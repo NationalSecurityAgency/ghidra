@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,17 +34,17 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Class for merging function tag changes. Most tag differences can be easily auto-merged, 
- * which is to say the result will be the set of all of tags from both program 1 and 
+ * Class for merging function tag changes. Most tag differences can be easily auto-merged,
+ * which is to say the result will be the set of all of tags from both program 1 and
  * program 2. Conflicts arise when both parties have edited/deleted the same tag.
- * 
+ *
  * The specific cases handled by the class are described below, where:
- * 
+ *
  *  - X and Y are tags
  *  - X(A) means to take A's version of tag X
  *  - ** indicates a conflict
  *  - NP means the situation is not possible
- *  
+ *
  * 		User A	|	Add X	Add Y	Delete X	Delete Y	Edit X		Edit Y
  * 				|
  * User B		|
@@ -53,11 +53,11 @@ import ghidra.util.task.TaskMonitor;
  * 				|
  * Add Y		|	X,Y		Y			Y			NP		X(A),Y		NP
  * 				|
- * Delete X		|	NP		Y			-			-		**			Y(A)		
+ * Delete X		|	NP		Y			-			-		**			Y(A)
  * 				|
  * Delete Y		|	X		NP			-			-		X(A)		**
  * 				|
- * Edit X		|	NP		X(B),Y		**			X(B)	**			X(B),Y(A)	
+ * Edit X		|	NP		X(B),Y		**			X(B)	**			X(B),Y(A)
  * 				|
  * Edit Y		|	X,Y(B)	NP			Y(B)		**		X(A),Y(B)	**
  */
@@ -82,11 +82,11 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	private Program latestProgram;
 	private Program myProgram;
 
-	// Contains info about all of the tag changes between Latest and 
+	// Contains info about all of the tag changes between Latest and
 	// Original.
 	ProgramChangeSet latestChanges;
 
-	// Contains info about all of the tag changes between My and 
+	// Contains info about all of the tag changes between My and
 	// Original.
 	ProgramChangeSet myChanges;
 
@@ -94,7 +94,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	private int conflictOption;
 	private int conflictChoice = ASK_USER;
 
-	// Stores all tag IDs that are in conflict, along with a description of the problem that 
+	// Stores all tag IDs that are in conflict, along with a description of the problem that
 	// caused the conflict.
 	private Map<Long, String> tagConflicts = new HashMap<>();
 
@@ -105,7 +105,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param mergeManager the merge manager
 	 * @param resultPgm the program storing the result of the merge
 	 * @param originalPgm the state of the program before any changes
@@ -145,7 +145,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	public void apply() {
 		conflictOption = conflictPanel.getSelectedOptions();
 
-		// If the "Use For All" check box is selected 
+		// If the "Use For All" check box is selected
 		// then save the option chosen for this conflict type.
 		if (conflictPanel.getUseForAll()) {
 			conflictChoice = conflictOption;
@@ -185,7 +185,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	/**
 	 * Displays a conflict resolution panel for each conflict discovered during
 	 * {@link #autoMerge()}.
-	 * 
+	 *
 	 * @param monitor the task monitor
 	 * @throws CancelledException
 	 */
@@ -215,7 +215,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 
 	/**
 	 * Merges the desired program (based on the provided option) into the Result program.
-	 * 
+	 *
 	 * @param chosenConflictOption conflict option indicating the program version to use.
 	 * @param monitor the task monitor
 	 * @throws CancelledException
@@ -245,8 +245,8 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	}
 
 	/**
-	 * Merges the tag being currently resolved into the Result program. 
-	 * 
+	 * Merges the tag being currently resolved into the Result program.
+	 *
 	 * @param sourceProgram
 	 * @param monitor
 	 * @throws CancelledException
@@ -255,11 +255,11 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	private void merge(Program sourceProgram, TaskMonitor monitor)
 			throws CancelledException, IOException {
 
-		// First get the tag from the source program and Result		
+		// First get the tag from the source program and Result
 		FunctionTag tag = getTag(sourceProgram, currentlyMergingTagID);
 		FunctionTag resultTag = getTag(resultProgram, currentlyMergingTagID);
 
-		// Get the Result tag manager so we can use it to store the new 
+		// Get the Result tag manager so we can use it to store the new
 		// tag info.
 		FunctionManagerDB functionManagerDBResult =
 			(FunctionManagerDB) resultProgram.getFunctionManager();
@@ -267,9 +267,9 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 		int transactionID = resultProgram.startTransaction(getDescription());
 
 		try {
-			// If the source program tag doesn't exist then the user has chosen to 
+			// If the source program tag doesn't exist then the user has chosen to
 			// keep a deleted tag, so make sure the corresponding tag in Result
-			// is deleted as well. 
+			// is deleted as well.
 			if (tag == null ) {
 				if (resultTag != null) {
 					resultTag.delete();
@@ -283,7 +283,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 					tag.getComment());
 			}
 
-			// If the source tag exists and Result tag exists, just update the tag 
+			// If the source tag exists and Result tag exists, just update the tag
 			// attributes in Result.
 			else {
 				resultTag.setName(tag.getName());
@@ -299,7 +299,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 
 	/**
 	 * Returns the {@link FunctionTag} instance for the given program and tag ID.
-	 * 
+	 *
 	 * @param program the program version to use
 	 * @param id the tag id
 	 * @return the tag, or null if not found
@@ -316,7 +316,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	/**
 	 * Attempts to merge all tag changes between My and Latest. Any conflicts
 	 * will be stored in {@link #tagConflicts} for later resolution.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	private void autoMerge() throws IOException {
@@ -377,12 +377,12 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	}
 
 	/**
-	 * Merges tags that have been edited (name/comment changed). 
-	 * 
+	 * Merges tags that have been edited (name/comment changed).
+	 *
 	 * CONFLICT CASES:
 	 * 	1. The same tag has been edited in both programs, either the name or comment.
-	 * 
-	 * Note that the conflict case of a tag being edited in one program and 
+	 *
+	 * Note that the conflict case of a tag being edited in one program and
 	 * deleted in another is handled in {@link #mergeDeletions(FunctionTagManagerDB, List, List, List, List)}.
 	 */
 	private void mergeEdits(FunctionTagManagerDB tagManagerMY,
@@ -409,7 +409,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 						functionTag.setName(tagMy.getName());
 						functionTag.setComment(tagMy.getComment());
 					}
-					
+
 				}
 			}
 		}
@@ -419,7 +419,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 				tagConflicts.put(id, CONFLICT_REASON);
 			}
 			else {
-				// The Result program already has Latest changes in it, so no need to update 
+				// The Result program already has Latest changes in it, so no need to update
 				// it here. If this wasn't the case we'd have to do the following:
 				// tagManagerRESULT.updateFunctionTag(id, tagLatest.getName(), tagLatest.getComment());
 			}
@@ -427,8 +427,8 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	}
 
 	/**
-	 * Merges tags that have been deleted. 
-	 * 
+	 * Merges tags that have been deleted.
+	 *
 	 * CONFLICT CASES:
 	 * 	1. A tag has been deleted in one program, but edited in the other.
 	 */
@@ -463,7 +463,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 
 	/**
 	 * Merges tags that have been added.
-	 * 
+	 *
 	 * CONFLICT CASES: Name is the same, comment is different.
 	 */
 	private void mergeAdditions(FunctionTagManagerDB tagManagerMY,
@@ -476,7 +476,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 			FunctionTag myTag = tagManagerMY.getFunctionTag(id);
 			FunctionTag latestTag = tagManagerLATEST.getFunctionTag(id);
 
-			// Sanity check: If myTag isn't valid, just return and do nothing. If 
+			// Sanity check: If myTag isn't valid, just return and do nothing. If
 			// the latest tag is invalid, just continue with adding what is in My.
 			if (myTag == null) {
 				return;
@@ -492,7 +492,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 			tagManagerRESULT.createFunctionTag(myTag.getName(), myTag.getComment());
 		}
 
-		// Note: The Result program already has Latest changes in it, so no need to update 
+		// Note: The Result program already has Latest changes in it, so no need to update
 		// it here. If this wasn't the case we'd have to do the following:
 		// for (long id : latestAdditionIDs) {
 		//	  FunctionTag tag = tagManagerLATEST.getFunctionTag(id);
@@ -502,11 +502,11 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 
 	/**
 	 * Given a list of tag IDs, returns the subset of those who's tags have
-	 * been edited. 
-	 * 
+	 * been edited.
+	 *
 	 * This is determined by checking the tag attributes in the given
 	 * program version against Original.
-	 * 
+	 *
 	 * @param ids the full list of ids to check
 	 * @param tagManager the source program tag manager
 	 * @param originalTagManager the Original program tag manager
@@ -539,15 +539,15 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	/**
 	 * Given a list of tag IDs, returns the subset of those who's tags have
 	 * been deleted.
-	 * 
+	 *
 	 * A delete is identified by comparing the given program version against
 	 * Original; if the tag exists in the latter but not the former, it was
 	 * deleted.
-	 * 
+	 *
 	 * @param ids the full list of ids to check
 	 * @param tagManager the source program tag manager
 	 * @param originalTagManager the Original program tag manager
-	 * 
+	 *
 	 * @return
 	 */
 	private List<Long> getDeletes(long[] ids, FunctionTagManager tagManager,
@@ -567,7 +567,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 
 	/**
 	 * Displays the conflict panel for a tag.
-	 * 
+	 *
 	 * @param id the tag id to merge
 	 * @param monitor task monitor
 	 */
@@ -623,9 +623,9 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 
 	/**
 	 * Returns the {@link FunctionTag} for the given tag id.
-	 * 
+	 *
 	 * @param id the tag id
-	 * @param program the program version 
+	 * @param program the program version
 	 * @return null function tag, or null if not found
 	 * @throws IOException
 	 */
@@ -647,7 +647,7 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	 * Builds the UI for the conflict panel. This will show the tag ID that is in
 	 * conflict, the reason for the conflict, and widgets allowing the user to
 	 * select a resolution.
-	 * 
+	 *
 	 * @param id the tag id
 	 * @param listener listener for handling radio button selects
 	 * @param monitor task monitor
@@ -705,9 +705,9 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	}
 
 	/**
-	 * Returns a string containing information about the current conflict. This will be 
+	 * Returns a string containing information about the current conflict. This will be
 	 * displayed in the header of the conflict panel.
-	 * 
+	 *
 	 * @param monitor the task monitor
 	 * @return
 	 */
@@ -734,9 +734,9 @@ public class FunctionTagMerger implements MergeResolver, ListingMergeConstants {
 	/**
 	 * Returns a string containing the tag contents for the program version
 	 * given.
-	 * 
+	 *
 	 * This is what should be displayed for each choice in the conflict panel.
-	 * 
+	 *
 	 * @param version the program version (LATEST, MY, ORIGINAL)
 	 * @param name the tag name
 	 * @param comment the tag comment

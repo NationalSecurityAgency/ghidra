@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,13 +53,13 @@ public enum DebugModelConventions {
 
 	/**
 	 * Search for a suitable object implementing the given interface, starting at a given seed.
-	 * 
+	 *
 	 * <p>
 	 * This performs an n-up-1-down search starting at the given seed, seeking an object which
 	 * implements the given interface. The 1-down part is only applied from objects implementing
 	 * {@link TargetAggregate}. See {@link TargetObject} for the specifics of expected model
 	 * conventions.
-	 * 
+	 *
 	 * <p>
 	 * Note that many a debugger target object interface type require a self-referential {@code T}
 	 * parameter referring to the implementing class type. To avoid referring to a particular
@@ -70,12 +70,12 @@ public enum DebugModelConventions {
 	 * wild-carded type, because the work-around involves a hidden class. Perhaps a little verbose
 	 * (hey, it's Java!), the following is the recommended pattern, e.g., to discover the
 	 * environment of a given process:
-	 * 
+	 *
 	 * <pre>
 	 * CompletableFuture<? extends TargetEnvironment<?>> futureEnv =
 	 * 	DebugModelConventions.findSuitable(TargetEnvironment.tclass, aProcess);
 	 * </pre>
-	 * 
+	 *
 	 * @param <T> the desired interface type.
 	 * @param iface the (probably {@code tclass}) of the desired interface type
 	 * @param seed the starting object
@@ -102,13 +102,13 @@ public enum DebugModelConventions {
 
 	/**
 	 * Search for a suitable object implementing the given interface, starting at a given seed.
-	 * 
+	 *
 	 * <p>
 	 * This performs an n-up-m-down search starting at the given seed, seeking an object which
 	 * implements the given interface. The m-down part is only applied from objects implementing
 	 * {@link TargetAggregate}. See {@link TargetObject} for the specifics of expected model
 	 * conventions.
-	 * 
+	 *
 	 * <p>
 	 * Note that many a debugger target object interface type require a self-referential {@code T}
 	 * parameter referring to the implementing class type. To avoid referring to a particular
@@ -119,12 +119,12 @@ public enum DebugModelConventions {
 	 * wild-carded type, because the work-around involves a hidden class. Perhaps a little verbose
 	 * (hey, it's Java!), the following is the recommended pattern, e.g., to discover the
 	 * environment of a given process:
-	 * 
+	 *
 	 * <pre>
 	 * CompletableFuture<? extends TargetEnvironment<?>> futureEnv =
 	 * 	DebugModelConventions.suitable(TargetEnvironment.tclass, aProcess);
 	 * </pre>
-	 * 
+	 *
 	 * @param <T> the desired interface type.
 	 * @param iface the (probably {@code tclass}) of the desired interface type
 	 * @param seed the starting object
@@ -161,14 +161,14 @@ public enum DebugModelConventions {
 
 	/**
 	 * Search for an object implementing the given interface among itself and its attributes.
-	 * 
+	 *
 	 * <p>
 	 * This method descends into the attributes of objects which implement the
 	 * {@link TargetAggregate} interface. All found objects will comes from the same "level" in the
 	 * tree, the algorithm terminating as soon as it finds a level with at least one object having
 	 * the interface. When it terminates, all such objects at that level will be included. The
 	 * resulting collection is in no particular order.
-	 * 
+	 *
 	 * @param <T> the desired interface type.
 	 * @param iface the (probably {@code tclass}) of the desired interface type
 	 * @param seed the starting object
@@ -181,10 +181,10 @@ public enum DebugModelConventions {
 
 	/**
 	 * Search for an object implementing the given interface among those given and their attributes.
-	 * 
+	 *
 	 * <p>
 	 * All seeds should be at the same "level", or else the result is not well defined.
-	 * 
+	 *
 	 * @see #findInAggregate(Class, TargetObject)
 	 */
 	public static <T extends TargetObject> CompletableFuture<Collection<T>> findInAggregate(
@@ -277,11 +277,11 @@ public enum DebugModelConventions {
 
 	/**
 	 * Find the nearest ancestor which implements the given interface.
-	 * 
+	 *
 	 * <p>
 	 * This is similar to {@link #findSuitable(Class, TargetObject)}, except without the 1-down
 	 * rule.
-	 * 
+	 *
 	 * @param <T> the type of the required interface
 	 * @param iface the (probably {@code tclass}) for the required interface
 	 * @param successor the seed object
@@ -307,7 +307,7 @@ public enum DebugModelConventions {
 
 	/**
 	 * Collect all ancestors (including seed) supporting the given interface
-	 * 
+	 *
 	 * @param <T> the type of interface
 	 * @param seed the starting point
 	 * @param iface the class of the interface
@@ -333,7 +333,7 @@ public enum DebugModelConventions {
 
 	/**
 	 * Collect all successors (including seed) that are elements supporting the given interface.
-	 * 
+	 *
 	 * @param <T> the type of interface
 	 * @param seed the starting point (root of subtree to inspect)
 	 * @param iface the class of the interface
@@ -397,7 +397,7 @@ public enum DebugModelConventions {
 
 	/**
 	 * Find the nearest ancestor thread
-	 * 
+	 *
 	 * @param successor the seed object
 	 * @return a future which completes with the found thread or completes with {@code null}.
 	 */
@@ -423,7 +423,7 @@ public enum DebugModelConventions {
 
 	/**
 	 * Check if the given process is alive
-	 * 
+	 *
 	 * @param process the process
 	 * @return true if alive
 	 */
@@ -445,7 +445,7 @@ public enum DebugModelConventions {
 
 	/**
 	 * Check if a target is a live process, and cast if so
-	 * 
+	 *
 	 * @param target the potential process
 	 * @return the process if live, or null
 	 */
@@ -471,21 +471,21 @@ public enum DebugModelConventions {
 
 		/**
 		 * An object has been removed from the sub-tree
-		 * 
+		 *
 		 * @param removed the removed object
 		 */
 		protected abstract void objectRemoved(TargetObject removed);
 
 		/**
 		 * An object has been added to the sub-tree
-		 * 
+		 *
 		 * @param added the added object
 		 */
 		protected abstract void objectAdded(TargetObject added);
 
 		/**
 		 * Decide whether a sub-tree (of the sub-tree) should be tracked
-		 * 
+		 *
 		 * @param obj the root of the sub-tree to consider
 		 * @return false to ignore, true to track
 		 */
@@ -592,11 +592,11 @@ public enum DebugModelConventions {
 
 		/**
 		 * Track a specified object, without initially adding the sub-tree
-		 * 
+		 *
 		 * <p>
 		 * Note that {@link #checkDescend(TargetObject)} must also exclude the sub-tree, otherwise
 		 * children added later will be tracked.
-		 * 
+		 *
 		 * @param obj the object to track
 		 * @return true if the object was not already being listened to
 		 */
@@ -616,7 +616,7 @@ public enum DebugModelConventions {
 
 		/**
 		 * Add a specified sub-tree to this listener
-		 * 
+		 *
 		 * @param obj
 		 * @return true if the object was not already being listened to
 		 */
@@ -668,7 +668,7 @@ public enum DebugModelConventions {
 
 		/**
 		 * Dispose of this sub-tree tracker/listener
-		 * 
+		 *
 		 * <p>
 		 * This uninstalls the listener from every tracked object and clears its collection of
 		 * tracked objects.
@@ -688,7 +688,7 @@ public enum DebugModelConventions {
 	/**
 	 * A variable that is updated whenever access changes according to the (now deprecated)
 	 * "every-ancestor" convention.
-	 * 
+	 *
 	 * @deprecated The "every-ancestor" thing doesn't add any flexibility to model implementations.
 	 *             It might even restrict it. Not to mention it's obtuse to implement.
 	 */
@@ -786,19 +786,19 @@ public enum DebugModelConventions {
 
 	/**
 	 * Obtain an object which tracks accessibility for a given target object.
-	 * 
+	 *
 	 * <p>
 	 * Recall that for an object to be considered accessible, it and its ancestors must all be
 	 * accessible. Objects without the {@link TargetAccessConditioned} interface, are assumed
 	 * accessible.
-	 * 
+	 *
 	 * <p>
 	 * <b>Caution:</b> The returned {@link AllRequiredAccess} object has the only strong references
 	 * to the listeners. If you intend to wait for access, e.g., by calling
 	 * {@link AsyncReference#waitValue(Object)}, you must ensure a strong reference to this object
 	 * is maintained for the duration of the wait. If not, it could be garbage collected, and you
 	 * will never get a callback.
-	 * 
+	 *
 	 * @param obj the object whose accessibility to track
 	 * @return a future which completes with an {@link AsyncReference} of the objects effective
 	 *         accessibility.
@@ -814,10 +814,10 @@ public enum DebugModelConventions {
 
 	/**
 	 * Request activation of the given object in its nearest active scope
-	 * 
+	 *
 	 * <p>
 	 * Note if the object has no suitable active scope, this method fails silently.
-	 * 
+	 *
 	 * @param obj the object on which to request activation
 	 * @return a future which completes when activation is granted, or exceptionally
 	 */
@@ -834,10 +834,10 @@ public enum DebugModelConventions {
 
 	/**
 	 * Request focus on the given object in its nearest focus scope
-	 * 
+	 *
 	 * <p>
 	 * Note if the object has no suitable focus scope, this method fails silently.
-	 * 
+	 *
 	 * @param obj the object on which to request focus
 	 * @return a future which completes when focus is granted, or exceptionally
 	 */

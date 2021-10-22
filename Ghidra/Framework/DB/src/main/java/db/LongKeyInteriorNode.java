@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.util.task.TaskMonitor;
  * has the following layout within a single DataBuffer (field size in bytes):
  * <pre>
  *   | NodeType(1) | KeyCount(4) | Key0(8) | ID0(4) | ... | KeyN(8) | IDN(4) |
- * </pre>  
+ * </pre>
  */
 class LongKeyInteriorNode extends LongKeyNode implements InteriorNode {
 
@@ -181,7 +181,7 @@ class LongKeyInteriorNode extends LongKeyNode implements InteriorNode {
 	/**
 	 * Perform a binary search to locate the specified key and derive an index
 	 * into the Buffer ID storage.  This method is intended to locate the child
-	 * node which contains the specified key.  The returned index corresponds 
+	 * node which contains the specified key.  The returned index corresponds
 	 * to a child's stored buffer/node ID and may correspond to another interior
 	 * node or a leaf record node.  Each stored key within this interior node
 	 * effectively identifies the maximum key contained within the corresponding
@@ -218,9 +218,9 @@ class LongKeyInteriorNode extends LongKeyNode implements InteriorNode {
 
 	/**
 	 * Perform a binary search to locate the specified key and derive an index
-	 * into the Buffer ID storage.  This method is intended to find the insertion 
+	 * into the Buffer ID storage.  This method is intended to find the insertion
 	 * index or exact match for a child key.  A negative value will be returned
-	 * when an exact match is not found and may be transformed into an 
+	 * when an exact match is not found and may be transformed into an
 	 * insertion index (insetIndex = -returnedIndex-1).
 	 * @param key key to search for
 	 * @return int buffer ID index.
@@ -376,9 +376,9 @@ class LongKeyInteriorNode extends LongKeyNode implements InteriorNode {
 	}
 
 	/**
-	 * Split this interior node and insert new child entry (key and buffer ID).  
+	 * Split this interior node and insert new child entry (key and buffer ID).
 	 * Assumes 3 or more child keys exist in this node.
-	 * @param newKey new child key 
+	 * @param newKey new child key
 	 * @param newId new child node's buffer ID
 	 * @return root node.
 	 * @throws IOException thrown if IO error occurs
@@ -418,7 +418,7 @@ class LongKeyInteriorNode extends LongKeyNode implements InteriorNode {
 
 	/**
 	 * Callback method allowing child node to remove itself from parent.
-	 * Rebalancing of the tree is performed if the interior node falls 
+	 * Rebalancing of the tree is performed if the interior node falls
 	 * below the half-full point.
 	 * @param key child node key
 	 * @return root node
@@ -450,8 +450,8 @@ class LongKeyInteriorNode extends LongKeyNode implements InteriorNode {
 	}
 
 	/**
-	 * Callback method allowing a child interior node to request balancing of its 
-	 * content with its sibling nodes.  Balancing is only done if the specified node 
+	 * Callback method allowing a child interior node to request balancing of its
+	 * content with its sibling nodes.  Balancing is only done if the specified node
 	 * is half-full or less.
 	 * @param node child interior node
 	 * @return root node
@@ -463,7 +463,7 @@ class LongKeyInteriorNode extends LongKeyNode implements InteriorNode {
 			return getRoot();
 		}
 
-		// balance with right sibling except if node corresponds to the right-most 
+		// balance with right sibling except if node corresponds to the right-most
 		// key within this interior node - in that case balance with left sibling.
 		int index = getIdIndex(node.getKey(0));
 		if (index == (keyCount - 1)) {
@@ -494,7 +494,7 @@ class LongKeyInteriorNode extends LongKeyNode implements InteriorNode {
 
 		// Can right keys fit within left node
 		if (newLeftKeyCount <= maxKeyCount) {
-			// Right node is elliminated and all entries stored in left node			
+			// Right node is elliminated and all entries stored in left node
 			moveKeysLeft(leftNode, rightNode, rightKeyCount);
 			nodeMgr.deleteNode(rightNode);
 			return deleteChild(rightKey);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ public class GhidraScriptUtils {
 
 	/**
 	 * Creates a new Ghidra script project with the given name.
-	 * 
+	 *
 	 * @param projectName The name of the project to create.
 	 * @param projectDir The directory the project will be created in.
 	 * @param createRunConfig Whether or not to create a new run configuration for the project.
@@ -106,16 +106,16 @@ public class GhidraScriptUtils {
 	}
 
 	/**
-	 * Create a Ghidra script with the given name in the in the user's ghidra_scripts, and link it in 
+	 * Create a Ghidra script with the given name in the in the user's ghidra_scripts, and link it in
 	 * to the provided project.
-	 * 
+	 *
 	 * @param scriptFolder The folder to create the script in.
 	 * @param scriptName The name of the script to create.
 	 * @param scriptAuthor The script's author.
 	 * @param scriptCategory The script's category.
 	 * @param scriptDescription The script's description lines.
 	 * @param monitor The progress monitor to use during script creation.
-	 * @return The script file (which could be opened in an editor by default). 
+	 * @return The script file (which could be opened in an editor by default).
 	 * @throws IOException If there was a file-related problem with creating the script.
 	 * @throws CoreException If there was an Eclipse-related problem with creating the script.
 	 */
@@ -129,7 +129,7 @@ public class GhidraScriptUtils {
 		}
 
 		IFile scriptFile = scriptFolder.getFile(scriptName);
-		
+
 		// Does the script exist already?  If so, it's a problem.
 		if (scriptFile.exists()) {
 			throw new IOException("File already exists: " + scriptFile);

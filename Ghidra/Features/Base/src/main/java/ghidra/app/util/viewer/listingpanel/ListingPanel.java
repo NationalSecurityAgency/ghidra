@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,7 +95,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Constructs a new ListingPanel using the given FormatManager and ServiceProvider.
-	 * 
+	 *
 	 * @param manager the FormatManager to use.
 	 */
 	public ListingPanel(FormatManager manager) {
@@ -125,7 +125,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Constructs a new ListingPanel for the given program.
-	 * 
+	 *
 	 * @param mgr the FormatManager to use.
 	 * @param program the program for which to create a new ListingPanel
 	 */
@@ -136,7 +136,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Constructs a new ListingPanel with the given FormatManager and ListingLayoutModel
-	 * 
+	 *
 	 * @param mgr the FormatManager to use
 	 * @param model the ListingLayoutModel to use.
 	 */
@@ -182,7 +182,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the ProgramLocationListener. Only one listener is supported
-	 * 
+	 *
 	 * @param listener the ProgramLocationListener to use.
 	 */
 	public void setProgramLocationListener(ProgramLocationListener listener) {
@@ -191,7 +191,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the ProgramSelectionListener. Only one listener is supported
-	 * 
+	 *
 	 * @param listener the ProgramSelectionListener to use.
 	 */
 	public void setProgramSelectionListener(ProgramSelectionListener listener) {
@@ -204,7 +204,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the ListingLayoutModel to use.
-	 * 
+	 *
 	 * @param newModel the model to use.
 	 */
 	public void setListingModel(ListingModel newModel) {
@@ -224,7 +224,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets whether or not the field header component is visible at the top of the listing panel
-	 * 
+	 *
 	 * @param show if true, the header component will be show, otherwise it will be hidden.
 	 */
 	public void showHeader(boolean show) {
@@ -283,7 +283,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Adds the MarginProvider to this panel
-	 * 
+	 *
 	 * @param provider the MarginProvider that will provide components to display in this panel's
 	 *            left margin area.
 	 */
@@ -375,7 +375,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Add a change listener to be notified whenever the indexMap changes.
-	 * 
+	 *
 	 * @param listener the listener to be added.
 	 */
 	public void addIndexMapChangeListener(ChangeListener listener) {
@@ -384,7 +384,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Removes the change listener to be notified when the indexMap changes.
-	 * 
+	 *
 	 * @param listener the listener to be removed.
 	 */
 	public void removeIndexMapChangeListener(ChangeListener listener) {
@@ -393,7 +393,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Removes the given margin provider from this panel
-	 * 
+	 *
 	 * @param provider the MarginProvider to remove.
 	 */
 	public void removeMarginProvider(MarginProvider provider) {
@@ -403,7 +403,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Adds the given OverviewProvider with will be displayed in this panels right margin area.
-	 * 
+	 *
 	 * @param provider the OverviewProvider to display.
 	 */
 	public void addOverviewProvider(OverviewProvider provider) {
@@ -414,7 +414,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Removes the given OverviewProvider from this panel
-	 * 
+	 *
 	 * @param provider the OverviewProvider to remove.
 	 */
 	public void removeOverviewProvider(OverviewProvider provider) {
@@ -425,7 +425,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	/**
 	 * Adds a ButtonPressedListener to be notified when the user presses the mouse button while over
 	 * this panel
-	 * 
+	 *
 	 * @param listener the ButtonPressedListener to add.
 	 */
 	public void addButtonPressedListener(ButtonPressedListener listener) {
@@ -436,7 +436,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Removes the given ButtonPressedListener.
-	 * 
+	 *
 	 * @param listener the ButtonPressedListener to remove.
 	 */
 	public void removeButtonPressedListener(ButtonPressedListener listener) {
@@ -507,7 +507,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the divider location between the left margin areas and the main display.
-	 * 
+	 *
 	 * @param dividerLocation the location to set on the divider.
 	 */
 	public void setDividerLocation(int dividerLocation) {
@@ -555,7 +555,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 	/**
 	 * Moves the cursor to the given program location and repositions the scrollbar to show that
 	 * location in the screen.
-	 * 
+	 *
 	 * @param loc the location to move to.
 	 */
 	public boolean goTo(ProgramLocation loc) {
@@ -711,7 +711,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Positions the ListingPanel to the given address.
-	 * 
+	 *
 	 * @param addr the address at which to position the listing.
 	 */
 	public boolean goTo(Address addr) {
@@ -724,7 +724,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Positions the ListingPanel to the given address.
-	 * 
+	 *
 	 * @param currentAddress used to determine which symbol to goto if the goto address has more
 	 *            than one
 	 * @param gotoAddress the address at which to position to listing.
@@ -767,7 +767,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the program to be displayed by this listing panel
-	 * 
+	 *
 	 * @param program the program to display.
 	 */
 	public void setProgram(Program program) {
@@ -801,7 +801,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Restricts the program's view to the given address set
-	 * 
+	 *
 	 * @param view the set of address to include in the view.
 	 */
 	public void setView(AddressSetView view) {
@@ -874,7 +874,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Get a program location for the given point.
-	 * 
+	 *
 	 * @return program location, or null if point does not correspond to a program location
 	 */
 	public ProgramLocation getProgramLocation(Point point) {
@@ -910,7 +910,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the cursor to the given program location.
-	 * 
+	 *
 	 * @param loc the location at which to move the cursor.
 	 */
 	public void setCursorPosition(ProgramLocation loc) {
@@ -919,10 +919,10 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the cursor to the given program location with a given trigger
-	 * 
+	 *
 	 * This method should only be used in automated testing to programmatically simulate a user
 	 * navigating within the listing panel.
-	 * 
+	 *
 	 * @param loc the location at which to move the cursor.
 	 * @param trigger the event trigger
 	 */
@@ -1039,7 +1039,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the selection.
-	 * 
+	 *
 	 * @param sel the new selection
 	 */
 	public void setSelection(ProgramSelection sel) {
@@ -1061,7 +1061,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 				}
 
 				Layout layout2 = layoutModel.getLayout(loc2.getIndex());
-				
+
 				if (fieldNum1 >= 0 && layout2 != null) {
 					BigInteger index2 = loc2.getIndex();
 					int fieldNum2 = layout.getEndRowFieldNum(loc2.getFieldNum());
@@ -1081,7 +1081,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Sets the highlight.
-	 * 
+	 *
 	 * @param highlight the new highlight.
 	 */
 	public void setHighlight(ProgramSelection highlight) {
@@ -1123,7 +1123,7 @@ public class ListingPanel extends JPanel implements FieldMouseListener, FieldLoc
 
 	/**
 	 * Returns the currently selected text.   The value will only be non-null for selections within
-	 * a single field. 
+	 * a single field.
 	 * @return the selected text or null
 	 */
 	public String getTextSelection() {

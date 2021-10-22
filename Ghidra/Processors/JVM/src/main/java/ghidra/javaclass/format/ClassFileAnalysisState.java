@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidra.util.Msg;
  * for a particular .class file Program. These describe the objects in the constant pool and
  * signatures of individual methods.  They are parsed directly from the .class
  * file (and so can't really change) and are shared via this {@link AnalysisState} with
- * any plug-in that needs to do p-code analysis. 
+ * any plug-in that needs to do p-code analysis.
  */
 public class ClassFileAnalysisState implements AnalysisState {
 

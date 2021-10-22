@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ import ghidra.util.SystemUtilities;
 /**
  * Tests the {@link KeyBindingUtils} class.
  *
- * 
+ *
  * @since  Tracker Id 329
  */
 public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
@@ -373,7 +373,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void reopenTool(PluginTool tool2) {
 		runSwing(() -> {
@@ -629,7 +629,7 @@ public class KeyBindingUtilsTest extends AbstractGhidraHeadedIntegrationTest {
 			KeyStroke optionsKs = oldOptions.getKeyStroke(name, null);
 			KeyStroke panelKs = panelKeyStrokeMap.get(name);
 
-			// if the value is null, then it would not have been placed into the options map 
+			// if the value is null, then it would not have been placed into the options map
 			// in the key bindings panel, so we only care about non-null values
 			if (optionsKs != null) {
 				match &= (optionsKs.equals(panelKs));

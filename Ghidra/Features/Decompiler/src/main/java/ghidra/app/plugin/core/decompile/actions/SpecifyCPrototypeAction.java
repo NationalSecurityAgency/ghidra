@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 	}
 
 	/**
-	 * Verify and adjust function editor model using dynamic storage to reflect current state of 
+	 * Verify and adjust function editor model using dynamic storage to reflect current state of
 	 * decompiled results.  It may be necessary to switch model to use custom storage.
 	 * @param hf decompiled high function
 	 * @param model function editor model
@@ -189,7 +189,7 @@ public class SpecifyCPrototypeAction extends AbstractDecompilerAction {
 			}
 		}
 
-		// make the model think it is not changed, so if the user doesn't change anything, 
+		// make the model think it is not changed, so if the user doesn't change anything,
 		// we don't save the changes made above.
 		model.setModelChanged(false);
 

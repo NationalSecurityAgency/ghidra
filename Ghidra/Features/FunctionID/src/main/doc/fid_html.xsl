@@ -10,7 +10,7 @@
 
 <xsl:template name="component.title">
   <xsl:param name="node" select="."/>
-  
+
   <xsl:variable name="level">
     <xsl:choose>
       <xsl:when test="ancestor::section">

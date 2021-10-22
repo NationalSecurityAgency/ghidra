@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,7 +53,7 @@ import mockit.VerificationsInOrder;
 
 /**
  * TODO: Cover the error cases, and cases where {@code null} is expected
- * 
+ *
  * <p>
  * TODO: Cover cases where multiple recorders are present
  */
@@ -67,7 +67,7 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 	 * CollectionChangeListener.of() if I try to mock one of those or a subclass directly. I'm
 	 * guessing the version we're using (1.44 as of this writing) is utterly ignorant of static
 	 * interface methods. What was the latest version of Java at the time?
-	 * 
+	 *
 	 * <p>
 	 * TODO: Check if a later version fixes this issue. If so, consider upgrading. If not, submit an
 	 * issue.

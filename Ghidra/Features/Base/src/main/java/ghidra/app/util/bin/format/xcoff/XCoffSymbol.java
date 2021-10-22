@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,11 +55,11 @@ public class XCoffSymbol {
 		aux = new byte[n_numaux * SYMSZ];
 
 		// 11th byte in the last auxiliary entry (csect)
-		x_smclas = (n_numaux > 0) ? aux[aux.length - 7] : 0;	
+		x_smclas = (n_numaux > 0) ? aux[aux.length - 7] : 0;
 	}
 
 	public boolean isLongName() {
-		return (n_name[0] == 0 && 
+		return (n_name[0] == 0 &&
 				n_name[1] == 0 &&
 				n_name[2] == 0 &&
 				n_name[3] == 0);
@@ -70,7 +70,7 @@ public class XCoffSymbol {
 	}
 
 	public boolean isFunction() {
-		return ((n_sclass == XCoffSymbolStorageClass.C_EXT || n_sclass == XCoffSymbolStorageClass.C_HIDEXT || n_sclass == XCoffSymbolStorageClass.C_WEAKEXT) && 
+		return ((n_sclass == XCoffSymbolStorageClass.C_EXT || n_sclass == XCoffSymbolStorageClass.C_HIDEXT || n_sclass == XCoffSymbolStorageClass.C_WEAKEXT) &&
 				n_scnum == _optionalHeader.getSectionNumberForText() &&
 				!n_name.equals(XCoffSectionHeaderNames._TEXT));
 	}

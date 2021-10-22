@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,13 +41,13 @@ public class ChangedFilesDialog extends DialogComponentProvider {
     private DomainFilesPanel filePanel;
     private PluginTool tool;
     private boolean saveSelected;
- 
-	/** 
-	 * Constructor 
+
+	/**
+	 * Constructor
 	 * @param tool tool to execute task and log messages in status window
 	 * @param list list of domain files that have changes
 	 */
-	public ChangedFilesDialog(PluginTool tool, ArrayList<DomainFile> list) { 
+	public ChangedFilesDialog(PluginTool tool, ArrayList<DomainFile> list) {
 		super("Save Changed Files?", true);
 		this.tool = tool;
 		this.fileList = list;
@@ -59,10 +59,10 @@ public class ChangedFilesDialog extends DialogComponentProvider {
 				save();
 			}
 		});
-		saveButton.setToolTipText("Save files that have selected check boxes"); 
-		addButton(saveButton);				
-        addCancelButton();	
-	}	
+		saveButton.setToolTipText("Save files that have selected check boxes");
+		addButton(saveButton);
+        addCancelButton();
+	}
 	/**
 	 * Set the tool tip on the cancel button.
 	 * @param toolTip tool tip to set on the cancel button
@@ -70,7 +70,7 @@ public class ChangedFilesDialog extends DialogComponentProvider {
 	public void setCancelToolTipText(String toolTip) {
 		setCancelToolTip(toolTip);
 	}
-	
+
 	/**
 	 * Show ChangedFilesDialog.
 	 * @return whether the save button was selected; return false if the user
@@ -78,7 +78,7 @@ public class ChangedFilesDialog extends DialogComponentProvider {
 	 */
 	public boolean showDialog() {
 		saveSelected = false;
-		tool.showDialog(this);	
+		tool.showDialog(this);
 		return saveSelected;
 	}
 	private JPanel buildMainPanel() {
@@ -112,13 +112,13 @@ public class ChangedFilesDialog extends DialogComponentProvider {
 	 */
 	private class SaveTask extends Task {
 		private DomainFile[] files;
-		
+
 		SaveTask(DomainFile[] files) {
-			super(files.length>1?"Saving Files..." : "Saving File", 
+			super(files.length>1?"Saving Files..." : "Saving File",
 				true, true, true);
 			this.files = files;
 		}
-		
+
 		@Override
         public void run(TaskMonitor monitor) {
 			for (DomainFile file : files) {

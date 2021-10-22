@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 //
-// Fixes up all composite datatypes within the current program to account for 
+// Fixes up all composite datatypes within the current program to account for
 // any changes to primitive datatype sizes or alignment rules as defined
 // by the associated data organization.
 //
@@ -49,7 +49,7 @@ public class FixupCompositeDataTypesScript extends GhidraScript {
 			popup("This script requires the DataTypeManagerService");
 			return;
 		}
-		
+
 		ArrayList<DTMWrapper> dtms = new ArrayList<>();
 
 		for (DataTypeManager dtm : service.getDataTypeManagers()) {

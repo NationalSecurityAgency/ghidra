@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -107,7 +107,7 @@ public class VTMatchAcceptTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 		// BTW this test exposes a bug because the hook that runs when you apply data on accept was.
 		// in a side effect, causing the destination address to be set. When the hook was changed to
-		// not set the destination address, the accept task was not setting the destination address 
+		// not set the destination address, the accept task was not setting the destination address
 		// as it should.
 		//
 

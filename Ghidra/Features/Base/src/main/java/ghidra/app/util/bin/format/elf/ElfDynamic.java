@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,12 +23,12 @@ import ghidra.util.*;
 
 /**
  * A class to represent the Elf<code>32</code>_Dyn data structure.
- * 
+ *
  * <pre><code>
  * typedef  int32_t  Elf32_Sword;
  * typedef uint32_t  Elf32_Word;
  * typedef uint32_t  Elf32_Addr;
- * 
+ *
  *  typedef struct {
  *      Elf32_Sword     d_tag;
  *      union {
@@ -36,11 +36,11 @@ import ghidra.util.*;
  *          Elf32_Addr  d_ptr;
  *      } d_un;
  *  } Elf32_Dyn;
- * 
+ *
  * typedef   int64_t  Elf64_Sxword;
  * typedef  uint64_t  Elf64_Xword;
  * typedef  uint64_t  Elf64_Addr;
- * 
+ *
  * typedef struct {
  *     Elf64_Sxword	   d_tag;     //Dynamic entry type
  *     union {
@@ -48,7 +48,7 @@ import ghidra.util.*;
  *         Elf64_Addr  d_ptr;     //Address value
  *     } d_un;
  * } Elf64_Dyn;
- * 
+ *
  * </code></pre>
  */
 public class ElfDynamic implements ByteArrayConverter {
@@ -108,7 +108,7 @@ FactoryBundledWithBinaryReader reader, ElfHeader elf)
     }
 
     /**
-     * Returns the value that controls the interpretation of the 
+     * Returns the value that controls the interpretation of the
      * the d_val and/or d_ptr.
      * @return the tag (or type) of this dynamic
      */
@@ -117,7 +117,7 @@ FactoryBundledWithBinaryReader reader, ElfHeader elf)
     }
 
     /**
-     * Returns the enum value that controls the interpretation of the 
+     * Returns the enum value that controls the interpretation of the
      * the d_val and/or d_ptr (or null if unknown).
      * @return the enum tag (or type) of this dynamic or null if unknown
      */

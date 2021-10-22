@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,10 +113,10 @@ import ghidra.util.classfinder.ExtensionPoint;
  * calls the {@link PluginTool#getService(Class)} method.
  * <p>
  * Conversely, any services your Plugin advertises in &#64;PluginInfo must be published via calls to
- * {@link #registerServiceProvided(Class, Object) registerServiceProvided()} in your Plugin's 
+ * {@link #registerServiceProvided(Class, Object) registerServiceProvided()} in your Plugin's
  * constructor.
  * <p>
- * <b>Cyclic dependencies</b> are not allowed and will cause the Plugin management code to fail to 
+ * <b>Cyclic dependencies</b> are not allowed and will cause the Plugin management code to fail to
  * load your Plugin. (ie. PluginA requires a service that PluginB provides, which requires a service
  * that PluginA provides)
  *
@@ -162,13 +162,13 @@ import ghidra.util.classfinder.ExtensionPoint;
  * <h2>Plugin Events</h2>
  * <UL>
  * 	<LI>Every type of plugin event should be represented by some class extending {@link PluginEvent}.
- *  <LI>One PluginEvent subclass may be used for more than one event type as long as there's some 
+ *  <LI>One PluginEvent subclass may be used for more than one event type as long as there's some
  *  natural grouping.
  * </UL>
  *
  * <h2>Component Providers</h2>
  * <UL>
- *  <LI>A plugin may supply a {@link ComponentProvider} that provides a visual component when 
+ *  <LI>A plugin may supply a {@link ComponentProvider} that provides a visual component when
  *  the plugin is added to the tool.
  * </UL>
  *
@@ -176,9 +176,9 @@ import ghidra.util.classfinder.ExtensionPoint;
  * <UL>
  * 	<LI>{@link OptionsChangeListener} - to receive notification when a configuration option
  * 	is changed by the user.
- * 	<LI>{@link FrontEndable} - marks this Plugin as being suitable for inclusion in the FrontEnd 
+ * 	<LI>{@link FrontEndable} - marks this Plugin as being suitable for inclusion in the FrontEnd
  * 		tool.
- * 	<LI>{@link FrontEndOnly} - marks this Plugin as FrontEnd only, not usable in CodeBrowser or 
+ * 	<LI>{@link FrontEndOnly} - marks this Plugin as FrontEnd only, not usable in CodeBrowser or
  * 		other tools.
  * 	<LI>{@link ProgramaticUseOnly} - marks this Plugin as special and not for user configuration.
  * </UL>
@@ -377,7 +377,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	}
 
 	/**
-	 * Called after the constructor and before {@link #init()} to publish services to 
+	 * Called after the constructor and before {@link #init()} to publish services to
 	 * the Tool's service registry.
 	 * <p>
 	 * Services registered during the constructor call will be queued in the services list.
@@ -520,7 +520,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 
 	/**
 	 * Check if this plugin depends on the given plugin
-	 * 
+	 *
 	 * @param plugin the plugin
 	 * @return true if this plugin depends on the given plugin
 	 */
@@ -836,7 +836,7 @@ public abstract class Plugin implements ExtensionPoint, PluginEventListener, Ser
 	 * Close the plugin.   This is when the plugin should release resources, such as those from
 	 * other services.  This method should not close resources being used by others (that should
 	 * happen in dispose()).
-	 * 
+	 *
 	 * <p>This method will be called before {@link #dispose()}.
 	 */
 	protected void close() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -132,7 +132,7 @@ public class ProgramAnnotatedStringHandler implements AnnotatedStringHandler {
 		// default folder is the root folder
 		DomainFolder folder = projectData.getRootFolder();
 
-		// Get program name and folder from program comment annotation 
+		// Get program name and folder from program comment annotation
 		// handles forward and back slashes and with and without first slash
 		String programText = getProgramText(annotationParts);
 		String programName = FilenameUtils.getName(programText);

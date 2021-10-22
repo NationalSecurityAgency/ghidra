@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
  * A map of cached values computed upon the first request, asynchronously
- * 
+ *
  * <p>
  * Each key present in the cache behaves similarly to {@link AsyncLazyValue}. The cache starts
  * empty. Whenever a key is requested, a computation for that key is started, but a future is
@@ -35,14 +35,14 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
  * that key will be fulfilled by the result of the first request. If the computation completes
  * exceptionally, the key is optionally removed from the cache. Thus, a subsequent request for a
  * failed key may retry the computation.
- * 
+ *
  * <p>
  * Values can also be provided "out of band." That is, they may be provided by an alternative
  * computation. This is accomplished using {@link #get(Object, Function)}, {@link #put(Object)} or
  * {@link #put(Object, Object)}. The last immediately provides a value and completes any outstanding
  * requests, even if there was an active computation for the key. The first claims the key and
  * promises to provide the value at a later time.
- * 
+ *
  * <p>
  * At any point, an unmodifiable view of the completed, cached values may be obtained.
  *
@@ -88,7 +88,7 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Construct a lazy map for the given function
-	 * 
+	 *
 	 * @param map the backing map. The lazy map ought to have an exclusive reference to this map.
 	 *            Mutations to the map outside of those caused by the lazy map may cause undefined
 	 *            behavior.
@@ -128,15 +128,15 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Sets a predicate to determine which errors to forget (i.e., retry)
-	 * 
-	 * 
+	 *
+	 *
 	 * <p>
 	 * A request resulting in an error that is remembered will not be retried until the cache is
 	 * invalidated. For a forgotten error, the request is retried if re-requested later.
-	 * 
+	 *
 	 * <p>
 	 * This will replace the behavior of any previous error-testing predicate.
-	 * 
+	 *
 	 * @param predicate the predicate
 	 * @return this lazy map
 	 */
@@ -148,7 +148,7 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Sets a predicate to determine which errors to remember
-	 * 
+	 *
 	 * @see #forgetErrors(BiPredicate)
 	 * @param predicate the predicate
 	 * @return this lazy map
@@ -160,17 +160,17 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Sets a predicate to determine which values to forget
-	 * 
+	 *
 	 * <p>
 	 * The predicate is applied to a cached entry when its key is re-requested. If forgotten, the
 	 * request will launch a fresh computation. The predicate is also applied at the time a
 	 * computation is completed. An entry that is forgotten still completes normally; however, it
 	 * never enters the cache, thus a subsequent request for the same key will launch a fresh
 	 * computation.
-	 * 
+	 *
 	 * <p>
 	 * This will replace the behavior of any previous value-testing predicate.
-	 * 
+	 *
 	 * @param predicate
 	 * @return this lazy map
 	 */
@@ -182,7 +182,7 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Sets a predicate to determine which values to remember
-	 * 
+	 *
 	 * @see #forgetValues(BiPredicate)
 	 * @param predicate
 	 * @return this lazy map
@@ -194,12 +194,12 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Request the value for a given key, using an alternative computation
-	 * 
+	 *
 	 * <p>
 	 * If this is called before any other get or put, the given function is launched for the given
 	 * key. A {@link CompletableFuture} is returned immediately. Subsequent gets or puts on the same
 	 * key will return the same future without starting any new computation.
-	 * 
+	 *
 	 * @param key the key
 	 * @param func an alternative computation function, given a key
 	 * @return a future, possibly already completed, for the key's value
@@ -228,13 +228,13 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Request the value for a given key
-	 * 
+	 *
 	 * <p>
 	 * If this is called before any other get or put, the computation given at construction is
 	 * launched for the given key. A {@link CompletableFuture} is returned immediately. Subsequent
 	 * calls gets or puts on the same key return the same future without starting any new
 	 * computation.
-	 * 
+	 *
 	 * @param key the key
 	 * @return a future, possible already completed, for the key's value
 	 */
@@ -244,17 +244,17 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Immediately provide an out-of-band value for a given key
-	 * 
+	 *
 	 * <p>
 	 * On occasion, the value for a key may become known outside of the specified computation. This
 	 * method circumvents the function given during construction by providing the value for a key.
 	 * If there is an outstanding request for the key's value -- a rare occasion -- it is completed
 	 * immediately with the provided value. Calling this method for a key that has already completed
 	 * has no effect.
-	 * 
+	 *
 	 * <p>
 	 * This is equivalent to the code {@code map.put(k).complete(value)}, but atomic.
-	 * 
+	 *
 	 * @param key the key whose value to provide
 	 * @param value the provided value
 	 * @return true if the key was completed by this call, false if the key had already been
@@ -274,21 +274,21 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Provide an out-of-band value for a given key
-	 * 
+	 *
 	 * <p>
 	 * If this is called before {@link #get(Object)}, the computation given at construction is
 	 * ignored for the given key. A new {@link CompletableFuture} is returned instead. The caller
 	 * must see to this future's completion. Subsequent calls to either {@link #get(Object)} or
 	 * {@link #put(Object)} on the same key return this same future without starting any
 	 * computation.
-	 * 
+	 *
 	 * <p>
 	 * Under normal circumstances, the caller cannot determine whether or not it has "claimed" the
 	 * computation for the key. If the usual computation is already running, then the computations
 	 * are essentially in a race. As such, it is essential that alternative computations result in
 	 * the same value for a given key as the usual computation. In other words, the functions must
 	 * not differ, but the means of computation can differ. Otherwise, race conditions may arise.
-	 * 
+	 *
 	 * @param key the key whose value to provide
 	 * @return a promise that the caller must fulfill or arrange to have fulfilled
 	 */
@@ -304,12 +304,12 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Remove a key from the map, without canceling any pending computation
-	 * 
+	 *
 	 * <p>
 	 * If the removed future has not yet completed, its value will never be added to the map of
 	 * values. Subsequent gets or puts to the invalidated key will behave as if the key had never
 	 * been requested.
-	 * 
+	 *
 	 * @param key the key to remove
 	 * @return the invalidated future
 	 */
@@ -320,7 +320,7 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Remove a key from the map, canceling any pending computation
-	 * 
+	 *
 	 * @param key the key to remove
 	 */
 	public V remove(K key) {
@@ -338,11 +338,11 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Get a view of completed keys with values
-	 * 
+	 *
 	 * <p>
 	 * The view is unmodifiable, but the backing map may still be modified as more keys are
 	 * completed. Thus, access to the view ought to be synchronized on this lazy map.
-	 * 
+	 *
 	 * @return a map view of keys to values
 	 */
 	public Map<K, V> getCompletedMap() {
@@ -351,10 +351,10 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Get a copy of the keys which are requested but not completed
-	 * 
+	 *
 	 * <p>
 	 * This should only be used for diagnostics.
-	 * 
+	 *
 	 * @return a copy of the pending key set
 	 */
 	public synchronized Set<K> getPendingKeySet() {
@@ -369,7 +369,7 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Clear the lazy map, including pending requests
-	 * 
+	 *
 	 * <p>
 	 * Pending requests will be cancelled
 	 */
@@ -387,10 +387,10 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Retain only those entries whose keys appear in the given collection
-	 * 
+	 *
 	 * <p>
 	 * All removed entries with pending computations will be canceled
-	 * 
+	 *
 	 * @param keys the keys to retain
 	 */
 	public void retainKeys(Collection<K> keys) {
@@ -413,7 +413,7 @@ public class AsyncLazyMap<K, V> {
 
 	/**
 	 * Check if a given key is in the map, pending or completed
-	 * 
+	 *
 	 * @param key the key to check
 	 * @return true if present, false otherwise
 	 */

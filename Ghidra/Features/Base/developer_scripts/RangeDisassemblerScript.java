@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,11 +33,11 @@ public class RangeDisassemblerScript extends GhidraScript {
 	 *  min - minimum disassembly address or block name
 	 *  max - maximum disassembly address (not used if block name used for min)
 	 *  out - disassembly output file path
-	 * 
+	 *
 	 * Optional:
 	 *  set.<context-reg-name>       - optional starting context value
 	 *  set.range.<context-reg-name> - optional context value over range
-	 * 
+	 *
 	 */
 
 	private AddressSetView region;

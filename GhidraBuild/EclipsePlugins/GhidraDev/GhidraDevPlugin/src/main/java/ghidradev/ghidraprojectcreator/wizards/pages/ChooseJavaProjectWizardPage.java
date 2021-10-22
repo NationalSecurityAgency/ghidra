@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class ChooseJavaProjectWizardPage extends WizardPage {
 
 	/**
 	 * Creates a new Java project chooser wizard page.
-	 * 
+	 *
 	 * @param selectedProject The currently selected project in the project explorer.
 	 */
 	public ChooseJavaProjectWizardPage(IProject selectedProject) {
@@ -71,9 +71,9 @@ public class ChooseJavaProjectWizardPage extends WizardPage {
 
 	/**
 	 * Gets the Java project.
-	 * 
+	 *
 	 * @return The chosen Java project.  Only valid when the page is complete.
-	 *   Could be null if unspecified, however, the page will not be valid until the project 
+	 *   Could be null if unspecified, however, the page will not be valid until the project
 	 *   is valid, so it should never be null when called by other classes.
 	 */
 	public IJavaProject getJavaProject() {
@@ -94,7 +94,7 @@ public class ChooseJavaProjectWizardPage extends WizardPage {
 
 		String message = null;
 		String projectName = projectCombo.getText();
-		
+
 		if (projectName.isEmpty()) {
 			message = "Existing Java project must be specified";
 		}

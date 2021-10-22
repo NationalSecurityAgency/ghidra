@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.util.exception.VersionException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Database adapter that maps function tags to individual functions. This table 
+ * Database adapter that maps function tags to individual functions. This table
  * consists of two columns, each of which is an index into the {@link FunctionTagAdapter}
  * and {@link SymbolTable} respectively.
  */
@@ -69,9 +69,9 @@ abstract class FunctionTagMappingAdapter {
 	}
 
 	/**
-	 * Returns all table entries associated with the given function ID. This 
+	 * Returns all table entries associated with the given function ID. This
 	 * effectively gives a list of all the tags for a function.
-	 * 
+	 *
 	 * @param functionID index into the {@link SymbolTable} table
 	 * @return iterator of database records
 	 * @throws IOException if database error occurs
@@ -79,8 +79,8 @@ abstract class FunctionTagMappingAdapter {
 	abstract RecordIterator getRecordsByFunctionID(long functionID) throws IOException;
 
 	/**
-	 * Searches this table for any entry matching the given function and tag ID. 
-	 * 
+	 * Searches this table for any entry matching the given function and tag ID.
+	 *
 	 * @param functionID index into the {@link SymbolTable} table
 	 * @param tagID index into the {@link FunctionTagAdapter} table
 	 * @return null if not found
@@ -90,7 +90,7 @@ abstract class FunctionTagMappingAdapter {
 
 	/**
 	 * Creates a new record with the given function and tag ID's.
-	 * 
+	 *
 	 * @param functionID the function's database id
 	 * @param tagID the FunctionTags database id
 	 * @return newly-created database record
@@ -102,7 +102,7 @@ abstract class FunctionTagMappingAdapter {
 	/**
 	 * Removes the record with the given function and tag IDs. There should be at most
 	 * one of these.
-	 * 
+	 *
 	 * @param functionID index into the {@link SymbolTable} table
 	 * @param tagID index into the {@link FunctionTagAdapter} table
 	 * @return true if the remove was performed
@@ -114,7 +114,7 @@ abstract class FunctionTagMappingAdapter {
 	/**
 	 * Removes all records containing the given tag ID. This should be called
 	 * whenever a tag is being deleted from the system.
-	 * 
+	 *
 	 * @param tagID index into the {@link FunctionTagAdapter} table
 	 * @throws IOException if database error occurs
 	 */

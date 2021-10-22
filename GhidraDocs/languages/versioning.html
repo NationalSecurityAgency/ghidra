@@ -180,7 +180,7 @@ Simple Translator Specification File:</p>
 <pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
 &lt;language_translation&gt;
 
-    &lt;from_language version="1"&gt;MyOldProcessorLanguage&lt;/from_language&gt;  
+    &lt;from_language version="1"&gt;MyOldProcessorLanguage&lt;/from_language&gt;
     &lt;to_language version="1"&gt;MyNewProcessorLanguage&lt;/to_language&gt;
 
     &lt;!--
@@ -195,8 +195,8 @@ Simple Translator Specification File:</p>
 
     &lt;!--
         Registers whose name has changed can be mapped (size and offset changes are allowed)
-        The map_register may include a size attribute although it is ignored. 
-    --&gt; 
+        The map_register may include a size attribute although it is ignored.
+    --&gt;
     &lt;map_register from="r0" to="cr0" /&gt;
     &lt;map_register from="r1" to="cr1" /&gt;
 
@@ -210,7 +210,7 @@ Simple Translator Specification File:</p>
         NOTE: sets occur after clear_all_context
     --&gt;
     &lt;set_context name="ctxbit0" value="1"/&gt;
-    
+
     &lt;!--
         Force a specific Java class which extends
           <i>ghidra.program.util.LanguagePostUpgradeInstructionHandler</i>

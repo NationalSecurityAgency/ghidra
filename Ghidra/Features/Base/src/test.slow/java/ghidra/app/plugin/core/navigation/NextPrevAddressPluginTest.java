@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -155,7 +155,7 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 			assertEquals(location.getProgramLocation().getAddress(), symbol.getAddress());
 		}
 
-		// pick one of the items in the next list and go to that item...        
+		// pick one of the items in the next list and go to that item...
 		DockingActionIf navigatedAction = actionList.get(2);
 		LocationMemento navigatedLocation =
 			(LocationMemento) getInstanceField("location", navigatedAction);
@@ -230,7 +230,7 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 	public void testFunctionNavigation_OnlyFunctionsInHistory() throws Exception {
 		Address f1 = addr("01002cf5"); // ghidra
 		Address f2 = addr("01006420"); // entry
-		Address f3 = addr("0100415a"); // sscanf 
+		Address f3 = addr("0100415a"); // sscanf
 
 		assertDisabled(previousFunctionAction);
 		assertDisabled(nextFunctionAction);
@@ -302,7 +302,7 @@ public class NextPrevAddressPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private ComponentProvider showDecompiler() {
 		ComponentProvider cp = tool.getComponentProvider("Decompiler");

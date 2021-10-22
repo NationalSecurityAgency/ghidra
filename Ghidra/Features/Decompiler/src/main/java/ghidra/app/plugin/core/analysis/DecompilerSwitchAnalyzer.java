@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -315,7 +315,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		/**
 		 * Handle any blocks that have a simple single computable flow with no switch type flow
 		 * in it by trying to resolving the reference
-		 * 
+		 *
 		 * @return true if this block could be handled as a simple single reference block flow
 		 */
 		private boolean handleSimpleBlock(Address location, TaskMonitor monitor)
@@ -328,7 +328,7 @@ public class DecompilerSwitchAnalyzer extends AbstractAnalyzer {
 		/**
 		 * resolve the flow destination by computing to a single value
 		 *   For large number of potential functions, this should improve switch analysis speed
-		 *   
+		 *
 		 * @return true if the flow could be easily resolved.
 		 */
 		private boolean resolveComputableFlow(Address location, TaskMonitor monitor,

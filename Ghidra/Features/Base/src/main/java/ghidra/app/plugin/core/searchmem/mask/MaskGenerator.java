@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.util.Msg;
 
 /**
- * 
+ *
  */
 class MaskGenerator {
 
@@ -36,9 +36,9 @@ class MaskGenerator {
 	private List<MaskValue> mnemonics = new ArrayList<>();
 
 	/*
-	 * Holds the masks and values for all the operands. The arraylist portion will correspond to the operand number. An example is 
+	 * Holds the masks and values for all the operands. The arraylist portion will correspond to the operand number. An example is
 	 * arraylist.get(0) will refer to the first operand. Arraylist.get(1) will return the second operands data. The previous commands will
-	 * give you a hashmap that maps the mnemonics MVCase object to its operands, if they exist. For example to get the first operand for the 
+	 * give you a hashmap that maps the mnemonics MVCase object to its operands, if they exist. For example to get the first operand for the
 	 * second mnemonic that was seen you would call arraylist.get(0).get(mnemonicArrayList.get(1)); That will return the MVCase that refers to
 	 * operand. I set it up this was to conserve memory and allow for a dynamically growing collection.
 	 *
@@ -46,13 +46,13 @@ class MaskGenerator {
 	private List<LinkedHashMap<MaskValue, OperandMaskValue>> ops = new ArrayList<>();
 
 	/**
-	 * 
+	 *
 	 */
 	private SLMaskControl maskControl;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param maskControl
 	 */
 	public MaskGenerator(SLMaskControl maskControl) {
@@ -61,7 +61,7 @@ class MaskGenerator {
 
 	/**
 	 * Returns the mask settings for the selected instructions.
-	 * 
+	 *
 	 * @param program
 	 * @param selection
 	 * @return
@@ -102,7 +102,7 @@ class MaskGenerator {
 			Instruction instr = iter.next();
 			Address addr = instr.getAddress();
 
-			// Extract some info from the address.  If there's a problem, don't exit the entire loop, 
+			// Extract some info from the address.  If there's a problem, don't exit the entire loop,
 			// just move on to the next item.
 			SleighDebugLogger logger =
 				new SleighDebugLogger(program, addr, SleighDebugMode.VERBOSE);
@@ -125,7 +125,7 @@ class MaskGenerator {
 
 	/**
 	 * Populates objects with mask/operand info for future use.
-	 * 
+	 *
 	 * @param instruction
 	 * @param logger
 	 * @param maskValue
@@ -134,7 +134,7 @@ class MaskGenerator {
 	private void storeOperands(Instruction instruction, SleighDebugLogger logger,
 			MaskValue maskValue, CodeUnit cu) {
 
-		// Iterates through all the operands for the currently selected 
+		// Iterates through all the operands for the currently selected
 		// instruction and stores them.
 		for (int i = 1; i <= logger.getNumOperands(); i++) {
 			byte[] mask = logger.getOperandValueMask(i - 1);
@@ -148,7 +148,7 @@ class MaskGenerator {
 			OperandMaskValue opMaskValue = new OperandMaskValue(mask, value,
 				instruction.getDefaultOperandRepresentation(i - 1));
 
-			// Determines if the given operand is a constant value. If it is 
+			// Determines if the given operand is a constant value. If it is
 			// a constant then proper flag is set.
 			//
 			// NOTE: Addresses and Scalars are both treated as constants.
@@ -158,9 +158,9 @@ class MaskGenerator {
 
 			LinkedHashMap<MaskValue, OperandMaskValue> mnemonicToOpMap = null;
 
-			// Do a check on the size of the instruction map (ops).  The size of ops must be 
-			// equal to the max number of operands across all instructions.  ie: if we have an 
-			// instruction with 4 operands, then ops.size() better equal 4.  So do a check here - 
+			// Do a check on the size of the instruction map (ops).  The size of ops must be
+			// equal to the max number of operands across all instructions.  ie: if we have an
+			// instruction with 4 operands, then ops.size() better equal 4.  So do a check here -
 			// if ops isn't large enough to handle the number of ops in this instruction, add
 			// another map struct.
 			if (ops.size() < i) {
@@ -171,7 +171,7 @@ class MaskGenerator {
 				mnemonicToOpMap = ops.get(i - 1);
 			}
 
-			// Adds the operand to the data-structure with a mapping to the 
+			// Adds the operand to the data-structure with a mapping to the
 			// instruction mnemonic extracted earlier
 			mnemonicToOpMap.put(maskValue, opMaskValue);
 		}
@@ -180,7 +180,7 @@ class MaskGenerator {
 	/**
 	 * Builds the mask and value byte streams for a single instruction that is
 	 * represented by the mnemonic entered into the first parameter.
-	 * 
+	 *
 	 * That mnemonic is used as a key to withdrawal the operands from the
 	 * data-structure and the SLMaskControl contains the filter information to
 	 * be applied to the instruction.
@@ -216,7 +216,7 @@ class MaskGenerator {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param op
 	 * @param result
 	 */
@@ -253,9 +253,9 @@ class MaskGenerator {
 		}
 
 		/*
-		 * This portion of code takes the masks and values from each of the 
+		 * This portion of code takes the masks and values from each of the
 		 * different commands and concatenates them together to form
-		 * a single mask and value byte array. 
+		 * a single mask and value byte array.
 		 */
 		byte[] finalValueArray = new byte[length];
 		byte[] finalMaskArray = new byte[length];
@@ -298,12 +298,12 @@ class MaskGenerator {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private class MnemonicMaskValue extends MaskValue {
 
 		/**
-		 * 
+		 *
 		 * @param mask
 		 * @param value
 		 * @param textRep
@@ -314,13 +314,13 @@ class MaskGenerator {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private class OperandMaskValue extends MaskValue {
 		private boolean constant = false;
 
 		/**
-		 * 
+		 *
 		 * @param mask
 		 * @param value
 		 * @param textRep

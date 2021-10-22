@@ -62,14 +62,14 @@
 :icbi RA_OR_ZERO,B		is OP=31 & BITS_21_25=0 & B & XOP_1_10=982 & BIT_0=0 & RA_OR_ZERO
 {
 	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
-	instructionCacheBlockInvalidate(ea);	
+	instructionCacheBlockInvalidate(ea);
 }
 
 #icbt 0,r0		0x7c 00 02 0c
 :icbt BITS_21_24,RA_OR_ZERO,B		is OP=31 & BIT_25=0 & BITS_21_24 & RA_OR_ZERO & B & XOP_1_10=22 & BIT_0=0
 {
 	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
-	instructionCacheBlockTouch(ea);	
+	instructionCacheBlockTouch(ea);
 }
 
 #isync		0x4c 00 01 2c
@@ -129,15 +129,15 @@
 	tmp = tmp & ((bit58 | bit49) << 5);
 	tmp = tmp & ((bit59 | bit49) << 4);
 	MSR = MSR & 0x00009000 | tmp;
-@endif	
+@endif
 }
 
 #mtmsr r0,1		0x7c 01 01 24
-:mtmsr S,1		is OP=31 & S & BITS_17_20=0 & MSR_L=1 & BITS_11_15=0 & XOP_1_10=146 & BIT_0=0 
+:mtmsr S,1		is OP=31 & S & BITS_17_20=0 & MSR_L=1 & BITS_11_15=0 & XOP_1_10=146 & BIT_0=0
 {
 @ifdef BIT_64
 	mask:8 = 0x000000000000fffe;
-@else 
+@else
 	mask:4 = 0x0000fffe;
 @endif
 	MSR = (MSR & ~mask) | (S & mask);
@@ -169,9 +169,9 @@
 
 }
 
-#rfi	0x4c 00 00 64 
-:rfi		is $(NOTVLE) & OP=19 & BITS_11_25=0 & XOP_1_10=50 & BIT_0=0	
-{ 
+#rfi	0x4c 00 00 64
+:rfi		is $(NOTVLE) & OP=19 & BITS_11_25=0 & XOP_1_10=50 & BIT_0=0
+{
 	MSR = returnFromInterrupt(MSR, SRR1);
 	local ra = SRR0;
 	return[ra];

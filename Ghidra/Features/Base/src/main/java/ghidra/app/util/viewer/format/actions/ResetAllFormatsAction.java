@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public class ResetAllFormatsAction extends DockingAction {
         super("Reset All Formats", owner, false);
         this.panel = panel;
         this.formatMgr = formatMgr;
-        
+
         setPopupMenuData( new MenuData( new String[] {"Reset All Formats"}, null, "format" ) );
 		setEnabled(true);
 		setHelpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, "Reset All Formats"));
@@ -50,20 +50,20 @@ public class ResetAllFormatsAction extends DockingAction {
     public boolean isEnabledForContext(ActionContext context) {
     	return context.getContextObject() instanceof FieldHeaderLocation;
     }
-    
+
     /**
      * Method called when the action is invoked.
      */
     @Override
     public void actionPerformed(ActionContext context) {
-        int userChoice = OptionDialog.showOptionDialog( panel, "Reset All Formats?", 
+        int userChoice = OptionDialog.showOptionDialog( panel, "Reset All Formats?",
             "There is no undo for this action.\n" +
-            "Are you sure you want to reset all formats?", "Continue", 
+            "Are you sure you want to reset all formats?", "Continue",
             OptionDialog.WARNING_MESSAGE );
         if ( userChoice == OptionDialog.CANCEL_OPTION ) {
             return;
         }
-        
+
 		formatMgr.setDefaultFormats();
 		panel.getHeaderTab().update();
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ public class VTDataReferenceCorrelator_x86_Test extends AbstractVTCorrelatorTest
 	}
 
 	/*
-	 * Specify 3 known data matches referenced by the "print" functions, then run the Data Reference 
+	 * Specify 3 known data matches referenced by the "print" functions, then run the Data Reference
 	 * Correlator and test that only the print functions match
 	 */
 	@Test
@@ -82,7 +82,7 @@ public class VTDataReferenceCorrelator_x86_Test extends AbstractVTCorrelatorTest
 	}
 
 	/*
-	 * Run the Exact Data Match correlator and accept all matches, 
+	 * Run the Exact Data Match correlator and accept all matches,
 	 * then run the Data Reference Correlator and test that the expected matches match and
 	 * that nothing else matches
 	 */

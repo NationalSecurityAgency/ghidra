@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.*;
 import ghidra.util.xml.*;
 import ghidra.xml.*;
 /**
- * 
+ *
  *
  * A group of C code tokens representing the return type of a function
  * as at the beginning of a function prototype.
@@ -42,10 +42,10 @@ public class ClangReturnType extends ClangTokenGroup {
 		varnode = null;
 		datatype = null;
 	}
-	
+
 	public DataType getDataType() { return datatype; }
 	public Varnode getVarnode() { return varnode; }
-	
+
 	@Override
     public void restoreFromXML(XmlPullParser parser,PcodeFactory pfactory) {
 	    XmlElement node = parser.peek();

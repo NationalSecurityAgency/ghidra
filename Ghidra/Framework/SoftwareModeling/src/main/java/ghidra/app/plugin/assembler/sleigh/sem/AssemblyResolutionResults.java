@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import org.apache.commons.collections4.set.AbstractSetDecorator;
 
 /**
  * A set of possible assembly resolutions for a single SLEIGH constructor
- * 
+ *
  * Since the assembler works from the leaves up, it unclear in what context a given token appears.
  * Thus, every possible encoding is collected and passed upward. As resolution continues, many of
  * the possible encodings are pruned out. When the resolver reaches the root, we end up with every
@@ -44,7 +44,7 @@ public class AssemblyResolutionResults extends AbstractSetDecorator<AssemblyReso
 
 	/**
 	 * Construct an immutable single-entry set consisting of the one given resolution
-	 * 
+	 *
 	 * @param rc the single resolution entry
 	 * @return the new resolution set
 	 */
@@ -59,7 +59,7 @@ public class AssemblyResolutionResults extends AbstractSetDecorator<AssemblyReso
 
 	/**
 	 * A synonym for {@link #addAll(Collection)} that accepts only another resolution set
-	 * 
+	 *
 	 * @param that the other set
 	 */
 	public void absorb(AssemblyResolutionResults that) {
@@ -73,7 +73,7 @@ public class AssemblyResolutionResults extends AbstractSetDecorator<AssemblyReso
 
 	/**
 	 * Get an unmodifiable reference to this set
-	 * 
+	 *
 	 * @return the set
 	 */
 	public Set<AssemblyResolution> getResolutions() {

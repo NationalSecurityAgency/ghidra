@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.exception.VersionException;
 public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTraceAddressSnapRangePropertyMapData<T>>
 		extends Abstract2DRStarTree< //
 				Address, Long, //
-				TraceAddressSnapRange, DR, // 
+				TraceAddressSnapRange, DR, //
 				TraceAddressSnapRange, DBTraceAddressSnapRangePropertyMapNode, //
 				T, TraceAddressSnapRangeQuery> {
 
@@ -459,10 +459,10 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 
 		/**
 		 * Find entries which do not exist at the from snap, but do exist at the to snap
-		 * 
+		 *
 		 * <p>
 		 * Note that entries created and then destroyed within the given span are not selected.
-		 * 
+		 *
 		 * @param from the first snap to "compare"
 		 * @param to the second snap to "compare"
 		 * @param space the address space
@@ -480,10 +480,10 @@ public class DBTraceAddressSnapRangePropertyMapTree<T, DR extends AbstractDBTrac
 
 		/**
 		 * Find entries which exist at the from snap, but do not exist at the to snap
-		 * 
+		 *
 		 * <p>
 		 * Note that entries created and then destroyed within the given span are not selected.
-		 * 
+		 *
 		 * @param from the first snap to "compare"
 		 * @param to the second snap to "compare"
 		 * @param space the address space

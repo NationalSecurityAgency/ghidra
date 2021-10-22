@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,23 +20,23 @@ import java.nio.ByteBuffer;
 
 /**
  * Based on the lzss.c source in img4lib
- * 
+ *
  * **************************************************************
- * 
+ *
  * LZSS.C -- A Data Compression Program
- * 
+ *
  * **************************************************************
- * 
+ *
  * 4/6/1989 Haruhiko Okumura
- * 
+ *
  * Use, distribution, and modify this program freely.
- * 
+ *
  * Please send me your improved versions.
- * 
+ *
  * PC-VAN SCIENCE
- * 
+ *
  * NIFTY-Serve PAF01022
- * 
+ *
  * CompuServe 74050,1022
  *
  **************************************************************/
@@ -61,7 +61,7 @@ public class LzssCodec {
 	private static class EncodeState {
 		/**
 		 * initialize state, mostly the trees
-		 * 
+		 *
 		 * For i = 0 to N - 1, rchild[i] and lchild[i] will be the right and
 		 * left children of node i. These nodes need not be initialized. Also
 		 * parent[i] is the parent of node i. These are initialzied to NIL (=N),

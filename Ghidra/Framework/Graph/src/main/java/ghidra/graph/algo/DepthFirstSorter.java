@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public class DepthFirstSorter<V, E extends GEdge<V>> {
 	/**
 	 * Returns the vertices of the given graph in post-order, which is the order the vertices
 	 * are last visited when performing a depth-first traversal.
-	 * 
+	 *
 	 * @param g the graph
 	 * @return the vertices in post-order
 	 */
@@ -41,7 +41,7 @@ public class DepthFirstSorter<V, E extends GEdge<V>> {
 	/**
 	 * Returns the vertices of the given graph in post-order, which is the order the vertices
 	 * are last visited when performing a depth-first traversal.
-	 * 
+	 *
 	 * @param g the graph
 	 * @param navigator the knower of the direction the graph should be traversed
 	 * @return the vertices in post-order
@@ -58,7 +58,7 @@ public class DepthFirstSorter<V, E extends GEdge<V>> {
 	/**
 	 * Returns the vertices of the given graph in pre-order, which is the order the vertices
 	 * are encountered when performing a depth-first traversal.
-	 * 
+	 *
 	 * @param g the graph
 	 * @return the vertices in pre-order
 	 */
@@ -69,7 +69,7 @@ public class DepthFirstSorter<V, E extends GEdge<V>> {
 	/**
 	 * Returns the vertices of the given graph in pre-order, which is the order the vertices
 	 * are encountered when performing a depth-first traversal.
-	 * 
+	 *
 	 * @param g the graph
 	 * @param navigator the knower of the direction the graph should be traversed
 	 * @return the vertices in pre-order
@@ -85,7 +85,7 @@ public class DepthFirstSorter<V, E extends GEdge<V>> {
 
 //==================================================================================================
 // Instance Code
-//==================================================================================================	
+//==================================================================================================
 
 	private GDirectedGraph<V, E> g;
 	GraphNavigator<V, E> navigator;

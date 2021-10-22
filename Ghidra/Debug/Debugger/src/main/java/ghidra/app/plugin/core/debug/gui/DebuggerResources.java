@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -123,7 +123,7 @@ public interface DebuggerResources {
 	ImageIcon ICON_STACK = ResourceManager.loadImage("images/stack.png");
 	ImageIcon ICON_BREAKPOINTS = ResourceManager.loadImage("images/breakpoints.png");
 	ImageIcon ICON_MODULES = ResourceManager.loadImage("images/modules.png");
-	ImageIcon ICON_MAPPINGS = ICON_PROGRAM; // TODO: A better icon 
+	ImageIcon ICON_MAPPINGS = ICON_PROGRAM; // TODO: A better icon
 	ImageIcon ICON_PCODE = ResourceManager.loadImage("images/stepinto.png"); // TODO
 	//ResourceManager.loadImage("images/mappings.png");
 	ImageIcon ICON_REGIONS = ResourceManager.loadImage("images/memory16.gif");
@@ -1379,7 +1379,7 @@ public interface DebuggerResources {
 		Icon ICON = ICON_SELECT_ADDRESSES;
 		String GROUP = GROUP_GENERAL;
 		String HELP_ANCHOR = "select_addresses";
-	
+
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
 			return new ActionBuilder(NAME, ownerName)

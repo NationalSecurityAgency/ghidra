@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,11 +22,11 @@ import java.util.TimerTask;
 
 /**
  * The GhidraSwinglessTimer is similar to the javax.swing.Timer class.  The big difference is
- * that it does NOT use the swing thread for its callbacks.  Similar to the swing timer, only 
+ * that it does NOT use the swing thread for its callbacks.  Similar to the swing timer, only
  * one timer thread is ever used no matter how many GhidraSwinglessTimers are instantiated.
- * 
+ *
  * It fires one or more {@code TimerCallback}s at specified
- * intervals. 
+ * intervals.
  * Setting up a timer
  * involves creating a <code>GhidraSwinglessTimer</code> object,
  * registering one or more TimerCallbacks on it,
@@ -39,7 +39,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	private static Timer timer;
 	private static int taskCount = 0;
 	private static CleanupTimerTask cleanupTask = null;
-	
+
 	private static synchronized Timer getTimer() {
 		if (timer == null) {
 			timer = new Timer("GhidraSwinglessTimer", true);
@@ -62,7 +62,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 		}
 		if (taskCount == 0) {
 			cleanupTask = new CleanupTimerTask();
-			getTimer().schedule(cleanupTask, CLEANUP_TIMER_THREAD_DELAY);	
+			getTimer().schedule(cleanupTask, CLEANUP_TIMER_THREAD_DELAY);
 		}
 	}
 
@@ -73,8 +73,8 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 			timer = null;
 		}
 	}
-	
-	
+
+
 	private TimerCallback callback;
 	private boolean repeats;
 	private int delay;
@@ -82,14 +82,14 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	private TimerTask timerTask;
 
 	/**
-	 * Creates a new repeating timer with a initial delay of 100ms and a continual delay of 100ms. 
+	 * Creates a new repeating timer with a initial delay of 100ms and a continual delay of 100ms.
 	 */
 	public GhidraSwinglessTimer() {
 		this(100, null);
 	}
-	
+
 	/**
-	 * Creates a new repeating timer with a initial and continual delay with the given delay. 
+	 * Creates a new repeating timer with a initial and continual delay with the given delay.
 	 * @param delay the delay to use for the first and subsequent timer callbacks.
 	 * @param callback the callback the be called with the timer fires.
 	 */
@@ -98,7 +98,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 	}
 
 	/**
-	 * Creates a new repeating timer with an initial and continual delay. 
+	 * Creates a new repeating timer with an initial and continual delay.
 	 * @param initialDelay the delay to use for the first timer callbacks.
 	 * @param delay the delay to use for subsequent timer callbacks.
 	 * @param callback the callback the be called with the timer fires.
@@ -176,7 +176,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 		}
 		timerTask = new MyTimerTask();
 		incrementCount();
-		getTimer().schedule(timerTask, initialDelay, delay);	
+		getTimer().schedule(timerTask, initialDelay, delay);
 	}
 
 	/**
@@ -221,11 +221,11 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 		public void run() {
 			cleanupTimer();
 		}
-		
+
 	}
 	public static void main(String[] args) throws InterruptedException {
 		final GhidraTimer t = new GhidraSwinglessTimer(500, null);
-		
+
 		TimerCallback callback1 = new TimerCallback() {
 			int i = 0;
 			public void timerFired() {
@@ -239,7 +239,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 		t.start();
 
 		final GhidraTimer t2 = new GhidraSwinglessTimer(50, null);
-		
+
 		TimerCallback callback2 = new TimerCallback() {
 			int i = 0;
 			public void timerFired() {
@@ -253,7 +253,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 		t2.setTimerCallback(callback2);
 		t2.start();
 
-		
+
 		System.err.println("waiting");
 		Thread.sleep(20000);
 		synchronized(GhidraSwinglessTimer.class) {
@@ -261,9 +261,9 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 				throw new AssertException("cleanup timer is null");
 			}
 		}
-		
+
 		final GhidraTimer t3 = new GhidraSwinglessTimer(50, null);
-		
+
 		TimerCallback callback3 = new TimerCallback() {
 			int i = 0;
 			public void timerFired() {
@@ -277,7 +277,7 @@ public class GhidraSwinglessTimer implements GhidraTimer {
 		t3.setTimerCallback(callback3);
 		t3.start();
 
-		
+
 		System.err.println("waiting");
 		Thread.sleep(20000);
 		synchronized(GhidraSwinglessTimer.class) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public class MenuGroupMap {
 	 * Sets the group for the given menuPath
 	 * @param menuPath the menuPath for which to assign a group
 	 * @param group the name of the group for the action with the given menu path
-	 * @param menuSubGroup the name used for sorting items in the same <code>group</code>.  If this 
+	 * @param menuSubGroup the name used for sorting items in the same <code>group</code>.  If this
 	 *        value is {@link MenuData#NO_SUBGROUP}, then sorting is based upon the name of the
 	 *        menu item.
 	 */
@@ -63,7 +63,7 @@ public class MenuGroupMap {
 	/**
 	 * Returns the menu subgroup string for the given menu path.  This string is used to perform
 	 * sorting of menu items that exist in the same group.
-	 * 
+	 *
 	 * @param menuPath the menu path for which to find its group
 	 * @return the menu sub-group
 	 */

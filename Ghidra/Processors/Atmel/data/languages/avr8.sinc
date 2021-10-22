@@ -4,7 +4,7 @@
 #  - 0x20-0xff as IO memory, rather than 0x20-0x5f
 #
 # This is a ATMega64 with a 64k sized memory
-# Other parts available have a 4M sized memory so that stack 
+# Other parts available have a 4M sized memory so that stack
 # pointer would be three bytes instead
 
 define endian=little;
@@ -71,7 +71,7 @@ define register offset=0x80 size=1 [
 
 #####################################
 # Some AVR processors may have different io layouts not just different io.
-# 
+#
 # AVR processors with more than 64 KiB of RAM make use of the RAMP- registers
 # to act as the high bits where the X, Y, or Z registers are used, or in direct
 # addressing instructions.
@@ -92,11 +92,11 @@ define mem offset=$(IO_START) size = 1 [
 # IO_START + 0x10
 	                                     _ _ _ _ _ _ _ _
 	                                     _ _ _ _ _ _ _ _
-	                                     
+
 # IO_START + 0x20
 	                                     _ _ _ _ _ _ _ _
 	                                     _ _ _ _ _ _ _ _
-# IO_START + 0x30	                                     	                                     
+# IO_START + 0x30
 	                                     _ _ _ _ _ _ _ _
 	                                     RAMPD RAMPX RAMPY RAMPZ _ _ _ SREG
 ];
@@ -120,7 +120,7 @@ define context contextreg
 	phase       = (1,1) # =0 check for useSkipCond, =1 parse instruction
 ;
 
-## Following 8051 example rather than define bitrange 
+## Following 8051 example rather than define bitrange
 # Works better as distinct variables
 @define Cflag "Cflg"
 @define Zflag "Zflg"
@@ -265,23 +265,23 @@ attach variables [ oplow3_flag op4to6_flag ] [
   Cflg Zflg Nflg Vflg Sflg Hflg Tflg Iflg
 ];
 
-attach variables [ RdHi RrHi f3op2RdHi ]  [ 
- R16 R17 R18 R19 
+attach variables [ RdHi RrHi f3op2RdHi ]  [
+ R16 R17 R18 R19
  R20 R21 R22 R23 Wlo Whi Xlo Xhi Ylo Yhi
  Zlo Zhi ]
 ;
 attach variables [  RdHi3 RrHi3 ] [
- R16 R17 R18 R19 
+ R16 R17 R18 R19
  R20 R21 R22 R23
 ];
 attach variables [ RrLow ] [
  R0 R1 R2 R3 R4 R5 R6 R7 R8 R9
- R10 R11 R12 R13 R14 R15 
+ R10 R11 R12 R13 R14 R15
 ];
 attach variables [ RdFull ] [
  R0 R1 R2 R3 R4 R5 R6 R7 R8 R9
- R10 R11 R12 R13 R14 R15 
- R16 R17 R18 R19 
+ R10 R11 R12 R13 R14 R15
+ R16 R17 R18 R19
  R20 R21 R22 R23 Wlo Whi Xlo Xhi Ylo Yhi
  Zlo Zhi
 ];
@@ -289,25 +289,25 @@ attach variables [ Rdw2 ] [
  W X Y Z
 ];
 attach variables [ Rstq ] [
-  Z Y 
+  Z Y
 ];
 attach variables [ RstPtr ] [
   Z _ Y X
 ];
 attach variables [ Rdw4 Rrw4 op1RdPair ldswop1RdPair stswop2RdPair ] [
- R1R0 R3R2 R5R4 R7R6 R9R8 
- R11R10 R13R12 R15R14 R17R16 R19R18 
- R21R20 R23R22 W 
- X Y Z 
+ R1R0 R3R2 R5R4 R7R6 R9R8
+ R11R10 R13R12 R15R14 R17R16 R19R18
+ R21R20 R23R22 W
+ X Y Z
 ];
 attach variables [ op1RrPairLow ] [
- R1R0 R3R2 R5R4 R7R6 R9R8 
- R11R10 R13R12 R15R14 
+ R1R0 R3R2 R5R4 R7R6 R9R8
+ R11R10 R13R12 R15R14
 ];
 attach variables [ op1RrPairHi op1RdPairHi f3op1RdPairHi ] [
- R17R16 R19R18 
- R21R20 R23R22 W 
- X Y Z 
+ R17R16 R19R18
+ R21R20 R23R22 W
+ X Y Z
 ];
 
 RrFull: RrHi   is RrHiLowSel=1 & RrHi  { tmp:1 = RrHi; export tmp; }
@@ -332,7 +332,7 @@ macro pushPC(val) {
 	*[mem]:1 SP = valb;
 	SP = SP - 1;
 }
-	
+
 macro popPC(val) {
 	local valb:1 = 0;
 	SP = SP + 1;
@@ -354,7 +354,7 @@ macro pushPC(val) {
 	*[mem]:1 SP = valb;
 	SP = SP - 1;
 }
-	
+
 macro popPC(val) {
 	SP = SP + 1;
 	val = *[mem]:1 SP;
@@ -367,12 +367,12 @@ macro popPC(val) {
 }
 
 @endif
-	
+
 macro push8(val) {
 	*[mem]:1 SP = val;
 	SP = SP -1;
 }
-	
+
 macro pop8(val) {
 	SP = SP + 1;
 	val = *[mem]:1 SP;
@@ -456,27 +456,27 @@ f3cmpK8: val   is f3op2bits0to3 & f3op2bits8to11 [ val = (f3op2bits8to11 << 4) |
 
 @endif
 
-rel7addr: rel  is op3to9signed [ rel = (op3to9signed + inst_next);] { 
+rel7addr: rel  is op3to9signed [ rel = (op3to9signed + inst_next);] {
   export *[code]:2 rel;
 }
 
-rel7dst: byteOffset  is op3to9signed & rel7addr [ byteOffset = (op3to9signed + inst_next) << 1;] { 
+rel7dst: byteOffset  is op3to9signed & rel7addr [ byteOffset = (op3to9signed + inst_next) << 1;] {
   export rel7addr;
 }
 
-rel12addr: rel  is oplow12signed [ rel = oplow12signed + inst_start + 1; ] { 
+rel12addr: rel  is oplow12signed [ rel = oplow12signed + inst_start + 1; ] {
   export *[code]:2 rel;
 }
 
-rel12dst: byteOffset  is oplow12signed & rel12addr [ byteOffset = (oplow12signed + inst_start + 1) << 1; ] { 
+rel12dst: byteOffset  is oplow12signed & rel12addr [ byteOffset = (oplow12signed + inst_start + 1) << 1; ] {
   export rel12addr;
 }
 
-abs22addr: loc  is op4to8 & opbit0; next16 [ loc = (op4to8 << 17) | (opbit0 << 16) | next16; ] { 
+abs22addr: loc  is op4to8 & opbit0; next16 [ loc = (op4to8 << 17) | (opbit0 << 16) | next16; ] {
  export *[code]:2 loc;
 }
 
-abs22dst: byteOffset  is (op4to8 & opbit0; next16) & abs22addr [ byteOffset = ((op4to8 << 17) | (opbit0 << 16) | next16) << 1; ] { 
+abs22dst: byteOffset  is (op4to8 & opbit0; next16) & abs22addr [ byteOffset = ((op4to8 << 17) | (opbit0 << 16) | next16) << 1; ] {
  export abs22addr;
 }
 
@@ -531,7 +531,7 @@ ldswPairPred: val  is ldswop1bit4=0 & ldswop2bit4=1 & ldswop1bits5to8=ldswop2bit
 stswPairPred: val  is ldswop1bit4=1 & ldswop2bit4=0 & ldswop1bits5to8=ldswop2bits5to8  [ val=0; ] { tmp:2 = val; export tmp; }
 
 # would like to check this for const pair, but hangs sleigh compiler:  ldswop1imm15=ldswop2imm15
-#  So check as a few in a row 
+#  So check as a few in a row
 #    Not any better & ldswop1imm5b=ldswop2imm5b & ldswop1imm5c=ldswop2imm5c
 ldswConstPairPred: val  is ldswop1bit16=0 & ldswop2bit16=1 & ldswop1imm6=ldswop2imm6    [ val=0; ] { tmp:2 = val; export tmp; }
 
@@ -766,7 +766,7 @@ define pcodeop decrypt;
 	ptr:3 = zext(Z) | (zext(RAMPZ) << 16);
 	tmp:2 = *[code]:2 (ptr >> 1);
 	val:2 = (tmp >> (8 * (Z & 0x1)));
-	R0 = val:1; 
+	R0 = val:1;
 }
 :elpm RdFull, Z                  is phase=1 & ophi7=0x48 & oplow4=0x6 & RdFull & Z {
 	ptr:3 = zext(Z) | (zext(RAMPZ) << 16);
@@ -906,7 +906,7 @@ LddYq: Rstq^"+"^q6 is Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
 
 @ifdef FUSION
 # Fuse together consecuitive lds ; lds
-# 
+#
 :ldsw ldswop1RdPair,ldswMemPtrVal2  is phase=1 & ldswop1hi7=0x48 & ldswop2hi7=0x48 & ldswop1low4=0 & ldswop2low4=0 & ldswMemPtrVal2 & ldswop1RdPair & ldswPairPred & ldswConstPairPred {
 	ldswop1RdPair = ldswMemPtrVal2;
 }
@@ -914,7 +914,7 @@ LddYq: Rstq^"+"^q6 is Rstq & q6 { local ptr = Rstq + zext(q6); export ptr; }
 @endif
 # lds Rd,k   Seem to get some problems here... but 16-bit instruction isn't available on all atmega64.
 #  Furthermore, it will sometimes conflict with ldd Z+q for q=0x2_
-#:lds RdHi,A7Ioaddr is ophi5=0x14 & RdHi & A7Ioaddr { 
+#:lds RdHi,A7Ioaddr is ophi5=0x14 & RdHi & A7Ioaddr {
 #  todo();  # Not currently implemented
 #  RdHi = A7Ioaddr;
 #}
@@ -953,7 +953,7 @@ LpmPlus: Z^"+" is Z {}
 :mov RdFull,RrFull               is phase=1 & ophi6=0xb & RdFull & RrFull {
 	RdFull = RrFull;
 }
-# movw Rd+1:Rd,Rr+1Rr   
+# movw Rd+1:Rd,Rr+1Rr
 :movw Rdw4,Rrw4                  is phase=1 & ophi8=0x1 & Rdw4 & Rrw4 {
 	Rdw4 = Rrw4;
 }

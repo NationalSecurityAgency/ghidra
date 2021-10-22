@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -96,7 +96,7 @@ public class ProgramBuilder {
 	 * Construct program builder using the big-endian Toy language and default compiler spec.
 	 * This builder object will be the program consumer and must be disposed to properly
 	 * release the program.
-	 * @throws Exception if there is an exception creating the program 
+	 * @throws Exception if there is an exception creating the program
 	 */
 	public ProgramBuilder() throws Exception {
 		this("Test Program", _TOY);
@@ -309,7 +309,7 @@ public class ProgramBuilder {
 		AbstractGenericTest.setInstanceField("recordChanges", program, Boolean.valueOf(enabled));
 	}
 
-	/** 
+	/**
 	 * This prevents the 'ask to analyze' dialog from showing when called with {@code true}
 	 * @param analyzed true to mark the program as analyzed
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,22 +20,22 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.util.ServiceListener;
 
 /**
- * This provides services, but overrides and implements its own goTo for one of the listing 
+ * This provides services, but overrides and implements its own goTo for one of the listing
  * panels in a dual listing code comparison panel.
  * If a goTo service is requested, this provides a goTo service that limits where you can go.
- * It constrains the goTo to addresses that are currently in the indicated listing panel of 
+ * It constrains the goTo to addresses that are currently in the indicated listing panel of
  * the dual listing code comparison panel.
  */
 class DualListingServiceProvider implements ServiceProvider {
-	
+
 	private ServiceProvider serviceProvider;
 	private DualListingGoToService dualListingGoToService;
-	
+
 	/**
 	 * Constructor for a DualListingServiceProvider.
 	 * @param serviceProvider the service provider to use for acquiring services other than goTo.
 	 * @param panel the dual listing code comparison panel.
-	 * @param isLeftPanel true indicates this is the left listing panel of the dual panel. 
+	 * @param isLeftPanel true indicates this is the left listing panel of the dual panel.
 	 * false indicates the right panel.
 	 */
 	DualListingServiceProvider(ServiceProvider serviceProvider, ListingCodeComparisonPanel panel,

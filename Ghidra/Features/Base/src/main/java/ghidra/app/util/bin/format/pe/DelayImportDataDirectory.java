@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,13 +33,13 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Points to the delayload information. 
- * See DELAYIMP.H from Visual C++. 
+ * Points to the delayload information.
+ * See DELAYIMP.H from Visual C++.
  */
 public class DelayImportDataDirectory extends DataDirectory {
     private final static String NAME = "IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT";
 
-    private DelayImportDescriptor [] descriptors; 
+    private DelayImportDescriptor [] descriptors;
 
     static DelayImportDataDirectory createDelayImportDataDirectory(
             NTHeader ntHeader, FactoryBundledWithBinaryReader reader)
@@ -177,7 +177,7 @@ public class DelayImportDataDirectory extends DataDirectory {
 		catch (Exception e) {}
 	}
 
-    private Address addr(AddressSpace space, boolean isBinary, 
+    private Address addr(AddressSpace space, boolean isBinary,
 			DelayImportDescriptor descriptor, long addr) {
 
     	if (!isBinary) {
@@ -193,10 +193,10 @@ public class DelayImportDataDirectory extends DataDirectory {
 		return space.getAddress(va);
 	}
 
-	private void markupImportByName(Program program, 
-									boolean isBinary, 
-									AddressSpace space, 
-									DelayImportDescriptor descriptor, 
+	private void markupImportByName(Program program,
+									boolean isBinary,
+									AddressSpace space,
+									DelayImportDescriptor descriptor,
 									TaskMonitor monitor,
 									MessageLog log)
 			throws DataTypeConflictException, DuplicateNameException {
@@ -218,16 +218,16 @@ public class DelayImportDataDirectory extends DataDirectory {
 		}
 	}
 
-	private void markupThunk(Program program, 
-						boolean isBinary, 
-						AddressSpace space, 
+	private void markupThunk(Program program,
+						boolean isBinary,
+						AddressSpace space,
 						DelayImportDescriptor descriptor,
 						long ptr,
 						List<ThunkData> thunks,
 						boolean isIAT,
 						TaskMonitor monitor,
 						MessageLog log) {
-		
+
 		boolean is64bit = ntHeader.getOptionalHeader().is64bit();
 		long thunkPtr = va(ptr, isBinary);
 		if (!descriptor.isUsingRVA()) {

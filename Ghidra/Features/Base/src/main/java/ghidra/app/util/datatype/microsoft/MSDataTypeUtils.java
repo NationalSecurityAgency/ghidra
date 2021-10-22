@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public class MSDataTypeUtils {
 	}
 
 	/**
-	 * Gets an empty aligned structure with a packing value of 8 that can be use to create the 
+	 * Gets an empty aligned structure with a packing value of 8 that can be use to create the
 	 * model's data type.
 	 * @param dataTypeManager the data type manager to associate with the structure.
 	 * @param categoryPath the structure's category path.
@@ -60,7 +60,7 @@ public class MSDataTypeUtils {
 	}
 
 	/**
-	 * Gets an empty aligned structure with a packing value of 4 that can be use to create the 
+	 * Gets an empty aligned structure with a packing value of 4 that can be use to create the
 	 * model's data type.
 	 * @param dataTypeManager the data type manager to associate with the structure.
 	 * @param categoryPath the structure's category path.
@@ -73,7 +73,7 @@ public class MSDataTypeUtils {
 	}
 
 	/**
-	 * Gets an empty aligned structure with the indicated packing value that can be use to create the 
+	 * Gets an empty aligned structure with the indicated packing value that can be use to create the
 	 * model's data type.
 	 * @param dataTypeManager the data type manager to associate with the structure.
 	 * @param categoryPath the structure's category path.
@@ -151,8 +151,8 @@ public class MSDataTypeUtils {
 	}
 
 	/**
-	 * Gets the named data type from the program or the windows data type archive. If neither 
-	 * the program or data type archive has an equivalent data type then the original data type 
+	 * Gets the named data type from the program or the windows data type archive. If neither
+	 * the program or data type archive has an equivalent data type then the original data type
 	 * is returned.
 	 * @param program the program for the data type.
 	 * @param comparisonDt the data type it should match
@@ -193,9 +193,9 @@ public class MSDataTypeUtils {
 			if (dataType.getLength() != comparisonDt.getLength()) {
 				continue;
 			}
-			// For now this uses the DataType.isEquivalent() method for comparing the 
-			// data types. However, the method is still rather rigid. It would be better 
-			// if there was another method that were more lenient. The hard part is 
+			// For now this uses the DataType.isEquivalent() method for comparing the
+			// data types. However, the method is still rather rigid. It would be better
+			// if there was another method that were more lenient. The hard part is
 			// determining what types of differences should be deemed equivalent.
 			if (dataType.isEquivalent(comparisonDt)) {
 				return dataType; // Return the first one we find that matches.
@@ -218,8 +218,8 @@ public class MSDataTypeUtils {
 
 	/**
 	 * Gets the referred to address from the bytes in the program at the indicated address.
-	 * If the program has 64 bit pointers, then a 32 bit image base offset value is expected to 
-	 * be found at the indicated address. 
+	 * If the program has 64 bit pointers, then a 32 bit image base offset value is expected to
+	 * be found at the indicated address.
 	 * If the program has 32 bit pointers, then a 32 bit absolute pointer value is expected at the
 	 * indicated address.
 	 * @param program the program whose memory is to be read.
@@ -235,14 +235,14 @@ public class MSDataTypeUtils {
 	}
 
 	/**
-	 * Gets bytes from <code>memory</code> at the indicated <code>startAddress</code>. 
-	 * The <code>length</code> indicates the number of bytes that must be read 
+	 * Gets bytes from <code>memory</code> at the indicated <code>startAddress</code>.
+	 * The <code>length</code> indicates the number of bytes that must be read
 	 * from memory.
 	 * @param memory the program memory for obtaining the bytes
 	 * @param startAddress the address to begin reading bytes
 	 * @param length the number of bytes to read
 	 * @return the bytes
-	 * @throws InvalidDataTypeException if the <code>length</code> number of bytes couldn't 
+	 * @throws InvalidDataTypeException if the <code>length</code> number of bytes couldn't
 	 * be read starting at the <code>startAddress</code> in <code>memory</code>.
 	 */
 	public static byte[] getBytes(Memory memory, Address startAddress, int length)
@@ -263,11 +263,11 @@ public class MSDataTypeUtils {
 	}
 
 	/**
-	 * Gets the appropriate reference data type. If program is 64 bit, then a 32-bit image 
-	 * base offset data type will be returned. Otherwise, a default pointer to the 
+	 * Gets the appropriate reference data type. If program is 64 bit, then a 32-bit image
+	 * base offset data type will be returned. Otherwise, a default pointer to the
 	 * referredToDataType will be returned.
 	 * @param program the program that will contain the returned data type
-	 * @param referredToDataType the data type that is at the address being referred to by the 
+	 * @param referredToDataType the data type that is at the address being referred to by the
 	 * pointer or image base offset. Otherwise, null.
 	 * @return the image base offset or pointer reference data type
 	 */

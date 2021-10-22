@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -102,8 +102,8 @@ public class EclipseIntegrationPlugin extends ProgramPlugin implements EclipseIn
 	public boolean isEclipseFeatureInstalled(FilenameFilter filter) throws FileNotFoundException {
 		File eclipseInstallDir = getEclipseInstallDir();
 
-		// Build up a list of directories to search.  It will consist of the main features 
-		// directory, the top-level dropins directory (plugins can live here too), and any 
+		// Build up a list of directories to search.  It will consist of the main features
+		// directory, the top-level dropins directory (plugins can live here too), and any
 		// features directories found in the dropins directories.
 		List<File> featuresDirs = new ArrayList<>();
 		File mainFeaturesDir = new File(eclipseInstallDir, "features");
@@ -144,7 +144,7 @@ public class EclipseIntegrationPlugin extends ProgramPlugin implements EclipseIn
 		if (SystemUtilities.isInHeadlessMode()) {
 			return;
 		}
-		
+
 		SystemUtilities.runSwingNow(() -> {
 
 			boolean autoGhidraDevInstall = options.getBoolean(
@@ -197,7 +197,7 @@ public class EclipseIntegrationPlugin extends ProgramPlugin implements EclipseIn
 					"GhidraDev Eclipse extension does not exist:\n" + ghidraDevFile);
 				return;
 			}
-			
+
 			try (ZipFile ghidraDevZip = new ZipFile(ghidraDevFile)) {
 				Enumeration<? extends ZipEntry> entries = ghidraDevZip.entries();
 				while (entries.hasMoreElements()) {
@@ -240,7 +240,7 @@ public class EclipseIntegrationPlugin extends ProgramPlugin implements EclipseIn
 	/**
 	 * Gets the Eclipse installation directory.  This is the directory with the eclipse.ini
 	 * file in it.
-	 * 
+	 *
 	 * @return The Eclipse installation directory.
 	 * @throws FileNotFoundException if the installation directory does not exist.
 	 */
@@ -275,7 +275,7 @@ public class EclipseIntegrationPlugin extends ProgramPlugin implements EclipseIn
 
 	/**
 	 * Gets the Eclipse dropins directory.
-	 * 
+	 *
 	 * @return The Eclipse dropins directory.
 	 * @throws FileNotFoundException if the dropins directory does not exist.
 	 */

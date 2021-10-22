@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import jnr.posix.POSIXFactory;
 
 /**
  * An input stream that wraps a native POSIX file descriptor
- * 
+ *
  * <p>
  * <b>WARNING:</b> This class makes use of jnr-ffi to invoke native functions. An invalid file
  * descriptor is generally detected, but an incorrect, but valid file descriptor may cause undefined
@@ -38,7 +38,7 @@ public class FdInputStream extends InputStream {
 
 	/**
 	 * Wrap the given file descriptor in an {@link InputStream}
-	 * 
+	 *
 	 * @param fd the file descriptor
 	 */
 	FdInputStream(int fd) {

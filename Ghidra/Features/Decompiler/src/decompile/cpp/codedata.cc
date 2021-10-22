@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -180,7 +180,7 @@ void CodeDataAnalysis::processTaint(void)
   ftiter = fromto_crossref.lower_bound(AddrLink(startaddr));
   enditer = fromto_crossref.lower_bound(AddrLink(endaddr));
   fromto_crossref.erase(ftiter,enditer); // Erase all cross-references coming out of this block
-  
+
   ftiter = tofrom_crossref.lower_bound(AddrLink(startaddr));
   enditer = tofrom_crossref.lower_bound(AddrLink(endaddr));
   while(ftiter != enditer) {
@@ -626,7 +626,7 @@ void CodeDataAnalysis::dumpCrossRefs(ostream &s) const
   for(iter=fromto_crossref.begin();iter!=fromto_crossref.end();++iter) {
     AddrLink addrlink = (*iter).first;
     uint4 flags = (*iter).second;
-    
+
     s << hex << "0x" << addrlink.a.getOffset() << " -> 0x" << addrlink.b.getOffset();
     if ((flags & CodeUnit::call)!=0)
       s << " call";
@@ -642,7 +642,7 @@ void CodeDataAnalysis::dumpFunctionStarts(ostream &s) const
   for(iter=tofrom_crossref.begin();iter!=tofrom_crossref.end();++iter) {
     AddrLink addrlink = (*iter).first;
     uint4 flags = (*iter).second;
-    
+
     if ((flags & CodeUnit::call)!=0)
       s << hex << "0x" << addrlink.a.getOffset() << endl;
   }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -142,7 +142,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 			// Remove old table
 			dbHandle.deleteTable(getTableName());
 
-			// Create new map table	
+			// Create new map table
 			propertyTable = dbHandle.createTable(getTableName(), schema);
 
 			// Copy upgraded records
@@ -213,7 +213,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 
 	/**
 	 * Delete this property map and all underlying tables.
-	 * This method should be overidden if any table other than the 
+	 * This method should be overidden if any table other than the
 	 * default propertyTable is used.
 	 * @throws IOException
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,7 +62,7 @@ public class GraphAlgorithmsVisualDebugger extends AbstractGraphAlgorithmsTest {
 			FindPathsAlgorithm<TestV, TestE> algo) throws CancelledException {
 
 		/*
-		   --> v1		 		
+		   --> v1
 		   |  /  \
 		   -v2    v3
 			    /  | \
@@ -71,11 +71,11 @@ public class GraphAlgorithmsVisualDebugger extends AbstractGraphAlgorithmsTest {
 			       |  v7    |
 			       |  | \   |
 			       |  v8 v9 -
-			       |   * 
+			       |   *
 			       |
-			      v10	
-			    
-			    
+			      v10
+
+
 			Paths: v1, v3, v5, v10
 		*/
 

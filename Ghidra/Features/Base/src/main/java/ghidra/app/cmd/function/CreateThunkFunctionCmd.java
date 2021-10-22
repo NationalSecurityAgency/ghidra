@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -129,12 +129,12 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 
 	/**
 	 * Constructs a new command for creating a thunk function that can compute the function this function is thunking to.
-	 * 
+	 *
 	 * @param entry entry point address for the function to be created.
 	 * @param checkForSideEffects true to check for side-effects that indicate it is not a pure thunk.
-	 * 
+	 *
 	 * The body may be computed.  References to the thunked to function may be created.
-	 * 
+	 *
 	 * If no function exists at the location being thunked, it will be created based on the above rules.
 	 */
 	public CreateThunkFunctionCmd(Address entry, boolean checkForSideEffects) {
@@ -304,7 +304,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 
 		Function f = listing.getFunctionAt(referencedFunctionAddr);
 		if (f == null) {
-			// If referencedFunctionAddr contained within EXTERNAL block attempt to 
+			// If referencedFunctionAddr contained within EXTERNAL block attempt to
 			// create a thunk function for it
 			if (MemoryBlock.isExternalBlockAddress(referencedFunctionAddr, program)) {
 				CreateThunkFunctionCmd extThunkCmd =
@@ -396,7 +396,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 
 	/**
 	 * resolve the flow destination by computing to a single value with a restriction to a single basic block.
-	 *   
+	 *
 	 * @return single flow address, null if single flow can't be resolved
 	 */
 	private boolean resolveComputableFlow(Program program, Address location, TaskMonitor monitor)
@@ -483,7 +483,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 
 	/**
 	 * if the code starting at entry is a thunk, return the thunked addess if known.
-	 * 
+	 *
 	 * @param program code resides in
 	 * @param entry start of the code
 	 * @return the function address, Address.NO_ADDRESS if thunk but unknonw addr, null otherwise
@@ -616,12 +616,12 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Handle conversion of label within reserved EXTERNAL block to a real 
+	 * Handle conversion of label within reserved EXTERNAL block to a real
 	 * external function which can be thunked.  This may be necessary when a
-	 * loaded symbol failed to identify itself as a function.  This will 
+	 * loaded symbol failed to identify itself as a function.  This will
 	 * only handle single symbols contained within the global namespace.
-	 * 
-	 * @param program 
+	 *
+	 * @param program
 	 * @param entry function being created
 	 * @return newly created external function address or null
 	 */
@@ -841,7 +841,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 						referencesFrom[0].isExternalReference())) {
 					return referencesFrom[0].getToAddress();
 				}
-				return null; // can't use indirection in single 
+				return null; // can't use indirection in single
 			}
 			return flowRef.getToAddress();
 		}

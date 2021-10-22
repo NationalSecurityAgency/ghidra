@@ -4,51 +4,51 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// PROTOTYPE Script to recover class information using RTTI structures.  
+// PROTOTYPE Script to recover class information using RTTI structures.
 // Note: This script does not compile on versions of Ghidra prior to 9.2 or in 9.2.1.
 // This script uses information found in RTTI structures to figure out
 // class hierarchy, inheritance types, constructors and destructors, class data types, and more.
 // If program has pdb information, it uses it to help fill in class structures with known names
-// and types for class member data. 
+// and types for class member data.
 // If program does not have pdb, or incomplete pdb data types, it uses the decompiler pcode store
 // information to fill in class structures with assumed data types for class member data. These
 // data types are not always complete and may be filled in with undefined place holders of
 // the same size as the associated data.
 // There are many options that can be changed by editing flags at the top of the script.
-// There are options to find missing functions that have not been disassembled, print or output 
-// class information in various formats, and to graph the class hierarchies. 
+// There are options to find missing functions that have not been disassembled, print or output
+// class information in various formats, and to graph the class hierarchies.
 // To best see the results of this script, look in the SymbolTree in the Classes folder. If a class
 // has RTTI, you will see the class functions, vftable(s), and more there. Click on class functions
 // and look at them in the decompiler to see how the class data types have improved the decompiler
 // results. To see class data definitions, either hover on the this param in the decompiler or look
-// in the DataTypeManager/<program_name>/ClassDataTypes/<class_name> folder. 
-// NOTE: As this is a prototype script, the location, names, and design of data types created by 
-// this script and default vfunctions named by this script are likely to change in the future 
-// once an official design for Object Oriented representation is determined.  
-// NOTE: Windows class recovery is more complete and tested than gcc class recovery, which is still 
+// in the DataTypeManager/<program_name>/ClassDataTypes/<class_name> folder.
+// NOTE: As this is a prototype script, the location, names, and design of data types created by
+// this script and default vfunctions named by this script are likely to change in the future
+// once an official design for Object Oriented representation is determined.
+// NOTE: Windows class recovery is more complete and tested than gcc class recovery, which is still
 // in early stages of development. Gcc class data types are only recovered for classes without multiple or
-// virtual inheritance but if the program contains DWARF, there will be some amount of data recovered 
+// virtual inheritance but if the program contains DWARF, there will be some amount of data recovered
 // by the DWARF analyzer.
-// NOTE: For likely the best results, run this script on freshly analyzed programs. No testing has been 
-// done on user marked-up programs. 
+// NOTE: For likely the best results, run this script on freshly analyzed programs. No testing has been
+// done on user marked-up programs.
 // NOTE: After running this script if you edit function signatures in the listing for a particular
-// class and wish to update the corresponding class data function definition data types (vftable 
-// structure field names, ...) then you can run the ApplyClassFunctionSignatureUpdatesScript.java 
+// class and wish to update the corresponding class data function definition data types (vftable
+// structure field names, ...) then you can run the ApplyClassFunctionSignatureUpdatesScript.java
 // to have it do so for you. See that script's description for more info.
-// Conversely, if you update a particular class's function definitions in the data type manager and  
-// wish to have related function signatures in the listing updated, as well as other data types that 
+// Conversely, if you update a particular class's function definitions in the data type manager and
+// wish to have related function signatures in the listing updated, as well as other data types that
 // are related, then run the ApplyClassFunctionDefinitionsUpdatesScript.java to do so. See that script's
-// description for more info. At some point, the Ghidra API will be updated to do the updates 
-// automatically instead of needing the mentioned scripts to do so. 
+// description for more info. At some point, the Ghidra API will be updated to do the updates
+// automatically instead of needing the mentioned scripts to do so.
 
 //@category C++
 
@@ -86,11 +86,11 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	// print class information (parent class, children classes, vfunctions, member data) to console
 	private static final boolean PRINT_CLASS_INFO = false;
 
-	// print class parent(s) and children classes to console 
+	// print class parent(s) and children classes to console
 	private static final boolean PRINT_CLASS_PARENTS_AND_CHILDREN = false;
 
 	// print one line hierarchy for each class with no children (child : parent : grandparent: ...)
-	// if multiple inheritance print multiple parents on new line directly below end of their child 
+	// if multiple inheritance print multiple parents on new line directly below end of their child
 	private static final boolean PRINT_CLASS_HIERARCHIES = false;
 
 	// these do the same as above but print to a file
@@ -102,9 +102,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	// print counts of found items
 	private static final boolean PRINT_COUNTS = true;
 
-	// recommended to find missing RTTI structure info in older programs and to find any missing 
-	// potential constructor destructor functions because analysis did not make them functions yet. 
-	// They are either undefined bytes or code that is not in a function. 
+	// recommended to find missing RTTI structure info in older programs and to find any missing
+	// potential constructor destructor functions because analysis did not make them functions yet.
+	// They are either undefined bytes or code that is not in a function.
 	private static final boolean FIXUP_PROGRAM = true;
 
 	// bookmark all constructor/destructor functions figured out by this script
@@ -343,11 +343,11 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 
 	/**
-	 * Method to create a class hierarchy graph where the parents are at the top of the graph and 
-	 * the children at the bottom. Classes with no parents have blue nodes. Classes with a single 
-	 * parent have green nodes. Classes with multiple parents have red nodes. Classes with virtual 
-	 * inheritance have orange edges between parent and child. Classes with non-virtual inheritance 
-	 * have lime green edges between parent and child.   
+	 * Method to create a class hierarchy graph where the parents are at the top of the graph and
+	 * the children at the bottom. Classes with no parents have blue nodes. Classes with a single
+	 * parent have green nodes. Classes with multiple parents have red nodes. Classes with virtual
+	 * inheritance have orange edges between parent and child. Classes with non-virtual inheritance
+	 * have lime green edges between parent and child.
 	 * @param recoveredClasses the list of classes
 	 * @return a hierarchy graph for the given list of classes
 	 * @throws CancelledException if cancelled
@@ -475,7 +475,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 
 	/**
-	 * Script works on versions of ghidra including and after 9.2 except for 9.2.1 because a method 
+	 * Script works on versions of ghidra including and after 9.2 except for 9.2.1 because a method
 	 * was accidentally removed from FillOutStructureCmd that is needed
 	 * @return true if script will work and false otherwise
 	 */
@@ -546,7 +546,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 
 	/**
-	 * Method to determine if somehow the constructor list and destructor list for a class contain 
+	 * Method to determine if somehow the constructor list and destructor list for a class contain
 	 * overlapping functions
 	 * @param recoveredClass the given class
 	 * @return true if there is a discrepancy in the constructor/destructor lists
@@ -850,7 +850,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	}
 
 	/**
-	 * Method to print class info for each of the classes on the given list, starting with classes with no parents then 
+	 * Method to print class info for each of the classes on the given list, starting with classes with no parents then
 	 * recursively printing infor for their child classes
 	 * @param recoveredClasses the list of classes
 	 * @throws CancelledException if cancelled
@@ -1012,7 +1012,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 
 	/**
-	 * Method to get the total number of 
+	 * Method to get the total number of
 	 * @param recoveredClasses list of classes
 	 * @return the total number of constructors and destructors in the given list of classes
 	 * @throws CancelledException if cancelled
@@ -1052,7 +1052,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	}
 
 	/**
-	 * Method to print the given list of addresses 
+	 * Method to print the given list of addresses
 	 * @param addresses the list of addresses to print
 	 * @throws CancelledException if cancelled
 	 */
@@ -1099,9 +1099,9 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	}
 
 	/**
-	 * Method to get formatted string containing the given class, it's parents and it's children 
+	 * Method to get formatted string containing the given class, it's parents and it's children
 	 * @param recoveredClass the given classes
-	 * @return StringBuffer containing the formatted string containing the given class, it's parents and it's children 
+	 * @return StringBuffer containing the formatted string containing the given class, it's parents and it's children
 	 * @throws CancelledException if cancelled
 	 */
 	private StringBuffer printClassParentsandChildren(RecoveredClass recoveredClass)
@@ -1323,7 +1323,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 
 	/**
-	 * Method to get the function signature string, from the decompiler if possible, otherwise from 
+	 * Method to get the function signature string, from the decompiler if possible, otherwise from
 	 * the listing
 	 * @param function the given function
 	 * @param includeReturn if true, include the return type in the string

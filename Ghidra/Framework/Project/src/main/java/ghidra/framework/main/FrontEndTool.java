@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -123,7 +123,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	/**
 	 * Construct a new Ghidra Project Window.
-	 * 
+	 *
 	 * @param pm project manager
 	 */
 	public FrontEndTool(ProjectManager pm) {
@@ -280,7 +280,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	/**
 	 * Set the active project.
-	 * 
+	 *
 	 * @param project may be null if there is no active project
 	 */
 	public void setActiveProject(Project project) {
@@ -301,7 +301,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	/**
 	 * Add the given project listener.
-	 * 
+	 *
 	 * @param l listener to add
 	 */
 	public void addProjectListener(ProjectListener l) {
@@ -310,7 +310,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	/**
 	 * Remove the given project listener.
-	 * 
+	 *
 	 * @param l listener to remove
 	 */
 	public void removeProjectListener(ProjectListener l) {
@@ -319,7 +319,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	/**
 	 * NOTE: do not call this from a non-Swing thread
-	 * 
+	 *
 	 * @param tool the tool
 	 * @return true if the repository is null or is connected.
 	 */
@@ -353,7 +353,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	/**
 	 * Check in the given domain file.
-	 * 
+	 *
 	 * @param tool tool that has the domain file opened
 	 * @param domainFile domain file to check in
 	 */
@@ -365,7 +365,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	/**
 	 * Check in the list of domain files.
-	 * 
+	 *
 	 * @param tool tool that has the domain files opened
 	 * @param fileList list of DomainFile objects
 	 * @param parent parent of dialog if an error occurs during checkin
@@ -417,7 +417,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	 * Merge the latest version in the repository with the given checked out
 	 * domain file. Upon completion of the merge, the domain file appears as
 	 * though the latest version was checked out.
-	 * 
+	 *
 	 * @param tool tool that has the domain file opened
 	 * @param domainFile domain file where latest version will be merged into
 	 * @param taskListener listener that is notified when the merge task
@@ -433,7 +433,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	 * Merge the latest version (in the repository) of each checked out file in
 	 * fileList. Upon completion of the merge, the domain file appears as though
 	 * the latest version was checked out.
-	 * 
+	 *
 	 * @param tool tool that has the domain files opened
 	 * @param fileList list of files that are checked out and are to be merged
 	 * @param taskListener listener that is notified when the merge task
@@ -575,7 +575,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	/**
 	 * Get project listeners.
-	 * 
+	 *
 	 * @return ProjectListener[]
 	 */
 	Iterable<ProjectListener> getListeners() {
@@ -629,7 +629,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 	/**
 	 * Refresh the plugins in the Ghidra Project Window based on what is
 	 * contained in the given XML Element.
-	 * 
+	 *
 	 * @param tc object that contains an entry for each plugin and its
 	 *            configuration state
 	 */
@@ -691,7 +691,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 	/**
 	 * Get the int value for the given string.
-	 * 
+	 *
 	 * @param value the string value to parse
 	 * @param defaultValue return this value if a NumberFormatException is
 	 *            thrown during the parseInt() method
@@ -866,7 +866,7 @@ public class FrontEndTool extends PluginTool implements OptionsChangeListener {
 
 		/**
 		 * Construct a new MergeTask.
-		 * 
+		 *
 		 * @param tool tool that has the domain files open
 		 * @param list list of DomainFiles to be merged
 		 * @param taskListener listener that is notified when this task

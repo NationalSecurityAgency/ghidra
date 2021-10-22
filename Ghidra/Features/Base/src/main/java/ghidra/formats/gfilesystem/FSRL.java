@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -99,7 +99,7 @@ public class FSRL {
 	/**
 	 * Ensures that a FSRL instance is a file type reference by converting any FSRLRoots
 	 * into the container file that hosts the FSRLRoot.
-	 * 
+	 *
 	 * @param fsrl FSRL or FSRLRoot instance to possibly convert
 	 * @return original FSRL if already a normal FSRL, or the container if it was a FSRLRoot
 	 */
@@ -297,8 +297,8 @@ public class FSRL {
 
 	/**
 	 * Tests specified MD5 value against MD5 in this FSRL.
-	 * 
-	 * @param otherMD5 md5 in a hex string  
+	 *
+	 * @param otherMD5 md5 in a hex string
 	 * @return boolean true if equal, or that both are null, false otherwise
 	 */
 	public boolean isMD5Equal(String otherMD5) {

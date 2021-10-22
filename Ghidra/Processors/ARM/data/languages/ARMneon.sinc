@@ -17,7 +17,7 @@
 zero: "#0"			is c0000 				{ export 0:8; }
 
 @if defined(SIMD)
-  
+
 attach variables [ thv_Rm ] [ r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc ];
 
 attach variables [ Qn0 Qd0 Qm0 thv_Qn0 thv_Qd0 thv_Qm0 ] [ q0 _ q1 _ q2 _ q3 _ q4 _ q5 _ q6 _ q7 _ ];
@@ -41,7 +41,7 @@ Qm: thv_Qm1		is TMode=1 & thv_Qm1 & thv_M5=1	{ export thv_Qm1; }
 @endif # SIMD
 
 @if defined(SIMD) || defined(VFPv3) || defined(VFPv2)
-  
+
 attach variables [ Dm_3 thv_Dm_3 ] [ d0 d1 d2 d3 d4 d5 d6 d7 ];
 
 attach variables [ Dn0 Dd0 Dm0 Dm_4 thv_Dn0 thv_Dd0 thv_Dm0 thv_Dm_4 ] [ d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 ];
@@ -61,7 +61,7 @@ attach variables [ thv_Dd_13 ] [ d12 d13 d14 d15 _ _ _ _ _ _ _ _ _ _ _ _ ];
 attach variables [ thv_Dd_14 ] [ d13 d14 d15 _ _ _ _ _ _ _ _ _ _ _ _ _ ];
 attach variables [ thv_Dd_15 ] [ d14 d15 _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
 attach variables [ thv_Dd_16 ] [ d15 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ ];
-  
+
 Dd: Dd0		is TMode=0 & Dd0 & D22=0	{ export Dd0; }
 Dn: Dn0		is TMode=0 & Dn0 & N7=0	{ export Dn0; }
 Dm: Dm0		is TMode=0 & Dm0 & M5=0	{ export Dm0; }
@@ -76,7 +76,7 @@ Dd2: Dd		is Dd			{ export Dd; }
 @if defined(SIMD) || defined(VFPv3)
 
 attach variables [ Dn1 Dd1 Dm1 thv_Dn1 thv_Dd1 thv_Dm1 ] [ d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d29 d30 d31 ];
-  
+
 Dd: Dd1		is TMode=0 & Dd1 & D22=1 { export Dd1; }
 Dn: Dn1		is TMode=0 & Dn1 & N7=1	{ export Dn1; }
 Dm: Dm1		is TMode=0 & Dm1 & M5=1	{ export Dm1; }
@@ -353,21 +353,21 @@ define pcodeop VFPExpandImmediate;
 
 # float
 vfpExpImm_4: imm		is TMode=0 & c1919 & c1818 & c1617 & c0003 [ imm = (c1919 << 31) | ((c1818 $xor 1) << 30) | ((c1818 * 0x1f) << 25) | (c1617 << 23) | (c0003 << 19); ] 	{
-	export *[const]:4 imm; 
+	export *[const]:4 imm;
 }
 
 # float
 vfpExpImm_4: imm		is TMode=1 & thv_c1919 & thv_c1818 & thv_c1617 & thv_c0003 [ imm = (thv_c1919 << 31) | ((thv_c1818 $xor 1) << 30) | ((thv_c1818 * 0x1f) << 25) | (thv_c1617 << 23) | (thv_c0003 << 19); ] 	{
-	export *[const]:4 imm; 
+	export *[const]:4 imm;
 }
 
 
-# double 
+# double
 vfpExpImm_8: imm		is TMode=0 & c1919 & c1818 & c1617 & c0003 [ imm = (c1919 << 63) | ((c1818 $xor 1) << 62) | ((c1818 * 0xff) << 54) | (c1617 << 52) | (c0003 << 48); ] 	{
 	export *[const]:8 imm;
 }
 
-# double 
+# double
 vfpExpImm_8: imm		is TMode=1 & thv_c1919 & thv_c1818 & thv_c1617 & thv_c0003 [ imm = (thv_c1919 << 63) | ((thv_c1818 $xor 1) << 62) | ((thv_c1818 * 0xff) << 54) | (thv_c1617 << 52) | (thv_c0003 << 48); ] 	{
 	export *[const]:8 imm;
 }
@@ -390,8 +390,8 @@ simdExpImm_8: "simdExpand("^thv_c0505^","^thv_cmode^","^val^")" 	is TMode=1 & th
 }
 
 simdExpImm_16: "#0" 	is TMode=0 & c2424=0 & c1618=0 & c0003=0	{
-	tmp:8 = 0; 
-	tmp1:16 = zext(tmp); 
+	tmp:8 = 0;
+	tmp1:16 = zext(tmp);
 	export tmp1;
 }
 simdExpImm_16: "simdExpand("^c0505^","^cmode^","^val^")" 	is TMode=0 & c2424 & c1618 & c0505 & c0003 & cmode [ val = (c2424 << 7) | (c1618 << 4) | c0003; ]	{
@@ -399,8 +399,8 @@ simdExpImm_16: "simdExpand("^c0505^","^cmode^","^val^")" 	is TMode=0 & c2424 & c
 	export imm128;
 }
 simdExpImm_16: "#0" 	is TMode=1 & thv_c2828=0 & thv_c1618=0 & thv_c0003=0	{
-	tmp:8 = 0; 
-	tmp1:16 = zext(tmp); 
+	tmp:8 = 0;
+	tmp1:16 = zext(tmp);
 	export tmp1;
 }
 simdExpImm_16: "simdExpand("^thv_c0505^","^thv_cmode^","^val^")" 	is TMode=1 & thv_c2828 & thv_c1618 & thv_c0505 & thv_c0003 & thv_cmode [ val = (thv_c2828 << 7) | (thv_c1618 << 4) | thv_c0003; ]	{
@@ -460,13 +460,13 @@ define pcodeop FloatVectorAbsolute;
 
 # TODO: watch out for c2021=3
 
-:vaba.^udt^esize2021 Dd,Dn,Dm    is ( ($(AMODE) & cond=15 & c2527=1 & c2323=0 & c2021<3 & c0811=7 & Q6=0 & c0404=1) | 
+:vaba.^udt^esize2021 Dd,Dn,Dm    is ( ($(AMODE) & cond=15 & c2527=1 & c2323=0 & c2021<3 & c0811=7 & Q6=0 & c0404=1) |
                                      ($(TMODE_EorF) &     thv_c2327=0x1e &    thv_c2021<3 & thv_c0811=7 & thv_c0606=0 & thv_c0404=1 ) ) & Dm & Dn & Dd & udt & esize2021
 {
 	Dd = VectorAbsoluteDifferenceAndAccumulate(Dn,Dm,esize2021,udt);
 }
 
-:vaba.^udt^esize2021 Qd,Qn,Qm    is ( ($(AMODE) & cond=15 & c2527=1 & c2323=0 & c2021<3 & c0811=7 & Q6=1 & c0404=1) | 
+:vaba.^udt^esize2021 Qd,Qn,Qm    is ( ($(AMODE) & cond=15 & c2527=1 & c2323=0 & c2021<3 & c0811=7 & Q6=1 & c0404=1) |
                                      ($(TMODE_EorF) &     thv_c2327=0x1e &    thv_c2021<3 & thv_c0811=7 & thv_c0606=1 & thv_c0404=1 ) ) & Qd & Qn & Qm & udt & esize2021
 {
 	Qd = VectorAbsoluteDifferenceAndAccumulate(Qn,Qm,esize2021,udt);
@@ -490,7 +490,7 @@ define pcodeop FloatVectorAbsolute;
 	Qd = VectorAbsoluteDifference(Qn,Qm,esize2021,udt);
 }
 
-:vabdl.^udt^esize2021 Qd,Dn,Dm    is ( ($(AMODE) & cond=15 &    c2527=1 & c2323=1 & c2021<3 &     c0811=7 &        Q6=0 &     c0404=0 ) | 
+:vabdl.^udt^esize2021 Qd,Dn,Dm    is ( ($(AMODE) & cond=15 &    c2527=1 & c2323=1 & c2021<3 &     c0811=7 &        Q6=0 &     c0404=0 ) |
                                        ($(TMODE_EorF) &     thv_c2327=0x1f &    thv_c2021<3 & thv_c0811=7 & thv_c0606=0 & thv_c0404=0 ) ) & Dm & Dn & Qd & udt & esize2021
 {
 	Qd = VectorAbsoluteDifference(Dn,Dm,esize2021,udt);
@@ -502,7 +502,7 @@ define pcodeop FloatVectorAbsolute;
 	Dd = FloatVectorAbsoluteDifference(Dn,Dm,2:1,32:1);
 }
 
-:vabd.f32 Qd,Qn,Qm    is ( ( $(AMODE) & cond=15 &   c2327=6 &        c2021=2 &     c0811=13 &        Q6=1 &     c0404=0 ) | 
+:vabd.f32 Qd,Qn,Qm    is ( ( $(AMODE) & cond=15 &   c2327=6 &        c2021=2 &     c0811=13 &        Q6=1 &     c0404=0 ) |
                            ($(TMODE_F)  &       thv_c2327=0x1e & thv_c2021=2 & thv_c0811=13 & thv_c0606=1 & thv_c0404=0 ) ) & Qd & Qm & Qn
 {
 	Qd = FloatVectorAbsoluteDifference(Qn,Qm,2:1,32:1);
@@ -606,7 +606,7 @@ define pcodeop VectorPairwiseAddAccumulateLong;
 }
 
 :vadd.f32 Dd,Dn,Dm		is ( ($(AMODE) & cond=15 & c2327=4 & c2021=0 & c0811=13 & Q6=0 & c0404=0) |
-                             ($(TMODE_E) & thv_c2327=0x1e & thv_c2021=0 & thv_c0811=13 & thv_Q6=0 & thv_c0404=0) ) & Dm& Dn & Dd 
+                             ($(TMODE_E) & thv_c2327=0x1e & thv_c2021=0 & thv_c0811=13 & thv_Q6=0 & thv_c0404=0) ) & Dm& Dn & Dd
 {
 	Dd = FloatVectorAdd(Dn,Dm,2:1,32:1);
 }
@@ -631,7 +631,7 @@ define pcodeop VectorPairwiseAddAccumulateLong;
 }
 
 :vpadd.f^fesize2021 Dd,Dn,Dm		is ( ($(AMODE) & cond=15 & c2327=6 & c2121=0 & c0811=13 & Q6=0 & c0404=0) |
-                             ($(TMODE_F)  &thv_c2327=0x1e & thv_c2121=0 & thv_c0811=13 & thv_Q6=0 & thv_c0404=0) ) & fesize2021 & Dm& Dn & Dd 
+                             ($(TMODE_F)  &thv_c2327=0x1e & thv_c2121=0 & thv_c0811=13 & thv_Q6=0 & thv_c0404=0) ) & fesize2021 & Dm& Dn & Dd
 {
 	Dd = FloatVectorPairwiseAdd(Dn,Dm,fesize2021:1);
 }
@@ -645,7 +645,7 @@ define pcodeop VectorPairwiseAddAccumulateLong;
 
 
 :vpmax.f^fesize2021 Dd,Dn,Dm		is ( ($(AMODE) & cond=15 & c2327=6 & c2121=0 & c0811=15 & Q6=0 & c0404=0) |
-                             ($(TMODE_F)  &thv_c2327=0x1e & thv_c2121=0 & thv_c0811=15 & thv_Q6=0 & thv_c0404=0) ) & fesize2021 & Dm & Dn & Dd 
+                             ($(TMODE_F)  &thv_c2327=0x1e & thv_c2121=0 & thv_c0811=15 & thv_Q6=0 & thv_c0404=0) ) & fesize2021 & Dm & Dn & Dd
 {
 	Dd = FloatVectorPairwiseMax(Dn,Dm,fesize2021:1);
 }
@@ -657,7 +657,7 @@ define pcodeop VectorPairwiseAddAccumulateLong;
 }
 
 :vpmin.f^fesize2021 Dd,Dn,Dm		is ( ($(AMODE) & cond=15 & c2327=6 & c2121=1 & c0811=15 & Q6=0 & c0404=0) |
-                             ($(TMODE_F)  &thv_c2327=0x1e & thv_c2121=1 & thv_c0811=15 & thv_Q6=0 & thv_c0404=0) ) & fesize2021 & Dm & Dn & Dd 
+                             ($(TMODE_F)  &thv_c2327=0x1e & thv_c2121=1 & thv_c0811=15 & thv_Q6=0 & thv_c0404=0) ) & fesize2021 & Dm & Dn & Dd
 {
 	Dd = FloatVectorPairwiseMin(Dn,Dm,fesize2021:1);
 }
@@ -1037,10 +1037,10 @@ define pcodeop VectorCountLeadingZeros;
 # set float register flags correctly for comparison
 macro FloatVectorCompare(op1,op2,nanx) {
 	local tNG = op1 f< op2;
-	local tZR = op1 f== op2;	
+	local tZR = op1 f== op2;
 	local tCY = op2 f<= op1;
 	tOV:1 = nan(op1) | nan(op2);  # this is really a comparison with NAN and may also raise an exception when NAN
-	
+
 	fpscr = (fpscr & 0x0fffffff) | (zext(tNG) << 31) | (zext(tZR) << 30) | (zext(tCY) << 29) | (zext(tOV) << 28);
 }
 
@@ -1187,7 +1187,7 @@ roundMode: 		is TMode=0 & c0707=1		{ export 3:1; } # Round towards zero
 roundMode: "r"	is TMode=1 & thv_c0707=0	{ tmp:1 = $(FPSCR_RMODE); export tmp; }
 roundMode: 		is TMode=1 & thv_c0707=1	{ export 3:1; } # Round towards zero
 
-:vcvt^roundMode^COND^".s32.f32" Sd,Sm	is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1618=5 & c0911=5 & c0808=0 & c0606=1 & c0404=0) | 
+:vcvt^roundMode^COND^".s32.f32" Sd,Sm	is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1618=5 & c0911=5 & c0808=0 & c0606=1 & c0404=0) |
                                                     ($(TMODE_E) & thv_c2327=0x1b & thv_c1921=7 & thv_c1618=5 & thv_c0911=5 & thv_c0808=0 & thv_c0606=1 & thv_c0404=0) ) & Sd & Sm & roundMode
 {
 	build COND;
@@ -1197,7 +1197,7 @@ roundMode: 		is TMode=1 & thv_c0707=1	{ export 3:1; } # Round towards zero
 	Sd = VectorFloatToSigned(Sm,roundMode);
 }
 
-:vcvt^roundMode^COND^".s32.f64" Sd,Dm	is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1618=5 & c0911=5 & c0808=1 & c0606=1 & c0404=0) | 
+:vcvt^roundMode^COND^".s32.f64" Sd,Dm	is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1618=5 & c0911=5 & c0808=1 & c0606=1 & c0404=0) |
                                                     ($(TMODE_E) & thv_c2327=0x1d & thv_c1921=7 & thv_c1618=5 & thv_c0911=5 & thv_c0808=1 & thv_c0606=1 & thv_c0404=0) ) & Sd & roundMode & Dm
 {
 	build COND;
@@ -1207,7 +1207,7 @@ roundMode: 		is TMode=1 & thv_c0707=1	{ export 3:1; } # Round towards zero
 	Sd = VectorFloatToSigned(Dm,roundMode);
 }
 
-:vcvt^roundMode^COND^".u32.f32" Sd,Sm	is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1618=4 & c0911=5 & c0808=0 & c0606=1 & c0404=0) | 
+:vcvt^roundMode^COND^".u32.f32" Sd,Sm	is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1618=4 & c0911=5 & c0808=0 & c0606=1 & c0404=0) |
                                                     ($(TMODE_E) & thv_c2327=0x1d & thv_c1921=7 & thv_c1618=4 & thv_c0911=5 & thv_c0808=0 & thv_c0606=1 & thv_c0404=0) ) & roundMode & Sd & Sm
 {
 	build COND;
@@ -1217,7 +1217,7 @@ roundMode: 		is TMode=1 & thv_c0707=1	{ export 3:1; } # Round towards zero
 	Sd = VectorFloatToUnsigned(Sm,roundMode);
 }
 
-:vcvt^roundMode^COND^".u32.f64" Sd,Dm	is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1618=4 & c0911=5 & c0808=1 & c0606=1 & c0404=0) | 
+:vcvt^roundMode^COND^".u32.f64" Sd,Dm	is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1618=4 & c0911=5 & c0808=1 & c0606=1 & c0404=0) |
                                                     ($(TMODE_E) & thv_c2327=0x1d & thv_c1921=7 & thv_c1618=4 & thv_c0911=5 & thv_c0808=1 & thv_c0606=1 & thv_c0404=0)) & roundMode& Sd & Dm
 {
 	build COND;
@@ -1247,7 +1247,7 @@ roundMode: 		is TMode=1 & thv_c0707=1	{ export 3:1; } # Round towards zero
 	Dd = VectorSignedToFloat(Sm,mode);
 }
 
-:vcvt^COND^".f32.u32" Sd,Sm	is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1618=0 & c0911=5 & c0808=0 & c0707=0 & c0606=1 & c0404=0) | 
+:vcvt^COND^".f32.u32" Sd,Sm	is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1618=0 & c0911=5 & c0808=0 & c0707=0 & c0606=1 & c0404=0) |
                                         ($(TMODE_E) & thv_c2327=0x1d & thv_c1921=7 & thv_c1618=0 & thv_c0911=5 & thv_c0808=0 & thv_c0707=0 & thv_c0606=1 & thv_c0404=0) ) & Sd  & Sm
 {
 	build COND;
@@ -1257,7 +1257,7 @@ roundMode: 		is TMode=1 & thv_c0707=1	{ export 3:1; } # Round towards zero
 	Sd = VectorUnsignedToFloat(Sm,mode);
 }
 
-:vcvt^COND^".f64.u32" Dd,Sm	is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1618=0 & c0911=5 & c0808=1 & c0707=0 & c0606=1 & c0404=0) | 
+:vcvt^COND^".f64.u32" Dd,Sm	is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1618=0 & c0911=5 & c0808=1 & c0707=0 & c0606=1 & c0404=0) |
                                         ($(TMODE_E) & thv_c2327=0x1d & thv_c1921=7 & thv_c1618=0 & thv_c0911=5 & thv_c0808=1 & thv_c0707=0 & thv_c0606=1 & thv_c0404=0) )& Dd & Sm
 {
 	build COND;
@@ -1339,7 +1339,7 @@ fbits32: "#"^val	is TMode=0 & c0505 & c0003	[ val = 32 - ((c0505 << 4) + c0003);
 fbits16: "#"^val	is TMode=1 & thv_c0505 & thv_c0003	[ val = 16 - ((thv_c0505 << 4) + thv_c0003); ] { tmp:1 = val; export tmp; }
 fbits32: "#"^val	is TMode=1 & thv_c0505 & thv_c0003	[ val = 32 - ((thv_c0505 << 4) + thv_c0003); ] { tmp:1 = val; export tmp; }
 
-:vcvt^COND^".s16.f32" Sd,Sd2,fbits16 is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1818=0 & c1717=1 & c1616=0 & c0911=5 & c0808=0 & c0707=0 & c0606=1 & c0404=0) | 
+:vcvt^COND^".s16.f32" Sd,Sd2,fbits16 is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1818=0 & c1717=1 & c1616=0 & c0911=5 & c0808=0 & c0707=0 & c0606=1 & c0404=0) |
                                                  ($(TMODE_E) & thv_c2327=0x1d & thv_c1921=7 & thv_c1818=0 & thv_c1717=1 & thv_c1616=0 & thv_c0911=5 & thv_c0808=0 & thv_c0707=0 & thv_c0606=1 & thv_c0404=0)) & Sd & Sd2 & fbits16
 {
 	build COND;
@@ -1349,7 +1349,7 @@ fbits32: "#"^val	is TMode=1 & thv_c0505 & thv_c0003	[ val = 32 - ((thv_c0505 << 
 	Sd = VectorFloatToSignedFixed(Sd2,16:1,fbits16);
 }
 
-:vcvt^COND^".u16.f32" Sd,Sd2,fbits16 is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1818=0 & c1717=1 & c1616=1 & c0911=5 & c0808=0 & c0707=0 & c0606=1 & c0404=0) | 
+:vcvt^COND^".u16.f32" Sd,Sd2,fbits16 is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1818=0 & c1717=1 & c1616=1 & c0911=5 & c0808=0 & c0707=0 & c0606=1 & c0404=0) |
                                                   ($(TMODE_E) & thv_c2327=0x1d & thv_c1921=7 & thv_c1818=0 & thv_c1717=1 & thv_c1616=1 & thv_c0911=5 & thv_c0808=0 & thv_c0707=0 & thv_c0606=1 & thv_c0404=0) ) & Sd & Sd2 & fbits16
 {
 	build COND;
@@ -1359,7 +1359,7 @@ fbits32: "#"^val	is TMode=1 & thv_c0505 & thv_c0003	[ val = 32 - ((thv_c0505 << 
 	Sd = VectorFloatToUnsignedFixed(Sd2,16:1,fbits16);
 }
 
-:vcvt^COND^".s32.f32" Sd,Sd2,fbits32 is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1818=0 & c1717=1 & c1616=0 & c0911=5 & c0808=0 & c0707=1 & c0606=1 & c0404=0) | 
+:vcvt^COND^".s32.f32" Sd,Sd2,fbits32 is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1818=0 & c1717=1 & c1616=0 & c0911=5 & c0808=0 & c0707=1 & c0606=1 & c0404=0) |
                                                  ($(TMODE_E) & thv_c2327=0x1d & thv_c1921=7 & thv_c1818=0 & thv_c1717=1 & thv_c1616=0 & thv_c0911=5 & thv_c0808=0 & thv_c0707=1 & thv_c0606=1 & thv_c0404=0) ) & Sd & Sd2 & fbits32
 {
 	build COND;
@@ -1389,7 +1389,7 @@ fbits32: "#"^val	is TMode=1 & thv_c0505 & thv_c0003	[ val = 32 - ((thv_c0505 << 
 	Dd = VectorFloatToSignedFixed(Dd2,16:1,fbits16);
 }
 
-:vcvt^COND^".u16.f64" Dd,Dd2,fbits16 is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1818=0 & c1717=1 & c1616=1 & c0911=5 & c0808=1 & c0707=0 & c0606=1 & c0404=0) | 
+:vcvt^COND^".u16.f64" Dd,Dd2,fbits16 is COND & ( ($(AMODE) & c2327=0x1d & c1921=7 & c1818=0 & c1717=1 & c1616=1 & c0911=5 & c0808=1 & c0707=0 & c0606=1 & c0404=0) |
                                                  ($(TMODE_E) & thv_c2327=0x1d & thv_c1921=7 & thv_c1818=0 & thv_c1717=1 & thv_c1616=1 & thv_c0911=5 & thv_c0808=1 & thv_c0707=0 & thv_c0606=1 & thv_c0404=0) ) & Dd & Dd2 & fbits16
 {
 	build COND;
@@ -1663,11 +1663,11 @@ vdupDm: Dm^"["^vdupIndex^"]"	is Dm & vdupIndex & ((TMode=0 & c1618=4) | (TMode=1
 	export val;
 }
 
-vdupDm16: vdupDm	is vdupDm	
-{ 
-	val:16 = zext(vdupDm); 
-	val = val & (val << 64); 
-	export val; 
+vdupDm16: vdupDm	is vdupDm
+{
+	val:16 = zext(vdupDm);
+	val = val & (val << 64);
+	export val;
 }
 
 :vdup.^vdupSize Dd,vdupDm	is ( ($(AMODE) & cond=15 & c2327=7 & c2021=3 & vdupSize & c0711=0x18 & Q6=0 & c0404=0 ) |
@@ -1712,11 +1712,11 @@ vdupRd8: Rd	is Rd & c2222=0 & c0505=0
 	export val;
 }
 
-vdupRd16: vdupRd8	is vdupRd8	
-{ 
-	val:16 = zext(vdupRd8); 
-	val = val & (val << 64); 
-	export val; 
+vdupRd16: vdupRd8	is vdupRd8
+{
+	val:16 = zext(vdupRd8);
+	val = val & (val << 64);
+	export val;
 }
 
 :vdup^COND^"."^vdupSize2 Dn,vdupRd8	is (( $(AMODE) & COND & c2327=0x1d & c2121=0 & c2020=0 & c0811=11 & c0606=0 & c0004=0x10) |
@@ -1964,11 +1964,11 @@ vld1RnReplicate:	is Rn & c0607=2
 vld1Dd3: Dreg^"[]"		is Dreg		{ export Dreg; }
 
 buildVld1DdList3:					is counter=0			{ }
-buildVld1DdList3: vld1Dd3			is counter=1	& vld1Dd3		[ counter=0; regNum=regNum+1; ] 
-{ 
+buildVld1DdList3: vld1Dd3			is counter=1	& vld1Dd3		[ counter=0; regNum=regNum+1; ]
+{
 	vld1Dd3 = mult_dat8;
 }
-buildVld1DdList3: vld1Dd3,buildVld1DdList3		is vld1Dd3 & buildVld1DdList3	[ counter=counter-1; regNum=regNum+1; ] 
+buildVld1DdList3: vld1Dd3,buildVld1DdList3		is vld1Dd3 & buildVld1DdList3	[ counter=counter-1; regNum=regNum+1; ]
 {
 	vld1Dd3 = mult_dat8;
 	build buildVld1DdList3;
@@ -2099,7 +2099,7 @@ vld2Dd: Dreg		is (($(AMODE) & c0607=1) | ($(TMODE_F) & thv_c0607=1)) & Dreg & re
 	ptr1 = ptr1 + 2;
 	ptr2 = ptr2 + 2;
 	goto <loop>;
-<loop_end>	
+<loop_end>
 }
 vld2Dd: Dreg		is (($(AMODE) & c0607=2) | ($(TMODE_F) & thv_c0607=2)) & Dreg & regInc
 {
@@ -2120,11 +2120,11 @@ vld2Dd: Dreg		is (($(AMODE) & c0607=2) | ($(TMODE_F) & thv_c0607=2)) & Dreg & re
 	ptr1 = ptr1 + 4;
 	ptr2 = ptr2 + 4;
 	goto <loop>;
-<loop_end>	
+<loop_end>
 }
 
 buildVld2DdListA:							is counter=0								{ }
-buildVld2DdListA: vld2Dd,buildVld2DdListA	is vld2Dd & buildVld2DdListA & esize0607	[ counter=counter-1; regNum=regNum+1; ] 
+buildVld2DdListA: vld2Dd,buildVld2DdListA	is vld2Dd & buildVld2DdListA & esize0607	[ counter=counter-1; regNum=regNum+1; ]
 {
 	build vld2Dd;
 	build buildVld2DdListA;
@@ -2199,15 +2199,15 @@ vld2DdList2: "{"^buildVld2DdList2^"}"	is  TMode=1 & thv_D22 & thv_c1215 & buildV
 vld2DdList2: "{"^buildVld2DdList2^"}"	is  TMode=1 & ((thv_c1011=1 & thv_c0505=1) | (thv_c1011=2 & thv_c0606=1)) & thv_D22 & thv_c1215 & buildVld2DdList2 [ regNum=(thv_D22<<4)+thv_c1215-2; regInc=2; counter=2; ] { } # Double
 
 
-:vld2.^esize1011 vld2DdList2,vld2RnAligned2		is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=2 & c1011<3 & c0809=1 & c0003=15 ) | 
+:vld2.^esize1011 vld2DdList2,vld2RnAligned2		is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=2 & c1011<3 & c0809=1 & c0003=15 ) |
 	                                                  ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c1011<3 & thv_c0809=1 & thv_c0003=15 ) ) & esize1011 & VRm & vld2RnAligned2 & vld2DdList2
 	unimpl
 
-:vld2.^esize1011 vld2DdList2,vld2RnAligned2^"!"	is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=2 & c1011<3 & c0809=1 & c0003=13 ) | 
+:vld2.^esize1011 vld2DdList2,vld2RnAligned2^"!"	is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=2 & c1011<3 & c0809=1 & c0003=13 ) |
 	                                                  ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c1011<3 & thv_c0809=1 & thv_c0003=13 ) ) & esize1011 & VRm & vld2RnAligned2 & vld2DdList2
 	unimpl
 
-:vld2.^esize1011 vld2DdList2,vld2RnAligned2,VRm	is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=2 & c1011<3 & c0809=1 & c0003 ) | 
+:vld2.^esize1011 vld2DdList2,vld2RnAligned2,VRm	is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=2 & c1011<3 & c0809=1 & c0003 ) |
 	                                                  ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c1011<3 & thv_c0809=1 & thv_c0003 ) ) & esize1011 & VRm & vld2RnAligned2 & vld2DdList2
 	unimpl
 
@@ -2235,15 +2235,15 @@ vld2DdList3: "{"^buildVld2DdList3^"}"	is  TMode=0 & c0505=1 & D22 & c1215 & buil
 vld2DdList3: "{"^buildVld2DdList3^"}"	is  TMode=1 & thv_c0505=0 & thv_D22 & thv_c1215 & buildVld2DdList3 [ regNum=(thv_D22<<4)+thv_c1215-1; regInc=1; counter=2; ] { } # Single
 vld2DdList3: "{"^buildVld2DdList3^"}"	is  TMode=1 & thv_c0505=1 & thv_D22 & thv_c1215 & buildVld2DdList3 [ regNum=(thv_D22<<4)+thv_c1215-2; regInc=2; counter=2; ] { } # Double
 
-:vld2.^esize0607 vld2DdList3,vld2RnAligned3		is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=2 & c0811=13 & c0607<3 & c0003=15 ) | 
+:vld2.^esize0607 vld2DdList3,vld2RnAligned3		is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=2 & c0811=13 & c0607<3 & c0003=15 ) |
 	                                                  ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c0811=13 & thv_c0607<3 & thv_c0003=15 ) ) & esize0607 & VRm & vld2RnAligned3 & vld2DdList3
 	unimpl
 
-:vld2.^esize0607 vld2DdList3,vld2RnAligned3^"!"	is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=2 & c0811=13 & c0607<3 & c0003=13 ) | 
+:vld2.^esize0607 vld2DdList3,vld2RnAligned3^"!"	is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=2 & c0811=13 & c0607<3 & c0003=13 ) |
 	                                                  ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c0811=13 & thv_c0607<3 & thv_c0003=13 ) ) & esize0607 & VRm & vld2RnAligned3 & vld2DdList3
 	unimpl
 
-:vld2.^esize0607 vld2DdList3,vld2RnAligned3,VRm	is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=2 & c0811=13 & c0607<3 & c0003) | 
+:vld2.^esize0607 vld2DdList3,vld2RnAligned3,VRm	is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=2 & c0811=13 & c0607<3 & c0003) |
 	                                                  ($(TMODE_F) & thv_c2327=0x13 & thv_c2021=2 & thv_c0811=13 & thv_c0607<3 & thv_c0003 ) ) & esize0607 & VRm & vld2RnAligned3 & vld2DdList3
 	unimpl
 
@@ -2425,15 +2425,15 @@ vld4DdList: "{"^buildVld4DdList^"}"	is  TMode=0 & c0808=1 & D22 & c1215 & buildV
 vld4DdList: "{"^buildVld4DdList^"}"	is  TMode=1 & thv_c0808=0 & thv_D22 & thv_c1215 & buildVld4DdList [ regNum=(thv_D22<<4)+thv_c1215-1; regInc=1; counter=4; ] { } # Single
 vld4DdList: "{"^buildVld4DdList^"}"	is  TMode=1 & thv_c0808=1 & thv_D22 & thv_c1215 & buildVld4DdList [ regNum=(thv_D22<<4)+thv_c1215-2; regInc=2; counter=4; ] { } # Double
 
-:vld4.^esize0607 vld4DdList,vld4RnAligned		is ( ( $(AMODE) & cond=15 & c2327=8 & c2021=2 & c0911=0 & c0607<3 & c0003=15 ) | 
+:vld4.^esize0607 vld4DdList,vld4RnAligned		is ( ( $(AMODE) & cond=15 & c2327=8 & c2021=2 & c0911=0 & c0607<3 & c0003=15 ) |
 	                                                  ($(TMODE_F) & thv_c2327=0x12 & thv_c2021=2 & thv_c0911=0 & thv_c0607<3 & thv_c0003=15 ) ) & esize0607 & VRm & vld4RnAligned & vld4DdList
 	unimpl
 
-:vld4.^esize0607 vld4DdList,vld4RnAligned^"!"	is ( ( $(AMODE) & cond=15 & c2327=8 & c2021=2 & c0911=0 & c0607<3 & c0003=13 ) | 
+:vld4.^esize0607 vld4DdList,vld4RnAligned^"!"	is ( ( $(AMODE) & cond=15 & c2327=8 & c2021=2 & c0911=0 & c0607<3 & c0003=13 ) |
 	                                                  ($(TMODE_F) & thv_c2327=0x12 & thv_c2021=2 & thv_c0911=0 & thv_c0607<3 & thv_c0003=13 ) ) & esize0607 & VRm & vld4RnAligned & vld4DdList
 	unimpl
 
-:vld4.^esize0607 vld4DdList,vld4RnAligned,VRm	is ( ( $(AMODE) & cond=15 & c2327=8 & c2021=2 & c0911=0 & c0607<3) | 
+:vld4.^esize0607 vld4DdList,vld4RnAligned,VRm	is ( ( $(AMODE) & cond=15 & c2327=8 & c2021=2 & c0911=0 & c0607<3) |
 	                                                  ($(TMODE_F) & thv_c2327=0x12 & thv_c2021=2 & thv_c0911=0 & thv_c0607<3 ) ) & esize0607 & VRm & vld4RnAligned & vld4DdList
 	unimpl
 
@@ -2474,7 +2474,7 @@ buildVldmDdList: Dreg,buildVldmDdList	is Dreg & buildVldmDdList	[ counter=counte
 vldmDdList: "{"^buildVldmDdList^"}"	is TMode=0 & D22 & c1215 & c0007 & buildVldmDdList [ regNum=(D22<<4)+c1215 - 1; counter=c0007>>1; ] { }
 vldmDdList: "{"^buildVldmDdList^"}"	is TMode=1 & thv_D22 & thv_c1215 & thv_c0007 & buildVldmDdList [ regNum=(thv_D22<<4)+thv_c1215 - 1; counter=thv_c0007>>1; ] { }
 
-:vldmia^COND vldmRn,vldmDdList	is ( ($(AMODE) & COND & c2327=0x19 & c2121 & c2020=1 & c0811=11 & c0000=0) | 
+:vldmia^COND vldmRn,vldmDdList	is ( ($(AMODE) & COND & c2327=0x19 & c2121 & c2020=1 & c0811=11 & c0000=0) |
                                      ($(TMODE_E) & thv_c2327=0x19 & thv_c2121 & thv_c2020=1 & thv_c0811=11 & thv_c0000=0) ) & vldmRn & vldmDdList & vldmOffset & vldmUpdate
 {
 	mult_addr = vldmRn;
@@ -2687,37 +2687,37 @@ define pcodeop VectorGetElement;
 						           ($(TMODE_E) &    thv_c2327=0x1e & thv_c2021<3 & thv_c0811=9 & thv_Q6=0 & thv_c0404=0)) & esize2021 & Dm & Dn & Dd
 {
 	Dd = VectorMultiplyAccumulate(Dn,Dm,esize2021,0:1);
-}  
+}
 
 :vmla.i^esize2021 Qd,Qn,Qm	is ( ( $(AMODE) & cond=15 & c2327=4 & c2021<3 & c0811=9 & Q6=1 & c0404=0) |
 						           ($(TMODE_E) &    thv_c2327=0x1e & thv_c2021<3 & thv_c0811=9 & thv_Q6=1 & thv_c0404=0)) & esize2021 & Qm & Qn & Qd
 {
 	Qd = VectorMultiplyAccumulate(Qn,Qm,esize2021,0:1);
-}  
+}
 
 :vmls.i^esize2021 Dd,Dn,Dm	is ( ($(AMODE) & cond=15 & c2327=6 & c2424=1 & c2021<3 & c0811=9 & Q6=0 & c0404=0) |
 						           ($(TMODE_F) &   thv_c2327=0x1e & thv_c2021<3 & thv_c0811=9 & thv_Q6=0 & thv_c0404=0)) & esize2021 & Dm & Dn & Dd
 {
 	Dd = VectorMultiplySubtract(Dn,Dm,esize2021,0:1);
-}  
+}
 
 :vmls.i^esize2021 Qd,Qn,Qm	is ( ($(AMODE) & cond=15 & c2327=6 & c2424=1 & c2021<3 & c0811=9 & Q6=1 & c0404=0) |
 						           ($(TMODE_F) &   thv_c2327=0x1e & thv_c2021<3 & thv_c0811=9 & thv_Q6=1 & thv_c0404=0)) & esize2021 & Qm & Qn & Qd
 {
 	Qd = VectorMultiplySubtract(Qn,Qm,esize2021,0:1);
-}  
+}
 
 :vmlal.^udt^esize2021 Qd,Dn,Dm	is ( ($(AMODE) & cond=15 & c2527=1 &      c2323=1    & c2021<3 &      c0811=8 &     Q6=0 & c0404=0) |
                                      ($(TMODE_EorF) &  thv_c2327=0x1f & thv_c2021<3 & thv_c0811=8 & thv_Q6=0 & thv_c0404=0 ) ) & Dm & Dn & Qd & udt & esize2021
 {
 	Qd = VectorMultiplyAccumulate(Dn,Dm,esize2021,udt);
-}  
+}
 
 :vmlsl.^udt^esize2021 Qd,Dn,Dm	is ( ($(AMODE) & cond=15 & c2527=1    & c2323=1 & c2021<3 & c0811=10 & Q6=0 & c0404=0) |
                                      ($(TMODE_EorF) &  thv_c2327=0x1f & thv_c2021<3 & thv_c0811=10 & thv_Q6=0 & thv_c0404=0 ) ) & Dm & Dn & Qd & udt & esize2021
 {
 	Qd = VectorMultiplySubtractLong(Dn,Dm,esize2021,udt);
-}  
+}
 
 :vmla.f^fesize2021 Dd,Dn,Dm	is ( ($(AMODE) & cond=15 & c2327=4 & c2121=0 & c0811=13 & Q6=0 & c0404=1) |
 	                              ($(TMODE_E) & thv_c2327=0x1e & thv_c2121=0 & thv_c0811=13 & thv_c0606=0 & thv_c0404=1)) & fesize2021 & Dn & Dd & Dm
@@ -2725,7 +2725,7 @@ define pcodeop VectorGetElement;
 	Dd = FloatVectorMultiplyAccumulate(Dn,Dm,fesize2021,8:1);
 }
 
-:vmla.f^fesize2021 Qd,Qn,Qm	is ( ($(AMODE) & cond=15 & c2327=4 & c2121=0 & c0811=13 & Q6=1 & c0404=1) | 
+:vmla.f^fesize2021 Qd,Qn,Qm	is ( ($(AMODE) & cond=15 & c2327=4 & c2121=0 & c0811=13 & Q6=1 & c0404=1) |
 	                             ($(TMODE_E) & thv_c2327=0x1e & thv_c2121=0 & thv_c0811=13 & thv_c0606=1 & thv_c0404=1)) & fesize2021 & Qn & Qd & Qm
 {
 	Qd = FloatVectorMultiplyAccumulate(Qn,Qm,fesize2021,16:1);
@@ -2737,7 +2737,7 @@ define pcodeop VectorGetElement;
 	Dd = FloatVectorMultiplySubtract(Dn,Dm,fesize2021,8:1);
 }
 
-:vmls.f^fesize2021 Qd,Qn,Qm	is ( ($(AMODE) & cond=15 & c2327=4 & c2121=1 & c0811=13 & Q6=1 & c0404=1) | 
+:vmls.f^fesize2021 Qd,Qn,Qm	is ( ($(AMODE) & cond=15 & c2327=4 & c2121=1 & c0811=13 & Q6=1 & c0404=1) |
 	                             ($(TMODE_E) & thv_c2327=0x1e & thv_c2121=1 & thv_c0811=13 & thv_c0606=1 & thv_c0404=1)) & fesize2021 & Qn & Qd & Qm
 {
 	Qd = FloatVectorMultiplySubtract(Qn,Qm,fesize2021,16:1);
@@ -2851,7 +2851,7 @@ vmlDm: thv_Dm_4^"["^thv_M5^"]"		is TMode=1 & thv_c2021=2 & thv_Dm_4 & thv_M5				
 	Qd = VectorMultiplySubtract(Dn,vmlDm,esize2021,udt);
 }
 
-:vmov.^simdExpImmDT Dd,simdExpImm_8 is (( $(AMODE) & cond=15 & c2527=1 & c2323=1 & c1921=0 & c0707=0 & Q6=0 & c0404=1 ) | 
+:vmov.^simdExpImmDT Dd,simdExpImm_8 is (( $(AMODE) & cond=15 & c2527=1 & c2323=1 & c1921=0 & c0707=0 & Q6=0 & c0404=1 ) |
 										( $(TMODE_EorF) & thv_c2327=0x1f & thv_c1921=0 & thv_c0707=0 & thv_Q6=0 & thv_c0404=1 )) & Dd & simdExpImmDT & simdExpImm_8
 {
 	Dd = simdExpImm_8;
@@ -2874,7 +2874,7 @@ vmlDm: thv_Dm_4^"["^thv_M5^"]"		is TMode=1 & thv_c2021=2 & thv_Dm_4 & thv_M5				
 }
 
 :vmov^COND^".f64" Dd,vfpExpImm_8	is ( ( $(AMODE) & COND & c2327=0x1d & c2021=3 & c0411=0xb0 ) |
-								     ( $(TMODE_E) & thv_c2327=0x1d & thv_c2021=3 & thv_c0411=0xb0 ) ) & Dd & vfpExpImm_8 
+								     ( $(TMODE_E) & thv_c2327=0x1d & thv_c2021=3 & thv_c0411=0xb0 ) ) & Dd & vfpExpImm_8
 {
 	Dd = vfpExpImm_8;
 }
@@ -2900,7 +2900,7 @@ vmlDm: thv_Dm_4^"["^thv_M5^"]"		is TMode=1 & thv_c2021=2 & thv_Dm_4 & thv_M5				
 @if defined(VFPv2) || defined(VFPv3)
 
 :vmov^COND^".f32" Sd,Sm		is ( ( $(AMODE) & COND &   c2327=0x1d &     c1621=0x30 &     c0611=0x29  &    c0404=0 ) |
-                                  ($(TMODE_E) &    thv_c2327=0x1d & thv_c1621=0x30 & thv_c0611=0x29 & thv_c0404=0) ) & Sd & Sm 
+                                  ($(TMODE_E) &    thv_c2327=0x1d & thv_c1621=0x30 & thv_c0611=0x29 & thv_c0404=0) ) & Sd & Sm
 {
 	Sd = Sm;
 }
@@ -3089,19 +3089,19 @@ define pcodeop PolynomialMultiply;
 }
 
 :vmul^COND^".f64" Dd,Dn,Dm	is COND & ( ($(AMODE) & c2327=0x1c & c2021=2 & c0811=11 & c0606=0 & c0404=0) |
-                                    ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=2 & thv_c0811=11 & thv_c0606=0 & thv_c0404=0) ) & Dm & Dn & Dd 
+                                    ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=2 & thv_c0811=11 & thv_c0606=0 & thv_c0404=0) ) & Dm & Dn & Dd
 {
 	Dd = Dn f* Dm;
 }
 
 :vmul^COND^".f32" Sd,Sn,Sm	is COND & ( ($(AMODE) & c2327=0x1c & c2021=2 & c0811=10 & c0606=0 & c0404=0) |
-                                    ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=2 & thv_c0811=10 & thv_c0606=0 & thv_c0404=0) ) & Sm & Sn & Sd 
+                                    ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=2 & thv_c0811=10 & thv_c0606=0 & thv_c0404=0) ) & Sm & Sn & Sd
 {
 	Sd = Sn f* Sm;
 }
 
 :vmul^COND^".f16" Sd,Sn,Sm	is COND & ( ($(AMODE) & c2327=0x1c & c2021=2 & c0811=9 & c0606=0 & c0404=0) |
-                                    ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=2 & thv_c0811=9 & thv_c0606=0 & thv_c0404=0) ) & Sm & Sn & Sd 
+                                    ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=2 & thv_c0811=9 & thv_c0606=0 & thv_c0404=0) ) & Sm & Sn & Sd
 {
     product:2 = Sn:2 f* Sm:2;
     Sd = zext(product);
@@ -3163,13 +3163,13 @@ vmlDmA: Dm_4^"["^M5^"]"		is TMode=0 & c2021=2 & Dm_4 & M5													{ el:4 = V
 vmlDmA: Dm_3^"["^index^"]"	is TMode=1 & thv_c2021=1 & Dm_3 & thv_M5 & c0303 [ index = (thv_M5 << 1) + c0303; ]	{ el:4 = VectorGetElement(Dm_3, index:1, 2:1, 0:1); export el; }
 vmlDmA: Dm_4^"["^thv_M5^"]"	is TMode=1 & thv_c2021=2 & Dm_4 & thv_M5											{ el:4 = VectorGetElement(Dm_4, thv_M5:1, 4:1, 0:1); export el; }
 
-:vmul.^etype^esize2021 Qd,Qn,vmlDmA	is ( ($(AMODE) & cond=15 & c2424=1 & c2527=1 & c2323=1 & (c2021=1 | c2021=2) & c0911=4 & c0606=1 & c0404=0) | 
+:vmul.^etype^esize2021 Qd,Qn,vmlDmA	is ( ($(AMODE) & cond=15 & c2424=1 & c2527=1 & c2323=1 & (c2021=1 | c2021=2) & c0911=4 & c0606=1 & c0404=0) |
                                      ($(TMODE_F) &  thv_c2828=1 & thv_c2327=0x1f & (thv_c2021=1 | thv_c2021=2) & thv_c0911=4 & thv_c0606=1 & thv_c0404=0 ) ) & etype & esize2021 & Qn & Qd & vmlDmA
 {
 	Qd = VectorMultiply(Qn,vmlDmA,esize2021);
 }
 
-:vmul.^etype^esize2021 Dd,Dn,vmlDmA	is ( ($(AMODE) & cond=15 & c2424=0 & c2527=1 & c2323=1 & (c2021=1 | c2021=2) & c0911=4 & c0606=1 & c0404=0) | 
+:vmul.^etype^esize2021 Dd,Dn,vmlDmA	is ( ($(AMODE) & cond=15 & c2424=0 & c2527=1 & c2323=1 & (c2021=1 | c2021=2) & c0911=4 & c0606=1 & c0404=0) |
                                      ($(TMODE_E) &  thv_c2828=0 & thv_c2327=0x1f & (thv_c2021=1 | thv_c2021=2) & thv_c0911=4 & thv_c0606=1 & thv_c0404=0 ) ) & etype & esize2021 & Dn & Dd & vmlDmA
 {
 	Dd = VectorMultiply(Dn,vmlDmA,esize2021);
@@ -3272,7 +3272,7 @@ define pcodeop FloatVectorNeg;
 }
 
 :vnmls.f16 Sd,Sn,Sm          is ( ($(AMODE) & cond=0xe & c2327=0x1c & c2021=1 & c0811=9 & c0606=0 & c0404=0) |
-                                  ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=1 & thv_c0811=9 & thv_c0606=0 & thv_c0404=0) ) & Sm & Sn & Sd 
+                                  ($(TMODE_E) & thv_c2327=0x1c & thv_c2021=1 & thv_c0811=9 & thv_c0606=0 & thv_c0404=0) ) & Sm & Sn & Sd
 {
     product:2 = Sn:2 f* Sm:2;
     product = product f- Sd:2;
@@ -3389,7 +3389,7 @@ vpushSd64List: "{"^buildVpushSd64List^"}"	is TMode=0 & D22 & c1215 & c0007 & bui
 vpushSd64List: "{"^buildVpushSd64List^"}"	is TMode=1 & thv_D22 & thv_c1215 & thv_c0007 & buildVpushSd64List [ regNum=(thv_D22<<4)+thv_c1215-1; counter=thv_c0007 / 2 - 1; ] { sp = sp - thv_c0007 * 4; mult_addr = sp; build buildVpushSd64List; }
 
 
-:vpush^COND vpushSd64List	is COND & ( ($(AMODE) & c2327=0x1a & c1619=13 & c2121=1 & c2020=0 & c0811=11) | 
+:vpush^COND vpushSd64List	is COND & ( ($(AMODE) & c2327=0x1a & c1619=13 & c2121=1 & c2020=0 & c0811=11) |
                                     ($(TMODE_E) &  thv_c2327=0x1a & thv_c1619=13 & thv_c2121=1 & thv_c2020=0 & thv_c0811=11) ) &  vpushSd64List
 {
 	build vpushSd64List;
@@ -3421,7 +3421,7 @@ vpopSd64List: "{"^buildVpopSd64List^"}"	is TMode=0 & D22 & c1215 & c0007 & build
 vpopSd64List: "{"^buildVpopSd64List^"}"	is TMode=1 & thv_D22 & thv_c1215 & thv_c0007 & buildVpopSd64List [ regNum=(thv_D22<<4)+thv_c1215-1; counter=thv_c0007 / 2 - 1; ]
    { mult_addr = sp; sp = sp + thv_c0007 * 4; build buildVpopSd64List; }
 
-:vpop^COND vpopSd64List	is COND & ( ($(AMODE) & c2327=0x19 & c1619=13 & c2121=1 & c2020=1 & c0811=11 & c0000=0) | 
+:vpop^COND vpopSd64List	is COND & ( ($(AMODE) & c2327=0x19 & c1619=13 & c2121=1 & c2020=1 & c0811=11 & c0000=0) |
                                     ($(TMODE_E) &  thv_c2327=0x19 & thv_c1619=13 & thv_c2121=1 & thv_c2020=1 & thv_c0811=11 & thv_c0000=0) ) &  vpopSd64List
 {
 	build vpopSd64List;
@@ -3938,7 +3938,7 @@ define pcodeop VectorShiftNarrowRight;
 
 :vshrn.^ShiftSize Dd, Qm, ShiftImmRLI is  ( ($(AMODE) & cond=15 & c2327=5 &        c0811=8 &      c0607=0     & c0404=1) |
                                          ($(TMODE_E) &     thv_c2327=0x1f & thv_c0811=8 &  thv_c0607=0 & thv_c0404=1) ) & udt & ShiftSize & ShiftImmRLI & Dd & Qm
-{ 
+{
 	Dd = VectorShiftNarrowRight(Qm,ShiftImmRLI);
 }
 
@@ -4158,7 +4158,7 @@ vst2Dd: Dreg		is Dreg & ((TMode=0 & c0607=1) | (TMode=1 & thv_c0607=1))  & regIn
 	ptr1 = ptr1 + 2;
 	ptr2 = ptr2 + 2;
 	goto <loop>;
-<loop_end>	
+<loop_end>
 }
 vst2Dd: Dreg		is Dreg & ((TMode=0 & c0607=2) | (TMode=1 & thv_c0607=2)) & regInc
 {
@@ -4179,11 +4179,11 @@ vst2Dd: Dreg		is Dreg & ((TMode=0 & c0607=2) | (TMode=1 & thv_c0607=2)) & regInc
 	ptr1 = ptr1 + 4;
 	ptr2 = ptr2 + 4;
 	goto <loop>;
-<loop_end>	
+<loop_end>
 }
 
 buildVst2DdListA:							is counter=0								{ }
-buildVst2DdListA: vst2Dd,buildVst2DdListA	is vst2Dd & buildVst2DdListA & esize0607	[ counter=counter-1; regNum=regNum+1; ] 
+buildVst2DdListA: vst2Dd,buildVst2DdListA	is vst2Dd & buildVst2DdListA & esize0607	[ counter=counter-1; regNum=regNum+1; ]
 {
 	build vst2Dd;
 	build buildVst2DdListA;
@@ -4256,7 +4256,7 @@ vst2DdList2: "{"^buildVst2DdList2^"}"	is  TMode=1 & thv_D22 & thv_c1215 & buildV
 vst2DdList2: "{"^buildVst2DdList2^"}"	is  TMode=1 & ((thv_c1011=1 & thv_c0505=1) | (thv_c1011=2 & thv_c0606=1)) & thv_D22 & thv_c1215 & buildVst2DdList2 [ regNum=(thv_D22<<4)+thv_c1215-2; regInc=2; counter=2; ] { } # Double
 
 :vst2.^esize1011 vst2DdList2,vst2RnAligned2		is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=0  & c1011<3 & c0809=1 & c0003=15 )  |
-                                                     ( $(TMODE_F)  &    thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=1 & thv_c0003=15 ) ) & vst2RnAligned2 & esize1011 & vst2DdList2 
+                                                     ( $(TMODE_F)  &    thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=1 & thv_c0003=15 ) ) & vst2RnAligned2 & esize1011 & vst2DdList2
 	unimpl
 
 :vst2.^esize1011 vst2DdList2,vst2RnAligned2^"!"	is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=0  & c1011<3 & c0809=1 & c0003=13 )  |
@@ -4320,7 +4320,7 @@ vst3DdList2: "{"^buildvst3DdList^"}"	is  TMode=1 & thv_D22 & thv_c1215 & buildvs
 vst3DdList2: "{"^buildvst3DdList^"}"	is  TMode=1 & ((thv_c1011=1 & thv_c0505=1) | (thv_c1011=2 & thv_c0606=1)) & thv_D22 & thv_c1215 & buildvst3DdList [ regNum=(thv_D22<<4)+thv_c1215-2; regInc=2; counter=2; ] { } # Double
 
 :vst3.^esize1011 vst3DdList2,vst3Rn		is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=0  & c1011<3 & c0809=2 & c0003=15 )  |
-                                                     ( $(TMODE_F)  &    thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=2 & thv_c0003=15 ) ) & vst3Rn & esize1011 & vst3DdList2 
+                                                     ( $(TMODE_F)  &    thv_c2327=0x13 & thv_c2021=0 & thv_c1011<3 & thv_c0809=2 & thv_c0003=15 ) ) & vst3Rn & esize1011 & vst3DdList2
 	unimpl
 
 :vst3.^esize1011 vst3DdList2,vst3Rn^"!"	is ( ( $(AMODE) & cond=15 & c2327=9 & c2021=0  & c1011<3 & c0809=2 & c0003=13 )  |
@@ -4429,7 +4429,7 @@ buildVstmDdList: Dreg,buildVstmDdList	is Dreg & buildVstmDdList	[ counter=counte
 vstmDdList: "{"^buildVstmDdList^"}"	is TMode=0 & D22 & c1215 & c0007 & buildVstmDdList [ regNum=(D22<<4)+c1215-1; counter=c0007>>1; ] { }
 vstmDdList: "{"^buildVstmDdList^"}"	is TMode=1 & thv_D22 & thv_c1215 & thv_c0007 & buildVstmDdList [ regNum=(thv_D22<<4)+thv_c1215-1; counter=thv_c0007>>1; ] { }
 
-:vstmia^COND vldmRn,vstmDdList	is ( ($(AMODE) & COND & c2327=0x19 & c2121 & c2020=0 & c0811=11 & c0000=0) | 
+:vstmia^COND vldmRn,vstmDdList	is ( ($(AMODE) & COND & c2327=0x19 & c2121 & c2020=0 & c0811=11 & c0000=0) |
                                      ($(TMODE_E) & thv_c2327=0x19 & thv_c2121 & thv_c2020=0 & thv_c0811=11 & thv_c0000=0) ) & vldmRn & vstmDdList & vldmOffset & vldmUpdate
 {
 	mult_addr = vldmRn;
@@ -4437,7 +4437,7 @@ vstmDdList: "{"^buildVstmDdList^"}"	is TMode=1 & thv_D22 & thv_c1215 & thv_c0007
 	build vldmUpdate;
 }
 
-:vstmdb^COND vldmRn,vstmDdList	is ( ($(AMODE) & COND & c2327=0x1a & c2121=1 & c2020=0 & c0811=11 & c0000=0) | 
+:vstmdb^COND vldmRn,vstmDdList	is ( ($(AMODE) & COND & c2327=0x1a & c2121=1 & c2020=0 & c0811=11 & c0000=0) |
                                      ($(TMODE_E) & thv_c2327=0x1a & thv_c2121=1 & thv_c2020=0 & thv_c0811=11 & thv_c0000=0) ) & vldmRn & vstmDdList & vldmOffset
 {
 	local start_addr = vldmRn - vldmOffset;
@@ -4527,7 +4527,7 @@ define pcodeop VectorSubAndNarrow;
 }
 
 :vsub.f32 Dd,Dn,Dm		is ( ($(AMODE) & cond=15 & c2327=4 & c2121=1 & c0811=13 & Q6=0 & c0404=0) |
-                             ($(TMODE_E) & thv_c2327=0x1e & thv_c2121=1 & thv_c0811=13 & thv_Q6=0 & thv_c0404=0) ) & Dm & Dn & Dd 
+                             ($(TMODE_E) & thv_c2327=0x1e & thv_c2121=1 & thv_c0811=13 & thv_Q6=0 & thv_c0404=0) ) & Dm & Dn & Dd
 {
 	Dd = FloatVectorSub(Dn,Dm,2:1,32:1);
 }
@@ -4614,7 +4614,7 @@ define pcodeop VectorTableLookup;
 
 buildVtblDdList:						    is counter=0							{ }
 buildVtblDdList: Dreg					is Dreg & counter=1 		  [ counter=0; regNum=regNum+1; ] { }
-buildVtblDdList: Dreg,buildVtblDdList	is Dreg & buildVtblDdList  [ counter=counter-1; regNum=regNum+1; ] 
+buildVtblDdList: Dreg,buildVtblDdList	is Dreg & buildVtblDdList  [ counter=counter-1; regNum=regNum+1; ]
 {
 	build buildVtblDdList;
 }

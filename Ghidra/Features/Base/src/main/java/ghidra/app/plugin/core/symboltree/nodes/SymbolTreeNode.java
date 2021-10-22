@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,21 +28,21 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Base class for all nodes that live in the {@link SymbolTreeProvider Symbol Tree}.  
- * 
+ * Base class for all nodes that live in the {@link SymbolTreeProvider Symbol Tree}.
+ *
  * <p>All nodes will provide a way to search for the node that represents a given symbol.  The
  * 'find' logic lives in this class so all nodes have this capability.  Some subclasses
- * of this interface, those with the potential for thousands of children, will break their 
- * children up into subgroups by name.  The search algorithm in this class will uses each 
+ * of this interface, those with the potential for thousands of children, will break their
+ * children up into subgroups by name.  The search algorithm in this class will uses each
  * node's {@link #getChildrenComparator()} method in order to be able to find the correct
  * symbol node whether or not the grouping nodes are used.   This allows each {@link GTreeNode}
- * to keep its default {@link GTreeNode#compareTo(GTreeNode)} method, while allow each 
+ * to keep its default {@link GTreeNode#compareTo(GTreeNode)} method, while allow each
  * parent node to sort its children differently.
  */
 public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 
 	public static final Comparator<Symbol> SYMBOL_COMPARATOR = (s1, s2) -> {
-		// note: not really sure if we care about the cases where 'symbol' is null, as that 
+		// note: not really sure if we care about the cases where 'symbol' is null, as that
 		//       implies the symbol was deleted and the node will go away.  Just be consistent.
 
 		if (s1 == null) {
@@ -81,7 +81,7 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 			return result;
 		}
 
-		// At this point we assume: same address, same name, same namespaces--use ID as a 
+		// At this point we assume: same address, same name, same namespaces--use ID as a
 		// consistent way to sort
 		return idCompare;
 	};
@@ -136,10 +136,10 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 	public abstract Namespace getNamespace();
 
 	/**
-	 * Returns the comparator used to sort the children of this node.  This node will still 
+	 * Returns the comparator used to sort the children of this node.  This node will still
 	 * be sorted according to its own <code>compareTo</code> method, unless its parent has
 	 * overridden this method.
-	 * 
+	 *
 	 * @return the comparator used to sort this node's children
 	 */
 	public Comparator<GTreeNode> getChildrenComparator() {
@@ -148,26 +148,26 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 
 	/**
 	 * Returns the symbol for this node, if it has one.
-	 * 
+	 *
 	 * @return the symbol for this node; null if it not associated with a symbol
 	 */
 	public Symbol getSymbol() {
 		// We use an odd inheritance hierarchy, where all nodes share this interface.  Not all
-		// nodes have symbols, like a category node.  Stub this method out here and allow 
+		// nodes have symbols, like a category node.  Stub this method out here and allow
 		// symbol nodes to return their value.
 		return null;
 	}
 
 	/**
 	 * Locates the node that contains the given symbol.
-	 * 
-	 * <p><b>Note: </b>This can degenerate into a brute-force search algorithm, but works in 
+	 *
+	 * <p><b>Note: </b>This can degenerate into a brute-force search algorithm, but works in
 	 * all normal cases using a binary search.
-	 *  
+	 *
 	 * @param key the node used to find an existing node.  This node is a node created that is
-	 *        used by the Comparators to perform binary searches.  These can be fabricated 
+	 *        used by the Comparators to perform binary searches.  These can be fabricated
 	 *        by using {@link SymbolNode#createNode(Symbol, Program)}
-	 * @param loadChildren if true then children should be loaded, else quit early if 
+	 * @param loadChildren if true then children should be loaded, else quit early if
 	 *        children are not loaded.
 	 * @param monitor the task monitor
 	 * @return the node that contains the given symbol.
@@ -190,9 +190,9 @@ public abstract class SymbolTreeNode extends GTreeSlowLoadingNode {
 				return node;
 			}
 
-			// At this point we know that the given child is not itself a symbol node, but it 
+			// At this point we know that the given child is not itself a symbol node, but it
 			// may contain a child that contains the symbol node (some symbol nodes will
-			// themselves contain more symbol nodes).  
+			// themselves contain more symbol nodes).
 			// Ask that child to search.  Leave this method regardless, as if this child does
 			// not have it, then none of the others will.
 			node = symbolNode.findSymbolTreeNode(key, loadChildren, monitor);

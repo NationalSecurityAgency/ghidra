@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -109,7 +109,7 @@ public interface Program extends DataTypeManagerDomainObject {
 	public SymbolTable getSymbolTable();
 
 	/**
-	
+
 	 * Returns the external manager.
 	 * @return the external manager
 	 */
@@ -233,7 +233,7 @@ public interface Program extends DataTypeManagerDomainObject {
 	 */
 	public Language getLanguage();
 
-	/** 
+	/**
 	 * Returns the CompilerSpec currently used by this program.
 	 * @return the compilerSpec currently used by this program.
 	 */
@@ -241,7 +241,7 @@ public interface Program extends DataTypeManagerDomainObject {
 
 	/**
 	 * Return the name of the language used by this program.
-	 * 
+	 *
 	 * @return the name of the language
 	 */
 	public LanguageID getLanguageID();
@@ -321,7 +321,7 @@ public interface Program extends DataTypeManagerDomainObject {
 
 	/**
 	 * Returns the largest register located at the specified address
-	 * 
+	 *
 	 * @param addr register minimum address
 	 * @return largest register at addr or null
 	 */
@@ -329,7 +329,7 @@ public interface Program extends DataTypeManagerDomainObject {
 
 	/**
 	 * Returns all registers located at the specified address
-	 * 
+	 *
 	 * @param addr register minimum address
 	 * @return all registers at addr
 	 */
@@ -339,7 +339,7 @@ public interface Program extends DataTypeManagerDomainObject {
 	 * Returns a specific register based upon its address and size
 	 * @param addr register address
 	 * @param size the size of the register (in bytes);
-	 * @return register or null 
+	 * @return register or null
 	 */
 	public Register getRegister(Address addr, int size);
 
@@ -383,7 +383,7 @@ public interface Program extends DataTypeManagerDomainObject {
 	 * @param compilerSpecID the new compiler specification ID
 	 * @param forceRedisassembly if true a redisassembly will be forced.  This should always be false.
 	 * @param monitor the task monitor
-	 * @throws IllegalStateException thrown if any error occurs, including a cancelled monitor, which leaves this 
+	 * @throws IllegalStateException thrown if any error occurs, including a cancelled monitor, which leaves this
 	 * program object in an unusable state.  The current transaction should be aborted and the program instance
 	 * discarded.
 	 * @throws IncompatibleLanguageException thrown if the new language is too different from the
@@ -401,7 +401,7 @@ public interface Program extends DataTypeManagerDomainObject {
 	public Namespace getGlobalNamespace();
 
 	/**
-	 * Create a new AddressSetPropertyMap with the specified name. 
+	 * Create a new AddressSetPropertyMap with the specified name.
 	 * @param name name of the property map.
 	 * @return the newly created property map.
 	 * @throws DuplicateNameException if a property map already exists with the given name.
@@ -411,7 +411,7 @@ public interface Program extends DataTypeManagerDomainObject {
 
 	/**
 	 * Create a new IntRangeMap with the specified name.
-	 * 
+	 *
 	 * @param name name of the property map.
 	 * @return the newly created property map.
 	 * @throws DuplicateNameException if a property map already exists with the given name.

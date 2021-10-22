@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,8 +46,8 @@ public class ConcurrentTestExceptionStatement extends Statement {
 		testStatement = originalStatement;
 		ConcurrentTestExceptionHandler.clear();
 
-		// enable timeout monitor by default; disable to permit extended debugging when running 
-		// from eclipse or when set via a system property 
+		// enable timeout monitor by default; disable to permit extended debugging when running
+		// from eclipse or when set via a system property
 		if (ignoreTimeout()) {
 			timoutMonitor = null;
 		}
@@ -104,7 +104,7 @@ public class ConcurrentTestExceptionStatement extends Statement {
 		//
 		// We must wait so the next test does not start before the last test is finished.  This
 		// can happen when we throw an exception from this method.
-		// 
+		//
 		waitForPreviousTestToFinish();
 
 		TestThread testThread = new TestThread(testStatement);
@@ -118,7 +118,7 @@ public class ConcurrentTestExceptionStatement extends Statement {
 		//
 		printNonTestThreadExceptions();
 
-		// 
+		//
 		// Throw any exceptions in order to fail the test.
 		//
 
@@ -134,7 +134,7 @@ public class ConcurrentTestExceptionStatement extends Statement {
 		}
 
 		//
-		// Throw the non-test thread exception.  This normally would not trigger a test failure, 
+		// Throw the non-test thread exception.  This normally would not trigger a test failure,
 		// but we want to clean these up, so fail the test.
 		//
 		throw nonTestThreadTracker.getCombinedException();
@@ -157,7 +157,7 @@ public class ConcurrentTestExceptionStatement extends Statement {
 	}
 
 	/**
-	 * Prints all exceptions found that did not occur on the test thread.  This is useful 
+	 * Prints all exceptions found that did not occur on the test thread.  This is useful
 	 * for debugging.
 	 */
 	private void printNonTestThreadExceptions() {
@@ -217,7 +217,7 @@ public class ConcurrentTestExceptionStatement extends Statement {
 
 		StackTraceElement[] trace = testThread.getStackTrace();
 
-		// if we get here, we are one step away from System.exit(1), so do the 
+		// if we get here, we are one step away from System.exit(1), so do the
 		// bad thing and kill the thread
 		testThread.stop();
 		lastTestThread = null; // don't try to join
@@ -231,7 +231,7 @@ public class ConcurrentTestExceptionStatement extends Statement {
 		testThread.interrupt();
 
 		try {
-			// give the test thread a chance to register any exceptions; if we don't wait, we 
+			// give the test thread a chance to register any exceptions; if we don't wait, we
 			// may report exceptions before the test thread is given back control
 			testThread.join(250);
 		}

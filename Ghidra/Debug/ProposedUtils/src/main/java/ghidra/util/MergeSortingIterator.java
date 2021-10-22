@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import generic.util.PeekableIterator;
 
 /**
  * An iterator which merges sorted iterators according to a comparator
- * 
+ *
  * <P>
  * TODO: This may be replaceable with {@link Iterators#mergeSorted(Iterable, Comparator)}. I
  * hesitate, since I benefit from this implementation complying with {@link PeekableIterator}, while
@@ -32,7 +32,7 @@ import generic.util.PeekableIterator;
  * {@link UnionAddressRangeIterator} takes advantage of the {@link PeekableIterator} interface of
  * this implementation. I could use {@link Iterators#peekingIterator(Iterator)}, but this would
  * introduce a wrapper.
- * 
+ *
  * @param <T> the type of elements in each iterator
  */
 public class MergeSortingIterator<T> implements PeekableIterator<T> {
@@ -97,14 +97,14 @@ public class MergeSortingIterator<T> implements PeekableIterator<T> {
 
 	/**
 	 * Construct a merge-sorting iterator which generates labeled values
-	 * 
+	 *
 	 * <p>
 	 * The map of iterators is a map of entries, each giving a label and an iterator to be merged.
 	 * Each iterator must return values as sorted by the given comparator. The entries returned by
 	 * the combined iterator give the values in sorted order, but each has a the key indicating
 	 * which given iterator returned that value. Note that the returned entry may be re-used by the
 	 * underlying implementation, so users needing to keep the entry should create a copy.
-	 * 
+	 *
 	 * @param iterMap a map of labeled iterators
 	 * @param comparator the comparator of values
 	 * @return an iterator which returns labeled values in sorted order

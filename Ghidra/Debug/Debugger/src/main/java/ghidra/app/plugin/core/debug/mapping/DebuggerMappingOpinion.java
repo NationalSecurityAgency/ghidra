@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,14 +26,14 @@ import ghidra.util.classfinder.ExtensionPoint;
 
 /**
  * An opinion governing selection of language and compiler spec when recording a target
- * 
+ *
  * <p>
  * When a target is recorded, the model service collects offers for the target and its environment
  * by querying all opinions discovered in the classpath. See
  * {@link #queryOpinions(TargetObject, boolean)}. If the recording was triggered automatically, the
  * highest-confidence offer is taken, so long as it is not an "override" offer. If triggered
  * manually, all offers are displayed for the user to choose from.
- * 
+ *
  * <p>
  * Override offers have negative confidence, and typically, one is only selected by the user as a
  * last-ditch effort when no opinion exists for the desired target. As such, one is never selected
@@ -48,7 +48,7 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 
 	/**
 	 * Get the endianness from the given environment
-	 * 
+	 *
 	 * @param env the target environment
 	 * @return the endianness
 	 */
@@ -65,10 +65,10 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 
 	/**
 	 * Query all known opinions for recording/tracing a debug session
-	 * 
+	 *
 	 * <p>
 	 * The returned offers are ordered highest-confidence first.
-	 * 
+	 *
 	 * @param target the target to be recorded, usually a process
 	 * @param includeOverrides true to include offers with negative confidence
 	 * @return a future which completes with the set of offers
@@ -95,7 +95,7 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 
 	/**
 	 * Checks if this opinion knows how to handle the given target
-	 * 
+	 *
 	 * @param target the target, usually a process
 	 * @return a future which completes with true if it knows, false if not
 	 */
@@ -118,7 +118,7 @@ public interface DebuggerMappingOpinion extends ExtensionPoint {
 
 	/**
 	 * Produce this opinion's offers for the given environment and target process
-	 * 
+	 *
 	 * @param env the environment associated with the target
 	 * @param process the target process
 	 * @param includeOverrides true to include override offers, i.e., those with negative confidence

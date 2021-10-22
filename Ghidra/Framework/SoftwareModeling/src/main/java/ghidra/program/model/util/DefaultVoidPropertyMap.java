@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,9 @@ import ghidra.util.prop.VoidPropertySet;
  * "void" type, which is a marker for whether a property exists.
  */
 public class DefaultVoidPropertyMap extends DefaultPropertyMap implements VoidPropertyMap {
-	
+
 	private VoidPropertySet propSet;
-	
+
 	/**
 	 * Construct a new VoidPropertyMap
 	 * @param name of property
@@ -34,7 +34,7 @@ public class DefaultVoidPropertyMap extends DefaultPropertyMap implements VoidPr
 		super(new VoidPropertySet(name));
 		propSet = (VoidPropertySet)propertyMgr;
 	}
-	
+
 	/**
 	 * Mark the specified address as having a property
 	 * @param addr address for the property
@@ -42,7 +42,7 @@ public class DefaultVoidPropertyMap extends DefaultPropertyMap implements VoidPr
 	public void add(Address addr) {
 		propSet.put(addrMap.getKey(addr));
 	}
-	
+
 	/**
 	 * @see ghidra.program.model.util.PropertyMap#getObject(ghidra.program.model.address.Address)
 	 */

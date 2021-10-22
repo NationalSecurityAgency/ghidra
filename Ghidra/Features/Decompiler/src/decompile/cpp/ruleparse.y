@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,10 +43,10 @@ extern int ruleparseerror(const char *str);
 %left OP_INT_XOR
 %left OP_INT_AND
 %left OP_INT_EQUAL OP_INT_NOTEQUAL OP_FLOAT_EQUAL OP_FLOAT_NOTEQUAL
-%nonassoc OP_INT_LESS OP_INT_LESSEQUAL OP_INT_SLESS OP_INT_SLESSEQUAL OP_FLOAT_LESS OP_FLOAT_LESSEQUAL 
+%nonassoc OP_INT_LESS OP_INT_LESSEQUAL OP_INT_SLESS OP_INT_SLESSEQUAL OP_FLOAT_LESS OP_FLOAT_LESSEQUAL
 %left OP_INT_LEFT OP_INT_RIGHT OP_INT_SRIGHT
 %left OP_INT_ADD OP_INT_SUB OP_FLOAT_ADD OP_FLOAT_SUB
-%left OP_INT_SDIV OP_INT_SREM OP_FLOAT_MULT OP_FLOAT_DIV OP_INT_MULT OP_INT_DIV OP_INT_REM 
+%left OP_INT_SDIV OP_INT_SREM OP_FLOAT_MULT OP_FLOAT_DIV OP_INT_MULT OP_INT_DIV OP_INT_REM
 %right OP_BOOL_NEGATE OP_INT_NEGATE
 %token OP_INT_ZEXT OP_INT_CARRY
 %token OP_INT_BORROW OP_INT_SEXT OP_INT_SCARRY OP_INT_SBORROW OP_FLOAT_NAN
@@ -73,7 +73,7 @@ extern int ruleparseerror(const char *str);
 
 %%
 
-fullrule: 
+fullrule:
 '{' statementlist actionlist '}' { rulecompile->setFullRule( rulecompile->mergeGroups($2,$3) ); }
 | '{' statementlist '[' megaormid ']' '}' { $2->addConstraint( $4 ); rulecompile->setFullRule( $2 ); }
 ;

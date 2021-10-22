@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 
 	/**
 	 * Constructs a new provider.
-	 * 
+	 *
 	 * @param title the title of the provider
 	 * @param tool the current tool
 	 * @param pluginDescriptions the list of plugins to display in the dialog
@@ -90,7 +90,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 	 * Returns the details panel.
 	 * <p>
 	 * Note: This is primarily for test access
-	 * 
+	 *
 	 * @return the details panel
 	 */
 	PluginDetailsPanel getDetailsPanel() {
@@ -101,7 +101,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 	 * Returns the filter panel.
 	 * <p>
 	 * Note: This is primarily for test access
-	 * 
+	 *
 	 * @return the filter panel
 	 */
 	GTableFilterPanel<PluginDescription> getFilterPanel() {
@@ -112,7 +112,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 	 * Returns the plugin configuration model.
 	 * <p>
 	 * Note: This is primarily for test access
-	 * 
+	 *
 	 * @return the plugin configuration model
 	 */
 	PluginConfigurationModel getModel() {
@@ -237,7 +237,7 @@ public class PluginInstallerDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Renderer for the plugin name column. 
+	 * Renderer for the plugin name column.
 	 */
 	private class NameCellRenderer extends GTableCellRenderer {
 

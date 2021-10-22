@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,10 +64,10 @@ public class BinaryReader {
 	public BinaryReader(ByteProvider provider, boolean isLittleEndian) {
 		this(provider, DataConverter.getInstance(!isLittleEndian), 0);
 	}
-	
+
 	/**
 	 * Creates a BinaryReader instance.
-	 * 
+	 *
 	 * @param provider the ByteProvider to use
 	 * @param converter the {@link DataConverter} to use
 	 * @param initialIndex the initial offset
@@ -81,7 +81,7 @@ public class BinaryReader {
 	/**
 	 * Returns a clone of this reader, with its own independent current position,
 	 * positioned at the new index.
-	 *  
+	 *
 	 * @param newIndex the new index
 	 * @return an independent clone of this reader positioned at the new index
 	 */
@@ -91,7 +91,7 @@ public class BinaryReader {
 
 	/**
 	 * Returns an independent clone of this reader positioned at the same index.
-	 * 
+	 *
 	 * @return a independent clone of this reader positioned at the same index
 	 */
 	@Override
@@ -101,7 +101,7 @@ public class BinaryReader {
 
 	/**
 	 * Returns a BinaryReader that is in BigEndian mode.
-	 * 
+	 *
 	 * @return a new independent BinaryReader, at the same position, in BigEndian mode
 	 */
 	public BinaryReader asBigEndian() {
@@ -110,7 +110,7 @@ public class BinaryReader {
 
 	/**
 	 * Returns a BinaryReader that is in LittleEndian mode.
-	 * 
+	 *
 	 * @return a new independent instance, at the same position, in LittleEndian mode
 	 */
 	public BinaryReader asLittleEndian() {
@@ -128,7 +128,7 @@ public class BinaryReader {
 
 	/**
 	 * Returns true if this reader will extract values in big endian.
-	 * 
+	 *
 	 * @return true is big endian, false is little endian
 	 */
 	public boolean isBigEndian() {
@@ -194,8 +194,8 @@ public class BinaryReader {
 
 	/**
 	 * A convenience method for setting the index using a 32 bit integer.
-	 * 
-	 * @param index new index, treated as a 32 bit unsigned integer 
+	 *
+	 * @param index new index, treated as a 32 bit unsigned integer
 	 */
 	public void setPointerIndex(int index) {
 		this.currentIndex = Integer.toUnsignedLong(index);
@@ -704,12 +704,12 @@ public class BinaryReader {
 
 	/**
 	 * Returns the signed value of the integer (of the specified length) at the specified offset.
-	 * 
-	 * @param index offset the offset from the membuffers origin (the address that it is set at) 
+	 *
+	 * @param index offset the offset from the membuffers origin (the address that it is set at)
 	 * @param len the number of bytes that the integer occupies.  Valid values are 1 (byte), 2 (short),
 	 * 4 (int), 8 (long)
 	 * @return value of requested length, with sign bit extended, in a long
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public long readValue(long index, int len) throws IOException {
 		byte[] bytes = provider.readBytes(index, len);
@@ -718,12 +718,12 @@ public class BinaryReader {
 
 	/**
 	 * Returns the unsigned value of the integer (of the specified length) at the specified offset.
-	 * 
-	 * @param index offset the offset from the membuffers origin (the address that it is set at) 
+	 *
+	 * @param index offset the offset from the membuffers origin (the address that it is set at)
 	 * @param len the number of bytes that the integer occupies.  Valid values are 1 (byte), 2 (short),
 	 * 4 (int), 8 (long)
 	 * @return unsigned value of requested length, in a long
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public long readUnsignedValue(long index, int len) throws IOException {
 		byte[] bytes = provider.readBytes(index, len);

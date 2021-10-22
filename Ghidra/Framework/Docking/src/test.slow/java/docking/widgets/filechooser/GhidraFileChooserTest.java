@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -242,7 +242,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		//  3) Double-click on the root drive.
 		//  3) Boom.
 
-		// hack: the focus listeners can trigger an editCancelled(), which is a problem in 
+		// hack: the focus listeners can trigger an editCancelled(), which is a problem in
 		//       parallel mode
 		DirectoryList dirlist = getListView();
 		removeFocusListeners(dirlist);
@@ -276,7 +276,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		DirectoryList dirlist = getListView();
 
-		// hack: the focus listeners can trigger an editCancelled(), which is a problem in 
+		// hack: the focus listeners can trigger an editCancelled(), which is a problem in
 		//       parallel mode
 		removeFocusListeners(dirlist);
 
@@ -337,7 +337,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		String name = "Foo_" + Math.random();
 		setText(editorField, name);
 
-		// cannot use triggerEnter() here because that uses the actionPerformed() of the 
+		// cannot use triggerEnter() here because that uses the actionPerformed() of the
 		// text field and our editor uses a key listener
 		triggerEnter(editorField);
 		waitForSwing();
@@ -699,7 +699,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		setMode(FILES_AND_DIRECTORIES);
 		DirectoryList dirlist = getListView();
 
-		// hack: the focus listeners can trigger an editCancelled(), which is a problem in 
+		// hack: the focus listeners can trigger an editCancelled(), which is a problem in
 		//       parallel mode
 		removeFocusListeners(dirlist);
 
@@ -865,8 +865,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	@Test
 	public void testDirectoryInFileOnlyMode_Selection_NoTextFieldText() throws Exception {
 
-		/* 
-		 * test when a user single clicks a directory name and clicks the action button 
+		/*
+		 * test when a user single clicks a directory name and clicks the action button
 		 * when the filename text field is empty
 		 */
 
@@ -893,8 +893,8 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	@Test
 	public void testDirectoryInFileOnlyMode_Selection_WithTextFieldText() throws Exception {
 
-		/* 
-		 * test when a user single clicks a directory name and clicks the action button 
+		/*
+		 * test when a user single clicks a directory name and clicks the action button
 		 * when the filename text field has a value
 		 */
 
@@ -1352,7 +1352,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	}
 
 	/*
-	 * Tests GhidraFileChooser's Desktop button to ensure it changes to the user's native 
+	 * Tests GhidraFileChooser's Desktop button to ensure it changes to the user's native
 	 * desktop directory.  This test is skipped if there is no native desktop directory.
 	 */
 	@Test
@@ -1373,13 +1373,13 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	}
 
 	/*
-	 * Tests GhidraFileChooser's Desktop button to ensure it is disabled when there is no 
+	 * Tests GhidraFileChooser's Desktop button to ensure it is disabled when there is no
 	 * user Desktop directory
 	 */
 	@Test
 	public void testMissingDesktop() throws Exception {
 
-		// close existing chooser window so we can make a new special one 
+		// close existing chooser window so we can make a new special one
 		runSwing(() -> chooser.close());
 		waitForSwing();
 
@@ -1406,7 +1406,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	}
 
 	/*
-	 * Tests GhidraFileChooser's Desktop button to ensure it is works by creating a 
+	 * Tests GhidraFileChooser's Desktop button to ensure it is works by creating a
 	 * fake user desktop directory.
 	 */
 	@Test
@@ -1622,7 +1622,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 	@Test
 	public void testFilenameAutoLookup_InTable() throws Exception {
 
-		// Note: the table auto lookup is tested elsewhere.  This test is just making sure that 
+		// Note: the table auto lookup is tested elsewhere.  This test is just making sure that
 		//       the feature responds within the file chooser.
 
 		// dir file names start with 'a_...', 'b_...', etc
@@ -1900,9 +1900,9 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 		File file = files.files.get(0);
 		selectFiles(file);
 
-		//		
+		//
 		// A single file selection will set the text field text
-		// 
+		//
 		waitForChooser();
 		String filenameFieldText = getFilenameFieldText();
 		assertEquals("Filename text field not updated upon file selection", file.getName(),
@@ -1910,7 +1910,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		//
 		// A multi-selection will clear the text field text
-		// 
+		//
 		selectFiles(files.files);
 		waitForChooser();
 		filenameFieldText = getFilenameFieldText();
@@ -1919,7 +1919,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 		//
 		// Clear the multi-selection; a single file selection will set the text field text
-		// 
+		//
 		selectFiles(file);
 		waitForChooser();
 		filenameFieldText = getFilenameFieldText();
@@ -2276,7 +2276,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 			// Batch mode has focus issue when running in parallel.  In this case, update
 			// the drop-down field to disable closing the popup window during focus changes.  By
 			// only doing this in batch mode, the test can still be run by a developer with
-			// the normal behavior.		
+			// the normal behavior.
 			return;
 		}
 
@@ -2817,7 +2817,7 @@ public class GhidraFileChooserTest extends AbstractDockingTest {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	/** Simple container class for newly created dirs and files */
 	private class TestFiles {

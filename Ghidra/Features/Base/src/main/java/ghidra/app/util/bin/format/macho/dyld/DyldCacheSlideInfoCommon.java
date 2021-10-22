@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,8 @@ import ghidra.util.exception.DuplicateNameException;
  * Class for representing the common components of the various dyld_cache_slide_info structures.
  * The intent is for the the full dyld_cache_slide_info structures to extend this and add their
  * specific parts.
- * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a>
  */
 public class DyldCacheSlideInfoCommon implements StructConverter {
 
@@ -36,7 +36,7 @@ public class DyldCacheSlideInfoCommon implements StructConverter {
 
 	/**
 	 * Create a new {@link DyldCacheSlideInfoCommon}.
-	 * 
+	 *
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info
 	 * @throws IOException if there was an IO-related problem creating the DYLD slide info
 	 */
@@ -46,7 +46,7 @@ public class DyldCacheSlideInfoCommon implements StructConverter {
 
 	/**
 	 * Gets the version of the DYLD slide info.
-	 * 
+	 *
 	 * @return The version of the DYLD slide info.
 	 */
 	public int getVersion() {

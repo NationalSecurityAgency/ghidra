@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import java.io.*;
 import java.util.*;
 
 /**
- * A class to represent the Object Module Format (OMF) Source Module File data structure. 
+ * A class to represent the Object Module Format (OMF) Source Module File data structure.
  * <br>
  * This class describes the code segments that receive code from a source file.
  * <br>
@@ -94,7 +94,7 @@ public class OMFSrcModuleFile {
 			//OMFSrcModuleLine line = new OMFSrcModuleLine(reader, index);
 			OMFSrcModuleLine line = OMFSrcModuleLine.createOMFSrcModuleLine(reader, ptr+baseSrcLn[i]);
 			moduleLineList.add(line);
-			index+=line.getByteCount();	
+			index+=line.getByteCount();
 		}
 	}
 
@@ -109,7 +109,7 @@ public class OMFSrcModuleFile {
 	}
 
 	/**
-	 * Returns an array of offsets for the line or address mapping for each segment 
+	 * Returns an array of offsets for the line or address mapping for each segment
 	 * that receives code from the source file.
 	 * @return an array of offsets for the line or address mapping for each segment
 	 */

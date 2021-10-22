@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -108,7 +108,7 @@ public class DataTypeArchiveUtility {
 
 	/**
 	 * get a list of known applicable .GDT archives for the given program.
-	 * 
+	 *
 	 * @param program - program to lookup archives for
 	 * @return list of archives that could apply to this program
 	 */
@@ -153,9 +153,9 @@ public class DataTypeArchiveUtility {
 	 *   The .debug$S is a non-standard debug section (which usually has the string "Microsoft" in it)
 	 * These particular sections seem to be universally present over many versions of Visual Studio
 	 * GNU bfd recognizes these sections as Microsoft Visual Studio specific
-	 * 
+	 *
 	 * @param program to check for the magic named sections
-	 * 
+	 *
 	 * @return true is (either section is present and) we think this is Visual Studio
 	 */
 	private static boolean isVisualStudio(Program program) {

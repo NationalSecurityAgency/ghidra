@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,17 +24,17 @@ import java.util.NoSuchElementException;
  * Access to related resources, such as parameters and change data, is also facilitated.
  */
 public interface BufferFile {
-	
+
 	/**
-	 * Returns true if this file may not be modified 
-	 * via the buffer put method.  
+	 * Returns true if this file may not be modified
+	 * via the buffer put method.
 	 * A read-only file may be considered "updateable" if the canSave
 	 * method returns true.  The term "updateable" means that a Save file
 	 * can be obtained via the getSaveFile method.
 	 * @throws IOException if an I/O error occurs
 	 */
 	boolean isReadOnly() throws IOException;
-	
+
 	/**
 	 * If file is open read-write, the modified contents are flushed
 	 * and the file re-opened as read-only.  This is also used to commit
@@ -43,7 +43,7 @@ public interface BufferFile {
 	 * @throws IOException if an I/O error occurs
 	 */
 	boolean setReadOnly() throws IOException;
-	
+
 	/**
 	 * Get a the stored value for a named parameter.
 	 * @param name parameter name
@@ -52,7 +52,7 @@ public interface BufferFile {
 	 * @throws IOException
 	 */
 	int getParameter(String name) throws NoSuchElementException, IOException;
-	
+
 	/**
 	 * Set the integer value for a named parameter.
 	 * @param name parameter name
@@ -60,21 +60,21 @@ public interface BufferFile {
 	 * @throws IOException
 	 */
 	public void setParameter(String name, int value) throws IOException;
-	
+
 	/**
 	 * Deletes all parameters
 	 * @throws IOException
 	 */
 	public void clearParameters() throws IOException;
-	
+
 	/**
 	 * Returns a list of all parameter names.
 	 * @throws IOException
 	 */
 	String[] getParameterNames() throws IOException;
-	
+
 	/**
-	 * Return the actual size of a user data buffer.  This value should be 
+	 * Return the actual size of a user data buffer.  This value should be
 	 * used when constructing DataBuffer objects.
 	 * @return DataBuffer data size as a number of bytes
 	 * @throws IOException if an I/O error occurs
@@ -90,7 +90,7 @@ public interface BufferFile {
 	 * @throws IOException
 	 */
 	int getIndexCount() throws IOException;
-	
+
 	/**
 	 * Returns the list of free indexes sorted by value.
 	 * The management of the free-index-list is implementation
@@ -98,7 +98,7 @@ public interface BufferFile {
 	 * @throws IOException
 	 */
 	int[] getFreeIndexes() throws IOException;
-	
+
 	/**
 	 * Sets the list of free buffer indexes.
 	 * The management of the free-index-list is implementation
@@ -107,7 +107,7 @@ public interface BufferFile {
 	 * @throws IOException
 	 */
 	void setFreeIndexes(int[] indexes) throws IOException;
-	
+
 	/**
 	 * Close the buffer file.  If the file was open for write access,
 	 * all buffers are flushed and the file header updated.  Once closed,
@@ -123,27 +123,27 @@ public interface BufferFile {
 	 * @throws IOException if an I/O error occurs.
 	 */
 	boolean delete() throws IOException;
-	
+
 	/**
 	 * Dispose of this buffer file object.  If file is not readOnly
 	 * and has not been closed, an attempt will be made to delete the
 	 * associated file(s).  Once disposed, it may no longer be used.
 	 */
 	void dispose();
-	
+
 	/**
 	 * Get the specified buffer.
-	 * DataBuffer data and flags are read from the file at index and 
+	 * DataBuffer data and flags are read from the file at index and
 	 * stored within the supplied DataBuffer object.  If the read buffer
 	 * is empty, the DataBuffer's data field will remain unchanged (which could be null).
 	 * @param buf a buffer whose data array will be filled-in or replaced.
 	 * @param index index of buffer to be read.  First user buffer
 	 * is at index 0.
-	 * @throws EOFException if the requested buffer index is greater 
+	 * @throws EOFException if the requested buffer index is greater
 	 * than the number of available buffers of the end-of-file was
 	 * encountered while reading the buffer.
 	 * @throws IOException if an I/O error occurs
-	 */ 
+	 */
 	DataBuffer get(DataBuffer buf, int index) throws IOException;
 
 	/**
@@ -153,5 +153,5 @@ public interface BufferFile {
 	 * @throws IOException thrown if an IO error occurs
 	 */
 	void put(DataBuffer buf, int index) throws IOException;
-	
+
 }

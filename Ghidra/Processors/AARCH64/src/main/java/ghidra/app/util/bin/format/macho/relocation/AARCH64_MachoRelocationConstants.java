@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,10 +15,10 @@
  */
 package ghidra.app.util.bin.format.macho.relocation;
 
-/** 
+/**
  * {@link AARCH64_MachoRelocationHandler} constants
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/arm64/reloc.h.auto.html">mach-o/arm64/reloc.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/arm64/reloc.h.auto.html">mach-o/arm64/reloc.h</a>
  */
 public class AARCH64_MachoRelocationConstants {
 
@@ -76,7 +76,7 @@ public class AARCH64_MachoRelocationConstants {
 	 * Must be followed by PAGE21 or PAGEOFF12
 	 */
 	public final static int ARM64_RELOC_ADDEND = 10;
-	
+
 	/**
 	 * Like ARM64_RELOC_UNSIGNED, but addend in lower 32-bits
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,7 @@ bool DisjointPattern::identical(const DisjointPattern *op2) const
 
 {				// Return true if patterns match exactly
   PatternBlock *a,*b;
-  
+
   a = getBlock(false);
   b = op2->getBlock(false);
   if (b != (PatternBlock *)0) {	// a must match existing block
@@ -159,7 +159,7 @@ void PatternBlock::normalize(void)
     return;
   }
   vector<uintm>::iterator iter1,iter2;
-  
+
   iter1 = maskvec.begin();	// Cut zeros from beginning of mask
   iter2 = valvec.begin();
   while((iter1 != maskvec.end())&&((*iter1)==0)) {
@@ -193,7 +193,7 @@ void PatternBlock::normalize(void)
       }
       valvec.back() <<= suboff*8;
     }
-    
+
     iter1 = maskvec.end();	// Cut zeros from end of mask
     iter2 = valvec.end();
     while(iter1 != maskvec.begin()) {
@@ -402,7 +402,7 @@ uintm PatternBlock::getMask(int4 startbit,int4 size) const
 
 {
   startbit -= 8*offset;
-  // Note the division and remainder here is unsigned.  Then it is recast to signed. 
+  // Note the division and remainder here is unsigned.  Then it is recast to signed.
   // If startbit is negative, then wordnum1 is either negative or very big,
   // if (unsigned size is same as sizeof int)
   // In either case, shift should come out between 0 and 8*sizeof(uintm)-1
@@ -426,7 +426,7 @@ uintm PatternBlock::getMask(int4 startbit,int4 size) const
     res |= (tmp>>(8*sizeof(uintm)-shift));
   }
   res >>= (8*sizeof(uintm) - size);
-  
+
   return res;
 }
 
@@ -453,7 +453,7 @@ uintm PatternBlock::getValue(int4 startbit,int4 size) const
     res |= (tmp>>(8*sizeof(uintm)-shift));
   }
   res >>= (8*sizeof(uintm) - size);
-  
+
   return res;
 }
 
@@ -584,7 +584,7 @@ Pattern *InstructionPattern::commonSubPattern(const Pattern *b,int4 sa) const
     return res;
   }
   const InstructionPattern *b4 = (const InstructionPattern *)b;
-  
+
   PatternBlock *respattern;
   if (sa < 0) {
     PatternBlock *a = maskvalue->clone();
@@ -722,7 +722,7 @@ Pattern *CombinePattern::doAnd(const Pattern *b,int4 sa) const
 
 {
   CombinePattern *tmp;
-  
+
   if (b->numDisjoint() != 0)
     return b->doAnd(this,-sa);
 
@@ -985,7 +985,7 @@ Pattern *OrPattern::simplifyClone(void) const
   for(iter=orlist.begin();iter!=orlist.end();++iter) // Look for alwaysFalse
     if (!(*iter)->alwaysFalse())
       newlist.push_back((DisjointPattern *)(*iter)->simplifyClone());
-  
+
   if (newlist.empty())
     return new InstructionPattern(false);
   else if (newlist.size() == 1)

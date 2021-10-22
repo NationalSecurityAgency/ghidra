@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.search.memory.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Analyzer that finds Windows PE Visual Studio exception handling data structures and creates data using the 
+ * Analyzer that finds Windows PE Visual Studio exception handling data structures and creates data using the
  * exception handling data types. Data flows can be followed to find other data and functions. If
  * the data appears valid, labels, references, and functions can be created based on the data.
  */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A location descriptor that should be extended by location descriptor implementations that 
+ * A location descriptor that should be extended by location descriptor implementations that
  * are based upon data types.
  */
 abstract class DataTypeLocationDescriptor extends LocationDescriptor {
@@ -79,7 +79,7 @@ abstract class DataTypeLocationDescriptor extends LocationDescriptor {
 	/** Returns the name of the data type, for example, 'Foo' or 'Foo.bar.baz' */
 	protected abstract String getDataTypeName();
 
-	/** 
+	/**
 	 * The base data type that this location descriptor describes (this may be the same as the
 	 * original data type.
 	 */
@@ -266,8 +266,8 @@ abstract class DataTypeLocationDescriptor extends LocationDescriptor {
 		}
 		// check for pointer names
 		else if (label.endsWith("*") && label.startsWith(paramName)) {
-			// see if we need to chop off some '*'s, as we may have searched for a pointer to a 
-			// pointer and have found a match against a simple pointer and thus the display may 
+			// see if we need to chop off some '*'s, as we may have searched for a pointer to a
+			// pointer and have found a match against a simple pointer and thus the display may
 			// not match our label
 			if (paramParts.length == 1) {
 				return paramName; // not a full declaration, just the name

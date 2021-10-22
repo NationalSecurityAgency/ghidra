@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -266,7 +266,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		}
 
 		// The existing highlights are based on the previously generated tokens, which no longer
-		// exist.  Use those tokens to highlight the current tokens, which are conceptually the 
+		// exist.  Use those tokens to highlight the current tokens, which are conceptually the
 		// same tokens.
 		Set<HighlightToken> oldHighlights =
 			highlightController.getSecondaryHighlightsByFunction(function);
@@ -332,9 +332,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		// to go to an actual token, since multiple tokens can share an address, we woudln't know
 		// which token is best.)
 		//
-		// Note:  at the time of this writing, not all fields have an address value.  For 
+		// Note:  at the time of this writing, not all fields have an address value.  For
 		//        example, the ClangFuncNameToken, does not have an address.  (It seems that most
-		//        of the tokens in the function signature do not have an address, which can 
+		//        of the tokens in the function signature do not have an address, which can
 		//        probably be fixed.)   So, to deal with this oddity, we will have some special
 		//        case code below.
 		//
@@ -389,7 +389,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	/**
 	 * Put cursor on first token in the list
-	 * @param tokens the tokens to search for 
+	 * @param tokens the tokens to search for
 	 */
 	private void goToBeginningOfLine(List<ClangToken> tokens) {
 		if (tokens.isEmpty()) {
@@ -450,10 +450,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	/**
-	 * Translate Ghidra address to decompiler address. Functions within an overlay space are 
-	 * decompiled in their physical space, therefore decompiler results refer to the 
+	 * Translate Ghidra address to decompiler address. Functions within an overlay space are
+	 * decompiled in their physical space, therefore decompiler results refer to the
 	 * functions underlying .physical space
-	 * 
+	 *
 	 * @param addr the Ghidra address
 	 * @return the decompiler address
 	 */
@@ -470,10 +470,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	/**
-	 * Translate Ghidra address set to decompiler address set. Functions within an overlay 
+	 * Translate Ghidra address set to decompiler address set. Functions within an overlay
 	 * space are decompiled in their physical space, therefore decompiler results
 	 * refer to the functions underlying .physical space
-	 * 
+	 *
 	 * @param set the Ghidra addresses
 	 * @return the decompiler addresses
 	 */
@@ -542,7 +542,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	/**
-	 * Passing false signals to disallow navigating to new functions from within the panel by 
+	 * Passing false signals to disallow navigating to new functions from within the panel by
 	 * using the mouse.
 	 * @param enabled false disabled mouse function navigation
 	 */
@@ -957,7 +957,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	private void doFindTokensByName(List<ClangToken> tokens, ClangTokenGroup group, String name) {
 
-		// TODO is it possible that two or more different variable tokens share the same name? 
+		// TODO is it possible that two or more different variable tokens share the same name?
 		for (int i = 0; i < group.numChildren(); ++i) {
 			ClangNode child = group.Child(i);
 			if (child instanceof ClangTokenGroup) {
@@ -1025,7 +1025,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	 * This is function is used to alert the panel that a token was renamed.
 	 * If the token that is being renamed had a secondary highlight, we must re-apply the highlight
 	 * to the new token.
-	 * 
+	 *
 	 * @param token the token being renamed
 	 * @param newName the new name of the token
 	 */
@@ -1053,7 +1053,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class SearchHighlightFactory implements HighlightFactory {
 
@@ -1138,10 +1138,10 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		/**
 		 * Moves this field panel to the given line and column.  Further, this navigation will
 		 * fire an event to the rest of the tool.   (This is in contrast to a field panel
-		 * <code>goTo</code>, which we use to simply move the cursor, but not trigger an 
-		 * tool-level navigation event.) 
-		 * 
-		 * @param lineNumber the line number 
+		 * <code>goTo</code>, which we use to simply move the cursor, but not trigger an
+		 * tool-level navigation event.)
+		 *
+		 * @param lineNumber the line number
 		 * @param column the column within the line
 		 */
 		void navigateTo(int lineNumber, int column) {
@@ -1171,7 +1171,7 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		void doUpdate() {
 
 			// Note: don't send this buffered cursor change highlight if some other highlight
-			//       has been applied.  Otherwise, this highlight would overwrite the last 
+			//       has been applied.  Otherwise, this highlight would overwrite the last
 			//       applied highlight.
 			long lastUpdateId = highlightController.getUpdateId();
 			if (updateId == lastUpdateId) {

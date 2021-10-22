@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,7 +76,7 @@ public interface Tool extends ServiceProvider {
 	/**
 	 * Removes the given ComponentProvider from the tool.  When a provider has been removed
 	 * from the tool it is considered disposed and should not be reused.
-	 * 
+	 *
 	 * @param componentProvider the provider to remove from the tool
 	 */
 	public void removeComponentProvider(ComponentProvider componentProvider);
@@ -163,22 +163,22 @@ public interface Tool extends ServiceProvider {
 
 	/**
 	 * Return a set of all actions in the tool.
-	 * 
+	 *
 	 * <p>Note: the result may contain conceptually duplicate actions, which is when multiple
 	 * actions exist that share the same full name (the full name is the action name with the
 	 * owner name, such as "My Action (MyPlugin)".
-	 * 
+	 *
 	 * @return set of all actions
 	 */
 	public Set<DockingActionIf> getAllActions();
 
 	/**
 	 * Returns all actions for the given owner
-	 * 
+	 *
 	 * <p>Note: the result may contain conceptually duplicate actions, which is when multiple
 	 * actions exist that share the same full name (the full name is the action name with the
 	 * owner name, such as "My Action (MyPlugin)".
-	 * 
+	 *
 	 * @param owner the action owner's name
 	 * @return the actions
 	 */
@@ -241,7 +241,7 @@ public interface Tool extends ServiceProvider {
 	/**
 	 * Signals to the tool that the provider's context has changed.  This lets toolbar and
 	 * menu actions update enablement based on current context.
-	 * 
+	 *
 	 * <p>Pass <code>null</code> to signal that the entire tool's context has changed
 	 *
 	 * @param provider the provider whose context changed; null to signal the tool's context
@@ -288,11 +288,11 @@ public interface Tool extends ServiceProvider {
 
 	/**
 	 * Returns the class that manages actions for the tool.
-	 * 
+	 *
 	 * <p>Most clients will not need to use this methods.  Instead, actions should be added to
 	 * the tool via {@link #addAction(DockingActionIf)} and
 	 * {@link #addLocalAction(ComponentProvider, DockingActionIf)}.
-	 * 
+	 *
 	 * @return the action manager
 	 */
 	public DockingToolActions getToolActions();

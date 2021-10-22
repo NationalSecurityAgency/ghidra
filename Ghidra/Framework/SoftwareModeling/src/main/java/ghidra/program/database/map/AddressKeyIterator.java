@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,7 +113,7 @@ public class AddressKeyIterator implements DBLongIterator {
 	 * Constructs  new AddressKeyIterator to iterate over an address set.
 	 * @param table the database table key by addresses
 	 * @param addrMap the address map
-	 * @param absolute if true, only absolute memory address encodings are considered, otherwise 
+	 * @param absolute if true, only absolute memory address encodings are considered, otherwise
 	 * only standard/relocatable address encodings are considered.
 	 * @param set the address set to iterator over or null for all addresses.
 	 * @param startAddr the address at which to position the iterator, can be null. The exact

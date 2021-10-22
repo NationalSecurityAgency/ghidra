@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ public class FunctionNameFieldLocation extends FunctionSignatureFieldLocation {
 
 	/**
 	 * Construct a new FunctionNameFieldLocation object.
-	 * 
+	 *
 	 * @param program the program of the location
 	 * @param locationAddr the address of the listing location (i.e., referent code unit)
 	 * @param functionAddr the function address
@@ -45,7 +45,7 @@ public class FunctionNameFieldLocation extends FunctionSignatureFieldLocation {
 
 	/**
 	 * Construct a new FunctionNameFieldLocation object.
-	 * 
+	 *
 	 * @param program the program of the location
 	 * @param functionAddr the function address
 	 * @param col the position within the function signature string for this location.

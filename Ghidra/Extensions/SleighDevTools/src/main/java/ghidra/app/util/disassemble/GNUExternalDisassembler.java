@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -212,7 +212,7 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 				}
 				Element contextRegisterElement = rootElem.getChild("context_register");
 				if (contextRegisterElement == null) {
-					//no context_register element found in the xml file 
+					//no context_register element found in the xml file
 					//this is not necessarily an error - might only be a global optstring
 					//global optstring has already been parsed, so we're done
 					if (globalElement != null) {
@@ -354,7 +354,7 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 
 	/**
 	 * Get detailed instruction list for a block of instructions.
-	 * 
+	 *
 	 * @param lang
 	 *            processor language (corresponding LanguageID must be defined
 	 *            within LanguageMap.txt)
@@ -756,7 +756,7 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 
 	/**
 	 * Process all language maps defined by any module.  Any alternate external disassembler
-	 * executable will be looked for within the os directory of the contributing module or 
+	 * executable will be looked for within the os directory of the contributing module or
 	 * within the gdis module
 	 * @throws Exception
 	 */
@@ -791,8 +791,8 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 
 					//System.out.println("found: " + parts[0] + " . " + parts[1]);
 
-					// TODO: should probably store exe module/name in map and defer search 
-					// until GdisConfig is created.  This will allow us to complain about a 
+					// TODO: should probably store exe module/name in map and defer search
+					// until GdisConfig is created.  This will allow us to complain about a
 					// missing exe when it is needed/used.
 
 					String gdisExe = parts[1];

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,9 @@ import ghidra.server.stream.BlockStreamServer;
 import ghidra.server.stream.RemoteInputBlockStreamHandle;
 
 /**
- * <code>RemoteManagedBufferFileImpl</code> provides a Remote wrapper for a managed 
- * (i.e., version controlled) buffer file enabling it to be passed or returned by 
- * other remote methods.  At the time of construction, the new instance is exported 
+ * <code>RemoteManagedBufferFileImpl</code> provides a Remote wrapper for a managed
+ * (i.e., version controlled) buffer file enabling it to be passed or returned by
+ * other remote methods.  At the time of construction, the new instance is exported
  * for remote access.
  */
 public class RemoteManagedBufferFileImpl extends RemoteBufferFileImpl

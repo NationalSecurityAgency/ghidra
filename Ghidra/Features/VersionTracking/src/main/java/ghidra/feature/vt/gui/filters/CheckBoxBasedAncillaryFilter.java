@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.util.layout.VerticalLayout;
 /**
  * A basic class to extract out code I was repeating over and over again.  This class creates
  * a component that contains series of check boxes and can answer questions about filtering.
- * 
+ *
  * @param <T> the type of item being filtered
  */
 public abstract class CheckBoxBasedAncillaryFilter<T> extends AncillaryFilter<T> {
@@ -238,11 +238,11 @@ public abstract class CheckBoxBasedAncillaryFilter<T> extends AncillaryFilter<T>
 		Set<String> names = getEnabledFilterNames();
 		Set<String> otherNames = otherCheckboxFilter.getEnabledFilterNames();
 
-		// 
+		//
 		// This filter is a collection of 'things', that are allowed to pass the filter.   We are
-		// only a sub-filter if the other filter has all of our 'things'.  Suppose our filter 
-		// consists of: 'cat', 'dog'.  We would then be a sub-filter if the other filter's set 
-		// consists of: 'cat', 'dog', and 'mouse', since our items will be in the results of 
+		// only a sub-filter if the other filter has all of our 'things'.  Suppose our filter
+		// consists of: 'cat', 'dog'.  We would then be a sub-filter if the other filter's set
+		// consists of: 'cat', 'dog', and 'mouse', since our items will be in the results of
 		// that filter.
 		//
 		if (otherNames.containsAll(names)) {

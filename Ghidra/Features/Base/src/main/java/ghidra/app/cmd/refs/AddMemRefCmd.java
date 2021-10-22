@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,22 +40,22 @@ public class AddMemRefCmd implements Command {
 	 * @param toAddr address of the location being referenced.
 	 * @param source the source of the reference
 	 * @param opIndex the operand index in the code unit where the reference occurs
-	 * @param setPrimary true if this reference should be primary. 
+	 * @param setPrimary true if this reference should be primary.
      */
     public AddMemRefCmd(Address fromAddr, Address toAddr,
     		SourceType source, int opIndex, boolean setPrimary) {
     	this(fromAddr, toAddr, null, source, opIndex, setPrimary);
     }
-    
+
     /**
      * Command constructor for adding a memory reference
 	 * @param fromAddr address of the codeunit where the reference occurs
 	 * @param toAddr address of the location being referenced.
 	 * @param refType reference type - how the location is being referenced.
 	 * @param source the source of the reference
-	 * @param opIndex the operand index in the code unit where the reference occurs 
+	 * @param opIndex the operand index in the code unit where the reference occurs
      */
-    public AddMemRefCmd(Address fromAddr, Address toAddr, RefType refType, 
+    public AddMemRefCmd(Address fromAddr, Address toAddr, RefType refType,
 			SourceType source, int opIndex) {
     	this(fromAddr, toAddr, refType, source, opIndex, false);
     }
@@ -67,9 +67,9 @@ public class AddMemRefCmd implements Command {
 	 * @param refType reference type - how the location is being referenced.
 	 * @param source the source of the reference
 	 * @param opIndex the operand index in the code unit where the reference occurs
-	 * @param setPrimary set the newly added reference primary 
+	 * @param setPrimary set the newly added reference primary
      */
-    public AddMemRefCmd(Address fromAddr, Address toAddr,  RefType refType, 
+    public AddMemRefCmd(Address fromAddr, Address toAddr,  RefType refType,
 			SourceType source, int opIndex, boolean setPrimary) {
     	this.fromAddr    = fromAddr;
     	this.toAddr      = toAddr;
@@ -78,21 +78,21 @@ public class AddMemRefCmd implements Command {
     	this.opIndex     = opIndex;
     	this.setPrimary  = setPrimary;
     }
-    
+
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
     public boolean applyTo(DomainObject obj) {
     	Program p = (Program)obj;
-    	
+
     	if (refType == null) {
     		CodeUnit cu = p.getListing().getCodeUnitAt(fromAddr);
     		if (cu != null) {
     			refType = RefTypeFactory.getDefaultMemoryRefType(cu, opIndex, toAddr, false);
     		}
     	}
-    	
+
     	ReferenceManager refMgr = p.getReferenceManager();
 		Reference ref = refMgr.addMemoryReference(fromAddr, toAddr, refType, source, opIndex);
 		if (setPrimary) {
@@ -100,7 +100,7 @@ public class AddMemRefCmd implements Command {
 		}
 		return true;
     }
- 
+
 
     /**
      * @see ghidra.framework.cmd.Command#getStatusMsg()

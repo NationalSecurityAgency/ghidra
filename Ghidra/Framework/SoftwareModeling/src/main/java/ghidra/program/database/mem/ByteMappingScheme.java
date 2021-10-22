@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,8 @@ import ghidra.program.model.mem.*;
  */
 public class ByteMappingScheme {
 
-	// Repeating byte mapping pattern defined by number of source bytes mapped (mappedByteCount) followed 
-	// by number of non-mapped source bytes (nonMappedByteCount).  The sum of these two values is 
+	// Repeating byte mapping pattern defined by number of source bytes mapped (mappedByteCount) followed
+	// by number of non-mapped source bytes (nonMappedByteCount).  The sum of these two values is
 	// mappedSourceByteCount.  The first byte of this block must correspond to the first mapped
 	// byte of this mapping sequence.
 	private final int mappedByteCount;
@@ -57,7 +57,7 @@ public class ByteMappingScheme {
 
 	/**
 	 * Construct byte mapping scheme specified as a ratio of mapped bytes to source bytes.
-	 * @param mappedByteCount number of mapped bytes per mappedSourcebyteCount (1..127).  This 
+	 * @param mappedByteCount number of mapped bytes per mappedSourcebyteCount (1..127).  This
 	 * value must be less-than or equal to schemeSrcByteCount.
 	 * @param mappedSourceByteCount number of source bytes for mapping ratio (1..127)
 	 * @throws IllegalArgumentException if invalid mapping scheme specified
@@ -91,7 +91,7 @@ public class ByteMappingScheme {
 	}
 
 	/**
-	 * Determine this scheme corresponds to a 1:1 byte mapping 
+	 * Determine this scheme corresponds to a 1:1 byte mapping
 	 * @return true if 1:1 mapping else false
 	 */
 	public boolean isOneToOneMapping() {
@@ -232,7 +232,7 @@ public class ByteMappingScheme {
 	}
 
 	/**
-	 * Write an array of bytes to memory utilizing this mapping scheme.  
+	 * Write an array of bytes to memory utilizing this mapping scheme.
 	 * @param memory program memory
 	 * @param mappedSourceBaseAddress base source memory address for byte-mapped subblock
 	 * @param offsetInSubBlock byte offset from start of subblock where writing should begin
@@ -271,7 +271,7 @@ public class ByteMappingScheme {
 
 	/**
 	 * Validate mapping scheme.  This scheme is specified as a ratio of mapped bytes to source bytes.
-	 * @param schemeDestByteCount number of mapped bytes per mappedSourcebyteCount (1..127).  This 
+	 * @param schemeDestByteCount number of mapped bytes per mappedSourcebyteCount (1..127).  This
 	 * value must be less-than or equal to schemeSrcByteCount.
 	 * @param schemeSrcByteCount number of source bytes for mapping ratio (1..127)
 	 * @throws IllegalArgumentException if invalid mapping scheme specified
@@ -286,10 +286,10 @@ public class ByteMappingScheme {
 	}
 
 	/**
-	 * Get encoded mapping scheme as a single value for storage purposes.  This scheme value 
-	 * identifies the ratio of mapped bytes to source bytes.  Value is encoded as two 7-bit 
+	 * Get encoded mapping scheme as a single value for storage purposes.  This scheme value
+	 * identifies the ratio of mapped bytes to source bytes.  Value is encoded as two 7-bit
 	 * values corresponding to the destination and source byte counts.
-	 * @param schemeDestByteCount number of mapped bytes per mappedSourcebyteCount (1..127).  This 
+	 * @param schemeDestByteCount number of mapped bytes per mappedSourcebyteCount (1..127).  This
 	 * value must be less-than or equal to schemeSrcByteCount.
 	 * @param schemeSrcByteCount number of source bytes for mapping ratio (1..127)
 	 * @return mapping scheme value

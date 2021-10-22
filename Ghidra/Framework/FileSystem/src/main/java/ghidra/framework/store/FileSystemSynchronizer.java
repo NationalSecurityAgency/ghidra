@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,11 +34,11 @@ public class FileSystemSynchronizer {
 	}
 
 	/**
-	 * Returns true the underlying file system is going through a long-running synchronization 
+	 * Returns true the underlying file system is going through a long-running synchronization
 	 * operation while holding the {@code filesystem} lock.   Calling this method allows clients
 	 * in the Swing thread to avoid  calling methods that require a file system lock, which would
 	 * cause the UI to lock during the synchronizing operation.
-	 * 
+	 *
 	 * @return true if synchronizing
 	 */
 	public static boolean isSynchronizing() {

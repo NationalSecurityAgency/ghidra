@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,13 +37,13 @@ import ghidra.util.datastruct.WeakDataStructureFactory;
 import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.NotFoundException;
 
-/** 
+/**
  * Provides a service for tracking the selected basic/subroutine block models for a tool.
  * Methods are provided for obtaining an instance of the active or arbitrary block model.
- * A new model instance is always provided since the internal cache will quickly become 
- * stale based upon program changes.  The current model implementations do not handle 
+ * A new model instance is always provided since the internal cache will quickly become
+ * stale based upon program changes.  The current model implementations do not handle
  * program changes which would invalidate the cached blocks stored within the model.
- * 
+ *
  * A single basic/sub model list is maintained since it is possible that some uses
  * may utilize either type of block model.
  */

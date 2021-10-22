@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,18 +27,18 @@ import ghidra.util.exception.DuplicateNameException;
 import java.io.IOException;
 
 public class Ext4XattrHeader implements StructConverter {
-	
+
 	private int h_magic;
 	private int h_refcount;
 	private int h_blocks;
 	private int h_hash;
 	private int h_checksum;
 	private int[] h_reserved; // 2 ints long
-	
+
 	public Ext4XattrHeader(ByteProvider provider) throws IOException {
 		this( new BinaryReader( provider, true ) );
 	}
-	
+
 	public Ext4XattrHeader(BinaryReader reader) throws IOException {
 		h_magic = reader.readNextInt();
 		h_refcount = reader.readNextInt();

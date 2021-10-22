@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Constructor for an editable stack frame for use with the editor.
-	 * 
+	 *
 	 * @param stack the function stack frame to be edited.
 	 */
 	public StackFrameDataType(StackFrame stack, DataTypeManager dtm) {
@@ -57,7 +57,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Constructor for an editable stack frame for use with the editor.
-	 * 
+	 *
 	 * @param stack the function stack frame to be edited.
 	 */
 	public StackFrameDataType(StackFrameDataType stackDt, DataTypeManager dtm) {
@@ -171,7 +171,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 	 * If a stack variable is defined in the editor at the specified offset, this retrieves the
 	 * editor element containing that stack variable <BR>
 	 * Note: if a stack variable isn't defined at the indicated offset then null is returned.
-	 * 
+	 *
 	 * @param offset the offset
 	 * @return the stack editor's element at the offset. Otherwise, null.
 	 */
@@ -190,7 +190,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 	 * If a stack variable is defined in the editor at the specified ordinal, this retrieves the
 	 * editor element containing that stack variable. <BR>
 	 * Note: if a stack variable isn't defined for the indicated ordinal then null is returned.
-	 * 
+	 *
 	 * @param ordinal the ordinal
 	 * @return the stack editor's element at the ordinal. Otherwise, null.
 	 */
@@ -320,7 +320,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Undefines any defined stack variables in the indicated offset range.
-	 * 
+	 *
 	 * @param minOffset the range's minimum offset on the stack frame
 	 * @param maxOffset the range's maximum offset on the stack frame
 	 */
@@ -341,7 +341,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Deletes the indicated range of bytes from this stack frame data type.
-	 * 
+	 *
 	 * @param minOffset the range's minimum offset on the stack frame
 	 * @param maxOffset the range's maximum offset on the stack frame
 	 */
@@ -408,7 +408,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Sets the name of the component at the specified ordinal.
-	 * 
+	 *
 	 * @param ordinal the ordinal
 	 * @param name the new name. Null indicates the default name.
 	 * @return true if name change was successful, else false
@@ -440,7 +440,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Sets the comment at the specified ordinal.
-	 * 
+	 *
 	 * @param ordinal the ordinal
 	 * @param comment the new comment.
 	 */
@@ -491,13 +491,13 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Currently no validation is done on the name.
-	 * 
+	 *
 	 * @param ordinal
 	 * @param newName
 	 * @throws InvalidNameException
 	 */
 	void validateName(int ordinal, String newName)
-//	throws InvalidNameException 
+//	throws InvalidNameException
 	{
 //		if (newName == null || newName.length() == 0) {
 //			return;
@@ -520,7 +520,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 	/**
 	 * Effectively moves a component for a defined stack variable if it will fit where it is being
 	 * moved to in the stack frame.
-	 * 
+	 *
 	 * @param ordinal the ordinal of the component to move by changing its offset.
 	 * @param newOffset the offset to move the variable to.
 	 * @return the component representing the stack variable at the new offset.
@@ -566,7 +566,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 	/**
 	 * Sets a component representing the defined stack variable at the indicated ordinal to have the
 	 * specified data type and length.
-	 * 
+	 *
 	 * @param ordinal the ordinal
 	 * @param type the data type
 	 * @param length the length or size of this variable.
@@ -579,7 +579,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Get the maximum variable size that will fit at the indicated offset if a replace is done.
-	 * 
+	 *
 	 * @param offset
 	 * @return the maximum size
 	 */
@@ -615,7 +615,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Returns the default name for the indicated stack offset.
-	 * 
+	 *
 	 * @param offset
 	 * @return the default stack variable name.
 	 */
@@ -679,7 +679,7 @@ public class StackFrameDataType extends BiDirectionDataType {
 
 	/**
 	 * Returns true if a stack variable is defined at the specified ordinal.
-	 * 
+	 *
 	 * @param ordinal
 	 * @return true if variable is defined at ordinal or false if undefined.
 	 */

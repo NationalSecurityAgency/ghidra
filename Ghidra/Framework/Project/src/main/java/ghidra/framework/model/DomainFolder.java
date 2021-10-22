@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,9 +24,9 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>DomainFolder</code> provides a storage interface for project folders.  A 
- * <code>DomainFolder</code> is an immutable reference to a folder contained within a project.  The 
- * state of a <code>DomainFolder</code> object does not track name/parent changes made to the 
+ * <code>DomainFolder</code> provides a storage interface for project folders.  A
+ * <code>DomainFolder</code> is an immutable reference to a folder contained within a project.  The
+ * state of a <code>DomainFolder</code> object does not track name/parent changes made to the
  * referenced project folder.
  */
 public interface DomainFolder extends Comparable<DomainFolder> {
@@ -49,12 +49,12 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 	/**
 	 * Set the name on this domain folder.
 	 * @param newName domain folder name
-	 * @return renamed domain file (the original DomainFolder object becomes invalid since it is 
+	 * @return renamed domain file (the original DomainFolder object becomes invalid since it is
 	 * immutable)
 	 * @throws InvalidNameException if newName contains illegal characters
-	 * @throws DuplicateFileException if a folder named newName 
+	 * @throws DuplicateFileException if a folder named newName
 	 * already exists in this files domain folder.
-	 * @throws FileInUseException if any file within this folder or its descendants is 
+	 * @throws FileInUseException if any file within this folder or its descendants is
 	 * in-use / checked-out.
 	 * @throws IOException thrown if an IO or access error occurs.
 	 */
@@ -162,7 +162,7 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 	 * @return the folder
 	 * @throws DuplicateFileException if a folder by
 	 * this name already exists
-	 * @throws InvalidNameException if name is an empty string of if it contains characters other 
+	 * @throws InvalidNameException if name is an empty string of if it contains characters other
 	 * than alphanumerics.
 	 * @throws IOException if IO or access error occurs
 	 */
@@ -180,11 +180,11 @@ public interface DomainFolder extends Comparable<DomainFolder> {
 	 * this affects both private and repository folders and files.  If not
 	 * connected, only private folders and files are affected.
 	 * @param newParent new parent folder within the same project
-	 * @return the newly relocated folder (the original DomainFolder object becomes invalid since 
+	 * @return the newly relocated folder (the original DomainFolder object becomes invalid since
 	 * it is immutable)
-	 * @throws DuplicateFileException if a folder with the same name 
+	 * @throws DuplicateFileException if a folder with the same name
 	 * already exists in newParent folder.
-	 * @throws FileInUseException if this folder or one of its descendants 
+	 * @throws FileInUseException if this folder or one of its descendants
 	 * contains a file which is in-use / checked-out.
 	 * @throws IOException thrown if an IO or access error occurs.
 	 */

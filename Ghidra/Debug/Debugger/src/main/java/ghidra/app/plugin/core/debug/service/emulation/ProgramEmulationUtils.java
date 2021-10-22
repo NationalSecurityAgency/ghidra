@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * A set of utilities for emulating programs without necessarily having a debugger connection.
- * 
+ *
  * <p>
  * Most of these are already integrated via the {@link DebuggerEmulationService}. Please see if that
  * service satisfies your use case before employing these directly.
@@ -63,7 +63,7 @@ public enum ProgramEmulationUtils {
 
 	/**
 	 * Suggests a name for a new trace for emulation of the given program
-	 * 
+	 *
 	 * @param program the program to emulate
 	 * @return the suggested name
 	 */
@@ -77,7 +77,7 @@ public enum ProgramEmulationUtils {
 
 	/**
 	 * Suggests the initial module name for loading a program into an emulated trace
-	 * 
+	 *
 	 * @param program the program comprising the module to "load"
 	 * @return the suggested module name
 	 */
@@ -95,7 +95,7 @@ public enum ProgramEmulationUtils {
 
 	/**
 	 * Convert permissions for a program memory block into flags for a trace memory region
-	 * 
+	 *
 	 * @param block the block whose permissions to convert
 	 * @return the corresponding set of flags
 	 */
@@ -119,16 +119,16 @@ public enum ProgramEmulationUtils {
 
 	/**
 	 * Create regions for each block in a program, without relocation, and map the program in
-	 * 
+	 *
 	 * <p>
 	 * This creates a region for each loaded, non-overlay block in the program. Permissions/flags
 	 * are assigned accordingly. A single static mapping is generated to cover the entire range of
 	 * created regions. Note that no bytes are copied in, as that could be prohibitive for large
 	 * programs. Instead, the emulator should load them, based on the static mapping, as needed.
-	 * 
+	 *
 	 * <p>
 	 * A transaction must already be started on the destination trace.
-	 * 
+	 *
 	 * @param snapshot the destination snapshot, usually 0
 	 * @param program the progam to load
 	 */
@@ -171,10 +171,10 @@ public enum ProgramEmulationUtils {
 
 	/**
 	 * Spawn a new thread in the given trace at the given creation snap
-	 * 
+	 *
 	 * <p>
 	 * This does not initialize the thread's state. It simply creates it.
-	 * 
+	 *
 	 * @param trace the trace to contain the new thread
 	 * @param snap the creation shap of the new thread
 	 * @return the new thread
@@ -195,7 +195,7 @@ public enum ProgramEmulationUtils {
 
 	/**
 	 * Initialize a thread's registers using program context and an optional stack
-	 * 
+	 *
 	 * @param trace the trace containing the thread
 	 * @param snap the destination snap for the register state
 	 * @param thread the thread whose registers to initialize
@@ -235,13 +235,13 @@ public enum ProgramEmulationUtils {
 
 	/**
 	 * Attempt to allocate a new stack region for the given thread
-	 * 
+	 *
 	 * @param trace the trace containing the stack and thread
 	 * @param snap the creation snap for the new region
 	 * @param thread the thread for which the stack is being allocated
 	 * @param size the desired size of the region
 	 * @return the new region representing the allocated stack
-	 * 
+	 *
 	 * @throws EmulatorOutOfMemoryException if the stack cannot be allocated
 	 */
 	public static TraceMemoryRegion allocateStack(Trace trace, long snap, TraceThread thread,
@@ -269,7 +269,7 @@ public enum ProgramEmulationUtils {
 
 	/**
 	 * Create a new trace with a single thread, ready for emulation of the given program
-	 * 
+	 *
 	 * @param program the program to emulate
 	 * @param pc the initial program counter for the new single thread
 	 * @param consumer the consumer of the new trace
@@ -305,7 +305,7 @@ public enum ProgramEmulationUtils {
 
 	/**
 	 * Create a new emulated thread within an existing trace
-	 * 
+	 *
 	 * @param trace the trace to contain the new thread
 	 * @param snap the creation snap for the new thread
 	 * @param program the program whose context to use for initial register values
@@ -337,7 +337,7 @@ public enum ProgramEmulationUtils {
 
 	/**
 	 * Check if the given trace is for "pure emulation"
-	 * 
+	 *
 	 * @param trace the trace to check
 	 * @return true if created for emulation, false otherwise
 	 */

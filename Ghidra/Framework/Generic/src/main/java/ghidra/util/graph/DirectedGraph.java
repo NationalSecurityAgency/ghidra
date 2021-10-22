@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,8 @@ import ghidra.util.graph.attributes.*;
  * Attributes for both vertices and edges may be defined for a DirectedGraph.
  * Parallel edges (more than one edge with the same from and to vertices)
  * are allowed in DirectedGraph. Loops are also allowed.
- * 
- * 
+ *
+ *
  */
 public class DirectedGraph {
 	private final VertexSet vertices;
@@ -42,7 +42,7 @@ public class DirectedGraph {
 	//    Constructors                                                  //
 	//                                                                  //
 	//////////////////////////////////////////////////////////////////////
-	/** Creates an empty DirectedGraph with room for 
+	/** Creates an empty DirectedGraph with room for
 	 * vertexCapacity vertices and edgeCapacity edges.
 	 */
 	public DirectedGraph(int vertexCapacity, int edgeCapacity) {
@@ -124,7 +124,7 @@ public class DirectedGraph {
 		return edges;
 	}
 
-	/** 
+	/**
 	 * @param key
 	 * @return the edge in the graph with the specified key or null
 	 * if the graph does not contain an edge with the key.
@@ -138,7 +138,7 @@ public class DirectedGraph {
 		return vertices;
 	}
 
-	/** 
+	/**
 	 * @param key
 	 * @return the vertex in the graph with the specified key or null
 	 * if the graph does not contain an vertex with the key.
@@ -436,10 +436,10 @@ public class DirectedGraph {
 
 	/** Returns an array of Sets (HashSet). Each set contains the vertices
 	 *  within a single strongly connected component of the DirectedGraph.
-	 * 
-	 * A strongly connected component of a directed graph is a subgraph 
-	 * in which it is possible to find a directed path from any vertex to any 
-	 * other vertex in the graph. A cycle is a simple example of strongly 
+	 *
+	 * A strongly connected component of a directed graph is a subgraph
+	 * in which it is possible to find a directed path from any vertex to any
+	 * other vertex in the graph. A cycle is a simple example of strongly
 	 * connected graph.
 	 */
 	@SuppressWarnings("unchecked")
@@ -573,7 +573,7 @@ public class DirectedGraph {
 		return this.edges().remove(e);
 	}
 
-	/** Returns true iff the vertex is in the graph. 
+	/** Returns true iff the vertex is in the graph.
 	 */
 	public boolean contains(Vertex v) {
 		return this.vertices().contains(v);
@@ -601,7 +601,7 @@ public class DirectedGraph {
 		return this.vertices().getSources();
 	}
 
-	/** Returns a Vertex[] containing the sinks. A vertex is a sink if it 
+	/** Returns a Vertex[] containing the sinks. A vertex is a sink if it
 	 * has no outgoing edges.
 	 */
 	public Vertex[] getSinks() {
@@ -643,7 +643,7 @@ public class DirectedGraph {
 		return this.inducedSubgraph(verts);
 	}
 
-	/** Returns an array of directed graphs. Each array element is a 
+	/** Returns an array of directed graphs. Each array element is a
 	 * DirectedGraph consisting of a single
 	 * connected component of this graph.
 	 */
@@ -909,7 +909,7 @@ public class DirectedGraph {
 		return false;
 	}
 
-	/** Removes all vertices and edges from the graph without changing 
+	/** Removes all vertices and edges from the graph without changing
 	* the space allocated.
 	*/
 	public void clear() {
@@ -930,7 +930,7 @@ public class DirectedGraph {
 	}
 
 	/** Returns Vertex[] containing all vertices having the given object as
-	*  a referent. Any number of vertices in the graph may refer back to 
+	*  a referent. Any number of vertices in the graph may refer back to
 	* the same object.
 	*/
 	public Vertex[] getVerticesHavingReferent(Object o) {
@@ -1064,7 +1064,7 @@ public class DirectedGraph {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private void CopyVertexAttributes(DirectedGraph copy) {
 		AttributeManager<Vertex> attm = this.vertexAttributes;
@@ -1153,8 +1153,8 @@ public class DirectedGraph {
 	}
 
 	/**
-	 * This method copies a vertex and all object attributes from graph 
-	 * 'other' into this graph. 
+	 * This method copies a vertex and all object attributes from graph
+	 * 'other' into this graph.
 	 * @param node
 	 * @param other
 	 */
@@ -1165,10 +1165,10 @@ public class DirectedGraph {
 	}
 
 	/**
-	 * This method copies an edge and all object attributes from graph 
-	 * 'other' into this graph.  Any implicictly created Verticies do not 
-	 * get their attribute values copied -- you must use copyVertex. 
-	 * 
+	 * This method copies an edge and all object attributes from graph
+	 * 'other' into this graph.  Any implicictly created Verticies do not
+	 * get their attribute values copied -- you must use copyVertex.
+	 *
 	 * @param e
 	 * @param other
 	 */
@@ -1185,7 +1185,7 @@ public class DirectedGraph {
 	/**
 	 * This method copies the attributes from an edge 'e' from DirectedGraph
 	 * 'other' into this graph associated with edge 'newe'
-	 * 
+	 *
 	 * @param newe
 	 * @param e
 	 * @param other
@@ -1207,10 +1207,10 @@ public class DirectedGraph {
 	}
 
 	/**
-	 * This method joins nodes from a directed graph into this.  This 
-	 * allows DirectedGraph subclasses to copy nodes and attributes, 
-	 * a shortcomings with the unionWith method. 
-	 *   
+	 * This method joins nodes from a directed graph into this.  This
+	 * allows DirectedGraph subclasses to copy nodes and attributes,
+	 * a shortcomings with the unionWith method.
+	 *
 	 * @param other the other directed graph that is to be joined into this one.
 	 * @return this directed graph
 	 */
@@ -1231,7 +1231,7 @@ public class DirectedGraph {
 
 	/**
 	 * This method copies vertex attributes for vertex 'vert' from graph
-	 * 'other' to this graph.  
+	 * 'other' to this graph.
 	 * @param vert the vertex whose attributes should be copied.
 	 * @param other the other graph to copy vertex attributes from
 	 */
@@ -1251,8 +1251,8 @@ public class DirectedGraph {
 	}
 
 	/**
-	 * This is a helper method that sets a object property named propName 
-	 * to edge e.  
+	 * This is a helper method that sets a object property named propName
+	 * to edge e.
 	 */
 	protected void setEdgeProperty(String propName, Edge e, Object prop) {
 		ObjectAttribute<Edge> attrib = getEdgeAttribute(propName);
@@ -1262,9 +1262,9 @@ public class DirectedGraph {
 	/**
 	 * This is a helper method that gets a property named propName to
 	 * from edge e.
-	 * 
+	 *
 	 * @param propName the property name
-	 * @param e the edge 
+	 * @param e the edge
 	 * @return the attribute for the indicated edge
 	 */
 	protected Object getEdgeProperty(String propName, Edge e) {
@@ -1276,7 +1276,7 @@ public class DirectedGraph {
 
 	/**
 	 * This is a helper method that sets an object property named propName
-	 * for Vertex v.  
+	 * for Vertex v.
 	 * @param propName the property name
 	 * @param v the vertex
 	 * @param prop the property value
@@ -1289,7 +1289,7 @@ public class DirectedGraph {
 	/**
 	 * This is a helper method that gets a property named propName
 	 * for vertex v.
-	 * 
+	 *
 	 * @param propName the property name
 	 * @param v the vertex
 	 * @return the property value
@@ -1301,9 +1301,9 @@ public class DirectedGraph {
 
 	/**
 	 * This method gets and ObjectAttribute method give an attribute name.
-	 * If it is not found in the attribute manager, the attribute is 
+	 * If it is not found in the attribute manager, the attribute is
 	 * created automatically.
-	 * 
+	 *
 	 * @param attribName the name of the attribute
 	 * @return the attribute
 	 */
@@ -1322,9 +1322,9 @@ public class DirectedGraph {
 
 	/**
 	 * This method gets and ObjectAttribute method give an attribute name.
-	 * If it is not found in the attribute manager, the attribute is 
+	 * If it is not found in the attribute manager, the attribute is
 	 * created automatically.
-	 * 
+	 *
 	 * @param attribName the attribute name
 	 * @return the attribute
 	 */
@@ -1338,11 +1338,11 @@ public class DirectedGraph {
 		return (ObjectAttribute<Vertex>) attrib;
 	}
 
-	/** 
+	/**
 	 * This method converts a collection of verticies into a set of its
-	 * referent objects.  It is up to the methods using the created set 
+	 * referent objects.  It is up to the methods using the created set
 	 * to properly type cast the set's elements.
-	 * 
+	 *
 	 * @param verts the vertices
 	 * @return the set of referent objects
 	 */

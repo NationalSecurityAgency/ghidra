@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -275,7 +275,7 @@ public class ByteViewerPanel extends JPanel
 		indexFactory.setIndexMap(indexMap, indexPanelWidth);
 
 		// Do the following loop twice - once with update off and then with update on.
-		// need to do this because all the byte view components must have their models 
+		// need to do this because all the byte view components must have their models
 		// updated before any one of them tells their dependents about the change.
 		for (int i = 0; i < viewList.size(); i++) {
 			ByteViewerComponent c = viewList.get(i);
@@ -349,7 +349,7 @@ public class ByteViewerPanel extends JPanel
 	}
 
 	/*
-	 * Called by the plugin in response to an event. 
+	 * Called by the plugin in response to an event.
 	 */
 	void setCursorLocation(ByteBlock block, BigInteger index, int column) {
 
@@ -398,7 +398,7 @@ public class ByteViewerPanel extends JPanel
 
 	/**
 	 * Add a view to the panel.
-	 * 
+	 *
 	 * @param viewName name of the format, e.g., Hex, Ascii, etc.
 	 * @param model model that understands the format
 	 * @param editMode true if edit mode is on
@@ -568,7 +568,7 @@ public class ByteViewerPanel extends JPanel
 
 	/**
 	 * Check that each model for the views can support the given bytes per line value.
-	 * 
+	 *
 	 * @throws InvalidInputException if a model cannot support the bytesPerLine value
 	 */
 	void checkBytesPerLine(int numBytesPerLine) throws InvalidInputException {
@@ -587,7 +587,7 @@ public class ByteViewerPanel extends JPanel
 
 	/**
 	 * Set the group size on the current view.
-	 * 
+	 *
 	 * @param groupSize new group size
 	 */
 	void setCurrentGroupSize(int groupSize) {
@@ -610,7 +610,7 @@ public class ByteViewerPanel extends JPanel
 	/**
 	 * Set the insertion field and tell other views to change location; called when the
 	 * ByteViewerComponent receives a notification that the cursor location has changed.
-	 * 
+	 *
 	 * @param source source of the change
 	 * @param block block for the new location
 	 * @param offset offset into the block
@@ -646,7 +646,7 @@ public class ByteViewerPanel extends JPanel
 	/**
 	 * Called from the ByteViewerComponent when it received a notification that the selection has
 	 * changed.
-	 * 
+	 *
 	 * @param source source of the change
 	 * @param selection selection
 	 */
@@ -731,7 +731,7 @@ public class ByteViewerPanel extends JPanel
 
 	/**
 	 * Restore the configuration of the plugin.
-	 * 
+	 *
 	 * @param fontMetrics font metrics
 	 * @param newEditColor color for showing edits
 	 */
@@ -1045,7 +1045,7 @@ public class ByteViewerPanel extends JPanel
 
 	/***
 	 * Getter for the list of ByteViewer Components
-	 * 
+	 *
 	 * @return viewList the list of ByteViewerComponents
 	 */
 	public List<ByteViewerComponent> getViewList() {
@@ -1054,7 +1054,7 @@ public class ByteViewerPanel extends JPanel
 
 	/**
 	 * Set the status info on the tool.
-	 * 
+	 *
 	 * @param message non-html text to display
 	 */
 	void setStatusMessage(String message) {

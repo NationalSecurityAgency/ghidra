@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,10 +24,10 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.*;
 
 /**
- * GUIDs identify objects such as interfaces, manager entry-point vectors (EPVs), 
- * and class objects. A GUID is a 128-bit value consisting of one group 
- * of 8 hexadecimal digits, followed by three groups of 4 hexadecimal 
- * digits each, followed by one group of 12 hexadecimal digits. The 
+ * GUIDs identify objects such as interfaces, manager entry-point vectors (EPVs),
+ * and class objects. A GUID is a 128-bit value consisting of one group
+ * of 8 hexadecimal digits, followed by three groups of 4 hexadecimal
+ * digits each, followed by one group of 12 hexadecimal digits. The
  * following example shows the groupings of hexadecimal digits in a GUID.
  * <br>
  * <code>6B29FC40-CA47-1067-B31D-00DD010662DA</code>
@@ -40,12 +40,12 @@ import ghidra.util.*;
  * 		BYTE Data4[8];
  * } GUID;
  * </pre>
- * Data1 - Specifies the first 8 hexadecimal digits of the GUID.<br> 
+ * Data1 - Specifies the first 8 hexadecimal digits of the GUID.<br>
  * Data2 - Specifies the first group of 4 hexadecimal digits.<br>
  * Data3 - Specifies the second group of 4 hexadecimal digits.<br>
  * Data4 - Array of 8 bytes.
  *         The first 2 bytes contain the third group of 4 hexadecimal digits.
- *         The remaining 6 bytes contain the final 12 hexadecimal digits.<br> 
+ *         The remaining 6 bytes contain the final 12 hexadecimal digits.<br>
  */
 public class GUID {
 	public final static int SIZEOF = 16;
@@ -57,7 +57,7 @@ public class GUID {
 
 	/**
 	 * Creates a GUID object using the GUID string form.
-	 * @param guidString - either with or without dashes between parts - 
+	 * @param guidString - either with or without dashes between parts -
 	 * "6B29FC40-CA47-1067-B31D-00DD010662DA", or "6B29FC40CA471067B31D00DD010662DA", and
 	 * with or without leading and trailing "{" "}" characters
 	 * @throws IllegalArgumentException if string does not represent a valid GUID

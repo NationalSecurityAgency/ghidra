@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,7 +82,7 @@ public class XmlUtilities {
 	/**
 	 * Converts any special or reserved characters in the specified XML string
 	 * into the equivalent Unicode encoding.
-	 * 
+	 *
 	 * @param xml the XML string
 	 * @return the encoded XML string
 	 */
@@ -157,7 +157,7 @@ public class XmlUtilities {
 
 	/**
 	 * Converts the specified XML element into a byte array.
-	 * 
+	 *
 	 * @param root the root element
 	 * @return the byte array translation of the given element
 	 */
@@ -178,7 +178,7 @@ public class XmlUtilities {
 
 	/**
 	 * Converts the specified XML element into a String.
-	 * 
+	 *
 	 * @param root the root element
 	 * @return String translation of the given element
 	 */
@@ -190,7 +190,7 @@ public class XmlUtilities {
 	/**
 	 * Convert a String into a JDOM {@link Element}.
 	 * <p>
-	 * 
+	 *
 	 * @param s
 	 * @return
 	 * @throws JDOMException
@@ -208,7 +208,7 @@ public class XmlUtilities {
 	/**
 	 * Writes a JDOM XML {@link Document} to a {@link File}.
 	 * <p>
-	 * 
+	 *
 	 * @param doc JDOM XML {@link Document} to write.
 	 * @param dest {@link File} to write to.
 	 * @throws IOException if error when writing file.
@@ -224,7 +224,7 @@ public class XmlUtilities {
 	 * Writes a JDOM XML {@link Document} to a {@link File}, with a prettier
 	 * format than {@link #writeDocToFile(Document, File)}.
 	 * <p>
-	 * 
+	 *
 	 * @param doc JDOM XML {@link Document} to write.
 	 * @param dest {@link File} to write to.
 	 * @throws IOException if error when writing file.
@@ -240,7 +240,7 @@ public class XmlUtilities {
 	/**
 	 * Read a File and convert to jdom xml doc.
 	 * <p>
-	 * 
+	 *
 	 * @param f {@link File} to read
 	 * @return JDOM {@link Document}
 	 * @throws JDOMException if text in file isn't valid XML
@@ -258,7 +258,7 @@ public class XmlUtilities {
 	/**
 	 * Read a File and convert to jdom xml doc.
 	 * <p>
-	 * 
+	 *
 	 * @param f {@link ResourceFile} to read
 	 * @return JDOM {@link Document}
 	 * @throws JDOMException if text in file isn't valid XML
@@ -276,7 +276,7 @@ public class XmlUtilities {
 
 	/**
 	 * Converts the specified byte array into an XML element.
-	 * 
+	 *
 	 * @param bytes the XML bytes
 	 * @return an XML element
 	 */
@@ -296,7 +296,7 @@ public class XmlUtilities {
 	/**
 	 * Parses the overlay name from the specified address string. Returns null
 	 * if the address string does appear to represent an overlay.
-	 * 
+	 *
 	 * @param addrStr the address string
 	 * @return the overlay name or null
 	 */
@@ -311,7 +311,7 @@ public class XmlUtilities {
 	/**
 	 * Parse the given string as either a hex number (if it starts with 0x) or a
 	 * decimal number.
-	 * 
+	 *
 	 * @param intStr the string to parse into an integer
 	 * @return the parsed integer.
 	 * @throws NumberFormatException if the given string does not represent a
@@ -325,7 +325,7 @@ public class XmlUtilities {
 	 * Parses the optional specified string as a decimal number, returning its
 	 * integer value.
 	 * <p>
-	 * 
+	 *
 	 * @param intStr string with integer digits, or empty or null
 	 * @param defaultValue value to return if intStr is missing
 	 * @return integer value of the intStr
@@ -341,7 +341,7 @@ public class XmlUtilities {
 	 * Parses the optional specified string as a decimal number, returning its
 	 * integer value, or defaultValue if the string is null.
 	 * <p>
-	 * 
+	 *
 	 * @param intStr string with integer digits, or null.
 	 * @param defaultValue value to return if intStr is null.
 	 * @param minValue minimum value allowed (inclusive).
@@ -367,7 +367,7 @@ public class XmlUtilities {
 	 * Parses the specified string as a decimal number, returning its integer
 	 * value.
 	 * <p>
-	 * 
+	 *
 	 * @param intStr String with integer digits
 	 * @param minValue minimum value allowed (inclusive)
 	 * @param maxValue maximum value allowed (inclusive)
@@ -392,7 +392,7 @@ public class XmlUtilities {
 	 * Parses the required attribute as a decimal number, returning its integer
 	 * value.
 	 * <p>
-	 * 
+	 *
 	 * @param ele JDom element that contains the attribute
 	 * @param attrName the name of the xml attribute to parse
 	 * @param minValue minimum value allowed (inclusive)
@@ -416,7 +416,7 @@ public class XmlUtilities {
 	 * Parses an optional attribute as a decimal number, returning its integer
 	 * value, or the defaultValue if the attribute is null.
 	 * <p>
-	 * 
+	 *
 	 * @param ele JDOM element that contains the attribute.
 	 * @param attrName the name of the xml attribute to parse.
 	 * @param defaultValue the default value to return if attribute is missing.
@@ -444,7 +444,7 @@ public class XmlUtilities {
 	/**
 	 * Parse the given string as either a hex number (if it starts with 0x) or a
 	 * decimal number.
-	 * 
+	 *
 	 * @param longStr the string to parse into an long
 	 * @return the parsed long.
 	 * @throws NumberFormatException if the given string does not represent a
@@ -476,7 +476,7 @@ public class XmlUtilities {
 	 * and upper bounds is problematic and should be avoided as the range check
 	 * will become a NO-OP and always succeed.
 	 * <p>
-	 * 
+	 *
 	 * @param longStr String with integer digits
 	 * @param minValue minimum value allowed (inclusive)
 	 * @param maxValue maximum value allowed (inclusive)
@@ -505,7 +505,7 @@ public class XmlUtilities {
 	 * and upper bounds is problematic and should be avoided as the range check
 	 * will become a NO-OP and always succeed.
 	 * <p>
-	 * 
+	 *
 	 * @param ele JDom element that contains the attribute
 	 * @param attrName the name of the xml attribute to parse
 	 * @param minValue minimum value allowed (inclusive)
@@ -533,7 +533,7 @@ public class XmlUtilities {
 	 * and upper bounds is problematic and should be avoided as the range check
 	 * will become a NO-OP and always succeed.
 	 * <p>
-	 * 
+	 *
 	 * @param ele JDom element that contains the attribute.
 	 * @param attrName the name of the xml attribute to parse.
 	 * @param defaultValue the default value to return if attribute is missing.
@@ -563,7 +563,7 @@ public class XmlUtilities {
 	 * Parses the given string into a boolean value. Acceptable inputs are
 	 * y,n,true,fase. A null input string will return false (useful if optional
 	 * boolean attribute is false by default)
-	 * 
+	 *
 	 * @param boolStr the string to parse into a boolean value
 	 * @return the boolean result.
 	 * @throws XmlAttributeException if the string in not one of y,n,true,false
@@ -608,7 +608,7 @@ public class XmlUtilities {
 	 * Throws an {@link IOException} with a verbose explanation if the requested
 	 * attribute is not present or is empty.
 	 * <p>
-	 * 
+	 *
 	 * @param ele JDOM {@link Element} that contains the attribute
 	 * @param attrName the attribute name
 	 * @return String value of the attribute (never null or empty)
@@ -625,7 +625,7 @@ public class XmlUtilities {
 
 	/**
 	 * Sets a string attribute on the specified element.
-	 * 
+	 *
 	 * @param ele JDom element
 	 * @param attrName name of attribute
 	 * @param attrValue value of attribute, null ok
@@ -638,7 +638,7 @@ public class XmlUtilities {
 
 	/**
 	 * Sets an integer attribute on the specified element.
-	 * 
+	 *
 	 * @param ele JDom element
 	 * @param attrName name of attribute
 	 * @param attrValue value of attribute
@@ -649,7 +649,7 @@ public class XmlUtilities {
 
 	/**
 	 * Type-safe way of getting a list of {@link Element}s from JDom.
-	 * 
+	 *
 	 * @param ele the parent element
 	 * @param childName the name of the children elements to return
 	 * @return {@literal List<Element>} of elements
@@ -661,7 +661,7 @@ public class XmlUtilities {
 	/**
 	 * Tests a string for characters that would cause a problem if added to an
 	 * xml attribute or element.
-	 * 
+	 *
 	 * @param s a string
 	 * @return boolean true if the string will cause a problem if added to an
 	 *         xml attribute or element.
@@ -672,9 +672,9 @@ public class XmlUtilities {
 
 	/**
 	 * Create a {@link SAXBuilder} that is not susceptible to XXE.
-	 * 
+	 *
 	 * This configures the builder to ignore external entities.
-	 * 
+	 *
 	 * @param validate indicates whether validation should occur
 	 * @param needsDTD false to disable doctype declarations altogether
 	 * @return the configured builder
@@ -694,9 +694,9 @@ public class XmlUtilities {
 
 	/**
 	 * Create a {@link SAXParserFactory} that is not susceptible to XXE.
-	 * 
+	 *
 	 * This configures the factory to ignore external entities.
-	 * 
+	 *
 	 * @param needsDTD false to disable doctype declarations altogether
 	 * @return the configured factory
 	 */

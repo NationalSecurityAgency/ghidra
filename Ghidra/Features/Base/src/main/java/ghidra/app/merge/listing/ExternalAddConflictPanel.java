@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ import resources.ResourceManager;
 import resources.icons.EmptyIcon;
 
 /**
- * Panel to select a data type in order to resolve an add conflict in the multi-user 
+ * Panel to select a data type in order to resolve an add conflict in the multi-user
  * external location merger.
  */
 class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
@@ -164,7 +164,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 		if (mergeBothRB.isSelected()) {
 			return ExternalFunctionMerger.MERGE_BOTH_ADDS;
 		}
-		return ListingMergeConstants.ASK_USER; // shouldn't get here 
+		return ListingMergeConstants.ASK_USER; // shouldn't get here
 	}
 
 	private ToolOptions getFieldOptions() {
@@ -310,7 +310,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 	}
 
 	/**
-	 * Add the latest program's listing model as a listener to the latest program 
+	 * Add the latest program's listing model as a listener to the latest program
 	 * for domain object events.
 	 */
 	public void addDomainObjectListener() {
@@ -319,7 +319,7 @@ class ExternalAddConflictPanel extends JPanel implements CodeFormatService {
 	}
 
 	/**
-	 * Remove the latest program's listing model as a listener to the latest program 
+	 * Remove the latest program's listing model as a listener to the latest program
 	 * for domain object events.
 	 */
 	public void removeDomainObjectListener() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressRange;
 
-/** 
+/**
  * Describes the source of bytes for a memory block.
  */
 public interface MemoryBlockSourceInfo {
@@ -59,7 +59,7 @@ public interface MemoryBlockSourceInfo {
 	Optional<FileBytes> getFileBytes();
 
 	/**
-	 * Returns the offset into the underlying {@link FileBytes} object where this sub-block 
+	 * Returns the offset into the underlying {@link FileBytes} object where this sub-block
 	 * starts getting its bytes from or -1 if this sub-block does not have an associated {@link FileBytes}
 	 * or a complex bit/byte-mapping is used.
 	 * @return  the offset into the {@link FileBytes} object where this section starts getting its bytes.
@@ -68,11 +68,11 @@ public interface MemoryBlockSourceInfo {
 
 	/**
 	 * Returns the offset into the {@link FileBytes} object for the given address or
-	 * -1 if this sub-block if address is out of range or this sub-block does not have 
+	 * -1 if this sub-block if address is out of range or this sub-block does not have
 	 * an associated {@link FileBytes}, or a complex bit/byte-mapping is used.
-	 * 
+	 *
 	 * @param address the address for which to get an offset into the {@link FileBytes} object.
-	 * @return  the offset into the {@link FileBytes} object for the given address. 
+	 * @return  the offset into the {@link FileBytes} object for the given address.
 	 */
 	long getFileBytesOffset(Address address);
 
@@ -85,14 +85,14 @@ public interface MemoryBlockSourceInfo {
 	Optional<AddressRange> getMappedRange();
 
 	/**
-	 * Returns an {@link Optional} {@link ByteMappingScheme} employed if this is a byte-mapped 
-	 * memory block.  Otherwise, the Optional is empty. 
-	 * @return an {@link Optional} {@link ByteMappingScheme} employed if this is a byte-mapped memory block. 
+	 * Returns an {@link Optional} {@link ByteMappingScheme} employed if this is a byte-mapped
+	 * memory block.  Otherwise, the Optional is empty.
+	 * @return an {@link Optional} {@link ByteMappingScheme} employed if this is a byte-mapped memory block.
 	 */
 	Optional<ByteMappingScheme> getByteMappingScheme();
 
 	/**
-	 * Returns the containing Memory Block 
+	 * Returns the containing Memory Block
 	 * @return the containing Memory Block
 	 */
 	MemoryBlock getMemoryBlock();
@@ -106,10 +106,10 @@ public interface MemoryBlockSourceInfo {
 
 	/**
 	 * Determine if this block source contains the specified file offset.
-	 * 
-	 * @param fileOffset file offset within underlying FileBytes (if applicable) within the loaded 
+	 *
+	 * @param fileOffset file offset within underlying FileBytes (if applicable) within the loaded
 	 *   range associated with this source info.
-	 * @return true if file offset is within the loaded range of the corresponding FileBytes, else 
+	 * @return true if file offset is within the loaded range of the corresponding FileBytes, else
 	 *   false if method is not supported by the sub-block type (e.g., bit/byte-mapped sub-block).
 	 */
 	default boolean containsFileOffset(long fileOffset) {
@@ -124,7 +124,7 @@ public interface MemoryBlockSourceInfo {
 
 	/**
 	 * Get the Address within this sub-block which corresponds to the specified file offset.
-	 *  
+	 *
 	 * @param fileOffset file offset
 	 * @return {@link Address} within this sub-block or null if file offset is out of range
 	 * or method is not supported by the sub-block type (e.g., bit/byte-mapped sub-block).

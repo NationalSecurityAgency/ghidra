@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,8 +48,8 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		AtomicReference<TestDataKeyModel> ref = new AtomicReference<>();
 
 		// Note: from the test model, the data looks like this:
-		//  "one", "two", "THREE", "Four", "FiVe", "sIx", "SeVEn", "EighT", "NINE", 
-		//  "ten", "ten", "ten" 
+		//  "one", "two", "THREE", "Four", "FiVe", "sIx", "SeVEn", "EighT", "NINE",
+		//  "ten", "ten", "ten"
 		runSwing(() -> ref.set(new TestDataKeyModel(monitor, false) {
 			@Override
 			void setDefaultTaskMonitor(TaskMonitor monitor) {
@@ -189,7 +189,7 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 	public void testSubFilter_RoundTrip_StartsWithFilter() throws Exception {
 
 		//
-		// Test that sub-filters are used for each successive addition.  Then test that the 
+		// Test that sub-filters are used for each successive addition.  Then test that the
 		// previous filtered data is used when deleting characters.
 		//
 
@@ -221,7 +221,7 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 	public void testSubFilter_RoundTrip_RegexFilter() throws Exception {
 
 		//
-		// Test that sub-filters are used for each successive addition.  Then test that the 
+		// Test that sub-filters are used for each successive addition.  Then test that the
 		// previous filtered data is used when deleting characters.
 		//
 
@@ -275,7 +275,7 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 	@Test
 	public void testRefilterHappens_ChangeFilterTypeNotText() throws Exception {
 
-		//  "one", "two", "THREE", "Four", "FiVe", "sIx", "SeVEn", "EighT", "NINE", 
+		//  "one", "two", "THREE", "Four", "FiVe", "sIx", "SeVEn", "EighT", "NINE",
 		//  "ten", "ten", "ten"
 
 		startsWithFilter("o");
@@ -290,7 +290,7 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 	@Test
 	public void testRefilterHappens_ChangeFilterOptionNotText() throws Exception {
 
-		//  "one", "two", "THREE", "Four", "FiVe", "sIx", "SeVEn", "EighT", "NINE", 
+		//  "one", "two", "THREE", "Four", "FiVe", "sIx", "SeVEn", "EighT", "NINE",
 		//  "ten", "ten", "ten"
 
 		startsWithFilter("t");
@@ -328,9 +328,9 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 	public void testCombinedTableFilter_TwoFilters_FirstFilterStandard_SecondFilterEmpty() {
 
 		//
-		// Test that a combined filter will properly support sub-filtering.   In this case, 
+		// Test that a combined filter will properly support sub-filtering.   In this case,
 		// combine a standard filter as the initial filter, with a custom filter as the second
-		// filter.   This custom filter allows us to control when we return true for 
+		// filter.   This custom filter allows us to control when we return true for
 		// 'isSubFilterOf'
 		//
 
@@ -339,7 +339,7 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 		assertFilteredEntireModel();
 		assertRowCount(4); // matching values: two, ten, ten, ten
 
-		// sub-filter; the custom filter is the empty filter, which reports it can be a 
+		// sub-filter; the custom filter is the empty filter, which reports it can be a
 		// child/sub-filter of any other filter.  This means it should allow the primary filter
 		// to work as normal.
 		createCombinedStartsWithFilter("te", customFilter);
@@ -355,9 +355,9 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 	public void testCombinedTableFilter_TwoFilters_FirstFilterStandard_SecondFilterNonEmpty() {
 
 		//
-		// Test that a combined filter will properly support sub-filtering.   In this case, 
+		// Test that a combined filter will properly support sub-filtering.   In this case,
 		// combine a standard filter as the initial filter, with a custom filter as the second
-		// filter.   This custom filter allows us to control when we return true for 
+		// filter.   This custom filter allows us to control when we return true for
 		// 'isSubFilterOf'
 		//
 
@@ -435,9 +435,9 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 
 		//
 		// Bug Case: This was a case where a table (like the Symbol Table) that uses permanent
-		//           combined filters would lose items inserted via the addObject() call.  The 
-		//           issue is that the job was not properly updating the table's full source 
-		//           data, only its filtered data.   Thus, when a job triggered a reload from 
+		//           combined filters would lose items inserted via the addObject() call.  The
+		//           issue is that the job was not properly updating the table's full source
+		//           data, only its filtered data.   Thus, when a job triggered a reload from
 		//           the original source data, the value would be lost.
 		//
 
@@ -677,7 +677,7 @@ public class DefaultThreadedTableFilterTest extends AbstractThreadedTableTest {
 
 		@Override
 		public boolean isSubFilterOf(TableFilter<?> tableFilter) {
-			// for now we are too complicated to figure out if we are a sub-filter, so always 
+			// for now we are too complicated to figure out if we are a sub-filter, so always
 			// return false
 			return false;
 		}

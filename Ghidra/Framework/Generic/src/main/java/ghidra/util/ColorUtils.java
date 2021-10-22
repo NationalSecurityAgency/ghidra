@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -131,7 +131,7 @@ public class ColorUtils {
 	/**
 	 * A method to produce a color (either black or white) that contrasts with the given color. This
 	 * is useful for finding a readable foreground color for a given background.
-	 * 
+	 *
 	 * @param color the color for which to find a contrast.
 	 * @return the contrasting color.
 	 */
@@ -144,8 +144,8 @@ public class ColorUtils {
 
 		// Note: the more accurate operation for calculating luminance is:
 		// float gamma = 2.2;
-		// float luminance = 0.2126 * pow(r, gamma) + 
-		//                   0.7152 * pow(g, gamma) + 
+		// float luminance = 0.2126 * pow(r, gamma) +
+		//                   0.7152 * pow(g, gamma) +
 		//                   0.0722 * pow(b, gamma);
 
 		// less precise, faster calculation
@@ -161,7 +161,7 @@ public class ColorUtils {
 	 * Takes the first color, blending into it the second color, using the given ratio. A lower
 	 * ratio (say .1f) signals to use very little of the first color; a larger ratio signals to use
 	 * more of the first color.
-	 * 
+	 *
 	 * @param c1 the first color
 	 * @param c2 the second color
 	 * @param ratio the amount of the first color to include in the final output
@@ -178,7 +178,7 @@ public class ColorUtils {
 
 		//@formatter:off
 		Color color = new Color(
-			rgb1[0] * ratio + rgb2[0] * inverse, 
+			rgb1[0] * ratio + rgb2[0] * inverse,
 			rgb1[1] * ratio + rgb2[1] * inverse,
 			rgb1[2] * ratio + rgb2[2] * inverse);
 		//@formatter:on
@@ -197,7 +197,7 @@ public class ColorUtils {
 
 		/**
 		 * Add a color into the mixture, in a quantity proportional to its alpha value
-		 * 
+		 *
 		 * @param color the color to mix
 		 */
 		public void add(Color color) {
@@ -220,7 +220,7 @@ public class ColorUtils {
 
 		/**
 		 * Get the color of the current mixture
-		 * 
+		 *
 		 * @param defaultColor the default (background) color, if the mixture has no color
 		 * @return the resulting color
 		 */

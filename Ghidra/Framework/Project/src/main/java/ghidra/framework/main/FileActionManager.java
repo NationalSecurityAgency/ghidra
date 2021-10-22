@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -275,7 +275,7 @@ class FileActionManager {
 	 * Opens the given project in a task that will show a dialog to block input while opening
 	 * the project in the swing thread.
 	 * @param projectLocator the project locator
-	 * @return true if the project was opened 
+	 * @return true if the project was opened
 	 */
 	final boolean openProject(ProjectLocator projectLocator) {
 		OpenTaskRunnable openRunnable = new OpenTaskRunnable(projectLocator);
@@ -347,7 +347,7 @@ class FileActionManager {
 	}
 
 	/**
-	 * Obtain domain objects from files and lock.  If unable to lock 
+	 * Obtain domain objects from files and lock.  If unable to lock
 	 * one or more of the files, none are locked and null is returned.
 	 * @param files the files
 	 * @return locked domain objects, or null if unable to lock
@@ -414,10 +414,10 @@ class FileActionManager {
 	/**
 	 * menu listener for File | Close Project...
 	 * <p>
-	 * This method will always save the FrontEndTool and project, but not the data unless 
+	 * This method will always save the FrontEndTool and project, but not the data unless
 	 * <tt>confirmClose</tt> is called.
-	 * 
-	 * @param isExiting true if we are closing the project because 
+	 *
+	 * @param isExiting true if we are closing the project because
 	 * Ghidra is exiting
 	 * @return false if user cancels the close operation
 	 */
@@ -663,7 +663,7 @@ class FileActionManager {
 	/**
 	 * Checks the list for read-only files; if any are found, pops up
 	 * a dialog for whether to save now or lose changes.
-	 * @param objs list of files which correspond to modified 
+	 * @param objs list of files which correspond to modified
 	 * domain objects.
 	 * @return true if there are no read only files OR if the user
 	 * wants to lose his changes; false if the user wants to save the

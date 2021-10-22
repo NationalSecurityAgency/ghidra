@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,13 +34,13 @@ import utility.function.ExceptionalFunction;
 
 /**
  * A convenience base class for creating tests that use the default tool and open a program.
- * This class will create for you a tool, a {@link TestEnv} and will open the program 
+ * This class will create for you a tool, a {@link TestEnv} and will open the program
  * specified by {@link #getProgramName()}.
- * 
- * <P>To use this class, you must call {@link #initialize()} from your test or <code>setUp</code> 
+ *
+ * <P>To use this class, you must call {@link #initialize()} from your test or <code>setUp</code>
  * method.
- * 
- * <P>Note: if you are loading a pre-existing program, then simply override 
+ *
+ * <P>Note: if you are loading a pre-existing program, then simply override
  * {@link #getProgramName()}.  Alternatively, if you are building a program, then override
  * {@link #getProgram()} and return it there.
  */
@@ -67,7 +67,7 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 
 	/**
 	 * Override this method if you need to build your own program.
-	 * 
+	 *
 	 * @return the program to use for this test.
 	 * @throws Exception if an exception is thrown opening the program
 	 */
@@ -160,8 +160,8 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 
 	/**
 	 * Provides a convenient method for modifying the current program, handling the transaction
-	 * logic. 
-	 * 
+	 * logic.
+	 *
 	 * @param callback the code to execute
 	 */
 	public <E extends Exception> void modifyProgram(ExceptionalConsumer<Program, E> callback) {
@@ -184,7 +184,7 @@ public abstract class AbstractProgramBasedTest extends AbstractGhidraHeadedInteg
 	/**
 	 * Provides a convenient method for modifying the current program, handling the transaction
 	 * logic and returning a new item as a result.
-	 * 
+	 *
 	 * @param f the function for modifying the program and creating the desired result
 	 * @return the result
 	 */

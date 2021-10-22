@@ -24,7 +24,7 @@ define register offset=0x30 size=1 [ S_flag Z_flag AC_flag P_flag CY_flag ];
 define token opbyte (8)
    op0_8     = (0,7)
    op6_2     = (6,7)
-   
+
    dRegPair4_2 = (4,5)
    pRegPair4_2 = (4,5)
    sRegPair4_2 = (4,5)
@@ -33,9 +33,9 @@ define token opbyte (8)
 
    reg3_3 = (3,5)
    bits3_3   = (3,5)
-   
+
    bits0_4   = (0,3)
-   
+
    reg0_3 = (0,2)
    bits0_3   = (0,2)
 ;
@@ -100,12 +100,12 @@ macro setSubtractFlags(op1,op2) {
 
 macro push16(val16) {
 	SP = SP - 2;
-	*:2 SP = val16; 
+	*:2 SP = val16;
 }
 
 macro pop16(ret16) {
 	ret16 = *:2 SP;
-	SP = SP + 2; 
+	SP = SP + 2;
 }
 
 ################################################################
@@ -140,17 +140,17 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 
 :MOV reg3_3,(HL)  is op6_2=0x1 & reg3_3 & bits0_3=0x6 & HL {
 	ptr:2 = HL;
-	reg3_3 = *:1 ptr; 
+	reg3_3 = *:1 ptr;
 }
 
 :MOV (HL),reg0_3  is op6_2=0x1 & bits3_3=0x6 & reg0_3 & HL {
 	ptr:2 = HL;
-	*:1 ptr = reg0_3; 
+	*:1 ptr = reg0_3;
 }
 
 :MVI (HL),imm8  is op0_8=0x36 & HL; imm8 {
 	ptr:2 = HL;
-	*:1 ptr = imm8; 
+	*:1 ptr = imm8;
 }
 
 :LDAX (BC)  is op0_8=0x0a  & BC {
@@ -208,7 +208,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 :XCHG  is op0_8=0xeb {
 	tmp:2 = DE;
 	DE = HL;
-	HL = tmp;	
+	HL = tmp;
 }
 
 :XTHL  is op0_8=0xe3 {
@@ -419,7 +419,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 }
 
 :CMA  is op0_8=0x2f {
-	A = ~A;	
+	A = ~A;
 }
 
 :CMC  is op0_8=0x3f {
@@ -498,7 +498,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 }
 
 :JMP Addr16  is op0_8=0xc3; Addr16 {
-	goto Addr16;	
+	goto Addr16;
 }
 
 :J^cc Addr16  is op6_2=0x3 & cc & bits0_3=0x2; Addr16 {
@@ -533,7 +533,7 @@ cc: "M"             is bits3_3=0x7                              { export S_flag;
 	tmp:2 = 0;
 	pop16(tmp);
 	return [tmp];
-}	
+}
 
 :RST RstAddr  is op6_2=0x3 & RstAddr & bits0_3=0x7 {
 	tmp:2 = inst_next;

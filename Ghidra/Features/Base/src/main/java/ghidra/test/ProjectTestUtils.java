@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class ProjectTestUtils {
 
 	/**
 	 * Open the project for the given directory and name.
-	* If the project does not exist, create one. 
+	* If the project does not exist, create one.
 	* Only once instance of a given project may be open at any given
 	* point in time.  Be sure to close the project if you will be
 	* re-opening.
@@ -88,7 +88,7 @@ public class ProjectTestUtils {
 	/**
 	 * Remove entire project.  Note: this will not remove the parent <code>directory</code> of
 	 * the project.
-	 * 
+	 *
 	 * @param directory directory of the project.
 	 * @param name The name of the project to delete
 	 * @return True if the project was deleted.
@@ -188,7 +188,7 @@ public class ProjectTestUtils {
 	 * user has permission to write.  If null, the root data folder will be used.
 	 * @return new domain file.
 	 * @throws InvalidNameException if the filename is invalid
-	 * @throws CancelledException if the opening is cancelled 
+	 * @throws CancelledException if the opening is cancelled
 	 * @throws LanguageNotFoundException if the language cannot be found
 	 * @throws IOException if there is an exception creating the program or domain file
 	 */

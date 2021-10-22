@@ -61,7 +61,7 @@
    # negate the float
    tmpB = f-( tmpB );
    setFPRF( tmpB );
- 
+
    <done>
 
    setSummaryFPSCR();
@@ -92,7 +92,7 @@
    # negate the float
    tmpB = f-( tmpB );
    setFPRF( tmpB );
- 
+
    <done>
 
    setSummaryFPSCR();

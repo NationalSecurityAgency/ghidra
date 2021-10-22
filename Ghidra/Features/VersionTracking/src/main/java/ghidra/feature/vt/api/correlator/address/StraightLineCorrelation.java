@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import java.util.*;
  * Generate address correlations by viewing each function as a list of instructions in address order
  * Instructions are paired one at a time, in order, if the mnemonics of the instructions match.
  * The correlation gives up at the first mismatch.
- * 
+ *
  * This algorithm is suitable for correlating functions paired by "exact match" program correlations, where
  * we know apriori that the functions are identical, instruction for instruction.
  *
@@ -59,14 +59,14 @@ public class StraightLineCorrelation implements AddressCorrelation {
 	}
 
 	private void initialize(TaskMonitor monitor) throws CancelledException {
-		
-		if (cachedForwardAddressMap != null) return;		
+
+		if (cachedForwardAddressMap != null) return;
 		cachedForwardAddressMap = new HashMap<Address, AddressRange>();
 
 		AddressSetView sourceAddressSet = (sourceFunction != null) ? sourceFunction.getBody() : null;
 		AddressSetView destinationAddressSet = (destinationFunction != null) ? destinationFunction.getBody() : null;
 
-		if (sourceAddressSet == null || destinationAddressSet == null) 
+		if (sourceAddressSet == null || destinationAddressSet == null)
 			return;
 
 		CodeUnitIterator srcIter = sourceFunction.getProgram().getListing().getCodeUnits(sourceAddressSet, true);
@@ -82,7 +82,7 @@ public class StraightLineCorrelation implements AddressCorrelation {
 			if (srcMnemonic.equals(destMnemonic)) {
 				monitor.checkCanceled();
 				monitor.incrementProgress(srcCodeUnit.getLength());
-				defineRange(cachedForwardAddressMap, srcCodeUnit, destCodeUnit);				
+				defineRange(cachedForwardAddressMap, srcCodeUnit, destCodeUnit);
 			}
 			else
 				break;			// First mismatch we break out of the loop

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,18 +32,18 @@ import ghidra.program.model.data.DataType;
  * 	...
  * 	return f.some_field;
  * </pre>
- * 
+ *
  * Alternatively, an anonymous variable access would look like this:
  * <pre>
  *	Bar b;
  * 	...
  *	return b-><b>foo_array[1].some_field</b>;
  * </pre>
- * 
- * In this case, <code><b>foo_array[1]</b></code> is a <code>Foo</code>, whose 
- * <code><b>some_field</b></code> is 
- * being accessed anonymously, since there is no variable of <code>Foo</code> declared 
- * in the current function. 
+ *
+ * In this case, <code><b>foo_array[1]</b></code> is a <code>Foo</code>, whose
+ * <code><b>some_field</b></code> is
+ * being accessed anonymously, since there is no variable of <code>Foo</code> declared
+ * in the current function.
  */
 public class AnonymousVariableAccessDR extends VariableAccessDR {
 
@@ -55,7 +55,7 @@ public class AnonymousVariableAccessDR extends VariableAccessDR {
 	public void accumulateMatches(DataType dt, String fieldName, List<DataTypeReference> results) {
 
 		//
-		// This class is backed by a ClangFieldToken.  That class's data type is the composite 
+		// This class is backed by a ClangFieldToken.  That class's data type is the composite
 		// that contains the field being accessed.   A variable being accessed has 2 types being
 		// touched: the aforementioned composite and the type of the field itself.
 		//

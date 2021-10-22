@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,7 +86,7 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 	/*
 	 * Test that the DemangledFunction will properly update a thunk function
 	 * with its namespace, and ripple through to the underlying default thunked
-	 * function.  The thunk 'this' parameter should utilize the Class 
+	 * function.  The thunk 'this' parameter should utilize the Class
 	 * within which the thunk resides.
 	 */
 	@Test
@@ -338,7 +338,7 @@ public class DemangledFunctionTest extends AbstractGhidraHeadlessIntegrationTest
 	public void testFunctionVariable() throws Exception {
 
 		//
-		// This makes sure that a variable inside of a function namespace prevents a class 
+		// This makes sure that a variable inside of a function namespace prevents a class
 		// namespace object from being created when a function does not exist.  Instead it should
 		// create a simple namespace.
 		//

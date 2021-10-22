@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,20 +21,20 @@ import java.util.ConcurrentModificationException;
 /**
  * Interface for VertexSet and EdgeSet iterators.
  *
- * 
+ *
  */
 public interface GraphIterator<T extends KeyedObject> {
 
 	/** Return true if the iterator has more elements */
 	public boolean hasNext();
-	
-	/** Returns next element in the iteration. 
+
+	/** Returns next element in the iteration.
 	 * @throws ConcurrentModificationException if the backing set
 	 * has been modified since the iterator was created.
 	 */
 	public T next() throws ConcurrentModificationException;
-	
+
 	/** Removes the object from the backing set safely */
-	public boolean remove(); 
+	public boolean remove();
 
 }

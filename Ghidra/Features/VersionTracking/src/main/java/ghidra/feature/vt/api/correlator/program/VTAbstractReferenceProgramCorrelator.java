@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -94,7 +94,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	 * First generates the sourceDictionary from the source program and matchSet,
 	 * then finds the destinations corresponding to the matchSet and the
 	 * sourceDictionary using the preset similarity and confidence thresholds.
-	 * 
+	 *
 	 * @param matchSet contains all existing matches
 	 * @param monitor the task monitor
 	 * @throws CancelledException if cancelled
@@ -113,10 +113,10 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	 * findDestinations updates matchSet with non-null VTMatchInfo members returned from transform.
 	 * For each of the entries in the destinationMap = {destMatchAddr:[list of source references]},
 	 * we test all pairs [list of source references] x [list of destination references]
-	 * 
+	 *
 	 * </br>
 	 * Note: {@code destinationMap} is a class variable set by {@code extractReferenceFeatures}
-	 * 
+	 *
 	 * @param matchSet The {@code VTMatchSet} for the current session (non-transitive)
 	 * @param monitor task monitor
 	 * @throws CancelledException if cancelled
@@ -171,7 +171,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	 * Scoring Mechanism: determines destination similarity and confidence for each of the
 	 * sourceNeighbors and if similarity and confidence pass the threshold, then VTMatchInfo will
 	 * be created and added to the result.
-	 * 
+	 *
 	 * @param matchSet match set for this correlator
 	 * @param destinationFunction function in the destination program that references an existing accepted match
 	 * @param destinationVector the destination function's feature vector
@@ -287,7 +287,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	/**
 	 * Recursively traces the reference chains from a given address and returns by reference a
 	 * list of functions found along the reference chain.
-	 * 
+	 *
 	 * @param depth the initial recursion depth
 	 * @param list a function accumulation list that is updated by this function
 	 * @param program the program
@@ -361,7 +361,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	/**
 	 * Used to check that a match association is of the correct type (e.g. DATA or FUNCTION) for
 	 * the given correlator.
-	 * 
+	 *
 	 * @param associationType the type of match
 	 * @return true if the correct type
 	 */
@@ -370,7 +370,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	/**
 	 * Used to check that a match association is of the correct type (e.g. DATA or FUNCTION) for
 	 * the given correlator.
-	 * 
+	 *
 	 * @param ref the reference
 	 * @return true if the correct type
 	 */
@@ -381,7 +381,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 	 * becomes a unique feature. At the end, all the source and destination functions will have
 	 * "vectors" of these features, which are unique match ids.  Then the LSH dictionary can be
 	 * made from the source and we can look for matches in the destination.
-	 * 
+	 *
 	 * @param matchSet the match set of previously user-accepted matches
 	 * @param monitor the monitor
 	 */
@@ -537,7 +537,7 @@ public abstract class VTAbstractReferenceProgramCorrelator extends VTAbstractPro
 		 * In order to account unmatched/unaccepted matches that appear in the key set that
 		 * consists of possibly correlated functions, we can consider the cost of a reference
 		 * switching and the cost of a reference being dropped or picked up between versions.
-		 * 
+		 *
 		 * Theoretically this should be dependent on the probability of the referenced element
 		 * occurring, but for the moment we'll consider the model for a generalized switch and
 		 * drop/pickup.

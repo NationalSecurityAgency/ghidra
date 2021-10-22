@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,14 +48,14 @@ import resources.ResourceManager;
 
 /**
  * A pair of text fields suitable for guided assembly
- * 
+ *
  * This object must be updated with program location information, so that it knows the applicable
  * language and address. It then provides two text boxes: one for the mnemonic, and one for the
  * operands. The two are linked so that the user can intuitively navigate between them as if they
  * were a single text box. The boxes are also attached to an autocompleter. It provides suggestions
  * based syntax errors returned by the assembler. When a valid instruction is present, it provides
  * the resulting instruction bytes.
- * 
+ *
  * To detect when the user has activated an instruction-bytes entry, add an
  * {@link AutocompletionListener} and check that the selection is an {@link AssemblyInstruction}.
  * Otherwise, the usual autocompletion behavior is applied automatically.
@@ -166,7 +166,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Represents an encoding for a complete assembly instruction
-	 * 
+	 *
 	 * These provide no insertion text, since their activation should be handled by a custom
 	 * listener.
 	 */
@@ -236,7 +236,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * A customized autocompleter for assembly
-	 * 
+	 *
 	 * This positions the list at the bottom left of the field(s), and considers the full text of
 	 * the linked text boxes when retrieving the prefix. It also delegates the item styling to the
 	 * item instances.
@@ -403,7 +403,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Set the current program location
-	 * 
+	 *
 	 * This may cause the construction of a new assembler, if one suitable for the given program's
 	 * language has not yet been built.
 	 * @param loc the location
@@ -454,7 +454,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Get a reference to the autocompleter
-	 * 
+	 *
 	 * This is useful for adding the custom listener needed to detect activation of assembled
 	 * instruction entries.
 	 * @return the autocompleter
@@ -473,7 +473,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * An enum type to specify which variant of the assembly input is shown.
-	 * 
+	 *
 	 * <ul>
 	 *   <li>{@link #INVISIBLE} hides both variants. Nothing is shown.</li>
 	 *   <li>{@link #DUAL_VISIBLE} shows the dual-box linked variant, suitable when the current
@@ -509,7 +509,7 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Add a focus listener to the box(es)
-	 * 
+	 *
 	 * NOTE: The listener will not fire when focus passes among the linked boxes of the dual variant.
 	 * @param listener the listener
 	 */
@@ -573,7 +573,7 @@ public class AssemblyDualTextField {
 	/**
 	 * Sets the style of the text fields
 	 * @param field the field to configure
-	 * 
+	 *
 	 * This is an extension point.
 	 */
 	protected void configureField(JTextField field) {
@@ -587,9 +587,9 @@ public class AssemblyDualTextField {
 	 * @param suggestion the text suggested by the assembly syntax analyzer
 	 * @param bufferleft the portion of the prefix that is also part of the suggestion
 	 * @return a formatted string that hints to the effect of selecting this suggestion
-	 * 
+	 *
 	 * This is an extension point.
-	 * 
+	 *
 	 * Currently, this just shows the current prefix in bold, and the text that would be inserted
 	 * as normal weight.
 	 */
@@ -601,14 +601,14 @@ public class AssemblyDualTextField {
 
 	/**
 	 * Provides an ordering for assembled instructions appearing in the list
-	 * 
+	 *
 	 * The items with the highest preference are positioned at the top of the list
 	 * @param rc a resolved instruction
 	 * @param existing the instruction, if any, currently under the user's cursor
 	 * @return a preference
-	 * 
+	 *
 	 * This is an extension point.
-	 * 
+	 *
 	 * Currently, a proposed instruction having the same constructor tree as the existing one is
 	 * the most preferred. Second, are instructions having a similar tree as the existing one --
 	 * "similar" is not yet well defined, but at the moment, it means their constructor tree
@@ -634,9 +634,9 @@ public class AssemblyDualTextField {
 	 * Compute valid completions given the prefix
 	 * @param text the prefix
 	 * @return the collection of completion items
-	 * 
+	 *
 	 * This is an extension point.
-	 * 
+	 *
 	 * If text parses and assembles, then the completion set will include assembled
 	 * instruction-byte entries. Note that there may still be valid textual completions to continue
 	 * the instruction. The suggestions yielded by all syntax errors are used to create textual

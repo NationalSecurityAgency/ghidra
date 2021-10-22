@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@
 package ghidra.util;
 
 /**
- * Class with static methods formatting values in hex.  
+ * Class with static methods formatting values in hex.
  */
 public class StringFormat {
 
@@ -35,7 +35,7 @@ public class StringFormat {
 		}
 		return rep;
 	}
-	
+
 	/**
 	 * Gets a hexadecimal representation of a short value.
 	 * @param s the short value
@@ -48,7 +48,7 @@ public class StringFormat {
 
 
 	/**
-	 * Creates a string prepended with zeros, if padding is indicated, and adds 
+	 * Creates a string prepended with zeros, if padding is indicated, and adds
 	 * the indicated endchar as the suffix.
 	 * @param str the original string
 	 * @param padlen length of the padded string without the suffix character.
@@ -65,7 +65,7 @@ public class StringFormat {
 			int len = str.length();
 
 			if (len < padlen) {
-				buffer.append(pad.substring(0,padlen-len)); 
+				buffer.append(pad.substring(0,padlen-len));
 			}
 		}
 		// add the number

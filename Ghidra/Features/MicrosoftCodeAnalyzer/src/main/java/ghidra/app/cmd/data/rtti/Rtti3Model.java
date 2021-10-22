@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,7 +71,7 @@ public class Rtti3Model extends AbstractCreateRttiDataModel {
 	 * @param program the program
 	 * @param rtti3Address the address in the program for the RTTI3 data
 	 * types.
-	 * @param validationOptions options indicating how to validate the data type at the indicated 
+	 * @param validationOptions options indicating how to validate the data type at the indicated
 	 * address.
 	 */
 	public Rtti3Model(Program program, Address rtti3Address,
@@ -122,7 +122,7 @@ public class Rtti3Model extends AbstractCreateRttiDataModel {
 
 	/**
 	 * This gets the ClassHierarchyDescriptor (RTTI 3) structure for the indicated program.
-	 * @param program the program which will contain this data type. 
+	 * @param program the program which will contain this data type.
 	 * @return the ClassHierarchyDescriptor (RTTI 3) structure.
 	 */
 	public static DataType getDataType(Program program) {
@@ -155,7 +155,7 @@ public class Rtti3Model extends AbstractCreateRttiDataModel {
 
 	/**
 	 * This gets the ClassHierarchyDescriptor (RTTI 3) structure for the indicated program.
-	 * @param program the program which will contain this data type. 
+	 * @param program the program which will contain this data type.
 	 * @return the ClassHierarchyDescriptor (RTTI 3) structure.
 	 */
 	static DataType getSimpleDataType(Program program) {
@@ -248,7 +248,7 @@ public class Rtti3Model extends AbstractCreateRttiDataModel {
 	}
 
 	/**
-	 * Gets the address of the RTTI2 that is referred to from an RTTI3 structure that is placed at 
+	 * Gets the address of the RTTI2 that is referred to from an RTTI3 structure that is placed at
 	 * the indicated address.
 	 * @return the address of the RTTI2 structure or null.
 	 * @throws InvalidDataTypeException if this isn't a valid model at the specified address.

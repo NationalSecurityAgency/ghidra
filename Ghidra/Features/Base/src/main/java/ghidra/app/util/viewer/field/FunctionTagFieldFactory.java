@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class FunctionTagFieldFactory extends FieldFactory {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param model the model that the field belongs to.
 	 * @param hsProvider the HightLightStringProvider.
 	 * @param displayOptions the Options for display properties.
@@ -102,7 +102,7 @@ public class FunctionTagFieldFactory extends FieldFactory {
 	}
 
 	/**
-	 * Overridden to ensure that we return` a {@link FunctionTagFieldLocation} instance. 
+	 * Overridden to ensure that we return` a {@link FunctionTagFieldLocation} instance.
 	 */
 	@Override
 	public ProgramLocation getProgramLocation(int row, int col, ListingField bf) {
@@ -118,8 +118,8 @@ public class FunctionTagFieldFactory extends FieldFactory {
 	}
 
 	/**
-	 * Overridden to ensure that we only place function tag text on the header of a 
-	 * function. 
+	 * Overridden to ensure that we only place function tag text on the header of a
+	 * function.
 	 */
 	@Override
 	public FieldLocation getFieldLocation(ListingField listingField, BigInteger index, int fieldNum,
@@ -161,8 +161,8 @@ public class FunctionTagFieldFactory extends FieldFactory {
 
 	/**
 	 * Creates a tags list field to be show at the beginning of each function that shows the tags
-	 * assigned to that function. 
-	 * 
+	 * assigned to that function.
+	 *
 	 * @param function the function to retrieve the tags from
 	 */
 	protected List<FieldElement> createFunctionTagElements(FunctionDB function) {
@@ -192,7 +192,7 @@ public class FunctionTagFieldFactory extends FieldFactory {
 
 	/**
 	 * Returns all function tags associated with the given function.
-	 * 
+	 *
 	 * @param function the function to retrieve the tags from
 	 * @return list of function tag names
 	 */

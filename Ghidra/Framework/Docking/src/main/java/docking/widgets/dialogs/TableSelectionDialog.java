@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class TableSelectionDialog<T> extends DialogComponentProvider {
 
 	/**
 	 * Create a new Dialog for displaying and choosing table row items
-	 * 
+	 *
 	 * @param title The title for the dialog
 	 * @param model a {@link RowObjectTableModel} that has the tRable data
 	 * @param allowMultipleSelection if true, the dialog allows the user to select more

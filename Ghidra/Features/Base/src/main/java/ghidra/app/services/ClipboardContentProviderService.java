@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.app.util.ClipboardType;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Determines what types of transfer data can be placed on the clipboard, as well as if 
+ * Determines what types of transfer data can be placed on the clipboard, as well as if
  * cut, copy, and paste operations are supported
  */
 public interface ClipboardContentProviderService {
@@ -107,8 +107,8 @@ public interface ClipboardContentProviderService {
 	 * Adds a change listener that will be notified when the state of the service provider changes
 	 * such that the ability to perform some actions has changed.  For example, the given
 	 * listener will be called when a copy action can be performed when it was previously not
-	 * possible. 
-	 * 
+	 * possible.
+	 *
 	 * @param listener The listener to add.
 	 */
 	public void addChangeListener(ChangeListener listener);
@@ -122,7 +122,7 @@ public interface ClipboardContentProviderService {
 
 	/**
 	 * Returns true if the service can perform a paste operation using the given transferable.
-	 * 
+	 *
 	 * @param availableFlavors data flavors available for the current clipboard transferable
 	 * @return true if the service can perform a paste operation using the given transferable.
 	 */
@@ -135,7 +135,7 @@ public interface ClipboardContentProviderService {
 	public boolean canCopy();
 
 	/**
-	 * Returns true if the given service provider can currently perform a 'copy special' 
+	 * Returns true if the given service provider can currently perform a 'copy special'
 	 * operation.
 	 * @return true if copy special is enabled
 	 */

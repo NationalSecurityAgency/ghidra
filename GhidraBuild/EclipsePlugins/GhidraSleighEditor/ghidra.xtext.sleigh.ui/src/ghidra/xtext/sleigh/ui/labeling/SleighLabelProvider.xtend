@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ import static extension org.eclipse.xtext.EcoreUtil2.*
 
 /**
  * Provides labels for EObjects.
- * 
+ *
  * See https://www.eclipse.org/Xtext/documentation/304_ide_concepts.html#label-provider
  */
 class SleighLabelProvider extends DefaultEObjectLabelProvider {
@@ -70,7 +70,7 @@ class SleighLabelProvider extends DefaultEObjectLabelProvider {
 
 		return qn.toString();
 	}
-	
+
 	def String getObjectText(EObject element) {
 		switch element {
 			macroDefine:
@@ -107,7 +107,7 @@ class SleighLabelProvider extends DefaultEObjectLabelProvider {
 			"  " + len + " " + '  (' + element.start.value + ',' + element.end.value + ')' +
 				(if(element.isSigned()) ' signed' else ''), StyledString::QUALIFIER_STYLER).append("\n\n" + possible);
 	}
-	
+
 	def getcontextfielddefText(contextfielddef element) {
 		// find all var attaches and display possible names
 		var len = getVarAttachesForElement(element)
@@ -116,7 +116,7 @@ class SleighLabelProvider extends DefaultEObjectLabelProvider {
 			"  " + len + " " + '  (' + element.start.value + ',' + element.end.value + ')' +
 				(if(element.isSigned()) ' signed' else ''), StyledString::QUALIFIER_STYLER).append("\n\n" + possible);
 	}
-	
+
 	protected def String getVarAttachesForElement(EObject element) {
 		model = element.eResource.contents.get(0);
 		varatt = model.eAllContents.filter(typeof(varattach));
@@ -147,7 +147,7 @@ class SleighLabelProvider extends DefaultEObjectLabelProvider {
 		}
 		len
 	}
-		
+
 	def getDefineSymText(DefineSym element) {
 		// find all var attaches and display possible names
 		var retStr = "";
@@ -167,7 +167,7 @@ class SleighLabelProvider extends DefaultEObjectLabelProvider {
 			return super.doGetText(element);
 		}
 		return retStr;
-	}	
+	}
 
 	override protected doGetText(Object element) {
 		if(element == null) return null;
@@ -197,7 +197,7 @@ class SleighLabelProvider extends DefaultEObjectLabelProvider {
 				super.doGetText(element)
 		}
 	}
-	
+
 	def getSizeStr(integerValue size) {
 		if (size.value != null) {
 			return size.value

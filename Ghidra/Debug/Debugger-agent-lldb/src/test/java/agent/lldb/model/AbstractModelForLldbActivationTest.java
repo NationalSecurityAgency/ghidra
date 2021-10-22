@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.dbg.util.PathPattern;
 
 /**
  * Test model object activation and focus
- * 
+ *
  * <p>
  * Activation and focus are related but separate concepts. Focus is a little looser, and is allowed
  * by the model to exactly match the client's notion of focus, usually indicating the object of the
@@ -50,7 +50,7 @@ public abstract class AbstractModelForLldbActivationTest extends AbstractDebugge
 		assumeNotNull(expectedDefaultFocus);
 		m.build();
 
-		PathPattern pathPattern = new PathPattern(expectedDefaultFocus);		
+		PathPattern pathPattern = new PathPattern(expectedDefaultFocus);
 		Set<TargetObject> activatable = getActivatableThings();
 		// The default must be one of the activatable objects
 		TargetObject obj = Unique.assertOne(activatable.stream()

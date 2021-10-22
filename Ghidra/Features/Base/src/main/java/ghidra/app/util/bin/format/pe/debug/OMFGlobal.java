@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import java.util.*;
 
 /**
  * A class to represent the Object Module Format (OMF) Global data structure.
- * 
+ *
  */
 public class OMFGlobal {
     private short symHash;
@@ -60,7 +60,7 @@ public class OMFGlobal {
 			DebugSymbol sym = DebugSymbolSelector.selectSymbol(reader, ptr);
 
 			ptr       += 2*BinaryReader.SIZEOF_SHORT;
-			bytesLeft -= 2*BinaryReader.SIZEOF_SHORT; 
+			bytesLeft -= 2*BinaryReader.SIZEOF_SHORT;
 
 			if (sym != null) {
 				symbols.add(sym);

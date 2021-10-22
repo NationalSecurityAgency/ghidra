@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,39 +30,39 @@ import util.CollectionUtils;
 
 /**
  * A set of convenience methods for performing graph algorithms on a graph.
- * 
+ *
  * <P>Some definitions:
  * <OL>
  * 	   <LI>
- * 		<B>dominance:</B> 
+ * 		<B>dominance:</B>
  * 					a node 'a' dominates node 'b' if all paths from start to 'b' contain 'a';
  *		            a node always dominates itself (except in 'strict dominance', which is all
  *		            dominators except for itself)
  *
  *	   <LI>
- *		<B>post-dominance:</B> 
+ *		<B>post-dominance:</B>
  *					 A node 'b' is said to post-dominate node 'a' if all paths from 'a'
  *		             to END contain 'b'
  *
  *	   <LI>
- *		<B>immediate dominator:</B> 
+ *		<B>immediate dominator:</B>
  *					the closest dominator of a node
  *
  *	   <LI>
- *		<B>dominance tree:</B>  
- *					A dominator tree is a tree where each node's children are those nodes 
+ *		<B>dominance tree:</B>
+ *					A dominator tree is a tree where each node's children are those nodes
  *					it *immediately* dominates (a idom b)
  *
  *     <LI>
- *     	<B>dominance frontier:</B> 
- *     				the immediate successors of the nodes dominated by 'a'; it is the set of 
+ *     	<B>dominance frontier:</B>
+ *     				the immediate successors of the nodes dominated by 'a'; it is the set of
  *     				nodes where d's dominance stops.
- *     
+ *
  *     <LI>
- *     	<B>strongly connected components:</B> 
- *     				a graph is said to be strongly connected if every vertex is reachable 
- *     				from every other vertex. The strongly connected components 
- *     				of an arbitrary directed graph form a partition into 
+ *     	<B>strongly connected components:</B>
+ *     				a graph is said to be strongly connected if every vertex is reachable
+ *     				from every other vertex. The strongly connected components
+ *     				of an arbitrary directed graph form a partition into
  *     				subgraphs that are themselves strongly connected.
  *     <LI>
  *     	<B>graph density:</B>
@@ -81,7 +81,7 @@ public class GraphAlgorithms {
 
 	/**
 	 * Returns all source vertices (those with no incoming edges) in the graph.
-	 * 
+	 *
 	 * @param g the graph
 	 * @return source vertices
 	 */
@@ -101,7 +101,7 @@ public class GraphAlgorithms {
 
 	/**
 	 * Returns all sink vertices (those with no outgoing edges) in the graph.
-	 * 
+	 *
 	 * @param g the graph
 	 * @return sink vertices
 	 */
@@ -121,9 +121,9 @@ public class GraphAlgorithms {
 
 	/**
 	 * Returns all descendants for the given vertices in the given graph.  Descendants for a given
-	 * vertex are all nodes at the outgoing side of an edge, as well as their outgoing 
+	 * vertex are all nodes at the outgoing side of an edge, as well as their outgoing
 	 * vertices, etc.
-	 * 
+	 *
 	 * @param g the graph
 	 * @param vertices the vertices for which to find descendants
 	 * @return the descendants
@@ -138,9 +138,9 @@ public class GraphAlgorithms {
 
 	/**
 	 * Returns all ancestors for the given vertices in the given graph.  Ancestors for a given
-	 * vertex are all nodes at the incoming side of an edge, as well as their incoming 
+	 * vertex are all nodes at the incoming side of an edge, as well as their incoming
 	 * vertices, etc.
-	 * 
+	 *
 	 * @param g the graph
 	 * @param vertices the vertices for which to find descendants
 	 * @return the ancestors
@@ -155,7 +155,7 @@ public class GraphAlgorithms {
 
 	/**
 	 * Returns a set of all edges that are reachable from the given vertex.
-	 * 
+	 *
 	 * @param g the graph
 	 * @param v the vertex for which to get edges
 	 * @param topDown true for outgoing edges; false for incoming edges
@@ -171,7 +171,7 @@ public class GraphAlgorithms {
 
 	/**
 	 * Returns a set of all edges that are reachable from the given collection of vertices.
-	 * 
+	 *
 	 * @param g the graph
 	 * @param vertices the vertices for which to get edges
 	 * @param topDown true for outgoing edges; false for incoming edges
@@ -210,9 +210,9 @@ public class GraphAlgorithms {
 	}
 
 	/**
-	 * Creates a subgraph of the given graph for each edge of the given graph that is 
+	 * Creates a subgraph of the given graph for each edge of the given graph that is
 	 * contained in the list of vertices.
-	 * 
+	 *
 	 * @param g the existing graph
 	 * @param vertices the vertices to be in the new graph
 	 * @return the new subgraph
@@ -235,17 +235,17 @@ public class GraphAlgorithms {
 	}
 
 	/**
-	 * Returns a list where each set therein is a strongly connected component of the given 
+	 * Returns a list where each set therein is a strongly connected component of the given
 	 * graph.  Each strongly connected component is that in which each vertex is reachable from
 	 * any other vertex in that set.
-	 * 
-	 * <P>This method can be used to determine reachability of a set of vertices.  
-	 * 
-	 * <P>This can also be useful for cycle detection, as a multi-vertex strong component 
-	 * is by definition a cycle.  This method differs from 
-	 * {@link #findCircuits(GDirectedGraph, boolean, TaskMonitor)} in that the latter will 
-	 * return cycles within the strong components, or sub-cycles. 
-	 * 
+	 *
+	 * <P>This method can be used to determine reachability of a set of vertices.
+	 *
+	 * <P>This can also be useful for cycle detection, as a multi-vertex strong component
+	 * is by definition a cycle.  This method differs from
+	 * {@link #findCircuits(GDirectedGraph, boolean, TaskMonitor)} in that the latter will
+	 * return cycles within the strong components, or sub-cycles.
+	 *
 	 * @param g the graph
 	 * @return the list of strongly connected components
 	 */
@@ -256,11 +256,11 @@ public class GraphAlgorithms {
 	}
 
 	/**
-	 * Returns all entry points in the given graph.  This includes sources, vertices which 
-	 * have no incoming edges, as well as strongly connected sub-graphs.  The latter being a 
+	 * Returns all entry points in the given graph.  This includes sources, vertices which
+	 * have no incoming edges, as well as strongly connected sub-graphs.  The latter being a
 	 * group vertices where each vertex is reachable from every other vertex.  In the case of
 	 * strongly connected components, we pick one of them arbitrarily to be the entry point.
-	 * 
+	 *
 	 * @param g the graph
 	 * @return the entry points into the graph
 	 */
@@ -274,7 +274,7 @@ public class GraphAlgorithms {
 
 		Set<V> entryPoints = new HashSet<>(sources);
 		if (isolatedVertices.isEmpty()) {
-			// no unconnected vertices 
+			// no unconnected vertices
 			return entryPoints;
 		}
 
@@ -292,9 +292,9 @@ public class GraphAlgorithms {
 	}
 
 	/**
-	 * Returns the dominance tree of the given graph.  A dominator tree of the vertices where each 
+	 * Returns the dominance tree of the given graph.  A dominator tree of the vertices where each
 	 * node's children are those nodes it *immediately* dominates (a idom b)
-	 * 
+	 *
 	 * @param g the graph
 	 * @param monitor the task monitor
 	 * @return the tree
@@ -307,11 +307,11 @@ public class GraphAlgorithms {
 	}
 
 	/**
-	 * Returns a set of all vertices that are dominated by the given vertex.  A node 'a' 
+	 * Returns a set of all vertices that are dominated by the given vertex.  A node 'a'
 	 * dominates node 'b' if all paths from start to 'b' contain 'a';
 	 * a node always dominates itself (except in 'strict dominance', which is all
 	 * dominators except for itself)
-	 * 
+	 *
 	 * @param g the graph
 	 * @param from the vertex for which to find dominated vertices
 	 * @param monitor the monitor
@@ -327,9 +327,9 @@ public class GraphAlgorithms {
 	}
 
 	/**
-	 * Returns a set of all vertices that are post-dominated by the given vertex.  A node 'b' 
+	 * Returns a set of all vertices that are post-dominated by the given vertex.  A node 'b'
 	 * is said to post-dominate node 'a' if all paths from 'a' to END contain 'b'.
-	 * 
+	 *
 	 * @param g the graph
 	 * @param from the vertex for which to get post-dominated vertices
 	 * @param monitor the monitor
@@ -346,7 +346,7 @@ public class GraphAlgorithms {
 
 	/**
 	 * Finds all the circuits, or cycles, in the given graph.
-	 * 
+	 *
 	 * @param g the graph
 	 * @param monitor the task monitor
 	 * @return the circuits
@@ -359,9 +359,9 @@ public class GraphAlgorithms {
 
 	/**
 	 * Finds all the circuits, or cycles, in the given graph.
-	 * 
+	 *
 	 * @param g the graph
-	 * @param uniqueCircuits true signals to return only unique circuits, where no two 
+	 * @param uniqueCircuits true signals to return only unique circuits, where no two
 	 *        circuits will contain the same vertex
 	 * @param monitor the task monitor
 	 * @return the circuits
@@ -378,12 +378,12 @@ public class GraphAlgorithms {
 
 	/**
 	 * Finds all the circuits, or cycles, in the given graph.  <B>This version
-	 * of <code>findCircuits()</code> takes a {@link TimeoutTaskMonitor}, which allows for the 
+	 * of <code>findCircuits()</code> takes a {@link TimeoutTaskMonitor}, which allows for the
 	 * client to control the duration of work.</B>   This is useful for finding paths on very
 	 * large, dense graphs.
-	 * 
+	 *
 	 * @param g the graph
-	 * @param uniqueCircuits true signals to return only unique circuits, where no two 
+	 * @param uniqueCircuits true signals to return only unique circuits, where no two
 	 *        circuits will contain the same vertex
 	 * @param monitor the timeout task monitor
 	 * @return the circuits
@@ -402,12 +402,12 @@ public class GraphAlgorithms {
 
 	/**
 	 * Finds all paths from <code>start</code> to <code>end</code> in the given graph.
-	 * 
-	 * <P><B><U>Warning:</U></B> for large, dense graphs (those with many interconnected 
-	 * vertices) this algorithm could run indeterminately, possibly causing the JVM to 
+	 *
+	 * <P><B><U>Warning:</U></B> for large, dense graphs (those with many interconnected
+	 * vertices) this algorithm could run indeterminately, possibly causing the JVM to
 	 * run out of memory.
-	 * 
-	 * <P>You are encouraged to call this method with a monitor that will limit the work to 
+	 *
+	 * <P>You are encouraged to call this method with a monitor that will limit the work to
 	 * be done, such as the {@link TimeoutTaskMonitor}.
 	 *
 	 * @param g the graph
@@ -426,12 +426,12 @@ public class GraphAlgorithms {
 
 	/**
 	 * Finds all paths from <code>start</code> to <code>end</code> in the given graph.  <B>This version
-	 * of <code>findPaths()</code> takes a {@link TimeoutTaskMonitor}, which allows for the 
+	 * of <code>findPaths()</code> takes a {@link TimeoutTaskMonitor}, which allows for the
 	 * client to control the duration of work.</B>   This is useful for finding paths on very
 	 * large, dense graphs.
-	 * 
-	 * <P><B><U>Warning:</U></B> for large, dense graphs (those with many interconnected 
-	 * vertices) this algorithm could run indeterminately, possibly causing the JVM to 
+	 *
+	 * <P><B><U>Warning:</U></B> for large, dense graphs (those with many interconnected
+	 * vertices) this algorithm could run indeterminately, possibly causing the JVM to
 	 * run out of memory.
 	 *
 	 * @param g the graph
@@ -453,7 +453,7 @@ public class GraphAlgorithms {
 	/**
 	 * Returns the vertices of the graph in post-order.   Pre-order is the order the vertices
 	 * are last visited when performing a depth-first traversal.
-	 * 
+	 *
 	 * @param g the graph
 	 * @param navigator the knower of the direction the graph should be traversed
 	 * @return the vertices
@@ -467,7 +467,7 @@ public class GraphAlgorithms {
 	/**
 	 * Returns the vertices of the graph in pre-order.   Pre-order is the order the vertices
 	 * are encountered when performing a depth-first traversal.
-	 * 
+	 *
 	 * @param g the graph
 	 * @param navigator the knower of the direction the graph should be traversed
 	 * @return the vertices
@@ -479,10 +479,10 @@ public class GraphAlgorithms {
 	}
 
 	/**
-	 * Calculates 'complexity depth', which is, for each vertex, the deepest/longest path 
-	 * from that vertex for a depth-first traversal.   So, for a vertex with a single 
+	 * Calculates 'complexity depth', which is, for each vertex, the deepest/longest path
+	 * from that vertex for a depth-first traversal.   So, for a vertex with a single
 	 * successor that has no children, the depth would be 1.
-	 * 
+	 *
 	 * @param g the graph
 	 * @return the map of each vertex to its complexity depth
 	 */
@@ -500,9 +500,9 @@ public class GraphAlgorithms {
 	}
 
 	/**
-	 * Retain all edges in the graph where each edge's endpoints are in the given set of 
-	 * vertices. 
-	 * 
+	 * Retain all edges in the graph where each edge's endpoints are in the given set of
+	 * vertices.
+	 *
 	 * @param graph the graph
 	 * @param vertices the vertices of the edges to keep
 	 * @return the set of edges
@@ -512,7 +512,7 @@ public class GraphAlgorithms {
 
 		//@formatter:off
 		Collection<E> edges = graph.getEdges();
-		Set<E> results = 
+		Set<E> results =
 			edges.stream()
 				 .filter(e -> vertices.contains(e.getStart()))
 				 .filter(e -> vertices.contains(e.getEnd()))
@@ -525,7 +525,7 @@ public class GraphAlgorithms {
 
 	/**
 	 * Returns the set of vertices contained within the given edges.
-	 * 
+	 *
 	 * @param edges the edges
 	 * @return the vertices
 	 */
@@ -540,7 +540,7 @@ public class GraphAlgorithms {
 
 	/**
 	 * A method to debug the given graph by printing it.
-	 * 
+	 *
 	 * @param g the graph to print
 	 * @param ps the output stream
 	 */
@@ -557,16 +557,16 @@ public class GraphAlgorithms {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/**
-	 * Returns true if the given strong component has no incoming edges that are outside of 
+	 * Returns true if the given strong component has no incoming edges that are outside of
 	 * the component.  This is useful to know, as it signals that the given strong component
 	 * is reachable from outside of that component.
-	 * 
+	 *
 	 * @param g the graph
 	 * @param strongComponent the set of vertices representing a strong component
-	 * @return true if the given strong component has no incoming edges that are outside of 
+	 * @return true if the given strong component has no incoming edges that are outside of
 	 * 		   the component
 	 */
 	private static <V, E extends GEdge<V>> boolean isSelfContainedStrongComponent(
@@ -577,7 +577,7 @@ public class GraphAlgorithms {
 			parents.addAll(g.getPredecessors(v));
 		}
 
-		// check to see if the given set of vertices has an incoming edge that is outside of 
+		// check to see if the given set of vertices has an incoming edge that is outside of
 		// the strong component
 		return strongComponent.containsAll(parents);
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,30 +42,30 @@ class RegisterValuesXmlMgr {
 	private AddressFactory factory;
 	private ProgramContext context;
 	private Set<String> undefinedRegisterNames;
-	
+
 	RegisterValuesXmlMgr(Program program, MessageLog log) {
 		this.program = program;
-		this.log = log;	
+		this.log = log;
 		factory = program.getAddressFactory();
 		context = program.getProgramContext();
 	}
-	
+
 	/**
 	 * Process the entry point section of the XML file.
 	 * @param parser xml reader
 	 * @param monitor monitor that can be canceled
 	 */
-	void read(XmlPullParser parser, TaskMonitor monitor) throws SAXParseException, CancelledException { 
+	void read(XmlPullParser parser, TaskMonitor monitor) throws SAXParseException, CancelledException {
 		undefinedRegisterNames = new HashSet<String>();
 		XmlElement element = parser.next();
 		if (!element.isStart() || !element.getName().equals("REGISTER_VALUES")) {
 			throw new SAXParseException("Expected REGISTER_VALUES start tag", null, null, parser.getLineNumber(), parser.getColumnNumber());
 		}
-		
+
 		element = parser.next();
 		while (element != null && element.isStart() && element.getName().equals("REGISTER_VALUE_RANGE")) {
 			if (monitor.isCancelled()) {
-				throw new CancelledException();	
+				throw new CancelledException();
 			}
 
 			processRegisterValues(element, parser);
@@ -74,22 +74,22 @@ class RegisterValuesXmlMgr {
 			if (element.isStart() || !element.getName().equalsIgnoreCase("REGISTER_VALUE_RANGE")) {
 				throw new SAXParseException("Expected REGISTER_VALUE_RANGE end tag", null, null, parser.getLineNumber(), parser.getColumnNumber());
 			}
-			
+
 			// read next tag
 			element = parser.next();
 		}
-		
+
 		if (element != null && !element.getName().equals("REGISTER_VALUES")) {
 			throw new SAXParseException("Expected REGISTER_VALUES end tag", null, null, parser.getLineNumber(), parser.getColumnNumber());
 		}
 	}
-	
+
 	/**
-	 * Returns list of unique registers which do not overlap any smaller 
+	 * Returns list of unique registers which do not overlap any smaller
 	 * registers.
 	 */
 	private List<Register> getUniqueRegisters() {
-	
+
 		ArrayList<Register> regs = new ArrayList<>(context.getRegisters());
 		Collections.sort(regs, new Comparator<Register>() {
 			@Override
@@ -97,12 +97,12 @@ class RegisterValuesXmlMgr {
 				int size1 = r1.getMinimumByteSize();
 				int size2 = r2.getMinimumByteSize();
 				if (size1 != size2) {
-					return size1 - size2;	
+					return size1 - size2;
 				}
-				return r1.getOffset() - r2.getOffset(); 
+				return r1.getOffset() - r2.getOffset();
 			}
 		});
-		
+
 		return regs;
 	}
 
@@ -125,11 +125,11 @@ class RegisterValuesXmlMgr {
 		AddressRangeIterator rangeIter = set.getAddressRanges();
 		while (rangeIter.hasNext()) {
 			if (monitor.isCancelled()) {
-				throw new CancelledException();	
+				throw new CancelledException();
 			}
 
 			AddressRange range = rangeIter.next();
-		
+
 			for (Register reg : regs) {
 				AddressRangeIterator it = context.getRegisterValueAddressRanges(reg, range.getMinAddress(), range.getMaxAddress());
 				while(it.hasNext()) {
@@ -142,13 +142,13 @@ class RegisterValuesXmlMgr {
 					XmlAttributes attr = new XmlAttributes();
 					attr.addAttribute("REGISTER", reg.getName());
 					attr.addAttribute("VALUE", value, true);
-					attr.addAttribute("START_ADDRESS", XmlProgramUtilities.toString(valueRange.getMinAddress()));				
+					attr.addAttribute("START_ADDRESS", XmlProgramUtilities.toString(valueRange.getMinAddress()));
 					attr.addAttribute("LENGTH", valueRange.getLength(), true);
 					writer.writeElement("REGISTER_VALUE_RANGE", attr);
 				}
 			}
 		}
-		
+
 		writer.endElement("REGISTER_VALUES");
 	}
 
@@ -185,7 +185,7 @@ class RegisterValuesXmlMgr {
 			}
 
 			context.setValue(reg, startAddr, startAddr.addNoWrap(len - 1), value);
-		} 
+		}
 		catch (Exception e) {
 			log.appendException(e);
 		}

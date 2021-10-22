@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,15 +40,15 @@ public class ClearOptions {
 	 * Default constructor that will clear everything!
 	 */
 	public ClearOptions() {
-		this(true);  
+		this(true);
 	}
 
 	public ClearOptions( boolean defaultClearValue ) {
-	    this(defaultClearValue, defaultClearValue, defaultClearValue, defaultClearValue, 
-	        defaultClearValue, defaultClearValue, defaultClearValue, defaultClearValue, 
+	    this(defaultClearValue, defaultClearValue, defaultClearValue, defaultClearValue,
+	        defaultClearValue, defaultClearValue, defaultClearValue, defaultClearValue,
 	        defaultClearValue, defaultClearValue, defaultClearValue, defaultClearValue);
 	}
-	
+
     private ClearOptions(boolean code,
                 		boolean symbols,
                 		boolean comments,
@@ -122,7 +122,7 @@ public class ClearOptions {
     public void setClearBookmarks( boolean bookmarks ) {
         this.bookmarks = bookmarks;
     }
-    
+
     boolean clearCode() {
         return code;
     }

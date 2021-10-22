@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,8 +43,8 @@ public class ApplyDataTypes {
 
 	/**
 	 * Construct a PDB XML datatype or class parser.  The {@link #preProcessDataTypeList(XmlPullParser, boolean, TaskMonitor)}
-	 * method must be used to injest member elements from the pull parser to populate the set of type to be parsed. 
-	 * The full parse will not be completed until the {@link #applyTo(TaskMonitor)} method is invoked after all types 
+	 * method must be used to injest member elements from the pull parser to populate the set of type to be parsed.
+	 * The full parse will not be completed until the {@link #applyTo(TaskMonitor)} method is invoked after all types
 	 * and classes have been pre-processed or applied.
 	 * @param pdbParser PDB parser object
 	 * @param xmlParser XML parser positioned immediately after datatypes or classes element
@@ -92,7 +92,7 @@ public class ApplyDataTypes {
 	}
 
 	/**
-	 * Perform parsing and caching of composite types 
+	 * Perform parsing and caching of composite types
 	 * @param monitor task monitor
 	 * @throws CancelledException if task cancelled
 	 */
@@ -175,7 +175,7 @@ public class ApplyDataTypes {
 
 //				/** Can this be avoided if using dependency ordering ??
 				// NOTE: currently composite may grow if zero-length array used
-				// since we must currently allocate one element since 0-length array 
+				// since we must currently allocate one element since 0-length array
 				// not yet supported.
 				Composite composite =
 					pdbParser.createComposite(compositeDefinition.kind, compositeDefinition.name);

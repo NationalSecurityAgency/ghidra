@@ -33,12 +33,12 @@ define space CODE type=ram_space wordsize=2 size=2 default;
 # General Purpose Register Memory consists of 4-banks of 255-bytes for PIC16,
 # or 32-banks of 255 bytes each for PIC_16F.
 # Bank selection occurs using STATUS register bits RP0 & RP1
-define space DATA type=ram_space size=2; 
+define space DATA type=ram_space size=2;
 
 # HWSTACK consists of a 8-word by 13-bit RAM and a corresponding to a hidden stack pointer (STKPTR).
 define space HWSTACK type=ram_space wordsize=2 size=1;  # WORDSIZE is actually 13-bits
- 
-define space register type=register_space size=2; 
+
+define space register type=register_space size=2;
 
 # Program Counter (13-bits) - PC Latch: PCLATH<PC:12-8> / PCL<PC:7-0>
 define register offset=0x0000 size=2 [ PC ];
@@ -72,7 +72,7 @@ define register offset=0x0007 size=1 [ IRP RP ];
 #   1. Chips with voltage comparator and reference functions may replace A/D registers (ADCON0 and ADCON1) with (VMCON and VRCON)
 #      Instances of this include PIC16F627A/628A/648A (there could be others)
 #	2. If a specific PIC-16 has a different register set, this file and the pic16.pspec file may be copied/renamed and
-#      slightly modified to specify a the correct Register File Map.  
+#      slightly modified to specify a the correct Register File Map.
 #
 
 #

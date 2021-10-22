@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class AllFunctionsPanel extends JPanel {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param program the current program
 	 * @param provider the component provider
 	 * @param title the title of the panel
@@ -76,7 +76,7 @@ public class AllFunctionsPanel extends JPanel {
 
 	/**
 	 * Updates the table with functions containing the selected tags given
-	 * 
+	 *
 	 * @param selectedTags the selected function tags
 	 */
 	public void refresh(Set<FunctionTag> selectedTags) {
@@ -85,7 +85,7 @@ public class AllFunctionsPanel extends JPanel {
 
 	/**
 	 * Stores the current program
-	 * 
+	 *
 	 * @param program the current program
 	 */
 	public void setProgram(Program program) {
@@ -95,7 +95,7 @@ public class AllFunctionsPanel extends JPanel {
 	/**
 	 * Updates the panel with the set of tags selected by the user. This
 	 * will update the panel title and the contents of the function table.
-	 * 
+	 *
 	 * @param tags the selected tags
 	 */
 	public void setSelectedTags(Set<FunctionTag> tags) {
@@ -118,7 +118,7 @@ public class AllFunctionsPanel extends JPanel {
 	 * Returns the list of functions in the panel
 	 * <p>
 	 * This is only used for testing!
-	 * 
+	 *
 	 * @return  the list of functions
 	 */
 	public List<Function> getFunctions() {
@@ -127,7 +127,7 @@ public class AllFunctionsPanel extends JPanel {
 
 	/**
 	 * Returns the functions table model
-	 * 
+	 *
 	 * @return the functions table model
 	 */
 	public FunctionTableModel getTableModel() {

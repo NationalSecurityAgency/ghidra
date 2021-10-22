@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -304,14 +304,14 @@ Address ParamEntry::getAddrBySlot(int4 &slotnum,int4 sz) const
       index = numslots;
       index -= slotnum;
       index -= slotsused;
-    } 
+    }
     else
       index = slotnum;
     res = Address(spaceid, addressbase + index * alignment);
     slotnum += slotsused;	// Inform caller of number of slots used
   }
   if (!isLeftJustified())   // Adjust for right justified (big endian)
-    res = res + (spaceused - sz); 
+    res = res + (spaceused - sz);
   return res;
 }
 
@@ -332,7 +332,7 @@ void ParamEntry::restoreXml(const Element *el,const AddrSpaceManager *manage,boo
   numslots = 1;
   groupsize = 1;		// default
   int4 num = el->getNumAttributes();
-  
+
   for(int4 i=0;i<num;++i) {
     const string &attrname( el->getAttributeName(i) );
     if (attrname=="minsize") {
@@ -658,7 +658,7 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
 
   for(int4 i=0;i<hitlist.size();++i) {
     const ParamEntry *curentry = hitlist[i];
-    
+
     if (curentry == (const ParamEntry *)0) {
       list<ParamEntry>::const_iterator iter;
       for(iter=entry.begin();iter!=entry.end();++iter) {
@@ -691,7 +691,7 @@ void ParamListStandard::buildTrialMap(ParamActive *active) const
 	  slot = endslot;
 	  endslot = tmp;
 	}
-	
+
 	while(slotlist.size() <= endslot)
 	  slotlist.push_back(0);
 	while(slot<=endslot) {
@@ -1613,7 +1613,7 @@ void ParamActive::deleteUnusedTrials(void)
 {
   vector<ParamTrial> newtrials;
   int4 slot = 1;
-  
+
   for(int4 i=0;i<trial.size();++i) {
     ParamTrial &curtrial(trial[i]);
     if (curtrial.isUsed()) {
@@ -1635,7 +1635,7 @@ void ParamActive::splitTrial(int4 i,int4 sz)
     throw LowlevelError("Cannot split parameter when the placeholder has not been recovered");
   vector<ParamTrial> newtrials;
   int4 slot = trial[i].getSlot();
-  
+
   for(int4 j=0;j<i;++j) {
     newtrials.push_back(trial[j]);
     int4 oldslot = newtrials.back().getSlot();
@@ -1944,7 +1944,7 @@ ProtoModel::ProtoModel(const string &nm,const ProtoModel &op2)
 
   effectlist = op2.effectlist;
   likelytrash = op2.likelytrash;
-  
+
   injectUponEntry = op2.injectUponEntry;
   injectUponReturn = op2.injectUponReturn;
   localrange = op2.localrange;
@@ -2186,7 +2186,7 @@ void ProtoModel::restoreXml(const Element *el)
       for(fiter=flist.begin();fiter!=flist.end();++fiter) {
 	effectlist.emplace_back();
 	effectlist.back().restoreXml(EffectRecord::killedbycall,*fiter,glb);
-      }	
+      }
     }
     else if (subnode->getName() == "returnaddress") {
       const List &flist(subnode->getChildren());
@@ -2223,7 +2223,7 @@ void ProtoModel::restoreXml(const Element *el)
       for(fiter=flist.begin();fiter!=flist.end();++fiter) {
 	likelytrash.emplace_back();
 	likelytrash.back().restoreXml(*fiter,glb);
-      }	
+      }
     }
     else if (subnode->getName() == "pcode") {
       if (subnode->getAttributeValue("inject") == "uponentry") {
@@ -2370,7 +2370,7 @@ void ProtoModelMerged::intersectLikelyTrash(const vector<VarnodeData> &trashlist
   while((i<likelytrash.size())&&(j<trashlist.size())) {
     const VarnodeData &trs1( likelytrash[i] );
     const VarnodeData &trs2( trashlist[j] );
-    
+
     if (trs1 < trs2)
       i += 1;
     else if (trs2 < trs1)
@@ -2529,10 +2529,10 @@ ProtoParameter *ParameterBasic::clone(void) const
   return res;
 }
 
-const string &ParameterSymbol::getName(void) const 
+const string &ParameterSymbol::getName(void) const
 
-{ 
-  return sym->getName(); 
+{
+  return sym->getName();
 }
 
 Datatype *ParameterSymbol::getType(void) const
@@ -2714,7 +2714,7 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
   }
   if (res->sym == (Symbol *)0) {
     if (scope->discoverScope(pieces.addr,pieces.type->getSize(),usepoint) == (Scope *)0)
-      usepoint = restricted_usepoint; 
+      usepoint = restricted_usepoint;
     res->sym = scope->addSymbol(nm,pieces.type,pieces.addr,usepoint)->getSymbol();
     scope->setCategory(res->sym,0,i);
     if (isindirect || ishidden) {
@@ -3257,7 +3257,7 @@ void FuncProto::paramShift(int4 paramshift)
     nmlist.push_back("");
     typelist.push_back(extra);
   }
-  
+
   if (isInputLocked()) {	// Copy in the original parameter types
     int4 num = numParams();
     for(int4 i=0;i<num;++i) {
@@ -3729,7 +3729,7 @@ void FuncProto::updateAllTypes(const vector<string> &namelist,const vector<Datat
   store->clearOutput();
   flags &= ~((uint4)voidinputlock);
   setDotdotdot(dtdtdt);
-  
+
   vector<ParameterPieces> pieces;
 
   // Calculate what memory locations hold each type
@@ -4000,7 +4000,7 @@ bool FuncProto::isCompatible(const FuncProto &op2) const
       // the prototype hasn't been marked as varargs
       if (isInputLocked()) return false;
     }
-    else 
+    else
       return false;
   }
 
@@ -4198,7 +4198,7 @@ void FuncProto::restoreXml(const Element *el,Architecture *glb)
       }
       const List &list2(subel->getChildren());
       List::const_iterator riter = list2.begin();
-      
+
       int4 tmpsize;
       outpieces.addr = Address::restoreXml(*riter,glb,tmpsize);
       ++riter;
@@ -4313,7 +4313,7 @@ void FuncCallSpecs::resolveSpacebaseRelative(Funcdata &data,Varnode *phvn)
       return;
     }
   }
-  
+
   if (isInputLocked()) {
     // The prototype is locked and had stack parameters, we grab the relative offset from this
     // rather than from a placeholder
@@ -4530,7 +4530,7 @@ bool FuncCallSpecs::transferLockedInput(vector<Varnode *> &newinput)
   for(int4 i=0;i<numparams;++i) {
     int4 reuse = transferLockedInputParam(getParam(i));
     if (reuse == 0) return false;
-    if (reuse > 0) 
+    if (reuse > 0)
       newinput.push_back(op->getIn(reuse));
     else {
       if (stackref == (Varnode *)0)
@@ -4983,7 +4983,7 @@ void FuncCallSpecs::checkInputTrialUse(Funcdata &data,AliasChecker &aliascheck)
   int4 expop = 0;
   if (hasModel()) {
     callee_pop = (getModelExtraPop() == ProtoModel::extrapop_unknown);
-    if (callee_pop) {		
+    if (callee_pop) {
       expop = getExtraPop();
       // Tried to use getEffectiveExtraPop at one point, but it is too unreliable
       if ((expop==ProtoModel::extrapop_unknown)||(expop <=4))
@@ -5081,7 +5081,7 @@ void FuncCallSpecs::buildInputFromTrials(Funcdata &data)
   bool isspacebase;
   Varnode *vn;
   vector<Varnode *> newparam;
-  
+
   newparam.push_back(op->getIn(0)); // Preserve the fspec parameter
 
   for(int4 i=0;i<activeinput.getNumTrials();++i) {

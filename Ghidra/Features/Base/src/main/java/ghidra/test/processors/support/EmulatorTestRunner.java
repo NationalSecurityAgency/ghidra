@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -119,7 +119,7 @@ public class EmulatorTestRunner {
 	}
 
 	public Instruction getCurrentInstruction() {
-		// TODO: Pull instruction from emulator instead of program after 
+		// TODO: Pull instruction from emulator instead of program after
 		// merge with SleighRefactor branch
 		return program.getListing().getInstructionAt(emu.getExecuteAddress());
 	}
@@ -232,7 +232,7 @@ public class EmulatorTestRunner {
 	/**
 	 * Get number of CALLOTHER errors detected when a test pass was registered.
 	 * This number should be subtracted from the pass count and possibly added
-	 * to the failure count.  Number does not reflect total number of CALLOTHER 
+	 * to the failure count.  Number does not reflect total number of CALLOTHER
 	 * pcodeops encountered but only the number of passed tests affected.
 	 * See log for all CALLOTHER executions detected.
 	 * @return number of CALLOTHER errors
@@ -243,7 +243,7 @@ public class EmulatorTestRunner {
 
 	/**
 	 * Execute test group without instruction stepping/tracing
-	 * @param timeLimitMS 
+	 * @param timeLimitMS
 	 * @param monitor
 	 * @return
 	 * @throws CancelledException
@@ -479,7 +479,7 @@ public class EmulatorTestRunner {
 					executionListener.log(testGroup, "printf invocation (log supressed) ...");
 				}
 				else if (printfCallAddr != null && isPrintfReturn(executeAddr, printfCallAddr)) {
-					// return from printf function 
+					// return from printf function
 					printfCallAddr = null;
 					memoryFilter.enabled = true;
 
@@ -488,7 +488,7 @@ public class EmulatorTestRunner {
 					executionListener.log(testGroup, "  " + str);
 				}
 				else {
-					// detect start of new group test and remove from map 
+					// detect start of new group test and remove from map
 					FunctionInfo functionInfo = subFunctionMap.remove(executeAddr);
 					if (functionInfo != null) {
 						if (currentFunction != null && !assertTriggered) {

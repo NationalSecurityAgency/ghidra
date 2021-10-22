@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.util.exception.NotFoundException;
 /**
  * A representation of a single Mach-O relocation that the {@link MachoRelocationHandler} will use
  * to perform the relocation.  In Mach-O, some relocations may be "paired," so an instance of this
- * class may contain 2 {@link RelocationInfo}s. 
+ * class may contain 2 {@link RelocationInfo}s.
  */
 public class MachoRelocation {
 
@@ -51,7 +51,7 @@ public class MachoRelocation {
 
 	/**
 	 * Creates a new unpaired {@link MachoRelocation} object
-	 * 
+	 *
 	 * @param program The program
 	 * @param machoHeader The Mach-O header
 	 * @param relocationAddress The {@link Address} the relocation takes place at
@@ -77,7 +77,7 @@ public class MachoRelocation {
 
 	/**
 	 * Creates a new paired {@link MachoRelocation} object
-	 * 
+	 *
 	 * @param program The program
 	 * @param machoHeader The Mach-O header
 	 * @param relocationAddress The {@link Address} the relocation takes place at
@@ -103,8 +103,8 @@ public class MachoRelocation {
 
 	/**
 	 * Gets the {@link Program} associated with this relocation
-	 * 
-	 * 
+	 *
+	 *
 	 * @return The {@link Program} associated with this relocation
 	 */
 	public Program getProgram() {
@@ -113,7 +113,7 @@ public class MachoRelocation {
 
 	/**
 	 * Gets the {@link Address} the relocation takes place at
-	 * 
+	 *
 	 * @return The {@link Address} the relocation takes place at
 	 */
 	public Address getRelocationAddress() {
@@ -122,7 +122,7 @@ public class MachoRelocation {
 
 	/**
 	 * Gets the lower-level {@link RelocationInfo} that describes the relocation
-	 * 
+	 *
 	 * @return The lower-level {@link RelocationInfo} that describes the relocation
 	 */
 	public RelocationInfo getRelocationInfo() {
@@ -130,19 +130,19 @@ public class MachoRelocation {
 	}
 
 	/**
-	 * Gets the lower-level {@link RelocationInfo} that describes the second part of the paired 
+	 * Gets the lower-level {@link RelocationInfo} that describes the second part of the paired
 	 * relocation.  This could be null if the relocation is not paired.
-	 * 
-	 * @return The lower-level {@link RelocationInfo} that describes the second part of the paired 
+	 *
+	 * @return The lower-level {@link RelocationInfo} that describes the second part of the paired
 	 *   relocation, or null if the relocation is not paired
 	 */
 	public RelocationInfo getRelocationInfoExtra() {
 		return relocationInfoExtra;
 	}
-	
+
 	/**
 	 * Gets the {@link Address} of the relocation target
-	 * 
+	 *
 	 * @return The {@link Address} of the relocation target
 	 * @throws NotFoundException If the {@link Address} of the relocation target could not be found
 	 */
@@ -158,12 +158,12 @@ public class MachoRelocation {
 		}
 		throw new NotFoundException("Relocation target not found");
 	}
-	
+
 	/**
 	 * Gets the {@link Address} of the extra relocation target
-	 * 
+	 *
 	 * @return The {@link Address} of the extra relocation target
-	 * @throws NotFoundException If the {@link Address} of the extra relocation target could not be 
+	 * @throws NotFoundException If the {@link Address} of the extra relocation target could not be
 	 *   found (of if there wasn't an extra relocation target).
 	 */
 	public Address getTargetAddressExtra() throws NotFoundException {
@@ -178,12 +178,12 @@ public class MachoRelocation {
 		}
 		throw new NotFoundException("Extra relocation target not found");
 	}
-	
+
 	/**
 	 * Checks to see if this relocation requires work to be done on it. Since our
-	 * {@link MachoLoader loader} does not allow non-default image bases, it is unnecessary to 
-	 * perform relocations under certain conditions.  
-	 * 
+	 * {@link MachoLoader loader} does not allow non-default image bases, it is unnecessary to
+	 * perform relocations under certain conditions.
+	 *
 	 * @return True if relocation steps are needed; otherwise, false
 	 */
 	public boolean requiresRelocation() {
@@ -197,7 +197,7 @@ public class MachoRelocation {
 
 	/**
 	 * Gets a short description of the target of the relocation
-	 * 
+	 *
 	 * @return A short description of the target of the relocation
 	 */
 	public String getTargetDescription() {
@@ -249,10 +249,10 @@ public class MachoRelocation {
 	}
 
 	/**
-	 * Attempts to find the target {@link Symbol} associated with the given lower-level 
-	 * {@link RelocationInfo}.  This method is only useful when the given {@link RelocationInfo} is 
+	 * Attempts to find the target {@link Symbol} associated with the given lower-level
+	 * {@link RelocationInfo}.  This method is only useful when the given {@link RelocationInfo} is
 	 * marked as "external".
-	 * 
+	 *
 	 * @param relocInfo The lower-level {@link RelocationInfo} that describes the relocation
 	 * @return The relocation's target {@link Symbol}, or null if one was not found
 	 */
@@ -273,10 +273,10 @@ public class MachoRelocation {
 	}
 
 	/**
-	 * Attempts to find the target {@link Section} associated with the given lower-level 
-	 * {@link RelocationInfo}.  This method is only useful when the given {@link RelocationInfo} is 
+	 * Attempts to find the target {@link Section} associated with the given lower-level
+	 * {@link RelocationInfo}.  This method is only useful when the given {@link RelocationInfo} is
 	 * NOT marked as "external".
-	 * 
+	 *
 	 * @param relocInfo The lower-level {@link RelocationInfo} that describes the relocation
 	 * @return The relocation's target {@link Section}, or null if one was not found
 	 */

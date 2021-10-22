@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,8 @@ import ghidra.program.model.listing.Program;
 
 /**
  * Model to expand a block and extend its ending address.
- * 
- * 
+ *
+ *
  */
 class ExpandBlockDownModel extends ExpandBlockModel {
 
@@ -52,7 +52,7 @@ class ExpandBlockDownModel extends ExpandBlockModel {
 			return true;
 		}
 		try {
-			startAddr = endAddr.subtract(length-1); 
+			startAddr = endAddr.subtract(length-1);
 			return expandBlock();
 		} catch(Exception e) {
 			message = e.getMessage();
@@ -77,7 +77,7 @@ class ExpandBlockDownModel extends ExpandBlockModel {
 				message = "Expanded block is too large";
 			}
 		}
-		listener.stateChanged(null);	
+		listener.stateChanged(null);
 
 	}
 
@@ -88,7 +88,7 @@ class ExpandBlockDownModel extends ExpandBlockModel {
     void setEndAddress(Address addr) {
 		message="";
 		endAddr = addr;
-		
+
 		if (endAddr == null) {
 			message = "Invalid Address";
 		}
@@ -97,12 +97,12 @@ class ExpandBlockDownModel extends ExpandBlockModel {
 							block.getEnd();
 		}
 		else {
-			length = endAddr.subtract(block.getStart()) +1;	
+			length = endAddr.subtract(block.getStart()) +1;
 		}
 		listener.stateChanged(null);
 	}
 	@Override
     void setStartAddress(Address addr) {
 	}
-	
+
 }

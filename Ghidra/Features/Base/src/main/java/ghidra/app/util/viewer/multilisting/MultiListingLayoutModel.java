@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 	 * @param formatMgr the FormatManager used to layout the fields.
 	 * @param programs the list of programs that will be coordinated using listing models.
 	 * The first program in the array will be used as the primary program.
-	 * @param primaryAddrSet the addressSet to use for the view. 
+	 * @param primaryAddrSet the addressSet to use for the view.
 	 * This is compatible with the primary program, which is program[0].
 	 */
 	public MultiListingLayoutModel(FormatManager formatMgr, Program[] programs,
@@ -166,9 +166,9 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 
 		/**
 		 * Returns the next address in the specified direction
-		 * 
+		 *
 		 * @param address the start address
-		 * @param after true to find the address after the given address; false to find the 
+		 * @param after true to find the address after the given address; false to find the
 		 * 		  address before the given address
 		 * @return the next address in the given direction; null if there is no next address or if
 		 *         <code>address</code> is null
@@ -180,7 +180,7 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 			Address primaryModelAddress = (program == primaryProgram) ? address
 					: SimpleDiffUtility.getCompatibleAddress(program, address, primaryProgram);
 
-			// If address is an external from the other model, then we may not be able to get 
+			// If address is an external from the other model, then we may not be able to get
 			// an equivalent address in the primary model (i.e. primaryModelAddress may be null)
 			if (primaryModelAddress == null) {
 				return null;
@@ -285,9 +285,9 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 
 		@Override
 		public AddressSetView getAddressSet() {
-			// The returned address set must be composed of addresses that are from 
+			// The returned address set must be composed of addresses that are from
 			// address spaces in the program associated with the modelID.
-			// The model's getAddressSet() uses the addrSet that was passed in to limit 
+			// The model's getAddressSet() uses the addrSet that was passed in to limit
 			// this address set to be compatible with the program for the modelID.
 			return DiffUtility.getCompatibleAddressSet(primaryAddrSet, getProgram());
 		}
@@ -366,8 +366,8 @@ public class MultiListingLayoutModel implements ListingModelListener, FormatMode
 
 	/**
 	 * Sets the address set for this MultiListingLayoutModel
-	 * 
-	 * @param view the current address set, which must be compatible with the 
+	 *
+	 * @param view the current address set, which must be compatible with the
 	 * primary program and listingModel
 	 */
 	public void setAddressSet(AddressSetView view) {

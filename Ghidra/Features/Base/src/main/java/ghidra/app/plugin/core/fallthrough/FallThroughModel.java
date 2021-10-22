@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 /**
- * This class is really a model for the FallThroughDialog state.  However, it is used as a 
+ * This class is really a model for the FallThroughDialog state.  However, it is used as a
  * convenience for executing the auto-override and clear-fallthrough actions.
  */
 class FallThroughModel implements ChangeListener {
@@ -43,7 +43,7 @@ class FallThroughModel implements ChangeListener {
 	private String message="";
 	private boolean executingCommand;
 	private BrowserCodeUnitFormat cuFormat;
-		
+
 	/**
 	 * Constructor for FallThroughModel.
 	 */
@@ -78,7 +78,7 @@ class FallThroughModel implements ChangeListener {
 		listener.stateChanged(null);
 	}
 	/**
-	 * 
+	 *
 	 * Get the current address for the instruction whose fallthough
 	 * may change.
 	 */
@@ -110,7 +110,7 @@ class FallThroughModel implements ChangeListener {
 	 *
 	 */
 	void defaultSelected() {
-		isDefault = true; 
+		isDefault = true;
 		isUserDefined = false;
 		currentFallthroughAddr = defaultFallthroughAddr;
 		listener.stateChanged(null);
@@ -124,7 +124,7 @@ class FallThroughModel implements ChangeListener {
 		isUserDefined = true;
 		currentFallthroughAddr = null;
 		listener.stateChanged(null);
-	}				
+	}
 	boolean isDefaultFallthrough() {
 		return isDefault;
 	}
@@ -143,7 +143,7 @@ class FallThroughModel implements ChangeListener {
 //			}
 //		}
 		return true;
-	}		
+	}
 	String getMessage() {
 		String msg = message;
 		message = "";
@@ -156,7 +156,7 @@ class FallThroughModel implements ChangeListener {
 	/**
 	 * Execute the command to set the fall-through.
 	 * @return true if the input was valid
-	 */		
+	 */
 	boolean execute() {
 		message = "";
 		Instruction inst = program.getListing().getInstructionContaining(currentAddr);
@@ -164,15 +164,15 @@ class FallThroughModel implements ChangeListener {
 		if (ftAddr == null ||
 			!inst.getFallThrough().equals(currentFallthroughAddr)) {
 			executingCommand = true;
-			SetFallThroughCmd cmd = new SetFallThroughCmd(inst.getMinAddress(), 
+			SetFallThroughCmd cmd = new SetFallThroughCmd(inst.getMinAddress(),
 														currentFallthroughAddr);
 			tool.execute(cmd, program);
 			message = "Updated Fallthrough address";
 			executingCommand = false;
-			if (defaultFallthroughAddr != null && 
+			if (defaultFallthroughAddr != null &&
 				defaultFallthroughAddr.equals(currentFallthroughAddr)) {
 				isDefault = true;
-				isUserDefined = false;					
+				isUserDefined = false;
 			}
 		}
 		else {
@@ -181,8 +181,8 @@ class FallThroughModel implements ChangeListener {
 		listener.stateChanged(null);
 		return true;
 	}
-	
-	
+
+
 	/**
 	 * Method autoOverride.
 	 * @param currentSelection
@@ -221,11 +221,11 @@ class FallThroughModel implements ChangeListener {
 		tool = null;
 		listener = null;
 	}
-	 
+
 	Program getProgram() {
 		return program;
 	}
-	
+
 	private void override(AddressRange range, CompoundCmd cmd) {
 		Address min = range.getMinAddress();
 		Address max = range.getMaxAddress();
@@ -235,7 +235,7 @@ class FallThroughModel implements ChangeListener {
 			inst = listing.getInstructionAfter(min);
 		}
 		while (inst != null && inst.getMinAddress().compareTo(max) <= 0) {
-			
+
 			Data data = listing.getDataAfter(inst.getMinAddress());
 			if (data == null) {
 				return;
@@ -247,8 +247,8 @@ class FallThroughModel implements ChangeListener {
 			}
 			inst = listing.getInstructionAfter(data.getMinAddress());
 		}
-	} 
-	
+	}
+
 	private void setFallThrough(Address addr, CompoundCmd cmd) {
 		Instruction inst = program.getListing().getInstructionAfter(addr);
 		if (inst != null) {

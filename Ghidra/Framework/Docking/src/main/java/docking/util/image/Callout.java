@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -127,7 +127,7 @@ public class Callout {
 
 		//
 		// This code creates a 'call out' image, which is a round, zoomed image of an area
-		// in the given image, as chosen by the client.  Further, a cone shape will extend 
+		// in the given image, as chosen by the client.  Further, a cone shape will extend
 		// from the client's chosen location to the callout image we create here.
 		//
 
@@ -140,9 +140,9 @@ public class Callout {
 		int calloutWidth = calloutHeight; // square
 
 		//
-		// Callout Distance (from original component).  This is the location (relative to 
+		// Callout Distance (from original component).  This is the location (relative to
 		// the original component) of the callout image (not the full shape).  So, if the
-		// x distance was 10, then the callout image would start 10 pixels to the right of 
+		// x distance was 10, then the callout image would start 10 pixels to the right of
 		// the component.
 		//
 		double distanceX = calloutWidth * 1.5;
@@ -162,7 +162,7 @@ public class Callout {
 
 			// Also, since we have made the image bigger, we have to the component bounds, as
 			// the callout image uses these bounds to know where to draw the callout.  If we
-			// don't move them, then the padding will cause the callout to be drawn higher 
+			// don't move them, then the padding will cause the callout to be drawn higher
 			// by the amount of the padding.
 			componentLocation.y += topPadding;
 			componentBounds.setLocation(componentLocation.x, componentLocation.y);
@@ -277,7 +277,7 @@ public class Callout {
 		int cy = cLoc.y - calloutOrigin.y;
 		Dimension cSize = calloutInfo.getSize();
 
-// TODO this shows how to correctly account for scaling in the Function Graph		
+// TODO this shows how to correctly account for scaling in the Function Graph
 //		Dimension cSize2 = new Dimension(cSize);
 //		double scale = .5d;
 //		cSize2.width *= scale;
@@ -295,13 +295,13 @@ public class Callout {
 			RectangularShape shape) {
 
 		//
-		// First draw the background circle that will sit beneath the image, to create a 
+		// First draw the background circle that will sit beneath the image, to create a
 		// ring around the image
 		//
 		g.setColor(CALLOUT_SHAPE_COLOR);
 		g.fill(shape);
 
-		// 
+		//
 		// Now, make the image a bit smaller, so that the background is a ring around the image
 		//
 		int offset = 3;
@@ -331,8 +331,8 @@ public class Callout {
 		Point p1 = new Point((int) cr.getCenterX(), (int) cr.getCenterY());
 		Point p2 = new Point(sr.x + (sr.width / 2), sr.y + (sr.height / 2));
 
-		// 
-		// Calculate the tangents to the callout circle		
+		//
+		// Calculate the tangents to the callout circle
 		//
 		int radius = sr.width / 2;
 		int dx = p2.x - p1.x;

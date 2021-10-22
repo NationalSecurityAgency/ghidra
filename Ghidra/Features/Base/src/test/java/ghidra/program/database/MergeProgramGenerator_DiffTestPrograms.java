@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,8 @@ class MergeProgramGenerator_DiffTestPrograms implements MergeProgramGenerator {
 	/**
 	 * We keep track of this to know if there are any changes in static initialization.  We want
 	 * to make sure that all program building runs result in the same ID sequences.  The first
-	 * program built triggers static loading, which will cause the IDs for that run to be 
-	 * larger than the subsequent runs.  So, we call all known static initializers before we 
+	 * program built triggers static loading, which will cause the IDs for that run to be
+	 * larger than the subsequent runs.  So, we call all known static initializers before we
 	 * run.  This variable lets us know if a new initializer was added, as the ID value between
 	 * the first run and the second run will be different.
 	 */
@@ -85,8 +85,8 @@ class MergeProgramGenerator_DiffTestPrograms implements MergeProgramGenerator {
 		// data
 		// CodeUnitMergerManagerTest - checks disassembly and data
 		//@formatter:off
-		builder.setBytes("0x10013d6", new byte[] { 
-			0x6d, 0x00, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x50, 0x65, 0x6e, 0x41  
+		builder.setBytes("0x10013d6", new byte[] {
+			0x6d, 0x00, 0x52, 0x65, 0x67, 0x69, 0x73, 0x74, 0x65, 0x72, 0x50, 0x65, 0x6e, 0x41
 		});
 		//@formatter:on
 

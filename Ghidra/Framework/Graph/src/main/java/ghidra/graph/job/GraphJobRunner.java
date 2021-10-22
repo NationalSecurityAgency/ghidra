@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,22 +30,22 @@ import utility.function.Callback;
  * itself threaded.
  * <P>
  * A job is considered finished when {@link #jobFinished(GraphJob)}
- * is called on this class.  After this callback, the next job will be run.  
+ * is called on this class.  After this callback, the next job will be run.
  * <P>
  * {@link #setFinalJob(GraphJob)} sets a job to be run last, after all jobs in the queue
  * have finished.
- * 
- * <P>When a job is added via {@link #schedule(GraphJob)}, any currently running job will 
- * be told to finish immediately, if it's {@link GraphJob#canShortcut()} returns true.  If it 
+ *
+ * <P>When a job is added via {@link #schedule(GraphJob)}, any currently running job will
+ * be told to finish immediately, if it's {@link GraphJob#canShortcut()} returns true.  If it
  * cannot be shortcut, then it will be allowed to finish.  Further, this logic will be applied
  * to each job in the queue.  So, if there are multiple jobs in the queue, which all return
- * true for {@link GraphJob#canShortcut()}, then they will each be shortcut (allowing them 
+ * true for {@link GraphJob#canShortcut()}, then they will each be shortcut (allowing them
  * to complete) before running the newly scheduled job.
- * 
+ *
  * <P>This class is thread-safe in that you can {@link #schedule(GraphJob)} jobs from any
  * thread.
- * 
- * <P>Synchronization Policy:  the methods that mutate fields of this class or read them 
+ *
+ * <P>Synchronization Policy:  the methods that mutate fields of this class or read them
  * must be synchronized.
  */
 public class GraphJobRunner implements GraphJobListener {
@@ -77,7 +77,7 @@ public class GraphJobRunner implements GraphJobListener {
 	/**
 	 * Sets a job to run after all currently running and queued jobs.  If a final job was already
 	 * set, then that job will be replaced with the given job.
-	 * 
+	 *
 	 * @param job the job to run
 	 */
 	public synchronized void setFinalJob(GraphJob job) {
@@ -88,7 +88,7 @@ public class GraphJobRunner implements GraphJobListener {
 			throw new IllegalArgumentException("cannot schedule a finished job!");
 		}
 
-		// simply overwrite any pending final job, as we can only have one 
+		// simply overwrite any pending final job, as we can only have one
 		finalJob = Objects.requireNonNull(job, "Graph job cannot be null");
 		swing(this::maybeRunNextJob);
 	}
@@ -111,11 +111,11 @@ public class GraphJobRunner implements GraphJobListener {
 
 	/**
 	 * Causes all jobs to be finished as quickly as possible, calling {@link GraphJob#shortcut()}
-	 * on each job.   
-	 * 
-	 * <P>Note: some jobs are not shortcut-able and will finish on their own time.  Any jobs 
-	 * queued behind a non-shortcut-able job will <b>not</b> be shortcut. 
-	 * 
+	 * on each job.
+	 *
+	 * <P>Note: some jobs are not shortcut-able and will finish on their own time.  Any jobs
+	 * queued behind a non-shortcut-able job will <b>not</b> be shortcut.
+	 *
 	 * @see #dispose()
 	 */
 	public void finishAllJobs() {
@@ -166,7 +166,7 @@ public class GraphJobRunner implements GraphJobListener {
 	}
 
 	/**
-	 * Shortcut as many jobs as possible to clear the queue and then trigger the run of the 
+	 * Shortcut as many jobs as possible to clear the queue and then trigger the run of the
 	 * remaining jobs.
 	 */
 	private synchronized void shortCutAndRunNextJob() {
@@ -184,7 +184,7 @@ public class GraphJobRunner implements GraphJobListener {
 			shortcutAsMuchAsPossible(false);
 		});
 
-		// 
+		//
 		// Run whatever is left
 		//
 		trace("\t" + methodName + " at end; calling runNextJob()");
@@ -220,7 +220,7 @@ public class GraphJobRunner implements GraphJobListener {
 	private boolean shortcutAsMuchAsPossible(boolean shortcutAll) {
 
 		//
-		// See if we can shortcut the current job 
+		// See if we can shortcut the current job
 		//
 		if (!shortcutCurrentJob()) {
 			// cannot stop the current job; allow it to finish, processing the pending jobs later
@@ -236,7 +236,7 @@ public class GraphJobRunner implements GraphJobListener {
 
 	/**
 	 * Attempts to shortcut the currently running job, if there is one
-	 * 
+	 *
 	 * @return false if there is a currently running job that cannot be shortcut
 	 */
 	private boolean shortcutCurrentJob() {
@@ -266,8 +266,8 @@ public class GraphJobRunner implements GraphJobListener {
 
 	private boolean shortcutPendingJobs(boolean shortcutAll) {
 		//
-		// Attempt to shortcut the remaining items in the queue that we can shortcut, optionally 
-		// leaving the last job. (The last job is the most recently added and 
+		// Attempt to shortcut the remaining items in the queue that we can shortcut, optionally
+		// leaving the last job. (The last job is the most recently added and
 		// presumably the one the client wants us to run.)
 		//
 		String methodName = "shortcutPendingJobs()";

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,11 @@ import javax.swing.ImageIcon;
 import resources.icons.TranslateIcon;
 
 /**
- * A builder to allow for easier creation of an icon that is composed of a base icon, with 
+ * A builder to allow for easier creation of an icon that is composed of a base icon, with
  * other icons overlaid.  The {@link #build()} method returns an {@link ImageIcon}, as this
  * allows Java's buttons to automatically create disabled icons correctly.
- * 
- * <P>Note: this class is a work-in-progress.  Add more methods for locating overlays as needed. 
+ *
+ * <P>Note: this class is a work-in-progress.  Add more methods for locating overlays as needed.
  */
 public class MultiIconBuilder {
 	private MultiIcon multiIcon;
@@ -44,7 +44,7 @@ public class MultiIconBuilder {
 	/**
 	 * Adds the specified icon as an overlay to the base icon, possibly scaled according
 	 * to the specified width and height, in the specified quadrant corner.
-	 * 
+	 *
 	 * @param icon the icon to overlay
 	 * @param w width of the overlaid icon
 	 * @param h height of the overlaid icon
@@ -65,7 +65,7 @@ public class MultiIconBuilder {
 
 	/**
 	 * Adds the given icon as an overlay to the base icon, to the lower-right
-	 * 
+	 *
 	 * @param icon the icon
 	 * @return this builder
 	 */
@@ -76,7 +76,7 @@ public class MultiIconBuilder {
 	/**
 	 * Adds the given icon as an overlay to the base icon, to the lower-right,
 	 * scaled to the given width and height
-	 * 
+	 *
 	 * @param icon the icon
 	 * @param w the desired width
 	 * @param h the desired height
@@ -88,7 +88,7 @@ public class MultiIconBuilder {
 
 	/**
 	 * Adds the given icon as an overlay to the base icon, to the lower-left
-	 * 
+	 *
 	 * @param icon the icon
 	 * @return this builder
 	 */
@@ -99,7 +99,7 @@ public class MultiIconBuilder {
 	/**
 	 * Adds the given icon as an overlay to the base icon, to the lower-left,
 	 * scaled to the given width and height
-	 * 
+	 *
 	 * @param icon the icon
 	 * @param w the desired width
 	 * @param h the desired height
@@ -111,7 +111,7 @@ public class MultiIconBuilder {
 
 	/**
 	 * Add text overlaid on the base icon, aligned to the specified quadrant.
-	 * 
+	 *
 	 * @param text Text string to write onto the icon.  Probably can only fit a letter or two
 	 * @param font The font to use to render the text.  You know the size of the base icon, so
 	 * you should be able to figure out the size of the font to use for the text
@@ -138,7 +138,7 @@ public class MultiIconBuilder {
 
 	/**
 	 * Sets a description for the icon being built.  This is useful for debugging.
-	 * 
+	 *
 	 * @param description the description
 	 * @return this builder
 	 */

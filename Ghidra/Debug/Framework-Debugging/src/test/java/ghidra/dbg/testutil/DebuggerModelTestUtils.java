@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ public interface DebuggerModelTestUtils extends AsyncTestUtils {
 
 	/**
 	 * Performs the cast, after verifying the schema, too
-	 * 
+	 *
 	 * @param <T> the type of the object
 	 * @param type the class of the object
 	 * @param obj the object to cast
@@ -120,7 +120,7 @@ public interface DebuggerModelTestUtils extends AsyncTestUtils {
 
 	/**
 	 * Assert that there is a single reference with shortest path, and get it
-	 * 
+	 *
 	 * @param <T> the type of object reference
 	 * @param refs the map of paths to references, <em>sorted shortest-key-first</em>
 	 * @return the value of the entry with shortest key

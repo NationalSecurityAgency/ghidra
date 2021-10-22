@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ public class GTreeModel implements TreeModel {
 
 	/**
 	 * Constructs a GTreeModel with the given root node.
-	 * 
+	 *
 	 * @param root The root of the tree.
 	 */
 	public GTreeModel(GTreeNode root) {
@@ -83,9 +83,9 @@ public class GTreeModel implements TreeModel {
 			// This can happen if the client code mutates the children of this node in a background
 			// thread such that there are fewer child nodes on this node, and then before the tree
 			// is notified, the JTree attempts to access a child that is no longer present. The
-			// GTree design specifically allows this situation to occur as a trade off for 
+			// GTree design specifically allows this situation to occur as a trade off for
 			// better performance when performing bulk operations (such as filtering).  If this
-			// does occur, this can be handled easily by temporarily returning a dummy node and 
+			// does occur, this can be handled easily by temporarily returning a dummy node and
 			// scheduling a node structure changed event to reset the JTree.
 			Swing.runLater(() -> fireNodeStructureChanged((GTreeNode) parent));
 			return new InProgressGTreeNode();
@@ -131,7 +131,7 @@ public class GTreeModel implements TreeModel {
 			}
 
 			if (node != changedNode) {
-				// Note: calling setChildren() here triggers another call to this method.  But, 
+				// Note: calling setChildren() here triggers another call to this method.  But,
 				//       the 'isFiringNodeStructureChanged' flag prevents that notification from
 				//       happening.  So, we still have to fire the event below.
 				node.setChildren(null);
@@ -165,9 +165,9 @@ public class GTreeModel implements TreeModel {
 		if (viewNode == null) {
 			return;
 		}
-		// Note - we are passing in the treepath of the node that changed.  The javadocs in 
+		// Note - we are passing in the treepath of the node that changed.  The javadocs in
 		// TreemodelListener seems to imply that you need to pass in the treepath of the parent
-		// of the node that changed and then the indexes of the children that changed. But this 
+		// of the node that changed and then the indexes of the children that changed. But this
 		// works and is cheaper then computing the index of the node that changed.
 		TreeModelEvent event = new TreeModelEvent(this, viewNode.getTreePath());
 

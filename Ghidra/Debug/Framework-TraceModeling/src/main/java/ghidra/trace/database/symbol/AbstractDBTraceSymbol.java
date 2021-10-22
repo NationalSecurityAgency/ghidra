@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -93,7 +93,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * NOTE: If the IDs match, then the symbols are considered equal, regardless of their other
 	 * attributes. This mechanic seems required to support the whole "placeholder" idea. See
 	 * {@link SymbolTable#createSymbolPlaceholder(Address, long)}.
@@ -346,9 +346,9 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 
 	/**
 	 * Checks and sets the parent
-	 * 
+	 *
 	 * The caller must still call {@link #update(DBObjectColumn...)} for {@link #PARENT_COLUMN}.
-	 * 
+	 *
 	 * @param newParent the parent namespace
 	 * @throws CircularDependencyException
 	 */
@@ -376,10 +376,10 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 
 	/**
 	 * Sets the flags for the given source.
-	 * 
+	 *
 	 * The caller must still call {@link #update(DBObjectColumn...)} for {@link #FLAGS_COLUMN}. The
 	 * update should be called before the returned event, if applicable, is fired.
-	 * 
+	 *
 	 * @param newSource the source type
 	 * @return the appropriate change event, if a change was actually made
 	 */
@@ -544,7 +544,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * Since blocks cannot be relocated as they can in a {@link Program}, it's tempting to say all
 	 * symbols are pinned; however, this presents in the UI and is a bit confusing and/or
 	 * distracting.

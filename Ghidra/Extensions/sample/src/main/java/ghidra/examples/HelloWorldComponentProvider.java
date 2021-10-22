@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,11 +83,11 @@ public class HelloWorldComponentProvider extends ComponentProviderAdapter {
 			public void actionPerformed(ActionContext context) {
 				announce("Hello World");
 
-				// To get the context object,				
+				// To get the context object,
 				Object contextObject = context.getContextObject();
 
 				// ...now we can cast activeObj to be a object of MyButton
-				// if that is necessary, as the overridden isAddToPopup() method below 
+				// if that is necessary, as the overridden isAddToPopup() method below
 				// will not add the popup action if the context object is not our button
 
 				@SuppressWarnings("unused")

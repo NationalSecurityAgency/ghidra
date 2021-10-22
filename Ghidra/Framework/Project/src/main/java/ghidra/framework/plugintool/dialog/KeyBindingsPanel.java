@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -147,7 +147,7 @@ public class KeyBindingsPanel extends JPanel {
 
 	public void reload() {
 		Swing.runLater(() -> {
-			// clear the current user key stroke so that it does not appear as though the 
+			// clear the current user key stroke so that it does not appear as though the
 			// user is editing while restoring
 			actionTable.clearSelection();
 
@@ -326,7 +326,7 @@ public class KeyBindingsPanel extends JPanel {
 
 			// give Swing a chance to repaint
 			Swing.runLater(() -> {
-				// clear the current user key stroke so that it does not appear as though the 
+				// clear the current user key stroke so that it does not appear as though the
 				// user is editing while importing
 				actionTable.clearSelection();
 				processKeyBindingsFromOptions(KeyBindingUtils.importKeyBindings());

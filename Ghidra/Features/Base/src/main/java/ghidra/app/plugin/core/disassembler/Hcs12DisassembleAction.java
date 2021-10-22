@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ class Hcs12DisassembleAction extends ListingContextAction {
 
 	public Hcs12DisassembleAction(DisassemblerPlugin plugin, String groupName, boolean disassembleXgate) {
 		super("Disassemble " + (disassembleXgate ? "HCS12" : "XGate"), plugin.getName());
-		
+
 		this.plugin = plugin;
 		this.disassembleXgate = disassembleXgate;
 
@@ -45,16 +45,16 @@ class Hcs12DisassembleAction extends ListingContextAction {
 		// section in the help.
 		HelpLocation location = new HelpLocation("DisassemblerPlugin", "Disassemble");
 		this.setHelpLocation(location);
-		
-		setPopupMenuData( new MenuData( 
-			new String[]{"Disassemble - "+ (disassembleXgate ? "XGate" : "HCS12") }, 
-			null, 
+
+		setPopupMenuData( new MenuData(
+			new String[]{"Disassemble - "+ (disassembleXgate ? "XGate" : "HCS12") },
+			null,
 			groupName ) );
-		
+
 		int keyEvent = (disassembleXgate ? KeyEvent.VK_F12 : KeyEvent.VK_F11);
 		setKeyBindingData( new KeyBindingData( keyEvent, 0 ) );
 	}
-	
+
 	@Override
     public void actionPerformed(ListingActionContext context) {
 		plugin.disassembleHcs12Callback(context, disassembleXgate);
@@ -64,14 +64,14 @@ class Hcs12DisassembleAction extends ListingContextAction {
 	public boolean isEnabledForContext(ListingActionContext context) {
 
 		// Action only intended for use where Xgate instructions are available.
-		// The presence of the XGATE context register can be used for this 
+		// The presence of the XGATE context register can be used for this
 		// determination.
-		
+
 		Address address = context.getAddress();
 		if ( address == null ) {
 		    return false;
 		}
-		
+
 		Program program = context.getProgram();
 		Language lang = program.getLanguage();
 		Processor proc = lang.getProcessor();
@@ -79,7 +79,7 @@ class Hcs12DisassembleAction extends ListingContextAction {
 		if (!"HCS12".equals(proc.toString())) {
 			return false;
 		}
-		
+
 		Register register = context.getProgram().getProgramContext().getRegister("XGATE");
 		if (register == null) {
 			return false;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,9 +82,9 @@ public class ClassSearcher {
 	}
 
 	/**
-	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes that implement or 
+	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes that implement or
 	 * derive from the given class
-	 * 
+	 *
 	 * @param c the filter class
 	 * @return set of classes that implement or extend T
 	 */
@@ -93,14 +93,14 @@ public class ClassSearcher {
 	}
 
 	/**
-	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes that 
+	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes that
 	 * implement or derive from the given class
-	 * 
+	 *
 	 * @param c the filter class
 	 * @param classFilter A Predicate that tests class objects (that are already of type T)
 	 * 			for further filtering, <code>null</code> is equivalent to "return true"
-	 * @return {@link ExtensionPointProperties#priority() priority-sorted} list of 
-	 * 			classes that implement or extend T and pass the filtering test performed by the 
+	 * @return {@link ExtensionPointProperties#priority() priority-sorted} list of
+	 * 			classes that implement or extend T and pass the filtering test performed by the
 	 * 			predicate
 	 */
 	@SuppressWarnings("unchecked") // we checked the type of each use so we know the casts are safe
@@ -130,14 +130,14 @@ public class ClassSearcher {
 	}
 
 	/**
-	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes 
+	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes
 	 * instances that implement or derive from the given class
-	 * 
+	 *
 	 * @param c the filter class
 	 * @param filter A Predicate that tests class objects (that are already of type T)
 	 * 			for further filtering, <code>null</code> is equivalent to "return true"
-	 * @return {@link ExtensionPointProperties#priority() priority-sorted} list of 
-	 * 			classes instances that implement or extend T and pass the filtering test performed by 
+	 * @return {@link ExtensionPointProperties#priority() priority-sorted} list of
+	 * 			classes instances that implement or extend T and pass the filtering test performed by
 	 *          the predicate
 	 */
 	public static <T> List<T> getInstances(Class<T> c, ClassFilter filter) {

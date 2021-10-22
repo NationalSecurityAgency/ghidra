@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 /*****************************************************************************************
 	This file is a "mix-in" gradle script that individual gradle projects that should be included
 	if this module has tests that should be included when running all the Ghidra tests.
-	
+
 	A gradle project can add itself to the test run by including the following in its build.gradle
 	file:
 
@@ -44,11 +44,11 @@ test { t ->
 	// the class searching environment.  This can have a negative impact
 	// on test results due to the inconsistent Application environment
 	// which may exist when all tests are run versus a single test.
-	// 
+	//
 	// Based on this limitation, do not place tests that depend on integration
 	// base classes (eg: AbstractGhidraHeadlessIntegrationTest) in 'test'; they
 	// must go in 'test.slow'.
-	
+
 	// Do not include suite classes; they trigger the tests in the suite to get run twice
 	// (once by normal jUnit and again when the suite runs).
 	excludes = ['**/*Suite*']
@@ -63,7 +63,7 @@ test { t ->
 
 task integrationTest (type: Test) { t ->
 	group "test"
-	dependsOn { project(":FunctionID").unpackFidDatabases }	
+	dependsOn { project(":FunctionID").unpackFidDatabases }
 	testClassesDirs = files sourceSets.integrationTest.output.classesDirs
 
 	classpath = sourceSets.integrationTest.runtimeClasspath
@@ -85,23 +85,23 @@ task integrationTest (type: Test) { t ->
 	}
 }
 
-task pcodeTest (type: Test) { t ->	
-    group "pcodeTest"	
-    dependsOn { project(":FunctionID").unpackFidDatabases }	
+task pcodeTest (type: Test) { t ->
+    group "pcodeTest"
+    dependsOn { project(":FunctionID").unpackFidDatabases }
     testClassesDirs = files sourceSets.pcodeTest.output.classesDirs
 	classpath = sourceSets.pcodeTest.runtimeClasspath
-	
+
 	// Enable if you want to force Gradle to launch a new JVM for each test.
-    forkEvery 1	
-    	
+    forkEvery 1
+
 	initTestJVM(t, rootProject.ext.pcodeTestRootDirName)
-	
+
 	doFirst {
 		startTestTimer(t)
 	}
 	doLast {
 		endTestTimer(t)
-	}		
+	}
 }
 
 rootProject.unitTestReport {
@@ -113,7 +113,7 @@ rootProject.integrationTestReport {
 rootProject.pcodeTestReport {
 	reportOn this.project.pcodeTest
 }
-rootProject.combinedTestReport { 
+rootProject.combinedTestReport {
 	reportOn this.project.test
 	reportOn this.project.integrationTest
 }
@@ -141,22 +141,22 @@ def initTestJVM(Task task, String rootDirName) {
 	}
 	// If false, testing will halt when an error is found.
 	task.ignoreFailures true
-	
+
 	// If false, then tests are re-run every time, even if no code has changed.
 	task.outputs.upToDateWhen {false}
-	
+
 	// Must set this to see System.out print statements.
 	task.testLogging.showStandardStreams = true
 
     // Min/Max heap size.  These are passed in.
     task.minHeapSize xms
     task.maxHeapSize xmx
-    	
+
     // for jmockit; needs the javaagent option
     // -javaagent:/path/to/jmockit.jar
     task.doFirst {
 	    def jmockitPath = configurations.jmockitAgent.singleFile
-	    	    
+
 		task.jvmArgs '-DupgradeProgramErrorMessage=' + upgradeProgramErrorMessage,
 			'-DupgradeTimeErrorMessage=' + upgradeTimeErrorMessage,
 			'-Dlog4j.configuration=' + logPropertiesUrl,
@@ -181,30 +181,30 @@ def initTestJVM(Task task, String rootDirName) {
 			'-noverify',
 			'-XX:TieredStopAtLevel=1',
 			'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=' + debugPort
-			
-			
+
+
 			// Note: this args are used to speed-up the tests, but are not safe for production code
-			// -noverify and -XX:TieredStopAtLevel=1			
-			
+			// -noverify and -XX:TieredStopAtLevel=1
+
 			// Note: modern remote debug invocation;
 			// 	-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
-			
-			// 
+
+			//
 			// We removed these lines, which should not be needed in modern JVMs
 			//  -Xdebug
 			//  -Xnoagent
 			//  -Djava.compiler=NONE
 			//  -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000
-			
+
 			//
 			// TODO Future Updates:
 			// The test configuration should be updated to support all known modes of operation:
 			// command-line test execution, CI test execution of a branch upon request, and full
 			// CI test execution (this is slow and may need to run overnight).  We do not currently
-			// support well running tests via the command-line.   See discussion at github 2854. 
-			// For better command-line usage we will need to update tests such that they can 
+			// support well running tests via the command-line.   See discussion at github 2854.
+			// For better command-line usage we will need to update tests such that they can
 			// share a VM, enabling us to elimnate the use of 'forEver 1' in this file.
-			// 
+			//
 	}
 }
 /*********************************************************************************
@@ -221,7 +221,7 @@ def startTestTimer(Task task) {
 def endTestTimer(Task task) {
 	Date endTime = new Date();
 	println ":" + task.project.name + ":" + task.name + " ended: " + endTime;
-	
+
 	long elapsedMS = endTime.getTime() - testStartTime.getTime();
 	long msPerMin = 60 * 1000;
 	long msPerHour = 60 * msPerMin;

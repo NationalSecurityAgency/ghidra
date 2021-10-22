@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import java.math.BigInteger;
  *      <li>value = sign * unscaled * 2 ^ (scale-fracbits)</li>
  * </ul>
  * sign = -1 or +1, unscaled has at most fracbits+1 bits, and scale is at most expbits bits.
- *      
+ *
  * <p>Operations compute exact result then round to nearest even.
  */
 public strictfp class BigFloat implements Comparable<BigFloat> {
@@ -43,13 +43,13 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	// -1, +1
 	int sign;
 	// normal numbers have unscaled.bitLength() =  fracbits+1
-	// subnormal numbers have scale=0 and unscaled.bitLength() <= fracbits 
+	// subnormal numbers have scale=0 and unscaled.bitLength() <= fracbits
 	BigInteger unscaled;
 	int scale;
 
 	/**
 	 * Construct a BigFloat.  If kind is FINITE, the value is <code>sign*unscaled*2^(scale-fracbits)</code>
-	 * 
+	 *
 	 * @param fracbits number of fractional bits
 	 * @param expbits maximum number of bits in exponent
 	 * @param kind the Kind, FINITE, INFINITE, ...
@@ -141,7 +141,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 
 	/**
 	 * Return the BigFloat with the given number of bits representing the given BigInteger.
-	 * 
+	 *
 	 * @param fracbits number of fractional bits
 	 * @param expbits number of bits in the exponent
 	 * @param i an integer
@@ -156,7 +156,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 
 	/**
 	 * Return the BigFloat with the given number of bits representing zero.
-	 * 
+	 *
 	 * @param fracbits number of fractional bits
 	 * @param expbits number of bits in the exponent
 	 * @param sign +1 or -1
@@ -169,7 +169,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 
 	/**
 	 * Return the BigFloat with the given number of bits representing (positive) zero.
-	 * 
+	 *
 	 * @param fracbits number of fractional bits
 	 * @param expbits number of bits in the exponent
 	 * @return a BigFloat representing +zero
@@ -191,7 +191,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 
 	/**
 	 * Return the BigFloat with the given number of bits representing (quiet) NaN.
-	 * 
+	 *
 	 * @param fracbits number of fractional bits
 	 * @param expbits number of bits in the exponent
 	 * @param sign +1 or -1
@@ -227,14 +227,14 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 
 	/**
 	 * This function is used internally to round after a computation.
-	 * 
+	 *
 	 * <p>Assume that the true value is
 	 * <pre>   sign * (unscaled + eps) * 2 ^ (scale-fracbits)
 	 * and
-	 *   unscaled.bitLength() &gt; fracbits+1 
+	 *   unscaled.bitLength() &gt; fracbits+1
 	 *
 	 * (or the value is subnormal with at least 1 bit of extra precision)
-	 * </pre> 
+	 * </pre>
 	 * @param eps &lt; 1
 	 */
 	protected void internalRound(boolean eps) {
@@ -287,7 +287,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 	/**
 	 * If finite, the returned BigDecimal is exactly equal to this.  If not finite, one of the
 	 * FloatFormat.BIG_* constants is returned.
-	 * 
+	 *
 	 * @return a BigDecimal
 	 */
 	public BigDecimal toBigDecimal() {
@@ -420,7 +420,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 
 	/**
 	 * {@code this/=other}
-	 * 
+	 *
 	 * @param other a BigFloat
 	 */
 	public void div(BigFloat other) {
@@ -473,7 +473,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 		//   floor(a)-floor(b)-1 <= floor(a-b) <= floor(a)-floor(b)
 		//  nbits(x) = floor(log_2(x))+1, so
 		//    nbits(x) - nbits(y) <= nbits(x/y) <= nbits(x) - nbits(y) + 1
-		// so 
+		// so
 		//   this + lshift - other = fracbits+2 =>
 		int lshift = fracbits + 2 + other.unscaled.bitLength() - this.unscaled.bitLength();
 		this.upscale(lshift);
@@ -501,7 +501,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 
 	/**
 	 * {@code this*=other}
-	 * 
+	 *
 	 * @param other a BigFloat
 	 */
 	public void mul(BigFloat other) {
@@ -542,7 +542,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 
 	/**
 	 * {@code this+=other}
-	 * 
+	 *
 	 * @param other a BigFloat
 	 */
 	public void add(BigFloat other) {
@@ -600,7 +600,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 
 	/**
 	 * {@code this-=other}
-	 * 
+	 *
 	 * @param other a BigFloat
 	 */
 	public void sub(BigFloat other) {
@@ -704,7 +704,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 
 	/**
 	 * {@code this=sqrt(this)}
-	 * 
+	 *
 	 *	<p>Square root by abacus algorithm, Martin Guy @ UKC, June 1985.
 	 *	From a book on programming abaci by Mr C. Woo.
 	 *	Argument is a positive integer, as is result.

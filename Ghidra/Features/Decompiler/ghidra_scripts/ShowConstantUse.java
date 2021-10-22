@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -157,8 +157,8 @@ public class ShowConstantUse extends GhidraScript {
 
 	/**
 	 * Builds the configurable columns for the TableDialog. More columns could be added.
-	 * 
-	 * @param tableChooserDialog the dialog 
+	 *
+	 * @param tableChooserDialog the dialog
 	 */
 	private void configureTableColumns(TableChooserDialog tableChooserDialog) {
 		// First column added is the Constant value that is found.
@@ -292,13 +292,13 @@ public class ShowConstantUse extends GhidraScript {
 	 * Sample execution task Execution class called whenever the execute button
 	 * in the table is called. NOTE: the execute button is not setup, so this is
 	 * just and example
-	 * 
+	 *
 	 * Useful if you are back tracking constants for malloc or calloc Runs
 	 * another script that will create a structure on the return variable of
 	 * calloc/malloc. It pulls a little trick when calling the CreateStructure
 	 * script by creating an artificial ScriptState. This is a useful technique
 	 * for other scripts as well.
-	 * 
+	 *
 	 * @return the executor
 	 */
 	@SuppressWarnings("unused")
@@ -383,7 +383,7 @@ public class ShowConstantUse extends GhidraScript {
 	 * Try to locate the Varnode that represents the variable in the listing or
 	 * decompiler. In the decompiler this could be a local/parameter at any
 	 * point in the decompiler. In the listing, it must be a parameter variable.
-	 * 
+	 *
 	 * @return the varnode
 	 */
 	private Varnode getVarnodeLocation() {
@@ -543,7 +543,7 @@ public class ShowConstantUse extends GhidraScript {
 	/**
 	 * Backtrack to a constant given a varnode within a decompiled function This
 	 * isn't useful for functions that can't be decompiled
-	 * 
+	 *
 	 * @param var
 	 *            varnode that represents a variable in a decompilation
 	 * @param tableChooserDialog
@@ -577,7 +577,7 @@ public class ShowConstantUse extends GhidraScript {
 	/**
 	 * Backtrack to a constant given a start position of a parameter of a given
 	 * function Useful if you want to start from a function paramter.
-	 * 
+	 *
 	 * @param f function to start in
 	 * @param paramIndex parameter index to backtrack from
 	 * @param tableChooserDialog accumulate entries. Don't like passing it, but this way the

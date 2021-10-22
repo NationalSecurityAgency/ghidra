@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param dataMgr
 	 * @param cache
 	 * @param adapter
@@ -316,12 +316,12 @@ class PointerDB extends DataTypeDB implements Pointer {
 			return false;
 		}
 
-		// TODO: The pointer deep-dive equivalence checking on the referenced datatype can 
+		// TODO: The pointer deep-dive equivalence checking on the referenced datatype can
 		// cause types containing pointers (composites, functions) to conflict when in
 		// reality the referenced type simply has multiple implementations which differ.
 		// Although without doing this Ghidra may fail to resolve dependencies which differ
 		// from those already contained within a datatype manager.
-		// Ghidra's rigid datatype relationships prevent the flexibility to handle 
+		// Ghidra's rigid datatype relationships prevent the flexibility to handle
 		// multiple implementations of a named datatype without inducing a conflicted
 		// datatype hierarchy.
 
@@ -382,7 +382,7 @@ class PointerDB extends DataTypeDB implements Pointer {
 	 *      class to do nothing. However, if updatePath is called, then this method
 	 *      calls super.setCategoryPath which bypasses the "overriddenness" of
 	 *      setCategoryPath, resulting in this method getting called.
-	 * 
+	 *
 	 */
 	@Override
 	protected void doSetCategoryPathRecord(long categoryID) throws IOException {

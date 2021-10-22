@@ -7,14 +7,14 @@ package mobiledevices.dmg.ghidra;
  * Helper methods for converting between
  * number data types without negative
  * promotion.
- * 
- * 
- */ 
+ *
+ *
+ */
 public class GConv {
-	
+
 	private GConv() {
 	}
-	
+
     /**
      * A byte mask.
      */
@@ -117,7 +117,7 @@ public class GConv {
     }
 
     /**
-     * Returns a string that is extended to 
+     * Returns a string that is extended to
      * length len with zeroes.
      * @param s The string to pad
      * @param len The length of the return string

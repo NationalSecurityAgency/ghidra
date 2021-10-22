@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -257,7 +257,7 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 			getSystemState().stderr.invoke("flush");
 		}
 		catch (PyException e) {
-			// if the python interp state's stdin/stdout/stderr is messed up, it can throw an error 
+			// if the python interp state's stdin/stdout/stderr is messed up, it can throw an error
 			Msg.error(this, "Failed to write to stderr", e);
 		}
 	}
@@ -360,7 +360,7 @@ public class GhidraPythonInterpreter extends InteractiveInterpreter {
 			//
 			// NOTE: We currently do not have a way to safely add protected methods.  Disabling
 			// python.security.respectJavaAccessibility and adding in protected methods in the below
-			// loop caused an InaccessibleObjectException for some users (relating to core Java 
+			// loop caused an InaccessibleObjectException for some users (relating to core Java
 			// modules, not the GhidraScript class hierarchy).
 			if (!scriptMethodsInjected) {
 				for (Method method : scriptClass.getDeclaredMethods()) {

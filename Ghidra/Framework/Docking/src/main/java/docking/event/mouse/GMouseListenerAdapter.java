@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,10 +31,10 @@ import ghidra.util.Msg;
  *  		<LI>Each of the methods mentioned below will be called as appropriate.</LI>
  *  		<LI>You can override any of these methods to be called for each trigger.</LI>
  *  		<LI>Normally popups are handled by the framework via custom actions.  But, for custom
- *          widgets it is sometimes simpler to handle your own popups.  This class makes that 
+ *          widgets it is sometimes simpler to handle your own popups.  This class makes that
  *          easier</LI>
  * </UL>
- * 
+ *
  * @see #popupTriggered(MouseEvent)
  * @see #doubleClickTriggered(MouseEvent)
  * @see #shouldConsume(MouseEvent)
@@ -49,12 +49,12 @@ public class GMouseListenerAdapter extends MouseAdapter {
 
 //==================================================================================================
 // Client Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * This method is called to ask the client if they wish to consume the given event.  This
-	 * allows clients to keep events from propagating to other listeners. 
-	 * 
+	 * allows clients to keep events from propagating to other listeners.
+	 *
 	 * @param e the event to potentially consume
 	 * @return true if the event should be consumed
 	 */
@@ -64,7 +64,7 @@ public class GMouseListenerAdapter extends MouseAdapter {
 
 	/**
 	 * Called when a double-click event is discovered.
-	 * 
+	 *
 	 * @param e the event that triggered the double-click
 	 */
 	public void doubleClickTriggered(MouseEvent e) {
@@ -73,7 +73,7 @@ public class GMouseListenerAdapter extends MouseAdapter {
 
 	/**
 	 * Called when a popup event is discovered.
-	 * 
+	 *
 	 * @param e the event that triggered the popup
 	 */
 	public void popupTriggered(MouseEvent e) {
@@ -82,7 +82,7 @@ public class GMouseListenerAdapter extends MouseAdapter {
 
 //==================================================================================================
 // MouseListener Interface Methods and Implementation
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public void mousePressed(MouseEvent e) {
@@ -159,7 +159,7 @@ public class GMouseListenerAdapter extends MouseAdapter {
 			return;
 		}
 
-		if (e.getClickCount() % 2 == 0) { // this allows double-click repeatedly without pause 
+		if (e.getClickCount() % 2 == 0) { // this allows double-click repeatedly without pause
 			trace("\tdouble-click");
 			if (bothClicksFromLeftButton(previousButton, currentButton)) {
 				trace("\tdouble-click from left");

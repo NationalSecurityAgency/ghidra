@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,15 +80,15 @@ public class IHDRChunk {
 	   Type    Bit Depths
 	   ------  ----------  ----------------------------------
 	   0       1,2,4,8,16  Each pixel is a grayscale sample.
-	   
+
 	   2       8,16        Each pixel is an R,G,B triple.
-	   
+
 	   3       1,2,4,8     Each pixel is a palette index;
 	                       a PLTE chunk must appear.
-	   
+
 	   4       8,16        Each pixel is a grayscale sample,
 	                       followed by an alpha sample.
-	   
+
 	   6       8,16        Each pixel is an R,G,B triple,
 	                       followed by an alpha sample.
 	* </pre>

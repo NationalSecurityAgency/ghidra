@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,10 +19,10 @@ package ghidra.framework.task;
 import java.util.*;
 
 /**
- * Class for grouping several {@link GTask}s that all should be 
+ * Class for grouping several {@link GTask}s that all should be
  * executed before any new group of tasks are
  * executed, regardless of priority.
- * 
+ *
  * @see GTaskManager
  */
 public class GTaskGroup {
@@ -89,9 +89,9 @@ public class GTaskGroup {
 	}
 
 	/**
-	 * Returns the TaskMonitor that will be used to track the overall progress of tasks within this 
+	 * Returns the TaskMonitor that will be used to track the overall progress of tasks within this
 	 * group.
-	 * @return the TaskMonitor that will be used to track the overall progress of tasks within this 
+	 * @return the TaskMonitor that will be used to track the overall progress of tasks within this
 	 * group.
 	 */
 	public GTaskMonitor getTaskMonitor() {
@@ -144,7 +144,7 @@ public class GTaskGroup {
 	 * Notification that a task in the group has been completed.  The group keeps track of the overall
 	 * progress of the tasks completed in this group.  This call is used to notify the group that
 	 * another one of its tasks was completed.
-	 * 
+	 *
 	 */
 	public void taskCompleted() {
 		monitor.incrementProgress(1);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,12 +38,12 @@ public class ServiceProviderDecorator implements ServiceProvider {
 	}
 
 	/**
-	 * Adds a service that will override any service contained in the delegate 
-	 * {@link ServiceProvider}. 
-	 * 
-	 * <P>Note: this will not notify any clients that services have been changed.  This means 
+	 * Adds a service that will override any service contained in the delegate
+	 * {@link ServiceProvider}.
+	 *
+	 * <P>Note: this will not notify any clients that services have been changed.  This means
 	 * that you should call this method before passing this service provider on to your clients.
-	 * 
+	 *
 	 * @param serviceClass the service class
 	 * @param service the service implementation
 	 */

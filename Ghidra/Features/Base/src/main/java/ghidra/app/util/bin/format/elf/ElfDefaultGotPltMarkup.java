@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>ElfDefaultGotPltMarkup</code> provides the legacy/default implementation of ELF GOT/PLT processing 
- * which handles a limited set of cases.  It is intended that over time this default implementation be 
+ * <code>ElfDefaultGotPltMarkup</code> provides the legacy/default implementation of ELF GOT/PLT processing
+ * which handles a limited set of cases.  It is intended that over time this default implementation be
  * eliminated although it may form the basis of an abstract implementation for specific processor
  * extensions.
  */
@@ -152,10 +152,10 @@ public class ElfDefaultGotPltMarkup {
 			}
 
 			// External dynamic symbol entries in the GOT, if any, will be placed
-			// after any local symbol entries.  Local entries are assumed to have original 
+			// after any local symbol entries.  Local entries are assumed to have original
 			// bytes of zero, whereas non-local entries will refer to the PLT
 
-			// While the dynamic value for pltGotType (e.g., DT_PLTGOT) identifies the start of 
+			// While the dynamic value for pltGotType (e.g., DT_PLTGOT) identifies the start of
 			// dynamic GOT table it does not specify its length.  The associated relocation
 			// table, identified by the dynamic value for pltGotRelType, will have a relocation
 			// record for each PLT entry linked via the GOT.  The number of relocations matches
@@ -192,13 +192,13 @@ public class ElfDefaultGotPltMarkup {
 
 			//
 			// Examine the first two GOT entries which correspond to the relocations (i.e., pltGotSymbols).
-			// An adjusted address from the original bytes is computed.  These will point into the PLT.  
-			// These two pointers will either refer to the same address (i.e., PLT head) or different 
-			// addresses which correspond to the first two PLT entries.  While likely offcut into each PLT 
-			// entry, the differing PLT addresses can be used to identify the PLT entry size/spacing but 
-			// not the top of PLT.  If symbols are present within the PLT for each entry, they may 
+			// An adjusted address from the original bytes is computed.  These will point into the PLT.
+			// These two pointers will either refer to the same address (i.e., PLT head) or different
+			// addresses which correspond to the first two PLT entries.  While likely offcut into each PLT
+			// entry, the differing PLT addresses can be used to identify the PLT entry size/spacing but
+			// not the top of PLT.  If symbols are present within the PLT for each entry, they may
 			// be used to identify the PLT entry size/spacing and will be converted to external symbols.
-			// 
+			//
 
 			long pltEntryCount = pltGotSymbols.size();
 
@@ -250,8 +250,8 @@ public class ElfDefaultGotPltMarkup {
 				minSymbolSearchAddress = pltAddr1.next();
 
 				// Use conservative PLT entry size when computing address limit for PLT symbol search.
-				// For a PLT with an actual entry size of 16 this will reduce the scan to less than half 
-				// of the PLT.  This should only present an issue for very small PLTs or those 
+				// For a PLT with an actual entry size of 16 this will reduce the scan to less than half
+				// of the PLT.  This should only present an issue for very small PLTs or those
 				// with sparsely placed symbols.
 				symbolSearchSpacing = MIN_SUPPORTED_PLT_ENTRY_SIZE;
 			}
@@ -427,7 +427,7 @@ public class ElfDefaultGotPltMarkup {
 
 	private void processPLTSection(TaskMonitor monitor) throws CancelledException {
 
-		// TODO: May want to consider using analysis to fully disassemble PLT, we only 
+		// TODO: May want to consider using analysis to fully disassemble PLT, we only
 		// really need to migrate external symbols contained within the PLT
 
 		// FIXME: Code needs help ... bad assumption about PLT head size (e.g., 16)
@@ -457,8 +457,8 @@ public class ElfDefaultGotPltMarkup {
 	}
 
 	/**
-	 * Perform disassembly and markup of specified external linkage table which 
-	 * consists of thunks to external functions.  If symbols are defined within the 
+	 * Perform disassembly and markup of specified external linkage table which
+	 * consists of thunks to external functions.  If symbols are defined within the
 	 * linkage table, these will be transitioned to external functions.
 	 * @param pltName name of PLT section for log messages
 	 * @param minAddress minimum address of linkage table
@@ -470,12 +470,12 @@ public class ElfDefaultGotPltMarkup {
 			TaskMonitor monitor) throws CancelledException {
 
 		try {
-			// Disassemble section.  
+			// Disassemble section.
 			// Disassembly is only done so we can see all instructions since many
 			// of them are unreachable after applying relocations
 			disassemble(minAddress, maxAddress, program, monitor);
 
-			// Any symbols in the linkage section should be converted to External function thunks 
+			// Any symbols in the linkage section should be converted to External function thunks
 			// This can be seen with ARM Android examples.
 			int count = convertSymbolsToExternalFunctions(minAddress, maxAddress);
 			if (count > 0) {
@@ -491,7 +491,7 @@ public class ElfDefaultGotPltMarkup {
 	}
 
 	/**
-	 * Convert all symbols over a specified range to thunks to external functions. 
+	 * Convert all symbols over a specified range to thunks to external functions.
 	 * @param minAddress
 	 * @param maxAddress
 	 * @return number of symbols converted
@@ -625,7 +625,7 @@ public class ElfDefaultGotPltMarkup {
 	 * then the base of the .so is most likely incorrect.  Shift it!
 	 */
 	private Address UglyImageBaseCheck(Data data, Address imageBase) {
-		// TODO: Find sample - e.g., ARM .so - seems too late in import processing to change image base 
+		// TODO: Find sample - e.g., ARM .so - seems too late in import processing to change image base
 		//       if any relocations have been applied.
 		if (elf.e_machine() != ElfConstants.EM_ARM) {
 			return null;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ class BitFieldDBDataType extends BitFieldDataType {
 	//      x - 1-bit, unused
 	//      t - 2-bit, =0: base type only, =1:TypeDef used, =2: enum used, =3: abstract-int
 	//      s - 1-bit, storage +1 (NOT-USED! - may be re-purposed by future schema change)
-	//      xxxx - 4-bits, unused 
+	//      xxxx - 4-bits, unused
 	// OO - bit offset (i.e., right-shift factor, relative to packing base type)
 	// SS - bit field size in bits
 
@@ -48,11 +48,11 @@ class BitFieldDBDataType extends BitFieldDataType {
 	private static final long ID_TO_INDEX_MASK = ~-(1L << DataTypeManagerDB.DATA_TYPE_KIND_SHIFT);
 
 	/**
-	 * Construct DB resident bitfield.  Minimal storage size and effective bit size will 
-	 * be computed based upon specified parameters. 
+	 * Construct DB resident bitfield.  Minimal storage size and effective bit size will
+	 * be computed based upon specified parameters.
 	 * @param baseDataType base data type (integer/enum type or typedef to same).  This
 	 * bitfield will adopt the same datatype manager as this base type.
-	 * @param bitSize size of bit-field expressed as number of bits (0..255).  The effective 
+	 * @param bitSize size of bit-field expressed as number of bits (0..255).  The effective
 	 * bit size may be reduced based upon the specified base datatype size.
 	 * @param bitOffset right shift factor within storage unit when viewed as a big-endian dd
 	 * scalar value.  Based upon minimal storage bitOffset should be in the range 0 to 7.
@@ -85,11 +85,11 @@ class BitFieldDBDataType extends BitFieldDataType {
 	/**
 	 * Get a generated ID for this bit-field which is suitable for reconstruction
 	 * via the {@link #getBitFieldDataType(long)} method.  This ID encodes the base
-	 * datatype (including typedef/enum and packing data), 
-	 * bit-size and bit-offset.  The upper byte of the ID will always be zero and 
+	 * datatype (including typedef/enum and packing data),
+	 * bit-size and bit-offset.  The upper byte of the ID will always be zero and
 	 * is reserved for use by the DataTypeManager.
 	 * <p>
-	 * The ability to reference base datatypes (e.g., TypeDef, Enum) is currently limited 
+	 * The ability to reference base datatypes (e.g., TypeDef, Enum) is currently limited
 	 * (i.e. 32-bit base datatype ID).
 	 * @param bitfieldDt the resolved bitfield datatype whose ID is needed.  This must first be
 	 * resolved by a DataTypeManagerDB.
@@ -197,7 +197,7 @@ class BitFieldDBDataType extends BitFieldDataType {
 	}
 
 	/**
-	 * Get the TypeDef which corresponds to the specified typeDefIndex and the 
+	 * Get the TypeDef which corresponds to the specified typeDefIndex and the
 	 * specified data type manager.
 	 * @param typeDefIndex base data type index used by bit-field
 	 * @param primitiveBaseDataType expected primitive base datatype
@@ -225,7 +225,7 @@ class BitFieldDBDataType extends BitFieldDataType {
 	}
 
 	/**
-	 * Get the Enum which corresponds to the specified enumIndex and the 
+	 * Get the Enum which corresponds to the specified enumIndex and the
 	 * specified data type manager.
 	 * @param enumIndex enum data type index used by bit-field
 	 * @param dtm data type manager
@@ -242,7 +242,7 @@ class BitFieldDBDataType extends BitFieldDataType {
 	}
 
 	/**
-	 * Get the integer base type which corresponds to the specified intTypeIndex and the 
+	 * Get the integer base type which corresponds to the specified intTypeIndex and the
 	 * specified data type manager.
 	 * @param intTypeIndex base data type index used by bit-field
 	 * @param dtm data type manager

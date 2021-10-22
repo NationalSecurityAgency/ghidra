@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -264,7 +264,7 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 	public void testSelectFunctions() throws Exception {
 
 		//
-		// Existing match: 
+		// Existing match:
 		// 'addPeople' (00411700)  ->  FUN_004116f0
 		//
 
@@ -282,7 +282,7 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 		// FUN_004116b0
 		selectRowByLocation(destinationTable, "004116b0");
 
-		// Verify via lack of error status that the single source and single destination 
+		// Verify via lack of error status that the single source and single destination
 		// could create a match.
 		checkProviderStatus("");
 
@@ -296,10 +296,10 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 
 		int matchesCount = matchesTable.getRowCount();
 
-		// Try to create a manual match which exists.		
+		// Try to create a manual match which exists.
 		assertTrue(hasMatch("Gadget", "FUN_00411430"));
 
-		// Gadget (00411440) -> FUN_00411430 
+		// Gadget (00411440) -> FUN_00411430
 		assertFalse("Created manual match when a similar match exists",
 			createManualMatch("00411440", "00411430", false, false));
 
@@ -403,9 +403,9 @@ public class VTFunctionAssociationTest extends AbstractGhidraHeadedIntegrationTe
 
 		//
 		// deployGadget (004118f0) -> FUN_00412340
-		// 
+		//
 
-		// change the signature in the source program so that an applyable markup item will be created. 
+		// change the signature in the source program so that an applyable markup item will be created.
 		int id = sourceProgram.startTransaction("test");
 		FunctionManager fm = sourceProgram.getFunctionManager();
 		Function function = fm.getFunctionAt(s_addr("004118f0")); // deployGadget

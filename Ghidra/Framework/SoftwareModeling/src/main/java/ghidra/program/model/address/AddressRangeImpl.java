@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -101,7 +101,7 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.AddressRange#getMaxAddress()
 	 */
 	@Override
@@ -110,7 +110,7 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.AddressRange#getLength()
 	 */
 	@Override
@@ -125,7 +125,7 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -152,7 +152,7 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.AddressRange#compareTo(ghidra.program.model.address.Address)
 	 */
 	@Override
@@ -167,7 +167,7 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
@@ -176,7 +176,7 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.AddressRange#intersects(ghidra.program.model.address.AddressRange)
 	 */
 	@Override
@@ -185,7 +185,7 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.AddressRange#intersects(ghidra.program.model.address.Address, ghidra.program.model.address.Address)
 	 */
 	@Override
@@ -195,7 +195,7 @@ public class AddressRangeImpl implements AddressRange, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.AddressRange#intersect(ghidra.program.model.address.AddressRange)
 	 */
 	@Override

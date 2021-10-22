@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,9 +46,9 @@ public class BatchInfo {
 	private FileSystemService fsService = FileSystemService.getInstance();
 
 	/*
-	 * These structures need to be synchronized to ensure thread visibility, since they are 
-	 * written to by a background thread and read from the Swing thread.  
-	 * 
+	 * These structures need to be synchronized to ensure thread visibility, since they are
+	 * written to by a background thread and read from the Swing thread.
+	 *
 	 * For now, concurrent modification is not an issue, since the client does not read from
 	 * these structures while they are being written, as the writes happen during a blocking
 	 * operation.
@@ -270,7 +270,7 @@ public class BatchInfo {
 	/**
 	 * Checks the found applications and returns true if only a single binary was found,
 	 * even if multiple loaders claim it.
-	 * 
+	 *
 	 * @return true if single binary and batch is probably not correct importer.
 	 */
 	public boolean isSingleApp() {
@@ -429,7 +429,7 @@ public class BatchInfo {
 		//@formatter:off
 		new TaskBuilder("Scanning Source Files", monitor -> doSetMaxDepth(newMaxDepth, monitor))
 			.setStatusTextAlignment(SwingConstants.LEADING)
-			.setHasProgress(false) // indeterminate			
+			.setHasProgress(false) // indeterminate
 			.launchModal()
 			;
 		//@formatter:on
@@ -437,7 +437,7 @@ public class BatchInfo {
 
 	/**
 	 * Adds the given files to this batch import
-	 * 
+	 *
 	 * @param filesToAdd the files to add
 	 * @return any files that failed to load; exceptions will be logged
 	 */
@@ -462,7 +462,7 @@ public class BatchInfo {
 		}
 
 		// TODO: make this smarter and when switching from higher maxDepth to lower,
-		// just remove existing files that are deeper.  Recalculating user added source info 
+		// just remove existing files that are deeper.  Recalculating user added source info
 		// number is hard so I'm skipping it now.
 
 		Msg.trace(this, "Switching maxDepth from " + maxDepth + " to " + newMaxDepth);
@@ -471,7 +471,7 @@ public class BatchInfo {
 		List<FSRL> files = userAddedSources
 			.stream()
 			.map(source -> {
-				return source.getFSRL(); 
+				return source.getFSRL();
 			})
 			.collect(Collectors.toList())
 			;
@@ -513,7 +513,7 @@ public class BatchInfo {
 				}
 				catch (CancelledException e) {
 					Msg.debug(this, "Cancelling Add File task while adding " + fsrl.getName());
-					// Note: the workflow for this felt odd: press cancel; confirm cancel; press Ok 
+					// Note: the workflow for this felt odd: press cancel; confirm cancel; press Ok
 					//       on dialog showing files not processed.
 					// It seems like the user should not have to see the second dialog
 					// badFiles.addAll(filesToAdd.subList(i, filesToAdd.size()));
@@ -526,7 +526,7 @@ public class BatchInfo {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class AddFilesRunnable implements MonitoredRunnable {
 

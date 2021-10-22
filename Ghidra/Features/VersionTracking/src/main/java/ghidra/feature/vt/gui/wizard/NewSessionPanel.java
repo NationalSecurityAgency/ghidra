@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class NewSessionPanel extends AbstractMageJPanel<VTWizardStateKey> {
 	private DomainFolder folder;
 	private PluginTool tool;
 
-	// All program info objects that the user may have opened while using the wizard.  We keep 
+	// All program info objects that the user may have opened while using the wizard.  We keep
 	// these around to avoid reopening them and any accompanying upgrading that may be required.
 	// These will be released when the wizard is finished.
 	private Map<DomainFile, ProgramInfo> allProgramInfos = new HashMap<>();

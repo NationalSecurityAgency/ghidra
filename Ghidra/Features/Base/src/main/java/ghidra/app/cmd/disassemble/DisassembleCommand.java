@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public class DisassembleCommand extends BackgroundCommand {
 
 	/**
 	 * Constructor for DisassembleCommand.
-	 * 
+	 *
 	 * @param start Address to start disassembly.
 	 * @param restrictedSet addresses that can be disassembled. a null set implies no restrictions
 	 * @param followFlow true means the disassembly should follow flow
@@ -63,7 +63,7 @@ public class DisassembleCommand extends BackgroundCommand {
 
 	/**
 	 * Constructor for DisassembleCommand.
-	 * 
+	 *
 	 * @param startSet set of addresses to be the start of a disassembly. The Command object will
 	 *            attempt to start a disassembly at each address in this set.
 	 * @param restrictedSet addresses that can be disassembled. a null set implies no restrictions
@@ -74,7 +74,7 @@ public class DisassembleCommand extends BackgroundCommand {
 
 	/**
 	 * Constructor for DisassembleCommand.
-	 * 
+	 *
 	 * @param startSet set of addresses to be the start of a disassembly. The Command object will
 	 *            attempt to start a disassembly at each address in this set.
 	 * @param restrictedSet addresses that can be disassembled. a null set implies no restrictions
@@ -98,7 +98,7 @@ public class DisassembleCommand extends BackgroundCommand {
 	 * context set via the {@link #setInitialContext(RegisterValue)} method will take precedence
 	 * when combined with any seed values. The seedContext should remain unchanged while
 	 * disassembler command is actively running.
-	 * 
+	 *
 	 * @param seedContext seed context or null
 	 */
 	public void setSeedContext(DisassemblerContextImpl seedContext) {
@@ -110,7 +110,7 @@ public class DisassembleCommand extends BackgroundCommand {
 	 * precedence when combined with any individual seed context values specified by the
 	 * {@link #setSeedContext(DisassemblerContextImpl)} method. The defaultSeedContext should remain
 	 * unchanged while disassembler command is actively running.
-	 * 
+	 *
 	 * @param initialContextValue the initial context value to set or null to clear it
 	 */
 	public void setInitialContext(RegisterValue initialContextValue) {
@@ -124,7 +124,7 @@ public class DisassembleCommand extends BackgroundCommand {
 	/**
 	 * Set code analysis enablement. By default new instructions will be submitted for
 	 * auto-analysis.
-	 * 
+	 *
 	 * @param enable
 	 */
 	public void enableCodeAnalysis(boolean enable) {
@@ -314,11 +314,11 @@ public class DisassembleCommand extends BackgroundCommand {
 
 	/**
 	 * Do disassembly of a seedSet of address locations
-	 * 
+	 *
 	 * @param disassembler disassembler to use
 	 * @param seedSet set of addresses to be disassembled
 	 * @param mgr
-	 * 
+	 *
 	 * @return addresses actually disassembled
 	 */
 	protected AddressSet doDisassemblySeeds(Disassembler disassembler, AddressSet seedSet,
@@ -346,7 +346,7 @@ public class DisassembleCommand extends BackgroundCommand {
 	 * startSet. Analysis will be triggered if startSet contains both the max address of the first
 	 * range of disassembledSet (M where M=disassembledSet.firstRange().getMaxAddress()) and the
 	 * next address (M.next()) which will be the next seed point.
-	 * 
+	 *
 	 * @param mgr auto analysis manager or null if analysis disabled
 	 * @param startSet disassembly seed points (prior to removing disassembledSet)
 	 * @param disassembledSet last set of disassembled addresses using startSet min-address as seed
@@ -372,7 +372,7 @@ public class DisassembleCommand extends BackgroundCommand {
 
 	/**
 	 * Returns an address set of all instructions that were disassembled.
-	 * 
+	 *
 	 * @return an address set of all instructions that were disassembled
 	 */
 	public AddressSet getDisassembledAddressSet() {

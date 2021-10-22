@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,8 +39,8 @@ import ghidra.util.layout.*;
 /**
  * Dialog that allows the user to select options related to table filtering. It consists
  * of the following sections:
- * 
- * 		Filter Strategy: 		Allows the user to define how filter terms are applied to strings. 
+ *
+ * 		Filter Strategy: 		Allows the user to define how filter terms are applied to strings.
  * 		Filter Options:			Various generic filter settings.
  * 		Multi-Term Filtering:	Options defining how to interpret filter text when multiple terms
  * 								are entered.
@@ -127,7 +127,7 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 	 * 		- Starts With
 	 * 		- Matches Exactly
 	 * 		- Regular Expression
-	 * 
+	 *
 	 */
 	class FilterStrategyPanel extends JPanel {
 
@@ -227,7 +227,7 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 
 	/**
 	 * Contains widgets for controlling various filtering attributes. The following options are
-	 * provided: 
+	 * provided:
 	 * 		- Case Sensitive
 	 * 		- Allow Globbing
 	 */
@@ -323,8 +323,8 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 
 	/**
 	 * Contains widgets for configuring multi-term filtering. This has two main
-	 * sections for setting the delimiter and setting the mode. The former allows the user to 
-	 * select a delimiter from a predefined set of characters. The latter allows them to 
+	 * sections for setting the delimiter and setting the mode. The former allows the user to
+	 * select a delimiter from a predefined set of characters. The latter allows them to
 	 * define how multiple terms are logically applied; eg: 'AND' means that all filter terms
 	 * must be matched, 'OR' means any single term must match.
 	 */
@@ -355,7 +355,7 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 		/**
 		 * Sets the eval mode to what is given. This is done by activating the
 		 * appropriate radio button associated with that mode.
-		 * 
+		 *
 		 * @param evalMode
 		 */
 		public void setEvalMode(MultitermEvaluationMode evalMode) {
@@ -388,9 +388,9 @@ public class FilterOptionsEditorDialog extends DialogComponentProvider {
 		}
 
 		/**
-		 * Sets the character to use for the delimiter. If the character is not found in 
+		 * Sets the character to use for the delimiter. If the character is not found in
 		 * the set of acceptable delimiters, the delimiter is not changed.
-		 * 
+		 *
 		 * @param delimiter the character to use as the delimiter
 		 */
 		public void setDelimiter(char delimiter) {

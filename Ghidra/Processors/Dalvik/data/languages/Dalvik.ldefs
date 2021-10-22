@@ -63,7 +63,7 @@
     <description>Dalvik DEX Lollipop</description>
     <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
   </language>
- 
+
    <language processor="Dalvik"
             endian="little"
             size="32"

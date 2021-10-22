@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ abstract class CommentsDBAdapter {
 //	/** comment type that goes before a code unit */
 //	static final int PRE_COMMENT = 1;
 //	/** comment type that follows after a code unit */
-//	static final int POST_COMMENT = 2; 
+//	static final int POST_COMMENT = 2;
 //	/** plate comment type */
 //	static final int PLATE_COMMENT = 3;
 //	/** repeatable comment type */
@@ -205,7 +205,7 @@ abstract class CommentsDBAdapter {
 	/**
 	 * Gets an iterator of all comment records in the program.
 	 * @return iterator of all comment records
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	abstract RecordIterator getRecords() throws IOException;
 
@@ -247,7 +247,7 @@ abstract class CommentsDBAdapter {
 	 * @param length the number of bytes in the memory block being moved
 	 * @param monitor progress monitor
 	 * @throws CancelledException
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	abstract void moveAddressRange(Address fromAddr, Address toAddr, long length,
 			TaskMonitor monitor) throws CancelledException, IOException;

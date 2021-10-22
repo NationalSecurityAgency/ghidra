@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,10 +24,10 @@ import ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern;
 
 /**
  * The (often intermediate) result of assembly
- * 
+ *
  * These may represent a successful construction ({@link AssemblyResolvedConstructor}, a future
  * field ({@link AssemblyResolvedBackfill}), or an error ({@link AssemblyResolvedError}).
- * 
+ *
  * This class also provides the static factory methods for constructing any of its subclasses.
  */
 public abstract class AssemblyResolution implements Comparable<AssemblyResolution> {
@@ -64,7 +64,7 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 
 	/**
 	 * Build the result of successfully resolving a SLEIGH constructor
-	 * 
+	 *
 	 * NOTE: This is not used strictly for resolved SLEIGH constructors. It may also be used to
 	 * store intermediates, e.g., encoded operands, during constructor resolution.
 	 * @param ins the instruction pattern block
@@ -193,7 +193,7 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 
 	/**
 	 * Get the child portion of {@link #toString()}
-	 * 
+	 *
 	 * If a subclass has another, possible additional, notion of children that it would like to
 	 * include in {@link #toString()}, it must override this method.
 	 * @see #hasChildren()
@@ -240,7 +240,7 @@ public abstract class AssemblyResolution implements Comparable<AssemblyResolutio
 
 	/**
 	 * Check if this record has children
-	 * 
+	 *
 	 * If a subclass has another, possibly additional, notion of children that it would like to
 	 * include in {@link #toString()}, it must override this method to return true when such
 	 * children are present.

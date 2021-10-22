@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,27 +29,27 @@ import ghidra.xml.XmlPullParser;
  * by the decompiler.  Depending on how the DecompInterface
  * was called, you can get C code (with markup), the
  * function' syntax tree, the prototype, etc.
- * 
+ *
  * To check if the decompileFunction call completed normally
  * use the decompileCompleted method.  If this returns false,
  * the getErrorMessage method may contain a useful error
  * message.  Its also possible that getErrorMessage will
  * return warning messages, even if decompileFunction did
  * complete.
- * 
+ *
  * To get the resulting C code, marked up with XML in terms
  * of the lines and tokens, use the getCCodeMarkup method.
- * 
+ *
  * To get the resulting C code just as a straight String,
  * use the getDecompiledFunction method which returns a
  * DecompiledFunction.  Off of this, you can use the getC
  * method to get the raw C code as a String or use the
  * getSignature method to get the functions prototype as
  * a String.
- * 
+ *
  * To get the syntax tree use the getHighFunction method.
- * 
- * 
+ *
+ *
  *
  */
 public class DecompileResults {
@@ -230,7 +230,7 @@ public class DecompileResults {
 							docroot = ClangXML.buildClangTree(parser, hfunc);
 							if (docroot == null) {
 								errMsg = "Unable to parse C (xml)";
-							}							
+							}
 						}
 					}
 					else if (el.getName().equals("parammeasures")) {

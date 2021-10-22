@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,13 +40,13 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 
 	//	public Address addNoWrap(Address addr, long displacement) throws AddressOverflowException {
 //		addr = super.addNoWrap(addr, displacement);
-//		
+//
 //		return translateAddress(addr);
 //	}
 //
 //	public Address addWrap(Address addr, long displacement) {
 //		addr = super.addWrap(addr, displacement);
-//		
+//
 //		return translateAddress(addr);
 //	}
 //
@@ -182,7 +182,7 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 	 * If the given address is outside the overlay block, then the address is tranlated to an
 	 * address in the base space with the same offset, otherwise (if the address exists in the
 	 * overlay block), it is returned
-	 * 
+	 *
 	 * @param addr the address to translate to the base space if it is outside the overlay block
 	 * @return either the given address if it is contained in the overlay memory block or an address
 	 *         in the base space with the same offset as the given address.
@@ -195,7 +195,7 @@ public class OverlayAddressSpace extends AbstractAddressSpace {
 	 * Tranlated an overlay-space address (addr, which may exceed the bounds of the overlay space)
 	 * to an address in the base space with the same offset. If forceTranslation is false and addr
 	 * is contained within the overlay-space the original addr is returned.
-	 * 
+	 *
 	 * @param addr the address to translate to the base space
 	 * @param forceTranslation if true addr will be translated even if addr falls within the bounds
 	 *            of this overlay-space.

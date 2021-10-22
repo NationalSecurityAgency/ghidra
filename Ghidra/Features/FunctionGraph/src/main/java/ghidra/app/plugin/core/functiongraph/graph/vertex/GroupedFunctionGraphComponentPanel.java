@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ import resources.ResourceManager;
 import util.CollectionUtils;
 
 /**
- * This panel looks similar in appearance to the LisGraphComponentPanel, with a header, actions 
+ * This panel looks similar in appearance to the LisGraphComponentPanel, with a header, actions
  * and a body.
  */
 public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPanel {
@@ -153,7 +153,7 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 	}
 
 	/**
-	 * A bit of a hack that triggers the text area to update its preferred height now before we 
+	 * A bit of a hack that triggers the text area to update its preferred height now before we
 	 * render so that it doesn't change later.
 	 */
 	private void updateTextAreaSizeToForceTextLayout() {
@@ -245,7 +245,7 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 		addToGroupAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Vertex_Action_Group_Add"));
 
-		// color	
+		// color
 		setVertexMostRecentAction = new SetVertexMostRecentColorAction(controller, vertex);
 		setVertexMostRecentAction.setHelpLocation(
 			new HelpLocation("FunctionGraphPlugin", "Group_Vertex_Action_Color"));
@@ -611,7 +611,7 @@ public class GroupedFunctionGraphComponentPanel extends AbstractGraphComponentPa
 	@Override
 	Component getMaximizedViewComponent() {
 // 7937:3 - this will need to change if we want to support showing only the vertices inside of
-//		    this group vertex.  To make this happen we probably need to be able to have the 
+//		    this group vertex.  To make this happen we probably need to be able to have the
 //		    group vertex contain its own graph that we can set on the viewer if the user hits
 //		    the full display button.
 

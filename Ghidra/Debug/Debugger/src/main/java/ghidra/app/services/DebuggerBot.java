@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,13 +29,13 @@ import ghidra.util.datastruct.CollectionChangeListener;
 
 /**
  * A bot (or analyzer) that aids the user in the debugging workflow
- * 
+ *
  * <p>
  * These are a sort of miniature front-end plugin (TODO: consider tool-only bots) with a number of
  * conveniences allowing the specification of automatic actions taken under given circumstances,
  * e.g., "Open the interpreter for new debugger connections." Such actions may include analysis of
  * open traces, e.g., "Disassemble memory at the Program Counter."
- * 
+ *
  * <p>
  * Bots which react to target state changes should take care to act quickly in most, if not all,
  * circumstances. Otherwise, the UI could become sluggish. It is vitally important that the UI not
@@ -51,7 +51,7 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * Log a missing-info-annotation error
-	 * 
+	 *
 	 * @param cls the bot's class missing the annotation
 	 * @param methodName the name of the method requesting the info
 	 */
@@ -63,10 +63,10 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * Utility for obtaining and bot's info annotation
-	 * 
+	 *
 	 * <p>
 	 * If the annotation is not present, an error is logged for the developer's sake.
-	 * 
+	 *
 	 * @param cls the bot's class
 	 * @param methodName the name of the method requesting the info, for error-reporting purposes
 	 * @return the annotation, or {@code null}
@@ -82,7 +82,7 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * Get a description of the bot
-	 * 
+	 *
 	 * @see DebuggerBotInfo#description()
 	 * @return the description
 	 */
@@ -96,7 +96,7 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * Get a detailed description of the bot
-	 * 
+	 *
 	 * @see DebuggerBotInfo#details()
 	 * @return the details
 	 */
@@ -110,7 +110,7 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * Get the help location for information about the bot
-	 * 
+	 *
 	 * @see DebuggerBotInfo#help()
 	 * @return the help location
 	 */
@@ -124,11 +124,11 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * Check whether this bot is enabled by default
-	 * 
+	 *
 	 * <p>
 	 * Assuming the user has never configured this bot before, determine whether it should be
 	 * enabled.
-	 * 
+	 *
 	 * @return true if enabled by default, false otherwise
 	 */
 	default boolean isEnabledByDefault() {
@@ -141,18 +141,18 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * Check if this bot is enabled
-	 * 
+	 *
 	 * @return true if enabled, false otherwise
 	 */
 	boolean isEnabled();
 
 	/**
 	 * Enable or disable the bot
-	 * 
+	 *
 	 * <p>
 	 * If {@link #isEnabled()} is already equal to the given -enabled- value, this method has no
 	 * effect.
-	 * 
+	 *
 	 * @param plugin the front-end plugin, required if -enabled- is set
 	 * @param enabled true to enable, false to disable
 	 */
@@ -170,14 +170,14 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * Enable and initialize the bot
-	 * 
+	 *
 	 * @param plugin the front-end plugin
 	 */
 	void enable(DebuggerWorkflowServicePlugin plugin);
 
 	/**
 	 * Disable and dispose the bot
-	 * 
+	 *
 	 * <p>
 	 * Note the bot must be prepared to be enabled again. In other words, it will not be
 	 * re-instantiated. It should return to the same state after construction but before being
@@ -187,7 +187,7 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * A model has been added to the model service
-	 * 
+	 *
 	 * @see DebuggerModelService#addModelsChangedListener(CollectionChangeListener)
 	 * @param model the new model
 	 */
@@ -196,7 +196,7 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * A model has been removed from the model service
-	 * 
+	 *
 	 * @see DebuggerModelService#addModelsChangedListener(CollectionChangeListener)
 	 * @param model the removed model
 	 */
@@ -205,7 +205,7 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * A program has been opened in a tool
-	 * 
+	 *
 	 * @param tool the tool which opened the program
 	 * @param program the program that was opened
 	 */
@@ -214,7 +214,7 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * A program has been closed in a tool
-	 * 
+	 *
 	 * @param tool the tool which closed the program
 	 * @param program the program that was closed
 	 */
@@ -223,7 +223,7 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * A trace has been opened in a tool
-	 * 
+	 *
 	 * @param tool the tool which opened the trace
 	 * @param trace the trace that was opened
 	 */
@@ -232,7 +232,7 @@ public interface DebuggerBot extends ExtensionPoint {
 
 	/**
 	 * A trace has been closed in a tool
-	 * 
+	 *
 	 * @param tool the tool which closed the trace
 	 * @param trace the trace that was closed
 	 */

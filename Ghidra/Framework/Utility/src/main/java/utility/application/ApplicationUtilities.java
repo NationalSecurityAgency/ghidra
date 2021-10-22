@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public class ApplicationUtilities {
 
 	/**
 	 * Searches for default application root directories.
-	 * 
+	 *
 	 * @return A collection of discovered application root directories (could be empty).
 	 */
 	public static Collection<ResourceFile> findDefaultApplicationRootDirs() {
@@ -51,7 +51,7 @@ public class ApplicationUtilities {
 	 * Finds the primary application root directory from the classpath.  The primary application
 	 * root directory must contain an application.properties file.  No other application root
 	 * directories may contain an application.properties file.
-	 * 
+	 *
 	 * @return The primary application root directory, or null if it could not be found.
 	 */
 	private static ResourceFile findPrimaryApplicationRootDir() {
@@ -77,7 +77,7 @@ public class ApplicationUtilities {
 
 	/**
 	 * Checks to make sure the given application properties file exists and is a valid format
-	 * 
+	 *
 	 * @param applicationPropertiesFile The application properties file to validate
 	 * @return true if the given application properties file exists and is a valid format;
 	 *   otherwise, false
@@ -102,7 +102,7 @@ public class ApplicationUtilities {
 
 	/**
 	 * Finds all application root directories defined in the repository config file.
-	 * 
+	 *
 	 * @param primaryApplicationRootDir The primary application root directory that may contain the
 	 *   repository config file one directory up.
 	 * @return A collection of defined application repository root directories.
@@ -138,7 +138,7 @@ public class ApplicationUtilities {
 
 	/**
 	 * Gets the default application's user temp directory.
-	 * 
+	 *
 	 * @param applicationProperties The application properties.
 	 * @return The default application's user temp directory.
 	 * @throws FileNotFoundException if the user temp directory could not be determined.
@@ -155,7 +155,7 @@ public class ApplicationUtilities {
 
 	/**
 	 * Gets the default application's user cache directory.
-	 * 
+	 *
 	 * @param applicationProperties The application properties.
 	 * @return The default application's user cache directory.
 	 * @throws FileNotFoundException if the user cache directory could not be determined.
@@ -197,7 +197,7 @@ public class ApplicationUtilities {
 
 	/**
 	 * Gets the default application's user settings directory.
-	 * 
+	 *
 	 * @param applicationProperties The application properties.
 	 * @param installationDirectory The application installation directory.
 	 * @return The application's user settings directory.
@@ -220,7 +220,7 @@ public class ApplicationUtilities {
 		String userSettingsDirName = "." + applicationIdentifier;
 
 		if (SystemUtilities.isInDevelopmentMode()) {
-			// Add the application's installation directory name to this variable, so that each 
+			// Add the application's installation directory name to this variable, so that each
 			// branch's project user directory is unique.
 			userSettingsDirName += "_location_" + installationDirectory.getName();
 		}

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,15 +44,15 @@ import java.io.Serializable;
  * location.
  *
  * An AddressObjectMap instance should only be used to map to addresses contained within
- * a single program.  The map should be discard if any changes 
+ * a single program.  The map should be discard if any changes
  * are made to that programs address map (e.g., removing or renaming overlay spaces).
  */
 
 public class AddressObjectMap {
-    
+
     private AddressMapImpl addrMap = new AddressMapImpl();
     private ObjectPropertySet objMarkers = new ObjectPropertySet("AddressObjectMap");
-    
+
     private static final Object [] emptyArray = new Object[0];
 
     /**
@@ -88,7 +88,7 @@ public class AddressObjectMap {
         }
     }
 
-    
+
 	/**
 	 * Associates the given object with the given range of addresses
 	 * @param obj the object to associate
@@ -101,7 +101,7 @@ public class AddressObjectMap {
         addRange(obj, start, end);
         coalesceRange(start,end);
     }
-    
+
 	/**
 	 * Removes any association with the object and the addresses in the given address set.
 	 * @param obj the object to remove
@@ -114,7 +114,7 @@ public class AddressObjectMap {
             removeObject(obj, range.getMinAddress(), range.getMaxAddress());
         }
     }
-    
+
     /**
      * Removes any association with the given object and the given range of addresses.
      * @param obj the object to remove from associations in the given range.
@@ -127,7 +127,7 @@ public class AddressObjectMap {
         removeRange(obj, start, end);
         coalesceRange(start, end);
     }
-    
+
 
     /**
      * Gets the list of objects associated with the given address.
@@ -392,7 +392,7 @@ public class AddressObjectMap {
 
 class Mark implements Serializable {
     private final static long serialVersionUID = 1;
-    
+
     static final int START = 1;
     static final int END = 2;
     static final int SINGLE = 3;

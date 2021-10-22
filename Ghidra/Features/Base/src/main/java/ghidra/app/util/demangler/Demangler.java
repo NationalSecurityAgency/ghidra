@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,9 +42,9 @@ public interface Demangler extends ExtensionPoint {
 			throws DemangledException;
 
 	/**
-	 * Attempts to demangle the given string using the default options 
+	 * Attempts to demangle the given string using the default options
 	 * ({@link #createDefaultOptions()}
-	 * 
+	 *
 	 * @param mangled the mangled string
 	 * @return the result
 	 * @throws DemangledException if the string cannot be demangled
@@ -55,7 +55,7 @@ public interface Demangler extends ExtensionPoint {
 
 	/**
 	 * Attempts to demangle the given string using the given options
-	 * 
+	 *
 	 * @param mangled the mangled string
 	 * @param options the options
 	 * @return the result

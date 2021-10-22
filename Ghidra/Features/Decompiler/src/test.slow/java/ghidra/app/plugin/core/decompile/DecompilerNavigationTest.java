@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,10 +69,10 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 	public void testNavigation_ExternalEventDoesNotTriggerNavigation() {
 
 		//
-		// Test to make sure that external ProgramLocationEvent notifications to not trigger 
-		// the Decompiler to broadcast a new event.   Setup a tool with the Listing and 
+		// Test to make sure that external ProgramLocationEvent notifications to not trigger
+		// the Decompiler to broadcast a new event.   Setup a tool with the Listing and
 		// the Decompiler open.  Then, navigate in the Listing and verify the address does not
-		// move.  (This is somewhat subject to the Code Unit at the address in how the 
+		// move.  (This is somewhat subject to the Code Unit at the address in how the
 		// Decompiler itself responds to the incoming event.)
 		//
 
@@ -107,14 +107,14 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		//
 
 		/*
-		 	01005a32 e8 be d2    CALL ghidra 
+		 	01005a32 e8 be d2    CALL ghidra
 		             ff ff
 		 */
 
 		String thunkAddress = "1002cf5";  // function 'ghidra'
 		createThunkToExternal(thunkAddress);
 
-		decompile("10059a3"); // function that calls 'ghidra' 
+		decompile("10059a3"); // function that calls 'ghidra'
 
 		int line = 35;
 		int character = 1;
@@ -143,14 +143,14 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		//
 
 		/*
-		 	01005a32 e8 be d2    CALL ghidra 
+		 	01005a32 e8 be d2    CALL ghidra
 		             ff ff
 		 */
 
 		String thunkAddress = "1002cf5";  // function 'ghidra'
 		createThunkToExternal(thunkAddress);
 
-		decompile("10059a3"); // function that calls 'ghidra' 
+		decompile("10059a3"); // function that calls 'ghidra'
 
 		int line = 35;
 		int character = 1;
@@ -183,10 +183,10 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 
 		//
 		// This is testing the case where the user starts on a function foo().  Ancillary windows
-		// will display tool, such as a decompiled view.   Now, if the user clicks to a 
-		// non-function location, such as data, the ancillary window may still show foo(), even 
+		// will display tool, such as a decompiled view.   Now, if the user clicks to a
+		// non-function location, such as data, the ancillary window may still show foo(), even
 		// though the user is no longer in foo.  At this point, if the user wishes to go to the
-		// previous function, then from the ancillary window's perspective, it is the function 
+		// previous function, then from the ancillary window's perspective, it is the function
 		// that came before foo().
 		//
 
@@ -204,7 +204,7 @@ public class DecompilerNavigationTest extends AbstractDecompilerTest {
 		provider.requestFocus();
 		waitForSwing();
 
-		// 
+		//
 		// The Decompiler is focused, showing 'entry'.  Going back while it is focused should go
 		// to the function before 'entry', which is 'ghidra'.
 		//

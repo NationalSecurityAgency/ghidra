@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.program.model.mem.*;
 import ghidra.util.exception.AssertException;
 
 /**
- * Model for exception handling information about the Function Information data type and its 
+ * Model for exception handling information about the Function Information data type and its
  * associated exception handling data types.
  * <br>
  * This is based on data type information from ehdata.h
@@ -176,10 +176,10 @@ public class EHFunctionInfoModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Whether or not the memory at the address for this model appears to be a valid location for a 
+	 * Whether or not the memory at the address for this model appears to be a valid location for a
 	 * function information data type.
-	 * @throws InvalidDataTypeException if this models location does not appear to be a FuncInfo 
-	 * data type. The exception has a message indicating why it does not appear to be a valid 
+	 * @throws InvalidDataTypeException if this models location does not appear to be a FuncInfo
+	 * data type. The exception has a message indicating why it does not appear to be a valid
 	 * location for the data type.
 	 */
 	@Override
@@ -223,10 +223,10 @@ public class EHFunctionInfoModel extends AbstractCreateDataTypeModel {
 
 	/**
 	 * Validate all the components that indicate count values for map entries.
-	 * This method can be called to perform additional validation that count components appear to 
+	 * This method can be called to perform additional validation that count components appear to
 	 * have reasonable values that aren't more than the indicated maximum value.
 	 * @param maxCount the maximum allowable count value
-	 * @throws InvalidDataTypeException whose message indicates which count does not appear to 
+	 * @throws InvalidDataTypeException whose message indicates which count does not appear to
 	 * be valid.
 	 */
 	public void validateCounts(int maxCount) throws InvalidDataTypeException {
@@ -237,10 +237,10 @@ public class EHFunctionInfoModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Validate all the locations (a relative or absolute address) indicated by components of 
+	 * Validate all the locations (a relative or absolute address) indicated by components of
 	 * this FuncInfo data. All locations indicated by components are expected to be within
 	 * the same block as the data for this model.
-	 * @throws InvalidDataTypeException whose message indicates which referenced address does 
+	 * @throws InvalidDataTypeException whose message indicates which referenced address does
 	 * not appear to be valid.
 	 */
 	public void validateLocationsInSameBlock() throws InvalidDataTypeException {
@@ -442,7 +442,7 @@ public class EHFunctionInfoModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address of the component containing the address of the unwind map, if there is one. 
+	 * Gets the address of the component containing the address of the unwind map, if there is one.
 	 * Otherwise, this returns null.
 	 * @return the address of the component with the address of the unwind map or null.
 	 * @throws InvalidDataTypeException if valid FuncInfo data can't be created at the model's address.
@@ -493,7 +493,7 @@ public class EHFunctionInfoModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address of the component containing the try block map address, if there is one. 
+	 * Gets the address of the component containing the try block map address, if there is one.
 	 * Otherwise, this returns null.
 	 * @return the address of the component with the try block map address or null.
 	 * @throws InvalidDataTypeException if valid FuncInfo data can't be created at the model's address.
@@ -545,7 +545,7 @@ public class EHFunctionInfoModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address of the component containing the IP to state map address, if there is one. 
+	 * Gets the address of the component containing the IP to state map address, if there is one.
 	 * Otherwise, this returns null.
 	 * @return the address of the component with the IP to state map address or null.
 	 * @throws InvalidDataTypeException if valid FuncInfo data can't be created at the model's address.
@@ -575,7 +575,7 @@ public class EHFunctionInfoModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address of the component containing the unwind help address, if there is one. 
+	 * Gets the address of the component containing the unwind help address, if there is one.
 	 * Otherwise, this returns null.
 	 * @return the address of the component with the unwind help address or null.
 	 * @throws UndefinedValueException if this FuncInfo doesn't specify the UnwindHelp address.
@@ -632,7 +632,7 @@ public class EHFunctionInfoModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address of the component containing the ES type list address, if there is one. 
+	 * Gets the address of the component containing the ES type list address, if there is one.
 	 * Otherwise, this returns null.
 	 * @return the address of the component with the ES type list address or null.
 	 * @throws UndefinedValueException if this FuncInfo doesn't specify the ESTypeList address.

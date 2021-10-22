@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,14 +50,14 @@ class OptionsDB extends AbstractOptions {
 
 	/**
 	 * Perform property alterations as specified by the map provided.  This must be called
-	 * immediately following construction before any other instance method is invoked 
+	 * immediately following construction before any other instance method is invoked
 	 * (with the exception of checkAlterations)
 	 * @param propertyAlterations oldPath-to-newPath property mappings.  Paths must not end
 	 * with the '.' path separator. If the newPath is null or conflicts with an existing stored property,
 	 * the corresponding oldPath properties will be removed.
 	 * @throws IllegalStateException if list has been manipulated since construction
 	 * @throws IllegalArgumentException if invalid property alterations are provided
-	 * @throws IOException if there is an exception moving or deleting a property 
+	 * @throws IOException if there is an exception moving or deleting a property
 	 */
 	synchronized void performAlterations(Map<String, String> propertyAlterations)
 			throws IOException {

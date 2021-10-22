@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -245,7 +245,7 @@ public class AddressRangeObjectMap<T> {
 
 	/**
 	 * Returns true if the associated address has an associated object even if the assocated object
-	 * is null. 
+	 * is null.
 	 * @param address the index to check for an association.
 	 * @return true if the associated index has an associated object even if the assocated object
 	 * is null.
@@ -269,7 +269,7 @@ public class AddressRangeObjectMap<T> {
 	 * the given index.  Note that null is a valid association so a null result could be either
 	 * no association or an actual association of the index to null.  Use the contains() method
 	 * first if the distinction is important.  If the contains() method returns true, the result
-	 * is cached so the next call to getObject() will be fast. 
+	 * is cached so the next call to getObject() will be fast.
 	 * @param address the index at which to retrieve an assocated object.
 	 * @return the object (which can be null) associated with the given index or null if no such
 	 * association exists.

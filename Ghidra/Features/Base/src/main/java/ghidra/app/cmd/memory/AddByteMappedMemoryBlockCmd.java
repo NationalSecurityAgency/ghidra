@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,9 +32,9 @@ public class AddByteMappedMemoryBlockCmd extends AbstractAddMemoryBlockCmd {
 	/**
 	 * Create a new AddByteMappedMemoryBlockCmd with a specified byte mapping scheme.
 	 * Byte mapping scheme is specified by two values schemeDestByteCount and schemeSrcByteCount which
-	 * may be viewed as a ratio of number of destination bytes to number of mapped source bytes. 
-	 * When the destination consumes bytes from the mapped source it consume schemeDestByteCount bytes then 
-	 * skips (schemeSrcByteCount - schemeDestByteCount) bytes before repeating the mapping sequence over 
+	 * may be viewed as a ratio of number of destination bytes to number of mapped source bytes.
+	 * When the destination consumes bytes from the mapped source it consume schemeDestByteCount bytes then
+	 * skips (schemeSrcByteCount - schemeDestByteCount) bytes before repeating the mapping sequence over
 	 * the extent of the destination block.  The block start address and source mappedAddress must
 	 * be chosen carefully as they relate to the mapping scheme when it is anything other than 1:1.
 	 * @param name the name for the new memory block.

@@ -15,7 +15,7 @@ define register offset=0x30 size=1 [ N V B D I Z C ];	# status bits
 
 define token opbyte (8)
    op       = (0,7)
-   
+
    aaa      = (5,7)
    bbb      = (2,4)
    cc       = (0,1)
@@ -61,7 +61,7 @@ macro resultFlags(value) {
 
 macro subtraction_flags1(register, operand, result) {
 	local complement_register = ~register;
-	
+
 	V = ( ((register & ~operand & ~result) | (complement_register & operand & result)) & 0b10000000 ) != 0;
 	N = (result s< 0);
 	Z = (result == 0);
@@ -76,7 +76,7 @@ macro subtraction_flags1(register, operand, result) {
 define pcodeop readIRQ;
 
 ################################################################
-REL: reloc		is rel	[ reloc = inst_next + rel; ] { export *:2 reloc; } 
+REL: reloc		is rel	[ reloc = inst_next + rel; ] { export *:2 reloc; }
 
 # Immediate
 OP1: "#"imm8    is bbb=2; imm8			{ tmp:1 = imm8; export tmp; }
@@ -127,9 +127,9 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 {
 	local op1 = OP1;
 	local tmpC = C;
-	
+
 	C = carry(A, op1);
-	
+
 	A = A + op1 + tmpC;
 
 	resultFlags(A);
@@ -137,8 +137,8 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 }
 
 :AND OP1     is (cc=1 & aaa=1) ... & OP1
-{ 
-	A = A & OP1; 
+{
+	A = A & OP1;
 	resultFlags(A);
 }
 
@@ -148,7 +148,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	C = tmp >> 7;
 	tmp = tmp << 1;
 	OP2 = tmp;
-	resultFlags(tmp);	
+	resultFlags(tmp);
 }
 
 :BCC  REL			is op=0x90; REL
@@ -229,7 +229,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 }
 
 :CMP OP1     is (cc=1 & aaa=6) ... & OP1
-{ 
+{
 	local op1 = OP1;
 	local tmp = A - op1;
 	resultFlags(tmp);
@@ -273,7 +273,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 }
 
 :EOR OP1     is (cc=1 & aaa=2) ... & OP1
-{ 
+{
 	local op1 = OP1;
 	A = A ^ op1;
 	resultFlags(A);
@@ -311,7 +311,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 :JSR   ADDR16    is op=0x20; ADDR16
 {
 	*:2 (SP-1) = inst_next;
-	SP=SP-2; 
+	SP=SP-2;
 	call ADDR16;
 }
 
@@ -340,7 +340,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	tmp = tmp >> 1;
 	OP2 = tmp;
 	Z = (tmp == 0);
-	N = 0;	
+	N = 0;
 }
 
 :NOP     is op=0xEA
@@ -349,7 +349,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :ORA  OP1    is  (cc=1 & aaa=0) ... & OP1
 {
-	A = A | OP1; 
+	A = A | OP1;
 	resultFlags(A);
 }
 
@@ -384,7 +384,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	local result = op2 << 1;
 	result = result | tmpC;
 	OP2 = result;
-	resultFlags(result);	
+	resultFlags(result);
 }
 
 :ROR OP2     is (op=0x66 | op=0x6A | op=0x6E | op=0x76 | op=0x7E) ... & OP2
@@ -395,17 +395,17 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	tmp = tmp >> 1;
 	tmp = tmp | tmpC;
 	OP2 = tmp;
-	resultFlags(tmp);	
+	resultFlags(tmp);
 }
 :RTI      is op=0x40
 {
 	popSR();
 	SP = SP+1;
-	
+
     SP = SP+1;
 	tmp:2 = *:2 SP;
 	SP = SP+1;
-	
+
 	return [tmp];
 }
 
@@ -414,7 +414,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 	SP = SP+1;
 	tmp:2 = *:2 SP;
 	SP = SP+1;
-	
+
 	return [tmp];
 }
 
@@ -422,10 +422,10 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 {
 	local op1 = OP1;
 	local result = A - op1 - !C;
-	
+
 	subtraction_flags1(A, op1, result);
-	A = result;	
-	
+	A = result;
+
 	# resultFlags(tmp);
 	# C = ((A <= op1) * C) | (A < op1);
 	# A = tmp;
@@ -438,7 +438,7 @@ ADDRI:  imm16   is imm16    { tmp:2 = imm16; export *:2 tmp; }
 
 :SED     is op=0xF8
 {
-	D = 1;	
+	D = 1;
 }
 
 :SEI     is op=0x78

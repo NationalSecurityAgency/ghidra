@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,18 +27,18 @@ public class Ext4Extent implements StructConverter {
 	private short ee_len;
 	private short ee_start_hi;
 	private int ee_start_lo;
-	
+
 	public Ext4Extent(ByteProvider provider) throws IOException {
 		this( new BinaryReader( provider, true ) );
 	}
-	
+
 	public Ext4Extent( BinaryReader reader ) throws IOException {
 		ee_block = reader.readNextInt();
 		ee_len = reader.readNextShort();
 		ee_start_hi = reader.readNextShort();
 		ee_start_lo = reader.readNextInt();
 	}
-	
+
 	public int getEe_block() {
 		return ee_block;
 	}
@@ -57,7 +57,7 @@ public class Ext4Extent implements StructConverter {
 
 	/**
 	 * Returns the number of blocks this extent contains.
-	 * 
+	 *
 	 * @return number of blocks in this extent
 	 */
 	public int getExtentBlockCount() {
@@ -66,7 +66,7 @@ public class Ext4Extent implements StructConverter {
 
 	/**
 	 * Returns the stream block number of where this extent starts.
-	 *  
+	 *
 	 * @return block number (in the constructed stream) of this extent
 	 */
 	public long getStreamBlockNumber() {
@@ -75,7 +75,7 @@ public class Ext4Extent implements StructConverter {
 
 	/**
 	 * Returns the block number of where the data for this extent is stored.
-	 * 
+	 *
 	 * @return starting block number of where data for this extent is stored
 	 */
 	public long getExtentStartBlockNumber() {

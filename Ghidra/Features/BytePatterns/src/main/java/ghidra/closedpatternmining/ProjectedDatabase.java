@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.Map.Entry;
 
 /**
- * 
+ *
  * A ProjectedDatabase contains all the suffixes of strings in database
  * which have a prefix consistent with prefixSequence
  *
@@ -33,7 +33,7 @@ public class ProjectedDatabase {
 
 	/**
 	 * Constructs a {@link ProjectedDatabase} given a database and a prefix sequence
-	 * 
+	 *
 	 * <p> Note: {@code prefixSequence} is assumed to be in ascending order of Item index
 	 * @param database database to project
 	 * @param prefixSequence prefix to use in projection
@@ -62,7 +62,7 @@ public class ProjectedDatabase {
 	/**
 	 * Given a {@link ProjectedDatabase}, construct a new {@link ProjectedDatabase} by
 	 * adding one item to the prefix sequence.
-	 * 
+	 *
 	 * @param projDatabase projected database to extend
 	 * @param extendingItem item to extend by
 	 */
@@ -145,10 +145,10 @@ public class ProjectedDatabase {
 	}
 
 	/**
-	 * Returns a set of {@link FrequentSequenceItem}s composed of all {@link FrequentSequenceItem}s in {@code globallyFrequentItems} 
+	 * Returns a set of {@link FrequentSequenceItem}s composed of all {@link FrequentSequenceItem}s in {@code globallyFrequentItems}
 	 * which occur after the projection index and in at least {@code minSupport} sequences in the projected database.
 	 * @param globallyFrequentItems
-	 * @param minSupport 
+	 * @param minSupport
 	 * @return
 	 */
 	public TreeSet<FrequentSequenceItem> getLocallyFrequentItems(Set<FrequentSequenceItem> globallyFrequentItems,
@@ -208,9 +208,9 @@ public class ProjectedDatabase {
 	/**
 	 * Computes the set of backward extension items, i.e., any items that could fill empty
 	 * spaces in the projected sequence without changing the support.
-	 * 
+	 *
 	 * <p> For example, if you create a {@link ProjectedDatabase} with the prefix A.C, and all of the
-	 * resulting sequences happen to have a B in the second position (i.e. position 1), the 
+	 * resulting sequences happen to have a B in the second position (i.e. position 1), the
 	 * returned set would consist of the {@link FrequentSequenceItem} with {@link SequenceItem (B,1)}
 	 * @return backward extension items
 	 */

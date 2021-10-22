@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.util.Msg;
 /**
  * A class that knows how to provide an icon and the URL for that icon.  If {@link #getUrl()}
  * returns a non-null value, then that is the URL used to originally load the icon in this class.
- * 
+ *
  * <p>If {@link #getUrl()} returns null, then {@link #getOrCreateUrl()} can be used to create a
  * value URL by writing out the image for this class's icon.
  */
@@ -60,10 +60,10 @@ public class IconProvider {
 	/**
 	 * Returns the value of {@link #getUrl()} if it is non-null.  Otherwise, this class will
 	 * attempt to create a temporary file containing the image of this class in order to return
-	 * a URL for that temp file.  If a temporary file could not be created, then the URL 
-	 * returned from this class will point to the 
+	 * a URL for that temp file.  If a temporary file could not be created, then the URL
+	 * returned from this class will point to the
 	 * {@link ResourceManager#getDefaultIcon() default icon}.
-	 * 
+	 *
 	 * @return the URL
 	 */
 	public URL getOrCreateUrl() {

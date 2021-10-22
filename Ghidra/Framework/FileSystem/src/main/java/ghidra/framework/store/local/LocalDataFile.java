@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,10 +26,10 @@ import java.io.*;
 
 /**
  * <code>LocalDataFile</code> provides a FolderItem implementation
- * for a local serialized data file.  This implementation supports 
+ * for a local serialized data file.  This implementation supports
  * a non-versioned file-system only.
  * <p>
- * This item utilizes a data directory for storing the serialized 
+ * This item utilizes a data directory for storing the serialized
  * data file.
  */
 public class LocalDataFile extends LocalFolderItem implements DataFileItem {
@@ -56,7 +56,7 @@ public class LocalDataFile extends LocalFolderItem implements DataFileItem {
 	 * @param istream data source input stream (should be a start of data and will be read to end of file).
 	 * The invoker of this constructor is responsible for closing istream.
 	 * @param contentType user content type
-	 * @param monitor progress monitor (used for cancel support, 
+	 * @param monitor progress monitor (used for cancel support,
 	 * progress not used since length of input stream is unknown)
 	 * @throws IOException if an IO Error occurs
 	 * @throws CancelledException if monitor cancels operation

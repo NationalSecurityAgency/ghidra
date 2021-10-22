@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,7 +56,7 @@ public class InstructionTable extends AbstractInstructionTable {
 	private static final String RELOAD_ICON_OVERLAY = "images/reload.png";
 	private static final String MANUAL_ENTRY_ICON_OVERLAY = "images/editbytes.gif";
 
-	// Need to keep track of the column in case the user clicks on the column header and we 
+	// Need to keep track of the column in case the user clicks on the column header and we
 	// need to display the context menu.
 	private int selectedColumn = -1;
 
@@ -67,7 +67,7 @@ public class InstructionTable extends AbstractInstructionTable {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param columns the number of columns in the table
 	 * @param plugin the parent plugin
 	 * @param dialog the parent dialog
@@ -199,7 +199,7 @@ public class InstructionTable extends AbstractInstructionTable {
 
 	private void createContextMenu() {
 
-		// Create a pop-up context menu on the column header and customize.  
+		// Create a pop-up context menu on the column header and customize.
 		getTableColumnPopupMenu(1).addSeparator();
 		getTableColumnPopupMenu(1).add(
 			createColumnMaskUnmaskAllMenuItem(true, "Mask entire column"));
@@ -237,7 +237,7 @@ public class InstructionTable extends AbstractInstructionTable {
 	 */
 	private void createMouseEvents() {
 		// A mouse listener is needed to keep track of mouse clicks on a column.  This is
-		// the only way for us to know which column to apply an event to when using the 
+		// the only way for us to know which column to apply an event to when using the
 		// context pop-up.
 		this.getTableHeader().addMouseListener(new MouseAdapter() {
 
@@ -248,17 +248,17 @@ public class InstructionTable extends AbstractInstructionTable {
 		});
 
 		// Set up a mouse release listener as the trigger for toggling mask state
-		// on table cells.  
+		// on table cells.
 		addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseReleased(MouseEvent evt) {
 				if (SwingUtilities.isLeftMouseButton(evt)) {
 
-					// To get the proper cell that the mouse was released on we have to 
-					// use rowAtPoint(). Using getRowSelection() would seem to be a better option, 
-					// but will not be accurate in the case of a drag-and-release, since it 
-					// will produce an array of options along the entire drag path, and we won't 
-					// know whether to grab the first item in the array or the last (depends on 
+					// To get the proper cell that the mouse was released on we have to
+					// use rowAtPoint(). Using getRowSelection() would seem to be a better option,
+					// but will not be accurate in the case of a drag-and-release, since it
+					// will produce an array of options along the entire drag path, and we won't
+					// know whether to grab the first item in the array or the last (depends on
 					// which direction the user drags - up or down).
 					int rowSelection = InstructionTable.this.rowAtPoint(evt.getPoint());
 					int columnSelection = InstructionTable.this.columnAtPoint(evt.getPoint());
@@ -345,7 +345,7 @@ public class InstructionTable extends AbstractInstructionTable {
 	/**
 	 * Generic method for creating a toolbar button with the given attributes.
 	 * The button is automatically added to the given toolbar instance.
-	 * 
+	 *
 	 */
 	private void createToolbarButton(JToolBar toolbar1, Icon icon, Action action, String name) {
 		EmptyBorderButton button = new EmptyBorderButton();
@@ -498,7 +498,7 @@ public class InstructionTable extends AbstractInstructionTable {
 			GoToService gs = plugin.getTool().getService(GoToService.class);
 
 			// Only go somewhere if something is actually in the table.  If it's empty this makes
-			// no sense.  Note that the plugin.getInstructions() call can never be null, so no 
+			// no sense.  Note that the plugin.getInstructions() call can never be null, so no
 			// need to check that here.
 			if (dialog.getSearchData().getInstructions().size() <= 0) {
 				return;
@@ -545,7 +545,7 @@ public class InstructionTable extends AbstractInstructionTable {
 
 	/**
 	 * Creates a new {@link InstructionTableDataObject} for the given operand.
-	 * 
+	 *
 	 * @param mnemonic the mnemonic ID
 	 * @param col the column in the table
 	 * @param dataObjects the set of data objects to modify
@@ -553,7 +553,7 @@ public class InstructionTable extends AbstractInstructionTable {
 	private InstructionTableDataObject[][] processOperand(int row, int col,
 			InstructionTableDataObject[][] dataObjects) {
 
-		// Just make sure the col is > 0...this is processing operands so a value of 0 would be 
+		// Just make sure the col is > 0...this is processing operands so a value of 0 would be
 		// a mnemonic, and a negative number is just meaningless.
 		if (col <= 0) {
 			return null;
@@ -581,7 +581,7 @@ public class InstructionTable extends AbstractInstructionTable {
 		}
 
 		// If here then the instruction has no operands, which isn't an error.  We just need
-		// to create an empty data object for the table to display.  Setting the state to 
+		// to create an empty data object for the table to display.  Setting the state to
 		// NA will cause it to not be able to be toggled on/off by the user.
 		else {
 			dataObjects[row][col] = new InstructionTableDataObject("",
@@ -593,7 +593,7 @@ public class InstructionTable extends AbstractInstructionTable {
 
 	/**
 	 * Finds all items in the table that are NOT instructions, and masks them.
-	 * 
+	 *
 	 * @param mask the instruction mask
 	 */
 	private void maskNonInstructionsItems(boolean mask) {
@@ -655,7 +655,7 @@ public class InstructionTable extends AbstractInstructionTable {
 	/**
 	 * Sets all {@link InstructionTableDataObject} instances in the table that
 	 * are operands to a masked or unmasked state.
-	 * 
+	 *
 	 * @param mask true for mask, false for unmask
 	 */
 	private void maskAllOperands(boolean mask) {
@@ -685,7 +685,7 @@ public class InstructionTable extends AbstractInstructionTable {
 
 	/**
 	 * Masks a single operand.
-	 * 
+	 *
 	 * @param mask true for mask, false for unmask
 	 * @param i the row index of the instruction
 	 * @param j the column index of the operand
@@ -706,7 +706,7 @@ public class InstructionTable extends AbstractInstructionTable {
 
 	/**
 	 * Masks a single field.
-	 * 
+	 *
 	 * @param mask true for mask, false for unmask
 	 * @param row the row index of the instruction
 	 * @param col the column index of the operand
@@ -721,7 +721,7 @@ public class InstructionTable extends AbstractInstructionTable {
 		}
 
 		// Do a check on the operand state - if it's 'NA', then there's no operand there at all
-		// and we should leave it alone so it can continue to be in a non-toggleable state. 
+		// and we should leave it alone so it can continue to be in a non-toggleable state.
 		// Otherwise, set its state according to what was passed in.
 		if (obj.getState() != OperandState.NA) {
 			if (mask) {
@@ -735,9 +735,9 @@ public class InstructionTable extends AbstractInstructionTable {
 
 	/**
 	 * Sets all operands with the given type to a masked or unmasked state.
-	 * 
+	 *
 	 * note: This is done in a background task since it may be long-running.
-	 * 
+	 *
 	 * @param opType the type of the operand
 	 * @param mask true for mask, false for unmask
 	 */
@@ -770,7 +770,7 @@ public class InstructionTable extends AbstractInstructionTable {
 	/**
 	 * Sets the given {@link InstructionTableDataObject} to a masked or unmasked
 	 * state, if it matches the given type.
-	 * 
+	 *
 	 * @param opType the operand type the operand must match
 	 * @param mask true for mask, false for unmask
 	 * @param obj the object to mask

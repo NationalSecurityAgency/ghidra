@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -441,7 +441,7 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 		/**
 		 * Only select a default thread if the trace is not live. If it is live, and the model
 		 * supports focus, then we should expect the debugger to control thread/frame focus.
-		 * 
+		 *
 		 * Note: If recorder has current thread, it should already be in the threadFocusByTrace map
 		 */
 		// Note: override view. May not agree on snap now, but will upon activation

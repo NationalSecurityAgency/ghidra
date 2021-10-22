@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -670,7 +670,7 @@ class StructureEditorModel extends CompEditorModel {
 		}
 
 		FieldRange currentRange = getSelectedRangeContaining(currentIndex);
-		// if the index isn't in the selection or is in a range of only 
+		// if the index isn't in the selection or is in a range of only
 		// one row then we want to handle it the same.
 		boolean isOneComponent =
 			(currentRange == null) || (currentRange.getStart().getIndex().intValue() +
@@ -770,10 +770,10 @@ class StructureEditorModel extends CompEditorModel {
 
 	/**
 	 * Gets the maximum number of bytes available for a data type that is added at the indicated
-	 * index. This can vary based on whether or not it is in a selection. 
-	 * <br>In unlocked mode, the size is unrestricted when no selection or single row selection. 
+	 * index. This can vary based on whether or not it is in a selection.
+	 * <br>In unlocked mode, the size is unrestricted when no selection or single row selection.
 	 * Multi-row selection always limits the size.
-	 * <br>In locked mode, single row selection is limited to selected row plus undefined bytes 
+	 * <br>In locked mode, single row selection is limited to selected row plus undefined bytes
 	 * following it that can be absorbed.
 	 *
 	 * @param rowIndex index of the row in the editor's composite data type table.
@@ -787,7 +787,7 @@ class StructureEditorModel extends CompEditorModel {
 		}
 		DataTypeComponent comp = getComponent(rowIndex);
 		FieldRange currentRange = getSelectedRangeContaining(rowIndex);
-		// if the index isn't in the selection or is in a range of only 
+		// if the index isn't in the selection or is in a range of only
 		// one row then we want to handle it the same.
 		boolean isOneComponent =
 			(currentRange == null) || (currentRange.getStart().getIndex().intValue() +
@@ -809,9 +809,9 @@ class StructureEditorModel extends CompEditorModel {
 	}
 
 	/**
-	 * Gets the maximum number of bytes available for a new data type that 
+	 * Gets the maximum number of bytes available for a new data type that
 	 * will replace the current data type at the indicated index.
-	 * If there isn't a component with the indicated index, the max length 
+	 * If there isn't a component with the indicated index, the max length
 	 * will be determined by the lock mode.
 	 *
 	 * @param currentIndex index of the component in the structure.
@@ -1051,7 +1051,7 @@ class StructureEditorModel extends CompEditorModel {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	void removeDtFromComponents(Composite comp) {
@@ -1243,7 +1243,7 @@ class StructureEditorModel extends CompEditorModel {
 
 	/**
 	 * Unpackage the selected component in the structure or array. This means replace the structure
-	 * with the data types for its component parts. For an array replace the array with the data type 
+	 * with the data types for its component parts. For an array replace the array with the data type
 	 * for each array element.
 	 * If the component isn't a structure or union then returns false.
 	 * @param rowIndex the row

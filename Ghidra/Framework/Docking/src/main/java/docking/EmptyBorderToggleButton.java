@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ public class EmptyBorderToggleButton extends EmptyBorderButton {
 		super();
 
 		// Note: do not pass the action up to super, since the JButton ancestor will perform
-		// initialization from the action that we have not been designed to handle (we shouldn't 
+		// initialization from the action that we have not been designed to handle (we shouldn't
 		// have to change the way that Java uses actions, but that is for a later refactoring).
 		initFromAction(action);
 		updateBorder(); // synch up the action with the border
@@ -176,7 +176,7 @@ public class EmptyBorderToggleButton extends EmptyBorderButton {
 	}
 
 	/**
-	 * Changes the button's state to the opposite of its current state.  Calling this method 
+	 * Changes the button's state to the opposite of its current state.  Calling this method
 	 * will also trigger a callback to the button's {@link Action#actionPerformed(ActionEvent)}
 	 * method.
 	 */

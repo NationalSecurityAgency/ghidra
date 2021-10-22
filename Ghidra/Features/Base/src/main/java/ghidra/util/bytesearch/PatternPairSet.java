@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.xml.XmlPullParser;
  * The larger pattern has the idea of bits of check, which means the number of bits that are fixed to
  * a value when matching (not don't care).  There is a pre pattern bits of check and post pattern bits
  * of check.  The bits of check are used to statistically gauge the accuracy of the pattern.
- * 
+ *
  * An example of the XML format follows:
  *   <patternpairs totalbits="32" postbits="16">
  *    <prepatterns>
@@ -39,7 +39,7 @@ import ghidra.xml.XmlPullParser;
  *      <data>0xe12fff1e 0x46c0           </data>
  *      <data>0xe12fff1e 0xe1a00000       </data>
  *    </prepatterns>
- *    
+ *
  *  <postpatterns>
  *      <data> 0xe24dd...                              11101001 00101101 .1...... ....0000  </data>
  *      <data> 11101001 00101101 .1...... ....0000     0xe24dd...                           </data>
@@ -49,7 +49,7 @@ import ghidra.xml.XmlPullParser;
  *      <funcstart/>
  *    </postpatterns>
  *  </patternpairs>
- *  
+ *
  *  Note: The post Patterns can also have a set of rules that must be satisfied along with one of the
  *  Pattern DittedBitSequence matches.
  */

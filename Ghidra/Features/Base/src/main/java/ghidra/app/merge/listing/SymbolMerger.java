@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1755,7 +1755,7 @@ class SymbolMerger extends AbstractListingMerger {
 	/**
 	 * Checks to see if there is a symbol in the otherProgram that conflicts
 	 * with the indicated symbol. A conflict can be one of these types:
-	 * 1) a symbol other than label or function that has the same name and 
+	 * 1) a symbol other than label or function that has the same name and
 	 * namespace as another non label or function.
 	 * 2) a symbol at the same address with the same name and namespace.
 	 *
@@ -1789,7 +1789,7 @@ class SymbolMerger extends AbstractListingMerger {
 				saveAddressConflict(address, symbol);	// this might be the wrong type of symbol
 			}
 			if (namespaceConflict) {  // (example: namespace vs library)
-				// Symbol could be latest, my, or original. 
+				// Symbol could be latest, my, or original.
 				// Only check namespace if it is my symbol that has a namespace conflict and rename it.
 				if (program == myPgm) {
 					Address myAddr = symbol.getAddress();

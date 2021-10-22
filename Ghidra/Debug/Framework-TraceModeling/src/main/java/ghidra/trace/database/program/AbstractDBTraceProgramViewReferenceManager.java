@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -395,15 +395,15 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 
 	/**
 	 * Get the reference level for a given reference type
-	 * 
+	 *
 	 * <p>
 	 * TODO: Why is this not a property of {@link RefType}, or a static method of
 	 * {@link SymbolUtilities}?
-	 * 
+	 *
 	 * <p>
 	 * Note that this was copy-pasted from {@code BigRefListV0}, and there's an exact copy also in
 	 * {@code RefListV0}.
-	 * 
+	 *
 	 * @param rt the reference type
 	 * @return the reference level
 	 */
@@ -425,13 +425,13 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * <p>
 	 * To clarify, "reference level" is a sort of priority assigned to each reference type. See,
 	 * e.g., {@link SymbolUtilities#SUB_LEVEL}. Each is a byte constant, and greater values imply
 	 * higher priority. This method returns the highest priority of any reference to the given
 	 * address.
-	 * 
+	 *
 	 * <p>
 	 * TODO: Track this in the database?
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,7 @@ public class RelayoutFunctionGraphJob<V extends VisualVertex, E extends VisualEd
 		//
 		// this may be the same as the current locations, or they may be updated, depending upon
 		// user options
-		// 
+		//
 
 		LayoutPositions<V, E> futurePositions = calculateDefaultLayoutLocations();
 		Map<V, Point2D> destinationLocations = futurePositions.getVertexLocations();
@@ -120,7 +120,7 @@ public class RelayoutFunctionGraphJob<V extends VisualVertex, E extends VisualEd
 
 		List<ArticulationTransitionPoints> transitionPoints = new ArrayList<>();
 
-		// 
+		//
 		// We will have to add articulations to the current edge now so that we can
 		// animate their creation.
 		//

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -423,8 +423,8 @@ public class StackEditorProvider1Test extends AbstractStackEditorProviderTest {
 		// NOTE: This test appears to verify that the undefined*16 type
 		// resolved against the program DTM used by the stack editor
 		// is removed on the first undo - unfortunately, the redo
-		// does not restore the editor state.  It is unclear why a private 
-		// DTM is not employed similar to the Structure editor which 
+		// does not restore the editor state.  It is unclear why a private
+		// DTM is not employed similar to the Structure editor which
 		// would allow the new undefined*16 type to persist after the undo (see SCR 10280)
 
 		Window dialog;

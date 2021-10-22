@@ -10,7 +10,7 @@
 
   <default_proto>
     <prototype name="__stdcall" extrapop="0" stackshift="0">
-      
+
       <input>
         <pentry minsize="1" maxsize="4">
           <register name="r6"/>
@@ -32,7 +32,7 @@
           <addr offset="0" space="stack"/>
         </pentry>
       </input>
-      
+
       <output>
         <pentry minsize="1" maxsize="4">
           <register name="r10"/>
@@ -42,7 +42,7 @@
           <addr space="join" piece1="r10" piece2="r11"/>
         </pentry>
       </output>
-      
+
       <unaffected>
         <register name="r20"/>
         <register name="r21"/>
@@ -61,7 +61,7 @@
         <register name="tp"/>
         <register name="ctbp"/>
       </unaffected>
-    
+
     </prototype>
   </default_proto>
 

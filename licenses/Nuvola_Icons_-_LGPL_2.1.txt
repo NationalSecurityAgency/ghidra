@@ -42,7 +42,7 @@ Version:	1.0
 
 DESCRIPTION:
 
-Icon theme for KDE 3.x. 
+Icon theme for KDE 3.x.
 Icons where designed using Adobe Illustrator, and then exported to PNG format.
 Icons shadows and minor corrections were done using Adobe Photoshop.
 Kiconedit was used to correct some 16x16 and 22x22 icons.
@@ -54,7 +54,7 @@ Look at the license.txt file.
 
 CONTACT
 
-David Vignoni	
+David Vignoni
 e-mail :		david [at] icon-king.com
 ICQ :			117761009
 http:           	http://www.icon-king.com

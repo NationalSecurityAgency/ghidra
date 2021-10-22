@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -225,7 +225,7 @@ public class VectorSTL<T> implements Iterable<T> {
 	 * the given key.  This method assumes the vector is sorted in ascending order.
 	 * @param key the key for which to find the lower bound
 	 * @return an iterator postioned at the item in the vector that is the smallest key less or equal than
-	 * the given key. 
+	 * the given key.
 	 * @throws UnsupportedOperationException if T is not comparable
 	 */
 	public IteratorSTL<T> lower_bound(T key, Comparator<T> comparator) {
@@ -252,7 +252,7 @@ public class VectorSTL<T> implements Iterable<T> {
 	 * the given key.  This method assumes the vector is sorted in ascending order.
 	 * @param key the key for which to find the lower bound
 	 * @return an iterator postioned at the item in the vector that is the smallest key less or equal than
-	 * the given key. 
+	 * the given key.
 	 */
 	public IteratorSTL<T> lower_bound(T key) {
 		if (!(key instanceof Comparable)) {
@@ -266,7 +266,7 @@ public class VectorSTL<T> implements Iterable<T> {
 	 * the given key.  This method assumes the vector is sorted in ascending order.
 	 * @param key the key for which to find the upper bound
 	 * @return an iterator postioned at the item in the vector that is the smallest key less than
-	 * the given key. 
+	 * the given key.
 	 * @throws UnsupportedOperationException if T is not comparable
 	 */
 	public IteratorSTL<T> upper_bound(T key) {
@@ -281,7 +281,7 @@ public class VectorSTL<T> implements Iterable<T> {
 	 * the given key.  This method assumes the vector is sorted in ascending order.
 	 * @param key the key for which to find the upper bound
 	 * @return an iterator postioned at the item in the vector that is the smallest key less than
-	 * the given key. 
+	 * the given key.
 	 * @throws UnsupportedOperationException if T is not comparable
 	 */
 	public IteratorSTL<T> upper_bound(T key, Comparator<T> comparator) {

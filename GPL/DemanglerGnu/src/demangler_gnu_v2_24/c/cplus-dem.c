@@ -31,11 +31,11 @@ Library General Public License for more details.
 You should have received a copy of the GNU Library General Public
 License along with libiberty; see the file COPYING.LIB.  If
 not, write to the Free Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
-Boston, MA 02110-1301, USA.  
+Boston, MA 02110-1301, USA.
 
 
 					CHANGE NOTICE:
-This file was changed on July 1st, 2014.			
+This file was changed on July 1st, 2014.
 
 */
 
@@ -470,7 +470,7 @@ static const char* qualifier_string (int);
 
 static const char* demangle_qualifier (int);
 
-static int demangle_expression (struct work_stuff *, const char **, string *, 
+static int demangle_expression (struct work_stuff *, const char **, string *,
                                 type_kind_t);
 
 static int
@@ -793,7 +793,7 @@ cplus_mangle_opname (const char *opname, int options)
 enum demangling_styles
 cplus_demangle_set_style (enum demangling_styles style)
 {
-  const struct demangler_engine *demangler = libiberty_demanglers; 
+  const struct demangler_engine *demangler = libiberty_demanglers;
 
   for (; demangler->demangling_style != unknown_demangling; ++demangler)
     if (style == demangler->demangling_style)
@@ -810,7 +810,7 @@ cplus_demangle_set_style (enum demangling_styles style)
 enum demangling_styles
 cplus_demangle_name_to_style (const char *name)
 {
-  const struct demangler_engine *demangler = libiberty_demanglers; 
+  const struct demangler_engine *demangler = libiberty_demanglers;
 
   for (; demangler->demangling_style != unknown_demangling; ++demangler)
     if (strcmp (name, demangler->demangling_style_name) == 0)
@@ -893,7 +893,7 @@ ada_demangle (const char *mangled, int option ATTRIBUTE_UNUSED)
   const char* p;
   char *d;
   char *demangled;
-  
+
   /* Discard leading _ada_, which is used for library level subprograms.  */
   if (strncmp (mangled, "_ada_", 5) == 0)
     mangled += 5;
@@ -909,7 +909,7 @@ ada_demangle (const char *mangled, int option ATTRIBUTE_UNUSED)
      they occur only once.  */
   len0 = strlen (mangled) + 7 + 1;
   demangled = XNEWVEC (char, len0);
-  
+
   d = demangled;
   p = mangled;
   while (1)
@@ -2026,7 +2026,7 @@ demangle_template_value_parm (struct work_stuff *work, const char **mangled,
     {
       if (**mangled == 'Q')
 	success = demangle_qualified (work, mangled, s,
-				      /*isfuncname=*/0, 
+				      /*isfuncname=*/0,
 				      /*append=*/1);
       else
 	{
@@ -3670,7 +3670,7 @@ do_type (struct work_stuff *work, const char **mangled, string *result)
 	    else if (**mangled == 'Q')
 	      {
 		success = demangle_qualified (work, mangled, &decl,
-					      /*isfuncnam=*/0, 
+					      /*isfuncnam=*/0,
 					      /*append=*/0);
 		if (!success)
 		  break;
@@ -4568,7 +4568,7 @@ demangle_nested_args (struct work_stuff *work, const char **mangled,
 
 /* Returns 1 if a valid function name was found or 0 otherwise.  */
 
-static int 
+static int
 demangle_function_name (struct work_stuff *work, const char **mangled,
                         string *declp, const char *scan)
 {
@@ -4904,9 +4904,9 @@ get_demangler_list ()
 
       start = 1;
       left = sizeof (demangler_list_buffer) - start;
-  
-      for (i = 0; i < unknown_demangling && left > 0; i++) 
-      {	
+
+      for (i = 0; i < unknown_demangling && left > 0; i++)
+      {
 	  strncpy (&demangler_list_buffer [start],
 		   libiberty_demanglers [i].demangling_style_name, left);
 	  len = (int)strlen (libiberty_demanglers [i].demangling_style_name);
@@ -4921,7 +4921,7 @@ get_demangler_list ()
 
       if (left >= 0)
 	{
-	  demangler_list_buffer [--start] = '}';  
+	  demangler_list_buffer [--start] = '}';
 	}
     }
 
@@ -4995,7 +4995,7 @@ usage (stream, status)
 		  [-s|--format ");
 		  print_demangler_list (stream);
 		  fprintf (stream, "]\n");
-		
+
 		  fprintf (stream, "\
 		  [@<file>]                   Read extra options from <file>\n\
 		  [-h|--help]                 Display this information\n\
@@ -5005,8 +5005,8 @@ usage (stream, status)
 		If no names are provided on the command line, stdin is read.\n");
 
 	exit(status);
-	
-}	
+
+}
 
 static void
 usage_old (stream, status)
@@ -5019,7 +5019,7 @@ Usage: %s [-_] [-n] [--strip-underscores] [--no-strip-underscores] \n",
 
   fprintf (stream, "\
        [-s|--format ");
-	print_demangler_list(stream);	
+	print_demangler_list(stream);
 	fprintf (stream, " ]\n");
 
   fprintf (stream, "\
@@ -5064,7 +5064,7 @@ hp_symbol_characters PARAMS ((void));
 static const char *
 gnu_v3_symbol_characters PARAMS ((void));
 
-/* Return the string of non-alnum characters that may occur 
+/* Return the string of non-alnum characters that may occur
    as a valid symbol component, in the standard assembler symbol
    syntax.  */
 
@@ -5112,7 +5112,7 @@ hp_symbol_characters ()
 }
 
 
-/* Return the string of non-alnum characters that may occur 
+/* Return the string of non-alnum characters that may occur
    as a valid symbol component in the GNU C++ V3 ABI mangling
    scheme.  */
 

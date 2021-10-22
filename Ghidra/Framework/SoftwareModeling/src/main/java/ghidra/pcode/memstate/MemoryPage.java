@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -125,11 +125,11 @@ public class MemoryPage {
 	}
 
 	/**
-	 * Get number of leading bytes within page range which have been 
+	 * Get number of leading bytes within page range which have been
 	 * initialized.
 	 * @param pageOffset
 	 * @param size
-	 * @return number of leading bytes within page range which have been 
+	 * @return number of leading bytes within page range which have been
 	 * initialized.
 	 */
 	public int getInitializedByteCount(int pageOffset, int size) {
@@ -221,7 +221,7 @@ public class MemoryPage {
 	 * initialized.  Valid page region defined by pageOffset and size is assumed.
 	 * @param initializedMask
 	 * @param pageOffset
-	 * @param size 
+	 * @param size
 	 * @return number of leading bytes at pageOffset (upto size) are initialized.
 	 */
 	public static int getInitializedByteCount(byte[] initializedMask, int pageOffset, int size) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public class DbgBreakpointInfo {
 
 	/**
 	 * Construct Dbg breakpoint information
-	 * 
+	 *
 	 * @param number the Dbg-assigned breakpoint number
 	 * @param type the type of breakpoint
 	 * @param disp the breakpoint disposition
@@ -134,10 +134,10 @@ public class DbgBreakpointInfo {
 
 	/**
 	 * Get the Dbg-assigned breakpoint number
-	 * 
+	 *
 	 * This is the key into Dbg's breakpoint table to locate the breakpoint this information
 	 * describes.
-	 * 
+	 *
 	 * @return the number
 	 */
 	public long getNumber() {
@@ -146,7 +146,7 @@ public class DbgBreakpointInfo {
 
 	/**
 	 * Get the type of breakpoint
-	 * 
+	 *
 	 * @return the type
 	 */
 	public DbgBreakpointType getType() {
@@ -175,7 +175,7 @@ public class DbgBreakpointInfo {
 
 	/**
 	 * Get the breakpoint disposition, i.e., what happens to the breakpoint once it has been hit
-	 * 
+	 *
 	 * @return the disposition
 	 */
 	public DbgBreakpointDisp getDisp() {
@@ -184,7 +184,7 @@ public class DbgBreakpointInfo {
 
 	/**
 	 * Get the offset expression of the breakpoint
-	 * 
+	 *
 	 * @return the location
 	 */
 	public String getExpression() {
@@ -193,7 +193,7 @@ public class DbgBreakpointInfo {
 
 	/**
 	 * Get the size of the breakpoint
-	 * 
+	 *
 	 * @return the size
 	 */
 	public int getSize() {
@@ -202,7 +202,7 @@ public class DbgBreakpointInfo {
 
 	/**
 	 * Get the access of the breakpoint
-	 * 
+	 *
 	 * @return the size
 	 */
 	public BitmaskSet<BreakAccess> getAccess() {
@@ -211,11 +211,11 @@ public class DbgBreakpointInfo {
 
 	/**
 	 * Get the offset of this breakpoint
-	 * 
+	 *
 	 * <p>
 	 * Note if the offset was given as an expression, but it hasn't been resolved, this will return
 	 * {@code null}.
-	 * 
+	 *
 	 * @return the offset, or {@code null}
 	 */
 	public Long getOffset() {
@@ -224,7 +224,7 @@ public class DbgBreakpointInfo {
 
 	/**
 	 * If the breakpoint is pending resolution, get the location that is pending
-	 * 
+	 *
 	 * @return the pending location
 	 */
 	public String getPending() {
@@ -233,7 +233,7 @@ public class DbgBreakpointInfo {
 
 	/**
 	 * Check if the breakpoint is enabled
-	 * 
+	 *
 	 * @return true if enabled, false otherwise
 	 */
 	public boolean isEnabled() {
@@ -242,7 +242,7 @@ public class DbgBreakpointInfo {
 
 	/**
 	 * Get the number of times the breakpoint has been hit
-	 * 
+	 *
 	 * @return the hit count
 	 */
 	public int getTimes() {
@@ -251,12 +251,12 @@ public class DbgBreakpointInfo {
 
 	/**
 	 * Get a list of resolved addresses
-	 * 
+	 *
 	 * <p>
 	 * The effective locations may change for a variety of reasons. Most notable, a new module may
 	 * be loaded, having location(s) that match the desired location of this breakpoint. The binary
 	 * addresses within will become new effective locations of this breakpoint.
-	 * 
+	 *
 	 * @return the list of locations at the time the breakpoint information was captured
 	 */
 	/*public List<DbgBreakpointLocation> getLocations() {

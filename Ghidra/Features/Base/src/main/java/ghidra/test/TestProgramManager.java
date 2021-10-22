@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -124,7 +124,7 @@ public class TestProgramManager {
 	/**
 	 * Save a program to the cached program store.  A SaveAs will be performed on the
 	 * program to its cached storage location.
-	 * 
+	 *
 	 * @param progName program name
 	 * @param program program object
 	 * @param replace if true any existing cached database with the same name will be replaced
@@ -211,7 +211,7 @@ public class TestProgramManager {
 	 * @param project the project into which the file will be restored
 	 * @param programName the name of the program zip file without the ".gzf" extension
 	 * @return the file
-	 * @throws FileNotFoundException if the file cannot be found 
+	 * @throws FileNotFoundException if the file cannot be found
 	 */
 	public DomainFile addProgramToProject(Project project, String programName)
 			throws FileNotFoundException {
@@ -228,7 +228,7 @@ public class TestProgramManager {
 	 * @param folder the folder into which the domain file will be inserted
 	 * @param programName the name of the program zip file without the ".gzf" extension.
 	 * @return the file
-	 * @throws FileNotFoundException if the file cannot be found 
+	 * @throws FileNotFoundException if the file cannot be found
 	 */
 	public DomainFile addProgramToProject(DomainFolder folder, String programName)
 			throws FileNotFoundException {

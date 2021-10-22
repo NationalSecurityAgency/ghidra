@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,9 +79,9 @@ public class SaveState {
 	private String saveStateName;
 
 	/**
-	 * Creates a SaveState object and populates its values from the given file. The file must 
+	 * Creates a SaveState object and populates its values from the given file. The file must
 	 * conform to the format that is created with {@link #saveToJson()}
-	 * 
+	 *
 	 * @param file the file to load values from
 	 * @return a new SaveState object loaded with values from the given file.
 	 * @throws IOException if an error occurs reading the given file.
@@ -96,7 +96,7 @@ public class SaveState {
 	/**
 	 * Creates a new SaveState object with a non-default name.  The name serves no real purpose
 	 * other than as a hint as to what the SaveState represents
-	 * 
+	 *
 	 * @param name of the state
 	 */
 	public SaveState(String name) {
@@ -491,13 +491,13 @@ public class SaveState {
 	 *    "Retired": "boolean",
 	 *    "Age": "int",
 	 *    "Endian": "enum",
-	 *  },	
+	 *  },
 	 *  "ENUM CLASSES": {
 	 *    "Endian": "ghidra.program.model.lang.Endian"
 	 *  }
 	 *}
 	 * </pre>
-	 * 
+	 *
 	 * @param file the file to save to
 	 * @throws IOException if an error occurs writing to the given file
 	 */
@@ -829,7 +829,7 @@ public class SaveState {
 
 	/**
 	 * Remove the object identified by the given name
-	 * 
+	 *
 	 * @param name the name of the property to remove
 	 */
 	public void remove(String name) {
@@ -1369,7 +1369,7 @@ public class SaveState {
 
 	/**
 	 * Returns true if there is a value for the given name
-	 * 
+	 *
 	 * @param name true the name of the property to check for a value
 	 * @return true if the SaveState object has a value for the given name
 	 */

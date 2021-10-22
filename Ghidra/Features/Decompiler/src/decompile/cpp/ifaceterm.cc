@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ IfaceTerm::IfaceTerm(const string &prmpt,istream &is,ostream &os)
   //  ifd = fileno( (FILE *)sptr->rdbuf() );
   ifd = 0;			// The above line doesn't work on some systems
 				// and since ifd will almost always refer to stdin...
-  
-  if (0>tcgetattr(ifd,&itty)) { // Get original terminal settings 
+
+  if (0>tcgetattr(ifd,&itty)) { // Get original terminal settings
     if (errno == EBADF)
       throw IfaceError("Bad input file descriptor passed to iface");
     else if (errno == ENOTTY) {
@@ -36,12 +36,12 @@ IfaceTerm::IfaceTerm(const string &prmpt,istream &is,ostream &os)
     }
     throw IfaceError("Unknown error with input file stream");
   }
-                              // Build terminal settings for entering passphrase 
+                              // Build terminal settings for entering passphrase
   ittypass = itty;
-  ittypass.c_lflag &= ~((tcflag_t)ECHO); // Turn off echo 
-  ittypass.c_lflag &= ~((tcflag_t)ICANON); // Turn of buffered input 
-  ittypass.c_cc[VMIN] = 1;    // Buffer only one character at a time 
-  ittypass.c_cc[VTIME] = 0;   // Do not time out 
+  ittypass.c_lflag &= ~((tcflag_t)ECHO); // Turn off echo
+  ittypass.c_lflag &= ~((tcflag_t)ICANON); // Turn of buffered input
+  ittypass.c_cc[VMIN] = 1;    // Buffer only one character at a time
+  ittypass.c_cc[VTIME] = 0;   // Do not time out
 
   if (0>tcsetattr(ifd,TCSANOW,&ittypass))
     throw IfaceError("Unable to set terminal attributes");
@@ -105,7 +105,7 @@ int4 IfaceTerm::doCompletion(string &line,int4 cursor)
   }
   if (oldsize < line.size())	// If we have expanded at all
     return line.size();		// Just display expansion
-  
+
   if (match > 1) {		// If more than one possible command
     string complete;		// Display all possible completions
     *optr << endl;
@@ -118,7 +118,7 @@ int4 IfaceTerm::doCompletion(string &line,int4 cursor)
     *optr << endl << "Command is complete" << endl;
   return line.size();
 }
-  
+
 void IfaceTerm::readLine(string &line)
 
 {
@@ -188,7 +188,7 @@ void IfaceTerm::readLine(string &line)
       }
       break;
     case 0x10:			// C-p
-      if (hist < getHistorySize()) { 
+      if (hist < getHistorySize()) {
 	hist += 1;		// Get more ancient history
 	if (hist==1)
 	  saveline = line;

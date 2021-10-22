@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -101,20 +101,20 @@ public class AddressMapImplTest extends AbstractGenericTest {
 		for (int i = 0; i < addrs.length; i++) {
 			values[i] = map.getKey(addrs[i]);
 		}
-//		
+//
 //		try {
 //			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 //			ObjectOutputStream oos = new ObjectOutputStream(baos);
 //			oos.writeObject(map);
 //			oos.close();
-//			
+//
 //			ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
 //			ObjectInputStream ois = new ObjectInputStream(bais);
 //			map = (AddressMap)ois.readObject();
 //		} catch(Exception e) {
 //			Assert.fail("Caught unexpected io exception");
-//		}		
-//		
+//		}
+//
 		for (int i = 0; i < addrValues.length; i++) {
 			addrValues[i] = map.decodeAddress(values[i]);
 		}

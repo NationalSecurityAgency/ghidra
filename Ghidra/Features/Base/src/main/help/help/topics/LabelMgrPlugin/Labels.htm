@@ -140,20 +140,20 @@
         <UL>
           <LI>
             Text field for entering the name of the label. A combo box is included which allows
-            selecting recently used label names. 
+            selecting recently used label names.
 
             <P>You may enter a namespace path in this text field that follows the format:<BR>
             </P>
 <PRE>
     &lt;namespace_name1&gt;::&lt;namespace_name2&gt;::&lt;...&gt;::&lt;label_text&gt;
-       
+
 </PRE>
             For example, the following string denotes a full namespace path that starts at the
             <B>Global</B> namespace and ends at the label name <TT>myLabel</TT>:<BR>
-             
+
 <PRE>
     Global::foo::bar::myLabel
-       
+
 </PRE>
             The namespace in the <I>Namespace</I> combo box will be used as the parent namespace
             for the label name and any included namespaces. However, if the you provide a namespace
@@ -212,11 +212,11 @@
           <LI>Sets the label to pinned.  A pinned label will not move if the image base is changed
           or a memory block is moved.  A label that is not pinned, will move with the code
           or data if a memory block is moved or the image base is changed.  Also, a pinned
-          label will not be removed if the memory block that contains it is removed.  Only code, 
+          label will not be removed if the memory block that contains it is removed.  Only code,
           data, or function labels may be pinned.</LI>
         </UL>
       </BLOCKQUOTE>
-      
+
     </BLOCKQUOTE>
 
     <H2><A name="OperandLabelDialog"></A>Set Label Dialog</H2>
@@ -286,18 +286,18 @@
         <LI>Press the <B>OK</B> button.</LI>
       </OL>
 
-      	<P><IMG src="../../shared/note.png" alt="Note:">If the label appearing in an operand corresponds 
-      	to an external location the <B>Edit Label</B> action will be replaced by <B>Edit External Location</B>. 
+      	<P><IMG src="../../shared/note.png" alt="Note:">If the label appearing in an operand corresponds
+      	to an external location the <B>Edit Label</B> action will be replaced by <B>Edit External Location</B>.
 
     </BLOCKQUOTE>
-    
+
     <H3><A name="Edit_External_Location"></A>Edit External Location</H2>
 
     <BLOCKQUOTE>
-      <P>Similar to editing a label associated with the primary reference of an operand, an 
+      <P>Similar to editing a label associated with the primary reference of an operand, an
       external location referenced by an operand may be renamed or modified.  Right-click on the operand which references an external location
-      and choose the <B>Edit External Location</B> menu option 
-      (see Symbol Tree - 
+      and choose the <B>Edit External Location</B> menu option
+      (see Symbol Tree -
       <A href="help/topics/SymbolTreePlugin/SymbolTree.htm#Edit_External_Location">Edit External Location</A>
       for more discussion on the use of the edit dialog).</P>
     </BLOCKQUOTE>
@@ -354,16 +354,16 @@
 
         <LI>
           Select a namespace from the <I>namespace</I> combo-box in the <B><A href=
-          "#AddEditDialog">Label</A></B> dialog.  Or, you may enter a new namespace with the label using "::" as a 
-            name separator.  If a specified namespace does not exist a simple-namespace 
-            will be created. 
-             </LI>  
+          "#AddEditDialog">Label</A></B> dialog.  Or, you may enter a new namespace with the label using "::" as a
+            name separator.  If a specified namespace does not exist a simple-namespace
+            will be created.
+             </LI>
           </UL>
         </LI>
       </OL>
       <P align="left"><IMG src="../../shared/note.png" border="0"> Any use of a class-namespace requires that it first be
-            created prior to associating a label or other namespace with that 
-            class-namespace. This is most easily accomplished via the 
+            created prior to associating a label or other namespace with that
+            class-namespace. This is most easily accomplished via the
             <A href="help/topics/SymbolTreePlugin/SymbolTree.htm">Symbol Tree</A></P>
     </BLOCKQUOTE>
 
@@ -407,8 +407,8 @@
     <H3><A name="Set_Operand_Label"></A>Selecting a referenced Label for an Operand</H3>
 
     <BLOCKQUOTE>
-      <P>Referenced labels appear in instruction operands. By default, the primary label associated with the 
-      primary reference from an operand will be displayed within the operand. 
+      <P>Referenced labels appear in instruction operands. By default, the primary label associated with the
+      primary reference from an operand will be displayed within the operand.
       To have the operand display a different label corresponding to the primary memory reference:</P>
 
       <OL>
@@ -475,7 +475,7 @@
       <OL start="2">
         <LI>
           A dialog is displayed so that you can enter a label name (or part of a label
-          name)&nbsp;&nbsp; 
+          name)&nbsp;&nbsp;
 
           <UL>
             <LI>Enter a string you would like to see matches for.</LI>
@@ -485,7 +485,7 @@
         </LI>
 
         <LI>
-          Select the OK button or press the &lt;Enter&gt; key in the text field. 
+          Select the OK button or press the &lt;Enter&gt; key in the text field.
 
           <UL>
             <LI>If label history was found, a dialog similar to the one shown above is displayed

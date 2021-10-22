@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,7 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 	// Unusual Code Alert!: We can't initialize these in the fields above because calling
 	// DockingUtils calls into Swing code.  Further, we don't want Swing code being accessed
 	// when the Plugin classes are loaded, as they get loaded in the headless environment.
-	// 
+	//
 	private final KeyStroke NEXT_TAB_KEYSTROKE =
 		KeyStroke.getKeyStroke(KeyEvent.VK_F9, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 	private final KeyStroke PREVIOUS_TAB_KEYSTROKE =
@@ -133,7 +133,7 @@ public class MultiTabPlugin extends Plugin implements DomainObjectListener {
 		goToPreviousProgramAction.setHelpLocation(
 			new HelpLocation("ProgramManagerPlugin", "Go_To_Next_And_Previous_Program"));
 
-		// this timer is to give the user time to select successive programs before activating one 
+		// this timer is to give the user time to select successive programs before activating one
 		selectHighlightedProgramTimer = new Timer(750, e -> selectHighlightedProgram());
 		selectHighlightedProgramTimer.setRepeats(false);
 

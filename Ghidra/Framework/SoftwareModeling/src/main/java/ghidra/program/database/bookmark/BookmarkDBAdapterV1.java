@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import java.util.*;
 import db.*;
 
 /**
- * 
+ *
  */
 class BookmarkDBAdapterV1 extends BookmarkDBAdapter {
 
@@ -36,8 +36,8 @@ class BookmarkDBAdapterV1 extends BookmarkDBAdapter {
 	static final int V1_TYPE_CATEGORY_COL = 2; // mangled column to improve indexing
 	static final int V1_COMMENT_COL = 3;
 
-//	private static final Schema SCHEMA = new Schema(VERSION,"ID", 
-//							new Class[] {LongField.class, LongField.class, 
+//	private static final Schema SCHEMA = new Schema(VERSION,"ID",
+//							new Class[] {LongField.class, LongField.class,
 //										 StringField.class, StringField.class},
 //							new String[] {"Address", "Type ID", "Type ID/Category", "Comment"});
 
@@ -173,7 +173,7 @@ class BookmarkDBAdapterV1 extends BookmarkDBAdapter {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class BatchRecordIterator implements RecordIterator {
 		private ListIterator<DBRecord> iter;

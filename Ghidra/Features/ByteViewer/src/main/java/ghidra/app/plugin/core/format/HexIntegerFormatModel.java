@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public class HexIntegerFormatModel implements UniversalDataFormatModel {
 	}
 
 	/**
-	 * Get the number of bytes to make a unit; in this case, 
+	 * Get the number of bytes to make a unit; in this case,
 	 * returns 4.
 	 */
 	public int getUnitByteSize() {
@@ -77,7 +77,7 @@ public class HexIntegerFormatModel implements UniversalDataFormatModel {
 
 	/**
 	 * Gets the number of characters required to display a
-	 * unit. 
+	 * unit.
 	 * @return 4 for number of characters in the integer representation.
 	 */
 	public int getDataUnitSymbolSize() {
@@ -163,7 +163,7 @@ public class HexIntegerFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Set the number of units in a group. This format does not
 	 * support groups.
-	 * @throws UnsupportedOperationException 
+	 * @throws UnsupportedOperationException
 	 */
 	public void setGroupSize(int groupSize) {
 		throw new UnsupportedOperationException("groups are not supported");

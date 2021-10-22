@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ public class VisualGraphSatelliteTranslatingGraphMousePlugin<V extends VisualVer
 
 	private boolean didDrag;
 
-	// Note: for ideas on resizing instead of moving, see LensTranslatingGraphMousePlugin     
+	// Note: for ideas on resizing instead of moving, see LensTranslatingGraphMousePlugin
 	public VisualGraphSatelliteTranslatingGraphMousePlugin() {
 		super(InputEvent.BUTTON1_DOWN_MASK);
 		this.cursor = Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR);
@@ -84,7 +84,7 @@ public class VisualGraphSatelliteTranslatingGraphMousePlugin<V extends VisualVer
 		}
 	}
 
-	// if we get a click, then the user didn't drag...in this case, just move 
+	// if we get a click, then the user didn't drag...in this case, just move
 	// (center) the window to the click point
 	@Override
 	public void mouseClicked(MouseEvent e) {
@@ -120,7 +120,7 @@ public class VisualGraphSatelliteTranslatingGraphMousePlugin<V extends VisualVer
 
 		if (!didDrag) {
 			// this is the case where we are handling the event, but we didn't drag, which means
-			// we will later get a mouseClicked() callback, which we want to do some stuff, so 
+			// we will later get a mouseClicked() callback, which we want to do some stuff, so
 			// don't consume the events
 			return;
 		}
@@ -134,8 +134,8 @@ public class VisualGraphSatelliteTranslatingGraphMousePlugin<V extends VisualVer
 		VisualizationViewer<V, E> viewMaster = getGraphViewer(e);
 		Shape satelliteLens = getSatelliteLensInSatelliteViewSpace(satelliteViewer, viewMaster);
 
-		// See if the new mouse point will still allow the lens to fit entirely in the 
-		// satellite view.  If not, then we do not want to let the user drag the lens.  Otherwise, 
+		// See if the new mouse point will still allow the lens to fit entirely in the
+		// satellite view.  If not, then we do not want to let the user drag the lens.  Otherwise,
 		// have at it!
 		Point adjustedLensPointInViewSpace =
 			getLensPointAdjustedForSatelliteBounds(satelliteViewer, satelliteLens);

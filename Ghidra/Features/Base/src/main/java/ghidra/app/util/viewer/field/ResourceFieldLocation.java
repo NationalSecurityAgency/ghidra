@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.program.util.OperandFieldLocation;
 import ghidra.program.util.ProgramLocation;
 
 /**
- * A {@link ProgramLocation} of an item that is a Resource 
+ * A {@link ProgramLocation} of an item that is a Resource
  * embedded in a binary (ie. a embedded graphic image)
  */
 public class ResourceFieldLocation extends OperandFieldLocation {
@@ -37,7 +37,7 @@ public class ResourceFieldLocation extends OperandFieldLocation {
 
 	/**
 	 * Creates an ResourceFieldLocation
-	 * 
+	 *
 	 * @param program the program
 	 * @param address the address of the location
 	 * @param componentPath the data component path
@@ -50,7 +50,7 @@ public class ResourceFieldLocation extends OperandFieldLocation {
 			String displayValue, int opIndex, int characterOffset, Data data) {
 
 		super(program, address, componentPath, null, displayValue, opIndex, characterOffset);
-		
+
 		this.data = data;
 	}
 
@@ -63,8 +63,8 @@ public class ResourceFieldLocation extends OperandFieldLocation {
 
 	/**
 	 * Returns the resource's Data instance.
-	 * 
-	 * @return the resource's Data instance 
+	 *
+	 * @return the resource's Data instance
 	 */
 	public Data getResourceData() {
 		if (data == null) {
@@ -75,7 +75,7 @@ public class ResourceFieldLocation extends OperandFieldLocation {
 
 	/**
 	 * Returns true if this resource is a {@link DataImage}.
-	 * 
+	 *
 	 * @return true if this resource is a {@link DataImage}
 	 */
 	public boolean isDataImageResource() {

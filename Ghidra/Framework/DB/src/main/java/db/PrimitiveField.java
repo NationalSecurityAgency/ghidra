@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,10 +17,10 @@ package db;
 
 /**
  * <code>PrimitiveField</code> provides a base implementation for
- * all primitive value {@link Field}s.  
+ * all primitive value {@link Field}s.
  * <br>
- * When a {@link PrimitiveField} associated with a {@link SparseRecord} 
- * has a null state it will have a zero (0) value. 
+ * When a {@link PrimitiveField} associated with a {@link SparseRecord}
+ * has a null state it will have a zero (0) value.
  */
 abstract class PrimitiveField extends Field {
 
@@ -54,7 +54,7 @@ abstract class PrimitiveField extends Field {
 
 	/**
 	 * Invoked prior to setting the field's primitive value this
-	 * method will perform an immutable check and set to a non-null 
+	 * method will perform an immutable check and set to a non-null
 	 * state.
 	 */
 	final void updatingPrimitiveValue() {

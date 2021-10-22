@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.program.model.mem.MemBuffer;
  * dataTypes are not context sensitive and are suitable for use anywhere.
  * Others like dynamic structures need to create an instance that wraps the
  * data type.
- * 
+ *
  * It helps for situations where a data type must have a length.
  */
 public class DataTypeInstance {
@@ -33,7 +33,7 @@ public class DataTypeInstance {
 
 	/**
 	 * Create an instance of a data type with the given length.
-	 * 
+	 *
 	 * @param dt data type
 	 * @param length fixed length of the data type
 	 */

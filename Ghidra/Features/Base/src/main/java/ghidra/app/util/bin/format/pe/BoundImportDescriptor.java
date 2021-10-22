@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * A class to represent the 
+ * A class to represent the
  * <code>IMAGE_BOUND_IMPORT_DESCRIPTOR</code>
  * data structure defined in <b><code>winnt.h</code></b>.
  * <p>
@@ -100,7 +100,7 @@ public class BoundImportDescriptor implements StructConverter, ByteArrayConverte
     }
 
 	/**
-	 * Returns an offset to a string with the name of the imported DLL. 
+	 * Returns an offset to a string with the name of the imported DLL.
 	 * @return an offset to a string with the name
 	 */
     public short getOffsetModuleName() {
@@ -112,8 +112,8 @@ public class BoundImportDescriptor implements StructConverter, ByteArrayConverte
 	}
 
 	/**
-	 * Returns the number of IMAGE_BOUND_FORWARDER_REF 
-	 * structures that immediately follow this structure. 
+	 * Returns the number of IMAGE_BOUND_FORWARDER_REF
+	 * structures that immediately follow this structure.
 	 * @return the number of IMAGE_BOUND_FORWARDER_REF structures that immediately follow this structure
 	 */
     public short getNumberOfModuleForwarderRefs() {
@@ -184,7 +184,7 @@ public class BoundImportDescriptor implements StructConverter, ByteArrayConverte
 	 * @see ghidra.app.util.bin.ByteArrayConverter#toBytes(ghidra.util.DataConverter)
 	 */
 	public byte [] toBytes(DataConverter dc) {
-		byte [] bytes = new byte[IMAGE_SIZEOF_BOUND_IMPORT_DESCRIPTOR + 
+		byte [] bytes = new byte[IMAGE_SIZEOF_BOUND_IMPORT_DESCRIPTOR +
 			(numberOfModuleForwarderRefs*BoundImportForwarderRef.IMAGE_SIZEOF_BOUND_IMPORT_FORWARDER_REF)];
 		int pos = 0;
 		dc.getBytes(timeDateStamp, bytes, pos);

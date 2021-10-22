@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -163,7 +163,7 @@ public class DebugCOFFSymbol implements StructConverter {
             index += BinaryReader.SIZEOF_INT;
             if (longVal > 0) {
             	name = reader.readAsciiString(stringTableIndex + longVal);
-            } 
+            }
         }
 
         value              = reader.readInt  (index); index += BinaryReader.SIZEOF_INT;
@@ -299,7 +299,7 @@ public class DebugCOFFSymbol implements StructConverter {
     @Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
     	String structureName = StructConverterUtil.parseName(DebugCOFFSymbol.class);
-    	
+
     	Structure structure = new StructureDataType(structureName + "_" +numberOfAuxSymbols, 0);
     	structure.add(STRING, NAME_LENGTH, "name", null);
     	structure.add(DWORD, "value", null);

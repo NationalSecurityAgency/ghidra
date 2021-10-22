@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,7 +74,7 @@ public class RepositoryFile {
 
 	/**
 	 * Validate this repository file.
-	 * @throws IOException if the underlying item is not found or 
+	 * @throws IOException if the underlying item is not found or
 	 * associated repository is not valid
 	 */
 	private void validate() throws IOException {
@@ -157,7 +157,7 @@ public class RepositoryFile {
 	 * This method is only valid for an underlying FolderItem of type database.
 	 * @param version requested version or -1 for current version
 	 * @param minChangeDataVer minimum version to include within change data or -1 if not applicable.
-	 * @param user 
+	 * @param user
 	 * @return open BufferFile for read-only use.
 	 * @throws IOException
 	 */
@@ -212,7 +212,7 @@ public class RepositoryFile {
 	/**
 	 * Returns the length of this domain file.  This size is the minimum disk space
 	 * used for storing this file, but does not account for additional storage space
-	 * used to tracks changes, etc. 
+	 * used to tracks changes, etc.
 	 * @return file length
 	 * @throws IOException thrown if IO or access error occurs
 	 */
@@ -318,7 +318,7 @@ public class RepositoryFile {
 			throws IOException {
 		synchronized (fileSystem) {
 			validate();
-			repository.validateWritePrivilege(user); // don't allow checkout if read-only 
+			repository.validateWritePrivilege(user); // don't allow checkout if read-only
 			ItemCheckoutStatus coStatus = databaseItem.checkout(checkoutType, user, projectPath);
 			if (coStatus != null && checkoutType != CheckoutType.NORMAL && repositoryItem != null &&
 				repositoryItem.getFileID() == null) {

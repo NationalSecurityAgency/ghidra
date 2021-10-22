@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ abstract class EnumDBAdapter {
 	static final int ENUM_LAST_CHANGE_TIME_COL = EnumDBAdapterV1.V1_ENUM_LAST_CHANGE_TIME_COL;
 
 	/**
-	 * Gets an adapter for working with the enumeration data type database table. The adapter is based 
+	 * Gets an adapter for working with the enumeration data type database table. The adapter is based
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
@@ -159,14 +159,14 @@ abstract class EnumDBAdapter {
 	/**
 	 * Updates the enumeration data type table with the provided record.
 	 * @param record the new record
-	 * @param setLastChangedTime true means change the last change time in the record to the 
+	 * @param setLastChangedTime true means change the last change time in the record to the
 	 * current time before putting the record in the database.
 	 * @throws IOException if the database can't be accessed.
 	 */
 	abstract void updateRecord(DBRecord record, boolean setLastChangeTime) throws IOException;
 
 	/**
-	 * Remove the record for the given enumeration ID, and remove all of its 
+	 * Remove the record for the given enumeration ID, and remove all of its
 	 * associated value records.
 	 * @param enumID ID of enumerated data type to delete
 	 * @throws IOException if there was a problem accessing the database

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,13 +85,13 @@ public class DemanglerCmd extends BackgroundCommand {
 			return false; // error
 
 			// This produces too many messages for non-demangled symbols.  If we could
-			// figure out a way to tell which symbol are those which are mangled and 
-			// failing, then we should print those.  The problem is not knowing how to 
+			// figure out a way to tell which symbol are those which are mangled and
+			// failing, then we should print those.  The problem is not knowing how to
 			// tell a mangled from a non-mangled symbol.
 			// Msg.debug(this, "Unable to demangle name: " + mangled);
 		}
 		catch (Exception e) {
-			// Demangler IndexOutOfBoundsException that we're not sure how to fix 
+			// Demangler IndexOutOfBoundsException that we're not sure how to fix
 			setStatusMsg("Unable to demangle symbol: " + mangled + " at " + addr + ". Message: " +
 				e.getMessage());
 			return false;

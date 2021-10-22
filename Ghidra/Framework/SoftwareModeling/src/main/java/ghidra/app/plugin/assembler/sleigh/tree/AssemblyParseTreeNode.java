@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ public abstract class AssemblyParseTreeNode {
 
 	/**
 	 * Get the symbol for which this node is substituted
-	 * 
+	 *
 	 * For a branch, this is the LHS of the corresponding production. For a token, this is the
 	 * terminal whose tokenizer matched it.
 	 * @return the symbol
@@ -77,7 +77,7 @@ public abstract class AssemblyParseTreeNode {
 	protected abstract void print(PrintStream out, String indent);
 
 	/**
-	 * Check if this node yields a subconstructor resolution 
+	 * Check if this node yields a subconstructor resolution
 	 * @return true if this node yields a subconstructor resolution
 	 */
 	public boolean isConstructor() {

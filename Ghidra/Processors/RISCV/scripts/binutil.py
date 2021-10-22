@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 ## ###
 #  IP: GHIDRA
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
-#  
+#
 #       http://www.apache.org/licenses/LICENSE-2.0
-#  
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -2432,7 +2432,7 @@ def opcode_map_c(op):
         # BNEZ
         parse_CB(op, None)
     elif x == 7 and y == 2:
-        # 
+        #
         # print("CMAP: FSWSP SDSP SDSP")
         if op.name.find("fswsp") >= 0: parse_CSS(op, 32)
         elif op.name.find("sdsp") >= 0:
@@ -2822,11 +2822,11 @@ def find_gaps(op):
             # print("# BP = %s " % bp)
             op.bitpattern.append(bp)
             x = end + 1
-            
+
         else:
             # print("#END 1")
             break
-        
+
 
 def parse():
     sorted_opcodes = sorted(opcodes, key=lambda x: x[0])

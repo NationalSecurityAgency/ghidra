@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 
 /**
  * Tests the function comparison API and data model. Each test verifies that
- * the underlying data model looks correct following a particular API method 
+ * the underlying data model looks correct following a particular API method
  * call. There are a few tests that also exercise various features of the data
  * model directly.
  * <li>The API methods being tested: {@link FunctionComparisonService}</li>
@@ -279,7 +279,7 @@ public class CompareFunctionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 //==================================================================================================
 // Data Model tests
-//==================================================================================================	
+//==================================================================================================
 
 	@Test
 	public void testGetTargets() {
@@ -354,7 +354,7 @@ public class CompareFunctionsTest extends AbstractGhidraHeadedIntegrationTest {
 		builder.createMemory(".text", "0x1001000", 0x6600);
 		builder.setProperty(Program.DATE_CREATED, new Date(100000000)); // arbitrary, but consistent
 
-		// functions 
+		// functions
 		DataType dt = new ByteDataType();
 		Parameter p = new ParameterImpl(null, dt, builder.getProgram());
 		foo = builder.createEmptyFunction("Foo", "10018cf", 10, null, p);
@@ -372,7 +372,7 @@ public class CompareFunctionsTest extends AbstractGhidraHeadedIntegrationTest {
 		builder.createMemory(".text", "0x1001000", 0x6600);
 		builder.setProperty(Program.DATE_CREATED, new Date(100000000)); // arbitrary, but consistent
 
-		// functions 
+		// functions
 		DataType dt = new ByteDataType();
 		Parameter p = new ParameterImpl(null, dt, builder.getProgram());
 		one = builder.createEmptyFunction("One", "10017c5", 10, null, p);

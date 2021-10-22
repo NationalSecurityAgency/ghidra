@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * 
+ *
  */
 package ghidra.sleigh.grammar;
 
@@ -23,17 +23,17 @@ import java.util.*;
 
 /**
  * Utility class to Search for Files in any directory
- * All one needs is to call FileSearcher.gatherFilesFromDir and 
+ * All one needs is to call FileSearcher.gatherFilesFromDir and
  * provide the necessary file extension(s) and the list will be returned.
- * 
- * 
+ *
+ *
  *
  */
 public class FileSearcher {
 
 	/***
 	 * File Searcher Exception Handler...
-	 * 
+	 *
 	 */
 	public static class FileSearcherException extends Exception {
 		public static final long serialVersionUID = 0L;
@@ -41,12 +41,12 @@ public class FileSearcher {
 			super(ExceptionString);
 		}
 	}
-	
+
 	/***
 	 * Gather's all Files from the Directory
 	 * that have the passed in File Type Extension.
 	 * Returns this List of Files Found.
-	 * 
+	 *
 	 * @param currDirToSearch - The Directory to Search
 	 * @param currFileTypeExtList - The List of File Type Extensions to Search for
 	 * @param useRecursionInSearch - Determine whether to Search recursively or not
@@ -81,11 +81,11 @@ public class FileSearcher {
 		}
 		return foundFilesFromSearchList;
 	}
-	
+
 	/***
 	 * Performs the location of files of type FileTypeExtension passed in, whether recursively
 	 * or not, and stores these files in the currFilesFromSearchList parameter.
-	 * 
+	 *
 	 * @param currDirArray - The Directory Root Array of Files.
 	 * @param currFileTypeExtList - The List of File Type Extensions to Search for
 	 * @param currFilesFromSearchList - File List to add found Files to.
@@ -110,7 +110,7 @@ public class FileSearcher {
 			}
 		}
 	}
-	
+
 	/**
 	 * @param args
 	 */

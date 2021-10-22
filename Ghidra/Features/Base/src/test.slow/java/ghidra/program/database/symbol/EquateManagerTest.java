@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -128,7 +128,7 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 //		assertTrue(equatesFromTable.size() == 2);
 //		assertTrue(eqTest.equals(equatesFromTable.get(0)));
 //		assertTrue(eqTest2.equals(equatesFromTable.get(1)));
-//		
+//
 //		Equate eqTest3 = equateTable.createEquate("Test-3", 100);
 //		eqTest3.addReference(addr(100), 0);
 //		refs = eqTest.getReferences();
@@ -251,7 +251,7 @@ public class EquateManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		set.addRange(addr(300), addr(500));
 
 		AddressIterator iter = equateTable.getEquateAddresses(set);
-		// should not get 100, 110		
+		// should not get 100, 110
 
 		assertEquals(addr(10), iter.next());
 		assertEquals(addr(20), iter.next());

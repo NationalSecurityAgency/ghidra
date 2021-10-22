@@ -2,7 +2,7 @@
 
 <processor_spec>
   <programcounter register="PC"/>
-  
+
   <segmentop space="ram" userop="segment" farpointer="yes">
     <pcode>
       <input name="base" size="2"/>
@@ -21,7 +21,7 @@
       <set name="DECOMPILE_MODE" val="1"/>
     </tracked_set>
   </context_data>
-  
+
   <register_data>
     <register name="AF_" group="Alt"/>
     <register name="BC_" group="Alt"/>
@@ -29,7 +29,7 @@
     <register name="HL_" group="Alt"/>
   </register_data>
   <default_symbols>
-  
+
     <symbol name="RST0" address="ram:0000" entry="true"/>
     <symbol name="RST1" address="ram:0008" entry="true"/>
     <symbol name="RST2" address="ram:0010" entry="true"/>
@@ -38,9 +38,9 @@
     <symbol name="RST5" address="ram:0028" entry="true"/>
     <symbol name="RST6" address="ram:0030" entry="true"/>
     <symbol name="RST7" address="ram:0038" entry="true"/>
-    
+
     <symbol name="NMI_ISR" address="ram:0066" entry="true"/>
-    
+
     <symbol name="CNTLA0" address="io:0000" entry="false"/>
     <symbol name="CNTLA1" address="io:0001" entry="false"/>
     <symbol name="CNTLB0" address="io:0002" entry="false"/>
@@ -106,7 +106,7 @@
 
     <symbol name="OMCR" address="io:003e" entry="false"/>
     <symbol name="CR" address="io:003f" entry="false"/>
-  
+
   </default_symbols>
   <default_memory_blocks>
     <memory_block name="IO" start_address="io:0" length="0xFF" initialized="false"/>

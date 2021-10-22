@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -151,7 +151,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * repair any damaged locations
-	 * 
+	 *
 	 * @param taskMonitor for cancellation
 	 * @param clearInstSet locations to clear and repair
 	 */
@@ -172,7 +172,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Set function to non-returning
-	 * 
+	 *
 	 * @param cp program
 	 * @param entry function entry to change to non-returning
 	 */
@@ -192,7 +192,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Set calls to the entry point to non-returning calls
-	 * 
+	 *
 	 * @param cp current program
 	 * @param entry entry point of a non-returning function
 	 */
@@ -218,10 +218,10 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * find locations of potential damage from calls to non-returning functions
-	 * 
+	 *
 	 * @param prog program
 	 * @param entry address of start of non-returning function
-	 * 
+	 *
 	 * @return locations of potential instruction damage
 	 */
 	private AddressSet findPotentialDamagedLocations(Program prog, Address entry) {
@@ -244,11 +244,11 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Find locations that need repairing
-	 * 
+	 *
 	 * @param cp current program
 	 * @param entry non-returning function entry point
 	 * @return an address set of the locations that may need repairing
-	 * 
+	 *
 	 * @throws CancelledException if monitor is canceled
 	 */
 	protected AddressSet findRepairLocations(Program cp, Address entry) throws CancelledException {
@@ -440,7 +440,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 				FlowType destFlowType = destRef.getFlowType();
 
-				// check call or jump to non-returning destination			
+				// check call or jump to non-returning destination
 				if (destFlowType.isCall() || destFlowType.isJump()) {
 					// check target
 					// if non-Return, set-hit no return, and continue;
@@ -476,10 +476,10 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 	 * Check for issues around a calling instruction that indicate the called function
 	 * may not return.  Example issues: calls refs right after, bad instruction, data after,
 	 * data ref after.
-	 * 
+	 *
 	 * @param callInst - instruction to check
 	 * @param noReturnFunctions - set of functions that are already non-returning
-	 * 
+	 *
 	 * @return true if there are indications the called function does not return
 	 * @throws CancelledException if monitor cancelled
 	 */
@@ -554,7 +554,7 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 	/**
 	 * Return true if fallThru address has inconsistent (data/call) references to it.
 	 * Adds the reason for non-returning reason to no return locations list.
-	 * 
+	 *
 	 * @param addr location to check for read/write references
 	 * @param funcManager function manager
 	 * @param callingFunc function containing call that is being checked
@@ -610,12 +610,12 @@ public class FindNoReturnFunctionsAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Get the next defined function after the current address.
-	 * 
+	 *
 	 * Save the returned function along with the address
 	 * The nextFunction will be valid for any getNextFunction call for
 	 * addresses from lastGetNextFuncAddress to nextFunction,
 	 * which avoids an expensive funcMgr.getNextFunction() call
-	 * 
+	 *
 	 * @param addr address to find the next defined function after
 	 * @return return the next function if found, or null otherwise
 	 */

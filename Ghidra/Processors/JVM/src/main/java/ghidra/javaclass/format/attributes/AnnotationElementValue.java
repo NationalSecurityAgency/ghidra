@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.util.exception.DuplicateNameException;
  * value of an element-value pair. It is used to represent element values
  * in all attributes that describe annotations:
  * 		RuntimeVisibleAnnotations,
- * 		RuntimeInvisibleAnnotations, 
+ * 		RuntimeInvisibleAnnotations,
  * 		RuntimeVisibleParameterAnnotations, and
  * 		RuntimeInvisibleParameterAnnotations.
  * <p>
@@ -106,9 +106,9 @@ public class AnnotationElementValue implements StructConverter {
 	 * The tag item indicates the type of this annotation element-value pair.
 	 * <p>
 	 * The letters 'B', 'C', 'D', 'F', 'I', 'J', 'S', and 'Z' indicate a primitive type.
-	 * <p> 
+	 * <p>
 	 * These letters are interpreted as BaseType characters ( Table 4.2 ).
-	 * <p> 
+	 * <p>
 	 * The other legal values for tag are listed with their interpretations in Table 4.24.
 	 * @see DataTypeDecoder
 	 * @return the type of this annotation element-value pair
@@ -118,20 +118,20 @@ public class AnnotationElementValue implements StructConverter {
 	}
 
 	/**
-	 * The const_value_index item is used if the tag item is one of 
-	 * 		'B', 
-	 * 		'C', 
+	 * The const_value_index item is used if the tag item is one of
+	 * 		'B',
+	 * 		'C',
 	 * 		'D',
-	 * 		'F', 
-	 * 		'I', 
-	 * 		'J', 
-	 * 		'S', 
-	 * 		'Z', 
-	 * 		's'. 
+	 * 		'F',
+	 * 		'I',
+	 * 		'J',
+	 * 		'S',
+	 * 		'Z',
+	 * 		's'.
 	 * The value of the const_value_index item must be
-	 * a valid index into the constant_pool table. 
+	 * a valid index into the constant_pool table.
 	 * <p>
-	 * The constant_pool entry at that index must be of the correct entry type 
+	 * The constant_pool entry at that index must be of the correct entry type
 	 * for the field type designated by the tag item, as specified in Table 4.24.
 	 * @return a valid index into the constant_pool table
 	 */
@@ -185,7 +185,7 @@ public class AnnotationElementValue implements StructConverter {
 	}
 
 	/**
-	 * The annotation_value item is used if the tag item is '@'. 
+	 * The annotation_value item is used if the tag item is '@'.
 	 * The element_value structure represents a "nested" annotation.
 	 * @return a "nested" annotation
 	 */

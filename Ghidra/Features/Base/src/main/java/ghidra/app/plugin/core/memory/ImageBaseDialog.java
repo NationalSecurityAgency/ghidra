@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,14 +44,14 @@ class ImageBaseDialog extends DialogComponentProvider {
 	private Address currentAddr;
 	private Program program;
 	private PluginTool tool;
-	
+
 	ImageBaseDialog(PluginTool tool, Program program, Address currentAddr) {
 		super("Base Image Address", true, true, true, false);
 		this.program = program;
 		this.currentAddr = currentAddr;
 		this.tool = tool;
 		addr = currentAddr;
-		
+
 		addWorkPanel(createWorkPanel());
 		addOKButton();
 		addCancelButton();
@@ -60,13 +60,13 @@ class ImageBaseDialog extends DialogComponentProvider {
 		setHelpLocation(new HelpLocation(HelpTopics.MEMORY_MAP, "Set Image Base"));
 		setFocusComponent(textField);
 	}
-	
+
 	public void dispose() {
 		super.close();
 		tool = null;
 		program = null;
 	}
-		
+
 	private JComponent createWorkPanel() {
 		JPanel panel = new JPanel(new MiddleLayout());
 		textField = new JTextField(20);
@@ -80,7 +80,7 @@ class ImageBaseDialog extends DialogComponentProvider {
 			}
 		});
 		panel.add(textField);
-		
+
 		textField.getDocument().addDocumentListener(new DocumentListener() {
 			public void changedUpdate(DocumentEvent e) {
 				updateAddress();
@@ -94,7 +94,7 @@ class ImageBaseDialog extends DialogComponentProvider {
 		});
 		return panel;
 	}
-	
+
 	private void updateAddress() {
 		clearStatusText();
 		String addrString = textField.getText();
@@ -125,12 +125,12 @@ class ImageBaseDialog extends DialogComponentProvider {
 		}
 		close();
 	}
-	
+
 }
 class SetBaseCommand implements Command {
 	private Address addr;
 	private String msg;
-	
+
 	SetBaseCommand(Address addr) {
 		this.addr = addr;
 	}

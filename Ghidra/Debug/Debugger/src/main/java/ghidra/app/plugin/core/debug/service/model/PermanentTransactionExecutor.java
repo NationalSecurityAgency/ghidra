@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,7 +50,7 @@ public class PermanentTransactionExecutor {
 	 * This hash is borrowed from {@link HashMap}, except for the power-of-two masking, since I
 	 * don't want to force the thread count to be a power of two (though it probably is). In the
 	 * grand scheme of things, one division operation is small per transaction.
-	 * 
+	 *
 	 * @param sel the basis for selecting a thread
 	 * @return the selected executor
 	 */

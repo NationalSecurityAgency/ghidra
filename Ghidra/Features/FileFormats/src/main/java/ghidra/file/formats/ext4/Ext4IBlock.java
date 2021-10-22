@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,17 +23,17 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 public class Ext4IBlock implements StructConverter {
-	
+
 	private Ext4ExtentHeader header;
 	private List<Ext4ExtentIdx> indexEntries;
 	private List<Ext4Extent> extentEntries;
 	private byte[] extra;
-	
+
 	private boolean isExtentTree;
-	
+
 	/**
 	 * Reads an IBlock that is expected to contain extents
-	 * 
+	 *
 	 * @param provider {@link ByteProvider} to read from
 	 * @param offset offset of the extent header
 	 * @return new Ext4IBlock
@@ -49,7 +49,7 @@ public class Ext4IBlock implements StructConverter {
 	public Ext4IBlock(ByteProvider provider, boolean isExtentTree) throws IOException {
 		this( new BinaryReader( provider, true ), isExtentTree );
 	}
-	
+
 	public Ext4IBlock(BinaryReader reader, boolean isExtentTree) throws IOException {
 		this.isExtentTree = isExtentTree;
 		int count = 0;

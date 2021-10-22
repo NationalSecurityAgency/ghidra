@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.app.plugin.processors.sleigh.symbol.TripleSymbol;
 //Based on OperandValue#getValue()
 /**
  * Solves expressions of an operand value
- * 
+ *
  * These are a sort of named sub-expression, but they may also specify a shift in encoding.
  */
 public class OperandValueSolver extends AbstractExpressionSolver<OperandValue> {
@@ -38,10 +38,10 @@ public class OperandValueSolver extends AbstractExpressionSolver<OperandValue> {
 
 	/**
 	 * Obtains the "defining expression"
-	 * 
+	 *
 	 * This is either the symbols assigned defining expression, or the expression associated with
 	 * its defining symbol.
-	 * 
+	 *
 	 * @return the defining expression, or null if neither is available
 	 */
 	protected PatternExpression getDefiningExpression(OperandSymbol sym) {

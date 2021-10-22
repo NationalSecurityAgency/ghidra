@@ -14,12 +14,12 @@ define token opcode_word (16)
 	reg0_2             = (0, 2)
 	reg0_1             = (0, 1)
 	operation_size     = (2, 2)
-	
+
 	branch_sign        = (5, 5)
 	branch_external    = (4, 4)
 	branch_condition   = (0, 3)
 	external_condition = (0, 3)
-	
+
 	opcode6_9          = (6, 9)
 	opcode3_9          = (3, 9)
 	opcode2_9          = (2, 9)
@@ -129,7 +129,7 @@ cc: "ESC" is branch_external=0 & branch_condition=15 { local tmp = S == C; expor
 
 macro resultFlags(value) {
 	Z = value == 0;
-	S = value s< 0; 
+	S = value s< 0;
 }
 
 macro addition(first_w, first_r, second) {
@@ -144,14 +144,14 @@ macro addition(first_w, first_r, second) {
 macro comparison(first, second) {
 	local __val__ = first - second;
 	O = sborrow(first, second);
-	C = first < second; 
+	C = first < second;
 	resultFlags(__val__);
 }
 
 macro subtraction(first_w, first_r, second) {
 	local __val__ = first_r - second;
 	O = sborrow(first_r, second);
-	C = first_r < second; 
+	C = first_r < second;
 	resultFlags(__val__);
 	first_w = __val__;
 }
@@ -210,7 +210,7 @@ define pcodeop SoftwareInterrupt;
 
 :BEXT branchdest16, external_condition is (opcode6_9=0x0008 & branch_external=1 & external_condition) ... & branchdest16 {
 	goto branchdest16;
-}  
+}
 
 :CLRC is opcode0_9=0x0006 {
 	C = 0;
@@ -257,7 +257,7 @@ define pcodeop SoftwareInterrupt;
 
 :GSWD reg0_1 is opcode2_9=0x000C & reg0_1 {
 	local mask:2 = (zext(S) << 7) + (zext(Z) << 6) + (zext(O) << 5) + (zext(C) << 4);
-	reg0_1 = (mask << 8) + mask; 
+	reg0_1 = (mask << 8) + mask;
 }
 
 :HLT is opcode0_9=0x0000 {
@@ -330,14 +330,14 @@ define pcodeop SoftwareInterrupt;
 }
 
 :MVO@ reg0_2, reg3_5 is opcode6_9=0x0009 & reg0_2 & reg3_5 & (reg3_5=4 | reg3_5=5) & checkbranch {
-	local ptr:2 = reg3_5; 
+	local ptr:2 = reg3_5;
 	*ptr = reg0_2;
 	reg3_5 = reg3_5 + 1;
 	build checkbranch;
 }
 
 :MVO@ reg0_2, reg3_5 is opcode6_9=0x0009 & reg0_2 & reg3_5 & checkbranch {
-	local ptr:2 = reg3_5; 
+	local ptr:2 = reg3_5;
 	*ptr = reg0_2;
 	build checkbranch;
 }
@@ -489,7 +489,7 @@ define pcodeop SoftwareInterrupt;
 	S = tmpS;
 	Z = reg0_2 == 0;
 	build checkbranch;
-} 
+}
 
 :SLR reg0_2, 1 is opcode3_9=0x000C & reg0_2 & regval0_2 & checkbranch {
 	local tmpS = (regval0_2 & 0x0100) != 0;
@@ -497,7 +497,7 @@ define pcodeop SoftwareInterrupt;
 	S = tmpS;
 	Z = reg0_2 == 0;
 	build checkbranch;
-} 
+}
 
 :SWAP reg0_2, 1 is opcode3_9=0x0008 & reg0_2 & regval0_2 & checkbranch {
 	local tmpS = (regval0_2 & 0x8000) != 0;

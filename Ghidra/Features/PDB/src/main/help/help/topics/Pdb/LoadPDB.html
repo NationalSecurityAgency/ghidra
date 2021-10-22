@@ -8,31 +8,31 @@
 	</HEAD>
 
 	<BODY lang="EN-US">
-	
+
 	<H1>Load PDB</H1>
-	
-	
+
+
 	<H2><A name="SymbolServers"></A>Symbol Servers and Symbol Storage</H2>
 
 	<BLOCKQUOTE>
 		<P>In an effort to manage large collections of symbol files, Microsoft specified a scheme to organize
 		symbol files into directory structures.</P>
-		
-		<P>Ghidra can search Microsoft-style symbol servers (web-based HTTP/HTTPS) or local file system symbol 
+
+		<P>Ghidra can search Microsoft-style symbol servers (web-based HTTP/HTTPS) or local file system symbol
 		storage directories as well as unorganized, non-MS symbol storage directories for the PE executable's
 		matching PDB symbol file.</P>
-		
+
 		<UL>
 			<LI>Microsoft symbol servers / symbol storage directories:</LI>
 			<UL>
 				<LI>Organize symbol files (typically PDB files) into a directory hierarchy using information
 				from the symbol file being stored.</LI>
-				<LI><A name="OneLevel_SymbolDirectory"></A>In a single-level symbol server directory hierarchy, a symbol file named <CODE>myprogram.pdb</CODE> might be stored 
+				<LI><A name="OneLevel_SymbolDirectory"></A>In a single-level symbol server directory hierarchy, a symbol file named <CODE>myprogram.pdb</CODE> might be stored
 				as:</LI>
 				<UL>
 					<LI><CODE><FONT COLOR="BLUE">myprogram.pdb</FONT>/<FONT COLOR="RED">012345670123012301230123456789AB</FONT><FONT COLOR="GREEN">1</FONT>/<FONT COLOR="BLUE">myprogram.pdb</FONT></CODE>.</LI>
 					<LI><CODE><FONT COLOR="BLUE">myprogram.pdb</FONT></CODE> is the name of the file and the name of the initial subdirectory off the root of the server.</LI>
-					<LI><CODE><FONT COLOR="RED">012345670123012301230123456789AB</FONT></CODE> is the 32 character hexadecimal value (made up for this example) of the GUID 
+					<LI><CODE><FONT COLOR="RED">012345670123012301230123456789AB</FONT></CODE> is the 32 character hexadecimal value (made up for this example) of the GUID
 					"01234567-0123-0123-0123-0123456789AB" of the PDB file.</LI>
 					<UL><LI>This value might instead be a 8 character hexadecimal value of the ID of the symbol file if it was created by an older version of the tool chain.</LI></UL>
 					<LI><CODE><FONT COLOR="GREEN">1</FONT></CODE> is the hexadecimal value of the 'age' (build number) of the PDB file. Note: most PDB files will have an age value of 1.</LI>
@@ -42,7 +42,7 @@
 				first two letters of the symbol file's name are used to create a bucketing directory called "my" where all symbol files starting with
 				"my" are stored.</LI>
 				<UL><LI>A two-level symbol server directory hierarchy is indicated by the presence of a file called <CODE>index2.txt</CODE> in the root directory of
-				the hierarchy.</LI></UL> 
+				the hierarchy.</LI></UL>
 				<LI>Symbol storage directories are expected to have a <CODE>pingme.txt</CODE> file and a special directory called <CODE>000admin</CODE>.</LI>
 				<LI>Compressed symbol files (<CODE>*.pd_</CODE>):</LI>
 				<UL>
@@ -94,7 +94,7 @@
 			</UL>
 		</BLOCKQUOTE>
 	</BLOCKQUOTE>
-   
+
 	<BLOCKQUOTE>
 		<H3><A name="Symbol_Server_Config"></A>Symbol Server Config</H3>
 		<BLOCKQUOTE>
@@ -115,15 +115,15 @@
 				<LI>Search locations can be disabled by toggling the <b>enabled</b> checkbox at the beginning of the row.</LI>
 				<LI>A typical configuration: <BLOCKQUOTE><IMG border="0" src="images/SymbolServerConfig_Configured.png"></BLOCKQUOTE></LI>
 			</UL>
-		
+
 			<H4><A name="SymbolServerConfig_Add"></A><img border="0" src="images/Plus2.png">&nbsp;(Add)</H4>
 			<BLOCKQUOTE>
 				<P>Allows the user to add a location to the search path list.  Pick from the offered types of locations, or pick
 				a predefined location.</P>
 				<BLOCKQUOTE><IMG border="0" src="images/SymbolServerConfig_AddButtonMenu.png"></BLOCKQUOTE>
 				<UL>
-					<LI><B>Directory</B> - allows the user to pick an existing directory that will be searched for symbol files.  
-					See <A href="#OneLevel_SymbolDirectory">level 1</A>/<A href="#TwoLevel_SymbolDirectory">level 2</A> or 
+					<LI><B>Directory</B> - allows the user to pick an existing directory that will be searched for symbol files.
+					See <A href="#OneLevel_SymbolDirectory">level 1</A>/<A href="#TwoLevel_SymbolDirectory">level 2</A> or
 					<A href="#Unorganized_SymbolDirectory">unorganized</A> directory descriptions.</LI>
 					<LI><B>URL</B> - allows the user to enter a HTTP or HTTPS URL to a web-based symbol server.</LI>
 					<LI><B>Program's Import Location</B> - automatically references the directory from which the program was imported.</LI>
@@ -131,11 +131,11 @@
 					URLs and symbol directory locations to be added to the Ghidra configuration.  If no environment value is present,
 					the user can paste their own value into the text field.</LI>
 				</UL>
-				<P>All items listed after the menu dividing line are automatically added from resource files that have a 
+				<P>All items listed after the menu dividing line are automatically added from resource files that have a
 				<CODE>*.pdburl</CODE> extension.  The default file included with Ghidra is called <CODE>PDB_SYMBOL_SERVER_URLS.pdburl</CODE> and
 				is located in the <CODE>Ghidra/Configurations/Public_Release/data</CODE> directory under the Ghidra install directory.</P>
 			</BLOCKQUOTE>
-	
+
 			<H4><A name="SymbolServerConfig_Delete"></A><img border="0" src="images/error.png">&nbsp;(Delete)</H4>
 			<BLOCKQUOTE>
 				<P>Deletes the currently selected locations from the <b>Additional Search Paths</b> table.</P>
@@ -145,13 +145,13 @@
 			<BLOCKQUOTE>
 				<P>Moves the currently selected item up or down in the <b>Additional Search Paths</b> table.</P>
 			</BLOCKQUOTE>
-			
+
 			<H4><A name="SymbolServerConfig_Refresh_Status"></A><img border="0" src="images/reload3.png">&nbsp;(Refresh)</H4>
 			<BLOCKQUOTE>
 				<P>Updates the status column of the locations listed in the <b>Additional Search Paths</b>
 				table.  Symbol servers or storage locations that are unreachable or misconfigured will show an error status in that column.</P>
 			</BLOCKQUOTE>
-			
+
 			<H4><A name="SymbolServerConfig_Save"></A><img border="0" src="images/disk.png">&nbsp;(Save)</H4>
 			<BLOCKQUOTE>
 				<P>Saves the currently displayed search and storage locations to the preferences file.  This is shared between all Ghidra tools.</P>
@@ -204,14 +204,14 @@
 				PKI Certificate</A> for more details.</LI>
 			</UL>
 		</BLOCKQUOTE>
-		
+
 	<BR><BR><BR>
-     
+
 	<P class="relatedtopic">Related Topics:</P>
 	<UL>
 		<LI><P class="relatedtopic"><A href="PDB.htm">PDB (general)</A></P></LI>
 	</UL>
-    
+
 	<BR><BR><BR>
 
 	</BODY>

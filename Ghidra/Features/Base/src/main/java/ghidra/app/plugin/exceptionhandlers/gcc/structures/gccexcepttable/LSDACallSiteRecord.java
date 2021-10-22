@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,8 +50,8 @@ public class LSDACallSiteRecord extends GccAnalysisClass {
 
 	/**
 	 * Constructor for a call site record.
-	 * <br>Note: The <code>create(Address)</code> method must be called after constructing an 
-	 * LSDACallSiteRecord to associate it with an address before any of its "get..." methods are 
+	 * <br>Note: The <code>create(Address)</code> method must be called after constructing an
+	 * LSDACallSiteRecord to associate it with an address before any of its "get..." methods are
 	 * called.
 	 * @param monitor task monitor to see if the user has cancelled analysis.
 	 * @param program the program containing the call site record.
@@ -63,7 +63,7 @@ public class LSDACallSiteRecord extends GccAnalysisClass {
 	}
 
 	/**
-	 * Creates data for a call site record at the indicated address and creates a comment to 
+	 * Creates data for a call site record at the indicated address and creates a comment to
 	 * identify it as a call site record.
 	 * <br>Note: This method must get called before any of the "get..." methods.
 	 * @param addr the start (minimum address) of this call site record.
@@ -187,7 +187,7 @@ public class LSDACallSiteRecord extends GccAnalysisClass {
 
 	/**
 	 * Gets the next address indicating the address after this call site record.
-	 * @return the next address after this call site record or null if this record hasn't been 
+	 * @return the next address after this call site record or null if this record hasn't been
 	 * created at any address yet.
 	 */
 	Address getNextAddress() {

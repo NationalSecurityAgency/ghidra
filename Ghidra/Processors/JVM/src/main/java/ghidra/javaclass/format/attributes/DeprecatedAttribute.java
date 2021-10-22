@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,12 +30,12 @@ import java.io.IOException;
  * table of a ClassFile, field_info or method_info structure.
  * A class, interface, method, or field may be marked using a Deprecated attribute to
  * indicate that the class, interface, method, or field has been superseded.
- * 
+ *
  * A runtime interpreter or tool that reads the class file format, such as a compiler,
  * can use this marking to advise the user that a superceded class, interface, method,
  * or field is being referred to. The presence of a Deprecated attribute does not alter
  * the semantics of a class or interface.
- * 
+ *
  * The Deprecated attribute has the following format:
  * <pre>
  * 	Deprecated_attribute {

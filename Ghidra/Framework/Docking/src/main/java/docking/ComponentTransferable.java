@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,9 +29,9 @@ import ghidra.util.Msg;
  */
 class ComponentTransferable implements Transferable, ClipboardOwner {
 	private static final Logger LOGGER = LogManager.getLogger(ComponentTransferable.class);
-    
+
 	public static DataFlavor localComponentProviderFlavor = createLocalComponentProviderFlavor();
-    
+
 	// create a data flavor that is a tool button
 	private static DataFlavor createLocalComponentProviderFlavor() {
 		try {
@@ -41,12 +41,12 @@ class ComponentTransferable implements Transferable, ClipboardOwner {
 		}
 		return null;
 	}
-	
-	private static DataFlavor []flavors= 
+
+	private static DataFlavor []flavors=
 		{localComponentProviderFlavor};
-    
+
 	private ComponentTransferableData provider;
-    
+
 	/**
 	 * Constructs a new ComponentTransferable with the given CompProv object.
 	 */
@@ -60,25 +60,25 @@ class ComponentTransferable implements Transferable, ClipboardOwner {
 	public synchronized DataFlavor []getTransferDataFlavors() {
 		return flavors;
 	}
-    
+
 	/**
 	 * Return whether the specifed data flavor is supported.
 	 */
 	public boolean isDataFlavorSupported(DataFlavor f) {
 		return f == localComponentProviderFlavor;
 	}
-    
+
 	/**
 	 * Return the transfer data with the given data flavor.
 	 */
-	public synchronized Object getTransferData(DataFlavor f) 
+	public synchronized Object getTransferData(DataFlavor f)
 		throws UnsupportedFlavorException, IOException {
-            
+
 		if (f.equals(localComponentProviderFlavor)) {
 			return provider;
 		}
 		throw new UnsupportedFlavorException(f);
-        
+
 	}
 	/**
 	 * Get the string representation for this transferable.
@@ -87,7 +87,7 @@ class ComponentTransferable implements Transferable, ClipboardOwner {
     public String toString() {
 		return "ComponentProviderTransferable";
 	}
-    
+
 	/**
 	 * ClipboardOwner interface method.
 	 */

@@ -154,7 +154,7 @@ macro tzcntflags(input, output) {
  <loopend>
   tzcntflags(rm16, countTmp);
   Reg16 = countTmp;
- 
+
 }
 
 :TZCNT Reg32, rm32	is vexMode=0 & opsize=1 & $(PRE_F3) & byte=0x0F; byte=0xBC; Reg32 ... & check_Reg32_dest ... & rm32 {

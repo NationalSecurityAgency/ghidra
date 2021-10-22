@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * 
+ *
  */
 package ghidra.app.services;
 
@@ -30,13 +30,13 @@ import ghidra.util.Msg;
 import ghidra.util.task.TaskLauncher;
 
 /**
- * A collection of {@link FunctionComparison function comparison} 
+ * A collection of {@link FunctionComparison function comparison}
  * objects that describe how functions may be compared. Each comparison object
- * is a mapping of a function (source) to a list of functions (targets). 
+ * is a mapping of a function (source) to a list of functions (targets).
  * <p>
- * This model is intended to be used by the {@link FunctionComparisonProvider} 
+ * This model is intended to be used by the {@link FunctionComparisonProvider}
  * as the basis for its display. It should never be created manually, and should
- * only be accessed via the {@link FunctionComparisonService}. 
+ * only be accessed via the {@link FunctionComparisonService}.
  * <p>
  * Note: Subscribers may register to be informed of changes to this model via the
  * {@link FunctionComparisonModelListener comparison model listener} interface.
@@ -49,7 +49,7 @@ public class FunctionComparisonModel {
 	/**
 	 * Adds the given subscriber to the list of those to be notified of model
 	 * changes
-	 * 
+	 *
 	 * @param listener the model change subscriber
 	 */
 	public void addFunctionComparisonModelListener(FunctionComparisonModelListener listener) {
@@ -57,9 +57,9 @@ public class FunctionComparisonModel {
 	}
 
 	/**
-	 * Returns a list of all comparisons in the model, in sorted order by 
+	 * Returns a list of all comparisons in the model, in sorted order by
 	 * source function name
-	 * 
+	 *
 	 * @return a list of all comparisons in the model
 	 */
 	public List<FunctionComparison> getComparisons() {
@@ -71,7 +71,7 @@ public class FunctionComparisonModel {
 
 	/**
 	 * Replaces the current model with the comparisons provided
-	 * 
+	 *
 	 * @param comparisons the new comparison model
 	 */
 	public void setComparisons(List<FunctionComparison> comparisons) {
@@ -80,7 +80,7 @@ public class FunctionComparisonModel {
 
 	/**
 	 * Adds a single comparison to the model
-	 * 
+	 *
 	 * @param comparison the comparison to add
 	 */
 	public void addComparison(FunctionComparison comparison) {
@@ -90,7 +90,7 @@ public class FunctionComparisonModel {
 	/**
 	 * Returns a list of all targets in the model (across all comparisons) for
 	 * a given source function
-	 * 
+	 *
 	 * @param source the source function
 	 * @return list of associated target functions
 	 */
@@ -107,14 +107,14 @@ public class FunctionComparisonModel {
 
 	/**
 	 * Updates the model with a set of functions to compare. This will add the
-	 * functions to any existing {@link FunctionComparison comparisons} in the 
+	 * functions to any existing {@link FunctionComparison comparisons} in the
 	 * model and create new comparisons for functions not represented.
 	 * <p>
 	 * Note: It is assumed that when using this method, all functions can be
-	 * compared with all other functions; meaning each function will be added as 
+	 * compared with all other functions; meaning each function will be added as
 	 * both a source AND a target. To specify a specific source/target
 	 * relationship, use {@link #compareFunctions(Function, Function)}.
-	 * 
+	 *
 	 * @param functions the set of functions to compare
 	 */
 	public void compareFunctions(Set<Function> functions) {
@@ -132,7 +132,7 @@ public class FunctionComparisonModel {
 	 * Compares two functions. If a comparison already exists in the model for
 	 * the given source, the target will simply be added to it; otherwise a
 	 * new comparison will be created.
-	 * 
+	 *
 	 * @param source the source function
 	 * @param target the target function
 	 */
@@ -146,7 +146,7 @@ public class FunctionComparisonModel {
 	/**
 	 * Removes the given function from all comparisons in the model, whether
 	 * stored as a source or target
-	 * 
+	 *
 	 * @param function the function to remove
 	 */
 	public void removeFunction(Function function) {
@@ -174,7 +174,7 @@ public class FunctionComparisonModel {
 	/**
 	 * Removes all functions in the model that come from the given
 	 * program
-	 * 
+	 *
 	 * @param program the program to remove functions from
 	 */
 	public void removeFunctions(Program program) {
@@ -195,7 +195,7 @@ public class FunctionComparisonModel {
 
 	/**
 	 * Returns all source functions in the model
-	 * 
+	 *
 	 * @return a set of all source functions
 	 */
 	public Set<Function> getSourceFunctions() {
@@ -208,7 +208,7 @@ public class FunctionComparisonModel {
 
 	/**
 	 * Returns all target functions in the model
-	 * 
+	 *
 	 * @return a set of all target functions
 	 */
 	public Set<Function> getTargetFunctions() {
@@ -224,7 +224,7 @@ public class FunctionComparisonModel {
 
 	/**
 	 * Returns a set of all target functions for a given source
-	 * 
+	 *
 	 * @param source the source function to search for
 	 * @return the set of associated target functions
 	 */
@@ -244,7 +244,7 @@ public class FunctionComparisonModel {
 
 	/**
 	 * Creates a {@link FunctionComparison comparison} for each function
-	 * given, such that each comparison will have every other function as its 
+	 * given, such that each comparison will have every other function as its
 	 * targets. For example, given three functions, f1, f2, and f3, this is what the
 	 * model will look like after this call:
 	 * <li>comparison 1:</li>
@@ -262,23 +262,23 @@ public class FunctionComparisonModel {
 	 *    <li> source: f3</li>
 	 *    <li> targets: f1, f2</li>
 	 *    </ul>
-	 *   
-	 * If this model already contains a comparison for a given function 
-	 * (meaning the model contains a comparison with the function as the 
-	 * source) then that function is skipped. 
+	 *
+	 * If this model already contains a comparison for a given function
+	 * (meaning the model contains a comparison with the function as the
+	 * source) then that function is skipped.
 	 * <p>
-	 * Note that this could be a long-running process if many (thousands) 
-	 * functions are chosen to compare, hence the monitored task. In practice 
+	 * Note that this could be a long-running process if many (thousands)
+	 * functions are chosen to compare, hence the monitored task. In practice
 	 * this should never be the case, as users will likely not be
 	 * comparing more than a handful of functions at any given time.
-	 * 
+	 *
 	 * @param functions the set of functions to create comparisons for
 	 */
 	private void createNewComparisons(Set<Function> functions) {
 
 		TaskLauncher.launchModal("Creating Comparisons", (monitor) -> {
 
-			// Remove any functions that already have an comparison in the 
+			// Remove any functions that already have an comparison in the
 			// model; these will be ignored
 			functions.removeIf(f -> comparisons.stream()
 					.anyMatch(fc -> f.equals(fc.getSource())));
@@ -287,7 +287,7 @@ public class FunctionComparisonModel {
 			monitor.setMessage("Creating new comparisons");
 			monitor.initialize(functions.size());
 
-			// Save off all the existing targets in the model; these have to be 
+			// Save off all the existing targets in the model; these have to be
 			// added to any new comparisons
 			Set<Function> existingTargets = getTargetFunctions();
 
@@ -312,7 +312,7 @@ public class FunctionComparisonModel {
 	/**
 	 * Searches the model for a comparison that has the given function as its
 	 * source; if not found, a new comparison is created
-	 * 
+	 *
 	 * @param source the source function to search for
 	 * @return a function comparison object for the given source
 	 */
@@ -330,9 +330,9 @@ public class FunctionComparisonModel {
 	}
 
 	/**
-	 * Adds a given set of functions to every target list in every 
+	 * Adds a given set of functions to every target list in every
 	 * comparison in the model
-	 * 
+	 *
 	 * @param functions the functions to add
 	 */
 	private void addToExistingComparisons(Set<Function> functions) {

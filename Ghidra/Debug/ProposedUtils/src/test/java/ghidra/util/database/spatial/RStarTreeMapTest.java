@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -510,18 +510,18 @@ public class RStarTreeMapTest {
 		 * getParentOf(n)); DBIntRectNodeRecord split = super.doSplit(n);
 		 * System.out.println("  ParentAfter:  " + getParentOf(n)); System.out.println("  Node:  " +
 		 * n); System.out.println("  Split: " + split); return split; }
-		 * 
+		 *
 		 * @Override protected void doInsert(DBTreeRecord<?, ? extends IntRect> entry, int dstLevel,
 		 * BitSet reinsertedLevels) { DBIntRectNodeRecord oldRoot = root;
 		 * System.out.println("Inserting: " + entry + " into level " + dstLevel);
 		 * super.doInsert(entry, dstLevel, reinsertedLevels); if (oldRoot != root) {
 		 * System.out.println("  New root: " + root); } }
-		 * 
+		 *
 		 * @Override protected DBIntRectNodeRecord doOverflowTreatment(DBIntRectNodeRecord n, int
 		 * level, BitSet reinsertedLevels) { System.out.println( "Overflow on " + n + " at level " +
 		 * level + ". Already " + reinsertedLevels); return super.doOverflowTreatment(n, level,
 		 * reinsertedLevels); }
-		 * 
+		 *
 		 * @Override protected void doReInsert(DBIntRectNodeRecord n, int level, BitSet
 		 * reinsertedLevels) { System.out.println("Reinserting some children of " + n);
 		 * super.doReInsert(n, level, reinsertedLevels); }

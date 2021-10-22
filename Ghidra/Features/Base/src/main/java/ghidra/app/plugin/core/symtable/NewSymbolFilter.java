@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -412,7 +412,7 @@ public class NewSymbolFilter implements SymbolFilter {
 					if (cu == null) {
 						return true;
 					}
-					if (cu instanceof Instruction) {	// only include if no function 
+					if (cu instanceof Instruction) {	// only include if no function
 						return program.getFunctionManager().getFunctionAt(addr) == null;
 					}
 				}
@@ -870,7 +870,7 @@ public class NewSymbolFilter implements SymbolFilter {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private abstract static class AdvancedFilter extends Filter {
 
@@ -903,18 +903,18 @@ public class NewSymbolFilter implements SymbolFilter {
 		@Override
 		Element saveToXml() {
 			/*
-			 	<ADVANCED_FILTER NAME="foo" 
-			 	                
-					<FILTER NAME="one" 	
-							ACTIVE="false" 
-							INCLUDES_DEFAULTS="true" 
+			 	<ADVANCED_FILTER NAME="foo"
+
+					<FILTER NAME="one"
+							ACTIVE="false"
+							INCLUDES_DEFAULTS="true"
 							ONLY_CODE_SYMBOLS="false" />
-							
-					<FILTER NAME="two" 	
-							ACTIVE="false" 
-							INCLUDES_DEFAULTS="true" 
+
+					<FILTER NAME="two"
+							ACTIVE="false"
+							INCLUDES_DEFAULTS="true"
 							ONLY_CODE_SYMBOLS="false" />
-			 	                
+
 			 	</ADVANCED_FILTER>
 			 */
 

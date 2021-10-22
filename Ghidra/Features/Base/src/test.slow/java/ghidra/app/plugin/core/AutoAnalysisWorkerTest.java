@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -121,7 +121,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 	/**
 	 * Test running an AnalysisWorker from an ad hoc thread (i.e., Main)
 	 * with events ignored by analysis at various priority levels.
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@Test
 	public void testDisableIgnoreResumeAdhocThreadWorkerInvocation() throws Exception {
@@ -146,7 +146,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 	/**
 	 * Test running an AnalysisWorker from an adhoc thread (i.e., Main)
 	 * with events used by analysis at various priority levels.
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@Test
 	public void testDisableResumeAdhocThreadWorkerInvocation() throws Exception {
@@ -170,7 +170,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 	/**
 	 * Test running an AnalysisWorker from an analysis task thread
 	 * with events ignored by analysis at various priority levels.
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@Test
 	public void testDisableIgnoreResumeAnalysisTaskWorkerInvocation() throws Exception {
@@ -195,7 +195,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 	/**
 	 * Test running an AnalysisWorker from an analysis task thread
 	 * with events used by analysis at various priority levels.
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@Test
 	public void testDisableResumeAnalysisTaskWorkerInvocation() throws Exception {
@@ -220,7 +220,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 	/**
 	 * Test running an AnalysisWorker from a tool task thread
 	 * with events ignored by analysis at various priority levels.
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@Test
 	public void testDisableIgnoreResumeToolTaskWorkerInvocation() throws Exception {
@@ -244,9 +244,9 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 	}
 
 	/**
-	 * Test running an AnalysisWorker from a tool task thread 
+	 * Test running an AnalysisWorker from a tool task thread
 	 * with events used by analysis at various priority levels.
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@Test
 	public void testDisableResumeToolTaskWorkerInvocation() throws Exception {
@@ -271,7 +271,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 
 	/**
 	 * Test attempt to run an AnalysisWorker from swing thread
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@Test
 	public void testSwingThreadWorkerInvocation() throws Exception {
@@ -356,7 +356,7 @@ public class AutoAnalysisWorkerTest extends AbstractGhidraHeadedIntegrationTest 
 				public boolean analysisWorkerCallback(Program p, Object workerContext,
 						TaskMonitor monitor) throws Exception, CancelledException {
 
-					// Click Cancel on modal blocker dialog 
+					// Click Cancel on modal blocker dialog
 					Window blockerDialog = waitForWindow("CancelTest");
 					assertNotNull(blockerDialog);
 					pressButtonByText(blockerDialog, "Cancel");

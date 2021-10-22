@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -273,7 +273,7 @@ public class SleighDebugLogger {
 	/**
 	 * Append a binary formatted integer value with the specified range of bits
 	 * bracketed to the log.  A -1 value for both startbit and bitcount disable the
-	 * bit range bracketing. 
+	 * bit range bracketing.
 	 * NOTE: Method has no affect unless constructed with VERBOSE logging mode.
 	 * @param value integer value
 	 * @param startbit identifies the first most-significant bit within the
@@ -805,9 +805,9 @@ public class SleighDebugLogger {
 	//
 
 	/**
-	 * Start new pattern group for a specific sub-table.  
-	 * A null can correspond to a top-level constructor or 
-	 * low level complex pattern (AND, OR).  All committed unnamed groups 
+	 * Start new pattern group for a specific sub-table.
+	 * A null can correspond to a top-level constructor or
+	 * low level complex pattern (AND, OR).  All committed unnamed groups
 	 * with the same parent group will be combined.
 	 * @param name group name or null for unnamed group
 	 */

@@ -7,7 +7,7 @@ macro pclmul(src1, src2, dest) {
 
     <start>
     if (i > 63:4) goto <end>;
-        if ((src1 & (1 << i)) == 0) goto <skip>;   
+        if ((src1 & (1 << i)) == 0) goto <skip>;
             temp = temp ^ (src2 << i);
     <skip>
         i = i+1;
@@ -49,22 +49,22 @@ macro pclmul(src1, src2, dest) {
 	if (imm8_0:1) goto <src1_b>;
 		src1:16 = zext(XmmReg1[0,64]);
 		goto <done1>;
-		
+
 	<src1_b>
 		src1 = zext(XmmReg1[64,64]);
-	
+
 	<done1>
-		
+
 	if (imm8_4:1) goto <src2_b>;
 		src2:16 = zext(XmmReg2[0,64]);
 		goto <done2>;
-		
+
 	<src2_b>
 		src2 = zext(XmmReg2[64,64]);
-		
+
 	<done2>
-	
-    pclmul(src1,src2,XmmReg1); 
+
+    pclmul(src1,src2,XmmReg1);
 }
 
 :PCLMULQDQ XmmReg, m128, imm8  is vexMode=0 & $(PRE_66) & byte=0x0f; byte=0x3a; byte=0x44; XmmReg ... & m128; imm8 & imm8_4 & imm8_0
@@ -72,21 +72,21 @@ macro pclmul(src1, src2, dest) {
 	if (imm8_0:1) goto <src1_b>;
 		src1:16 = zext(XmmReg[0,64]);
 		goto <done1>;
-		
+
 	<src1_b>
 		src1 = zext(XmmReg[64,64]);
-	
+
 	<done1>
-        local m:16 = m128;		
+        local m:16 = m128;
 	if (imm8_4:1) goto <src2_b>;
 		src2:16 = zext(m[0,64]);
 		goto <done2>;
-		
+
 	<src2_b>
 		src2 = zext(m[64,64]);
-		
+
 	<done2>
-	
+
      pclmul(src1,src2,XmmReg);
 }
 
@@ -127,21 +127,21 @@ macro pclmul(src1, src2, dest) {
 	if (imm8_0:1) goto <src1_b>;
 		src1:16 = zext(vexVVVV_XmmReg[0,64]);
 		goto <done1>;
-		
+
 	<src1_b>
 		src1 = zext(vexVVVV_XmmReg[64,64]);
-	
+
 	<done1>
-		
+
 	if (imm8_4:1) goto <src2_b>;
 		src2:16 = zext(XmmReg2[0,64]);
 		goto <done2>;
-		
+
 	<src2_b>
 		src2 = zext(XmmReg2[64,64]);
-		
+
 	<done2>
-	
+
     pclmul(src1,src2,XmmReg1);
 	YmmReg1 = zext(XmmReg1);
 }
@@ -151,22 +151,22 @@ macro pclmul(src1, src2, dest) {
 	if (imm8_0:1) goto <src1_b>;
 		src1:16 = zext(vexVVVV_XmmReg[0,64]);
 		goto <done1>;
-		
+
 	<src1_b>
 		src1 = zext(vexVVVV_XmmReg[64,64]);
-	
+
 	<done1>
 
         local m:16 = m128;
 	if (imm8_4:1) goto <src2_b>;
 		src2:16 = zext(m[0,64]);
 		goto <done2>;
-		
+
 	<src2_b>
 		src2 = zext(m[64,64]);
-		
+
 	<done2>
-	
+
     pclmul(src1,src2,XmmReg1);
 	YmmReg1 = zext(XmmReg1);
 }

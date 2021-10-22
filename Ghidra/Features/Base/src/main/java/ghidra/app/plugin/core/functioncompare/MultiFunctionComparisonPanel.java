@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,16 +34,16 @@ import ghidra.program.model.listing.Function;
 /**
  * Extends the basic {@link FunctionComparisonPanel one-to-one comparison panel}
  * to allow a many-to-many relationship. The panel provides a pair of combo
- * boxes above the function display area that allows users to select which 
+ * boxes above the function display area that allows users to select which
  * functions are to be compared.
  * <p>
  * Throughout this class the terms <code>source</code> and <code>target</code>
- * are used when referencing functions. This is because the model that backs 
+ * are used when referencing functions. This is because the model that backs
  * this panel maintains a relationship between the functions being compared
  * such that each source function can only be compared to a specific set
  * of target functions. For all practical purposes, the source functions
  * appear in the left-side panel and targets appear on the right.
- *    
+ *
  */
 public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 
@@ -62,7 +62,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param provider the comparison provider associated with this panel
 	 * @param tool the active plugin tool
 	 */
@@ -76,13 +76,13 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 		add(choicePanel, BorderLayout.NORTH);
 
 		// For the multi-panels we don't need to show the title of each
-		// comparison panel because the name of the function/data being shown 
+		// comparison panel because the name of the function/data being shown
 		// is already visible in the combo box
 		getComparisonPanels().forEach(p -> p.setShowTitles(false));
 	}
 
 	/**
-	 * Clears out the source and targets lists and reloads them to 
+	 * Clears out the source and targets lists and reloads them to
 	 * ensure that they reflect the current state of the data model. Any
 	 * currently-selected list items will be restored after the lists
 	 * are reloaded.
@@ -96,7 +96,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 		loadFunctions(selectedSource, (Function) targetFunctionsCBModel.getSelectedItem());
 		updateTabText();
 
-		// Fire a notification to update the UI state; without this the 
+		// Fire a notification to update the UI state; without this the
 		// actions would not be properly enabled/disabled
 		tool.contextChanged(provider);
 		tool.setStatusInfo("function comparisons updated");
@@ -104,7 +104,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 
 	/**
 	 * Returns the combo box (source or target) which has focus
-	 * 
+	 *
 	 * @return the focused component
 	 */
 	public JComboBox<Function> getFocusedComponent() {
@@ -116,7 +116,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 
 	/**
 	 * Returns the source combo box
-	 * 
+	 *
 	 * @return the source combo box
 	 */
 	public JComboBox<Function> getSourceComponent() {
@@ -125,7 +125,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 
 	/**
 	 * Returns the target combo box
-	 * 
+	 *
 	 * @return the target combo box
 	 */
 	public JComboBox<Function> getTargetComponent() {
@@ -156,10 +156,10 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 	}
 
 	/**
-	 * Clears out and reloads the target function list with functions 
-	 * associated with the given source function. Any selection currently made 
+	 * Clears out and reloads the target function list with functions
+	 * associated with the given source function. Any selection currently made
 	 * on the list will be reestablished.
-	 * 
+	 *
 	 * @param source the selected source function
 	 */
 	private void reloadTargetList(Function source) {
@@ -199,7 +199,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 	 * Sets a given function to be the selected item in a given combo
 	 * box. If the function isn't found, the first item in the box is
 	 * set.
-	 * 
+	 *
 	 * @param cb the combo box
 	 * @param selection the function to set
 	 */
@@ -229,7 +229,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 	 * since a combo box may show functions from any number of programs, and
 	 * the default is to simply show the function name<br>
 	 * eg: "init (notepad)"<br>
-	 * 
+	 *
 	 * @return the source panel
 	 */
 	private JPanel createSourcePanel() {
@@ -254,7 +254,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 
 				updateTabText();
 
-				// Fire a notification to update the UI state; without this the 
+				// Fire a notification to update the UI state; without this the
 				// actions would not be properly enabled/disabled
 				tool.contextChanged(provider);
 			}
@@ -272,7 +272,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 	 * since a combo box may show functions from any number of programs, and
 	 * the default is to simply show the function name<br>
 	 * eg: "init (notepad)"<br>
-	 * 
+	 *
 	 * @return the target panel
 	 */
 	private JPanel createTargetPanel() {
@@ -293,7 +293,7 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 
 				updateTabText();
 
-				// Fire a notification to update the UI state; without this the 
+				// Fire a notification to update the UI state; without this the
 				// actions would not be properly enabled/disabled
 				tool.contextChanged(provider);
 			}
@@ -314,8 +314,8 @@ public class MultiFunctionComparisonPanel extends FunctionComparisonPanel {
 				boolean isSelected, boolean cellHasFocus) {
 
 			if (value == null) {
-				// It's possible during a close program operation to have this 
-				// renderer called with a null value. If so, we can't get the 
+				// It's possible during a close program operation to have this
+				// renderer called with a null value. If so, we can't get the
 				// function so just use the default renderer.
 				return super.getListCellRendererComponent(list, value, index, isSelected,
 					cellHasFocus);

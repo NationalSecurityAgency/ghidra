@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,25 +21,25 @@ import ghidra.graph.*;
 
 /**
  * Computes a topological sorting of the vertices in a directed acyclic graph (DAG)
- * 
+ *
  * <p>
  * This produces a list of vertices in the graph s.t. for every pair (v, w) where v precedes w, it
  * can never be the case that the edge w -> v exists in the graph. Optionally, this sorter may also
  * require that the list is unique. Here are some examples:
- * 
+ *
  * <p>
  * A-->B-->C yields simply [A, B, C]
- * 
+ *
  * <p>
  * A, B-->C yields either [A, B, C], [B, A, C], or [B, C, A] If a total ordering is required, this
  * example causes the algorithm to fail, since the solution is not unique.
- * 
+ *
  * <p>
  * A-->B-->C-->A fails always, because the graph contains a cycle, i.e., not a DAG.
- * 
+ *
  * <p>
  * A-->B-->D, A-->C-->D yields either [A, B, C, D] or [A, C, B, D]
- * 
+ *
  * @see {@link https://en.wikipedia.org/wiki/Topological_sorting}
  */
 public class TopologicalSorter<V, E extends GEdge<V>> {
@@ -50,7 +50,7 @@ public class TopologicalSorter<V, E extends GEdge<V>> {
 
 	/**
 	 * Apply a topological sort to the given graph
-	 * 
+	 *
 	 * @param graph the graph
 	 * @param requireTotal true to require a unique solution
 	 * @note if a unique solution is not requested, this algorithm will choose a solution
@@ -65,7 +65,7 @@ public class TopologicalSorter<V, E extends GEdge<V>> {
 
 	/**
 	 * Execute the algorithm an obtain the list of vertices, in topological order
-	 * 
+	 *
 	 * @return the sorted list of vertices
 	 * @throws SorterException if the graph is cyclic, or if {@code requireTotal} is set and the
 	 *             solution is not unique.
@@ -85,7 +85,7 @@ public class TopologicalSorter<V, E extends GEdge<V>> {
 
 	/**
 	 * Check that the solution is unique
-	 * 
+	 *
 	 * @throws SorterException if the solution is not unique
 	 */
 	protected void checkTotal() throws SorterException {
@@ -105,7 +105,7 @@ public class TopologicalSorter<V, E extends GEdge<V>> {
 
 	/**
 	 * Visit a vertex
-	 * 
+	 *
 	 * @param n the vertex
 	 * @throws SorterException if a cycle is detected
 	 */
@@ -115,7 +115,7 @@ public class TopologicalSorter<V, E extends GEdge<V>> {
 
 	/**
 	 * Visit a vertex, checking for a cycle
-	 * 
+	 *
 	 * @param n the vertex
 	 * @param temp a list of previously-visited vertices on this path
 	 * @throws SorterException if a cycle is detected

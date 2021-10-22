@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.util.*;
 
 public class FacePatterns {
 
-	private int maxDim;					// Maximum number of dits to have to be accepted as a pattern. 
+	private int maxDim;					// Maximum number of dits to have to be accepted as a pattern.
 	private HashSet<Face> patterns;		// Patterns of ditted bit sequences (faces).
 	private int sampleSize;				// Maximum number of sequences to try and cluster at once
 
@@ -105,7 +105,7 @@ public class FacePatterns {
 		}
 		return;
 	}
-	
+
 	//Recursively creates the edge list under a node in a DAG.
 	static private HashSet<String> edgize(Face node) {
 		HashSet<String> result = new HashSet<String>();
@@ -127,7 +127,7 @@ public class FacePatterns {
 			writer.write(line + "\n");
 		}
 	}
-	
+
 	//Sends a list of faces to a file (as a list of ditted bit sequences).
 	public void outputTopPatterns(Writer writer) throws IOException {
 		for (Face f : patterns) {

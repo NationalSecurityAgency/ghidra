@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,14 +26,14 @@ import ghidra.util.Msg;
 
 /**
  * Template for a repeated Dynamic Data Type.
- * 
+ *
  * Base abstract data type for a Dynamic structure data type that contains
  * some number of repeated data types.  After each data type, including the header
  * there is a terminator value which specifies whether there are any more data structures
  * following.  TerminatorValue can be 1,2,4,or 8 bytes.
- * 
+ *
  * The dynamic structure looks like this:
- * 
+ *
  *    RepeatDynamicDataType
  *       Header
  *       TerminatorV1
@@ -43,7 +43,7 @@ import ghidra.util.Msg;
  *       ...
  *       RepDTN-1
  *       TerminatorVN  == TerminateValue
- *       
+ *
  */
 public abstract class RepeatedDynamicDataType extends DynamicDataType {
 
@@ -55,7 +55,7 @@ public abstract class RepeatedDynamicDataType extends DynamicDataType {
 
 	/**
 	 * Construct Repeat Dynamic Data Type Template.
-	 * 
+	 *
 	 * @param name            name of this data type
 	 * @param description     description of the data type
 	 * @param header          header data type

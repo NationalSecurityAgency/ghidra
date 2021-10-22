@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,11 +28,11 @@ import ghidra.program.util.ProgramSelection;
  * will apply the perspective information, if any has been specified.
  * <p>
  * This settings object is what exists when a graph is being displayed.  Changing attributes on
- * this settings object will apply those values directly to the graph.  Contrastingly, when a 
+ * this settings object will apply those values directly to the graph.  Contrastingly, when a
  * graph is being built, then a different type of {@link FunctionGraphViewSettings} object is in
- * place and changing attributes of that object will apply the changed value after the graph 
+ * place and changing attributes of that object will apply the changed value after the graph
  * has been loaded.
- * 
+ *
  * @see PendingFunctionGraphViewSettings
  */
 class CurrentFunctionGraphViewSettings extends FunctionGraphViewSettings {

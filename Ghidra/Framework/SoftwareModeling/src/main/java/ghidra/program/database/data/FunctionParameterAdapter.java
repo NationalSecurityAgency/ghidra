@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ abstract class FunctionParameterAdapter {
 		FunctionParameterAdapterV1.V1_PARAMETER_DT_LENGTH_COL;
 
 	/**
-	 * Gets an adapter for working with the function definition parameters database table. The adapter is based 
+	 * Gets an adapter for working with the function definition parameters database table. The adapter is based
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
@@ -87,7 +87,7 @@ abstract class FunctionParameterAdapter {
 	}
 
 	/**
-	 * Upgrades the Function Definition Parameters table from the oldAdapter's version to the 
+	 * Upgrades the Function Definition Parameters table from the oldAdapter's version to the
 	 * current version.
 	 * @param handle handle to the database whose table is to be upgraded to a newer version.
 	 * @param oldAdapter the adapter for the existing table to be upgraded.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -178,7 +178,7 @@ public class DefaultTraceRecorderOnto741 implements TraceRecorder {
 
 	/**
 	 * Get accessible memory, as viewed in the trace
-	 * 
+	 *
 	 * @param pred an additional predicate applied via "AND" with accessibility
 	 * @return the computed set
 	 */
@@ -473,7 +473,7 @@ public class DefaultTraceRecorderOnto741 implements TraceRecorder {
 			 * abstract machine is involved, it is probably more fitting to present separate
 			 * containers (likely provided by separate models) than to present both the physical and
 			 * abstract machine in the same target.
-			 * 
+			 *
 			 * <p>
 			 * TODO: Should I formalize that only one register container is present in a recorded
 			 * thread? This seems counter to the model's flexibility. Traces allow polyglot
@@ -651,7 +651,7 @@ public class DefaultTraceRecorderOnto741 implements TraceRecorder {
 
 		/**
 		 * Inform the recorder the given object is no longer valid
-		 * 
+		 *
 		 * @param invalid the invalidated object
 		 * @return true if this recorder should be invalidated, too
 		 */

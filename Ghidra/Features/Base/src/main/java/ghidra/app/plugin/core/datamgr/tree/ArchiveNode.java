@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -202,11 +202,11 @@ public class ArchiveNode extends CategoryNode {
 	}
 
 	/**
-	 * Finds the node that represents the given category.  
-	 * 
+	 * Finds the node that represents the given category.
+	 *
 	 * <P>Children <b>will not</b> be loaded when searching for the node.  This allows clients
 	 * to search for data types of interest, only updating the tree when the nodes are loaded.
-	 * 
+	 *
 	 * @param localCategory the category of interest
 	 * @return the node if loaded; null if not loaded
 	 */
@@ -216,7 +216,7 @@ public class ArchiveNode extends CategoryNode {
 
 	/**
 	 * Finds the node that represents the given category.
-	 * 
+	 *
 	 * @param localCategory the category of interest
 	 * @param loadChildren true will load child nodes when searching; false will not load children
 	 * @return the node

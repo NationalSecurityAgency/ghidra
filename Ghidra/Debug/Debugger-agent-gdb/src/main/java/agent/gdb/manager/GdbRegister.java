@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package agent.gdb.manager;
 
 /**
  * A handle/descriptor to a GDB register
- * 
+ *
  * This contains a register's name and number
  */
 public class GdbRegister implements Comparable<GdbRegister> {
@@ -27,7 +27,7 @@ public class GdbRegister implements Comparable<GdbRegister> {
 
 	/**
 	 * Construct a new register descriptor
-	 * 
+	 *
 	 * @param name the register's name
 	 * @param number the GDB-assigned register number
 	 * @param the size in bytes
@@ -40,7 +40,7 @@ public class GdbRegister implements Comparable<GdbRegister> {
 
 	/**
 	 * Get the register's name
-	 * 
+	 *
 	 * @return the name
 	 */
 	public String getName() {
@@ -49,7 +49,7 @@ public class GdbRegister implements Comparable<GdbRegister> {
 
 	/**
 	 * Get the register's GDB-assigned number
-	 * 
+	 *
 	 * @return the number
 	 */
 	public int getNumber() {
@@ -58,7 +58,7 @@ public class GdbRegister implements Comparable<GdbRegister> {
 
 	/**
 	 * Get the register's size in bytes
-	 * 
+	 *
 	 * @return the size
 	 */
 	public int getSize() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	protected CompositeEditorActionManager actionMgr;
 
 	/**
-	 * Construct a new stack editor provider. 
+	 * Construct a new stack editor provider.
 	 * @param plugin owner of this provider
 	 * @param program program for data type; may be null if data type
 	 * is part of an archive
@@ -270,7 +270,7 @@ public abstract class CompositeEditorProvider extends ComponentProviderAdapter
 	/**
 	 * Prompts the user if the editor has unsaved changes. Saves the changes if
 	 * the user indicates to do so.
-	 * @return 0 if the user canceled; 1 if the user saved changes; 
+	 * @return 0 if the user canceled; 1 if the user saved changes;
 	 * 2 if the user did not to save changes; 3 if there was an error when
 	 * the changes were applied.
 	 */

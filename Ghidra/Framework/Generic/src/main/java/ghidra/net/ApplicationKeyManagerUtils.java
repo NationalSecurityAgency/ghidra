@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,13 +64,13 @@ public class ApplicationKeyManagerUtils {
 	static {
 		/**
 		 * Bouncy Castle uses its BCStyle for X500Names which reverses Distingushed Name ordering.
-		 * This is resolved by setting the default to RFC4519 style to ensure compatibility with 
+		 * This is resolved by setting the default to RFC4519 style to ensure compatibility with
 		 * Java's internal implementation of X500Name.
 		 * <p>
 		 * Note that this could become an issue if this static default is adjusted elsewhere.
 		 * It may be neccessary to set this at the start of all methods which rely on any of the
 		 * BC code for X500 certificate processing.
-		 * 
+		 *
 		 */
 		X500Name.setDefaultStyle(RFC4519Style.INSTANCE);
 	}
@@ -262,7 +262,7 @@ public class ApplicationKeyManagerUtils {
 
 	/**
 	 * Export X.509 certificates to the specified outFile.
-	 * @param certificates certificates to be stored 
+	 * @param certificates certificates to be stored
 	 * @param outFile output file
 	 * @throws IOException if error occurs writing to outFile
 	 * @throws CertificateEncodingException if error occurs while encoding certificate data
@@ -292,7 +292,7 @@ public class ApplicationKeyManagerUtils {
 
 	/**
 	 * Generate a new {@link X509Certificate} with RSA {@link KeyPair} and create/update a {@link KeyStore}
-	 * optionally backed by a keyFile.  
+	 * optionally backed by a keyFile.
 	 * @param alias entry alias with keystore
 	 * @param dn distinguished name (e.g., "CN=Ghidra Test, O=Ghidra, OU=Test, C=US" )
 	 * @param durationDays number of days which generated certificate should remain valid
@@ -356,21 +356,21 @@ public class ApplicationKeyManagerUtils {
 			long durationMs = (long) durationDays * MILLISECONDS_PER_DAY;
 			Date notAfter = new Date(notBefore.getTime() + durationMs);
 			BigInteger serialNumber = new BigInteger(128, random);
-			
+
 //			JcaX509ExtensionUtils x509Utils = new JcaX509ExtensionUtils();
-			
+
 			X509v3CertificateBuilder certificateBuilder = new X509v3CertificateBuilder(caX500Name,
 				serialNumber, notBefore, notAfter, x500Name, bcPk);
 			certificateBuilder
 //					.addExtension(Extension.subjectKeyIdentifier, true, x509Utils.createSubjectKeyIdentifier(bcPk))
 					.addExtension(Extension.keyUsage, true, keyUsage);
-			
+
 			if (caEntry == null) {
 				certificateBuilder
 						.addExtension(Extension.basicConstraints, true, new BasicConstraints(1));
 //						.addExtension(Extension.authorityKeyIdentifier, true, x509Utils.createAuthorityKeyIdentifier(bcPk));
 			}
-			
+
 			ContentSigner contentSigner =
 				new JcaContentSignerBuilder(SIGNING_ALGORITHM).build(issuerKey);
 
@@ -426,7 +426,7 @@ public class ApplicationKeyManagerUtils {
 
 	/**
 	 * Generate a new {@link X509Certificate} with RSA {@link KeyPair} and create/update a {@link KeyStore}
-	 * optionally backed by a keyFile.  
+	 * optionally backed by a keyFile.
 	 * @param alias entry alias with keystore
 	 * @param dn distinguished name (e.g., "CN=Ghidra Test, O=Ghidra, OU=Test, C=US" )
 	 * @param durationDays number of days which generated certificate should remain valid

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -295,7 +295,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for breakpoint events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -308,7 +308,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for exception events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -321,7 +321,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for method entry events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -333,7 +333,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for method exit events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -345,7 +345,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for class prepared events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -366,7 +366,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for class unload events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -378,7 +378,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for monitor contended entered events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -391,7 +391,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for monitor contended enter events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -404,7 +404,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for monitor waited events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -417,7 +417,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for monitor waited events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -429,7 +429,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for step events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -442,7 +442,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for watchpoint events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -455,7 +455,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for access watchpoint events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -468,7 +468,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for watchpoint modified events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -481,7 +481,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for thread death events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -495,7 +495,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for thread start events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -509,7 +509,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for vm death events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -522,7 +522,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for vm disconnect events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return
@@ -536,7 +536,7 @@ public class JdiEventHandler implements Runnable {
 
 	/**
 	 * Handler for vm start events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return

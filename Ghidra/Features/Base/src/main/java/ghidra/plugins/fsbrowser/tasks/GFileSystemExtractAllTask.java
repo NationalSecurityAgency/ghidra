@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,7 +85,7 @@ public class GFileSystemExtractAllTask extends AbstractFileExtractorTask {
 					"<div style='margin-bottom: 20pt;'>Elapsed time: " + DateUtils.formatDuration(elapsed) + "</div>" +
 					"<table style='margin-bottom: 20pt;' width='100%'>" +
 					"<tr><td></td><td>Files</td><td>Directories</td><td>Bytes</td></tr>" +
-					"<tr><td>Successful</td><td>" + getTotalFilesExportedCount() + "</td><td>" + getTotalDirsExportedCount() + 
+					"<tr><td>Successful</td><td>" + getTotalFilesExportedCount() + "</td><td>" + getTotalDirsExportedCount() +
 						"</td><td>" + FileUtilities.formatLength(getTotalBytesExportedCount()) + "</td></tr>" +
 					"<tr><td>Failed</td><td>" + errorredFiles.size() + "</td><td></td><td></td></tr>" +
 					"</table>" +

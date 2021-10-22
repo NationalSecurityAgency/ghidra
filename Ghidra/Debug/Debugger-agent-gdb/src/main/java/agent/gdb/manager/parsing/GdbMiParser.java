@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,12 +28,12 @@ import agent.gdb.manager.parsing.GdbParsingUtils.GdbParseError;
 
 /**
  * A parser for GDB/MI records
- * 
+ *
  * While this is a much more machine-friendly format, it has some interesting idiosyncrasies that
  * make it annoying even within a machine. This class attempts to impose a nice abstraction of these
  * records while dealing with nuances particular to certain records, but in general. Examine GDB's
  * documentation for some example records.
- * 
+ *
  * There seem to be one primitive type and two (and a half?) aggregate types in these records. The
  * one primitive type is a string. The aggregates are lists and maps, and maybe "field lists" which
  * behave like multi-valued maps. Maps introduce IDs, which comprise the map keys or field names.
@@ -48,14 +48,14 @@ public class GdbMiParser extends AbstractGdbParser {
 
 	/**
 	 * The class used to store parsed maps and field lists
-	 * 
+	 *
 	 * A field list is simply a multi-valued map. A single key may occur multiple times with
 	 * different values.
 	 */
 	public static class GdbMiFieldList {
 		/**
 		 * For testing, start building a field list, as if parsed
-		 * 
+		 *
 		 * @return a builder
 		 */
 		public static Builder builder() {
@@ -74,7 +74,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 			/**
 			 * Add a key-value pair to the field list
-			 * 
+			 *
 			 * @param key the key
 			 * @param value the associated value
 			 * @return this builder
@@ -86,7 +86,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 			/**
 			 * Build the field list
-			 * 
+			 *
 			 * @return
 			 */
 			public GdbMiFieldList build() {
@@ -108,7 +108,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 			/**
 			 * Get the key
-			 * 
+			 *
 			 * @return the key
 			 */
 			public String getKey() {
@@ -117,7 +117,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 			/**
 			 * Get the value
-			 * 
+			 *
 			 * @return the value
 			 */
 			public Object getValue() {
@@ -148,7 +148,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 		/**
 		 * Get the list of entries, in order of appearance
-		 * 
+		 *
 		 * @return the list of key-value entries
 		 */
 		public List<Entry> entries() {
@@ -157,7 +157,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 		/**
 		 * Get all values associated with the given key
-		 * 
+		 *
 		 * @param key the key
 		 * @return the unordered collection of values
 		 */
@@ -167,7 +167,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 		/**
 		 * Assume only a single value is associated with the key, and get that value
-		 * 
+		 *
 		 * @param key the key
 		 * @return the value
 		 * @throws IllegalStateException if more than one value is associated
@@ -185,7 +185,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 		/**
 		 * Assume only a single string is associated with the key, and get that string
-		 * 
+		 *
 		 * @param key the key
 		 * @return the value
 		 * @throws IllegalStateException if more than one value is associated
@@ -196,10 +196,10 @@ public class GdbMiParser extends AbstractGdbParser {
 
 		/**
 		 * Assume only a single list is associated with the key, and get that list
-		 * 
+		 *
 		 * For convenience, the list is cast to a list of elements of a given type. This cast is
 		 * unchecked.
-		 * 
+		 *
 		 * @param cls the type of elements in the list
 		 * @param key the key
 		 * @return the value
@@ -212,7 +212,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 		/**
 		 * Assume only a single field list is associated with the key, and get that list
-		 * 
+		 *
 		 * @param key the key
 		 * @return the value
 		 * @throws IllegalStateException if more than one value is associated
@@ -229,7 +229,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 		/**
 		 * Check if a key is present in the field list
-		 * 
+		 *
 		 * @param key the key
 		 * @return true if present, false otherwise
 		 */
@@ -239,7 +239,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 		/**
 		 * Count the number of entries (not keys) in the field list
-		 * 
+		 *
 		 * @return the count
 		 */
 		public int size() {
@@ -279,10 +279,10 @@ public class GdbMiParser extends AbstractGdbParser {
 
 	/**
 	 * Construct a parser of the given text
-	 * 
+	 *
 	 * The static methods {@link #parseObject(CharSequence)}, {@link #parseString(CharSequence)},
 	 * {@link #parseFields(CharSequence)} should probably be used instead.
-	 * 
+	 *
 	 * @param text the text to parse
 	 */
 	public GdbMiParser(CharSequence text) {
@@ -291,7 +291,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 	/**
 	 * Parse the object in the text
-	 * 
+	 *
 	 * @param text the text to parse
 	 * @return the object defined in the text
 	 * @throws GdbParseError if no text matches the pattern
@@ -305,7 +305,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 	/**
 	 * Parse the string literal in the text
-	 * 
+	 *
 	 * @param text the text to parse
 	 * @return the string parsed
 	 * @throws GdbParseError if no text matches the pattern
@@ -319,7 +319,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 	/**
 	 * Parse the fields in the text
-	 * 
+	 *
 	 * @param text the text to parse
 	 * @return the string parsed
 	 * @throws GdbParseError if no text matches the pattern
@@ -333,7 +333,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 	/**
 	 * Parse the object at the cursor
-	 * 
+	 *
 	 * @see #parseObject(CharSequence)
 	 * @return the object
 	 * @throws GdbParseError
@@ -355,7 +355,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 	/**
 	 * Parse the string at the cursor
-	 * 
+	 *
 	 * @see #parseString(CharSequence)
 	 * @return the string
 	 * @throws GdbParseError if no text matches the pattern
@@ -392,7 +392,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 	/**
 	 * Parse the list at the cursor
-	 * 
+	 *
 	 * @return the list
 	 * @throws GdbParseError if no text matches the pattern
 	 */
@@ -424,7 +424,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 	/**
 	 * Parse the map at the cursor
-	 * 
+	 *
 	 * @return the map (as a field list)
 	 * @throws GdbParseError if no text matches the pattern
 	 */
@@ -437,7 +437,7 @@ public class GdbMiParser extends AbstractGdbParser {
 
 	/**
 	 * Parse the fields at the cursor
-	 * 
+	 *
 	 * @see #parseFields(CharSequence)
 	 * @param enclosed true if the field list is enclosed in brackets/braces
 	 * @return the field list

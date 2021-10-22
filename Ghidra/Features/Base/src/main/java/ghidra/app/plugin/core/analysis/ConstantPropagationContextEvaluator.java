@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,18 +22,18 @@ import ghidra.program.model.symbol.*;
 import ghidra.program.util.ContextEvaluatorAdapter;
 import ghidra.program.util.VarnodeContext;
 
-/** 
+/**
  * The ConstantPropogatorEvaluator is used as the evaluator for the SymbolicPropagator when finding constant
  * references and laying them down for a generic processor.  Extend this class to add additional checks
  * and behaviors necessary for a unique processor such as the PowerPC.
- * 
+ *
  * This implementation checks values that are problematic and will not make references to those locations.
  *     0-256, 0xffffffff, 0xffff, 0xfffffffe
  * For some embedded processors these locations or these locations in certain address spaces are OK,
  * so the evaluateConstant and evaluateReference should be overridden.
- * 
+ *
  * The base implementation supports setting of an option to trust values read from writable memory.
- * 
+ *
  * An addressset of locations that were computed jump flows where the flow is unknown is
  * available in a destination address set.
  */
@@ -65,7 +65,7 @@ public class ConstantPropagationContextEvaluator extends ContextEvaluatorAdapter
 
 	/**
 	 * The computed destination set is useful if follow on switch analysis is to be done.
-	 * 
+	 *
 	 * @return a set of destinations that have computed flow where the flow is unknown
 	 */
 	public AddressSet getDestinationSet() {

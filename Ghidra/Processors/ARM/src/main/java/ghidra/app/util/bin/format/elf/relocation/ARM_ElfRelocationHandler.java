@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,9 +46,9 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 		Program program = elfRelocationContext.getProgram();
 
 		Memory memory = program.getMemory();
-		
-		boolean instructionBigEndian = program.getLanguage().getLanguageDescription().getInstructionEndian().isBigEndian();		
-		
+
+		boolean instructionBigEndian = program.getLanguage().getLanguageDescription().getInstructionEndian().isBigEndian();
+
 		int type = relocation.getType();
 		if (type == ARM_ElfRelocationConstants.R_ARM_NONE) {
 			return;
@@ -355,11 +355,11 @@ public class ARM_ElfRelocationHandler extends ElfRelocationHandler {
 				break;
 			}
 */
-			case ARM_ElfRelocationConstants.R_ARM_MOVW_ABS_NC: 
-			case ARM_ElfRelocationConstants.R_ARM_MOVT_ABS: {	// Target Class: ARM Instruction		
+			case ARM_ElfRelocationConstants.R_ARM_MOVW_ABS_NC:
+			case ARM_ElfRelocationConstants.R_ARM_MOVT_ABS: {	// Target Class: ARM Instruction
 				oldValue = memory.getInt(relocationAddress, instructionBigEndian);
 				newValue = oldValue;
-				
+
 				oldValue = ((oldValue & 0xf0000) >> 4) | (oldValue & 0xfff);
 				oldValue = (oldValue ^ 0x8000) - 0x8000;
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,8 +43,8 @@ public class DisambiguateByParent implements DisambiguateStrategy {
 				res.add(new Hash(srcBlock.getMatchHash(),1));		// Use its match hash as a disambiguator
 			}
 		}
-		if (count == 0)	
+		if (count == 0)
 			res.add(new Hash(ENTRY_BLOCK_HASH,1));					// Add hash indicating entry block
 		return res;
-	}		
+	}
 }

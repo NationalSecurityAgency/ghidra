@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class FollowFlowProgramBuilder extends ProgramBuilder {
 	}
 
 	/*
-	
+
 	function(A, 0x00, 0x2f)
 	00	nop
 	01	nop
@@ -150,7 +150,7 @@ public class FollowFlowProgramBuilder extends ProgramBuilder {
 	b9	nop
 	ba	computed call M        [5]
 	bf	ret
-	
+
 	function(E, 0x130, 0x131)
 	function(F, 0x160, 0x161)
 	function(G, 0x190, 0x191)
@@ -160,12 +160,12 @@ public class FollowFlowProgramBuilder extends ProgramBuilder {
 	function(K, 0x330, 0x331)
 	function(L, 0x360, 0x361)
 	function(M, 0x390, 0x391)
-	
+
 	pointer(0x5000, 0x60)
 	pointer(0x5004, 0x190)
 	pointer(0x5008, 0x330)
 	pointer(0x500c, 0x5000)
-	
+
 	struct(MyStruct, 0x5020) {
 		float
 		pointer(0x5024, 0x90)
@@ -190,7 +190,7 @@ public class FollowFlowProgramBuilder extends ProgramBuilder {
 
 	indirectRef(0x290, 0x5034)
 	indirectRef(0x390, 0x5040)
-	
+
 	*/
 
 	private void setupProgram() throws Exception {

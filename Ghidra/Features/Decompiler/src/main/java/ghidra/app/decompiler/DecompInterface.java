@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,37 +44,37 @@ import ghidra.xml.XmlPullParser;
  * it automatically respawns the process and reinitializes
  * it the next time it is needed.  The basic usage pattern
  * is as follows<pre>
- * 
+ *
  *   // Instantiate the interface
  *   DecompInterface ifc = new DecompInterface();
- *   
+ *
  *   // Setup any options or other initialization
  *   ifc.setOptions(xmlOptions); // Inform interface of global options
  *   // ifc.toggleSyntaxTree(false);  // Don't produce syntax trees
  *   // ifc.toggleCCode(false);       // Don't produce C code
  *   // ifc.setSimplificationStyle("normalize"); // Alternate analysis style
- *   
+ *
  *   // Setup up the actual decompiler process for a
  *   // particular program, using all the above initialization
  *   ifc.openProgram(program,language);
- *   
+ *
  *   // Make calls to the decompiler:
  *   DecompileResults res = ifc.decompileFunction(func,0,taskmonitor);
- *   
+ *
  *   // Check for error conditions
  *   if (!res.decompileCompleted()) {
  *   	system.out.println(res.getErrorMessage());
  *      return;
  *   }
- *   
+ *
  *   // Make use of results
  *      // Get C code
  *   ClangTokenGroup tokgroup = res.getCCodeMarkup();
- *   ...  
+ *   ...
  *      // Get the function object/syntax tree
  *   HighFunction hfunc = res.getHighFunction();
  *   ...
- *   
+ *
  * </pre>
  */
 public class DecompInterface {
@@ -212,7 +212,7 @@ public class DecompInterface {
 			DecompileProcessFactory.release(decompProcess);
 			decompProcess = DecompileProcessFactory.get();
 		}
-		// use static uniqueBase since we don't know how many dynamically generated 
+		// use static uniqueBase since we don't know how many dynamically generated
 		// variables Ghidra may add to the language/compile-spec uniqueBase
 		long uniqueBase = 0x10000000;
 		String tspec =
@@ -393,7 +393,7 @@ public class DecompInterface {
 	 *      measure information for parameter id analysis.
 	 *      raw pcode.
 	 * </ul>
-	 *      
+	 *
 	 * <p>
 	 * This property should ideally be set once before the
 	 * openProgram call is made, but it can be used repeatedly
@@ -402,7 +402,7 @@ public class DecompInterface {
 	 * changes, the method does NOT need to be called repeatedly.
 	 * Even after a crash, the new decompiler process will
 	 * automatically configured with the cached style value.
-	 * 
+	 *
 	 * @param actionstring "decompile"|"normalize"|"register"|"firstpass"|"paramid"
 	 * @return true - if the decompiler process was successfully configured
 	 */
@@ -614,7 +614,7 @@ public class DecompInterface {
 
 	/**
 	 * Get the options currently in effect for the decompiler
-	 * 
+	 *
 	 * @return options that will be passed to the decompiler
 	 */
 	public synchronized DecompileOptions getOptions() {
@@ -759,10 +759,10 @@ public class DecompInterface {
 	}
 
 	/**
-	 * Stop the decompile process. 
-	 * 
-	 * NOTE: Subsequent calls made from another  
-	 * thread to this DecompInterface object may fail since the decompiler 
+	 * Stop the decompile process.
+	 *
+	 * NOTE: Subsequent calls made from another
+	 * thread to this DecompInterface object may fail since the decompiler
 	 * process is being yanked away.
 	 */
 	public void stopProcess() {

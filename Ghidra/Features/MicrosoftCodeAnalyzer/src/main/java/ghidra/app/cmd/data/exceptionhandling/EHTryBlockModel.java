@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
- * Model for exception handling information about the TryBlockMapEntry data type and its 
+ * Model for exception handling information about the TryBlockMapEntry data type and its
  * associated exception handling data types.
  * <br>
  * This is based on data type information from ehdata.h
@@ -65,7 +65,7 @@ public class EHTryBlockModel extends AbstractCreateDataTypeModel {
 	/**
 	 * Whether or not the memory at the indicated address appears to be a valid location for the
 	 * indicated number of try block map entry data types.
-	 * @throws InvalidDataTypeException if this model's location does not appear to be a valid 
+	 * @throws InvalidDataTypeException if this model's location does not appear to be a valid
 	 * group of try block map entries. The exception has a message indicating
 	 * why it does not appear to be a valid location for the data type.
 	 */
@@ -84,7 +84,7 @@ public class EHTryBlockModel extends AbstractCreateDataTypeModel {
 
 	/**
 	 * This gets the TryBlockMapEntry structure for the indicated program.
-	 * @param program the program which will contain this data type. 
+	 * @param program the program which will contain this data type.
 	 * @return the TryBlockMapEntry structure.
 	 */
 	public static DataType getDataType(Program program) {
@@ -146,11 +146,11 @@ public class EHTryBlockModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the low state value of the try, if there is one, in the TryBlockMapEntry indicated 
+	 * Gets the low state value of the try, if there is one, in the TryBlockMapEntry indicated
 	 * by the ordinal.
 	 * @param tryBlockOrdinal 0-based ordinal indicating which TryBlockMapEntry in the map.
 	 * @return the low state value of the try
-	 * @throws InvalidDataTypeException 
+	 * @throws InvalidDataTypeException
 	 */
 	public int getTryLow(int tryBlockOrdinal) throws InvalidDataTypeException {
 		checkValidity(tryBlockOrdinal);
@@ -161,11 +161,11 @@ public class EHTryBlockModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the high state value of the try, if there is one, in the TryBlockMapEntry indicated 
+	 * Gets the high state value of the try, if there is one, in the TryBlockMapEntry indicated
 	 * by the ordinal.
 	 * @param tryBlockOrdinal 0-based ordinal indicating which TryBlockMapEntry in the map.
 	 * @return the high state value of the try
-	 * @throws InvalidDataTypeException if valid TryBlockMapEntry data can't be created for 
+	 * @throws InvalidDataTypeException if valid TryBlockMapEntry data can't be created for
 	 * the indicated ordinal.
 	 */
 	public int getTryHigh(int tryBlockOrdinal) throws InvalidDataTypeException {
@@ -177,11 +177,11 @@ public class EHTryBlockModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the high state value of the catches, if there is one, in the TryBlockMapEntry indicated 
+	 * Gets the high state value of the catches, if there is one, in the TryBlockMapEntry indicated
 	 * by the ordinal.
 	 * @param tryBlockOrdinal 0-based ordinal indicating which TryBlockMapEntry in the map.
 	 * @return the high state value of the catches
-	 * @throws InvalidDataTypeException if valid TryBlockMapEntry data can't be created for 
+	 * @throws InvalidDataTypeException if valid TryBlockMapEntry data can't be created for
 	 * the indicated ordinal.
 	 */
 	public int getCatchHigh(int tryBlockOrdinal) throws InvalidDataTypeException {
@@ -193,11 +193,11 @@ public class EHTryBlockModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the catch handler model for the catch handler address in the 
+	 * Gets the catch handler model for the catch handler address in the
 	 * TryBlockMapEntry indicated by the ordinal.
 	 * @param tryBlockOrdinal 0-based ordinal indicating which TryBlockMapEntry in the map.
 	 * @return the catch handler model, which may be invalid.
-	 * @throws InvalidDataTypeException if valid TryBlockMapEntry data can't be created for 
+	 * @throws InvalidDataTypeException if valid TryBlockMapEntry data can't be created for
 	 * the indicated ordinal.
 	 */
 	public EHCatchHandlerModel getCatchHandlerModel(int tryBlockOrdinal)
@@ -210,11 +210,11 @@ public class EHTryBlockModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the catch handler map's entry count, if there is one, in the TryBlockMapEntry 
+	 * Gets the catch handler map's entry count, if there is one, in the TryBlockMapEntry
 	 * indicated by the ordinal.
 	 * @param tryBlockOrdinal 0-based ordinal indicating which TryBlockMapEntry in the map.
 	 * @return the catch handler count
-	 * @throws InvalidDataTypeException if valid TryBlockMapEntry data can't be created for 
+	 * @throws InvalidDataTypeException if valid TryBlockMapEntry data can't be created for
 	 * the indicated ordinal.
 	 */
 	public int getCatchHandlerCount(int tryBlockOrdinal) throws InvalidDataTypeException {
@@ -226,11 +226,11 @@ public class EHTryBlockModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the catch handler map's address, if there is one, in the TryBlockMapEntry 
+	 * Gets the catch handler map's address, if there is one, in the TryBlockMapEntry
 	 * indicated by the ordinal.
 	 * @param tryBlockOrdinal 0-based ordinal indicating which TryBlockMapEntry in the map.
 	 * @return the catch handler map's address
-	 * @throws InvalidDataTypeException if valid TryBlockMapEntry data can't be created for 
+	 * @throws InvalidDataTypeException if valid TryBlockMapEntry data can't be created for
 	 * the indicated ordinal.
 	 */
 	public Address getCatchHandlerMapAddress(int tryBlockOrdinal) throws InvalidDataTypeException {
@@ -244,11 +244,11 @@ public class EHTryBlockModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the component address of the catch handler map's address, if there is one, in the 
+	 * Gets the component address of the catch handler map's address, if there is one, in the
 	 * TryBlockMapEntry indicated by the ordinal.
 	 * @param tryBlockOrdinal 0-based ordinal indicating which TryBlockMapEntry in the map.
 	 * @return the address of the component with the catch handler map's address
-	 * @throws InvalidDataTypeException if valid TryBlockMapEntry data can't be created for 
+	 * @throws InvalidDataTypeException if valid TryBlockMapEntry data can't be created for
 	 * the indicated ordinal.
 	 */
 	public Address getComponentAddressOfCatchHandlerMapAddress(int tryBlockOrdinal)

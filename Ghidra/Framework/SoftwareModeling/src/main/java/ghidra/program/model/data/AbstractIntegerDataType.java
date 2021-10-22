@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param name a unique signed/unsigned data-type name (also used as the mnemonic)
 	 * @param signed true if signed, false if unsigned
 	 * @param dtm data-type manager whose data organization should be used
@@ -72,7 +72,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 
 	/**
 	 * Return the Format settings definition included in the settings definition array
-	 * 
+	 *
 	 * @see #getSettingsDefinitions()
 	 * @return Format settings definition included in the settings definition array
 	 */
@@ -266,7 +266,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 	 * <p>
 	 * Does not handle CHAR format, use
 	 * {@link StringDataInstance#getCharRepresentation(DataType, byte[], Settings)}
-	 * 
+	 *
 	 * @param bigInt BigInteger value with the appropriate sign
 	 * @param settings integer format settings (PADDING, FORMAT, etc.)
 	 * @param bitLength number of value bits to be used from bigInt
@@ -441,7 +441,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 
 	/**
 	 * Get a Signed Integer data-type instance of the requested size
-	 * 
+	 *
 	 * @param size data type size, sizes greater than 8 (and other than 16) will cause an
 	 *            SignedByteDataType[size] (i.e., Array) to be returned.
 	 * @param dtm optional program data-type manager, if specified a generic data-type will be
@@ -480,7 +480,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 
 	/**
 	 * Returns all built-in signed integer data-types.
-	 * 
+	 *
 	 * @param dtm optional program data-type manager, if specified generic data-types will be
 	 *            returned in place of fixed-sized data-types.
 	 * @return array of all signed integer types (char and bool types excluded)
@@ -513,7 +513,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 
 	/**
 	 * Get a Unsigned Integer data-type instance of the requested size
-	 * 
+	 *
 	 * @param size data type size, sizes greater than 8 (and other than 16) will cause an undefined
 	 *            type to be returned.
 	 * @param dtm optional program data-type manager, if specified a generic data-type will be
@@ -552,7 +552,7 @@ public abstract class AbstractIntegerDataType extends BuiltIn implements ArraySt
 
 	/**
 	 * Returns all built-in unsigned integer data-types
-	 * 
+	 *
 	 * @param dtm optional program data-type manager, if specified generic data-types will be
 	 *            returned in place of fixed-sized data-types.
 	 * @return array of all unsigned integer types (char and bool types excluded)

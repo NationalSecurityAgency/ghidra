@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,7 +55,7 @@ public class CodeUnitFormatOptions {
 		 */
 		ALWAYS,
 		/**
-		 * Indicator to show namespace for a label reference if the label is in a 
+		 * Indicator to show namespace for a label reference if the label is in a
 		 * different namespace from the referenced location.
 		 */
 		NON_LOCAL,
@@ -110,7 +110,7 @@ public class CodeUnitFormatOptions {
 	 * the operand using the =&gt; separator if necessary
 	 * @param includeScalarReferenceAdjustment if true scalar adjustment of certain reference offsets
 	 * will be included to maintain replaced scalar value
-	 * @param showLibraryInNamespace if true any referenced external symbols will include 
+	 * @param showLibraryInNamespace if true any referenced external symbols will include
 	 * library name
 	 * @param followReferencedPointers if true referenced pointers (read or indirect) will
 	 * follow the pointer and display the indirect symbol with -&gt; instead of pointer label.

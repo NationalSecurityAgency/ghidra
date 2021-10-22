@@ -163,7 +163,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
     local result:2 = rs1 + rs2 + zext($(XC));
     rd = result;
-    
+
     addition_flags(rs1, rs2, result);
 }
 
@@ -172,7 +172,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
     local result:2 = rs1 + rs2;
     rd = result;
-    
+
     addition_flags(rs1, rs2, result);
 }
 
@@ -181,9 +181,9 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
 	local val:2 = ximm8 << 8;
     local result:2 = rd + val;
-    
+
     addition_flags(rd, val, result);
-    
+
     rd = result;
 }
 
@@ -191,7 +191,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :ADDL rd, ximm8 is opcode=0x1c & rd & ximm8
 {
     local result:2 = rd + ximm8;
-    
+
 	$(XN) = (result s< 0);
     $(XZ) = ((result == 0) & ($(XZ)==1));
 	$(XV) = ((~rd & result) & 0x8000) != 0;
@@ -203,7 +203,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :AND rd, rs1, rs2 is opcode=0x2 & rd & rs1 & rs2 & op2=0x0
 {
     rd = rs1 & rs2;
-    
+
     default_flags(rd);
 }
 
@@ -211,7 +211,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :ANDH rd, ximm8 is opcode=0x11 & rd & ximm8 & rd_hi
 {
     rd_hi = rd_hi & ximm8;
-    
+
 	default_flags(rd_hi);
 }
 
@@ -219,7 +219,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :ANDL rd, ximm8 is opcode=0x10 & rd & ximm8 & rd_lo
 {
     rd_lo = rd_lo & ximm8;
-    
+
 	default_flags(rd_lo);
 }
 
@@ -228,7 +228,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
 	getbit($(XC), rd, ximm4-1);
     rd = rd s>> ximm4;
-    
+
     default_flags(rd);
 }
 
@@ -236,7 +236,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
 	getbit($(XC), rd, rs1-1);
     rd = rd s>> rs1;
-    
+
     default_flags(rd);
 }
 
@@ -266,9 +266,9 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
     local width:2 = (rs2 >> 4) & 0xf;
     local mask:2 = (0xffff >> (16-(width + 1))) << origin;
     local result:2 = (rs1 & mask) >> origin;
-    
+
     rd = result;
-    
+
     default_flags(rd);
 }
 
@@ -291,9 +291,9 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
     local width:2 = (rs2 >> 4) & 0xf;
     local mask:2 = (0xffff >> (16-(width + 1))) << origin;
     local result:2 = (rs1 & mask);
-    
+
     rd = (rd & ~mask) | result;
-    
+
 	default_flags(rd);
 }
 
@@ -304,9 +304,9 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
     local width:2 = (rs2 >> 4) & 0xf;
     local mask:2 = (0xffff >> (16-(width + 1))) << origin;
     local result:2 = (~rs1 & mask);
-    
+
     rd = (rd & ~mask) | result;
-    
+
     default_flags(rd);
 }
 
@@ -317,9 +317,9 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
     local width:2 = (rs2 >> 4) & 0xf;
     local mask:2 = (0xffff >> (16-(width + 1))) << origin;
     local result:2 = (~(rs1 ^ rd) & mask);
-    
+
     rd = (rd & ~mask) | result;
-    
+
     default_flags(rd);
 }
 
@@ -347,7 +347,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :BITH rd, ximm8 is opcode=0x13 & rd & ximm8 & rd_hi
 {
     local val = rd_hi & ximm8;
-    
+
     default_flags(val);
 }
 
@@ -355,7 +355,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :BITL reg8, ximm8 is opcode=0x12 & reg8 & ximm8 & rd_lo
 {
     local val  = rd_lo & ximm8;
-    
+
     default_flags(val);
 }
 
@@ -443,7 +443,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
 	local val:2 = ~rs2;
 	rd = val;
-	
+
 	default_flags(rd);
 }
 
@@ -451,7 +451,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
 	local val:2 = ~rs2;
 	rd = val;
-	
+
 	default_flags(rd);
 }
 
@@ -618,7 +618,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 	computePage(addr);
 	local dst:3 = segment(PPAGE,addr);
 	local val:2 = *:2 (dst);
-	rd = val;	
+	rd = val;
 }
 
 :LDW rd, (rs1, rs2+)  is opcode=0xd & rd & rs1 & rs2 & op2=0x1
@@ -721,7 +721,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :ORH rd, ximm8 is opcode=0x15 & rd & ximm8 & rd_hi
 {
     rd_hi = rd_hi | ximm8;
-    
+
 	default_flags(rd_hi);
 }
 
@@ -729,7 +729,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :ORL rd, ximm8 is opcode=0x14 & rd & ximm8 & rd_lo
 {
     rd_lo = rd_lo | ximm8;
- 
+
  	default_flags(rd_lo);
 }
 
@@ -737,7 +737,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :PAR rd is opcode=0x0 & rd & xop8=0xf5
 {
 	parity(rd, $(XC));
-	
+
     default_flags(rd);
 }
 
@@ -746,7 +746,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
 	local cnt:2 = ximm4;
 	rd = (rd << cnt) | (rd >> (16 - cnt));
-	
+
     default_flags(rd);
 }
 
@@ -754,7 +754,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
 	local cnt:2 = rs1 & 0xf;
 	rd = (rd << cnt) | (rd >> (16 - cnt));
-	
+
     default_flags(rd);
 }
 
@@ -763,7 +763,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
 	local cnt:2 = ximm4;
 	rd = (rd >> cnt) | (rd << (16 - cnt));
-	
+
     default_flags(rd);
 }
 
@@ -771,7 +771,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
 	local cnt:2 = rs1 & 0xf;
 	rd = (rd >> cnt) | (rd << (16 - cnt));
-	
+
     default_flags(rd);
 }
 # Return to Scheduler
@@ -794,7 +794,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
 	local result:1 = rd:1 & 0xff;
 	rd = sext(result);
-	
+
     default_flags(rd);
 }
 # Set Interrupt Flag
@@ -906,7 +906,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
 	local result:2 = rs1 - rs2;
 	rd = result;
-	
+
 	subtraction_flags(rs1, rs2, result);
 }
 
@@ -916,9 +916,9 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
 	local val:2 = ximm8 << 8;
     local result:2 = rd - val;
-    
+
     subtraction_flags(rd, val, result);
-    
+
     rd = result;
 }
 
@@ -927,7 +927,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
 	local val:2 = ximm8;
     local result:2 = rd - val;
-    
+
 	$(XN) = (result s< 0);
     $(XZ) = ((result == 0) & ($(XZ)==1));
 	$(XV) = ((~rd & result) & 0x8000) != 0;
@@ -961,7 +961,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :TST rs1 is opcode=0x3 & reg8=0x0 & rs1 & reg2=0x0 & op2=0x0
 {
 	local result:2 = rs1;
-	
+
 	subtraction_flags(rs1,0,result);
 }
 
@@ -970,7 +970,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 {
     local result:2 = ~(rs1 ^ rs2);
     rd = result;
-    
+
     default_flags(result);
 }
 
@@ -978,7 +978,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :XNORH rd, ximm8 is opcode=0x17 & rd & ximm8 & rd_hi
 {
     rd_hi = ~(rd_hi ^ ximm8);
-    
+
 	default_flags(rd_hi);
 }
 
@@ -986,7 +986,7 @@ rd_hi: reg8 is reg8 & reg8_hi { export reg8_hi; }
 :XNORL rd, ximm8 is opcode=0x16 & rd & ximm8 & rd_lo
 {
     rd_lo= ~(rd_lo^ ximm8);
-    
+
 	default_flags(rd_lo);
 }
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,8 +34,8 @@ public class PopupRegulator<V, E> {
 	private int popupDelay = 1000;
 
 	/**
-	 * We need this timer because the default mechanism for triggering popups doesn't 
-	 * always work.  We use this timer in conjunction with a mouse motion listener to 
+	 * We need this timer because the default mechanism for triggering popups doesn't
+	 * always work.  We use this timer in conjunction with a mouse motion listener to
 	 * get the results we want.
 	 */
 	private Timer popupTimer;
@@ -44,8 +44,8 @@ public class PopupRegulator<V, E> {
 	/** the current target (vertex or edge) of a popup window */
 	private Object nextPopupTarget;
 
-	/** 
-	 * This value is not null when the user moves the cursor over a target for which a 
+	/**
+	 * This value is not null when the user moves the cursor over a target for which a
 	 * popup is already showing.  We use this value to prevent showing a popup multiple times
 	 * while over a single node.
 	 */
@@ -81,7 +81,7 @@ public class PopupRegulator<V, E> {
 			public void mouseMoved(MouseEvent e) {
 				popupMouseEvent = e;
 
-				// this clears out the current last popup shown so that the user can 
+				// this clears out the current last popup shown so that the user can
 				// move off and on a node to re-show the popup
 				savePopupTarget(e);
 
@@ -132,7 +132,7 @@ public class PopupRegulator<V, E> {
 
 		Component c = event.getComponent();
 		if (!c.isShowing()) {
-			// This method is called from a a timer.  It is possible that the graph has been 
+			// This method is called from a a timer.  It is possible that the graph has been
 			// closed by the time this method is called.
 			return;
 		}
@@ -141,13 +141,13 @@ public class PopupRegulator<V, E> {
 		JComponent toolTipComponent = toolTipInfo.getToolTipComponent();
 		boolean isCustomJavaTooltip = !(toolTipComponent instanceof JToolTip);
 		if (lastShownPopupTarget == nextPopupTarget && isCustomJavaTooltip) {
-			// 
+			//
 			// Kinda Hacky:
 			// We don't show repeated popups for the same item (the user has to move away
 			// and then come back to re-show the popup).  However, one caveat to this is that
 			// we do want to allow the user to see popups for the toolbar actions always.  So,
-			// only return here if we have already shown a popup for the item *and* we are 
-			// using a custom tooltip (which is used to show a vertex tooltip or an edge 
+			// only return here if we have already shown a popup for the item *and* we are
+			// using a custom tooltip (which is used to show a vertex tooltip or an edge
 			// tooltip)
 			return;
 		}
@@ -188,7 +188,7 @@ public class PopupRegulator<V, E> {
 	private void hidePopupTooltips() {
 		if (popupWindow != null && popupWindow.isShowing()) {
 			popupWindow.hide();
-			// don't call dispose, or we don't get our componentHidden() callback 
+			// don't call dispose, or we don't get our componentHidden() callback
 			// popupWindow.dispose();
 		}
 	}

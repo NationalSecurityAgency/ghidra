@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,13 +24,13 @@ public interface LoadImage {
 
 // TODO this doesn't appear to be used.
 //    /**
-//     * 
+//     *
 //     * @param ptr
 //     * @param size
 //     * @param addr
 //     * @param bufOffset
 //     * @param generateInitializedMask if true the function should return an initialized bit mask
-//     * or null if all loaded bytes were known.  If true, uninitialized memory reads should only be 
+//     * or null if all loaded bytes were known.  If true, uninitialized memory reads should only be
 //     * reflected in the mask and should not be reported via the memory fault handler.
 //     * @return initialized bit mask or null (see generateInitializedMask parameter)
 //     * @see MemoryPage

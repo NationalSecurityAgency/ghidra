@@ -113,7 +113,7 @@ import ghidra.util.Msg;
 import java.util.*;
 import java.io.*;
 import java.math.BigInteger;
-import ghidra.program.util.AddressEvaluator; 
+import ghidra.program.util.AddressEvaluator;
 
 @SuppressWarnings("all") // ignore warnings from generated code
 public class PreProcessor {
@@ -426,7 +426,7 @@ public class PreProcessor {
 	Vector<String> pathList = new Vector<String>();
 
 	int ifDepth = 0;
-	
+
 	//Hastable for storing #defs
 	DefineTable defs = new DefineTable();
 
@@ -1044,7 +1044,7 @@ public class PreProcessor {
 			if (str.endsWith("L") || str.endsWith("l") || str.endsWith("U")) {
 				str = str.substring(0, str.length() - 1);
 			}
-			
+
 			if (str.startsWith("--")) {
 			    str = str.substring(2, str.length());
 			}
@@ -1656,14 +1656,14 @@ PPToken Text() :
        [LOOKAHEAD(2)u=<OTHER_TEXT>{if (emitExecSwitch==true)  buf.append(u.image);}
 //        [LOOKAHEAD(2)u=NewLines(){if (emitExecSwitch==true)  buf.append(u.image);}]])+|
         (LOOKAHEAD(2)u=NewLines(){if (emitExecSwitch==true)  buf.append(u.image);})*])+|
-                
+
       (LOOKAHEAD(2)(u=QuotedText(){if (emitExecSwitch==true)  buf.append(u.image);}
                     [LOOKAHEAD(2)u=NewLines(){if (emitExecSwitch==true)  buf.append(u.image);}]|
                     u=<OTHER_TEXT>{if (emitExecSwitch==true)  buf.append(u.image);})
        [LOOKAHEAD(2)t=NewLines(){if (emitExecSwitch==true)  buf.append(u.image);}]
        [LOOKAHEAD(2)u=<OTHER_TEXT>{if (emitExecSwitch==true)  buf.append(u.image);}]
        [LOOKAHEAD(2)u=NewLines(){if (emitExecSwitch==true)  buf.append(u.image);}])+ |
-       
+
       u=NewLines(){if (emitExecSwitch==true)  buf.append(u.image);}
     ){return new PPToken(buf.toString());}
 }
@@ -1701,7 +1701,7 @@ PPToken CompoundConditionalExpression() :
     )
    {return new PPToken(t);}
 }
-                                 
+
 PPToken CompoundAndExpression() :
 {PPToken t,u,v;}
 {
@@ -2030,7 +2030,7 @@ PPToken Assertion() :
        pt.setTruth(isDef(pt));
        return pt;
     })
-    | 
+    |
     ((t=<OPTIONED>  | t=<HASINCLUDE> | t=<HASINCLUDENEXT>
       {if (verboseLevel()==7) print(t.image);} )
       <BEGITEM> pt=Expression() <ENDITEM>
@@ -2136,7 +2136,7 @@ PPToken ValueExpression() :
             pt.image += ")";
 
             pt.image = defs.expand(pt.image, true);
-            
+
             // The expanded macro text can't be injected into the parse stream
             // try parsing the expression with an internal simple expression
             // parser that can handle equality expressions

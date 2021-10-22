@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,7 @@ class StackFrameImpl implements StackFrame {
 
 	/**
 	 * Creates a new Stack Frame.
-	 * Stack characteristics are established at time of construction 
+	 * Stack characteristics are established at time of construction
 	 * (e.g., parameter offset, negative-growth, etc.).
 	 */
 	StackFrameImpl(Function function) {
@@ -81,8 +81,8 @@ class StackFrameImpl implements StackFrame {
 	}
 
 	/**
-	 * Create a new stack variable.  
-	 * 
+	 * Create a new stack variable.
+	 *
 	 * Specified source is always ignored
 	 * and the variable instance returned will never be a parameter.
 	 * @see ghidra.program.model.listing.StackFrame#createVariable(String, int, DataType, SourceType)
@@ -154,7 +154,7 @@ class StackFrameImpl implements StackFrame {
 	/**
 	 * Gets the number of parameters in the stack frame regardless
 	 * of the direction the stack grows in.
-	 * 
+	 *
 	 * @return the number of parameters in the stack frame.
 	 */
 	public int getParameterCount() {
@@ -180,7 +180,7 @@ class StackFrameImpl implements StackFrame {
 	}
 
 //	/**
-//	 * 
+//	 *
 //	 * @see ghidra.program.model.listing.StackFrame#setParameterOffset(int)
 //	 */
 //	@Override

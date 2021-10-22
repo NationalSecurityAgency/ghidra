@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -167,12 +167,12 @@ public class RTTI1DataType extends RTTIDataType {
 	}
 
 	/**
-	 * Gets the total length of the data created when this data type is placed at the indicated 
+	 * Gets the total length of the data created when this data type is placed at the indicated
 	 * address in memory.
 	 * @param memory the program memory for this data.
 	 * @param address the start address of the data.
 	 * @param bytes the bytes for this data.
-	 * @return the length of the data. zero is returned if valid data can't be created at the 
+	 * @return the length of the data. zero is returned if valid data can't be created at the
 	 * indicated address using this data type.
 	 */
 	public int getLength(Memory memory, Address address, byte[] bytes) {
@@ -267,12 +267,12 @@ public class RTTI1DataType extends RTTIDataType {
 		}
 		// Middle bytes are 5 dword numeric values.
 		try {
-			// numBases should be >= 0 
+			// numBases should be >= 0
 			int numBases = memory.getInt(startAddress.add(NUM_CONTAINED_BASES_OFFSET));
 			if (numBases < 0) {
 				return false;
 			}
-			// member displacement should be >= 0 
+			// member displacement should be >= 0
 			int mDisp = memory.getInt(startAddress.add(PMD_OFFSET + M_DISP_OFFSET));
 			if (mDisp < 0) {
 				return false;
@@ -282,7 +282,7 @@ public class RTTI1DataType extends RTTIDataType {
 			if (pDisp < -1) {
 				return false;
 			}
-			// displacement within vbtable should be >= 0 
+			// displacement within vbtable should be >= 0
 			int vDisp = memory.getInt(startAddress.add(PMD_OFFSET + V_DISP_OFFSET));
 			if (vDisp < 0) {
 				return false;

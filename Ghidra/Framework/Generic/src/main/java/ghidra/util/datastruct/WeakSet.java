@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,10 +42,10 @@ public abstract class WeakSet<T> implements Iterable<T> {
 
 	/**
 	 * Looks for situations where clients <b>may</b> lose the values added to this class.  This
-	 * most often happens when a client adds an anonymous, local listener to an object that is 
-	 * using a WeakSet to store its listeners.  Our policy is to implement listeners at the 
-	 * class field level so that they will not be flagged by this method. 
-	 * 
+	 * most often happens when a client adds an anonymous, local listener to an object that is
+	 * using a WeakSet to store its listeners.  Our policy is to implement listeners at the
+	 * class field level so that they will not be flagged by this method.
+	 *
 	 * @param t The object to check
 	 */
 	protected void maybeWarnAboutAnonymousValue(T t) {
@@ -76,7 +76,7 @@ public abstract class WeakSet<T> implements Iterable<T> {
 
 //==================================================================================================
 // Interface Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Add the given object to the set
@@ -87,7 +87,7 @@ public abstract class WeakSet<T> implements Iterable<T> {
 	/**
 	 * Remove the given object from the data structure
 	 * @param t the object to remove
-	 * 
+	 *
 	 */
 	public abstract void remove(T t);
 
@@ -116,7 +116,7 @@ public abstract class WeakSet<T> implements Iterable<T> {
 
 	/**
 	 * Returns a Collection view of this set.  The returned Collection is backed by this set.
-	 * 
+	 *
 	 * @return a Collection view of this set.  The returned Collection is backed by this set.
 	 */
 	public abstract Collection<T> values();

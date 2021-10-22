@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -872,7 +872,7 @@ public class DIEAggregate {
 			// else it was a DW_FORM_data value and is relative to the lowPC value
 			DWARFNumericAttribute low =
 				getAttribute(DWARFAttribute.DW_AT_low_pc, DWARFNumericAttribute.class);
-			
+
 			long lhighVal = highVal.getUnsignedValue();
 			if (lhighVal == 0) {
 				lhighVal = 1;
@@ -893,7 +893,7 @@ public class DIEAggregate {
 	 * <p>
 	 * Only seen in extremely old gcc versions.  Typically the low & high
 	 * pc values are omitted if the CU is empty.
-	 * 
+	 *
 	 * @return boolean true if the LowPC and HighPC values are present and equal
 	 */
 	public boolean isLowPCEqualHighPC() {

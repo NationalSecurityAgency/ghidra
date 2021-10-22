@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,7 +50,7 @@ import ghidra.util.timer.GTimer;
 import utilities.util.FileUtilities;
 
 /**
- * 
+ *
  */
 public class ServerTestUtil {
 
@@ -73,7 +73,7 @@ public class ServerTestUtil {
 		GhidraURL.makeURL(LOCALHOST, GHIDRA_TEST_SERVER_PORT, "Test1");
 
 	/**
-	 * Default user "test" has been pre-added to server with repository admin rights to both 
+	 * Default user "test" has been pre-added to server with repository admin rights to both
 	 * the "Test" and "Test1" repos
 	 */
 	public static final String ADMIN_USER = "test";
@@ -107,8 +107,8 @@ public class ServerTestUtil {
 		// utils class; can't create
 	}
 
-	/** 
-	 * This is our attempt to cleanup lingering server processes after testing.  This has no 
+	/**
+	 * This is our attempt to cleanup lingering server processes after testing.  This has no
 	 * effect if everything was shutdown correctly.
 	 */
 	private static class ShutdownHook extends Thread {
@@ -120,7 +120,7 @@ public class ServerTestUtil {
 	}
 
 	/**
-	 * 
+	 *
 	 * Thread to read from an input stream and write it to stdout.
 	 */
 	private static class IOThread extends Thread {
@@ -297,7 +297,7 @@ public class ServerTestUtil {
 	 * containing the contents of a server repository
 	 * @param port RMI registry port, 0 indicates that default port should be used
 	 * @param authMode primary authentication mode (0-3, -1=None, see GhidraServer)
-	 * @param enableAltLoginName if true alternate login name will be 
+	 * @param enableAltLoginName if true alternate login name will be
 	 * enabled for those modes which support it.
 	 * @param enableSSHAuthentication enable SSH authentication if true
 	 * @param enableAnonymousAuthentication enable anonymous logins
@@ -386,7 +386,7 @@ public class ServerTestUtil {
 	}
 
 	/**
-	 * Force client username to be used throughout Ghidra.  This may be required when testing 
+	 * Force client username to be used throughout Ghidra.  This may be required when testing
 	 * so that the default login name can be forced.
 	 * @param username
 	 * @see ClientUtil#getUserName()
@@ -588,7 +588,7 @@ public class ServerTestUtil {
 
 	/**
 	 * Start new server instance and return server adapter.
-	 * This method blocks until server is started and adapter is connected.  
+	 * This method blocks until server is started and adapter is connected.
 	 * @param serverRoot root directory
 	 * @param users list of server users
 	 * @return server adapter
@@ -750,7 +750,7 @@ public class ServerTestUtil {
 	 * @param userAccessLines the permissions for the set of users being created (see above)
 	 * @return newly created versioned filesystem (caller is responsible for invoking the
 	 * dispose method on the returned object.
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public static LocalFileSystem createRepository(String dirPath, String repoName,
 			String... userAccessLines) throws IOException {
@@ -808,8 +808,8 @@ public class ServerTestUtil {
 	}
 
 	/**
-	 * Create and populate server test repositories "Test" and "Test1" with the specified 
-	 * users added.  The ADMIN_USER "test" is added by default. 
+	 * Create and populate server test repositories "Test" and "Test1" with the specified
+	 * users added.  The ADMIN_USER "test" is added by default.
 	 * @param dirPath server root
 	 * @param users optional inclusion of USER_A and/or USER_B to be added with no authentication required
 	 * @throws Exception

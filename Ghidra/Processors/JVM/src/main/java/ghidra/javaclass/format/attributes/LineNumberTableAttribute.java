@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,12 +29,12 @@ import ghidra.util.exception.DuplicateNameException;
  * attributes table of a Code attribute. It may be used by debuggers to
  * determine which part of the Java virtual machine code array corresponds to a given
  * line number in the original source file.
- * 
+ *
  * If LineNumberTable attributes are present in the attributes table of a given
  * Code attribute, then they may appear in any order. Furthermore, multiple
  * LineNumberTable attributes may together represent a given line of a source file;
  * that is, LineNumberTable attributes need not be one-to-one with source lines.
- * 
+ *
  * The LineNumberTable attribute has the following format:
  * <pre>
  * 	LineNumberTable_attribute {

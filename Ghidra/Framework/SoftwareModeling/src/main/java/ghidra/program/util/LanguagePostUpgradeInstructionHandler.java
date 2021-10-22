@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,9 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>LanguagePostUpgradeInstructionHandler</code> provides an abstract implementation 
+ * <code>LanguagePostUpgradeInstructionHandler</code> provides an abstract implementation
  * of a post language-upgrade instruction modification handler.  The Simple Language Translator
- * facilitates the specification of such a handler implementation within a language 
+ * facilitates the specification of such a handler implementation within a language
  * translator specification file using the <i>post_upgrade_handler</i> element.
  * Following a major-version language upgrade, the last translator invoked is given an
  * opportunity to perform additional instruction modifications on the entire program.
@@ -56,11 +56,11 @@ public abstract class LanguagePostUpgradeInstructionHandler {
 	}
 
 	/**
-	 * Invoked after Program language upgrade has completed.  
+	 * Invoked after Program language upgrade has completed.
 	 * Implementation of this method permits the final re-disassembled program to be
-	 * examined/modified to address more complex language upgrades.  This method will only be 
+	 * examined/modified to address more complex language upgrades.  This method will only be
 	 * invoked on the latest translator, which means all complex multi-version post-upgrade
-	 * concerns must factor in the complete language transition.  The program's language 
+	 * concerns must factor in the complete language transition.  The program's language
 	 * information will still reflect the original pre-upgrade state, and if the program is
 	 * undergoing a schema version upgrade as well, certain complex upgrades may not
 	 * have been completed (e.g., Function and Variable changes).  Program modifications should
@@ -78,7 +78,7 @@ public abstract class LanguagePostUpgradeInstructionHandler {
 	 * Repair the context and re-disassemble the instruction at the specified address.
 	 * @param addr instruction address
 	 * @param contextValue new context value
-	 * @param mergeContext if true, the specified context value will be merged with the existing 
+	 * @param mergeContext if true, the specified context value will be merged with the existing
 	 * context at the specified address, otherwise the existing value will be replaced.
 	 */
 	protected void modifySingleInstructionContext(Address addr,

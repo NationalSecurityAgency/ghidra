@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,10 +35,10 @@ import ghidra.util.StringUtilities;
 
 /**
  * The analog of {@link PatternBlock}, designed for use by the assembler
- * 
+ *
  * It is suitable for the assembler because it is represented byte-by-byte, and it offers a number
  * of useful conversions and operations.
- * 
+ *
  * TODO A lot of this could probably be factored into the {@link PatternBlock} class, but it was
  * best to experiment in another class altogether to avoid breaking things.
  */
@@ -187,7 +187,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	}
 
 	/**
-	 * Convert a block from a disjoint pattern into an assembly pattern block 
+	 * Convert a block from a disjoint pattern into an assembly pattern block
 	 * @param pat the pattern to convert
 	 * @param context true to select the context block, false to select the instruction block
 	 * @return the converted pattern block
@@ -295,7 +295,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	 * Convert a register value into a pattern block
 	 * @param rv the register value
 	 * @return the pattern block
-	 * 
+	 *
 	 * This is used primarily to compute default context register values, and pass them into an
 	 * assembler.
 	 */
@@ -372,7 +372,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Combine this pattern block with another given block
-	 * 
+	 *
 	 * Two blocks can be combined in their corresponding defined bits agree. When blocks are
 	 * combined, their bytes are aligned according to their shifts, and the defined bits are taken
 	 * from either block. If neither block defines a bit (i.e., the mask bit at that position is
@@ -516,13 +516,13 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Encode the given value into a copy of this pattern block as specified by a context operation
-	 * 
+	 *
 	 * NOTE: this method is given as a special operation, instead of a conversion factory method,
 	 * because this is a write operation, not a combine operation. As such, the bits (including
 	 * undefined bits) replace the bits in the existing pattern block. Were this a conversion
 	 * method, we would lose the distinction between unknown bits being written, and bits whose
 	 * values are simply not included in the write.
-	 * 
+	 *
 	 * @param cop the context operation specifying the location of the value to encode
 	 * @param val the value to encode
 	 * @return the new copy with the encoded value
@@ -597,7 +597,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	 * Set all bits read by a given context operation to unknown
 	 * @param cop the context operation
 	 * @return the result
-	 * 
+	 *
 	 * This is used during resolution to remove a context requirement passed upward by a child.
 	 * When a parent constructor writes the required value to the context register, that
 	 * requirement need not be passed further upward, since the write satisfies the requirement.
@@ -692,7 +692,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	}
 
 	/**
-	 * Fill all unknown bits with {@code 0} bits 
+	 * Fill all unknown bits with {@code 0} bits
 	 * @return the result
 	 */
 	public AssemblyPatternBlock fillMask() {
@@ -737,7 +737,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Decode the values array into a {@link BigInteger} of length {@code n} bytes
-	 * 
+	 *
 	 * The array is either truncated or zero-extended <em>on the right</em> to match the requested
 	 * number of bytes, then decoded in big-endian format as an unsigned value.
 	 * @param n the number of bytes (left-to-right) to decode
@@ -756,7 +756,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Counts the total number of known bits in the pattern
-	 * 
+	 *
 	 * At a slightly lower level, counts the number of 1-bits in the mask.
 	 * @return the count
 	 */
@@ -784,9 +784,9 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 
 	/**
 	 * Get an iterable over all the possible fillings of the value, given a partial mask
-	 * 
+	 *
 	 * This is meant to be used idiomatically, as in an enhanced for loop:
-	 * 
+	 *
 	 * <pre>
 	 * {@code
 	 * for (byte[] val : pattern.possibleVals()) {
@@ -794,7 +794,7 @@ public class AssemblyPatternBlock implements Comparable<AssemblyPatternBlock> {
 	 * }
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * NOTE: A single byte array is instantiated with the call to {@link Iterable#iterator()}. Each
 	 * call to {@link Iterator#next()} modifies the one byte array and returns it. As such, if you
 	 * intend to preserve the value in the array for later use, you <em>must</em> make a copy.

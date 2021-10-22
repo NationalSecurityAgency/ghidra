@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class ClassicSampleX86ProgramBuilder extends ProgramBuilder {
 	 * A set of predefined memory bytes, code units and functions will be added.
 	 * This builder object will be the program consumer and must be disposed to properly
 	 * release the program.
-	 * 
+	 *
 	 * @throws Exception if an unexpected exception happens
 	 */
 	public ClassicSampleX86ProgramBuilder() throws Exception {
@@ -47,7 +47,7 @@ public class ClassicSampleX86ProgramBuilder extends ProgramBuilder {
 	 * A set of predefined memory bytes, code units and functions will be added.
 	 * This builder object will be the program consumer and must be disposed to properly
 	 * release the program.
-	 * 
+	 *
 	 * @param disableAnalysis if true, the analysis manager will be disabled
 	 * @throws Exception if an unexpected exception happens
 	 */
@@ -61,7 +61,7 @@ public class ClassicSampleX86ProgramBuilder extends ProgramBuilder {
 	 * This builder object will be the program consumer and must be disposed to properly
 	 * release the program.
 	 * @param name program name
-	 * 
+	 *
 	 * @param disableAnalysis if true, the analysis manager will be disabled
 	 * @throws Exception if an unexpected exception happens
 	 */
@@ -151,7 +151,7 @@ public class ClassicSampleX86ProgramBuilder extends ProgramBuilder {
 
 		//
 		// Labels
-		//		
+		//
 		createLabel("0x01001160", "MSVCRT.dll___set_app_type");
 		createLabel("0x01002d1f", "MyLocal");
 		createLabel("0x01002d2b", "AnotherLocal");
@@ -178,7 +178,7 @@ public class ClassicSampleX86ProgramBuilder extends ProgramBuilder {
 		setBytes("0x01006a1e", "04 00");
 		setBytes("0x01008014", "01 00 00 00 53 00 61 00 6d 00 70 00 6c 00 65 00");
 		setBytes("0x010085a7", "00 ef bb bf"); // float
-		setBytes("0x010085a9", "bb bf 00 ff fe 00 00 fe"); // double		
+		setBytes("0x010085a9", "bb bf 00 ff fe 00 00 fe"); // double
 
 		//
 		// Data Types
@@ -238,7 +238,7 @@ public class ClassicSampleX86ProgramBuilder extends ProgramBuilder {
 		createMemoryReference("0x01004930", "0x010049f9", RefType.CONDITIONAL_JUMP,
 			SourceType.ANALYSIS);
 
-// Any test needing complete analysis should call the analysis method 
+// Any test needing complete analysis should call the analysis method
 //		if (!disableAnalysis) {
 //			analyze();
 //		}

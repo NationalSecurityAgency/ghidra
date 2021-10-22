@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public class MenuKeyProcessor {
 	/**
 	 * Checks the given event to see if it has a registered action to perform while a menu is open.
 	 * If a menu is open and a handler exists, the handler will be called.
-	 * 
+	 *
 	 * @param event the event to check
 	 * @return true if the event triggered a handler
 	 */

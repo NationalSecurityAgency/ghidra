@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,25 +28,25 @@ import utility.module.ModuleUtilities;
 /**
  * Class used to prepare Ghidra for launching
  * <p>
- * A {@link #main(String[])} method is provided which redirects execution to a 
+ * A {@link #main(String[])} method is provided which redirects execution to a
  * {@link GhidraLaunchable} class passed in as a command line argument
  */
 public class GhidraLauncher {
 
 	/**
 	 * Launches the given {@link GhidraLaunchable} specified in the first command line argument
-	 * 
+	 *
 	 * @param args The first argument is the name of the {@link GhidraLaunchable} to launch.
-	 *   The remaining args get passed through to the class's {@link GhidraLaunchable#launch} 
+	 *   The remaining args get passed through to the class's {@link GhidraLaunchable#launch}
 	 *   method.
 	 * @throws Exception If there was a problem launching.  See the exception's message for more
-	 *     details on what went wrong.  
+	 *     details on what went wrong.
 	 */
 	public static void launch(String[] args) throws Exception {
 
 		// Initialize the Ghidra environment
 		GhidraApplicationLayout layout = initializeGhidraEnvironment();
-		
+
 		// Make sure the thing to launch is a GhidraLaunchable
 		Class<?> cls = ClassLoader.getSystemClassLoader().loadClass(args[0]);
 		if (!GhidraLaunchable.class.isAssignableFrom(cls)) {
@@ -61,12 +61,12 @@ public class GhidraLauncher {
 
 	/**
 	 * Launches the given {@link GhidraLaunchable} specified in the first command line argument
-	 * 
+	 *
 	 * @param args The first argument is the name of the {@link GhidraLaunchable} to launch.
-	 *   The remaining args get passed through to the class's {@link GhidraLaunchable#launch} 
+	 *   The remaining args get passed through to the class's {@link GhidraLaunchable#launch}
 	 *   method.
 	 * @throws Exception If there was a problem launching.  See the exception's message for more
-	 *     details on what went wrong. 
+	 *     details on what went wrong.
 	 * @deprecated Use {@link Ghidra#main(String[])} instead
 	 */
 	@Deprecated(since = "10.1", forRemoval = true)
@@ -79,10 +79,10 @@ public class GhidraLauncher {
 	 * and adding all relevant modules and libraries to the classpath
 	 * <p>
 	 * NOTE: This method expects that the {@link GhidraClassLoader} is the active classloader
-	 * 
+	 *
 	 * @return Ghidra's {@link GhidraApplicationLayout layout}
 	 * @throws IOException if there was an issue getting the {@link GhidraApplicationLayout layout}
-	 * @throws ClassNotFoundException if the {@link GhidraClassLoader} is not the active classloader 
+	 * @throws ClassNotFoundException if the {@link GhidraClassLoader} is not the active classloader
 	 */
 	public static GhidraApplicationLayout initializeGhidraEnvironment()
 			throws IOException, ClassNotFoundException {
@@ -97,7 +97,7 @@ public class GhidraLauncher {
 
 		// Get application layout
 		GhidraApplicationLayout layout = new GhidraApplicationLayout();
-		
+
 		// Get the classpath
 		List<String> classpathList = buildClasspath(layout);
 
@@ -111,7 +111,7 @@ public class GhidraLauncher {
 	 * Builds and returns a classpath from the given {@link GhidraApplicationLayout layout}
 	 * <p>
 	 * NOTE: This method does NOT add the built classpath to a classloader...it just returns it
-	 * 
+	 *
 	 * @param layout Ghidra's {@link GhidraApplicationLayout layout}
 	 * @return A {@link List} of classpath entries
 	 * @throws IOException if there was an IO-related issue with building the classpath
@@ -134,9 +134,9 @@ public class GhidraLauncher {
 	}
 
 	/**
-	 * Add patch jars to the given path list.  This should be done first so they take precedence in 
+	 * Add patch jars to the given path list.  This should be done first so they take precedence in
 	 * the classpath.
-	 * 
+	 *
 	 * @param pathList The list of paths to add to
 	 * @param patchDir The application installation directory; may be null
 	 */
@@ -155,7 +155,7 @@ public class GhidraLauncher {
 
 	/**
 	 * Add module bin directories to the given path list.
-	 * 
+	 *
 	 * @param pathList The list of paths to add to.
 	 * @param modules The modules to get the bin directories of.
 	 */
@@ -166,7 +166,7 @@ public class GhidraLauncher {
 
 	/**
 	 * Add module lib jars to the given path list.
-	 * 
+	 *
 	 * @param pathList The list of paths to add to.
 	 * @param modules The modules to get the jars of.
 	 */
@@ -178,7 +178,7 @@ public class GhidraLauncher {
 	/**
 	 * Add external runtime lib jars to the given path list.  The external jars are discovered by
 	 * parsing the build/libraryDependencies.txt file that results from a prepDev.
-	 * 
+	 *
 	 * @param pathList The list of paths to add to.
 	 * @param appRootDirs The application root directories to search.
 	 * @throws IOException if a required file or directory was not found.
@@ -233,7 +233,7 @@ public class GhidraLauncher {
 	/**
 	 * Searches the given directory (non-recursively) for jars and returns their paths in a list.
 	 * The paths will be sorted by jar file name.
-	 * 
+	 *
 	 * @param dir The directory to search for jars in
 	 * @return A list of discovered jar paths, sorted by jar file name
 	 */
@@ -251,10 +251,10 @@ public class GhidraLauncher {
 	}
 
 	/**
-	 * Gets the modules ordered by "class-loader priority".  This ensures that core modules (things 
+	 * Gets the modules ordered by "class-loader priority".  This ensures that core modules (things
 	 * in Framework/Features/Processors, etc) come before user modules (Extensions).  It also
 	 * guarantees a consistent module order from run to run.
-	 * 
+	 *
 	 * @param layout The layout
 	 * @return the modules mapped by name, ordered by priority
 	 */
@@ -310,7 +310,7 @@ public class GhidraLauncher {
 
 	/**
 	 * Updates the list of paths to make sure the order is correct for any class-loading dependencies.
-	 *  
+	 *
 	 * @param pathList The list of paths to order.
 	 * @param modules The modules on the classpath.
 	 * @return A new list with the elements of the original list re-ordered as needed.

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ void PreferSplitManager::fillinInstance(SplitInstance *inst,bool bigendian,bool 
   int4 hisize = vn->getSize() - losize;
   if (vn->isConstant()) {
     uintb origval = vn->getOffset();
-    
+
     uintb loval = origval & calc_mask( losize );// Split the constant into two pieces
     uintb hival = (origval >> 8*losize) & calc_mask( hisize );
     if (setlo && (inst->lo == (Varnode *)0))
@@ -274,7 +274,7 @@ void PreferSplitManager::splitLoad(SplitInstance *inst,PcodeOp *op)
   PcodeOp *loop = data->newOp(2,op->getAddr());
   PcodeOp *addop = data->newOp(2,op->getAddr());
   Varnode *ptrvn = op->getIn(1);
-  
+
   data->opSetOpcode(hiop,CPUI_LOAD);
   data->opSetOpcode(loop,CPUI_LOAD);
 
@@ -299,7 +299,7 @@ void PreferSplitManager::splitLoad(SplitInstance *inst,PcodeOp *op)
   data->opSetInput(loop,spaceid,0);
   if (ptrvn->isFree())		// Don't read a free varnode twice
     ptrvn = data->newVarnode(ptrvn->getSize(),ptrvn->getSpace(),ptrvn->getOffset());
-  
+
   if (spc->isBigEndian()) {
     data->opSetInput(hiop,ptrvn,1);
     data->opSetInput(loop,addvn,1);
@@ -324,7 +324,7 @@ void PreferSplitManager::splitStore(SplitInstance *inst,PcodeOp *op)
   PcodeOp *loop = data->newOp(3,op->getAddr());
   PcodeOp *addop = data->newOp(2,op->getAddr());
   Varnode *ptrvn = op->getIn(1);
-  
+
   data->opSetOpcode(hiop,CPUI_STORE);
   data->opSetOpcode(loop,CPUI_STORE);
 
@@ -348,7 +348,7 @@ void PreferSplitManager::splitStore(SplitInstance *inst,PcodeOp *op)
   data->opSetInput(hiop,spaceid,0);
   spaceid = data->newConstant(spaceid->getSize(),spaceid->getOffset());
   data->opSetInput(loop,spaceid,0);
-  
+
   if (ptrvn->isFree())		// Don't read a free varnode twice
     ptrvn = data->newVarnode(ptrvn->getSize(),ptrvn->getSpace(),ptrvn->getOffset());
   if (spc->isBigEndian()) {

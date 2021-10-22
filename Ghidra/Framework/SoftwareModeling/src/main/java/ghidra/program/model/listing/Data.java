@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -201,11 +201,11 @@ public interface Data extends CodeUnit, Settings {
 	 * at the given offset.  It is important to note that with certain
 	 * datatypes there may be more than one component containing the specified offset
 	 * (see {@link #getComponentsContaining(int)}).
-	 * 
+	 *
 	 * @param offset the amount to add to this data items address to get the
 	 * address of the requested data item.
 	 * @return first data component containing offset or null
-	 * @deprecated method name has been changed to better reflect behavior.  The method 
+	 * @deprecated method name has been changed to better reflect behavior.  The method
 	 * {@link #getComponentContaining(int)} should be used instead.
 	 */
 	@Deprecated
@@ -216,7 +216,7 @@ public interface Data extends CodeUnit, Settings {
 	 * at the given offset.  It is important to note that with certain
 	 * datatypes there may be more than one component containing the specified offset
 	 * (see {@link #getComponentsContaining(int)}).
-	 * 
+	 *
 	 * @param offset the amount to add to this data items address to get the
 	 * @return first data component containing offset or null
 	 * address of the requested data item.
@@ -238,9 +238,9 @@ public interface Data extends CodeUnit, Settings {
 
 	/**
 	 * Returns the primitive component containing this offset (i.e., one that does not
-	 * have sub-components).  This is useful for data items which are made up of multiple 
-	 * layers of other data items. This method immediately goes to the lowest level data item.  
-	 * If the minimum offset of a component is specified, the only first component containing 
+	 * have sub-components).  This is useful for data items which are made up of multiple
+	 * layers of other data items. This method immediately goes to the lowest level data item.
+	 * If the minimum offset of a component is specified, the only first component containing
 	 * the offset will be considered (e.g., 0-element array).
 	 * @return primitive component containing this offset
 	 */

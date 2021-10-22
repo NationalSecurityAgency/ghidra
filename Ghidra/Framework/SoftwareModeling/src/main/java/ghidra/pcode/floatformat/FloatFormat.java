@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public strictfp class FloatFormat {
 
 	/**
 	 * Round {@code bigFloat} using this format's displayContext.
-	 * 
+	 *
 	 * @param bigFloat any BigFloat
 	 * @return a BigDecimal rounded according to this format's displayContext
 	 */
@@ -300,9 +300,9 @@ public strictfp class FloatFormat {
 
 	/**
 	 * Decode {@code encoding} to a BigFloat using this format.
-	 * 
+	 *
 	 * NB: this method should not be used if {@link #size}&gt;8
-	 * 
+	 *
 	 * @param encoding the encoding
 	 * @return the decoded value as a BigFloat
 	 */
@@ -331,9 +331,9 @@ public strictfp class FloatFormat {
 
 	/**
 	 * Decode {@code encoding} to a SmallFloatData using this format.
-	 * 
+	 *
 	 * NB: this method should not be used if {@link #size}>8
-	 * 
+	 *
 	 * @param encoding the encoding
 	 * @return the decoded value as a SmallFloatData
 	 */
@@ -342,7 +342,7 @@ public strictfp class FloatFormat {
 		int exp = extractExponentCode(encoding);
 		long frac = extractFractionalCode(encoding);
 		FloatKind kind = extractKind(encoding);
-	
+
 		int scale;
 		long unscaled = frac;
 		if (kind == FloatKind.FINITE) {
@@ -536,9 +536,9 @@ public strictfp class FloatFormat {
 
 	/**
 	 * Convert an encoded value to a binary floating point representation.
-	 * 
+	 *
 	 * NB: this method should not be used if {@link #size}&gt;8
-	 * 
+	 *
 	 * @param encoding the encoding of a floating point value in this format
 	 * @return a binary string representation of the encoded floating point {@code encoding}
 	 */
@@ -627,9 +627,9 @@ public strictfp class FloatFormat {
 
 	/**
 	 * right shift and round to nearest even or left shift to an integer with lead bit at newLeadBit.
-	 * 
+	 *
 	 * The final round up might cause a carry that propagates up, so this must be followed by a test.
-	 * 
+	 *
 	 * @param i integer representation of mantissa 1.xxxxx
 	 * @param newLeadBit the bit position we want as a new lead bit
 	 * @return integer representing 1.yyyy with a new lead bit position
@@ -692,7 +692,7 @@ public strictfp class FloatFormat {
 		/**
 		 * Construct SmallFloat Data.
 		 * If kind is FINITE, the value is <code>sign*unscaled*2^(scale-fracbits)</code>
-		 * 
+		 *
 		 * @param fracbits number of fractional bits
 		 * @param expbits maximum number of bits in exponent
 		 * @param kind the Kind, FINITE, INFINITE, ...

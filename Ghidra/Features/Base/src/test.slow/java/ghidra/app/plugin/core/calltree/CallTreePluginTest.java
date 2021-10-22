@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -109,7 +109,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		/*
 		 	Create a function call tree that looks like:
-		 	
+
 		root 0000
 		 	 a 1000
 		 		 b 2000
@@ -124,11 +124,11 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		 											 l 7100
 		 										 m 6000  (duplicate)
 		 										     n 7000
-		 
+
 		 */
 
 		//
-		// 
+		//
 		// -called by a chain of 5 other functions
 		// -calls a chain of 4 other children
 		// -has multiple children
@@ -273,7 +273,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testChangingDepthWillFilterOnNewText() {
-		// 
+		//
 		// Verifies that we can match a filter at one depth and then increase the depth and match
 		// a new filtered item that is at a deeper level than the previous depth.
 		//
@@ -386,7 +386,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		fullyExpandIncomingNode(node);
 
-		int nodeDepth = node.getTreePath().getPathCount() - 1;// -1 for root node 
+		int nodeDepth = node.getTreePath().getPathCount() - 1;// -1 for root node
 		int depth = 4 + nodeDepth;
 		assertIncomingMaxDepth(depth, false);
 		assertDepth(node, depth);
@@ -440,7 +440,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testIncomingCalls() {
 		//
-		// Make sure there are some incoming calls.  Make sure we can open child nodes to see 
+		// Make sure there are some incoming calls.  Make sure we can open child nodes to see
 		// more incoming calls.
 		//
 
@@ -553,7 +553,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		//
 		// Test that the 'home' address does not change when the user navigates
-		// 
+		//
 
 		toggleFollowIncomingNavigation(false);
 		Address startAddress = addr("0x5000");
@@ -576,7 +576,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		//
 		// Test that the 'home' address does not change when the user navigates
-		// 
+		//
 
 		toggleFollowIncomingNavigation(true);
 		setProviderFunction("0x5000");
@@ -596,7 +596,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testFilterOutgoingDuplicates_DifferentSource_SameDestination() {
 		//
-		// Test that the filter action will remove duplicate entries from the child nodes of 
+		// Test that the filter action will remove duplicate entries from the child nodes of
 		// the outgoing tree
 		//
 		// setup a known state
@@ -628,7 +628,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 		// Test that 2 references from the same source address to the same function will not get
 		// added to the tree, regardless of the duplicate filter state
-		// 
+		//
 
 		// add a second reference (this is already defined in setup)
 		builder.createMemoryCallReference("0x5020", "0x6000");
@@ -644,7 +644,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		GTreeNode rootNode = getRootNode(outgoingTree);
 		Map<String, List<GTreeNode>> nameCountMap = createNameCountMap(rootNode);
 
-		// 1, not 2 entries (the exact duplicate and the duplicate destination are ignored)		
+		// 1, not 2 entries (the exact duplicate and the duplicate destination are ignored)
 		assertEquals(1, nameCountMap.get("Function_6000").size());
 
 		performAction(filterDuplicatesAction, true);// deselect
@@ -662,7 +662,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 		// Test that 2 references from the same source address to the same function will not get
 		// added to the tree, regardless of the duplicate filter state
-		// 
+		//
 
 		// add a second reference from 0x5020 to a function already called (see setup)
 		builder.createMemoryCallReference("0x5020", "0x6000");
@@ -695,13 +695,13 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		/*
 		Create a function call tree that looks like:
-		
-		
+
+
 			NS1::Foo
 					root
 			NS2::Foo
 					root
-					
+
 				 */
 
 		Function f1 = function("NS1", "Foo", 0x11000);
@@ -727,7 +727,7 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testTracksSelection() {
 		//
-		// Test the action that tracks node selection in the outgoing tree.  When toggled on, 
+		// Test the action that tracks node selection in the outgoing tree.  When toggled on,
 		// navigating the nodes in the outgoing tree should trigger a listing navigation.
 		//
 		Address startAddress = addr("0x5000");
@@ -790,10 +790,10 @@ public class CallTreePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testCallTreeForExternalFicticiousFunction() {
-		// 
+		//
 		// Apparently, we create fake function markup for external functions.  Thus, there is no
 		// real function at that address and our plugin has to do some work to find out where
-		// we 'hang' references to the external function, which is itself a Function.  These 
+		// we 'hang' references to the external function, which is itself a Function.  These
 		// fake function will usually just be a pointer to another function.
 		//
 

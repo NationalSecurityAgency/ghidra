@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.test.TestEnv;
 
 /**
- * Test for byte viewer formats. 
+ * Test for byte viewer formats.
  */
 public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -131,13 +131,13 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 			c.cursorRight();
 		});
 
-//		SwingUpdateManager updateManager = (SwingUpdateManager) 
+//		SwingUpdateManager updateManager = (SwingUpdateManager)
 //			TestUtils.getInstanceField("updateManager", provider);
 //		waitForSwingUpdateManager( updateManager );
 		waitForSwing();
 		assertEquals(getAddr(0x01001001).toString(), findLabelStr(panel, "Insertion"));
 
-		// move the cursor to the left; the insertion field should have 
+		// move the cursor to the left; the insertion field should have
 		//   been decremented by one
 		runSwing(() -> {
 			ByteViewerComponent c = panel.getCurrentComponent();
@@ -179,7 +179,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		});
 		assertEquals(getAddr(0x01001001).toString(), findLabelStr(panel, "Insertion"));
 
-		// move the cursor to the left; the insertion field should have 
+		// move the cursor to the left; the insertion field should have
 		//   been decremented by one
 		runSwing(() -> {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
@@ -221,7 +221,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 		});
 		assertEquals(getAddr(0x01001002).toString(), findLabelStr(panel, "Insertion"));
 
-		// move the cursor to the left; the insertion field should have 
+		// move the cursor to the left; the insertion field should have
 		//   been decremented by one
 		runSwing(() -> {
 			ByteViewerComponent currentComponent = panel.getCurrentComponent();
@@ -555,7 +555,7 @@ public class ByteViewerPluginFormatsTest extends AbstractGhidraHeadedIntegration
 
 	@Test
 	public void testDisassembledRecognition() throws Exception {
-		// verify that the undefined bytes are marked with a box 
+		// verify that the undefined bytes are marked with a box
 		// ("\u2700" unicode for dingbat char);
 		// defined data and instructions are marked with '.'
 		env.showTool();

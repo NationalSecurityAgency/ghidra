@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.util.List;
 
 /**
  * The RegisterTree class builds and represents relationships between registers. Any
- * register that "breaks down" into smaller registers can be represent by a 
+ * register that "breaks down" into smaller registers can be represent by a
  * RegisterTree.  The largest register will be at the root and the registers that
  * make it up will be its children trees.  The children are RegisterTrees as well
  * and can have children trees of thier own.  The root of a RegisterTree may not

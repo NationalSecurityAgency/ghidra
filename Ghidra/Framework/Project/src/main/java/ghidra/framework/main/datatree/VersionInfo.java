@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,9 @@ public class VersionInfo implements Serializable {
 
 	private String domainFilePath;
 	private int versionNumber;
-		
+
 	/**
-	 * Construct a new version info object. 
+	 * Construct a new version info object.
 	 * @param domainFilePath pathname for the domain file.
 	 * @param versionNumber version number
 	 */
@@ -48,5 +48,5 @@ public class VersionInfo implements Serializable {
 	public int getVersionNumber() {
 		return versionNumber;
 	}
-		
+
 }

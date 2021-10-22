@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 
 /**
- * Model for run-time type information about the RTTI4 data type, which represents a 
+ * Model for run-time type information about the RTTI4 data type, which represents a
  * CompleteObjectLocator structure.
  * <p>
  * Fields for this RunTimeTypeInformation structure can be found on http://www.openrce.org
@@ -69,7 +69,7 @@ public class Rtti4Model extends AbstractCreateRttiDataModel {
 	 * @param program the program
 	 * @param rtti4Address the address in the program for the RTTI4 data
 	 * types.
-	 * @param validationOptions options indicating how to validate the data type at the indicated 
+	 * @param validationOptions options indicating how to validate the data type at the indicated
 	 * address.
 	 */
 	public Rtti4Model(Program program, Address rtti4Address,
@@ -133,7 +133,7 @@ public class Rtti4Model extends AbstractCreateRttiDataModel {
 
 	/**
 	 * This gets the CompleteObjectLocator (RTTI 4) structure for the indicated program.
-	 * @param program the program which will contain this data type. 
+	 * @param program the program which will contain this data type.
 	 * @return the CompleteObjectLocator (RTTI 4) structure.
 	 */
 	public static DataType getDataType(Program program) {

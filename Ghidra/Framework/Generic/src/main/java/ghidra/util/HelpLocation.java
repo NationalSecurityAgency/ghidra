@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,11 +45,11 @@ public class HelpLocation {
 	 * defined using the specified anchor name.
 	 * <p>
 	 * <b>Note:</b>  You can specify a <code>null</code> anchor value.  In that case, the given topic
-	 * will be searched for a file with the same name as the topic.  If such a file exists, 
-	 * then that file will be used as the file for this location.  If no such file exists, then 
+	 * will be searched for a file with the same name as the topic.  If such a file exists,
+	 * then that file will be used as the file for this location.  If no such file exists, then
 	 * the help file to use <b>cannot be resolved</b>.  Therefore, it is best to always specify
 	 * a value for the help location.
-	 *    
+	 *
 	 * @param topic topic directory name
 	 * @param anchor anchor name or null
 	 */
@@ -63,16 +63,16 @@ public class HelpLocation {
 	 * defined using the specified anchor name.
 	 * <p>
 	 * <b>Note:</b>  You can specify a <code>null</code> anchor value.  In that case, the given topic
-	 * will be searched for a file with the same name as the topic.  If such a file exists, 
-	 * then that file will be used as the file for this location.  If no such file exists, then 
+	 * will be searched for a file with the same name as the topic.  If such a file exists,
+	 * then that file will be used as the file for this location.  If no such file exists, then
 	 * the help file to use <b>cannot be resolved</b>.  Therefore, it is best to always specify
 	 * a value for the help location.
-	 *    
+	 *
 	 * @param topic topic directory name
 	 * @param anchor anchor name or null
-	 * @param inceptionInformation the description of from whence the item 
+	 * @param inceptionInformation the description of from whence the item
 	 *        described by this location has come; can be null
-	 *        
+	 *
 	 */
 	public HelpLocation(String topic, String anchor, String inceptionInformation) {
 		if (topic == null) {
@@ -299,10 +299,10 @@ public class HelpLocation {
 	private static String getInceptionInformationFromTheFirstClassThatIsNotUs(
 			StackTraceElement[] stackTrace) {
 
-		// To find our creation point we can use a simple algorithm: find the name of our class, 
+		// To find our creation point we can use a simple algorithm: find the name of our class,
 		// which is in the first stack trace element and then keep walking backwards until that
 		// name is not ours.
-		//         
+		//
 		String myClassName = HelpLocation.class.getName();
 		int myClassNameStartIndex = -1;
 		for (int i = 1; i < stackTrace.length; i++) { // start at 1, because we are the first item

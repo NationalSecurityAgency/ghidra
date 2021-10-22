@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,14 +22,14 @@ import ghidra.util.UniversalID;
 import ghidra.util.exception.VersionException;
 
 /**
- * Version 2-4 implementation for accessing the Composite database table. 
+ * Version 2-4 implementation for accessing the Composite database table.
  */
 class CompositeDBAdapterV2V4 extends CompositeDBAdapter implements RecordTranslator {
 
-	// While the addition of flex-array and bitfields does not impact the 
+	// While the addition of flex-array and bitfields does not impact the
 	// actual schema the presence of such components can not be supported
 	// by earlier versions of Ghidra.  A version change to the existing
-	// schema permits us to prevent archives containing such components 
+	// schema permits us to prevent archives containing such components
 	// where not supported.
 
 	// Version bumped to 3 when flex-arrays support added to structures

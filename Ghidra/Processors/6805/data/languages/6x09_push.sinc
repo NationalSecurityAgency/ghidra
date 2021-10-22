@@ -21,7 +21,7 @@ pshs6: pshs5        is imm86=0 & pshs5      { }
 pshs7: pshs6" "PC   is PC & imm87=1 & pshs6 { local t:2 = inst_next; Push2(S, t); }
 pshs7: pshs6        is imm87=0 & pshs6      { }
 
-:PSHS pshs7    is op=0x34; pshs7 { }                                                                                           
+:PSHS pshs7    is op=0x34; pshs7 { }
 ################################################################
 # PSHU helper
 ################################################################

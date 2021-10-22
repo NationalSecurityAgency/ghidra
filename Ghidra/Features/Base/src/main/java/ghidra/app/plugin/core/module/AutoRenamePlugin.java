@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -90,7 +90,7 @@ public class AutoRenamePlugin extends ProgramPlugin {
 
         // Fragment Auto-Rename Action
         autoRenameAction = new AutoRenameAction(getName());
-        
+
         // Fragment Rename Action (using active LabelFieldLocation)
         autoLblRenameAction = new AutoLableRenameAction(getName());
         tool.addAction(autoRenameAction);
@@ -124,14 +124,14 @@ public class AutoRenamePlugin extends ProgramPlugin {
                 if (!n.isFragment())
                     continue;
 
-                // Rename Fragment using minimum address label	
+                // Rename Fragment using minimum address label
                 ProgramFragment f = n.getFragment();
                 Address a = f.getMinAddress();
                 if (a == null)
                     continue; // empty Fragment
                 Symbol s = symTable.getPrimarySymbol(a);
                 if (s != null) {
-                    cmd.add(new RenameCmd(f.getTreeName(), false, f.getName(), s.getName(), 
+                    cmd.add(new RenameCmd(f.getTreeName(), false, f.getName(), s.getName(),
                     	ignoreDuplicateNames));
                 }
             }
@@ -177,9 +177,9 @@ public class AutoRenamePlugin extends ProgramPlugin {
         public AutoRenameAction(String owner) {
             super("Rename Fragment from Program Tree View", owner);
             setHelpLocation(new HelpLocation("ProgramTreePlugin", "AutoRename"));
-            setPopupMenuData( new MenuData( 
-            	AUTO_RENAME_MENUPATH, 
-            	null, 
+            setPopupMenuData( new MenuData(
+            	AUTO_RENAME_MENUPATH,
+            	null,
             	"delete" ) );
 
             setDescription("Rename a fragment in the program tree viewer with the minimum address label in that fragment.");
@@ -221,7 +221,7 @@ public class AutoRenamePlugin extends ProgramPlugin {
 
 		public AutoLableRenameAction(String owner) {
 			super("Rename Fragment from Code Browser", owner);
-			setPopupMenuData( new MenuData( 
+			setPopupMenuData( new MenuData(
 				AUTO_LBL_RENAME_MENUPATH, null, GROUP_NAME ) );
 
 	        setDescription("Rename a fragment in the program tree viewer with the selected label within the fragment.");

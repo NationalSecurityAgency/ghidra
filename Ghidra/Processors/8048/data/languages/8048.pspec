@@ -3,7 +3,7 @@
 <processor_spec>
 
   <programcounter register="PC"/>
-  
+
   <default_symbols>
 
     <symbol name="BANK0_R0" address="INTMEM:00"/>
@@ -45,5 +45,5 @@
     <memory_block name="INTMEM" start_address="INTMEM:20" length="0xe0" initialized="false"/>
     <memory_block name="PORT" start_address="PORT:0" length="0x8" initialized="false"/>
   </default_memory_blocks>
-  
+
 </processor_spec>

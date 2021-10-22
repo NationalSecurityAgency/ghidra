@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 /*
  * Created on Apr 2, 2003
  *
- * To change this generated comment go to 
+ * To change this generated comment go to
  * Window>Preferences>Java>Code Generation>Code and Comments
  */
 package ghidra.program.model.data;
@@ -32,8 +32,8 @@ import ghidra.util.classfinder.ClassTranslator;
 /**
  * Definition of a Bitmap Resource Data Structure defined within the
  * resources section of a windows executable.
- * 
- * 
+ *
+ *
  */
 public class BitmapResourceDataType extends DynamicDataType implements Resource {
 
@@ -132,7 +132,7 @@ public class BitmapResourceDataType extends DynamicDataType implements Resource 
 		offset = addComp(DWordDataType.dataType, 4, "width", comps, offset);      	//width of bitmap in pixels
 		offset = addComp(DWordDataType.dataType, 4, "height", comps, offset);  		//height of bitmap in pixels
 		offset = addComp(WordDataType.dataType, 2, "planes", comps, offset);   		//number of planes - value must be a 1
-		offset = addComp(WordDataType.dataType, 2, "bitCount", comps, offset); 		//number of bits per pixel													   		
+		offset = addComp(WordDataType.dataType, 2, "bitCount", comps, offset); 		//number of bits per pixel
 		offset = addComp(DWordDataType.dataType, 4, "compression", comps, offset);  //type of compression for a compressed bottom-up bitmap (top down ones can't be compressed)
 		offset = addComp(DWordDataType.dataType, 4, "sizeImage", comps, offset);
 		offset = addComp(DWordDataType.dataType, 4, "XpelsPerMeter", comps, offset);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,10 +41,10 @@ import utilities.util.reflection.ReflectionUtilities;
  * the entire application.
  * <p>
  * DockingActions can be invoked from the global menu, a popup menu, a toolbar, and/or a keybinding,
- * depending on whether or not menuBarData, popupMenuData, toolBarData, and/or keyBindingData have 
+ * depending on whether or not menuBarData, popupMenuData, toolBarData, and/or keyBindingData have
  * been set.
  * <p>
- * <b> 
+ * <b>
  * Implementors of this class should override {@link #actionPerformed(ActionContext)}.
  * </b>
  * <p>
@@ -199,12 +199,12 @@ public abstract class DockingAction implements DockingActionIf {
 	 * <P>
 	 * If the client wants the action on all windows, then they can call {@link #shouldAddToAllWindows}
 	 * <P>
-	 * If the client wants the action to be on a window only when the window can produce 
-	 * a certain context type, the the client should call 
+	 * If the client wants the action to be on a window only when the window can produce
+	 * a certain context type, the the client should call
 	 * {@link #addToWindowWhen(Class)}
 	 * <P>
 	 * Otherwise, by default, the action will only be on the main window.
-	 * 
+	 *
 	 */
 	@Override
 	public final boolean shouldAddToWindow(boolean isMainWindow, Set<Class<?>> contextTypes) {
@@ -212,7 +212,7 @@ public abstract class DockingAction implements DockingActionIf {
 		if (menuBarData == null && toolBarData == null) {
 			return false;
 		}
-		
+
 		// clients can specify that the action should be on all windows.
 		if (shouldAddToAllWindows) {
 			return true;
@@ -579,10 +579,10 @@ public abstract class DockingAction implements DockingActionIf {
 	/**
 	 * Sets a predicate for dynamically determining the action's enabled state.  If this
 	 * predicate is not set, the action's enable state must be controlled directly using the
-	 * {@link DockingAction#setEnabled(boolean)} method. See 
+	 * {@link DockingAction#setEnabled(boolean)} method. See
 	 * {@link DockingActionIf#isEnabledForContext(ActionContext)}
-	 *  
-	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 *
+	 * @param predicate the predicate that will be used to dynamically determine an action's
 	 * enabled state.
 	 */
 	public void enabledWhen(Predicate<ActionContext> predicate) {
@@ -592,10 +592,10 @@ public abstract class DockingAction implements DockingActionIf {
 	/**
 	 * Sets a predicate for dynamically determining if this action should be included in
 	 * an impending pop-up menu.  If this predicate is not set, the action's will be included
-	 * in an impending pop-up, if it is enabled. See 
+	 * in an impending pop-up, if it is enabled. See
 	 * {@link DockingActionIf#isAddToPopup(ActionContext)}
-	 *  
-	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 *
+	 * @param predicate the predicate that will be used to dynamically determine an action's
 	 * enabled state.
 	 */
 	public void popupWhen(Predicate<ActionContext> predicate) {
@@ -603,10 +603,10 @@ public abstract class DockingAction implements DockingActionIf {
 	}
 
 	/**
-	 * Sets a predicate for dynamically determining if this action is valid for the current 
+	 * Sets a predicate for dynamically determining if this action is valid for the current
 	 * {@link ActionContext}.  See {@link DockingActionIf#isValidContext(ActionContext)}
-	 *  
-	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 *
+	 * @param predicate the predicate that will be used to dynamically determine an action's
 	 * validity for a given {@link ActionContext}
 	 */
 	public void validContextWhen(Predicate<ActionContext> predicate) {
@@ -620,14 +620,14 @@ public abstract class DockingAction implements DockingActionIf {
 	 * that can produce an ActionContext that is appropriate for this action.
 	 * <P>
 	 * @param contextClass the ActionContext class required to be producible by a
-	 * provider that is hosted in that window before this action is added to that 
-	 * window. 
-	 * 
+	 * provider that is hosted in that window before this action is added to that
+	 * window.
+	 *
 	 */
 	public void addToWindowWhen(Class<? extends ActionContext> contextClass) {
 		addToWindowWhenContextClass = contextClass;
 	}
-	
+
 	/**
 	 * Tells this action to add itself to all windows
 	 * <P>
@@ -664,5 +664,5 @@ public abstract class DockingAction implements DockingActionIf {
 		String classInfo = trace[0].toString();
 		return classInfo;
 	}
-	
+
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -131,7 +131,7 @@ void findCppNameInScope(PDBApiContext& ctx, const std::wstring& name, IDiaSymbol
 	// while ( scope ) {
 	// Scan the scope for a symbol.
 	// If any namespaces, then scan for name in namespace.
-	// If scope is a member function then 
+	// If scope is a member function then
 	//   scan class parent for member with name.
 	// scope = scope.parent;
 	// }
@@ -175,7 +175,7 @@ void findCppNameInScope(PDBApiContext& ctx, const std::wstring& name, IDiaSymbol
 		// Move to lexical parent.
 		if ( pscope->get_lexicalParent( &pParent ) == S_OK && pParent != NULL ) {
 			pscope = pParent;
-		} 
+		}
 		else {
 			pscope = NULL;
 		}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import resources.ResourceManager;
 /**
  * A default implementation of the file chooser model
  * that browses the local file system.
- * 
+ *
  */
 public class LocalFileChooserModel implements GhidraFileChooserModel {
 	private static final ImageIcon PROBLEM_FILE_ICON =
@@ -96,7 +96,7 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 			roots = File.listRoots();
 
 			// pre-populate root Description cache mapping with placeholder values that will be
-			// overwritten by the background thread. 
+			// overwritten by the background thread.
 			synchronized (rootDescripMap) {
 				for (File r : roots) {
 					rootDescripMap.put(r, getFastRootDescriptionString(r));
@@ -114,7 +114,7 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 	 * Return a description string for a file system root.  Avoid slow calls (such as {@link FileSystemView#getSystemDisplayName(File)}.
 	 * <p>
 	 * Used when pre-populating the root description map with values before {@link FileDescriptionThread background thread}
-	 * finishes.  
+	 * finishes.
 	 */
 	protected String getFastRootDescriptionString(File root) {
 		String fsvSTD = "Unknown status";
@@ -131,13 +131,13 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 	 * Return a description string for a root location.
 	 * <p>
 	 * Called from a {@link FileDescriptionThread background thread} to avoid blocking the UI
-	 * while waiting for slow file systems. 
+	 * while waiting for slow file systems.
 	 * <p>
 	 * @param root
 	 * @return string such as "Local Disk (C:)", "Network Drive (R:)"
 	 */
 	protected String getRootDescriptionString(File root) {
-		// Special case the description of the root of a unix filesystem, otherwise it gets marked as removable 
+		// Special case the description of the root of a unix filesystem, otherwise it gets marked as removable
 		if ("/".equals(root.getAbsolutePath())) {
 			return "File system root (/)";
 		}

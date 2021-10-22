@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,10 +30,10 @@ import ghidra.app.plugin.assembler.sleigh.util.SleighUtil;
 
 /**
  * A class that implements the LALR(1) parsing algorithm
- * 
+ *
  * Instances of this class store a parse state. In order to work correctly, the class must be
  * given a properly-constructed Action/Goto table.
- * 
+ *
  * This implementation is somewhat unconventional. First, instead of strictly tokenizing and then
  * parsing, each terminal is given the opportunity to match a token in the input. If none match, it
  * results in a syntax error (equivalent to the token type having an empty cell in the classical
@@ -181,7 +181,7 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 
 	/**
 	 * Duplicate this machine state
-	 * 
+	 *
 	 * This is used extensively when branching
 	 * @return the duplicate
 	 */
@@ -211,7 +211,7 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 	 * @param tok the token given by the terminal (column) of the entry containing this action
 	 * @param results a place to store all the parsing results (each must be accept or error state)
 	 * @param visited a collection of machine states already visited
-	 * 
+	 *
 	 * The visited "collection" prevents infinite loops or stack overflows resulting from
 	 * "consuming" epsilon and going to the same state. Such loops may involve many states. It is
 	 * also defined as a map here for debugging purposes, so that when a loop is detected, we can
@@ -277,7 +277,7 @@ public class AssemblyParseMachine implements Comparable<AssemblyParseMachine> {
 
 	/**
 	 * Look for previous machine states having the same stack and position
-	 * 
+	 *
 	 * This would imply we have gone in a loop without consuming anything. We need to prune.
 	 * @param machine the machine state to check
 	 * @param visited the stack of previous machine states

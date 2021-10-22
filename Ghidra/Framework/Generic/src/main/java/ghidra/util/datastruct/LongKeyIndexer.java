@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ public class LongKeyIndexer implements Serializable {
         if (index == -1) {
             // make sure there is enough room
             if (indexer.getSize() >= capacity) {
-                // if not enough room, grow the key capacity.            	
+                // if not enough room, grow the key capacity.
                 grow();
             }
             // now use the hashcode as the listID and get a new index
@@ -201,7 +201,7 @@ public class LongKeyIndexer implements Serializable {
 
 	 private void grow() {
 
-        int newCapacity = Prime.nextPrime(indexer.getNewCapacity());       
+        int newCapacity = Prime.nextPrime(indexer.getNewCapacity());
         indexer.growCapacity(newCapacity);
         indexer.growNumLists(newCapacity);
         indexer.clear();

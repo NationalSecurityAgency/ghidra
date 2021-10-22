@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,8 +38,8 @@ public class SetLabelNamespaceCmd implements Command {
 	private String name;
 	private Namespace oldNamespace;
 	private Namespace newNamespace;
-	private String errorMsg = "";	
-	
+	private String errorMsg = "";
+
 	/**
 	 * Constructs a new command for changing the scope of a label.
 	 * @param addr the address of the label to be changed.
@@ -47,7 +47,7 @@ public class SetLabelNamespaceCmd implements Command {
 	 * @param oldNamespace the current scope of the label that will be changed.
 	 * @param newNamespace the new scope of the label.
 	 */
-	public SetLabelNamespaceCmd(Address addr, String name, 
+	public SetLabelNamespaceCmd(Address addr, String name,
 				Namespace oldNamespace, Namespace newNamespace) {
 		this.addr = addr;
 		this.name = name;
@@ -56,7 +56,7 @@ public class SetLabelNamespaceCmd implements Command {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
 	public boolean applyTo(DomainObject obj) {
@@ -69,7 +69,7 @@ public class SetLabelNamespaceCmd implements Command {
 			return false;
 		}
 		try {
-			s.setNamespace(newNamespace); 
+			s.setNamespace(newNamespace);
 			return true;
 		}catch (DuplicateNameException e) {
 			errorMsg = "Symbol named "+name+" already exists in namespace "+newNamespace;
@@ -77,7 +77,7 @@ public class SetLabelNamespaceCmd implements Command {
 			errorMsg = e.getMessage();
 		} catch (CircularDependencyException e) {
 			errorMsg = e.getMessage();
-		}	
+		}
 		return false;
 	}
 

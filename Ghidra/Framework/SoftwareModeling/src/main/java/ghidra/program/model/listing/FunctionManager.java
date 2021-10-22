@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -140,7 +140,7 @@ public interface FunctionManager extends ManagerDB {
 	public Function getFunctionAt(Address entryPoint);
 
 	/**
-	 * Get the function which resides at the specified address or is referenced from the specified 
+	 * Get the function which resides at the specified address or is referenced from the specified
 	 * address
 	 *
 	 * @param address function address or address of pointer to a function.

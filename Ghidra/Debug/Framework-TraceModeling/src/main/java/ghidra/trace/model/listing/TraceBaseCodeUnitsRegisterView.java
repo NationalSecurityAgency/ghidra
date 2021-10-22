@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.trace.util.TraceRegisterUtils;
 /**
  * A {@link TraceBaseCodeUnitsView} associated with a thread, restricted to register space, and
  * possibly restricted to a particular subset by type.
- * 
+ *
  * @param <T> the type of units in the view
  */
 public interface TraceBaseCodeUnitsRegisterView<T extends TraceCodeUnit>
@@ -34,14 +34,14 @@ public interface TraceBaseCodeUnitsRegisterView<T extends TraceCodeUnit>
 
 	/**
 	 * Get the associated thread
-	 * 
+	 *
 	 * @return the thread
 	 */
 	TraceThread getThread();
 
 	/**
 	 * Get the set of registers for the trace's base language
-	 * 
+	 *
 	 * @return the register set
 	 */
 	default Set<Register> getRegisters() {
@@ -51,7 +51,7 @@ public interface TraceBaseCodeUnitsRegisterView<T extends TraceCodeUnit>
 	/**
 	 * Get the unit (or component of a structure) which spans exactly the addresses of the given
 	 * register
-	 * 
+	 *
 	 * @param register the register
 	 * @return the unit or {@code null}
 	 */
@@ -81,9 +81,9 @@ public interface TraceBaseCodeUnitsRegisterView<T extends TraceCodeUnit>
 
 	/**
 	 * Get the unit which completely contains the given register
-	 * 
+	 *
 	 * This does not descend into structures.
-	 * 
+	 *
 	 * @param register the register
 	 * @return the unit or {@code unit}
 	 */
@@ -102,7 +102,7 @@ public interface TraceBaseCodeUnitsRegisterView<T extends TraceCodeUnit>
 
 	/**
 	 * Get the live units whose start addresses are within the given register
-	 * 
+	 *
 	 * @param register the register
 	 * @param forward true to order the units by increasing address, false for descending
 	 * @return the iterable of units

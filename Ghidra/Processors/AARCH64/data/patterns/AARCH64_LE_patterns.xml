@@ -1,4 +1,4 @@
-<patternlist>  
+<patternlist>
   <patternpairs totalbits="32" postbits="16">  <!-- AARCH64 -->
     <prepatterns>
       <data>0xc0 0x03 0x5f 0xd6                  </data> <!-- ret -->
@@ -6,7 +6,7 @@
       <data> ........ ........ ........ 000101.. </data> <!-- b <xxx>  shared jump call -->
       <data> 0x20 0x00 0x20 0xd4                 </data> <!-- brk #1 -->
     </prepatterns>
-    
+
     <postpatterns>
       <data> 0xfd 0x7b 0xbf 0xa9 </data> <!--  stp x29, x30, [sp, #-0x10]!  -->
       <data> 0xfe .0001111 0x1. 0xf8 </data> <!--  stp x30, [sp, #-0x..0]!  -->
@@ -18,22 +18,22 @@
       <possiblefuncstart/>
     </postpatterns>
   </patternpairs>
-  
+
   <pattern> <!-- possible function start -->
     <data> 111..... .1....11 10...... 0xa9 </data> <!-- stp x, x, [sp, -0x.0]! -->
     <possiblefuncstart after="defined" isvalid="true"/> <!-- must be something defined right before this -->
   </pattern>
-  
+
   <pattern> <!-- possible function start -->
     <data> 0x........    111..... .1....11 10...... 0xa9 </data> <!-- stp x, x, [sp, -0x.0]! -->
     <possiblefuncstart after="defined" isvalid="true" /> <!-- must be something defined right before this -->
   </pattern>
-  
+
   <pattern> <!-- possible function start -->
     <data> 0xfe .0001111 0x1. 0xf8 </data> <!--  stp x30, [sp, #-0x..0]!  -->
     <possiblefuncstart after="defined" isvalid="true"/> <!-- must be something defined right before this -->
   </pattern>
-  
+
   <pattern> <!-- possible function start -->
     <data> 0x........ 0xfe .0001111 0x1. 0xf8 </data> <!--  stp x30, [sp, #-0x..0]!  -->
     <possiblefuncstart after="defined" isvalid="true"/>  <!-- must be something defined right before this -->
@@ -44,17 +44,17 @@
       <codeboundary />  <!-- definitely code -->
       <possiblefuncstart /> <!-- must be something defined right before this -->
   </pattern>
-  
+
   <pattern> <!-- solid function start -->
       <data> 0x7f 0x23 0x03 0xd5 0xff ..000011 00000... 0xd1 </data> <!-- pacibsp   sub sp, sp, #... -->
       <codeboundary />  <!-- definitely code -->
       <possiblefuncstart /> <!-- must be something defined right before this -->
   </pattern>
-  
+
   <pattern> <!-- AARCH64 Thunk -->
-      <data> ...10000 ........ ........ 1..10000 
-             00010001 ........ 01...... 0xf9 
-             0x10 ......10 00...... 0x91 
+      <data> ...10000 ........ ........ 1..10000
+             00010001 ........ 01...... 0xf9
+             0x10 ......10 00...... 0x91
              0x20 0x02 0x1f 0xd6   </data>
       <!-- adrp x16, #...
            ldr  x17, xxxx
@@ -63,6 +63,6 @@
        -->
       <funcstart validcode="function" thunk="true"/>
   </pattern>
-  
+
 </patternlist>
 

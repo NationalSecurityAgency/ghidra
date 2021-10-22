@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class FieldUtils {
 
 	/**
 	 * Splits the given FieldElement into sub-elements by wrapping the element on whitespace.
-	 * 
+	 *
 	 * @param fieldElement The element to wrap
 	 * @param width The maximum width to allow before wrapping
 	 * @return The wrapped elements
@@ -103,7 +103,7 @@ public class FieldUtils {
 
 	/**
 	 * Splits the given FieldElement into sub-elements by wrapping the element on whitespace.
-	 * 
+	 *
 	 * @param fieldElement The element to wrap
 	 * @param width The maximum width to allow before wrapping
 	 * @return The wrapped elements
@@ -136,7 +136,7 @@ public class FieldUtils {
 	 * If there is no whitespace character before the width break point, it finds the first
 	 * whitespace character after the width.  If no whitespace can be found, then the text will
 	 * be split at a non-whitespace character.
-	 * 
+	 *
 	 * @param element the element to split
 	 * @param width the max width to allow before looking for a word wrap positions
 	 * @return 0 if the element cannot be split, else the character position of the string

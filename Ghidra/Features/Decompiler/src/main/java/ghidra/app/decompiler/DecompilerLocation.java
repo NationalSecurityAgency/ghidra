@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,7 +53,7 @@ public class DecompilerLocation extends ProgramLocation {
 
 	/**
 	 * Results from the decompilation
-	 * 
+	 *
 	 * @return C-AST, DFG, and CFG object. null if there are no results attached to this location
 	 */
 	public DecompileResults getDecompile() {
@@ -62,7 +62,7 @@ public class DecompilerLocation extends ProgramLocation {
 
 	/**
 	 * C text token at the current cursor location
-	 * 
+	 *
 	 * @return token at this location, could be null if there are no decompiler results
 	 */
 	public ClangToken getToken() {

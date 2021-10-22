@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,7 +137,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 	void resolve() {
 
 		// NOTE: Until we know better we do not want to explicitly
-		// apply nested composite datatypes and allow them to be 
+		// apply nested composite datatypes and allow them to be
 		// created as-needed (e.g., function definition).  This is
 		// done to minimize duplication of anonymous/unnamed nested
 		// composites since the parent composite reconstruction performed
@@ -401,7 +401,7 @@ public class CompositeTypeApplier extends AbstractComplexTypeApplier {
 		return ((AbstractCompositeMsType) getDependencyApplier().getMsType()).getSize();
 	}
 
-	// TODO: 
+	// TODO:
 	// Taken from PdbUtil without change.  Would have had to change access on class PdbUtil and
 	//  this ensureSize method to public to make it accessible.  Can revert to using PdbUtil
 	//  once we move this new module from Contrib to Features/PDB.

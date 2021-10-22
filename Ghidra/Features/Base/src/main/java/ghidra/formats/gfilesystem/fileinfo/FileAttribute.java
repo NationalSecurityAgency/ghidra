@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import java.util.Objects;
 
 /**
  * A (type, type_display_string, value) tuple.
- * 
+ *
  * @param <T> type of the value
  */
 public class FileAttribute<T> {
@@ -28,9 +28,9 @@ public class FileAttribute<T> {
 	private final T attributeValue;
 
 	/**
-	 * Creates a new {@link FileAttribute} instance with an 
+	 * Creates a new {@link FileAttribute} instance with an
 	 * {@link FileAttributeType#UNKNOWN_ATTRIBUTE} type and the specified display name.
-	 * 
+	 *
 	 * @param <T> type of the value
 	 * @param name custom display name for the value
 	 * @param attributeValue value (should be .toString()'able)
@@ -42,11 +42,11 @@ public class FileAttribute<T> {
 
 	/**
 	 * Creates a new {@link FileAttribute} instance with the specified type and value.
-	 * 
+	 *
 	 * @param <T> type of the value
 	 * @param attributeType {@link FileAttributeType} type
-	 * @param attributeValue value (should match the 
-	 * type specified in {@link FileAttributeType#getValueType()}) 
+	 * @param attributeValue value (should match the
+	 * type specified in {@link FileAttributeType#getValueType()})
 	 * @return new FileAttribute instance
 	 */
 	public static <T> FileAttribute<T> create(FileAttributeType attributeType,
@@ -57,12 +57,12 @@ public class FileAttribute<T> {
 	/**
 	 * Creates a new {@link FileAttribute} instance with the specified type, display name and
 	 * value.
-	 * 
+	 *
 	 * @param <T> type of the value
 	 * @param attributeType {@link FileAttributeType} type
-	 * @param attributeDisplayName display name of the type 
-	 * @param attributeValue value (should match the 
-	 * type specified in {@link FileAttributeType#getValueType()}) 
+	 * @param attributeDisplayName display name of the type
+	 * @param attributeValue value (should match the
+	 * type specified in {@link FileAttributeType#getValueType()})
 	 * @return new FileAttribute instance
 	 */
 	public static <T> FileAttribute<T> create(FileAttributeType attributeType,
@@ -83,7 +83,7 @@ public class FileAttribute<T> {
 
 	/**
 	 * Returns the {@link FileAttributeType} of this instance.
-	 * 
+	 *
 	 * @return {@link FileAttributeType}
 	 */
 	public FileAttributeType getAttributeType() {
@@ -93,7 +93,7 @@ public class FileAttribute<T> {
 	/**
 	 * Returns the display name of this instance.  This is usually derived from
 	 * the {@link FileAttributeType#getDisplayName()}.
-	 * 
+	 *
 	 * @return string display name
 	 */
 	public String getAttributeDisplayName() {
@@ -102,7 +102,7 @@ public class FileAttribute<T> {
 
 	/**
 	 * Return the value.
-	 * 
+	 *
 	 * @return value
 	 */
 	public T getAttributeValue() {

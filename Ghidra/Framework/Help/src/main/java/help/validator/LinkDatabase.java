@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,7 +56,7 @@ public class LinkDatabase {
 					return lineNumber1 - lineNumber2;
 				}
 
-				// ...wow...on the same line too?...just use identity, since we 
+				// ...wow...on the same line too?...just use identity, since we
 				// create as we parse, which is how we read, from left to right
 
 				return o1.identityHashCode() - o2.identityHashCode();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,8 +69,8 @@ public class FdeTable {
 	StructureDataType fdeTableEntry;
 
 	/**
-	 * Constructor for an FDE table. 
-	 * 
+	 * Constructor for an FDE table.
+	 *
 	 * @param monitor a status monitor for indicating progress or allowing a task to be cancelled.
 	 * @param curProg the program containing the FDE table.
 	 */
@@ -108,7 +108,7 @@ public class FdeTable {
 
 	/**
 	 * Creates an FDE Table at the specified Address.
-	 * 
+	 *
 	 * @param addr Address at which the FDE Table should be created.
 	 * @param decoder the decoder for DWARF encoded exception handling information
 	 * @param fdeTableCnt the number of exception handler FDEs.
@@ -134,7 +134,7 @@ public class FdeTable {
 		/* Create a new FDE structures beginning at startAddress */
 		MemoryBlock curMemBlock = prog.getMemory().getBlock(".eh_frame_hdr");
 		while( curMemBlock != null &&
-				  (addr.compareTo( curMemBlock.getEnd()) < 0) && 
+				  (addr.compareTo( curMemBlock.getEnd()) < 0) &&
 				  (curFdeTableCnt < fdeTableCnt) )
 		{
 			if (monitor.isCancelled()) {

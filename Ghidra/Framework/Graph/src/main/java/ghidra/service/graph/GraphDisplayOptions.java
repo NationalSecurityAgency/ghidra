@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -509,7 +509,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 
 	/**
 	 * Returns true if the rendering mode is to use icons for the vertices. If using
-	 * icons, the label is drawn inside the shape. 
+	 * icons, the label is drawn inside the shape.
 	 * @return true if the rendering mode is to use icons.
 	 */
 	public boolean usesIcons() {
@@ -527,7 +527,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	}
 
 	/**
-	 * Returns the label position relative to the vertex. Note this is only relevant 
+	 * Returns the label position relative to the vertex. Note this is only relevant
 	 * if {@link #usesIcons()} is false
 	 * @return  the label position relative to the vertex
 	 */
@@ -589,8 +589,8 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 	}
 
 	/**
-	 * Sets the maximum number of nodes a graph can have and still be displayed. Be careful, 
-	 * setting this value too high can result in Ghidra running out of memory and/or 
+	 * Sets the maximum number of nodes a graph can have and still be displayed. Be careful,
+	 * setting this value too high can result in Ghidra running out of memory and/or
 	 * making the system very sluggish.
 	 * @param maxNodeCount the maximum number of nodes a graph can have and still be displayed.
 	 */
@@ -649,7 +649,7 @@ public class GraphDisplayOptions implements OptionsChangeListener {
 
 	/**
 	 * Loads values from tool options
-	 * 
+	 *
 	 * @param tool the tool from which to update values.
 	 */
 	public void initializeFromOptions(Tool tool) {

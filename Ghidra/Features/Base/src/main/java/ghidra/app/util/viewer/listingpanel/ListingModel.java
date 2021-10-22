@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ public interface ListingModel {
 
 	/**
 	 * Returns true if the data is open
-	 * 
+	 *
 	 * @param data the data to check
 	 * @return true if the data is open
 	 */
@@ -54,14 +54,14 @@ public interface ListingModel {
 
 	/**
 	 * Changes the open state of the given data (open -&gt; closes; closed-&gt; open).
-	 * 
+	 *
 	 * @param data the data to open
 	 */
 	public void toggleOpen(Data data);
 
 	/**
 	 * Opens the given data, but not any sub-components.
-	 * 
+	 *
 	 * @param data the data to open
 	 * @return true if the data was opened (will return false if the data is already open or has no children)
 	 */
@@ -69,7 +69,7 @@ public interface ListingModel {
 
 	/**
 	 * Recursively open the given data and its sub-components.
-	 * 
+	 *
 	 * @param data the data to open
 	 * @param monitor the task monitor
 	 */
@@ -77,7 +77,7 @@ public interface ListingModel {
 
 	/**
 	 * Opens all data found within the given addresses.  Each data is fully opened.
-	 * 
+	 *
 	 * @param addresses the range of addresses to search for data
 	 * @param monitor the task monitor
 	 */
@@ -85,14 +85,14 @@ public interface ListingModel {
 
 	/**
 	 * Closes the given data, but not any sub-components.
-	 * 
+	 *
 	 * @param data the data to close
 	 */
 	public void closeData(Data data);
 
 	/**
 	 * Recursively close the given data and its sub-components.
-	 * 
+	 *
 	 * @param data the data to close
 	 * @param monitor the task monitor
 	 */
@@ -100,7 +100,7 @@ public interface ListingModel {
 
 	/**
 	 * Closes all data found within the given addresses.  Each data is fully closed.
-	 * 
+	 *
 	 * @param addresses the range of addresses to search for data
 	 * @param monitor the task monitor
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -135,7 +135,7 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 		isolateProvider();
 		hideSatellite();
 
-		setSize(700, 500);// size first, as the positioning is sensitive to the size		
+		setSize(700, 500);// size first, as the positioning is sensitive to the size
 		setZoom(.25);// zoom out a bit to show more vertices
 		centerDisplay();
 		captureProvider();
@@ -278,7 +278,7 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 	public void testFunctionGraph_Vertex_Drop_Shadow() {
 		//
 		// This image is a bit abnormal.  It is a picture of a vertex next to itself after it
-		// has been zoomed out past its 'interaction threshold'.  Further, both vertices are 
+		// has been zoomed out past its 'interaction threshold'.  Further, both vertices are
 		// zoomed out past the point of readability.
 		//
 		String functionAddress = "4057c4";
@@ -324,7 +324,7 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 		screen.image = fullImage;
 	}
 
-// For Debug of callout	
+// For Debug of callout
 //	public void testCallout() {
 //		go("406630"); // _strlen function
 //
@@ -354,7 +354,7 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private Image captureGraph() {
 		FGController controller = getFunctionGraphController();
@@ -851,8 +851,8 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 		assertNotNull("Could not find min cross layout!", minCrossState);
 
 		//@formatter:off
-		invokeInstanceMethod( "setCurrentActionState", 
-							  action, 
+		invokeInstanceMethod( "setCurrentActionState",
+							  action,
 							  new Class<?>[] { ActionState.class },
 							  new Object[] { minCrossState });
 		//@formatter:on
@@ -886,7 +886,7 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 		}
 
 		@Override
-		// overridden so that we use the outer class's name when finding the help topic 
+		// overridden so that we use the outer class's name when finding the help topic
 		protected File getHelpTopic() {
 			Class<?> clazz = FunctionGraphPluginScreenShots.class;
 			String simpleName = clazz.getSimpleName();
@@ -915,7 +915,7 @@ public class FunctionGraphPluginScreenShots extends AbstractFunctionGraphTest {
 		@Override
 		public Point convertPointToParent(Point location) {
 			// TODO: this won't work for now if the graph is scaled.   This is because there is
-			//       point information that is calculated by the client of this class that does 
+			//       point information that is calculated by the client of this class that does
 			//       not take into account the scaling of the graph.  This is a known issue--
 			//       don't use this class when the graph is scaled.
 			return location;

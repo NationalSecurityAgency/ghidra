@@ -143,7 +143,7 @@ to populate the database.
 <dt><span class="term"><span class="bold"><strong>Library Family Name</strong></span></span></dt>
 <dd><p>
       The name of the library being ingested. This is the identifier that will be inserted
-      as part of the comment when a match is found for functions in this library. 
+      as part of the comment when a match is found for functions in this library.
       </p></dd>
 <dt><span class="term"><span class="bold"><strong>Library Version</strong></span></span></dt>
 <dd><p>
@@ -225,11 +225,11 @@ Ghidra's <code class="code">analyzeHeadless</code> command to analyze across the
 of the modifications to the default analysis that may be necessary to get good Function ID results.
 </p>
 <p>
-Every function to be included must have a <span class="emphasis"><em>non-default</em></span> function name assigned. 
+Every function to be included must have a <span class="emphasis"><em>non-default</em></span> function name assigned.
 Function ID uses a function's <span class="emphasis"><em>primary symbol</em></span> for the name.
 Symbols are typically imported from debug information, but any method for assigning
 names, script based or manual, will work.  Any function that still has its default name,
-<code class="code">FUN_00....</code>, currently will not be ingested. 
+<code class="code">FUN_00....</code>, currently will not be ingested.
 </p>
 <p>
 When performing auto-analysis in preparation for ingest, its best to disable the
@@ -238,7 +238,7 @@ When performing auto-analysis in preparation for ingest, its best to disable the
 in order to avoid cross contamination from different databases. If the function symbols
 are <span class="emphasis"><em>mangled</em></span>, be sure to turn off the <span class="bold"><strong>Demangler</strong></span>
 analyzer. This lets the future database apply the raw mangled symbol to new programs during analysis, which
-lets their <span class="bold"><strong>Demangler</strong></span> analyzer pass run with complete information. 
+lets their <span class="bold"><strong>Demangler</strong></span> analyzer pass run with complete information.
 </p>
 <p>
 For an example of these sorts of modifications to the analysis process, see the file:
@@ -346,9 +346,9 @@ directly. These strategies include:
 <dt><span class="term"><span class="bold"><strong>Auto Pass</strong></span></span></dt>
 <dd><p>
       This strategy is different from the others, in that it applies to function
-      entries whose scores are slightly too <span class="emphasis"><em>low</em></span>.  
+      entries whose scores are slightly too <span class="emphasis"><em>low</em></span>.
       If a low scoring function has an instruction sequence that is deemed unique enough,
-      this strategy causes any potential match to automatically pass the threshold. 
+      this strategy causes any potential match to automatically pass the threshold.
       This provides an alternative to lowering the instruction count threshold to include
       a particular function.
       </p></dd>

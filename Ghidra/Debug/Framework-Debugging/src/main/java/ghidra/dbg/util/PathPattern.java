@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,20 +23,20 @@ public class PathPattern implements PathPredicates {
 	/**
 	 * TODO: This can get more sophisticated if needed, but for now, I don't think we even need
 	 * regular expressions. Either we care about a path element, or we don't.
-	 * 
+	 *
 	 * <p>
 	 * This takes a list of path keys as a means of matching paths. The empty key serves as a
 	 * wildcard accepting all keys in that position, e.g., the following matches all elements within
 	 * {@code Processes}:
-	 * 
+	 *
 	 * <p>
 	 * {@code List.of("Processes", "[]")}
-	 * 
+	 *
 	 * <p>
 	 * This should still be compatible with {@link PathUtils#parse(String)} and
 	 * {@link PathUtils#toString(List)} allowing the last example to be expressed as
 	 * {@code PathUtils.parse("Processes[]")}.
-	 * 
+	 *
 	 * @param pattern a list of path elements
 	 */
 	public PathPattern(List<String> pattern) {
@@ -197,13 +197,13 @@ public class PathPattern implements PathPredicates {
 
 	/**
 	 * If the given path matches, extract indices where matched by wildcards
-	 * 
+	 *
 	 * <p>
 	 * This is essentially the inverse of {@link #applyIndices(List)}, but can only be asked of one
 	 * pattern. The keys are returned from left to right, in the order matched by the pattern. Only
 	 * those keys matched by a wildcard are included in the result. Indices are extracted with the
 	 * brackets {@code []} removed.
-	 * 
+	 *
 	 * @param path the path to match
 	 * @return the list of matched indices or {@code null} if not matched
 	 */

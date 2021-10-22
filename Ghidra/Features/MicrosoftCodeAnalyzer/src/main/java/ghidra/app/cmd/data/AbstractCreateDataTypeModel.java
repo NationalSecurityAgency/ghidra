@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 
 /**
- * Abstract model for information about a windows data type and its associated structure, 
+ * Abstract model for information about a windows data type and its associated structure,
  * which can be used to create and validate it in a program.
  */
 public abstract class AbstractCreateDataTypeModel {
@@ -57,11 +57,11 @@ public abstract class AbstractCreateDataTypeModel {
 	protected DataValidationOptions validationOptions;
 
 	/**
-	 * Constructor for the abstract create data type model. This constructor assumes 
+	 * Constructor for the abstract create data type model. This constructor assumes
 	 * that only a single data type will be created at the indicated address in the program.
 	 * @param program the program where the data type would be created.
 	 * @param address the address where the data type would be created.
-	 * @param validationOptions options indicating how to validate the data type at the indicated 
+	 * @param validationOptions options indicating how to validate the data type at the indicated
 	 * address.
 	 */
 	public AbstractCreateDataTypeModel(Program program, Address address,
@@ -76,7 +76,7 @@ public abstract class AbstractCreateDataTypeModel {
 	 * @param program the program where the data type would be created.
 	 * @param count the number of data types to create.
 	 * @param address the address where the data type would be created.
-	 * @param validationOptions options indicating how to validate the data type at the indicated 
+	 * @param validationOptions options indicating how to validate the data type at the indicated
 	 * address.
 	 */
 	public AbstractCreateDataTypeModel(Program program, int count, Address address,
@@ -169,7 +169,7 @@ public abstract class AbstractCreateDataTypeModel {
 
 	/**
 	 * Determine if the components in this model's data type use relative offsets or pointers.
-	 * @param program the program which will contain this model's data type. 
+	 * @param program the program which will contain this model's data type.
 	 * @return true if the data type uses relative offsets.
 	 */
 	protected static boolean isRelative(Program program) {
@@ -278,11 +278,11 @@ public abstract class AbstractCreateDataTypeModel {
 
 	/**
 	 * Whether or not the memory at the indicated address appears to be a valid location for the
-	 * indicated number of the indicated data type. Models that extend AbstractCreateDataTypeModel 
-	 * should override this method in order to check model specific information to determine that 
+	 * indicated number of the indicated data type. Models that extend AbstractCreateDataTypeModel
+	 * should override this method in order to check model specific information to determine that
 	 * it's data type will be valid at the address.
 	 * <br>Note: This method will be called by validate().
-	 * <br>Important: None of the code in this method or in anything it calls should call the 
+	 * <br>Important: None of the code in this method or in anything it calls should call the
 	 * model's checkValidity() method.
 	 * @throws InvalidDataTypeException if this model's location doesn't appear to be valid for
 	 * a group of entries of the indicated data type. The exception has a message indicating
@@ -292,7 +292,7 @@ public abstract class AbstractCreateDataTypeModel {
 
 	/**
 	 * Performs validation of the parts that are common to all models that extend this class.
-	 * @throws InvalidDataTypeException if the model isn't valid for the associated program and 
+	 * @throws InvalidDataTypeException if the model isn't valid for the associated program and
 	 * address. The message in the exception indicates why the model isn't valid.
 	 */
 	private void doValidate() throws InvalidDataTypeException {
@@ -352,7 +352,7 @@ public abstract class AbstractCreateDataTypeModel {
 	 * Your model must override this method if the model can't always determine the exact
 	 * composition of the exception handling data structure and its size.
 	 * @throws InvalidDataTypeException if the model can't determine the data type and its size
-	 * when placed on memory at the model's address in the program. The exception should contain 
+	 * when placed on memory at the model's address in the program. The exception should contain
 	 * a message that indicates why it can't determine the composition of the data type or its size.
 	 */
 	protected void checkDataType() throws InvalidDataTypeException {
@@ -360,9 +360,9 @@ public abstract class AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * This method can be called by a model's get methods to validate the model before trying 
+	 * This method can be called by a model's get methods to validate the model before trying
 	 * to retrieve a particular piece of information
-	 * <br>Important: This method must not be called by any methods that are called (possibly 
+	 * <br>Important: This method must not be called by any methods that are called (possibly
 	 * indirectly) by the model's validateModelSpecificInfo() method.
 	 * @throws InvalidDataTypeException if the model's data type isn't valid at the associated
 	 * address in the program.
@@ -375,10 +375,10 @@ public abstract class AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * This method can be called by a model's methods to validate the model before trying 
-	 * to retrieve a particular piece of information. It also validates that the ordinal value 
+	 * This method can be called by a model's methods to validate the model before trying
+	 * to retrieve a particular piece of information. It also validates that the ordinal value
 	 * doesn't exceed the count for the model.
-	 * <br>Important: This method must not be called by any methods that are called (possibly 
+	 * <br>Important: This method must not be called by any methods that are called (possibly
 	 * indirectly) by the model's validateModelSpecificInfo() method.
 	 * @param ordinal the ordinal indicating which one of the multiple copies of the data type
 	 * to be laid down at the address.
@@ -415,7 +415,7 @@ public abstract class AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets a count indicating the number of this data type that should occur in the program at 
+	 * Gets a count indicating the number of this data type that should occur in the program at
 	 * the specified address.
 	 * @return the count
 	 */
@@ -424,7 +424,7 @@ public abstract class AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * The address in the program where this model should begin validating or overlaying the 
+	 * The address in the program where this model should begin validating or overlaying the
 	 * data type for this model.
 	 * @return the address
 	 */
@@ -436,12 +436,12 @@ public abstract class AbstractCreateDataTypeModel {
 	 * Converts the indicated address to null whenever there are no entries as indicated
 	 * by numEntries and the filler address is as expected.
 	 * <br>
-	 * Map addresses are extracted from a component in a structure in memory. 
-	 * This method returns null when the associated number of expected map entries in the 
-	 * table is 0 and the value for no entries is used for the address. Otherwise, either 
-	 * the image base offset or a zero address could get used when the address isn't actually 
+	 * Map addresses are extracted from a component in a structure in memory.
+	 * This method returns null when the associated number of expected map entries in the
+	 * table is 0 and the value for no entries is used for the address. Otherwise, either
+	 * the image base offset or a zero address could get used when the address isn't actually
 	 * relevant.
-	 * 
+	 *
 	 * @param mapAddress address where the map data types are expected.
 	 * @param numEntries the number of expected map entries.
 	 * @return the mapAddress or null when appropriate to indicate no valid address.
@@ -499,7 +499,7 @@ public abstract class AbstractCreateDataTypeModel {
 	public abstract DataType getDataType();
 
 	/**
-	 * Determines if the map information appears valid based on the number of entries and the 
+	 * Determines if the map information appears valid based on the number of entries and the
 	 * address of the map. zero can be a valid number of entries.
 	 * @param numEntries the number of entries in the map.
 	 * @param mapAddress the address of the map.
@@ -523,7 +523,7 @@ public abstract class AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Whether or not the memory has any instructions defined in the area from the indicated 
+	 * Whether or not the memory has any instructions defined in the area from the indicated
 	 * address up to the size of the data type for this model.
 	 * @return true if there are any instructions where the data type is being placed.
 	 * @throws InvalidDataTypeException if data type's expected bytes can't be checked.
@@ -592,7 +592,7 @@ public abstract class AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Determines if the indicated count value for the number of entries is above the indicated 
+	 * Determines if the indicated count value for the number of entries is above the indicated
 	 * maximum valid count value for the indicated count type.
 	 * @param countType name indicating the type of count being checked.
 	 * @param actualCount the count of the actual number of entries for a data type map.
@@ -673,7 +673,7 @@ public abstract class AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Sets whether or not the data type returned by this model already includes the model's 
+	 * Sets whether or not the data type returned by this model already includes the model's
 	 * count as part of the data type.
 	 * @param dataTypeAlreadyBasedOnCount true if the model's data type is already based on the count.
 	 * false means the data type returned by the model isn't based on the count in any way.
@@ -683,7 +683,7 @@ public abstract class AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the default message indicating the data type for this model isn't valid at the 
+	 * Gets the default message indicating the data type for this model isn't valid at the
 	 * indicated address.
 	 * @return the message
 	 */
@@ -692,9 +692,9 @@ public abstract class AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Throws an InvalidDataTypeException with a default message that indicates the data type 
+	 * Throws an InvalidDataTypeException with a default message that indicates the data type
 	 * and address where it is invalid.
-	 * 
+	 *
 	 * @throws InvalidDataTypeException which has the message
 	 */
 	protected void invalid() throws InvalidDataTypeException {
@@ -702,10 +702,10 @@ public abstract class AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Throws an InvalidDataTypeException with a default message indicating the data type 
-	 * and address where it is invalid that is followed by the message from the exception 
+	 * Throws an InvalidDataTypeException with a default message indicating the data type
+	 * and address where it is invalid that is followed by the message from the exception
 	 * passed to this method.
-	 * 
+	 *
 	 * @param e the exception which has its message appended to the default message
 	 * @throws InvalidDataTypeException which has the message
 	 */
@@ -719,10 +719,10 @@ public abstract class AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Throws an InvalidDataTypeException with a default message indicating the data type 
-	 * and address where it is invalid that is followed by the suffixMessage passed to this 
+	 * Throws an InvalidDataTypeException with a default message indicating the data type
+	 * and address where it is invalid that is followed by the suffixMessage passed to this
 	 * method.
-	 * 
+	 *
 	 * @param suffixMessage the message to append to the default message
 	 * @throws InvalidDataTypeException which has the message
 	 */

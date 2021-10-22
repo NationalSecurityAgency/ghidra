@@ -1,24 +1,24 @@
 ## ###
 #  IP: GHIDRA
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
-#  
+#
 #       http://www.apache.org/licenses/LICENSE-2.0
-#  
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ##
-# This example script locates a memory address for a file offset.  
+# This example script locates a memory address for a file offset.
 #Prompt user for a file offset.
 #Print the associated memory address to the Ghidra console
 #Print the file offset as a Ghidra comment at the memory address in the Ghidra Listing
 #If multiple addresses are located, then print the addresses to the console (do not set a Ghidra comment)
-# @category Examples   
+# @category Examples
 
 import sys
 from ghidra.program.model.address import Address
@@ -43,10 +43,10 @@ def processAddress(addr, memBlockName, fileOffset):
   myCodeUnit = currentProgram.getListing().getCodeUnitContaining(addr)
   comment = myCodeUnit.getComment(0)
   if not comment:
-    myCodeUnit.setComment(0, getScriptName() + ': File offset: ' + hex(fileOffset) + 
+    myCodeUnit.setComment(0, getScriptName() + ': File offset: ' + hex(fileOffset) +
       ', Memory block:address ' + memBlockName + ':'+ addr.toString())
   else:
-    myCodeUnit.setComment(0, comment + ' ' + getScriptName() + ': File offset: ' + hex(fileOffset) + 
+    myCodeUnit.setComment(0, comment + ' ' + getScriptName() + ': File offset: ' + hex(fileOffset) +
       ', Memory block:address ' + memBlockName + ':' + addr.toString())
 
 myFileOffset = getFileOffset()

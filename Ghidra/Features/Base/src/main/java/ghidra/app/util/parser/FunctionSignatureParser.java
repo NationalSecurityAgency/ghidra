@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,10 +36,10 @@ import ghidra.util.exception.CancelledException;
  * Class for parsing function signatures. This class attempts to be much more
  * flexible than a full parser that requires correct C or C++ syntax. To achieve
  * this, it scans the original function signature (if present) for names that
- * would cause parse problems (parens, brackets, asterisk, commas, and spaces). 
- * If it finds any problem names, it looks for those strings in the text to be 
- * parsed and if it finds them, it replaces them with substitutes that parse 
- * easily. Then, after parsing, those replacement strings are then restored to 
+ * would cause parse problems (parens, brackets, asterisk, commas, and spaces).
+ * If it finds any problem names, it looks for those strings in the text to be
+ * parsed and if it finds them, it replaces them with substitutes that parse
+ * easily. Then, after parsing, those replacement strings are then restored to
  * their original values.
  * <P>
  * Some examples of valid c++ that would fail due to the current limitations:
@@ -65,7 +65,7 @@ public class FunctionSignatureParser {
 	/**
 	 * Constructs a SignatureParser for a program.  The destDataTypeManager and/or
 	 * service must be specified.
-	 * 
+	 *
 	 * @param destDataTypeManager the destination datatype maanger.
 	 * @param service the DataTypeManagerService to use for resolving datatypes that
 	 *                can't be found in the given program. Can be null to utilize
@@ -347,7 +347,7 @@ public class FunctionSignatureParser {
 	/**
 	 * Provides a simple caching datatype manager service wrapper.<br>
 	 * Implementation intended for use with {@link FunctionSignatureParser}
-	 * and underlying {@link DataTypeParser} and {@link DataTypeUtilities} classes.  
+	 * and underlying {@link DataTypeParser} and {@link DataTypeUtilities} classes.
 	 */
 	private static class ParserDataTypeManagerService implements DataTypeQueryService {
 
@@ -358,7 +358,7 @@ public class FunctionSignatureParser {
 		/**
 		 * Construct caching datatype manager service.
 		 * @param service actual datatype manager service which may prompt
-		 * user to make a datatype selection.  It is this impementation's 
+		 * user to make a datatype selection.  It is this impementation's
 		 * purpose to cache such a choice for {@link #getDataType(String)} to
 		 * avoid repeated selections of the same choice if type is reused
 		 * within a function signature.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ public class PdbInfoCodeView implements StructConverter, PdbInfo {
 	/**
 	 * Returns true if the pdb information at the specified offset is a {@link PdbInfoCodeView}
 	 * type (based on the signature at that offset).
-	 * 
+	 *
 	 * @param reader {@link BinaryReader}
 	 * @param offset offset of the Pdb information
 	 * @return boolean true if it is a {@link PdbInfoCodeView} type
@@ -51,7 +51,7 @@ public class PdbInfoCodeView implements StructConverter, PdbInfo {
 
 	/**
 	 * Reads the pdb information from a PE binary.
-	 * 
+	 *
 	 * @param reader {@link BinaryReader}
 	 * @param offset offset of the Pdb information
 	 * @return new {@link PdbInfoCodeView} instance, never null

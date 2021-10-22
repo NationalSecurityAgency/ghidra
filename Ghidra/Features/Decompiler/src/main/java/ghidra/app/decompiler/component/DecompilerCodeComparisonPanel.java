@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 
 	/**
 	 * Creates a comparison panel with two decompilers
-	 * 
+	 *
 	 * @param owner the owner of this panel
 	 * @param tool the tool displaying this panel
 	 */
@@ -271,7 +271,7 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 		titlePanels[LEFT] = new TitledPanel(leftTitleLabel, cPanels[LEFT], 5);
 		titlePanels[RIGHT] = new TitledPanel(rightTitleLabel, cPanels[RIGHT], 5);
 
-		// Set the MINIMUM_PANEL_WIDTH for the left and right panel to prevent the split pane's 
+		// Set the MINIMUM_PANEL_WIDTH for the left and right panel to prevent the split pane's
 		// divider from becoming locked (can't be moved) due to extra long title names.
 		titlePanels[LEFT].setMinimumSize(
 			new Dimension(MINIMUM_PANEL_WIDTH, titlePanels[LEFT].getMinimumSize().height));
@@ -319,7 +319,7 @@ public abstract class DecompilerCodeComparisonPanel<T extends DualDecompilerFiel
 	}
 
 	/**
-	 * Sets the coordinator for the two decompiler panels within this code comparison panel. 
+	 * Sets the coordinator for the two decompiler panels within this code comparison panel.
 	 * It coordinates their scrolling and location synchronization.
 	 * @param fieldPanelCoordinator the coordinator for the two decompiler panels
 	 */

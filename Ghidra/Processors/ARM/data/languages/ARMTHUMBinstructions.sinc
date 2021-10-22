@@ -47,7 +47,7 @@ define token instrThumb (16)
   sop0003=(0,3)
   sop0608=(6,8)
   sop0610=(6,10)
-  
+
   sopit=(0,7)
 
   Ra1215=(12,15)
@@ -66,7 +66,7 @@ define token instrThumb (16)
   Rs0305=(3,5)
   Rt1215=(12,15)
   Rt0811=(8,11)
-  
+
   thI9=(9,9)
   thP8=(8,8)
   thH8=(8,8)
@@ -77,7 +77,7 @@ define token instrThumb (16)
   thS6=(6,6)
   thW5=(5,5)
   thL4=(4,4)
-  
+
   thCRd=(12,15)
   thCRn=(0,3)
   thCRm=(0,3)
@@ -92,7 +92,7 @@ define token instrThumb (16)
   immed6=(0,5)
   immed7=(0,6)
   immed8=(0,7)
-  
+
   immed12_i=(10,10)
   immed12_imm3=(12,14)
   immed12_imm8=(0,7)
@@ -115,32 +115,32 @@ define token instrThumb (16)
   R=(8,8)
   sbz=(0,2)
   thwbit=(5,5)
-  
+
   th_psrmask=(8,11)
-  
+
   addr_pbit=(10,10)
   addr_ubit=(9,9)
   addr_wbit=(8,8)
   addr_puw  =(8,10)
   addr_puw1 =(5,8)
-  
+
   thsrsMode=(0,4)
-  
+
   fcond=(4,7)
-  
+
   throt=(4,6)
-  
+
   imm3_12=(12,14)
-  
+
   imm3_shft=(12,14)
   imm2_shft=(6,7)
-  
+
   imm5=(3,7)
-  
+
   sysm=(0,7)
   sysm37=(3,7)
   sysm02=(0,2)
-  
+
 
   thc0001=(0,1)
   thc0002=(0,2)
@@ -201,13 +201,13 @@ attach variables [ Rd0002 Rd0810 Rn0002 Rn0305  Rn0810 Rm0305 Rm0608 Rs0305 ]
 
 attach variables [ Rm0003 Rm0306 Rd0811 Rn0003 Rt1215 Rt0811 Ra1215 Rd0003 part2Rt part2Rd0003 ] [ r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 sp lr pc ];
 
-attach variables [ thCRn thCRd thCRm ] [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 cr10 cr11 cr12 cr13 cr14 cr15 ]; 	
+attach variables [ thCRn thCRd thCRm ] [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 cr10 cr11 cr12 cr13 cr14 cr15 ];
 
 attach names [ thcpn ] [ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15  ];
 
 attach variables [ hrn0002 hrm0305 hrd0002 ]
                  [ r8 r9 r10 r11 r12 sp lr pc ];
-                 
+
 macro th_addflags(op1,op2) {
   tmpCY = carry(op1,op2);
   tmpOV = scarry(op1,op2);
@@ -225,8 +225,8 @@ macro th_add_with_carry_flags(op1,op2){
 #sets tmpCY if there is NO borrow
 macro th_sub_with_carry_flags(op1, op2){
   local result = op1 - op2;
-  tmpCY = (op1 > op2) || (result < zext(CY)); 
-  tmpOV = sborrow(op1,op2) ^^ sborrow(result,zext(!CY));	
+  tmpCY = (op1 > op2) || (result < zext(CY));
+  tmpOV = sborrow(op1,op2) ^^ sborrow(result,zext(!CY));
 }
 
 
@@ -1768,7 +1768,7 @@ th2_SetMode: "#"^31  is thc0004=0x1f  { setSystemMode(); }
 
 :cps th2_SetMode is
         TMode=1 & part2op=0x1e & part2S=0x0 & part2cond=0xe & part2imm6=0x2f ;
-        thc0808=0x1 & th2_SetMode & op11=0x10 
+        thc0808=0x1 & th2_SetMode & op11=0x10
 {
 }
 
@@ -1874,7 +1874,7 @@ Z:    "t"               is TMode=1 & ((thc0404=1 & thc0101=1) | (thc0404=0 & thc
 Z:    "e"               is TMode=1 & ((thc0404=1 & thc0101=0) | (thc0404=0 & thc0101=1)) & (thc0000=1)  { }
 Z:    ""                is TMode=1 & thc0404 & thc0101 & (thc0000=0)  { }
 
-XYZ:                    is TMode=1 & sop0003=8  { }              
+XYZ:                    is TMode=1 & sop0003=8  { }
 XYZ:  X^Y^Z             is TMode=1 & X & Y & Z  { }
 
 
@@ -2631,12 +2631,12 @@ define pcodeop getProcessStackPointer;
 define pcodeop getBasePriority;
 define pcodeop getCurrentExceptionNumber;
 
-mrsipsr: "i"	is thc0000=1 & Rd0811 { 
+mrsipsr: "i"	is thc0000=1 & Rd0811 {
 	b:1 = isCurrentModePrivileged();
 	if (!b) goto <notPriv>;
 	ipsr:4 = getCurrentExceptionNumber();
 	Rd0811 = Rd0811 | (ipsr & 0x1f);
- <notPriv> 
+ <notPriv>
 }
 mrsipsr: 		is thc0000=0 { }
 mrsepsr: "e"	is thc0101=1 { }
@@ -2684,7 +2684,7 @@ primask: "primask"			is epsilon {}
   build ItCond;
   Rd0811 = 0;
   b:1 = isCurrentModePrivileged();
-  if (!b) goto inst_next; 
+  if (!b) goto inst_next;
   Rd0811 = isIRQinterruptsEnabled(); # should reflect primask register/bit
 }
 
@@ -2841,7 +2841,7 @@ define pcodeop setStackMode;
   if (!b) goto inst_next;
   privileged:1 = (Rn0003 & 1) == 0;
   setThreadModePrivileged(privileged);
-# TODO: not sure about the following semantics  
+# TODO: not sure about the following semantics
   b = isThreadMode();
   if (!b) goto inst_next;
   stackMode:1 = isUsingMainStack() == 1:1;
@@ -3214,7 +3214,7 @@ thspsrmask: spsr^thpsrmask	is thpsrmask & spsr { export thpsrmask; }
 
 :push^ItCond    thstrlist_dec       is TMode=1 & ItCond & op0=0xe92d; thstrlist_dec
 {
-    build ItCond; 
+    build ItCond;
 #	mult_addr = sp & 0xfffffffc;
     mult_addr = sp-4;
 	build thstrlist_dec;
@@ -3618,7 +3618,7 @@ macro th_set_carry_for_ror(result, count) {
 {
   build ItCond;
   local shift_amount = Rm0003 & 0x1f;
-  local tmp = (Rn0003>>shift_amount)|(Rn0003<<(32-shift_amount)); 
+  local tmp = (Rn0003>>shift_amount)|(Rn0003<<(32-shift_amount));
   th_set_carry_for_ror(tmp,Rm0003 & 0xff);
   Rd0811 = tmp;
   resflags(Rd0811);
@@ -4264,7 +4264,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 }
 
 :stm^ItCond^".w"    Rn0003!,thstrlist_inc           is TMode=1 & ItCond & op11=0x1d & thc0910=0 & sop0608=2 & thwbit=1 & thc0404=0 & Rn0003; thc1515=0 & thc1313=0 & thstrlist_inc
-{ 
+{
    build ItCond;
    mult_addr = Rn0003;
    build thstrlist_inc;
@@ -4696,7 +4696,7 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
 @if defined(VERSION_6T2) || defined(VERSION_7)
 
 :sxtb16^ItCond   Rd0811, Rm0003, ByteRotate    is  TMode=1 & ItCond & op0=0xfa2f; op12=0xf & Rd0811 & thc0707=1 & thc0606=0 & ByteRotate & Rm0003
-                                      
+
 {
    build ItCond;
   tmp:4 = (Rm0003 >> ByteRotate) | Rm0003 << ( 32 - ByteRotate);
@@ -4765,11 +4765,11 @@ thumbEndianNess: "BE" is op0=0xb658 { export 1:1; }
    goto [pc];
 }
 
-Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=0 [ cloc = inst_next; ] 
+Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=0 [ cloc = inst_next; ]
 {
    local tmp = Rm0003; tmp = cloc + tmp; val:1 = *tmp; tmp = zext(val); export tmp;
 }
-Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ] 
+Pcrel: [cloc,Rm0003]  is Rm0003 & thc0404=1 [ cloc = inst_next; ]
 {
    local tmp = Rm0003; tmp = cloc + (tmp * 2); val:2 = *tmp; tmp = zext(val); export tmp;
 }

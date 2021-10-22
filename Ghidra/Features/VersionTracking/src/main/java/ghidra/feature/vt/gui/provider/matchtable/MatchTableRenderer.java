@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public class MatchTableRenderer extends CompositeGhidraTableCellRenderer {
 	@Override
 	public Component getTableCellRendererComponent(GTableCellRenderingData data) {
 
-		// We are here to just render the background, so let our parent render the cell and we 
+		// We are here to just render the background, so let our parent render the cell and we
 		// will just add our decoration.
 		Component rendererComponent =
 			super.getTableCellRendererComponent(data);
@@ -42,7 +42,7 @@ public class MatchTableRenderer extends CompositeGhidraTableCellRenderer {
 		VTMatch match = (VTMatch) rowObject;
 		if (match == null) {
 			// This can happen when matches are applied.  The match table will trigger an
-			// add/remove job on the ThreadedTableModel.  This job will manipulate the table's 
+			// add/remove job on the ThreadedTableModel.  This job will manipulate the table's
 			// data from off the Swing thread, which could lead to the rug being pulled out from
 			// under the renderer whilst it is repainting.
 			return rendererComponent;
@@ -50,7 +50,7 @@ public class MatchTableRenderer extends CompositeGhidraTableCellRenderer {
 
 		VTAssociation association = match.getAssociation();
 		if (!isSelected && association != null) {
-			// gray out our background if we are locked-out            
+			// gray out our background if we are locked-out
 			rendererComponent.setBackground(getBackgroundColor(association, table,
 				rendererComponent.getBackground()));
 		}

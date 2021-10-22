@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public class VTCombinedFunctionDataReferenceCorrelator_x86_Test extends Abstract
 		// Create matches
 		VTMatchSet matchSet = createMatchSet(session, associations);
 
-		// apply the matches created above 
+		// apply the matches created above
 		Collection<VTMatch> matches = matchSet.getMatches();
 		for (VTMatch match : matches) {
 			applyMatch(match);
@@ -83,7 +83,7 @@ public class VTCombinedFunctionDataReferenceCorrelator_x86_Test extends Abstract
 	}
 
 	/*
-	* Run the Exact Data Match correlator and accept all matches, 
+	* Run the Exact Data Match correlator and accept all matches,
 	* then run the Data Reference Correlator and accept all matches
 	* then run the Combined Data and Function reference correlator and test
 	* that only the expected matches are found for the Default Options
@@ -125,18 +125,18 @@ public class VTCombinedFunctionDataReferenceCorrelator_x86_Test extends Abstract
 		expectedMatchPairs.add(associate(addr(srcProg, "004115d0"), addr(destProg, "004115c0")));  // src:print dst: print
 		expectedMatchPairs.add(associate(addr(srcProg, "00411700"), addr(destProg, "004116f0")));  // src:addPeople dst: addPeople
 		expectedMatchPairs.add(associate(addr(srcProg, "00411860"), addr(destProg, "00411830")));  // src:addPerson dst: addPerson
-		expectedMatchPairs.add(associate(addr(srcProg, "004118f0"), addr(destProg, "004118c0")));  // src:deployGadget dst: FUN_004118c0		
+		expectedMatchPairs.add(associate(addr(srcProg, "004118f0"), addr(destProg, "004118c0")));  // src:deployGadget dst: FUN_004118c0
 
 		expectedMatchPairs.add(associate(addr(srcProg, "00411a30"), addr(destProg, "00411a10")));  // src:main dst: main
 
-		expectedMatchPairs.add(associate(addr(srcProg, "00411b80"), addr(destProg, "00411b60")));  // src:__RTC_CheckEsp dst: __RTC_CheckEsp		
+		expectedMatchPairs.add(associate(addr(srcProg, "00411b80"), addr(destProg, "00411b60")));  // src:__RTC_CheckEsp dst: __RTC_CheckEsp
 		expectedMatchPairs.add(associate(addr(srcProg, "00411bb0"), addr(destProg, "00411b90")));  // src:@_RTC_CheckStackVars@8 dst: @_RTC_CheckStackVars@8
-		expectedMatchPairs.add(associate(addr(srcProg, "00411c70"), addr(destProg, "00411c50")));  // src:@_RTC_CheckStackVars2@12 dst: @_RTC_CheckStackVars2@12		
-		expectedMatchPairs.add(associate(addr(srcProg, "00411dc0"), addr(destProg, "00411da0")));  // src:FUN_00411dc0 dst: FUN_00411da0		
-//		expectedMatchPairs.add(associate(addr(srcProg, "00411e70"), addr(destProg, "00411e50")));  // src:FUN_00411e70 dst: FUN_00411e50 -- similarity score < 0.5	
+		expectedMatchPairs.add(associate(addr(srcProg, "00411c70"), addr(destProg, "00411c50")));  // src:@_RTC_CheckStackVars2@12 dst: @_RTC_CheckStackVars2@12
+		expectedMatchPairs.add(associate(addr(srcProg, "00411dc0"), addr(destProg, "00411da0")));  // src:FUN_00411dc0 dst: FUN_00411da0
+//		expectedMatchPairs.add(associate(addr(srcProg, "00411e70"), addr(destProg, "00411e50")));  // src:FUN_00411e70 dst: FUN_00411e50 -- similarity score < 0.5
 		expectedMatchPairs.add(associate(addr(srcProg, "00411ee0"), addr(destProg, "00411ec0")));  // src:_mainCRTStartup dst: _mainCRTStartup
 
-//		expectedMatchPairs.add(associate(addr(srcProg, "00411f00"), addr(destProg, "00411ee0")));  // src:___tmainCRTStartup dst: ___tmainCRTStartup -- similarity score < 0.5		
+//		expectedMatchPairs.add(associate(addr(srcProg, "00411f00"), addr(destProg, "00411ee0")));  // src:___tmainCRTStartup dst: ___tmainCRTStartup -- similarity score < 0.5
 
 		expectedMatchPairs.add(associate(addr(srcProg, "004122b0"), addr(destProg, "00412290")));  // src:__RTC_GetErrDesc dst: __RTC_GetErrDesc
 		expectedMatchPairs.add(associate(addr(srcProg, "00412380"), addr(destProg, "00412360")));  // src:_RTC_Failure dst: _RTC_Failure
@@ -147,7 +147,7 @@ public class VTCombinedFunctionDataReferenceCorrelator_x86_Test extends Abstract
 		expectedMatchPairs.add(associate(addr(srcProg, "00412b60"), addr(destProg, "00412b40")));  // src:__RTC_UninitUse dst: __RTC_UninitUse
 		expectedMatchPairs.add(associate(addr(srcProg, "00412e90"), addr(destProg, "00412e70")));  // src:__setdefaultprecision dst: __setdefaultprecision
 
-//		expectedMatchPairs.add(associate(addr(srcProg, "00412fa0"), addr(destProg, "00412f80")));  // src:__onexit dst: __onexit -- similarity score < 0.5	
+//		expectedMatchPairs.add(associate(addr(srcProg, "00412fa0"), addr(destProg, "00412f80")));  // src:__onexit dst: __onexit -- similarity score < 0.5
 
 		expectedMatchPairs.add(associate(addr(srcProg, "004130d0"), addr(destProg, "004130b0")));  // src:_atexit dst: _atexit
 		expectedMatchPairs.add(associate(addr(srcProg, "00413370"), addr(destProg, "00413350")));  // src:__IsNonwritableInCurrentImage dst: __IsNonwritableInCurrentImage
@@ -160,9 +160,9 @@ public class VTCombinedFunctionDataReferenceCorrelator_x86_Test extends Abstract
 	}
 
 	/*
-	* Run the Exact Data Match correlator and accept all matches, 
+	* Run the Exact Data Match correlator and accept all matches,
 	* then run the Data Reference Correlator and accept all matches
-	* then run the Combined Data and Function reference correlator 
+	* then run the Combined Data and Function reference correlator
 	* with lowered similarity score and Refine Results turned off
 	* then test that only the expected matches are found
 	*/
@@ -205,18 +205,18 @@ public class VTCombinedFunctionDataReferenceCorrelator_x86_Test extends Abstract
 		expectedMatchPairs.add(associate(addr(srcProg, "004115d0"), addr(destProg, "004115c0")));  // src:print dst: print
 		expectedMatchPairs.add(associate(addr(srcProg, "00411700"), addr(destProg, "004116f0")));  // src:addPeople dst: addPeople
 		expectedMatchPairs.add(associate(addr(srcProg, "00411860"), addr(destProg, "00411830")));  // src:addPerson dst: addPerson
-		expectedMatchPairs.add(associate(addr(srcProg, "004118f0"), addr(destProg, "004118c0")));  // src:deployGadget dst: FUN_004118c0		
+		expectedMatchPairs.add(associate(addr(srcProg, "004118f0"), addr(destProg, "004118c0")));  // src:deployGadget dst: FUN_004118c0
 
 		expectedMatchPairs.add(associate(addr(srcProg, "00411a30"), addr(destProg, "00411a10")));  // src:main dst: main
 
-		expectedMatchPairs.add(associate(addr(srcProg, "00411b80"), addr(destProg, "00411b60")));  // src:__RTC_CheckEsp dst: __RTC_CheckEsp		
+		expectedMatchPairs.add(associate(addr(srcProg, "00411b80"), addr(destProg, "00411b60")));  // src:__RTC_CheckEsp dst: __RTC_CheckEsp
 		expectedMatchPairs.add(associate(addr(srcProg, "00411bb0"), addr(destProg, "00411b90")));  // src:@_RTC_CheckStackVars@8 dst: @_RTC_CheckStackVars@8
-		expectedMatchPairs.add(associate(addr(srcProg, "00411c70"), addr(destProg, "00411c50")));  // src:@_RTC_CheckStackVars2@12 dst: @_RTC_CheckStackVars2@12		
-		expectedMatchPairs.add(associate(addr(srcProg, "00411dc0"), addr(destProg, "00411da0")));  // src:FUN_00411dc0 dst: FUN_00411da0		
-		expectedMatchPairs.add(associate(addr(srcProg, "00411e70"), addr(destProg, "00411e50")));  // src:FUN_00411e70 dst: FUN_00411e50 -- similarity score < 0.5	
+		expectedMatchPairs.add(associate(addr(srcProg, "00411c70"), addr(destProg, "00411c50")));  // src:@_RTC_CheckStackVars2@12 dst: @_RTC_CheckStackVars2@12
+		expectedMatchPairs.add(associate(addr(srcProg, "00411dc0"), addr(destProg, "00411da0")));  // src:FUN_00411dc0 dst: FUN_00411da0
+		expectedMatchPairs.add(associate(addr(srcProg, "00411e70"), addr(destProg, "00411e50")));  // src:FUN_00411e70 dst: FUN_00411e50 -- similarity score < 0.5
 		expectedMatchPairs.add(associate(addr(srcProg, "00411ee0"), addr(destProg, "00411ec0")));  // src:_mainCRTStartup dst: _mainCRTStartup
 
-		expectedMatchPairs.add(associate(addr(srcProg, "00411f00"), addr(destProg, "00411ee0")));  // src:___tmainCRTStartup dst: ___tmainCRTStartup -- similarity score < 0.5		
+		expectedMatchPairs.add(associate(addr(srcProg, "00411f00"), addr(destProg, "00411ee0")));  // src:___tmainCRTStartup dst: ___tmainCRTStartup -- similarity score < 0.5
 
 		expectedMatchPairs.add(associate(addr(srcProg, "004122b0"), addr(destProg, "00412290")));  // src:__RTC_GetErrDesc dst: __RTC_GetErrDesc
 		expectedMatchPairs.add(associate(addr(srcProg, "00412380"), addr(destProg, "00412360")));  // src:_RTC_Failure dst: _RTC_Failure
@@ -227,7 +227,7 @@ public class VTCombinedFunctionDataReferenceCorrelator_x86_Test extends Abstract
 		expectedMatchPairs.add(associate(addr(srcProg, "00412b60"), addr(destProg, "00412b40")));  // src:__RTC_UninitUse dst: __RTC_UninitUse
 		expectedMatchPairs.add(associate(addr(srcProg, "00412e90"), addr(destProg, "00412e70")));  // src:__setdefaultprecision dst: __setdefaultprecision
 
-		expectedMatchPairs.add(associate(addr(srcProg, "00412fa0"), addr(destProg, "00412f80")));  // src:__onexit dst: __onexit -- similarity score < 0.5	
+		expectedMatchPairs.add(associate(addr(srcProg, "00412fa0"), addr(destProg, "00412f80")));  // src:__onexit dst: __onexit -- similarity score < 0.5
 
 		expectedMatchPairs.add(associate(addr(srcProg, "004130d0"), addr(destProg, "004130b0")));  // src:_atexit dst: _atexit
 		expectedMatchPairs.add(associate(addr(srcProg, "00413370"), addr(destProg, "00413350")));  // src:__IsNonwritableInCurrentImage dst: __IsNonwritableInCurrentImage
@@ -254,9 +254,9 @@ public class VTCombinedFunctionDataReferenceCorrelator_x86_Test extends Abstract
 		 * Create associated matches for the Reference correlator to work with.
 		 */
 		List<VTAssociationPair> associations = new ArrayList<>();
-		/*		
+		/*
 		 * The defined testMatch references the following 3 items:
-		 * 
+		 *
 		 *	Function	thunk_FUN_00411da0			thunk_FUN_00411d80		00411023	00411023	Implied Match
 		 *	Data		DAT_00418000				DAT_00418000			00418000	00418000	Implied Match
 		 *	Function	_except_handler4_common		_except_handler4_common	004111db	004111d6	Implied Match
@@ -327,7 +327,7 @@ public class VTCombinedFunctionDataReferenceCorrelator_x86_Test extends Abstract
 
 	/************************************************************************************
 	 * Check that the scoring increases for a particular match as we add more references.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -343,9 +343,9 @@ public class VTCombinedFunctionDataReferenceCorrelator_x86_Test extends Abstract
 		 * Create associated matches for the Reference correlator to work with.
 		 */
 		List<VTAssociationPair> associations = new ArrayList<>();
-		/*		
+		/*
 		 * The defined testMatch references the following 3 items:
-		 * 
+		 *
 		 *	Function	thunk_FUN_00411da0			thunk_FUN_00411d80		00411023	00411023	Implied Match
 		 *	Data		DAT_00418000				DAT_00418000			00418000	00418000	Implied Match
 		 *	Function	_except_handler4_common		_except_handler4_common	004111db	004111d6	Implied Match

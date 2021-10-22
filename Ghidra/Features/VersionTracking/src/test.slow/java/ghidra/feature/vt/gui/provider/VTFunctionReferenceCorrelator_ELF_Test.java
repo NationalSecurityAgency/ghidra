@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,9 +36,9 @@ public class VTFunctionReferenceCorrelator_ELF_Test extends AbstractVTCorrelator
 	 * Begin Tests
 	 */
 	/************************************************************************************
-	 * Specify only function matches referenced by single function, then run the Function 
+	 * Specify only function matches referenced by single function, then run the Function
 	 * Reference Correlator and make sure it matches only on functions that have those function references
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -89,9 +89,9 @@ public class VTFunctionReferenceCorrelator_ELF_Test extends AbstractVTCorrelator
 	}
 
 	/************************************************************************************
-	 * Run the Exact Function Match correlator and accept all matches, 
+	 * Run the Exact Function Match correlator and accept all matches,
 	 * then run the Function Reference Correlator and test that only expected matches are found
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test

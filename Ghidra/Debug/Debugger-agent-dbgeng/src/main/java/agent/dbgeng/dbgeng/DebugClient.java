@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -221,7 +221,7 @@ public interface DebugClient extends DebugClientReentrant {
 		CREATE_NO_WINDOW(WinBase.CREATE_NO_WINDOW), //
 
 		//PROFILE_USER(WinBase.PROFILE_USER), //
-		//PROFILE_KERNEL(WinBase.PROFILE_KERNEL), //     
+		//PROFILE_KERNEL(WinBase.PROFILE_KERNEL), //
 		//PROFILE_SERVER(WinBase.PROFILE_SERVER), //
 		//CREATE_IGNORE_SYSTEM_DEFAULT(WinBase.CREATE_IGNORE_SYSTEM_DEFAULT), //
 		DEBUG_CREATE_NO_DEBUG_HEAP(0x00000400), //
@@ -283,14 +283,14 @@ public interface DebugClient extends DebugClientReentrant {
 
 	/**
 	 * Obtain the advanced interface to this client.
-	 * 
+	 *
 	 * @return the advanced interface
 	 */
 	DebugAdvanced getAdvanced();
 
 	/**
 	 * Obtain the control interface to this client
-	 * 
+	 *
 	 * @return the control interface
 	 */
 	@Override
@@ -298,35 +298,35 @@ public interface DebugClient extends DebugClientReentrant {
 
 	/**
 	 * Obtain the data spaces interface to this client
-	 * 
+	 *
 	 * @return the data spaces interface
 	 */
 	DebugDataSpaces getDataSpaces();
 
 	/**
 	 * Obtain the registers interface to this client
-	 * 
+	 *
 	 * @return the registers interface
 	 */
 	DebugRegisters getRegisters();
 
 	/**
 	 * Obtain the symbols interface to this client
-	 * 
+	 *
 	 * @return the symbols interface
 	 */
 	DebugSymbols getSymbols();
 
 	/**
 	 * Obtain the system objects interface to this client
-	 * 
+	 *
 	 * @return the system objects interface
 	 */
 	DebugSystemObjects getSystemObjects();
 
 	/**
 	 * The the ID for the local server
-	 * 
+	 *
 	 * @return the ID
 	 */
 	DebugServerId getLocalServer();

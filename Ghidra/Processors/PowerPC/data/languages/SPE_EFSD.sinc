@@ -14,7 +14,7 @@
 {
    D = abs( A );
 }
- 
+
 # =================================================================
 # Page 577
 
@@ -80,7 +80,7 @@
    # negate the float
    tmpB = f-( tmpB );
    setSPEFSCR_L( tmpB );
- 
+
    <done>
 
    tmpC:8 = float2float( tmpB );
@@ -99,7 +99,7 @@
 # ISA-cmt: efdcfsi - Convert Floating-Point Double-Precision from Signed Integer
 # ISA-info: efdcfsi - Form "EVX" Page 579 Category "SP.FD"
 # binutils: e500.d:   6c:	10 a0 22 f1 	efdcfsi r5,r4
-:efdcfsi D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=753 
+:efdcfsi D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=753
 {
    # check if negative
    if ( ( B:4 & 0x80000000 ) != 0 ) goto <negative>;
@@ -119,7 +119,7 @@
    # negate the float
    tmpB = f-( tmpB );
    setSPEFSCR_L( tmpB );
- 
+
    <done>
 
    setSummarySPEFSCR();
@@ -135,7 +135,7 @@
 # ISA-cmt: efdcfsid - Convert Floating-Point Double-Precision from Signed Integer Doubleword
 # ISA-info: efdcfsid - Form "EVX" Page 580 Category "SP.FD"
 # binutils: e500.d:   70:	10 a0 22 e3 	efdcfsid r5,r4
-:efdcfsid D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=739 
+:efdcfsid D,B is OP=4 & D & BITS_16_20=0 & B & XOP_0_10=739
 {
    # check if negative
    if ( ( B & 0x8000000000000000 ) != 0 ) goto <negative>;
@@ -155,7 +155,7 @@
    # negate the float
    tmpB = f-( tmpB );
    setSPEFSCR_L( tmpB );
- 
+
    <done>
 
    setSummarySPEFSCR();

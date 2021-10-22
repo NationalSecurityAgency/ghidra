@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.pcode.*;
 
 /**
- * A base class that represents a variable from the decompiler.  This is either a variable 
+ * A base class that represents a variable from the decompiler.  This is either a variable
  * type or a variable with an optional field access.
  */
 public abstract class DecompilerVariable {
@@ -51,7 +51,7 @@ public abstract class DecompilerVariable {
 			return ((ClangTypeToken) variable).getDataType();
 		}
 
-// not sure if we need this; the type returned here is the structure and not the 
+// not sure if we need this; the type returned here is the structure and not the
 // field's type
 //		if (variable instanceof ClangFieldToken) {
 //			return ((ClangFieldToken) variable).getDataType();
@@ -79,8 +79,8 @@ public abstract class DecompilerVariable {
 			}
 		}
 
-		// Prefer the type of the first input varnode, unless that type is a 'void *'.  
-		// Usually, in that special case, the output varnode has the correct type information. 		
+		// Prefer the type of the first input varnode, unless that type is a 'void *'.
+		// Usually, in that special case, the output varnode has the correct type information.
 		PcodeOp op = variable.getPcodeOp();
 		dataType = getInputDataType(op);
 
@@ -193,7 +193,7 @@ public abstract class DecompilerVariable {
 		String castString = casts.isEmpty() ? "" : "\tcasts: " + casts + ",\n";
 		//@formatter:off
 		return "{\n" +
-			castString + 
+			castString +
 			"\tvariable: " + variable + ",\n" +
 		"}";
 		//@formatter:on

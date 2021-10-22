@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -125,12 +125,12 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Verify that the user cannot delete an immutable tag (a tag that has been preloaded
-	 * from a configuration file). 
+	 * from a configuration file).
 	 * <p>
-	 * Secondary checks: 
+	 * Secondary checks:
 	 * <li>Verify that the delete button will still be disabled if we add
 	 * non-immutable tags to the selection</li>
-	 * <li>Verify that the delete button will become enabled if we 
+	 * <li>Verify that the delete button will become enabled if we
 	 * remove any immutable tags from the selection</li>
 	 * @throws Exception if there is a problem selecting tags
 	 */
@@ -266,7 +266,7 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests that we can add a tag to a function.
-	 * 
+	 *
 	 * @throws Exception if there is a problem adding tags to functions
 	 */
 	@Test
@@ -339,7 +339,7 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	/**
 	 * Verifies if a tag is assigned to multiple functions they will all be shown
 	 * in the function panel
-	 * 
+	 *
 	 * @throws Exception if there's a problem adding tags to functions
 	 */
 	@Test
@@ -375,7 +375,7 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	/**
 	 * Verifies if multiple tags are selected, all functions containing that tag
 	 * are displayed
-	 * 
+	 *
 	 * @throws Exception if there's a problem adding tags to functions
 	 */
 	@Test
@@ -396,7 +396,7 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		addTagToFunction(tagName2, FUNCTION_ENTRY_ADDRESS_2);
 		addTagToFunction(tagName2, FUNCTION_ENTRY_ADDRESS_3);
 
-		// Select both tags and verify that 3 functions are listed in 
+		// Select both tags and verify that 3 functions are listed in
 		// the functions panel
 		goTo(tool, program, addr("00000000"));
 		FunctionTagTable table = getSourceTable();
@@ -550,7 +550,7 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Returns true if the button with the given name is enabled.
-	 * 
+	 *
 	 * @param name the button name
 	 * @return true if enabled
 	 */
@@ -665,8 +665,8 @@ public class FunctionTagPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Returns an immutable tag (the first one found) from the source panel, if one exists. 
-	 * 
+	 * Returns an immutable tag (the first one found) from the source panel, if one exists.
+	 *
 	 * @return an immutable tag, or null if not found
 	 * @throws UsrException if there's an error retrieving tags in the source panel
 	 */

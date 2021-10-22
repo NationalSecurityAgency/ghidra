@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.dbg.util.CollectionUtils.AbstractNMap;
 
 /**
  * An object which can be invoked as a method
- * 
+ *
  * <p>
  * TODO: Should parameters and return type be something incorporated into Schemas?
  */
@@ -39,18 +39,18 @@ public interface TargetMethod extends TargetObject {
 
 	/**
 	 * A description of a method parameter
-	 * 
+	 *
 	 * <p>
 	 * TODO: For convenience, these should be programmable via annotations.
 	 * <P>
 	 * TODO: Should this be incorporated into schemas?
-	 * 
+	 *
 	 * @param <T> the type of the parameter
 	 */
 	class ParameterDescription<T> {
 		/**
 		 * Create a parameter
-		 * 
+		 *
 		 * @param <T> the type of the parameter
 		 * @param type the class representing the type of the parameter
 		 * @param name the name of the parameter
@@ -68,7 +68,7 @@ public interface TargetMethod extends TargetObject {
 
 		/**
 		 * Create a parameter having enumerated choices
-		 * 
+		 *
 		 * @param <T> the type of the parameter
 		 * @param type the class representing the type of the parameter
 		 * @param name the name of the parameter
@@ -140,11 +140,11 @@ public interface TargetMethod extends TargetObject {
 
 		/**
 		 * Extract the argument for this parameter
-		 * 
+		 *
 		 * <p>
 		 * You must validate the arguments, using
 		 * {@link TargetMethod#validateArguments(Map, Map, boolean)}, first.
-		 * 
+		 *
 		 * @param arguments the validated arguments
 		 * @return the parameter
 		 */
@@ -196,7 +196,7 @@ public interface TargetMethod extends TargetObject {
 
 	/**
 	 * Construct a map of parameter descriptions from a stream
-	 * 
+	 *
 	 * @param params the descriptions
 	 * @return a map of descriptions by name
 	 */
@@ -209,7 +209,7 @@ public interface TargetMethod extends TargetObject {
 
 	/**
 	 * Construct a map of parameter descriptions from a collection
-	 * 
+	 *
 	 * @param params the descriptions
 	 * @return a map of descriptions by name
 	 */
@@ -219,7 +219,7 @@ public interface TargetMethod extends TargetObject {
 
 	/**
 	 * Construct a map of parameter descriptions from an array
-	 * 
+	 *
 	 * @param params the descriptions
 	 * @return a map of descriptions by name
 	 */
@@ -229,7 +229,7 @@ public interface TargetMethod extends TargetObject {
 
 	/**
 	 * Validate the given arguments against the given parameters
-	 * 
+	 *
 	 * @param parameters the parameter descriptions
 	 * @param arguments the arguments
 	 * @param permitExtras false to require every named argument has a named parameter
@@ -285,7 +285,7 @@ public interface TargetMethod extends TargetObject {
 	/**
 	 * A convenience method used by {@link TargetLauncher} as a stopgap until "launch" becomes a
 	 * {@link TargetMethod}.
-	 * 
+	 *
 	 * @param obj the object having a "parameters" attribute.
 	 * @return the parameter map
 	 */
@@ -296,7 +296,7 @@ public interface TargetMethod extends TargetObject {
 
 	/**
 	 * Get the parameter descriptions of this method
-	 * 
+	 *
 	 * @return the name-description map of parameters
 	 */
 	@TargetAttributeType(
@@ -310,12 +310,12 @@ public interface TargetMethod extends TargetObject {
 
 	/**
 	 * Get the return type of this method
-	 * 
+	 *
 	 * <p>
 	 * If the return type is {@link TargetObject} then it is most likely a link, but that is not
 	 * necessarily the case. If the arguments alone determine the returned object, then the returned
 	 * object can in fact be a canonical object whose path includes the invocation syntax.
-	 * 
+	 *
 	 * @return the return type
 	 */
 	@TargetAttributeType(
@@ -331,7 +331,7 @@ public interface TargetMethod extends TargetObject {
 
 	/**
 	 * Invoke the method with the given arguments
-	 * 
+	 *
 	 * @param arguments the map of named arguments
 	 * @return a future which completes with the return value
 	 */

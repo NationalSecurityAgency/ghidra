@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public class MarkerLocation implements Serializable {
 
 	/**
 	 * Returns the program.
-	 * 
+	 *
 	 * @return the program for this marker location
 	 */
 	public Program getProgram() {
@@ -60,7 +60,7 @@ public class MarkerLocation implements Serializable {
 
 	/**
 	 * Returns the address.
-	 * 
+	 *
 	 * @return the address for this marker location
 	 */
 	public Address getAddr() {
@@ -69,7 +69,7 @@ public class MarkerLocation implements Serializable {
 
 	/**
 	 * Returns the Marker Manager.
-	 * 
+	 *
 	 * @return the marker manager
 	 */
 	public MarkerSet getMarkerManager() {
@@ -78,7 +78,7 @@ public class MarkerLocation implements Serializable {
 
 	/**
 	 * Returns the X screen location of the popup point.
-	 * 
+	 *
 	 * @return the X coordinate for the screen location.
 	 */
 	public int getX() {
@@ -87,7 +87,7 @@ public class MarkerLocation implements Serializable {
 
 	/**
 	 * Returns the Y screen location of the popup point.
-	 * 
+	 *
 	 * @return the Y coordinate for the screen location.
 	 */
 	public int getY() {

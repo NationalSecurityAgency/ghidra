@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,7 +88,7 @@ public abstract class AbstractStringSearcher {
 	}
 
 	/**
-	 * Searches the given addressSet for strings. 
+	 * Searches the given addressSet for strings.
 	 * <p>
 	 * Note: The address set searched will be modified before searching in the following ways:
 	 * <ul>
@@ -129,9 +129,9 @@ public abstract class AbstractStringSearcher {
 	 * Returns a new address set that is the intersection of the given set with the
 	 * desired memory block addresses (loaded or unloaded).
 	 * <p>
-	 * Note: This desired set of memory blocks is known by inspecting the 
-	 * {@link StringTableOptions#useLoadedBlocksOnly()} attribute set by the user. 
-	 * 
+	 * Note: This desired set of memory blocks is known by inspecting the
+	 * {@link StringTableOptions#useLoadedBlocksOnly()} attribute set by the user.
+	 *
 	 * @param addressSet the address set to update
 	 * @param useLoadedBlocksOnly if true, only return addresses in loaded memory blocks
 	 * @return new the new address set

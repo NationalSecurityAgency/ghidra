@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <language_definitions>
-  
+
   <language processor="6502"
             endian="little"
             size="16"
@@ -29,5 +29,5 @@
     <compiler name="default" spec="6502.cspec" id="default"/>
 	<external_name tool="IDA-PRO" name="m65c02"/>
   </language>
-  
+
 </language_definitions>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public interface SortedTableModel extends TableModel {
 
 	/**
 	 * Returns the column index that is the primary sorted column; -1 if no column is sorted
-	 * 
+	 *
 	 * @return the index
 	 */
 	public int getPrimarySortColumnIndex();
@@ -59,9 +59,9 @@ public interface SortedTableModel extends TableModel {
 	public TableSortState getTableSortState();
 
 	/**
-	 * Adds a listener to be notified when the sort state of this model changes. 
+	 * Adds a listener to be notified when the sort state of this model changes.
 	 * <br>
-	 * <b>Note: the listener may be stored in a weak collection, which means you have to 
+	 * <b>Note: the listener may be stored in a weak collection, which means you have to
 	 *          maintain a handle to the listener so that it does not get garbage collected.
 	 * </b>
 	 * @param l the listener

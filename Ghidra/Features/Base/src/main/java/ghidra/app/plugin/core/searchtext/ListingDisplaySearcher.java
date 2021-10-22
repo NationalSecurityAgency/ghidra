@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,19 +38,19 @@ import ghidra.util.UserSearchUtils;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class attempts to search for text as it is rendered on the screen.  This in in 
- * contrast to the Program Database Searcher which searches the database.  This is 
- * needed because some information on the screen is rendered "on the fly" and not 
- * stored in the database.  This searcher is much slower, but delivers 
+ * This class attempts to search for text as it is rendered on the screen.  This in in
+ * contrast to the Program Database Searcher which searches the database.  This is
+ * needed because some information on the screen is rendered "on the fly" and not
+ * stored in the database.  This searcher is much slower, but delivers
  * results that are in-line with what the user sees.
  * <p>
- * The search is performed in two steps.  First it uses Instruction and Data iterators to 
+ * The search is performed in two steps.  First it uses Instruction and Data iterators to
  * find possible addresses where where information would be rendered.  Then for each of those
  * addresses, it uses the code browsers rendering engine to produce a textual representation
  * for that address.  The textual representation also maintains information about the field
  * that generated it so that the search can be constrained to specific fields such as the
- * label or comment field. 
- * 
+ * label or comment field.
+ *
  */
 class ListingDisplaySearcher implements Searcher {
 
@@ -143,7 +143,7 @@ class ListingDisplaySearcher implements Searcher {
 	private AddressIterator[] getSearchIterators() {
 		//
 		// This code used to get specific iterators for labels, comments, etc, depending
-		// on what options were selected (which is the fastest way to search).  However, 
+		// on what options were selected (which is the fastest way to search).  However,
 		// this approach missed auto comments and structure comments.
 		//
 		// The idea now is to get iterators that will return addresses for every defined
@@ -355,7 +355,7 @@ class ListingDisplaySearcher implements Searcher {
 
 		int fieldCount = 1; // we always match on one field, unless it is the Mnemonic/Operand combo
 
-		// if field is the Mnemonic, and instructions or data are 
+		// if field is the Mnemonic, and instructions or data are
 		// being searched, get the next field as well
 		boolean isMnemonic = fieldName.equals(MnemonicFieldFactory.FIELD_NAME);
 		boolean isInstructionsOrData =

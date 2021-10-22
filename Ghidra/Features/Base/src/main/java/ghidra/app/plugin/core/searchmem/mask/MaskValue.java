@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.app.plugin.core.searchmem.mask;
 
 /**
  * Stores information about the instruction and mask.
- * 
+ *
  */
 class MaskValue {
 	private byte[] mask;
@@ -26,7 +26,7 @@ class MaskValue {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param mask
 	 * @param value
 	 */
@@ -37,7 +37,7 @@ class MaskValue {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param mask
 	 * @param value
 	 * @param textRepresentation
@@ -49,7 +49,7 @@ class MaskValue {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	public String toString() {
@@ -61,7 +61,7 @@ class MaskValue {
 	/**
 	 * Performs a bitwise OR on the given byte array and mask.  Results are stored internally in
 	 * the 'mask' object.
-	 * 
+	 *
 	 * @param other
 	 */
 	public void orMask(byte[] other) {
@@ -75,7 +75,7 @@ class MaskValue {
 	/**
 	 * Performs a bitwise OR on the given byte array and instruction value.  Results are stored internally
 	 * in the 'value' object.
-	 * 
+	 *
 	 * @param other
 	 */
 	public void orValue(byte[] other) {
@@ -87,7 +87,7 @@ class MaskValue {
 
 	/**
 	 * Takes two byte arrays and performs a bitwise OR on them.  The arrays must be of the same length.
-	 * 
+	 *
 	 * @param arr1
 	 * @param arr2
 	 * @return null if the inputs are not valid
@@ -105,7 +105,7 @@ class MaskValue {
 
 		return result;
 	}
-	
+
 	public void setMask(byte[] mask) {
 		this.mask = mask;
 	}

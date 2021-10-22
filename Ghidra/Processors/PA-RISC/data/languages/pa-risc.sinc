@@ -65,7 +65,7 @@ define space ram type=ram_space size=$(ADDRSIZE) default;
 define space register type=register_space size=4; # this is a large enough address space to address all the registers. Two bytes would probably be enough
 
 # General purpose registers
-define register offset=0 size=$(REGSIZE) [ 
+define register offset=0 size=$(REGSIZE) [
     r0 r1 rp r3
     r4 r5 r6 r7
     r8 r9 r10 r11
@@ -73,7 +73,7 @@ define register offset=0 size=$(REGSIZE) [
     r16 r17 r18 r19
     r20 r21 r22 r23
     r24 r25 r26 dp
-    r28 r29 sp r31 
+    r28 r29 sp r31
 ];
 
 # Floating point registers
@@ -133,16 +133,16 @@ define register offset=0x6000 size=4 [
 ];
 
 # special hidden registers to support the nullify and delay slot features of PA-RISC
-define register offset=0x7000 size=1 [nullifyCond nullifyNextCond branchCond branchExecuted]; 
+define register offset=0x7000 size=1 [nullifyCond nullifyNextCond branchCond branchExecuted];
 define register offset=0x7100 size=4 [branchIndDest nullifyCondResult];
 
 define register offset=0x7200 size=12   contextreg;
 define context contextreg
 
- # transient context 
+ # transient context
  phase       = (0,2) noflow
  temp1		 = (3,3)
-  
+
  # stored context
  nullifyEnable = (4,4) noflow
  branchCouldBeNullified = (5,5) noflow
@@ -154,11 +154,11 @@ define context contextreg
 #    branchIsCall    = (9,9) noflow
  branchIsReturn  = (10,10) noflow # used for returns
  padding = (10,31) noflow
- branchImmDest = (32,63) noflow  
+ branchImmDest = (32,63) noflow
  temp32 = (64,95) noflow
 ;
 
-@define COMMON  "phase=1 " 
+@define COMMON  "phase=1 "
 
 # Instruction fields
 
@@ -252,7 +252,7 @@ define token instr(32)
     op			= (6,11)
     sfu			= (6,8)
     fp0czero	= (6,8)
-    fptx		= (6,6)		
+    fptx		= (6,6)
     bit6		= (6,6)
     sysop		= (5,12)
     i2			= (5,11)
@@ -290,7 +290,7 @@ define token instr(32)
     crnamet		= (0,4)
     t			= (0,4)
     bit0		= (0,0)
-    w			= (0,0) 
+    w			= (0,0)
 ;
 
 # general purpose registers
@@ -302,7 +302,7 @@ attach variables [reg1 reg2 t r b x] [
 ];
 
 # fp registers - 64 bit doubles
-attach variables [ freg2 freg1 fpt fpra fpta ] [ 
+attach variables [ freg2 freg1 fpt fpra fpta ] [
     fr0  fpe23  fpe45  fpe67  fr4  fr5  fr6  fr7
     fr8  fr9  fr10 fr11 fr12 fr13 fr14 fr15
     fr16 fr17 fr18 fr19 fr20 fr21 fr22 fr23
@@ -311,7 +311,7 @@ attach variables [ freg2 freg1 fpt fpra fpta ] [
 
 # 64 bit fp registers when used as 32 bit (.sgl completer)
 # This mapping goes from bit pattern N -> register NL
-attach variables [ freg2sgl freg1sgl fptsgl ] [ 
+attach variables [ freg2sgl freg1sgl fptsgl ] [
     fr0L  fpe2  fpe4  fpe6  fr4L  fr5L  fr6L  fr7L
     fr8L  fr9L  fr10L fr11L fr12L fr13L fr14L fr15L
     fr16L fr17L fr18L fr19L fr20L fr21L fr22L fr23L
@@ -319,7 +319,7 @@ attach variables [ freg2sgl freg1sgl fptsgl ] [
 ];
 
 # 32 bit single precision mode fpra fpta for mult-add and mult-sub instructions
-attach variables [ fusedra fusedta fusedr2 fusedr1 fusedrt ] [ 
+attach variables [ fusedra fusedta fusedr2 fusedr1 fusedrt ] [
     fr16L fr17L fr18L fr19L fr20L fr21L fr22L fr23L
     fr24L fr25L fr26L fr27L fr28L fr29L fr30L fr31L
     fr16R fr17R fr18R fr19R fr20R fr21R fr22R fr23R
@@ -339,7 +339,7 @@ attach names [ crname2 crname1 crnamet ] [
 	RCTR CR1 CR2 CR3 CR4 CR5 CR6 CR7
 	PID1 PID2 CCR SAR PID3 PID4 IVA EIEM
 	ITMR IIASQ IIAOQ IIR ISR IOR IPSW EIRR
-	TMP0 TMP1 TMP2 TMP3 TMP4 TMP5 TMP6 TMP7 
+	TMP0 TMP1 TMP2 TMP3 TMP4 TMP5 TMP6 TMP7
 ];
 
 attach names [ ldcc ] [
@@ -413,7 +413,7 @@ attach names [ fixedsf fixeddf ] [
 
 # the floating point number types for fused ops
 attach names [ fusedfmt ] [
-	",DBL" ",SGL" 
+	",DBL" ",SGL"
 ];
 
 
@@ -426,7 +426,7 @@ attach names [ fusedfmt ] [
 # and the control flow will branch to that destination.
 # This case should result in a red bookmark due to the disassembly context difference
 # These all also assume that the instruction following a branch (in the delay slot)
-# does not nullify its succeeding instruction 
+# does not nullify its succeeding instruction
 #######################################################################################
 # no branch, no nullify
 # previous instruction was not a branch and did not nullify this instruction
@@ -444,7 +444,7 @@ attach names [ fusedfmt ] [
 	if (wasNullified) goto <skip>;
 		build instruction;
 		nullifyCond=nullifyNextCond;
-	<skip>	
+	<skip>
 }
 
 #
@@ -936,7 +936,7 @@ immediateDest: is branchImmDest { export *:$(ADDRSIZE) branchImmDest; }
 ############################################################
 
 #############################
-# general purpose registers selected 
+# general purpose registers selected
 # by different fields for different purposes (index, base, general, src, target, ...)
 #############################
 R1: reg1					is reg1 & reg1=0 { export 0:$(REGSIZE); }
@@ -1239,7 +1239,7 @@ fpcmp64: ",!?"			is fpcond=28 { result:1 = 1; export result; }
 fpcmp64: ",<=>"			is fpcond=29 { result:1 = 1; export result; }
 fpcmp64: ",TRUE?"		is fpcond=30 { result:1 = 1; export result; }
 fpcmp64: ",TRUE"		is fpcond=31 { result:1 = 1; export result; }
- 	
+
 
 #################################
 # space register subconstructors
@@ -1275,7 +1275,7 @@ SRVAL:	SR						is SR & RB & s=0 {
 								   local selbits = (RB >> 30);
 								   srreg:4 = &sr4 + 4 * selbits;
 								   spc:4 = *[register] srreg;
-								   export spc; 
+								   export spc;
 }
 
 SRVAL: sr1						is sr1 & s=1  { export sr1; }
@@ -1288,8 +1288,8 @@ SPCBASE:		is SRVAL & RB {
 								off:$(ADDRSIZE) = zext(RB); # need to decide whether to remove the lower bits to hide privilege-- TODO & 0xFFFFFFFFFFFFFFFC;
 #								address:$(ADDRSIZE) = (space << 32) | offset;
 #								export address;
-								export off; 
-}				
+								export off;
+}
 
 ###############################################
 # encodings for branches
@@ -1302,7 +1302,7 @@ displacement2W: target				is w & w2 [ target = (1-(w*2)) *  ( ((w2 & 0x1) << 10)
 ##### good before caret branchTarget2W: target		is w & w2 [ target = inst_start + 8 + 4 * ( (w * 0xFFFFFFFFFFFFF800) | ((w2 & 0x1) << 10) | ((w2>>1) & 0x3FF) ); ] { export *:$(ADDRSIZE) target;  }
 #branchTarget2W: target	is w & w2 [
 branchTarget2W: target is w & w2less2 & w2_2
-	[ 
+	[
 #		target = inst_start + 8 + 4 * ( (w * 0xFFFFFFFFFFFFF800) | ((w2 & 0x1) << 10) | ((w2>>1) & 0x3FF) );
 		target = inst_start + 8 + 4 * (
 			((-1 * w) << 11) |
@@ -1423,8 +1423,8 @@ OFF_BASE_14: lse14^SRRB	is lse14 & SRRB & SPCBASE { temp:$(ADDRSIZE) = SPCBASE +
 #############################
 
 # shift conditions. There are no inverted forms of these conditions.
-ShiftCond:				is c=0 { export 0:1; } # never 
-ShiftCond:				is c=1 & RT { tmp:1 = (nullifyCondResult == 0) ; export tmp; } # equal 
+ShiftCond:				is c=0 { export 0:1; } # never
+ShiftCond:				is c=1 & RT { tmp:1 = (nullifyCondResult == 0) ; export tmp; } # equal
 ShiftCond:				is c=2 & RT { tmp:1 = (((nullifyCondResult >> ($(REGSIZE)*8 - 1)) & 1) != 0) ; export tmp; } # leftmost bit is one
 ShiftCond:				is c=3 & RT { tmp:1 = ((nullifyCondResult & 0x1) != 0) ; export tmp; } # rightmost bit is 1 (odd)
 ShiftCond:				is c=4 { export 1:1; } # always
@@ -1439,8 +1439,8 @@ ShiftCondNullify:	is ShiftCond [ nullifyEnable = 1; globalset(inst_next, nullify
 }
 
 # deposit conditions. There are no inverted forms of these conditions.
-DepCond:				is c=0 { export 0:1; } # never 
-DepCond:				is c=1 { tmp:1 = (nullifyCondResult == 0) ; export tmp; } # equal 
+DepCond:				is c=0 { export 0:1; } # never
+DepCond:				is c=1 { tmp:1 = (nullifyCondResult == 0) ; export tmp; } # equal
 DepCond:				is c=2 { tmp:1 = (nullifyCondResult s< 0) ; export tmp; } # leftmost bit is one (< 0)
 DepCond:				is c=3 { tmp:1 = ((nullifyCondResult & 0x1) == 1) ; export tmp; } # rightmost bit is 1 (odd)
 DepCond:				is c=4 { export 1:1; } # always
@@ -1455,8 +1455,8 @@ DepCondNullify:	is DepCond [nullifyEnable = 1; globalset(inst_next, nullifyEnabl
 }
 
 # extract conditions. The extract ops target R1, not R2 like deposit does
-ExtrCond:				is c=0 { export 0:1; } # never 
-ExtrCond:				is c=1 { tmp:1 = (nullifyCondResult == 0); export tmp; } # equal 
+ExtrCond:				is c=0 { export 0:1; } # never
+ExtrCond:				is c=1 { tmp:1 = (nullifyCondResult == 0); export tmp; } # equal
 ExtrCond:				is c=2 { tmp:1 = (((nullifyCondResult >> ($(REGSIZE)*8 - 1)) & 1) != 0); export tmp; } # leftmost bit is one
 ExtrCond:				is c=3 { tmp:1 = ((nullifyCondResult & 0x1) != 0) ; export tmp; } # rightmost bit is 1 (odd)
 ExtrCond:				is c=4 { export 1:1; } # always
@@ -1505,7 +1505,7 @@ UnitCondSym: InvUnitCondSym	is InvUnitCondSym & fv=1 { }
 #
 RegAddCond: 		is c = 0 { export 0:1; } # never
 RegAddCond: 		is c = 1 & R1 & R2 { tmp:1 = (R1 == R2) ; export tmp; } # equal
-RegAddCond: 		is c = 2 & R1 & R2 { tmp:1 = (R1 s< -R2) ; export tmp; } # signed less than negative of R2 
+RegAddCond: 		is c = 2 & R1 & R2 { tmp:1 = (R1 s< -R2) ; export tmp; } # signed less than negative of R2
 RegAddCond: 		is c = 3 & R1 & R2 { tmp:1 = (R1 s<= R2) ; export tmp; } # signed less than or equal to R2
 RegAddCond: 		is c = 4 & R1 & R2 { tmp:1 = ! carry(R1,R2) ; export tmp; } # unsigned sum does not overflow
 RegAddCond: 		is c = 5 & R1 & R2 { tmp:1 = (R1 + R2) == 0 ; export tmp; } # sum is zero or no overflow (why two definitions??)
@@ -1526,7 +1526,7 @@ AddCondSym: InvAddCondSym	is InvAddCondSym & fv=1 { }
 
 RegAddCondI: 		is c = 0 { export 0:1; } # never
 RegAddCondI: 		is c = 1 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val == -R2) ; export tmp; } # equal to negated
-RegAddCondI: 		is c = 2 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val s< -R2) ; export tmp; } # signed less than negated R2 
+RegAddCondI: 		is c = 2 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val s< -R2) ; export tmp; } # signed less than negated R2
 RegAddCondI: 		is c = 3 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val s<= -R2) ; export tmp; } # signed less than or equal to R2
 RegAddCondI: 		is c = 4 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = ! carry(val,R2) ; export tmp; } # unsigned sum does not overflow
 RegAddCondI: 		is c = 5 & highlse5 & R2 { val:$(REGSIZE) = sext(highlse5:1); tmp:1 = (val + R2) == 0 ; export tmp; } # sum is zero or no overflow (why two definitions??)
@@ -1588,7 +1588,7 @@ RegCSCond: 		is c=0 & R1 & R2 { export 0:1; }  # never
 RegCSCond: 		is c=1 & R1 & R2 { tmp:1 = (R1 == R2) ; export tmp; } # equal
 RegCSCond: 		is c=2 & R1 & R2 { tmp:1 = (R1 s< R2) ; export tmp; } # signed less than
 RegCSCond: 		is c=3 & R1 & R2 { tmp:1 = (R1 s<= R2) ; export tmp; } # signed less than equal
-RegCSCond: 		is c=4 & R1 & R2 { tmp:1 = (R1 < R2) ; export tmp; } # unsigned less than 
+RegCSCond: 		is c=4 & R1 & R2 { tmp:1 = (R1 < R2) ; export tmp; } # unsigned less than
 RegCSCond: 		is c=5 & R1 & R2 { tmp:1 = (R1 <= R2) ; export tmp; } # unsigned less than equal
 RegCSCond: 		is c=6 & R1 & R2 { tmp:1 = sborrow(R1,R2) ; export tmp; } # signed minus overflows (borrows)
 RegCSCond: 		is c=7 & R1 & R2 { tmp:1 = ((R1 - R2) & 0x1) == 1 ; export tmp; } # odd
@@ -1611,7 +1611,7 @@ RegCSCondI: 		is  c=0 & R2 & highlse5 { export 0:1; }  # never
 RegCSCondI: 		is  c=1 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val == R2) ; export tmp; } # equal
 RegCSCondI: 		is  c=2 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val s< R2) ; export tmp; } # signed less than
 RegCSCondI: 		is  c=3 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val s<= R2) ; export tmp; } # signed less than equal
-RegCSCondI: 		is  c=4 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val < R2) ; export tmp; } # unsigned less than 
+RegCSCondI: 		is  c=4 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val < R2) ; export tmp; } # unsigned less than
 RegCSCondI: 		is  c=5 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = (val <= R2) ; export tmp; } # unsigned less than equal
 RegCSCondI: 		is  c=6 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); local diff = (val - R2); tmp:1 = (val s> 0 && R2 s> 0 && diff s< 0) || (val s< 0 && R2 s< 0 && diff s> 0)  ; export tmp; } # overflow
 RegCSCondI: 		is  c=7 & R2 & highlse5 { val:$(REGSIZE) = sext(highlse5); tmp:1 = ((val - R2) & 0x1) == 1 ; export tmp; } # odd
@@ -1621,7 +1621,7 @@ RegCSCondI11: 		is  c=0 & R2 & lse11 { export 0:1; }  # never
 RegCSCondI11: 		is  c=1 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val == R2) ; export tmp; } # equal
 RegCSCondI11: 		is  c=2 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val s< R2) ; export tmp; } # signed less than
 RegCSCondI11: 		is  c=3 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val s<= R2) ; export tmp; } # signed less than equal
-RegCSCondI11: 		is  c=4 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val < R2) ; export tmp; } # unsigned less than 
+RegCSCondI11: 		is  c=4 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val < R2) ; export tmp; } # unsigned less than
 RegCSCondI11: 		is  c=5 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = (val <= R2) ; export tmp; } # unsigned less than equal
 RegCSCondI11: 		is  c=6 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); local diff = (val - R2); tmp:1 = (val s> 0 && R2 s> 0 && diff s< 0) || (val s< 0 && R2 s< 0 && diff s> 0)  ; export tmp; } # overflow
 RegCSCondI11: 		is  c=7 & R2 & lse11 { val:$(REGSIZE) = sext(lse11); tmp:1 = ((val - R2) & 0x1) == 1 ; export tmp; } # odd

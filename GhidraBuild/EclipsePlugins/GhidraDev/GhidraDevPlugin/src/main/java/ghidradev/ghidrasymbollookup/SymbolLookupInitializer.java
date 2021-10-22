@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,10 @@ import ghidradev.*;
 import ghidradev.ghidrasymbollookup.preferences.GhidraSymbolLookupPreferences;
 
 /**
- * High level driver for initializing the Ghidra Symbol Lookup subcomponent.  Should get called 
+ * High level driver for initializing the Ghidra Symbol Lookup subcomponent.  Should get called
  * by the startup extension.  This subcomponent is responsible for receiving symbol lookup requests
  * from Ghidra to Eclipse over a socket.
- * 
+ *
  * @see GhidraDevStartup
  */
 public class SymbolLookupInitializer {
@@ -35,8 +35,8 @@ public class SymbolLookupInitializer {
 	/**
 	 * Initializes the Ghidra Symbol Lookup subcomponent.  Nothing in the package should be
 	 * used until this initialization happens.  Should be called during Eclipse startup.
-	 * 
-	 * @param firstTimeConsent True if the user has just consented to opening ports; otherwise, 
+	 *
+	 * @param firstTimeConsent True if the user has just consented to opening ports; otherwise,
 	 *   false.
 	 * @see GhidraDevStartup
 	 */
@@ -50,7 +50,7 @@ public class SymbolLookupInitializer {
 	/**
 	 * Listens for socket connections on the given port.  If there is a problem listening,
 	 * a popup is displayed for the user.
-	 * 
+	 *
 	 * @param port The port to listen on.  If the port is -1, this method doesn't do anything.
 	 */
 	private static void listen(int port) {
@@ -85,7 +85,7 @@ public class SymbolLookupInitializer {
 
 	/**
 	 * Called when the symbol lookup preferences change.
-	 * 
+	 *
 	 * @param enabledWasChanged True if the enablement was changed to a new value.
 	 * @param portWasChanged True if the port preferences was changed to a new value.
 	 */

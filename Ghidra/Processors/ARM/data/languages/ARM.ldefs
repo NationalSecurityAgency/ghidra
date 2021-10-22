@@ -24,7 +24,7 @@
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
   </language>
-  
+
   <language processor="ARM"
             endian="little"
             size="32"
@@ -43,7 +43,7 @@
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
   </language>
-  
+
   <language processor="ARM"
             endian="big"
             instructionEndian="little"
@@ -59,7 +59,7 @@
     <compiler name="Visual Studio" spec="ARM.cspec" id="windows"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
   </language>
-  
+
   <language processor="ARM"
             endian="big"
             size="32"
@@ -82,7 +82,7 @@
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
   </language>
-  
+
   <language processor="ARM"
             endian="big"
             size="32"
@@ -99,7 +99,7 @@
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
   </language>
-  
+
   <language processor="ARM"
             endian="little"
             size="32"
@@ -134,7 +134,7 @@
     <compiler name="Visual Studio" spec="ARM.cspec" id="windows"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
   </language>
-  
+
   <language processor="ARM"
             endian="big"
             size="32"
@@ -191,7 +191,7 @@
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/>
   </language>
-  
+
   <language processor="ARM"
             endian="little"
             size="32"
@@ -208,7 +208,7 @@
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="arm"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
-    <!-- change DWARF register mapping to ARMneon.dwarf if VFPv2 is enabled --> 
+    <!-- change DWARF register mapping to ARMneon.dwarf if VFPv2 is enabled -->
     <!-- <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/> -->
   </language>
 
@@ -228,7 +228,7 @@
     <external_name tool="gdis.disassembler.options.file" name="ARM.gdis"/>
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
-    <!-- change DWARF register mapping to ARMneon.dwarf if VFPv2 is enabled --> 
+    <!-- change DWARF register mapping to ARMneon.dwarf if VFPv2 is enabled -->
     <!-- <external_name tool="DWARF.register.mapping.file" name="ARMneon.dwarf"/> -->
   </language>
 
@@ -308,7 +308,7 @@
             slafile="ARM4t_le.sla"
             processorspec="ARMt_v45.pspec"
             manualindexfile="../manuals/ARM.idx"
-            id="ARM:LE:32:v4t"> 
+            id="ARM:LE:32:v4t">
     <description>Generic ARM/Thumb v4 little endian (T-variant)</description>
     <compiler name="default" spec="ARM_v45.cspec" id="default"/>
     <external_name tool="gnu" name="armv4t"/>
@@ -373,5 +373,5 @@
     <external_name tool="IDA-PRO" name="armb"/>
     <external_name tool="DWARF.register.mapping.file" name="ARM.dwarf"/>
   </language>
-  
+
 </language_definitions>

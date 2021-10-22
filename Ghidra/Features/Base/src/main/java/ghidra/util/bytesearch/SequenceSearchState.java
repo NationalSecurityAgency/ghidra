@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 
 	/**
 	 * Construct a sub sequence state with a parent sequence
-	 * 
+	 *
 	 * @param parent parent SequenceSearchState
 	 */
 	public SequenceSearchState(SequenceSearchState parent) {
@@ -76,7 +76,7 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 	}
 
 	/**
-	 * Sort the sequences that have been added 
+	 * Sort the sequences that have been added
 	 */
 	public void sortSequences() {
 		Comparator<DittedBitSequence> comp = new Comparator<DittedBitSequence>() {
@@ -148,7 +148,7 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 				parent.trans[i] = this;			// Should be replaced with this
 			}
 		}
-		if (op.success != null) {				// Merge 
+		if (op.success != null) {				// Merge
 			if (success == null) {
 				success = op.success;
 			}
@@ -221,7 +221,7 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 	/**
 	 * Search for patterns in a byte array.  All matches are returned.
 	 * @param buffer is the array of bytes to search
-	 * @param match is populated with a Match object for each pattern and position that matches 
+	 * @param match is populated with a Match object for each pattern and position that matches
 	 */
 	public void apply(byte[] buffer, ArrayList<Match> match) {
 		SequenceSearchState curstate;
@@ -400,7 +400,7 @@ public class SequenceSearchState implements Comparable<SequenceSearchState> {
 
 	/**
 	 * Build a new transition level for the state machine
-	 * 
+	 *
 	 * @param prev previous search sequences
 	 * @param pos position within the search sequence state for this level
 	 * @return list of possible new search states to be added to the state machine

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.util.xml.*;
 import ghidra.xml.*;
 
 /**
- * 
+ *
  *
  * A C code token which is not an operation, variable, function name, or type. Like '(' or ','
  * A SyntaxToken may be or may include spacing
@@ -46,13 +46,13 @@ public class ClangSyntaxToken extends ClangToken {
 		super(par,txt,col);
 		open = close = -1;
 	}
-	
+
 	@Override
     public boolean isVariableRef() {
 		if (Parent() instanceof ClangVariableDecl) return true;
-		return false;	
+		return false;
 	}
-	
+
 	@Override
     public void restoreFromXML(XmlElement el,XmlElement end,PcodeFactory pfactory) {
 		super.restoreFromXML(el,end,pfactory);
@@ -63,8 +63,8 @@ public class ClangSyntaxToken extends ClangToken {
 		if (str != null)
 			close = SpecXmlUtils.decodeInt(str);
 	}
-	
+
 	public int getOpen() { return open; }
 	public int getClose() { return close; }
 }
- 
+

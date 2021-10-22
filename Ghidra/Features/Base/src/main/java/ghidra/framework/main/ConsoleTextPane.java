@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,9 +29,9 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.exception.AssertException;
 import ghidra.util.task.SwingUpdateManager;
 
-/** 
+/**
  * A generic text pane that is used as a console to which text can be written.
- * 
+ *
  * There is not test for this class, but it is indirectly tested by FrontEndGuiTest.
  */
 public class ConsoleTextPane extends JTextPane implements OptionsChangeListener {
@@ -97,7 +97,7 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 	}
 //==================================================================================================
 // Non-interface Methods
-//==================================================================================================    
+//==================================================================================================
 
 	private void initOptions(Options options) {
 		options.registerOption(MAXIMUM_CHARACTERS_OPTION_NAME, DEFAULT_MAXIMUM_CHARS, null,

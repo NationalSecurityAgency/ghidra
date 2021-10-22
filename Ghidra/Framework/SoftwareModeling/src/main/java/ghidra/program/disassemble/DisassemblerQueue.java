@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,7 +86,7 @@ class DisassemblerQueue {
 	/**
 	 * Determine if additional InstructionSets may be produced.  If true is returned,
 	 * this queue will be ready to produce InstructionSet blocks.
-	 * @param monitor cancellable task monitor 
+	 * @param monitor cancellable task monitor
 	 * @return true if additional InstructionSets may be produced
 	 */
 	boolean continueProducingInstructionSets(TaskMonitor monitor) {
@@ -117,11 +117,11 @@ class DisassemblerQueue {
 
 	/**
 	 * Return next block to disassemble for the current InstructionSet.
-	 * @param fallThruAddr specifies the next instruction to be disassembled if the 
-	 * previous instruction had a fall-through.  If specified, the previous block 
-	 * will be return.  If null, the next block to be disassembled will be returned. 
+	 * @param fallThruAddr specifies the next instruction to be disassembled if the
+	 * previous instruction had a fall-through.  If specified, the previous block
+	 * will be return.  If null, the next block to be disassembled will be returned.
 	 * @param memory needed for normalization of SegementedAddresses (may be null).
-	 * @param monitor cancellable task monitor 
+	 * @param monitor cancellable task monitor
 	 * @return next block to be disassembled or null if no more queued flows to process
 	 * for current InstructionSet, or remaining flows fall outside restricted address set,
 	 * monitor has cancelled disassembly.
@@ -138,7 +138,7 @@ class DisassemblerQueue {
 			if (lastBlock == null) {
 				throw new IllegalStateException();
 			}
-			// no state change fallThruAddr is 
+			// no state change fallThruAddr is
 			if (fallThruAddr.equals(lastBlockAddr)) {
 				return lastBlock;
 			}
@@ -194,7 +194,7 @@ class DisassemblerQueue {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param instructionSet
 	 * @return number of instructions added to program
 	 */
@@ -277,7 +277,7 @@ class DisassemblerQueue {
 	/**
 	 * Queue priority delay-slot disassembly for current block.
 	 * Fallthrough must be handled immediately with next InstructionSet
-	 * to ensure that it remains the start of an InstructionBlock contained 
+	 * to ensure that it remains the start of an InstructionBlock contained
 	 * within current InstructionSet.
 	 * Caller is responsible for adding flow to current block.
 	 * @param flow instruction flow

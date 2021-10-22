@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.util.exception.NoValueException;
 import ghidra.util.prop.PropertyVisitor;
 
 /**
- * 
+ *
  */
 abstract class PseudoCodeUnit implements CodeUnit {
 
@@ -194,7 +194,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	@Override
 	public int getBytes(byte[] b, int offset) {
 		if (program == null) {
-			// program not specified - allow partial fill 
+			// program not specified - allow partial fill
 			if (offset < 0 || offset >= bytes.length) {
 				return 0;
 			}
@@ -272,7 +272,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	 * Set the property name with the given value for this code unit.
 	 * @param name the name of the property to save.
 	 * @param value the value of the property to save.
-	 * 
+	 *
 	 * @throws TypeMismatchException
 	 *             if the property manager for name does not support object
 	 *             types
@@ -288,7 +288,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	 * Set the property name with the given value for this code unit.
 	 * @param name the name of the property to save.
 	 * @param value the value of the property to save.
-	 * 
+	 *
 	 * @throws TypeMismatchException
 	 *             if the property manager for name does not support string
 	 *             types
@@ -304,7 +304,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	 * Set the property name with the given value for this code unit.
 	 * @param name the name of the property to save.
 	 * @param value the value of the property to save.
-	 * 
+	 *
 	 * @throws TypeMismatchException
 	 *             if the property manager for name does not support int types
 	 * @throws ConcurrentModificationException
@@ -318,7 +318,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	/**
 	 * Mark the property name as having a value for this code unit.
 	 * @param name the name of the property to save.
-	 * 
+	 *
 	 * @throws TypeMismatchException
 	 *             if the property manager for name does not support void types
 	 * @throws ConcurrentModificationException
@@ -333,7 +333,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	 * Get the object property for name; returns null if there is no name
 	 * property for this code unit.
 	 * @param name the name of the property.
-	 * 
+	 *
 	 * @throws TypeMismatchException
 	 *             if the property manager for name does not support object
 	 *             types
@@ -349,7 +349,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	 * Get the string property for name; returns null if there is no name
 	 * property for this code unit.
 	 * @param name the name of the property.
-	 * 
+	 *
 	 * @throws TypeMismatchException
 	 *             if the property manager for name does not support string
 	 *             types
@@ -364,7 +364,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	/**
 	 * Get the int property for name.
 	 * @param name the name of the property.
-	 * 
+	 *
 	 * @throws NoValueException
 	 *             if there is not name property for this code unit
 	 * @throws TypeMismatchException
@@ -386,7 +386,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	/**
 	 * Returns whether this code unit is marked as having the name property.
 	 * @param name the name of the property.
-	 * 
+	 *
 	 * @throws TypeMismatchException
 	 *             if the property manager for name does not support void types
 	 * @throws ConcurrentModificationException
@@ -414,7 +414,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	/**
 	 * Invokes the visit() method of the specified PropertyVisitor if the named
 	 * property exists for this code unit.
-	 * 
+	 *
 	 * @param visitor
 	 *            the class implementing the PropertyVisitor interface.
 	 * @param propertyName
@@ -427,7 +427,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Get the label for this code unit.
-	 * 
+	 *
 	 * @throws ConcurrentModificationException
 	 *             if this object is no longer valid.
 	 * @deprecated
@@ -447,7 +447,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Get the symbols for this code unit.
-	 * 
+	 *
 	 * @throws ConcurrentModificationException
 	 *             if this object is no longer valid.
 	 */
@@ -461,7 +461,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Get the primary Symbol for this code unit.
-	 * 
+	 *
 	 * @throws ConcurrentModificationException
 	 *             if this object is no longer valid.
 	 */
@@ -476,7 +476,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Get the starting address for this code unit.
-	 * 
+	 *
 	 * @throws ConcurrentModificationException
 	 *             if this object is no longer valid.
 	 */
@@ -487,7 +487,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Get the ending address for this code unit.
-	 * 
+	 *
 	 * @throws ConcurrentModificationException
 	 *             if this object is no longer valid.
 	 */
@@ -498,7 +498,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Get the code unit after this code unit.
-	 * 
+	 *
 	 * @throws ConcurrentModificationException
 	 *             if this object is no longer valid.
 	 */
@@ -510,7 +510,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Get the code unit before this code unit.
-	 * 
+	 *
 	 * @throws ConcurrentModificationException
 	 *             if this object is no longer valid.
 	 */
@@ -522,7 +522,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Return true if the given CodeUnit follows directly after this code unit.
-	 * 
+	 *
 	 * @throws ConcurrentModificationException
 	 *             if this object is no longer valid.
 	 */
@@ -542,7 +542,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	/**
 	 * Get the comment as an array where each element is a single line for the
 	 * given type.
-	 * 
+	 *
 	 * @param commentType
 	 *            must be either EOL_COMMENT_TYPE, PRE_COMMENT_TYPE,
 	 *            POST_COMMENT_TYPE, or PLATE_COMMENT_TYPE
@@ -564,7 +564,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Set the comment for the given type.
-	 * 
+	 *
 	 * @param commentType
 	 *            must be either EOL_COMMENT, PRE_COMMENT, POST_COMMENT, or
 	 *            PLATE_COMMENT
@@ -582,7 +582,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Set the comment for the given type.
-	 * 
+	 *
 	 * @param commentType
 	 *            must be either EOL_COMMENT, PRE_COMMENT, POST_COMMENT, or
 	 *            PLATE_COMMENT
@@ -618,7 +618,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 //				changeType = ChangeManager.DOCR_EOL_COMMENT_CHANGED;
 //				break;
 //		}
-//		
+//
 //		program.setObjChanged(changeType, getMinAddress(), this, oldValue, comment);
 		//throw new UnsupportedOperationException();
 	}
@@ -638,7 +638,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Compares the given address to the address range of this node.
-	 * 
+	 *
 	 * @param a the address
 	 * @return a negative integer if addr is greater than the maximum range
 	 *         address zero if addr is in the range a positive integer if addr
@@ -657,7 +657,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Get one byte from memory at the current position plus offset.
-	 * 
+	 *
 	 * @param offset
 	 *            the displacement from the current position.
 	 * @return the data at offset from the current position.
@@ -694,7 +694,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Get the Address which corresponds to the offset 0.
-	 * 
+	 *
 	 * @return the current address of offset 0.
 	 */
 	@Override
@@ -704,7 +704,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Get the Memory object actually used by the MemBuffer.
-	 * 
+	 *
 	 * return the Memory used by this MemBuffer.
 	 */
 	@Override
@@ -716,7 +716,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 
 	/**
 	 * Add a reference to the mnemonic for this code unit.
-	 * 
+	 *
 	 * @param refAddr
 	 *            address of reference to add
 	 * @param refType

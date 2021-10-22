@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#getAddress(java.lang.String)
 	 */
 	@Override
@@ -66,7 +66,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#getNewAddress(long)
 	 */
 	@Override
@@ -87,7 +87,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#getOffset()
 	 */
 	@Override
@@ -118,7 +118,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#getAddressSpace()
 	 */
 	@Override
@@ -127,7 +127,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#getSize()
 	 */
 	@Override
@@ -136,7 +136,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#subtract(ghidra.program.model.address.Address)
 	 */
 	@Override
@@ -145,7 +145,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#subtractWrap(long)
 	 */
 	@Override
@@ -166,7 +166,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#subtractNoWrap(long)
 	 */
 	@Override
@@ -177,7 +177,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#subtract(long)
 	 */
 	@Override
@@ -208,7 +208,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#addNoWrap(long)
 	 */
 	@Override
@@ -227,7 +227,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#add(long)
 	 */
 	@Override
@@ -238,7 +238,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#isSuccessor(ghidra.program.model.address.Address)
 	 */
 	@Override
@@ -260,7 +260,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -276,7 +276,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -295,7 +295,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#toString(java.lang.String)
 	 */
 	@Override
@@ -331,7 +331,7 @@ public class GenericAddress implements Address {
 		int unitSize = addrSpace.isStackSpace() ? 1 : addrSpace.getAddressableUnitSize();
 		int maxDigitsSizeForSpace = ((addrSpace.getSize() - 1) / 4) + 1;
 //		if (unitSize > 1) {
-//			maxDigitsSizeForSpace /= 2;	//addressSpaces with unitsize > 1, have twice the bitSize that they 
+//			maxDigitsSizeForSpace /= 2;	//addressSpaces with unitsize > 1, have twice the bitSize that they
 //										// should to account for bits for the mod part.
 //		}
 
@@ -369,7 +369,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#hasSameAddressSpace(ghidra.program.model.address.Address)
 	 */
 	@Override
@@ -378,7 +378,7 @@ public class GenericAddress implements Address {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.Address#next()
 	 */
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ import ghidra.util.search.memory.MemSearchResult;
 import ghidra.util.table.GhidraTable;
 
 /**
- * Base class for memory search tests.  
+ * Base class for memory search tests.
  */
 public abstract class AbstractMemSearchTest extends AbstractProgramBasedTest {
 
@@ -70,7 +70,7 @@ public abstract class AbstractMemSearchTest extends AbstractProgramBasedTest {
 	protected MemSearchDialog dialog;
 
 	/*
-	 * Note that this setup function does not have the @Before annotation - this is because 
+	 * Note that this setup function does not have the @Before annotation - this is because
 	 * sub-classes often need to override this and if we have the annotation here, the test
 	 * runner will only invoke this base class implementation.
 	 */
@@ -231,7 +231,7 @@ public abstract class AbstractMemSearchTest extends AbstractProgramBasedTest {
 
 	protected void myTypeText(String text) {
 		// Note: we do not use setFocusedComponent(valueField), as that method will fail if the
-		//       focus change doesn't work.  Here, we will keep on going if the focus change 
+		//       focus change doesn't work.  Here, we will keep on going if the focus change
 		//       doesn't work.
 		runSwing(() -> valueField.requestFocus());
 		triggerText(valueField, text);
@@ -283,7 +283,7 @@ public abstract class AbstractMemSearchTest extends AbstractProgramBasedTest {
 	protected void assertEnabled(String text, boolean isEnabled) {
 		// Note: we do not use the findAbstractButtonByText() here as there are two buttons with
 		//       the same text.  Only one of the buttons is actually a JButton, so this call works.
-		//       Ideally, all buttons would have a name set so that wouldn't have to rely on the 
+		//       Ideally, all buttons would have a name set so that wouldn't have to rely on the
 		//       button text.
 		JButton b = findButtonByText(pane, text);
 		assertEquals(isEnabled, isEnabled(b));

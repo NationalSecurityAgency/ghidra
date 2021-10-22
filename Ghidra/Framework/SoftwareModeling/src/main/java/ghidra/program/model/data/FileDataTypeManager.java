@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	/**
 	 * Construct a new DataTypeFileManager using the default data organization.
 	 * @param packedDbfile file to load or create based upon openMode
-	 * @param openMode one of the DBConstants: CREATE, UPDATE, READ_ONLY, UPGRADE 
+	 * @param openMode one of the DBConstants: CREATE, UPDATE, READ_ONLY, UPGRADE
 	 * @throws IOException
 	 */
 	private FileDataTypeManager(ResourceFile packedDbfile, int openMode) throws IOException {
@@ -107,8 +107,8 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 	 * match another existing archive database.
 	 * @param saveFile the file to save
 	 * @param newUniversalId the new id to use
-	 * @throws DuplicateFileException 
-	 * @throws IOException 
+	 * @throws DuplicateFileException
+	 * @throws IOException
 	 */
 	public void saveAs(File saveFile, UniversalID newUniversalId)
 			throws DuplicateFileException, IOException {
@@ -164,7 +164,7 @@ public class FileDataTypeManager extends StandAloneDataTypeManager
 
 	/**
 	 * Get the filename for the current file.
-	 * 
+	 *
 	 * @return String filename, or null if there is no current file.
 	 */
 	public String getFilename() {

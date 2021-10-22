@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,12 +54,12 @@ public abstract class AbstractGroupingFunctionGraphJob extends AbstractFunctionG
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param controller the controller of the graph to be ungrouped
 	 * @param groupVertex The group vertex to be ungrouped
 	 * @param newVertices the vertices that will remain after the grouping/ungrouping process has
 	 *                    completed
-	 * @param verticesToRemove the vertices that will be removed from the graph after the 
+	 * @param verticesToRemove the vertices that will be removed from the graph after the
 	 *                         grouping/ungrouping process has completed
 	 * @param relayoutOverride a boolean that when true signals to perform a layout <b>
 	 * 		  	  			   regardless of the user's relayout options</b>.  This is required to
@@ -129,11 +129,11 @@ public abstract class AbstractGroupingFunctionGraphJob extends AbstractFunctionG
 		else {
 			//
 			// Unusual Code Alert!: when not performing a relayout, we can't know what the
-			//                      articulations should be.  So, just clear all articulations. 
+			//                      articulations should be.  So, just clear all articulations.
 			//                      The result is edge/vertex crossing, but it is better than
-			//                      having articulations in the middle of nowhere. 
-			//             
-			//                      If we ever add the ability to refresh articulations by 
+			//                      having articulations in the middle of nowhere.
+			//
+			//                      If we ever add the ability to refresh articulations by
 			//                      using the layout, then we can change that here (TODO).
 			//
 			positions = getCurrentLayoutLocations();
@@ -159,9 +159,9 @@ public abstract class AbstractGroupingFunctionGraphJob extends AbstractFunctionG
 	}
 
 	/*
-	 * Subclasses must return locations for vertices.  This method will be called when no 
+	 * Subclasses must return locations for vertices.  This method will be called when no
 	 * relayout will be performed.
-	 * 
+	 *
 	 * @return default destination locations for vertices
 	 */
 	protected abstract Map<FGVertex, Point2D> getGroupingDestinationLocations(boolean isRelayout,
@@ -232,7 +232,7 @@ public abstract class AbstractGroupingFunctionGraphJob extends AbstractFunctionG
 	}
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void removeOldVertexAndEdges() {
 		Collection<FGVertex> vertices = getVerticesToBeRemoved();
@@ -245,7 +245,7 @@ public abstract class AbstractGroupingFunctionGraphJob extends AbstractFunctionG
 			return null; // we are not removing the group vertex (must be a grouping operation)
 		}
 
-		// We want the group vertex to fade away into another vertex.  We also want to be 
+		// We want the group vertex to fade away into another vertex.  We also want to be
 		// consistent, so just merge to the root vertex of the group vertex.
 		Address vertexAddress = groupVertex.getVertexAddress();
 		Set<FGVertex> vertices = groupVertex.getVertices();

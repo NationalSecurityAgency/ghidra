@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ public class DataTypeEncodeException extends UsrException {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param message the exception message
 	 * @param value the requested value or representation
 	 * @param dt the data type
@@ -38,7 +38,7 @@ public class DataTypeEncodeException extends UsrException {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param message the exception message
 	 * @param value the requested value or representation
 	 * @param dt the data type
@@ -53,7 +53,7 @@ public class DataTypeEncodeException extends UsrException {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param value the requested value or representation
 	 * @param dt the data type
 	 * @param cause the exception cause
@@ -64,7 +64,7 @@ public class DataTypeEncodeException extends UsrException {
 
 	/**
 	 * Get the requested value or representation
-	 * 
+	 *
 	 * @return the requested value representation
 	 */
 	public Object getValue() {
@@ -73,7 +73,7 @@ public class DataTypeEncodeException extends UsrException {
 
 	/**
 	 * Get the data type
-	 * 
+	 *
 	 * @return the data type
 	 */
 	public DataType getDataType() {

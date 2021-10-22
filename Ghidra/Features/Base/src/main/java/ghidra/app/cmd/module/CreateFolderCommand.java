@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ public class CreateFolderCommand implements Command {
 	private String statusMsg;
 	private String parentName;
 	private String treeName;
-	
+
 	/**
 	 * @param treeName name of the tree where the new Module will reside
 	 * @param name of the new Module
@@ -51,10 +51,10 @@ public class CreateFolderCommand implements Command {
 		if (m == null) {
 			statusMsg = "Folder named " + parentName + " does not exist";
 			return false;
-		}		
-		
+		}
+
 		try {
-			m.createModule(name); 
+			m.createModule(name);
 			return true;
 		} catch (DuplicateNameException e) {
 			statusMsg = name + " already exists";
@@ -73,7 +73,7 @@ public class CreateFolderCommand implements Command {
 	 * @see ghidra.framework.cmd.Command#getName()
 	 */
 	public String getName() {
-		return "Create Folder"; 
+		return "Create Folder";
 	}
 
 }

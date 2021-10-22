@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ public class MachoProgramBuilder {
 
 	/**
 	 * Creates a new {@link MachoProgramBuilder} based on the given information.
-	 * 
+	 *
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
@@ -87,7 +87,7 @@ public class MachoProgramBuilder {
 
 	/**
 	 * Builds up a Mach-O {@link Program}.
-	 * 
+	 *
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
@@ -189,12 +189,12 @@ public class MachoProgramBuilder {
 	}
 
 	/**
-	 * Creates memory blocks for the given header.  
-	 * 
+	 * Creates memory blocks for the given header.
+	 *
 	 * @param header The Mach-O header to process for memory block creation.
 	 * @param source A name that represents where the memory blocks came from.
 	 * @param processSections True to split segments into their sections.
-	 * @param allowZeroAddr True if memory blocks at address 0 should be processed; otherwise, 
+	 * @param allowZeroAddr True if memory blocks at address 0 should be processed; otherwise,
 	 *   false.
 	 * @throws Exception If there was a problem processing the memory blocks.
 	 */
@@ -276,7 +276,7 @@ public class MachoProgramBuilder {
 	 * an already-created block. If this is the case, we split the outer block(s) that encompass our
 	 * desired new block. This is the nature of Mach-O segments and sections (sections are
 	 * contained in segments).
-	 * 
+	 *
 	 * @param name The name of the new block.
 	 * @param start The starting address of the new block.
 	 * @param dataOffset The provider offset of the new block.
@@ -288,7 +288,7 @@ public class MachoProgramBuilder {
 	 * @param x True if the new block has execute-permissions; otherwise, false.
 	 * @param zeroFill True if the new block is zero-filled; otherwise, false.  Newly created
 	 *   zero-filled blocks will be uninitialized to safe space.
-	 * @return The newly created (or split) memory block, or null if it failed to be created. 
+	 * @return The newly created (or split) memory block, or null if it failed to be created.
 	 * @throws Exception If there was a problem creating the new memory block.
 	 */
 	private MemoryBlock createMemoryBlock(String name, Address start, long dataOffset,
@@ -326,7 +326,7 @@ public class MachoProgramBuilder {
 				dataOffset, dataLength, comment, source, r, w, x, log);
 		}
 
-		// Split the starting block (if necessary).  Splitting is not necessary if the start of our 
+		// Split the starting block (if necessary).  Splitting is not necessary if the start of our
 		// new block begins exactly where the starting block begins.
 		MemoryBlock startingBlock = intersectingBlocks.get(0);
 		if (start.compareTo(startingBlock.getStart()) > 0) {
@@ -335,7 +335,7 @@ public class MachoProgramBuilder {
 		}
 
 		// Split the ending block (if necessary).  Splitting is not necessary if the end of our new
-		// block ends exactly where the ending block ends.  We need to fix up the name of the split 
+		// block ends exactly where the ending block ends.  We need to fix up the name of the split
 		// block so it doesn't end in ".split"
 		MemoryBlock endingBlock = intersectingBlocks.get(intersectingBlocks.size() - 1);
 		if (start.add(dataLength - 1).compareTo(endingBlock.getEnd()) < 0) {
@@ -432,7 +432,7 @@ public class MachoProgramBuilder {
 	 * The indirect symbols need to be applied across the IMPORT segment. The
 	 * individual section do not really matter except the number of bytes
 	 * between each symbol varies based on section.
-	 * 
+	 *
 	 * @throws Exception if there is a problem
 	 */
 	private void processIndirectSymbols() throws Exception {
@@ -847,10 +847,10 @@ public class MachoProgramBuilder {
 	}
 
 	/**
-	 * Sets up the {@link MachHeader} in memory and returns its address.  If the header was not 
-	 * intended to reside in memory (like for Mach-O object files}, then this method will create an 
+	 * Sets up the {@link MachHeader} in memory and returns its address.  If the header was not
+	 * intended to reside in memory (like for Mach-O object files}, then this method will create an
 	 * area in the "OTHER" address space for the header to live in.
-	 * 
+	 *
 	 * @param segments A {@link Collection} of {@link SegmentCommand Mach-O segments}
 	 * @return The {@link Address} of {@link MachHeader} in memory
 	 */
@@ -868,7 +868,7 @@ public class MachoProgramBuilder {
 			lowestFileOffset = Math.min(lowestFileOffset, segment.getFileOffset());
 		}
 
-		// The header did not live in a defined segment.  Create a memory region in the OTHER space 
+		// The header did not live in a defined segment.  Create a memory region in the OTHER space
 		// and copy the header there.
 		headerAddr = AddressSpace.OTHER_SPACE.getAddress(0);
 		MemoryBlock headerBlock = MemoryBlockUtils.createInitializedBlock(program, true, "HEADER",
@@ -1145,7 +1145,7 @@ public class MachoProgramBuilder {
 	 * r_address is set to the offset from the vmaddr of the first LC_SEGMENT
 	 * command. For MH_SPLIT_SEGS images, r_address is set to the the offset
 	 * from the vmaddr of the first read-write LC_SEGMENT command.
-	 * 
+	 *
 	 * @return The relocation base address.
 	 */
 	private Address getRelocationBaseAddress() {

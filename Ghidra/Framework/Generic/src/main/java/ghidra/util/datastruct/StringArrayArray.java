@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ public class StringArrayArray implements Array, Serializable {
 			remove(index);
 		}
 		byte[] bytes = stringArrayToBytes(value);
-		byteStore.put(index, bytes);	
+		byteStore.put(index, bytes);
 	}
 
 	/**
@@ -67,7 +67,7 @@ public class StringArrayArray implements Array, Serializable {
 							int toIndex,
 							int toCol) {
 		table.putStringArray(toIndex, toCol, get(index));
- 
+
 	}
 
 	/**
@@ -96,7 +96,7 @@ public class StringArrayArray implements Array, Serializable {
 		int n = value.length;
 		bytes[0] = (byte)(n >> 24);
 		bytes[1] = (byte)(n >> 16);
-		bytes[2] = (byte)(n >> 8);			
+		bytes[2] = (byte)(n >> 8);
 		bytes[3] = (byte)n;
 		int pos = 4;
 		for(int i=0;i<n;i++) {
@@ -106,7 +106,7 @@ public class StringArrayArray implements Array, Serializable {
 			}
 			else {
 				int strlen = value[i].length();
-			
+
 				bytes[pos++] = (byte)(strlen >> 8);
 				bytes[pos++] = (byte)(strlen);
 				System.arraycopy(value[i].getBytes(),0,bytes,pos,strlen);
@@ -117,22 +117,22 @@ public class StringArrayArray implements Array, Serializable {
 	}
 	private String[] bytesToStringArray(byte[] bytes) {
 		int numStrings = ((bytes[0] & 0xff) << 24) +
-					      ((bytes[1] & 0xff) << 16) +			
-					      ((bytes[2] & 0xff) << 8) + 
+					      ((bytes[1] & 0xff) << 16) +
+					      ((bytes[2] & 0xff) << 8) +
 					      (bytes[3] & 0xff);
 
 		String[] strings = new String[numStrings];
-		
+
 		int pos = 4;
 		for(int i=0;i<numStrings;i++) {
-			int strlen = (bytes[pos] << 8) + ((bytes[pos+1]) & 0xff);	
+			int strlen = (bytes[pos] << 8) + ((bytes[pos+1]) & 0xff);
 			if (strlen >= 0) {
 				strings[i] = new String(bytes,pos+2,strlen);
  				pos += strlen;
 			}
 			pos += 2;
 		}
-		return strings;							  
+		return strings;
 	}
 
 }

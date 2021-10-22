@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,7 +88,7 @@ public class GraphDisplayOptionsBuilder {
 	/**
 	 * Sets the shape and color for vertices of the given type
 	 * @param vertexType the vertex type to assign shape and color
-	 * @param vertexShape the shape to use for the named vertex type 
+	 * @param vertexShape the shape to use for the named vertex type
 	 * @param color the color to use for the named vertex type
 	 * @return this GraphDisplayOptionsBuilder
 	 */
@@ -152,7 +152,7 @@ public class GraphDisplayOptionsBuilder {
 	/**
 	 * Sets drawing "mode" for the graph display. If true, vertices are drawn as scaled
 	 * cached images with the label inside the shapes. If false, vertices are drawn as smaller
-	 * shapes with labels drawn near the shapes. 
+	 * shapes with labels drawn near the shapes.
 	 * @param b true to use pre-rendered icon images
 	 * @return this GraphDisplayOptionsBuilder
 	 */

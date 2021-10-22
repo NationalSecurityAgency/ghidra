@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,7 +83,7 @@ public class SystemUtilities {
 		Class<?> myClass = SystemUtilities.class;
 		ClassLoader loader = myClass.getClassLoader();
 		if (loader == null) {
-			// Can happen when called from the Eclipse GhidraDev plugin 
+			// Can happen when called from the Eclipse GhidraDev plugin
 			return false;
 		}
 		String name = myClass.getName().replace('.', '/') + ".class";
@@ -334,10 +334,10 @@ public class SystemUtilities {
 	}
 
 	/**
-	 * Returns a file that contains the given class. If the class is in a jar file, then 
-	 * the jar file will be returned. If the file is in a .class file, then the directory 
+	 * Returns a file that contains the given class. If the class is in a jar file, then
+	 * the jar file will be returned. If the file is in a .class file, then the directory
 	 * containing the package root will be returned (i.e. the "bin" directory).
-	 * 
+	 *
 	 * @param classObject the class for which to get the location
 	 * @return the containing location
 	 */

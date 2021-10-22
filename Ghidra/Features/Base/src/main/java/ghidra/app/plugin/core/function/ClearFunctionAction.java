@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,11 +26,11 @@ import docking.action.KeyBindingData;
 
 
 /**
- * <CODE>ClearFunctionAction</CODE> allows the user to perform a clear of function data 
+ * <CODE>ClearFunctionAction</CODE> allows the user to perform a clear of function data
  * at the entry point of the function.
  * <p>
- * The actual work performed by this action depends upon the location of the cursor in the 
- * code browser.  Further, multiple instances of this action are created to handel different 
+ * The actual work performed by this action depends upon the location of the cursor in the
+ * code browser.  Further, multiple instances of this action are created to handel different
  * pieces of the function, like the signature, parameters, etc.
  */
 class ClearFunctionAction extends ListingContextAction {
@@ -48,7 +48,7 @@ class ClearFunctionAction extends ListingContextAction {
         this.funcPlugin = plugin;
         this.locationEnabledClass = locationEnabledClass;
 
-        setKeyBindingData( new KeyBindingData( 
+        setKeyBindingData( new KeyBindingData(
         	KeyEvent.VK_C, 0 ) );
 
     }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -453,7 +453,7 @@ bool FlowInfo::processInstruction(const Address &curaddr,bool &startbasic)
     oiter = obank.beginDead();
   else
     ++oiter;
-  
+
   if (oiter != obank.endDead()) {
     stat.seqnum = (*oiter)->getSeqNum();
     data.opMarkStartInstruction(*oiter); // Mark the first op in the instruction
@@ -538,7 +538,7 @@ void FlowInfo::fallthru(void)
   Address curaddr;
   bool startbasic = true;
   bool fallthruflag;
-  
+
   for(;;) {
     curaddr = addrlist.back();
     addrlist.pop_back();
@@ -781,7 +781,7 @@ void FlowInfo::generateOps(void)
 	  fallthru();
       }
     }
-    
+
     checkContainedCall();	// Check for PIC constructions
     if (collapsed_jumptable)
       checkMultistageJumptables();
@@ -1111,7 +1111,7 @@ bool FlowInfo::testHardInlineRestrictions(Funcdata *inlinefd,PcodeOp *op,Address
     inline_head->warning("Could not inline here",op->getAddr());
     return false;
   }
-  
+
   if (!inlinefd->getFuncProto().isNoReturn()) {
     list<PcodeOp *>::iterator iter = op->getInsertIter();
     ++iter;
@@ -1375,7 +1375,7 @@ void FlowInfo::checkContainedCall(void)
       data.warning("Call to offcut address within same function",op->getAddr());
     }
   }
-  
+
 }
 
 /// \brief Look for changes in control-flow near indirect jumps that were discovered \e after the jumptable recovery
@@ -1387,5 +1387,5 @@ void FlowInfo::checkMultistageJumptables(void)
     JumpTable *jt = data.getJumpTable(i);
     if (jt->checkForMultistage(&data))
       tablelist.push_back(jt->getIndirectOp());
-  }  
+  }
 }

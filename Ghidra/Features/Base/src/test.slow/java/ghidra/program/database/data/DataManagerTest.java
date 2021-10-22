@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -300,20 +300,20 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 //	public void testSave() throws Exception {
-//		
+//
 //		Array array = new ArrayDataType(new ByteDataType(), 5);
 //		TypeDef td = new TypedefDataType("ByteTypedef", array);
 //		Pointer p = new PointerDataType(td, 4);
-//		
+//
 //		Pointer ptr = dataMgr.createPointer(p, p.getLength());
 //		File programFile = new File("c:\\");
 //		program.saveAs(programFile, "testdb", null);
 //
-//				
+//
 //	}
 
 // TODO: This should be addressed at some point
-//	
+//
 //	@Test
 //	public void testReplaceBuiltInDataType() throws Exception {
 //		// Byte based types
@@ -531,52 +531,52 @@ public class DataManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 //	public void testAddCustomFormat() {
-//	
+//
 //		Structure struct = new StructureDataType("test", 0);
 //		struct.add(new ByteDataType());
 //		struct.add(new WordDataType());
-//		
+//
 //		DataType dt = dataMgr.resolve(struct);
 //		dataMgr.addCustomFormat(dt, new byte[] {(byte)0, (byte)1, (byte)2});
-//		
+//
 //		CustomFormat[] fmts = dataMgr.getAllCustomFormats();
-//		assertEquals(1, fmts.length);	
+//		assertEquals(1, fmts.length);
 //	}
-//	
+//
 //	public void testRemoveCustomFormat() {
 //		Structure struct = new StructureDataType("test", 0);
 //		struct.add(new ByteDataType());
 //		struct.add(new WordDataType());
-//		
+//
 //		DataType dt = dataMgr.resolve(struct);
 //		dataMgr.addCustomFormat(dt, new byte[] {(byte)0, (byte)1, (byte)2});
-//		
+//
 //		assertTrue(dataMgr.removeCustomFormat(dt));
 //	}
-//	
+//
 //	public void testGetAllCustomFormats() {
 //
 //		Structure struct = new StructureDataType("test", 0);
 //		struct.add(new ByteDataType());
 //		struct.add(new WordDataType());
-//		
+//
 //		DataType dt = dataMgr.resolve(struct);
 //		dataMgr.addCustomFormat(dt, new byte[] {(byte)0, (byte)1, (byte)2});
 //
-//		struct = new StructureDataType("test-two", 0);		
+//		struct = new StructureDataType("test-two", 0);
 //		struct.add(new ByteDataType());
 //		struct.add(new WordDataType());
-//		
+//
 //		DataType dt2 = dataMgr.resolve(struct);
 //		dataMgr.addCustomFormat(dt2, new byte[] {(byte)4, (byte)5, (byte)6, (byte)7});
-//		
-//		
+//
+//
 //		CustomFormat[] fmts = dataMgr.getAllCustomFormats();
-//		assertEquals(2, fmts.length);	
-//		
+//		assertEquals(2, fmts.length);
+//
 //		assertEquals(dt, fmts[0].getDataType());
 //		assertEquals(dt2, fmts[1].getDataType());
-//		
+//
 //	}
 
 	private void startTransaction() {

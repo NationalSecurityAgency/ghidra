@@ -1,13 +1,13 @@
 # RV64F  Standard Extension (in addition to RV32F)
 
-# fcvt.l.s d,S,m c0200053 fff0007f SIMPLE (64, 0) 
+# fcvt.l.s d,S,m c0200053 fff0007f SIMPLE (64, 0)
 :fcvt.l.s rdL,frs1S,FRM is frs1S & FRM & rdL & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x60 & op2024=0x2
 {
 	rdL = trunc(frs1S);
 }
 
 
-# fcvt.lu.s d,S,m c0300053 fff0007f SIMPLE (64, 0) 
+# fcvt.lu.s d,S,m c0300053 fff0007f SIMPLE (64, 0)
 :fcvt.lu.s rdL,frs1S,FRM is frs1S & FRM & rdL & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x60 & op2024=0x3
 {
 	#TODO  unsigned
@@ -15,7 +15,7 @@
 }
 
 
-# fcvt.s.l D,s,m d0200053 fff0007f SIMPLE (64, 0) 
+# fcvt.s.l D,s,m d0200053 fff0007f SIMPLE (64, 0)
 :fcvt.s.l frd,rs1L,FRM is frd & FRM & rs1L & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x68 & op2024=0x2
 {
 	local tmp:4 = int2float(rs1L);
@@ -23,7 +23,7 @@
 }
 
 
-# fcvt.s.lu D,s,m d0300053 fff0007f SIMPLE (64, 0) 
+# fcvt.s.lu D,s,m d0300053 fff0007f SIMPLE (64, 0)
 :fcvt.s.lu frd,rs1L,FRM is frd & FRM & rs1L & op0001=0x3 & op0204=0x4 & op0506=0x2 & funct7=0x68 & op2024=0x3
 {
 	#ATTN  unsigned can be an issue here

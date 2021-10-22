@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +35,8 @@ public class DyldCacheDylibExtractor {
 
 	/**
 	 * Gets an {@link ByteProvider} that reads a DYLIB from a {@link DyldCacheFileSystem}.  The
-	 * DYLIB's header will be altered to account for its segment bytes being packed down.   
-	 * 
+	 * DYLIB's header will be altered to account for its segment bytes being packed down.
+	 *
 	 * @param dylibOffset The offset of the DYLIB in the given provider
 	 * @param provider The DYLD
 	 * @param fsrl {@link FSRL} to assign to the resulting ByteProvider
@@ -85,9 +85,9 @@ public class DyldCacheDylibExtractor {
 	}
 
 	/**
-	 * Fixes-up the old DYLD file offsets in the given segment so they are correct for the newly 
+	 * Fixes-up the old DYLD file offsets in the given segment so they are correct for the newly
 	 *   packed DYLIB
-	 * 
+	 *
 	 * @param cmd The segment to fix-up
 	 * @param packedDylib The packed DYLIB
 	 * @param is64bit True if the segment is 64-bit; false if 32-bit
@@ -115,9 +115,9 @@ public class DyldCacheDylibExtractor {
 	}
 
 	/**
-	 * Fixes-up the old DYLD file offsets in the given symbol table so they are correct for the 
+	 * Fixes-up the old DYLD file offsets in the given symbol table so they are correct for the
 	 * newly packed DYLIB
-	 * 
+	 *
 	 * @param cmd The symbol table to fix-up
 	 * @param packedDylib The packed DYLIB
 	 * @throws IOException If there was an IO-related issue performing the fix-up
@@ -133,9 +133,9 @@ public class DyldCacheDylibExtractor {
 	}
 
 	/**
-	 * Fixes-up the old DYLD file offsets in the given dynamic symbol table so they are correct for 
+	 * Fixes-up the old DYLD file offsets in the given dynamic symbol table so they are correct for
 	 * the newly packed DYLIB
-	 * 
+	 *
 	 * @param cmd The dynamic symbol table to fix-up
 	 * @param packedDylib The packed DYLIB
 	 * @throws IOException If there was an IO-related issue performing the fix-up
@@ -163,9 +163,9 @@ public class DyldCacheDylibExtractor {
 	}
 
 	/**
-	 * Fixes-up the old DYLD file offsets in the given DYLD Info command so they are correct for the 
+	 * Fixes-up the old DYLD file offsets in the given DYLD Info command so they are correct for the
 	 * newly packed DYLIB
-	 * 
+	 *
 	 * @param cmd The DYLD Info command to fix-up
 	 * @param packedDylib The packed DYLIB
 	 * @throws IOException If there was an IO-related issue performing the fix-up
@@ -192,7 +192,7 @@ public class DyldCacheDylibExtractor {
 	/**
 	 * A packed DYLIB that was once living inside of a DYLD.  The DYLIB is said to be packed
 	 * because its segment file bytes, which were not adjacent in its containing DYLD, are now
-	 * adjacent in its new array. 
+	 * adjacent in its new array.
 	 */
 	private static class PackedDylib {
 
@@ -202,7 +202,7 @@ public class DyldCacheDylibExtractor {
 
 		/**
 		 * Creates a new {@link PackedDylib} object
-		 * 
+		 *
 		 * @param header The DYLD's DYLIB's Mach-O header
 		 * @param dylibOffset The offset of the DYLIB in the given provider
 		 * @param provider The DYLD's bytes
@@ -243,7 +243,7 @@ public class DyldCacheDylibExtractor {
 		/**
 		 * Fixes up the bytes at the given DYLD file offset to map to the correct offset in the
 		 * packed DYLIB
-		 *  
+		 *
 		 * @param fileOffset The DYLD file offset to fix-up
 		 * @param size The number of bytes to fix-up (must be 4 or 8)
 		 * @throws IOException If there was an IO-related error
@@ -266,7 +266,7 @@ public class DyldCacheDylibExtractor {
 
 		/**
 		 * Converts the given DYLD file offset to an offset into the packed DYLIB
-		 * 
+		 *
 		 * @param fileOffset The DYLD file offset to convert
 		 * @return An offset into the packed DYLIB
 		 * @throws NotFoundException If there was no corresponding DYLIB offset
@@ -285,7 +285,7 @@ public class DyldCacheDylibExtractor {
 
 		/**
 		 * Converts the given value to a byte array
-		 * 
+		 *
 		 * @param value The value to convert to a byte array
 		 * @param size The number of bytes to convert (must be 4 or 8)
 		 * @return The value as a byte array of the given size

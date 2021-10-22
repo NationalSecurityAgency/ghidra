@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,11 +28,11 @@ import docking.action.MenuData;
  */
 public class AddAllFieldAction extends DockingAction {
 	FieldHeader panel;
-	
+
 	/**
 	 * Constructor takes the CodeBrowserPlugin that created it and the header
 	 * component so that it can be repainted when fields are added.
-	 * @param owner the action owner	
+	 * @param owner the action owner
 	 * @param panel the listing panel.
 	 */
     public AddAllFieldAction(String owner, FieldHeader panel) {
@@ -50,7 +50,7 @@ public class AddAllFieldAction extends DockingAction {
         }
         FieldHeaderLocation loc = (FieldHeaderLocation) contextObject;
         FieldFormatModel modelAtLocation = loc.getModel();
-        
+
         FieldFactory[] allFactories = modelAtLocation.getAllFactories();
         return allFactories.length > 1;
 	}
@@ -59,7 +59,7 @@ public class AddAllFieldAction extends DockingAction {
     public boolean isValidContext(ActionContext context) {
         return (context.getContextObject() instanceof FieldHeaderLocation);
     }
-    
+
     /**
      * Method called when the action is invoked.
      */

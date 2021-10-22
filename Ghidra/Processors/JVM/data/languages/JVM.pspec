@@ -15,10 +15,10 @@
   <inferptrbounds>
     <range space="ram" first="0" last="0"/>   <!-- Don't try to infer pointers from constants in the body of a function -->
   </inferptrbounds>
-  
+
   <jumpassist name="switchAssist">
     <!-- pcode to describe how to get case values from an index 0...size-1 -->
-    <case_pcode>  
+    <case_pcode>
       <input name="index" size="4"/>
       <input name="opcodeAddr" size="4"/>
       <input name="padding" size="1"/>
@@ -67,5 +67,5 @@
       ]]></body>
     </size_pcode>
   </jumpassist>
-  
+
 </processor_spec>

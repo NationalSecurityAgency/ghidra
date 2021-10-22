@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ public class PcodeEmitObjects extends PcodeEmit {
 	/**
 	 * Pcode emitter constructor for producing PcodeOp objects for unimplemented, snippets or empty responses.
 	 * @param walk state of the ParserContext from which to generate p-code
-	 * @param fallOffset default fall-through offset (i.e., the full length 
+	 * @param fallOffset default fall-through offset (i.e., the full length
 	 * of instruction including delay-sloted instructions)
 	 */
 	public PcodeEmitObjects(ParserWalker walk, int fallOffset) {		// For use with emitting precompiled p-code templates

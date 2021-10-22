@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,10 +36,10 @@ public class EditFieldNameDialog extends DialogComponentProvider {
 	private PluginTool tool;
 	private TitledBorder nameBorder;
 	private JTextField fieldName;
-	
+
 	private Program program;
 	private DataTypeComponent dtComp;
-	
+
    /**
 	 * Construct a new dialog.
 	 *
@@ -47,7 +47,7 @@ public class EditFieldNameDialog extends DialogComponentProvider {
 	 * @param tool the plugin tool
 	 */
 	public EditFieldNameDialog(String title, PluginTool tool) {
-		super(title, true, true, true, false); 
+		super(title, true, true, true, false);
 		this.tool = tool;
 		setHelpLocation(new HelpLocation(HelpTopics.LABEL, "EditFieldNameDialog"));
 
@@ -59,12 +59,12 @@ public class EditFieldNameDialog extends DialogComponentProvider {
 		addCancelButton();
 
 		setDefaultButton(okButton);
-		
+
 		setMinimumSize(new Dimension(300, 50));
 	}
-	
-	
-	
+
+
+
 	private String getCurrentFieldName() {
 		String name = dtComp.getFieldName();
 		if (name == null) {
@@ -79,14 +79,14 @@ public class EditFieldNameDialog extends DialogComponentProvider {
 	 */
     @Override
     protected void okCallback() {
-   	
+
         String newName = fieldName.getText().trim();
-        
+
         if (newName.equals(getCurrentFieldName())) {
         	close();
         	return;
         }
-        
+
         boolean success = false;
         int txId = program.startTransaction("Edit Field Name");
         try {
@@ -102,20 +102,20 @@ public class EditFieldNameDialog extends DialogComponentProvider {
 		} finally {
 			program.endTransaction(txId, true);
 		}
-		
+
 		if (success) {
 			dtComp = null;
 			program = null;
 			close();
 		}
     }
-    
+
 	public void editField(DataTypeComponent dataTypeComponent, Program p) {
 		ComponentProvider componentProvider = tool.getComponentProvider(PluginConstants.CODE_BROWSER);
 		JComponent component = componentProvider.getComponent();
 		editField( dataTypeComponent, p, component );
-	}	
-	
+	}
+
 	public void editField(DataTypeComponent dataTypeComponent, Program p, Component centeredOverComponent ) {
 	    this.dtComp = dataTypeComponent;
         this.program = p;
@@ -125,20 +125,20 @@ public class EditFieldNameDialog extends DialogComponentProvider {
         clearStatusText();
         tool.showDialog(this, centeredOverComponent);
 	}
-	
+
 	/**
 	 * Define the Main panel for the dialog here.
 	 */
 	private JPanel create() {
 		fieldName = new JTextField();
-		
+
 		JPanel mainPanel = new JPanel(new BorderLayout());
 
 		nameBorder = BorderFactory.createTitledBorder("Enter Field Name");
 		mainPanel.setBorder(nameBorder);
-		
+
 		mainPanel.add(fieldName, BorderLayout.CENTER);
-	    
+
 		mainPanel.setBorder(new EmptyBorder(5,5,5,5));
 
 		return mainPanel;

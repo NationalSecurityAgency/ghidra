@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,10 @@ import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
 
 /**
- * 
- * A {@link GTree} extended with a count.  The count represents the total number 
+ *
+ * A {@link GTree} extended with a count.  The count represents the total number
  * of instruction sequences represented in the tree.
- * 
+ *
  *
  */
 
@@ -80,7 +80,7 @@ public class FunctionBitPatternsGTree extends GTree {
 		Map<GTreeNode, Map<String, GTreeNode>> nodeMap =
 			new HashMap<GTreeNode, Map<String, GTreeNode>>();
 
-		//for each node, want to find the children quickly instead of iterating through the 
+		//for each node, want to find the children quickly instead of iterating through the
 		//list of children
 		//need a map nodes - > keys -> nodes
 		for (InstructionSequence currentSeq : instSeqs) {

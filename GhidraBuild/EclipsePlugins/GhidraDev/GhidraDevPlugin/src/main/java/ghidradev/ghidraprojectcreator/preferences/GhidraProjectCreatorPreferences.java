@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public class GhidraProjectCreatorPreferences {
 
 	/**
 	 * Gets the set of Ghidra installation directories that's defined in the preferences.
-	 * 
+	 *
 	 * @return The set of Ghidra installation directories that's defined in the preferences.
 	 */
 	public static Set<File> getGhidraInstallDirs() {
@@ -66,7 +66,7 @@ public class GhidraProjectCreatorPreferences {
 
 	/**
 	 * Sets the set of Ghidra installation directories that's defined in the preferences.
-	 * 
+	 *
 	 * @param dirs The set of Ghidra installation directories that's defined in the preferences.
 	 */
 	public static void setGhidraInstallDirs(Set<File> dirs) {
@@ -78,7 +78,7 @@ public class GhidraProjectCreatorPreferences {
 
 	/**
 	 * Gets the default Ghidra installation directory that's defined in the preferences.
-	 * 
+	 *
 	 * @return The default Ghidra installation directory that's defined in the preferences.
 	 *   Could be null if a default is not defined.
 	 */
@@ -93,7 +93,7 @@ public class GhidraProjectCreatorPreferences {
 
 	/**
 	 * Sets the default Ghidra installation directory that's defined in the preferences.
-	 * 
+	 *
 	 * @param dir The default Ghidra installation directory that's defined in the preferences.
 	 *   Could be null if there is no default.
 	 */
@@ -104,7 +104,7 @@ public class GhidraProjectCreatorPreferences {
 
 	/**
 	 * Gets the last used Ghidra project root path that's defined in the preferences.
-	 * 
+	 *
 	 * @return The last used Ghidra project root path that's defined in the preferences.
 	 *   Could be the empty string.
 	 */
@@ -115,7 +115,7 @@ public class GhidraProjectCreatorPreferences {
 
 	/**
 	 * Sets the last used Ghidra project root path that's defined in the preferences.
-	 * 
+	 *
 	 * @param path The last used Ghidra project root path that's defined in the preferences.
 	 */
 	public static void setGhidraLastProjectRootPath(String path) {
@@ -125,7 +125,7 @@ public class GhidraProjectCreatorPreferences {
 
 	/**
 	 * Gets the last used Ghidra Gradle distribution that's defined in the preferences.
-	 * 
+	 *
 	 * @return The last used Ghidra Gradle distribution that's defined in the preferences.
 	 *   Could be null if there is no last used distribution.
 	 */
@@ -145,8 +145,8 @@ public class GhidraProjectCreatorPreferences {
 
 	/**
 	 * Sets the last used Ghidra Gradle distribution that's defined in the preferences.
-	 * 
-	 * @param gradleDistribution The last used Ghidra Gradle distribution that's defined in the 
+	 *
+	 * @param gradleDistribution The last used Ghidra Gradle distribution that's defined in the
 	 *   preferences.  Could be null if the preference should be set to the default.
 	 */
 	public static void setGhidraLastGradleDistribution(GradleDistribution gradleDistribution) {

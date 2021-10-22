@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,10 +81,10 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 	/**
 	 * Create a Function Definition based on a Function
 	 * @param function the function to use to create a Function Signature.
-	 * @param formalSignature if true only original formal types will be retained and 
+	 * @param formalSignature if true only original formal types will be retained and
 	 * auto-params discarded (e.g., this, __return_storage_ptr__, etc.).  If false,
 	 * the effective signature will be used where forced indirect and auto-params
-	 * are reflected in the signature.  This option has no affect if the specified 
+	 * are reflected in the signature.  This option has no affect if the specified
 	 * function has custom storage enabled.
 	 */
 	public FunctionDefinitionDataType(Function function, boolean formalSignature) {
@@ -278,9 +278,9 @@ public class FunctionDefinitionDataType extends GenericDataType implements Funct
 
 	/**
 	 * Compare the comment of the given function signature to my comment.
-	 * 
+	 *
 	 * @param sig signature to compare the comment
-	 * 
+	 *
 	 * @return true if the comments match
 	 */
 	private boolean compareComment(FunctionSignature sig) {

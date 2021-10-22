@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -94,7 +94,7 @@ public interface DomainFolderChangeListener {
 	/**
 	 * Notification that a new version of the domain object exists and the
 	 * current one is no longer valid. Existing consumers should be immediately
-	 * released and no additional use of the oldObject is permitted once this 
+	 * released and no additional use of the oldObject is permitted once this
 	 * method returns.  This is only called for domain objects which were
 	 * opened for update.
 	 * @param file file whose object was replaced

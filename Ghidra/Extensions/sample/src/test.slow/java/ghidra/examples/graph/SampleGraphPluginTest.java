@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -96,7 +96,7 @@ public class SampleGraphPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void assertSomeVerticesFilteredOut() {
 
@@ -150,7 +150,7 @@ public class SampleGraphPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private void setNewLayout(String layoutName) {
 
 		/*
-		 	Note: we use LayoutProvider<?, ?, ?> here instead of 
+		 	Note: we use LayoutProvider<?, ?, ?> here instead of
 		 	      LayoutProvider<SampleVertex, SampleEdge, SampleGraph> simply because
 		 	      the former is more concise
 		 */

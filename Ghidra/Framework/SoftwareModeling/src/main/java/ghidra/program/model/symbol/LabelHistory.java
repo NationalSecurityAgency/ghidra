@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class LabelHistory {
 	private byte actionID;
 	private Date modificationDate;
 	private String userName;
-	
+
 	/**
 	 * Construct a new LabelHistory object.
 	 * @param addr address of the label change
@@ -50,8 +50,8 @@ public class LabelHistory {
 	 * @param actionID either ADD, REMOVE, or RENAME
 	 * @param labelStr label string
 	 * @param modificationDate date of the change
-	 */	
-	public LabelHistory(Address addr, String userName, 
+	 */
+	public LabelHistory(Address addr, String userName,
 						byte actionID, String labelStr,
 						Date modificationDate) {
 
@@ -93,5 +93,5 @@ public class LabelHistory {
 	public Date getModificationDate() {
 		return modificationDate;
 	}
-		
+
 }

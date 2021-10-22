@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ import ghidra.util.table.GhidraTable;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A base class for use by tests that exercise various types of 
+ * A base class for use by tests that exercise various types of
  * {@link LocationDescriptor}.
  */
 public abstract class AbstractLocationReferencesTest extends AbstractProgramBasedTest {
@@ -98,7 +98,7 @@ public abstract class AbstractLocationReferencesTest extends AbstractProgramBase
 
 		//
 		// Arrays/Structures
-		//		
+		//
 		DataType type = new IntegerDataType();
 		DataType pointer = new PointerDataType(type);
 		ArrayDataType array = new ArrayDataType(pointer, 4, pointer.getLength());
@@ -150,7 +150,7 @@ public abstract class AbstractLocationReferencesTest extends AbstractProgramBase
 	private void doGoToDataNameFieldAt(Address a, int[] path) {
 		openData(a);
 
-		// note: the path here is 
+		// note: the path here is
 		FieldNameFieldLocation location = new FieldNameFieldLocation(program, a, path, "name", 0);
 		ProgramLocationPluginEvent event =
 			new ProgramLocationPluginEvent("Test", location, program);

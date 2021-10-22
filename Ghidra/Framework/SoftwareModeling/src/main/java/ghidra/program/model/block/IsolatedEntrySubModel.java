@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ import ghidra.util.task.TaskMonitor;
 public class IsolatedEntrySubModel extends OverlapCodeSubModel {
 
 	public static final String ISOLATED_MODEL_NAME = "Isolated Entry";
-	
+
     /**
      * Construct a <CODE>IsolatedEntrySubModel</CODE> subroutine on a program.
      *
@@ -51,7 +51,7 @@ public class IsolatedEntrySubModel extends OverlapCodeSubModel {
     public IsolatedEntrySubModel(Program program) {
         super(program);
     }
-    
+
     /**
      * Construct a <CODE>IsolatedEntrySubModel</CODE> subroutine on a program.
      *
@@ -65,7 +65,7 @@ public class IsolatedEntrySubModel extends OverlapCodeSubModel {
 	/**
      * Get the subroutine code block which starts at the specified address which
      * is an entry point of a Model-M subroutine.
-     * 
+     *
      * Classes which extend this class should implement this method.
      *
      * @param   mStartAddr = a Model-M subroutine entry point.
@@ -75,7 +75,7 @@ public class IsolatedEntrySubModel extends OverlapCodeSubModel {
      */
     @Override
     protected CodeBlock getSubroutine(Address mStartAddr, TaskMonitor monitor) throws CancelledException {
-    	
+
     	// Create address list which contains all other entry points for this M-model sub
         CodeBlock mSub = modelM.getCodeBlockAt(mStartAddr, monitor);
         if (mSub == null) {
@@ -91,39 +91,39 @@ public class IsolatedEntrySubModel extends OverlapCodeSubModel {
 
 		// create a holder for the blockSet
         AddressSet addrSet = new AddressSet();
-        
+
         // Create the todoStack and initialize it with instr; also initialize the list for entryPts.
         LinkedList<Address> todoList = new LinkedList<Address>();
         todoList.addFirst(mStartAddr);
-        
+
         CodeBlockModel bbModel = modelM.getBasicBlockModel();
-        
+
         // Build model-S subroutine from basic blocks
         while (!todoList.isEmpty()) {
-        
+
         	if (monitor.isCancelled()) {
 				throw new CancelledException();
 			}
-        		
-        	// Get basic block at the specified address 
-        	Address a = todoList.removeLast();  
+
+        	// Get basic block at the specified address
+        	Address a = todoList.removeLast();
         	if (addrSet.contains(a) || startSet.contains(a))
 			 {
-				continue; // already processed this block or encountered another Model-M entry point  
+				continue; // already processed this block or encountered another Model-M entry point
 			}
 	        CodeBlock bblock = bbModel.getFirstCodeBlockContaining(a, monitor);
 	        if (bblock == null) {
 				continue;
 			}
-	        	
+
 	        // Verify that the block contains instructions
 	        if (listing.getInstructionAt(a) == null) {
 				continue;
 			}
-	        	
+
 	        // Add basic block to subroutine address set
 	        addrSet.add(bblock);
-        
+
         	// Process all destination references
         	CodeBlockReferenceIterator destIter = bblock.getDestinations(monitor);
         	while (destIter.hasNext()) {
@@ -132,10 +132,10 @@ public class IsolatedEntrySubModel extends OverlapCodeSubModel {
         		if (refFlowType.isJump() || refFlowType.isFallthrough())
 	            {
 	            	// Add Jump and Fall-through destinations to the todoList
-	            	todoList.add(destRef.getDestinationAddress());	
+	            	todoList.add(destRef.getDestinationAddress());
 	            }
-        	}       	
-        } 
+        	}
+        }
     	return createSub(addrSet, mStartAddr);
     }
 

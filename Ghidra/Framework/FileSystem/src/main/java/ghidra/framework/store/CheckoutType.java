@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,14 +28,14 @@ public enum CheckoutType {
 	NORMAL,
 
 	/**
-	 * Checkout is a persistent exclusive checkout which 
+	 * Checkout is a persistent exclusive checkout which
 	 * ensures no other checkout can occur while this checkout
 	 * persists.
 	 */
 	EXCLUSIVE,
 
 	/**
-	 * Similar to an EXCLUSIVE checkout, this checkout only 
+	 * Similar to an EXCLUSIVE checkout, this checkout only
 	 * persists while the associated client-connection is
 	 * alive.  This checkout is only permitted for remote
 	 * versioned file systems which support its use.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -209,7 +209,7 @@ public class StackEditorModel extends CompositeEditorModel {
 				if (fieldName == null) {
 					fieldName = "";
 				}
-//				if ((fieldName.length() == 0) 
+//				if ((fieldName.length() == 0)
 //				 && (element.getOffset() == ((StackFrameDataType)viewComposite).getReturnAddressOffset())) {
 //					return "<RETURN_ADDRESS>";
 //				}
@@ -269,7 +269,7 @@ public class StackEditorModel extends CompositeEditorModel {
 
 	/**
 	 * Gets called to update/validate the current editable location in the table
-	 * 
+	 *
 	 * @param value the new cell value
 	 * @param rowIndex the row index in the component table
 	 * @param columnIndex the column index for the table cell in the current model
@@ -448,7 +448,7 @@ public class StackEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private OffsetPairs getRelOffsetSelection() {
 		OffsetPairs offsets = new OffsetPairs();
@@ -471,7 +471,7 @@ public class StackEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	private void setRelOffsetSelection(OffsetPairs offsets) {
 		FieldSelection newSelection = new FieldSelection();
@@ -633,7 +633,7 @@ public class StackEditorModel extends CompositeEditorModel {
 		boolean existingPointer = (compDt instanceof Pointer);
 		boolean isPointer = (dataType instanceof Pointer) || existingPointer;
 		int newLength = dataType.getLength();
-		// NOTE : Allow the generic pointer, but don't allow -1 length data 
+		// NOTE : Allow the generic pointer, but don't allow -1 length data
 		//        types (i.e. string) except on pointers.
 		if (!isPointer && (newLength <= 0)) {
 			return false;
@@ -913,7 +913,7 @@ public class StackEditorModel extends CompositeEditorModel {
 	@Override
 	public boolean apply() throws EmptyCompositeException, InvalidDataTypeException {
 
-		// commit changes for any fields under edit 
+		// commit changes for any fields under edit
 		if (isEditingField()) {
 			endFieldEditing();
 		}
@@ -941,7 +941,7 @@ public class StackEditorModel extends CompositeEditorModel {
 			original.setLocalSize(edited.getLocalSize());
 			original.setReturnAddressOffset(edited.getReturnAddressOffset());
 
-			// first-pass: remove deleted params from end of param list if possible 
+			// first-pass: remove deleted params from end of param list if possible
 			// to avoid custom storage enablement
 			Parameter[] origParams = function.getParameters();
 			for (int i = origParams.length - 1; i >= 0; --i) {
@@ -1111,7 +1111,7 @@ public class StackEditorModel extends CompositeEditorModel {
 	}
 
 	/*
-	 * 
+	 *
 	 */
 	public DataTypeComponent replace(int index, DataType dataType) throws UsrException {
 		try {
@@ -1216,7 +1216,7 @@ public class StackEditorModel extends CompositeEditorModel {
 				return;
 			}
 
-			// Don't try to actually rename, since we shouldn't get name change on a 
+			// Don't try to actually rename, since we shouldn't get name change on a
 			// fabricated stack data type.
 			OffsetPairs offsetSelection = getRelOffsetSelection();
 			fireTableDataChanged();
@@ -1287,7 +1287,7 @@ public class StackEditorModel extends CompositeEditorModel {
 
 	//**************************************************************************
 	// The methods below were overridden to prevent data types with a length of
-	// -1 from being applied in the stack editor. We also don't want to get 
+	// -1 from being applied in the stack editor. We also don't want to get
 	// prompted for a length when the user tries to apply a -1 length data type.
 	//**************************************************************************
 	//vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
@@ -1301,7 +1301,7 @@ public class StackEditorModel extends CompositeEditorModel {
 	}
 
 	/**
-	 * This method overrides the CompositeEditorModel to wrap the resolve of the data type 
+	 * This method overrides the CompositeEditorModel to wrap the resolve of the data type
 	 * in a transaction.
 	 */
 	@Override

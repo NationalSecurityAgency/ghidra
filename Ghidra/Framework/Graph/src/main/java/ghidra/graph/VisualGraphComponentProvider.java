@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,13 +31,13 @@ import ghidra.graph.viewer.event.mouse.VertexMouseInfo;
 
 /**
  * A base component provider for displaying {@link VisualGraph}s
- * 
+ *
  * <p>This class will provide many optional sub-features, enabled as desired by calling the
- * various <code>addXyzFeature()</code> methods.  
- * 
+ * various <code>addXyzFeature()</code> methods.
+ *
  * <p>Implementation Notes:   to get full functionality, you must:
  * <ul>
- *  <li>Have your plugin call {@link #readConfigState(SaveState)} and 
+ *  <li>Have your plugin call {@link #readConfigState(SaveState)} and
  *  {@link #writeConfigState(SaveState)} to save user settings.
  *  </li>
  *  <li>Enable features you desire after calling your {@link #addToTool()} method.
@@ -49,9 +49,9 @@ import ghidra.graph.viewer.event.mouse.VertexMouseInfo;
  * @param <G> the graph type
  */
 //@formatter:off
-public abstract class VisualGraphComponentProvider<V extends VisualVertex, 
-												   E extends VisualEdge<V>, 
-												   G extends VisualGraph<V, E>> 
+public abstract class VisualGraphComponentProvider<V extends VisualVertex,
+												   E extends VisualEdge<V>,
+												   G extends VisualGraph<V, E>>
 	extends ComponentProvider {
 //@formatter:on
 
@@ -127,7 +127,7 @@ public abstract class VisualGraphComponentProvider<V extends VisualVertex,
 
 //==================================================================================================
 // Featurette Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Adds the satellite viewer functionality to this provider
@@ -139,39 +139,39 @@ public abstract class VisualGraphComponentProvider<V extends VisualVertex,
 	}
 
 	/*
-	 
+
 	 Features to provide
-	 
+
 		Actions
 			-change layout
 			-re-layout
 			-disable popups
-		
+
 		Snapshots
-		
-		
+
+
 		Save State
 			-selected layout
 			-satellite dock/vis state
-			
-		
+
+
 		Save image
-		
+
 		Export graph:
 			-xml?
 			-dot
 			-gephi?
-			
+
 		Undo/redo for graph operations (delete; group/ungroup; move)
 			-rapid pressing will shortcut items
-			-undo/redo allows us to prune nodes 
-				--how to maintain old nodes/edges?  (FilteringVisualGraph)	
-	
+			-undo/redo allows us to prune nodes
+				--how to maintain old nodes/edges?  (FilteringVisualGraph)
+
 	*/
 
 //==================================================================================================
 // Provider Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * To be called at the end of this provider's lifecycle
@@ -183,7 +183,7 @@ public abstract class VisualGraphComponentProvider<V extends VisualVertex,
 
 	/**
 	 * Writes this providers saveable state to the given state object
-	 * 
+	 *
 	 * @param saveState the state object into which state is to be written
 	 */
 	public void writeConfigState(SaveState saveState) {
@@ -192,7 +192,7 @@ public abstract class VisualGraphComponentProvider<V extends VisualVertex,
 
 	/**
 	 * Reads previously saved state from the given state object
-	 * 
+	 *
 	 * @param saveState the state object that may contain state information for this provider
 	 */
 	public void readConfigState(SaveState saveState) {

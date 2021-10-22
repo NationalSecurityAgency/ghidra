@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ public interface MagePanel<T> extends WizardPanel {
 
 	/**
 	 * Enter panel for real; take your state from the state object and then
-	 * populate your external state accordingly. 
+	 * populate your external state accordingly.
 	 * @param state the state object
 	 * @throws IllegalPanelStateException indicates that something bad has happened and we should
 	 * return to the very first panel - unless we are the first panel in which case we
@@ -44,9 +44,9 @@ public interface MagePanel<T> extends WizardPanel {
 	public void leavePanel(WizardState<T> state);
 
 	/**
-	 * Updates the state object, being passed as a parameter, with the current state information 
-	 * from this panel. Only state information that the panel is intended to set should be modified 
-	 * within the state object by this method. For example, a summary panel might display state 
+	 * Updates the state object, being passed as a parameter, with the current state information
+	 * from this panel. Only state information that the panel is intended to set should be modified
+	 * within the state object by this method. For example, a summary panel might display state
 	 * information, but doesn't set it and therefore wouldn't change it in the state object.
 	 * @param state the state object to update
 	 */

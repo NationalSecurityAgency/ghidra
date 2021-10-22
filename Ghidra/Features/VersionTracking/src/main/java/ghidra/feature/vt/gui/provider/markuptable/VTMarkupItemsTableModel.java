@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -128,7 +128,7 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 			return false;
 		}
 
-		// Make destination address editable. It will get validated upon edit and 
+		// Make destination address editable. It will get validated upon edit and
 		// display an info dialog if not really editable.
 		return true;
 	}
@@ -178,7 +178,7 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================   
+//==================================================================================================
 
 	private static class MarkupTablePassthroughFilter implements TableFilter<VTMarkupItem> {
 
@@ -209,7 +209,7 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 		}
 
 		/*
-		 * For our row to match, each column must be tested for each filter to see if all filters 
+		 * For our row to match, each column must be tested for each filter to see if all filters
 		 * match, as we are using an AND filtering mechanism.
 		 */
 		private boolean rowMatchesFilters(List<Filter<VTMarkupItem>> filters,
@@ -255,8 +255,8 @@ public class VTMarkupItemsTableModel extends AddressBasedTableModel<VTMarkupItem
 
 		@Override
 		public boolean equals(Object obj) {
-			// For now we don't support equals(); if this filter gets re-created, 
-			// then the table must be re-filtered.  If we decide to implement this method, then 
+			// For now we don't support equals(); if this filter gets re-created,
+			// then the table must be re-filtered.  If we decide to implement this method, then
 			// we must also implement equals() on the filters used by this filter.
 			return this == obj;
 		}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class LongArrayList implements List<Long> {
     	longs = arr;
     	size = arr.length;
     }
-    
+
     /**
      * Creates a new LongArrayList that is equivalent to the specified LongArrayList.
      * It creates a copy of the specified list.
@@ -73,7 +73,7 @@ public class LongArrayList implements List<Long> {
 	public void add(int index, Long value) {
 		add(index, value.longValue());
 	}
-	
+
 	public void add(int index, long value) {
     	if (index < 0 || index > size) {
     		throw new IndexOutOfBoundsException();
@@ -86,7 +86,7 @@ public class LongArrayList implements List<Long> {
 		} catch(Exception e) {
 		    Msg.error(this, "Unexpected Exception: " + e.getMessage(), e);
 		}
-	
+
         longs[index] = value;
 		size++;
     }
@@ -224,13 +224,13 @@ public class LongArrayList implements List<Long> {
 			if (longs[i] == longValue) {
 				return i;
 			}
-		}		
+		}
 		return -1;
 	}
 	public List<Long> subList(int startIndex, int endIndex) {
 		return new LongArraySubList(this, startIndex, endIndex);
 	}
-	
+
 	public boolean addAll(Collection<? extends Long> c) {
 		return addAll(size(), c);
 	}
@@ -281,7 +281,7 @@ public class LongArrayList implements List<Long> {
 			if (longs[i] == longValue) {
 				return i;
 			}
-		}		
+		}
 		return -1;
 	}
 
@@ -302,7 +302,7 @@ public class LongArrayList implements List<Long> {
 			}
 		}
 		return changed;
-	
+
 	}
 
 	public boolean retainAll(Collection<?> c) {
@@ -318,12 +318,12 @@ public class LongArrayList implements List<Long> {
 		size = newIndex;
 		return changed;
 	}
-	
+
 	static class LongArraySubList implements List<Long> {
 		private int startIndex;
 		private int endIndex;
 		private LongArrayList backingList;
-		
+
 		LongArraySubList(LongArrayList list, int startIndex, int endIndex) {
 			this.backingList = list;
 			this.startIndex = startIndex;
@@ -415,8 +415,8 @@ public class LongArrayList implements List<Long> {
 				if (get(i) == value) {
 					return i;
 				}
-			}		
-			return -1;		
+			}
+			return -1;
 		}
 
 		public boolean addAll(Collection<? extends Long> c) {
@@ -454,7 +454,7 @@ public class LongArrayList implements List<Long> {
 				if (backingList.longs[startIndex+i] == longValue) {
 					return i;
 				}
-			}		
+			}
 			return -1;
 		}
 
@@ -475,7 +475,7 @@ public class LongArrayList implements List<Long> {
 				if (backingList.longs[startIndex+i] == longValue) {
 					return i;
 				}
-			}		
+			}
 			return -1;
 		}
 
@@ -567,12 +567,12 @@ class LongArrayListIterator implements ListIterator<Long> {
 	int nextIndex;
 	int lastReturnedIndex = -1;
 	List<Long> list;
-	
+
 	public LongArrayListIterator(List<Long> list, int startIndex) {
 		this.list = list;
 		this.nextIndex = startIndex;
 	}
-	
+
 	public void add(Long o) {
 		list.add(nextIndex, o);
 	}
@@ -626,5 +626,5 @@ class LongArrayListIterator implements ListIterator<Long> {
 		}
 		list.set(lastReturnedIndex, o);
 	}
-	
+
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,12 +33,12 @@ public abstract class ProgramDatabaseFieldSearcher {
 		this.pattern = pattern;
 		this.forward = forward;
 		this.startLocation = startLoc;
-		
-		if (forward && set != null && !set.isEmpty() && startLoc != null && 
+
+		if (forward && set != null && !set.isEmpty() && startLoc != null &&
 				!set.getMinAddress().equals(startLoc.getAddress())) {
 			throw new IllegalArgumentException("Start location and addressSet are inconsistent!");
 		}
-		if (!forward && set != null && !set.isEmpty() && startLoc != null && 
+		if (!forward && set != null && !set.isEmpty() && startLoc != null &&
 				!set.getMaxAddress().equals(startLoc.getAddress())) {
 			throw new IllegalArgumentException("Start location and addressSet are inconsistent!");
 		}
@@ -56,7 +56,7 @@ public abstract class ProgramDatabaseFieldSearcher {
         return address;
 	}
 	protected abstract Address advance(List<ProgramLocation> currentMatches);
-	
+
 	public Address getNextSignificantAddress( Address address ) {
 		if (address == null) {
 			initialize();
@@ -74,13 +74,13 @@ public abstract class ProgramDatabaseFieldSearcher {
 	public ProgramLocation getMatch() {
 		return matchesForCurrentAddress.remove( 0 );
 	}
-	
+
 	public boolean hasMatch( Address address ) {
 		if (!address.equals(currentAddress)) {
 			return false;
 		}
 		return !matchesForCurrentAddress.isEmpty();
-	}	
+	}
 
 	private void trimMatchesForStartLocation( ) {
 		if (startLocation == null) {
@@ -94,7 +94,7 @@ public abstract class ProgramDatabaseFieldSearcher {
 			ProgramLocation programLoc = it.next();
 			int compareVal = startLocation.compareTo( programLoc );
 			if ((forward && compareVal >=0) ||
-				(!forward && compareVal <=0 )) {	
+				(!forward && compareVal <=0 )) {
 					it.remove();
 			}
 		}

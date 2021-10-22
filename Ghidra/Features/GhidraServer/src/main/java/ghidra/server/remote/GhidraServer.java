@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -863,7 +863,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	}
 
 	private static void setGlobalSerializationFilter() throws IOException {
-		
+
 		ObjectInputFilter patternFilter = readSerialFilterPatternFile();
 
 		ObjectInputFilter filter = new ObjectInputFilter() {
@@ -886,7 +886,7 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 				if (clazz == null) {
 					return Status.ALLOWED;
 				}
-				
+
 				Class<?> componentType = clazz.getComponentType();
 				if (componentType != null && componentType.isPrimitive()) {
 					return Status.ALLOWED; // allow all primitive arrays
@@ -931,10 +931,10 @@ public class GhidraServer extends UnicastRemoteObject implements GhidraServerHan
 	}
 
 	/**
-	 * Read serial.filter file content removing any comments and newlines and generate 
+	 * Read serial.filter file content removing any comments and newlines and generate
 	 * corresponding {@link ObjectInputFilter}.  See {@link java.io.ObjectInputFilter.Config#createFilter(String)}
 	 * for filter syntax.
-	 * @return serial filter content 
+	 * @return serial filter content
 	 * @throws IOException if file error occurs
 	 */
 	private static ObjectInputFilter readSerialFilterPatternFile() throws IOException {

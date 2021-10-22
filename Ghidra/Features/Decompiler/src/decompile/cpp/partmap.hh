@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,7 +79,7 @@ public:
 template<typename _linetype,typename _valuetype>
   _valuetype &partmap<_linetype,_valuetype>::
   getValue(const _linetype &pnt)
-  
+
   {
     iterator iter;
 
@@ -98,10 +98,10 @@ template<typename _linetype,typename _valuetype>
 template<typename _linetype,typename _valuetype>
   const _valuetype &partmap<_linetype,_valuetype>::
   getValue(const _linetype &pnt) const
-  
+
   {
     const_iterator iter;
-    
+
     iter = database.upper_bound(pnt);
     if (iter == database.begin())
       return defaultvalue;
@@ -118,7 +118,7 @@ template<typename _linetype,typename _valuetype>
 
   {
     iterator iter;
-    
+
     iter = database.upper_bound(pnt);
     if (iter != database.begin()) {
       --iter;
@@ -147,12 +147,12 @@ template<typename _linetype,typename _valuetype>
     split(pnt2);
     iterator beg = begin(pnt1);
     iterator end = begin(pnt2);
-    
+
     _valuetype &ref( (*beg).second );
     ++beg;
     database.erase(beg,end);
     return ref;
-  }  
+  }
 
 /// \brief Get the value object for a given point and return the range over which the value object applies
 ///
@@ -176,7 +176,7 @@ template<typename _linetype,typename _valuetype>
       return defaultvalue;
     }
     const_iterator iter,enditer;
-    
+
     enditer = database.upper_bound(pnt);
     if (enditer != database.begin()) {
       iter = enditer;
@@ -216,7 +216,7 @@ int main(int argc,char **argv)
   cout << data.getValue(8) << endl;
   cout << data.getValue(4) << endl;
   cout << data.getValue(1) << endl;
-  
+
   partmap<int,unsigned int>::const_iterator iter;
 
   iter = data.begin(3);

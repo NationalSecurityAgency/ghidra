@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class HandlerMap<T, A, R> {
 
 	/**
 	 * Add a handler to the map
-	 * 
+	 *
 	 * @param cls the type assigned to this handler
 	 * @param handler the handler
 	 * @return the previous handler, if any, otherwise {@code null}
@@ -52,10 +52,10 @@ public class HandlerMap<T, A, R> {
 
 	/**
 	 * Add a void handler to the map
-	 * 
+	 *
 	 * Note that this wraps the {@link BiConsumer} in a {@link BiFunction}. If the handler is
 	 * replaced, the {@link BiFunction} is returned instead of the {@link BiConsumer}.
-	 * 
+	 *
 	 * @param cls the type assigned to this handler
 	 * @param handler the handler
 	 * @return the previous handler, if any, otherwise {@code null}
@@ -70,12 +70,12 @@ public class HandlerMap<T, A, R> {
 
 	/**
 	 * Invoke the a handler for the given object
-	 * 
+	 *
 	 * The given object's type is reflected to determine the appropriate handler to call. The
 	 * object's type must exactly match one of the handlers' assigned types. Being a subclass of an
 	 * assigned type does not constitute a match. The type and the custom argument are then passed
 	 * to the handler. If there is no match, an {@link IllegalArgumentException} is thrown.
-	 * 
+	 *
 	 * @param t the object to handle
 	 * @param a the custom additional argument, often {@code null}
 	 * @return a future

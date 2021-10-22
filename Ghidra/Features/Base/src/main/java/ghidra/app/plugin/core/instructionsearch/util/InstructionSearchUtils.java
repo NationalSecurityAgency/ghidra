@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class InstructionSearchUtils {
 
 	/**
 	 * Converts the given byte to a binary string.
-	 * 
+	 *
 	 * @param byteval
 	 * @return
 	 */
@@ -52,7 +52,7 @@ public class InstructionSearchUtils {
 
 	/**
 	 * Returns true if the input is a valid binary string (all 0's and 1's).
-	 * 
+	 *
 	 * @param input
 	 * @return
 	 */
@@ -64,9 +64,9 @@ public class InstructionSearchUtils {
 	/**
 	 * Returns a binary representation of the given hex string.  This will pad the string
 	 * with '0's at the beginning to make a full byte.
-	 * 
+	 *
 	 * Note that spaces are allowed in the input, but will be ignored.
-	 * 
+	 *
 	 * @param hex
 	 * @return
 	 */
@@ -95,10 +95,10 @@ public class InstructionSearchUtils {
 	}
 
 	/**
-	 * Returns true if the input is a valid hex string.  
-	 * 
+	 * Returns true if the input is a valid hex string.
+	 *
 	 * Note that spaces are allowed in the input, but are ignored.
-	 * 
+	 *
 	 * @param input
 	 * @return
 	 */
@@ -108,8 +108,8 @@ public class InstructionSearchUtils {
 	}
 
 	/**
-	 * Returns true if the input string represents a full byte of information.  
-	 * 
+	 * Returns true if the input string represents a full byte of information.
+	 *
 	 * @param input
 	 * @return
 	 */
@@ -119,8 +119,8 @@ public class InstructionSearchUtils {
 	}
 
 	/**
-	 * Returns true if the input string represents a full byte of information.  
-	 * 
+	 * Returns true if the input string represents a full byte of information.
+	 *
 	 * @param input
 	 * @return
 	 */
@@ -131,7 +131,7 @@ public class InstructionSearchUtils {
 
 	/**
 	 * Returns true if any bit in the given array is 'on' (set to 1).
-	 * 
+	 *
 	 * @param bytearray
 	 * @return
 	 */
@@ -148,7 +148,7 @@ public class InstructionSearchUtils {
 
 	/**
 	 * Converts the given byte array to a binary string.
-	 * 
+	 *
 	 * @param bs
 	 * @return
 	 */
@@ -171,7 +171,7 @@ public class InstructionSearchUtils {
 	 * @param searchStr
 	 * @param mask
 	 * @return
-	 * @throws InvalidInputException 
+	 * @throws InvalidInputException
 	 */
 	public static String formatSearchString(String searchStr, String mask)
 			throws InvalidInputException {
@@ -203,7 +203,7 @@ public class InstructionSearchUtils {
 
 	/**
 	 * Performs an bitwise OR on the given arrays.
-	 * 
+	 *
 	 * @param arr1
 	 * @param arr2
 	 * @return
@@ -224,7 +224,7 @@ public class InstructionSearchUtils {
 
 	/**
 	 * Peforms a bitwise & on the given arrays.
-	 * 
+	 *
 	 * @param mask
 	 * @param bytes
 	 * @return
@@ -243,8 +243,8 @@ public class InstructionSearchUtils {
 	}
 
 	/**
-	* Converts the given binary instruction to hex.  
-	* 
+	* Converts the given binary instruction to hex.
+	*
 	* @param binaryStr binary string
 	* @return hex string
 	*/
@@ -261,7 +261,7 @@ public class InstructionSearchUtils {
 		String[] instrBytes = binaryStr.split("\\s");
 
 		// For each byte, convert it to hex.  If there are any masked characters they will
-		// be identified by a '.', so we can't show this as hex; just keep as binary and 
+		// be identified by a '.', so we can't show this as hex; just keep as binary and
 		// put in brackets to more easily identify.
 		for (String binary : instrBytes) {
 
@@ -270,7 +270,7 @@ public class InstructionSearchUtils {
 			}
 			else {
 
-				// If we're here, then take the full 8 bits and convert to 
+				// If we're here, then take the full 8 bits and convert to
 				// hex, making sure that if a single character is the result, we
 				// zero-fill to make more readable.
 				int decimal = Integer.parseInt(binary, 2);
@@ -286,11 +286,11 @@ public class InstructionSearchUtils {
 	}
 
 	/**
-	 * Converts the given binary string to hex, but isn't granular beyond the nibble level. 
+	 * Converts the given binary string to hex, but isn't granular beyond the nibble level.
 	 * e.g. If the byte string is '00101...' the trailing '1' will be treated as a wildcard ('0010....').
-	 * 
+	 *
 	 * Note: This is primarily for YARA work, since YARA does not get down to the bit level.
-	 * 
+	 *
 	 * @param instr
 	 * @return
 	 */
@@ -307,7 +307,7 @@ public class InstructionSearchUtils {
 		String[] instrBytes = instr.split(" ");
 
 		// For each byte, convert it to hex.  If there are any masked characters they will
-		// be identified by a '.', so we can't show this as hex; just keep as binary and 
+		// be identified by a '.', so we can't show this as hex; just keep as binary and
 		// put in brackets to more easily identify.
 		for (String binary : instrBytes) {
 			if (binary.contains(".")) {
@@ -335,7 +335,7 @@ public class InstructionSearchUtils {
 			}
 			else {
 
-				// If we're here, then take the full 8 bits and convert to 
+				// If we're here, then take the full 8 bits and convert to
 				// hex, making sure that if a single character is the result, we
 				// zero-fill to make more readable.
 				int decimal = Integer.parseInt(binary, 2);
@@ -351,14 +351,14 @@ public class InstructionSearchUtils {
 	}
 
 	/**
-	 * Returns a list of the sizes of each group, in terms of bytes, in the input string. 
-	 * eg: if the input string is "1001 01 AAAA BB ABCDEF" the returned list will be 
+	 * Returns a list of the sizes of each group, in terms of bytes, in the input string.
+	 * eg: if the input string is "1001 01 AAAA BB ABCDEF" the returned list will be
 	 * {2, 1, 2, 1, 3}.
-	 * 
+	 *
 	 * @param source
 	 * @param mode BINARY or HEX
 	 * @return
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public static List<Integer> getGroupSizes(String source, InputMode mode) throws Exception {
 		List<Integer> sizes = new ArrayList<>();
@@ -384,14 +384,14 @@ public class InstructionSearchUtils {
 	/**
 	 * Returns a list of all whitespaces in the given string. eg: if the input string is
 	 * "aaa bb  cc     ddd e", the returned list will be: {" ", "  ", "     ", " "}.
-	 * 
-	 * Note 1: This will match newline characters as well, so those will be preserved in the 
+	 *
+	 * Note 1: This will match newline characters as well, so those will be preserved in the
 	 *         returned strings.
-	 * 
-	 * Note 2: This is here so that we can 'remember' what the spaces are in an input string, and 
+	 *
+	 * Note 2: This is here so that we can 'remember' what the spaces are in an input string, and
 	 *         subsequently restore those spaces after manipulating (ie: converting from binary
 	 *         to hex or vica-versa).
-	 * 
+	 *
 	 * @param source
 	 * @return
 	 */
@@ -409,7 +409,7 @@ public class InstructionSearchUtils {
 
 	/**
 	 * Returns a {@link Byte} list from the given byte string.
-	 * 
+	 *
 	 * @param byteStr
 	 * @return
 	 */
@@ -428,7 +428,7 @@ public class InstructionSearchUtils {
 
 	/**
 	 * Converts a {@link Byte} array to a {@link byte} array.
-	 * 
+	 *
 	 * @param bytes
 	 * @return
 	 */
@@ -476,7 +476,7 @@ public class InstructionSearchUtils {
 	}
 
 	/**
-	 * Returns a list of {@link Address} items contained in the given {@link InstructionMetadata} 
+	 * Returns a list of {@link Address} items contained in the given {@link InstructionMetadata}
 	 * list.
 	 *
 	 * @param searchResults
@@ -493,7 +493,7 @@ public class InstructionSearchUtils {
 
 	/**
 	 * Finds the {@link InstructionSearchPlugin}; returns null if it doesn't exist.
-	 * 
+	 *
 	 * @param tool
 	 * @return
 	 */
@@ -514,7 +514,7 @@ public class InstructionSearchUtils {
 
 	/**
 	 * Adds zeros to the beginning of the binary string so it represents a full byte.
-	 * 
+	 *
 	 * @param binStr
 	 * @return
 	 */

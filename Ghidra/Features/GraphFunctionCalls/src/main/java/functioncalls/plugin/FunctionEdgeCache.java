@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ public class FunctionEdgeCache {
 		LazyMap.lazyMap(new HashMap<>(), () -> new HashSet<>());
 
 	// note: having a function as a key in the above map is not enough to know if it has been
-	//       processed already (as the function can be added by processing edges of other 
-	//       nodes).  Being in this structure means that it has been processed for its 
+	//       processed already (as the function can be added by processing edges of other
+	//       nodes).  Being in this structure means that it has been processed for its
 	//       incoming and outgoing connections
 	private Set<Function> tracked = new HashSet<>();
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	/**
 	 * Construct a new composite with the given name
-	 * 
+	 *
 	 * @param path                          the category path indicating where this
 	 *                                      data type is located.
 	 * @param name                          the name of the new structure
@@ -88,7 +88,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	 * aligned structures the preferred component length for a fixed-length dataType
 	 * will be the length of that dataType. Otherwise the length returned will be no
 	 * larger than the specified length.
-	 * 
+	 *
 	 * @param dataType new component datatype
 	 * @param length   constrained length or -1 to force use of dataType size.
 	 *                 Dynamic types such as string must have a positive length
@@ -122,12 +122,12 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	/**
 	 * Determine if this composite should be treated as undefined.
 	 * <p>
-	 * A composite is considered undefined with a zero-length when it has 
+	 * A composite is considered undefined with a zero-length when it has
 	 * no components and packing is disabled.  A {@link DataTypeComponent} defined by an
-	 * an datatype which is not-yet-defined (i.e., {@link DataType#isNotYetDefined()} is true) 
-	 * will always have a size of 1.  If an empty composite should be treated as 
-	 * fully specified, packing on the composite should be enabled to ensure that 
-	 * a zero-length component is used should the occassion arise (e.g., empty structure 
+	 * an datatype which is not-yet-defined (i.e., {@link DataType#isNotYetDefined()} is true)
+	 * will always have a size of 1.  If an empty composite should be treated as
+	 * fully specified, packing on the composite should be enabled to ensure that
+	 * a zero-length component is used should the occassion arise (e.g., empty structure
 	 * placed within union as a component).
 	 */
 	@Override
@@ -144,7 +144,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	 * This method throws an exception if the indicated data type is an ancestor of
 	 * this data type. In other words, the specified data type has a component or
 	 * sub-component containing this data type.
-	 * 
+	 *
 	 * @param dataType the data type
 	 * @throws IllegalArgumentException if the data type is an ancestor of this data
 	 *                                  type.
@@ -162,10 +162,10 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	/**
 	 * This method throws an exception if the indicated data type is not a valid
-	 * data type for a component of this composite data type.  If the DEFAULT 
-	 * datatype is specified when unsupported an Undefined1 will be returned 
+	 * data type for a component of this composite data type.  If the DEFAULT
+	 * datatype is specified when unsupported an Undefined1 will be returned
 	 * in its place (e.g., packing enabled, Union).
-	 * 
+	 *
 	 * @param dataType the data type to be checked.
 	 * @return datatype to be used for insert/add
 	 * @throws IllegalArgumentException if the data type is invalid.
@@ -193,7 +193,7 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 
 	/**
 	 * Handle replacement of datatype which may impact bitfield datatype.
-	 * 
+	 *
 	 * @param bitfieldComponent bitfield component
 	 * @param oldDt             affected datatype which has been removed or replaced
 	 * @param newDt             replacement datatype
@@ -294,16 +294,16 @@ public abstract class CompositeDataTypeImpl extends GenericDataType implements C
 	}
 
 	/**
-	 * Repack components within this composite based on the current packing, alignment 
+	 * Repack components within this composite based on the current packing, alignment
 	 * and {@link DataOrganization} settings.  Non-packed Structures: change detection
 	 * is limited to component count and length is assumed to already be correct.
 	 * <p>
-	 * NOTE: If modifications to stored length are made prior to invoking this method, 
-	 * detection of a size change may not be possible.  
+	 * NOTE: If modifications to stored length are made prior to invoking this method,
+	 * detection of a size change may not be possible.
 	 * <p>
 	 * NOTE: Currently a change in calculated alignment can not be provided since
 	 * this value is not stored.
-	 * 
+	 *
 	 * @param notify if true notification will be sent to parents if a size change
 	 * or component placement change is detected.
 	 * @return true if a layout change was detected.

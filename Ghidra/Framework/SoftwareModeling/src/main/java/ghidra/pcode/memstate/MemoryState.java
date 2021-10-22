@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -309,12 +309,12 @@ public class MemoryState {
 	 * and the request is forwarded to the getChunk method on the MemoryBank. If there
 	 * is no registered MemoryBank or some other error, an exception is thrown.
 	 * All getLongValue methods utilize this method to read the bytes from the
-	 * appropriate memory bank. 
+	 * appropriate memory bank.
 	 * @param res the result buffer for storing retrieved bytes
 	 * @param spc the desired address space
 	 * @param off the starting offset of the byte range being read
 	 * @param size the number of bytes being read
-	 * @param stopOnUnintialized if true a partial read is permitted and returned size may be 
+	 * @param stopOnUnintialized if true a partial read is permitted and returned size may be
 	 * smaller than size requested
 	 * @return number of bytes actually read
 	 * @throws LowlevelError if spc has not been mapped within this MemoryState or memory fault
@@ -338,7 +338,7 @@ public class MemoryState {
 	 * write is forwarded to the setChunk method on the MemoryBank. If there is no
 	 * registered MemoryBank or some other error, an exception  is throw.
 	 * All setValue methods utilize this method to read the bytes from the
-	 * appropriate memory bank. 
+	 * appropriate memory bank.
 	 * @param val the byte values to be written into the MemoryState
 	 * @param spc the address space being written
 	 * @param off the starting offset of the range being written
@@ -359,7 +359,7 @@ public class MemoryState {
 	 * write is forwarded to the setInitialized method on the MemoryBank. If there is no
 	 * registered MemoryBank or some other error, an exception  is throw.
 	 * All setValue methods utilize this method to read the bytes from the
-	 * appropriate memory bank. 
+	 * appropriate memory bank.
 	 * @param initialized indicates if range should be marked as initialized or not
 	 * @param spc the address space being written
 	 * @param off the starting offset of the range being written

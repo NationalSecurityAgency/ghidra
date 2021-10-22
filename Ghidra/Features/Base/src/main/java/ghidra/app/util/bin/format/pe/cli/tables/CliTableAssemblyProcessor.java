@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,11 @@ import ghidra.program.model.data.*;
 public class CliTableAssemblyProcessor extends CliAbstractTable {
 	public class CliAssemblyProcessorRow extends CliAbstractTableRow {
 		public int processor;
-		
+
 		public CliAssemblyProcessorRow(int processor) {
 			this.processor = processor;
 		}
-		
+
 		@Override
 		public String getRepresentation() {
 			return String.format("Processor %d", processor);
@@ -48,7 +48,7 @@ public class CliTableAssemblyProcessor extends CliAbstractTable {
 	public DataType getRowDataType() {
 		return toDataType();
 	}
-	
+
 	@Override
 	public DataType toDataType() {
 		Structure rowDt = new StructureDataType(new CategoryPath(PATH), "AssemblyProcessor Row", 0);

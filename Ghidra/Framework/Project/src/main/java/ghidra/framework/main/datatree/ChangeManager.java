@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -142,7 +142,7 @@ class ChangeManager implements DomainFolderChangeListener {
 
 //    @Override
 //    public void domainFileSaved(DomainFile file, DomainObject dobj) {
-//    	treePanel.getActionManager().adjustActions();	
+//    	treePanel.getActionManager().adjustActions();
 //    }
 
 	@Override
@@ -174,7 +174,7 @@ class ChangeManager implements DomainFolderChangeListener {
 		DomainFolderNode folderNode = root;
 		for (String name : folderPath) {
 			if (lazy && !folderNode.isLoaded()) {
-				return null; // not visited 
+				return null; // not visited
 			}
 			// must look at all children since a folder and file may have the same name
 			boolean found = false;
@@ -201,7 +201,7 @@ class ChangeManager implements DomainFolderChangeListener {
 //			return null;
 //		}
 //		if (lazy && !folderNode.isChildrenLoadedOrInProgress()) {
-//			return null; // not visited 
+//			return null; // not visited
 //		}
 //		GTreeNode child = folderNode.getChild(name);
 //		if (child instanceof DomainFileNode) {
@@ -216,7 +216,7 @@ class ChangeManager implements DomainFolderChangeListener {
 			return null;
 		}
 		if (lazy && !folderNode.isLoaded()) {
-			return null; // not visited 
+			return null; // not visited
 		}
 
 		GTreeNode child = folderNode.getChild(domainFile.getName());

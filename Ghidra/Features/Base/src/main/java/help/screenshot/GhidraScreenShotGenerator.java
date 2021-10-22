@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,7 +63,7 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 		}
 	}
 
-	/** 
+	/**
 	 * Generally, you shouldn't use this.  This is only visible for those who do not directly
 	 * extend this class.
 	 */
@@ -179,10 +179,10 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 	}
 
 	/**
-	 * Call when you are finished generating a new image.  This method will either show the 
-	 * newly created image or write it to disk, depending upon the value of 
+	 * Call when you are finished generating a new image.  This method will either show the
+	 * newly created image or write it to disk, depending upon the value of
 	 * {@link #SAVE_CREATED_IMAGE_FILE}, which is a system property.
-	 * 
+	 *
 	 * @param helpTopic The help topic that contains the image
 	 * @param oldImageName  The name of the image
 	 */
@@ -287,8 +287,8 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 	}
 
 	/**
-	 * @deprecated use instead {@link #finished(File, String)}.  
-	 * 
+	 * @deprecated use instead {@link #finished(File, String)}.
+	 *
 	 * @param helpTopic The help topic that contains the image
 	 * @param oldImageName  The name of the image
 	 */
@@ -298,8 +298,8 @@ public abstract class GhidraScreenShotGenerator extends AbstractScreenShotGenera
 	}
 
 	/**
-	 * @deprecated use instead {@link #finished(File, String)}.  
-	 * 
+	 * @deprecated use instead {@link #finished(File, String)}.
+	 *
 	 * @param helpTopic The help topic that contains the image
 	 * @param imageName  The name of the image
 	 */

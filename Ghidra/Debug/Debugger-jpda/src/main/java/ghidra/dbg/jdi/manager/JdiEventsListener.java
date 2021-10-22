@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A different vm has been selected (gained focus)
-	 * 
+	 *
 	 * @param vm a handle to the selected vm
 	 * @param cause the cause of this event
 	 */
@@ -35,7 +35,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A different thread has been selected (gained focus)
-	 * 
+	 *
 	 * @param thread a handle to the selected thread
 	 * @param frame a handle to the current frame
 	 * @param cause the cause of this event
@@ -44,7 +44,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A library has been loaded by an vm
-	 * 
+	 *
 	 * @param vm a handle to the vm which loaded the library
 	 * @param name the name of the library on the target
 	 * @param cause the cause of this event
@@ -53,7 +53,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A library has been unloaded from an vm
-	 * 
+	 *
 	 * @param vm a handle to the vm which unloaded the library
 	 * @param name the name of the library on the target
 	 * @param cause the cause of this event
@@ -62,7 +62,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A breakpoint has been created in the session
-	 * 
+	 *
 	 * @param info information about the new breakpoint
 	 * @param cause the cause of this event
 	 */
@@ -70,7 +70,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A breakpoint in the session has been modified
-	 * 
+	 *
 	 * @param newInfo new information about the modified breakpoint
 	 * @param oldInfo old information about the modified breakpoint
 	 * @param cause the cause of this event
@@ -79,7 +79,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A breakpoint has been deleted from the session
-	 * 
+	 *
 	 * @param info information about the now-deleted breakpoint
 	 * @param cause the cause of this event
 	 */
@@ -87,10 +87,10 @@ public interface JdiEventsListener {
 
 	/**
 	 * TODO: This is not yet implemented
-	 * 
+	 *
 	 * It is not clear whether JDI detects when a target writes into its own memory, or if this
 	 * event is emitted when JDI changes the target's memory, or both.
-	 * 
+	 *
 	 * @param vm the vm whose memory changed
 	 * @param addr the address of the change
 	 * @param len the length, with the address, bounding the region of change
@@ -102,7 +102,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A breakpoint has been hit
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -110,7 +110,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * An exception has been hit
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -118,7 +118,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A method has been invoked
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -126,14 +126,14 @@ public interface JdiEventsListener {
 
 	/**
 	 * A method is about to finish
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
 	void methodExit(MethodExitEvent evt, JdiCause cause);
 
 	/**
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -141,7 +141,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A calls is being unloaded
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -149,7 +149,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A thread has entered a monitor after release from another thread
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -157,7 +157,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A thread is attempting to enter monitor acquired by another thread
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -165,7 +165,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A vm has finished waiting on a monitor object
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -173,7 +173,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A vm is about to wait on a monitor object
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -181,7 +181,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A step has completed
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -189,7 +189,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A watchpoint has been hit
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -197,7 +197,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A field has been accessed
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -205,7 +205,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A field has been modified
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -213,7 +213,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A thread has exited
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -221,7 +221,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A thread has started
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -229,7 +229,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A thread has changed state
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -238,7 +238,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A vm has exited
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -246,7 +246,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A vm has been disconnected
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */
@@ -254,7 +254,7 @@ public interface JdiEventsListener {
 
 	/**
 	 * A vm has started
-	 * 
+	 *
 	 * @param evt the triggering event
 	 * @param cause the cause of this event
 	 */

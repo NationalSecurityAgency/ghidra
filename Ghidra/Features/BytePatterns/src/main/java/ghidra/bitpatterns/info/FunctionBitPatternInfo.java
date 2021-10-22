@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,7 +80,7 @@ public class FunctionBitPatternInfo {
 	public FunctionBitPatternInfo(Program program, Function func, DataGatheringParams params) {
 		Listing listing = program.getListing();
 		//if specified, create ContextRegisterInfo objects for each context register
-		//TODO: do this at the end and add the contextRegisterInfo to the 
+		//TODO: do this at the end and add the contextRegisterInfo to the
 		if (params.getContextRegisters() != null) {
 			contextRegisters =
 				recordContextRegisterInfo(program, func, params.getContextRegisters());
@@ -234,7 +234,7 @@ public class FunctionBitPatternInfo {
 						break;
 					}
 					//if validAddresses is not null, check that the address is
-					//in validAddresses 
+					//in validAddresses
 					if (validAddresses != null) {
 						Address preInstStart = preInstruction.getAddress();
 						if (!validAddresses.contains(preInstStart)) {
@@ -377,7 +377,7 @@ public class FunctionBitPatternInfo {
 
 	/**
 	 * Set the sequence of first instructions of the function
-	 * 
+	 *
 	 * @param firstInst
 	 */
 	public void setFirstInst(InstructionSequence firstInst) {
@@ -394,7 +394,7 @@ public class FunctionBitPatternInfo {
 
 	/**
 	 * Set the sequence of instructions immediately before the function
-	 * @param preInst pre-instructions 
+	 * @param preInst pre-instructions
 	 */
 	public void setPreInst(InstructionSequence preInst) {
 		this.preInst = preInst;
@@ -449,7 +449,7 @@ public class FunctionBitPatternInfo {
 	}
 
 	/**
-	 * Get the {@link String} representations of the bytes immediately before (and including) 
+	 * Get the {@link String} representations of the bytes immediately before (and including)
 	 * a return instruction.
 	 * @return byte strings
 	 */
@@ -500,7 +500,7 @@ public class FunctionBitPatternInfo {
 
 	/**
 	 * Converts a XML element into a FunctionBitPatternInfo object.
-	 * 
+	 *
 	 * @param e xml {@link Element} to convert
 	 * @return new {@link FunctionBitPatternInfo} object, never null
 	 */
@@ -537,7 +537,7 @@ public class FunctionBitPatternInfo {
 				contextRegisters.add(ContextRegisterInfo.fromXml(criElement));
 			}
 		}
-		
+
 		FunctionBitPatternInfo result = new FunctionBitPatternInfo();
 		result.setPreBytes(preBytes);
 		result.setFirstBytes(firstBytes);
@@ -553,7 +553,7 @@ public class FunctionBitPatternInfo {
 
 	/**
 	 * Converts this object instance into XML.
-	 * 
+	 *
 	 * @return new jdom Element populated with all the datas
 	 */
 	public Element toXml() {

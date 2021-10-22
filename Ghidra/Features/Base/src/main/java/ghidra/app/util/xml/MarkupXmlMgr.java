@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -139,12 +139,12 @@ class MarkupXmlMgr {
 		//CodeUnit destCu = program.getListing().getCodeUnitAt(toAddr);
 		//if (srcCu instanceof Instruction) {
 		//	Instruction instr = (Instruction)srcCu;
-		//	
+		//
 		//	// Use FlowType of instruction if reference to another instruction
 		//	if (destCu instanceof Instruction) {
 		//		refType = instr.getFlowType();
 		//	}
-		//	
+		//
 		//	// Otherwise, use default operand reference type if operand specified
 		//	else if (opIndex != CodeUnit.MNEMONIC){
 		//		refType = instr.getOperandRefType(opIndex);

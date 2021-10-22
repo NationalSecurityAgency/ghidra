@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,8 +50,8 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
 	/*
 	 	Map of Maps of Sets
-	 	
-	 	Owner Name -> 
+
+	 	Owner Name ->
 	 		Action Name -> Set of Actions
 	 */
 	private Map<String, Map<String, Set<DockingActionIf>>> actionsByNameByOwner = LazyMap.lazyMap(
@@ -67,7 +67,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
 	/**
 	 * Construct an ActionManager
-	 * 
+	 *
 	 * @param tool tool using this ActionManager
 	 * @param actionToGuiHelper the class that takes actions and maps them to GUI widgets
 	 */
@@ -117,7 +117,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	}
 
 	/**
-	 * Add an action that works specifically with a component provider. 
+	 * Add an action that works specifically with a component provider.
 	 * @param provider provider associated with the action
 	 * @param action local action to the provider
 	 */
@@ -300,7 +300,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	}
 
 	/**
-	 * Get the keybindings for each action so that they are still registered as being used; 
+	 * Get the keybindings for each action so that they are still registered as being used;
 	 * otherwise the options will be removed because they are noted as not being used.
 	 */
 	public synchronized void restoreKeyBindings() {
@@ -323,7 +323,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	}
 
 	/**
-	 * Remove an action that works specifically with a component provider. 
+	 * Remove an action that works specifically with a component provider.
 	 * @param provider provider associated with the action
 	 * @param action local action to the provider
 	 */
@@ -371,7 +371,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	private void updateKeyBindingsFromOptions(ToolOptions options, String optionName,
 			KeyStroke newKs) {
 
-		// note: the 'shared actions' update themselves, so we only need to handle standard actions 
+		// note: the 'shared actions' update themselves, so we only need to handle standard actions
 
 		Matcher matcher = ACTION_NAME_PATTERN.matcher(optionName);
 		matcher.find();
@@ -396,7 +396,7 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 
 		DockingActionIf action = (DockingActionIf) evt.getSource();
 		if (!action.getKeyBindingType().isManaged()) {
-			// this reads unusually, but we need to notify the tool to rebuild its 'Window' menu 
+			// this reads unusually, but we need to notify the tool to rebuild its 'Window' menu
 			// in the case that this action is one of the tool's special actions
 			keyBindingsChanged();
 			return;
@@ -443,13 +443,13 @@ public class ToolActions implements DockingToolActions, PropertyChangeListener {
 	}
 
 	/**
-	 * Allows clients to register an action by using a placeholder.  This is useful when 
+	 * Allows clients to register an action by using a placeholder.  This is useful when
 	 * an API wishes to have a central object (like a plugin) register actions for transient
 	 * providers, that may not be loaded until needed.
-	 * 
+	 *
 	 * <p>This method may be called multiple times with the same conceptual placeholder--the
 	 * placeholder will only be added once.
-	 * 
+	 *
 	 * @param placeholder the placeholder containing information related to the action it represents
 	 */
 	@Override

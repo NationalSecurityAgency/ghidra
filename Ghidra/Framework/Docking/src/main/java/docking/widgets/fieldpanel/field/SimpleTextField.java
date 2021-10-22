@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,7 +79,7 @@ public class SimpleTextField implements Field {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see docking.widgets.fieldpanel.field.Field#getWidth()
 	 */
 	@Override
@@ -93,7 +93,7 @@ public class SimpleTextField implements Field {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see docking.widgets.fieldpanel.field.Field#getHeight()
 	 */
 	@Override
@@ -102,7 +102,7 @@ public class SimpleTextField implements Field {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see docking.widgets.fieldpanel.field.Field#getStartX()
 	 */
 	@Override
@@ -116,7 +116,7 @@ public class SimpleTextField implements Field {
 	}
 
 	/**
-	* 
+	*
 	* @see docking.widgets.fieldpanel.field.Field#getNumRows()
 	*/
 	@Override
@@ -125,7 +125,7 @@ public class SimpleTextField implements Field {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see docking.widgets.fieldpanel.field.Field#getNumCols(int)
 	 */
 	@Override
@@ -134,7 +134,7 @@ public class SimpleTextField implements Field {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see docking.widgets.fieldpanel.field.Field#getRow(int)
 	 */
 	@Override
@@ -143,7 +143,7 @@ public class SimpleTextField implements Field {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see docking.widgets.fieldpanel.field.Field#getCol(int, int)
 	 */
 	@Override
@@ -162,7 +162,7 @@ public class SimpleTextField implements Field {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see docking.widgets.fieldpanel.field.Field#getY(int)
 	 */
 	@Override
@@ -171,7 +171,7 @@ public class SimpleTextField implements Field {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see docking.widgets.fieldpanel.field.Field#getX(int, int)
 	 */
 	@Override
@@ -187,7 +187,7 @@ public class SimpleTextField implements Field {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see docking.widgets.fieldpanel.field.Field#isValid(int, int)
 	 */
 	@Override
@@ -285,7 +285,7 @@ public class SimpleTextField implements Field {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see docking.widgets.fieldpanel.field.Field#contains(int, int)
 	 */
 	@Override
@@ -316,7 +316,7 @@ public class SimpleTextField implements Field {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see docking.widgets.fieldpanel.field.Field#getScrollableUnitIncrement(int, int, int)
 	 */
 	@Override

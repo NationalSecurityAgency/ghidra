@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ public final class DWARFSectionNames {
 	public static final String DEBUG_PUBNAMES = "debug_pubnames";
 	public static final String DEBUG_PUBTYPES = "debug_pubtypes";
 	public static final String DEBUG_MACINFO = "debug_macinfo";
-	
+
 	public static final String[] MINIMAL_DWARF_SECTIONS = { DEBUG_INFO, DEBUG_ABBREV };
 
 }

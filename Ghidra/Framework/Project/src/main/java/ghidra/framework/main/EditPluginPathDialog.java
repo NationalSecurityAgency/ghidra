@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,13 +44,13 @@ import ghidra.util.filechooser.GhidraFileFilter;
 
 /**
  * Dialog for editing the Plugin path and Jar directory path preferences.
- * 
+ *
  * <p>The Plugin Path and Jar directory path are locations where Ghidra searches
  * for plugins to load. The Plugin Path is specified exactly as a Java Classpath
- * is specified.  When changes are made to these fields in the dialog, the 
+ * is specified.  When changes are made to these fields in the dialog, the
  * preferences file is updated and written to disk. The preferences file is
  * located in the .ghidra directory in the user's home directory.
- * 
+ *
  */
 class EditPluginPathDialog extends DialogComponentProvider {
 

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,14 +25,14 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * The Language Specific Data Area (LSDA) serves as a reference to the runtime for how to 
- * respond to an exception. Each function that handles an exception (that is, has a 'catch' 
+ * The Language Specific Data Area (LSDA) serves as a reference to the runtime for how to
+ * respond to an exception. Each function that handles an exception (that is, has a 'catch'
  * block) has an LSDA, and each exception-prone fragment has a record within the LSDA.
- * The runtime will walk up the call stack as part of the Unwind routines, asking the LSDA 
- * if a function knows how to handle the thrown exception;the default handler typically 
- * terminates the program. 
+ * The runtime will walk up the call stack as part of the Unwind routines, asking the LSDA
+ * if a function knows how to handle the thrown exception;the default handler typically
+ * terminates the program.
  * <p>
- * Unwind uses the personality function and the LSDA -- the return value tells Unwind whether 
+ * Unwind uses the personality function and the LSDA -- the return value tells Unwind whether
  * the function can handle the exception or not.
  * <p>
  *   The LSDA is comprised of:
@@ -43,7 +43,7 @@ import ghidra.util.task.TaskMonitor;
  *     a corresponding catch block resides, and the actions to take.
  *   <li>An action table, that describes what the runtime needs to do during unwind
  *   </ul>
- * <p>  
+ * <p>
  * The structures modeled here are described in detail in the C++ ABI.
  */
 
@@ -60,8 +60,8 @@ public class LSDATable {
 
 	/**
 	 * Constructor for an LSDA exception table.
-	 * <br>Note: The <code>create(Address, DwarfEHDecoder, RegionDescriptor)</code> method must be 
-	 * called after constructing an LSDATable to associate it with an address before any of 
+	 * <br>Note: The <code>create(Address, DwarfEHDecoder, RegionDescriptor)</code> method must be
+	 * called after constructing an LSDATable to associate it with an address before any of
 	 * its "get..." methods are called.
 	 * @param monitor task monitor to see if the user has cancelled analysis
 	 * @param program the program containing the table

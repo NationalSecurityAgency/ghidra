@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -141,7 +141,7 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 
 		Component component = event.getComponent();
 		if (!component.isShowing()) {
-			// This can happen since we are using a timer.  When the timer fires, the source 
+			// This can happen since we are using a timer.  When the timer fires, the source
 			// component may have been hidden.
 			return;
 		}
@@ -193,14 +193,14 @@ public abstract class AbstractHoverProvider implements HoverProvider {
 		}
 		else {
 
-			// 
+			//
 			// Make an area over which to show the popup.   The popup should not cover this area.
-			// The field that is hovered may be too big to be this area, as a big field may cause 
+			// The field that is hovered may be too big to be this area, as a big field may cause
 			// the popup to be too far away from the cursor.
 			//
 			// Use the mouse point and then create an area (based on trial-and-error) that should
-			// not be occluded. 
-			// 
+			// not be occluded.
+			//
 			int horizontalPad = 100;
 			int verticalPad = 50;
 			Rectangle keepVisibleArea = new Rectangle(event.getPoint());

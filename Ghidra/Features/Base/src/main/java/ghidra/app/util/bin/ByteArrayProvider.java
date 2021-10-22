@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public class ByteArrayProvider implements ByteProvider {
 
 	/**
 	 * Constructs a {@link ByteArrayProvider} using the specified byte array
-	 * 
+	 *
 	 * @param bytes the underlying byte array
 	 */
 	public ByteArrayProvider(byte[] bytes) {
@@ -41,7 +41,7 @@ public class ByteArrayProvider implements ByteProvider {
 
 	/**
 	 * Constructs a {@link ByteArrayProvider} using the specified byte array
-	 * 
+	 *
 	 * @param bytes the underlying byte array
 	 * @param fsrl FSRL identity of the file
 	 */
@@ -52,8 +52,8 @@ public class ByteArrayProvider implements ByteProvider {
 
 	/**
 	 * Constructs a {@link ByteArrayProvider} using the specified byte array
-	 * 
-	 * @param name the name of the {@link ByteProvider} 
+	 *
+	 * @param name the name of the {@link ByteProvider}
 	 * @param bytes the underlying byte array
 	 */
 	public ByteArrayProvider(String name, byte[] bytes) {
@@ -70,7 +70,7 @@ public class ByteArrayProvider implements ByteProvider {
 	 * Releases the byte storage of this instance.
 	 * <p>
 	 * This is separate from the normal close() to avoid changing existing
-	 * behavior of this class. 
+	 * behavior of this class.
 	 */
 	public void hardClose() {
 		srcBytes = new byte[0];

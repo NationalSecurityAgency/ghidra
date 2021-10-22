@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -92,7 +92,7 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 	private SwingUpdateManager swingMgr;
 
 	/**
-	 * A worker that will process domain object change event work off of the Swing thread.  This 
+	 * A worker that will process domain object change event work off of the Swing thread.  This
 	 * solves the issue of db lock contention that can happen during analysis while this class
 	 * attempts to get symbols from the db while processing a flurry of domain events.
 	 */
@@ -545,15 +545,15 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 				return;
 			}
 
-			// Note: this code *should* be checking the entire address range to handle the case 
+			// Note: this code *should* be checking the entire address range to handle the case
 			//       where large address range was cleared.   This implementation will handle the
 			//       case where individual code units are cleared.  This feature has been this way
 			//       for many years.   The assumption is that most users are not showing dynamic
-			//       symbols often, especially not when performing analysis or clearing large 
+			//       symbols often, especially not when performing analysis or clearing large
 			//       address ranges.    Checking each address of the changed range is very slow.
 			//       This code will need to be updated in the future if we decide updating the
 			//       dynamic symbols in the symbol table is worth the cost.  For now, if the table
-			//       becomes out-of-date, then user can simply close and re-open the table to 
+			//       becomes out-of-date, then user can simply close and re-open the table to
 			//       trigger an update.
 			SymbolTable symbolTable = currentProgram.getSymbolTable();
 			Symbol symbol = symbolTable.getPrimarySymbol(start);
@@ -638,7 +638,7 @@ public class SymbolTablePlugin extends Plugin implements DomainObjectListener {
 		protected void doRun() {
 
 			// Note: should not need this check--the provider should be built to handle this
-			// if (symbol.checkIsValid()) 
+			// if (symbol.checkIsValid())
 			symProvider.symbolChanged(symbol);
 			refProvider.symbolChanged(symbol);
 		}

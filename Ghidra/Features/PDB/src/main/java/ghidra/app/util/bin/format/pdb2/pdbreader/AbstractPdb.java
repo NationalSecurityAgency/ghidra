@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -141,7 +141,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	}
 
 	/**
-	 * Returns the main {@link PdbIdentifiers} found in the PDB Directory. 
+	 * Returns the main {@link PdbIdentifiers} found in the PDB Directory.
 	 * @return {@link PdbIdentifiers} of information.
 	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes.
@@ -151,7 +151,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 		parseDBI();
 		if (debugInfo != null) {
 			try {
-				// dbiAge and targetProcessor set during deserialization of new DBI header 
+				// dbiAge and targetProcessor set during deserialization of new DBI header
 				debugInfo.deserialize(true, TaskMonitor.DUMMY);
 			}
 			catch (CancelledException e) {
@@ -281,7 +281,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	// TODO: this method should be package protected
 	public void setTargetProcessor(Processor targetProcessorIn) {
 		/**
-		 * Should we allow an overwrite?  The {@link PdbNewDebugInfo} value (mapped from 
+		 * Should we allow an overwrite?  The {@link PdbNewDebugInfo} value (mapped from
 		 * {@link ImageFileMachine}) should be processed and laid down first.  Subsequent values
 		 * can come from {@link AbstractCompile2MsSymbol} and {@link Compile3MsSymbol}.  Note:
 		 * {@link PdbDebugInfo} does not carry {@link ImageFileMachine}, and thus no mapping
@@ -312,7 +312,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	/**
 	 * Returns the ItemProgramInterface (of type {@link AbstractTypeProgramInterface})
 	 *  component.
-	 * @return ItemProgramInterface (of type {@link AbstractTypeProgramInterface}) component 
+	 * @return ItemProgramInterface (of type {@link AbstractTypeProgramInterface}) component
 	 * or null if not available.
 	 */
 	public AbstractTypeProgramInterface getItemProgramInterface() {
@@ -441,7 +441,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @return Version number.
 	 * @throws IOException on file I/O issues.
-	 * @throws PdbException on parsing issues. 
+	 * @throws PdbException on parsing issues.
 	 * @throws CancelledException Upon user cancellation.
 	 */
 	static int deserializeVersionNumber(AbstractMsf msf, TaskMonitor monitor)
@@ -476,7 +476,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 
 	/**
 	 * Deserializes the main {@link PdbIdentifiers} found in the PDB Directory from the
-	 *  {@link PdbByteReader}. 
+	 *  {@link PdbByteReader}.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes.
@@ -494,7 +494,7 @@ public abstract class AbstractPdb implements AutoCloseable {
 		return msf;
 	}
 
-	//TODO  Not sure if we will keep this method or if more gets added to it. 
+	//TODO  Not sure if we will keep this method or if more gets added to it.
 	/**
 	 * Deserializes the sub-streams for this {@link AbstractPdb} object.
 	 * @param monitor {@link TaskMonitor} used for checking cancellation.

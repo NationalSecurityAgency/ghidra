@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * <code>UserManager</code> manages the set of users associated with a running GhidraServer.
- * Support is also provided for managing and authenticating local user passwords when 
+ * Support is also provided for managing and authenticating local user passwords when
  * needed.
  */
 public class UserManager {
@@ -72,9 +72,9 @@ public class UserManager {
 	/**
 	 * Construct server user manager
 	 * @param repositoryMgr repository manager (used for queued command processing)
-	 * @param enableLocalPasswords if true user passwords will be maintained 
+	 * @param enableLocalPasswords if true user passwords will be maintained
 	 * 			within local 'users' file
-	 * @param defaultPasswordExpirationDays password expiration in days when 
+	 * @param defaultPasswordExpirationDays password expiration in days when
 	 * 			local passwords are enabled (0 = no expiration)
 	 */
 	UserManager(RepositoryManager repositoryMgr, boolean enableLocalPasswords,
@@ -370,7 +370,7 @@ public class UserManager {
 	}
 
 	/**
-	 * Returns the amount of time in milliseconds until the 
+	 * Returns the amount of time in milliseconds until the
 	 * user's password will expire.
 	 * @param username user name
 	 * @return time until expiration or -1 if it will not expire
@@ -390,7 +390,7 @@ public class UserManager {
 	}
 
 	/**
-	 * Returns the amount of time in milliseconds until the 
+	 * Returns the amount of time in milliseconds until the
 	 * user's password will expire.
 	 * @param user user entry
 	 * @return time until expiration or -1 if it will not expire
@@ -512,7 +512,7 @@ public class UserManager {
 
 	/**
 	 * Read user data from file if the timestamp on the file has changed.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	private void readUserListIfNeeded() throws IOException {
@@ -764,7 +764,7 @@ public class UserManager {
 
 	/**
 	 * Ensures a name only contains valid characters and meets length limitations.
-	 * 
+	 *
 	 * @param s name string
 	 * @return boolean true if valid name, false if not valid
 	 */

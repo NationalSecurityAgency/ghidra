@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public class CondenseFillerBytes extends GhidraScript {
 		}
 		println("filler byte chosen: " + filler);
 
-		// Create array of minBytes length initialized to fillerByte    	    	    	
+		// Create array of minBytes length initialized to fillerByte
 		byte[] targetFillerBytes = new byte[minBytes];
 		byte fillerByte = Integer.decode(filler).byteValue();
 		Arrays.fill(targetFillerBytes, fillerByte);
@@ -77,7 +77,7 @@ public class CondenseFillerBytes extends GhidraScript {
 				continue;
 			}
 
-			// Check has min run length		
+			// Check has min run length
 			memory.getBytes(fillerAddr, prgmFillerBytes);
 			if (Arrays.equals(prgmFillerBytes, targetFillerBytes)) {
 
@@ -97,9 +97,9 @@ public class CondenseFillerBytes extends GhidraScript {
 					++fillerLen;
 				}
 
-				// Check if immediate data after filler bytes is undefined				
+				// Check if immediate data after filler bytes is undefined
 				if (listing.isUndefined(fillerAddr.add(fillerLen), fillerAddr.add(fillerLen))) {
-					// Not in between defined data/instructions, add to list										
+					// Not in between defined data/instructions, add to list
 					possibleAddrSet.add(fillerAddr);
 
 					println("*** Possible Alignment datatype at " + fillerAddr.toString());
@@ -126,7 +126,7 @@ public class CondenseFillerBytes extends GhidraScript {
 	/**
 	 * This function tries to determine the fill value used by the current program.
 	 * The byte value occurring most is the winner.
-	 * 
+	 *
 	 * @return filler
 	 * @throws Exception
 	 */
@@ -160,7 +160,7 @@ public class CondenseFillerBytes extends GhidraScript {
 
 		println("Possible filler values (and their counts): " + fillValuesHash.toString());
 
-		// Decide that filler value is the one with the greatest count				
+		// Decide that filler value is the one with the greatest count
 		String filler = getValueWithHighestCount(fillValuesHash);
 
 		return filler;

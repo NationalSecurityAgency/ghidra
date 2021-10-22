@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import java.math.BigInteger;
 
 /**
  * <code>MemoryStateBuffer</code> provides a MemBuffer for instruction parsing use
- * which wraps an emulator MemoryState.  This implementation wraps all specified 
+ * which wraps an emulator MemoryState.  This implementation wraps all specified
  * memory offsets within the associated address space.
  */
 public class EmulateMemoryStateBuffer implements MemBuffer {
@@ -54,8 +54,8 @@ public class EmulateMemoryStateBuffer implements MemBuffer {
 	}
 
 	/**
-	 * Determine if request is valid and compute wrapped memory offset relative to 
-	 * current buffer address.  A request is invalid if too close to the end of the 
+	 * Determine if request is valid and compute wrapped memory offset relative to
+	 * current buffer address.  A request is invalid if too close to the end of the
 	 * memory space to read the requested number of bytes.
 	 * @param offset relative offset
 	 * @param size read request size

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -114,10 +114,10 @@ public class FieldInfoJava implements StructConverter {
 	 * <p>
 	 * The attributes defined by this specification as appearing
 	 * in the attributes table of a field_info structure are
-	 * 		ConstantValue, 
-	 * 		Synthetic, 
+	 * 		ConstantValue,
+	 * 		Synthetic,
 	 * 		Signature,
-	 * 		Deprecated, 
+	 * 		Deprecated,
 	 * 		RuntimeVisibleAnnotations and
 	 * 		RuntimeInvisibleAnnotations.
 	 * <p>

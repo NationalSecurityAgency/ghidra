@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
+//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS.
 package classrecovery;
 
 import java.util.*;
@@ -211,7 +211,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			return null;
 		}
 
-		// try demangling all the symbols at this address	
+		// try demangling all the symbols at this address
 		Symbol[] vtableSymbols = symbolTable.getSymbols(addressContainingBothStrings);
 		for (Symbol vtableSymbol : vtableSymbols) {
 			DemanglerCmd cmd =
@@ -252,7 +252,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		List<Symbol> typeinfoSymbols = extraUtils.getListOfSymbolsInAddressSet(
 			program.getAddressFactory().getAddressSet(), "typeinfo", true);
 
-		// create class objects for each typeinfo struct and make a class to typeinfo mapping for each		
+		// create class objects for each typeinfo struct and make a class to typeinfo mapping for each
 		createClassesFromTypeinfoSymbols(typeinfoSymbols);
 
 		updateClassesWithParentsAndFlags(typeinfoSymbols);
@@ -286,7 +286,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	private void updateClassesWithParentsAndFlags(List<Symbol> typeinfoSymbols)
 			throws Exception {
 
-		// add properties and parents to each class 
+		// add properties and parents to each class
 		Iterator<Symbol> typeinfoIterator = typeinfoSymbols.iterator();
 		while (typeinfoIterator.hasNext()) {
 
@@ -295,7 +295,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			Symbol typeinfoSymbol = typeinfoIterator.next();
 			Address typeinfoAddress = typeinfoSymbol.getAddress();
 
-			// skip the typeinfo symbols from the three special typeinfos 
+			// skip the typeinfo symbols from the three special typeinfos
 			if (typeinfoAddress.equals(class_type_info) ||
 				typeinfoAddress.equals(si_class_type_info) ||
 				typeinfoAddress.equals(vmi_class_type_info)) {
@@ -556,7 +556,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			return null;
 		}
 
-		// check for appropriately sized long that is value 0 to make sure the 
+		// check for appropriately sized long that is value 0 to make sure the
 		// vtable the typeinfo ref is in is the main one and skip otherwise since non-zero
 		// ones are internal vtables that will get processed with the main one
 		if (!extraUtils.hasNumZeros(longBeforeTypeinfoRef, defaultPointerSize)) {
@@ -569,7 +569,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// stop if top of mem block
 		// stop if bytes are an address
 		// stop if referenced
-		// are they ever zero - not that i have seen so far in the last vftable 
+		// are they ever zero - not that i have seen so far in the last vftable
 		// if pointer to something or valid address
 		// or is in a structure
 		Address nextAddress = getAddress(vtableAddress, 0 - defaultPointerSize);
@@ -689,10 +689,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	/**
-	 * Method to add a search pattern, to the searcher, for the set of bytes representing a typeinfo 
+	 * Method to add a search pattern, to the searcher, for the set of bytes representing a typeinfo
 	 * address
 	 * @param searcher the MemoryBytePatternSearcher
-	 * @param typeinfoRefs a list typeinfo reference addresses that are not contained 
+	 * @param typeinfoRefs a list typeinfo reference addresses that are not contained
 	 * in a function, instruction, or a typeinfo structure
 	 * @param typeinfoAddress the given typeinfo address
 	 * @param bytes the bytes to search for
@@ -770,7 +770,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	/**
-	 * Method to create an appropriate type of vtable (primary, internal, or construction) and 
+	 * Method to create an appropriate type of vtable (primary, internal, or construction) and
 	 * an associated VTT, if applicable
 	 * @param vtableAddress the given vtable address
 	 * @param vtableNamespace the namespace of the given vtable
@@ -781,7 +781,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			List<Symbol> listOfAllVtables)
 			throws Exception {
 
-		// skip the special tables			
+		// skip the special tables
 		if (vtableAddress.equals(class_type_info_vtable) ||
 			vtableAddress.equals(si_class_type_info_vtable) ||
 			vtableAddress.equals(vmi_class_type_info_vtable)) {
@@ -1340,7 +1340,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	/**
-	 * Method to replace the array incorrectly placed at special vftable with longs followed by 
+	 * Method to replace the array incorrectly placed at special vftable with longs followed by
 	 * typeinfo label
 	 * @param vtableAddress the given special vtable address
 	 * @return the address of the typeinfo in the vtable if replace was successful, null otherwise
@@ -1394,7 +1394,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 			Address address = vtableAddress.add(offset);
 
-			// Except for the first one which should have a symbol, if there is a symbol at the 
+			// Except for the first one which should have a symbol, if there is a symbol at the
 			// address, stop making longs because it there are no references into the vtable longs
 			if (offset > 0 && symbolTable.getPrimarySymbol(address) != null) {
 				return numLongs;
@@ -1735,7 +1735,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			Symbol typeinfoSymbol = typeinfoIterator.next();
 			Address typeinfoAddress = typeinfoSymbol.getAddress();
 
-			// skip the typeinfo symbols from the three special typeinfos 
+			// skip the typeinfo symbols from the three special typeinfos
 			if (isSpecialTypeinfo(typeinfoAddress)) {
 				continue;
 			}
@@ -1856,7 +1856,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		separateInlinedConstructorDestructors(recoveredClasses);
 
 		// figure out which member functions are constructors and which are destructors
-		// using the order their parents are called		
+		// using the order their parents are called
 		processRegularConstructorsAndDestructorsUsingCallOrder(recoveredClasses);
 
 		// determine which of the inlines are constructors and which are destructors
@@ -1866,22 +1866,22 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		findInlineConstructorsAndDestructorsUsingRelatedClassFunctions(recoveredClasses);
 
-		// use the load/store information from decompiler to figure out as many of the 
+		// use the load/store information from decompiler to figure out as many of the
 		// ones that could not be determined in earlier stages
 		processRemainingIndeterminateConstructorsAndDestructors(recoveredClasses);
 
-		// use the known constructors and known vfunctions to figure out 
+		// use the known constructors and known vfunctions to figure out
 		// clone functions
 		//	findCloneFunctions(recoveredClasses);
 
 		// This has to be here. It needs all the info from the previously run methods to do this.
-		// Finds the constructors that have multiple basic blocks, reference the vftable not in the 
+		// Finds the constructors that have multiple basic blocks, reference the vftable not in the
 		// first block, and call non-parent constructors and non operator new before the vftable ref
 		//	findMoreInlinedConstructors(recoveredClasses);
 
 		//	findDestructorsWithNoParamsOrReturn(recoveredClasses);
 
-		// use vftables with references to all the same function (except possibly one deleting 
+		// use vftables with references to all the same function (except possibly one deleting
 		// destructor)to find the purecall function
 		//	identifyPureVirtualFunction(recoveredClasses);
 
@@ -1997,7 +1997,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	/**
 	 * Method to add parents to the given gcc class
 	 * @param recoveredClass the given class
-	 * @param typeinfoAddress the address of the typeinfo 
+	 * @param typeinfoAddress the address of the typeinfo
 	 * @return list of parents for the given class
 	 * @throws Exception if cannot access the given typeinfo structure, one of its components,  or it is not a vmi structure
 	 */
@@ -2104,7 +2104,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 			long publicVirtualOffsetFlag = value.getSignedValue();
 
-			//The low-order byte of __offset_flags contains flags, as given by the masks 
+			//The low-order byte of __offset_flags contains flags, as given by the masks
 			//from the enumeration __offset_flags_masks:
 
 			//0x1: Base class is virtual
@@ -2143,9 +2143,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			parentClass.setIsPublicClass(isPublic);
 
 			// from doc:
-			//All but the lower 8 bits of __offset_flags are a signed offset. For a 
-			//non-virtual base, this is the offset in the object of the base subobject. 
-			//For a virtual base, this is the offset in the virtual table of the 
+			//All but the lower 8 bits of __offset_flags are a signed offset. For a
+			//non-virtual base, this is the offset in the object of the base subobject.
+			//For a virtual base, this is the offset in the virtual table of the
 			//virtual base offset for the virtual base referenced (negative).
 			long offset = (publicVirtualOffsetFlag & offsetMask) >> 8;
 
@@ -2298,7 +2298,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		while (address != null && currentMemoryBlock.contains(address)) {
 
 			Symbol symbol = symbolTable.getPrimarySymbol(address);
-			// if the symbol we find is not a default symbol 
+			// if the symbol we find is not a default symbol
 			// because we have reached the end of the item we are searching
 			if (!address.equals(startAddress) && symbol != null &&
 				symbol.getSource() != SourceType.DEFAULT) {
@@ -2347,7 +2347,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			Namespace vtableNamespace = vtableSymbol.getParentNamespace();
 			Address vtableAddress = vtableSymbol.getAddress();
 
-			// skip the special tables			
+			// skip the special tables
 			if (vtableAddress.equals(class_type_info_vtable) ||
 				vtableAddress.equals(si_class_type_info_vtable) ||
 				vtableAddress.equals(vmi_class_type_info_vtable)) {
@@ -2420,7 +2420,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			Symbol typeinfoSymbol = typeinfoIterator.next();
 			Address typeinfoAddress = typeinfoSymbol.getAddress();
 
-			// skip the typeinfo symbols from the three special typeinfos 
+			// skip the typeinfo symbols from the three special typeinfos
 			if (isSpecialTypeinfo(typeinfoAddress)) {
 				continue;
 			}
@@ -2474,8 +2474,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 			}
 
-			// per docs those on this list 
-			// have no bases (ie parents), and is also a base type for the other two class type 
+			// per docs those on this list
+			// have no bases (ie parents), and is also a base type for the other two class type
 			// representations ie (si and vmi)
 			if (specialTypeinfoRef.equals(class_type_info) ||
 				specialTypeinfoRef.equals(class_type_info_vtable)) {
@@ -2502,7 +2502,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				specialTypeinfoRef.equals(vmi_class_type_info_vtable)) {
 
 				multiAndOrVirtuallyInheritedGccClasses.add(recoveredClass);
-				// not necessarily multiple - maybe just a single virtual ancestor or maybe a single 
+				// not necessarily multiple - maybe just a single virtual ancestor or maybe a single
 				// non-public one
 
 			}
@@ -2675,7 +2675,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	/**
-	 * Method to create a series of long data types from the given start address to the given end 
+	 * Method to create a series of long data types from the given start address to the given end
 	 * address
 	 * @param start the starting address
 	 * @param end the ending address
@@ -2750,7 +2750,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	/**
 	 * Method to determine if there are enough zeros to make a null poihnter and no references into
-	 * or out of the middle 
+	 * or out of the middle
 	 * @param address the given address
 	 * @return true if the given address could be a valid null pointer, false if not
 	 */
@@ -2893,7 +2893,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// then filled in later
 		Map<Address, DataType> vfPointerDataTypes = createEmptyVfTableStructs(recoveredClass);
 
-		// create current class structure and add pointer to vftable, all parent member data strutures, 
+		// create current class structure and add pointer to vftable, all parent member data strutures,
 		// and class member data structure
 		Structure classStruct = createSimpleClassStructure(recoveredClass, vfPointerDataTypes);
 
@@ -2918,7 +2918,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		// This is done after the class structure is created and added to the dtmanager
-		// because if done before the class structures are created 
+		// because if done before the class structures are created
 		// then empty classes will get auto-created in the wrong place
 		// when the vfunctions are put in the class
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,7 +55,7 @@ public class ReturnParameterImpl extends ParameterImpl {
 	 * prior to determining storage elements since their length may change)
 	 * @param stackOffset stack offset
 	 * @param program target program
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * address is specified, or unable to resolve storage element for specified datatype
 	 */
 	public ReturnParameterImpl(DataType dataType, int stackOffset, Program program)
@@ -70,7 +70,7 @@ public class ReturnParameterImpl extends ParameterImpl {
 	 * prior to determining storage elements since their length may change)
 	 * @param register storage register
 	 * @param program target program
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * address is specified, or unable to resolve storage element for specified datatype
 	 */
 	public ReturnParameterImpl(DataType dataType, Register register, Program program)
@@ -80,12 +80,12 @@ public class ReturnParameterImpl extends ParameterImpl {
 	}
 
 	/**
-	 * Construct a return parameter with a single varnode at the specified address.  
+	 * Construct a return parameter with a single varnode at the specified address.
 	 * @param dataType a fixed-length datatype.  (NOTE: Should be cloned to program datatype manager
 	 * prior to determining storage elements since their length may change)
 	 * @param storageAddr storage address or null if no storage has been identified
 	 * @param program target program
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * address is specified, or unable to resolve storage element for specified datatype
 	 */
 	public ReturnParameterImpl(DataType dataType, Address storageAddr, Program program)
@@ -101,7 +101,7 @@ public class ReturnParameterImpl extends ParameterImpl {
 	 * prior to determining storage elements since their length may change)
 	 * @param storage variable storage or null for unassigned storage
 	 * @param program target program
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * element is specified, or error while resolving storage element for specified datatype
 	 */
 	public ReturnParameterImpl(DataType dataType, VariableStorage storage, Program program)
@@ -117,7 +117,7 @@ public class ReturnParameterImpl extends ParameterImpl {
 	 * @param storage variable storage or null for unassigned storage
 	 * @param force if true storage will be forced even if incorrect size
 	 * @param program target program
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * element is specified, or error while resolving storage element for specified datatype
 	 */
 	public ReturnParameterImpl(DataType dataType, VariableStorage storage, boolean force,

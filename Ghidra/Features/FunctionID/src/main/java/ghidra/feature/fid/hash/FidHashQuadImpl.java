@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 package ghidra.feature.fid.hash;
 
 /**
- * Implementation container class for FidHashQuad. 
+ * Implementation container class for FidHashQuad.
  */
 class FidHashQuadImpl implements FidHashQuad {
 	final short codeUnitSize;
@@ -25,7 +25,7 @@ class FidHashQuadImpl implements FidHashQuad {
 	final long specificHash;
 
 	/**
-	 * Constructs a FidHashQuadImpl with the given values. 
+	 * Constructs a FidHashQuadImpl with the given values.
 	 * @param codeUnitSize the full hash size
 	 * @param fullHash the full hash
 	 * @param specificHashAdditionalSize the specific hash additional hash size

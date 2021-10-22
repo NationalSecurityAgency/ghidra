@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,7 +68,7 @@ public interface Mask {
 	* Apply the mask to a memory buffer.
 	*   @param buffer the memory buffer that contains the values to be masked
 	*   @return the resulting masked byte array.
-	* @exception MemoryAccessException thrown if mask exceeds the available data 
+	* @exception MemoryAccessException thrown if mask exceeds the available data
 	* within buffer
 	 */
 	byte[] applyMask(MemBuffer buffer) throws MemoryAccessException;
@@ -107,7 +107,7 @@ public interface Mask {
 	*/
 	boolean subMask(byte[] msk) throws IncompatibleMaskException;
 
-	/** 
+	/**
 	 * Returns the bytes that make up this mask.
 	 */
 	byte[] getBytes();

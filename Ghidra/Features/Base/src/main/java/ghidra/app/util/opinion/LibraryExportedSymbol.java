@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.app.util.opinion;
 
 /**
  * A class to represent an exported symbol in a library (or DLL).
- * 
+ *
  */
 class LibraryExportedSymbol {
 
@@ -79,9 +79,9 @@ class LibraryExportedSymbol {
 	 * to this exported symbol. The purge value
 	 * is the number of bytes purged from the stack
 	 * when the function returns.
-	 * 
+	 *
 	 * -2 purge value is used to prevent infinite loops in recursion.
-	 * 
+	 *
 	 * @return the purge value of the function or -1 (if unable to resolve the purge value)
 	 */
 	int getPurge() {
@@ -99,9 +99,9 @@ class LibraryExportedSymbol {
 	/**
 	 * Returns the No-Return value of the function related
 	 * to this exported symbol.
-	 * 
+	 *
 	 * -2 purge value is used to prevent infinite loops in recursion.
-	 * 
+	 *
 	 * @return the No-Return value of the function
 	 */
 	boolean hasNoReturn() {
@@ -119,7 +119,7 @@ class LibraryExportedSymbol {
 	/**
 	 * Attempt to get purge value and noReturn from forwarded entry.
 	 * If purge value is not -1, these values have already been retrieved.
-	 * 
+	 *
 	 * -2 purge value is used to prevent infinite loops in recursion.
 	 */
 	private synchronized void processForwardedEntry() {

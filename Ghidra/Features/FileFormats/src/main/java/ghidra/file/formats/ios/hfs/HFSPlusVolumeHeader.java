@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,29 +35,29 @@ public class HFSPlusVolumeHeader {
 	private int attributes;               // 4            4
 	private int lastMountedVersion;       // 8            4     '10.0' string
 	private int journalInfoBlock;         // C            4
-	
+
 	private int createDate;               // 10           4
 	private int modifyDate;               // 14           4
 	private int backupDate;               // 18           4
 	private int checkedDate;              // 1C           4
-	
+
 	private int fileCount;                // 20           4
 	private int folderCount;              // 24           4
-	
+
 	private int blockSize;                // 28           4     0x1000=4096
 	private int totalBlocks;              // 2C           4     blockSize*totalBlocks should equal vol size
 	private int freeBlocks;               // 30           4
-	
+
 	private int nextAllocation;           // 34           4
 	private int rsrcClumpSize;            // 38           4
 	private int dataClumpSize;            // 3C           4
-	private int nextCatalogID;            // 40           4 
-	
+	private int nextCatalogID;            // 40           4
+
 	private int writeCount;               // 44           4
 	private long encodingsBitmap;         // 48           8
-	
+
 	private int[] finderInfo;             // 50           32    uint32[8]
-	
+
 	private byte[] rawForkData;           // 70           400
     //HFSPlusForkData     allocationFile; // 70           80
     //HFSPlusForkData     extentsFile;    // C0           80
@@ -99,19 +99,19 @@ public class HFSPlusVolumeHeader {
 		result.attributes = reader.readNextInt();
 		result.lastMountedVersion = reader.readNextInt();
 		result.journalInfoBlock = reader.readNextInt();
-		
+
 		result.createDate = reader.readNextInt();
 		result.modifyDate = reader.readNextInt();
 		result.backupDate = reader.readNextInt();
 		result.checkedDate = reader.readNextInt();
-		
+
 		result.fileCount = reader.readNextInt();
 		result.folderCount = reader.readNextInt();
-		
+
 		result.blockSize = reader.readNextInt();
 		result.totalBlocks = reader.readNextInt();
 		result.freeBlocks = reader.readNextInt();
-		
+
 		result.nextAllocation = reader.readNextInt();
 		result.rsrcClumpSize = reader.readNextInt();
 		result.dataClumpSize = reader.readNextInt();

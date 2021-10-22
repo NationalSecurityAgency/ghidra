@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,9 +39,9 @@ public class ApplicationVersion implements Comparable<ApplicationVersion> {
 
 	/**
 	 * Creates a new {@link ApplicationVersion} object from the given version string.
-	 * 
+	 *
 	 * @param version A version string.
-	 * @throws IllegalArgumentException if the version string failed to parse.  The 
+	 * @throws IllegalArgumentException if the version string failed to parse.  The
 	 *   exception's message has more detailed information about why it failed.
 	 */
 	public ApplicationVersion(String version) throws IllegalArgumentException {
@@ -50,7 +50,7 @@ public class ApplicationVersion implements Comparable<ApplicationVersion> {
 
 	/**
 	 * Gets the major version.
-	 * 
+	 *
 	 * @return The major version.
 	 */
 	public int getMajor() {
@@ -59,7 +59,7 @@ public class ApplicationVersion implements Comparable<ApplicationVersion> {
 
 	/**
 	 * Gets the minor version.
-	 * 
+	 *
 	 * @return The minor version.
 	 */
 	public int getMinor() {
@@ -68,7 +68,7 @@ public class ApplicationVersion implements Comparable<ApplicationVersion> {
 
 	/**
 	 * Gets the patch version.
-	 * 
+	 *
 	 * @return The patch version.
 	 */
 	public int getPatch() {
@@ -77,7 +77,7 @@ public class ApplicationVersion implements Comparable<ApplicationVersion> {
 
 	/**
 	 * Gets the tag.
-	 * 
+	 *
 	 * @return The tag.  Could be the empty string.
 	 */
 	public String getTag() {
@@ -164,9 +164,9 @@ public class ApplicationVersion implements Comparable<ApplicationVersion> {
 
 	/**
 	 * Parses the major, minor, patch, and tag components out of the given version string.
-	 * 
+	 *
 	 * @param version A version string.
-	 * @throws IllegalArgumentException if the version string failed to parse.  The 
+	 * @throws IllegalArgumentException if the version string failed to parse.  The
 	 *   exception's message has more detailed information about why it failed.
 	 */
 	private void parse(String version) throws IllegalArgumentException {
@@ -204,7 +204,7 @@ public class ApplicationVersion implements Comparable<ApplicationVersion> {
 
 	/**
 	 * Parses a version part string to an integer.
-	 * 
+	 *
 	 * @param versionPart A version part string.
 	 * @param versionPartName The version part name (for error reporting).
 	 * @return The version part string as an integer.

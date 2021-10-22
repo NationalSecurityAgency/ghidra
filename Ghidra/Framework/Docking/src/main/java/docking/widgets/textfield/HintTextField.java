@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,7 +64,7 @@ public class HintTextField extends JTextField {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param hint the hint text
 	 * @param required true, if the field should be marked as required
 	 * @param verifier input verifier, or null if none needed
@@ -139,7 +139,7 @@ public class HintTextField extends JTextField {
 	/**
 	 * Sets whether the field is required or not. If so, it will be rendered
 	 * differently to indicate that to the user.
-	 * 
+	 *
 	 * @param required true if required, false otherwise
 	 */
 	public void setRequired(boolean required) {
@@ -157,7 +157,7 @@ public class HintTextField extends JTextField {
 
 	/**
 	 * Returns true if the field contains valid input.
-	 * 
+	 *
 	 * @return true if valid, false otherwise
 	 */
 	public boolean isFieldValid() {
@@ -183,7 +183,7 @@ public class HintTextField extends JTextField {
 	}
 
 	/**
-	 * Checks the validity of the field and sets the appropriate 
+	 * Checks the validity of the field and sets the appropriate
 	 * field attributes.
 	 */
 	private void validateField() {

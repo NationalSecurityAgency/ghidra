@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public class GhidraScriptEditorPreferences {
 
 	/**
 	 * Gets whether or not the script editor feature is enabled.
-	 * 
+	 *
 	 * @return True if the script editor feature is enabled; otherwise, false.
 	 */
 	public static boolean isScriptEditorEnabled() {
@@ -46,7 +46,7 @@ public class GhidraScriptEditorPreferences {
 
 	/**
 	 * Sets whether or not the script editor feature is enabled.
-	 * 
+	 *
 	 * @param enabled True to enable the script editor feature; false to disable it.
 	 */
 	public static void setScriptEditorEnabled(boolean enabled) {
@@ -56,7 +56,7 @@ public class GhidraScriptEditorPreferences {
 
 	/**
 	 * Gets the port used for script editor.
-	 * 
+	 *
 	 * @return The port used for script editor.  Will return -1 if the port is not set.
 	 */
 	public static int getScriptEditorPort() {

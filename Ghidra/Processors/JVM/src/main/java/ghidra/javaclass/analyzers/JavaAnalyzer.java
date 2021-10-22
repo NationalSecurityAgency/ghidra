@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 			return JavaClassUtil.isClassFile(program);
 		}
 		catch (Exception e) {
-			//ignore 
+			//ignore
 		}
 		return false;
 	}
@@ -164,7 +164,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 	/**
 	 * Create datatypes for all classes mentioned in the constant pool
 	 * @param program program file
-	 * @param classFile ClassFileJava associated with {@code program} 
+	 * @param classFile ClassFileJava associated with {@code program}
 	 * @param monitor for canceling analysis
 	 * @param messageLog for logging messages
 	 */
@@ -668,10 +668,10 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 	/**
 	 * Sets the name, return type, and parameter types of a method using the information in the constant pool.
 	 * Also overrides the signatures on all method invocations made within the method body.
-	 * @param function - the function (method) 
+	 * @param function - the function (method)
 	 * @param methodInfo information about the method from the constant pool
 	 * @param classFile class file containing the method
-	 * @param dtManager data type manager for program 
+	 * @param dtManager data type manager for program
 	 * @throws DuplicateNameException if there are duplicate name issues with function or parameter names
 	 * @throws InvalidInputException if a function or parameter name is invalid
 	 */
@@ -684,7 +684,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 		String descriptor =
 			((ConstantPoolUtf8Info) constantPool[methodInfo.getDescriptorIndex()]).getString();
 		//note: the name of a function in java is not necessarily unique, but the name together
-		//with the descriptor is.  Hence we append the type names of the parameters and return to 
+		//with the descriptor is.  Hence we append the type names of the parameters and return to
 		//the function name to avoid an exception being thrown for duplicate names.
 		List<String> typeNames = DescriptorDecoder.getTypeNameList(descriptor, true, true);
 		StringBuilder sb = new StringBuilder();
@@ -703,7 +703,7 @@ public class JavaAnalyzer extends AbstractJavaAnalyzer implements AnalysisWorker
 
 		List<Variable> params = new ArrayList<>();
 		//in order to set the parameters for the method, we need to know whether
-		//there is an implicit 'this' parameter.  
+		//there is an implicit 'this' parameter.
 		if (!methodInfo.isStatic()) {
 			int thisIndex = classFile.getThisClass();
 			ConstantPoolClassInfo thisClass = (ConstantPoolClassInfo) constantPool[thisIndex];

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ public interface TestDebuggerModelProvider {
 		/**
 		 * Use the schema to find the appropriate path, substituting the given index for a wildcard
 		 * at most once, then get or wait for that object
-		 * 
+		 *
 		 * @param <T> the type of object
 		 * @param cls the class giving the type
 		 * @param index the index when needed

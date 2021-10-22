@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -170,7 +170,7 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 	private List<ElfRelocation> parseRelrRelocations(FactoryBundledWithBinaryReader reader)
 			throws IOException {
 
-		// NOTE: Current implementation supports an entrySize of 8 or 4.  This could be 
+		// NOTE: Current implementation supports an entrySize of 8 or 4.  This could be
 		// made more flexable if needed (applies to ElfRelrRelocationTableDataType as well)
 
 		List<ElfRelocation> relocList = new ArrayList<>();
@@ -284,7 +284,7 @@ public class ElfRelocationTable implements ElfFileSection, ByteArrayConverter {
 	 * Returns the section where the relocations will be applied.
 	 * For example, this method will return ".plt" for ".rel.plt"
 	 * @return the section where the relocations will be applied
-	 * or null for dynamic relocation table not associated with 
+	 * or null for dynamic relocation table not associated with
 	 * a section.
 	 */
 	public ElfSectionHeader getSectionToBeRelocated() {

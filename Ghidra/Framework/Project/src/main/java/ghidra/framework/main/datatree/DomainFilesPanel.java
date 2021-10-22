@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import docking.widgets.list.ListPanel;
 import ghidra.framework.model.DomainFile;
 
 /**
- * Reusable Panel that shows a list of checkboxes for each domain 
+ * Reusable Panel that shows a list of checkboxes for each domain
  * file in a list.
  */
 class DomainFilesPanel extends JPanel {
@@ -129,7 +129,7 @@ class DomainFilesPanel extends JPanel {
 			checkboxes[index].setSelected(!selected);
 			// The following repaint() is to get the check box state to get refreshed on the screen.
 			// Prior to adding this the check box did not refresh the display of its state in the
-			// list when selected multiple times in a row. It only seemed to repaint when focus 
+			// list when selected multiple times in a row. It only seemed to repaint when focus
 			// was lost.
 			list.repaint();
 		}

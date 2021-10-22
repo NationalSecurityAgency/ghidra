@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -225,7 +225,7 @@ public class VarnodeContext implements ProcessorContext {
 //		}
 //		for (Iterator<Register> iterator = conflicts.iterator(); iterator.hasNext();) {
 //
-// TODO: do not use reg which appears same as initial input state 
+// TODO: do not use reg which appears same as initial input state
 //			Register reg = iterator.next();
 //			offsetContext.setValue(reg, address, BigInteger.valueOf(reg.getOffset()));
 //			spaceContext.setValue(reg, address,
@@ -240,12 +240,12 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param targetFunc function to get a returning varnode for
-	 * 
+	 *
 	 * NOTE: this only gets one, unless there is custom storage on the called function
 	 *    there may be bonded ones in the default convention!
-	 * 
+	 *
 	 * @return varnode that represents where functions place their return value
 	 */
 	public Varnode[] getReturnVarnode(Function targetFunc) {
@@ -291,7 +291,7 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return Varnode that represents the stack register
 	 */
 	public Varnode getStackVarnode() {
@@ -335,7 +335,7 @@ public class VarnodeContext implements ProcessorContext {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return Register that represents the stack register
 	 */
 	public Register getStackRegister() {
@@ -435,7 +435,7 @@ public class VarnodeContext implements ProcessorContext {
 				if (isSymbolicAddr) {
 					// symbolic spaces are off of a register, find the space.
 					AddressSpace regSpace = addrFactory.getAddressSpace(varnode.getSpace());
-					// figure out what register is used for stack values 
+					// figure out what register is used for stack values
 					Register stackRegister = getStackRegister();
 					if (!isStackSymbolicSpace(varnode)) {
 						if (debug) {
@@ -463,7 +463,7 @@ public class VarnodeContext implements ProcessorContext {
 			if (isSymbolicAddr) {
 				throw notFoundExc;
 			}
-			// if this is an offset address, find out if we can assume an address into memory			
+			// if this is an offset address, find out if we can assume an address into memory
 //			if ( evaluator != null && isSymbolicSpacevarnode.getSpace()) ) {
 //				Instruction instr = program.getListing().getInstructionContaining(offsetContext.getAddress());
 //				Long lval = evaluator.unknownValue(this, instr, varnode);
@@ -549,7 +549,7 @@ public class VarnodeContext implements ProcessorContext {
 
 	/**
 	 * Search the value state stack for the first occurence of the set value
-	 * 
+	 *
 	 * @param varnode varnode to search for a value
 	 * @return first value found on stack, null otherwise
 	 */
@@ -568,7 +568,7 @@ public class VarnodeContext implements ProcessorContext {
 
 	/**
 	 * Put the value for the varnode on the top of the memory state stack
-	 * 
+	 *
 	 * @param out varnode for the value
 	 * @param value value to store for the varnode
 	 */
@@ -581,7 +581,7 @@ public class VarnodeContext implements ProcessorContext {
 	 * get the translated stored space value.
 	 * SpaceID is stored invert'ed so that the constants for subpieces will blend,
 	 * but no other space will.
-	 * 
+	 *
 	 * @return null space for constant space, real spaceID otherwise.
 	 */
 	private BigInteger getTranslatedSpaceValue(Register reg) {
@@ -599,7 +599,7 @@ public class VarnodeContext implements ProcessorContext {
 	 * get the translated stored space value.
 	 * SpaceID is stored invert'ed so that the constants for subpieces will blend,
 	 * but no other space will.
-	 * 
+	 *
 	 * @return null space for constant space, real spaceID otherwise.
 	 */
 	private BigInteger getTranslatedSpaceValue(Register reg, Address fromAddr, Address toAddr) {
@@ -615,9 +615,9 @@ public class VarnodeContext implements ProcessorContext {
 
 	/**
 	 * Check if the symbol at the address is read_only.
-	 * 
+	 *
 	 * @param addr - address of the symbol
-	 * 
+	 *
 	 * @return true if the block is read_only, and there are no write references.
 	 */
 	protected boolean isReadOnly(Address addr) {
@@ -745,7 +745,7 @@ public class VarnodeContext implements ProcessorContext {
 
 	/**
 	 * Propogate any results that are in the value cache.
-	 * 
+	 *
 	 * @param clearContext  true if the cache should be cleared.
 	 *                      The propogation could be for flow purposes, and the
 	 *                      processing of the instruction is finished, so it's effects should be kept.
@@ -834,10 +834,10 @@ public class VarnodeContext implements ProcessorContext {
 	/**
 	 * return the location that this register was last set
 	 * This is a transient thing, so it should only be used as a particular flow is being processed...
-	 * 
+	 *
 	 * @param reg register to find last set location
 	 * @param bval value to look for to differentiate set locations, null if don't care
-	 * 
+	 *
 	 * @return address that the register was set.
 	 */
 	public Address getLastSetLocation(Register reg, BigInteger bval) {
@@ -878,7 +878,7 @@ public class VarnodeContext implements ProcessorContext {
 	/**
 	 * return the location that this varnode was last set
 	 * This is a transient thing, so it should only be used as a particular flow is being processed...
-	 * 
+	 *
 	 * @param rvar the register varnode
 	 * @param bval this parameter is unused.
 	 * @return address that the register was set.
@@ -956,7 +956,7 @@ public class VarnodeContext implements ProcessorContext {
 
 	/**
 	 * get the value of a register as a varnode (value, space, size)
-	 * 
+	 *
 	 * @param reg  register to get value for
 	 * @param fromAddr  from address
 	 * @param toAddr to address
@@ -1032,11 +1032,11 @@ public class VarnodeContext implements ProcessorContext {
 	/**
 	 * Copy the varnode with as little manipulation as possible.
 	 * Try to keep whatever partical state there is intact if a real value isn't required.
-	 * 
+	 *
 	 * @param out varnode to put it in
 	 * @param in varnode to copy from.
-	 * @param evaluator 
-	 * @throws NotFoundException 
+	 * @param evaluator
+	 * @throws NotFoundException
 	 */
 	public void copy(Varnode out, Varnode in, boolean mustClearAll, ContextEvaluator evaluator)
 			throws NotFoundException {
@@ -1058,11 +1058,11 @@ public class VarnodeContext implements ProcessorContext {
 	/**
 	 * Add two varnodes together to get a new value
 	 * This could create a new space and return a varnode pointed into that space
-	 * 
+	 *
 	 * @param val1 first value
 	 * @param val2 second value
 	 * @return varnode that could be a constant, or an offset into a space
-	 * 
+	 *
 	 * @throws NotFoundException if any constant is needed not known
 	 */
 	public Varnode add(Varnode val1, Varnode val2, ContextEvaluator evaluator)
@@ -1234,7 +1234,7 @@ public class VarnodeContext implements ProcessorContext {
 		return result;
 	}
 
-	// This is bad since registers could have multiple associated spaces 
+	// This is bad since registers could have multiple associated spaces
 //	private int getSymbolSpaceID(Varnode val) {
 //		Register reg = trans.getRegister(val);
 //		if (reg == null) {
@@ -1256,11 +1256,11 @@ public class VarnodeContext implements ProcessorContext {
 	/**
 	 * Subtract two varnodes to get a new value
 	 * This could create a new space and return a varnode pointed into that space
-	 * 
+	 *
 	 * @param val1 first value
 	 * @param val2 second value
 	 * @return varnode that could be a constant, or an offset into a space
-	 * 
+	 *
 	 * @throws NotFoundException if any constant is needed not known
 	 */
 	public Varnode subtract(Varnode val1, Varnode val2, ContextEvaluator evaluator)
@@ -1306,7 +1306,7 @@ public class VarnodeContext implements ProcessorContext {
 
 	/**
 	 * Extend a constant value if it can be extended.
-	 * 
+	 *
 	 * @param out varnode to extend into (for size)
 	 * @param in varnode value to extend the size
 	 * @return

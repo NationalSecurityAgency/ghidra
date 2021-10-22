@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,8 @@ import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Test the reference manager for the database implementation.
- * 
- * 
+ *
+ *
  */
 public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
@@ -50,7 +50,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		super();
 	}
 
-	/* 
+	/*
 	 * @see TestCase#setUp()
 	 */
     @Before
@@ -199,21 +199,21 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 //		refMgr.addMemReference(addr(118), addr(256),RefType.TERMINATOR, true, 1, false);
 //		refMgr.addMemReference(addr(125), addr(256),RefType.TERMINATOR, true, 1, false);
 //		refMgr.addMemReference(addr(135), addr(256),RefType.COMPUTED_JUMP, true, 1, false);
-//	
+//
 //		AddressIterator iter = refMgr.getFallthroughRefIterator(addr(100));
 //		assertNotNull(iter);
 //		assertTrue(iter.hasNext());
-//		assertEquals(addr(100), iter.next());	
-//		
-//		assertTrue(iter.hasNext());
-//		assertEquals(addr(110), iter.next());	
+//		assertEquals(addr(100), iter.next());
 //
 //		assertTrue(iter.hasNext());
-//		assertEquals(addr(120), iter.next());	
+//		assertEquals(addr(110), iter.next());
+//
+//		assertTrue(iter.hasNext());
+//		assertEquals(addr(120), iter.next());
 //
 //		assertTrue(iter.hasNext());
 //		assertEquals(addr(130), iter.next());
-//		assertTrue(!iter.hasNext());	
+//		assertTrue(!iter.hasNext());
 //	}
 
 @Test
@@ -1094,48 +1094,48 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 //	private void doAdd(int thresholdCnt, PrintWriter pw) throws Exception {
 //		transactionID = program.startTransaction("Test");
-//		
+//
 //		RefList.BIG_REFLIST_THRESHOLD = thresholdCnt;
-//		
+//
 //		System.gc(); System.gc();
-//		
+//
 //		long start = System.nanoTime();
-//		
+//
 //		for (int i = 0; i < 50000; i++) {
 //			refMgr.addMemoryReference(addr(512+i), addr(256),RefType.FLOW, SourceType.USER_DEFINED, 2);
 //		}
 //
 //		long delta = (System.nanoTime() - start) / 1000000;
-//		
+//
 //		if (pw != null) {
 //			pw.println(thresholdCnt + ", " + delta);
 //		}
-//		
+//
 //		System.out.println("threshold=" + thresholdCnt + " time(ms)=" + delta);
-//		
+//
 //		program.endTransaction(transactionID, true);
 //		program.undo();
 //	}
-//	
+//
 //	public void testBigRefList() throws Exception {
-//		
+//
 //		PrintWriter pw = new PrintWriter("C:\\Documents and Settings\\mysid\\Desktop\\test.dat");
-//		
+//
 //		program.endTransaction(transactionID, true);
-//		
+//
 //		// wait for things to settle down
 //		for (int i = 1000; i < 1500; i+=100) {
 //			doAdd(i, null);
 //		}
-//		
+//
 //		for (int n = 0; n < 5; n++) {
 //			for (int i = 1000; i < 5000; i+=100) {
 //				doAdd(i, pw);
 //			}
 //		}
-//		
+//
 //		pw.close();
-//		
+//
 //		transactionID = program.startTransaction("Test");
 //	}
 

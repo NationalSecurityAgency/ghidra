@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ public abstract class GccAnalysisClass {
 	/**
 	 * Creates an abstract GccAnalysisClass object. Subclasses should call this constructor
 	 * to initialize the program and task monitor.
-	 * 
+	 *
 	 * @param monitor task monitor to see if the user has cancelled analysis.
 	 * @param program the program being analyzed.
 	 */
@@ -56,7 +56,7 @@ public abstract class GccAnalysisClass {
 	 * Method that initializes the various pieces
 	 * of information that are used throughout the
 	 * program.
-	 * 
+	 *
 	 * @param program the program being analyzed
 	 */
 	protected void init(Program program) {
@@ -75,7 +75,7 @@ public abstract class GccAnalysisClass {
 
 	/**
 	 * Creates the specified DataType at the supplied address.
-	 * 
+	 *
 	 * @param program the program being analyzed
 	 * @param addr the address where data is created
 	 * @param dt the type for the data
@@ -94,14 +94,14 @@ public abstract class GccAnalysisClass {
 	/**
 	 * Creates the specified DataType at the supplied address. In
 	 * addition, a comment of the specified type is also created at the address.
-	 * 
+	 *
 	 * @param program the program being analyzed
 	 * @param addr the address where data is created
 	 * @param dt the type for the data
 	 * @param comment the comment about the data
-	 * @param commentType the type of comment ({@link CodeUnit#PLATE_COMMENT}, 
+	 * @param commentType the type of comment ({@link CodeUnit#PLATE_COMMENT},
 	 * {@link CodeUnit#PRE_COMMENT}, {@link CodeUnit#EOL_COMMENT}, {@link CodeUnit#POST_COMMENT},
-	 * {@link CodeUnit#REPEATABLE_COMMENT}) 
+	 * {@link CodeUnit#REPEATABLE_COMMENT})
 	 */
 	protected static void createAndCommentData(Program program, Address addr, DataType dt,
 			String comment, int commentType) {

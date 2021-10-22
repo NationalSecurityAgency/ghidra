@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -122,7 +122,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	}
 
 	// TODO add methods:
-	// createDefaultToyProgram() with no params	
+	// createDefaultToyProgram() with no params
 	// createDefaultX86Program() with no params
 	// createDefaultX86ProgramBuilder() with no params
 	// createClassicNotepadProgram()
@@ -167,7 +167,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Run a command against the specified program within a transaction.
 	 * The transaction will be committed unless the command throws a RollbackException.
-	 * 
+	 *
 	 * @param program the program
 	 * @param cmd the command to apply
 	 * @return result of command applyTo method
@@ -198,8 +198,8 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Provides a convenient method for modifying the current program, handling the transaction
-	 * logic. 
-	 * 
+	 * logic.
+	 *
 	 * @param p the program
 	 * @param c the code to execute
 	 */
@@ -224,7 +224,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	 * Provides a convenient method for modifying the current program, handling the transaction
 	 * logic.   This method is calls {@link #tx(Program, ExceptionalCallback)}, but helps with
 	 * semantics.
-	 * 
+	 *
 	 * @param p the program
 	 * @param c the code to execute
 	 */
@@ -235,7 +235,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Provides a convenient method for modifying the current program, handling the transaction
 	 * logic and returning a new item as a result
-	 * 
+	 *
 	 * @param program the program
 	 * @param f the function for modifying the program and creating the desired result
 	 * @return the result
@@ -435,7 +435,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Returns the global symbol with the given name if and only if it is the only
 	 * global symbol with that name.
-	 * 
+	 *
 	 * @param program the program to search.
 	 * @param name the name of the global symbol to find.
 	 * @return  the global symbol with the given name if and only if it is the only one.
@@ -447,7 +447,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	/**
 	 * Returns the symbol in the given namespace with the given name if and only if it is the only
 	 * symbol in that namespace with that name.
-	 * 
+	 *
 	 * @param program the program to search.
 	 * @param name the name of the symbol to find.
 	 * @param namespace the parent namespace; may be null
@@ -462,16 +462,16 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	}
 
 	/**
-	 * A convenience method that allows you to open the given program in a default tool, 
-	 * navigating to the given address. 
-	 * 
+	 * A convenience method that allows you to open the given program in a default tool,
+	 * navigating to the given address.
+	 *
 	 * <P>Note: this is a blocking operation.  Your test will not proceed while this method is
-	 * sleeping. 
-	 * 
+	 * sleeping.
+	 *
 	 * <P><B>Do not leave this call in your test when committing changes.</B>
 	 * @param p the program
 	 * @param address the address
-	 * 
+	 *
 	 * @throws Exception if there is an issue create a {@link TestEnv}
 	 */
 	public void debugProgramInTool(Program p, String address) throws Exception {
@@ -507,8 +507,8 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 	}
 
 	/**
-	 * Waits for a launched script to complete by using the given listener. 
-	 * 
+	 * Waits for a launched script to complete by using the given listener.
+	 *
 	 * @param listener the listener used to track script progress
 	 * @param timeoutMS the max time to wait; failing if exceeded
 	 */
@@ -530,7 +530,7 @@ public abstract class AbstractGhidraHeadlessIntegrationTest extends AbstractDock
 
 	/**
 	 * Replaces the given implementations of the provided service class with the given class.
-	 * 
+	 *
 	 * @param tool the tool whose services to update (optional)
 	 * @param service the service to override
 	 * @param replacement the new version of the service

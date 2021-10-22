@@ -77,7 +77,7 @@ dcbstep  ,   939
 dcbt  ,   712
 dcbtep  ,   939
 dcbtls  ,   999
-dcbtst   ,   712 
+dcbtst   ,   712
 dcbtstep  ,   941
 dcbtstls  ,   999
 dcbz  ,   715
@@ -155,7 +155,7 @@ dmul.  ,   203
 dmul  ,   203
 dmulq.  ,   203
 dmulq  ,   203
-dnh   ,   1068 
+dnh   ,   1068
 doze  ,   770
 dqua.  ,   212
 dqua  ,   212
@@ -734,7 +734,7 @@ mtocrf  ,   131
 mtpmr  ,   1122
 mtspr  ,   128
 mtsr   ,   824
-mtsrin   ,   824 
+mtsrin   ,   824
 mtvscr  ,   297
 mulchw.  ,   624
 mulchw  ,   624
@@ -1260,22 +1260,22 @@ xxspltw  ,   529
 @PowerISA_V2.07B.pdf [Power ISA Version 2.07 B April 9, 2015]
 e_b,1307
 e_bl,1307
-se_b,1307 	
-se_bl,1307 
+se_b,1307
+se_bl,1307
 e_bc,1307
 e_bcl,1307
 se_bc,1307
-se_bctr,1308			
-se_bctrl,1308			
-se_blr,1308			
-se_blrl,1308			
-se_sc,1309				
-e_sc,1309			
-se_illegal,1310		
-se_rfmci,1310			
-se_rfci,1311	
-se_rfi,1311		
-se_rfdi,1312		
+se_bctr,1308
+se_bctrl,1308
+se_blr,1308
+se_blrl,1308
+se_sc,1309
+e_sc,1309
+se_illegal,1310
+se_rfmci,1310
+se_rfci,1311
+se_rfi,1311
+se_rfdi,1312
 se_rfgi,1312
 e_crand,1313
 e_crandc,1313
@@ -1299,10 +1299,10 @@ se_lwz,1318
 e_lwzu,1319
 e_stb,1320
 se_stb,1320
-e_stbu,1321	
+e_stbu,1321
 e_sth ,1321
 se_sth,1321
-e_sthu,1321 
+e_sthu,1321
 e_stw,1322
 se_stw,1322
 e_stwu,1322
@@ -1340,7 +1340,7 @@ e_cmph,1330
 se_cmph,1331
 e_cmph16i.,1331
 e_cmphl,1331
-se_cmphl,1331 
+se_cmphl,1331
 e_cmphl16i.,1332
 e_and2i.,1333
 e_and2is.,1333
@@ -1606,7 +1606,7 @@ xsmaddmsp,593
 xsmsubasp,614
 xsmsubmsp,614
 xsmulsp,624
-xsnmaddasp,633 
+xsnmaddasp,633
 xsnmaddmsp,633
 xsnmsubasp,642
 xsnmsubmsp,642
@@ -1637,7 +1637,7 @@ stxsibx,518
 stxsihx,518
 stxssp.502
 stxv,526
-stxvb16x,522 
+stxvb16x,522
 stxvh8x,524
 stxvl,526
 stxvll,528

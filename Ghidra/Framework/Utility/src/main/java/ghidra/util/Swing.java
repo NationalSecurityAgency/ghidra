@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -109,9 +109,9 @@ public class Swing {
 	}
 
 	/**
-	 * Runs the given runnable now if the caller is on the Swing thread.  Otherwise, the 
+	 * Runs the given runnable now if the caller is on the Swing thread.  Otherwise, the
 	 * runnable will be posted later.
-	 * 
+	 *
 	 * @param r the runnable
 	 */
 	public static void runIfSwingOrRunLater(Runnable r) {
@@ -130,9 +130,9 @@ public class Swing {
 
 	/**
 	 * Calls the given suppler on the Swing thread, blocking with a
-	 * {@link SwingUtilities#invokeAndWait(Runnable)} if not on the Swing thread.  
-	 * 
-	 * <p>Use this method when you are not on the Swing thread and you need to get a value 
+	 * {@link SwingUtilities#invokeAndWait(Runnable)} if not on the Swing thread.
+	 *
+	 * <p>Use this method when you are not on the Swing thread and you need to get a value
 	 * that is managed/synchronized by the Swing thread.
 	 *
 	 * <pre>{@literal
@@ -191,14 +191,14 @@ public class Swing {
 
 	/**
 	 * Calls the given runnable on the Swing thread
-	 * 
+	 *
 	 * <p>This method will throw an exception if the Swing thread is not available within the
 	 * given timeout.  This method is useful for preventing deadlocks.
 	 *
 	 * @param r the runnable
 	 * @param timeout the timeout value
 	 * @param unit the time unit of the timeout value
-	 * @throws UnableToSwingException if the timeout was reach waiting for the Swing thread 
+	 * @throws UnableToSwingException if the timeout was reach waiting for the Swing thread
 	 * @see #runNow(Supplier) if you need to return a value from the Swing thread.
 	 */
 	public static void runNow(Runnable r, long timeout, TimeUnit unit)
@@ -211,7 +211,7 @@ public class Swing {
 
 		/*
 		 	We use the CyclicBarrier to force this thread and the Swing thread to wait for each
-		 	other.  This allows the calling thread to know if/when the Swing thread starts and 
+		 	other.  This allows the calling thread to know if/when the Swing thread starts and
 		 	the Swing thread to know if the calling thread timed-out.
 		 */
 		CyclicBarrier start = new CyclicBarrier(2);
@@ -233,8 +233,8 @@ public class Swing {
 		});
 
 		if (!waitFor(start, timeout, unit)) {
-			// Special case: if the wait() returns false, then it was interrupted.  If the 
-			// timeout occurred, an exception would have been thrown.   Interrupts are expected, 
+			// Special case: if the wait() returns false, then it was interrupted.  If the
+			// timeout occurred, an exception would have been thrown.   Interrupts are expected,
 			// so just exit.
 			return;
 		}

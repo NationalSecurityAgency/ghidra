@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -369,10 +369,10 @@ public class ProjectFileManager implements ProjectData {
 	}
 
 	/**
-	 * Returns the owner of the project that is associated with this 
+	 * Returns the owner of the project that is associated with this
 	 * ProjectFileManager.  A value of null indicates an old multiuser
 	 * project.
-	 * @return the owner of the project 
+	 * @return the owner of the project
 	 */
 	public String getOwner() {
 		return owner;
@@ -415,7 +415,7 @@ public class ProjectFileManager implements ProjectData {
 			}
 		}
 
-		// NOTE: we can't distinguish between files represented in both file counts so we will 
+		// NOTE: we can't distinguish between files represented in both file counts so we will
 		// return the larger of the two counts obtained.
 
 		int privateFileCnt = -1;
@@ -928,9 +928,9 @@ public class ProjectFileManager implements ProjectData {
 	}
 
 	/**
-	 * Set the open domain object (opened for update) associated with a file. 
-	 * NOTE: Caller is responsible for setting domain file on domain object after invoking this 
-	 * method. If a domain object saveAs was done, the previous file association 
+	 * Set the open domain object (opened for update) associated with a file.
+	 * NOTE: Caller is responsible for setting domain file on domain object after invoking this
+	 * method. If a domain object saveAs was done, the previous file association
 	 * will be removed.
 	 * @param pathname the path name
 	 * @param doa the domain object

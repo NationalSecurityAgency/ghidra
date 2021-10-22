@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public class YAFFS2Header implements StructConverter {
      * Construct an entry from an archive's header bytes.
      */
     public YAFFS2Header(byte[] buffer) {
-        
+
         // parse header structure
         objectType 		= YAFFS2Utils.parseInteger(buffer, 0, 4);
         parentObjectId 	= YAFFS2Utils.parseInteger(buffer, 4, 4);
@@ -86,7 +86,7 @@ public class YAFFS2Header implements StructConverter {
 	public long getObjectType() {
 		return objectType;
 	}
-	
+
 	public boolean isDirectory() {
 		if (objectType == 3) {
 			return true;
@@ -184,10 +184,10 @@ public class YAFFS2Header implements StructConverter {
 		}
 		return false;
 	}
-	
+
 	// header structure for analyzer
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		
+
 		Structure structure = new StructureDataType( "yaffs2Hdr", 0 );
 		structure.add( DWORD, "objectType", null );
 		structure.add( DWORD, "parentObjectId", null );
@@ -215,7 +215,7 @@ public class YAFFS2Header implements StructConverter {
 		structure.add( DWORD, "isShrink", null );
 		structure.add(new ArrayDataType(BYTE, YAFFS2Constants.EMPTY_DATA_SIZE, BYTE.getLength()), "emptyData", null);
 		return structure;
-		
+
 	}
-	
+
 }

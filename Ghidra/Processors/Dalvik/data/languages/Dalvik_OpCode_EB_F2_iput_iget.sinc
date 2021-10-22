@@ -22,7 +22,7 @@
 :iput_char_quick registerA4,[registerB4:C_BITS_0_15]  is inst0=0xed ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool(registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
-	*ptr = registerA4 : 2;	
+	*ptr = registerA4 : 2;
 }
 
 #------------------------------------------------------------------------------------
@@ -67,5 +67,5 @@
 :iget_short_quick registerA4,[registerB4:C_BITS_0_15]  is inst0=0xf2 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool( registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
-	registerA4 = sext( *:2 ptr );	
+	registerA4 = sext( *:2 ptr );
 }

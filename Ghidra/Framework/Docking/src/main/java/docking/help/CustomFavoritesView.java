@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import ghidra.util.Msg;
 
 /**
- * This class allows us to change the renderer of the favorites tree. 
+ * This class allows us to change the renderer of the favorites tree.
  */
 public class CustomFavoritesView extends FavoritesView {
 
@@ -58,7 +58,7 @@ public class CustomFavoritesView extends FavoritesView {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================    
+//==================================================================================================
 
 	class CustomHelpFavoritesNavigator extends JHelpFavoritesNavigator {
 
@@ -150,8 +150,8 @@ public class CustomFavoritesView extends FavoritesView {
 			//
 			// Overridden to track the change events.  We need this to fix a bug where our
 			// parent class will get the wrong title of the page being loaded *when the user
-			// has navigated via a hyperlink*.  The result of using the wrong title 
-			// manifests itself when the user makes a 'favorite' item--the title will not 
+			// has navigated via a hyperlink*.  The result of using the wrong title
+			// manifests itself when the user makes a 'favorite' item--the title will not
 			// match the 'favorite'd page.
 			//
 

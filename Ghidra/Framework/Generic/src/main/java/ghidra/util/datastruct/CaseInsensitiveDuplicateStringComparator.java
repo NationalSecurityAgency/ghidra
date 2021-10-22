@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,9 +22,9 @@ import java.util.Comparator;
  * Comparator for sorting Strings in a case insensitive way except that case insensitive duplicates
  * are then sub-sorted by reverse case so that lower case is before upper case.
  *
- * Example:   the strings "abc", "bob", "Bob", "zzz" would always sort as shown.  In a normal case 
+ * Example:   the strings "abc", "bob", "Bob", "zzz" would always sort as shown.  In a normal case
  * insensitive sort, the "bob" and "Bob" order would be arbitrary.
- * 
+ *
  */
 public class CaseInsensitiveDuplicateStringComparator implements Comparator<String> {
 

@@ -1,4 +1,4 @@
-# This module defines Microchip PIC-24. 
+# This module defines Microchip PIC-24.
 
 define endian=little; # little endian only
 

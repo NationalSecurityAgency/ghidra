@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,11 +28,11 @@ public class Ext4ExtentsHelper {
 	/**
 	 * Creates a {@link RangeMappedByteProvider} from the extents data found in the
 	 * inode's i_block field.
-	 *   
+	 *
 	 * @param rawIBlockBytes raw bytes from the inode's i_block
 	 * @param provider the file system volume provider
 	 * @param expectedLength the length the file should be (from the inode)
-	 * @param blockSize file system blockSize 
+	 * @param blockSize file system blockSize
 	 * @param fsrl {@link FSRL} to assign to the new ByteProvider
 	 * @return new {@link ByteProvider} containing the blocks of the volume that were specified
 	 * by the extent data
@@ -62,7 +62,7 @@ public class Ext4ExtentsHelper {
 		if (header.getEh_depth() == 0) {
 			for (int i = 0; i < header.getEh_entries() && ebp.length() < expectedLength; i++) {
 				Ext4Extent extent = new Ext4Extent(reader);
-				
+
 				long startPos = extent.getStreamBlockNumber() * blockSize;
 				long providerOfs = extent.getExtentStartBlockNumber() * blockSize;
 				long extentLen = extent.getExtentBlockCount() * blockSize;

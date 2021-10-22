@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,17 +42,17 @@ public abstract class AbstractWorker<T extends Job> {
 
 	/**
 	 * Constructs a new Worker with the given name.
-	 * 
-	 * @param queue the queue into which jobs will be place.  e.g. PriorityBlockingQueue or 
+	 *
+	 * @param queue the queue into which jobs will be place.  e.g. PriorityBlockingQueue or
 	 *              LinkedBlockingQueue
 	 * @param isPersistentThread if true, the worker thread will stay around when idle;
-	 *             false means that the thread will go away if not needed. Should be true for 
+	 *             false means that the thread will go away if not needed. Should be true for
 	 *             high frequency usage.
 	 * @param name the name of this worker. The thread that executes the jobs will have this
 	 *             name.
-	 * @param shareThreadPool true signals to use the given name to find/create a thread pool 
+	 * @param shareThreadPool true signals to use the given name to find/create a thread pool
 	 *             that can be shared throughout the system.
-	 * @param monitor the task monitor that allows for cancelling of jobs. 
+	 * @param monitor the task monitor that allows for cancelling of jobs.
 	 */
 	protected AbstractWorker(BlockingQueue<T> queue, boolean isPersistentThread, String name,
 			boolean shareThreadPool, TaskMonitor monitor) {
@@ -73,7 +73,7 @@ public abstract class AbstractWorker<T extends Job> {
 			.setCancelClearsAllJobs(false)
 			.setJobsReportProgress(true)
 			.setMaxInProgress(1)
-			.build(callback);		
+			.build(callback);
 		// @formatter:on
 
 		qProgressListener = new ProgressListener();
@@ -162,7 +162,7 @@ public abstract class AbstractWorker<T extends Job> {
 
 	private static <K> boolean canSquashException(Throwable t, boolean isCancelled) {
 		//
-		// We have a policy of ignoring DB closed exceptions when a task has already 
+		// We have a policy of ignoring DB closed exceptions when a task has already
 		// been cancelled, as this can happen when shutting down Ghidra.
 		//
 		if (!isCancelled) {
@@ -214,12 +214,12 @@ public abstract class AbstractWorker<T extends Job> {
 	 *  <p>
 	 *  <b>Warning: Calling this method may leave the program in a bad
 	 *  state.  Thus, it is recommended that you only do so when you known that any job that
-	 *  could possibly be scheduled does not manipulate sensitive parts of the program; for 
-	 *  example, opening file handles that should be closed before finishing.</b>  
+	 *  could possibly be scheduled does not manipulate sensitive parts of the program; for
+	 *  example, opening file handles that should be closed before finishing.</b>
 	 *  <p><b>
-	 *  If you are unsure 
+	 *  If you are unsure
 	 *  about whether your jobs handle interrupt correctly, then don't use this method.
-	 *  </b> 
+	 *  </b>
 	 */
 	public void clearAllJobsWithInterrupt_IKnowTheRisks() {
 		clearAllJobs(true);
@@ -233,7 +233,7 @@ public abstract class AbstractWorker<T extends Job> {
 	}
 
 	/**
-	 * Clears any jobs from the queue <b>that have not yet been run</b>.  This does not cancel 
+	 * Clears any jobs from the queue <b>that have not yet been run</b>.  This does not cancel
 	 * the currently running job.
 	 */
 	public void clearPendingJobs() {
@@ -270,7 +270,7 @@ public abstract class AbstractWorker<T extends Job> {
 
 	/**
 	 * This method will block until there are no scheduled jobs in this worker. This
-	 * method assumes that all jobs have a priority less than Long.MAX_VALUE.   
+	 * method assumes that all jobs have a priority less than Long.MAX_VALUE.
 	 * <p>
 	 * For a non-priority
 	 * queue, this call will not wait for jobs that are scheduled after this call was made.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,16 +23,16 @@ import ghidra.util.exception.CancelledException;
  * An implementation of the {@link TaskMonitor} interface that simply wraps a delegate task
  * monitor.   This is useful for classes that wish to wrap a task monitor, changing behavior
  * as needed by overriding a subset of methods.
- * 
+ *
  * <p><b>Synchronization Policy</b>:<br>
  * We wish for this class to be performant.    Thus, we do not synchronize the methods of this
  * class. The {@link #setDelegate(TaskMonitor)} is synchronized to ensure thread visibility
- * for the state of the delegate monitor. 
- * 
+ * for the state of the delegate monitor.
+ *
  * <p>When calling {@link #setDelegate(TaskMonitor)} there is the potential for the values being
  * transferred to become inconsistent with any new values being set.  We have decided that this
  * does not much matter for the overall progress or the messages on the monitor.  However, most
- * of the other setter methods could lead to bad behavior if they are inconsistent.  
+ * of the other setter methods could lead to bad behavior if they are inconsistent.
  */
 public class WrappingTaskMonitor implements TaskMonitor {
 
@@ -42,7 +42,7 @@ public class WrappingTaskMonitor implements TaskMonitor {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param delegate the delegate task monitor
 	 */
 	public WrappingTaskMonitor(TaskMonitor delegate) {
@@ -50,9 +50,9 @@ public class WrappingTaskMonitor implements TaskMonitor {
 	}
 
 	/**
-	 * Sets the delegate of this wrapper to be the new value.  The new delegate will be 
+	 * Sets the delegate of this wrapper to be the new value.  The new delegate will be
 	 * initialized with the current values of the existing delegate.
-	 * 
+	 *
 	 * @param newDelegate the new delegate
 	 */
 	public synchronized void setDelegate(TaskMonitor newDelegate) {

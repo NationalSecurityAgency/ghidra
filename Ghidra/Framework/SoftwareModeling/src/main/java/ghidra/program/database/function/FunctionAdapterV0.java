@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,17 +37,17 @@ class FunctionAdapterV0 extends FunctionAdapter {
 //	final static Schema FUNCTION_SCHEMA = new Schema(SCHEMA_VERSION,
 //			"ID",
 //			new Class [] {
-//						LongField.class, 
+//						LongField.class,
 //						IntField.class,
 //						IntField.class,
-//						IntField.class, 
+//						IntField.class,
 //						IntField.class,
 //			},
 //			new String [] {
-//						"Return DataType ID", 
-//						"StackPurge", 
-//						"StackParamOffset", 
-//						"StackReturnOffset", 
+//						"Return DataType ID",
+//						"StackPurge",
+//						"StackParamOffset",
+//						"StackReturnOffset",
 //						"StackLocalSize"
 //						}
 //			);
@@ -55,7 +55,7 @@ class FunctionAdapterV0 extends FunctionAdapter {
 	private Table table;
 
 	/**
-	 * 
+	 *
 	 * @param dbHandle
 	 * @param addrMap
 	 * @param create

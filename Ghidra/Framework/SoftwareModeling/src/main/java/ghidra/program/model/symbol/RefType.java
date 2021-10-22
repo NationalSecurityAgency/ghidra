@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -262,8 +262,8 @@ public abstract class RefType {
 	public static final RefType STACK_WRITE =
 		new DataRefType(__STACK_WRITE, "STACK_WRITE", DataRefType.WRITEX);
 	/**
-	 * Reference type used internally to identify external entry points.  
-	 * The use of this RefType for references to external library data or functions 
+	 * Reference type used internally to identify external entry points.
+	 * The use of this RefType for references to external library data or functions
 	 * is deprecated and should not be used for that purpose.
 	 */
 	public static final RefType EXTERNAL_REF = new DataRefType(__EXTERNAL_REF, "EXTERNAL", 0);

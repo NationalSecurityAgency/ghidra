@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 		createFieldAttributes();
 		createMainPanel();
 
-		// Any time the table is reloaded or a new selection is made, we want to reload this 
+		// Any time the table is reloaded or a new selection is made, we want to reload this
 		// panel. This ensures we are always viewing data for the currently-selected item.
 		tablePanel.getTableModel().addThreadedTableModelListener(new ThreadedTableModelListener() {
 
@@ -70,7 +70,7 @@ class ExtensionDetailsPanel extends AbstractDetailsPanel {
 
 	/**
 	 * Updates this panel with the given extension.
-	 * 
+	 *
 	 * @param details the extension to display
 	 */
 	public void setDescription(ExtensionDetails details) {

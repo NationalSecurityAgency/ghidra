@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -446,9 +446,9 @@ class ToolServicesImpl implements ToolServices {
 
 	/**
 	 * Get all running tools that have the same tool chest tool name as this one.
-	 * 
+	 *
 	 * @param tool the tool for comparison.
-	 * 
+	 *
 	 * @return array of tools that are running and named the same as this one.
 	 */
 	private PluginTool[] getSameNamedRunningTools(PluginTool tool) {
@@ -470,10 +470,10 @@ class ToolServicesImpl implements ToolServices {
 
 	/**
 	 * Search the array of tools for one using the given domainFile.
-	 * 
+	 *
 	 * @param tools array of tools to search
 	 * @param domainFile domain file to find user of
-	 * 
+	 *
 	 * @return first tool found to be using the domainFile
 	 */
 	private PluginTool findToolUsingFile(PluginTool[] tools, DomainFile domainFile) {

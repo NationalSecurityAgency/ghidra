@@ -1,6 +1,6 @@
 # These instructions show up in the Freescale PowerQUICC III instruction manual
 # (not present elsewhere)
- 
+
 define pcodeop dataCacheBlockClearLock;
 define pcodeop prefetchDataCacheBlockLockSet;
 define pcodeop prefetchDataCacheBlockLockSetX;
@@ -73,14 +73,14 @@ define pcodeop invalidateTLB;
 @ifndef IS_ISA
 #mbar 0         #FIXME
 :mbar MO        is OP=31 & MO & XOP_1_10=854
-{ 
+{
 	memoryBarrier(MO:1);
 }
 @endif
 
 #mfapidi r0,r1  #FIXME
 :mfapidi D,A    is $(NOTVLE) & OP=31 & D & A & XOP_1_10=275
-{ 
+{
 	D = moveFromAPIDIndirect(A);
 }
 
@@ -88,19 +88,19 @@ pmrn: pmr       is BITS_16_20 & BITS_11_15 [ pmr = BITS_11_15 << 5 | BITS_16_20;
 
 #mfpmr r0,?     #FIXME
 :mfpmr D,pmrn   is OP=31 & D & pmrn & XOP_1_10=334 & BIT_0=0
-{ 
+{
 	D = moveFromPerformanceMonitorRegister(pmrn);
 }
 
 #mtpmr r0,?     #FIXME
 :mtpmr pmrn,S   is OP=31 & S & pmrn & XOP_1_10=462 & BIT_0=0
-{ 
+{
 	moveToPerformanceMonitorRegister(pmrn, S);
 }
 
 #rfdi           #FIXME
 :rfdi           is $(NOTVLE) & OP=19 & XOP_1_10=39
-{ 
+{
 	MSR = returnFromDebugInterrupt(MSR, spr23f); #DSRR1
 	local ra = spr23e; #DSRR0
 	return[ra];
@@ -108,7 +108,7 @@ pmrn: pmr       is BITS_16_20 & BITS_11_15 [ pmr = BITS_11_15 << 5 | BITS_16_20;
 
 #rfmci          #FIXME
 :rfmci          is $(NOTVLE) & OP=19 & XOP_0_10=76
-{ 
+{
 	MSR = returnFromMachineCheckInterrupt(MSR, spr23b); #MCSRR1
 	local ra = spr23a; #MCSRR0
 	return[ra];
@@ -119,7 +119,7 @@ pmrn: pmr       is BITS_16_20 & BITS_11_15 [ pmr = BITS_11_15 << 5 | BITS_16_20;
 # CMT: TLB Invalidate Local Indexed [Category: Embedded.Phased In]]
 # FORM: X-form
 define pcodeop TLBInvalidateLocalIndexed; # Outputs/affect TBD
-:tlbilx BITS_21_22,RA_OR_ZERO,RB_OR_ZERO is $(NOTVLE) & OP=31 & CRFD=0 & BITS_21_22 & RA_OR_ZERO & RB_OR_ZERO & XOP_1_10=18 & BIT_0=0 { 
+:tlbilx BITS_21_22,RA_OR_ZERO,RB_OR_ZERO is $(NOTVLE) & OP=31 & CRFD=0 & BITS_21_22 & RA_OR_ZERO & RB_OR_ZERO & XOP_1_10=18 & BIT_0=0 {
 	TLBInvalidateLocalIndexed(BITS_21_22:1,RA_OR_ZERO,RB_OR_ZERO);
 }
 

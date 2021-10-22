@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,13 +40,13 @@ class FunctionCategoryNode extends SymbolCategoryNode {
 		super(SymbolCategory.FUNCTION_CATEGORY, program);
 	}
 
-//	
+//
 //	This code will allow symbols to appear both in the 'Functions' node *and* in the namespaces
 //	node, if they have a namespace.  We have decided that we only want symbols appearing in one
 //	or the other node, as does the LabelCategoryNode.  Anywho, if you put this code back in, then
 //	you must change supportsSymbol() below to know how to allow symbols to be both in this
 //	node and the namespaces node.
-//	
+//
 //	@Override
 //	protected List<GTreeNode> getSymbols(SymbolType type, TaskMonitor monitor) {
 //		List<GTreeNode> nodes = new ArrayList<GTreeNode>();
@@ -210,8 +210,8 @@ class FunctionCategoryNode extends SymbolCategoryNode {
 			return null;
 		}
 
-		// At this point we have a function and we have found the node for that function.  
-		// Search that node for the symbol.  (This bypasses the OrganizationNode's search 
+		// At this point we have a function and we have found the node for that function.
+		// Search that node for the symbol.  (This bypasses the OrganizationNode's search
 		// algorithm.)
 		return ((FunctionSymbolNode) parentNode).findSymbolTreeNode(key, loadChildren, monitor);
 	}

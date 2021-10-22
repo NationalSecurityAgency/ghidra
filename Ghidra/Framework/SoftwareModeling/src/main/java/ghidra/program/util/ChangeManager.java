@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public interface ChangeManager {
 	public static final int DOCR_MEMORY_BLOCK_REMOVED = 21;
 
 	/**
-	 * A memory block was changed. 
+	 * A memory block was changed.
 	 * (for example: its name, comment, or read, write, or execute flags were changed.)
 	 */
 	public static final int DOCR_MEMORY_BLOCK_CHANGED = 22;
@@ -199,7 +199,7 @@ public interface ChangeManager {
 	public static final int DOCR_SYMBOL_DATA_CHANGED = 52;
 
 	/**
-	 * Symbol address changed.  
+	 * Symbol address changed.
 	 * NOTE: This is only permitted for variable/parameter symbols
 	 */
 	public static final int DOCR_SYMBOL_ADDRESS_CHANGED = 53;
@@ -207,7 +207,7 @@ public interface ChangeManager {
 	////////////////////////////////////////////////////////////
 	//
 	// 				REFERENCES
-	// 
+	//
 	/////////////////////////////////////////////////////////////
 
 	/**
@@ -507,7 +507,7 @@ public interface ChangeManager {
 
 	///////////////////////////////////////////////////////////////////////
 	//
-	//                       Trees 
+	//                       Trees
 	//
 	////////////////////////////////////////////////////////////////////////
 
@@ -599,7 +599,7 @@ public interface ChangeManager {
 	////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * A function's purge size was changed. 
+	 * A function's purge size was changed.
 	 */
 	public final static int FUNCTION_CHANGED_PURGE = 1;
 
@@ -678,7 +678,7 @@ public interface ChangeManager {
 	//                              AddressSetPropertyMap
 	//
 	////////////////////////////////////////////////////////////////////////////
-	//  
+	//
 	/**
 	 * An AddressSetPropertyMap was added.
 	 */

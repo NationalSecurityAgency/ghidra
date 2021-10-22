@@ -2406,7 +2406,7 @@ addrGranuleIndexed: addr_granuleSIMM is opc.indexmode=2 & addr_granuleSIMM { exp
 # post indexed wback
 addrGranuleIndexed: "["^Rn_GPR64xsp^"]", "#"^pimm
 is Rn_GPR64xsp & simm9 & opc.indexmode=1
-[ pimm = simm9 << $(LOG2_TAG_GRANULE); ] 
+[ pimm = simm9 << $(LOG2_TAG_GRANULE); ]
 {
 	tmp:8 = Rn_GPR64xsp;
 	Rn_GPR64xsp = Rn_GPR64xsp + pimm;
@@ -2505,12 +2505,12 @@ DecodeTMask32: "#"^tmask is b_31=0 & b_22=0 & b_1215=0xe & b_1011 & b_1617
 
 # esize=2, len=1, levels=0x1: 2 bits with b_1010+1 1s; rotate right b_1616; replicate 16 times
 DecodeWMask32: "#"^wmask is b_31=0 & b_22=0 & b_1115=0x1e & b_1010 & b_1616
-[ wmask=((((~(-1<<(b_1010+1)))*0x5)>>b_1616)&0x3)*0x5*0x11*0x101*0x10001; ] 
+[ wmask=((((~(-1<<(b_1010+1)))*0x5)>>b_1616)&0x3)*0x5*0x11*0x101*0x10001; ]
 { export * [const]:4 wmask; }
 
 # esize=2, len=1, levels=0x1: 2 bits with |b_1010-b_1616|+1 1s; replicate 16 times
 DecodeTMask32: "#"^tmask is b_31=0 & b_22=0 & b_1115=0x1e & b_1010 & b_1616
-[ tmask=((~(-1<<(((b_1010-b_1616)&0x1)+1)))&0x3)*0x5*0x11*0x101*0x10001; ] 
+[ tmask=((~(-1<<(((b_1010-b_1616)&0x1)+1)))&0x3)*0x5*0x11*0x101*0x10001; ]
 { export * [const]:4 tmask; }
 
 # esize=64, len=6, levels=0x3f: 64 bits with b_1015+1 1s; rotate right b_1621; repeat 1 time
@@ -2521,24 +2521,24 @@ DecodeWMask64: "#"^wmask is b_31=1 & b_22=1 & b_1015 & b_1621
 
 # esize=64, len=6, levels=0x3f: 64 bits with |b_1015-b_1621|+1 1s; repeat 1 time
 DecodeTMask64: "#"^tmask is b_31=1 & b_22=1 & b_1015 & b_1621
-[ tmask=~((-1<<((b_1015-b_1621)&0x3f))<<1); ] 
+[ tmask=~((-1<<((b_1015-b_1621)&0x3f))<<1); ]
 { export * [const]:8 tmask; }
 
 # esize=32, len=5, levels=0x1f: 32 bits with b_1014+1 1s; rotate right b_1620; replicate 2 times
 DecodeWMask64: "#"^wmask is b_31=1 & b_22=0 & b_15=0 & b_1014 & b_1620
-[ wmask=((((~(-1<<(b_1014+1)))*0x100000001)>>b_1620)&0xffffffff)*0x100000001; ] 
+[ wmask=((((~(-1<<(b_1014+1)))*0x100000001)>>b_1620)&0xffffffff)*0x100000001; ]
 { export * [const]:8 wmask; }
 
 # esize=32, len=5, levels=0x1f: 32 bits with |b_1014-b_1620|+1 1s; replicate 2 times
 DecodeTMask64: "#"^tmask is b_31=1 & b_22=0 & b_15=0 & b_1014 & b_1620
-[ tmask=((~(-1<<(((b_1014-b_1620)&0x1f)+1)))&0xffffffff)*0x100000001; ] 
+[ tmask=((~(-1<<(((b_1014-b_1620)&0x1f)+1)))&0xffffffff)*0x100000001; ]
 { export * [const]:8 tmask; }
 
 # returned 0xffcfffdefcfffcf
 # shouldbe 0xffcfffcfffcfffcf
 # esize=16, len=4, levels=0xf: 16 bits with b_1013+1 1s; rotate right b_1619; replicate 4 times
 DecodeWMask64: "#"^wmask is b_31=1 & b_22=0 & b_1415=0x2 & b_1013 & b_1619
-[ wmask=((((~(-1<<(b_1013+1)))*0x10001)>>b_1619)&0xffff)*0x10001*0x100000001; ] 
+[ wmask=((((~(-1<<(b_1013+1)))*0x10001)>>b_1619)&0xffff)*0x10001*0x100000001; ]
 { export * [const]:8 wmask; }
 
 # esize=16, len=4, levels=0xf: 16 bits with |b_1013-b_1619|+1 1s; replicate 4 times
@@ -2759,7 +2759,7 @@ T: "D" is sve_size_2223=0b11 { export 8:1; }
 T_sz: "S" is sve_sz_22=0 { export 4:1; }
 T_sz: "D" is sve_sz_22=1 { export 8:1; }
 
-# <T> encoded in "tszh:tszl" -- Is the size specifier, tszh tszl <T> 00 00 RESERVED 00 01 B 00 1x H 01 xx S 1x xx D 
+# <T> encoded in "tszh:tszl" -- Is the size specifier, tszh tszl <T> 00 00 RESERVED 00 01 B 00 1x H 01 xx S 1x xx D
 # Note that tszl is either in b_0809 (if b_21=0) or b_1920 (if b_21=1)
 
 T_tszh: "B" is sve_tszh_2223=0b00 & b_21=0 & sve_tszl_0809=0b01 { export 1:1; }
@@ -3973,7 +3973,7 @@ is ImmS_ImmR_TestSet=0 & ImmR & ImmS & instruction
 ]{}
 
 with : ImmS_ImmR_TestSet=1 {
-	
+
 @include "AARCH64_base_PACoptions.sinc"
 
 @include "AARCH64base.sinc"

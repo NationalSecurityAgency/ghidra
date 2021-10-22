@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,9 @@ import ghidra.program.model.address.AddressSpace;
 /// of this page implementation.  The underlying memory bank can be a \b null pointer
 /// in which case, this memory bank behaves as if it were initially filled with zeros.
 public class MemoryPageOverlay extends MemoryPageBank {
-	
+
 	protected MemoryBank underlie;		// underlying memory object
-	
+
 	/// A page overlay memory bank needs all the parameters for a generic memory bank
 	/// and it needs to know the underlying memory bank being overlayed.
 	/// \param spc is the address space associated with the memory bank

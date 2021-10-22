@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @implNote This uses {@link ProcessBuilder} to launch the subprocess. See its documentation
 	 *           for more details of the parameters of this method.
 	 * @implNote This actually launches a special "leader" subprocess, which sets up the session and
@@ -53,7 +53,7 @@ public class LinuxPtyChild extends LinuxPtyEndpoint implements PtyChild {
 	 *           received by the leader by mistake if sent immediately upon spawning a new session.
 	 *           Users should send a simple command, e.g., "echo", to confirm that the requested
 	 *           program is active before sending special characters.
-	 * 
+	 *
 	 * @param args the image path and arguments
 	 * @param env the environment
 	 * @return a handle to the subprocess

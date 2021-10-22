@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ public class ValueRange implements Comparable<ValueRange> {
 	private long start;
 	private long end;
 	private int value;
-	
+
 	/**
 	 * Constructor for numeric range with an associated value.
 	 * @param start beginning of the range
@@ -60,7 +60,7 @@ public class ValueRange implements Comparable<ValueRange> {
 	public boolean contains(long index) {
 		return index >= start && index <= end;
 	}
-	
+
 	@Override
 	public int compareTo(ValueRange otherRange) {
 		if (start < otherRange.start) {

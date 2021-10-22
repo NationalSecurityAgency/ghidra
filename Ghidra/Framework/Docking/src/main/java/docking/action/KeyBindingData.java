@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import docking.actions.KeyBindingUtils;
 
 /**
  * An object that contains a key stroke and the precedence for when that key stroke should be used.
- * 
+ *
  * <p>Note: this class creates key strokes that work on key {@code pressed}.  This effectively
  * normalizes all client key bindings to work on the same type of key stroke (pressed, typed or
  * released).
@@ -47,7 +47,7 @@ public class KeyBindingData {
 	 * Creates a key stroke from the given text.  See
 	 * {@link KeyBindingUtils#parseKeyStroke(KeyStroke)}.   The key stroke created for this class
 	 * will always be a key {@code pressed} key stroke.
-	 * 
+	 *
 	 * @param keyStrokeString the key stroke string to parse
 	 */
 	public KeyBindingData(String keyStrokeString) {

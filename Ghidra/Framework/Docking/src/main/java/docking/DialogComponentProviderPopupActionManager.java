@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,7 @@ public class DialogComponentProviderPopupActionManager {
 			actionContext = new ActionContext();
 		}
 
-		// If the source is null, must set it or we won't have 
+		// If the source is null, must set it or we won't have
 		// any popups shown.
 		if (actionContext.getSourceObject() == null) {
 			actionContext.setSourceObject(e.getSource());
@@ -68,7 +68,7 @@ public class DialogComponentProviderPopupActionManager {
 
 		DockingWindowManager dwm = DockingWindowManager.getInstance(provider.getComponent());
 		if (dwm == null) {
-			// This is rare, but can happen if there is no initialized application, which would 
+			// This is rare, but can happen if there is no initialized application, which would
 			// happen if client code triggers the showing of a DialogComponentProvider before
 			// any tools are shown.
 			return;
@@ -95,7 +95,7 @@ public class DialogComponentProviderPopupActionManager {
 
 		// This is a bit of a kludge, but allows us to get generic actions, like 'copy' for
 		// tables.  This can go away if we ever convert DialogComponentProviders to use the
-		// primary action system (this was something we were going to do once).  If that happens, 
+		// primary action system (this was something we were going to do once).  If that happens,
 		// then this entire class goes away.
 		ActionToGuiMapper actionManager = dwm.getActionToGuiMapper();
 		PopupActionManager toolPopupManager = actionManager.getPopupActionManager();

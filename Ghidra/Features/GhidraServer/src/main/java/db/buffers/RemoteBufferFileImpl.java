@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.server.stream.*;
 
 /**
  * <code>RemoteBufferFileImpl</code> provides a Remote wrapper for a buffer file
- * enabling it to be passed or returned by other remote methods.  At the time of construction, 
+ * enabling it to be passed or returned by other remote methods.  At the time of construction,
  * the new instance is exported for remote access.
  */
 public class RemoteBufferFileImpl extends UnicastRemoteObject
@@ -118,8 +118,8 @@ public class RemoteBufferFileImpl extends UnicastRemoteObject
 	}
 
 	/**
-	 * Get the number of open RemoteBufferFileHandle's associated with the 
-	 * specified owner repository handle. 
+	 * Get the number of open RemoteBufferFileHandle's associated with the
+	 * specified owner repository handle.
 	 * @param owner owner's repository handle
 	 * @return number of open remote buffer file handles associated with owner
 	 */
@@ -172,7 +172,7 @@ public class RemoteBufferFileImpl extends UnicastRemoteObject
 	}
 
 	/**
-	 * Dispose and unexport all RemoteBufferFileImpl instances associated with the 
+	 * Dispose and unexport all RemoteBufferFileImpl instances associated with the
 	 * specified owner.
 	 * @param owner
 	 * @return true if one or more buffer files were disposed.

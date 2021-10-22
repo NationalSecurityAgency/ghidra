@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public abstract class AbstractFileExtractorTask extends Task {
 
 	/**
 	 * See {@link Task#Task(String, boolean, boolean, boolean)}.
-	 * 
+	 *
 	 * @param title See {@link Task#Task(String, boolean, boolean, boolean)}
 	 * @param canCancel See {@link Task#Task(String, boolean, boolean, boolean)}
 	 * @param hasProgress See {@link Task#Task(String, boolean, boolean, boolean)}
@@ -54,7 +54,7 @@ public abstract class AbstractFileExtractorTask extends Task {
 
 	/**
 	 * Starts the file extraction process.
-	 * 
+	 *
 	 * @param fs the {@link GFileSystem} that holds the files
 	 * @param srcDir the starting directory to extract, if {@code null}, start at root of file system
 	 * @param monitor {@link TaskMonitor} that will be updated with progress and checked for cancel
@@ -146,7 +146,7 @@ public abstract class AbstractFileExtractorTask extends Task {
 	 * <p>
 	 * If you wish to modify this behavior, override this method and return different
 	 * mappings.
-	 *  
+	 *
 	 * @param srcFile source file
 	 * @return String name of the source file, possibly modified to be safer
 	 * @throws IOException thrown if name is not mappable and the extract process should stop
@@ -160,7 +160,7 @@ public abstract class AbstractFileExtractorTask extends Task {
 	 * <p>
 	 * Return true if the exception should be ignored by the file extraction process,
 	 * otherwise return false if it should be propagated up the call stack.
-	 * 
+	 *
 	 * @param file file that was being extracted when the exception happened
 	 * @param e the exception
 	 * @return true if the exception should be suppressed, false if the exception should

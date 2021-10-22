@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,10 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 
 /**
- * 
+ *
  * This is a utility class for generating pcode for the multianewarray operation.
  * Note that the newarray operation, which creates arrays of primitive types, does not
- * reference the constant pool and does not require pcode injection (but see 
+ * reference the constant pool and does not require pcode injection (but see
  * ConstantPoolJava.getRecord()
  *
  */
@@ -44,16 +44,16 @@ public class ArrayMethods {
 	private ArrayMethods(){
 		throw new AssertionError();
 	}
-	
+
 	/**
 	 * Emits pcode for the multianewarray op, which is used to create new multi-dimensional arrays
 	 * It is modeled with two black-box pcode ops: multianewarrayOp and multianewarrayProcessAdditionalDimensionsOp.
-	 * The second op is need because pcode operations are limited to 8 input parameters, whereas multianewarray 
-	 * takes between 1 and 256 parameters.  
-	 * 
+	 * The second op is need because pcode operations are limited to 8 input parameters, whereas multianewarray
+	 * takes between 1 and 256 parameters.
+	 *
 	 * The first argument to multianewarrayOp is a reference to the class of the new array.  The remaining seven arguments
-	 * are array dimensions.  Additional array dimensions are consumed from the stack with calls to 
-	 * multianewarrayProcessAdditionalDimensionsOp, which takes a reference returned by multianewarrayOp as its first argument 
+	 * are array dimensions.  Additional array dimensions are consumed from the stack with calls to
+	 * multianewarrayProcessAdditionalDimensionsOp, which takes a reference returned by multianewarrayOp as its first argument
 	 * and a dimension as its second argument.
 	 * @param pCode is the pcode accumulator
 	 * @param constantPoolIndex
@@ -68,7 +68,7 @@ public class ArrayMethods {
 			String iAsString = Integer.toString(i);
 			pCode.emitPopCat1Value(DIMENSION + iAsString);
 		}
-		
+
 		pCode.emitAssignVarnodeFromPcodeOpCall(CLASS_NAME, 4, ConstantPoolJava.CPOOL_OP, "0",
 			Integer.toString(constantPoolIndex), ConstantPoolJava.CPOOL_MULTIANEWARRAY);
 
@@ -95,7 +95,7 @@ public class ArrayMethods {
 		}
 		pCode.emitAssignVarnodeFromPcodeOpCall(ARRAY_REF, 4, MULTIANEWARRAY, CLASS_NAME, "dim1",
 			"dim2");
-		
+
 
 
 		//consume any additional arguments
@@ -107,7 +107,7 @@ public class ArrayMethods {
 		pCode.emitPushCat1Value(ARRAY_REF);
 	}
 	/**
-	 * The array type codes can be found in the JVM documentation for the 
+	 * The array type codes can be found in the JVM documentation for the
 	 * "newarray" instruction.
 	 * @param code
 	 * @return

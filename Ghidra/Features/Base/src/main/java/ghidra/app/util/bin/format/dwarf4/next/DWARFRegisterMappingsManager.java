@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,7 +68,7 @@ public class DWARFRegisterMappingsManager {
 	 * Returns a possibly cached {@link DWARFRegisterMappings} object for the
 	 * specified language,
 	 * <p>
-	 * 
+	 *
 	 * @param lang {@link Language} to get the matching DWARF register mappings
 	 *            for
 	 * @return {@link DWARFRegisterMappings} instance, never null
@@ -138,7 +138,7 @@ public class DWARFRegisterMappingsManager {
 	 * Throws {@link IOException} if the lang does not have a mapping or it is
 	 * invalid.
 	 * <p>
-	 * 
+	 *
 	 * @param lang {@link Language} to read the matching DWARF register mappings
 	 *            for
 	 * @return a new {@link DWARFRegisterMappings} instance, created from
@@ -172,7 +172,7 @@ public class DWARFRegisterMappingsManager {
 	 * Creates a new {@link DWARFRegisterMappings} from the data present in the
 	 * xml element.
 	 * <p>
-	 * 
+	 *
 	 * @param rootElem JDom XML element containing the &lt;dwarf&gt; root
 	 *            element of the mapping file.
 	 * @param lang The Ghidra {@link Language} that the DWARF register mapping

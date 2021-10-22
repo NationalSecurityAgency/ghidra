@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * NOTE:  ALL ANALYZER CLASSES MUST END IN "Analyzer".  If not,
  * the ClassSearcher will not find them.
- * 
+ *
  * Interface to perform automatic analysis.
  */
 public interface Analyzer extends ExtensionPoint {
@@ -68,7 +68,7 @@ public interface Analyzer extends ExtensionPoint {
 	public AnalysisPriority getPriority();
 
 	/**
-	 * Can this analyzer work on this program. 
+	 * Can this analyzer work on this program.
 	 * @param program program to be analyzed
 	 * @return true if this analyzer can analyze this program
 	 */
@@ -77,7 +77,7 @@ public interface Analyzer extends ExtensionPoint {
 	/**
 	 * Called when the requested information type has been added.
 	 * (ie: function added.)
-	 * 
+	 *
 	 * @param program program to analyze
 	 * @param set AddressSet of locations that have been added
 	 * @param monitor monitor that indicates progress and indicates whether
@@ -111,7 +111,7 @@ public interface Analyzer extends ExtensionPoint {
 	public void registerOptions(Options options, Program program);
 
 	/**
-	 * Analyzers should initialize their options from the values in the given Options, 
+	 * Analyzers should initialize their options from the values in the given Options,
 	 * providing appropriate default values.
 	 * @param options the program options/property list that contains the options
 	 * @param program program to be analyzed
@@ -119,7 +119,7 @@ public interface Analyzer extends ExtensionPoint {
 	public void optionsChanged(Options options, Program program);
 
 	/**
-	 * Called when an auto-analysis session ends. This notifies the analyzer so it can clean up any 
+	 * Called when an auto-analysis session ends. This notifies the analyzer so it can clean up any
 	 * resources that only needed to be maintained during a single auto-analysis session.
 	 * @param program the program that was just completed being analyzed
 	 */

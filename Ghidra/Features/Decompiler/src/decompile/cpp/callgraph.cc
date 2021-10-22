@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ void CallGraphEdge::restoreXml(const Element *el,CallGraph *graph)
 {
   const AddrSpaceManager *manage = graph->getArch();
   Address fromaddr,toaddr,siteaddr;
-  
+
   const List &list(el->getChildren());
   List::const_iterator iter;
 
@@ -283,7 +283,7 @@ void CallGraph::deleteInEdge(CallGraphNode *node,int4 i)
       node->inedge[j-1].complement -= 1;
   }
   node->inedge.pop_back();
-  
+
   for(int4 j=fromi+1;j<fromsize;++j) {
     from->outedge[j-1] = from->outedge[j];
     if (from->outedge[j-1].complement >= i)

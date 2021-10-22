@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,8 +77,8 @@ public class MergeProgressPanel extends JPanel {
 	/**
 	 * Adds a new phase name and its associated icon to the panel.
 	 * The last string in the array will be the name displayed for this phase.
-	 * @param phase array of strings indicating this phase. 
-	 * The first string indicates the primary phase. EAch subsequent string indicates 
+	 * @param phase array of strings indicating this phase.
+	 * The first string indicates the primary phase. EAch subsequent string indicates
 	 * another sub-phase of the phase indicated by the previous string.
 	 * The last string indicates this phase.
 	 * @return the panel that was added which displays this phase's name and status
@@ -101,7 +101,7 @@ public class MergeProgressPanel extends JPanel {
 	}
 
 	/**
-	 * Indicates a particular phase or sub-phase whose status icon is to be changed to 
+	 * Indicates a particular phase or sub-phase whose status icon is to be changed to
 	 * indicate that it is in progress.
 	 * @param phase array which indicates this phase or sub-phase.
 	 */
@@ -113,7 +113,7 @@ public class MergeProgressPanel extends JPanel {
 	}
 
 	/**
-	 * Indicates a particular phase or sub-phase whose status icon is to be changed to 
+	 * Indicates a particular phase or sub-phase whose status icon is to be changed to
 	 * indicate that it is completed.
 	 * @param phase array which indicates this phase or sub-phase.
 	 */

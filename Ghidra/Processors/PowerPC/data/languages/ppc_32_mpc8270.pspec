@@ -6,7 +6,7 @@
     <property key="addressesDoNotAppearDirectlyInCode" value="true"/>
     <property key="emulateInstructionStateModifierClass" value="ghidra.program.emulation.PPCEmulateInstructionStateModifier"/>
   </properties>
-  
+
   <programcounter register="pc"/>
 
 <!-- these SPR names are accurate for the MPC8280 PowerQUICC II
@@ -1109,7 +1109,7 @@ don't know about the DCRs though
 
 	<register name="dcr090" rename="BEAR" group="DCR"/>
 	<register name="dcr091" rename="BESR" group="DCR"/>
-	
+
 	<register name="dcr080" rename="BR0" group="DCR"/>
 	<register name="dcr081" rename="BR1" group="DCR"/>
 	<register name="dcr082" rename="BR2" group="DCR"/>
@@ -1118,39 +1118,39 @@ don't know about the DCRs though
 	<register name="dcr085" rename="BR5" group="DCR"/>
 	<register name="dcr086" rename="BR6" group="DCR"/>
 	<register name="dcr087" rename="BR7" group="DCR"/>
-	
+
 	<register name="dcr0c4" rename="DMACC0" group="DCR"/>
 	<register name="dcr0cc" rename="DMACC1" group="DCR"/>
 	<register name="dcr0d4" rename="DMACC2" group="DCR"/>
 	<register name="dcr0dc" rename="DMACC3" group="DCR"/>
-	
+
 	<register name="dcr0c0" rename="DMACR0" group="DCR"/>
 	<register name="dcr0c8" rename="DMACR1" group="DCR"/>
 	<register name="dcr0d0" rename="DMACR2" group="DCR"/>
 	<register name="dcr0d8" rename="DMACR3" group="DCR"/>
-	
+
 	<register name="dcr0c1" rename="DMACT0" group="DCR"/>
 	<register name="dcr0c9" rename="DMACT1" group="DCR"/>
 	<register name="dcr0d1" rename="DMACT2" group="DCR"/>
 	<register name="dcr0d9" rename="DMACT3" group="DCR"/>
-	
+
 	<register name="dcr0c2" rename="DMADA0" group="DCR"/>
 	<register name="dcr0ca" rename="DMADA1" group="DCR"/>
 	<register name="dcr0d2" rename="DMADA2" group="DCR"/>
 	<register name="dcr0da" rename="DMADA3" group="DCR"/>
-	
+
 	<register name="dcr0c3" rename="DMASA0" group="DCR"/>
 	<register name="dcr0cb" rename="DMASA1" group="DCR"/>
 	<register name="dcr0d3" rename="DMASA2" group="DCR"/>
 	<register name="dcr0db" rename="DMASA3" group="DCR"/>
-	
+
 	<register name="dcr0e0" rename="DMASR" group="DCR"/>
-	
+
 	<register name="dcr042" rename="EXIER" group="DCR"/>
 	<register name="dcr040" rename="EXISR" group="DCR"/>
-	
+
 	<register name="dcr0a0" rename="IOCR" group="DCR"/>
-	
+
   </register_data>
-  
+
 </processor_spec>

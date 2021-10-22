@@ -6,10 +6,10 @@ package mobiledevices.dmg.ghidra;
 import java.io.IOException;
 
 /**
- * A class for reading data from a 
+ * A class for reading data from a
  * generic byte provider in either big-endian or little-endian.
- * 
- * 
+ *
+ *
  */
 public class GBinaryReader {
     /**
@@ -34,17 +34,17 @@ public class GBinaryReader {
     private long currentIndex;
 
     /**
-     * Constructs a reader using the given 
+     * Constructs a reader using the given
      * file and endian-order.
-     * 
+     *
      * If isLittleEndian is true, then all values read
      * from the file will be done so assuming
      * little-endian order.
-     * 
+     *
      * Otherwise, if isLittleEndian
      * is false, then all values will be read
      * assuming big-endian order.
-     * 
+     *
      * @param provider the byte provider
      * @param isLittleEndian the endian-order
      */
@@ -97,7 +97,7 @@ public class GBinaryReader {
     }
 
     /**
-     * Returns true if the specified index into 
+     * Returns true if the specified index into
      * the underlying byte provider is valid.
      * @param index the index in the byte provider
      * @return returns true if the specified index is valid
@@ -108,7 +108,7 @@ public class GBinaryReader {
     }
 
     /**
-     * Returns true if the specified index into 
+     * Returns true if the specified index into
      * the underlying byte provider is valid.
      * @param index the index in the byte provider
      * @return returns true if the specified index is valid
@@ -148,7 +148,7 @@ public class GBinaryReader {
      * Sets the current index to the specified value.
      * The pointer index will allow the reader
      * to operate as a psuedo-iterator.
-     * 
+     *
      * @param index the byte provider index value
      */
     public void setPointerIndex(long index) {
@@ -316,7 +316,7 @@ public class GBinaryReader {
      * Reads an Ascii string of <code>length</code>
      * characters starting at the current index and then increments the current
      * index by <code>length</code>.
-     * 
+     *
      * @return the Ascii string at the current index
      */
     public String readNextAsciiString(int length) throws IOException {
@@ -460,7 +460,7 @@ public class GBinaryReader {
      * Returns a null-terminated Ascii string starting
      * at <code>index</code>. The end of the string
      * is denoted by a <code>null</code> character.
-     * 
+     *
      * @param index the index where the Ascii string begins
      * @return the Ascii string
      * @exception IOException if an I/O error occurs
@@ -515,7 +515,7 @@ public class GBinaryReader {
             if (c == 0x0000) {
                 break;
             }
-            buffer.append(c); 
+            buffer.append(c);
             i += 2;
         }
         return buffer.toString().trim();

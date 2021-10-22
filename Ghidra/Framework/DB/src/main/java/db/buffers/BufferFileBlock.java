@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,11 +18,11 @@ package db.buffers;
 import ghidra.util.BigEndianDataConverter;
 
 /**
- * <code>BufferFileBlock</code> is used to hold BufferFile blocks 
+ * <code>BufferFileBlock</code> is used to hold BufferFile blocks
  * for use during block streaming operations.
- * <p>  
+ * <p>
  * Block indexes are absolute where 0 corresponds
- * to the head block in the BufferFile.  It is important to note that 
+ * to the head block in the BufferFile.  It is important to note that
  * this number is off by 1 from DataBuffer numbering and the index values
  * utilized by {@link BufferFile#getIndexCount()}, {@link BufferFile#get(DataBuffer, int)},
  * {@link BufferFile#put(DataBuffer, int)}, etc..  It is important for
@@ -64,7 +64,7 @@ public class BufferFileBlock {
 	}
 
 	/**
-	 * Get absolute block index, where 0 corresponds to the first 
+	 * Get absolute block index, where 0 corresponds to the first
 	 * physical block within the buffer file.
 	 * @return block index
 	 */

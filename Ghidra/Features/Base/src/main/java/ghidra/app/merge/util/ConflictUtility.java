@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import ghidra.program.util.DiffUtility;
 import ghidra.util.HTMLUtilities;
 
 /**
- * <code>ConflictUtility</code> provides some constants and static methods 
+ * <code>ConflictUtility</code> provides some constants and static methods
  * used by the Listing Merge portion of the multi-user merge.
  * For now, the VariousChoicesPanel and VerticalChoicesPanel use HTML in
  * JLabels to display color etc. This is because they also show radiobuttons
@@ -59,7 +59,7 @@ public class ConflictUtility {
 	}
 
 	/**
-	 * This creates color text by wrapping a text string with an HTML font tag 
+	 * This creates color text by wrapping a text string with an HTML font tag
 	 * that has a color attribute.
 	 * @param rgbColor (eg. "#8c0000")
 	 * @param text the text to be colored
@@ -70,7 +70,7 @@ public class ConflictUtility {
 	}
 
 	/**
-	 * This creates a colored number by converting the number to a string and 
+	 * This creates a colored number by converting the number to a string and
 	 * wrapping it with an HTML font tag that has a color attribute.
 	 * @param rgbColor (eg. "#8c0000")
 	 * @param value the integer number
@@ -161,8 +161,8 @@ public class ConflictUtility {
 	}
 
 	/**
-	 * Creates a standard address set conflict count message. This indicates 
-	 * which address or address range with conflicts you are resolving of some 
+	 * Creates a standard address set conflict count message. This indicates
+	 * which address or address range with conflicts you are resolving of some
 	 * total number of addresses or address ranges with conflicts.
 	 * @param addressNum the current conflicting address number.
 	 * @param totalAddresses the total number of conflicting addresses.
@@ -274,7 +274,7 @@ public class ConflictUtility {
 	}
 
 	/**
-	 * Creates a string containing HTML tags to represent the offset value in 
+	 * Creates a string containing HTML tags to represent the offset value in
 	 * color as a hexadecimal value.
 	 * @param offset the offset to be displayed in hexadecimal
 	 * @return the message string containing HTML tags.
@@ -284,7 +284,7 @@ public class ConflictUtility {
 	}
 
 	/**
-	 * Creates a string containing HTML tags to represent the hash value in 
+	 * Creates a string containing HTML tags to represent the hash value in
 	 * color as an unsigned hexadecimal value.
 	 * @param hash the hash to be displayed in hexadecimal
 	 * @return the message string containing HTML tags.

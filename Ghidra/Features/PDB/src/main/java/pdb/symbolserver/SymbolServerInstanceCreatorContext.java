@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import java.io.File;
  * Ghidra program was imported from, as well as to reach back to the registry itself and
  * use it to create other SymbolServer instances (if necessary).
  * <p>
- * Created via {@link SymbolServerInstanceCreatorRegistry#getContext()} or 
+ * Created via {@link SymbolServerInstanceCreatorRegistry#getContext()} or
  * {@link SymbolServerInstanceCreatorRegistry#getContext(ghidra.program.model.listing.Program)}
  */
 public class SymbolServerInstanceCreatorContext {
@@ -45,7 +45,7 @@ public class SymbolServerInstanceCreatorContext {
 
 	/**
 	 * The {@link SymbolServerInstanceCreatorRegistry} associated with this context.
-	 * 
+	 *
 	 * @return the {@link SymbolServerInstanceCreatorRegistry}
 	 */
 	public SymbolServerInstanceCreatorRegistry getSymbolServerInstanceCreatorRegistry() {
@@ -54,7 +54,7 @@ public class SymbolServerInstanceCreatorContext {
 
 	/**
 	 * The root directory of the imported binary.
-	 * 
+	 *
 	 * @return directory of the binary, or null if no associated program
 	 */
 	public File getRootDir() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ abstract class AbstractAddressSpace implements AddressSpace {
 	protected Address maxAddress;
 	private int hashcode;
 	protected int spaceID;
-	private boolean showSpaceName; // show space name when displaying an address	
+	private boolean showSpaceName; // show space name when displaying an address
 	private boolean hasMemoryMappedRegisters = false;
 
 	private long wordAddressMask = -1;
@@ -45,7 +45,7 @@ abstract class AbstractAddressSpace implements AddressSpace {
 	/**
 	 * Constructs a new address space with the given name, bit size, type and unique value.
 	 * @param name the name of the space.
-	 * @param size the number of bits required to represent the largest address 
+	 * @param size the number of bits required to represent the largest address
 	 * the space.
 	 * @param unitSize number of bytes contained at each addressable location (i.e., word-size in bytes)
 	 * @param type the type of the space
@@ -547,10 +547,10 @@ abstract class AbstractAddressSpace implements AddressSpace {
 
 		AddressSpace s = (AddressSpace) obj;
 
-//        return spaceID == s.getUniqueSpaceID() && 
+//        return spaceID == s.getUniqueSpaceID() &&
 //			   type == s.getType() &&
 ////        	   name.equals(s.getName) &&  // does the name really matter?
-//        	   size == s.getSize();		
+//        	   size == s.getSize();
 
 		return type == s.getType() && name.equals(s.getName()) && size == s.getSize();
 	}
@@ -591,7 +591,7 @@ abstract class AbstractAddressSpace implements AddressSpace {
 
 	/**
 	 * No overlay translation necessary, this is a base addressSpace.
-	 * 
+	 *
 	 *  (non-Javadoc)
 	 * @see ghidra.program.model.address.AddressSpace#getOverlayAddress(ghidra.program.model.address.Address)
 	 */
@@ -717,7 +717,7 @@ abstract class AbstractAddressSpace implements AddressSpace {
 
 	/**
 	 * Tag this memory space as having memory mapped registers
-	 * 
+	 *
 	 * @param hasRegisters true if it has registers, false otherwise
 	 */
 	public void setHasMappedRegisters(boolean hasRegisters) {

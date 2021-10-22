@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -178,11 +178,11 @@ public class VersionControlCheckOutAction extends VersionControlAction {
 				}
 
 				//
-				// This task uses the monitor in a dual mode.  Each sub-task will control the 
+				// This task uses the monitor in a dual mode.  Each sub-task will control the
 				// progress such that each file goes from zero to complete.   This task will
-				// control the message so that the user sees the overall progress (e.g., 
+				// control the message so that the user sees the overall progress (e.g.,
 				// '1 of 10', etc...)
-				// 
+				//
 				monitor.setMaximum(0);
 				monitor.setProgress(0);
 				WrappingTaskMonitor wrappedMonitor = new WrappingTaskMonitor(monitor) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-//This example script locates a memory address for a file offset.  
+//This example script locates a memory address for a file offset.
 //Prompt user for a file offset.
 //Print the associated memory address to the Ghidra console
 //Print the file offset as a Ghidra comment at the memory address in the Ghidra Listing
-//If multiple addresses are located, then print the addresses to the console (do not set a 
+//If multiple addresses are located, then print the addresses to the console (do not set a
 //Ghidra comment)
 //@category Examples
 
@@ -45,7 +45,7 @@ public class LocateMemoryAddressesForFileOffset extends GhidraScript {
 			processAddress(address, mem.getBlock(address).getName(), myFileOffset);
 
 		}
-		//address set size is > 1, file offset matches to multiple addresses.  
+		//address set size is > 1, file offset matches to multiple addresses.
 		//Let the user decide which address they want.
 		else {
 			println("Possible memory block:address are:");

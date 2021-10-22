@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -100,10 +100,10 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 
 	/**
 	 * Attempt to derive a location from the given context
-	 * 
+	 *
 	 * <p>
 	 * Currently, this supports {@link ProgramLocationActionContext} and {@link MarkerLocation}.
-	 * 
+	 *
 	 * @param context a possible location context
 	 * @return the program location, or {@code null}
 	 */
@@ -503,10 +503,10 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 
 	/**
 	 * TODO: Document me
-	 * 
+	 *
 	 * <p>
 	 * This is a little different from that in the breakpoint service.
-	 * 
+	 *
 	 * @param loc
 	 * @return
 	 */
@@ -982,7 +982,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 
 	/**
 	 * Instantiate a marker set for the given program or trace view
-	 * 
+	 *
 	 * @param program the (static) program or (dynamic) trace view
 	 * @return the marker sets
 	 */

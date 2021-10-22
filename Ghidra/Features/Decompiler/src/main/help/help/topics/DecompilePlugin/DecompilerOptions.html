@@ -13,7 +13,7 @@
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter">
 <div class="titlepage"><div><div><h1 class="title">
 <a name="DecompilerOptions"></a>Decompiler Options</h1></div></div></div>
-  
+
 <div class="simplesect">
 <div class="titlepage"></div>
   <p>
@@ -68,7 +68,7 @@
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="GeneralOptions"></a>General Options</h2></div></div></div>
-  
+
   <p>
     These options govern what resources are available to the Plug-in and the Decompiler engine but do
     not affect how analysis is performed or results are displayed.
@@ -134,7 +134,7 @@
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="AnalysisOptions"></a>Analysis Options</h2></div></div></div>
-  
+
   <p>
     These options directly affect how the Decompiler performs its analysis, either by
     toggling specific analysis passes or changing how it treats various annotations.
@@ -269,7 +269,7 @@
 	   Users can actively set whether specific memory regions are considered read-only through the
 	  <span class="emphasis"><em>Memory Manager</em></span>, and individual data elements can be marked
 	  as <span class="emphasis"><em>constant</em></span> via the <span class="bold"><strong>Mutability</strong></span> setting
-	  (see <a class="xref" href="DecompilerAnnotations.html#AnnoteMutability" title="Data Mutability">Data Mutability</a>). 
+	  (see <a class="xref" href="DecompilerAnnotations.html#AnnoteMutability" title="Data Mutability">Data Mutability</a>).
 	</p>
       </dd>
 <dt>
@@ -314,7 +314,7 @@
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="DisplayOptions"></a>Display Options</h2></div></div></div>
-  
+
   <p>
     These options do not change the Decompiler's analysis but only affect how the results are presented.
   </p>
@@ -420,8 +420,8 @@
 </dt>
 <dd>
 	<p>
-	  Set whether a specific type of comment should be incorporated into Decompiler output. 
-	  Each type has its own toggle and can be individually included or excluded from Decompiler output. 
+	  Set whether a specific type of comment should be incorporated into Decompiler output.
+	  Each type has its own toggle and can be individually included or excluded from Decompiler output.
 	  </p>
 <div class="informalexample">
 	    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
@@ -453,7 +453,7 @@
 	  Toggle whether the Decompiler emits comments at the head (before the beginning) of a function.
 	  The header is built from Plate comments placed at the <span class="emphasis"><em>entry point</em></span> of the
 	  function (see the discussion in <a class="xref" href="DecompilerAnnotations.html#AnnoteComments" title="Comments">Comments</a>).
-	  The inclusion of other Plate comments is controlled by the <span class="bold"><strong>Display PLATE comments</strong></span> toggle, described above. 
+	  The inclusion of other Plate comments is controlled by the <span class="bold"><strong>Display PLATE comments</strong></span> toggle, described above.
 	</p>
       </dd>
 <dt>
@@ -479,7 +479,7 @@
 <div class="informalexample">
 	    <div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: bullet; ">
 <li class="listitem" style="list-style-type: disc">
-		<span class="bold"><strong>Minimally</strong></span> - Display the minimal path that distinguishes the symbol 
+		<span class="bold"><strong>Minimally</strong></span> - Display the minimal path that distinguishes the symbol
 	      </li>
 <li class="listitem" style="list-style-type: disc">
 		<span class="bold"><strong>Always</strong></span> - Always display the entire namespace path
@@ -508,7 +508,7 @@
 	<p>
 	  Toggle whether Decompiler generated <span class="emphasis"><em>WARNING</em></span> comments are displayed as part
 	  of the output. The Decompiler generates these comments, independent of those laid down by users, to
-	  indicate unusual conditions or possible errors (see <a class="xref" href="DecompilerAnnotations.html#CommentWarnings" title="Warning Comments">Warning Comments</a>). 
+	  indicate unusual conditions or possible errors (see <a class="xref" href="DecompilerAnnotations.html#CommentWarnings" title="Warning Comments">Warning Comments</a>).
 	</p>
       </dd>
 <dt>
@@ -602,7 +602,7 @@
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="ProgramOptions"></a>Program Options</h2></div></div></div>
-  
+
   <p>
     Changes to these options affect only the Decompiler and only for
     the current Program being analyzed.
@@ -619,7 +619,7 @@
 	  Sets the calling convention (prototype model) used when decompiling a function where
 	  the convention is not known; i.e., marked as <span class="bold"><strong>unknown</strong></span>.  Many architectures have multiple
 	  calling conventions, <span class="bold"><strong>__stdcall</strong></span>, <span class="bold"><strong>__thiscall</strong></span>, etc.
-	  (see the discussion in <a class="xref" href="DecompilerConcepts.html#ConceptPrototypeModel" title="Prototype Model">Prototype Model</a>).  
+	  (see the discussion in <a class="xref" href="DecompilerConcepts.html#ConceptPrototypeModel" title="Prototype Model">Prototype Model</a>).
 	</p>
       </dd>
 </dl></div>
@@ -630,7 +630,7 @@
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="ExtensionOptions"></a>Specification Extensions</h2></div></div></div>
-  
+
   <p>
     This entry displays elements from the Program's <span class="emphasis"><em>compiler specification</em></span> and
     <span class="emphasis"><em>processor specification</em></span> and allows the user to add or remove
@@ -647,7 +647,7 @@
   <p>
     Users can change or reimport an extension if new information points to a better definition.
     Users have full control over an extension, and unlike a core element, can tailor it specifically
-    to the Program.  
+    to the Program.
   </p>
   <p>
     This options entry presents a table of all specification elements.
@@ -670,7 +670,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ExtendTypes"></a>Extension Types</h3></div></div></div>
-    
+
     <p>
       Each of the element types described here represents an XML tag of the same name, which, if
       present in the table, must either be in the <span class="emphasis"><em>compiler specification</em></span> file,
@@ -764,7 +764,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ExtendStatus"></a>Status</h3></div></div></div>
-    
+
     <p>
       The Status column labels an element as either a core specification
       or an extension; it also gives an indication of whether the element
@@ -844,7 +844,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ExtendImport"></a>Importing a New Extension</h3></div></div></div>
-    
+
     <p>
       The <span class="emphasis"><em>Import</em></span> button at the bottom of the
       <span class="bold"><strong>Specification Extensions</strong></span> pane allows the user to import one of the
@@ -883,7 +883,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ExtendRemove"></a>Removing an Extension</h3></div></div></div>
-    
+
     <p>
       The <span class="emphasis"><em>Remove</em></span> button at the bottom of the <span class="bold"><strong>Specification Extensions</strong></span> pane allows
       the user to remove a previously installed extension.  A row from the table is selected first, which

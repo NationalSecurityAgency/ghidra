@@ -1,12 +1,12 @@
 #
-# TI MSP430 
+# TI MSP430
 #
 # Texas Instruments microcontroller 16-bit CPU
 
 
 #
 # 	Memory Architecture
-# 
+#
 
 define endian=$(ENDIAN);
 define alignment=2;
@@ -19,12 +19,12 @@ define space register type=register_space size=2;
 define register offset=0x0000 size=$(REG_SIZE) [
 	PC # R0 # Program Counter
 	SP # R1 # Stack Pointer
-	SR # R2 # Status Register 
+	SR # R2 # Status Register
 	R3 # R3 # Constant Generator
-		
+
 	#Available for general use:
 	R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15
-	
+
 	#None:
 	None
 ];
@@ -34,15 +34,15 @@ define register offset=0x0000 size=$(REG_SIZE) [
 define register offset=0x0000 size=2 [
 	PC_16 _ SP_16 _ SR_16  _ R3_16  _ R4_16  _ R5_16  _ R6_16  _ R7_16 _
 	R8_16 _ R9_16 _ R10_16 _ R11_16 _ R12_16 _ R13_16 _ R14_16 _ R15_16 _
-	
+
 ];
 
 define register offset=0x0000 size=1 [
 	PC_lo PC_hi _ _ # R0 # Program Counter
 	SP_lo SP_hi _ _ # R1 # Stack Pointer
-	SR_lo SR_hi _ _ # R2 # Status Register 
+	SR_lo SR_hi _ _ # R2 # Status Register
 	R3_lo R3_hi _ _ # R3 # Constant Generator
-		
+
 	#Available for general use:
 	R4_lo  R4_hi _ _
     R5_lo  R5_hi _ _
@@ -56,7 +56,7 @@ define register offset=0x0000 size=1 [
     R13_lo R13_hi _ _
     R14_lo R14_hi _ _
     R15_lo R15_hi _ _
-	
+
 	#None:
 	None_lo None_hi _ _
 ];
@@ -65,9 +65,9 @@ define register offset=0x0000 size=1 [
 define register offset=0x0000 size=1 [
 	PC_lo PC_hi # R0 # Program Counter
 	SP_lo SP_hi # R1 # Stack Pointer
-	SR_lo SR_hi # R2 # Status Register 
+	SR_lo SR_hi # R2 # Status Register
 	R3_lo R3_hi # R3 # Constant Generator
-		
+
 	#Available for general use:
 	R4_lo  R4_hi
     R5_lo  R5_hi
@@ -81,7 +81,7 @@ define register offset=0x0000 size=1 [
     R13_lo R13_hi
     R14_lo R14_hi
     R15_lo R15_hi
-	
+
 	#None:
 	None_lo None_hi
 ];
@@ -98,7 +98,7 @@ define context contextreg
   ctx_al=(1,1) noflow					# extension word al field
   ctx_ctregdest=(2,5) noflow			# extension word dest register/immediate field
   ctx_ctregdests=(2,5) signed noflow	# signed version of above
-  ctx_repreg=(2,5) noflow				# register repeat count comes from. 
+  ctx_repreg=(2,5) noflow				# register repeat count comes from.
   ctx_regsrc=(6,9) noflow				# extension word src register/immediate field
   ctx_regsrcs=(6,9) signed noflow		# signed version of above
   ctx_zc=(10,10) noflow					# extension word zero carry field
@@ -126,10 +126,10 @@ define token instr16(16)
 	opext_11_5	= (11, 15)
 	op16_7_1  	= (7, 7)
 	op16_13_3  	= (13, 15)
-	
+
 	src		= (0, 3)
 	dest	= (0, 3)
-	
+
 	as	= (4, 5)
 	bow	= (6, 6)
 	insid = (4, 7)
@@ -145,15 +145,15 @@ define token instr16(16)
 	dest_Indexed16_0_4 	= (0, 3)
 	dest_Direct_lo		= (0, 3)
 	dest_Direct_hi		= (0, 3)
-	
+
 	condition	= (10, 12)
-	
+
 	off16  = (0, 9) signed
 	off16_8_2	= (8, 9)
 	off16_4_4	= (4, 7)
 	off16_0_4 	= (0, 3)
 
-	zc	= (8, 8)	
+	zc	= (8, 8)
 	ad	= (7, 7)
 	al	= (6, 6)
 	imm_4_4		= (4, 7)
@@ -168,7 +168,7 @@ define token instr16(16)
 	src_Direct_hi		= (8, 11)
 	src_ext				= (7, 10)
 	rrn					= (10, 11)
-	
+
 	imm_0_16			= (0, 15)
 	imms_0_16			= (0, 15) signed
 	indexExtWord16_0_16 = (0, 15)
@@ -183,22 +183,22 @@ define token instr16(16)
 #
 attach variables [ 	src_8_4
 					dest_0_4
-					reg_Direct16_0_4 
-					src_Direct16_8_4 
+					reg_Direct16_0_4
+					src_Direct16_8_4
 					dest_Direct16_0_4
 					ctx_popreg
 					ctx_repreg ] [ PC SP SR R3 R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 ];
-					
+
 attach variables [ dest_Direct_lo src_Direct_lo] [ PC_lo SP_lo SR_lo   _      R4_lo  R5_lo  R6_lo  R7_lo
                                       			R8_lo R9_lo R10_lo  R11_lo R12_lo R13_lo R14_lo R15_lo ];
 attach variables [ dest_Direct_hi src_Direct_hi] [ PC_hi SP_hi SR_hi   _      R4_hi  R5_hi  R6_hi  R7_hi
                                       			R8_hi R9_hi R10_hi  R11_hi R12_hi R13_hi R14_hi R15_hi ];
-                                      					 
-attach variables [ 	reg_Indexed16_0_4 
-					src_Indexed16_8_4 
+
+attach variables [ 	reg_Indexed16_0_4
+					src_Indexed16_8_4
 					dest_Indexed16_0_4 ] [ None SP _ _ R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 ];
 
-attach variables [ 	reg_InDirect16_0_4 
+attach variables [ 	reg_InDirect16_0_4
 					src_InDirect16_8_4 ] [ PC SP _ _ R4 R5 R6 R7 R8 R9 R10 R11 R12 R13 R14 R15 ];
 
 @if REG_SIZE == "4"
@@ -260,7 +260,7 @@ AMASK:		val	is epsilon [ val = 0xFFFF; ]  { export *[const]:2 val; }
 REG_W_AS: DST16_0_4 			 		 is DST16_0_4 & as=0x0 & bow=0x0  {export DST16_0_4;} # Word/Register Direct (Rn):
 REG_W_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:2 tmp;}
 REG_W_AS: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-REG_W_AS: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+REG_W_AS: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 REG_W_AS: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x0 & AMASK; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK; export *:2 tmp; } # Symbolic
 REG_W_AS: "#"^indexExtWord16_0_16 	 is reg16_0_4=0x0 & as=0x3 & bow=0x0 ; indexExtWord16_0_16 {export *[const]:2 indexExtWord16_0_16; } # Immediate
 REG_W_AS: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 {export *:2 indexExtWord16_0_16; } # Absolute
@@ -274,7 +274,7 @@ REG_W_AS: "#-1" 					 is	reg16_0_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2;} 	
 REG_W_AS_DEST: DST16_0_4 			 is DST16_0_4 & as=0x0 & bow=0x0  {export DST16_0_4;} # Word/Register Direct (Rn):
 REG_W_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:2 tmp;}
 REG_W_AS_DEST: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-REG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+REG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 REG_W_AS_DEST: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:2 tmp; } # Symbolic
 REG_W_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 {export *:2 indexExtWord16_0_16; } # Absolute
 
@@ -282,7 +282,7 @@ REG_W_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; i
 REG_B_AS: DST8_0_4 			 		 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
 REG_B_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:1 tmp;}
 REG_B_AS: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-REG_B_AS: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+REG_B_AS: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 REG_B_AS: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:1 tmp; } # Symbolic
 REG_B_AS: "#"^indexExtWord16_0_16 	 is reg16_0_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 { export *[const]:1 indexExtWord16_0_16; } # Immediate
 REG_B_AS: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
@@ -291,12 +291,12 @@ REG_B_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x1  { export 8:1;}		# Con
 REG_B_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x1  { export 0:1;}		# Constant
 REG_B_AS: "#1" 						 is reg16_0_4=0x3 & as=0x1 & bow=0x1  { export 1:1;}		# Constant
 REG_B_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x1  { export 2:1;}		# Constant
-REG_B_AS: "#-1" 					 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1;} 	# Constant	
+REG_B_AS: "#-1" 					 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1;} 	# Constant
 
 REG_B_AS_DEST: DST8_0_4 			 	 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
 REG_B_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (reg_Indexed16_0_4 + indexExtWord16_0_16s) & AMASK; export *:1 tmp;}
 REG_B_AS_DEST: "@"^reg_InDirect16_0_4 	 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-REG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+REG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+" is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 REG_B_AS_DEST: labelCalc 				 is reg16_0_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:1 tmp; } # Symbolic
 REG_B_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
 
@@ -308,7 +308,7 @@ REG_B_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; i
 SRC_W_AS: SRC16_8_4 			 		 is SRC16_8_4 & as=0x0 & bow=0x0  {export SRC16_8_4;} # Word/Register Direct (Rn):
 SRC_W_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (src_Indexed16_8_4 + indexExtWord16_0_16s) & AMASK; export *:2 tmp;}
 SRC_W_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-SRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+SRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):
 SRC_W_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x0 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:2 tmp; } # Symbolic
 SRC_W_AS: "#"^indexExtWord16_0_16 	 is src16_8_4=0x0 & as=0x3 & bow=0x0 ; indexExtWord16_0_16 {export *[const]:2 indexExtWord16_0_16; } # Immediate
 SRC_W_AS: "&"^indexExtWord16_0_16 	 is src16_8_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 {export *:2 indexExtWord16_0_16; } # Absolute
@@ -317,12 +317,12 @@ SRC_W_AS: "#8" 						 is src16_8_4=0x2 & as=0x3 & bow=0x0  { export 8:2; }		# Co
 SRC_W_AS: "#0" 						 is src16_8_4=0x3 & as=0x0 & bow=0x0  { export 0:2; }		# Constant
 SRC_W_AS: "#1" 						 is src16_8_4=0x3 & as=0x1 & bow=0x0  { export 1:2; }		# Constant
 SRC_W_AS: "#2" 						 is src16_8_4=0x3 & as=0x2 & bow=0x0  { export 2:2; }		# Constant
-SRC_W_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2; } 	# Constant	
+SRC_W_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2; } 	# Constant
 #-----------------------------------------------
 SRC_B_AS: SRC8_8_4 			 		 is SRC8_8_4 & as=0x0 & bow=0x1  { export SRC8_8_4;} # Word/Register Direct (Rn):
 SRC_B_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = (src_Indexed16_8_4 + indexExtWord16_0_16s) & AMASK; export *:1 tmp;}
 SRC_B_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-SRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+SRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):
 SRC_B_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x1 & AMASK ; indexExtWord16_0_16 [labelCalc = inst_start + 2 + indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = labelCalc & AMASK;export *:1 tmp; } # Symbolic
 SRC_B_AS: "#"^indexExtWord16_0_16 	 is src16_8_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 {export *[const]:1 indexExtWord16_0_16;} # Immediate
 SRC_B_AS: "&"^indexExtWord16_0_16 	 is src16_8_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
@@ -402,7 +402,7 @@ DEST_B_AD: "&"^indexExt2Word16_0_16   is dest=0x2 & ad=0x1 & bow=0x1 & as=0x3 & 
 
 # For handling constant operands in CALL and BR instructions.
 DirectAddr: "#"^indexExtWord16_0_16  is indexExtWord16_0_16 {export *:$(REG_SIZE) indexExtWord16_0_16; }
-     
+
 tbl_bzero:			is ad=0 & reg_Direct16_0_4 & dest_Direct_lo {ztmp:1 = dest_Direct_lo; reg_Direct16_0_4 = 0; dest_Direct_lo = ztmp; }
 tbl_bzero:			is epsilon {}
 
@@ -480,16 +480,16 @@ zeroExtend: is dest_Direct_lo & dest_Direct16_0_4
 #
 # Post processing when destination is the PC
 #
-postIncrementStore:  			 is postIncrement & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0 & bow=0x1 & ctx_al=1 & zeroExtend 
+postIncrementStore:  			 is postIncrement & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0 & bow=0x1 & ctx_al=1 & zeroExtend
 { build zeroExtend; build postIncrement; return [PC]; }
-postIncrementStore:  			 is postIncrement & ad=0x0 & dest_Direct16_0_4=0x0 & bow=0x1 & ctx_al=1 & zeroExtend 
+postIncrementStore:  			 is postIncrement & ad=0x0 & dest_Direct16_0_4=0x0 & bow=0x1 & ctx_al=1 & zeroExtend
 { build zeroExtend; build postIncrement; goto [PC];}
 postIncrementStore:              is postIncrement & ad=0x0 & bow=0x1 & ctx_al=1 & zeroExtend
 { build zeroExtend; build postIncrement; }
 
-postIncrementStore:  			 is postIncrement & ctx_haveext=0 & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0 & bow=0x1 & zeroExtend 
+postIncrementStore:  			 is postIncrement & ctx_haveext=0 & ad=0x0 & src_InDirect16_8_4 & as=0x3 & src16_8_4=1 & dest_Direct16_0_4=0x0 & bow=0x1 & zeroExtend
 { build zeroExtend; build postIncrement; return [PC]; }
-postIncrementStore:  			 is postIncrement & ctx_haveext=0 & ad=0x0 & dest_Direct16_0_4=0x0 & bow=0x1 & zeroExtend 
+postIncrementStore:  			 is postIncrement & ctx_haveext=0 & ad=0x0 & dest_Direct16_0_4=0x0 & bow=0x1 & zeroExtend
 { build zeroExtend; build postIncrement; goto [PC];}
 postIncrementStore:              is postIncrement & ctx_haveext=0 & ad=0x0 & bow=0x1 & zeroExtend
 { build zeroExtend; build postIncrement; }
@@ -525,12 +525,12 @@ JCND: "MP"	is condition=0x7 {cndTst:1 = 0x1; export cndTst;}                    
 
 OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	{ export *:2 offset10;}
-	
-	
+
+
 ###################################################################################
 #
 #	Single-operand arithmetic
-#	
+#
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
@@ -544,7 +544,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 0  | 0  | 0  | 1  | 0  | 0  |     000    | B/W |   As    |     register    | 
+#	| 0  | 0  | 0  | 1  | 0  | 0  |     000    | B/W |   As    |     register    |
 :RRC^".W" REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x0 & bow=0x0 & tbl_wzero & postRegIncrement) ... & REG_W_AS_DEST {
 	# Operation Flags...
 	$(OVERFLOW) = ((REG_W_AS_DEST != 0x0) && ($(CARRY) == 0x1));	# V Flag
@@ -581,7 +581,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 0  | 0  | 0  | 1  | 0  | 0  |     001    |  0  |   As    |     register    | 
+#	| 0  | 0  | 0  | 1  | 0  | 0  |     001    |  0  |   As    |     register    |
 :SWPB REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x0 & op16_7_1=0x1 & bow=0x0 & tbl_wzero & postRegIncrement) ... & REG_W_AS_DEST {
 	lowByte:1 = REG_W_AS_DEST[0,8];
 	highByte:1 = REG_W_AS_DEST[8,8];
@@ -599,7 +599,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 0  | 0  | 0  | 1  | 0  | 0  |     010    | B/W |   As    |     register    | 
+#	| 0  | 0  | 0  | 1  | 0  | 0  |     010    | B/W |   As    |     register    |
 :RRA^".W" REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x0 & tbl_wzero & postRegIncrement) ... & REG_W_AS_DEST {
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;					# V Flag (reset)
@@ -636,11 +636,11 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 0  | 0  | 0  | 1  | 0  | 0  |     011    |  0  |   As    |     register    | 
+#	| 0  | 0  | 0  | 1  | 0  | 0  |     011    |  0  |   As    |     register    |
 :SXT REG_W_AS_DEST is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x1 & bow=0x0 & tbl_wzero & postRegIncrement) ... & REG_W_AS_DEST {
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;						# V Flag
-	# Operation...	
+	# Operation...
 	byteVal:1 = REG_W_AS_DEST[0,8];
 	REG_W_AS_DEST = sext(byteVal);
 	build tbl_wzero;
@@ -658,7 +658,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 0  | 0  | 0  | 1  | 0  | 0  |     100    | B/W |   As    |     register    | 
+#	| 0  | 0  | 0  | 1  | 0  | 0  |     100    | B/W |   As    |     register    |
 :PUSH^".W" REG_W_AS is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0 & bow=0x0 & postRegIncrement) ... & REG_W_AS {
 	SP = SP - 0x2;
 	*:2 SP = REG_W_AS;
@@ -671,7 +671,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	*:1 SP = REG_B_AS;
 	#Status bits are not affected
 	build postRegIncrement;
-}	
+}
 
 
 ###################################################################################
@@ -680,7 +680,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 0  | 0  | 0  | 1  | 0  | 0  |     101    |  0  |   As    |     register    | 
+#	| 0  | 0  | 0  | 1  | 0  | 0  |     101    |  0  |   As    |     register    |
 :CALL REG_W_AS is ctx_haveext=0 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x1 & bow=0x0 & postRegIncrement) ... & REG_W_AS {
     SP = SP - 0x2;
     *:2 SP = inst_next;
@@ -707,7 +707,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 0  | 0  | 0  | 1  | 0  | 0  |     110    |  0  |   00    |       0000      | 
+#	| 0  | 0  | 0  | 1  | 0  | 0  |     110    |  0  |   00    |       0000      |
 :RETI is ctx_haveext=0 & op16_12_4=0x1 & op16_8_4=0x3 & op16_7_1=0x0 & as=0x0 & bow=0x0 & op16_0_4=0x0 & op16_4_4=0x0 {
 @if REG_SIZE == "2"
 	SR = *:2 SP;
@@ -718,7 +718,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	SR = zext(tmp[0,12]);
 	SP = SP + 0x2;
 	PC = zext(*:2 SP) | ((tmp & 0xF000) << 4);
-@endif	
+@endif
 	SP = SP + 0x2;
 	return [PC];
 	#Status bits are restored from system stack
@@ -727,7 +727,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 ###################################################################################
 #
 #	Conditional jump; PC = PC + 2*offset
-#	
+#
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
@@ -741,7 +741,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 0  | 0  | 1  |  condition   |   			10-bit signed offset		     | 
+#	| 0  | 0  | 1  |  condition   |   			10-bit signed offset		     |
 :J^JCND OFFSET_10BIT is ctx_haveext=0 & op16_13_3=0x1 & JCND & OFFSET_10BIT {
 	if (JCND) goto OFFSET_10BIT;
 	#Status bits are not affected
@@ -755,7 +755,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 ###################################################################################
 #
 #	Two-operand arithmetic
-#	
+#
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
@@ -769,7 +769,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 0    1    0    0  |     source      | Ad | B/W |   As    |   destination   | 
+#	| 0    1    0    0  |     source      | Ad | B/W |   As    |   destination   |
 #-----------------------
 # Emulated instructions
 #-----------------------
@@ -845,7 +845,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 0    1    0    1  |     source      | Ad | B/W |   As    |   destination   | 
+#	| 0    1    0    1  |     source      | Ad | B/W |   As    |   destination   |
 #-----------------------
 # Emulated instructions
 #-----------------------
@@ -973,7 +973,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 0    1    1    0  |     source      | Ad | B/W |   As    |   destination   | 
+#	| 0    1    1    0  |     source      | Ad | B/W |   As    |   destination   |
 #-----------------------
 # Emulated instructions
 #-----------------------
@@ -1079,7 +1079,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 0    1    1    1  |     source      | Ad | B/W |   As    |   destination   | 
+#	| 0    1    1    1  |     source      | Ad | B/W |   As    |   destination   |
 #-----------------------
 # Emulated instructions
 #-----------------------
@@ -1088,7 +1088,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	# Operation Flags...
 	brw:2 = 1 - zext( $(CARRY) );
 	$(CARRY) = (brw <= DEST_W_AD);		# Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DEST_W_AD, brw);	
+	$(OVERFLOW) = sborrow(DEST_W_AD, brw);
 	# Operation...
 	DEST_W_AD = DEST_W_AD - brw;
 	build tbl_wzero;
@@ -1103,7 +1103,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	# Operation Flags...
 	brw:1 = 1 - $(CARRY);
     $(CARRY) = (brw <= DEST_B_AD);             # Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DEST_B_AD, brw);	
+	$(OVERFLOW) = sborrow(DEST_B_AD, brw);
 	# Operation...
 	DEST_B_AD = DEST_B_AD - brw;
 	build tbl_bzero;
@@ -1120,7 +1120,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	# Operation Flags...
 	brw:2 = 1 - zext( $(CARRY) );
 	$(CARRY) = ((brw + SRC_W_AS) <= DEST_W_AD);		# Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DEST_W_AD, SRC_W_AS + brw);	
+	$(OVERFLOW) = sborrow(DEST_W_AD, SRC_W_AS + brw);
 	# Operation...
 	DEST_W_AD = DEST_W_AD - SRC_W_AS - brw;
 	build tbl_wzero;
@@ -1138,7 +1138,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	# Operation Flags...
 	brw:1 = 1 - $(CARRY);
     $(CARRY) = ((brw + SRC_B_AS) <= DEST_B_AD);             # Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DEST_B_AD, SRC_B_AS + brw);	
+	$(OVERFLOW) = sborrow(DEST_B_AD, SRC_B_AS + brw);
 	# Operation...
 	DEST_B_AD = DEST_B_AD - SRC_B_AS - brw;
 	build tbl_bzero;
@@ -1155,7 +1155,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 1    0    0    0  |     source      | Ad | B/W |   As    |   destination   | 
+#	| 1    0    0    0  |     source      | Ad | B/W |   As    |   destination   |
 #-----------------------
 # Emulated instructions
 #-----------------------
@@ -1165,7 +1165,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	$(CARRY) = (0x0 == DEST_W_AD);			# C Flag
 	$(OVERFLOW) = (0x8000 == DEST_W_AD);	# V Flag
 	# Operation...
-	DEST_W_AD = DEST_W_AD - 0x1;		
+	DEST_W_AD = DEST_W_AD - 0x1;
 	build tbl_wzero;
 	# Result Flags...
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
@@ -1179,7 +1179,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	$(CARRY) = (0x0 == DEST_B_AD);			# C Flag
 	$(OVERFLOW) = (0x80 == DEST_B_AD);		# V Flag
 	# Operation...
-	DEST_B_AD = DEST_B_AD - 0x1;		
+	DEST_B_AD = DEST_B_AD - 0x1;
 	build tbl_bzero;
 	# Result Flags...
 	$(SIGN) = (DEST_B_AD s< 0x0);			# S Flag
@@ -1223,7 +1223,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	$(CARRY) = (SRC_W_AS <= DEST_W_AD);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(DEST_W_AD, SRC_W_AS);								# V Flag
 	# Operation...
-	DEST_W_AD = DEST_W_AD - SRC_W_AS;		
+	DEST_W_AD = DEST_W_AD - SRC_W_AS;
 	build tbl_wzero;
 	# Result Flags...
 	$(SIGN) = (DEST_W_AD s< 0x0);			# S Flag
@@ -1240,7 +1240,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 	$(CARRY) = (SRC_B_AS <= DEST_B_AD);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(DEST_B_AD, SRC_B_AS);									# V Flag
 	# Operation...
-	DEST_B_AD = DEST_B_AD - SRC_B_AS;		
+	DEST_B_AD = DEST_B_AD - SRC_B_AS;
 	build tbl_bzero;
 	# Result Flags...
 	$(SIGN) = (DEST_B_AD s< 0x0);			# S Flag
@@ -1255,7 +1255,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 1    0    0    1  |     source      | Ad | B/W |   As    |   destination   | 
+#	| 1    0    0    1  |     source      | Ad | B/W |   As    |   destination   |
 #-----------------------
 # Emulated instructions
 #-----------------------
@@ -1319,7 +1319,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 1    0    1    0  |     source      | Ad | B/W |   As    |   destination   | 
+#	| 1    0    1    0  |     source      | Ad | B/W |   As    |   destination   |
 #----------------------------------------------------------------------------------------------------------------
 # These decimal add instructions appear to lack supporting BCD p-code operations to handle carries and overflows.
 #----------------------------------------------------------------------------------------------------------------
@@ -1389,7 +1389,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 1    0    1    1  |     source      | Ad | B/W |   As    |   destination   | 
+#	| 1    0    1    1  |     source      | Ad | B/W |   As    |   destination   |
 #------------------
 #	16 bit SRC Word
 #------------------
@@ -1428,7 +1428,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 1    1    0    0  |     source      | Ad | B/W |   As    |   destination   | 
+#	| 1    1    0    0  |     source      | Ad | B/W |   As    |   destination   |
 #-----------------------
 # Emulated instructions
 #-----------------------
@@ -1484,7 +1484,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 1    1    0    1  |     source      | Ad | B/W |   As    |   destination   | 
+#	| 1    1    0    1  |     source      | Ad | B/W |   As    |   destination   |
 #-----------------------
 # Emulated instructions
 #-----------------------
@@ -1541,7 +1541,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3 | 2 | 1 |  0  |
 #	------------------------------------------------------------------------------
-#	| 1    1    1    0  |     source      | Ad | B/W |   As    |   destination   | 
+#	| 1    1    1    0  |     source      | Ad | B/W |   As    |   destination   |
 #-----------------------
 # Emulated instructions
 #-----------------------
@@ -1612,7 +1612,7 @@ OFFSET_10BIT: offset10 is off16   [offset10 = inst_start + 2 + off16 * 2; ]
 #   ------------------------------------------------------------------------------
 #	| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7  |  6  | 5  | 4  | 3  | 2  | 1 | 0 |
 #	------------------------------------------------------------------------------
-#	| 1    1    1    1  |     source      | Ad | B/W |   As    |   destination   | 
+#	| 1    1    1    1  |     source      | Ad | B/W |   As    |   destination   |
 #------------------
 #	16 bit SRC Word
 #------------------

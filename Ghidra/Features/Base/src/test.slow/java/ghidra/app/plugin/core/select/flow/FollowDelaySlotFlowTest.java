@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import org.junit.*;
 
 public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 
-	private ToyProgramBuilder programBuilder; // Instructions are 2-byte aligned 
+	private ToyProgramBuilder programBuilder; // Instructions are 2-byte aligned
 
 	private int txId;
 
@@ -63,14 +63,14 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 	}
 
 	/**
-	 * 
+	 *
 	 *     10: callds 20 --+
 	 *     12: _or         |
 	 *     14: ret         |
 	 *                     |
 	 *     20: or   <------+
 	 *     22: ret
-	 *     
+	 *
 	 * simple delay slot flow
 	 */
 	@Test
@@ -101,14 +101,14 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 
 	/**
 	 *     10: or
-	 *  +- 12: brds   20   
+	 *  +- 12: brds   20
 	 *  |  14: _or   <-----+
 	 *  |  16: ret         |
 	 *  |                  |
 	 *  +->20: or          |
 	 *     22: breq 14 ----+
 	 *     24: ret
-	 *     
+	 *
 	 * branch into delay slot
 	 */
 	@Test
@@ -142,14 +142,14 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 
 	/**
 	 *     10: or
-	 *  +- 12: brds   20   
+	 *  +- 12: brds   20
 	 *  |  14: _or   <-----+
 	 *  |  16: ret         |
 	 *  |                  |
 	 *  +->20: or          |
 	 *     22: breq 14 ----+
 	 *     24: ret
-	 *     
+	 *
 	 * branch into delay slot
 	 */
 	@Test
@@ -186,11 +186,11 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 	 *                     |
 	 *     10: or          |
 	 *  +- 12: brds   20   |
-	 *  |  14: _or   <-----+     
+	 *  |  14: _or   <-----+
 	 *  |  16: ret
-	 *  |         
-	 *  +->20: ret   
-	 *     
+	 *  |
+	 *  +->20: ret
+	 *
 	 * branch into delay slot
 	 */
 	@Test
@@ -228,11 +228,11 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 	 *                     |
 	 *     10: or          |
 	 *  +- 12: brds   20   |
-	 *  |  14: _or   <-----+     
+	 *  |  14: _or   <-----+
 	 *  |  16: ret
-	 *  |         
-	 *  +->20: ret   
-	 *     
+	 *  |
+	 *  +->20: ret
+	 *
 	 * branch into delay slot
 	 */
 	@Test
@@ -266,14 +266,14 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 	}
 
 	/**
-	 * 
+	 *
 	 *     10: callds 20 --+
 	 *     12: _or         |
 	 *     14: ret         |
 	 *                     |
 	 *     20: or   <------+
 	 *     22: ret
-	 *     
+	 *
 	 * simple delay slot flow
 	 */
 	@Test
@@ -303,14 +303,14 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 	}
 
 	/**
-	 * 
+	 *
 	 *     10: callds 20 --+
 	 *     12: _or         |
 	 *     14: ret         |
 	 *                     |
 	 *     20: or   <------+
 	 *     22: ret
-	 *     
+	 *
 	 * simple delay slot flow
 	 */
 	@Test
@@ -340,14 +340,14 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 
 	/**
 	 *     10: or
-	 *  +- 12: brds   20   
+	 *  +- 12: brds   20
 	 *  |  14: _or   <-----+
 	 *  |  16: ret         |
 	 *  |                  |
 	 *  +->20: or          |
 	 *     22: breq 14 ----+
 	 *     24: ret
-	 *     
+	 *
 	 * branch into delay slot
 	 */
 	@Test
@@ -381,14 +381,14 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 
 	/**
 	 *     10: or
-	 *  +- 12: brds   20   
+	 *  +- 12: brds   20
 	 *  |  14: _or   <-----+
 	 *  |  16: ret         |
 	 *  |                  |
 	 *  +->20: or          |
 	 *     22: breq 14 ----+
 	 *     24: ret
-	 *     
+	 *
 	 * branch into delay slot
 	 */
 	@Test
@@ -422,14 +422,14 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 
 	/**
 	 *     10: or
-	 *  +- 12: brds   20   
+	 *  +- 12: brds   20
 	 *  |  14: _or   <-----+
 	 *  |  16: ret         |
 	 *  |                  |
 	 *  +->20: or          |
 	 *     22: breq 14 ----+
 	 *     24: ret
-	 *     
+	 *
 	 * branch into delay slot
 	 */
 	@Test
@@ -466,11 +466,11 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 	 *                     |
 	 *     10: or          |
 	 *  +- 12: brds   20   |
-	 *  |  14: _or   <-----+     
+	 *  |  14: _or   <-----+
 	 *  |  16: ret
-	 *  |         
-	 *  +->20: ret   
-	 *     
+	 *  |
+	 *  +->20: ret
+	 *
 	 * branch into delay slot
 	 */
 	@Test
@@ -508,11 +508,11 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 	 *                     |
 	 *     10: or          |
 	 *  +- 12: brds   20   |
-	 *  |  14: _or   <-----+     
+	 *  |  14: _or   <-----+
 	 *  |  16: ret
-	 *  |         
-	 *  +->20: ret   
-	 *     
+	 *  |
+	 *  +->20: ret
+	 *
 	 * branch into delay slot
 	 */
 	@Test
@@ -550,11 +550,11 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 	 *                     |
 	 *     10: or          |
 	 *  +- 12: brds   20   |
-	 *  |  14: _or   <-----+     
+	 *  |  14: _or   <-----+
 	 *  |  16: ret
-	 *  |         
-	 *  +->20: ret   
-	 *     
+	 *  |
+	 *  +->20: ret
+	 *
 	 * branch into delay slot
 	 */
 	@Test
@@ -590,13 +590,13 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 	 *                      |
 	 *      10: or          |
 	 *  +-- 12: brds   20   |
-	 *  | +>14: _or   <-----+     
+	 *  | +>14: _or   <-----+
 	 *  | | 16: ret
-	 *  | |        
-	 *  | +-20: bral 14   
-	 *  +-->22: or   
-	 *      24: ret   
-	 *     
+	 *  | |
+	 *  | +-20: bral 14
+	 *  +-->22: or
+	 *      24: ret
+	 *
 	 * multiple branches into delay slot
 	 */
 	@Test
@@ -636,13 +636,13 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 	 *                      |
 	 *      10: or          |
 	 *  +-- 12: brds   20   |
-	 *  | +>14: _or   <-----+     
+	 *  | +>14: _or   <-----+
 	 *  | | 16: ret
-	 *  | |        
-	 *  | +-20: brds 14   
-	 *  +-->22: _or   
-	 *      24: ret   
-	 *     
+	 *  | |
+	 *  | +-20: brds 14
+	 *  +-->22: _or
+	 *      24: ret
+	 *
 	 * multiple branches into delay slot
 	 */
 	@Test

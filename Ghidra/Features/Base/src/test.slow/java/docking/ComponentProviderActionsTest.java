@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -178,7 +178,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 
 		//
 		// Test the conflicting key binding use case
-		// 
+		//
 
 		HasDefaultKeyBindingComponentProvider otherProvider =
 			new HasDefaultKeyBindingComponentProvider(tool);
@@ -334,7 +334,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 			KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, DockingUtils.CONTROL_KEY_MODIFIER_MASK);
 		setKeyBindingViaF4Dialog_FromCloseButton(controlEsc);
 
-		// Note: there may be a test focus issue here.  If this test fails sporadically due to 
+		// Note: there may be a test focus issue here.  If this test fails sporadically due to
 		// how the action context is generated (it depends on focus).  It is only useful to fail
 		// here in development mode.
 		triggerKey(provider.getComponent(), controlEsc);
@@ -544,7 +544,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 
 	private void setKeyBindingViaF4Dialog_FromCloseButton(KeyStroke ks) {
 
-		// simulate the user mousing over the toolbar button		
+		// simulate the user mousing over the toolbar button
 		DockingActionIf closeAction = getAction(tool, provider.getOwner(), "Close Window");
 		assertNotNull("Provider action not installed in toolbar", closeAction);
 
@@ -589,7 +589,7 @@ public class ComponentProviderActionsTest extends AbstractGhidraHeadedIntegratio
 
 	private void setKeyBindingViaF4Dialog_FromToolToolbar(KeyStroke ks) {
 
-		// simulate the user mousing over the toolbar button		
+		// simulate the user mousing over the toolbar button
 		DockingActionIf toolbarAction = getToolbarShowProviderAction();
 		assertNotNull("Provider action not installed in toolbar", toolbarAction);
 		DockingWindowManager.setMouseOverAction(toolbarAction);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -150,7 +150,7 @@ string SleighBase::getRegisterName(AddrSpace *base,uintb off,int4 size) const
   uintb offbase = point.offset;
   if (point.offset+point.size >= off+size)
     return (*iter).second;
-  
+
   while(iter != varnode_xref.begin()) {
     --iter;
     const VarnodeData &point((*iter).first);
@@ -197,7 +197,7 @@ void SleighBase::saveXml(ostream &s) const
   for(int4 i=0;i<numSpaces();++i) {
     AddrSpace *spc = getSpace(i);
     if (spc == (AddrSpace *)0) continue;
-    if ((spc->getType()==IPTR_CONSTANT) || 
+    if ((spc->getType()==IPTR_CONSTANT) ||
 	(spc->getType()==IPTR_FSPEC)||
 	(spc->getType()==IPTR_IOP)||
 	(spc->getType()==IPTR_JOIN))

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.util.ReversedListIterator;
 /**
  * A view of the value-sorted map for implementing
  * {@link #subMapByValue(Object, boolean, Object, boolean)}, etc.
- * 
+ *
  * @param <K> the type of keys
  * @param <V> the type of values
  */
@@ -45,7 +45,7 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 
 		/**
 		 * Construct an iterator starting at a given index of the <em>sub</em> list.
-		 * 
+		 *
 		 * @param start initial iterator position
 		 */
 		public RestrictedEntryListIterator(int start) {
@@ -124,7 +124,7 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 
 		/**
 		 * Construct an iterator starting at a given index of the <em>sub</em> list.
-		 * 
+		 *
 		 * @param start initial iterator position
 		 */
 		public RestrictedKeyListIterator(int start) {
@@ -193,7 +193,7 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 
 		/**
 		 * Construct an iterator starting at a given index of the <em>sub</em> list.
-		 * 
+		 *
 		 * @param start initial iterator position
 		 */
 		public RestrictedValueListIterator(int start) {
@@ -995,7 +995,7 @@ public class RestrictedValueSortedMap<K, V> implements ValueSortedMap<K, V> {
 
 	/**
 	 * Construct a restricted view of a value-sorted map
-	 * 
+	 *
 	 * @param wrapped the value-sorted map to restrict
 	 * @param comparator the value comparator
 	 * @param hasFrom true if there exists a lower bound

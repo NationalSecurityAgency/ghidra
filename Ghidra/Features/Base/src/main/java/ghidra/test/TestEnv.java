@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -289,21 +289,21 @@ public class TestEnv {
 	}
 
 	/**
-	 * Adds and returns the plugin to this env's tool for the given class.   
-	 * 
-	 * <P>If you have not created a tool using this env, then the default 
+	 * Adds and returns the plugin to this env's tool for the given class.
+	 *
+	 * <P>If you have not created a tool using this env, then the default
 	 * tool from {@link #lazyTool()} is used.  If you have launched a tool, then that tool
 	 * is used.   In the following example, the given plugin is added to the default tool:
 	 * <pre>
 	 * 		TestEnv env = new TestEnv();
 	 * 		env.launchDefaultTool();
 	 * 		FooPlugin foo = env.addPlugin(FooPlugin.class);
-	 * </pre> 
-	 * 
-	 * 
+	 * </pre>
+	 *
+	 *
 	 * @param c the plugin class
 	 * @return the plugin instance
-	 * @throws PluginException if there is an exception adding the given tool 
+	 * @throws PluginException if there is an exception adding the given tool
 	 */
 	public <T extends Plugin> T addPlugin(Class<T> c) throws PluginException {
 		PluginTool defaultTool = lazyTool();
@@ -312,12 +312,12 @@ public class TestEnv {
 	}
 
 	/**
-	 * Shows any previously created tool, creating a simple empty tool if not tool has yet 
-	 * been created.  
-	 * 
-	 * <P>This method is considered sub-standard and users should prefer instead 
+	 * Shows any previously created tool, creating a simple empty tool if not tool has yet
+	 * been created.
+	 *
+	 * <P>This method is considered sub-standard and users should prefer instead
 	 * {@link #launchDefaultTool()} or {@link #launchDefaultTool(Program)}.
-	 * 
+	 *
 	 * @return the newly shown tool
 	 */
 	public PluginTool showTool() {
@@ -325,12 +325,12 @@ public class TestEnv {
 	}
 
 	/**
-	 * Shows any previously created tool, creating a simple empty tool if not tool has yet 
+	 * Shows any previously created tool, creating a simple empty tool if not tool has yet
 	 * been created.  The given program will be opened in the tool.
-	 * 
-	 * <P>This method is considered sub-standard and users should prefer instead 
+	 *
+	 * <P>This method is considered sub-standard and users should prefer instead
 	 * {@link #launchDefaultTool()} or {@link #launchDefaultTool(Program)}.
-	 * 
+	 *
 	 * @param p the program
 	 * @return the newly shown tool
 	 */
@@ -403,11 +403,11 @@ public class TestEnv {
 	}
 
 	private static void installDefaultTool(GhidraProject gp) {
-		// 
-		// Unusual Code Alert: The default tool is not always found in the testing environment,  
+		//
+		// Unusual Code Alert: The default tool is not always found in the testing environment,
 		// depending upon where the test lives.   This code maps the test tool to that tool name
 		// so that tests will have the default tool as needed.
-		// 
+		//
 		Project project = gp.getProject();
 		ToolChest toolChest = project.getLocalToolChest();
 		ToolTemplate template = getToolTemplate(AbstractGenericTest.DEFAULT_TEST_TOOL_NAME);
@@ -858,7 +858,7 @@ public class TestEnv {
 	 * Launches a tool of the given name using the given domain file.
 	 * <p>
 	 * Note: the tool returned will have auto save disabled by default.
-	 * 
+	 *
 	 * @param toolName the tool's name
 	 * @return the tool that is launched
 	 */
@@ -1152,7 +1152,7 @@ public class TestEnv {
 
 	private void disposeAllSwingUpdateManagers() {
 		//
-		// Cleanup all statically tracked SwingUpdateManagers.  If we do not do this, then as 
+		// Cleanup all statically tracked SwingUpdateManagers.  If we do not do this, then as
 		// tools are launched, the number of tracked managers increases, as not all clients of
 		// the managers will dispose the managers.
 		//
@@ -1165,7 +1165,7 @@ public class TestEnv {
 			Msg.out("complete update manager list: ");
 			List<SwingUpdateManager> list = new ArrayList<>(s.values());
 			Collections.sort(list, (v1, v2) -> {
-		
+
 				return v1.toString().compareTo(v2.toString());
 			});
 			Msg.out(StringUtils.join(list, ",\n"));

@@ -8,7 +8,7 @@ define space ram type=ram_space size=4 default;
 define space register type=register_space size=4;
 
 define register offset=0x0020 size=4 [ r0 r1 r2 r3  r4  r5  r6  r7	r8 r9 r10 r11 r12  sp  lr  pc ];
-define register offset=0x0060 size=1 [ NG ZR CY OV tmpNG tmpZR tmpCY tmpOV shift_carry TB Q GE1 GE2 GE3 GE4 ]; 
+define register offset=0x0060 size=1 [ NG ZR CY OV tmpNG tmpZR tmpCY tmpOV shift_carry TB Q GE1 GE2 GE3 GE4 ];
 define register offset=0x0070 size=4 [ cpsr spsr ];
 define register offset=0x0080 size=4 [ mult_addr ];	# Special internal register for dealing with multiple stores/loads
 define register offset=0x0084 size=4 [ r14_svc r13_svc spsr_svc ];
@@ -34,13 +34,13 @@ define register offset=0x0200 size=4 [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 c
 @if defined(VFPv2) || defined(VFPv3)
 
 @if ENDIAN == "little"
-  define register offset=0x0300 size=4  [ s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13 s14 s15 
+  define register offset=0x0300 size=4  [ s0 s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13 s14 s15
   										s16 s17 s18 s19 s20 s21 s22 s23 s24 s25 s26 s27 s28 s29 s30 s31 ];
 @else # ENDIAN == "big"
   define register offset=0x0300 size=4  [ s31 s30 s29 s28 s27 s26 s25 s24 s23 s22 s21 s20 s19 s18 s17 s16
   										s15 s14 s13 s12 s11 s10 s9 s8 s7 s6 s5 s4 s3 s2 s1 s0 ];
 @endif # ENDIAN = "big"
-  
+
 @endif # VFPv2 || VFPv3
 
 @if defined(VFPv2)
@@ -56,7 +56,7 @@ define register offset=0x0200 size=4 [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 c
 @if defined(SIMD) || defined(VFPv3)
 
 @if ENDIAN == "little"
-  define register offset=0x0300 size=8  [ d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15 
+  define register offset=0x0300 size=8  [ d0 d1 d2 d3 d4 d5 d6 d7 d8 d9 d10 d11 d12 d13 d14 d15
   										d16 d17 d18 d19 d20 d21 d22 d23 d24 d25 d26 d27 d28 d29 d30 d31 ];
 @else # ENDIAN == "big"
   define register offset=0x0300 size=8  [ d31 d30 d29 d28 d27 d26 d25 d24 d23 d22 d21 d20 d19 d18 d17 d16
@@ -77,7 +77,7 @@ define register offset=0x0200 size=4 [ cr0 cr1 cr2 cr3 cr4 cr5 cr6 cr7 cr8 cr9 c
 
 # Define context bits
 # WARNING: when adjusting context keep compiler packing in mind
-# and make sure fields do not span a 32-bit boundary before or 
+# and make sure fields do not span a 32-bit boundary before or
 # after context packing
 define register offset=0x00 size=8   contextreg;
 define context contextreg
@@ -99,7 +99,7 @@ define context contextreg
   	cond_base   = (6,8)    # shift mask for controlling shift
   	cond_shft   = (9,13)   # mask and lower bit of it condition field
   	itmode      = (5,5)    # true if in ITBlock mode
-     
+
 @endif
 
 	# Transient context bits

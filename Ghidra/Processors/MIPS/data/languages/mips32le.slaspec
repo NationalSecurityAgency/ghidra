@@ -1,7 +1,7 @@
 # SLA specification file for MIPS32 little endian
 
 @define ENDIAN "little"
-@define FREGSIZE "4"    
+@define FREGSIZE "4"
 @define ISA_VARIANT ""
 
 @include "mips.sinc"

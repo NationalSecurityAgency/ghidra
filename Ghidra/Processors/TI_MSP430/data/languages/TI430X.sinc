@@ -9,7 +9,7 @@
 
 
 #:^instruction							is ctx_haveext=1 & instruction & as=1 & src_8_4=3 [ctx_haveext=2;] {build instruction;}
-:^instruction							is ctx_haveext=1 & instruction & as=1 & src_8_4=3 [ctx_haveext=7;] {build instruction;} #replacment substituting second of haveext=2. NOTE: as=1 precludes first 
+:^instruction							is ctx_haveext=1 & instruction & as=1 & src_8_4=3 [ctx_haveext=7;] {build instruction;} #replacment substituting second of haveext=2. NOTE: as=1 precludes first
 :^instruction							is ctx_haveext=1 & instruction & as=1 [ctx_haveext=7;] {build instruction;}
 :^instruction							is ctx_haveext=1 & instruction & as=3 & src_8_4=0 [ctx_haveext=7;] {build instruction;}
 #:^instruction							is ctx_haveext=1 & instruction [ctx_haveext=2;] {build instruction;}
@@ -44,7 +44,7 @@ NUM2: val					is rrn [ val = rrn+1;] {export *[const]:1 val;}
 XREG_B_AS: DST8_0_4 			 		 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
 XREG_B_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:1 tmp;}
 XREG_B_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_B_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_B_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XREG_B_AS: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:1 labelCalc; } # Symbolic
 XREG_B_AS: "#"^indexExtWord16_0_16 		 is reg16_0_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 {export *[const]:1 indexExtWord16_0_16; } # Immediate
 XREG_B_AS: "&"^indexExtWord16_0_16 		 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
@@ -53,22 +53,22 @@ XREG_B_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x1  { export 8:1;}		# Co
 XREG_B_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x1  { export 0:1;}		# Constant
 XREG_B_AS: "#1" 						 is reg16_0_4=0x3 & as=0x1 & bow=0x1  { export 1:1;}		# Constant
 XREG_B_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x1  { export 2:1;}		# Constant
-XREG_B_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1;} 	# Constant	
+XREG_B_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1;} 	# Constant
 
 XRREG_B_AS: DST8_0_4 			 		 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
 XRREG_B_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_B_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_B_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XRREG_B_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x1  { export 4:1;}		# Constant
 XRREG_B_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x1  { export 8:1;}		# Constant
 XRREG_B_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x1  { export 0:1;}		# Constant
 XRREG_B_AS: "#1" 						 is reg16_0_4=0x3 & as=0x1 & bow=0x1  { export 1:1;}		# Constant
 XRREG_B_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x1  { export 2:1;}		# Constant
-XRREG_B_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1;} 	# Constant	
+XRREG_B_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1;} 	# Constant
 
 XREG_W_AS: DST16_0_4 			 		 is DST16_0_4 & as=0x0 & bow=0x0  {export DST16_0_4;} # Word/Register Direct (Rn):
 XREG_W_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:2 tmp;}
 XREG_W_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_W_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_W_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XREG_W_AS: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:2 labelCalc; } # Symbolic
 XREG_W_AS: "#"^indexExtWord16_0_16 		 is reg16_0_4=0x0 & as=0x3 & bow=0x0 ; indexExtWord16_0_16 {export *[const]:2 indexExtWord16_0_16; } # Immediate
 XREG_W_AS: "&"^indexExtWord16_0_16 		 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 {export *:2 indexExtWord16_0_16; } # Absolute
@@ -81,7 +81,7 @@ XREG_W_AS: "#-1" 					 	 is	reg16_0_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2;
 
 XRREG_W_AS: DST16_0_4 			 		 is DST16_0_4 & as=0x0 & bow=0x0  {export DST16_0_4;} # Word/Register Direct (Rn):
 XRREG_W_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_W_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_W_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XRREG_W_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x0  { export 4:2;}		# Constant
 XRREG_W_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x0  { export 8:2;}		# Constant
 XRREG_W_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x0  { export 0:2;}		# Constant
@@ -92,7 +92,7 @@ XRREG_W_AS: "#-1" 					 	 is	reg16_0_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2
 XREG_A_AS: dest_0_4						 is dest_0_4 & as=0 & bow=0x1 {export dest_0_4;}
 XREG_A_AS: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:$(REG_SIZE) tmp;}
 XREG_A_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_A_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_A_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XREG_A_AS: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [labelCalc = inst_start + 4 + ((ctx_ctregdests << 16) | indexExtWord16_0_16); ] {export *:$(REG_SIZE) labelCalc; } # Symbolic
 XREG_A_AS: "#"^val 						 is reg16_0_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_ctregdests << 16) | indexExtWord16_0_16; ] {export *[const]:$(REG_SIZE) val; } # Immediate
 XREG_A_AS: "&"^val 						 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_ctregdest << 16) | indexExtWord16_0_16; ] {export *:$(REG_SIZE) val; } # Absolute
@@ -101,63 +101,63 @@ XREG_A_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x1  { export 8:$(REG_SIZ
 XREG_A_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x1  { export 0:$(REG_SIZE);}		# Constant
 XREG_A_AS: "#1" 						 is reg16_0_4=0x3 & as=0x1 & bow=0x1  { export 1:$(REG_SIZE);}		# Constant
 XREG_A_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x1  { export 2:$(REG_SIZE);}		# Constant
-XREG_A_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE);} 	# Constant	
+XREG_A_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE);} 	# Constant
 
 XRREG_A_AS: dest_0_4						 is dest_0_4 & as=0 & bow=0x1 {export dest_0_4;}
 XRREG_A_AS: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_A_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_A_AS: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XRREG_A_AS: "#4" 						 is reg16_0_4=0x2 & as=0x2 & bow=0x1  { export 4:$(REG_SIZE);}		# Constant
 XRREG_A_AS: "#8" 						 is reg16_0_4=0x2 & as=0x3 & bow=0x1  { export 8:$(REG_SIZE);}		# Constant
 XRREG_A_AS: "#0" 						 is reg16_0_4=0x3 & as=0x0 & bow=0x1  { export 0:$(REG_SIZE);}		# Constant
 XRREG_A_AS: "#1" 						 is reg16_0_4=0x3 & as=0x1 & bow=0x1  { export 1:$(REG_SIZE);}		# Constant
 XRREG_A_AS: "#2" 						 is reg16_0_4=0x3 & as=0x2 & bow=0x1  { export 2:$(REG_SIZE);}		# Constant
-XRREG_A_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE);} 	# Constant	
+XRREG_A_AS: "#-1" 						 is	reg16_0_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE);} 	# Constant
 
 XREG_B_AS_DEST: DST8_0_4 			 	 is DST8_0_4 & as=0x0 & bow=0x1  { export DST8_0_4;} # Word/Register Direct (Rn):
 XREG_B_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:1 tmp;}
 XREG_B_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XREG_B_AS_DEST: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:1 labelCalc; } # Symbolic
 XREG_B_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
 
 XRREG_B_AS_DEST: DST8_0_4 			 	 is DST8_0_4 & as=0x0 & reg_Direct16_0_4 & bow=0x1  { ztmp:1 = DST8_0_4; reg_Direct16_0_4=0; DST8_0_4 = ztmp; export DST8_0_4;} # Word/Register Direct (Rn):
 XRREG_B_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_B_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:1 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 
 XREG_W_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:2 tmp;}
 XREG_W_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XREG_W_AS_DEST: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:2 labelCalc; } # Symbolic
 XREG_W_AS_DEST: "&"^indexExtWord16_0_16 	 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 {export *:2 indexExtWord16_0_16; } # Absolute
 
 XRREG_W_AS_DEST: DST16_0_4 			 is DST16_0_4 & as=0x0 & reg_Direct16_0_4 & bow=0x0  {ztmp:2 = DST16_0_4; reg_Direct16_0_4=0; DST16_0_4 = ztmp;export DST16_0_4;} # Word/Register Direct (Rn):
 XRREG_W_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_W_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:2 reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 
 XREG_A_AS_DEST: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:$(REG_SIZE) tmp;}
 XREG_A_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_A_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_A_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XREG_A_AS_DEST: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [labelCalc = inst_start + 4 + ((ctx_ctregdests << 16) | indexExtWord16_0_16); ] {export *:$(REG_SIZE) labelCalc; } # Symbolic
 XREG_A_AS_DEST: "&"^val 					 is reg16_0_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_ctregdest << 16) | indexExtWord16_0_16; ] {export *:$(REG_SIZE) val; } # Absolute
 
 XRREG_A_AS_DEST: dest_0_4						 is dest_0_4 & as=0 & bow=0x1 {export dest_0_4;}
 XRREG_A_AS_DEST: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_A_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_A_AS_DEST: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 
 XREG_A_AS_DEST2: indexExtWord16_0_16s^"("^reg_Indexed16_0_4^")" is reg_Indexed16_0_4 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = reg_Indexed16_0_4 + indexExtWord16_0_16s; export *:$(REG_SIZE) tmp;}
 XREG_A_AS_DEST2: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XREG_A_AS_DEST2: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XREG_A_AS_DEST2: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XREG_A_AS_DEST2: labelCalc 					 is reg16_0_4=0x0 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 [labelCalc = inst_start + 4 + ((ctx_ctregdests << 16) | indexExtWord16_0_16);  ] {export *:$(REG_SIZE) labelCalc; } # Symbolic
 XREG_A_AS_DEST2: "&"^val 					 is reg16_0_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 [val=(ctx_ctregdest << 16) | indexExtWord16_0_16; ] {export *:$(REG_SIZE) val; } # Absolute
 
 XRREG_A_AS_DEST2: dest_0_4						 is dest_0_4 & as=0 & bow=0x0 {export dest_0_4;}
 XRREG_A_AS_DEST2: "@"^reg_InDirect16_0_4 		 is reg_InDirect16_0_4 & as=0x2 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect (@Rn):
-XRREG_A_AS_DEST2: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRREG_A_AS_DEST2: "@"^reg_InDirect16_0_4^"+"	 is reg_InDirect16_0_4 & as=0x3 & bow=0x0  {export *:$(REG_SIZE) reg_InDirect16_0_4;} # Word/Register Indirect Autoincrement (@Rn+):
 
 XSRC_B_AS: SRC8_8_4 			 		 is SRC8_8_4 & as=0x0 & bow=0x1 { export SRC8_8_4;} # Word/Register Direct (Rn):
 XSRC_B_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = src_Indexed16_8_4 + indexExtWord16_0_16s; export *:1 tmp;}
 XSRC_B_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-XSRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XSRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XSRC_B_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:1 labelCalc; } # Symbolic
 XSRC_B_AS: "#"^indexExtWord16_0_16 	 is src16_8_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 {export *[const]:1 indexExtWord16_0_16;} # Immediate
 XSRC_B_AS: "&"^indexExtWord16_0_16 	 is src16_8_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 {export *:1 indexExtWord16_0_16; } # Absolute
@@ -170,7 +170,7 @@ XSRC_B_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1; } 	
 
 XRSRC_B_AS: SRC8_8_4 			 		 is SRC8_8_4 & as=0x0 & bow=0x1 { export SRC8_8_4;} # Word/Register Direct (Rn):
 XRSRC_B_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-XRSRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRSRC_B_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:1 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XRSRC_B_AS: "#4" 						 is src16_8_4=0x2 & as=0x2 & bow=0x1  { export 4:1; }		# Constant
 XRSRC_B_AS: "#8" 						 is src16_8_4=0x2 & as=0x3 & bow=0x1  { export 8:1; }		# Constant
 XRSRC_B_AS: "#0" 						 is src16_8_4=0x3 & as=0x0 & bow=0x1  { export 0:1; }		# Constant
@@ -182,7 +182,7 @@ XRSRC_B_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xff:1; } 
 XSRC_W_AS: SRC16_8_4 			 	 is SRC16_8_4 & as=0x0 & bow=0x0 {export SRC16_8_4;} # Word/Register Direct (Rn):
 XSRC_W_AS: indexExtWord16_0_16s^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s {tmp:$(REG_SIZE) = src_Indexed16_8_4 + indexExtWord16_0_16s; export *:2 tmp;}
 XSRC_W_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-XSRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XSRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XSRC_W_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x0 ; indexExtWord16_0_16s [labelCalc = inst_start + 4 + indexExtWord16_0_16s; ] {export *:2 labelCalc; } # Symbolic
 XSRC_W_AS: "#"^indexExtWord16_0_16 	 is src16_8_4=0x0 & as=0x3 & bow=0x0 ; indexExtWord16_0_16 {export *[const]:2 indexExtWord16_0_16; } # Immediate
 XSRC_W_AS: "&"^indexExtWord16_0_16 	 is src16_8_4=0x2 & as=0x1 & bow=0x0 ; indexExtWord16_0_16 {export *:2 indexExtWord16_0_16; } # Absolute
@@ -191,22 +191,22 @@ XSRC_W_AS: "#8" 					 is src16_8_4=0x2 & as=0x3 & bow=0x0  { export 8:2; }		# Co
 XSRC_W_AS: "#0" 					 is src16_8_4=0x3 & as=0x0 & bow=0x0  { export 0:2; }		# Constant
 XSRC_W_AS: "#1" 					 is src16_8_4=0x3 & as=0x1 & bow=0x0  { export 1:2; }		# Constant
 XSRC_W_AS: "#2" 					 is src16_8_4=0x3 & as=0x2 & bow=0x0  { export 2:2; }		# Constant
-XSRC_W_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2; } 	# Constant	
+XSRC_W_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2; } 	# Constant
 
 XRSRC_W_AS: SRC16_8_4 			 	 is SRC16_8_4 & as=0x0 & bow=0x0 {export SRC16_8_4;} # Word/Register Direct (Rn):
 XRSRC_W_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-XRSRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRSRC_W_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x0  {export *:2 src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XRSRC_W_AS: "#4" 					 is src16_8_4=0x2 & as=0x2 & bow=0x0  { export 4:2; }		# Constant
 XRSRC_W_AS: "#8" 					 is src16_8_4=0x2 & as=0x3 & bow=0x0  { export 8:2; }		# Constant
 XRSRC_W_AS: "#0" 					 is src16_8_4=0x3 & as=0x0 & bow=0x0  { export 0:2; }		# Constant
 XRSRC_W_AS: "#1" 					 is src16_8_4=0x3 & as=0x1 & bow=0x0  { export 1:2; }		# Constant
 XRSRC_W_AS: "#2" 					 is src16_8_4=0x3 & as=0x2 & bow=0x0  { export 2:2; }		# Constant
-XRSRC_W_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2; } 	# Constant	
+XRSRC_W_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x0  { export 0xffff:2; } 	# Constant
 
 XSRC_A_AS: src_8_4 			 		 is src_8_4 & as=0x0 & bow=0x1 { export src_8_4;} # Word/Register Direct (Rn):
 XSRC_A_AS: val^"("^src_Indexed16_8_4^")" is src_Indexed16_8_4 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_regsrcs << 16) | indexExtWord16_0_16; ] {tmp:$(REG_SIZE) = src_Indexed16_8_4 + val; export *:$(REG_SIZE) tmp;}
 XSRC_A_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-XSRC_A_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XSRC_A_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XSRC_A_AS: labelCalc 				 is src16_8_4=0x0 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [labelCalc = inst_start + 4 + ((ctx_regsrcs << 16) | indexExtWord16_0_16); ] {export *:$(REG_SIZE) labelCalc; } # Symbolic
 XSRC_A_AS: "#"^val 	 				 is src16_8_4=0x0 & as=0x3 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_regsrcs << 16) | indexExtWord16_0_16; ] {export *[const]:$(REG_SIZE) val; } # Immediate
 XSRC_A_AS: "&"^val 	 				 is src16_8_4=0x2 & as=0x1 & bow=0x1 ; indexExtWord16_0_16 [val=(ctx_regsrc << 16) | indexExtWord16_0_16; ] {export *:$(REG_SIZE) val; } # Absolute
@@ -215,17 +215,17 @@ XSRC_A_AS: "#8" 					 is src16_8_4=0x2 & as=0x3 & bow=0x1  { export 8:$(REG_SIZE
 XSRC_A_AS: "#0" 					 is src16_8_4=0x3 & as=0x0 & bow=0x1  { export 0:$(REG_SIZE); }		# Constant
 XSRC_A_AS: "#1" 					 is src16_8_4=0x3 & as=0x1 & bow=0x1  { export 1:$(REG_SIZE); }		# Constant
 XSRC_A_AS: "#2" 					 is src16_8_4=0x3 & as=0x2 & bow=0x1  { export 2:$(REG_SIZE); }		# Constant
-XSRC_A_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE); } 	# Constant	
+XSRC_A_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE); } 	# Constant
 
 XRSRC_A_AS: src_8_4 			 		 is src_8_4 & as=0x0 & bow=0x1 { export src_8_4;} # Word/Register Direct (Rn):
 XRSRC_A_AS: "@"^src_InDirect16_8_4 	 is src_InDirect16_8_4 & as=0x2 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect (@Rn):
-XRSRC_A_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):	
+XRSRC_A_AS: "@"^src_InDirect16_8_4^"+" is src_InDirect16_8_4 & as=0x3 & bow=0x1  {export *:$(REG_SIZE) src_InDirect16_8_4;} # Word/Register Indirect Autoincrement (@Rn+):
 XRSRC_A_AS: "#4" 					 is src16_8_4=0x2 & as=0x2 & bow=0x1  { export 4:$(REG_SIZE); }		# Constant
 XRSRC_A_AS: "#8" 					 is src16_8_4=0x2 & as=0x3 & bow=0x1  { export 8:$(REG_SIZE); }		# Constant
 XRSRC_A_AS: "#0" 					 is src16_8_4=0x3 & as=0x0 & bow=0x1  { export 0:$(REG_SIZE); }		# Constant
 XRSRC_A_AS: "#1" 					 is src16_8_4=0x3 & as=0x1 & bow=0x1  { export 1:$(REG_SIZE); }		# Constant
 XRSRC_A_AS: "#2" 					 is src16_8_4=0x3 & as=0x2 & bow=0x1  { export 2:$(REG_SIZE); }		# Constant
-XRSRC_A_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE); } 	# Constant	
+XRSRC_A_AS: "#-1" 					 is	src16_8_4=0x3 & as=0x3 & bow=0x1  { export 0xffffffff:$(REG_SIZE); } 	# Constant
 
 XDEST_B_AD: DST8_0_4 		  		 is DST8_0_4 & ad=0x0 & bow=0x1
      { export DST8_0_4; }        # Word/Register Direct (Rn):
@@ -310,7 +310,7 @@ macro setsubflags(ans, in1, in2)
 	$(OVERFLOW) = ((in1 s< 0) & (in2 s>= 0) & (ans s< 0)) | ((in1 s>= 0) & (in2 s< 0) & (ans s>= 0));
 	$(SIGN) = (ans s< 0);
 	$(ZERO) = (ans == 0);
-	
+
 }
 
 #################
@@ -573,12 +573,12 @@ POPAR15:					is ctx_count=0 {}
 POPAR15:					is ctx_mreg=0xF {
 	R15 = *[RAM]:4 SP;
 	R15 = sext(R15[0,20]);
-	SP = SP + 4;	
+	SP = SP + 4;
 }
 
 POPAR14:					is ctx_count=0 {}
 POPAR14:					is  POPAR15 {build POPAR15;}
-POPAR14:					is ctx_mreg=0xE & POPAR15 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {	
+POPAR14:					is ctx_mreg=0xE & POPAR15 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
 	R14 = *[RAM]:4 SP;
 	R14 = sext(R14[0,20]);
 	SP = SP + 4;
@@ -713,12 +713,12 @@ POPAR0:						is ctx_mreg=0x0 & POPAR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 POPWR15:					is ctx_count=0 {}
 POPWR15:					is ctx_mreg=0xF {
 	R15 = zext(*[RAM]:2 SP);
-	SP = SP + 2;	
+	SP = SP + 2;
 }
 
 POPWR14:					is ctx_count=0 {}
 POPWR14:					is  POPWR15 {build POPWR15;}
-POPWR14:					is ctx_mreg=0xE & POPWR15 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {	
+POPWR14:					is ctx_mreg=0xE & POPWR15 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+1;] {
 	R14 = zext(*[RAM]:2 SP);
 	SP = SP + 2;
 	build POPWR15;
@@ -840,7 +840,7 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmp:$(REG_SIZE) = src_8_4 + dest_0_4;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setaddflags(dest_0_4,src_8_4,tmpd);
 }
 
@@ -848,7 +848,7 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	tmpd:$(REG_SIZE) = inst_start + 2;
 	tmp:$(REG_SIZE) = src_8_4 + tmpd;
 	PC = sext(tmp[0,20]);
-	
+
 	setaddflags(dest_0_4,src_8_4,tmpd);
 	goto [PC];
 }
@@ -858,7 +858,7 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	tmps:$(REG_SIZE) = inst_start + 2;
 	tmp:$(REG_SIZE) = tmps + dest_0_4;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setaddflags(dest_0_4,tmps,tmpd);
 }
 
@@ -867,7 +867,7 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	tmps:$(REG_SIZE) = sext(Abs20s);
 	tmp:$(REG_SIZE) = tmpd + tmps;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setaddflags(dest_0_4,tmps,tmpd);
 }
 
@@ -876,7 +876,7 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	tmps:$(REG_SIZE) = sext(Abs20s);
 	tmp:$(REG_SIZE) = tmpd + tmps;
 	PC = sext(tmp[0,20]);
-	
+
 	setaddflags(PC,tmps,tmpd);
 	goto [PC];
 }
@@ -939,7 +939,7 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmp:$(REG_SIZE) = dest_0_4 - src_8_4;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setsubflags(dest_0_4,src_8_4,tmpd);
 }
 
@@ -947,7 +947,7 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	tmpd:$(REG_SIZE) = inst_start + 2;
 	tmp:$(REG_SIZE) = tmpd - src_8_4;
 	PC = sext(tmp[0,20]);
-	
+
 	setsubflags(dest_0_4,src_8_4,tmpd);
 	goto [PC];
 }
@@ -957,7 +957,7 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	tmps:$(REG_SIZE) = inst_start + 2;
 	tmp:$(REG_SIZE) = dest_0_4 - tmps;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setsubflags(dest_0_4,tmps,tmpd);
 }
 
@@ -966,7 +966,7 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	tmps:$(REG_SIZE) = sext(Abs20s);
 	tmp:$(REG_SIZE) = dest_0_4 - tmps;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setsubflags(dest_0_4,tmps,tmpd);
 }
 
@@ -975,7 +975,7 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	tmps:$(REG_SIZE) = sext(Abs20s);
 	tmp:$(REG_SIZE) = tmpd - tmps;
 	PC = sext(tmp[0,20]);
-	
+
 	setsubflags(PC,tmps,tmpd);
 	goto [PC];
 }
@@ -1045,7 +1045,7 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	tmps:$(REG_SIZE) = 2;
 	dest_0_4 = dest_0_4 - 2;
 	dest_0_4 = sext(dest_0_4[0,20]);
-	
+
 	setsubflags(dest_0_4,tmps,tmpd);
 }
 
@@ -1054,7 +1054,7 @@ POPWR0:						is ctx_mreg=0x0 & POPWR1 [ctx_count=ctx_count-1; ctx_mreg=ctx_mreg+
 	tmps:$(REG_SIZE) = 2;
 	dest_0_4 = dest_0_4 + 2;
 	dest_0_4 = sext(dest_0_4[0,20]);
-	
+
 	setaddflags(dest_0_4,tmps,tmpd);
 }
 
@@ -1266,7 +1266,7 @@ macro wzero(full, word)
 # I've determined they don't really exist. First off, the base
 # RRU is not mentioned in the manual and is not in the toolchain.
 # The toolchain does take rrux instructions, but what I've figured
-# out is that for the W and A versions, it substitutes RRUM with 
+# out is that for the W and A versions, it substitutes RRUM with
 # the 'n' argument being 1. For the B version, it uses rra.b
 # followed by a bic.b instruction.
 #############################
@@ -1317,7 +1317,7 @@ macro wzero(full, word)
 	tmpc:$(REG_SIZE) = zext($(CARRY));
 	tmp:$(REG_SIZE) = tmpc + dest_0_4;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setaddflags(dest_0_4,tmpc,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -1364,7 +1364,7 @@ macro wzero(full, word)
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmp:$(REG_SIZE) = XRSRC_A_AS + dest_0_4;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setaddflags(dest_0_4,XRSRC_A_AS,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -1414,7 +1414,7 @@ macro wzero(full, word)
 	tmps:$(REG_SIZE) = XRSRC_A_AS + zext($(CARRY));
 	tmp:$(REG_SIZE) = tmps + dest_0_4;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setaddflags(dest_0_4,tmps,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -1763,7 +1763,7 @@ macro wzero(full, word)
 	$(CARRY) = (1 <= DST8_0_4);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(DST8_0_4, 1:1);									# V Flag
 	# Operation...
-	DST8_0_4 = DST8_0_4 - 1;		
+	DST8_0_4 = DST8_0_4 - 1;
 	bzero(reg_Direct16_0_4,DST8_0_4);
 	# Result Flags...
 	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
@@ -1780,7 +1780,7 @@ macro wzero(full, word)
 	$(CARRY) = (1 <= DST16_0_4);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(DST16_0_4, 1:2);								# V Flag
 	# Operation...
-	DST16_0_4 = DST16_0_4 - 1;		
+	DST16_0_4 = DST16_0_4 - 1;
 	wzero(reg_Direct16_0_4,DST16_0_4);
 	# Result Flags...
 	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
@@ -1796,7 +1796,7 @@ macro wzero(full, word)
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmp:$(REG_SIZE) = dest_0_4 - 1;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setsubflags(dest_0_4,1:$(REG_SIZE),tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -1810,7 +1810,7 @@ macro wzero(full, word)
 	$(CARRY) = (2 <= DST8_0_4);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(DST8_0_4, 2:1);									# V Flag
 	# Operation...
-	DST8_0_4 = DST8_0_4 - 2;		
+	DST8_0_4 = DST8_0_4 - 2;
 	bzero(reg_Direct16_0_4,DST8_0_4);
 	# Result Flags...
 	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
@@ -1827,7 +1827,7 @@ macro wzero(full, word)
 	$(CARRY) = (2 <= DST16_0_4);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(DST16_0_4, 2:2);								# V Flag
 	# Operation...
-	DST16_0_4 = DST16_0_4 - 2;		
+	DST16_0_4 = DST16_0_4 - 2;
 	wzero(reg_Direct16_0_4,DST16_0_4);
 	# Result Flags...
 	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
@@ -1843,7 +1843,7 @@ macro wzero(full, word)
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmp:$(REG_SIZE) = dest_0_4 - 2;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setsubflags(dest_0_4,2:$(REG_SIZE),tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -1890,7 +1890,7 @@ macro wzero(full, word)
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmp:$(REG_SIZE) = 1 + dest_0_4;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setaddflags(dest_0_4,1:$(REG_SIZE),tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -1937,7 +1937,7 @@ macro wzero(full, word)
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmp:$(REG_SIZE) = 2 + dest_0_4;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setaddflags(dest_0_4,2:$(REG_SIZE),tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -2096,7 +2096,7 @@ macro wzero(full, word)
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmp:$(REG_SIZE) = dest_0_4 + dest_0_4;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setaddflags(dest_0_4,tmpd,tmpd);
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
@@ -2145,7 +2145,7 @@ macro wzero(full, word)
 	tmps:$(REG_SIZE) = dest_0_4 + zext($(CARRY));
 	tmp:$(REG_SIZE) = tmps + dest_0_4;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setaddflags(dest_0_4,tmps,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -2158,7 +2158,7 @@ macro wzero(full, word)
 	# Operation Flags...
 	brw:1 = 1 - $(CARRY);
     $(CARRY) = (brw <= DST8_0_4);             # Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DST8_0_4, brw);	
+	$(OVERFLOW) = sborrow(DST8_0_4, brw);
 	# Operation...
 	DST8_0_4 = DST8_0_4 - brw;
 	bzero(reg_Direct16_0_4,DST8_0_4);
@@ -2176,7 +2176,7 @@ macro wzero(full, word)
 	# Operation Flags...
 	brw:2 = 1 - zext( $(CARRY) );
 	$(CARRY) = (brw  <= DST16_0_4);		# Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DST16_0_4, brw);	
+	$(OVERFLOW) = sborrow(DST16_0_4, brw);
 	# Operation...
 	DST16_0_4 = DST16_0_4 - brw;
 	wzero(reg_Direct16_0_4,DST16_0_4);
@@ -2195,7 +2195,7 @@ macro wzero(full, word)
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmp:$(REG_SIZE) = dest_0_4 - brw;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setsubflags(dest_0_4,brw,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -2208,7 +2208,7 @@ macro wzero(full, word)
 	# Operation Flags...
 	brw:1 = 1 - $(CARRY);
     $(CARRY) = ((brw + XRSRC_B_AS) <= DST8_0_4);             # Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DST8_0_4, XRSRC_B_AS + brw);	
+	$(OVERFLOW) = sborrow(DST8_0_4, XRSRC_B_AS + brw);
 	# Operation...
 	DST8_0_4 = DST8_0_4 - XRSRC_B_AS - brw;
 	bzero(reg_Direct16_0_4,DST8_0_4);
@@ -2226,7 +2226,7 @@ macro wzero(full, word)
 	# Operation Flags...
 	brw:2 = 1 - zext( $(CARRY) );
 	$(CARRY) = ((brw + XRSRC_W_AS) <= DST16_0_4);		# Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(DST16_0_4, XRSRC_W_AS + brw);	
+	$(OVERFLOW) = sborrow(DST16_0_4, XRSRC_W_AS + brw);
 	# Operation...
 	DST16_0_4 = DST16_0_4 - XRSRC_W_AS - brw;
 	wzero(reg_Direct16_0_4,DST16_0_4);
@@ -2246,7 +2246,7 @@ macro wzero(full, word)
 	tmps:$(REG_SIZE) = XRSRC_A_AS + brw;
 	tmp:$(REG_SIZE) = dest_0_4 - tmps;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setsubflags(dest_0_4,tmps,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -2260,7 +2260,7 @@ macro wzero(full, word)
 	$(CARRY) = (XRSRC_B_AS <= DST8_0_4);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(DST8_0_4, XRSRC_B_AS);									# V Flag
 	# Operation...
-	DST8_0_4 = DST8_0_4 - XRSRC_B_AS;		
+	DST8_0_4 = DST8_0_4 - XRSRC_B_AS;
 	bzero(reg_Direct16_0_4,DST8_0_4);
 	# Result Flags...
 	$(SIGN) = (DST8_0_4 s< 0x0);			# S Flag
@@ -2277,7 +2277,7 @@ macro wzero(full, word)
 	$(CARRY) = (XRSRC_W_AS <= DST16_0_4);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(DST16_0_4, XRSRC_W_AS);								# V Flag
 	# Operation...
-	DST16_0_4 = DST16_0_4 - XRSRC_W_AS;		
+	DST16_0_4 = DST16_0_4 - XRSRC_W_AS;
 	wzero(reg_Direct16_0_4,DST16_0_4);
 	# Result Flags...
 	$(SIGN) = (DST16_0_4 s< 0x0);			# S Flag
@@ -2293,7 +2293,7 @@ macro wzero(full, word)
 	tmpd:$(REG_SIZE) = dest_0_4;
 	tmp:$(REG_SIZE) = dest_0_4 - XRSRC_A_AS;
 	dest_0_4 = sext(tmp[0,20]);
-	
+
 	setsubflags(dest_0_4,XRSRC_A_AS,tmpd);
 	build postIncrementStore;
 	if (CNT == 0) goto inst_next;
@@ -2421,7 +2421,7 @@ macro wzero(full, word)
 	tmpc:$(REG_SIZE) = zext($(CARRY));
 	tmp:$(REG_SIZE) = tmpc + XDEST_A_AD;
 	XDEST_A_AD = sext(tmp[0,20]);
-	
+
 	setaddflags(XDEST_A_AD,tmpc,tmpd);
 	build postIncrementStore;
 }
@@ -2455,7 +2455,7 @@ macro wzero(full, word)
 :ADDX.A	XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x5 & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
 	tmpd:$(REG_SIZE) = XDEST_A_AD;
 	tmp:$(REG_SIZE) = XSRC_A_AS + XDEST_A_AD;
-	
+
 	XDEST_A_AD = sext(tmp[0,20]);
 	setaddflags(XDEST_A_AD,XSRC_A_AS,tmpd);
 	build postIncrementStore;
@@ -2494,7 +2494,7 @@ macro wzero(full, word)
 	tmps:$(REG_SIZE) = XSRC_A_AS + zext($(CARRY));
 	tmp:$(REG_SIZE) = tmps + XDEST_A_AD;
 	XDEST_A_AD = sext(tmp[0,20]);
-	
+
 	setaddflags(XDEST_A_AD,tmps,tmpd);
 	build postIncrementStore;
 }
@@ -2746,7 +2746,7 @@ macro wzero(full, word)
 	$(CARRY) = (1 <= XDEST_B_AD);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(XDEST_B_AD, 1:1);									# V Flag
 	# Operation...
-	XDEST_B_AD = XDEST_B_AD - 1;		
+	XDEST_B_AD = XDEST_B_AD - 1;
 	build tbl_bzero;
 	# Result Flags...
 	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
@@ -2759,7 +2759,7 @@ macro wzero(full, word)
 	$(CARRY) = (1 <= XDEST_W_AD);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(XDEST_W_AD, 1:2);								# V Flag
 	# Operation...
-	XDEST_W_AD = XDEST_W_AD - 1:2;		
+	XDEST_W_AD = XDEST_W_AD - 1:2;
 	build tbl_wzero;
 	# Result Flags...
 	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
@@ -2771,7 +2771,7 @@ macro wzero(full, word)
 	tmpd:$(REG_SIZE) = XDEST_A_AD;
 	tmp:$(REG_SIZE) = XDEST_A_AD - 1:$(REG_SIZE);
 	XDEST_A_AD = sext(tmp[0,20]);
-	
+
 	setsubflags(XDEST_A_AD,1:$(REG_SIZE),tmpd);
 	build postIncrementStore;
 }
@@ -2781,7 +2781,7 @@ macro wzero(full, word)
 	$(CARRY) = (1 <= XDEST_B_AD);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(XDEST_B_AD, 2:1);									# V Flag
 	# Operation...
-	XDEST_B_AD = XDEST_B_AD - 2;		
+	XDEST_B_AD = XDEST_B_AD - 2;
 	build tbl_bzero;
 	# Result Flags...
 	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
@@ -2794,7 +2794,7 @@ macro wzero(full, word)
 	$(CARRY) = (1 <= XDEST_W_AD);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(XDEST_W_AD, 2:2);								# V Flag
 	# Operation...
-	XDEST_W_AD = XDEST_W_AD - 2:2;		
+	XDEST_W_AD = XDEST_W_AD - 2:2;
 	build tbl_wzero;
 	# Result Flags...
 	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
@@ -2806,7 +2806,7 @@ macro wzero(full, word)
 	tmpd:$(REG_SIZE) = XDEST_A_AD;
 	tmp:$(REG_SIZE) = XDEST_A_AD - 2:$(REG_SIZE);
 	XDEST_A_AD = sext(tmp[0,20]);
-	
+
 	setsubflags(XDEST_A_AD,2:$(REG_SIZE),tmpd);
 	build postIncrementStore;
 }
@@ -2841,7 +2841,7 @@ macro wzero(full, word)
 	tmpd:$(REG_SIZE) = XDEST_A_AD;
 	tmp:$(REG_SIZE) = 1 + XDEST_A_AD;
 	XDEST_A_AD = sext(tmp[0,20]);
-	
+
 	setaddflags(XDEST_A_AD,1:$(REG_SIZE),tmpd);
 	build postIncrementStore;
 }
@@ -2876,7 +2876,7 @@ macro wzero(full, word)
 	tmpd:$(REG_SIZE) = XDEST_A_AD;
 	tmp:$(REG_SIZE) = 2 + XDEST_A_AD;
 	XDEST_A_AD = sext(tmp[0,20]);
-	
+
 	setaddflags(XDEST_A_AD,1:$(REG_SIZE),tmpd);
 	build postIncrementStore;
 }
@@ -2963,7 +2963,7 @@ macro wzero(full, word)
 	# Operation Flags...
 	brw:1 = 1 - $(CARRY);
     $(CARRY) = (brw <= XDEST_B_AD);             # Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(XDEST_B_AD, brw);	
+	$(OVERFLOW) = sborrow(XDEST_B_AD, brw);
 	# Operation...
 	XDEST_B_AD = XDEST_B_AD - brw;
 	build tbl_bzero;
@@ -2977,7 +2977,7 @@ macro wzero(full, word)
 	# Operation Flags...
 	brw:2 = 1 - zext( $(CARRY) );
 	$(CARRY) = (brw <= XDEST_W_AD);		# Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(XDEST_W_AD, brw);	
+	$(OVERFLOW) = sborrow(XDEST_W_AD, brw);
 	# Operation...
 	XDEST_W_AD = XDEST_W_AD - brw;
 	build tbl_wzero;
@@ -2989,10 +2989,10 @@ macro wzero(full, word)
 
 :SBCX.A XDEST_A_AD						is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x7 & bow=1 & src16_8_4=0x3 & as=0x0 & postIncrementStore) ... & XDEST_A_AD ... {
 	tmpd:$(REG_SIZE) = XDEST_A_AD;
-	brw:$(REG_SIZE) = 1 - zext( $(CARRY) ); 
+	brw:$(REG_SIZE) = 1 - zext( $(CARRY) );
 	tmp:$(REG_SIZE) = XDEST_A_AD - brw;
 	XDEST_A_AD = sext(tmp[0,20]);
-	
+
 	setsubflags(XDEST_A_AD,brw,tmpd);
 	build postIncrementStore;
 }
@@ -3001,7 +3001,7 @@ macro wzero(full, word)
 	# Operation Flags...
 	brw:1 = 1 - $(CARRY);
     $(CARRY) = ((brw + XSRC_B_AS) <= XDEST_B_AD);             # Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(XDEST_B_AD, XSRC_B_AS + brw);	
+	$(OVERFLOW) = sborrow(XDEST_B_AD, XSRC_B_AS + brw);
 	# Operation...
 	XDEST_B_AD = XDEST_B_AD - XSRC_B_AS - brw;
 	build tbl_bzero;
@@ -3015,7 +3015,7 @@ macro wzero(full, word)
 	# Operation Flags...
 	brw:2 = 1 - zext( $(CARRY) );
 	$(CARRY) = ((brw + XSRC_W_AS) <= XDEST_W_AD);		# Carry flag is NOT set if there is a borrow
-	$(OVERFLOW) = sborrow(XDEST_W_AD, XSRC_W_AS + brw);	
+	$(OVERFLOW) = sborrow(XDEST_W_AD, XSRC_W_AS + brw);
 	# Operation...
 	XDEST_W_AD = XDEST_W_AD - XSRC_W_AS - brw;
 	build tbl_wzero;
@@ -3027,11 +3027,11 @@ macro wzero(full, word)
 
 :SUBCX.A XSRC_A_AS, XDEST_A_AD			is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x7 & bow=1 & postIncrementStore) ... & XSRC_A_AS ... & XDEST_A_AD ... {
 	tmpd:$(REG_SIZE) = XDEST_A_AD;
-	brw:$(REG_SIZE) = 1 - zext( $(CARRY) ); 
+	brw:$(REG_SIZE) = 1 - zext( $(CARRY) );
 	tmps:$(REG_SIZE) = XSRC_A_AS + brw;
 	tmp:$(REG_SIZE) = XDEST_A_AD - tmps;
 	XDEST_A_AD = sext(tmp[0,20]);
-	
+
 	setsubflags(XDEST_A_AD,tmps,tmpd);
 	build postIncrementStore;
 }
@@ -3041,7 +3041,7 @@ macro wzero(full, word)
 	$(CARRY) = (XSRC_B_AS <= XDEST_B_AD);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(XDEST_B_AD, XSRC_B_AS);									# V Flag
 	# Operation...
-	XDEST_B_AD = XDEST_B_AD - XSRC_B_AS;		
+	XDEST_B_AD = XDEST_B_AD - XSRC_B_AS;
 	build tbl_bzero;
 	# Result Flags...
 	$(SIGN) = (XDEST_B_AD s< 0x0);			# S Flag
@@ -3054,7 +3054,7 @@ macro wzero(full, word)
 	$(CARRY) = (XSRC_W_AS <= XDEST_W_AD);		# Carry is NOT set if there is a borrow
 	$(OVERFLOW) = sborrow(XDEST_W_AD, XSRC_W_AS);								# V Flag
 	# Operation...
-	XDEST_W_AD = XDEST_W_AD - XSRC_W_AS;		
+	XDEST_W_AD = XDEST_W_AD - XSRC_W_AS;
 	build tbl_wzero;
 	# Result Flags...
 	$(SIGN) = (XDEST_W_AD s< 0x0);			# S Flag
@@ -3066,7 +3066,7 @@ macro wzero(full, word)
 	tmpd:$(REG_SIZE) = XDEST_A_AD;
 	tmp:$(REG_SIZE) = XDEST_A_AD - XSRC_A_AS;
 	XDEST_A_AD = sext(tmp[0,20]);
-	
+
 	setsubflags(XDEST_A_AD,XSRC_A_AS,tmpd);
 	build postIncrementStore;
 }
@@ -3153,7 +3153,7 @@ macro wzero(full, word)
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
 	goto <top>;
-}	
+}
 
 :PUSHX.W XRREG_W_AS 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x2 & bow=0x0 & postRegIncrement & XRREG_W_AS {
 	<top>
@@ -3175,7 +3175,7 @@ macro wzero(full, word)
 	if (CNT == 0) goto inst_next;
 	CNT = CNT - 1;
 	goto <top>;
-}	
+}
 
 :RRAX.B XRREG_B_AS_DEST 		is ctx_haveext=4 & ctx_al=1 & op16_12_4=0x1 & op16_8_4=0x1 & bow=0x1 & postRegIncrement & XRREG_B_AS_DEST {
 	<top>
@@ -3199,7 +3199,7 @@ macro wzero(full, word)
 	$(OVERFLOW) = 0x0;					# V Flag (reset)
 	# Operation...
 	$(CARRY) = XRREG_W_AS_DEST[0,1];
-	XRREG_W_AS_DEST = XRREG_W_AS_DEST s>> 1; 
+	XRREG_W_AS_DEST = XRREG_W_AS_DEST s>> 1;
 	# Result Flags...
 	$(SIGN) = (XRREG_W_AS_DEST s< 0x0);			# S Flag
 	$(ZERO) = (XRREG_W_AS_DEST == 0x0);			# Z Flag
@@ -3303,7 +3303,7 @@ macro wzero(full, word)
 	<top>
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;						# V Flag
-	# Operation...	
+	# Operation...
 	XRREG_W_AS_DEST = sext(XRREG_W_AS_DEST:1);
 	# Result Flags...
 	$(SIGN) = (XRREG_W_AS_DEST s< 0x0);			# S Flag
@@ -3319,7 +3319,7 @@ macro wzero(full, word)
 	<top>
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;						# V Flag
-	# Operation...	
+	# Operation...
 	XRREG_A_AS_DEST2 = sext(XRREG_A_AS_DEST2:1);
 	# Result Flags...
 	$(SIGN) = (XRREG_A_AS_DEST2 s< 0x0);			# S Flag
@@ -3338,7 +3338,7 @@ macro wzero(full, word)
 	*:1 SP = XREG_B_AS;
 	#Status bits are not affected
 	build postRegIncrement;
-}	
+}
 
 :PUSHX.W XREG_W_AS 		is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x2 & op16_7_1=0x0 & bow=0x0 & postRegIncrement) ... & XREG_W_AS {
 	SP = SP - 0x2;
@@ -3351,7 +3351,7 @@ macro wzero(full, word)
 	SP = SP - 0x4;
 	*:$(REG_SIZE) SP = XREG_A_AS;
 	build postRegIncrement;
-}	
+}
 
 :RRAX.B XREG_B_AS_DEST 	is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x0 & bow=0x1 & postRegIncrement) ... & XREG_B_AS_DEST {
 	# Operation Flags...
@@ -3447,7 +3447,7 @@ macro wzero(full, word)
 :SXTX.W XREG_W_AS_DEST 	is ctx_haveext=7 & ctx_al=1 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x1 & bow=0x0 & postRegIncrement) ... & XREG_W_AS_DEST {
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;						# V Flag
-	# Operation...	
+	# Operation...
 	XREG_W_AS_DEST = sext(XREG_W_AS_DEST:1);
 	# Result Flags...
 	$(SIGN) = (XREG_W_AS_DEST s< 0x0);			# S Flag
@@ -3460,7 +3460,7 @@ macro wzero(full, word)
 :SXTX.A XREG_A_AS_DEST2	is ctx_haveext=7 & ctx_al=0 & (op16_12_4=0x1 & op16_8_4=0x1 & op16_7_1=0x1 & bow=0x0 & postRegIncrement) ... & XREG_A_AS_DEST2 {
 	# Operation Flags...
 	$(OVERFLOW) = 0x0;						# V Flag
-	# Operation...	
+	# Operation...
 	XREG_A_AS_DEST2 = sext(XREG_A_AS_DEST2:1);
 	# Result Flags...
 	$(SIGN) = (XREG_A_AS_DEST2 s< 0x0);			# S Flag

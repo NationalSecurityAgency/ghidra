@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.program.model.data.StructureDataType;
 /**
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
  * <p>
- * Attributes are used in the ClassFile, field_info, method_info and 
+ * Attributes are used in the ClassFile, field_info, method_info and
  * Code_attribute structures of the class file format.
  * <p>
  * All attributes have the following general format:
@@ -36,10 +36,10 @@ import ghidra.program.model.data.StructureDataType;
  * 		}
  * <pre>
  * <p>
- * For all attributes, the attribute_name_index must be a valid unsigned 
+ * For all attributes, the attribute_name_index must be a valid unsigned
  * 16-bit index into the constant pool of the class. The constant_pool entry
  * at attribute_name_index must be a CONSTANT_Utf8_info structure
- * representing the name of the attribute. 
+ * representing the name of the attribute.
  * <p>
  * The value of the attribute_length item
  * indicates the length of the subsequent information in bytes. The length does
@@ -117,7 +117,7 @@ public abstract class AbstractAttributeInfo implements StructConverter {
 
 	/**
 	 * The value of the attribute_length item indicates the length of the attribute,
-	 * excluding the initial six bytes. 
+	 * excluding the initial six bytes.
 	 * The value of the attribute_length item is thus dependent on the specific
 	 * attribute.
 	 * @return the length of the attribute, excluding the initial six bytes

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -99,7 +99,7 @@ public class StructureMemberLocationDescriptor extends LocationDescriptor {
 
 	private Composite getLowestNonLeafComposite() {
 
-		// Assumption: in the given data path, the leaf item is the thing we seek, so get it's 
+		// Assumption: in the given data path, the leaf item is the thing we seek, so get it's
 		//             parent.
 		int i = 0;
 		if (fieldName != null) {
@@ -125,7 +125,7 @@ public class StructureMemberLocationDescriptor extends LocationDescriptor {
 	}
 
 	@Override
-	// overridden to ensure that all members of the structure member's path are 
+	// overridden to ensure that all members of the structure member's path are
 	// highlighted
 	protected boolean isInAddresses(Address address) {
 		if (address == null) {

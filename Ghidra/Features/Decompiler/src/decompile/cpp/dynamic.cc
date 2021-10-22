@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ uint4 DynamicHash::transtable[] = {
   CPUI_FLOAT_LESS,  CPUI_FLOAT_LESS, // LESSEQUAL hashes same as EQUAL
   0,				// Unused slot - skip
   CPUI_FLOAT_NAN,
- 
+
   CPUI_FLOAT_ADD,  CPUI_FLOAT_DIV,  CPUI_FLOAT_MULT,  CPUI_FLOAT_ADD, // SUB hashes same as ADD
   CPUI_FLOAT_NEG,  CPUI_FLOAT_ABS, CPUI_FLOAT_SQRT,
 
@@ -56,7 +56,7 @@ uint4 DynamicHash::transtable[] = {
   0,				// CAST is skipped
   CPUI_INT_ADD,  CPUI_INT_ADD, 	// PTRADD and PTRSUB hash same as INT_ADD
   CPUI_SEGMENTOP, CPUI_CPOOLREF, CPUI_NEW, CPUI_INSERT, CPUI_EXTRACT, CPUI_POPCOUNT
-  
+
 };
 
 /// These edges are sorted to provide consistency to the hash
@@ -104,7 +104,7 @@ uint4 ToOpEdge::hash(uint4 reg) const
 /// we get the same hash whether or not these ops are present.
 /// \param vn is the given Varnode
 void DynamicHash::buildVnUp(const Varnode *vn)
-  
+
 {
   const PcodeOp *op;
   for(;;) {
@@ -120,11 +120,11 @@ void DynamicHash::buildVnUp(const Varnode *vn)
 /// we get the same hash whether or not these ops are present.
 /// \param vn is the given Varnode
 void DynamicHash::buildVnDown(const Varnode *vn)
-  
+
 {
   list<PcodeOp *>::const_iterator iter;
   uint4 insize = opedge.size();
-  
+
   for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
     const PcodeOp *op = *iter;
     const Varnode *tmpvn = vn;
@@ -228,7 +228,7 @@ void DynamicHash::calcHash(const Varnode *root,uint4 method)
     gatherUnmarkedOp();
     for(;opproc<markop.size();++opproc)
       buildOpUp(markop[opproc]);
-    
+
     gatherUnmarkedVn();
     for(;vnproc<markvn.size();++vnproc)
       buildVnUp(markvn[vnproc]);
@@ -254,7 +254,7 @@ void DynamicHash::calcHash(const Varnode *root,uint4 method)
   default:
     break;
   }
-    
+
   for(uint4 i=0;i<markvn.size();++i) // Clear our marks
     markvn[i]->clearMark();
   for(uint4 i=0;i<markop.size();++i)
@@ -306,7 +306,7 @@ void DynamicHash::calcHash(const Varnode *root,uint4 method)
   hash |= (uint8)op->code();	// 7-bits
   hash <<= 5;
   hash |= (uint8)(slot & 0x1f);	// 5-bits
-  
+
   hash <<= 32;
   hash |= (uint8)reg;		// 32-bits for the neighborhood hash
   addrresult = op->getSeqNum().getAddr();

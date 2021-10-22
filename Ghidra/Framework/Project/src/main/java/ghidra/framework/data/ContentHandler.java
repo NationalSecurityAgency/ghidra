@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,10 +33,10 @@ import ghidra.util.task.TaskMonitor;
 /**
  * NOTE:  ALL ContentHandler CLASSES MUST END IN "ContentHandler".  If not,
  * the ClassSearcher will not find them.
- * 
- * <code>ContentHandler</code> defines an application interface for converting 
- * between a specific domain object implementation and folder item storage. 
- * This interface also defines a method which provides an appropriate icon 
+ *
+ * <code>ContentHandler</code> defines an application interface for converting
+ * between a specific domain object implementation and folder item storage.
+ * This interface also defines a method which provides an appropriate icon
  * corresponding to the content.
  */
 public interface ContentHandler extends ExtensionPoint {
@@ -72,14 +72,14 @@ public interface ContentHandler extends ExtensionPoint {
 	 * @param version version of the stored folder item to be opened.
 	 * DomainFile.DEFAULT_VERSION (-1) should be specified when not opening a specific
 	 * file version.
-	 * @param minChangeVersion the minimum version which should be included in the 
+	 * @param minChangeVersion the minimum version which should be included in the
 	 * change set for the returned object. A value of -1 indicates the default change
 	 * set.
 	 * @param monitor the monitor that allows the user to cancel
 	 * @return immutable domain object
 	 * @throws IOException if a folder item access error occurs
 	 * @throws CancelledException if operation is cancelled by user
-	 * @throws VersionException if unable to handle file content due to version 
+	 * @throws VersionException if unable to handle file content due to version
 	 * difference which could not be handled.
 	 */
 	DomainObjectAdapter getImmutableObject(FolderItem item, Object consumer, int version,
@@ -100,7 +100,7 @@ public interface ContentHandler extends ExtensionPoint {
 	 * @return read-only domain object
 	 * @throws IOException if a folder item access error occurs
 	 * @throws CancelledException if operation is cancelled by user
-	 * @throws VersionException if unable to handle file content due to version 
+	 * @throws VersionException if unable to handle file content due to version
 	 * difference which could not be handled.
 	 */
 	DomainObjectAdapter getReadOnlyObject(FolderItem item, int version, boolean okToUpgrade,
@@ -112,7 +112,7 @@ public interface ContentHandler extends ExtensionPoint {
 	 * saved to the original folder item.
 	 * @param item stored folder item
 	 * @param userfs file system which contains associated user data
-	 * @param checkoutId an appropriate checout ID required to update the specified 
+	 * @param checkoutId an appropriate checout ID required to update the specified
 	 * folder item.
 	 * @param okToUpgrade if true a version upgrade to the content will be done
 	 * if necessary.
@@ -123,7 +123,7 @@ public interface ContentHandler extends ExtensionPoint {
 	 * @return updateable domain object
 	 * @throws IOException if a folder item access error occurs
 	 * @throws CancelledException if operation is cancelled by user
-	 * @throws VersionException if unable to handle file content due to version 
+	 * @throws VersionException if unable to handle file content due to version
 	 * difference which could not be handled.
 	 */
 	DomainObjectAdapter getDomainObject(FolderItem item, FileSystem userfs, long checkoutId,
@@ -136,16 +136,16 @@ public interface ContentHandler extends ExtensionPoint {
 	 * @param versionedFolderItem versioned folder item
 	 * @param olderVersion the older version number
 	 * @param newerVersion the newer version number
-	 * @return the set of changes that were made 
+	 * @return the set of changes that were made
 	 * @throws VersionException if a database version change prevents reading of data.
-	 * @throws IOException if a folder item access error occurs or change set was 
+	 * @throws IOException if a folder item access error occurs or change set was
 	 * produced by newer version of software and can not be read
 	 */
 	ChangeSet getChangeSet(FolderItem versionedFolderItem, int olderVersion, int newerVersion)
 			throws VersionException, IOException;
 
 	/**
-	 * Get an instance of a suitable merge manager to be used during the merge of a Versioned 
+	 * Get an instance of a suitable merge manager to be used during the merge of a Versioned
 	 * object which has been modified by another user since it was last merged
 	 * or checked-out.
 	 * @param resultsObj object to which merge results should be written
@@ -159,7 +159,7 @@ public interface ContentHandler extends ExtensionPoint {
 			DomainObject originalObj, DomainObject latestObj);
 
 	/**
-	 * Returns true if the content type is always private 
+	 * Returns true if the content type is always private
 	 * (i.e., can not be added to the versioned filesystem).
 	 */
 	boolean isPrivateContentType();

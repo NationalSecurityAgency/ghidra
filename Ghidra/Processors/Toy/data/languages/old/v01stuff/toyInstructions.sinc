@@ -1,7 +1,7 @@
 #### immediates
 #  0iii dddd iiii iiii  # imm rd, i          load 11-bit unsigned int into rd
 #  10nn dddd nnnn nnnn  # simm rd, n         load 10-bit signed int into rd
-#  
+#
 #### arithmetic
 #  1100 0000 ssss tttt  # add rs, rt         rs = rs + rt
 #  1100 0001 ssss tttt  # sub rs, rt         rs = rs - rt
@@ -11,7 +11,7 @@
 #  1100 0101 ssss tttt  # mod rs, rt         rs = rs % rt
 #  1100 0110 ssss tttt  # cmp rs, rt         (set status only based on signed compare (rs - rt))
 #  1100 0111 ssss tttt  # ucmp rs, rt        (set status only based on unsigned compare (rs - rt))
-#  
+#
 #  1100 1000 ssss nnnn  # add rs, n          rs = rs + n
 #  1100 1001 ssss nnnn  # sub rs, n          rs = rs - n
 #  1100 1010 ssss nnnn  # rsub rs, n         rs = n - rs
@@ -20,7 +20,7 @@
 #  1100 1101 ssss iiii  # mod rs, i          rs = rs % i
 #  1100 1110 ssss nnnn  # cmp rs, n          (set status only based on signed compare (rs - n))
 #  1100 1111 ssss iiii  # ucmp rs, i         (set status only based on unsigned compare (rs - i))
-#  
+#
 #### logic
 #  1101 0000 ssss tttt  # and rs, rt         rs = rs & rt
 #  1101 0001 ssss tttt  # or rs, rt          rs = rs | rt
@@ -29,18 +29,18 @@
 #  1101 0100 ssss tttt  # asr rs, rt         rs = rs s>> rt
 #  1101 0101 ssss tttt  # lsl rs, rt         rs = rs << rt
 #  1101 1000 ssss tttt  # saa rs, rt         rs = (rs << 11) | rt
-#  
+#
 #  1101 1011 ssss iiii  # lsr rs, i          rs = rs >> i
 #  1101 1100 ssss iiii  # asr rs, i          rs = rs s>> i
 #  1101 1101 ssss iiii  # lsl rs, i          rs = rs << i
 #  1101 1110 ssss 0000  # inv rs             rs = ~rs
 #  1101 1110 ssss 0001  # neg rs             rs = -rs
-#  
+#
 #### memory
 #  1101 0110 ssss tttt  # load rs, [rt]      rs = [rt]
 #  1101 0111 ssss tttt  # store [rs], rt     [rs] = rt
 #  1101 1111 ssss tttt  # mov rs, rt         rs = rt
-#  
+#
 #### flow
 #  1110 nnnn nnnn 0ccc  # brcc n             if ccc goto pc + n
 #  1110 nnnn nnnn 1ccc  # brdscc n           if ccc goto pc + n with delay slot

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,7 +72,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testRunNext() {
 		//
 		// Test that posting a runnable when one is currently running will not cancel the
-		// currently running runnable, but will clear the queue of any other pending 
+		// currently running runnable, but will clear the queue of any other pending
 		// runnables
 		//
 
@@ -289,7 +289,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		LatchRunnable runnable = new LatchRunnable(startLatch);
 		assertTrue(!component.isShowing());
 
-		// long enough that our two threads will have time to start and sleep without the 
+		// long enough that our two threads will have time to start and sleep without the
 		// thread schedule causing spurious failures
 		int delay = 2500;
 		runManager.runNow(runnable, "Test of Progress Bar Runnable", delay);
@@ -357,7 +357,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		JComponent component = runManager.getMonitorComponent();
 		assertTrue(!component.isShowing());
 
-		// long enough that our two threads will have time to start and sleep without the 
+		// long enough that our two threads will have time to start and sleep without the
 		// thread schedule causing spurious failures
 		int delay = 5000;
 		runManager.runNow(runnable, "Test of Progress Bar Runnable", delay);
@@ -393,7 +393,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void waitForRunManagerToStart(RunManager runManager, TestRunnable runnable) {
 		assertTrue("Failed waiting for runnable to start", runnable.waitForStart(MAX_WAIT_TIME));
@@ -695,7 +695,7 @@ public class RunManagerTest extends AbstractGhidraHeadedIntegrationTest {
 					Thread.sleep(250);
 				}
 				catch (InterruptedException e) {
-					// don't care; we will check the monitor above to know if we 
+					// don't care; we will check the monitor above to know if we
 					// were cancelled
 					trace("\t" + getClass().getSimpleName() + " - interrupted - " +
 						monitor.isCancelled());

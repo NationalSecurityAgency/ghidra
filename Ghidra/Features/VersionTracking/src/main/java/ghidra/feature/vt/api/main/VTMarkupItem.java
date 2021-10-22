@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,10 +39,10 @@ public interface VTMarkupItem {
 	 */
 	public boolean canUnapply();
 
-	/**    
-	 * Applies this markup item using the given action at the give address.  The destination 
+	/**
+	 * Applies this markup item using the given action at the give address.  The destination
 	 * address and the address source must be set prior to calling this method.
-	 * 
+	 *
 	 * @param applyAction the type of apply action to take when applying the given markup item
 	 * @throws VersionTrackingApplyException if an error occurred while attempting to apply the
 	 * markup item.
@@ -59,12 +59,12 @@ public interface VTMarkupItem {
 
 	/**
 	 * Sets the default destination address for this item.  This address will not be saved, as it
-	 * is considered a temporary address value.  Further, this value is intended to be a 
+	 * is considered a temporary address value.  Further, this value is intended to be a
 	 * "best guess" as to what the destination address should be.
 	 * <p>
-	 * Users should not call this method, but should instead call 
+	 * Users should not call this method, but should instead call
 	 * {@link #setDestinationAddress(Address)}.
-	 * 
+	 *
 	 * @param address the address to set.
 	 * @param addressSource the source of the address.  This will be the name of a
 	 *        {@link VTProgramCorrelator} when a correlator is used to populate default address
@@ -76,15 +76,15 @@ public interface VTMarkupItem {
 	/**
 	 * Sets the actual destination address for the markup item.  This method differs from
 	 * {@link #setDefaultDestinationAddress(Address, String)} in that the address passed to this
-	 * method will be saved. 
+	 * method will be saved.
 	 * <p>
 	 * The {@link #getDestinationAddressSource()} will return {@link #USER_DEFINED_ADDRESS_SOURCE}
 	 * when a valid destination address is set via this method.
 	 * <p>
 	 * To clear the destination address you may pass <tt>null</tt> to this method.
-	 * 
+	 *
 	 * @param address the new destination address for the item.
-	 * @throws IllegalStateException if this method is called on an applied markup item (you 
+	 * @throws IllegalStateException if this method is called on an applied markup item (you
 	 *         can use {@link #canUnapply()} to know if this item is applied).
 	 * @see #setDefaultDestinationAddress(Address, String)
 	 */
@@ -92,22 +92,22 @@ public interface VTMarkupItem {
 
 	/**
 	 * Returns the editable status of this markup item's destination address.
-	 *  
+	 *
 	 * @return the editable status of this markup item's destination address.
 	 * @see #setDestinationAddress(Address, String)
 	 */
 	public VTMarkupItemDestinationAddressEditStatus getDestinationAddressEditStatus();
 
 	/**
-	 * Sets a considered status on this item without applying this item.  This is useful to 
-	 * indicate that you <b>considered</b> this item and have decided not to apply it, with 
+	 * Sets a considered status on this item without applying this item.  This is useful to
+	 * indicate that you <b>considered</b> this item and have decided not to apply it, with
 	 * some indication as to why.
 	 * <p>
 	 * To clear the considered status pass {@link VTMarkupItemConsideredStatus#UNCONSIDERED}.
 	 * <p>
 	 * If the status was an "applied" status, then an exception will be thrown.  To determine if
 	 * an item is applied you can use {@link #canUnapply()}.
-	 * 
+	 *
 	 * @param status The <b>considered</b> status to set
 	 * @throws IllegalStateException if you call this method on an applied item
 	 * @see #setUnconsidered()
@@ -115,14 +115,14 @@ public interface VTMarkupItem {
 	public void setConsidered(VTMarkupItemConsideredStatus status);
 
 	/**
-	 * Returns the status of this markup item. 
+	 * Returns the status of this markup item.
 	 * @return  the status of this markup item.
 	 */
 	public VTMarkupItemStatus getStatus();
 
-	/** 
+	/**
 	 * Returns an optional description of the current markup item status.  For example, if there
-	 * status is {@link VTMarkupItemStatus#FAILED_APPLY}, then this method should return a 
+	 * status is {@link VTMarkupItemStatus#FAILED_APPLY}, then this method should return a
 	 * description of the failure.
 	 */
 	public String getStatusDescription();
@@ -194,7 +194,7 @@ public interface VTMarkupItem {
 	public boolean supportsApplyAction(VTMarkupItemApplyActionType actionType);
 
 	/**
-	 * Returns the VTMarkupType for this markup Item.  VTMarkup types include comments, labels, 
+	 * Returns the VTMarkupType for this markup Item.  VTMarkup types include comments, labels,
 	 * function names, etc.
 	 * @return the VTMarkupType for this markup Item.
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -96,7 +96,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	/**
 	 * Constructs a new ELF header using the specified byte provider.
 	 * @param provider the byte provider to supply the bytes
-	 * @throws ElfException if the underlying bytes in the byte provider 
+	 * @throws ElfException if the underlying bytes in the byte provider
 	 * do not constitute a valid ELF.
 	 */
 	public static ElfHeader createElfHeader(GenericFactory factory, ByteProvider provider)
@@ -230,7 +230,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 	/**
-	 * Get the installed extension provider.  If the parse method has not yet been 
+	 * Get the installed extension provider.  If the parse method has not yet been
 	 * invoked, the default adapter will be returned.
 	 * @return ELF load adapter
 	 */
@@ -240,14 +240,14 @@ public class ElfHeader implements StructConverter, Writeable {
 
 	/**
 	 * Adjust address offset for certain pre-linked binaries which do not adjust certain
-	 * header fields (e.g., dynamic table address entries).  Standard GNU/Linux pre-linked 
-	 * shared libraries have adjusted header entries and this method should have no effect. 
+	 * header fields (e.g., dynamic table address entries).  Standard GNU/Linux pre-linked
+	 * shared libraries have adjusted header entries and this method should have no effect.
 	 * @param address
 	 * @return address with appropriate pre-link adjustment added
 	 */
 	public long adjustAddressForPrelink(long address) {
 
-		// TODO: how do we ensure that adjustment is only made to 
+		// TODO: how do we ensure that adjustment is only made to
 		// addresses in the default space?  Should loads into
 		// data space have the same adjustment?
 
@@ -268,7 +268,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 */
 	public long unadjustAddressForPrelink(long address) {
 
-		// TODO: how do we ensure that adjustment is only made to 
+		// TODO: how do we ensure that adjustment is only made to
 		// addresses in the default space?  Should loads into
 		// data space have the same adjustment?
 
@@ -500,7 +500,7 @@ public class ElfHeader implements StructConverter, Writeable {
 		try {
 
 			// NOTE: Dynamic and Relocation tables are loaded into memory, however,
-			// we construct them without loading so we must map memory addresses 
+			// we construct them without loading so we must map memory addresses
 			// back to file offsets.
 
 			long relocTableAddr =
@@ -907,7 +907,7 @@ public class ElfHeader implements StructConverter, Writeable {
 
 		//note: we cannot retrieve all the names
 		//until after we have read all the section headers.
-		//this is because one of the section headers 
+		//this is because one of the section headers
 		//is a string table that contains the names of the sections.
 		for (int i = 0; i < e_shnum; ++i) {
 			sectionHeaders[i].updateName();
@@ -983,18 +983,18 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 	/**
-	 * Inspect the Elf image and determine the default image base prior 
+	 * Inspect the Elf image and determine the default image base prior
 	 * to the {@link #parse()} method being invoked (i.e., only the main Elf
 	 * header structure has been parsed).
 	 * The image base is the virtual address of the PT_LOAD program header
 	 * with the smallest address or 0 if no program headers exist.  By default,
 	 * the image base address should be treated as a addressable unit offset.
-	 * @return preferred image base 
+	 * @return preferred image base
 	 */
 	public long findImageBase() {
 
 		// FIXME! This needs to be consistent with the getImageBase() method
-		// which currently considers prelink. 
+		// which currently considers prelink.
 
 		long minBase = -1;
 
@@ -1019,7 +1019,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	private Long elfImageBase;
 
 	/**
-	 * Returns the image base of this ELF. 
+	 * Returns the image base of this ELF.
 	 * The image base is the virtual address of the first PT_LOAD
 	 * program header or 0 if no program headers. By default,
 	 * the image base address should be treated as a addressable unit offset.s
@@ -1053,7 +1053,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	/**
 	 * Determine if the image has been pre-linked.
 	 * NOTE: Currently has very limited support.  Certain pre-link
-	 * cases can not be detected until after a full parse has been 
+	 * cases can not be detected until after a full parse has been
 	 * performed.
 	 * @return true if image has been pre-linked
 	 */
@@ -1173,7 +1173,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 */
 	public long e_entry() {
 		// guard against adjustment of 0
-		// TODO: this might need to be re-thought.  
+		// TODO: this might need to be re-thought.
 		if (e_entry == 0) {
 			return 0;
 		}
@@ -1218,7 +1218,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	/**
 	 * This member holds the size in bytes of one entry in the file's program header table;
 	 * all entries are the same size.
-	 * @return the size in bytes of one program header table entry 
+	 * @return the size in bytes of one program header table entry
 	 */
 	public short e_phentsize() {
 		return e_phentsize;
@@ -1322,8 +1322,8 @@ public class ElfHeader implements StructConverter, Writeable {
 	/**
 	 * This member identifies the object file version,
 	 * where "EV_NONE == Invalid Version" and "EV_CURRENT == Current Version"
-	 * The value 1 signifies the original file format; extensions will 
-	 * create new versions with higher numbers. 
+	 * The value 1 signifies the original file format; extensions will
+	 * create new versions with higher numbers.
 	 * The value of EV_CURRENT, though given as 1 above, will change as
 	 * necessary to reflect the current version number.
 	 * @return the object file version
@@ -1403,7 +1403,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	 * @return the section header that contains the address
 	 */
 	public ElfSectionHeader getSectionLoadHeaderContaining(long address) {
-// FIXME: verify 
+// FIXME: verify
 		for (ElfSectionHeader sectionHeader : sectionHeaders) {
 			if (!sectionHeader.isAlloc()) {
 				continue;
@@ -1525,7 +1525,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 	/**
-	 * Returns the PT_LOAD program header which loads a range containing 
+	 * Returns the PT_LOAD program header which loads a range containing
 	 * the specified address, or null if not found.
 	 * @param virtualAddr the address of the requested program header
 	 * @return the program header with the specified address
@@ -1546,7 +1546,7 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 	/**
-	 * Returns the PT_LOAD program header which loads a range containing 
+	 * Returns the PT_LOAD program header which loads a range containing
 	 * the specified file offset, or null if not found.
 	 * @param offset the file offset to be loaded
 	 * @return the program header with the specified file offset
@@ -1731,27 +1731,27 @@ public class ElfHeader implements StructConverter, Writeable {
 	}
 
 	/**
-	 * Get the Elf header structure component ordinal 
+	 * Get the Elf header structure component ordinal
 	 * corresponding to the e_entry element
-	 * @return e_entry component ordinal 
+	 * @return e_entry component ordinal
 	 */
 	public int getEntryComponentOrdinal() {
 		return 11;
 	}
 
 	/**
-	 * Get the Elf header structure component ordinal 
+	 * Get the Elf header structure component ordinal
 	 * corresponding to the e_phoff element
-	 * @return e_phoff component ordinal 
+	 * @return e_phoff component ordinal
 	 */
 	public int getPhoffComponentOrdinal() {
 		return 12;
 	}
 
 	/**
-	 * Get the Elf header structure component ordinal 
+	 * Get the Elf header structure component ordinal
 	 * corresponding to the e_shoff element
-	 * @return e_shoff component ordinal 
+	 * @return e_shoff component ordinal
 	 */
 	public int getShoffComponentOrdinal() {
 		return 13;

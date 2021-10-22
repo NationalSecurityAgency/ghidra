@@ -176,14 +176,14 @@ define space ram type=ram_space size=$(ADDRSIZE) default;
 define space register type=register_space size=4;
 
 # General purpose registers
-define register offset=0 size=$(REGSIZE) [ 
-    zero at v0 v1 
-    a0 a1 a2 a3 
-    t0 t1 t2 t3 
-    t4 t5 t6 t7 
-    s0 s1 s2 s3 
-    s4 s5 s6 s7 
-    t8 t9 k0 k1 
+define register offset=0 size=$(REGSIZE) [
+    zero at v0 v1
+    a0 a1 a2 a3
+    t0 t1 t2 t3
+    t4 t5 t6 t7
+    s0 s1 s2 s3
+    s4 s5 s6 s7
+    t8 t9 k0 k1
     gp sp s8 ra
     pc
 ];
@@ -260,14 +260,14 @@ define register offset=0x1200 size=4 [
 
 # COP-0 control registers, sel=0
 define register offset=0x2000 size=$(REGSIZE) [
-    Index           Random          EntryLo0        EntryLo1 
-    Context         PageMask        Wired           HWREna  
-    BadVAddr        Count           EntryHi         Compare  
-    Status          Cause           EPC             PRId 
-    Config          LLAddr          WatchLo         WatchHi 
+    Index           Random          EntryLo0        EntryLo1
+    Context         PageMask        Wired           HWREna
+    BadVAddr        Count           EntryHi         Compare
+    Status          Cause           EPC             PRId
+    Config          LLAddr          WatchLo         WatchHi
     XContext        cop0_reg21      cop0_reg22      Debug
     DEPC            PerfCnt         ErrCtl          CacheErr
-    TagLo           TagHi           ErrorEPC        DESAVE 
+    TagLo           TagHi           ErrorEPC        DESAVE
 ];
 
 # COP-0 control registers, sel=1
@@ -365,10 +365,10 @@ define context contextreg
   PAIR_INSTRUCTION_FLAG=(0,0) noflow      # =1 paired instruction
   REL6=(31,31)							  # =1 Release 6, =0 Pre release 6, (Fixed, set via pspec)
   RELP=(30,30)							  # =1 Mips16e, =0 MicroMips. REL6, RELP can't both be 1 (Fixed, set via pspec)
-@ifdef ISA_VARIANT  
+@ifdef ISA_VARIANT
   ISA_MODE=(1,1)						  # =1 Decode using alternate ISA, variable.
   LowBitCodeMode = (1,1)				  # =1 if low bit of instruction address is set on a branch
-#below here is for mips16e. Overlaps with micromips   
+#below here is for mips16e. Overlaps with micromips
   ext_isjal=(2,2) noflow
   ext_value=(3,13) noflow
   ext_value_select=(3,5) noflow
@@ -411,8 +411,8 @@ define context contextreg
   ext_32_addims=(10,16) signed noflow
   ext_32_imm2=(15,16) noflow
   ext_32_imm2s=(15,16) signed noflow
-  ext_32_imm3=(14,16) noflow 
-  ext_32_imm3s=(14,16) signed noflow 
+  ext_32_imm3=(14,16) noflow
+  ext_32_imm3s=(14,16) signed noflow
   ext_32_imm5=(12,16) noflow
   ext_32_imm5s=(12,16) signed noflow
   ext_32_imm6=(11,16) noflow
@@ -421,17 +421,17 @@ define context contextreg
   ext_32_basea=(12,16) noflow
 
   ext_32_rd=(7,11) noflow
-  ext_32_rdset=(7,11) noflow  
+  ext_32_rdset=(7,11) noflow
   ext_32_rs1=(7,11) noflow
   ext_32_rs1lo=(7,11) noflow
   ext_32_rs1set=(7,11) noflow
   ext_16_rs=(7,9) noflow
   ext_16_rslo=(7,8) noflow
   ext_16_rshi=(9,9) noflow
-  
+
   ext_off16_s=(7,22) signed noflow
   ext_off16_u=(7,22) noflow
-@endif  # ISA_VARIANT  
+@endif  # ISA_VARIANT
 ;
 
 
@@ -473,7 +473,7 @@ define token instr(32)
     index       = (16,20)
     hint        = (16,20)
     cop1code    = (16,20)
-    synci       = (16,20)  
+    synci       = (16,20)
     cond        = (16,20)
     op          = (16,20)
     zero1620    = (16,20)
@@ -544,30 +544,30 @@ define token instr(32)
     simmed11	= (0,10)
 ;
 
-attach variables [ rs rt rd base index baser6 ] [ 
+attach variables [ rs rt rd base index baser6 ] [
     zero  at  v0  v1  a0  a1  a2  a3
     t0    t1  t2  t3  t4  t5  t6  t7
     s0    s1  s2  s3  s4  s5  s6  s7
-    t8    t9  k0  k1  gp  sp  s8  ra 
+    t8    t9  k0  k1  gp  sp  s8  ra
 ];
 
 @ifdef MIPS64
-attach variables [ rs32 rt32 rd32 ] [ 
+attach variables [ rs32 rt32 rd32 ] [
     zero_lo  at_lo  v0_lo  v1_lo  a0_lo  a1_lo  a2_lo  a3_lo
     t0_lo    t1_lo  t2_lo  t3_lo  t4_lo  t5_lo  t6_lo  t7_lo
     s0_lo    s1_lo  s2_lo  s3_lo  s4_lo  s5_lo  s6_lo  s7_lo
-    t8_lo    t9_lo  k0_lo  k1_lo  gp_lo  sp_lo  s8_lo  ra_lo 
+    t8_lo    t9_lo  k0_lo  k1_lo  gp_lo  sp_lo  s8_lo  ra_lo
 ];
 @else
 # For MIPS32 these are the same as rs, rt, and rd
-attach variables [ rs32 rt32 rd32 ] [ 
+attach variables [ rs32 rt32 rd32 ] [
     zero  at  v0  v1  a0  a1  a2  a3
     t0    t1  t2  t3  t4  t5  t6  t7
     s0    s1  s2  s3  s4  s5  s6  s7
-    t8    t9  k0  k1  gp  sp  s8  ra 
+    t8    t9  k0  k1  gp  sp  s8  ra
 ];
 @endif
-               
+
 attach variables [ fs ft fd fr ] [
     f0  f1  f2  f3  f4  f5  f6  f7  f8  f9  f10 f11 f12 f13 f14 f15
     f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 f27 f28 f29 f30 f31
@@ -595,16 +595,16 @@ attach variables [ fs_fcr ] [
 	_		_		_		_		_		_		_		_
 	_		fccr	fexr	_		fenr	_		_		fcsr
 ];
-    
+
 attach variables [ rd0_0 ] [
-    Index           Random          EntryLo0        EntryLo1 
-    Context         PageMask        Wired           HWREna  
-    BadVAddr        Count           EntryHi         Compare  
-    Status          Cause           EPC             PRId 
-    Config          LLAddr          WatchLo         WatchHi 
+    Index           Random          EntryLo0        EntryLo1
+    Context         PageMask        Wired           HWREna
+    BadVAddr        Count           EntryHi         Compare
+    Status          Cause           EPC             PRId
+    Config          LLAddr          WatchLo         WatchHi
     XContext        cop0_reg21      cop0_reg22      Debug
     DEPC            PerfCnt         ErrCtl          CacheErr
-    TagLo           TagHi           ErrorEPC        DESAVE 
+    TagLo           TagHi           ErrorEPC        DESAVE
 ];
 
 attach variables [ rd0_1 ] [
@@ -687,7 +687,7 @@ attach variables [ rd0_7 ] [
 attach variables [ aclo acflo ] [ lo lo1 lo2 lo3 ];
 attach variables [ achi acfhi ] [ hi hi1 hi2 hi3 ];
 
-attach names hint [ 
+attach names hint [
     "load" "store" "hint2" "hint3" "load_streamed" "store_streamed" "load_retained" "store_retained"
     "hint8" "hint9" "hint10" "hint11" "hint12" "hint13" "hint14" "hint15"
     "hint16" "hint17" "hint18" "hint19" "hint20" "hint21" "hint22" "hint23" "hint24"
@@ -852,7 +852,7 @@ define pcodeop TLB_read_indexed_entryPageMask;
 define pcodeop TLB_write_indexed_entry;
 define pcodeop TLB_write_random_entry;
 
-# prefetch(vaddr, hint); 
+# prefetch(vaddr, hint);
 define pcodeop prefetch;
 
 # getFpCondition(cc)

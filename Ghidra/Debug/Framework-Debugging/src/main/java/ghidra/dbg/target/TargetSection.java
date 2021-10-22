@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,12 +22,12 @@ import ghidra.program.model.address.AddressRange;
 
 /**
  * An allocated section of a binary module
- * 
+ *
  * <p>
  * Note that the model should only present those sections which are allocated in memory. Otherwise
  * strange things may happen, such as zero-length ranges (which AddressRange hates), or overlapping
  * ranges (which Trace hates).
- * 
+ *
  * <p>
  * TODO: Present all sections, but include isAllocated?
  */
@@ -39,7 +39,7 @@ public interface TargetSection extends TargetObject {
 
 	/**
 	 * Get the module to which this section belongs
-	 * 
+	 *
 	 * @return the owning module
 	 */
 	@TargetAttributeType(name = MODULE_ATTRIBUTE_NAME, required = true, fixed = true, hidden = true)
@@ -52,7 +52,7 @@ public interface TargetSection extends TargetObject {
 
 	/**
 	 * Get the range of addresses comprising the section
-	 * 
+	 *
 	 * @return the range
 	 */
 	@TargetAttributeType(name = RANGE_ATTRIBUTE_NAME, required = true, fixed = true)
@@ -62,7 +62,7 @@ public interface TargetSection extends TargetObject {
 
 	/**
 	 * Get the lowest address in the section
-	 * 
+	 *
 	 * @return the start
 	 */
 	public default Address getStart() {
@@ -71,7 +71,7 @@ public interface TargetSection extends TargetObject {
 
 	/**
 	 * Get the highest address (inclusive) in the section
-	 * 
+	 *
 	 * @return the end
 	 */
 	public default Address getEnd() {

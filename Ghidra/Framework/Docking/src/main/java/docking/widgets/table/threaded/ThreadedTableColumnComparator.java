@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public class ThreadedTableColumnComparator<T> extends RowBasedColumnComparator<T
 	/**
 	 * Constructs this class with the given column comparator that will get called after the
 	 * given row is converted to the column value for the given sort column
-	 * 
+	 *
 	 * @param model the table model using this comparator
 	 * @param sortColumn the column being sorted
 	 * @param comparator the column comparator to use for sorting
@@ -44,10 +44,10 @@ public class ThreadedTableColumnComparator<T> extends RowBasedColumnComparator<T
 	}
 
 	/**
-	 * This version of the constructor is used for the default case where the client will 
+	 * This version of the constructor is used for the default case where the client will
 	 * supply a backup row comparator that will get called if the given column comparator returns
 	 * a '0' value.
-	 * 
+	 *
 	 * @param model the table model using this comparator
 	 * @param sortColumn the column being sorted
 	 * @param comparator the column comparator to use for sorting

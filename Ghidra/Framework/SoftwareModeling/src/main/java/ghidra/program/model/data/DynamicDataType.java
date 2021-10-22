@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,7 +53,7 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 	/**
 	 * Gets the number of component data types in this data type.
 	 * @param buf a memory buffer to be used by dataTypes that change depending on
-	 * their data context. 
+	 * their data context.
 	 * @return the number of components that make up this data prototype
 	 *   - if this is an Array, return the number of elements in the array.
 	 *   - if this datatype is a subcomponent of another datatype and it
@@ -86,7 +86,7 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 	 * @param ordinal the components ordinal (zero based).
 	 * @param buf a memory buffer to be used by dataTypes that change depending on
 	 * their data context.
-	 * @return the component data type or null if there is no component at the 
+	 * @return the component data type or null if there is no component at the
 	 * indicated index.
 	 * @throws ArrayIndexOutOfBoundsException if index is out of bounds
 	 */
@@ -156,7 +156,7 @@ public abstract class DynamicDataType extends BuiltIn implements Dynamic {
 		int lastComponentLength = last.getLength();
 		return last.getOffset() + lastComponentLength;
 		// NOTE: any trailing alignment padding must be represented with
-		// undefined components to achieve the correct length.  It may be 
+		// undefined components to achieve the correct length.  It may be
 		// best to do this for all padding within the component structure.
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -162,9 +162,9 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	/**
 	 * A package-level method.  Subclasses should not call this.
-	 * 
+	 *
 	 * <p>This exists to handle whether this model should load incrementally.
-	 * 
+	 *
 	 * @param monitor the monitor
 	 * @return the loaded data
 	 * @throws CancelledException if the load was cancelled
@@ -223,27 +223,27 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * This method will retrieve a column value for the given row object.  Further, the retrieved
 	 * value will be cached.   This is useful when sorting a table, as the same column value may
 	 * be requested multiple times.
-	 * 
+	 *
 	 * <p><u>Performance Notes</u>
 	 * <ul>
 	 * 	<li>This method uses a {@link HashMap} to cache column values for a row object.   Further,
-	 *      upon a key collision, the map will perform O(logn) lookups <b>if the 
+	 *      upon a key collision, the map will perform O(logn) lookups <b>if the
 	 *      key (the row object) is {@link Comparable}</b>.   If the key is not comparable, then
 	 *      the collision lookups will be linear.    So, make your row objects comparable
 	 *      for maximum speed <b>when your table size becomes large</b>  (for small tables there
 	 *      is no observable impact).
-	 *  <li>Even if your row objects are comparable, relying on this table model to convert your 
+	 *  <li>Even if your row objects are comparable, relying on this table model to convert your
 	 *      row object into column values can be slow <b>for large tables</b>.  This is because
-	 *      the default column comparison framework for the tables will call this method 
-	 *      multiple times, resulting in many more method calls per column value lookup.  For 
-	 *      large data, the repeated method calls start to become noticeable.  For maximum 
-	 *      column sorting speed, use a comparator that works not on the column value, but on 
-	 *      the row value.  To do this, return a comparator from your model's 
-	 *      {@link #createSortComparator(int)} method, instead of from the column itself or 
+	 *      the default column comparison framework for the tables will call this method
+	 *      multiple times, resulting in many more method calls per column value lookup.  For
+	 *      large data, the repeated method calls start to become noticeable.  For maximum
+	 *      column sorting speed, use a comparator that works not on the column value, but on
+	 *      the row value.  To do this, return a comparator from your model's
+	 *      {@link #createSortComparator(int)} method, instead of from the column itself or
 	 *      by relying on column item implementing {@link Comparable}.  This is possible any
 	 *      time that a row object already has a field that is used for a given column.
 	 * </ul>
-	 * 
+	 *
 	 * @param rowObject the row object
 	 * @param columnIndex the column index for which to get a value
 	 * @return the column value
@@ -414,7 +414,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	/**
 	 * Override this to change how filtering is performed.  This implementation will do nothing
 	 * if a <code>TableFilter</code> has not been set via a call to {@link #setTableFilter(TableFilter)}.
-	 * 
+	 *
 	 *
 	 * @param data The list of data to be filtered.
 	 *
@@ -516,17 +516,17 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 	/**
 	 * Removes the specified object from this model and schedules an update.
-	 * 
-	 * <P>Note: for this method to function correctly, the given object must compare as 
-	 * {@link #equals(Object)} and have the same {@link #hashCode()} as the object to be removed 
+	 *
+	 * <P>Note: for this method to function correctly, the given object must compare as
+	 * {@link #equals(Object)} and have the same {@link #hashCode()} as the object to be removed
 	 * from the table data.   This allows clients to create proxy objects to pass into this method,
-	 * as long as they honor those requirements.    
-	 * 
+	 * as long as they honor those requirements.
+	 *
 	 * <P>If this model's data is sorted, then a binary search will be used to locate the item
-	 * to be removed.  However, for this to work, all field used to sort the data must still be 
+	 * to be removed.  However, for this to work, all field used to sort the data must still be
 	 * available from the original object and must be the same values.   If this is not true, then
 	 * the binary search will not work and a brute force search will be used.
-	 * 
+	 *
 	 * @param obj the object to remove
 	 */
 	public void removeObject(ROW_OBJECT obj) {
@@ -544,7 +544,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 
 		//@formatter:off
 		// The data is changed when it is filtered OR when an item has been added or removed
-		boolean dataChanged = this.filteredData.getId() != filteredData.getId() || 
+		boolean dataChanged = this.filteredData.getId() != filteredData.getId() ||
 							  this.filteredData.size() != filteredData.size();
 		//@formatter:on
 		this.allData = allData;
@@ -779,7 +779,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	/**
 	 * Sets the update delay, which is how long the model should wait before updating, after
 	 * a change has been made the data
-	 * 
+	 *
 	 * @param updateDelayMillis the new update delay
 	 * @param maxUpdateDelayMillis the new max update delay; updates will not wait past this time
 	 */
@@ -810,13 +810,13 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 	 * Returns the strategy to use for performing adds and removes to this table.   Subclasses can
 	 * override this method to customize this process for their particular type of data.   See
 	 * the implementations of {@link TableAddRemoveStrategy} for details.
-	 * 
-	 * <P>Note: The default add/remove strategy assumes that objects to be removed will be the 
-	 * same instance that is in the list of this model.   This allows the {@link #equals(Object)} 
-	 * and {@link #hashCode()} to be used when removing the object from the list.   If you model 
-	 * does not pass the same instance into {@link #removeObject(Object)}, then you will need to 
+	 *
+	 * <P>Note: The default add/remove strategy assumes that objects to be removed will be the
+	 * same instance that is in the list of this model.   This allows the {@link #equals(Object)}
+	 * and {@link #hashCode()} to be used when removing the object from the list.   If you model
+	 * does not pass the same instance into {@link #removeObject(Object)}, then you will need to
 	 * update your add/remove strategy accordingly.
-	 * 
+	 *
 	 * @return the strategy
 	 */
 	protected TableAddRemoveStrategy<ROW_OBJECT> getAddRemoveStrategy() {

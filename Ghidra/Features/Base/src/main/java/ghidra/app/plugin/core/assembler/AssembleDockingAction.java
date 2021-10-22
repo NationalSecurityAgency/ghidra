@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -105,10 +105,10 @@ public class AssembleDockingAction extends DockingAction {
 
 	/*
 	 * A class for all my callbacks
-	 * 
+	 *
 	 * For autocompletion, this causes activation of an assembled instruction to actually patch the
 	 * instruction in.
-	 * 
+	 *
 	 * For keyboard, it causes the escape key, if not already consumed by the autocompleter, to
 	 * cancel the assembly action altogether.
 	 */
@@ -226,7 +226,7 @@ public class AssembleDockingAction extends DockingAction {
 	/**
 	 * Retrieve the location in the code viewer's {@link FieldPanel} for the field at the given
 	 * address having the given header text
-	 * 
+	 *
 	 * @param address the address
 	 * @param fieldName the name of the field
 	 * @return if found, the {@link FieldLocation}, otherwise {@code null}

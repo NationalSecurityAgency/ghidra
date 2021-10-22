@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,10 +71,10 @@ public class VTDomainObjectEventsTest extends VTBaseTestCase {
 	}
 
 	private <T extends GhidraTimer> void disableDocsTimer() {
-		// The DomainObjectChangeSupport class uses a timer.  In SOP, the timer fires its 
+		// The DomainObjectChangeSupport class uses a timer.  In SOP, the timer fires its
 		// events on the Swing thread.
 		// We are in a headless environment.  Resultingly, we cannot use the Swing thread to
-		// synchronize events when we flush them.  Here we mock the timer, preventing it 
+		// synchronize events when we flush them.  Here we mock the timer, preventing it
 		// from starting. Without the timer, we can rely on our flushing of the queued events.
 
 		new MockUp<T>() {

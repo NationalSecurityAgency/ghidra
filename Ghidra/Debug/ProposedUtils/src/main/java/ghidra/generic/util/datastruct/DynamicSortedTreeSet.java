@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import java.util.*;
 
 /**
  * A set where the ordering of elements may change over time, based on an alternative comparator
- * 
+ *
  * <p>
  * This is an implementation of {@link Set} where elements may be sorted by an alternative
  * comparator (usually by "cost"), rather than by the natural ordering. It may seem odd, but the
@@ -32,11 +32,11 @@ import java.util.*;
  * interfaces. Since the set is ordered, it makes sense to treat it as a list. It provides fairly
  * efficient implementations of {@link #get(int)} and {@link #indexOf(Object)}. Sequential access is
  * best performed via {@link #iterator()}, since this will use a linked list.
- * 
+ *
  * <p>
  * The underlying implementation is backed by {@link TreeValueSortedMap}. Currently, it is not
  * thread safe.
- * 
+ *
  * @param <E> the type of the elements
  */
 public class DynamicSortedTreeSet<E> extends AbstractSet<E> implements List<E>, Deque<E> {
@@ -45,7 +45,7 @@ public class DynamicSortedTreeSet<E> extends AbstractSet<E> implements List<E>, 
 
 	/**
 	 * Construct a dynamic sorted tree set using the elements' natural ordering
-	 * 
+	 *
 	 * <p>
 	 * Other than, perhaps, a more convenient interface, this offers few if any benefits over the
 	 * stock {@link Set}.
@@ -57,7 +57,7 @@ public class DynamicSortedTreeSet<E> extends AbstractSet<E> implements List<E>, 
 
 	/**
 	 * Construct a dynamic sorted tree set using a custom comparator to order the elements
-	 * 
+	 *
 	 * @param comparator the comparator, providing a total ordering of the values
 	 */
 	public DynamicSortedTreeSet(Comparator<E> comparator) {
@@ -72,7 +72,7 @@ public class DynamicSortedTreeSet<E> extends AbstractSet<E> implements List<E>, 
 
 	/**
 	 * Inserts the element, ignoring index
-	 * 
+	 *
 	 * @param index ignore since the set is sorted
 	 */
 	@Override
@@ -82,7 +82,7 @@ public class DynamicSortedTreeSet<E> extends AbstractSet<E> implements List<E>, 
 
 	/**
 	 * Inserts all elements from the given collection, ignoring index
-	 * 
+	 *
 	 * @param index ignore since the set is sorted
 	 */
 	@Override
@@ -279,7 +279,7 @@ public class DynamicSortedTreeSet<E> extends AbstractSet<E> implements List<E>, 
 
 	/**
 	 * Replace the element at the given index with the given element
-	 * 
+	 *
 	 * <p>
 	 * Because the set is sorted, the index of the given element may not be the same as
 	 * {@code index}. In fact, this is equivalent to removing the element at the given index, and
@@ -312,10 +312,10 @@ public class DynamicSortedTreeSet<E> extends AbstractSet<E> implements List<E>, 
 
 	/**
 	 * Notify the queue of a change to an element's cost.
-	 * 
+	 *
 	 * <p>
 	 * This may cause the element's index to change.
-	 * 
+	 *
 	 * @param e the element whose cost may have changed
 	 * @return true if the index changed
 	 */

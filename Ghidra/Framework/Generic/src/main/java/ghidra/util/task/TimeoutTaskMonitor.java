@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,9 +30,9 @@ import utility.function.Dummy;
 /**
  * A task monitor that allows clients the ability to specify a timeout after which this monitor
  * will be cancelled.
- * 
+ *
  * <P>This monitor can wrap an existing monitor.
- * 
+ *
  * <P>You can call {@link #setTimeoutListener(Callback)} to get a notification that the monitor
  * timed-out.  In order to prevent this from firing after your work is finished normally, call
  * {@link #finished()}.
@@ -41,7 +41,7 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 
 	/**
 	 * Creates a timeout task monitor that will be cancelled after the specified timeout.
-	 * 
+	 *
 	 * @param timeout the timeout value
 	 * @param timeUnit the timeout time unit
 	 * @return the newly created monitor
@@ -58,7 +58,7 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 	 * created monitor wraps the given monitor, calling cancel on the given monitor when the
 	 * timeout is reached.  This method allows you to use an existing monitor while adding
 	 * the timeout feature.
-	 * 
+	 *
 	 * @param timeout the timeout value
 	 * @param timeUnit the timeout time unit
 	 * @param monitor the monitor to wrap
@@ -102,7 +102,7 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 
 	/**
 	 * Sets a callback function that will be called if the timeout is reached.
-	 * 
+	 *
 	 * @param timeoutCallback the callback to call
 	 */
 	public void setTimeoutListener(Callback timeoutCallback) {
@@ -124,7 +124,7 @@ public class TimeoutTaskMonitor implements TaskMonitor {
 
 //==================================================================================================
 // TaskMonitor Methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public boolean isCancelled() {

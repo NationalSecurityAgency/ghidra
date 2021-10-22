@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,12 +21,12 @@ import ghidra.app.plugin.core.functiongraph.graph.vertex.FGVertex;
 import ghidra.graph.viewer.layout.LayoutProviderExtensionPoint;
 
 /**
- * A version of {@link FGLayoutProvider} that is discoverable at runtime.   Layouts that do not wish 
+ * A version of {@link FGLayoutProvider} that is discoverable at runtime.   Layouts that do not wish
  * to be discoverable should implement {@link FGLayoutProvider} directly, not this interface.
  */
 //@formatter:off
-public abstract class FGLayoutProviderExtensionPoint 
-	extends FGLayoutProvider 
+public abstract class FGLayoutProviderExtensionPoint
+	extends FGLayoutProvider
 	implements LayoutProviderExtensionPoint<FGVertex, FGEdge, FunctionGraph> {
 //@formatter:on
 }

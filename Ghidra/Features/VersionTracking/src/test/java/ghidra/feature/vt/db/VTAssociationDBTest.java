@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -94,15 +94,15 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 
 		//
 		// now test remove
-		// 
+		//
 
-		// just doing an unapply will not remove the DB, since we have put in a custom, 
+		// just doing an unapply will not remove the DB, since we have put in a custom,
 		// USER_DEFINED address above...
 		markupItemFromDB.unapply();
 		markupItems = getStoredMarkupItems(association);
 		assertEquals(1, markupItems.size());
 
-		// ...now that we have unapplied, check that clearing the address will trigger a 
+		// ...now that we have unapplied, check that clearing the address will trigger a
 		// DB removal
 		markupItem.setDestinationAddress(null);
 		markupItems = getStoredMarkupItems(association);
@@ -152,7 +152,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 			createProgramCorrelator(null, db.getSourceProgram(), db.getDestinationProgram()));
 
 		//
-		// To create our locking scenario we will create associations that are related and 
+		// To create our locking scenario we will create associations that are related and
 		// unrelated.  This allows us to test that competing associations will get locked-out
 		// when any related associations are applied.  Also, unrelated associations should not
 		// be locked-out.
@@ -184,7 +184,7 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 
 		//
 		// test no locked associations when no committed markup items
-		// 
+		//
 		assertEquals(VTAssociationStatus.AVAILABLE, mainAssociation.getStatus());
 		assertEquals(VTAssociationStatus.AVAILABLE, relatedAssociation.getStatus());
 		assertEquals(VTAssociationStatus.AVAILABLE, unrelatedAssociation.getStatus());
@@ -193,10 +193,10 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 
 		Address destinationAddress = addr();
 
-		// 
+		//
 		// commit an item and make sure the association is locked and competing associations are
 		// locked-out
-		// 
+		//
 		mainMarkupItem.setDestinationAddress(destinationAddress);
 		try {
 
@@ -211,9 +211,9 @@ public class VTAssociationDBTest extends VTBaseTestCase {
 		assertEquals(VTAssociationStatus.BLOCKED, conflict1Association.getStatus());
 		assertEquals(VTAssociationStatus.BLOCKED, conflict2Association.getStatus());
 
-		// 
+		//
 		// verify we cannot commit from a competing association (others are locked-out)
-		// 
+		//
 		VTMarkupItem unappliedConflictItem = conflict1MarkupItem;
 		try {
 			unappliedConflictItem.setDestinationAddress(destinationAddress);

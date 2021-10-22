@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Represents a thread_command structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a>
  */
 public class ThreadCommand extends LoadCommand {
 	private ThreadStateHeader threadStateHeader;
@@ -86,7 +86,7 @@ public class ThreadCommand extends LoadCommand {
 		else if (header.getCpuType() == CpuTypes.CPU_TYPE_ARM_64) {
 			if (threadStateHeader.getFlavor() == ThreadStateARM_64.ARM64_THREAD_STATE) {
 				threadState = ThreadStateARM_64.createThreadStateARM_64(reader);
-			}	
+			}
 		}
 		else {
 			Msg.info("Mach-O Thread Command",

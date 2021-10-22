@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,8 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Represents a mach_header structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a>
  */
 public class MachHeader implements StructConverter {
 	private int magic;
@@ -51,7 +51,7 @@ public class MachHeader implements StructConverter {
 
 	/**
 	 * Returns true if the specified ByteProvider starts with a Mach header magic signature.
-	 * 
+	 *
 	 * @param provider {@link ByteProvider} to check
 	 * @return boolean true if byte provider starts with a MachHeader
 	 */
@@ -214,7 +214,7 @@ public class MachHeader implements StructConverter {
 		struct.setCategoryPath(new CategoryPath(MachConstants.DATA_TYPE_CATEGORY));
 		return struct;
 	}
-	
+
 	/**
 	 * Returns the start index that should be used for calculating offsets.
 	 * This will be 0 for things such as the dyld shared cache where offsets are

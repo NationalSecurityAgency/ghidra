@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -241,9 +241,9 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	public Address findFirstAddressInCommon(AddressSetView set);
 
 	/**
-	 * Trim address set removing all addresses less-than-or-equal to specified 
+	 * Trim address set removing all addresses less-than-or-equal to specified
 	 * address based upon {@link Address} comparison.
-	 * The address set may contain address ranges from multiple 
+	 * The address set may contain address ranges from multiple
 	 * address spaces.
 	 * @param set address set to be trimmed
 	 * @param addr trim point.  Only addresses greater than this address will be returned.
@@ -268,9 +268,9 @@ public interface AddressSetView extends Iterable<AddressRange> {
 	}
 
 	/**
-	 * Trim address set removing all addresses greater-than-or-equal to specified 
-	 * address based upon {@link Address} comparison.  
-	 * The address set may contain address ranges from multiple 
+	 * Trim address set removing all addresses greater-than-or-equal to specified
+	 * address based upon {@link Address} comparison.
+	 * The address set may contain address ranges from multiple
 	 * address spaces.
 	 * @param set address set to be trimmed
 	 * @param addr trim point.  Only addresses less than this address will be returned.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -211,7 +211,7 @@ public class PrimitiveTypeApplier extends MsTypeApplier {
 			//=======================================
 			// Unsigned Character types
 			//=======================================
-			// 8-bit unsigned 
+			// 8-bit unsigned
 			case 0x0020:
 				primitiveDataType = primitiveApplicator.getUnsignedCharType();
 				break;
@@ -344,7 +344,7 @@ public class PrimitiveTypeApplier extends MsTypeApplier {
 			case 0x007a:
 				primitiveDataType = primitiveApplicator.getUnicode16Type();
 				break;
-			// 16-bit pointer to a 16-bit unicode char 
+			// 16-bit pointer to a 16-bit unicode char
 			case 0x017a:
 				primitiveDataType = primitiveApplicator.get16NearPointerType(type,
 					primitiveApplicator.getUnicode16Type());
@@ -387,7 +387,7 @@ public class PrimitiveTypeApplier extends MsTypeApplier {
 			case 0x007b:
 				primitiveDataType = primitiveApplicator.getUnicode32Type();
 				break;
-			// 16-bit pointer to a 32-bit unicode char 
+			// 16-bit pointer to a 32-bit unicode char
 			case 0x017b:
 				primitiveDataType = primitiveApplicator.get16NearPointerType(type,
 					primitiveApplicator.getUnicode32Type());

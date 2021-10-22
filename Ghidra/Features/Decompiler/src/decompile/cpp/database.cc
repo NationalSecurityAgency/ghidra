@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -146,7 +146,7 @@ Datatype *SymbolEntry::getSizedType(const Address &inaddr,int4 sz) const
   // This PROBABLY means the varnode shouldn't be considered addrtied
   // I.e. it shouldn't be considered part of the same variable as symbol
   //    }
-    
+
   return (Datatype *)0;
 }
 
@@ -1807,7 +1807,7 @@ SymbolEntry *ScopeInternal::addMapInternal(Symbol *sym,uint4 exfl,const Address 
     msg += " extends beyond the end of the address space";
     throw LowlevelError(msg);
   }
-    
+
   list<SymbolEntry>::iterator iter = rangemap->insert(initdata,addr.getOffset(),lastaddress.getOffset());
   // Store reference to map in symbol
   sym->mapentry.push_back(iter);
@@ -1853,7 +1853,7 @@ MapIterator ScopeInternal::begin(void) const
 	if (iter!=maptable.end())
 	  curiter = (*iter)->begin_list();
       }
-      
+
     }
   }
   return MapIterator(&maptable,iter,curiter);
@@ -2112,7 +2112,7 @@ void ScopeInternal::renameSymbol(Symbol *sym,const string &newname)
 void ScopeInternal::retypeSymbol(Symbol *sym,Datatype *ct)
 
 {
-  if ((sym->type->getSize() == ct->getSize())||(sym->mapentry.empty())) { 
+  if ((sym->type->getSize() == ct->getSize())||(sym->mapentry.empty())) {
 // If size is the same, or no mappings nothing special to do
     sym->type = ct;
     sym->checkSizeTypeLock();
@@ -2123,7 +2123,7 @@ void ScopeInternal::retypeSymbol(Symbol *sym,Datatype *ct)
     if ((*iter).isAddrTied()) {
       // Save the starting address of map
       Address addr((*iter).getAddr());
-      
+
       // Find the correct rangemap
       EntryMap *rangemap = maptable[ (*iter).getAddr().getSpace()->getIndex() ];
       // Remove the map entry
@@ -3053,7 +3053,7 @@ Scope *Database::resolveScopeFromSymbolName(const string &fullname,const string 
 {
   if (start == (Scope *)0)
     start = globalscope;
-  
+
   string::size_type mark = 0;
   string::size_type endmark;
   for(;;) {

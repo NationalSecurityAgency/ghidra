@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public interface GComponent {
 
 	/**
 	 * Returns the current HTML rendering 'enable-ment' of this component.
-	 * 
+	 *
 	 * @return boolean, true if HTML rendering is allowed
 	 */
 	public default boolean getHTMLRenderingEnabled() {
@@ -66,7 +66,7 @@ public interface GComponent {
 
 	/**
 	 * Sets the HTML rendering flag for the specified component.
-	 * 
+	 *
 	 * @param comp the thing
 	 * @param enabled boolean, if true html rendering will be allowed
 	 */

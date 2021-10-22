@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Defines the specific program regions that may throw an exception within the 
+ * Defines the specific program regions that may throw an exception within the
  * context of the LSDA.
  */
 public class LSDACallSiteTable extends GccAnalysisClass {
@@ -42,7 +42,7 @@ public class LSDACallSiteTable extends GccAnalysisClass {
 
 	/**
 	 * Constructor for a call site table.
-	 * <br>Note: The <code>create(Address)</code> method must be called after constructing an 
+	 * <br>Note: The <code>create(Address)</code> method must be called after constructing an
 	 * LSDACallSiteTable to associate it with an address before any of its "get..." methods are called.
 	 * @param monitor task monitor to see if the user has cancelled analysis.
 	 * @param program the program containing the call site table.
@@ -117,7 +117,7 @@ public class LSDACallSiteTable extends GccAnalysisClass {
 
 	/**
 	 * Gets the next address indicating the address after this call site table.
-	 * @return the next address after this call site table or null if this table hasn't been 
+	 * @return the next address after this call site table or null if this table hasn't been
 	 * created at any address yet.
 	 */
 	Address getNextAddress() {
@@ -126,7 +126,7 @@ public class LSDACallSiteTable extends GccAnalysisClass {
 
 	/**
 	 * Gets all of the call site records in this table.
-	 * @return the call site records in this table or empty if no address has been established for 
+	 * @return the call site records in this table or empty if no address has been established for
 	 * this table.
 	 */
 	public List<LSDACallSiteRecord> getCallSiteRecords() {

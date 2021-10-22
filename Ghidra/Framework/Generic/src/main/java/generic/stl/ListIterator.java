@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,14 +20,14 @@ public class ListIterator<T> implements IteratorSTL<T> {
 	ListNodeSTL<T> root;
 	protected ListNodeSTL<T> node;
 	public StackTraceElement[] stackUse;
-	
+
 
 	ListIterator(ListSTL<T> list, ListNodeSTL<T> root, ListNodeSTL<T> node) {
 		this.list = list;
 		this.root = root;
 		this.node = node;
 	}
-	
+
 	public void assign( IteratorSTL<T> otherIterator ) {
 		ListIterator<T> other = (ListIterator<T>)otherIterator;
 		this.list = other.list;
@@ -45,8 +45,8 @@ public class ListIterator<T> implements IteratorSTL<T> {
 	public boolean isEnd() {
 		return node == root;
 	}
-	
-	
+
+
 	public IteratorSTL<T> decrement() {
 		if (node.prev == root) {
 			throw new IndexOutOfBoundsException();
@@ -94,7 +94,7 @@ public class ListIterator<T> implements IteratorSTL<T> {
 	protected ListNodeSTL<T> getNode(){
 		return node;
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == null) {

@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- This cspec describes the MIPS64 ABI called "o64"
      This ABI must be requested explicitly in gcc with the -mabi=o64 flag.
-      
-     o64 specifies 64-bit registers but 32-bit pointers, but otherwise is a copy of the original MIPS32 ABI 
+
+     o64 specifies 64-bit registers but 32-bit pointers, but otherwise is a copy of the original MIPS32 ABI
      o64 is different from the default ABI "n32"
      The primary parameter passing difference between o64 and n32 is that
      o64 can use only up to 4 general purpose registers for parameters before going to the stack, while
      n32 can use up to 8 registers
-     
-     See for example "MIPSpro ABI Handbook" SGI part number 007-2816-005     
+
+     See for example "MIPSpro ABI Handbook" SGI part number 007-2816-005
 -->
 <compiler_spec>
   <data_organization>
@@ -39,9 +39,9 @@
     <prototype name="__stdcall" extrapop="0" stackshift="0">
       <input killedbycall="true">
         <!--
-        		If the first and second arguments floating-point arguments to a function are 
-        		32-bit values, they are passed in f12 and f14. If the first is a 32-bit value 
-        		and the second is a 64-bit value, they are passed in f12 and f13.  If they are 
+        		If the first and second arguments floating-point arguments to a function are
+        		32-bit values, they are passed in f12 and f14. If the first is a 32-bit value
+        		and the second is a 64-bit value, they are passed in f12 and f13.  If they are
         		both 64-bit values, they are passed in f12 and f13.
         -->
         <pentry minsize="1" maxsize="8" metatype="float">

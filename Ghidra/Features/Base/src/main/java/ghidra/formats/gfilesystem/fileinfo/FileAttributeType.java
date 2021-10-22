@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.formats.gfilesystem.FSRL;
  * Uncommon information about a file should be added to the {@link FileAttributes} collection
  * as an {@link #UNKNOWN_ATTRIBUTE} with a custom display name.
  * <p>
- * When adding new attribute types to this enum, add them adjacent to other types of the same 
+ * When adding new attribute types to this enum, add them adjacent to other types of the same
  * {@link FileAttributeTypeGroup category}.  The enum ordinal controls display ordering.
  */
 public enum FileAttributeType {
@@ -72,7 +72,7 @@ public enum FileAttributeType {
 
 	/**
 	 * Returns the display name of this attribute type.
-	 * 
+	 *
 	 * @return string display name
 	 */
 	public String getDisplayName() {
@@ -81,7 +81,7 @@ public enum FileAttributeType {
 
 	/**
 	 * Returns the {@link FileAttributeTypeGroup group} this attribute belongs in.
-	 * 
+	 *
 	 * @return {@link FileAttributeTypeGroup}
 	 */
 	public FileAttributeTypeGroup getGroup() {
@@ -90,7 +90,7 @@ public enum FileAttributeType {
 
 	/**
 	 * Returns the class the value should match.
-	 * 
+	 *
 	 * @return expected class of the value
 	 */
 	public Class<?> getValueType() {

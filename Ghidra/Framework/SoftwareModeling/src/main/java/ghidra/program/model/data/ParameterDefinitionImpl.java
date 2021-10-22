@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,7 @@ public class ParameterDefinitionImpl implements ParameterDefinition {
 	 * <ul>
 	 * <li>Function definition datatype</li>
 	 * <li>An unsized/zero-element array</li>
-	 * </ul>  
+	 * </ul>
 	 * @param dataType datatype to be checked.  If null specified the DEFAULT datatype will be returned.
 	 * @param dtMgr target datatype manager (null permitted which will adopt default data organization)
 	 * @param voidOK true if checking return datatype and void is allow, else false.

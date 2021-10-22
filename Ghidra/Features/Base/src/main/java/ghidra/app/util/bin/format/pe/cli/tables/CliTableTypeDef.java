@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public class CliTableTypeDef extends CliAbstractTable {
 		public int extendsIndex;
 		public int fieldListIndex;
 		public int methodListIndex;
-		
+
 		public CliTypeDefRow(int flags, int typeNameIndex, int typeNamespaceIndex,
 				int extendsIndex, int fieldListIndex, int methodListIndex) {
 			super();
@@ -54,7 +54,7 @@ public class CliTableTypeDef extends CliAbstractTable {
 				metadataStream.getStringsStream().getString(typeNamespaceIndex),
 				metadataStream.getStringsStream().getString(typeNameIndex));
 		}
-		
+
 		@Override
 		public String getRepresentation() {
 			String extendsRep;
@@ -77,7 +77,7 @@ public class CliTableTypeDef extends CliAbstractTable {
 				getRowRepresentationSafe(CliTypeTable.MethodDef, methodListIndex), CliEnumTypeAttributes.dataType.getName(flags & 0xffffffff));
 		}
 	}
-	
+
 	public CliTableTypeDef(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
@@ -89,7 +89,7 @@ public class CliTableTypeDef extends CliAbstractTable {
 		}
 		reader.setPointerIndex(this.readerOffset);
 	}
-	
+
 	public int getOwnerOfFieldIndex(int fieldIndex) {
 		for (int i = 0; i < this.numRows; i++) {
 			CliTypeDefRow row = (CliTypeDefRow) rows.get(i);
@@ -104,7 +104,7 @@ public class CliTableTypeDef extends CliAbstractTable {
 		}
 		return -1;
 	}
-	
+
 	@Override
 	public StructureDataType getRowDataType() {
 		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "TypeDef Row", 0);

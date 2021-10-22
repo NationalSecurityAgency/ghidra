@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.scalar.Scalar;
 
 /**
- * Model for exception handling information about the IpToStateMapEntry data type and its 
+ * Model for exception handling information about the IpToStateMapEntry data type and its
  * associated exception handling data types.
  * <br>
  * This is based on data type information from ehdata.h
@@ -63,7 +63,7 @@ public class EHIPToStateModel extends AbstractCreateDataTypeModel {
 	/**
 	 * Whether or not the memory at the indicated address appears to be a valid location for the
 	 * indicated number of ipToState map entry data types.
-	 * @throws InvalidDataTypeException if this model's location does not appear to be a valid 
+	 * @throws InvalidDataTypeException if this model's location does not appear to be a valid
 	 * group of ipToState map entries. The exception has a message indicating
 	 * why it does not appear to be a valid location for the data type.
 	 */
@@ -86,7 +86,7 @@ public class EHIPToStateModel extends AbstractCreateDataTypeModel {
 
 	/**
 	 * This gets the IPToStateMap structure for the indicated program.
-	 * @param program the program which will contain this data type. 
+	 * @param program the program which will contain this data type.
 	 * @return the IPToStateMap structure.
 	 */
 	public static DataType getDataType(Program program) {
@@ -140,11 +140,11 @@ public class EHIPToStateModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the IP value for the IP To State map as either an address of IP or as an IP value, 
+	 * Gets the IP value for the IP To State map as either an address of IP or as an IP value,
 	 * if there is one, in the IpToStateMapEntry indicated by the ordinal.
 	 * @param ipToStateOrdinal 0-based ordinal indicating which IpToStateMapEntry in the map.
 	 * @return the IP value (as either an Address or a Scalar) for IP To State map.
-	 * @throws InvalidDataTypeException if valid IPToStateEntry data can't be created for 
+	 * @throws InvalidDataTypeException if valid IPToStateEntry data can't be created for
 	 * the indicated ordinal.
 	 */
 	public Object getIP(int ipToStateEntryOrdinal) throws InvalidDataTypeException {
@@ -166,12 +166,12 @@ public class EHIPToStateModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address of the component containing the IP To State address, if there is one 
-	 * in the IpToStateMapEntry indicated by the ordinal. 
+	 * Gets the address of the component containing the IP To State address, if there is one
+	 * in the IpToStateMapEntry indicated by the ordinal.
 	 * Otherwise, this returns null.
 	 * @param ipToStateOrdinal 0-based ordinal indicating which IpToStateMapEntry in the map.
 	 * @return the address of the component with the IP To State address or null.
-	 * @throws InvalidDataTypeException if valid IPToStateEntry data can't be created for 
+	 * @throws InvalidDataTypeException if valid IPToStateEntry data can't be created for
 	 * the indicated ordinal.
 	 */
 	public Address getComponentAddressOfIPAddress(int ipToStateEntryOrdinal)
@@ -187,7 +187,7 @@ public class EHIPToStateModel extends AbstractCreateDataTypeModel {
 	 * Gets the state value, if there is one, in the IpToStateMapEntry indicated by the ordinal.
 	 * @param ipToStateOrdinal 0-based ordinal indicating which IpToStateMapEntry in the map.
 	 * @return the state value.
-	 * @throws InvalidDataTypeException if valid IPToStateEntry data can't be created for 
+	 * @throws InvalidDataTypeException if valid IPToStateEntry data can't be created for
 	 * the indicated ordinal.
 	 */
 	public int getState(int ipToStateEntryOrdinal) throws InvalidDataTypeException {

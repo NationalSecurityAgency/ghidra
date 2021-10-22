@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ public class OmfFileHeader extends OmfRecord {
 		readCheckSumByte(reader);
 		isLittleEndian = reader.isLittleEndian();
 	}
-	
+
 	/**
 	 * This is usually the original source filename
 	 * @return the name
@@ -51,7 +51,7 @@ public class OmfFileHeader extends OmfRecord {
 	public String getName() {
 		return objectName;
 	}
-	
+
 	/**
 	 * The name of the object module (within a library)
 	 * @return the name
@@ -59,14 +59,14 @@ public class OmfFileHeader extends OmfRecord {
 	public String getLibraryModuleName() {
 		return libModuleName;
 	}
-	
+
 	/**
 	 * @return the string identifying the architecture this object was compiled for
 	 */
 	public String getMachineName() {
 		return "i386";			// This is the only possibility
 	}
-	
+
 	/**
 	 * If the OMF file contains a "translator" record, this is usually a string
 	 * indicating the compiler which produced the file.
@@ -75,14 +75,14 @@ public class OmfFileHeader extends OmfRecord {
 	public String getTranslator() {
 		return translator;
 	}
-	
+
 	/**
 	 * @return true if the file describes the load image for a little endian architecture
 	 */
 	public boolean isLittleEndian() {
 		return isLittleEndian;
 	}
-	
+
 	/**
 	 * @return the list of segments in this file
 	 */
@@ -96,7 +96,7 @@ public class OmfFileHeader extends OmfRecord {
 	public ArrayList<OmfSegmentHeader> getExtraSegments() {
 		return extraSeg;
 	}
-	
+
 	/**
 	 * @return the list of group records for this file
 	 */
@@ -110,21 +110,21 @@ public class OmfFileHeader extends OmfRecord {
 	public ArrayList<OmfExternalSymbol> getExternalSymbols() {
 		return externsymbols;
 	}
-	
+
 	/**
 	 * @return the list of symbols exported by this file
 	 */
 	public ArrayList<OmfSymbolRecord> getPublicSymbols() {
 		return symbols;
 	}
-	
+
 	/**
 	 * @return the list of relocation records for this file
 	 */
 	public ArrayList<OmfFixupRecord> getFixups() {
 		return fixup;
 	}
-	
+
 	/**
 	 * Sort the explicit data-blocks for each segment into address order.
 	 */
@@ -166,10 +166,10 @@ public class OmfFileHeader extends OmfRecord {
 			segment.addEnumeratedData(datablock);
 		}
 	}
-	
+
 	/**
 	 * Given an index, retrieve the specific segment it refers to. This
-	 * incorporates the special Borland segments, where the index has 
+	 * incorporates the special Borland segments, where the index has
 	 * the bit 0x4000 set.
 	 * @param index identifies the segment
 	 * @return the corresponding OmfSegmentHeader
@@ -192,7 +192,7 @@ public class OmfFileHeader extends OmfRecord {
 		res = segments.get(index-1);
 		return res;
 	}
-	
+
 	/**
 	 * Resolve special names associated with each segment: segment, class, overlay names
 	 * and group: group name
@@ -208,7 +208,7 @@ public class OmfFileHeader extends OmfRecord {
 			groups.get(i).resolveNames(nameList);
 		}
 	}
-	
+
 	/**
 	 * Given an index, either find an existing Borland segment, or create a new one.
 	 * Borland compilers can introduce special segments with a separate indexing
@@ -227,12 +227,12 @@ public class OmfFileHeader extends OmfRecord {
 		}
 		OmfSegmentHeader segment = extraSeg.get(index-1);
 		if (segment == null) {
-			segment = new OmfSegmentHeader(index,datatype); 
+			segment = new OmfSegmentHeader(index,datatype);
 			extraSeg.set(index-1,segment);
 		}
 		return segment;
 	}
-	
+
 	private void evaluateComdef(OmfComdefRecord comdef) {
 		OmfSymbol[] coms = comdef.getSymbols();
 		for (OmfSymbol sym : coms) {
@@ -241,7 +241,7 @@ public class OmfFileHeader extends OmfRecord {
 				int count = (extraSeg==null) ? 1 : extraSeg.size()+1;
 				createOrFindBorlandSegment(count,dt);
 				sym.setSegmentRef(count);
-				
+
 			}
 		}
 	}
@@ -289,7 +289,7 @@ public class OmfFileHeader extends OmfRecord {
 		}
 		return header;
 	}
-	
+
 	/**
 	 * Parse the entire object file
 	 * @param reader is the byte stream
@@ -305,7 +305,7 @@ public class OmfFileHeader extends OmfRecord {
 		}
 		OmfFileHeader header = (OmfFileHeader)record;
 		Object lastDataBlock = null;
-		
+
 		while((record.getRecordType() & (byte)0xfe) != OmfRecord.MODEND) {
 			if (monitor.isCancelled()) {
 				break;					// Return what we have
@@ -375,7 +375,7 @@ public class OmfFileHeader extends OmfRecord {
 		}
 		return header;
 	}
-	
+
 	/**
 	 * Assign a load image address to each segment. Follow OMF rules for grouping and ordering
 	 * the segments in memory.
@@ -399,7 +399,7 @@ public class OmfFileHeader extends OmfRecord {
 				}
 			}
 		}
-		
+
 		// Fill in any remaining segments
 		for(int i=0;i<segments.size();++i) {
 			OmfSegmentHeader segment = segments.get(i);
@@ -434,9 +434,9 @@ public class OmfFileHeader extends OmfRecord {
 					throw new OmfException("Combine type not supported");
 				}
 			}
-		}		
+		}
 	}
-	
+
 	/**
 	 * Check that the file has the specific OMF magic number
 	 * @param reader accesses the bytes of the file
@@ -455,7 +455,7 @@ public class OmfFileHeader extends OmfRecord {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Create a reader for a specific OMF file
 	 * @param provider is the underlying ByteProvider

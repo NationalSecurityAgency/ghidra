@@ -7,12 +7,12 @@ import java.io.*;
 import java.util.zip.*;
 
 /**
- * 
+ *
  * TODO make this more memory efficient!!
  *
  */
 public class ZLIB {
-	
+
     public ZLIB() {
 	}
 

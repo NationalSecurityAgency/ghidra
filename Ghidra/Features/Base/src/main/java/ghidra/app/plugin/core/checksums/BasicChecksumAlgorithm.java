@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ public abstract class BasicChecksumAlgorithm extends ChecksumAlgorithm {
 		CHECKSUM8(1),
 		CHECKSUM16(2),
 		CHECKSUM32(4);
-		
+
 		private int numBytes;
 
 		private SupportedByteSize(int numBytes) {
@@ -43,7 +43,7 @@ public abstract class BasicChecksumAlgorithm extends ChecksumAlgorithm {
 
 		/**
 		 * Gets the number of bytes supported by this entry.
-		 * 
+		 *
 		 * @return The number of bytes supported by this entry.
 		 */
 		public int getNumBytes() {
@@ -56,7 +56,7 @@ public abstract class BasicChecksumAlgorithm extends ChecksumAlgorithm {
 
 	/**
 	 * Constructor for the basic checksum.
-	 * 
+	 *
 	 * @param size The size in bytes of the basic checksum.
 	 */
 	public BasicChecksumAlgorithm(SupportedByteSize size) {
@@ -79,7 +79,7 @@ public abstract class BasicChecksumAlgorithm extends ChecksumAlgorithm {
 
 	/**
 	 * Computes the checksum with the given options.
-	 * 
+	 *
 	 * @param memory The memory to generate the checksum from.
 	 * @param addrSet The addresses over which to generate the checksum.
 	 * @param monitor Cancelable task monitor to cancel the computation.

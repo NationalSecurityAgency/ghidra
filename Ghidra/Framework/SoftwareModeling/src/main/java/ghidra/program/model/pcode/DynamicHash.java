@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -93,7 +93,7 @@ public class DynamicHash {
 
 	/**
 	 * An edge between a Varnode and a PcodeOp
-	 * 
+	 *
 	 * A DynamicHash is defined on a sub-graph of the data-flow, and this defines an edge
 	 * in the sub-graph.  The edge can either be from an input Varnode to the PcodeOp
 	 * that reads it, or from a PcodeOp to the Varnode it defines.
@@ -170,7 +170,7 @@ public class DynamicHash {
 
 	/**
 	 * Construct a hash of the given Varnode with a specific hash method.
-	 * 
+	 *
 	 * @param root is the given Varnode
 	 * @param method is the method (0, 1, 2, 3)
 	 */
@@ -192,7 +192,7 @@ public class DynamicHash {
 
 	/**
 	 * Construct a level 0 hash on the input Varnode to the given PcodeOp
-	 * 
+	 *
 	 * The PcodeOp can be raw, no linked into a PcodeSyntaxTree
 	 * @param op is the given PcodeOp
 	 * @param inputIndex is the index of the input Varnode to hash

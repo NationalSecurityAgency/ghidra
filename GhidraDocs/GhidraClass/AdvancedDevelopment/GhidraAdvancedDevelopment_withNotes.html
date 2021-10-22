@@ -92,7 +92,7 @@
   }
 
   #slideidx,
-  #nextslideidx, 
+  #nextslideidx,
   #slidecount {
     background: #888;
     font-size: 40px;
@@ -158,12 +158,12 @@
     url: null,
     idx: 1
   };
-  
+
   Dz.init = function() {
     this.startClock();
     this.loadIframes();
   }
-  
+
   Dz.onkeydown = function(aEvent) {
     // Don't intercept keyboard shortcuts
     if (aEvent.altKey
@@ -199,7 +199,7 @@
       this.toggleContent();
     }
   }
-  
+
   Dz.onmessage = function(aEvent) {
     var argv = aEvent.data.split(" "), argc = argv.length;
     argv.forEach(function(e, i, a) { a[i] = decodeURIComponent(e) });
@@ -224,9 +224,9 @@
         $("#slidecount").innerHTML = argv[2];
     }
   }
-  
+
   /* Get url from hash or prompt and store it */
-  
+
   Dz.getUrl = function() {
     var u = window.location.hash.split("#")[1];
     if (!u) {
@@ -242,7 +242,7 @@
     }
     return u;
   }
-  
+
   Dz.loadIframes = function() {
     var present = $("#present iframe");
     var future = $("#future iframe");
@@ -264,11 +264,11 @@
     if (this.views.remote)
       this.postMsg(this.views.remote, "TOGGLE_CONTENT");
   }
-  
+
   Dz.onhashchange = function() {
     this.loadIframe();
   }
-  
+
   Dz.back = function() {
     this.postMsg(this.views.present, "BACK");
   }
@@ -292,14 +292,14 @@
   Dz.popup = function() {
     this.views.remote = window.open(this.url + "#" + this.idx, 'slides', 'width=800,height=600,personalbar=0,toolbar=0,scrollbars=1,resizable=1');
   }
-  
+
   Dz.postMsg = function(aWin, aMsg) { // [arg0, [arg1...]]
     aMsg = [aMsg];
     for (var i = 2; i < arguments.length; i++)
       aMsg.push(encodeURIComponent(arguments[i]));
     aWin.postMessage(aMsg.join(" "), "*");
   }
-  
+
   Dz.startClock = function() {
     var addZero = function(num) {
       return num < 10 ? '0' + num : num;
@@ -328,7 +328,7 @@
     Function.prototype.bind = function (oThis) {
 
       // closest thing possible to the ECMAScript 5 internal IsCallable
-      // function 
+      // function
       if (typeof this !== "function")
       throw new TypeError(
         "Function.prototype.bind - what is trying to be fBound is not callable"

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ import ghidra.util.Msg;
 import ghidra.util.layout.PairLayout;
 
 /**
- * 
+ *
  * The main provider for the FunctionBitPatterns plugin
  *
  */
@@ -87,7 +87,7 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 	private InstructionSequenceTreePanelBuilder firstInstPanel;
 	private static final String FIRST_INST_TITLE = "First Instructions Tree";
 
-	//pre instruction tree pane 
+	//pre instruction tree pane
 	private static final int PRE_INSTRUCTION_PANEL_INDEX = 1;
 	private InstructionSequenceTreePanelBuilder preInstPanel;
 	private static final String PRE_INST_TITLE = "Pre-Instructions Tree";
@@ -112,7 +112,7 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 	private ByteSequencePanelBuilder returnBytesPanel;
 	private static final String RETURN_BYTES_TITLE = "Return Bytes";
 
-	//function start alignment pane 
+	//function start alignment pane
 	private static final int ALIGNMENT_PANEL_INDEX = 6;
 	private static final String ALIGNMENT_PANEL_TITLE = "Function Start Alignment";
 	private AlignmentPanelBuilder alignmentPanel;
@@ -134,7 +134,7 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 	private DockingAction gatherDataFromProgramAction;
 
 	/**
-	 * 
+	 *
 	 * @param plugin plugin associated with provider
 	 */
 	public FunctionBitPatternsMainProvider(FunctionBitPatternsExplorerPlugin plugin) {
@@ -578,7 +578,7 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 	private void updatePanel() {
 		int selectedTab = tabbedPane.getSelectedIndex();
 
-		//set the number of files and the number of functions 
+		//set the number of files and the number of functions
 		numFunctionsField.setText(Integer.toString(patternReader.getNumFuncs()));
 		numFilesField.setText(Integer.toString(patternReader.getNumFiles()));
 
@@ -629,7 +629,7 @@ public class FunctionBitPatternsMainProvider extends ComponentProviderAdapter
 		returnBytesPanel.setFsReader(patternReader);
 		returnBytesPanel.enableLengthFilterButtons(true);
 
-		//update the alignment information	
+		//update the alignment information
 		alignmentPanel.resetModulus();
 		alignmentPanel.updateExtentAndClearFilter(patternReader.getContextRegisterExtent());
 		alignmentPanel.setFsReader(patternReader);

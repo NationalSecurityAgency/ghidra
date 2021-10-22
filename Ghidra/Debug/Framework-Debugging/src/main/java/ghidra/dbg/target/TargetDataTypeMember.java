@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,11 +22,11 @@ import ghidra.dbg.util.TargetDataTypeConverter;
 
 /**
  * A member of another data type
- * 
+ *
  * <p>
  * This is usually the child of a {@link TargetNamedDataType}, and its role in determined
  * conventionally by the actual type of the parent, and of this member's key.
- * 
+ *
  * <p>
  * TODO: Document the conventions. Most, if not all, are implemented in
  * {@link TargetDataTypeConverter}.
@@ -41,11 +41,11 @@ public interface TargetDataTypeMember extends TargetObject {
 
 	/**
 	 * The position of the member in the composite
-	 * 
+	 *
 	 * <p>
 	 * A position of -1 implies the parent is not a composite or this member's role is special,
 	 * e.g., the return type of a function.
-	 * 
+	 *
 	 * @return the position
 	 */
 	@TargetAttributeType(name = POSITION_ATTRIBUTE_NAME, hidden = true)
@@ -55,7 +55,7 @@ public interface TargetDataTypeMember extends TargetObject {
 
 	/**
 	 * The name of the member in the composite
-	 * 
+	 *
 	 * @return the name
 	 */
 	@TargetAttributeType(name = MEMBER_NAME_ATTRIBUTE_NAME, required = true, hidden = true)
@@ -65,11 +65,11 @@ public interface TargetDataTypeMember extends TargetObject {
 
 	/**
 	 * The offset of the member in the composite
-	 * 
+	 *
 	 * <p>
 	 * For structs, this should be the offset in bytes from the base of the struct. For unions, this
 	 * should likely be 0. For others, this should be absent or -1.
-	 * 
+	 *
 	 * @return the offset
 	 */
 	@TargetAttributeType(name = OFFSET_ATTRIBUTE_NAME, hidden = true)
@@ -79,7 +79,7 @@ public interface TargetDataTypeMember extends TargetObject {
 
 	/**
 	 * The type of this member
-	 * 
+	 *
 	 * @return the type
 	 */
 	@TargetAttributeType(name = DATA_TYPE_ATTRIBUTE_NAME, required = true, hidden = true)

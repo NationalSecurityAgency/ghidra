@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.app.plugin.core.instructionsearch.util.InstructionSearchUtils;
 
 /**
  * Flips the endianness of the user input, whether in binary or hex mode.
- * 
+ *
  * Note that this class does not care whether the input is big or little endian; it just flips
  * the bytes and leaves the interpretation up to the user.
  */
@@ -37,7 +37,7 @@ public class EndianFlipWidget extends ControlPanelWidget {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param plugin
 	 * @param title
 	 * @param parent
@@ -54,7 +54,7 @@ public class EndianFlipWidget extends ControlPanelWidget {
 
 	/**
 	 * The only thing in this widget is a button that does the flipping.
-	 * 
+	 *
 	 * @return
 	 */
 	@Override
@@ -74,8 +74,8 @@ public class EndianFlipWidget extends ControlPanelWidget {
 	 ********************************************************************************************/
 
 	/**
-	 * Returns the given string as a list of byte strings. 
-	 * 
+	 * Returns the given string as a list of byte strings.
+	 *
 	 * @param token the string the parse
 	 * @param tokenLength the length of a byte (2 for hex, 8 for binary)
 	 * @return
@@ -142,7 +142,7 @@ public class EndianFlipWidget extends ControlPanelWidget {
 			int whitespaceIndex = 0;
 			for (String str : groups) {
 
-				// Break up the input string into a list of bytes that we can reverse, and 
+				// Break up the input string into a list of bytes that we can reverse, and
 				// reverse them.
 				List<String> input = getByteStrings(str, byteLength);
 				Collections.reverse(input);

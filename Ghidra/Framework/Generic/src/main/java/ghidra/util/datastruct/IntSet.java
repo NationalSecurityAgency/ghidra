@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ package ghidra.util.datastruct;
  */
 
 public class IntSet {
-	
+
 	private IntKeyIndexer indexer;
 
 	/**
@@ -31,7 +31,7 @@ public class IntSet {
 	public IntSet(int capacity) {
 		indexer = new IntKeyIndexer(capacity);
 	}
-	
+
 	/**
 	 * Constructs a new IntSet and populates it with the given array of ints.
 	 * @param values the array if ints to add to the set.
@@ -42,7 +42,7 @@ public class IntSet {
 			add(values[i]);
 		}
 	}
-	
+
 	/**
 	 * Returns the number of ints in the set.
 	 * @return the number of ints in the set.
@@ -50,14 +50,14 @@ public class IntSet {
 	public int size() {
 		return indexer.getSize();
 	}
-	
+
 	/**
 	 * Returns true if the set is empty
 	 */
 	public boolean isEmpty() {
 		return indexer.getSize() == 0;
 	}
-	
+
 	/**
 	 * Returns true if the set contains the given value.
 	 * @param value the value to test if it is in the set.
@@ -66,7 +66,7 @@ public class IntSet {
 	public boolean contains(int value) {
 		return indexer.get(value) >= 0;
 	}
-	
+
 	/**
 	 * Add the int value to the set.
 	 * @param value the value to add to the set.
@@ -74,7 +74,7 @@ public class IntSet {
 	public void add(int value) {
 		indexer.put(value);
 	}
-	
+
 	/**
 	 * Removes the int value from the set.
 	 * @param value the value to remove from the set.
@@ -83,14 +83,14 @@ public class IntSet {
 	public boolean remove(int value) {
 		return indexer.remove(value) >= 0;
 	}
-	
+
 	/**
 	 * Removes all values from the set.
 	 */
 	public void clear() {
 		indexer.clear();
 	}
-	
+
 	/**
 	 * Returns an array with all the values in the set.
 	 */

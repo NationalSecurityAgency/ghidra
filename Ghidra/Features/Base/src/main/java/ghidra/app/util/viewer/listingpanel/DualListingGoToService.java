@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This is a GoToService for a dual listing panel. It allows the goTo to occur relative to the 
+ * This is a GoToService for a dual listing panel. It allows the goTo to occur relative to the
  * left or right listing panel of a dual listing panel, since the left and right sides can be
  * displaying totally different addresses.
  */
@@ -83,7 +83,7 @@ class DualListingGoToService implements GoToService {
 
 	/**
 	 * Checks the address to make sure the listing won't navigate outside the addresses
-	 * it currently has loaded. If it is not a valid address it will set a status message 
+	 * it currently has loaded. If it is not a valid address it will set a status message
 	 * on the dual listing.
 	 * @param addr the address to check
 	 * @return true if the address is valid for navigation.

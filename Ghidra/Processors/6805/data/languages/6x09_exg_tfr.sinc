@@ -151,7 +151,7 @@ TFR_GOTO: is reg1_exg=5 { goto [PC]; }
 TFR_GOTO: is reg1_exg   {  } # PC not set
 
 # Exchange two registers
-:EXG EXG_r0Set,EXG_r1Set    is op=0x1E; EXG_r0Set & EXG_r1Set & EXG_r0Tmp & EXG_r1Tmp & EXG_GOTO                               
+:EXG EXG_r0Set,EXG_r1Set    is op=0x1E; EXG_r0Set & EXG_r1Set & EXG_r0Tmp & EXG_r1Tmp & EXG_GOTO
 {
     build EXG_r0Tmp;
     build EXG_r1Tmp;

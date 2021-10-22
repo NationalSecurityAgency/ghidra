@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,20 +20,20 @@ import ghidra.framework.plugintool.PluginEvent;
 import ghidra.program.util.GroupPath;
 
 /**
- * 
+ *
  * Notification for a new Program Tree selection.
- * 
- * 
+ *
+ *
  */
 public final class TreeSelectionPluginEvent extends PluginEvent {
 	/**
 	 * Name of the event.
 	 */
 	public static final String NAME = "ProgramTreeSelection";
-	
+
 	private GroupPath[] groupPaths;
 	private String treeName;
-	
+
 	/**
 	 * Constructor for TreeSelectionPluginEvent.
 	 * @param source name of the plugin that generated this event
@@ -80,6 +80,6 @@ public final class TreeSelectionPluginEvent extends PluginEvent {
 			}
 		}
 		sb.append("}");
-		return sb.toString();	
+		return sb.toString();
 	}
 }

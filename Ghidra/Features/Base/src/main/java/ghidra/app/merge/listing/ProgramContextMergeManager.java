@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,12 +29,12 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>ProgramContextMergeManager</code> merges register value changes 
+ * <code>ProgramContextMergeManager</code> merges register value changes
  * for multi-user program versions. It merges changes for each named register
  * in the program.
- * <br>Note: If a register gets changed that is part of another register that has been set, 
- * then each named register will get merged independently. This means that 
- * when in conflict with another version the conflict would arise for each 
+ * <br>Note: If a register gets changed that is part of another register that has been set,
+ * then each named register will get merged independently. This means that
+ * when in conflict with another version the conflict would arise for each
  * instead of just the larger register.
  */
 public class ProgramContextMergeManager implements MergeResolver, ListingMergeConstants {
@@ -84,7 +84,7 @@ public class ProgramContextMergeManager implements MergeResolver, ListingMergeCo
 	 * @param originalPgm the program that was checked out.
 	 * @param latestPgm the latest checked-in version of the program.
 	 * @param myPgm the program requesting to be checked in.
-	 * @param latestChanges the address set of changes between original and latest versioned program.  
+	 * @param latestChanges the address set of changes between original and latest versioned program.
 	 * @param myChanges the address set of changes between original and my modified program.
 	 */
 	public ProgramContextMergeManager(ProgramMultiUserMergeManager mergeManager, Program resultPgm,
@@ -195,7 +195,7 @@ public class ProgramContextMergeManager implements MergeResolver, ListingMergeCo
 
 			ArrayList<Register> regs = new ArrayList<>(latestContext.getRegisters());
 			// Sort the registers by size so that largest come first.
-			// This prevents the remove call below from incorrectly clearing 
+			// This prevents the remove call below from incorrectly clearing
 			// smaller registers that are part of a larger register.
 			Collections.sort(regs, new Comparator<Register>() {
 				@Override

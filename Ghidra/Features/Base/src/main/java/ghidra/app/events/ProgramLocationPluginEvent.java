@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ import java.lang.ref.WeakReference;
 /**
  * This plugin event class provides program location information.
  * The event is fired when a plugin's program location has changed.
- * Typically, a plugin does not actually generate the event unless it is 
- * processing some user action, 
+ * Typically, a plugin does not actually generate the event unless it is
+ * processing some user action,
  * e.g., the user mouse clicks somewhere on a plugin component to cause
  * the program location to change.
  */
@@ -52,7 +52,7 @@ public final class ProgramLocationPluginEvent extends PluginEvent {
         if (loc == null) {
         	NullPointerException exc = new NullPointerException(
 					"Null ProgramLocation passed to create a Plugin event");
-        	Msg.showError(this, 
+        	Msg.showError(this,
 					null, "Error", "Null ProgramLocationEvent being created.  Trace and remove this problem", exc);
         }
         this.loc = loc;
@@ -76,7 +76,7 @@ public final class ProgramLocationPluginEvent extends PluginEvent {
     protected String getDetails() {
 		if (loc != null) {
 			return loc.getClass().getName() + " addr==> " + loc.getAddress() +"\n";
-		}			            	
+		}
 		return super.getDetails();
     }
 }

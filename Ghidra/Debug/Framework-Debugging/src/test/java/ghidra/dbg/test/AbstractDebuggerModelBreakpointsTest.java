@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.Msg;
 
 /**
  * Tests the functionality of breakpoints
- * 
+ *
  * <p>
  * Note that this test does not check for nuances regarding specification vs. location, as it is
  * meant to generalize across models for interests of the UI only. As such, we only test that we can
@@ -45,7 +45,7 @@ import ghidra.util.Msg;
  * Models which have separate specifications from locations, or for which you want to test
  * non-address specifications will need to add their own tests, tailored to the semantics of that
  * model's breakpoint specifications.
- * 
+ *
  * <p>
  * TODO: Enable, disable (if supported), delete (if supported), manipulation via CLI is synced
  */
@@ -54,7 +54,7 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 
 	/**
 	 * Get the expected (absolute) path of the target's breakpoint container
-	 * 
+	 *
 	 * @param targetPath the path of the target
 	 * @return the expected path, or {@code null} for no assertion
 	 */
@@ -164,7 +164,7 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 	/**
 	 * Verify that the given breakpoint location covers the required range and kind, using the
 	 * interpreter
-	 * 
+	 *
 	 * @param range the requested range of the breakpoint
 	 * @param kind the requested kind of the breakpoint
 	 * @param loc the location object
@@ -179,7 +179,7 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 
 	/**
 	 * Verify that the given spec and/or location is in the given state, using the interpreter
-	 * 
+	 *
 	 * @param t the spec or location
 	 * @param enabled the expected state: true for enabled, false for disabled
 	 * @param interpreter the interpreter
@@ -192,7 +192,7 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 
 	/**
 	 * Verify that the given spec and/or location no longer exists, using the interpreter
-	 * 
+	 *
 	 * @param d the spec or location
 	 * @param interpreter the interpreter
 	 * @throws Throwable if anything goes wrong
@@ -204,7 +204,7 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 
 	/**
 	 * Place the given breakpoint using the interpreter
-	 * 
+	 *
 	 * @param range the requested range
 	 * @param kind the requested kind
 	 * @param interpreter the interpreter
@@ -217,7 +217,7 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 
 	/**
 	 * Disable the given spec and/or location using the interpreter
-	 * 
+	 *
 	 * @param t the spec and/or location
 	 * @param interpreter the interpreter
 	 * @throws Throwable if anything goes wrong
@@ -229,7 +229,7 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 
 	/**
 	 * Enable the given spec and/or location using the interpreter
-	 * 
+	 *
 	 * @param t the spec and/or location
 	 * @param interpreter the interpreter
 	 * @throws Throwable if anything goes wrong
@@ -241,7 +241,7 @@ public abstract class AbstractDebuggerModelBreakpointsTest extends AbstractDebug
 
 	/**
 	 * Delete the given spec and/or location using the interpreter
-	 * 
+	 *
 	 * @param d the spec and/or location
 	 * @param interpreter the interpreter
 	 * @throws Throwable if anything goes wrong

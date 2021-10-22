@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,14 +95,14 @@ public class PdbParser {
 
 	/**
 	 * Creates a PdbParser instance.
-	 * 
+	 *
 	 * @param pdbFile the pdb file to parse, either .pdb or .pdb.xml
 	 * @param program the {@link Program} to modify
 	 * @param service {@link DataTypeManagerService}
-	 * @param forceAnalysis boolean flag, currently always true, needs to be refactored out 
+	 * @param forceAnalysis boolean flag, currently always true, needs to be refactored out
 	 * @param allowNonExactMatch boolean flag, if true skips warning user about mismatch
 	 * between the program's PDB guid/id/age and the specified PDB file's guid/id/age, which
-	 * can terminate the pdb import in headless  
+	 * can terminate the pdb import in headless
 	 * @param monitor {@link TaskMonitor}, null ok
 	 */
 	public PdbParser(File pdbFile, Program program, DataTypeManagerService service,
@@ -113,15 +113,15 @@ public class PdbParser {
 
 	/**
 	 * Creates a PdbParser instance.
-	 * 
+	 *
 	 * @param pdbFile the pdb file to parse, either .pdb or .pdb.xml
 	 * @param program the {@link Program} to modify
 	 * @param service {@link DataTypeManagerService}
 	 * @param programAttributes the PDB information specified by the program
-	 * @param forceAnalysis boolean flag, currently always true, needs to be refactored out 
+	 * @param forceAnalysis boolean flag, currently always true, needs to be refactored out
 	 * @param allowNonExactMatch boolean flag, if true skips warning user about mismatch
 	 * between the program's PDB guid/id/age and the specified PDB file's guid/id/age, which
-	 * can terminate the pdb import in headless  
+	 * can terminate the pdb import in headless
 	 * @param monitor {@link TaskMonitor}, null ok
 	 */
 	public PdbParser(File pdbFile, Program program, DataTypeManagerService service,

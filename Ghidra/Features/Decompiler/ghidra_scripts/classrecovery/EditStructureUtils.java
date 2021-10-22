@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
+//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS.
 package classrecovery;
 
 import java.util.*;
@@ -30,12 +30,12 @@ public class EditStructureUtils {
 
 
 	/**
-	 * Method to determine if the given containing struct has components at the given offset 
+	 * Method to determine if the given containing struct has components at the given offset
 	 * that are either the same, all undefined1's or equivalently sized undefineds as the components
 	 * in the given possible newInternalStruct
 	 * @param containingStruct the given structure to check
 	 * @param offset the offset at the containing struct to check for equivalent components
-	 * @param newInternalStruct the possible new internal struct to replace at the given offset in the 
+	 * @param newInternalStruct the possible new internal struct to replace at the given offset in the
 	 * given containing struct
 	 * @param monitor task monitor
 	 * @return true if components in the containing struct are replaceable with the possible new
@@ -164,7 +164,7 @@ public class EditStructureUtils {
 		Iterator<Integer> offsetIterator = offsetsToClear.iterator();
 		while (offsetIterator.hasNext()) {
 			Integer componentOffset = offsetIterator.next();
-			// need to get ordinal from component using offset because after clearing 
+			// need to get ordinal from component using offset because after clearing
 			// component size > 1, the index changes
 			DataTypeComponent component = structure.getComponentAt(componentOffset);
 			int index = component.getOrdinal();
@@ -187,7 +187,7 @@ public class EditStructureUtils {
 	}
 
 	/**
-	 * Method to determine if data type is an undefined data type of any size 
+	 * Method to determine if data type is an undefined data type of any size
 	 * @param dataType the given data type
 	 * @return true if given data type is undefined of any size, false otherwise
 	 */
@@ -238,9 +238,9 @@ public class EditStructureUtils {
 	}
 
 	/**
-	 * Method to add a field to the given structure. If the structure already has data 
-	 * at the given offset, don't replace. If there is undefined data there then replace 
-	 * it with the data type. If the structure empty, insert the data type at the given offset. 
+	 * Method to add a field to the given structure. If the structure already has data
+	 * at the given offset, don't replace. If there is undefined data there then replace
+	 * it with the data type. If the structure empty, insert the data type at the given offset.
 	 * If the structure is not big enough and not-empty, grow it so there is room to replace.
 	 * @param structure the given structure
 	 * @param offset the offset to add a field
@@ -260,7 +260,7 @@ public class EditStructureUtils {
 		int endOfDataTypeInStruct = offset + dataTypeLength;
 
 		int roomForData = structure.getLength() - endOfDataTypeInStruct;
-		
+
 		// FIXME: This will not worked for structures where packing is enabled - not sure how to handle
 
 		// if structure isn't defined insert
@@ -274,7 +274,7 @@ public class EditStructureUtils {
 			structure.growStructure(0 - roomForData);
 		}
 
-		// else replace only if data already there are enough undefined data types at 
+		// else replace only if data already there are enough undefined data types at
 		// that offset to fit the new data type
 		if (hasEnoughUndefined1sAtOffset(structure, offset, dataTypeLength, monitor)) {
 			structure.replaceAtOffset(offset, dataType, dataTypeLength, fieldName, null);

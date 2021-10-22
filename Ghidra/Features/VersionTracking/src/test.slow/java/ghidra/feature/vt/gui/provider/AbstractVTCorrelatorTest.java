@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -378,7 +378,7 @@ public abstract class AbstractVTCorrelatorTest extends AbstractGhidraHeadedInteg
 	/**
 	 * Run Dummy Task Monitor, flush events and wait for Swing.
 	 * @param task
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	protected void runTask(Task task) throws Exception {
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,7 +50,7 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 		boolean isHeadless =
 			configuration.getType().getIdentifier().equals(GhidraLaunchUtils.HEADLESS_LAUNCH);
 		ILaunchConfigurationWorkingCopy wc = configuration.getWorkingCopy();
-		
+
 		// Get the launch properties associated with the version of Ghidra that is trying to launch
 		String projectName =
 			wc.getAttribute(IJavaLaunchConfigurationConstants.ATTR_PROJECT_NAME, "");
@@ -113,13 +113,13 @@ public class GhidraLaunchDelegate extends JavaLaunchDelegate {
 	}
 
 	/**
-	 * For the given Java project, gets all of its classpath dependencies that are themselves 
-	 * projects.  The result is formatted as a string of paths separated by 
+	 * For the given Java project, gets all of its classpath dependencies that are themselves
+	 * projects.  The result is formatted as a string of paths separated by
 	 * {@link File#pathSeparator}.
-	 *   
+	 *
 	 * @param javaProject The Java project whose project dependencies we are getting.
 	 * @return A string of paths separated by {@link File#pathSeparator} that represents the given
-	 *   Java project's dependencies that are projects.  Could be empty if there are no 
+	 *   Java project's dependencies that are projects.  Could be empty if there are no
 	 *   dependencies.
 	 * @throws CoreException if there was an Eclipse-related problem with getting the dependencies.
 	 */

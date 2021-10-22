@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,18 +37,18 @@ public class SearchBaseExtended extends GhidraScript {
 	ArrayList<Case> mnemonics = new ArrayList<>();
 
 	/*
-	 * Holds the masks and values for all the operands. The arraylist portion will correspond to the operand number. An example is 
+	 * Holds the masks and values for all the operands. The arraylist portion will correspond to the operand number. An example is
 	 * arraylist.get(0) will refer to the first operand. Arraylist.get(1) will return the second operands data. The previous commands will
-	 * give you a hashmap that maps the mnemonics MVCase object to its operands, if they exist. For example to get the first operand for the 
+	 * give you a hashmap that maps the mnemonics MVCase object to its operands, if they exist. For example to get the first operand for the
 	 * second mnemonic that was seen you would call arraylist.get(0).get(mnemonicArrayList.get(1)); That will return the MVCase that refers to
 	 * operand. I set it up this was to conserve memory and allow for a dynamically growing collection.
 	 */
 	ArrayList<LinkedHashMap<Case, OperandCase>> ops =
-		new ArrayList<>();//holds masks and values for all operands. 
+		new ArrayList<>();//holds masks and values for all operands.
 
 	ArrayList<Case> db = new ArrayList<>();//holds the search results.
 
-	//These control the detail at which a scan is performed. 
+	//These control the detail at which a scan is performed.
 	//They determine how specific the instructions must match the currently selected ones
 	ArrayList<SLMaskControl> controlList = new ArrayList<>();
 
@@ -105,7 +105,7 @@ public class SearchBaseExtended extends GhidraScript {
 			Address tempAddr = addrRange.getMinAddress();//sets the beginning scan address
 
 			/*
-			 * The purpose of this while loop is to iterate through the memory that is currently selected by user. 
+			 * The purpose of this while loop is to iterate through the memory that is currently selected by user.
 			 * All the instructions within this selection range are extracted and corresponding masks made from them.
 			 * These masks will then be used to search through memory to find instructions of the same type.
 			 */
@@ -226,7 +226,7 @@ public class SearchBaseExtended extends GhidraScript {
 
 	/*
 	 * Builds the mask and value byte streams for a single instruction that is represented by the mnemonic entered into the first parameter.
-	 * 
+	 *
 	 * That mnemonic is used as a key to withdrawal the operands from the data-structure and the SLMaskControl contains the filter information to be
 	 * applied to the instruction.
 	 */
@@ -314,7 +314,7 @@ public class SearchBaseExtended extends GhidraScript {
 	}
 
 	/*
-	 * Calculates the final mask and value byte streams. These streams are then used to search through memory to look for similar 
+	 * Calculates the final mask and value byte streams. These streams are then used to search through memory to look for similar
 	 * assembly instructions.
 	 */
 	private MaskValueCase getFinalMaskAndValue(ArrayList<Case> privateMnemonics,
@@ -338,10 +338,10 @@ public class SearchBaseExtended extends GhidraScript {
 
 		/*
 		 * This loop will scan through the mnemonics and apply the provided MaskControls.
-		 * 
+		 *
 		 * The masks will be applied from the arraylist until there aren't any remaining in the list. At this point
 		 * a mask of all falses will be applied. This will in effect ignore rest of the mnemonics
-		 * 
+		 *
 		 * TODO Apply a switch that will allow the last mask in the array to be applied to rest of the mnemonics within selection.
 		 */
 		for (int x = 0; x < privateMnemonics.size(); x++) {
@@ -349,7 +349,7 @@ public class SearchBaseExtended extends GhidraScript {
 			MaskValueCase result = new MaskValueCase();
 
 			if (x < control.size()) {
-				//need to apply the filter from control		
+				//need to apply the filter from control
 				result = buildSingleInstructionMask(privateMnemonics.get(x), localOperands,
 					control.get(x));
 			}
@@ -376,9 +376,9 @@ public class SearchBaseExtended extends GhidraScript {
 
 	/*
 	 * Populates the database with the locations where the specified byte arrays are found.
-	 * The first parameter should only have two elements. Element 0 should contain mask and element 1 
+	 * The first parameter should only have two elements. Element 0 should contain mask and element 1
 	 * contain the value.
-	 * 
+	 *
 	 * The second parameter gets populated with the results of the search.
 	 */
 	private void findLocations(MaskValueCase searchArrays, ArrayList<Case> localDatabase) {
@@ -424,7 +424,7 @@ public class SearchBaseExtended extends GhidraScript {
 
 	/*
 	 * Used for determining if there is a "On" bit in a byte stream.
-	 * 
+	 *
 	 * This is necessary because if you do a memory search for a mask with no "on" bit then it will return every memory address.
 	 */
 	private boolean containsOnBit(byte[] array) {
@@ -477,7 +477,7 @@ public class SearchBaseExtended extends GhidraScript {
 	}
 
 	/*
-	 * Represents a filter for a single instruction. 
+	 * Represents a filter for a single instruction.
 	 * Controls which portions of the instruction will be used when performing the search through memory.
 	 */
 	public class SLMaskControl {

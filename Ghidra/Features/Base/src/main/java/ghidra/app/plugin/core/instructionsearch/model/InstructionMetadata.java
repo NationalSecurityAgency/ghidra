@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public class InstructionMetadata {
 	private Address addr;
 	private String mnemonic;
 
-	// Indicates if this is a 'real' instruction or a data element.  
+	// Indicates if this is a 'real' instruction or a data element.
 	private boolean isInstruction;
 
 	// Indicates if the mnemonic is masked (true) or not (false).
@@ -47,7 +47,7 @@ public class InstructionMetadata {
 	/**
 	 * Constructor. We always need to have a mask container, so force users to
 	 * pass it in.
-	 * 
+	 *
 	 * @param maskContainer
 	 */
 	public InstructionMetadata(MaskContainer maskContainer) {

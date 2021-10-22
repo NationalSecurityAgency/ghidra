@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,7 +59,7 @@ public class MergeTestFacilitator {
 	 * {@link MergeProgramModifier} is stubbed-out for you, meaning less code.  Plus, plus,
 	 * the callback for this method passes you a {@link MergeProgram}, which has a simpler
 	 * interface for configuring your merge tests.
-	 *  
+	 *
 	 * @param programName the name of the program--can be anything
 	 * @param modifier your implementation of the callback, with overridden methods for
 	 *                 things you wish to configure.
@@ -110,7 +110,7 @@ public class MergeTestFacilitator {
 	/**
 	 * Returns original Immutable program.
 	 * This represents the original checked-out version.
-	 * Program returned will be released by the MergeTestFacilitator 
+	 * Program returned will be released by the MergeTestFacilitator
 	 * when disposed or re-initialized.
 	 */
 	public ProgramDB getOriginalProgram() {
@@ -123,7 +123,7 @@ public class MergeTestFacilitator {
 	/**
 	 * Returns latest Immutable program.
 	 * This represents the current version.
-	 * Program returned will be released by the MergeTestFacilitator 
+	 * Program returned will be released by the MergeTestFacilitator
 	 * when disposed or re-initialized.
 	 */
 	public ProgramDB getLatestProgram() {
@@ -136,7 +136,7 @@ public class MergeTestFacilitator {
 	/**
 	 * Returns private Immutable program.
 	 * This represents the local program to be checked-in.
-	 * Program returned will be released by the MergeTestFacilitator 
+	 * Program returned will be released by the MergeTestFacilitator
 	 * when disposed or re-initialized.
 	 */
 	public ProgramDB getPrivateProgram() {
@@ -149,7 +149,7 @@ public class MergeTestFacilitator {
 	/**
 	 * Returns results program for update.
 	 * This represents the checkin program containing the merged data.
-	 * Program returned will be released by the MergeTestFacilitator 
+	 * Program returned will be released by the MergeTestFacilitator
 	 * when disposed or re-initialized.
 	 */
 	public ProgramDB getResultProgram() {

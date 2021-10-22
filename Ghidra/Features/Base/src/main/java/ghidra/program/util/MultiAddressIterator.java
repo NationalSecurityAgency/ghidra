@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ public class MultiAddressIterator {
 		return false;
 	}
 
-	/** Returns the next address. The next address could be from any 
+	/** Returns the next address. The next address could be from any
 	 * one of the iterators.
 	 * @return the next address.
 	 */
@@ -118,11 +118,11 @@ public class MultiAddressIterator {
 		return addrNext;
 	}
 
-	/** Returns the next address(es). The next address could be from any 
+	/** Returns the next address(es). The next address could be from any
 	 * one or more of the iterators.
-	 * @return an array with the next address(es). Each element in this array 
-	 * corresponds to each iterator passed to the constructor. 
-	 * Null is returned in an element if the next overall address is not the 
+	 * @return an array with the next address(es). Each element in this array
+	 * corresponds to each iterator passed to the constructor.
+	 * Null is returned in an element if the next overall address is not the
 	 * next address from the corresponding iterator.
 	 */
 	public Address[] nextAddresses() {

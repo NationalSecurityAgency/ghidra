@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -152,12 +152,12 @@ public class DecodeBitMasks {
 	public static void main(String[] args) {
 		DecodeBitMasks bm = new DecodeBitMasks();
 		boolean valid;
-		
+
 		valid = bm.decode(0, 0, 0, true, 64);
 		if (valid) {
 			bm.printit();
 		}
-		
+
 		int immN = 0;
 		//for (int immN = 0; immN <= 1; immN++) {
 		for (int immr = 0; immr <= 0x3f; immr++) {
@@ -186,8 +186,8 @@ public class DecodeBitMasks {
 		if (bm.decode(0, 0x1D, 0x1E, true, 32)) {
 			bm.printit();
 		}
-		
-		
+
+
 		immN = 0;
 		for (int immr = 0; immr <= 0x3f; immr++) {
 			for (int imms = 0; imms <= 0x3f; imms++) {
@@ -197,7 +197,7 @@ public class DecodeBitMasks {
 				}
 			}
 		}
-		
+
 		immN = 1;
 		for (int immr = 0; immr <= 0x3f; immr++) {
 			for (int imms = 0; imms <= 0x3f; imms++) {
@@ -207,7 +207,7 @@ public class DecodeBitMasks {
 				}
 			}
 		}
-		
+
 		immN = 0;
 		for (int imms = 0; imms <= 0x3f; imms++) {
 			valid = bm.decode(immN, imms, 0, true, 64);
@@ -215,7 +215,7 @@ public class DecodeBitMasks {
 				bm.printit();
 			}
 		}
-		
+
 		immN = 1;
 		for (int imms = 0; imms <= 0x3f; imms++) {
 			valid = bm.decode(immN, imms, 0, true, 64);

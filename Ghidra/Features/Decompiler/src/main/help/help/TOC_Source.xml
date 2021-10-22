@@ -1,35 +1,35 @@
 <?xml version='1.0' encoding='ISO-8859-1' ?>
-<!-- 
+<!--
 
-	This is an XML file intended to be parsed by the Ghidra help system.  It is loosely based 
-	upon the JavaHelp table of contents document format.  The Ghidra help system uses a 
-	TOC_Source.xml file to allow a module with help to define how its contents appear in the 
-	Ghidra help viewer's table of contents.  The main document (in the Base module) 
-	defines a basic structure for the 
+	This is an XML file intended to be parsed by the Ghidra help system.  It is loosely based
+	upon the JavaHelp table of contents document format.  The Ghidra help system uses a
+	TOC_Source.xml file to allow a module with help to define how its contents appear in the
+	Ghidra help viewer's table of contents.  The main document (in the Base module)
+	defines a basic structure for the
 	Ghidra table of contents system.  Other TOC_Source.xml files may use this structure to insert
 	their files directly into this structure (and optionally define a substructure).
-	
-	
+
+
 	In this document, a tag can be either a <tocdef> or a <tocref>.  The former is a definition
-	of an XML item that may have a link and may contain other <tocdef> and <tocref> children.  
-	<tocdef> items may be referred to in other documents by using a <tocref> tag with the 
-	appropriate id attribute value.  Using these two tags allows any module to define a place 
-	in the table of contents system (<tocdef>), which also provides a place for 
-	other TOC_Source.xml files to insert content (<tocref>).  
-	
+	of an XML item that may have a link and may contain other <tocdef> and <tocref> children.
+	<tocdef> items may be referred to in other documents by using a <tocref> tag with the
+	appropriate id attribute value.  Using these two tags allows any module to define a place
+	in the table of contents system (<tocdef>), which also provides a place for
+	other TOC_Source.xml files to insert content (<tocref>).
+
 	During the help build time, all TOC_Source.xml files will be parsed and	validated to ensure
 	that all <tocref> tags point to valid <tocdef> tags.  From these files will be generated
-	<module name>_TOC.xml files, which are table of contents files written in the format 
+	<module name>_TOC.xml files, which are table of contents files written in the format
 	desired by the JavaHelp system.   Additionally, the genated files will be merged together
 	as they are loaded by the JavaHelp system.  In the end, when displaying help in the Ghidra
-	help GUI, there will be on table of contents that has been created from the definitions in 
+	help GUI, there will be on table of contents that has been created from the definitions in
 	all of the modules' TOC_Source.xml files.
 
-	
+
 	Tags and Attributes
-	
+
 	<tocdef>
-	-id          - the name of the definition (this must be unique across all TOC_Source.xml files)	
+	-id          - the name of the definition (this must be unique across all TOC_Source.xml files)
 	-text        - the display text of the node, as seen in the help GUI
 	-target**    - the file to display when the node is clicked in the GUI
 	-sortgroup   - this is a string that defines where a given node should appear under a given
@@ -38,35 +38,35 @@
 	               the text of attribute will be used.
 
 	<tocref>
-	-id			 - The id of the <tocdef> that this reference points to 
-	
-	**The URL for the target is relative and should start with 'help/topics'.  This text is 
+	-id			 - The id of the <tocdef> that this reference points to
+
+	**The URL for the target is relative and should start with 'help/topics'.  This text is
 	used by the Ghidra help system to provide a universal starting point for all links so that
 	they can be resolved at runtime, across modules.
-	
-	
+
+
 -->
 
 
 <tocroot>
 
 	<tocref id="Ghidra Functionality">
-	            
-	    <tocdef id="Decompiler" 
-	            text="Decompiler"  
+
+	    <tocdef id="Decompiler"
+	            text="Decompiler"
 	            target="help/topics/DecompilePlugin/DecompilerIntro.html" >
-	            
-	        <tocdef id="Decompiler Concepts" 
+
+	        <tocdef id="Decompiler Concepts"
 				    sortgroup="a"
-	                text="Decompiler Concepts"	                  
+	                text="Decompiler Concepts"
 	                target="help/topics/DecompilePlugin/DecompilerConcepts.html">
 		  <tocdef id="ConceptPcode" sortgroup="a" text="P-code" target="help/topics/DecompilePlugin/DecompilerConcepts.html#ConceptPcode"/>
 		  <tocdef id="ConceptHighFunction" sortgroup="b" text="The HighFunction" target="help/topics/DecompilePlugin/DecompilerConcepts.html#ConceptHighFunction"/>
 		  <tocdef id="ConceptSpecification" sortgroup="c" text="SLEIGH Specification Files" target="help/topics/DecompilePlugin/DecompilerConcepts.html#ConceptSpecification"/>
 		</tocdef>
-	        <tocdef id="Program Annotations Affecting the Decompiler" 
+	        <tocdef id="Program Annotations Affecting the Decompiler"
 	        		sortgroup="b"
-	                text="Program Annotations Affecting the Decompiler"  
+	                text="Program Annotations Affecting the Decompiler"
 	                target="help/topics/DecompilePlugin/DecompilerAnnotations.html">
 		  <tocdef id="AnnoteFunctionBody" sortgroup="a" text="Machine Instructions" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteFunctionBody"/>
 		  <tocdef id="AnnoteComments" sortgroup="b" text="Comments" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteComments"/>
@@ -75,10 +75,10 @@
 		  <tocdef id="AnnoteMutability" sortgroup="e" text="Data Mutability" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteMutability"/>
 		  <tocdef id="AnnoteConstants" sortgroup="f" text="Constant Annotations" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteConstants"/>
 		  <tocdef id="AnnoteRegister" sortgroup="g" text="Register Values" target="help/topics/DecompilePlugin/DecompilerAnnotations.html#AnnoteRegister"/>
-		</tocdef> 
+		</tocdef>
 	        <tocdef id="Decompiler Options"
-	        		sortgroup="c" 
-	                text="Decompiler Options"  
+	        		sortgroup="c"
+	                text="Decompiler Options"
 	                target="help/topics/DecompilePlugin/DecompilerOptions.html">
 		  <tocdef id="GeneralOptions" sortgroup="a" text="General Options" target="help/topics/DecompilePlugin/DecompilerOptions.html#GeneralOptions"/>
 		  <tocdef id="AnalysisOptions" sortgroup="b" text="Analysis Options" target="help/topics/DecompilePlugin/DecompilerOptions.html#AnalysisOptions"/>
@@ -86,9 +86,9 @@
 		  <tocdef id="ProgramOptions" sortgroup="d" text="Program Options" target="help/topics/DecompilePlugin/DecompilerOptions.html#ProgramOptions"/>
 		  <tocdef id="ExtensionOptions" sortgroup="e" text="Specification Extensions" target="help/topics/DecompilePlugin/DecompilerOptions.html#ExtensionOptions"/>
 		</tocdef>
-	        <tocdef id="Decompiler Window" 
+	        <tocdef id="Decompiler Window"
 	        		sortgroup="d"
-	        	    text="Decompiler Window"  
+	        	    text="Decompiler Window"
 	        	    target="help/topics/DecompilePlugin/DecompilerWindow.html">
 		  <tocdef id="DecompilerDisplay" sortgroup="a" text="Display" target="help/topics/DecompilePlugin/DecompilerWindow.html#DecompilerDisplay"/>
 		  <tocdef id="MainWindow" sortgroup="b" text="Main Window" target="help/topics/DecompilePlugin/DecompilerWindow.html#MainWindow"/>
@@ -100,5 +100,5 @@
 		</tocdef>
 	   </tocdef>
 	 </tocref>
- 
+
 </tocroot>

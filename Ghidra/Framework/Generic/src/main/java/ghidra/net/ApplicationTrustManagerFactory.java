@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,20 +28,20 @@ import ghidra.util.Msg;
 
 /**
  * <code>ApplicationTrustManagerFactory</code> provides the ability to establish
- * acceptable certificate authorities to be used with SSL connections and PKI 
- * authentication.  
+ * acceptable certificate authorities to be used with SSL connections and PKI
+ * authentication.
  * <p>
- * The default behavior is for no trust authority to be established, in which case 
+ * The default behavior is for no trust authority to be established, in which case
  * SSL peers will not be authenticated.  If CA certificates have been set, all SSL
  * connections which leverage this factory will perform peer authentication.  If an error
- * occurs while reading the CA certs file, all peer authentication will fail based upon the 
+ * occurs while reading the CA certs file, all peer authentication will fail based upon the
  * inability to choose a suitable client/server certificate.
  * <p>
- * The application X.509 CA certificates file may be in the standard form (*.pem, *.crt, 
- * *.cer, *.der) or may be in a Java JKS form (*.jks). The path to this file may be 
+ * The application X.509 CA certificates file may be in the standard form (*.pem, *.crt,
+ * *.cer, *.der) or may be in a Java JKS form (*.jks). The path to this file may be
  * established in one of two ways using the absolute file path:
  * <ol>
- * <li>setting the system property <i>ghidra.cacerts</i> (takes precedence)</li> 
+ * <li>setting the system property <i>ghidra.cacerts</i> (takes precedence)</li>
  * <li>setting the user preference <i>ghidra.cacerts</i></li>
  * </ol>
  * <p>
@@ -51,7 +51,7 @@ import ghidra.util.Msg;
 public class ApplicationTrustManagerFactory {
 
 	/**
-	 * The X509 cacerts file to be used when authenticating remote 
+	 * The X509 cacerts file to be used when authenticating remote
 	 * certificates is identified by either a system property or user
 	 * preference <i>ghidra.cacerts</i>.  The system property takes precedence.
 	 */
@@ -77,7 +77,7 @@ public class ApplicationTrustManagerFactory {
 	}
 
 	/**
-	 * Initialize trustManagers if <i>ghidra.cacerts</i> property or preference was specified, 
+	 * Initialize trustManagers if <i>ghidra.cacerts</i> property or preference was specified,
 	 * otherwise an "open" trust manager will be established.  If an error occurs processing
 	 * a specified cacerts file, a "closed" trust policy will be adopted.
 	 */
@@ -130,8 +130,8 @@ public class ApplicationTrustManagerFactory {
 
 	/**
 	 * Determine if certificate authorities are in place.  If no certificate authorities
-	 * have been specified via the "ghidra.cacerts" property, all certificates will be 
-	 * trusted. 
+	 * have been specified via the "ghidra.cacerts" property, all certificates will be
+	 * trusted.
 	 * @return true if certificate authorities are in place, else false.
 	 */
 	public static boolean hasCertificateAuthorities() {
@@ -148,7 +148,7 @@ public class ApplicationTrustManagerFactory {
 
 	/**
 	 * Get the CA cert initialization error which occurred
-	 * during initialization 
+	 * during initialization
 	 * @return error object or null if not applicable
 	 */
 	static Exception getCertError() {
@@ -167,7 +167,7 @@ public class ApplicationTrustManagerFactory {
 	}
 
 	/**
-	 * Invalidate the active keystore and key manager 
+	 * Invalidate the active keystore and key manager
 	 */
 	static synchronized void invalidateTrustManagers() {
 		trustManager = null;

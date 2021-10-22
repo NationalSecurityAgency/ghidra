@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,23 +28,23 @@ import java.util.*;
  * conserve file handles, only one VersionFile is held open at any point
  * in time.
  * <p>
- * When constructed, this handler determines the set of VersionFile's needed to 
+ * When constructed, this handler determines the set of VersionFile's needed to
  * reconstruct an older version from a specified target version.
  */
 public class VersionFileHandler {
-	
+
 	private VersionFile[] versionFiles;
 	private int openFileIx;
-	
+
 	// maps buffer indexes to the corresponding versionFiles index
 	private IntIntHashtable bufferMap = new IntIntHashtable();
-	
+
 	private int originalBufCount;
 	private int maxBufCount;
 	private long originalFileId;
 	private int[] freeIndexes;
 	private Hashtable<String,Integer> origParms = new Hashtable<String,Integer>();
-	
+
 
 	/**
 	 * Construct a VersionFile handler.
@@ -66,16 +66,16 @@ public class VersionFileHandler {
 		try {
 			openFileIx = -1;
 			for (int v = origVer; v < targetVer; v++) {
-				
+
 				// Close previous version file
 				if (openFileIx != -1) {
 					versionFiles[openFileIx].close();
 				}
-				
+
 				// Open next version file
 				VersionFile vf = new VersionFile(bfMgr.getVersionFile(v));
 				versionFiles[++openFileIx] = vf;
-				
+
 				// Use free index list and parameters from original version file only
 				if (openFileIx == 0) {
 					originalBufCount = vf.getOriginalBufferCount();
@@ -88,14 +88,14 @@ public class VersionFileHandler {
 				}
 				else {
 					if (lastTargetFileId != vf.getOriginalFileID())	{
-						throw new IOException("Incorrect version file - wrong file ID");	
+						throw new IOException("Incorrect version file - wrong file ID");
 					}
 				}
 				lastTargetFileId = vf.getTargetFileID();
 				if (maxBufCount < vf.getOriginalBufferCount()) {
 					maxBufCount = vf.getOriginalBufferCount();
 				}
-				
+
 				// Add buffer indexes to map which are not present in earlier version file
 				int[] bufferIndexes = vf.getOldBufferIndexes();
 				for (int i = 0; i < bufferIndexes.length; i++) {
@@ -105,7 +105,7 @@ public class VersionFileHandler {
 				}
 			}
 			if (lastTargetFileId != targetFileId)	{
-				throw new IOException("Incorrect version file - wrong file ID");	
+				throw new IOException("Incorrect version file - wrong file ID");
 			}
 			success = true;
 		}
@@ -114,7 +114,7 @@ public class VersionFileHandler {
 				close();
 			}
 		}
-		
+
 	}
 
 	/**
@@ -128,14 +128,14 @@ public class VersionFileHandler {
 		} catch (IOException e) {
 		}
 	}
-	
+
 	/**
 	 * Returns file ID associated with original buffer file.
 	 */
 	long getOriginalFileID() {
 		return originalFileId;
 	}
-	
+
 	/**
 	 * Returns the list of free indexes associated with the original
 	 * buffer file.
@@ -143,10 +143,10 @@ public class VersionFileHandler {
 	int[] getFreeIndexList() {
 		return freeIndexes;
 	}
-	
+
 	private VersionFile getVersionFile(int vfIndex) throws IOException {
 		if (openFileIx != vfIndex) {
-			versionFiles[openFileIx].close();	
+			versionFiles[openFileIx].close();
 			openFileIx = vfIndex;
 			versionFiles[openFileIx].open();
 		}
@@ -154,7 +154,7 @@ public class VersionFileHandler {
 	}
 
 	/**
-	 * Get original buffer associated with the specified storage index in the 
+	 * Get original buffer associated with the specified storage index in the
 	 * original file.
 	 * @param buf data buffer
 	 * @param index storage index
@@ -169,26 +169,26 @@ public class VersionFileHandler {
 		}
 		if (Arrays.binarySearch(freeIndexes, index) >= 0) {
 			buf.setId(-1);
-			buf.setEmpty(true);	
+			buf.setEmpty(true);
 			buf.setDirty(false);
 			return buf;
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Returns a bit map corresponding to all buffers modified since
 	 * the original version (e.g., oldest).  This identifies all buffers within the target
 	 * version (e.g., latest) which must be reverted to rebuild the original version.
-	 * NOTE: The bit mask may identify buffers which have been removed in the current version. 
+	 * NOTE: The bit mask may identify buffers which have been removed in the current version.
 	 */
 	byte[] getReverseModMapData() {
-		
+
 		// Allocate map based upon number of buffers corresponding to latest version changes
 		int bitMapSize = (maxBufCount + 7) / 8;
 		byte[] data = new byte[bitMapSize];
 		Arrays.fill(data, (byte)0);
-		
+
 		// Mark excess bits corresponding to maxBufCount and beyond as changed
 		int excess = maxBufCount % 8;
 		if (excess != 0) {
@@ -203,20 +203,20 @@ public class VersionFileHandler {
 		}
 		return data;
 	}
-	
+
 	/**
 	 * Returns a bit map corresponding to all buffers modified since
 	 * the original version (e.g., oldest).  This identifies all buffers contained within the original
 	 * version (e.g., oldest) which have been modified during any revision up until the original version.
-	 * NOTE: The bit mask may identify buffers which have been removed in the current version. 
+	 * NOTE: The bit mask may identify buffers which have been removed in the current version.
 	 */
 	byte[] getForwardModMapData() {
-		
+
 		// Allocate map based upon number of buffers corresponding to latest version changes
 		int bitMapSize = (originalBufCount + 7) / 8;
 		byte[] data = new byte[bitMapSize];
 		Arrays.fill(data, (byte)0);
-		
+
 		// Mark excess bits corresponding to maxBufCount and beyond as changed
 		int excess = originalBufCount % 8;
 		if (excess != 0) {
@@ -229,20 +229,20 @@ public class VersionFileHandler {
 		}
 		return data;
 	}
-	
+
 	private void setMapDataBit(byte[] data, int index) {
 		int byteOffset = index / 8;
 		int bitMask = 1 << (index % 8);
 		data[byteOffset] = (byte)(data[byteOffset] | bitMask);
 	}
-	
+
 	/**
-	 * Returns buffer count for original buffer file. 
+	 * Returns buffer count for original buffer file.
 	 */
 	public int getOriginalBufferCount() {
 		return originalBufCount;
 	}
-	
+
 	/**
 	 * Returns a list of parameters defined within the original beffer file.
 	 */
@@ -257,7 +257,7 @@ public class VersionFileHandler {
 		list.toArray(names);
 		return names;
 	}
-	
+
 	/**
 	 * Get a parameter value associated with the original buffer file.
 	 * @param name parameter name
@@ -269,5 +269,5 @@ public class VersionFileHandler {
 			throw new NoSuchElementException();
 		return ((Integer) obj).intValue();
 	}
-	
+
 }

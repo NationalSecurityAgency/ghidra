@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,8 @@ import ghidra.graph.viewer.VisualEdge;
 import ghidra.graph.viewer.VisualVertex;
 
 /**
- * Simple container class to hold vertex locations (points) and edge articulation locations 
- * (points).  The only complicated code in this class is the use of transformers to create 
+ * Simple container class to hold vertex locations (points) and edge articulation locations
+ * (points).  The only complicated code in this class is the use of transformers to create
  * copies of the given points as they are accessed so that the original points remain unmodified.
  */
 public class LayoutPositions<V extends VisualVertex, E extends VisualEdge<V>> {
@@ -37,7 +37,7 @@ public class LayoutPositions<V extends VisualVertex, E extends VisualEdge<V>> {
 	private Map<E, List<Point2D>> edgeArticulations;
 
 	//@formatter:off
-	public static <V extends VisualVertex, E extends VisualEdge<V>> 
+	public static <V extends VisualVertex, E extends VisualEdge<V>>
 		LayoutPositions<V, E> getCurrentPositions(VisualGraph<V, E> graph, Layout<V, E> graphLayout) {
 	//@formatter:on
 
@@ -100,7 +100,7 @@ public class LayoutPositions<V extends VisualVertex, E extends VisualEdge<V>> {
 	public void dispose() {
 
 		//
-		// Let's go a bit overboard and help the garbage collector cleanup clearing out our 
+		// Let's go a bit overboard and help the garbage collector cleanup clearing out our
 		// data structures
 		//
 

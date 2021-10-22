@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ public class GhidraGraphCollapser extends VisualGraphCollapser<AttributedVertex,
 
 	/**
 	 * Group the selected vertices into one vertex that represents them all
-	 * 
+	 *
 	 * @return the new GroupVertex
 	 */
 	public AttributedVertex groupSelectedVertices() {
@@ -63,7 +63,7 @@ public class GhidraGraphCollapser extends VisualGraphCollapser<AttributedVertex,
 	/**
 	 * Converts the given set of vertices to a new set where any vertices that are part of a group
 	 * are replaced with the outermost group containing it.
-	 *  
+	 *
 	 * @param vertices the set of vertices to possibly convert to containing group nodes
 	 * @return a converted set of vertices where all vertices part of a group have been replace with
 	 * its containing outermost GroupNode.
@@ -78,8 +78,8 @@ public class GhidraGraphCollapser extends VisualGraphCollapser<AttributedVertex,
 
 	/**
 	 * Return the outermost GroupVertex containing the given vertex or else return the given vertex
-	 * if it is not in a group.	 
-	 *  
+	 * if it is not in a group.
+	 *
 	 * @param vertex the vertex to check if inside a group.
 	 * @return the outermost GroupVertex containing the given vertex or else return the given vertex
 	 * if it is not in a group.

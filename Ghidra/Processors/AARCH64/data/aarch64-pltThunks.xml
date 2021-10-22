@@ -1,5 +1,5 @@
 <patternlist>
-  <!-- 
+  <!--
   	This file contains AARCH64 ELF PLT Thunk patterns.
   	All patterns must end with "br x17" instruction
   	All patterns are specified as little-endian.

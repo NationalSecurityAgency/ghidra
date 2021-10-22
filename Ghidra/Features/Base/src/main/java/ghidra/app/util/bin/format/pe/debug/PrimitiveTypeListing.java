@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import ghidra.util.Msg;
 
 /**
  * A class to convert from debug data types into Ghidra data types.
- * 
+ *
  */
 public class PrimitiveTypeListing {
 
@@ -55,7 +55,7 @@ public class PrimitiveTypeListing {
     public final static short T_BIT       = 0x0060;
     /**Pascal CHAR*/
     public final static short T_PASCHAR   = 0x0061;
-	
+
 	// Character Types
     /**8-bit signed*/
     public final static short T_CHAR       = 0x0010;
@@ -81,7 +81,7 @@ public class PrimitiveTypeListing {
     public final static short T_32PFCHAR   = 0x0510;
     /**16:32 far pointer to 8-bit unsigned*/
     public final static short T_32PFUCHAR  = 0x0520;
-	
+
 	// Real Character Types
     /**Real char*/
     public final static short T_RCHAR	  = 0x0070;
@@ -135,7 +135,7 @@ public class PrimitiveTypeListing {
     public final static short T_32PFINT2  = 0x0572;
     /**16:32 far pointer to 16-bit unsigned short*/
     public final static short T_32PFUINT2 = 0x0573;
-	
+
 	// 16-bit Short Types
     /**16-bit signed*/
     public final static short T_SHORT      = 0x0011;
@@ -161,7 +161,7 @@ public class PrimitiveTypeListing {
     public final static short T_32PFSHORT  = 0x0511;
     /**16:32 far pointer to 16-bit unsigned*/
     public final static short T_32PFUSHORT = 0x0521;
-	
+
 	// Real 32-bit Integer Types
     /**Real 32-bit signed short*/
     public final static short T_INT4      = 0x0074;
@@ -187,7 +187,7 @@ public class PrimitiveTypeListing {
     public final static short T_32PFINT4  = 0x0574;
     /**16:32 far pointer to 32-bit unsigned short*/
     public final static short T_32PFUINT4 = 0x0575;
-	
+
 	// 32-bit Long Types
     /**32-bit signed*/
     public final static short T_LONG 	  = 0x0012;
@@ -213,7 +213,7 @@ public class PrimitiveTypeListing {
     public final static short T_P2PFLONG  = 0x0512;
     /**16:32 far pointer to 32-bit unsigned*/
     public final static short T_32PFULONG = 0x0522;
-	
+
 	// Real 64-bit short Types
     /**64-bit signed*/
     public final static short T_INT8 	  = 0x0076;
@@ -239,7 +239,7 @@ public class PrimitiveTypeListing {
     public final static short T_32PFINT8  = 0x0576;
     /**16:32 far pointer to 64-bit unsigned*/
     public final static short T_32PFUINT8 = 0x0577;
-		
+
 	// 64-bit Integral Types
     /**64-bit signed*/
     public final static short T_QUAD 	  = 0x0013;
@@ -265,7 +265,7 @@ public class PrimitiveTypeListing {
     public final static short T_32PFQUAD  = 0x0513;
     /**16:32 far pointer to 64-bit unsigned*/
     public final static short T_32PFUQUAD = 0x0523;
-	
+
 	// 32-bit Real Types
     /**32-bit real*/
     public final static short T_REAL32     = 0x0040;
@@ -279,7 +279,7 @@ public class PrimitiveTypeListing {
     public final static short T_32PREAL32  = 0x0440;
     /**16:32 far pointer to 32-bit real*/
     public final static short T_32PFREAL32 = 0x0540;
-	
+
 	// 64-bit Real Types
     /**64-bit real*/
     public final static short T_REAL64     = 0x0041;
@@ -293,7 +293,7 @@ public class PrimitiveTypeListing {
     public final static short T_32PREAL64  = 0x0441;
     /**16:32 far pointer to 64-bit real*/
     public final static short T_32PFREAL64 = 0x0541;
-	
+
 	// 32-bit Complex Types
     /**32-bit complex*/
     public final static short T_CPLX32     = 0x0050;
@@ -307,7 +307,7 @@ public class PrimitiveTypeListing {
     public final static short T_32PCPLX32  = 0x0450;
     /**16:32 far pointer to 32-bit complex*/
     public final static short T_32PFCPLX32 = 0x0550;
-	
+
 	//64-bit Complex Types
     /**32-bit complex*/
     public final static short T_CPLX64     = 0x0051;
@@ -321,7 +321,7 @@ public class PrimitiveTypeListing {
     public final static short T_32PCPLX64  = 0x0451;
     /**16:32 far pointer to 64-bit complex*/
     public final static short T_32PFCPLX64 = 0x0551;
-	
+
 	// Boolean Types
     /**8-bit boolean*/
     public final static short T_BOOL08     = 0x0030;
@@ -371,7 +371,7 @@ public class PrimitiveTypeListing {
     public final static short T_32PFBOOL32 = 0x0532;
     /**16:32 far pointer to 64-bit boolean*/
     public final static short T_32PFBOOL64 = 0x0533;
-	
+
     /**HANDLE*/
     public final static short T_HINSTANCE = 0x10fd;
 
@@ -513,6 +513,6 @@ public class PrimitiveTypeListing {
 				return DataType.DEFAULT;
 		}
 	}
-	
-		
+
+
 }

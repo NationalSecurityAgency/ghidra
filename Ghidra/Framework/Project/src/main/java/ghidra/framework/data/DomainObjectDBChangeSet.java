@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package ghidra.framework.data;
 import db.DBChangeSet;
 
 /**
- * <code>DomainObjectDBChangeSet</code> extends <code>DBChangeSet</code> 
+ * <code>DomainObjectDBChangeSet</code> extends <code>DBChangeSet</code>
  * providing methods which facilitate transaction synchronization with the domain object's DBHandle.
  */
 public interface DomainObjectDBChangeSet extends DBChangeSet {
@@ -55,7 +55,7 @@ public interface DomainObjectDBChangeSet extends DBChangeSet {
 
 	/**
 	 * End change data transaction.
-	 * @param commit if true transaction data is committed, 
+	 * @param commit if true transaction data is committed,
 	 *               otherwise transaction data is discarded
 	 */
 	void endTransaction(boolean commit);

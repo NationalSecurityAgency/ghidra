@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,7 +59,7 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Database implementation for Program. 
+ * Database implementation for Program.
  */
 public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeManager {
 
@@ -95,18 +95,18 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 *                            schemes other than the default 1:1
 	 * 19-Jun-2020 - version 22 - Corrected fixed length indexing implementation causing
 	 *                            change in index table low-level storage for newly
-	 *                            created tables. 
+	 *                            created tables.
 	 * 18-Feb-2021 - version 23   Added support for Big Reflist for tracking FROM references.
 	 *                            Primarily used for large numbers of Entry Point references.
-	 * 31-Mar-2021 - version 24   Added support for CompilerSpec extensions     
+	 * 31-Mar-2021 - version 24   Added support for CompilerSpec extensions
 	 */
 	static final int DB_VERSION = 24;
 
 	/**
 	 * UPGRADE_REQUIRED_BFORE_VERSION should be changed to DB_VERSION anytime the
 	 * latest version requires a forced upgrade (i.e., Read-only mode not supported
-	 * until upgrade is performed).  It is assumed that read-only mode is supported 
-	 * if the data's version is &gt;= UPGRADE_REQUIRED_BEFORE_VERSION and &lt;= DB_VERSION. 
+	 * until upgrade is performed).  It is assumed that read-only mode is supported
+	 * if the data's version is &gt;= UPGRADE_REQUIRED_BEFORE_VERSION and &lt;= DB_VERSION.
 	 */
 	private static final int UPGRADE_REQUIRED_BEFORE_VERSION = 19;
 
@@ -148,7 +148,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	// The numbering of managers controls the order in which they are notified.
 	// The following ManagerDB methods are invoked for each manager starting with index 0:
 	//   - setProgram, programReady, clearCache
-	// The following ManagerDB methods are invoked for each manager in the REVERSE order, 
+	// The following ManagerDB methods are invoked for each manager in the REVERSE order,
 	// starting with index NUM_MANAGERS-1:
 	//   - deleteAddressRange, moveAddressRange
 	// NOTE: for deleting a range the order of the FunctionManager, the
@@ -156,11 +156,11 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	//  reasons:
 	// (1) the Function ID is the Symbol ID so the Function must be removed before the
 	//   symbol is removed.
-	// (2) the FunctionManager relies on the NamespaceManager to get the 
+	// (2) the FunctionManager relies on the NamespaceManager to get the
 	//   functions that overlap a given address set, so the NamespaceManager's
-	//   deleteAddressRange method must be called AFTER that of the 
+	//   deleteAddressRange method must be called AFTER that of the
 	//   FunctionManager.
-	// 
+	//
 	private static final int MEMORY_MGR = 0;
 	private static final int CODE_MGR = 1;
 	private static final int SYMBOL_MGR = 2; // do not change the order
@@ -448,7 +448,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 					.getLanguageTranslator(oldLanguage, newLanguage);
 			if (languageUpgradeTranslator == null) {
 
-// TODO: This is a bad situation!! Most language revisions should be supportable, if not we have no choice but to throw 
+// TODO: This is a bad situation!! Most language revisions should be supportable, if not we have no choice but to throw
 // a LanguageNotFoundException  until we figure out how to deal with nasty translations which require
 // a complete redisassembly and possibly auto analysis.
 
@@ -474,7 +474,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	/**
-	 * Language specified by languageName was not found.  Check for 
+	 * Language specified by languageName was not found.  Check for
 	 * valid language translation/migration.  Old language version specified by
 	 * languageVersion.
 	 * @param openMode one of:
@@ -776,7 +776,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	/**
 	 * Returns this programs address map.
 	 * NOTE: This method has been dropped from the Program interface to help
-	 * discourage the use of the program's address map since bad assumptions 
+	 * discourage the use of the program's address map since bad assumptions
 	 * are frequently made about address keys which may not be ordered or sequential
 	 * across an entire address space.
 	 */
@@ -826,7 +826,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * notification the a datatype has changed
 	 * @param dataTypeID the id of the datatype that changed.
 	 * @param type the type of the change (moved, renamed, etc.)
-	 * @param isAutoChange true if change was an automatic change in response to 
+	 * @param isAutoChange true if change was an automatic change in response to
 	 * another datatype's change (e.g., size, alignment), else false in which case this
 	 * change will be added to program change-set to aid merge conflict detection.
 	 * @param oldValue the old datatype.
@@ -945,10 +945,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	/**
 	 * Notification that a {@link FunctionTag} was changed. This can be either an
 	 * edit or a delete.
-	 * 
+	 *
 	 * @param tag the tag that was changed.
 	 * @param type the type of change
-	 * @param oldValue old value 
+	 * @param oldValue old value
 	 * @param newValue new value
 	 */
 	public void tagChanged(FunctionTag tag, int type, Object oldValue, Object newValue) {
@@ -962,7 +962,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	/**
 	 * Notification that a new {@link FunctionTag} was created.
-	 * 
+	 *
 	 * @param tag the tag that was created.
 	 * @param type the type of change
 	 */
@@ -1215,9 +1215,9 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	/**
 	 * Create a new OverlayAddressSpace based upon the given overlay blockName and base AddressSpace
 	 * @param blockName the name of the overlay memory block which corresponds to the new overlay address
-	 * space to be created.  This name may be modified to produce a valid overlay space name and avoid 
+	 * space to be created.  This name may be modified to produce a valid overlay space name and avoid
 	 * duplication.
-	 * @param originalSpace the base AddressSpace to overlay	
+	 * @param originalSpace the base AddressSpace to overlay
 	 * @param minOffset the min offset of the space
 	 * @param maxOffset the max offset of the space
 	 * @return the new space
@@ -1536,7 +1536,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	/*
-	 * Perform more complex upgrades which require all language version translation to be completed 
+	 * Perform more complex upgrades which require all language version translation to be completed
 	 */
 	private void postUpgrade(int oldVersion, TaskMonitor monitor)
 			throws CancelledException, IOException {
@@ -1835,7 +1835,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 		monitor.checkCanceled();
 
-		// Upgrade Function Manager 
+		// Upgrade Function Manager
 		if (openMode == UPGRADE && oldFunctionMgr != null) {
 			oldFunctionMgr.upgrade(this, monitor);
 		}
@@ -1970,7 +1970,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 
 	/**
 	 * Moves all information stored in the given range to the new location
-	 * 
+	 *
 	 * @param fromAddr the first address in the range to be moved
 	 * @param toAddr the address to move to
 	 * @param length the number of addresses to move
@@ -2039,7 +2039,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	 * @param newCompilerSpecID new compiler specification which corresponds to new language, may be null.
 	 * @param forceRedisassembly if true a redisassembly will be forced even if not required
 	 * @param monitor task monitor
-	 * @throws LockException if exclusive access is missing 
+	 * @throws LockException if exclusive access is missing
 	 */
 	public void setLanguage(LanguageTranslator translator, CompilerSpecID newCompilerSpecID,
 			boolean forceRedisassembly, TaskMonitor monitor) throws LockException {
@@ -2152,7 +2152,7 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	/*
-	 * Repair damaged context prior to language upgrade.  It is assumed that the context has 
+	 * Repair damaged context prior to language upgrade.  It is assumed that the context has
 	 * already been upgrade and that the original prototypes and instructions are still intact.
 	 */
 	private void repairContext(int oldLanguageVersion, int oldLanguageMinorVersion,
@@ -2164,10 +2164,10 @@ public class ProgramDB extends DomainObjectAdapterDB implements Program, ChangeM
 	}
 
 	/*
-	 * Repair damaged ARM/THUMB context prior to language upgrade.  With the release of Ghidra 5.2 
-	 * (which corresponds to the ARM language version of 1.6) the stored context register 
+	 * Repair damaged ARM/THUMB context prior to language upgrade.  With the release of Ghidra 5.2
+	 * (which corresponds to the ARM language version of 1.6) the stored context register
 	 * value is write-protected where instructions exist.
-	 * It is assumed that the context has already been upgrade and that the original 
+	 * It is assumed that the context has already been upgrade and that the original
 	 * prototypes and instructions are still intact.
 	 */
 	private void repairARMContext(int oldLanguageVersion, int oldLanguageMinorVersion,

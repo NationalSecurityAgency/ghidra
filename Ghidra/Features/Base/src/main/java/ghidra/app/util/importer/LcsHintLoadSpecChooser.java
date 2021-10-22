@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,9 +33,9 @@ public class LcsHintLoadSpecChooser implements LoadSpecChooser {
 	/**
 	 * Creates a new {@link LcsHintLoadSpecChooser}.
 	 * <p>
-	 * NOTE: It is assumed that the given {@link Language} is valid and it supports the given 
+	 * NOTE: It is assumed that the given {@link Language} is valid and it supports the given
 	 * {@link CompilerSpec}.
-	 * 
+	 *
 	 * @param language The {@link Language} to use (should not be null)
 	 * @param compilerSpec The {@link CompilerSpec} to use (f null default compiler spec will be used)
 	 */
@@ -66,8 +66,8 @@ public class LcsHintLoadSpecChooser implements LoadSpecChooser {
 			}
 		}
 
-		// The desired language/compiler spec is not a defined LoadSpec, so we'll create a custom 
-		// one. This could result in crazy results/analysis, but the point of this chooser is to do 
+		// The desired language/compiler spec is not a defined LoadSpec, so we'll create a custom
+		// one. This could result in crazy results/analysis, but the point of this chooser is to do
 		// what we are told.
 		LoadSpec anyLoadSpec = CollectionUtils.any(loadSpecs);
 		LanguageCompilerSpecPair customLcsPair =

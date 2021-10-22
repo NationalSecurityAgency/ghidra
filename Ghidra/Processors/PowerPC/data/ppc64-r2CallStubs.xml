@@ -1,10 +1,10 @@
 <patternlist>
-  <!-- 
+  <!--
   	This file contains all known call stub (i.e., thunk) patterns which
   	utilize a propagated r2 register value in determining the thunked function
   	to which any given call stub branches.
-  	
-  	NOTES: 
+
+  	NOTES:
   		1. Each pattern must account for all instructions contained within the stub.
   		2. Only 4-byte instructions are supported (due to pattern flipping for little endian use)
   -->
@@ -38,7 +38,7 @@
      </data>
   </pattern>
   <!-- It is possible that the patterns below always appear inline and not used as a thunk -->
-  <pattern> 
+  <pattern>
      <data>
      	0x3d62....	# addis	r11,r2,0x####
      	0xe98b....	# ld		r12,0x####(r11)
@@ -130,8 +130,8 @@
      	0x4e800420	# bctr
      </data>
   </pattern>
-     <!-- 
-     	The case where call stub performs conditional bnectr followed 
+     <!--
+     	The case where call stub performs conditional bnectr followed
      	by relative branch is omitted since this is not a valid thunk
      	scenario.
      -->
@@ -145,7 +145,7 @@
   </pattern>
   <pattern>
      <data>
-     	0xf8410000	# std   r2,0x####(r1) 
+     	0xf8410000	# std   r2,0x####(r1)
 	 	0x3d820000	# addis r12,r2,0x####
 	 	0xe98c0000	# ld		r12,0x####(r12)
 	 	0x7d8903a6	# mtspr	CTR,r12

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ class PythonPluginInputThread extends Thread {
 
 	/**
 	 * Creates a new python input thread that gets a line of python input from the given plugin.
-	 * 
+	 *
 	 * @param plugin The python plugin to get input from.
 	 */
 	PythonPluginInputThread(PythonPlugin plugin) {
@@ -47,7 +47,7 @@ class PythonPluginInputThread extends Thread {
 
 	/**
 	 * Gets the last python plugin execution thread that ran.
-	 * 
+	 *
 	 * @return The last python plugin execution thread that ran.  Could be null if one never ran.
 	 */
 	PythonPluginExecutionThread getPythonPluginExecutionThread() {
@@ -70,7 +70,7 @@ class PythonPluginInputThread extends Thread {
 					pythonExecutionThread.join();
 				}
 				catch (InterruptedException ie) {
-					// Hey we're back... a little earlier than expected, but there must be a reason. 
+					// Hey we're back... a little earlier than expected, but there must be a reason.
 					// So we'll go quietly.
 				}
 

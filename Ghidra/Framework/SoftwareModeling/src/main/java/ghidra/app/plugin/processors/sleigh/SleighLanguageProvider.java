@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,12 +42,12 @@ public class SleighLanguageProvider implements LanguageProvider {
 	/**
 	 * <pre>
 	 * Raw:     .*(\/|\\)\.\.?(\/|\\)|\.(\/|\\)|\.\.(\/|\\)
-	 * Parts:   .*(\/|\\)\.\.?(\/|\\) - optional text followed by a forward or back slash, 
+	 * Parts:   .*(\/|\\)\.\.?(\/|\\) - optional text followed by a forward or back slash,
 	 *                                  followed by one or two literal dots, followed
 	 *                                  by a forward or back slash
 	 *      OR
 	 *          \.(\/|\\)             - a literal dot followed by a forward or back slash
-	 *      OR 
+	 *      OR
 	 *          \.\.(\/|\\)           - two literal dots followed by a forward or back slash
 	 * </pre>
 	 */

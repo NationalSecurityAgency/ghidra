@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,7 +112,7 @@ bool Address::containedBy(int4 sz,const Address &op2,int4 sz2) const
 }
 
 /// Return -1 if (\e op2,\e sz2) is not properly contained in (\e this,\e sz).
-/// If it is contained, return the endian aware offset of (\e op2,\e sz2) 
+/// If it is contained, return the endian aware offset of (\e op2,\e sz2)
 /// I.e. if the least significant byte of the \e op2 range falls on the least significant
 /// byte of the \e this range, return 0.  If it intersects the second least significant, return 1, etc.
 /// The -forceleft- toggle causes the check to be made against the left (lowest address) side
@@ -338,7 +338,7 @@ void RangeList::insertRange(AddrSpace *spc,uintb first,uintb last)
 
   // Set iter2 to first range with range.first > last
   iter2 = tree.upper_bound(Range(spc,last,last));
-  
+
   while(iter1!=iter2) {
     if ((*iter1).first < first)
       first = (*iter1).first;
@@ -374,7 +374,7 @@ void RangeList::removeRange(AddrSpace *spc,uintb first,uintb last)
 
   // Set iter2 to first range with range.first > last
   iter2 = tree.upper_bound(Range(spc,last,last));
-  
+
   while(iter1!=iter2) {
     uintb a,b;
 

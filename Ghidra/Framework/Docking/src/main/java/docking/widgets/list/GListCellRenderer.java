@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 	 * <p>
 	 * Use this if you only need to provide a way to get the string value from the type being shown
 	 * in the list.
-	 * 
+	 *
 	 * @param cellToTextMappingFunction a function that maps your custom type to a string value
 	 * @return new GListCellRenderer instance
 	 */
@@ -89,7 +89,7 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 
 			JList.DropLocation dropLocation = list.getDropLocation();
 			// @formatter:off
-			boolean isDropRow = (dropLocation != null && 
+			boolean isDropRow = (dropLocation != null &&
 								dropLocation.isInsert() &&
 								dropLocation.getIndex() == index);
 			// @formatter:on
@@ -120,7 +120,7 @@ public class GListCellRenderer<E> extends AbstractGCellRenderer implements ListC
 	 * Useful for setting a JList's fixed cell width and height to the actual necessary size.
 	 * <p>
 	 * NOTE: the items and the renderer must be in plain text mode, not HTML rendering mode.
-	 * 
+	 *
 	 * @param list the JList that uses this cell renderer
 	 * @param items the items to measure
 	 * @param minWidth the minimum width that can be returned

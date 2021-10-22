@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -216,7 +216,7 @@ public class FunctionGraphGroupVertices3Test extends AbstractFunctionGraphTest {
 	@Test
 	public void testHistoryUpdatesWhenGroupUserTextChanges() {
 		//
-		// The group history can hang around for a while, which means that the history's 
+		// The group history can hang around for a while, which means that the history's
 		// description can be out-of-sync with the current state of the group unless we update it.
 		// This method tests that we correctly update the history.
 		//
@@ -266,36 +266,36 @@ public class FunctionGraphGroupVertices3Test extends AbstractFunctionGraphTest {
 		FGData graphData = graphFunction("01002cf5");
 		FunctionGraph functionGraph = graphData.getFunctionGraph();
 		Graph<FGVertex, FGEdge> graph = functionGraph;
-	
+
 		Collection<FGEdge> originalEdges = graph.getEdges();
-	
+
 		Set<FGVertex> ungroupedVertices =
 			selectVertices(functionGraph, "01002d2b" /* Another Local*/, "01002d1f" /* MyLocal */);
 		Set<FGEdge> ungroupedEdges = getEdges(graph, ungroupedVertices);
 		assertEquals("Did not grab all known edges for vertices", 4, ungroupedEdges.size());
-	
+
 		group(ungroupedVertices);
-	
+
 		assertVerticesRemoved(graph, ungroupedVertices);
 		assertEdgesRemoved(graph, ungroupedEdges);
-	
+
 		// -1 because one of the edges was between two of the vertices being grouped
 		int expectedGroupedEdgeCount = ungroupedEdges.size() - 1;
 		GroupedFunctionGraphVertex groupedVertex = validateNewGroupedVertexFromVertices(
 			functionGraph, ungroupedVertices, expectedGroupedEdgeCount);
-	
+
 		//
 		// Pick another vertex to add to the current group
 		//
 		Set<FGVertex> newUngroupedVertices =
 			selectVertices(functionGraph, "01002d66" /* LAB_01002d66 */);
 		Set<FGEdge> newUngroupedEdges = getEdges(graph, newUngroupedVertices);
-	
+
 		addToGroup(groupedVertex, newUngroupedVertices);
-	
+
 		assertVerticesRemoved(graph, newUngroupedVertices);
 		assertEdgesRemoved(graph, newUngroupedEdges);
-	
+
 		expectedGroupedEdgeCount = 3;
 		GroupedFunctionGraphVertex updatedGroupedVertex = validateNewGroupedVertexFromVertices(
 			functionGraph, ungroupedVertices, expectedGroupedEdgeCount);
@@ -303,26 +303,26 @@ public class FunctionGraphGroupVertices3Test extends AbstractFunctionGraphTest {
 		Set<FGVertex> originalVertices = groupedVertex.getVertices();
 		Set<FGVertex> newVertices = updatedGroupedVertex.getVertices();
 		assertTrue(newVertices.containsAll(originalVertices));
-	
+
 		//
 		//  Ungroup and make sure all edges and vertices return
 		//
-	
+
 		ungroup(updatedGroupedVertex);
-	
+
 		assertVertexRemoved(graph, updatedGroupedVertex);
-	
+
 		assertVerticesAdded(graph, ungroupedVertices);
 		assertEdgesAdded(functionGraph, originalEdges);
-	
+
 		ungroupedVertices.addAll(newUngroupedVertices);
 		assertSelected(ungroupedVertices);
 	}
 
 	protected void doTestGroupingProperlyTranslatesEdgesFromGroupedVerticesToRealVertices() {
 		//
-		//	WARNING!!!  WARNING!!!  WARNING!!!  WARNING!!!  WARNING!!!  WARNING!!!  
-		// This is not a junit test in that it is long, involved, hidden and complicated.  We 
+		//	WARNING!!!  WARNING!!!  WARNING!!!  WARNING!!!  WARNING!!!  WARNING!!!
+		// This is not a junit test in that it is long, involved, hidden and complicated.  We
 		// need to test this functionality, but we don't have a jComplicatedTest, so we will do
 		// it here.
 		//
@@ -330,32 +330,32 @@ public class FunctionGraphGroupVertices3Test extends AbstractFunctionGraphTest {
 		//
 		// Desired Behavior: We want to be able to group vertices, group grouped vertices and then
 		//                   ungroup them in any order.  For us to be able to do this, our group
-		//                   vertices must store enough edge information to be able to ungroup 
+		//                   vertices must store enough edge information to be able to ungroup
 		//                   and find vertices for edges *whether or now those vertices have been
 		//                   grouped or ungrouped*
-		// 
-		// Original Bug: We had a bug loosely described here: 
+		//
+		// Original Bug: We had a bug loosely described here:
 		// 0) Start with a directed graph of vertices.
 		// 1) Create two separate group vertices (A and B), such that A has an edge to B.
-		// 2) Create a third group vertex (Z) that contains a non-grouped vertex (B) *and* one 
+		// 2) Create a third group vertex (Z) that contains a non-grouped vertex (B) *and* one
 		//    of the other groups.
 		// 3) Now, ungroup the 1 remaining originally grouped vertex (A).
-		// 4) **At this point, the code could not determine which endpoint to pick for the edge 
+		// 4) **At this point, the code could not determine which endpoint to pick for the edge
 		//      that used to be from Z->A.  Which vertex inside of A represented the connection
 		//      pointing into Z (by way of B).
-		// 
-		// The fix is mentioned in the Desired Behavior section.  
+		//
+		// The fix is mentioned in the Desired Behavior section.
 		//
 
 		/*
-		 
+
 		 0) Initial Graph
-		 
+
 		 1 -> 2 -> 3 -> 4
 		           |
 		           *
 		           5
-		           
+
 		*/
 
 		create12345Graph();
@@ -370,7 +370,7 @@ public class FunctionGraphGroupVertices3Test extends AbstractFunctionGraphTest {
 		FGVertex v4 = vertex("1004196");
 		FGVertex v5 = vertex("100419c");
 
-		// verify initial graph 
+		// verify initial graph
 		verifyEdge(v1, v2);
 		verifyEdge(v2, v3);
 		verifyEdge(v3, v4);
@@ -379,12 +379,12 @@ public class FunctionGraphGroupVertices3Test extends AbstractFunctionGraphTest {
 
 		/*
 		 1) Create two separate group vertices (A and B), such that A has an edge to B.
-		            
+
 		 A (v:{1,2} e:{1->2, 2->3}) -> B (v:{3,4} e:{2->3,3->4,3->5})
 		                               |
 		                               *
 		                               5
-		                               		 
+
 		 */
 
 		GroupedFunctionGraphVertex groupA = group("A", v1, v2);
@@ -395,14 +395,14 @@ public class FunctionGraphGroupVertices3Test extends AbstractFunctionGraphTest {
 		verifyEdgeCount(2);// no other edges
 
 		/*
-		 2) Create a third group vertex (Z) that contains a non-grouped vertex *and* one 
+		 2) Create a third group vertex (Z) that contains a non-grouped vertex *and* one
 		    of the other groups (B).
-		    
+
 		 A (v:{1,2} e:{1->2, 2->3}) -> Z (
 		 									v:{B (v:{3,4} e:{2->3,3->4,3->5}), 5}
 		 									e:{2->3, 3->5}
-		 								  )          
-		
+		 								  )
+
 		*/
 
 		GroupedFunctionGraphVertex groupZ = group("Z", groupB, v5);
@@ -412,12 +412,12 @@ public class FunctionGraphGroupVertices3Test extends AbstractFunctionGraphTest {
 
 		/*
 		 3) Now, ungroup the 1 remaining originally grouped vertex (A).
-		 
+
 		 1 -> 2 -> Z (
 						v:{B (v:{3,4} e:{2->3,3->4,3->5}), 5}
 						e:{2->3, 3->5}
-					  )   
-		 
+					  )
+
 		 */
 
 		ungroup(groupA);
@@ -427,14 +427,14 @@ public class FunctionGraphGroupVertices3Test extends AbstractFunctionGraphTest {
 		verifyEdgeCount(2);
 
 		/*
-		 
+
 		 4) Now, ungroup Z and go back to having one remaining group vertex (B)
-		 
+
 		 1 -> 2 -> -> B (v:{3,4} e:{2->3,3->4,3->5})
 		              |
 		              *
 		              5
-		            		  
+
 		*/
 
 		ungroup(groupZ);
@@ -446,12 +446,12 @@ public class FunctionGraphGroupVertices3Test extends AbstractFunctionGraphTest {
 
 		/*
 		 5) Finally, ungroup the last group and make sure the graph is restored
-		              
+
 		 1 -> 2 -> 3 -> 4
 		           |
 		           *
-		           5		
-		  
+		           5
+
 		 */
 
 		ungroup(groupB);

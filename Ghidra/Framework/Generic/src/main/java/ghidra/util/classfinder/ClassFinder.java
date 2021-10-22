@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -101,7 +101,7 @@ public class ClassFinder {
 			String n1 = c1.getName();
 			String n2 = c2.getName();
 			if (n1.equals(n2)) {
-				// Same priority and same package/class name....just arbitrarily choose one 
+				// Same priority and same package/class name....just arbitrarily choose one
 				return Integer.compare(c1.hashCode(), c2.hashCode());
 			}
 			return n1.compareTo(n2);
@@ -134,7 +134,7 @@ public class ClassFinder {
 
 		if (t instanceof LinkageError) {
 			// We see this sometimes when loading classes that match our naming convention for
-			// extension points, but are actually extending 3rd party libraries.  For now, do 
+			// extension points, but are actually extending 3rd party libraries.  For now, do
 			// not make noise in the log for this case.
 			Msg.trace(ClassFinder.class,
 				"LinkageError loading class " + name + "; Incompatible class version? ", t);
@@ -185,7 +185,7 @@ public class ClassFinder {
 
 	/**
 	 * Checks to see if the given class is an extension point of interest.
-	 * 
+	 *
 	 * @param c The class to check.
 	 * @return True if the given class is an extension point of interest; otherwise, false.
 	 */

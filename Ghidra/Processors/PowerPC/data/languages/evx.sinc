@@ -55,7 +55,7 @@ define pcodeop vectorShiftRightWordUnsigned;
 }
 @endif
 
-:evstdd RS,dUI16PlusRAOrZeroAddress is OP=4 & RS & dUI16PlusRAOrZeroAddress & XOP_0_10=801 
+:evstdd RS,dUI16PlusRAOrZeroAddress is OP=4 & RS & dUI16PlusRAOrZeroAddress & XOP_0_10=801
 {
    ea:$(REGISTER_SIZE) = dUI16PlusRAOrZeroAddress;
    *:8 ($(EATRUNC)) = RS;

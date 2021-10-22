@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,9 +28,9 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>DomainFile</code> provides a storage interface for project files.  A 
- * <code>DomainFile</code> is an immutable reference to file contained within a project.  The state 
- * of a <code>DomainFile</code> object does not track name/parent changes made to the referenced 
+ * <code>DomainFile</code> provides a storage interface for project files.  A
+ * <code>DomainFile</code> is an immutable reference to file contained within a project.  The state
+ * of a <code>DomainFile</code> object does not track name/parent changes made to the referenced
  * project file.
  */
 public interface DomainFile extends Comparable<DomainFile> {
@@ -38,7 +38,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	/**
 	* Use with getDomainObject to request the default version.  The default version is
 	* the private file or check-out file if one exists, or the latest version from the
-	* version controlled file system. 
+	* version controlled file system.
 	*/
 	public static final int DEFAULT_VERSION = FolderItem.LATEST_VERSION;
 
@@ -60,7 +60,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public boolean exists();
 
 	/**
-	 * Returns a unique file-ID 
+	 * Returns a unique file-ID
 	 * @return the ID
 	 */
 	public String getFileID();
@@ -68,9 +68,9 @@ public interface DomainFile extends Comparable<DomainFile> {
 	/**
 	 * Set the name on this domain file.
 	 * @param newName domain file name
-	 * @return renamed domain file (the original DomainFile object becomes invalid since it is immutable) 
+	 * @return renamed domain file (the original DomainFile object becomes invalid since it is immutable)
 	 * @throws InvalidNameException if newName contains illegal characters
-	 * @throws DuplicateFileException if a file named newName 
+	 * @throws DuplicateFileException if a file named newName
 	 * already exists in this files domain folder.
 	 * @throws FileInUseException if this file is in-use / checked-out.
 	 * @throws IOException thrown if an IO or access error occurs.
@@ -111,7 +111,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * Returns changes made to versioned file by others since checkout was performed.
 	 * @return change set or null
 	 * @throws VersionException latest version was created with a newer version of software
-	 * @throws IOException if a folder item access error occurs or change set was 
+	 * @throws IOException if a folder item access error occurs or change set was
 	 * produced by newer version of software and can not be read
 	 */
 	public ChangeSet getChangesByOthersSinceCheckout() throws VersionException, IOException;
@@ -126,7 +126,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * be in compliance with the current version of Ghidra. A Version exception will be thrown
 	 * if the domain object cannot be upgraded OR okToUpgrade is false and the domain object is
 	 * out of date.
-	 * @param okToRecover if true, allows the system to recover unsaved file changes which 
+	 * @param okToRecover if true, allows the system to recover unsaved file changes which
 	 * resulted from a crash.  If false, any existing recovery data will be deleted.
 	 * This flag is only relevant if project is open for update (isInProject) and the file can be
 	 * opened for update.
@@ -135,8 +135,8 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * @throws VersionException if the domain object could not be read due
 	 * to a version format change.  If okToUpgrade is true, then a VersionException indicates
 	 * that the domain object cannot be upgraded to the current format.  If okToUpgrade is false,
-	 * then the VersionException only means the object is not in the current format - it 
-	 * may or may not be possible to upgrade. 
+	 * then the VersionException only means the object is not in the current format - it
+	 * may or may not be possible to upgrade.
 	 * @throws IOException thrown if an IO or access error occurs.
 	 * @throws CancelledException if monitor cancelled operation
 	 */
@@ -158,8 +158,8 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * to a new filename.
 	 * @param consumer consumer of the domain object which is responsible for
 	 * releasing it after use.
-	 * @param version the domain object version requested.  DEFAULT_VERSION should be 
-	 * specified to open the current version.  
+	 * @param version the domain object version requested.  DEFAULT_VERSION should be
+	 * specified to open the current version.
 	 * @param monitor permits monitoring of open progress.
 	 * @return a new domain object that is disassociated from its original domain file.
 	 * @throws VersionException if the domain object could not be read due
@@ -175,8 +175,8 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * Returns a new DomainObject that cannot be changed or saved to its original file.
 	 * @param consumer consumer of the domain object which is responsible for
 	 * releasing it after use.
-	 * @param version the domain object version requested.  DEFAULT_VERSION should be 
-	 * specified to open the current version.  
+	 * @param version the domain object version requested.  DEFAULT_VERSION should be
+	 * specified to open the current version.
 	 * @param monitor permits monitoring of open progress.
 	 * @return a new domain object that is disassociated from its original domain file
 	 * and cannot be modified
@@ -214,9 +214,9 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public boolean canRecover();
 
 	/**
-	 * If the file has an updatable domain object with unsaved changes, generate a recovery 
+	 * If the file has an updatable domain object with unsaved changes, generate a recovery
 	 * snapshot.
-	 * @return true if snapshot successful or not needed, false if file is busy which prevents 
+	 * @return true if snapshot successful or not needed, false if file is busy which prevents
 	 * snapshot, or snapshot was cancelled.
 	 * @throws IOException if there is an exception saving the snapshot
 	 */
@@ -236,7 +236,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 
 	/**
 	 * Get the state based Icon image for the domain file based upon its content class.
-	 * @param disabled true if the icon return should be rendered as 
+	 * @param disabled true if the icon return should be rendered as
 	 * not enabled
 	 * @return image icon
 	 */
@@ -288,14 +288,14 @@ public interface DomainFile extends Comparable<DomainFile> {
 	/**
 	 * Sets the object to read-only.  This method may only be invoked
 	 * for private files (i.e., not versioned).
-	 * @param state if true file will be read-only and may not be updated, if false the 
+	 * @param state if true file will be read-only and may not be updated, if false the
 	 * file may be updated.
 	 * @throws IOException thrown if an IO error occurs.
 	 */
 	public void setReadOnly(boolean state) throws IOException;
 
 	/**
-	 * Returns whether the object is read-only. From a framework point of view a read-only object 
+	 * Returns whether the object is read-only. From a framework point of view a read-only object
 	 * can never be changed.
 	 * @return true if read-only
 	 */
@@ -345,13 +345,13 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 */
 	public Version[] getVersionHistory() throws IOException;
 
-	/** 
+	/**
 	 * Adds this private file to version control.
 	 * @param comment new version comment
 	 * @param keepCheckedOut if true, the file will be initially checked-out
 	 * @param monitor progress monitor
 	 * @throws FileInUseException if this file is in-use.
-	 * @throws IOException thrown if an IO or access error occurs.  Also thrown if file is not 
+	 * @throws IOException thrown if an IO or access error occurs.  Also thrown if file is not
 	 * private.
 	 * @throws CancelledException if the monitor cancelled the operation
 	 */
@@ -359,12 +359,12 @@ public interface DomainFile extends Comparable<DomainFile> {
 			throws IOException, CancelledException;
 
 	/**
-	 * Checkout this file for update.  If this file is already 
+	 * Checkout this file for update.  If this file is already
 	 * private, this method does nothing.
-	 * @param exclusive if true an exclusive checkout will be requested 
+	 * @param exclusive if true an exclusive checkout will be requested
 	 * @param monitor progress monitor
 	 * @return true if checkout successful, false if an exclusive checkout was not possible
-	 * due to other users having checkouts of this file.  A request for a non-exclusive checkout 
+	 * due to other users having checkouts of this file.  A request for a non-exclusive checkout
 	 * will never return false.
 	 * @throws IOException thrown if an IO or access error occurs.
 	 * @throws CancelledException if task monitor cancelled operation.
@@ -373,7 +373,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 			throws IOException, CancelledException;
 
 	/**
-	 * Performs check in to associated repository.  File must be checked-out 
+	 * Performs check in to associated repository.  File must be checked-out
 	 * and modified since checkout.
 	 * @param checkinHandler provides user input data to complete checkin process.
 	 * @param okToUpgrade if true an upgrade will be performed if needed
@@ -388,7 +388,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 			throws IOException, VersionException, CancelledException;
 
 	/**
-	 * Performs merge from current version of versioned file into local checked-out file. 
+	 * Performs merge from current version of versioned file into local checked-out file.
 	 * @param okToUpgrade if true an upgrade will be performed if needed
 	 * @param monitor task monitor
 	 * @throws IOException if an IO or access error occurs
@@ -440,13 +440,13 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public void delete() throws IOException;
 
 	/**
-	 * Deletes a specific version of a file from the versioned filesystem.  
+	 * Deletes a specific version of a file from the versioned filesystem.
 	 * @param version specific version to be deleted.  The version must either
 	 * be the oldest or latest, or -1 which will attempt to remove all versions.
 	 * When deleting the latest version, this method could take a long time
 	 * to return since the previous version must be reconstructed within the
 	 * versioned filesystem.
-	 * @throws IOException if an IO error occurs, including the inability 
+	 * @throws IOException if an IO error occurs, including the inability
 	 * to delete a version because this item is checked-out, the user does
 	 * not have permission, or the specified version is not the oldest or
 	 * latest.
@@ -457,7 +457,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	 * Move this file into the newParent folder.
 	 * @param newParent new parent folder within the same project
 	 * @return the newly relocated domain file (the original DomainFile object becomes invalid since it is immutable)
-	 * @throws DuplicateFileException if a file with the same name 
+	 * @throws DuplicateFileException if a file with the same name
 	 * already exists in newParent folder.
 	 * @throws FileInUseException if this file is in-use / checked-out.
 	 * @throws IOException thrown if an IO or access error occurs.
@@ -523,10 +523,10 @@ public interface DomainFile extends Comparable<DomainFile> {
 	public void packFile(File file, TaskMonitor monitor) throws IOException, CancelledException;
 
 	/**
-	 * Returns an ordered map containing the metadata that has been associated with the 
-	 * corresponding domain object. The map contains key,value pairs and are ordered by their 
-	 * insertion order. 
-	 * @return a map containing the metadata that has been associated with the corresponding domain 
+	 * Returns an ordered map containing the metadata that has been associated with the
+	 * corresponding domain object. The map contains key,value pairs and are ordered by their
+	 * insertion order.
+	 * @return a map containing the metadata that has been associated with the corresponding domain
 	 * object.
 	 */
 	public Map<String, String> getMetadata();
@@ -534,7 +534,7 @@ public interface DomainFile extends Comparable<DomainFile> {
 	/**
 	 * Returns the length of this domain file.  This size is the minimum disk space
 	 * used for storing this file, but does not account for additional storage space
-	 * used to tracks changes, etc. 
+	 * used to tracks changes, etc.
 	 * @return file length
 	 * @throws IOException thrown if IO or access error occurs
 	 */

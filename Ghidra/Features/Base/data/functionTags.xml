@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- This file is meant to define a set of tags that can be assigned
-     to functions. 
-     
+     to functions.
+
      This will be loaded by ghidra.program.database.function.FunctionTagAdapter
      on startup during the database loading phase. -->
 <tags>

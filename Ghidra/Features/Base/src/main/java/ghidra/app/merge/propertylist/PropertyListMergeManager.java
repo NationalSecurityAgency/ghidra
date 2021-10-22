@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,10 +32,10 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Manages options changes and conflicts between the latest versioned 
+ * Manages options changes and conflicts between the latest versioned
  * Program and the Program that is being checked into version control.
- * 
- * 
+ *
+ *
  */
 public class PropertyListMergeManager implements MergeResolver {
 	static final int CANCELED = -2; // user canceled the merge operation
@@ -62,9 +62,9 @@ public class PropertyListMergeManager implements MergeResolver {
 
 	/**
 	 * Construct a new PropertyListMergeManager.
-	 * 
+	 *
 	 * @param mergeManager manages each stage of the merge/resolve conflict process
-	 * @param resultProgram latest version of the Program that is the 
+	 * @param resultProgram latest version of the Program that is the
 	 * destination for changes that will be applied from the source program
 	 * @param myProgram source of changes to apply to the result
 	 * program
@@ -89,7 +89,7 @@ public class PropertyListMergeManager implements MergeResolver {
 	public void apply() {
 		conflictOption = mergePanel.getSelectedOption();
 
-		// If the "Use For All" check box is selected 
+		// If the "Use For All" check box is selected
 		// then save the option chosen for this conflict type.
 		if (mergePanel.getUseForAll()) {
 			propertyListChoice = conflictOption;
@@ -422,8 +422,8 @@ public class PropertyListMergeManager implements MergeResolver {
 			}
 			else if (mergeManager != null && conflictOption == ASK_USER) {
 				showMergePanel(info, currentConflict, totalConflictCount);
-				// block until the user resolves the conflict or cancels the 
-				// process 
+				// block until the user resolves the conflict or cancels the
+				// process
 			}
 
 			switch (conflictOption) {

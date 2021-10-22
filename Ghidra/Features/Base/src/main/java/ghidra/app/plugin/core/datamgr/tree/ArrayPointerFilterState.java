@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,8 +17,8 @@ package ghidra.app.plugin.core.datamgr.tree;
 
 /**
  * Class to maintain the state of whether or not the Data Type Manager Tree is showing
- * pointers and/or arrays.  
- * 
+ * pointers and/or arrays.
+ *
  * Note: Not sure if this needs to be synchronized or not.  The set methods are called
  * from the awt thread, but the getter methods are often called by a background worker
  * thread. The theory is that we don't need to synchronize this because if the state

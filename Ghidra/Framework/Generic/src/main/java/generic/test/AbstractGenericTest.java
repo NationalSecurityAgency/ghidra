@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -157,7 +157,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	/**
 	 * A method to update any {@link ApplicationLayout} values
-	 * 
+	 *
 	 * @param layout the layout to initialize
 	 */
 	protected void initializeLayout(ApplicationLayout layout) {
@@ -211,7 +211,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	/**
 	 * Determine if test failure occur (for use within tear down methods)
-	 * 
+	 *
 	 * @return true if test failure detected
 	 */
 	protected boolean hasTestFailed() {
@@ -222,7 +222,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * A callback for subclasses when a test has failed. This will be called
 	 * <b>after</b> <code>tearDown()</code>.  This means that any diagnostics will have to
 	 * take into account items that have already been disposed.
-	 * 
+	 *
 	 * @param e the exception that happened when the test failed
 	 */
 	protected void testFailed(Throwable e) {
@@ -294,7 +294,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Load a text resource file into an ArrayList. Each line of the file is
 	 * stored as an item in the list.
-	 * 
+	 *
 	 * @param cls class where resource exists
 	 * @param name resource filename
 	 * @return list of lines contained in file
@@ -391,7 +391,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	/**
 	 * Returns the data directory containing test programs and data
-	 * 
+	 *
 	 * @return the data directory containing test programs and data
 	 */
 	public static File getTestDataDirectory() {
@@ -494,7 +494,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * Get the first field object contained within object ownerInstance which
 	 * has the type classType. This method is only really useful if it is known
 	 * that only a single field of classType exists within the ownerInstance.
-	 * 
+	 *
 	 * @param <T> the type
 	 * @param classType the class type of the desired field
 	 * @param ownerInstance the object instance that owns the field
@@ -635,7 +635,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * Finds the button with the indicated TEXT that is a sub-component of the
 	 * indicated container, and then programmatically presses the button. <BR>
 	 * The following is a sample JUnit test use:
-	 * 
+	 *
 	 * <PRE>
 	 * env.showTool();
 	 * OptionDialog dialog = (OptionDialog) env.waitForDialog(OptionDialog.class, 1000);
@@ -655,7 +655,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Finds the button with the indicated TEXT that is a sub-component of the
 	 * indicated container, and then programmatically presses the button.
-	 * 
+	 *
 	 * @param container the container to search. (Typically a dialog.)
 	 * @param buttonText the text on the desired JButton.
 	 * @param waitForCompletion if true wait for action to complete before
@@ -683,7 +683,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Finds the button with the indicated NAME that is a subcomponent of the
 	 * indicated container, and then programmatically presses the button.
-	 * 
+	 *
 	 * @param container the container to search. (Typically a dialog)
 	 * @param buttonName the name on the desired AbstractButton (see
 	 *            Component.setName())
@@ -695,7 +695,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Finds the button with the indicated NAME that is a subcomponent of the
 	 * indicated container, and then programmatically presses the button.
-	 * 
+	 *
 	 * @param container the container to search. (Typically a dialog.)
 	 * @param buttonName the name on the desired AbstractButton (see
 	 *            Component.setName()).
@@ -721,7 +721,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	/**
 	 * Programmatically presses the indicated button.
-	 * 
+	 *
 	 * @param button the button
 	 */
 	public static void pressButton(AbstractButton button) {
@@ -733,7 +733,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	/**
 	 * Programmatically presses the indicated button.
-	 * 
+	 *
 	 * @param button the button
 	 * @param waitForCompletion if true wait for action to complete before
 	 *            returning, otherwise schedule action to be performed and
@@ -842,7 +842,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Searches the subcomponents of the the given container and returns the
 	 * JButton that has the specified text.
-	 * 
+	 *
 	 * @param container the container to search
 	 * @param text the button text
 	 * @return the JButton, or null the button was not found
@@ -942,7 +942,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	/**
 	 * Simulates click the mouse button.
-	 * 
+	 *
 	 * @param comp the component to click on.
 	 * @param button the mouse button (1, 2, or 3)
 	 * @param x the x coordinate of the click location
@@ -970,7 +970,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	/**
 	 * Simulates click the mouse button.
-	 * 
+	 *
 	 * @param comp the component to click on.
 	 * @param button the mouse button (1, 2, or 3)
 	 * @param x the x coordinate of the click location
@@ -986,7 +986,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	/**
 	 * Simulates a mouse drag action
-	 * 
+	 *
 	 * @param comp the component to drag on.
 	 * @param button the mouse button (1, 2, or 3)
 	 * @param startX the x coordinate of the start drag location
@@ -1010,7 +1010,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	/**
 	 * Fire a mouse moved event for the given component.
-	 * 
+	 *
 	 * @param comp source of the event.
 	 * @param x x position relative to the component
 	 * @param y y position relative to the component
@@ -1109,9 +1109,9 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Run the given code snippet on the Swing thread later, not blocking the current thread.  Use
 	 * this if the code snippet causes a blocking operation.
-	 * 
+	 *
 	 * <P>This is a shortcut for <code>runSwing(r, false);</code>.
-	 * 
+	 *
 	 * @param r the runnable code snippet
 	 */
 	public void runSwingLater(Runnable r) {
@@ -1121,7 +1121,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Call this version of {@link #runSwing(Runnable)} when you expect your runnable <b>may</b>
 	 * throw exceptions
-	 * 
+	 *
 	 * @param callback the runnable code snippet to call
 	 * @throws Exception any exception that is thrown on the Swing thread
 	 */
@@ -1348,7 +1348,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Clicks a range of items in a list (simulates holding SHIFT and selecting
 	 * each item in the range in-turn)
-	 * 
+	 *
 	 * @param list the list to select from
 	 * @param row the initial index
 	 * @param count the number of rows to select
@@ -1366,7 +1366,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Clicks a range of items in a table (simulates holding SHIFT and selecting
 	 * each item in the range)
-	 * 
+	 *
 	 * @param table the table to select
 	 * @param row the starting row index
 	 * @param count the number of rows to select
@@ -1396,7 +1396,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Gets the rendered value for the specified table cell.  The actual value at the cell may
 	 * not be a String.  This method will get the String display value, as created by the table.
-	 * 
+	 *
 	 * @param table the table to query
 	 * @param row the row to query
 	 * @param column the column to query
@@ -1444,7 +1444,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * Note: This method affects the expansion state of the tree. It will expand
 	 * nodes starting at the root until a match is found or all of the tree is
 	 * checked.
-	 * 
+	 *
 	 * @param tree the tree
 	 * @param text the tree node's text
 	 * @return the tree path
@@ -1458,7 +1458,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	/**
 	 * Performs a depth first search for the named tree node.
-	 * 
+	 *
 	 * @param tree the tree to search
 	 * @param startTreePath path indicating node to begin searching from in the
 	 *            tree
@@ -1490,7 +1490,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Returns a string which is a printout of a stack trace for each thread
 	 * running in the current JVM
-	 * 
+	 *
 	 * @return the stack trace string
 	 */
 	public static String createStackTraceForAllThreads() {
@@ -1500,7 +1500,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	/**
 	 * Prints the contents of the given collection by way of the
 	 * {@link Object#toString()} method.
-	 * 
+	 *
 	 * @param collection The contents of which to print
 	 * @return A string representation of the given collection
 	 */
@@ -1823,7 +1823,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * {@link Files#createTempDirectory(Path, String, java.nio.file.attribute.FileAttribute...)}.
 	 * Any left-over test directories will be cleaned-up before creating the new
 	 * directory.
-	 * 
+	 *
 	 * <p>
 	 * Note: you should not call this method multiple times, as each call will
 	 * cleanup the previously created directories.
@@ -1857,7 +1857,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * Creates a file path with a filename that is under the system temp
 	 * directory. The path returned will not point to an existing file. The
 	 * suffix of the file will be <code>.tmp</code>.
-	 * 
+	 *
 	 * @param name the filename
 	 * @return a new file path
 	 * @throws IOException if there is any problem ensuring that the created
@@ -1874,7 +1874,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * directory. The path returned will not point to an existing file. This
 	 * method is the same as {@link #createTempFilePath(String)}, except that
 	 * you must provide the extension.
-	 * 
+	 *
 	 * @param name the filename
 	 * @param extension the file extension
 	 * @return a new file path
@@ -1893,7 +1893,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * for the filename. This method calls {@link #createTempFile(String)},
 	 * which will cleanup any pre-existing temp files whose name pattern matches
 	 * this test name. This helps to avoid old temp files from accumulating.
-	 * 
+	 *
 	 * @return the new temp file
 	 * @throws IOException if there is a problem creating the new file
 	 */
@@ -1906,7 +1906,7 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 	 * for the filename. This method calls {@link #createTempFile(String)},
 	 * which will cleanup any pre-existing temp files whose name pattern matches
 	 * this test name. This helps to avoid old temp files from accumulating.
-	 * 
+	 *
 	 * @param suffix the suffix to provide for the temp file
 	 * @return the new temp file
 	 * @throws IOException if there is a problem creating the new file

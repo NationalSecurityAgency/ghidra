@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -161,7 +161,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 			}
 
 			if (oldVariableStorageMgr != null) {
-				// migrate from old variable storage table which utilized namespace-specific 
+				// migrate from old variable storage table which utilized namespace-specific
 				// storage addresses
 				migrateFromOldVariableStorageManager(monitor);
 			}
@@ -1057,7 +1057,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 		return null;
 	}
 
-	// note: this could be public; adding it may be confusing due to the potential for having 
+	// note: this could be public; adding it may be confusing due to the potential for having
 	//       multiple symbols and not knowing when to call which method.
 	private Symbol getFirstSymbol(String name, Namespace namespace, Predicate<Symbol> test) {
 		if (namespace == null) {
@@ -2665,7 +2665,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 				return (Namespace) namespaceSymbol.getObject();
 			}
 
-			// Note: We know there are no namespaces with the name; do we still have to check for 
+			// Note: We know there are no namespaces with the name; do we still have to check for
 			//       duplicates?  Assuming yes, as another symbol type may exist with this name.
 			SymbolDB s =
 				doCreateSpecialSymbol(Address.NO_ADDRESS, name, parent, SymbolType.NAMESPACE, null,
@@ -2687,8 +2687,8 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 	 * @param name the name of the symbol
 	 * @param parent the namespace for the symbol
 	 * @param symbolType the type of the symbol
-	 * @param dataTypeId the id for an associated datatype or null 
-	 * @param variableOffset this is the ordinal for params and firstUseOffset for locals 
+	 * @param dataTypeId the id for an associated datatype or null
+	 * @param variableOffset this is the ordinal for params and firstUseOffset for locals
 	 * @param stringData value whose meaning depends on the symbol type.
 	 * @param source the SourceType for the new symbol
 	 * @return the newly created symbol
@@ -2801,7 +2801,7 @@ public class SymbolManager implements SymbolTable, ManagerDB {
 
 	/**
 	 * Internal method for creating function symbols
-	 * 
+	 *
 	 * @param addr the address for the new symbol
 	 * @param name the name of the new symbol
 	 * @param namespace the namespace for the new symbol

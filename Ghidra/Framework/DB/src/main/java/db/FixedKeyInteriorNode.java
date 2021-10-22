@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,11 @@ import ghidra.util.task.TaskMonitor;
  * <code>FixedKeyInteriorNode</code> stores a BTree node for use as an interior
  * node when searching for Table records within the database.  This type of node
  * has the following layout within a single DataBuffer (field size in bytes,
- * where 'L' is the fixed length of the fixed-length key as specified by 
+ * where 'L' is the fixed length of the fixed-length key as specified by
  * key type in associated Schema):
  * <pre>
  *   | NodeType(1) | KeyCount(4) | Key0(L) | ID0(4) | ... | KeyN(L) | IDN(4) |
- * </pre>  
+ * </pre>
  */
 class FixedKeyInteriorNode extends FixedKeyNode implements FieldKeyInteriorNode {
 
@@ -183,7 +183,7 @@ class FixedKeyInteriorNode extends FixedKeyNode implements FieldKeyInteriorNode 
 	/**
 	 * Perform a binary search to locate the specified key and derive an index
 	 * into the Buffer ID storage.  This method is intended to locate the child
-	 * node which contains the specified key.  The returned index corresponds 
+	 * node which contains the specified key.  The returned index corresponds
 	 * to a child's stored buffer/node ID and may correspond to another interior
 	 * node or a leaf record node.  Each stored key within this interior node
 	 * effectively identifies the maximum key contained within the corresponding
@@ -370,9 +370,9 @@ class FixedKeyInteriorNode extends FixedKeyNode implements FieldKeyInteriorNode 
 	}
 
 	/**
-	 * Split this interior node and insert new child entry (key and buffer ID).  
+	 * Split this interior node and insert new child entry (key and buffer ID).
 	 * Assumes 3 or more child keys exist in this node.
-	 * @param newKey new child key 
+	 * @param newKey new child key
 	 * @param newId new child node's buffer ID
 	 * @return root node.
 	 * @throws IOException thrown if IO error occurs
@@ -424,7 +424,7 @@ class FixedKeyInteriorNode extends FixedKeyNode implements FieldKeyInteriorNode 
 
 	/**
 	 * Callback method allowing child node to remove itself from parent.
-	 * Rebalancing of the tree is performed if the interior node falls 
+	 * Rebalancing of the tree is performed if the interior node falls
 	 * below the half-full point.
 	 * @param key child node key
 	 * @return root node
@@ -456,8 +456,8 @@ class FixedKeyInteriorNode extends FixedKeyNode implements FieldKeyInteriorNode 
 	}
 
 	/**
-	 * Callback method allowing a child interior node to request balancing of its 
-	 * content with its sibling nodes.  Balancing is only done if the specified node 
+	 * Callback method allowing a child interior node to request balancing of its
+	 * content with its sibling nodes.  Balancing is only done if the specified node
 	 * is half-full or less.
 	 * @param node child interior node
 	 * @return root node
@@ -469,7 +469,7 @@ class FixedKeyInteriorNode extends FixedKeyNode implements FieldKeyInteriorNode 
 			return getRoot();
 		}
 
-		// balance with right sibling except if node corresponds to the right-most 
+		// balance with right sibling except if node corresponds to the right-most
 		// key within this interior node - in that case balance with left sibling.
 		int index = getIdIndex(node.getKeyField(0));
 		if (index == (keyCount - 1)) {
@@ -500,7 +500,7 @@ class FixedKeyInteriorNode extends FixedKeyNode implements FieldKeyInteriorNode 
 
 		// Can right keys fit within left node
 		if (newLeftKeyCount <= maxKeyCount) {
-			// Right node is elliminated and all entries stored in left node			
+			// Right node is elliminated and all entries stored in left node
 			moveKeysLeft(leftNode, rightNode, rightKeyCount);
 			nodeMgr.deleteNode(rightNode);
 			return deleteChild(rightKey);

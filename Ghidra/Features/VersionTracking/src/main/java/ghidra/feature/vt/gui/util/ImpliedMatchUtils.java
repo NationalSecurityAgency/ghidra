@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Utility class for finding version tracking implied matches given an accepted matched function.
  * Each referenced data and function that exist in equivalent sections of the matched source
- * and destination functions will added to the current version tracking session as an implied match. 
+ * and destination functions will added to the current version tracking session as an implied match.
  */
 public class ImpliedMatchUtils {
 
@@ -43,12 +43,12 @@ public class ImpliedMatchUtils {
 	 * function. Each referenced data and function that exist in equivalent sections
 	 * of the matched source and destination functions will added to the current
 	 * version tracking session as an implied match.
-	 * 
+	 *
 	 * @param controller Version Tracking controller for the current VT tool
 	 * @param sourceFunction The matched function from the source program
 	 * @param destinationFunction The matched function from the destination program
 	 * @param session The Version Tracking session
-	 * @param correlationManager Keeps track of which section of the source function corresponds to 
+	 * @param correlationManager Keeps track of which section of the source function corresponds to
 	 * the which section of the destination function
 	 * @param monitor Handles user cancellations
 	 * @return a set of VTImpliedMatchInfo objects
@@ -88,7 +88,7 @@ public class ImpliedMatchUtils {
 			Function sourceFunction, Function destinationFunction, Reference sourceRef,
 			VTMatchSet possibleMatchSet, TaskMonitor monitor) throws CancelledException {
 
-		// Get the reference type of the passed in reference and make sure it is either a call or 
+		// Get the reference type of the passed in reference and make sure it is either a call or
 		// data reference
 		RefType refType = sourceRef.getReferenceType();
 		if (!(refType.isCall() || refType.isData())) {
@@ -102,14 +102,14 @@ public class ImpliedMatchUtils {
 			return null;
 		}
 
-		// Get corrected source reference "to" address if necessary (ie if thunk get the thunked 
+		// Get corrected source reference "to" address if necessary (ie if thunk get the thunked
 		// function)
 		srcRefToAddress = getReference(sourceFunction.getProgram(), srcRefToAddress);
-		
+
 		// Get the source reference's "from" address (where the reference itself is located)
 		Address srcRefFromAddress = sourceRef.getFromAddress();
 
-		// Get the destination reference address corresponding to the given source reference address  
+		// Get the destination reference address corresponding to the given source reference address
 		AddressRange range = correlator.getCorrelatedDestinationRange(srcRefFromAddress, monitor);
 		if (range == null) {
 			return null;
@@ -121,11 +121,11 @@ public class ImpliedMatchUtils {
 		if (destinationRef == null) {
 			return null;
 		}
-		
+
 		// Get the destination reference's "to" address
 		Address destRefToAddress = destinationRef.getToAddress();
-		
-		// Get corrected destination reference "to" address if necessary (ie if thunk get the 
+
+		// Get corrected destination reference "to" address if necessary (ie if thunk get the
 		// thunked function)
 		destRefToAddress = getReference(destinationFunction.getProgram(), destRefToAddress);
 
@@ -173,11 +173,11 @@ public class ImpliedMatchUtils {
 	}
 
 	/**
-	 * This method checks to see if the given reference is a thunk function and if so returns 
+	 * This method checks to see if the given reference is a thunk function and if so returns
 	 * the address of the thunked function instead of thunk function
 	 * @param program
 	 * @param refToAddress The address of the interesting reference
-	 * @return Returns either the same address passed in or the address of the thunked function if 
+	 * @return Returns either the same address passed in or the address of the thunked function if
 	 * the original address refers to a thunk
 	 */
 	private static Address getReference(Program program, Address refToAddress) {
@@ -185,13 +185,13 @@ public class ImpliedMatchUtils {
 		// If the function is a thunk - get the thunked to function and make that the implied match
 		// source not the thunk
 
-		// if the reference is a thunk function change the refToAddress to the THUNKED function 
+		// if the reference is a thunk function change the refToAddress to the THUNKED function
 		// address instead of the thunk function address
 		Function referencedFunction = program.getFunctionManager().getFunctionAt(refToAddress);
 		if ((referencedFunction != null) && (referencedFunction.isThunk())) {
 			refToAddress = referencedFunction.getThunkedFunction(true).getEntryPoint();
 		}
-		
+
 		return refToAddress;
 	}
 
@@ -292,7 +292,7 @@ public class ImpliedMatchUtils {
 	/**
 	 * Returns the source function given a version tracking session and association pair
 	 *
-	 * @param session The Version Tracking session 
+	 * @param session The Version Tracking session
 	 * @param association The association pair for a match
 	 * @return the source function given a version tracking session and association pair
 	 */
@@ -306,7 +306,7 @@ public class ImpliedMatchUtils {
 	/**
 	 * Returns the destination function given a version tracking session and association pair
 	 *
-	 * @param session The Version Tracking session 
+	 * @param session The Version Tracking session
 	 * @param association The association pair for a match
 	 * @return the destination function given a version tracking session and association pair
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import com.sun.jdi.ThreadReference;
 /**
  * Indicates the reason for a thread's state to change, usually only when
  * {@link ThreadReference#STOPPED}
- * 
+ *
  * This concept is native to JDI. When a thread stops, JDI may communicate the reason, e.g., a
  * breakpoint was hit, or the thread exited. The manager attempts to parse information for the
  * reasons it understands and provides it in e.g., a {@link JdiBreakpointHitReason}. If JDI provides

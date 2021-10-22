@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,12 +21,12 @@ import org.apache.commons.collections4.IteratorUtils;
 
 /**
  * A set of enumeration constants encoded using bits
- * 
+ *
  * All constants in the set must belong to the same enumeration called the "universe." The
  * enumeration must implement {@link BitmaskUniverse}, so that each constant provides its mask bit.
  * This is essentially a "set" abstraction on the idiom of using "flag" bits to represent the
  * present or absence of each element.
- * 
+ *
  * It is highly recommended that each constant's mask have a population of one bit. At the very
  * least, each should have one unique bit. Constants which represent combinations of other flags are
  * allowed, but they should be documented. Defining such combinations may produce surprising
@@ -44,7 +44,7 @@ public class BitmaskSet<E extends Enum<E> & BitmaskUniverse> implements Set<E> {
 
 	/**
 	 * Obtain a set of the given constants
-	 * 
+	 *
 	 * @param elements the constants, all from the same enumeration
 	 * @return the set
 	 */
@@ -64,7 +64,7 @@ public class BitmaskSet<E extends Enum<E> & BitmaskUniverse> implements Set<E> {
 
 	/**
 	 * Decode a set of constants from the given universe using the given bitmask
-	 * 
+	 *
 	 * @param universe the enumeration of constants the set may contain
 	 * @param bitmask the bitmask to decode
 	 */
@@ -75,7 +75,7 @@ public class BitmaskSet<E extends Enum<E> & BitmaskUniverse> implements Set<E> {
 
 	/**
 	 * Copy the given collection as a bitmask of constants
-	 * 
+	 *
 	 * @param universe the enumeration of constants the set may contain
 	 * @param collection the collection to copy
 	 */
@@ -100,7 +100,7 @@ public class BitmaskSet<E extends Enum<E> & BitmaskUniverse> implements Set<E> {
 
 	/**
 	 * Copy the given bitmask set
-	 * 
+	 *
 	 * @param that the other set
 	 */
 	public BitmaskSet(BitmaskSet<E> that) {
@@ -110,7 +110,7 @@ public class BitmaskSet<E extends Enum<E> & BitmaskUniverse> implements Set<E> {
 
 	/**
 	 * Create an empty set
-	 * 
+	 *
 	 * @param universe the enumeration of constants the set may contain
 	 */
 	public BitmaskSet(Class<E> universe) {
@@ -119,7 +119,7 @@ public class BitmaskSet<E extends Enum<E> & BitmaskUniverse> implements Set<E> {
 
 	/**
 	 * Check if a constant is in the set
-	 * 
+	 *
 	 * @param elem the constant
 	 * @return {@code true} if it is present, {@code false} otherwise
 	 */
@@ -130,7 +130,7 @@ public class BitmaskSet<E extends Enum<E> & BitmaskUniverse> implements Set<E> {
 
 	/**
 	 * Remove a constant from the set
-	 * 
+	 *
 	 * @param elem the constant to remove
 	 * @return {@code true} if it was present and removed, {@code false} if already not present
 	 */
@@ -142,7 +142,7 @@ public class BitmaskSet<E extends Enum<E> & BitmaskUniverse> implements Set<E> {
 
 	/**
 	 * Attempt to cast the given collection as a bitmask of the same type of elements as this
-	 * 
+	 *
 	 * @param c the collection to cast
 	 * @return the same collection, or {@code null} if the collection or element types differ
 	 */
@@ -371,7 +371,7 @@ public class BitmaskSet<E extends Enum<E> & BitmaskUniverse> implements Set<E> {
 
 	/**
 	 * Obtain the encoded bitmask
-	 * 
+	 *
 	 * @return the bitmask
 	 */
 	public long getBitmask() {
@@ -380,7 +380,7 @@ public class BitmaskSet<E extends Enum<E> & BitmaskUniverse> implements Set<E> {
 
 	/**
 	 * Decode the given bitmask, overwriting the value of this set
-	 * 
+	 *
 	 * @param bitmask the bitmask to decode
 	 */
 	public void setBitmask(long bitmask) {
@@ -389,7 +389,7 @@ public class BitmaskSet<E extends Enum<E> & BitmaskUniverse> implements Set<E> {
 
 	/**
 	 * Get this set's universe
-	 * 
+	 *
 	 * @return the enumeration representing the universe
 	 */
 	public Class<E> getUniverse() {

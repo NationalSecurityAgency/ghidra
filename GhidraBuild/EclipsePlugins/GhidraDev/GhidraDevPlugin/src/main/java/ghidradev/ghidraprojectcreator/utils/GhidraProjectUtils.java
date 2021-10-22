@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ import utility.module.ModuleUtilities;
 public class GhidraProjectUtils {
 
 	/**
-	 * The name of the linked project folder that points to the installation of 
+	 * The name of the linked project folder that points to the installation of
 	 * Ghidra that it is using.
 	 */
 	public static final String GHIDRA_FOLDER_NAME = "Ghidra";
@@ -62,7 +62,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Gets all of the open Java projects in the workspace.
-	 * 
+	 *
 	 * @return A collection of the open Java projects in the workspace.
 	 */
 	public static Collection<IJavaProject> getJavaProjects() {
@@ -77,7 +77,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Checks to see if the given project is a Java project.
-	 * 
+	 *
 	 * @param project The project to check.
 	 * @return True if the given project is a Java project; otherwise, false.
 	 */
@@ -93,7 +93,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Checks to see if the given project is a Ghidra project.
-	 * 
+	 *
 	 * @param project The project to check.
 	 * @return True if the given project is a Ghidra project; otherwise, false.
 	 */
@@ -103,7 +103,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Checks to see if the given Java project is a Ghidra module project.
-	 * 
+	 *
 	 * @param project The project to check.
 	 * @return True if the given project is a Ghidra module project; otherwise, false.
 	 */
@@ -114,7 +114,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Gets all of the open Ghidra projects in the workspace.
-	 * 
+	 *
 	 * @return A collection of the open Ghidra projects in the workspace.
 	 */
 	public static Collection<IJavaProject> getGhidraProjects() {
@@ -129,7 +129,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Gets the open Ghidra project with the given name.
-	 * 
+	 *
 	 * @param name The name of the project to get.
 	 * @return The open Ghidra project with the given name, or null if it doesn't exist.
 	 */
@@ -145,7 +145,7 @@ public class GhidraProjectUtils {
 	/**
 	 * Gets the selected project, or null if a project is not selected.  If multiple things
 	 * are selected, only the first selected item is considered.
-	 * 
+	 *
 	 * @param selection A selection from which to get a project.
 	 * @return The selected project, or null if a project is not selected.
 	 */
@@ -167,7 +167,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Tries to get the given project object's enclosing project.
-	 * 
+	 *
 	 * @param projectObj The project object to get the enclosing project of.
 	 * @return The given project object's enclosing project.  Could be null if it could not be
 	 *   determined.
@@ -203,7 +203,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Creates the given folder, including any necessary but nonexistent parent directories.
-	 * 
+	 *
 	 * @param folder The folder to create.
 	 * @param monitor The progress monitor to use during folder creation.
 	 * @throws CoreException If there was an Eclipse-related problem with creating the folder.
@@ -220,7 +220,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Updates the Java project's classpath to include the given list of classpath entries.
-	 * 
+	 *
 	 * @param javaProject The Java project that will get the new classpath entries.
 	 * @param classpathEntries A list of classpath entries to add to the Java project's classpath.
 	 * @param monitor The progress monitor.
@@ -238,7 +238,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Updates the Java project's classpath to include the given classpath entry.
-	 * 
+	 *
 	 * @param javaProject The Java project that will get the new classpath entries.
 	 * @param classpathEntry The classpath entry to add to the Java project's classpath.
 	 * @param monitor The progress monitor.
@@ -253,7 +253,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Creates a new empty Ghidra project with the given name.
-	 * 
+	 *
 	 * @param projectName The name of the project to create.
 	 * @param projectDir The directory the project will be created in.
 	 * @param createRunConfig Whether or not to create a new run configuration for the project.
@@ -324,12 +324,12 @@ public class GhidraProjectUtils {
 	}
 
 	/**
-	 * Links the Ghidra layout to the given Java project.  This effectively makes the project's 
-	 * build path "Ghidra aware." 
+	 * Links the Ghidra layout to the given Java project.  This effectively makes the project's
+	 * build path "Ghidra aware."
 	 * <p>
 	 * If the project already has a Ghidra installation directory linked to it, that link is deleted
 	 * and the new Ghidra installation directory is freshly linked back in.
-	 * 
+	 *
 	 * @param javaProject The Java project to link.
 	 * @param ghidraLayout The Ghidra layout to link the project to.
 	 * @param javaConfig Ghidra's Java configuration.
@@ -367,7 +367,7 @@ public class GhidraProjectUtils {
 		List<IClasspathEntry> classpathEntriesToKeep = new ArrayList<>();
 		for (IClasspathEntry entry : javaProject.getRawClasspath()) {
 
-			// If the project is not linked to an old Ghidra, save off the project's existing VM.  
+			// If the project is not linked to an old Ghidra, save off the project's existing VM.
 			// We'll decide whether or not to keep it later.
 			if (entry.getEntryKind() == IClasspathEntry.CPE_CONTAINER &&
 				entry.getPath().toString().startsWith(JavaRuntime.JRE_CONTAINER)) {
@@ -401,7 +401,7 @@ public class GhidraProjectUtils {
 					entryFolder.createLink(new Path(newPath), IResource.REPLACE, monitor);
 					classpathEntriesToKeep.add(JavaCore.newSourceEntry(entryFolder.getFullPath()));
 				}
-				// If it's anything else that doesn't live in the old Ghidra installation, keep it. 
+				// If it's anything else that doesn't live in the old Ghidra installation, keep it.
 				else if (oldGhidraInstallPath == null ||
 					!oldGhidraInstallPath.isPrefixOf(entry.getPath())) {
 					classpathEntriesToKeep.add(entry);
@@ -409,8 +409,8 @@ public class GhidraProjectUtils {
 			}
 		}
 
-		// If we detected a VM to potentially keep, we should ask the user if they are OK with using 
-		// the VM that Ghidra wants to use.  Changing it automatically might cause problems for their 
+		// If we detected a VM to potentially keep, we should ask the user if they are OK with using
+		// the VM that Ghidra wants to use.  Changing it automatically might cause problems for their
 		// existing Java project.
 		if (vmEntryCandidate == null || (!vmEntryCandidate.getPath().equals(vmPath) &&
 			EclipseMessageUtils.showConfirmDialog("Java Conflict",
@@ -455,7 +455,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Gets the appropriate classpath attribute for Ghidra's javadoc in the provided layout.
-	 *  
+	 *
 	 * @param ghidraLayout The Ghidra layout that contains the javadoc to get.
 	 * @return The appropriate classpath attribute for Ghidra's javadoc in the provided layout.
 	 * @throws FileNotFoundException If the javadoc was not found in the provided layout.
@@ -475,7 +475,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Gets a list of classpath entries for Ghidra's module libraries.
-	 * 
+	 *
 	 * @param ghidraLayout The Ghidra layout that contains the classpath entries to get.
 	 * @return A list of classpath entries for Ghidra's module libraries.
 	 * @throws FileNotFoundException If the javadoc was not found in the provided layout.
@@ -512,7 +512,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Gets the required VM used to build and run the Ghidra defined by the given layout.
-	 * 
+	 *
 	 * @param javaConfig Ghidra's Java configuration.
 	 * @return The required VM used to build and run the Ghidra defined by the given layout.
 	 * @throws IOException If there was a file-related problem with getting the VM.
@@ -569,7 +569,7 @@ public class GhidraProjectUtils {
 
 	/**
 	 * Configures the default Java compiler behavior for the given java project.
-	 * 
+	 *
 	 * @param jp The Java project to configure.
 	 * @param javaConfig Ghidra's Java configuration.
 	 */

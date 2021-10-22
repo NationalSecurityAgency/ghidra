@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -131,7 +131,7 @@ public class GhidraState {
 
 	/**
 	 * If it differs, set the current location to the given address and fire a {@link ProgramLocationPluginEvent}.
-	 * 
+	 *
 	 * @param address the address
 	 */
 	public void setCurrentAddress(Address address) {
@@ -150,7 +150,7 @@ public class GhidraState {
 
 	/**
 	 * If it differs, set the current location and fire a {@link ProgramLocationPluginEvent}.
-	 * 
+	 *
 	 * @param location
 	 */
 	public void setCurrentLocation(ProgramLocation location) {
@@ -173,7 +173,7 @@ public class GhidraState {
 
 	/**
 	 * Set the currently highlighted selection and fire a {@link ProgramHighlightPluginEvent}.
-	 * 
+	 *
 	 * @param highlight the selection
 	 */
 	public void setCurrentHighlight(ProgramSelection highlight) {
@@ -199,7 +199,7 @@ public class GhidraState {
 
 	/**
 	 * Set the current selection and fire a {@link ProgramSelectionPluginEvent}.
-	 * 
+	 *
 	 * @param selection the selection
 	 */
 	public void setCurrentSelection(ProgramSelection selection) {

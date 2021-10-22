@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -392,7 +392,7 @@ class DiffApplySettingsOptionManager {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param applySetting
 	 * @return
 	 */
@@ -444,7 +444,7 @@ class DiffApplySettingsOptionManager {
 	 * Converts the "combined" option for symbols into just the MERGE_CHOICE which is used
 	 * to decide if the symbol should be ignored, replaced, or merged.
 	 * @param the SYMBOL_MERGE_CHOICE
-	 * @return the MERGE_CHOICE 
+	 * @return the MERGE_CHOICE
 	 */
 	MERGE_CHOICE convertSymbolMergeChoiceToMergeChoice(SYMBOL_MERGE_CHOICE symbolMergeChoice) {
 		switch (symbolMergeChoice) {
@@ -463,7 +463,7 @@ class DiffApplySettingsOptionManager {
 	 * Converts the "combined" option for symbols into just the REPLACE_CHOICE which is used
 	 * to decide if the "primary" attribute should be used.
 	 * @param the SYMBOL_MERGE_CHOICE
-	 * @return the REPLACE_CHOICE 
+	 * @return the REPLACE_CHOICE
 	 */
 	REPLACE_CHOICE convertSymbolMergeChoiceToReplaceChoiceForPrimay(
 			SYMBOL_MERGE_CHOICE symbolMergeChoice) {
@@ -479,7 +479,7 @@ class DiffApplySettingsOptionManager {
 	}
 
 	/**
-	 * Gets the standard index number of a StringEnum for the "Symbols" option for the indicated 
+	 * Gets the standard index number of a StringEnum for the "Symbols" option for the indicated
 	 * filter values of the symbols apply filter and primary symbol filter.
 	 * @param symbolFilter the ProgramMergeFilter.SYMBOLS filter.
 	 * @param primaryFilter the ProgramMergeFilter.PRIMARY_SYMBOL filter.

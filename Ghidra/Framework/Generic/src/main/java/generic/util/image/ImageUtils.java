@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public class ImageUtils {
 	private static final float DEFAULT_TRANSPARENCY_ALPHA = 0.4f;
 
 	/**
-	 * A component to pass into the media tracker, as required by the constructor of the 
+	 * A component to pass into the media tracker, as required by the constructor of the
 	 * MediaTracker.
 	 */
 	private static JComponent mediaTrackerComponent;
@@ -43,7 +43,7 @@ public class ImageUtils {
 
 	/**
 	 * Creates an image of the given component
-	 * 
+	 *
 	 * @param c the component
 	 * @return the image
 	 */
@@ -63,7 +63,7 @@ public class ImageUtils {
 
 	/**
 	 * Pads the given image with space in the amount given.
-	 * 
+	 *
 	 * @param i the image to pad
 	 * @param c the color to use for the padding background
 	 * @param top the top padding
@@ -88,7 +88,7 @@ public class ImageUtils {
 
 	/**
 	 * Crops the given image, keeping the given bounds
-	 * 
+	 *
 	 * @param i the image to crop
 	 * @param bounds the new bounds
 	 * @return a new image based on the given image, cropped to the given bounds.
@@ -104,7 +104,7 @@ public class ImageUtils {
 
 	/**
 	 * Creates a new image of the given size.  This image is suitable for drawing operations.
-	 * 
+	 *
 	 * @param width the width of the new image
 	 * @param height the height of the new image
 	 * @return a new image of the given size.  This image is suitable for drawing operations.
@@ -119,7 +119,7 @@ public class ImageUtils {
 
 	/**
 	 * Places the two given images side-by-side into a new image.
-	 * 
+	 *
 	 * @param left the left image
 	 * @param right the right image
 	 * @return a new image with the two given images side-by-side into a new image.
@@ -155,7 +155,7 @@ public class ImageUtils {
 
 	/**
 	 * Turns the given image into a {@link RenderedImage}
-	 * 
+	 *
 	 * @param image the image
 	 * @return the rendered image
 	 */
@@ -170,7 +170,7 @@ public class ImageUtils {
 	/**
 	 * Copies this image into a buffered image.  If this image is already a buffered image, then
 	 * it will be returned.
-	 * 
+	 *
 	 * @param image the image
 	 * @return the buffered image
 	 */
@@ -196,7 +196,7 @@ public class ImageUtils {
 
 	/**
 	 * Waits a reasonable amount of time for the given image to load
-	 *  
+	 *
 	 * @param imageName the name of the image
 	 * @param image the image for which to wait
 	 * @return true if the wait was successful
@@ -270,7 +270,7 @@ public class ImageUtils {
 
 	/**
 	 * Writes the given icon out to the file denoted by <code>filename</code> <b> in the PNG format</b>.
-	 * 
+	 *
 	 * @param icon the icon to write
 	 * @param filename the filename denoting the write destination
 	 * @throws IOException see {@link ImageIO#write(RenderedImage, String, File)}
@@ -288,7 +288,7 @@ public class ImageUtils {
 	 * Make the specified icon semi-transparent using the default transparency alpha
 	 * @param icon The icon to make semi-transparent
 	 * @return a new icon, based on the original, made semi-transparent
-	 * @see ImageUtils#DEFAULT_TRANSPARENCY_ALPHA 
+	 * @see ImageUtils#DEFAULT_TRANSPARENCY_ALPHA
 	 */
 	public static Icon makeTransparent(Icon icon) {
 		return makeTransparent(icon, DEFAULT_TRANSPARENCY_ALPHA);
@@ -296,9 +296,9 @@ public class ImageUtils {
 
 	/**
 	 * Make the specified icon semi-transparent using the specified transparency alpha
-	 * 
+	 *
 	 * @param icon the icon to make semi-transparent
-	 * @param alpha the alpha value to use in making the icon transparent 
+	 * @param alpha the alpha value to use in making the icon transparent
 	 * @return a new icon, based on the original, made semi-transparent
 	 */
 	public static Icon makeTransparent(Icon icon, float alpha) {
@@ -335,7 +335,7 @@ public class ImageUtils {
 	/**
 	 * Creates a disabled version of the given image.  The disabled version will be grayed
 	 * and have the varying gray levels blended together.
-	 * 
+	 *
 	 * @param image the image to disable
 	 * @param brightnessPercent the amount of brightness to apply; 0-100
 	 * @return the new image
@@ -366,9 +366,9 @@ public class ImageUtils {
 	}
 
 	/**
-	 * Creates a new image that is the same as the given image but has the given colored 
+	 * Creates a new image that is the same as the given image but has the given colored
 	 * pixels replaced with the given new color
-	 * 
+	 *
 	 * @param image the image to change
 	 * @param oldColor the color to replace
 	 * @param newColor the color to use
@@ -413,7 +413,7 @@ public class ImageUtils {
 	/**
 	 * Takes in RGB pixel data and then converts the pixel into a gray color with a brightness
 	 * based upon <code>brightnessPercent</code>.
-	 *  
+	 *
 	 * @param rgbPixels The RGB pixel data for a given pixel.
 	 * @param destination The converted pixel data.
 	 * @param brightnessPercent The amount of brightness to include in the gray value, where 100

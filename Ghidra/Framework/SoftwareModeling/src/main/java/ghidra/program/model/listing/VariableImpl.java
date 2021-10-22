@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,7 +63,7 @@ abstract class VariableImpl implements Variable {
 	 * @param stackOffset signed stack offset
 	 * @param program target program
 	 *  @param sourceType source type
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * address is specified, or unable to resolve storage element for specified datatype
 	 * @throws AddressOutOfBoundsException if invalid stack offset specified
 	 */
@@ -73,9 +73,9 @@ abstract class VariableImpl implements Variable {
 	}
 
 	/**
-	 * Construct a variable with a single storage element at the specified address.  If address 
-	 * is contained within a register it may get realigned to the register based upon the resolved 
-	 * datatype length.  Variable storage will be aligned to the least-significant portion of the 
+	 * Construct a variable with a single storage element at the specified address.  If address
+	 * is contained within a register it may get realigned to the register based upon the resolved
+	 * datatype length.  Variable storage will be aligned to the least-significant portion of the
 	 * register.
 	 * @param name variable name
 	 * @param dataType a fixed-length datatype.  (NOTE: Should be cloned to program datatype manager
@@ -83,7 +83,7 @@ abstract class VariableImpl implements Variable {
 	 * @param storageAddr storage address or null if no storage has been identified
 	 * @param program target program
 	 * @param sourceType source type
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * address is specified, or unable to resolve storage element for specified datatype
 	 */
 	protected VariableImpl(String name, DataType dataType, Address storageAddr, Program program,
@@ -92,7 +92,7 @@ abstract class VariableImpl implements Variable {
 	}
 
 	/**
-	 * Construct a variable with a single storage register.  Variable storage will be 
+	 * Construct a variable with a single storage register.  Variable storage will be
 	 * aligned to the least-significant portion of the register.
 	 *@param name variable name
 	 * @param dataType a fixed-length datatype.  (NOTE: Should be cloned to program datatype manager
@@ -100,7 +100,7 @@ abstract class VariableImpl implements Variable {
 	 * @param register register storage
 	 * @param program target program
 	 * @param sourceType source type
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * address is specified, or unable to resolve storage element for specified datatype
 	 */
 	protected VariableImpl(String name, DataType dataType, Register register, Program program,
@@ -118,7 +118,7 @@ abstract class VariableImpl implements Variable {
 	 * @param force if true storage will be forced even if incorrect size
 	 * @param program target program
 	 * @param sourceType source type
-	 * @throws InvalidInputException if dataType restrictions are violated or an error occurs while 
+	 * @throws InvalidInputException if dataType restrictions are violated or an error occurs while
 	 * resolving storage for specified datatype
 	 */
 	protected VariableImpl(String name, DataType dataType, VariableStorage storage, boolean force,
@@ -141,7 +141,7 @@ abstract class VariableImpl implements Variable {
 	 * @param force if true storage will be forced even if mismatch with datatype size
 	 * @param program target program
 	 * @param sourceType source type
-	 * @throws InvalidInputException if dataType restrictions are violated or an error occurs while 
+	 * @throws InvalidInputException if dataType restrictions are violated or an error occurs while
 	 * resolving storage for specified datatype
 	 * @throws AddressOutOfBoundsException if invalid stack offset specified
 	 */
@@ -246,7 +246,7 @@ abstract class VariableImpl implements Variable {
 
 		long stackOffset = storageAddr.getOffset();
 		if (stackOffset < 0 && -stackOffset < dtLength) {
-			// do not allow stack element to span the 0-offset 
+			// do not allow stack element to span the 0-offset
 			// i.e., maintain separation of locals and params
 			throw new InvalidInputException(
 				"Data type does not fit within stack frame constraints (stack offset=" +
@@ -518,7 +518,7 @@ abstract class VariableImpl implements Variable {
 			((Parameter) this).getOrdinal() != ((Parameter) otherVar).getOrdinal()) {
 			return false;
 		}
-		// Always need to check the storage for a VariableImpl regardless of whether 
+		// Always need to check the storage for a VariableImpl regardless of whether
 		// the otherVar is a VariableDB with custom storage or not.
 		if (!SystemUtilities.isEqual(variableStorage, otherVar.getVariableStorage())) {
 			return false;

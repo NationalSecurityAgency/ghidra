@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package ghidra.framework.main.logviewer.event;
 /**
  * Custom events to be used in conjunction with the {@link FVEventListener} module. Users should
  * construct an event, then fire it using {@link FVEventListener#send(FVEvent)}.
- * 
+ *
  * Two items are passed along with each event:
  * 	- The {@link #eventType} attribute specifies the event that is being fired.
  * 	- The {@link #arg} is a generic object and can be populated with whatever is appropriate for the
@@ -53,7 +53,7 @@ public class FVEvent {
 	public Object arg;
 
 	/**
-	 * 
+	 *
 	 * @param eventType
 	 * @param arg
 	 */

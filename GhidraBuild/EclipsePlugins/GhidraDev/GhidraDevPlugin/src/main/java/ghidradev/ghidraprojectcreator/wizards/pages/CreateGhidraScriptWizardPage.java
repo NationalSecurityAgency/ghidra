@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,7 +56,7 @@ public class CreateGhidraScriptWizardPage extends WizardPage {
 
 	/**
 	 * Creates a new Ghidra script creation wizard page.
-	 * 
+	 *
 	 * @param selectedPackageFragmentRoot The current selection in the project explorer.
 	 *   Could be null if nothing is selected.
 	 */
@@ -70,7 +70,7 @@ public class CreateGhidraScriptWizardPage extends WizardPage {
 
 		Composite container = new Composite(parent, SWT.NULL);
 		container.setLayout(new GridLayout(3, false));
-		
+
 		// Source folder
 		Label sourceFolderLabel = new Label(container, SWT.NULL);
 		sourceFolderLabel.setText("Script folder:");
@@ -93,7 +93,7 @@ public class CreateGhidraScriptWizardPage extends WizardPage {
 				}
 			}
 		});
-		
+
 		// Script name
 		Label scriptNameLabel = new Label(container, SWT.NULL);
 		scriptNameLabel.setText("Script name:");
@@ -146,9 +146,9 @@ public class CreateGhidraScriptWizardPage extends WizardPage {
 
 	/**
 	 * Gets the script's target source folder. This is where the script will get created.
-	 * 
-	 * @return The script's target source folder.  Could be null if unspecified, however, the page 
-	 *   will not be valid until the source folder is valid, so it should never be null when called 
+	 *
+	 * @return The script's target source folder.  Could be null if unspecified, however, the page
+	 *   will not be valid until the source folder is valid, so it should never be null when called
 	 *   by other classes.
 	 */
 	public IFolder getScriptFolder() {
@@ -166,9 +166,9 @@ public class CreateGhidraScriptWizardPage extends WizardPage {
 
 	/**
 	 * Gets the name of the script to create (including extension).
-	 * 
+	 *
 	 * @return The name of the script to create (including extension).
-	 *   Could be empty if unspecified, however, the page will not be valid until the script 
+	 *   Could be empty if unspecified, however, the page will not be valid until the script
 	 *   name is valid, so it should never be empty when called by other classes.
 	 */
 	public String getScriptName() {
@@ -177,7 +177,7 @@ public class CreateGhidraScriptWizardPage extends WizardPage {
 
 	/**
 	 * Gets the script author.
-	 * 
+	 *
 	 * @return The script author.  This is an optional field, so it could be empty.
 	 */
 	public String getScriptAuthor() {
@@ -186,7 +186,7 @@ public class CreateGhidraScriptWizardPage extends WizardPage {
 
 	/**
 	 * Gets the script category.
-	 * 
+	 *
 	 * @return The script category.  This is an optional field, so it could be empty.
 	 */
 	public String getScriptCategory() {
@@ -195,8 +195,8 @@ public class CreateGhidraScriptWizardPage extends WizardPage {
 
 	/**
 	 * Gets the script description as an array of lines.
-	 * 
-	 * @return The script description as an array of lines. This is an optional field, 
+	 *
+	 * @return The script description as an array of lines. This is an optional field,
 	 * so it could be empty.
 	 */
 	public String[] getScriptDescription() {

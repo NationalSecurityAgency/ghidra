@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,9 +40,9 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetView<T> extends Abstrac
 
 	/**
 	 * TODO Document me
-	 * 
+	 *
 	 * The caller must reduce the map if only a certain range is desired.
-	 * 
+	 *
 	 * @param lock
 	 * @param map
 	 * @param predicate
@@ -150,7 +150,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetView<T> extends Abstrac
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * <p>
 	 * Note the first range may be incomplete up when composed of connected entries, but it will at
 	 * least include all the ranges ahead of the given start -- or behind the given start if forward
@@ -255,7 +255,7 @@ public class DBTraceAddressSnapRangePropertyMapAddressSetView<T> extends Abstrac
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * Note that adjacent or overlapping ranges may be omitted if they don't also contain the
 	 * address.
 	 */

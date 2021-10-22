@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,46 +21,46 @@ import java.awt.event.MouseEvent;
 import docking.action.DockingActionIf;
 
 /**
- * Action context is a class that contains state information that is given to 
+ * Action context is a class that contains state information that is given to
  * {@link DockingActionIf}s for them to decide if they are enabled for a given user action.  User
  * actions are toolbar button presses, menu bar item presses and popup menu item presses.   As
  * the user changes focus in the system, all actions are queried with the current context.  Thus,
  * <b>toolbar buttons and menu items will enable and disable as the user interacts with the system.
- * Further, popup menu items will not be added to popup menus when they report false for 
- * {@link DockingActionIf#isAddToPopup(ActionContext)}; they will appear in the popup, but be 
- * disabled if they report <code>true</code> for the above call, but <code>false</code> for 
+ * Further, popup menu items will not be added to popup menus when they report false for
+ * {@link DockingActionIf#isAddToPopup(ActionContext)}; they will appear in the popup, but be
+ * disabled if they report <code>true</code> for the above call, but <code>false</code> for
  * {@link DockingActionIf#isEnabledForContext(ActionContext)}.</b>
- * When the user executes an action, the current context will be passed to the backing 
- * {@link DockingActionIf}.   Ultimately, context serves to control action enablement and to 
- * allow plugins to share state with actions without having to store that state information 
+ * When the user executes an action, the current context will be passed to the backing
+ * {@link DockingActionIf}.   Ultimately, context serves to control action enablement and to
+ * allow plugins to share state with actions without having to store that state information
  * in class fields of the plugin.
- * 
+ *
  * <p>ComponentProviders are required to return Objects of this type in their getActionContext()
  * methods.  Generally, ComponentProviders have two ways to use this class.  They can either create
  * an ActionContext instance and pass in a contextObject that will be useful to its actions or,
  * subclass the ActionContext object to include specific methods to provide the information that
- * actions will require. 
- * 
+ * actions will require.
+ *
  * <p>The data contained by this class has meaning that can change relative to the code that
  * created it.  The intended purpose for the fields of this class is as follows:
  * <ul>
  * 	<li><b>provider</b> - the component provider to which this context belongs; the provider that
  *                        contains the component that is the source of the user action
  *  </li>
- * 	<li><b>contextObject</b> - client-defined data object.  This allows clients to save any 
+ * 	<li><b>contextObject</b> - client-defined data object.  This allows clients to save any
  *                             information desired to be used when the action is performed.
  *  </li>
- * 	<li><b>sourceObject</b> - when checking enablement, this is the item that was clicked or 
+ * 	<li><b>sourceObject</b> - when checking enablement, this is the item that was clicked or
  *                            activated; when performing an action this is either the active
  *                            object or the component that was clicked.  This value may change
- *                            between the check for  
+ *                            between the check for
  *                            {@link DockingActionIf#isEnabledForContext(ActionContext) enablement}
  *                            and {@link DockingActionIf#actionPerformed(ActionContext) execution}.
  *  </li>
- *  <li><b>sourceComponent</b> - this value is the component that is the source of the current 
+ *  <li><b>sourceComponent</b> - this value is the component that is the source of the current
  *                               context.  Whereas the <code>sourceObject</code> is the actual
- *                               clicked item, this value is the focused/active component and 
- *                               will not change between  
+ *                               clicked item, this value is the focused/active component and
+ *                               will not change between
  *                               {@link DockingActionIf#isEnabledForContext(ActionContext) enablement}
  *                            	 and {@link DockingActionIf#actionPerformed(ActionContext) execution}.
  *  </li>
@@ -68,8 +68,8 @@ import docking.action.DockingActionIf;
  *                          triggered by a key binding.
  *  </li>
  * </ul>
- * 
- * <p>Ultimately, clients can pass any values they wish for the fields of this class, even if 
+ *
+ * <p>Ultimately, clients can pass any values they wish for the fields of this class, even if
  * that changes the meaning of the fields outlined above.
  */
 
@@ -93,7 +93,7 @@ public class ActionContext {
 		this(cp, null);
 	}
 
-	/** 
+	/**
 	 * Basic constructor for ActionContext
 	 * @param provider the ComponentProvider that generated this context.
 	 * @param sourceComponent an optional source object; this is intended to be the component that
@@ -105,9 +105,9 @@ public class ActionContext {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param provider the ComponentProvider that generated this context.
-	 * @param contextObject an optional contextObject that the ComponentProvider can provide; this 
+	 * @param contextObject an optional contextObject that the ComponentProvider can provide; this
 	 *        can be anything that actions wish to later retrieve
 	 * @param sourceComponent an optional source object; this is intended to be the component that
 	 *        is the source of the context, usually the focused component
@@ -164,9 +164,9 @@ public class ActionContext {
 	}
 
 	/**
-	 * Sets the context object for this context.  This can be any object of the creator's 
+	 * Sets the context object for this context.  This can be any object of the creator's
 	 * choosing that can be provided for later retrieval.
-	 * 
+	 *
 	 * @param contextObject Sets the context object for this context.
 	 * @return this context
 	 */
@@ -184,10 +184,10 @@ public class ActionContext {
 	}
 
 	/**
-	 * Sets the sourceObject for this ActionContext.  This method is used internally by the 
-	 * DockingWindowManager. ComponentProvider and action developers should only use this 
+	 * Sets the sourceObject for this ActionContext.  This method is used internally by the
+	 * DockingWindowManager. ComponentProvider and action developers should only use this
 	 * method for testing.
-	 * 
+	 *
 	 * @param sourceObject the source object
 	 * @return this context
 	 */
@@ -197,10 +197,10 @@ public class ActionContext {
 	}
 
 	/**
-	 * Updates the context's mouse event.  Contexts that are based upon key events will have no 
-	 * mouse event.   This method is really for the framework to use.  Client calls to this 
+	 * Updates the context's mouse event.  Contexts that are based upon key events will have no
+	 * mouse event.   This method is really for the framework to use.  Client calls to this
 	 * method will be overridden by the framework when menu items are clicked.
-	 * 
+	 *
 	 * @param e the event that triggered this context.
 	 * @return this context
 	 */
@@ -210,9 +210,9 @@ public class ActionContext {
 	}
 
 	/**
-	 * Returns the context's mouse event.  Contexts that are based upon key events will have no 
+	 * Returns the context's mouse event.  Contexts that are based upon key events will have no
 	 * mouse event.
-	 * 
+	 *
 	 * @return the mouse event that triggered this context; null implies a key event-based context
 	 */
 	public MouseEvent getMouseEvent() {
@@ -222,7 +222,7 @@ public class ActionContext {
 	/**
 	 * Returns the component that is the target of this context.   This value should not change
 	 * whether the context is triggered by a key binding or mouse event.
-	 *   
+	 *
 	 * @return the component; may be null
 	 */
 	public Component getSourceComponent() {
@@ -235,7 +235,7 @@ public class ActionContext {
 
 		//@formatter:off
 		return "{\n" +
-			"\tprovider: " + provider + ",\n" + 
+			"\tprovider: " + provider + ",\n" +
 			"\tcontextObject: " + contextObject + ",\n" +
 			"\tsourceObject: " + sourceObject + ",\n" +
 			"\tsourceComponent: " + sourceComponent + ",\n" +

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.util.exception.DuplicateNameException;
  * A Code attribute contains the Java virtual machine
  * instructions and auxiliary information for a single method, instance initialization
  * method (?2.9), or class or interface initialization method (?2.9). Every Java virtual
- * machine implementation must recognize Code attributes. 
+ * machine implementation must recognize Code attributes.
  * <p>
  * If the method is either
  * native or abstract, its method_info structure must not have a Code attribute.
@@ -154,7 +154,7 @@ public class CodeAttribute extends AbstractAttributeInfo {
 
 	/**
 	 * Each entry in the exception_table array describes one exception handler in
-	 * the code array. 
+	 * the code array.
 	 * <p>
 	 * The order of the handlers in the exception_table array is significant
 	 * @return the exception_table array

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Creates a new {@link MachoPrelinkProgramBuilder} based on the given information.
-	 * 
+	 *
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
@@ -64,7 +64,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Builds up a PRELINK Mach-O {@link Program}.
-	 * 
+	 *
 	 * @param program The {@link Program} to build up.
 	 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 	 * @param fileBytes Where the Mach-O's bytes came from.
@@ -85,12 +85,12 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 
 		// We want to handle the start of the Mach-O normally.  It represents the System.kext.
 		super.build();
-		
+
 		// Fixup any chained pointers
 		List<Address> fixedAddresses = fixupChainedPointers();
 
-		// The rest of the Mach-O's live in the memory segments that the System.kext already 
-		// defined. Therefore, we really just want to go through and do additional markup on them 
+		// The rest of the Mach-O's live in the memory segments that the System.kext already
+		// defined. Therefore, we really just want to go through and do additional markup on them
 		// since they are already loaded in.
 		List<Long> machoHeaderOffsets =
 			MachoPrelinkUtils.findPrelinkMachoHeaderOffsets(provider, monitor);
@@ -158,7 +158,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Fixes up any chained pointers.  Relies on the __thread_starts section being present.
-	 * 
+	 *
 	 * @return A list of addresses where pointer fixes were performed.
 	 * @throws MemoryAccessException if there was a problem reading/writing memory.
 	 */
@@ -195,7 +195,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Fixes up any chained pointers, starting at the given address.
-	 * 
+	 *
 	 * @param chainStart The starting of address of the pointer chain to fix.
 	 * @param nextOffSize The size of the next offset.
 	 * @return A list of addresses where pointer fixes were performed.
@@ -223,7 +223,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Fixes up the pointer at the given address.
-	 * 
+	 *
 	 * @param pointerAddr The address of the pointer to fix.
 	 * @param pointerValue The value at the address of the pointer to fix.
 	 * @throws MemoryAccessException if there was a problem reading/writing memory.
@@ -277,7 +277,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 
 		/**
 		 * Creates a new {@link PrelinkMachoInfo} object with the given parameters.
-		 * 
+		 *
 		 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes.
 		 * @param offset The offset in the provider to the start of the Mach-O.
 		 * @param headerAddr The Mach-O's header address.
@@ -303,8 +303,8 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 
 		/**
 		 * Processes memory blocks for this PRELINK Mach-O.
-		 * 
-		 * @throws Exception If there was a problem processing memory blocks for this PRELINK 
+		 *
+		 * @throws Exception If there was a problem processing memory blocks for this PRELINK
 		 *   Mach-O.
 		 * @see MachoPrelinkProgramBuilder#processMemoryBlocks(MachHeader, String, boolean, boolean)
 		 */
@@ -314,7 +314,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 
 		/**
 		 * Marks up the PRELINK Mach-O headers.
-		 * 
+		 *
 		 * @throws Exception If there was a problem marking up the PRELINK Mach-O's headers.
 		 * @see MachoPrelinkProgramBuilder#markupHeaders(MachHeader, Address)
 		 */
@@ -328,7 +328,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 
 		/**
 		 * Adds an entry to the program tree for this PRELINK Mach-O.
-		 * 
+		 *
 		 * @param next The PRELINK Mach-O that comes directly after this one.  Could be null if this
 		 *   is the last one.
 		 * @throws Exception If there was a problem adding this PRELINK Mach-O to the program tree.

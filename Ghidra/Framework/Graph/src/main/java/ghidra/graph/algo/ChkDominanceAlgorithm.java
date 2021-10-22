@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,14 +25,14 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This algorithm is an implementation of the Cooper, Harvey, Kennedy algorithm.  
- * 
- * <P>The algorithm processes the graph in reverse post-order.  The runtime of 
- * this algorithm is approximately <code>O(V+E*D)</code> per iteration of the loop, where 
- * D is the size of the largest dominator set.  The number of iterations is 
- * bound at <code>d(G) + 3</code>, where d(G) is the "loop 
- * connectedness" of the graph. 
- * 
+ * This algorithm is an implementation of the Cooper, Harvey, Kennedy algorithm.
+ *
+ * <P>The algorithm processes the graph in reverse post-order.  The runtime of
+ * this algorithm is approximately <code>O(V+E*D)</code> per iteration of the loop, where
+ * D is the size of the largest dominator set.  The number of iterations is
+ * bound at <code>d(G) + 3</code>, where d(G) is the "loop
+ * connectedness" of the graph.
+ *
  *
  * @param <V> the vertex type
  * @param <E> the edge type
@@ -55,7 +55,7 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param g the graph
 	 * @param monitor the monitor
 	 * @throws CancelledException if the algorithm is cancelled
@@ -155,7 +155,7 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 			}
 			while (finger2Index < finger1Index) {
 				if (dominatorMap.get(finger2) == null) {
-					// this can happen when the dominators for 'finger2' have not 
+					// this can happen when the dominators for 'finger2' have not
 					// yet been calculated
 					return finger1;
 				}
@@ -168,9 +168,9 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 	}
 
 	/**
-	 * Returns all nodes dominated by the given vertex.  A node 'a' dominates node 'b' if 
+	 * Returns all nodes dominated by the given vertex.  A node 'a' dominates node 'b' if
 	 * all paths from start to 'b' contain 'a'.
-	 * 
+	 *
 	 * @param a the vertex
 	 * @return the dominated vertices
 	 */
@@ -187,9 +187,9 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 	}
 
 	/**
-	 * Returns all nodes that dominate the given vertex.  A node 'a' dominates node 'b' if 
-	 * all paths from start to 'b' contain 'a'.  
-	 * 
+	 * Returns all nodes that dominate the given vertex.  A node 'a' dominates node 'b' if
+	 * all paths from start to 'b' contain 'a'.
+	 *
 	 * @param a the vertex
 	 * @return the dominating vertices
 	 */
@@ -215,9 +215,9 @@ public class ChkDominanceAlgorithm<V, E extends GEdge<V>> extends AbstractDomina
 	}
 
 	/**
-	 * Returns the dominance tree for the given graph, which is tree where each 
+	 * Returns the dominance tree for the given graph, which is tree where each
 	 * node's children are those nodes it *immediately* dominates (a idom b).
-	 * 
+	 *
 	 * @return the dominance tree
 	 */
 	public GDirectedGraph<V, GEdge<V>> getDominanceTree() {

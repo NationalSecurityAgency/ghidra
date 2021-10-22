@@ -5,10 +5,10 @@
  * nativeBuildProperties.gradle
  *
  * This script contains global settings used by all projects that have
- * native build requirements.  
+ * native build requirements.
  *
  * This is NOT a complete build script for those
- * projects; it is only meant to capture items that are common to all so 
+ * projects; it is only meant to capture items that are common to all so
  * we don't need to define them over and over again.
  ****************************************************************************/
 
@@ -19,7 +19,7 @@ apply plugin: 'cpp'
 apply plugin: 'c'
 
 /****************************************************************************
- * Defines the platforms we have to support in Ghidra.  This model is used 
+ * Defines the platforms we have to support in Ghidra.  This model is used
  * for all native builds and should be extended by each module as-needed.
  ****************************************************************************/
 model {
@@ -32,11 +32,11 @@ model {
 				operatingSystem platform.os
 			}
 		}
-	}	
+	}
 
 	// The toolChains block is needed because Gradle doesn't find gcc/clang on ARM-based Linux
-	// and macOS platforms without explicitly declaring their targets.  Might be a bug in the 
-	// native Gradle plugin. 
+	// and macOS platforms without explicitly declaring their targets.  Might be a bug in the
+	// native Gradle plugin.
 	toolChains {
 		if (isCurrentLinux()) {
 			gcc(Gcc) {
@@ -65,13 +65,13 @@ task CheckToolChain {
 			// ensure that required MS Visual Studio is installed
 			if (!VISUAL_STUDIO_INSTALL_DIR) {
 				throw new GradleException("Visual Studio not found!");
-			}	
+			}
 		}
 	}
 }
 
 /*******************************************************************************************
- * If task1 contains the given platform name, then it needs to be executed before 
+ * If task1 contains the given platform name, then it needs to be executed before
  * task2.  The task1 must be of type LinkExecutable or LinkSharedLibrary so that the
  * targetPlatform may be inspected.
  *
@@ -85,7 +85,7 @@ def addTaskDependencyForMyPlatform(task1, task2, platform) {
 
 /*******************************************************************************************
  * Returns true if the given task is a custom Make task (starts with the platform name and
- * ends with "Make"). 
+ * ends with "Make").
  *
  * Note that this is a Ghidra-specific task and is not one created dynamically by Gradle.
  *
@@ -115,7 +115,7 @@ def shouldSkipNative(task) {
  * Args: PlatformName - The name of the platform.  If not specified, the current platform is used.
  *
  * Example: gradle buildNatives_win_x86_64 will build all win_x86_64 native executables and shared libraries.
- *	
+ *
  * NOTE: you must be on the appropriate platform for this to work.
  ******************************************************************************************/
 tasks.addRule("Pattern: buildNatives[_PlatformName]: build all natives for given platform") { String taskName ->
@@ -129,27 +129,27 @@ tasks.addRule("Pattern: buildNatives[_PlatformName]: build all natives for given
 		if (platform.startsWith("_")) {
 			platform = platform - "_"
 		}
-		
+
 		task(taskName)  { myTask ->
-		
+
 			project.tasks.withType(LinkExecutable) { t ->
 				addTaskDependencyForMyPlatform(t, myTask, platform)
 			}
 			project.tasks.withType(LinkSharedLibrary) { t ->
 				addTaskDependencyForMyPlatform(t, myTask, platform)
 			}
-			project.tasks.each { t -> 
+			project.tasks.each { t ->
 				if (isNativeBinaryMakeTask(t, platform)) {
 					myTask.dependsOn t.path
 					t.dependsOn CheckToolChain
 				}
-				
+
 				// buildNatives task natives end up in the distribution...mark test natives as "skip"
 				if (project.findProperty("nativesTestOnly") ?: false) {
 					t.ext.set("skipNative", true)
 				}
 			}
-			
+
 			// add callbacks to look for native build tasks when new tasks are added later
 			project.tasks.withType(LinkExecutable).whenTaskAdded { t ->
 				addTaskDependencyForMyPlatform(t, myTask, platform)
@@ -157,7 +157,7 @@ tasks.addRule("Pattern: buildNatives[_PlatformName]: build all natives for given
 			project.tasks.withType(LinkSharedLibrary).whenTaskAdded { t ->
 				addTaskDependencyForMyPlatform(t, myTask, platform)
 			}
-			project.tasks.whenTaskAdded { t -> 
+			project.tasks.whenTaskAdded { t ->
 				if (isNativeBinaryMakeTask(t, platform)) {
 					myTask.dependsOn t.path
 					t.dependsOn CheckToolChain
@@ -194,7 +194,7 @@ gradle.taskGraph.whenReady {
 }
 
 /*****************************************************************************************
- * The following block of code ensures that the buildNatives (for current plaform) task is 
+ * The following block of code ensures that the buildNatives (for current plaform) task is
  * used during assembly to ensure that missing toolchain generates an appropriate error
  ****************************************************************************************/
-assemble.dependsOn "buildNatives" 
+assemble.dependsOn "buildNatives"

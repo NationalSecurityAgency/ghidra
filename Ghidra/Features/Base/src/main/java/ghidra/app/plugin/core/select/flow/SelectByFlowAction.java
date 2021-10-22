@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,10 +44,10 @@ class SelectByFlowAction extends ListingContextAction {
 	 * @param name the name for this action.
 	 * @param plugin the plugin this action is associated with.
 	 * @param selectionType
-	 * SELECT_ALL_FLOWS_FROM indicates all flows from addresses in the current selection or 
+	 * SELECT_ALL_FLOWS_FROM indicates all flows from addresses in the current selection or
 	 * location should be followed.
 	 * <BR>
-	 * SELECT_LIMITED_FLOWS_FROM indicates all flows from addresses in the current selection or 
+	 * SELECT_LIMITED_FLOWS_FROM indicates all flows from addresses in the current selection or
 	 * location should be followed where the property for following that flow type is set to true.
 	 * <BR>
 	 * SELECT_SUBROUTINES indicates all flows except calls should be followed.
@@ -55,7 +55,7 @@ class SelectByFlowAction extends ListingContextAction {
 	 * SELECT_ALL_FLOWS_TO indicates all flows to addresses in the current selection or location
 	 * should be followed.
 	 * <BR>
-	 * SELECT_LIMITED_FLOWS_TO indicates all flows to addresses in the current selection or 
+	 * SELECT_LIMITED_FLOWS_TO indicates all flows to addresses in the current selection or
 	 * location should be followed where the property for following that flow type is set to true.
 	 */
 	SelectByFlowAction(String name, SelectByFlowPlugin plugin, int selectionType) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,10 +33,10 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * An interface that all loaders must implement. A particular loader implementation should be 
+ * An interface that all loaders must implement. A particular loader implementation should be
  * designed to identify one and only one file format.
  * <p>
- * NOTE:  ALL loader CLASSES MUST END IN "Loader".  If not, the {@link ClassSearcher} will not find 
+ * NOTE:  ALL loader CLASSES MUST END IN "Loader".  If not, the {@link ClassSearcher} will not find
  * them.
  */
 public interface Loader extends ExtensionPoint, Comparable<Loader> {
@@ -45,21 +45,21 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 
 	/**
 	 * If this {@link Loader} supports loading the given {@link ByteProvider}, this methods returns
-	 * a {@link Collection} of all supported {@link LoadSpec}s that contain discovered load 
+	 * a {@link Collection} of all supported {@link LoadSpec}s that contain discovered load
 	 * specification information that this {@link Loader} will need to load.  If this {@link Loader}
 	 * cannot support loading the given {@link ByteProvider}, an empty {@link Collection} is
 	 * returned.
-	 * 
+	 *
 	 * @param provider The bytes being loaded.
-	 * @return A {@link Collection} of {@link LoadSpec}s that this {@link Loader} supports loading, 
-	 *   or an empty {@link Collection} if this {@link Loader} doesn't support loading the given 
+	 * @return A {@link Collection} of {@link LoadSpec}s that this {@link Loader} supports loading,
+	 *   or an empty {@link Collection} if this {@link Loader} doesn't support loading the given
 	 *   {@link ByteProvider}.
 	 * @throws IOException if there was an IO-related issue finding the {@link LoadSpec}s.
 	 */
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException;
 
 	/**
-	 * Loads bytes in a particular format as a new {@link DomainObject}. 
+	 * Loads bytes in a particular format as a new {@link DomainObject}.
 	 * Multiple {@link DomainObject}s may end up getting created, depending on the nature of the
 	 * format.
 	 *
@@ -72,11 +72,11 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * @param messageLog The message log.
 	 * @param consumer A consumer object for {@link DomainObject} generated.
 	 * @param monitor A cancelable task monitor.
-	 * @return A list of loaded {@link DomainObject}s (element 0 corresponds to primary loaded 
+	 * @return A list of loaded {@link DomainObject}s (element 0 corresponds to primary loaded
 	 *   object).
 	 * @throws IOException if there was an IO-related problem loading.
 	 * @throws CancelledException if the user cancelled the load.
-	 * @throws DuplicateNameException if the load resulted in a naming conflict with the 
+	 * @throws DuplicateNameException if the load resulted in a naming conflict with the
 	 *   {@link DomainObject}.
 	 * @throws InvalidNameException if an invalid {@link DomainObject} name was used during load.
 	 * @throws VersionException if there was an issue with database versions, probably due to a
@@ -88,7 +88,7 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 			InvalidNameException, VersionException;
 
 	/**
-	 * Loads bytes into the specified {@link Program}.  This method will not create any new 
+	 * Loads bytes into the specified {@link Program}.  This method will not create any new
 	 * {@link Program}s.  It is only for adding to an existing {@link Program}.
 	 *
 	 * @param provider The bytes to load into the {@link Program}.
@@ -107,11 +107,11 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 
 	/**
 	 * Gets the default {@link Loader} options.
-	 * 
+	 *
 	 * @param provider The bytes of the thing being loaded.
 	 * @param loadSpec The {@link LoadSpec}.
 	 * @param domainObject The {@link DomainObject} being loaded.
-	 * @param loadIntoProgram True if the load is adding to an existing {@link DomainObject}; 
+	 * @param loadIntoProgram True if the load is adding to an existing {@link DomainObject};
 	 *   otherwise, false.
 	 * @return A list of the {@link Loader}'s default options.
 	 */
@@ -119,24 +119,24 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 			DomainObject domainObject, boolean loadIntoProgram);
 
 	/**
-	 * Validates the {@link Loader}'s options and returns null if all options are valid; otherwise, 
+	 * Validates the {@link Loader}'s options and returns null if all options are valid; otherwise,
 	 * an error message describing the problem is returned.
-	 * 
+	 *
 	 * @param provider The bytes of the thing being loaded.
 	 * @param loadSpec The proposed {@link LoadSpec}.
 	 * @param options The list of {@link Option}s to validate.
 	 * @param program existing program if the loader is adding to an existing program. If it is
-	 * a fresh import, then this will be null. 
-	 * @return null if all {@link Option}s are valid; otherwise, an error message describing the 
+	 * a fresh import, then this will be null.
+	 * @return null if all {@link Option}s are valid; otherwise, an error message describing the
 	 *   problem is returned.
 	 */
 	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			Program program);
 
 	/**
-	 * Gets the {@link Loader}'s name, which is used both for display purposes, and to identify the 
+	 * Gets the {@link Loader}'s name, which is used both for display purposes, and to identify the
 	 * {@link Loader} in the opinion files.
-	 * 
+	 *
 	 * @return The {@link Loader}'s name.
 	 */
 	public String getName();
@@ -160,12 +160,12 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	/**
 	 * The preferred file name to use when loading.
 	 * <p>
-	 * The default behavior of this method is to return the (cleaned up) name of the given 
+	 * The default behavior of this method is to return the (cleaned up) name of the given
 	 *   {@link ByteProvider}.
 	 * <p>
 	 * NOTE: This method may get called frequently, so only parse the given {@link ByteProvider}
 	 * if absolutely necessary.
-	 * 
+	 *
 	 * @param provider The bytes to load.
 	 * @return The preferred file name to use when loading.
 	 */
@@ -179,8 +179,8 @@ public interface Loader extends ExtensionPoint, Comparable<Loader> {
 	 * Checks to see if this {@link Loader} supports loading into an existing {@link Program}.
 	 * <p>
 	 * The default behavior of this method is to return false.
-	 * 
-	 * @return True if this {@link Loader} supports loading into an existing {@link Program}; 
+	 *
+	 * @return True if this {@link Loader} supports loading into an existing {@link Program};
 	 *   otherwise, false.
 	 */
 	public default boolean supportsLoadIntoProgram() {

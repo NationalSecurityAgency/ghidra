@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,9 @@ import java.awt.*;
 
 import javax.swing.Icon;
 
-/** 
- * Paints an oval of the given size, based upon the Component passed to 
- * {@link #paintIcon(Component, Graphics, int, int)}.  If the component is null, then no 
+/**
+ * Paints an oval of the given size, based upon the Component passed to
+ * {@link #paintIcon(Component, Graphics, int, int)}.  If the component is null, then no
  * painting will take place.
  */
 public class OvalBackgroundColorIcon implements Icon {
@@ -32,9 +32,9 @@ public class OvalBackgroundColorIcon implements Icon {
 
     public OvalBackgroundColorIcon( int width, int height ) {
         this.width = width;
-        this.height = height;        
+        this.height = height;
     }
-    
+
     public int getIconHeight() {
         return height;
     }
@@ -47,7 +47,7 @@ public class OvalBackgroundColorIcon implements Icon {
         if ( c == null ) {
             return;
         }
-        
+
         Color color = c.getBackground();
         g.setColor( color );
         g.fillOval( x, y, width, height );

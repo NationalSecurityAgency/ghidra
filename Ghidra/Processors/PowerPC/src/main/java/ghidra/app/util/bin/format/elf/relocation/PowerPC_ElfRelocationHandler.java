@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,10 +67,10 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 //		if (sym.isLocal() && sym.getSectionHeaderIndex() != ElfSectionHeaderConstants.SHN_UNDEF) {
 //
 //			// see glibc - sysdeps/powerpc/powerpc32/dl-machine.h elf_machine_rela
-//			
+//
 //			// TODO: Unclear if this logic is complete.  Need to find example where this is necessary.
 //
-//			// Relocation addend already includes original symbol value but needs to account 
+//			// Relocation addend already includes original symbol value but needs to account
 //			// for any image base adjustment
 //			symbolValue = (int) elfRelocationContext.getImageBaseWordAdjustmentOffset();
 //		}
@@ -114,15 +114,15 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, (short) newValue);
 				break;
 			/**
-			 * 
+			 *
 			R_POWERPC_ADDR16_HA: ((Symbol + Addend + 0x8000) >> 16) & 0xffff
 			static inline void addr16_ha(unsigned char* view, Address value)
 			{ This::addr16_hi(view, value + 0x8000); }
-			
+
 			static inline void
 			addr16_hi(unsigned char* view, Address value)
 			{ This::template rela<16,16>(view, 16, 0xffff, value + 0x8000, CHECK_NONE); }
-			
+
 			rela(unsigned char* view,
 			unsigned int right_shift,
 			typename elfcpp::Valtype_base<fieldsize>::Valtype dst_mask,
@@ -132,15 +132,15 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 			typedef typename elfcpp::Swap<fieldsize, big_endian>::Valtype Valtype;
 			Valtype* wv = reinterpret_cast<Valtype*>(view);
 			Valtype val = elfcpp::Swap<fieldsize, big_endian>::readval(wv);  // original bytes
-			
+
 			Valtype reloc = value >> 16;
 			val &= ~0xffff;
 			reloc &= dst_mask;
 			elfcpp::Swap<fieldsize, big_endian>::writeval(wv, val | reloc); // write instr btes
 			return overflowed<valsize>(value >> 16, overflow);
 			}
-			
-			
+
+
 			 */
 			case PowerPC_ElfRelocationConstants.R_PPC_ADDR16_HA:
 				newValue = (symbolValue + addend + 0x8000) >> 16;
@@ -197,7 +197,7 @@ public class PowerPC_ElfRelocationHandler extends ElfRelocationHandler {
 					memory.setInt(relocationAddress, newValue);
 				}
 				else {
-					// TODO: Handle this case if needed - hopefully the EXTERNAL block is 
+					// TODO: Handle this case if needed - hopefully the EXTERNAL block is
 					// not too far away since a fabricated GOT would be in the same block
 					// and we may only have room in the plt for two instructions.
 					markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName,

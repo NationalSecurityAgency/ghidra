@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,10 +48,10 @@ public class PdbParser {
 	 *  {@link AbstractPdb#deserializeIdentifiersOnly(TaskMonitor monitor)}.
 	 * @param filename {@link String} pathname of the PDB file to parse.
 	 * @param pdbOptions {@link PdbReaderOptions} used for processing the PDB.
-	 * @param monitor {@link TaskMonitor} used for checking cancellation. 
+	 * @param monitor {@link TaskMonitor} used for checking cancellation.
 	 * @return {@link AbstractPdb} class object for the file.
 	 * @throws IOException on file I/O issues.
-	 * @throws PdbException on parsing issues. 
+	 * @throws PdbException on parsing issues.
 	 * @throws CancelledException Upon user cancellation.
 	 */
 	public static AbstractPdb parse(String filename, PdbReaderOptions pdbOptions,

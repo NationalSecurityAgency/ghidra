@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ import utilities.util.FileUtilities;
 
 /**
  * {@link GhidraSourceBundle} represents a Java source directory that is compiled on build to an OSGi bundle.
- * 
+ *
  * <p>A manifest and {@link BundleActivator} are generated if not already present.
  */
 /**
@@ -64,7 +64,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 	/*
 	 * Match the leftover part of a class file on removing the class name, e.g.
 	 * we've found "MyClass.java", so we match "MyClass.class" by removing "MyClass" then
-	 * computing IS_CLASS_FILE.test(".class") == true.  We  want to match inner 
+	 * computing IS_CLASS_FILE.test(".class") == true.  We  want to match inner
 	 * class files like "MyClass$2.class" too, so IS_CLASS_FILE.test("$2.class") is also true.
 	 */
 	private static final Predicate<String> IS_CLASS_FILE =
@@ -74,7 +74,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 		/**
 		 * Invoked when there is a discrepancy between {@code sourceFile} and its
 		 * corresponding class file(s), {@code classFiles}
-		 * 
+		 *
 		 * @param sourceFile the source file or null to indicate the class files have no corresponding source
 		 * @param classFiles corresponding class file(s)
 		 * @throws Throwable an exception
@@ -105,7 +105,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 * Create a new GhidraSourceBundle.
-	 * 
+	 *
 	 * @param bundleHost the {@link BundleHost} instance this bundle will belong to
 	 * @param sourceDirectory the source bundle directory
 	 * @param enabled true to start enabled
@@ -130,9 +130,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/**
-	 * Source bundles are compiled to a path relative to the user's home:  
+	 * Source bundles are compiled to a path relative to the user's home:
 	 * &nbsp;{@code $USERHOME/.ghidra/.ghidra_<ghidra version>/osgi/compiled-bundles/<sourceDirHash> }
-	 *  
+	 *
 	 * @return the destination for compiled source bundles
 	 *
 	 * @see BundleHost#getOsgiDir
@@ -142,15 +142,15 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/**
-	 * When a source bundle doesn't have a manifest, Ghidra computes the bundle's 
+	 * When a source bundle doesn't have a manifest, Ghidra computes the bundle's
 	 * symbolic name as a hash of the source directory path.
-	 * 
+	 *
 	 * <p>This hash is also used as the final path component of the compile destination:
 	 * <br/>&nbsp;{@code $USERHOME/.ghidra/.ghidra_<ghidra version>/osgi/compiled-bundles/<sourceDirHash> }
-	 * 
+	 *
 	 * @param sourceDir the source directory
 	 * @return a string hash of the source directory path
-	 * 
+	 *
 	 * @see #getCompiledBundlesDir
 	 */
 	public static String sourceDirHash(ResourceFile sourceDir) {
@@ -159,7 +159,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 * for testing only!!!
-	 * 
+	 *
 	 * @param sourceFile a ghidra script file
 	 * @return the directory its class is compiled to
 	 */
@@ -171,7 +171,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 * Return the class name corresponding to a script in this source bundle.
-	 * 
+	 *
 	 * @param sourceFile a source file from this bundle
 	 * @return the class name
 	 * @throws ClassNotFoundException if {@code sourceFile} isn't contained in this bundle
@@ -193,8 +193,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/**
-	 * append build error 
-	 * @param sourceFile the file w/ errors 
+	 * append build error
+	 * @param sourceFile the file w/ errors
 	 * @param err an error string
 	 */
 	protected void buildError(ResourceFile sourceFile, String err) {
@@ -204,7 +204,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 * Get any errors associated with building the given source file.
-	 * 
+	 *
 	 * @param sourceFile the source file
 	 * @return a {@link BuildError} object
 	 */
@@ -214,7 +214,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 * Get the mapping from source file to BuildError.
-	 * 
+	 *
 	 * @return the error file map
 	 */
 	public Map<ResourceFile, BuildError> getAllErrors() {
@@ -234,7 +234,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 * update buildReqs based on \@importpackage tag in java files in the default(unnamed) package
-	 * 
+	 *
 	 * @throws GhidraBundleException on failure to parse the \@importpackage tag
 	 */
 	private void updateRequirementsFromMetadata() throws GhidraBundleException {
@@ -244,7 +244,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 		for (ResourceFile rootSourceFile : getSourceDirectory().listFiles()) {
 			if (rootSourceFile.getName().endsWith(".java")) {
-				// without GhidraScriptComponentProvider.updateAvailableScriptFilesForDirectory, 
+				// without GhidraScriptComponentProvider.updateAvailableScriptFilesForDirectory,
 				// or GhidraScriptComponentProvider.newScript this might be the earliest need for
 				// ScriptInfo, so allow construction.
 
@@ -275,7 +275,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 * assumes that {@link #updateRequirementsFromMetadata()} has been called recently
-	 * 
+	 *
 	 * @return deduped requirements
 	 */
 	private Map<String, BundleRequirement> getComputedReqs() {
@@ -369,9 +369,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 * look for new sources, metadata, manifest file.
-	 * 
+	 *
 	 * <p>if files had errors last time, haven't changed, and no new requirements are available, remove them.
-	 * 
+	 *
 	 * @param writer for reporting status to user
 	 * @throws IOException while accessing manifest file
 	 * @throws OSGiException while parsing imports
@@ -404,7 +404,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 				newSourceIterator.remove();
 			}
 			else {
-				// any errors are old, so remove them 
+				// any errors are old, so remove them
 				buildErrors.remove(newSourceFile);
 			}
 		}
@@ -440,7 +440,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 	}
 
 	/**
-	 * used just after {@link #build} to get the newly compiled source files 
+	 * used just after {@link #build} to get the newly compiled source files
 	 * @return new source files
 	 */
 	public List<ResourceFile> getNewSources() {
@@ -520,7 +520,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 * if a file that previously built without errors is now missing some requirements,
-	 * rebuild it to capture errors (if any). 
+	 * rebuild it to capture errors (if any).
 	 */
 	void addSourcesIfResolutionWillFail() {
 		// if previous successes no longer resolve, (cleanup) and try again
@@ -654,7 +654,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 * visit discrepancies between java source and corresponding class files.
-	 * 
+	 *
 	 * <pre>
 	 * walk resources to find:
 	 *  - source files that are newer than their corresponding binary
@@ -663,9 +663,9 @@ public class GhidraSourceBundle extends GhidraBundle {
 	 *		reports (source file, empty list)
 	 *  - binary files with no corresponding source
 	 *  	reports (null, list of binary files)
-	 *  
+	 *
 	 *   for a source file source_root/com/blah/Blah.java
-	 *   
+	 *
 	 *   all of the following binaries would correspond:
 	 *   	binary_root/com/blah/Blah.class
 	 *   	binary_root/com/blah/Blah$Inner.class
@@ -693,7 +693,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 				ClassMapper mapper = new ClassMapper(binarySubdir);
 
-				// for each source file, lookup class files by class name 
+				// for each source file, lookup class files by class name
 				for (ResourceFile sourceFile : sourceSubdir.listFiles()) {
 					if (sourceFile.isDirectory()) {
 						stack.push(sourceFile);
@@ -740,7 +740,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 	/*
 	 * when calling the java compiler programmatically, we map import requests to files with
 	 * a custom {@link JavaFileManager}.  We wrap the system JavaFileManager with one that
-	 * handles ResourceFiles then wrap that with Phidia, which handles imports based on 
+	 * handles ResourceFiles then wrap that with Phidia, which handles imports based on
 	 * bundle requirements.
 	 */
 	private BundleJavaManager createBundleJavaManager(PrintWriter writer, Summary summary,
@@ -752,7 +752,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 			resourceFileJavaManager, options);
 
 		// The phidias BundleJavaManager is for compiling from within a bundle -- it makes the
-		// bundle dependencies available to the compiler classpath.  Here, we are compiling in an as-yet 
+		// bundle dependencies available to the compiler classpath.  Here, we are compiling in an as-yet
 		// non-existing bundle, so we forge the wiring based on @importpackage metadata.
 
 		// get wires for currently active bundles to satisfy all requirements
@@ -798,8 +798,8 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/*
 	 * Try building sourcefiles.. on success return true.
-	 * 
-	 * If build fails, collect errors, remove files that caused 
+	 *
+	 * If build fails, collect errors, remove files that caused
 	 * errors from source files, and return false.
 	 */
 	private boolean tryBuild(PrintWriter writer, BundleJavaManager bundleJavaManager,
@@ -837,7 +837,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 * generate a manifest (and an activator)
-	 * 
+	 *
 	 * assumes that {@link #updateRequirementsFromMetadata()} has been called recently
 	 */
 	private String generateManifest(PrintWriter writer, Summary summary, Path binaryManifest)
@@ -919,7 +919,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 * create and compile a default bundle activator
-	 * 
+	 *
 	 * @param bindir destination for class file
 	 * @param activatorClassName the name to use for the generated activator class
 	 * @param writer for writing compile errors
@@ -981,7 +981,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 *  compile a source directory to an exploded bundle
-	 *  
+	 *
 	 * @param writer for updating the user during compilation
 	 * @throws IOException for source/manifest file reading/generation and binary deletion/creation
 	 * @throws OSGiException if generation of bundle metadata fails
@@ -1090,14 +1090,14 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 	/**
 	 * Index *.class files in a directory by class name, e.g.
-	 * 
+	 *
 	 * <pre>
 	 *    "A" -> [directory/A.class]
 	 *    "B" -> [directory/B.class, directory/B$inner.class]
 	 * </pre>
-	 * 
+	 *
 	 * <p>A list of classes are then processed one at a time with {@link ClassMapper#findAndRemove}.
-	 * 
+	 *
 	 * <p>After processing, "extras" are handled with {@link ClassMapper#extraClassFiles}.
 	 */
 	private static class ClassMapper {
@@ -1105,7 +1105,7 @@ public class GhidraSourceBundle extends GhidraBundle {
 
 		/**
 		 * Map classes in {@code directory} with {@link ClassMapper}.
-		 *  
+		 *
 		 * @param directory the directory
 		 * @throws IOException if there's a problem listing files
 		 */

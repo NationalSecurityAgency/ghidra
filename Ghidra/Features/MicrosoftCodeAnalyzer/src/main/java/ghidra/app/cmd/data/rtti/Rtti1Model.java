@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.program.model.mem.*;
 /**
  */
 /**
- * Model for run-time type information about the RTTI1 data type, which represents a 
+ * Model for run-time type information about the RTTI1 data type, which represents a
  * BaseClassDescriptor structure.
  * <p>
  * Fields for this RunTimeTypeInformation structure can be found on http://www.openrce.org
@@ -82,7 +82,7 @@ public class Rtti1Model extends AbstractCreateRttiDataModel {
 	 * Creates the model for the BaseClassDescriptor (RTTI 1) data type.
 	 * @param program the program
 	 * @param rtti1Address the address in the program for the RTTI1 data type.
-	 * @param validationOptions options indicating how to validate the data type at the indicated 
+	 * @param validationOptions options indicating how to validate the data type at the indicated
 	 * address.
 	 */
 	public Rtti1Model(Program program, Address rtti1Address,
@@ -98,7 +98,7 @@ public class Rtti1Model extends AbstractCreateRttiDataModel {
 	/**
 	 * Whether or not the memory at the indicated address appears to be a valid location for the
 	 * indicated number of HandlerType data types.
-	 * @throws InvalidDataTypeException if this model's location does not appear to be a valid 
+	 * @throws InvalidDataTypeException if this model's location does not appear to be a valid
 	 * group of catch handler entries. The exception has a message indicating
 	 * why it does not appear to be a valid location for the data type.
 	 */
@@ -207,7 +207,7 @@ public class Rtti1Model extends AbstractCreateRttiDataModel {
 
 	/**
 	 * This gets the BaseClassDescriptor (RTTI 1) structure for the indicated program.
-	 * @param program the program which will contain this data type. 
+	 * @param program the program which will contain this data type.
 	 * @return the BaseClassDescriptor (RTTI 1) structure.
 	 */
 	public static DataType getDataType(Program program) {
@@ -239,7 +239,7 @@ public class Rtti1Model extends AbstractCreateRttiDataModel {
 
 	/**
 	 * This gets the BaseClassDescriptor (RTTI 1) structure for the indicated program.
-	 * @param program the program which will contain this data type. 
+	 * @param program the program which will contain this data type.
 	 * @return the BaseClassDescriptor (RTTI 1) structure.
 	 */
 	static DataType getSimpleDataType(Program program) {

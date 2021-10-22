@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ public interface EditorModel {
 	public void load(Composite dataType, boolean offline);
 
 	/**
-	 * Called when the model is no longer needed. 
+	 * Called when the model is no longer needed.
 	 * This is where all cleanup code for the model should be placed.
 	 */
 	public void dispose();
@@ -127,7 +127,7 @@ public interface EditorModel {
 	public boolean isEditComponentAllowed();
 
 	/**
-	 * 
+	 *
 	 * @param rowIndex
 	 * @param column
 	 * @return
@@ -163,14 +163,14 @@ public interface EditorModel {
 	public boolean isMoveUpAllowed();
 
 //	/**
-//	 * 
+//	 *
 //	 * @param dataType
 //	 * @return
 //	 */
 //	public boolean isReplaceAllowed(DataType dataType);
 
 	/**
-	 * 
+	 *
 	 * @param rowIndex row index of the component in the composite data type.
 	 * @param dataType
 	 * @return
@@ -192,7 +192,7 @@ public interface EditorModel {
 	 *  Sets the name for the composite data type being edited.
 	 *
 	 * @param name the new name.
-	 * 
+	 *
 	 * @throws DuplicateNameException if the name already exists.
 	 */
 	public void setName(String name) throws DuplicateNameException, InvalidNameException;
@@ -206,14 +206,14 @@ public interface EditorModel {
 
 	/**
 	 * Sets the data type for the component at the indicated rowIndex.
-	 * @param rowIndex the row index of the component 
+	 * @param rowIndex the row index of the component
 	 * @param dataTypeObject a String or a DataType
 	 */
 	public void setComponentDataType(int rowIndex, Object dataTypeObject) throws UsrException;
 
 	/**
 	 * Sets the data type for the component at the indicated row index.
-	 * @param rowIndex the row index of the component 
+	 * @param rowIndex the row index of the component
 	 * @param dt component datatype
 	 * @param length component length
 	 * @throws UsrException if invalid datatype or length specified
@@ -223,7 +223,7 @@ public interface EditorModel {
 
 	/**
 	 * Sets the data type for the component at the indicated index.
-	 * @param rowIndex the row index of the component 
+	 * @param rowIndex the row index of the component
 	 * @param name
 	 */
 	public void setComponentName(int rowIndex, String name)
@@ -231,7 +231,7 @@ public interface EditorModel {
 
 	/**
 	 * Sets the data type for the component at the indicated index.
-	 * @param rowIndex the row index of the component 
+	 * @param rowIndex the row index of the component
 	 * @param comment
 	 */
 	public void setComponentComment(int rowIndex, String comment) throws InvalidInputException;
@@ -244,14 +244,14 @@ public interface EditorModel {
 
 	/**
 	 * Gets the column number of the first editable field found for the indicated row.
-	 * 
+	 *
 	 * @param rowIndex the index number of the row
 	 * @return the index number of the editable column or -1 if no fields are editable.
 	 */
 	public int getFirstEditableColumn(int rowIndex);
 
 	/**
-	 * 
+	 *
 	 * @param rowIndex
 	 * @param column
 	 * @return
@@ -269,12 +269,12 @@ public interface EditorModel {
 	public boolean isEditingField();
 
 	/**
-	 * 
+	 *
 	 */
 	public void endFieldEditing();
 
 	/**
-	 * 
+	 *
 	 * @param dataType
 	 * @return
 	 * @throws UsrException
@@ -282,7 +282,7 @@ public interface EditorModel {
 	public DataTypeComponent add(DataType dataType) throws UsrException;
 
 	/**
-	 * 
+	 *
 	 * @param rowIndex
 	 * @param dataType
 	 * @return
@@ -291,7 +291,7 @@ public interface EditorModel {
 	public DataTypeComponent add(int rowIndex, DataType dataType) throws UsrException;
 
 	/**
-	 * 
+	 *
 	 * @param rowIndex
 	 * @param dt
 	 * @param dtLength
@@ -313,7 +313,7 @@ public interface EditorModel {
 	public void clearComponent(int rowIndex);
 
 	/**
-	 * 
+	 *
 	 * @throws UsrException
 	 */
 	public void clearSelectedComponents() throws UsrException;
@@ -338,7 +338,7 @@ public interface EditorModel {
 
 	/**
 	 * Creates multiple duplicates of the indicated component.
-	 * The duplicates will be created at the index immediately after the 
+	 * The duplicates will be created at the index immediately after the
 	 * indicated component.
 	 * @param rowIndex the index of the row whose component is to be duplicated.
 	 * @param multiple the number of duplicates to create.
@@ -349,7 +349,7 @@ public interface EditorModel {
 			throws UsrException;
 
 	/**
-	 * 
+	 *
 	 * @param dataType
 	 * @return
 	 * @throws UsrException
@@ -357,7 +357,7 @@ public interface EditorModel {
 	public DataTypeComponent insert(DataType dataType) throws UsrException;
 
 	/**
-	 * 
+	 *
 	 * @param rowIndex
 	 * @param dataType
 	 * @return
@@ -366,7 +366,7 @@ public interface EditorModel {
 	public DataTypeComponent insert(int rowIndex, DataType dataType) throws UsrException;
 
 	/**
-	 * 
+	 *
 	 * @param rowIndex
 	 * @param dt
 	 * @param dtLength
@@ -376,10 +376,10 @@ public interface EditorModel {
 	public DataTypeComponent insert(int rowIndex, DataType dt, int dtLength) throws UsrException;
 
 	/**
-	 * Moves a contiguous selection of components up by a single position. 
-	 * The component that was immediately above 
+	 * Moves a contiguous selection of components up by a single position.
+	 * The component that was immediately above
 	 * (at the index immediately preceeding the selection)
-	 * the selection will be moved below the selection 
+	 * the selection will be moved below the selection
 	 * (to what was the maximum selected component index).
 	 * @return true if selected components were moved up.
 	 * @throws UsrException if components can't be moved up.
@@ -387,10 +387,10 @@ public interface EditorModel {
 	public boolean moveUp() throws UsrException;
 
 	/**
-	 * Moves a contiguous selection of components down by a single position. 
-	 * The component that was immediately below 
+	 * Moves a contiguous selection of components down by a single position.
+	 * The component that was immediately below
 	 * (at the index immediately following the selection)
-	 * the selection will be moved above the selection 
+	 * the selection will be moved above the selection
 	 * (to what was the minimum selected component index).
 	 * @return true if selected components were moved down.
 	 * @throws UsrException if components can't be moved down.
@@ -398,7 +398,7 @@ public interface EditorModel {
 	public boolean moveDown() throws UsrException;
 
 //	/**
-//	 * 
+//	 *
 //	 * @param dataType
 //	 * @return
 //	 * @throws UsrException
@@ -406,7 +406,7 @@ public interface EditorModel {
 //	public DataTypeComponent replace(DataType dataType) throws UsrException;
 //
 //	/**
-//	 * 
+//	 *
 //	 * @param rowIndex
 //	 * @param dataType
 //	 * @return
@@ -415,7 +415,7 @@ public interface EditorModel {
 //	public DataTypeComponent replace(int rowIndex, DataType dataType) throws UsrException;
 
 	/**
-	 * 
+	 *
 	 * @param rowIndex
 	 * @param dt
 	 * @param dtLength
@@ -426,16 +426,16 @@ public interface EditorModel {
 
 	/**
 	 * Gets the maximum number of bytes available for a data type that is added at the indicated
-	 * index. This can vary based on whether or not it is in a selection. 
+	 * index. This can vary based on whether or not it is in a selection.
 	 *
 	 * @param rowIndex index of the row in the editor's composite data type.
 	 */
 	public int getMaxAddLength(int rowIndex);
 
 	/**
-	 * Determine the maximum number of duplicates that can be created for 
+	 * Determine the maximum number of duplicates that can be created for
 	 * the component at the indicated index. The duplicates would follow
-	 * the component. The number allowed depends on how many fit based on 
+	 * the component. The number allowed depends on how many fit based on
 	 * the current lock/unlock state of the editor.
 	 * <br>Note: This method doesn't care whether there is a selection or not.
 	 *
@@ -445,7 +445,7 @@ public interface EditorModel {
 	public int getMaxDuplicates(int rowIndex);
 
 	/**
-	 * Determine the maximum number of array elements that can be created for 
+	 * Determine the maximum number of array elements that can be created for
 	 * the current selection. The array data type is assumed to become the
 	 * data type of the first component in the selection. The current selection
 	 * must be contiguous or 0 is returned.
@@ -455,9 +455,9 @@ public interface EditorModel {
 	public int getMaxElements();
 
 	/**
-	 * Gets the maximum number of bytes available for a new data type that 
+	 * Gets the maximum number of bytes available for a new data type that
 	 * will replace the current data type at the indicated component index.
-	 * If there isn't a component with the indicated index, the max length 
+	 * If there isn't a component with the indicated index, the max length
 	 * will be determined by the lock mode.
 	 *
 	 * @param rowIndex index of the row for the component to replace.
@@ -466,21 +466,21 @@ public interface EditorModel {
 	public int getMaxReplaceLength(int rowIndex);
 
 	/**
-	 * Return the last number of bytes the user entered when prompted for 
+	 * Return the last number of bytes the user entered when prompted for
 	 * a data type size.
 	 * @return the number of bytes
 	 */
 	public int getLastNumBytes();
 
 	/**
-	 * Return the last number of duplicates the user entered when prompted for 
+	 * Return the last number of duplicates the user entered when prompted for
 	 * creating duplicates of a component.
 	 * @return the number of duplicates
 	 */
 	public int getLastNumDuplicates();
 
 	/**
-	 * Return the last number of elements the user entered when prompted for 
+	 * Return the last number of elements the user entered when prompted for
 	 * creating an array.
 	 * @return the number of elements
 	 */

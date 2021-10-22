@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,8 +33,8 @@ import ghidra.program.util.ProgramMemoryComparator;
 import ghidra.util.HelpLocation;
 
 /**
- * The ExecuteDiffDialog is used whenever initiating a Program Diff. 
- * It allows the user to specify the types of differences to determine 
+ * The ExecuteDiffDialog is used whenever initiating a Program Diff.
+ * It allows the user to specify the types of differences to determine
  * and the address set to diff.
  */
 public class ExecuteDiffDialog extends DialogComponentProvider {
@@ -445,7 +445,7 @@ public class ExecuteDiffDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Get the current address set for the diff depending on whether or not the 
+	 * Get the current address set for the diff depending on whether or not the
 	 * Diff is limited to a selection.
 	 */
 	AddressSetView getAddressSet() {

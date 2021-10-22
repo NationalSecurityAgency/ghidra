@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import ghidra.util.exception.InvalidInputException;
 public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 
 	// *** NotepadMergeListingTest ***
-	// 01001978     no function 
+	// 01001978     no function
 	// 0100299e		no function
 	// 01002a91		FUN_01002a91	body:1002a91-1002b43
 	// 01002b44		FUN_01002b44	body:1002b44-1002b7c
@@ -997,7 +997,7 @@ public class FunctionMergeManagerTest extends AbstractListingMergeManagerTest {
 		assertTrue(func.hasCustomVariableStorage());
 		assertTrue(new WordDataType().isEquivalent(func.getReturnType()));
 		// Calling convention will cause the storage to allocate 10 bytes.
-		assertEquals("r0l:2", func.getReturn().getVariableStorage().toString()); // reflects dynamic storage 
+		assertEquals("r0l:2", func.getReturn().getVariableStorage().toString()); // reflects dynamic storage
 
 		func = getFunction(resultProgram, "0x10029a1");
 		assertSameDataType(new Undefined2DataType(), func.getReturnType());

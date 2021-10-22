@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ if (!project.hasProperty('machineName')) {
 	}
 	catch (UnknownHostException e) {
 		project.ext.machineName = "STANDALONE"
-	}	
+	}
 }
 
 if (!project.hasProperty('xms')) {
@@ -112,10 +112,10 @@ project.ext.targetProjects = targetMode ? getTestProjects(targetFiles) : null
 
 // 'parallelCombinedTestReport' task will parse a JUnit test report for test duration.
 // Specify the location of the report via cmd line using "-PtestTimeParserInputDir=<location>".
-// If the location is not specified via cmd line, it will look for the latest test report 
+// If the location is not specified via cmd line, it will look for the latest test report
 // in <reportDir>/../reportsArchive/reports_<date>
-// If a reportsArchive path does not exist, it will assume all tests have the same duration and 
-// continue with test task creation. 
+// If a reportsArchive path does not exist, it will assume all tests have the same duration and
+// continue with test task creation.
 project.ext.testTimeParserInputDir = project.hasProperty('testTimeParserInputDir') ?
         project.getProperty('testTimeParserInputDir') + "/reports/classes" : getLastArchivedReport("$reportArchivesDir") + "/classes"
 
@@ -139,14 +139,14 @@ def createDir(dirPath) {
 	if (!dir.canWrite()) {
 		throw new RuntimeException("Process does not have write permission for directory: " + dirPath);
 	}
-}	
+}
 
 /*********************************************************************************
  * Retrieves log4j properties file and returns its path.
  *********************************************************************************/
 def getLogFileUrl() {
 	String logFilePath = "$rootDir/Ghidra/Framework/Generic/src/main/resources/generic.log4jtest.xml"
-	File logFile = new File(logFilePath)	
+	File logFile = new File(logFilePath)
 	if (logFile.exists()) {
 		return logFile.toURI().toString()
 	}
@@ -157,18 +157,18 @@ def getLogFileUrl() {
  * Given a set of files (passed in via the -PtargetFiles command line param), this
  * will search the project tree for each files' package to see if there is a test
  * class defined that can be run.
- * 
+ *
  * The param is a list of file paths created by 'git diff --names-only'
  */
-def List<Project> getTestProjects(String files) {  
-      
+def List<Project> getTestProjects(String files) {
+
    List<Project> projects = new ArrayList<>();
-   
+
    List paths = files.tokenize('%')
-   
+
    for (String path : paths) {
      File file = new File(path)   // might blow up?
-     
+
      // Find the project for this file
      def ps
      while (file.parentFile != null) {
@@ -182,7 +182,7 @@ def List<Project> getTestProjects(String files) {
         file = file.parentFile
      }
    }
-   
+
    return projects
 }
 
@@ -191,7 +191,7 @@ def List<Project> getTestProjects(String files) {
  *********************************************************************************/
 def generateRandomDebugPort() {
 	// keep port within narrow range (NOTE: must be greater than 1024 and less than 65535)
-	
+
 	// Generate random byte value
 	Random random = new Random()
 	def ran = random.nextInt();
@@ -199,7 +199,7 @@ def generateRandomDebugPort() {
 		ran ^= (ran >> 8);
 	}
 	ran &= 0xff;
-	
+
 	// Generate random port between 18300 and 18555
 	def port = 18300 + ran
 	return port
@@ -217,8 +217,8 @@ def loadApplicationProperties() {
 		return;
 	}
 	props.load(new FileInputStream(appProperties));
-	
-	props.each {k, v ->			
+
+	props.each {k, v ->
 		System.setProperty(k, v)
 	}
 }
@@ -309,22 +309,22 @@ def initTestJVM(Task task, String rootDirName) {
 	}
 	// If false, testing will halt when an error is found.
 	task.ignoreFailures true
-	
+
 	// If false, then tests are re-run every time, even if no code has changed.
 	task.outputs.upToDateWhen {false}
-	
+
 	// Must set this to see System.out print statements.
 	task.testLogging.showStandardStreams = true
 
     // Min/Max heap size.  These are passed in.
     task.minHeapSize xms
     task.maxHeapSize xmx
-    	
+
     // for jmockit; needs the javaagent option
     // -javaagent:/path/to/jmockit.jar
     task.doFirst {
 	    def jmockitPath = configurations.jmockitAgent.singleFile
-	    
+
 		task.jvmArgs '-DupgradeProgramErrorMessage=' + upgradeProgramErrorMessage,
 			'-DupgradeTimeErrorMessage=' + upgradeTimeErrorMessage,
 			'-Dlog4j.configuration=' + logPropertiesUrl,
@@ -349,14 +349,14 @@ def initTestJVM(Task task, String rootDirName) {
 			'-noverify',
 			'-XX:TieredStopAtLevel=1',
 			'-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=' + debugPort
-			
+
 			// Note: this args are used to speed-up the tests, but are not safe for production code
-			// -noverify and -XX:TieredStopAtLevel=1			
-			
+			// -noverify and -XX:TieredStopAtLevel=1
+
 			// Note: modern remote debug invocation;
 			// 	-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000
-			
-			// 
+
+			//
 			// We removed these lines, which should not be needed in modern JVMs
 			//  -Xdebug
 			//  -Xnoagent
@@ -417,11 +417,11 @@ task integrationTestReport(type: TestReport) { t ->
  *
  * The projects to be run against are stored in the project.ext.targetProjects
  * var, which is populated at the top of this file. This is currently only
- * used by the runAllTests.sh script which executes this task on each commit, 
+ * used by the runAllTests.sh script which executes this task on each commit,
  * so we can run all the tests for the files contained in that commit.
  *
  *********************************************************************************/
-task targetedTestReport(type: TestReport) { t -> 
+task targetedTestReport(type: TestReport) { t ->
     group "test"
     description "Run unit tests against a specific set of projects."
     destinationDir = file("$reportDir/unitTests")
@@ -432,7 +432,7 @@ task targetedTestReport(type: TestReport) { t ->
 	// at this point, so we have to put this in an afterEvaluate block before
 	// we can set up the reportOn dependency
     project.ext.targetProjects.each {
-      it.afterEvaluate { p -> 
+      it.afterEvaluate { p ->
         if (p.tasks.findByName('test')) {
         	reportOn p.test
         }
@@ -445,9 +445,9 @@ task targetedTestReport(type: TestReport) { t ->
  *  Create a task of type: Test for a subproject.
  *  Each task will run a maximum of 'numMaxParallelForks' tests at a time.
  *  The task will include tests from classesList[classesListPosition, classesListPosition+numMaxParallelForks]
- *  and inherit excludes from its non-parallel counterpart.  
- *  
- *  @param subproject 
+ *  and inherit excludes from its non-parallel counterpart.
+ *
+ *  @param subproject
  *  @param testType - Either 'test' or 'integrationTest'. The sourceSets defined in setupJava.gradle
  *  @param bucketName - the test category (appConfig, dockingConfig, integrationConfig, etc...)
  *  @param taskNameCounter - Number to append to task name.
@@ -462,7 +462,7 @@ def createTestTask(Project subproject, String testType, String bucketName, int t
 		group "test"
 		testClassesDirs = files subproject.sourceSets["$testType"].output.classesDirs
 		classpath = subproject.sourceSets["$testType"].runtimeClasspath
-		
+
 		maxParallelForks = numMaxParallelForks
 
 		initTestJVM(t, testRootDirName)
@@ -513,15 +513,15 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 			Map<String,List> testMap = getTestsForSubProject(subproject.sourceSets.test.java)
 
 			for (Map.Entry<String,List> classMap : testMap.entrySet()) {
-			
+
 				String bucketName = classMap.getKey();
-				
+
 				int classesListPosition = 0 // current position in classesList
 				int taskNameCounter = 1 // task suffix
 				int numMaxParallelForks = 40 // unit tests are fast; 40 seems to be a reasonable number
-			
+
 				List<String> tests = classMap.getValue();
-				
+
 				while (classesListPosition < tests.size()) {
 					createTestTask(subproject, "test", bucketName, taskNameCounter, tests, classesListPosition, numMaxParallelForks)
 					classesListPosition+=numMaxParallelForks
@@ -529,26 +529,26 @@ configure(subprojects.findAll {parallelMode == true}) { subproject ->
 				}
 			}
 		}
-		
+
 		if (!shouldSkipIntegrationTestTaskCreation(subproject)) {
 			logger.info("parallelCombinedTestReport: Creating 'integrationTest' tasks for " + subproject.name + " subproject.")
 
 			Map<String,List> testMap = getTestsForSubProject(subproject.sourceSets.integrationTest.java)
-			
+
 			for (Map.Entry<String,List> classMap : testMap.entrySet()) {
-			
+
 				String bucketName = classMap.getKey();
-			
+
 				int classesListPosition = 0 // current position in classesList
 				int taskNameCounter = 1 // task suffix
-				
+
 				// Through trial-and-error we found that 40 is too many
 				// concurrent integration tests (ghidratest server has 40 CPUs).
 				// 20 seems like a good balance of throughput vs resource usage for ghidratest server.
-				int numMaxParallelForks = 20 
-			
+				int numMaxParallelForks = 20
+
 				List<String> tests = classMap.getValue();
-								
+
 				while (classesListPosition < tests.size()) {
 					createTestTask(subproject, "integrationTest", bucketName, taskNameCounter, tests, classesListPosition, numMaxParallelForks)
 					classesListPosition+=numMaxParallelForks
@@ -583,8 +583,8 @@ task combinedTestReport(type: TestReport) { t ->
 task pcodeTestReport(type: TestReport) { t ->
 	group "pcodeTest"
 	destinationDir = file("$pcodeTestShareDir" + "/reports")
-}	
-	
+}
+
 /*********************************************************************************
  * P-CODE TEST REPORT w/ MATRIX REPORT
  *
@@ -605,7 +605,7 @@ task pcodeConsolidatedTestReport(type: Copy) {
  * Rename archived report directory to reflect lastModified date
  *********************************************************************************/
 def renameReportArchive(dir) {
-	
+
 	long modifiedTime = dir.lastModified()
     Calendar calendar = new GregorianCalendar()
     calendar.setTimeInMillis( modifiedTime )
@@ -628,7 +628,7 @@ def getUniqueName(file) {
 	    	if (!file.exists()) {
 	    		return file
 	    	}
-	    	
+
 	    	for (int i = 2; i < 22; i++ ) {
 	    		String newName = file.getName() + "_" + i
 	    		File newFile = new File( file.getParentFile(), newName )
@@ -636,7 +636,7 @@ def getUniqueName(file) {
 	    			return newFile
 	    		}
 	    	}
-	    	
+
 	    	return file
 }
 
@@ -646,22 +646,22 @@ def getUniqueName(file) {
 def generateArchiveIndex(archivesDir) {
 
     	File file = new File( archivesDir, "index.html" );
-    	
+
     	println "Generating Archived Reports Index: " + file.getCanonicalPath()
-    	
+
     	PrintWriter p = new PrintWriter(file);
     	try {
 	    	p.println("<HTML>");
 	    	p.println("<HEAD>");
-	    	
+
 	    	printStyleSheet(p);
-	    	
+
 	    	p.println("</HEAD>");
 	    	p.println("<BODY>");
 	    	p.println("<CENTER>");
 	    	p.println("<H2>Past Test Reports</H2>");
-	    	p.println("    <TABLE BORDER=1 ALIGN=CENTER WIDTH=\"90%\">");   	
-	    	
+	    	p.println("    <TABLE BORDER=1 ALIGN=CENTER WIDTH=\"90%\">");
+
 	    	// get a dir listing of all the files from the report dir and
 	    	// create a hyperlink for the filename
 	    	File[] reportDirFiles = archivesDir.listFiles();
@@ -684,12 +684,12 @@ def generateArchiveIndex(archivesDir) {
 	    println "Current time: " + now
 		long oldestTime = now - (1000L * 60 * 60 * 24 * 30);
 	    println "Delete date: " + oldestTime
-				
+
     	for (File f : reportDirFiles) {
     		if (!f.isDirectory()) {
     			continue;
-    		}	
-    		
+    		}
+
     		println "File: " + f.toString()
     		println "\tlast modified: " + f.lastModified()
 			if (f.lastModified() < oldestTime) {
@@ -705,17 +705,17 @@ def generateArchiveIndex(archivesDir) {
 	    p.println("    </TABLE>");
 	    p.println("</CENTER>");
 	    p.println("</BODY>");
-	    p.println("</HTML>");	
+	    p.println("</HTML>");
 	}
 	finally {
 		p.close();
-	}		
+	}
 }
 
 /*********************************************************************************
  * Add HTML code to PrintWriter p which provides link to specified file which
  * is assumed to reside within the same directory as the index.html file being written
- *********************************************************************************/   	
+ *********************************************************************************/
 def createLinkForDir(p, file) {
 
     // skip files - dirs only
@@ -733,7 +733,7 @@ def createLinkForDir(p, file) {
 		p.println( columnPadding + linkText);
     }
     else {
-        p.println( columnPadding + dirName);    	
+        p.println( columnPadding + dirName);
     }
 
     p.println( columnPadding + "</TD></TR>" )
@@ -749,7 +749,7 @@ def containsIndexFile(dir) {
 
 /*********************************************************************************
  * Add HTML code to PrintWriter p which provides the STYLE tag
- *********************************************************************************/     	
+ *********************************************************************************/
 def printStyleSheet(p) {
     p.println( "<style>" );
     p.println( "<!--" );

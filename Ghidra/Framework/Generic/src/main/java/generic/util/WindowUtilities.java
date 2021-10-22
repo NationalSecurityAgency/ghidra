@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,13 +71,13 @@ public class WindowUtilities {
 	}
 
 	/**
-	 * Returns the a rectangle representing the screen bounds for the entire screen space for 
-	 * all screens in use.  The result will include virtual space that may not be rendered on 
-	 * any physical hardware.   Said differently, the rectangle returned from this method will 
-	 * contain all visible display coordinates, as well as potentially coordinates that are 
-	 * virtual and not displayed on any physical screen.  The OS's window manager is responsible 
+	 * Returns the a rectangle representing the screen bounds for the entire screen space for
+	 * all screens in use.  The result will include virtual space that may not be rendered on
+	 * any physical hardware.   Said differently, the rectangle returned from this method will
+	 * contain all visible display coordinates, as well as potentially coordinates that are
+	 * virtual and not displayed on any physical screen.  The OS's window manager is responsible
 	 * for controlling how the virtual space is created.
-	 * 
+	 *
 	 * @return the virtual screen bounds
 	 */
 	public static Rectangle getVirtualScreenBounds() {
@@ -97,7 +97,7 @@ public class WindowUtilities {
 	/**
 	 * Returns a shape that represents the visible portion of the virtual screen bounds
 	 * returned from {@link #getVirtualScreenBounds()}
-	 * 
+	 *
 	 * @return the visible shape of all screen devices
 	 */
 	public static Shape getVisibleScreenBounds() {
@@ -115,10 +115,10 @@ public class WindowUtilities {
 	}
 
 	/**
-	 * Gets the <b>usable</b> screen bounds for the screen in which the given component is 
-	 * showing.  Returns null if the given component is not showing.   Usable bounds are the 
+	 * Gets the <b>usable</b> screen bounds for the screen in which the given component is
+	 * showing.  Returns null if the given component is not showing.   Usable bounds are the
 	 * screen bounds after subtracting insets (for things like menu bars and task bars).
-	 * 
+	 *
 	 * @param c the component
 	 * @return the screen bounds; null if the component is not showing
 	 */
@@ -154,13 +154,13 @@ public class WindowUtilities {
 	/**
 	 * Computes the point such that a rectangle with the given size would be centered on the
 	 * screen.   The chosen screen in this case is the screen defined by
-	 * <pre>  
+	 * <pre>
 	 *	GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
 	 * </pre>
-	 * 
-	 * <p>If the given size is too big to fit on the screen in either dimension, 
+	 *
+	 * <p>If the given size is too big to fit on the screen in either dimension,
 	 * then it will be placed at the 0 position for that dimension.
-	 * 
+	 *
 	 * @param d the size of the rectangle to center
 	 * @return the upper-left point of the given centered dimension
 	 * @see #centerOnScreen(Component, Dimension)
@@ -179,10 +179,10 @@ public class WindowUtilities {
 
 	/**
 	 * Computes the point such that a rectangle with the given size would be centered on the
-	 * screen.   The chosen screen in this case is the screen defined by using the given 
-	 * component.  If the given size is too big to fit on the screen in either dimension, 
-	 * then it will be placed at the 0 position for that dimension. 
-	 * 
+	 * screen.   The chosen screen in this case is the screen defined by using the given
+	 * component.  If the given size is too big to fit on the screen in either dimension,
+	 * then it will be placed at the 0 position for that dimension.
+	 *
 	 * @param c the component that should be used to find the current screen
 	 * @param d the size of the rectangle to center
 	 * @return the upper-left point of the given centered dimension
@@ -244,12 +244,12 @@ public class WindowUtilities {
 
 	/**
 	 * Update the component to be within visible bounds of the screen
-	 * 
-	 * <P>This method differs from {@link #ensureOnScreen(Component, Rectangle)} in that 
+	 *
+	 * <P>This method differs from {@link #ensureOnScreen(Component, Rectangle)} in that
 	 * the other method does not adjust the component's bounds like this method does.
-	 * 
+	 *
 	 * @param c the component to move on screen as necessary
-	 * @throws IllegalArgumentException if the given component is not yet realized (see 
+	 * @throws IllegalArgumentException if the given component is not yet realized (see
 	 *         {@link Component#isShowing()}
 	 */
 	public static void ensureOnScreen(Component c) {
@@ -260,22 +260,22 @@ public class WindowUtilities {
 	}
 
 	/**
-	 * Update the bounds to be within visible bounds of the screen.  The given component is 
+	 * Update the bounds to be within visible bounds of the screen.  The given component is
 	 * used to determine which screen to use for updating the bounds.
-	 * 
+	 *
 	 * <P>Note: the given comonent's bounds will not be adjusted by this method
-	 * 
-	 * @param c the on screen component, used to determine which screen to check against the given 
+	 *
+	 * @param c the on screen component, used to determine which screen to check against the given
 	 *        bounds
 	 * @param bounds the bounds to adjust
-	 * @throws IllegalArgumentException if the given component is not yet realized (see 
+	 * @throws IllegalArgumentException if the given component is not yet realized (see
 	 *         {@link Component#isShowing()}
 	 */
 	public static void ensureOnScreen(Component c, Rectangle bounds) {
 
 		Shape visibleScreenBounds = getVisibleScreenBounds();
 		if (visibleScreenBounds.contains(bounds)) {
-			return; // the given shape is completely on the screen 
+			return; // the given shape is completely on the screen
 		}
 
 		Rectangle screen = getScreenBounds(c);
@@ -447,8 +447,8 @@ public class WindowUtilities {
 	/**
 	 * Attempts to locate the topmost modal dialog and then bring that dialog to the front of
 	 * the window hierarchy
-	 * 
-	 * @param activeWindow the system's active window 
+	 *
+	 * @param activeWindow the system's active window
 	 */
 	public static void bringModalestDialogToFront(final Window activeWindow) {
 		// NOTE: we do an invokeLater here, as some of our clients are calling us in a

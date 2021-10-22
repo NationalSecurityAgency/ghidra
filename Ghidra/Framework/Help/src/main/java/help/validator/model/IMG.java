@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,11 +31,11 @@ public class IMG implements Comparable<IMG> {
 	private final String imgSrc;
 
 	/**
-	 * The file on this filesystem; null if the file does not exists or of the image src 
+	 * The file on this filesystem; null if the file does not exists or of the image src
 	 * points to a remote URL or a runtime url.
 	 * <P>
 	 * An example remote URL is one that points to a web server, like <code>http://...</code>
-	 * <BR>An example runtime URL is one that the help system knows how to resolve at 
+	 * <BR>An example runtime URL is one that the help system knows how to resolve at
 	 * runtime, like <code>&lt;IMG SRC='Icons.REFRESH_ICON /'&gt;</code>
 	 */
 	private final Path imgFile;
@@ -43,8 +43,8 @@ public class IMG implements Comparable<IMG> {
 	private final int lineNumber;
 
 	/**
-	 * Constructor 
-	 * 
+	 * Constructor
+	 *
 	 * @param help the help module containing the file containing this IMG reference
 	 * @param sourceFile the source file containing this IMG reference
 	 * @param imgSrc the IMG SRC attribute pulled from the HTML file

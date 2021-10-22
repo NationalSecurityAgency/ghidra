@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 /*****************************************************************************************
 	This file is a "mix-in" gradle script that individual gradle projects should include if they
 	have processor definitions.
-	
+
 	A gradle project can add native code support by including the following it its build.gradle file:
 
 		apply from: "$rootProject.projectDir/gradle/nativeProject.gradle"
@@ -64,7 +64,7 @@ dependencies {
  *
  *****************************************************************************************/
  ext.sleighCompileOptions = [ ]
- 
+
  /*****************************************************************************************
  *
  *  Check for invalid sleighCompileOptions
@@ -76,15 +76,15 @@ dependencies {
  		assert !(arg.startsWith("-a") || arg.startsWith("-i")) : "Invalid sleighCompileOption: ${arg}"
  	}
  }
- 
+
 /*****************************************************************************************
  *
  * Task to write sleigh compiler args for use with sleigh compiler.
  * Due to the possible presence of module dependency paths two different sleighArgs.txt
  * files are produced: one for development layout (build/tmp/sleighArgs.txt) and
- * one for distribution layout ([build/]data/sleighArgs.txt).  When invoking the 
+ * one for distribution layout ([build/]data/sleighArgs.txt).  When invoking the
  * Sleigh compiler and using a sleighArgs.txt file the appropriate 'BaseDir' property
- * must be specified.  Withing a distribution install 'BaseDir' must specifiy the 
+ * must be specified.  Withing a distribution install 'BaseDir' must specifiy the
  * path to the install directory while in a development layout 'BaseDir' must specify
  * the repos root directory which contains the 'ghidra' repo directory.
  *
@@ -97,13 +97,13 @@ task saveSleighArgs {
 	doLast {
 		checkSleighCompileOptions()
 		sleighArgsFile.withWriter { out->
-			sleighCompileOptions.each { a-> 
-				out.println resolveSleighArg(a, false) 
+			sleighCompileOptions.each { a->
+				out.println resolveSleighArg(a, false)
 			}
 		}
 		sleighArgsDevFile.withWriter { out->
-			sleighCompileOptions.each { a-> 
-				out.println resolveSleighArg(a, true) 
+			sleighCompileOptions.each { a->
+				out.println resolveSleighArg(a, true)
 			}
 		}
 	}
@@ -126,7 +126,7 @@ task writeSleighDevBuild {
 
 	doLast {
 		// Generate build.xml with injected classpath for running sleigh compiler
-		def sleighDevClasspath = project(':SoftwareModeling').sourceSets.main.runtimeClasspath.collect { it.absolutePath }.join(':')		
+		def sleighDevClasspath = project(':SoftwareModeling').sourceSets.main.runtimeClasspath.collect { it.absolutePath }.join(':')
 		copy {
 			into "data"
 			from (templateFilePath) {
@@ -144,7 +144,7 @@ rootProject.prepDev.dependsOn(writeSleighDevBuild)
  *  Write sleigh build.xml file for each language module into assembleDistribution
  *
  *****************************************************************************************/
-rootProject.assembleDistribution { 
+rootProject.assembleDistribution {
 	into (getZipPath(this.project)  + "/data") {
 		from (rootProject.projectDir.toString() + "/GhidraBuild/BuildFiles/sleighDistBuild.template") {
 	        rename { "build.xml" }
@@ -161,11 +161,11 @@ task sleighCompile (type: JavaExec) {
 	dependsOn saveSleighArgs
 	group = rootProject.GHIDRA_GROUP
 	description "  Compiles all the sleigh languages.    [gradle/processorProject.gradle]\n"
-	 
+
 	// define standard parameters for JavaExec
 	classpath configurations.sleighConfig
 	main = 'ghidra.pcodeCPort.slgh_compile.SleighCompile'
-	
+
 	// Delay adding the directory argument until the first part of the execution phase, so
 	// that any extra args added by a project override will be added to the arg list before
 	// these arguments.
@@ -178,8 +178,8 @@ task sleighCompile (type: JavaExec) {
 		args '-a'
 		args './data/languages'
 	}
-	
-	jvmArgs '-Xmx2048M'	
+
+	jvmArgs '-Xmx2048M'
 }
 
 // The task that copies the common files to the distribution folder must depend on
@@ -215,7 +215,7 @@ task cleanSleigh  {
  ******************************************************************************************/
 def taskInputs  = fileTree(dir: 'data/languages', exclude: '**/*.sla')
 def taskOutputs = fileTree(dir: 'data/languages', include: '**/*.sla')
-	
+
 // define the sleigh compile inputs and outputs so that gradle can check if they need building
 sleighCompile.inputs.files (taskInputs)
 sleighCompile.outputs.files (taskOutputs)
@@ -226,7 +226,7 @@ saveSleighArgs.inputs.files (taskInputs)
 /*****************************************************************************************
  *
  * Gets the absolute repos root directory path with a trailing File separator.
- * This path may be used for specifying 'BaseDir' to the sleigh compiler within a 
+ * This path may be used for specifying 'BaseDir' to the sleigh compiler within a
  * development layout.
  *
  *****************************************************************************************/
@@ -243,7 +243,7 @@ def getProjectReposRootPath() {
  * arg is supported.
  *
  * This mechanism relies on the relative depth of a language module project within a
- * repository directory hierarchy.  In general language module projects must reside 
+ * repository directory hierarchy.  In general language module projects must reside
  * within the directory Ghidra/Processors.
  *
  *****************************************************************************************/

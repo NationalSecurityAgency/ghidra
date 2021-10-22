@@ -94,6 +94,6 @@
 	          <range space="stack" first="0x0" last="0xf"/>
 		</localrange>
 	</prototype>
-	
+
 </compiler_spec>
 

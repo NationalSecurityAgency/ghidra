@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,12 +80,12 @@ public class BitmapResource {
 	BI_PNG = 0x0005,
 	BI_CMYK = 0x000B,
 	BI_CMYKRLE8 = 0x000C,
-	BI_CMYKRLE4 = 0x000D	   
+	BI_CMYKRLE4 = 0x000D
 */
 
 	/**
-	 * @throws IOException 
-	 * 
+	 * @throws IOException
+	 *
 	 */
 	public BitmapResource(MemBuffer buf) throws IOException {
 		initialize(buf);
@@ -171,7 +171,7 @@ public class BitmapResource {
 	}
 
 	/**
-	 * Get the raw image data size as contained within this resource.  If compressed, 
+	 * Get the raw image data size as contained within this resource.  If compressed,
 	 * this will be smaller than the value returned by {@link #getImageDataSize() } which reflects
 	 * the uncompressed size.
 	 * @return raw image data size

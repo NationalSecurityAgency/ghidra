@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,8 +30,8 @@ public class CryptoProviders {
 
 	/**
 	 * Fetch the global {@link CryptoProviders} singleton instance.
-	 * 
-	 * @return shared {@link CryptoProviders} singleton instance 
+	 *
+	 * @return shared {@link CryptoProviders} singleton instance
 	 */
 	public static CryptoProviders getInstance() {
 		return singletonInstance;
@@ -56,7 +56,7 @@ public class CryptoProviders {
 	 * Adds a {@link CryptoProvider} to this registry.
 	 * <p>
 	 * TODO: do we need provider priority ordering?
-	 * 
+	 *
 	 * @param provider {@link CryptoProvider}
 	 */
 	public void registerCryptoProvider(CryptoProvider provider) {
@@ -65,7 +65,7 @@ public class CryptoProviders {
 
 	/**
 	 * Removes a {@link CryptoProvider} from this registry.
-	 * 
+	 *
 	 * @param provider {@link CryptoProvider} to remove
 	 */
 	public void unregisterCryptoProvider(CryptoProvider provider) {
@@ -76,7 +76,7 @@ public class CryptoProviders {
 	 * Returns the {@link CachedPasswordProvider}.
 	 * <p>
 	 * (Used by GUI actions to manage the cache)
-	 * 
+	 *
 	 * @return cached crypto provider instance
 	 */
 	public CachedPasswordProvider getCachedCryptoProvider() {
@@ -85,7 +85,7 @@ public class CryptoProviders {
 
 	/**
 	 * Returns the previously registered matching {@link CryptoProvider} instance.
-	 * 
+	 *
 	 * @param <T> CryptoProvider type
 	 * @param providerClass {@link CryptoProvider} class
 	 * @return previously registered CryptoProvider instance, or null if not found
@@ -104,7 +104,7 @@ public class CryptoProviders {
 	 * TODO: to truly be effective when multiple files
 	 * are being opened (ie. batch import), nested sessions
 	 * need to be implemented.
-	 * 
+	 *
 	 * @return new {@link CryptoSession} instance
 	 */
 	public CryptoSession newSession() {

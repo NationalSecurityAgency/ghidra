@@ -59,7 +59,7 @@
       </localrange>
     </prototype>
   </default_proto>
-  
+
   <callfixup name="switch_override_ACC">
     <pcode>
       <body><![CDATA[
@@ -68,5 +68,5 @@
       ]]></body>
     </pcode>
   </callfixup>
-  
+
 </compiler_spec>

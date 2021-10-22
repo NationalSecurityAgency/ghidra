@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,14 +34,14 @@ public abstract class HeadlessScript extends GhidraScript {
 	 */
 	public enum HeadlessContinuationOption {
 		/**
-		 * Continue running scripts and/or analysis; <code>-import</code> and <code>-process</code> 
+		 * Continue running scripts and/or analysis; <code>-import</code> and <code>-process</code>
 		 * modes complete normally.
 		 */
 		CONTINUE,
 
 		/**
-		 *  Continue running scripts and/or analysis; 
-		 *  <code>-import</code> mode does not save program, 
+		 *  Continue running scripts and/or analysis;
+		 *  <code>-import</code> mode does not save program,
 		 *  <code>-process</code> mode deletes program.
 		 */
 		CONTINUE_THEN_DELETE,
@@ -53,9 +53,9 @@ public abstract class HeadlessScript extends GhidraScript {
 		ABORT_AND_DELETE,
 
 		/**
-		 * Abort any scripts or analysis that come after this script; <code>-import</code> mode does 
+		 * Abort any scripts or analysis that come after this script; <code>-import</code> mode does
 		 * save program (but it may not be processed completely),
-		 * <code>-process</code> mode completes normally, minus scripts or analysis that 
+		 * <code>-process</code> mode completes normally, minus scripts or analysis that
 		 * runs after the ABORT request.
 		 */
 		ABORT
@@ -74,12 +74,12 @@ public abstract class HeadlessScript extends GhidraScript {
 	}
 
 	/**
-	 * Sets the current headless instance -- doing so gives the user the ability to manipulate 
+	 * Sets the current headless instance -- doing so gives the user the ability to manipulate
 	 * headless analyzer-specific parameters.
 	 * <p>
-	 * This method is declared with no access modifier to only allow package-level (no subclass) 
+	 * This method is declared with no access modifier to only allow package-level (no subclass)
 	 * access. This method is meant to only be used by the HeadlessAnalyzer class.
-	 * 
+	 *
 	 * @param ha  HeadlessAnalyzer instance
 	 */
 	void setHeadlessInstance(HeadlessAnalyzer ha) {
@@ -91,7 +91,7 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * <p>
 	 * This method is declare with no access modifier to only allow package-level (no
 	 * subclass) access. This method is meant to only be used by the HeadlessAnalyzer class.
-	 * 
+	 *
 	 * @param option initial continuation option for this script
 	 */
 	void setInitialContinuationOption(HeadlessContinuationOption option) {
@@ -106,7 +106,7 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * <p>
 	 * This method is declared with no access modifier to only allow package-level (no
 	 * subclass) access. This method is meant to only be used by the HeadlessAnalyzer class.
-	 * 
+	 *
 	 * @return the script's final HeadlessContinuationOption
 	 */
 	HeadlessContinuationOption getContinuationOption() {
@@ -118,10 +118,10 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * <p>
 	 * This method should be called at the beginning of every public method in HeadlessScript
 	 * that accesses HeadlessAnalyzer methods (for instance, 'headless.isAnalysisEnabled()').
-	 * The call to this method can not be placed in the constructor, because 'setHeadlessInstance', 
-	 * which connects the script with the current headless instance, is not called until after the 
+	 * The call to this method can not be placed in the constructor, because 'setHeadlessInstance',
+	 * which connects the script with the current headless instance, is not called until after the
 	 * call to the constructor.
-	 *   
+	 *
 	 * @throws ImproperUseException if not in headless mode or headless instance not set
 	 */
 	private void checkHeadlessStatus() throws ImproperUseException {
@@ -133,15 +133,15 @@ public abstract class HeadlessScript extends GhidraScript {
 	/**
 	 * Stores a key/value pair in the HeadlessAnalyzer instance for later use.
 	 * <p>
-	 * This method, along with the 'getStoredHeadlessValue' method, is useful for debugging and 
+	 * This method, along with the 'getStoredHeadlessValue' method, is useful for debugging and
 	 * testing the Headless Analyzer (when the user has directly instantiated the HeadlessAnalyzer
 	 * instead of running it from analyzeHeadless.sh or analyzeHeadless.bat). This method is
-	 * intended to allow a HeadlessScript to store variables that reflect the current state of 
+	 * intended to allow a HeadlessScript to store variables that reflect the current state of
 	 * processing (at the time the script is being run). Storing variables in the HeadlessAnalyzer
-	 * instance may be the only way to access the state of processing during cases when the user 
-	 * is forced to run in -readOnly mode, or if there is a value that is only accessible at the 
+	 * instance may be the only way to access the state of processing during cases when the user
+	 * is forced to run in -readOnly mode, or if there is a value that is only accessible at the
 	 * scripts stage.
-	 * 
+	 *
 	 * @param key	storage key in String form
 	 * @param value value to store
 	 * @throws ImproperUseException if not in headless mode or headless instance not set
@@ -156,15 +156,15 @@ public abstract class HeadlessScript extends GhidraScript {
 	/**
 	 * Get stored value by key from the HeadlessAnalyzer instance.
 	 * <p>
-	 * This method, along with the 'storedHeadlessValue' method, is useful for debugging and 
+	 * This method, along with the 'storedHeadlessValue' method, is useful for debugging and
 	 * testing the Headless Analyzer (when the user has directly instantiated the HeadlessAnalyzer
 	 * instead of running it from analyzeHeadless.sh or analyzeHeadless.bat). This method is
-	 * intended to allow a HeadlessScript to store variables that reflect the current state of 
+	 * intended to allow a HeadlessScript to store variables that reflect the current state of
 	 * processing (at the time the script is being run). Storing variables in the HeadlessAnalyzer
-	 * instance may be the only way to access the state of processing during cases when the user 
-	 * is forced to run in -readOnly mode, or if there is a value that is only accessible at the 
-	 * scripts stage.	 
-	 *  
+	 * instance may be the only way to access the state of processing during cases when the user
+	 * is forced to run in -readOnly mode, or if there is a value that is only accessible at the
+	 * scripts stage.
+	 *
 	 * @param key  key to retrieve the desired stored value
 	 * @return  stored Object, or null if none exists for that key
 	 * @throws ImproperUseException if not in headless mode or headless instance not set
@@ -178,7 +178,7 @@ public abstract class HeadlessScript extends GhidraScript {
 
 	/**
 	 * Returns whether the specified key was stored in the HeadlessAnalyzer instance.
-	 * 
+	 *
 	 * @param key  value of key to check for in Headless Analyzer instance
 	 * @return  true if the specified key exists
 	 * @throws ImproperUseException if not in headless mode or headless instance not set
@@ -195,7 +195,7 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * <p>
 	 * The continuation option specifies whether to continue or abort follow-on processing,
 	 * and whether to delete or keep the current program.
-	 * 
+	 *
 	 * @param option HeadlessContinuationOption set by this script
 	 * @see #getHeadlessContinuationOption()
 	 */
@@ -209,7 +209,7 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * <p>
 	 * The continuation option specifies whether to continue or abort follow-on processing,
 	 * and whether to delete or keep the current program.
-	 * 
+	 *
 	 * @return the current HeadlessContinuationOption
 	 * @see #setHeadlessContinuationOption(HeadlessContinuationOption)
 	 */
@@ -226,15 +226,15 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * <p>
 	 * A script that calls this method should run as a 'preScript', since preScripts
 	 * execute before analysis would typically run. Running the script as a 'postScript'
-	 * is ineffective, since the stage at which analysis would have happened has already 
+	 * is ineffective, since the stage at which analysis would have happened has already
 	 * passed.
 	 * <p>
 	 * This change will persist throughout the current HeadlessAnalyzer session, unless
 	 * changed again (in other words, once analysis is enabled via script for one program,
-	 * it will also be enabled for future programs in the current session, unless changed). 
-	 * 
+	 * it will also be enabled for future programs in the current session, unless changed).
+	 *
 	 * @param b  true to enable analysis, false to disable analysis
-	 * @throws ImproperUseException if not in headless mode or headless instance not set 
+	 * @throws ImproperUseException if not in headless mode or headless instance not set
 	 * @see #isHeadlessAnalysisEnabled()
 	 */
 	public void enableHeadlessAnalysis(boolean b) throws ImproperUseException {
@@ -245,7 +245,7 @@ public abstract class HeadlessScript extends GhidraScript {
 
 	/**
 	 * Returns whether analysis is currently enabled or disabled in the HeadlessAnalyzer.
-	 * 
+	 *
 	 * @return whether analysis has been enabled or not
 	 * @throws ImproperUseException if not in headless mode or headless instance not set
 	 * @see #enableHeadlessAnalysis(boolean)
@@ -261,7 +261,7 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * it is in -process mode). The use of -import mode implies that binaries are actively being
 	 * imported into the project (with optional scripts/analysis). The use of -process mode implies
 	 * that existing project files are being processed (using scripts and/or analysis).
-	 * 
+	 *
 	 * @return whether we are in -import mode or not
 	 * @throws ImproperUseException if not in headless mode or headless instance not set
 	 */
@@ -272,17 +272,17 @@ public abstract class HeadlessScript extends GhidraScript {
 	}
 
 	/**
-	 * Changes the path <i>in the Ghidra project</i> where imported files are saved. 
+	 * Changes the path <i>in the Ghidra project</i> where imported files are saved.
 	 * The passed-in path is assumed to be relative to the project root. For example,
 	 * if the directory structure for the Ghidra project looks like this:
-	 * 
+	 *
 	 * <pre>
 	 * 		MyGhidraProject:
 	 * 		  /dir1
 	 * 		    /innerDir1
 	 * 		    /innerDir2
 	 * </pre>
-	 * 
+	 *
 	 * Then the following usage would ensure that any files imported after this call would
 	 * be saved in the <code>MyGhidraProject:/dir1/innerDir2</code> folder.
 	 * <pre>
@@ -317,8 +317,8 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * </pre>
 	 * As in the examples above, if the desired folder does not already exist, it is created.
 	 * <p>
-	 * A change in the import save folder will persist throughout the current HeadlessAnalyzer 
-	 * session, unless changed again (in other words, once the import directory has been changed, 
+	 * A change in the import save folder will persist throughout the current HeadlessAnalyzer
+	 * session, unless changed again (in other words, once the import directory has been changed,
 	 * it will remain the 'save' directory for import files in the current session, unless changed).
 	 * <p>
 	 * To revert back to the default import location (that which was specified via command line),
@@ -326,14 +326,14 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * <pre>
 	 * 		setHeadlessImportDirectory(null);	// Sets import save directory to default
 	 * </pre>
-	 * If a file with the same name already exists in the desired location, it will only be 
+	 * If a file with the same name already exists in the desired location, it will only be
 	 * overwritten if "-overwrite" is true.
 	 * <p>
-	 * This method is only applicable when using the HeadlessAnalyzer <code>-import</code> mode and 
+	 * This method is only applicable when using the HeadlessAnalyzer <code>-import</code> mode and
 	 * is ineffective in <code>-process</code> mode.
-	 * 
+	 *
 	 * @param importDir  the absolute path (relative to root) where inputs will be saved
-	 * @throws ImproperUseException if not in headless mode or headless instance not set	 
+	 * @throws ImproperUseException if not in headless mode or headless instance not set
 	 * @throws IOException if there are issues creating the folder
 	 * @throws InvalidNameException if folder name is invalid
 	 */
@@ -377,7 +377,7 @@ public abstract class HeadlessScript extends GhidraScript {
 	 * 		<li>the current script is being run as a postScript (since postScripts run after
 	 * analysis)</li>
 	 * </ol>
-	 * 
+	 *
 	 * @return whether analysis timeout occurred
 	 * @throws ImproperUseException if not in headless mode or headless instance not set
 	 */
@@ -463,7 +463,7 @@ public abstract class HeadlessScript extends GhidraScript {
 	/**
 	 * Resolve continuation options according to the table in 'analyzeHeadlessREADME.html'.
 	 * (See "Multiple Scripts" section).
-	 * 
+	 *
 	 * @param opt  continuation option to combine with current continuation option
 	 */
 	private void resolveContinuationOptionWith(HeadlessContinuationOption opt) {

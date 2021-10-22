@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,12 +45,12 @@ public class TestClassFileCreator {
 	private TestClassFileCreator(){
 		//private constructor to enforce noninstantiability
 	}
-	
+
 	public static AbstractConstantPoolInfoJava[] getConstantPoolFromBytes(byte[] bytes) throws IOException{
 		ByteProvider provider = new ByteArrayProvider(bytes);
 		return getConstantPoolFromByteProvider(provider);
 	}
-	
+
 	public static AbstractConstantPoolInfoJava[] getConstantPoolFromFile(String testFileName) throws IOException{
 		Application.initializeApplication(new GhidraApplicationLayout(),
 			new ApplicationConfiguration());
@@ -60,7 +60,7 @@ public class TestClassFileCreator {
 		ByteProvider provider = new RandomAccessByteProvider(testFile);
 		return getConstantPoolFromByteProvider(provider);
 	}
-		
+
 	public static AbstractConstantPoolInfoJava[] getConstantPoolFromByteProvider(ByteProvider provider) throws IOException{
 		//java is big endian
 		BinaryReader reader = new BinaryReader(provider, false);
@@ -75,7 +75,7 @@ public class TestClassFileCreator {
 		@SuppressWarnings("unused") //just advance past it
 		short majorVersion = reader.readNextShort();
 		short constantPoolCount = reader.readNextShort();
-		
+
 		AbstractConstantPoolInfoJava[] constantPool = new AbstractConstantPoolInfoJava[constantPoolCount+1];
 		//NOTE: start at index 1 per JVM specification!!!
 		for (int i = 1; i < constantPoolCount; i++) {
@@ -101,17 +101,17 @@ public class TestClassFileCreator {
 		classFile.add((byte) 0);
 		classFile.add((byte) 0);
 		classFile.add((byte) 0x34);
-		
+
 	}
 
 	public static void appendCount(ArrayList<Byte> classFile, short	s) {
 		appendShort(classFile,s);
 	}
-	
+
 	public static void appendInteger(ArrayList<Byte> classFile, int i){
 		classFile.add(ConstantPoolTagsJava.CONSTANT_Integer);
 		appendInt(classFile,i);
-		
+
 	}
 
 	public static byte[] getByteArray(ArrayList<Byte> classFile) {
@@ -128,7 +128,7 @@ public class TestClassFileCreator {
 		classFile.add(ConstantPoolTagsJava.CONSTANT_Float);
 		appendInt(classFile,i);
 	}
-	
+
 	public static void appendDouble(ArrayList<Byte> classFile, double input){
 		long l = (long) input;
 		classFile.add(ConstantPoolTagsJava.CONSTANT_Double);
@@ -138,14 +138,14 @@ public class TestClassFileCreator {
 	public static void appendLong(ArrayList<Byte> classFile, long l) {
 		classFile.add(ConstantPoolTagsJava.CONSTANT_Long);
 		appendLongValue(classFile, l);
-		
+
 	}
 
 	public static void appendString(ArrayList<Byte> classFile, short string_index) {
 		classFile.add(ConstantPoolTagsJava.CONSTANT_String);
 		appendShort(classFile, string_index);
 	}
-	
+
 	public static void appendUtf8(ArrayList<Byte> classFile, String input){
 		classFile.add(ConstantPoolTagsJava.CONSTANT_Utf8);
 		byte[] bytes = input.getBytes();
@@ -155,12 +155,12 @@ public class TestClassFileCreator {
 			classFile.add(b);
 		}
 	}
-	
+
 	public static void appendClass(ArrayList<Byte> classFile, short name_index){
 		classFile.add(ConstantPoolTagsJava.CONSTANT_Class);
 		appendShort(classFile, name_index);
 	}
-	
+
 	public static void appendMethodType(ArrayList<Byte> classFile, short s){
 		classFile.add(ConstantPoolTagsJava.CONSTANT_MethodType);
 		appendShort(classFile, s);
@@ -169,28 +169,28 @@ public class TestClassFileCreator {
 	public static void appendFieldRef(ArrayList<Byte> classFile, short class_index, short name_and_type_index) {
 	    classFile.add( ConstantPoolTagsJava.CONSTANT_Fieldref);
 	    appendShort(classFile, class_index);
-	    appendShort(classFile, name_and_type_index);	
+	    appendShort(classFile, name_and_type_index);
 	}
-	
+
 	public static void appendMethodRef(ArrayList<Byte> classFile, short class_index, short name_and_type_index) {
 	    classFile.add( ConstantPoolTagsJava.CONSTANT_Methodref);
 	    appendShort(classFile, class_index);
-	    appendShort(classFile, name_and_type_index);	
+	    appendShort(classFile, name_and_type_index);
 	}
-	
+
 	public static void appendInterfaceMethodRef(ArrayList<Byte> classFile, short class_index, short name_and_type_index) {
 	    classFile.add( ConstantPoolTagsJava.CONSTANT_InterfaceMethodref);
 	    appendShort(classFile, class_index);
-	    appendShort(classFile, name_and_type_index);	
+	    appendShort(classFile, name_and_type_index);
 	}
-	
+
 	public static void appendInvokeDynamicInfo(ArrayList<Byte> classFile, short bootstrap_method_attr_index, short name_and_type_index){
 		classFile.add( ConstantPoolTagsJava.CONSTANT_InvokeDynamic);
 		appendShort(classFile, bootstrap_method_attr_index);
 		appendShort(classFile, name_and_type_index);
 	}
-	
-	
+
+
 	public static void appendNameAndType(ArrayList<Byte> classFile, short name_index, short descriptor_index){
 		classFile.add( ConstantPoolTagsJava.CONSTANT_NameAndType);
 		appendShort(classFile, name_index);
@@ -199,16 +199,16 @@ public class TestClassFileCreator {
 
 	private static void appendShort(ArrayList<Byte> classFile, short s){
 		classFile.add((byte) ((s >> 8) & 0xff));
-		classFile.add((byte) (s & 0xff));	
+		classFile.add((byte) (s & 0xff));
 	}
-	
+
 	private static void appendInt(ArrayList<Byte> classFile, int i){
 		classFile.add((byte) ((i >> 24) & 0xff));
 		classFile.add((byte) ((i >> 16) & 0xff));
 		classFile.add((byte) ((i >> 8) & 0xff));
 		classFile.add((byte) (i & 0xff));
 	}
-	
+
 	private static void appendLongValue(ArrayList<Byte> classFile, long l){
 		classFile.add((byte) ((l >> 56) & 0xff));
 		classFile.add((byte) ((l >> 48) & 0xff));
@@ -217,15 +217,15 @@ public class TestClassFileCreator {
 		classFile.add((byte) ((l >> 24) & 0xff));
 		classFile.add((byte) ((l >> 16) & 0xff));
 		classFile.add((byte) ((l >> 8) & 0xff));
-		classFile.add((byte) (l & 0xff));	
+		classFile.add((byte) (l & 0xff));
 	}
 
 	public static void appendMethodHandleFieldRef(ArrayList<Byte> classFile, byte reference_kind, short reference_index ) {
 		classFile.add(ConstantPoolTagsJava.CONSTANT_MethodHandle);
 		classFile.add(reference_kind);
-		appendShort(classFile, reference_index);	
+		appendShort(classFile, reference_index);
 	}
-	
-	
-	
+
+
+
 }

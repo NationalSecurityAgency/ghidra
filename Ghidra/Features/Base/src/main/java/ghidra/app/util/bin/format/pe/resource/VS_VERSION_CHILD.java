@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * A class to represent the VS_VERSION_CHILD data structure which generally corresponds 
+ * A class to represent the VS_VERSION_CHILD data structure which generally corresponds
  * to either StringFileInfo or VarFileInfo.  Only a single instance of each childName
  * is expected.
  */
@@ -81,7 +81,7 @@ public class VS_VERSION_CHILD implements StructConverter {
 		else if ("StringTable".equals(parentName)) {
 			// Should be called "String" but this may conflict with other String types
 			// Also, we have seen some PE's where the childValueType of this is 0, so we can't
-			// rely on that to know if we should read an integer or a string.  This field is 
+			// rely on that to know if we should read an integer or a string.  This field is
 			// always a string regardless of the specified type.
 			childDataType = "StringInfo";
 			if (childValueSize > 0) {
@@ -184,7 +184,7 @@ public class VS_VERSION_CHILD implements StructConverter {
 	}
 
 	/**
-	 * @return true if value is 4-byte integer value in memory 
+	 * @return true if value is 4-byte integer value in memory
 	 * while string value return by {@link DataType#getValue(ghidra.program.model.mem.MemBuffer, ghidra.docking.settings.Settings, int)
 	 * DataType.getValue(MemBuffer, Settings, int)} is a numeric hex string.
 	 */

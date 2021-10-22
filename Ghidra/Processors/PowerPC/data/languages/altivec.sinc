@@ -190,17 +190,17 @@ define pcodeop vectorUnpackLowSignedHalfWord;
 }
 
 :lvebx vrD,RA_OR_ZERO,B		is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=7 & Rc=0
-{	
+{
 	tmp:$(REGISTER_SIZE) = (RA_OR_ZERO + B);
 	tmpb:1 = *[ram]:1 tmp;
 	eb:1 = tmp[0,4];
 # This looks backwards from what the manual says, but it's ok since byte 0 in the manual is MSB
-# where as for us byte 0 is LSB	
+# where as for us byte 0 is LSB
 @if ENDIAN == "big"
 	eb = 0xF - eb;
 @endif
 	eb = eb * 8;
-	vrD = (zext(tmpb) << eb);	
+	vrD = (zext(tmpb) << eb);
 	#vrD = loadVectorElementByteIndexed(A,B);
 }
 
@@ -220,7 +220,7 @@ define pcodeop vectorUnpackLowSignedHalfWord;
 }
 
 :lvsr vrD,RA_OR_ZERO,B		is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=38 & Rc=0
-{   
+{
 	tmp:$(REGISTER_SIZE) = (RA_OR_ZERO + B);
 	eb:1 = tmp[0,4];
 	eb = eb * 8;
@@ -234,11 +234,11 @@ define pcodeop vectorUnpackLowSignedHalfWord;
 }
 
 :lvx vrD,RA_OR_ZERO,B		is OP=31 & vrD & RA_OR_ZERO & B & XOP_1_10=103 & Rc=0
-{   
+{
 #	vrD = loadVectorIndexed(A,B);
 	build RA_OR_ZERO;
 	tmp:$(REGISTER_SIZE) = (RA_OR_ZERO + B) & 0xfffffffffffffff0;
-	vrD = *[ram]:16 tmp; 
+	vrD = *[ram]:16 tmp;
 }
 
 :lvxl vrD,A,B		is OP=31 & vrD & A & B & XOP_1_10=359 & Rc=0
@@ -277,11 +277,11 @@ define pcodeop vectorUnpackLowSignedHalfWord;
 :stvx vrS,RA_OR_ZERO,B		is OP=31 & vrS & B & RA_OR_ZERO & XOP_1_10=231 & Rc=0
 {
 	tmp:$(REGISTER_SIZE) = (RA_OR_ZERO + B) & 0xfffffffffffffff0;
-	*[ram]:16 tmp = vrS; 
+	*[ram]:16 tmp = vrS;
 }
 
 :stvxl vrS,RA_OR_ZERO,B		is OP=31 & vrS & B & RA_OR_ZERO & XOP_1_10=487 & Rc=0
-{   # TODO definition 
+{   # TODO definition
 	tmp:$(REGISTER_SIZE) = (RA_OR_ZERO + B) & 0xfffffffffffffff0;
 	*[ram]:16 tmp = vrS;
 	# mark_as_not_likely_to_be_needed_again_anytime_soon(tmp);
@@ -312,7 +312,7 @@ define pcodeop vectorUnpackLowSignedHalfWord;
 	vrD = vectorAddSignedWordSaturate(vrA,vrB);
 }
 
-vaddubm_part1: is  vrA_8_0 & vrA_8_1 & vrA_8_2 & vrA_8_3 & vrA_8_4 & vrA_8_5 & vrA_8_6 & vrA_8_7 
+vaddubm_part1: is  vrA_8_0 & vrA_8_1 & vrA_8_2 & vrA_8_3 & vrA_8_4 & vrA_8_5 & vrA_8_6 & vrA_8_7
             & vrB_8_0 & vrB_8_1 & vrB_8_2 & vrB_8_3 & vrB_8_4 & vrB_8_5 & vrB_8_6 & vrB_8_7
             & vrD_8_0 & vrD_8_1 & vrD_8_2 & vrD_8_3 & vrD_8_4 & vrD_8_5 & vrD_8_6 & vrD_8_7
 {
@@ -326,9 +326,9 @@ vaddubm_part1: is  vrA_8_0 & vrA_8_1 & vrA_8_2 & vrA_8_3 & vrA_8_4 & vrA_8_5 & v
     vrD_8_7 = vrA_8_7 + vrB_8_7;
 }
 
-vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13 & vrA_8_14 & vrA_8_15 
-            & vrB_8_8 & vrB_8_9 & vrB_8_10 & vrB_8_11 & vrB_8_12 & vrB_8_13 & vrB_8_14 & vrB_8_15 
-            & vrD_8_8 & vrD_8_9 & vrD_8_10 & vrD_8_11 & vrD_8_12 & vrD_8_13 & vrD_8_14 & vrD_8_15 
+vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13 & vrA_8_14 & vrA_8_15
+            & vrB_8_8 & vrB_8_9 & vrB_8_10 & vrB_8_11 & vrB_8_12 & vrB_8_13 & vrB_8_14 & vrB_8_15
+            & vrD_8_8 & vrD_8_9 & vrD_8_10 & vrD_8_11 & vrD_8_12 & vrD_8_13 & vrD_8_14 & vrD_8_15
 {
     vrD_8_8 = vrA_8_8 + vrB_8_8;
     vrD_8_9 = vrA_8_9 + vrB_8_9;
@@ -342,7 +342,7 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 # A bug in sleigh compiler forces us to keep the number of imported symbols less than 35 (it slows to a halt pass there), that is why we have vaddubm_part1 & vaddubm_part2
 :vaddubm vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=0 & vaddubm_part1 & vaddubm_part2
-{   
+{
 }
 
 :vaddubs vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=512
@@ -350,11 +350,11 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 	vrD = vectorAddUnsignedByteSaturate(vrA,vrB);
 }
 
-:vadduhm vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=64 
-    & vrA_16_0 & vrA_16_1 & vrA_16_2 & vrA_16_3 & vrA_16_4 & vrA_16_5 & vrA_16_6 & vrA_16_7 
-    & vrB_16_0 & vrB_16_1 & vrB_16_2 & vrB_16_3 & vrB_16_4 & vrB_16_5 & vrB_16_6 & vrB_16_7 
-    & vrD_16_0 & vrD_16_1 & vrD_16_2 & vrD_16_3 & vrD_16_4 & vrD_16_5 & vrD_16_6 & vrD_16_7 
-{   
+:vadduhm vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=64
+    & vrA_16_0 & vrA_16_1 & vrA_16_2 & vrA_16_3 & vrA_16_4 & vrA_16_5 & vrA_16_6 & vrA_16_7
+    & vrB_16_0 & vrB_16_1 & vrB_16_2 & vrB_16_3 & vrB_16_4 & vrB_16_5 & vrB_16_6 & vrB_16_7
+    & vrD_16_0 & vrD_16_1 & vrD_16_2 & vrD_16_3 & vrD_16_4 & vrD_16_5 & vrD_16_6 & vrD_16_7
+{
     vrD_16_0 = vrA_16_0 + vrB_16_0;
     vrD_16_1 = vrA_16_1 + vrB_16_0;
     vrD_16_2 = vrA_16_2 + vrB_16_2;
@@ -371,10 +371,10 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 }
 
 :vadduwm vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & XOP_0_10=128
-    & vrA_32_0 & vrA_32_1 & vrA_32_2 & vrA_32_3 
-    & vrB_32_0 & vrB_32_1 & vrB_32_2 & vrB_32_3 
-    & vrD_32_0 & vrD_32_1 & vrD_32_2 & vrD_32_3 
-{   
+    & vrA_32_0 & vrA_32_1 & vrA_32_2 & vrA_32_3
+    & vrB_32_0 & vrB_32_1 & vrB_32_2 & vrB_32_3
+    & vrD_32_0 & vrD_32_1 & vrD_32_2 & vrD_32_3
+{
     vrD_32_0 = vrA_32_0 + vrB_32_0;
     vrD_32_1 = vrA_32_1 + vrB_32_1;
     vrD_32_2 = vrA_32_2 + vrB_32_2;
@@ -472,7 +472,7 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 }
 
 :vcmpequh vrD,vrA,vrB	is OP=4 & vrD & vrA & vrB & BIT_10=0 & XOP_0_9=70
-{   # TODO definition 
+{   # TODO definition
 	# TODO change CR6
 	vrD = vectorCompareEqualToUnsignedHalfWord(vrA,vrB);
 }
@@ -783,7 +783,7 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vmulosb vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=264
 {	# TODO definition
-	vrD = vectorMultiplyOddSignedByte(vrA,vrB);	
+	vrD = vectorMultiplyOddSignedByte(vrA,vrB);
 }
 
 :vmulosh vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=328
@@ -807,17 +807,17 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 }
 
 :vnor vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1284
-{	
+{
 	vrD = ~(vrA | vrB);
 }
 
 :vor vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1156
-{	
+{
 	vrD = vrA | vrB;
 }
 
 :vperm vrD,vrA,vrB,vrC	is OP=4 & vrD & vrA & vrB & vrC & XOP_0_5=43
-{	
+{
 #	tmp:32 = (zext(vrA) << 128) | zext(vrB);
 #	tmp2:16 = 0;
 #	tmp3:32 = 0;
@@ -865,7 +865,7 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 }
 
 :vpkuhus vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=142
-{	# TODO definitionXTF = 
+{	# TODO definitionXTF =
 	vrD = vectorPackUnsignedHalfWordUnsignedSaturate(vrA,vrB);
 }
 
@@ -966,7 +966,7 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 	tmp:1 = (0xF - UIMB) * 8;
 	tmpa:16 = (vrB >> tmp) & 0xFF;
 	vrD = tmpa | (tmpa << 8) | (tmpa << 16) | (tmpa << 24) | (tmpa << 32) | (tmpa << 40) | (tmpa << 48) | (tmpa << 56);
-	vrD = vrD | (tmpa << 64) | (tmpa << 72) | (tmpa << 80) | (tmpa << 88) | (tmpa << 96) | (tmpa << 104) | (tmpa << 112) | (tmpa << 120);	
+	vrD = vrD | (tmpa << 64) | (tmpa << 72) | (tmpa << 80) | (tmpa << 88) | (tmpa << 96) | (tmpa << 104) | (tmpa << 112) | (tmpa << 120);
 }
 
 :vsplth vrD,vrB,UIMH	is OP=4 & vrD & BITS_19_20=0 & UIMH & vrB & XOP_0_10=588
@@ -1076,11 +1076,11 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 	vrD = vectorSubtractUnsignedByteSaturate(vrA,vrB);
 }
 
-:vsubuhm vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1088 
-    & vrA_16_0 & vrA_16_1 & vrA_16_2 & vrA_16_3 & vrA_16_4 & vrA_16_5 & vrA_16_6 & vrA_16_7 
-    & vrB_16_0 & vrB_16_1 & vrB_16_2 & vrB_16_3 & vrB_16_4 & vrB_16_5 & vrB_16_6 & vrB_16_7 
-    & vrC_16_0 & vrC_16_1 & vrC_16_2 & vrC_16_3 & vrC_16_4 & vrC_16_5 & vrC_16_6 & vrC_16_7 
-{	
+:vsubuhm vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1088
+    & vrA_16_0 & vrA_16_1 & vrA_16_2 & vrA_16_3 & vrA_16_4 & vrA_16_5 & vrA_16_6 & vrA_16_7
+    & vrB_16_0 & vrB_16_1 & vrB_16_2 & vrB_16_3 & vrB_16_4 & vrB_16_5 & vrB_16_6 & vrB_16_7
+    & vrC_16_0 & vrC_16_1 & vrC_16_2 & vrC_16_3 & vrC_16_4 & vrC_16_5 & vrC_16_6 & vrC_16_7
+{
     vrC_16_0 = vrA_16_0 - vrB_16_0;
     vrC_16_1 = vrA_16_1 - vrB_16_1;
     vrC_16_2 = vrA_16_2 - vrB_16_2;
@@ -1118,17 +1118,17 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 
 :vsum4sbs vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1800
 {	# TODO definition
-	vrD = vectorSumAcrossPartialSignedByteSaturate(vrA,vrB);	
+	vrD = vectorSumAcrossPartialSignedByteSaturate(vrA,vrB);
 }
 
 :vsum4shs vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1608
 {	# TODO definition
-	vrD = vectorSumAcrossPartialSignedHalfWordSaturate(vrA,vrB);	
+	vrD = vectorSumAcrossPartialSignedHalfWordSaturate(vrA,vrB);
 }
 
 :vsum4ubs vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1544
 {	# TODO definition
-	vrD = vectorSumAcrossPartialUnsignedByteSaturate(vrA,vrB);	
+	vrD = vectorSumAcrossPartialUnsignedByteSaturate(vrA,vrB);
 }
 
 :vupkhpx vrD,vrB		is OP=4 & vrD & A_BITS=0 & vrB & XOP_0_10=846
@@ -1162,7 +1162,7 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 }
 
 :vxor vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1220
-{	
+{
 	vrD = vrA ^ vrB;
 }
 
@@ -1308,7 +1308,7 @@ define pcodeop altv300_71;
 }
 
 :bcdsub. vrD,vrA,vrB,PS		is OP=4 & BIT_10=1 & XOP_0_8=65 & vrA & vrB & vrD & PS {
-	vrD = altv207_65(vrA,vrB,PS:1);	
+	vrD = altv207_65(vrA,vrB,PS:1);
 }
 
 

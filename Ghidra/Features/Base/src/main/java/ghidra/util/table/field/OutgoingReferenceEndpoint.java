@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,8 +30,8 @@ public class OutgoingReferenceEndpoint extends ReferenceEndpoint {
 
 	/**
 	 * A special constructor that allows clients to override the 'toAddress' of the reference.
-	 * 
-	 * @param r the reference 
+	 *
+	 * @param r the reference
 	 * @param toAddress the desired 'toAddress'
 	 * @param isOffcut false if the given reference points to the min address of a code unit
 	 */

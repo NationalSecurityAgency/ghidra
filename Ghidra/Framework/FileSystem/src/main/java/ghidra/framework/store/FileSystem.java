@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,8 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>FileSystem</code> provides a hierarchical view and management of a 
- * set of files and folders.  
+ * <code>FileSystem</code> provides a hierarchical view and management of a
+ * set of files and folders.
  */
 public interface FileSystem {
 
@@ -37,7 +37,7 @@ public interface FileSystem {
 
 	/**
 	 * Get user name associated with this filesystem.  In the case of a remote filesystem
-	 * this will correspond to the name used during login/authentication.  A null value may 
+	 * this will correspond to the name used during login/authentication.  A null value may
 	 * be returned if user name unknown.
 	 */
 	String getUserName();
@@ -137,14 +137,14 @@ public interface FileSystem {
 			CancelledException;
 
 	/**
-	 * Create a new empty database item within the specified parent folder. 
+	 * Create a new empty database item within the specified parent folder.
 	 * If this is a versioned file-system, the associated item is checked-out.
 	 * The resulting checkoutId can be obtained from the returned buffer file.
 	 * @param parentPath folder path of parent
 	 * @param name new database name
 	 * @param fileID file ID to be associated with new database or null
 	 * @param contentType application defined content type
-	 * @param bufferSize buffer size.  If copying an existing BufferFile, the buffer 
+	 * @param bufferSize buffer size.  If copying an existing BufferFile, the buffer
 	 * size must be the same as the source file.
 	 * @param user name of user creating item (required for versioned item)
 	 * @param projectPath path of project in which database is checked-out (required for versioned item)
@@ -166,7 +166,7 @@ public interface FileSystem {
 	 * @param istream source data
 	 * @param comment version comment (used for versioned file system only)
 	 * @param contentType application defined content type
-	 * @param monitor progress monitor (used for cancel support, 
+	 * @param monitor progress monitor (used for cancel support,
 	 * progress not used since length of input stream is unknown)
 	 * @return new data file
 	 * @throws DuplicateFileException Thrown if a folderItem with that name already exists.
@@ -185,7 +185,7 @@ public interface FileSystem {
 	 * @param parentPath folder path of parent
 	 * @param name new data file name
 	 * @param packedFile packed file data
-	 * @param monitor progress monitor (used for cancel support, 
+	 * @param monitor progress monitor (used for cancel support,
 	 * progress not used since length of input stream is unknown)
 	 * @param user name of user creating item (required for versioned item)
 	 * @return new item
@@ -208,7 +208,7 @@ public interface FileSystem {
 	public void deleteFolder(String folderPath) throws IOException;
 
 	/**
-	 * Move the specified folder to the path specified by newFolderPath. 
+	 * Move the specified folder to the path specified by newFolderPath.
 	 * The moved folder must not be an ancestor of the new Parent.
 	 * @param parentPath path of parent folder that the moving folder currently resides in.
 	 * @param folderName name of the folder within the parentPath to be moved.

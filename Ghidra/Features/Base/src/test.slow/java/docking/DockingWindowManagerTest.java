@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -115,7 +115,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		//
 		// Test that each new provider, with a group that has a partial match to another group,
 		//gets placed in its preferred intragroup position.
-		// 
+		//
 		// Note: 'Stacked' is the default.
 		//
 
@@ -136,7 +136,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		//
 		// Test that each new provider, with a group that has a partial match to another group,
 		//gets placed in its preferred intragroup position.
-		// 
+		//
 		// Note: 'Stacked' is the default.
 		//
 
@@ -149,12 +149,12 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 
 		show(dwm);
 
-		/*    
-		  
+		/*
+
 		   We are expecting a layout something like this (although exact layout may change
 		   due to memory layout):
-		 	
-		 	
+
+
 		 		.=========.=========.
 		 		|         |         |
 		 		|  AB     |  ABC    |
@@ -164,8 +164,8 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		 		|         A         |
 		 		|                   |
 		 		.===================.
-		 
-		 
+
+
 		 */
 
 		assertAbove(dwm, providerAB, providerA);
@@ -196,8 +196,8 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		final DockingWindowManager dwm2 = createNewDockingWindowManagerFromXML(element);
 
 		//
-		// Show providers that have the same name and group as those we just added above.  Make 
-		// sure that even though they are changing the window positions, they will still 
+		// Show providers that have the same name and group as those we just added above.  Make
+		// sure that even though they are changing the window positions, they will still
 		// be placed where they were when the xml was saved.
 		//
 		ComponentProvider newB = addProvider(dwm2, "B", "b", WINDOW, STACK);
@@ -231,8 +231,8 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		DockingWindowManager dwm2 = createNewDockingWindowManagerFromXML(element);
 
 		//
-		// Show providers that have the same name and group as those we just added above.  Make 
-		// sure that even though they are changing the window positions, they will still 
+		// Show providers that have the same name and group as those we just added above.  Make
+		// sure that even though they are changing the window positions, they will still
 		// be placed where they were when the xml was saved.
 		//
 		ComponentProvider newAB = addProvider(dwm2, "AB", "a.b", WINDOW, STACK);
@@ -246,7 +246,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 	@Test
 	public void testRestoreFromXML_favorVisiblePlaceholder() {
 		//
-		// Tests that the xml restore doesn't throw away 
+		// Tests that the xml restore doesn't throw away
 		DockingWindowManager dwm1 = new DockingWindowManager(tool, (List<Image>) null);
 
 		ComponentProvider provider1 = addProvider(dwm1, "A", "a", "X", STACK);
@@ -302,8 +302,8 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		DockingWindowManager dwm2 = createNewDockingWindowManagerFromXML(element);
 
 		//
-		// Show providers that have the same name and group as those we just added above.  Make 
-		// sure that even though they are changing the window positions, they will still 
+		// Show providers that have the same name and group as those we just added above.  Make
+		// sure that even though they are changing the window positions, they will still
 		// be placed where they were when the xml was saved.
 		//
 		ComponentProvider newX = addProvider(dwm2, "A", "a", "X", STACK);
@@ -317,7 +317,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 	@Test
 	public void testParentGroupToSubGroupRelationship_ParentOpenFirst() {
 		//
-		// Test that a parent group 'a' will always open where it wants to, relative to its group, 
+		// Test that a parent group 'a' will always open where it wants to, relative to its group,
 		// and that a subgroup 'a.b' will open relative to the parent.  **Make sure that this
 		// works when the parent is the first provider open.
 		//
@@ -334,7 +334,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 	@Test
 	public void testParentGroupToSubGroupRelationship_ChildOpenFirst() {
 		//
-		// Test that a parent group 'a' will always open where it wants to, relative to its group, 
+		// Test that a parent group 'a' will always open where it wants to, relative to its group,
 		// and that a subgroup 'a.b' will open relative to the parent.  **Make sure that this
 		// works when the subgroup is the first provider open.
 		//
@@ -345,7 +345,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 
 		show(dwm);
 
-		// Parent is still above the child (it's default position is used), since the 
+		// Parent is still above the child (it's default position is used), since the
 		// parent 'a' is not a child of 'a.b'
 		assertAbove(dwm, providerA, providerAB);
 	}
@@ -353,7 +353,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 	@Test
 	public void testGroupPositioningAcrossOwnwers() {
 		//
-		// Test that two providers that don't share an owner (the plugin) can share a group and 
+		// Test that two providers that don't share an owner (the plugin) can share a group and
 		// open relative to each other.
 		//
 		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null);
@@ -369,15 +369,15 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 
 	@Test
 	public void testGroupPositioning_SCR_10248() {
-		/*    
-		  
+		/*
+
 		   We are expecting a layout something like this (although exact layout may change
 		   due to memory layout):
-		 	
-		 	
+
+
 		 		We want this:
-		 		
-		 		
+
+
 		 		.=========.=========.=========.
 		 		|         |         |         |
 		 		|    A    |    B    |    C    |
@@ -385,11 +385,11 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		 		|         |         |         |
 		 		|         |    B2   |         |
 		 		.=========.=========.=========.
-		 		
-		 		
+
+
 		 		Not this:
-		 	
-		 	
+
+
 		 		.=========.=========.=========.
 		 		|         |         |         |
 		 		|    A    |    B    |    C    |
@@ -401,8 +401,8 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 		 		|              B2             |
 		 		|                             |
 		 		.=============================.
-		 
-		 
+
+
 		 */
 
 		DockingWindowManager dwm = new DockingWindowManager(tool, (List<Image>) null);
@@ -435,42 +435,42 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 	}
 
 	//@formatter:off
-	private ComponentProvider addProvider(final DockingWindowManager dwm, 
-							 final String name, 
+	private ComponentProvider addProvider(final DockingWindowManager dwm,
+							 final String name,
 							 final String group,
 							 final WindowPosition defaultWindowPosition) {
-		
+
 		return addProvider(dwm, "SomeOwner", name, group, defaultWindowPosition, defaultWindowPosition);
 	}
 	//@formatter:on
 	//@formatter:off
-	private ComponentProvider addProvider(final DockingWindowManager dwm, 
-							 final String name, 
+	private ComponentProvider addProvider(final DockingWindowManager dwm,
+							 final String name,
 							 final String group,
 							 final String title,
 							 final WindowPosition defaultWindowPosition) {
-		
+
 		return addProvider(dwm, "SomeOwner", name, group, title, defaultWindowPosition, defaultWindowPosition);
 	}
 	//@formatter:on
 
 	//@formatter:off
-	private ComponentProvider addProvider(final DockingWindowManager dwm, 
-							 final String name, 
+	private ComponentProvider addProvider(final DockingWindowManager dwm,
+							 final String name,
 							 final String group,
-							 final WindowPosition defaultWindowPosition, 
+							 final WindowPosition defaultWindowPosition,
 							 final WindowPosition defaultIntragroupPoistion) {
-		
+
 		return addProvider(dwm, "SomeOwner", name, group, defaultWindowPosition, defaultIntragroupPoistion);
 	}
 	//@formatter:on
 
 	//@formatter:off
-	private ComponentProvider addProvider(final DockingWindowManager dwm, 
-						 	 final String owner, 
-							 final String name, 
+	private ComponentProvider addProvider(final DockingWindowManager dwm,
+						 	 final String owner,
+							 final String name,
 							 final String group,
-							 final WindowPosition defaultWindowPosition, 
+							 final WindowPosition defaultWindowPosition,
 							 final WindowPosition defaultIntragroupPoistion) {
 		return addProvider(dwm, owner, name, group, "Default Title", defaultWindowPosition,
 				defaultIntragroupPoistion);
@@ -478,14 +478,14 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 	//@formatter:on
 
 	//@formatter:off
-	private ComponentProvider addProvider(final DockingWindowManager dwm, 
-						 	 final String owner, 
-							 final String name, 
+	private ComponentProvider addProvider(final DockingWindowManager dwm,
+						 	 final String owner,
+							 final String name,
 							 final String group,
 							 final String title,
-							 final WindowPosition defaultWindowPosition, 
+							 final WindowPosition defaultWindowPosition,
 							 final WindowPosition defaultIntragroupPoistion) {
-		
+
 		final AtomicReference<ComponentProvider> ref = new AtomicReference<>();
 		runSwing(() -> {
 			ComponentProvider p = new MyProvider(owner, name, group, title, defaultWindowPosition);
@@ -494,7 +494,7 @@ public class DockingWindowManagerTest extends AbstractDockingTest {
 			ref.set(p);
 		});
 		waitForSwing();
-		
+
 		return ref.get();
 	}
 	//@formatter:on

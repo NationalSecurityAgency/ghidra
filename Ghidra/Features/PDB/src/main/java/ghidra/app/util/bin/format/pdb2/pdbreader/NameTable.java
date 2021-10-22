@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,7 +113,7 @@ public class NameTable {
 	//==============================================================================================
 	// TODO: Regarding String conversions... We expect that US_ASCII could be a problem, but it
 	//  is probably better than creating the String without any code set chosen at all.  Do we
-	//  need to change all processing of Strings within the PDB so that we are only creating byte 
+	//  need to change all processing of Strings within the PDB so that we are only creating byte
 	//  arrays with some notional idea (1 byte, 2 byte, possibly utf-8, utf-16, wchar_t, or
 	//  "unknown" and defer true interpretation/conversion to String until we know or until
 	//  Ghidra user can ad-hoc apply interpretations to those fields?  Needs investigation, but

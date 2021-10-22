@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,8 +46,8 @@ public final class NamingUtilities {
 	 * </ul>
 	 * @param name name to validate
 	 * @return true if specified name is valid, else false
-	 * @deprecated method has been deprecated due to improper and widespread use.  
-	 * New methods include {@link NamingUtilities#isValidProjectName(String)} and 
+	 * @deprecated method has been deprecated due to improper and widespread use.
+	 * New methods include {@link NamingUtilities#isValidProjectName(String)} and
 	 * {@link LocalFileSystem#testValidName(String,boolean)}.
 	 */
 	@Deprecated
@@ -110,11 +110,11 @@ public final class NamingUtilities {
 	 * <p>
 	 * This method should only be used with {@link #isValidName(String)}} and <b>not</b>
 	 * {@link #isValidProjectName(String)}
-	 * 
+	 *
 	 * @param name the name with an invalid character
 	 * @return the invalid character or 0 if no invalid character can be found
 	 * @see #isValidName(String)
-	 * @deprecated this method may be removed in a subsequent release due to 
+	 * @deprecated this method may be removed in a subsequent release due to
 	 * limited use and applicability (project names and project file names have
 	 * different naming restrictions).
 	 */
@@ -138,7 +138,7 @@ public final class NamingUtilities {
 	 * not case sensitive.  Under Windows, Foo.exe and foo.exe represent
 	 * the same filename.  To fix this we mangle names first such that Foo.exe becomes
 	 * _foo.exe.
-	 * 
+	 *
 	 * @param name name string to be mangled
 	 * @return mangled name
 	 */
@@ -167,7 +167,7 @@ public final class NamingUtilities {
 	 * Performs the inverse of the mangle method.  A string is returned such that
 	 * all characters following a MANGLE_CHAR are converted to uppercase.  Two MANGLE
 	 * chars in a row are replace by a single MANGLE_CHAR.
-	 * 
+	 *
 	 * @param mangledName mangled name string
 	 * @return demangle name
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.generic.util.datastruct.TreeSetValuedTreeMap;
 
 /**
  * The Action/Goto table for a LALR(1) parser
- * 
+ *
  * This table is unconventional in that it permits a single cell to be populated by more than one
  * action. Typically, such a situation would indicate an ambiguity, or the need for a longer
  * look-ahead value. Because we do not presume to control the grammar (which was automatically

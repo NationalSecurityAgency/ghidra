@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public class SleighLanguages {
 
 	/**
 	 * Traverse the Pcode operations of a given SLEIGH language
-	 * 
+	 *
 	 * During traversal, if a "NOP" constructor, i.e., one having no Pcode operations, is
 	 * encountered, the callback is still invoked at least once, with a null Pcode operation. This
 	 * is so NOP constructors are not overlooked by this traversal.
@@ -65,7 +65,7 @@ public class SleighLanguages {
 
 	/**
 	 * An internal visitor
-	 * 
+	 *
 	 * The {@link SleighLanguages#traverseAllPcodeOps(SleighLanguage, PcodeOpEntryVisitor)} method
 	 * uses this visitor to traverse every constructor a given language. For each constructor, it
 	 * then applies another (anonymous) visitor to traverse each Pcode operation in the visited

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.util.NoSuchElementException;
 
 /**
  * <code>FieldIndexTable</code> provides a simplified index table whoose key is
- * a fixed or variable length {@link IndexField} which consists of a concatenation of 
+ * a fixed or variable length {@link IndexField} which consists of a concatenation of
  * the index field value and associated primary table key.
  */
 public class FieldIndexTable extends IndexTable {
@@ -49,7 +49,7 @@ public class FieldIndexTable extends IndexTable {
 	 * its root ID specified within the tableRecord.
 	 * @param primaryTable primary table.
 	 * @param indexTableRecord specifies the index parameters.
-	 * @throws IOException thrown if an IO error occurs 
+	 * @throws IOException thrown if an IO error occurs
 	 */
 	FieldIndexTable(Table primaryTable, TableRecord indexTableRecord) throws IOException {
 		super(primaryTable, indexTableRecord);
@@ -167,7 +167,7 @@ public class FieldIndexTable extends IndexTable {
 		}
 
 		/**
-		 * Construct an index field iterator. 
+		 * Construct an index field iterator.
 		 * @param minValue minimum index value or null if no minimum
 		 * @param maxValue maximum index value or null if no maximum
 		 * @param before if true initial position is before minValue, else position
@@ -213,7 +213,7 @@ public class FieldIndexTable extends IndexTable {
 		}
 
 		/**
-		 * Construct an index field iterator.  The iterator is positioned at index 
+		 * Construct an index field iterator.  The iterator is positioned at index
 		 * value identified by startValue.
 		 * @param minValue minimum index value or null if no minimum
 		 * @param maxValue maximum index value or null if no maximum
@@ -442,7 +442,7 @@ public class FieldIndexTable extends IndexTable {
 		}
 
 		/**
-		 * Construct a key iterator.  The iterator is positioned immediately before 
+		 * Construct a key iterator.  The iterator is positioned immediately before
 		 * the key associated with the first occurance of the startValue.
 		 * @param startValue indexed field value.
 		 * @param after if true the iterator is positioned immediately after
@@ -456,13 +456,13 @@ public class FieldIndexTable extends IndexTable {
 		}
 
 		/**
-		 * Construct a key iterator.  The iterator is positioned immediately before 
+		 * Construct a key iterator.  The iterator is positioned immediately before
 		 * or after the key associated with the specified startValue/primaryKey.
 		 * @param minValue minimum index value or null if no minimum
 		 * @param maxValue maximum index value or null if no maximum
 		 * @param startValue starting index value.
 		 * @param primaryKey starting primary key value (ignored if startValue is null).
-		 * @param after if true iterator is positioned immediately after 
+		 * @param after if true iterator is positioned immediately after
 		 * the startValue/primaryKey,
 		 * otherwise immediately before.
 		 * @throws IOException thrown if IO error occurs
@@ -499,11 +499,11 @@ public class FieldIndexTable extends IndexTable {
 		}
 
 		/**
-		 * If min or max index values was truncated, a comparison of the actual 
+		 * If min or max index values was truncated, a comparison of the actual
 		 * indexed field value (i.e., primary table value) is done with the min and/or max values.
 		 * @param f index field from index table iterator
 		 * @return true if field value corresponding to f is outside the min/max range.
-		 * It is assumed that the underlying table iterator will not return index values 
+		 * It is assumed that the underlying table iterator will not return index values
 		 * out of range which do not have the same truncated index value.
 		 * @throws IOException thrown if IO error occurs
 		 */

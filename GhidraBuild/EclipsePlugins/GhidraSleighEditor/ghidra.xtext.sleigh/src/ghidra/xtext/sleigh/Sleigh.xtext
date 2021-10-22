@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ Model:
 
 Import:
     '@include' importURI = STRING;
-    
+
 macroDefine :
 	defineType='@define' definename=DefineSym value=DefineValue
 	|
@@ -58,7 +58,7 @@ DefineValue:
 //	STRING | ( sym=[constraintsym] | OP_AND | OP_OR | ';' | '...' | '(' | ')' | '=' | '<' | '>' | OP_LESSEQUAL| OP_GREATEQUAL )+
 	STRING | intvalue // | ( OP_AND | OP_OR | ';' | '...' | '(' | ')' | '=' | '<' | '>' /* | OP_LESSEQUAL | OP_GREATEQUAL */ )+
 ;
-    
+
 spec:
     iswith?='with' withTableName+=(SUBTABLESYM)* ':' withmatch+=pequation '{' elements+=spec+ '}'
 	|  Import
@@ -272,7 +272,7 @@ pexprDiv:
 	pexprNegate ({pexprDiv.left=current} op='/' right=pexprNegate)*;
 
 pexprNegate:
-	pexprInvert | ({pexprNegate} op='-' left=pexprInvert); 
+	pexprInvert | ({pexprNegate} op='-' left=pexprInvert);
 
 pexprInvert:
 	singlePexpression | ({pexprInvert} op='~' left=singlePexpression);
@@ -349,13 +349,13 @@ pAnd:
 
 pOr:
 	elleqRight ({pOr.left=current} op=OP_OR right=elleqRight)*;
-	
+
 elleqRight:
 	elleqLeft ({elleqRight.left=current} op='...')?;
 
 elleqLeft:
 	('...')? atomic;
-	
+
 elleq:
 	('...') atomic
     | atomic ('...')
@@ -418,7 +418,7 @@ globalLocRef:
 	| CONTEXTSYM
 	| NAMESYM
 	| VARLISTSYM
-	// specificsymbol 
+	// specificsymbol
 	| VARSYM
 	| LOCALSYM
 	| CONTEXTSYM | TOKENSYM // should really be special, must appear in match pattern
@@ -448,7 +448,7 @@ exportStmt:
 	'export' (resultsize=sizedstar)? result=exportedSym ';'
 ;
 
-exportedSym:	
+exportedSym:
 	symref=[exportvarnode]
 	| is_start?='inst_start'
 	| is_next?='inst_next'
@@ -567,7 +567,7 @@ exprRight returns Expression:
 
 exprSRight returns Expression:
 	exprMult ({exprSRight.left=current} OP_SRIGHT right=exprMult)*;
-	
+
 exprMult returns Expression:
 	exprDiv ({exprMult.left=current} '*' right=exprDiv)*;
 
@@ -582,7 +582,7 @@ exprRem returns Expression:
 
 exprSRem returns Expression:
 	exprBoolXor ({exprSRem.left=current} OP_SREM right=exprBoolXor)*;
-	
+
 exprBoolXor returns Expression:
 	exprBoolAnd ({exprBoolXor.left=current} OP_BOOL_XOR right=exprBoolAnd)*;
 
@@ -722,7 +722,7 @@ integervarnode:
 	| isaddrof=OP_AND sizeOpColon size=integerValue (inode=instSymbol | vnode=[specificsymbol])
 ;
 
-instSymbol: 
+instSymbol:
 	STARTSYM | ENDSYM
 ;
 
@@ -775,7 +775,7 @@ specificsymbol:
 	| MACROPARAMSYM
 	| aliasSym
 	;
-	
+
 //specificsymbol:
 //	(vardef | contextfielddef | bitrange | MACROSYM)
 //	| sym=[SPECSYM]
@@ -854,7 +854,7 @@ varlist:
 
 varpart:
 	varpart=[VARSYM] | hasunder?=EMPTYVARSYM  // TODO: somehow '_' is OK at head of STRING?
-	| macroUse 
+	| macroUse
 ;
 
 paramlist:
@@ -905,13 +905,13 @@ SECTIONSYM:
 
 sectionsymbol:
 	name=ID;
-	
+
 VarnodeSymbol:
 	VARSYM;
 
 VARSYM:
 	name=ID;
-	
+
 TOKENGROUPSYM:
 	tokengroup;
 
@@ -932,7 +932,7 @@ VARNODESYM:
 
 varsymbol:
 	name=ID;
-	
+
 EMPTYVARSYM:
 	'_'
 ;
@@ -988,7 +988,7 @@ DefineUsage:
 integerValue:
 	value=intvalue | sym=DefineUsage
 	;
-	
+
 intvalue:
 	HEXVAL | BINVAL | NUMVAL
 	;
@@ -1004,7 +1004,7 @@ terminal HEXVAL returns ecore::EBigInteger:
 terminal fragment HEX_DIGIT:
 	(DIGIT | 'a'..'f' | 'A'..'F')
 ;
-	
+
 terminal BINVAL returns ecore::EBigInteger:
 	'0b' BIN_DIGIT+
 ;
@@ -1024,7 +1024,7 @@ terminal fragment DIGIT:
 //terminal DEFINE_KEY:
 //	'define';
 // define								{ BEGIN(defblock); return DEFINE_KEY; }
-	
+
 
 //terminal ATTACH_KEY:
 //// 'attach'								{ BEGIN(defblock); slgh->calcContextLayout(); return ATTACH_KEY; }
@@ -1129,10 +1129,10 @@ terminal OP_FLESSEQUAL:
 terminal OP_FGREATEQUAL:
 	'f>=';
 
-terminal STRING	: 
+terminal STRING	:
 			'"' ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|'"') )* '"' |
 			"'" ( '\\' . /* 'b'|'t'|'n'|'f'|'r'|'u'|'"'|"'"|'\\' */ | !('\\'|"'") )* "'"
-		; 
+		;
 terminal ML_COMMENT	: '/*' -> '*/';
 terminal SL_COMMENT 	: '#' !('\n'|'\r')* ('\r'? '\n')?;
 
@@ -1141,5 +1141,5 @@ terminal WS			: (' '|'\t'|'\r'|'\n')+;
 //terminal ANY_OTHER: .;
 //
 //terminal DEFINENAME: 'synthetic:DEFINENAME';
-//terminal BEGINDEFINE: 'synthetic:BEGINDEFINE';  
+//terminal BEGINDEFINE: 'synthetic:BEGINDEFINE';
 //terminal ENDDEFINE: 'synthetic:ENDDEFINE';

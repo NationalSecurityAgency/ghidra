@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -147,8 +147,8 @@ public class DataTypeDiffBuilder {
 
 		Integer list1MatchForLine2 = findNextMatch(validator2, line2, validator1);
 		if (list1MatchForLine2 == null) {
-			// neither line has a match in the other list, treat them as 
-			// two different values in the same position			
+			// neither line has a match in the other list, treat them as
+			// two different values in the same position
 			line1.setValidationLine(line2);
 			validator2.increment();
 		}
@@ -164,13 +164,13 @@ public class DataTypeDiffBuilder {
 	}
 
 	/**
-	 * Returns a line that matches the given line that occurs later in the 'other' validator; 
+	 * Returns a line that matches the given line that occurs later in the 'other' validator;
 	 * returns null if no suitable match is found.
-	 * 
+	 *
 	 * @param source the validator that has a line which needs matching
 	 * @param sourceLine the line that needs matching
 	 * @param other the validator in which to find a match for the given line
-	 * @return a line that matches the given line that occurs later in the 'other' validator; 
+	 * @return a line that matches the given line that occurs later in the 'other' validator;
 	 * 		   returns null if no suitable match is found.
 	 */
 	private static Integer findNextMatch(DiffLinesValidator source, ValidatableLine sourceLine,
@@ -179,59 +179,59 @@ public class DataTypeDiffBuilder {
 		//
 		// The goal of this method is to find a match for the line from the source structure in
 		// the other structure.  Further, we are trying to match an item that was pushed down due
-		// to a user inserting a new item into the structure.  We do NOT want to match the 
+		// to a user inserting a new item into the structure.  We do NOT want to match the
 		// case when the user changed an item.  In that case, there is no logical match, but there
 		// may be other matching items in the list (which we do not want).  We assume that matching
 		// lines at the same offset is a signal that the given item we seek can not exists.
 		//
 
 		/*
-		 
-		 	Good Match:    
-		 	
+
+		 	Good Match:
+
 			 	struct 1 {
 			 		byte
 			 		int
 			 		byte
 			 	}
-			 	
+
 			 	struct 1.1 {
 			 		word
 			 		byte
 			 		int
 			 		byte
 			 	}
-		 	
+
 			source - struct 1
 			source line - the first 'byte'
 			other - struct 1.1
-			
+
 			result: there should be a match for the 'byte' at index 1 in 'struct 1.1'
-			
-			
+
+
 			Bad Match:
-			
+
 				struct 1 {
 			 		byte
 			 		int
 			 		byte
 			 	}
-			 	
+
 			 	struct 1.1 {
 			 		word
 			 		int
 			 		byte
 			 	}
-		 	
+
 			source - struct 1
 			source line - the first 'byte'
 			other - struct 1.1
-			
+
 			result: there should NOT be a match for the 'byte' at index 2 in 'struct 1.1'; rather
-			        the eventual pairing for the diff algorithm will be for struct 1[0] to 
+			        the eventual pairing for the diff algorithm will be for struct 1[0] to
 			        struct 1.1[0], from 'byte' -> 'word'
-		 	
-		 
+
+
 		 */
 
 		Integer index = other.findNextMatch(sourceLine);
@@ -241,7 +241,7 @@ public class DataTypeDiffBuilder {
 
 		//
 		// Starting after the index of the current line, see if there is a match in the structures,
-		// at the same index.  If so, then we don't want to use the match from another 
+		// at the same index.  If so, then we don't want to use the match from another
 		// offset that we found above.
 		//
 		int start = source.indexOf(sourceLine) + 1;
@@ -267,11 +267,11 @@ public class DataTypeDiffBuilder {
 		leftLines.removeLeadingEmptyRows();
 		rightLines.removeLeadingEmptyRows();
 
-		// 
+		//
 		// For the lists, condense areas with empty rows by adjusting the blocks with empty rows
 		// so that the empty rows are at the bottom.  This seems to be aesthetically more pleasing
 		// when viewing the diff.
-		// 
+		//
 		int end = Math.min(leftLines.size(), rightLines.size());
 		condenseSharedRange(leftLines, rightLines, newLeftLines, newRightLines, 0, end);
 
@@ -318,8 +318,8 @@ public class DataTypeDiffBuilder {
 		return end;
 	}
 
-	/** 
-	 * Copies from the source to the destination all lines that are not placeholders.  If the 
+	/**
+	 * Copies from the source to the destination all lines that are not placeholders.  If the
 	 * two input lists are not the same after the copy, then the smaller list is padded with
 	 * placeholder lines.
 	 */
@@ -363,7 +363,7 @@ public class DataTypeDiffBuilder {
 
 	private static void padSmaller(DiffLines leftDestination, DiffLines rightDestination) {
 
-		// for the bigger list, we need to pad, for the other, we don't need the empty rows        
+		// for the bigger list, we need to pad, for the other, we don't need the empty rows
 		DiffLines smallerList = null;
 		DiffLines largerList = null;
 

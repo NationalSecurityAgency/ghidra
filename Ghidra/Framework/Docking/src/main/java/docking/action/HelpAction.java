@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -108,7 +108,7 @@ public class HelpAction extends DockingAction {
 			return null;
 		}
 
-		// First see if help exists for the given component directly...                
+		// First see if help exists for the given component directly...
 		HelpService helpService = DockingWindowManager.getHelpService();
 		HelpLocation helpLocation = helpService.getHelpLocation(startingHelpObject);
 		if (helpLocation != null) {
@@ -120,7 +120,7 @@ public class HelpAction extends DockingAction {
 		//
 		// For Components, we can walk their containment hierarchy to find a potential help object
 		if (!(startingHelpObject instanceof Component)) {
-			// not a Component; don't know how to find a better help object 
+			// not a Component; don't know how to find a better help object
 			return null;
 		}
 

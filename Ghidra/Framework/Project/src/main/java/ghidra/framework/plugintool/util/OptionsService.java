@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,11 +33,11 @@ public interface OptionsService {
 	/**
 	 * Get the options for the given category name.   If no options exist with the given name,
 	 * then a new options object is created.
-	 * 
+	 *
 	 * <p>Note: the given name should not contains options path separator characters.  Any
 	 * sub-options needed must be retrieved from the ToolOptions object returned from this
 	 * method.
-	 * 
+	 *
 	 * @param category name of category
 	 * @return the options for the given category name.
 	 */
@@ -59,12 +59,12 @@ public interface OptionsService {
 	 * in the options tree exists a node {@literal Root->Foo->childNode1}  In this case, you may
 	 * pass the value "Foo.childNode1", where the '.' character is the delimiter of the
 	 * {@link ToolOptions} class (this is the value at the time of writing this documentation).
-	 * 
+	 *
 	 * <p>
 	 * The filter text parameter is used to set the contents filter text of the options.  You may
 	 * use this parameter to filter the tree; for example, to show only the node in the tree that
 	 * you want the user to see.
-	 * 
+	 *
 	 * @param category The category of options to have displayed
 	 * @param filterText An optional value used to filter the nodes visible in the options tree.
 	 *                   You may pass <code>null</code> or the empty string <code>""</code> here if you

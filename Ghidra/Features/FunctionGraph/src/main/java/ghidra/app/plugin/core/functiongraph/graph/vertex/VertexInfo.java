@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,11 +67,11 @@ class VertexInfo {
 	}
 
 	/**
-	 * Finds an existing vertex represented by this info.  Returns null if no vertex exists to 
+	 * Finds an existing vertex represented by this info.  Returns null if no vertex exists to
 	 * match this info (this can happen if the code block structure has changed).
-	 * 
+	 *
 	 * @param controller The controller used for the current function graph
-	 * @return an existing vertex represented by this info.  Returns null if no vertex exists to 
+	 * @return an existing vertex represented by this info.  Returns null if no vertex exists to
 	 *         match this info
 	 */
 	FGVertex getVertex(FGController controller, Map<AddressHasher, FGVertex> vertexMap) {

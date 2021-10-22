@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.graph.viewer.*;
 
 /**
  * A mouse handler to center a vertex when the header is double-clicked
- * 
+ *
  * @param <V> the vertex type
  * @param <E> the edge type
  */
@@ -101,7 +101,7 @@ public class VisualGraphAnimatedPickingGraphMousePlugin<V extends VisualVertex, 
 	}
 
 	/*
-	 * Override subclass method to translate the master view instead of this satellite view 
+	 * Override subclass method to translate the master view instead of this satellite view
 	 */
 	@Override
 	public void mouseReleased(MouseEvent e) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 	public interface DecodesAddresses {
 		/**
 		 * Get the space adapter for the trace containing the object
-		 * 
+		 *
 		 * @return the adapter
 		 */
 		DBTraceOverlaySpaceAdapter getOverlaySpaceAdapter();
@@ -50,13 +50,13 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 
 	/**
 	 * Used for objects having an {@link Address} field.
-	 * 
+	 *
 	 * <p>
 	 * Most managers storing things by address will actually have a table per space, so the address
 	 * is encoded only as an offset. However, any other {@link Address} field (not constrained to
 	 * the same space) will need to encode the space information as well. This codec can do that.
 	 * The object will need to return its trace's space adapter, though.
-	 * 
+	 *
 	 * @param <OT> the type of object containing the field
 	 */
 	public static class AddressDBFieldCodec<OT extends DBAnnotatedObject & DecodesAddresses>

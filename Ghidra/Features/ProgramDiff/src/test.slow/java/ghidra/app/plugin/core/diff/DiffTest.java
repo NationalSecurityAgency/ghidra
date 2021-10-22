@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -849,7 +849,7 @@ public class DiffTest extends DiffTestAdapter {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private Color getBgColor(FieldPanel fp, BigInteger index) {
 		return runSwing(() -> fp.getBackgroundColor(index));
@@ -882,7 +882,7 @@ public class DiffTest extends DiffTestAdapter {
 	/**
 	 * Checks that the specified Diff action is in the indicated state and
 	 * causes a JUnit assert if not.
-	 * 
+	 *
 	 * @param actionName the name of the DIff action.
 	 * @param inTool the action is currently added to the tool.
 	 * @param enabled the action is enabled.

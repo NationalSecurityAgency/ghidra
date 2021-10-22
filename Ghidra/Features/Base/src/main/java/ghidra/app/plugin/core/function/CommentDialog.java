@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,10 +56,10 @@ abstract class CommentDialog extends DialogComponentProvider {
             commentsField.selectAll();
         }
         PluginTool tool = plugin.getTool();
-        tool.showDialog( this, tool.getComponentProvider( 
+        tool.showDialog( this, tool.getComponentProvider(
             PluginConstants.CODE_BROWSER ));
     }
-    
+
     /////////////////////////////////////////////
     // *** GhidraDialog "callback" methods ***
     /////////////////////////////////////////////
@@ -93,7 +93,7 @@ abstract class CommentDialog extends DialogComponentProvider {
             applyWasDone = true;
         }
     }
-    
+
     abstract protected void doApply(String comment);
 
     ////////////////////////////////////////////////////////////////////

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,10 +30,10 @@ import java.net.URL;
 import docking.widgets.fieldpanel.field.AttributedString;
 
 /**
- * An annotated string handler that allows handles annotations that begin with 
+ * An annotated string handler that allows handles annotations that begin with
  * {@link #SUPPORTED_ANNOTATIONS}.  This class expects one or two strings following the annotation.
  * The first string will be treated as a Java {@link URL} and the optional second string will
- * be treated as display text.  If there is not display text, then the URL will be 
+ * be treated as display text.  If there is not display text, then the URL will be
  * displayed.
  */
 public class URLAnnotatedStringHandler implements AnnotatedStringHandler {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,39 +43,39 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Returns block permissions as a bit mask.
-	 * Permission bits defined as READ, WRITE, EXECUTE and VOLATILE 
+	 * Permission bits defined as READ, WRITE, EXECUTE and VOLATILE
 	 */
 	public int getPermissions();
 
 	/**
-	 * Get memory data in the form of an InputStream. 
+	 * Get memory data in the form of an InputStream.
 	 * Null is returned for thos memory blocks which have no data.
 	 */
 	public InputStream getData();
 
 	/**
 	 * Return whether addr is contained in this block.
-	 * @param addr address 
+	 * @param addr address
 	 */
 	public boolean contains(Address addr);
 
 	/**
 	 * Return the starting address for this block.
-	 * 
+	 *
 	 * @return block's start address
 	 */
 	public Address getStart();
 
 	/**
 	 * Return the end address of this block.
-	 * 
+	 *
 	 * @return end address of the block
 	 */
 	public Address getEnd();
 
 	/**
 	 * Get the number of bytes in this block.
-	 * 
+	 *
 	 * @return number of bytes in the block
 	 */
 	public long getSize();
@@ -161,7 +161,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Get the name of the source of this memory block.
-	 * 
+	 *
 	 * @return source name
 	 */
 	public String getSourceName();
@@ -182,7 +182,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public byte getByte(Address addr) throws MemoryAccessException;
 
 	/**
-	 * Tries to get b.length bytes from this block at the given address.  May 
+	 * Tries to get b.length bytes from this block at the given address.  May
 	 * return fewer bytes if the requested length is beyond the end of the block.
 	 * @param addr the address from which to get the bytes.
 	 * @param b the byte array to populate.
@@ -194,7 +194,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public int getBytes(Address addr, byte[] b) throws MemoryAccessException;
 
 	/**
-	 * Tries to get len bytes from this block at the given address and put them 
+	 * Tries to get len bytes from this block at the given address and put them
 	 * into the given byte array at the specified offet.  May return
 	 * fewer bytes if the requested length is beyond the end of the block.
 	 * @param addr the address from which to get the bytes.
@@ -217,26 +217,26 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public void putByte(Address addr, byte b) throws MemoryAccessException;
 
 	/**
-	 * Tries to put b.length bytes from the specified byte array to this block. 
+	 * Tries to put b.length bytes from the specified byte array to this block.
 	 * All the bytes may not be put if the requested length is beyond the end of
 	 * the block.
 	 * @param addr the address of where to put the bytes.
 	 * @param b the byte array containing the bytes to write.
-	 * @return the number of bytes actually written.	
+	 * @return the number of bytes actually written.
 	 * @throws MemoryAccessException if the block is uninitialized
 	 * @throws IllegalArgumentException if the Address is not in this block.
 	 */
 	public int putBytes(Address addr, byte[] b) throws MemoryAccessException;
 
 	/**
-	 * Tries to put len bytes from the specified byte array to this block.  All 
+	 * Tries to put len bytes from the specified byte array to this block.  All
 	 * the bytes may not be written if the requested length is beyond the end of
 	 * the block.
 	 * @param addr the address of where to put the bytes.
 	 * @param b the byte array containing the bytes to write.
 	 * @param off the offset into the byte array.
 	 * @param len the number of bytes to write.
-	 * @return the number of bytes actually written.	
+	 * @return the number of bytes actually written.
 	 * @throws MemoryAccessException if the block is uninitialized
 	 * @throws IllegalArgumentException if the Address is not in this block.
 	 */
@@ -271,7 +271,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public boolean isLoaded();
 
 	/**
-	 * Returns a list of {@link MemoryBlockSourceInfo} objects for this block.  A block may consist of 
+	 * Returns a list of {@link MemoryBlockSourceInfo} objects for this block.  A block may consist of
 	 * multiple sequences of bytes from different sources.  Each such source of bytes is described
 	 * by its respective SourceInfo object.  Blocks may have multiple sources after two or more
 	 * memory blocks have been joined together and the underlying byte sources can't be joined.

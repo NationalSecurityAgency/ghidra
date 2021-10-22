@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,14 +35,14 @@ public class WeightFactory {
 	private double probflip1_norm;
 	private double probdiff0_norm;
 	private double probdiff1_norm;
-	
+
 	private void updateNorms() {
 		probflip0_norm = probflip0 * scale;
 		probflip1_norm = probflip1 * scale;
 		probdiff0_norm = probdiff0 * scale;
 		probdiff1_norm = probdiff1 * scale;
 	}
-	
+
 	/**
 	 * @return number of weights in the IDF portion of the table
 	 */
@@ -138,14 +138,14 @@ public class WeightFactory {
 	public final double getAddend() {
 		return addend;
 	}
-	
+
 	public void setLogarithmicTFWeights() {
 		double log2 = Math.log(2.0);
 		for (int i = 0; i < tfweight.length; ++i) {
 			tfweight[i] = Math.sqrt(1.0 + Math.log( i + 1) / log2);
 		}
 	}
-	
+
 	/**
 	 * Serialize this object as XML to a Writer
 	 * @param fwrite is the Writer
@@ -260,7 +260,7 @@ public class WeightFactory {
 		probdiff0 = Double.parseDouble(parser.end().getText());
 		parser.start("probdiff1");
 		probdiff1 = Double.parseDouble(parser.end().getText());
-		
+
 		parser.end(el);
 		updateNorms();
 	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -295,7 +295,7 @@ class ProjectActionManager {
 			return;
 		}
 
-		// don't include the active project in the list of views 
+		// don't include the active project in the list of views
 		URL[] recentViews = plugin.getRecentViewedProjects();
 
 		tool.setMenuGroup(new String[] { ToolConstants.MENU_PROJECT, "View Recent" }, "AView", "3");
@@ -357,7 +357,7 @@ class ProjectActionManager {
 
 		// Remove all the view/edit access-related actions so we always start
 		// with a clean slate. If we don't do this we could eventually end up with
-		// both edit and view options available at the same time (open a project with 
+		// both edit and view options available at the same time (open a project with
 		// admin rights, then open one without).
 		//
 		// Note that overriding the isValidContext method in the actions themselves will
@@ -634,7 +634,7 @@ class ProjectActionManager {
 	}
 
 	/**
-	 * Class for recent view actions; subclass to set the help ID. 
+	 * Class for recent view actions; subclass to set the help ID.
 	 */
 	private class RecentViewPluginAction extends DockingAction {
 

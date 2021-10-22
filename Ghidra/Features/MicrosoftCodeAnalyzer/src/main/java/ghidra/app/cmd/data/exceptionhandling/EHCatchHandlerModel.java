@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.program.model.scalar.Scalar;
 import ghidra.util.exception.AssertException;
 
 /**
- * Model for exception handling information about the HandlerType data type and its 
+ * Model for exception handling information about the HandlerType data type and its
  * associated exception handling data types.
  * <br>
  * This is based on data type information from ehdata.h
@@ -67,7 +67,7 @@ public class EHCatchHandlerModel extends AbstractCreateDataTypeModel {
 	/**
 	 * Whether or not the memory at the indicated address appears to be a valid location for the
 	 * indicated number of HandlerType data types.
-	 * @throws InvalidDataTypeException if this model's location does not appear to be a valid 
+	 * @throws InvalidDataTypeException if this model's location does not appear to be a valid
 	 * group of catch handler entries. The exception has a message indicating
 	 * why it does not appear to be a valid location for the data type.
 	 */
@@ -96,7 +96,7 @@ public class EHCatchHandlerModel extends AbstractCreateDataTypeModel {
 
 	/**
 	 * This gets the HandlerType structure for the indicated program.
-	 * @param program the program which will contain this data type. 
+	 * @param program the program which will contain this data type.
 	 * @return the HandlerType structure.
 	 */
 	public static DataType getDataType(Program program) {
@@ -175,11 +175,11 @@ public class EHCatchHandlerModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the type descriptor model for the type descriptor address in the 
+	 * Gets the type descriptor model for the type descriptor address in the
 	 * HandlerType entry indicated by the ordinal.
 	 * @param catchHandlerOrdinal 0-based ordinal indicating which HandlerType entry in the map.
 	 * @return the model for the type descriptor, if there is one.
-	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for 
+	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for
 	 * the indicated ordinal.
 	 */
 	public TypeDescriptorModel getTypeDescriptorModel(int catchHandlerOrdinal)
@@ -193,11 +193,11 @@ public class EHCatchHandlerModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address, if there is one, of the type descriptor address in the 
+	 * Gets the address, if there is one, of the type descriptor address in the
 	 * HandlerType entry indicated by the ordinal. Otherwise, this returns null.
 	 * @param catchHandlerOrdinal 0-based ordinal indicating which HandlerType entry in the map.
 	 * @return the address of the type descriptor or null.
-	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for 
+	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for
 	 * the indicated ordinal.
 	 */
 	public Address getTypeDescriptorAddress(int catchHandlerOrdinal)
@@ -212,11 +212,11 @@ public class EHCatchHandlerModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address, if there is one, of the component with the type descriptor address in the 
+	 * Gets the address, if there is one, of the component with the type descriptor address in the
 	 * HandlerType entry indicated by the ordinal. Otherwise, this returns null.
 	 * @param catchHandlerOrdinal 0-based ordinal indicating which HandlerType entry in the map.
 	 * @return the address of the component with the type descriptor address or null.
-	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for 
+	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for
 	 * the indicated ordinal.
 	 */
 	public Address getComponentAddressOfTypeDescriptorAddress(int catchHandlerOrdinal)
@@ -230,12 +230,12 @@ public class EHCatchHandlerModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address of the catch handler in the map as indicated by the ordinal, if there is one. 
+	 * Gets the address of the catch handler in the map as indicated by the ordinal, if there is one.
 	 * Otherwise, this returns null.
 	 * @param catchHandlerOrdinal 0-based ordinal indicating which HandlerType entry in the map.
-	 * @return the address of the catch handler within the indicated HandlerType entry in the 
+	 * @return the address of the catch handler within the indicated HandlerType entry in the
 	 * map or null.
-	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for 
+	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for
 	 * the indicated ordinal.
 	 */
 	public Address getCatchHandlerAddress(int catchHandlerOrdinal) throws InvalidDataTypeException {
@@ -249,10 +249,10 @@ public class EHCatchHandlerModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address, if there is one, of the component with the catch handler address in the 
+	 * Gets the address, if there is one, of the component with the catch handler address in the
 	 * HandlerType entry indicated by the ordinal. Otherwise, this returns null.
 	 * @return the address of the component with the catch handler address or null.
-	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for 
+	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for
 	 * the indicated ordinal.
 	 */
 	public Address getComponentAddressOfCatchHandlerAddress(int catchHandlerOrdinal)
@@ -268,9 +268,9 @@ public class EHCatchHandlerModel extends AbstractCreateDataTypeModel {
 	 * Gets a modifier that provides information about specific modifications for the catch
 	 * handler type in the indicated HandlerType map entry.
 	 * @param catchHandlerOrdinal 0-based ordinal indicating which HandlerType entry in the map.
-	 * @return the modifier information for the catch handler type or NO_MODIFIERS if they 
+	 * @return the modifier information for the catch handler type or NO_MODIFIERS if they
 	 * can't be determined.
-	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for 
+	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for
 	 * the indicated ordinal.
 	 */
 	public EHCatchHandlerTypeModifier getModifiers(int catchHandlerOrdinal)
@@ -295,11 +295,11 @@ public class EHCatchHandlerModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets a name for the catch handler function based on its type descriptor or whether it is a 
+	 * Gets a name for the catch handler function based on its type descriptor or whether it is a
 	 * catch all. The name will be for the HandlerType in the map that is indicated by the ordinal.
 	 * @param catchHandlerOrdinal 0-based ordinal indicating which HandlerType entry in the map.
 	 * @return the name for the catch handler function.
-	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for 
+	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for
 	 * the indicated ordinal.
 	 */
 	public String getCatchHandlerName(int catchHandlerOrdinal) throws InvalidDataTypeException {
@@ -360,7 +360,7 @@ public class EHCatchHandlerModel extends AbstractCreateDataTypeModel {
 	 * Gets the scalar for the catch object displacement in the indicated HandlerType map entry.
 	 * @param catchHandlerOrdinal 0-based ordinal indicating which HandlerType entry in the map.
 	 * @return the scalar for the catch object displacement.
-	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for 
+	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for
 	 * the indicated ordinal.
 	 */
 	public Scalar getCatchObjectDisplacement(int catchHandlerOrdinal)
@@ -375,11 +375,11 @@ public class EHCatchHandlerModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the scalar for the displacement of the address of the function frame in the 
+	 * Gets the scalar for the displacement of the address of the function frame in the
 	 * indicated HandlerType map entry.
 	 * @param catchHandlerOrdinal 0-based ordinal indicating which HandlerType entry in the map.
 	 * @return scalar for the displacement of the address of the function frame.
-	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for 
+	 * @throws InvalidDataTypeException if valid HandlerType data can't be created for
 	 * the indicated ordinal.
 	 */
 	public Scalar getFunctionFrameAddressDisplacement(int catchHandlerOrdinal)

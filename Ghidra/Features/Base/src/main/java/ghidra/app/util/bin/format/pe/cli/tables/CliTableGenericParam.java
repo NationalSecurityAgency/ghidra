@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ public class CliTableGenericParam extends CliAbstractTable {
 		public short flags;
 		public int ownerIndex;
 		public int nameIndex;
-		
+
 		public CliGenericParamRow(short number, short flags, int ownerIndex, int nameIndex) {
 			super();
 			this.number = number;
@@ -58,11 +58,11 @@ public class CliTableGenericParam extends CliAbstractTable {
 				CliEnumGenericParamAttributes.dataType.getName(flags & 0xffff));
 		}
 	}
-	
+
 	public CliTableGenericParam(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
-			CliGenericParamRow row = new CliGenericParamRow(reader.readNextShort(), reader.readNextShort(), 
+			CliGenericParamRow row = new CliGenericParamRow(reader.readNextShort(), reader.readNextShort(),
 				CliIndexTypeOrMethodDef.readCodedIndex(reader, stream), readStringIndex(reader));
 			rows.add(row);
 			strings.add(row.nameIndex);

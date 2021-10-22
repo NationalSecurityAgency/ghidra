@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -115,13 +115,13 @@ public class SetCommentCmd implements Command {
 	/**
 	 * Creates the specified comment of the specified type at address.  The current comment of
 	 * this commentType will be cleared.
-	 * 
+	 *
 	 * @param program the program being analyzed
 	 * @param addr the address where data is created
 	 * @param comment the comment about the data
-	 * @param commentType the type of comment ({@link CodeUnit#PLATE_COMMENT}, 
+	 * @param commentType the type of comment ({@link CodeUnit#PLATE_COMMENT},
 	 * {@link CodeUnit#PRE_COMMENT}, {@link CodeUnit#EOL_COMMENT}, {@link CodeUnit#POST_COMMENT},
-	 * {@link CodeUnit#REPEATABLE_COMMENT}) 
+	 * {@link CodeUnit#REPEATABLE_COMMENT})
 	 */
 	public static void createComment(Program program, Address addr, String comment,
 			int commentType) {

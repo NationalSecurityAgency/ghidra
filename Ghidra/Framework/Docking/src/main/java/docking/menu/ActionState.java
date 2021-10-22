@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,9 +22,9 @@ import ghidra.util.SystemUtilities;
 
 /**
  * Note: this class overrides the <code>equals(Object)</code> and relies upon the <code>equals</code>
- * method of the <code>userData</code> object.  Thus, if it is important that equals work for you in 
+ * method of the <code>userData</code> object.  Thus, if it is important that equals work for you in
  * the non-standard identity way, then you must override <code>equals</code> in your user data objects.
- * 
+ *
  * @param <T> the type of the action state
  */
 public class ActionState<T> {

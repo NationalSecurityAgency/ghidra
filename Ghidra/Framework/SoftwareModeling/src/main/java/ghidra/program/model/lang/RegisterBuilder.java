@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -167,7 +167,7 @@ public class RegisterBuilder {
 	}
 
 	/**
-	 * Rename a register.  This allows generic register names declared within the langauge 
+	 * Rename a register.  This allows generic register names declared within the langauge
 	 * specification (*.slaspec) to be renamed for a processor variant specification (*.pspec).
 	 * @param oldName original register name
 	 * @param newName new register name
@@ -241,7 +241,7 @@ public class RegisterBuilder {
 	 * @param registerName register name
 	 * @param laneSizeInBytes the size of the lane to add in bytes
 	 * @return true if register was found, else false
-	 * @throws UnsupportedOperationException if register is unable to support the definition of 
+	 * @throws UnsupportedOperationException if register is unable to support the definition of
 	 * lanes.
 	 * @throws IllegalArgumentException if {@code laneSizeInBytes} is invalid
 	 */

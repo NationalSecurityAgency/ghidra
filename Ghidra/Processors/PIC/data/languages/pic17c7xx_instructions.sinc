@@ -5,7 +5,7 @@
 
 # 16-bit instruction token uses big-endian bit numbering which agrees with
 # instruction bit numbering with PIC documentation.
-# 	15-14-13-12-11-10-9-8-7-6-5-4-3-2-1-0 
+# 	15-14-13-12-11-10-9-8-7-6-5-4-3-2-1-0
 define token instr16(16)
 	op16 =	(0,15)
 	op8 =	(8,15)
@@ -28,14 +28,14 @@ define token instr16(16)
 	f8hi =	(5,7)
 	f8_4 =	(4,4)
 	f8_3 =	(3,3)
-	f8reg = (0,4) 
+	f8reg = (0,4)
 	k8 =	(0,7)
 	k8_h =	(4,7)
 	k8_l =	(0,3)
 	k13 =	(0,12)
 ;
 
-attach variables [ f8reg p5reg ] [ 
+attach variables [ f8reg p5reg ] [
     INDF0	FSR0	PCL		PCLATH	ALUSTA	T0STA	CPUSTA	INTSTA
    	INDF1	FSR1	WREG	TMR0L	TMR0H	TBLPTRL	TBLPTRH	BSR
    	_		_		_		_		_		_		_		_
@@ -179,7 +179,7 @@ fREGLoc: f8reg		is f8=0x00 & f8reg		{
 	addr:1 = FSR0;
 	val:1 = ((FS10 == 0x1) * 1) + ((FS10 == 0x0) * -1);
 	FSR0 = addr + val;
-	export *[DATA]:1 addr; 
+	export *[DATA]:1 addr;
 }
 
 # Indirect File Register access - INDF1
@@ -187,7 +187,7 @@ fREGLoc: f8reg		is f8=0x08 & f8reg		{
 	addr:1 = FSR1;
 	val:1 = ((FS32 == 0x1) * 1) + ((FS32 == 0x0) * -1);
 	FSR1 = addr + val;
-	export *[DATA]:1 addr; 
+	export *[DATA]:1 addr;
 }
 
 
@@ -213,7 +213,7 @@ pREGLoc: p5reg		is p5=0x00 & p5reg		{
 	addr:1 = FSR0;
 	val:1 = ((FS10 == 0x1) * 1) + ((FS10 == 0x0) * -1);
 	FSR0 = addr + val;
-	export *[DATA]:1 addr; 
+	export *[DATA]:1 addr;
 }
 
 # Indirect File Register access - INDF1
@@ -221,7 +221,7 @@ pREGLoc: p5reg		is p5=0x08 & p5reg		{
 	addr:1 = FSR1;
 	val:1 = ((FS32 == 0x1) * 1) + ((FS32 == 0x0) * -1);
 	FSR1 = addr + val;
-	export *[DATA]:1 addr; 
+	export *[DATA]:1 addr;
 }
 
 
@@ -231,7 +231,7 @@ srcFREG: fREGLoc		is fREGLoc									{ export fREGLoc; }
 # PCL read - latch PC into PCL and PCLATH
 srcFREG: "PC"		is f8=0x02						{
 	PCLAT = inst_start;
-	export PCL; 
+	export PCL;
 }
 
 # Destination register (always fREGLoc)
@@ -247,7 +247,7 @@ srcPREG: pREGLoc		is pREGLoc									{ export pREGLoc; }
 # PCL read - latch PC into PCL and PCLATH
 srcPREG: "PC"		is p5=0x02						{
 	PCLAT = inst_start;
-	export PCL; 
+	export PCL;
 }
 
 # Destination register (always pREGLoc)
@@ -269,7 +269,7 @@ I: "1"		is i=1										{ }
 T: t		is t										{ export t; }
 
 # Relative instruction location with an 8K page
-shortAddr: nLoc is k13				[ nLoc = (inst_next & 0xe000) + k13; ]	{ 
+shortAddr: nLoc is k13				[ nLoc = (inst_next & 0xe000) + k13; ]	{
 	tmp:2 = nLoc:2 >> 8;
 	PCLATH = tmp:1;
 	export *[CODE]:2 nLoc;
@@ -301,7 +301,7 @@ bit: "#"b3		is b3											{ export *[const]:1 b3; }
 	# 1011 0001 kkkk kkkk
 	tmp1:1 = WREG;
 	tmp2:1 = imm8;
-	setAddFlags(tmp1, tmp2); 
+	setAddFlags(tmp1, tmp2);
 	local tmp = tmp1 + tmp2;
 	WREG = tmp;
 	setResultFlags(tmp);
@@ -311,7 +311,7 @@ bit: "#"b3		is b3											{ export *[const]:1 b3; }
 	# 0000 111d ffff ffff
 	tmp1:1 = srcFREG; # read only once!
 	tmp2:1 = WREG;
-	setAddFlags(tmp1, tmp2); 
+	setAddFlags(tmp1, tmp2);
 	local tmp = tmp1 + tmp2;
 	destREG = tmp;
 	setResultFlags(tmp);
@@ -337,7 +337,7 @@ bit: "#"b3		is b3											{ export *[const]:1 b3; }
 	local tmpC = C & 1;
 	tmp1:1 = srcFREG; # read only once!
 	tmp2:1 = WREG;
-	setAddCFlags(tmp1, tmp2); 
+	setAddCFlags(tmp1, tmp2);
 	local tmp = tmp1 + tmp2 + tmpC;
 	destREG = tmp;
 	setResultFlags(tmp);
@@ -578,14 +578,14 @@ bit: "#"b3		is b3											{ export *[const]:1 b3; }
 	if (srcFREG < WREG) goto skipInst;
 }
 
-:DAW destFREG, S	is op7=0x17 & s=0 & S & destFREG			{ 
+:DAW destFREG, S	is op7=0x17 & s=0 & S & destFREG			{
 	#  0010 1110 ffff ffff
 	tmp:1 = decimalAdjust(WREG);
 	destFREG = tmp;
 	WREG = tmp;
 }
 
-:DAW destFREG, S	is op7=0x17 & s=1 & S & destFREG			{ 
+:DAW destFREG, S	is op7=0x17 & s=1 & S & destFREG			{
 	# 0010 1111 ffff ffff
 	tmp:1 = decimalAdjust(WREG);
 	destFREG = tmp;
@@ -595,7 +595,7 @@ bit: "#"b3		is b3											{ export *[const]:1 b3; }
 :DECF srcFREG, D	is op7=0x03 & D & srcFREG & destREG		{
 	# 0000 011d ffff ffff
 	tmp:1 = srcFREG;
-	setSubtractFlags(tmp, 1); 
+	setSubtractFlags(tmp, 1);
 	tmp = tmp - 1;
 	destREG = tmp;
 	setResultFlags(tmp);
@@ -623,7 +623,7 @@ bit: "#"b3		is b3											{ export *[const]:1 b3; }
 :INCF srcFREG, D	is op7=0x0a & D & srcFREG & destREG			{
 	# 0001 010d ffff ffff
 	tmp:1 = srcFREG; # read once only!
-	setAddFlags(tmp, 1); 
+	setAddFlags(tmp, 1);
 	tmp = tmp + 1;
 	destREG = tmp;
 	setResultFlags(tmp);
@@ -633,14 +633,14 @@ bit: "#"b3		is b3											{ export *[const]:1 b3; }
 	# 0001 111d ffff ffff
 	val:1 = srcFREG + 1;
 	destREG = val;
-	if (val == 0) goto skipInst;	
+	if (val == 0) goto skipInst;
 }
 
 :INFSNZ srcFREG, D	is op7=0x12 & D & srcFREG & destREG	& skipInst		{
 	# 0010 010d ffff ffff
 	val:1 = srcFREG + 1;
 	destREG = val;
-	if (val != 0) goto skipInst;	
+	if (val != 0) goto skipInst;
 }
 
 :IORLW imm8			is op8=0xb3 & imm8		{
@@ -837,7 +837,7 @@ bit: "#"b3		is b3											{ export *[const]:1 b3; }
 	# 1011 0010 kkkk kkkk
 	tmp:1 = imm8;
 	tmpW:1 = WREG;
-	setSubtractFlags(tmp, tmpW); 
+	setSubtractFlags(tmp, tmpW);
 	tmp = tmp - tmpW;
 	WREG = tmp;
 	setResultFlags(tmp);
@@ -847,7 +847,7 @@ bit: "#"b3		is b3											{ export *[const]:1 b3; }
 	# 0000 010d ffff ffff
 	tmp:1 = srcFREG;
 	tmpW:1 = WREG;
-	setSubtractFlags(tmp, tmpW); 
+	setSubtractFlags(tmp, tmpW);
 	tmp = tmp - tmpW;
 	destREG = tmp;
 	setResultFlags(tmp);
@@ -858,7 +858,7 @@ bit: "#"b3		is b3											{ export *[const]:1 b3; }
 	local notC = ~(C & 1);
 	tmp:1 = srcFREG;
 	tmpW:1 = WREG;
-	setSubtractCFlags(tmp, tmpW); 
+	setSubtractCFlags(tmp, tmpW);
 	tmp = tmp - tmpW - notC;
 	destREG = tmp;
 	setResultFlags(tmp);
@@ -899,7 +899,7 @@ bit: "#"b3		is b3											{ export *[const]:1 b3; }
 :TSTFSZ srcFREG				is op8=0x33 & srcFREG & skipInst	{
 	# 0011 0011 ffff ffff
 	if (srcFREG == 0) goto skipInst;
-} 
+}
 
 :XORLW imm8					is op8=0xb4 & imm8			{
 	# 1011 0100 kkkk kkkk

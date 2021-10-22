@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <language_definitions>
-  
+
   <language processor="8048"
             endian="little"
             size="16"
@@ -14,5 +14,5 @@
     <description>8048 Microcontroller Family</description>
     <compiler name="default" spec="8048.cspec" id="default"/>
   </language>
-  
+
 </language_definitions>

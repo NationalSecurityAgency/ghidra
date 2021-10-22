@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -249,13 +249,13 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Identify additional dereferenced instruction starts which should be cleared. 
+	 * Identify additional dereferenced instruction starts which should be cleared.
 	 * @param program
 	 * @param starts stack to which dereferenced instruction starts will be added
 	 * @param clearSet all addresses intended to be cleared, should also contain refFromSet
 	 * @param refFromSet address set over which from references should be checked
 	 * @param monitor
-	 * @throws CancelledException 
+	 * @throws CancelledException
 	 */
 	private void addDereferencedInstructionStarts(Program program, Stack<Address> starts,
 			AddressSetView clearSet, AddressSetView refFromSet, TaskMonitor monitor)
@@ -312,7 +312,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Attempt to repair context prior to disassembly by re-disassembly of the 
+	 * Attempt to repair context prior to disassembly by re-disassembly of the
 	 * existing instruction which flows to the disassembly start location.
 	 * @param program
 	 * @param fromInstrAddr existing instruction address to be used for
@@ -344,8 +344,8 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Regenerate future context flow state prior to re-disassembly of branch/call 
-	 * destinations. 
+	 * Regenerate future context flow state prior to re-disassembly of branch/call
+	 * destinations.
 	 * NOTE: behavior is unaffected by flow references
 	 * @param program
 	 * @param fromInstrAddr existing instruction address to be used for
@@ -418,7 +418,7 @@ public class ClearFlowAndRepairCmd extends BackgroundCommand {
 							seedContext = new DisassemblerContextImpl(programContext);
 						}
 						repairFlowContextFrom(program, ref.getFromAddress(), seedContext);
-// TODO: context which contains future flow states is never used by disassembler 
+// TODO: context which contains future flow states is never used by disassembler
 // and does not affect stored program context - need to use within disassembler to leverage
 // repaired future context states.  This is also done inconsistent with fall-through repair.
 					}

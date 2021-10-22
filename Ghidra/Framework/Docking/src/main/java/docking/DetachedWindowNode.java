@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -242,13 +242,13 @@ class DetachedWindowNode extends WindowNode {
 
 	/**
 	 * Creates a list of titles from the given component providers and placeholders.  The utility
-	 * of this method is that it will group like component providers into one title value 
+	 * of this method is that it will group like component providers into one title value
 	 * instead of having one value for each placeholder.
 	 */
 	private List<String> generateTitles(List<ComponentPlaceholder> placeholders) {
 
 		//
-		// Decompose the given placeholders into a mapping of provider names to placeholders 
+		// Decompose the given placeholders into a mapping of provider names to placeholders
 		// that share that name.  This lets us group placeholders that are multiple instances of
 		// the same provider.
 		//
@@ -368,7 +368,7 @@ class DetachedWindowNode extends WindowNode {
 	}
 
 	/**
-	 * Ensures the bounds of this window have a valid location and size 
+	 * Ensures the bounds of this window have a valid location and size
 	 */
 	private void adjustBounds() {
 

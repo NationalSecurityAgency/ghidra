@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,8 +67,8 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 		MarkupItemStorageImpl storageImpl =
 			new MarkupItemStorageImpl(association, MarkupTypeTestStub.INSTANCE, addr(100));
 
-		// 
-		// Setting the address with anything other than a user-defined address should not 
+		//
+		// Setting the address with anything other than a user-defined address should not
 		// create a storage object
 		//
 		String addressSource = "Test Source";
@@ -92,8 +92,8 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 		MarkupItemStorageImpl storageImpl =
 			new MarkupItemStorageImpl(association, MarkupTypeTestStub.INSTANCE, addr(100));
 
-		// 
-		// Setting the address with anything other than a user-defined address should not 
+		//
+		// Setting the address with anything other than a user-defined address should not
 		// create a storage object
 		//
 		String addressSource = "Test Source";
@@ -122,7 +122,7 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 
 		//
 		// Test that setting ignored to true creates a DB storage
-		//         
+		//
 		MarkupItemStorage newStorage = storageImpl.setStatus(VTMarkupItemStatus.DONT_CARE);
 		assertTrue("A database entry was not created when setting the storage to ignored",
 			(newStorage instanceof MarkupItemStorageDB));
@@ -134,7 +134,7 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 
 		//
 		// Test that any set destination address is retained when setting ignored to true and false
-		// 
+		//
 
 		storageImpl =
 			new MarkupItemStorageImpl(association, MarkupTypeTestStub.INSTANCE, addr(200));
@@ -188,7 +188,7 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 
 		//
 		// Test that any set destination address is retained when setting apply failed to true and false
-		// 
+		//
 		storageImpl =
 			new MarkupItemStorageImpl(association, MarkupTypeTestStub.INSTANCE, addr(200));
 
@@ -227,10 +227,10 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 	@Test
 	public void testLoadingUnappliedMarkupItemFindsExistingStorageRecord()
 			throws CancelledException {
-		// 
+		//
 		// Test that if we create a DB object, that a new 'equivalent' markup item will find and
 		// use the matching DB record.
-		//              
+		//
 		VTMatch match = createMatchSetWithOneMatch();
 
 		VTMarkupItem markupItem = createRandomMarkupItemStub(match);
@@ -254,10 +254,10 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 	@Test
 	public void testLoadingUnappliedMarkupItemWithNoExistingStorageRecord()
 			throws CancelledException {
-		// 
+		//
 		// Test that if we create a DB object, that a new 'equivalent' markup item will find and
 		// use the matching DB record.
-		//              
+		//
 		VTMatch match = createMatchSetWithOneMatch();
 
 		VTMarkupItem markupItem = createRandomMarkupItemStub(match);

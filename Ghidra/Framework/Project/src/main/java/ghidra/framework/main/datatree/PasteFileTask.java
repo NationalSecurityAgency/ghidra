@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ import ghidra.util.task.*;
 /**
  *
  * Task to paste files at given destination folder.
- * 
- * 
+ *
+ *
  */
 public class PasteFileTask extends Task {
 
@@ -45,7 +45,7 @@ public class PasteFileTask extends Task {
 
 	/**
 	 * Constructor for PasteFileTask.
-	 *  
+	 *
 	 * @param destNode destination folder
 	 * @param list list of GTreeNodes being pasted
 	 * @param isCut boolean flag, true means source nodes were cut instead of copied.
@@ -90,7 +90,7 @@ public class PasteFileTask extends Task {
 
 	/**
 	 * Paste the given file at the folder represented by destNode.
-	 * 
+	 *
 	 * @param file file to be pasted.
 	 * @param monitor task monitor
 	 */
@@ -117,7 +117,7 @@ public class PasteFileTask extends Task {
 
 	/**
 	 * Copy a file into a new folder
-	 * 
+	 *
 	 * @param file source file}
 	 * @param folder destination folder
 	 * @param monitor task monitor
@@ -173,9 +173,9 @@ public class PasteFileTask extends Task {
 	 * Move a file into a folder.
 	 * <p>
 	 * Displays a error dialog if there was an exception
-	 * 
+	 *
 	 * @param file file being moved
-	 * @param folder destination folder 
+	 * @param folder destination folder
 	 */
 	private void moveFile(DomainFile file, DomainFolder folder) {
 		try {
@@ -197,7 +197,7 @@ public class PasteFileTask extends Task {
 	 * Move the given folder and all of its contents into a new parent folder.
 	 * <p>
 	 * Displays a error dialog if there was an exception
-	 * 
+	 *
 	 * @param folder being moved
 	 * @param newParent destination
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,8 +37,8 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Tests to verify that the Exact Symbol Name program correlation determines matches as expected. 
- * This correlator should match on all labels at the entry point of the function or all labels at 
+ * Tests to verify that the Exact Symbol Name program correlation determines matches as expected.
+ * This correlator should match on all labels at the entry point of the function or all labels at
  * the minimum address for data.
  */
 public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest {
@@ -86,7 +86,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"FUN_00411e70"}, 
+			new String[] {"FUN_00411e70"},
 			new String[] {"FUN_00411e50"});
 		//@formatter:on
 	}
@@ -103,7 +103,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"TestSymbolOne"}, 
+			new String[] {"TestSymbolOne"},
 			new String[] {"FUN_00411e50"});
 		//@formatter:on
 	}
@@ -120,7 +120,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"FUN_00411e70"}, 
+			new String[] {"FUN_00411e70"},
 			new String[] {"TestSymbolTwo"});
 		//@formatter:on
 	}
@@ -138,7 +138,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"TestSymbol"}, 
+			new String[] {"TestSymbol"},
 			new String[] {"TestSymbol"});
 		//@formatter:on
 	}
@@ -156,7 +156,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"TestSymbol_00411e70"}, 
+			new String[] {"TestSymbol_00411e70"},
 			new String[] {"TestSymbol_00411e50"});
 		//@formatter:on
 	}
@@ -174,7 +174,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"TestSymbol@00411e70"}, 
+			new String[] {"TestSymbol@00411e70"},
 			new String[] {"TestSymbol@00411e50"});
 		//@formatter:on
 	}
@@ -192,7 +192,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"TestSymbol_00411e70"}, 
+			new String[] {"TestSymbol_00411e70"},
 			new String[] {"TestSymbol@00411e50"});
 		//@formatter:on
 	}
@@ -211,7 +211,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"Foo", "TestSymbol"}, 
+			new String[] {"Foo", "TestSymbol"},
 			new String[] {"TestSymbol"});
 		//@formatter:on
 	}
@@ -230,7 +230,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"TestSymbol"}, 
+			new String[] {"TestSymbol"},
 			new String[] {"Foo", "TestSymbol"});
 		//@formatter:on
 	}
@@ -251,7 +251,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"Bar", "Bat", "TestSymbol"}, 
+			new String[] {"Bar", "Bat", "TestSymbol"},
 			new String[] {"Foo", "TestSymbol"});
 		//@formatter:on
 	}
@@ -273,7 +273,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"Bar", "Bat", "Foo", "TestSymbol"}, 
+			new String[] {"Bar", "Bat", "Foo", "TestSymbol"},
 			new String[] {"Foo", "TestSymbol"});
 		//@formatter:on
 	}
@@ -302,7 +302,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"printf"}, 
+			new String[] {"printf"},
 			new String[] {"printf"});
 		//@formatter:on
 	}
@@ -322,7 +322,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"foo"}, 
+			new String[] {"foo"},
 			new String[] {"bar"});
 		//@formatter:on
 	}
@@ -338,7 +338,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"s_Wallace_00416860"}, 
+			new String[] {"s_Wallace_00416860"},
 			new String[] {"s_Wallace_00416860"});
 		//@formatter:on
 	}
@@ -356,7 +356,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"DataSymbol"}, 
+			new String[] {"DataSymbol"},
 			new String[] {"DataSymbol"});
 		//@formatter:on
 	}
@@ -375,7 +375,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"DataSymbol", "Foo"}, 
+			new String[] {"DataSymbol", "Foo"},
 			new String[] {"DataSymbol"});
 		//@formatter:on
 	}
@@ -395,7 +395,7 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"Bar", "Foo"}, 
+			new String[] {"Bar", "Foo"},
 			new String[] {"Bar", "Foo"});
 		//@formatter:on
 	}
@@ -417,14 +417,14 @@ public class VTExactSymbolMatch2Test extends AbstractGhidraHeadedIntegrationTest
 
 		//@formatter:off
 		checkAllSymbols(
-			new String[] {"A", "Bar", "Foo"}, 
+			new String[] {"A", "Bar", "Foo"},
 			new String[] {"B", "Bar", "Foo"});
 		//@formatter:on
 	}
 
 //==================================================================================================
 // Helper Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private Symbol getExternalSymbol(Program program, String name) {
 		SymbolTable sourceSymbolTable = program.getSymbolTable();

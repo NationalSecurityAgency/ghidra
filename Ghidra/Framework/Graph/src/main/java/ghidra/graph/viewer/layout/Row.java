@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,12 +25,12 @@ import ghidra.graph.viewer.GraphViewerUtils;
 /**
  * A row in a grid.   This class stores its row index, its y offset and its height.   The
  * y value is the layout space y value of a {@link Point2D} object.   That is, unlike the
- * {@link GridLocationMap}, the y value of this object is in layout space and not indexes 
+ * {@link GridLocationMap}, the y value of this object is in layout space and not indexes
  * of a grid.
- * 
+ *
  * <p>This class maintains a collection of vertices on this row, organized by column index.  You
  * can get the column of a vertex from {@link #getColumn(Object) getColumn(V)}.
- * 
+ *
  * @param <V> the vertex type
  */
 public class Row<V> {
@@ -56,9 +56,9 @@ public class Row<V> {
 
 	/**
 	 * Sets the column index in this row for the given vertex
-	 * 
+	 *
 	 * @param v the vertex
-	 * @param col the column index 
+	 * @param col the column index
 	 */
 	public void setColumn(V v, int col) {
 		columnsByVertex.put(v, col);
@@ -67,8 +67,8 @@ public class Row<V> {
 
 	/**
 	 * Returns the column index for the given vertex
-	 * 
-	 * @param v the vertex 
+	 *
+	 * @param v the vertex
 	 * @return the column index for the given vertex
 	 */
 	public int getColumn(V v) {
@@ -80,7 +80,7 @@ public class Row<V> {
 
 	/**
 	 * Returns the vertex at the given column index or null if there is no vertex at that column
-	 * 
+	 *
 	 * @param column the column index
 	 * @return the vertex
 	 */
@@ -92,13 +92,13 @@ public class Row<V> {
 	 * Represents the range of columns in this row.  For this given row in a grid:
 	 * <pre>
 	 * 	0 1 2 3 4 5 6
-	 * 	- - v - v - - 
+	 * 	- - v - v - -
 	 * </pre>
-	 * the column count is 3--where the column range is 2-4, inclusive.   
-	 * 
+	 * the column count is 3--where the column range is 2-4, inclusive.
+	 *
 	 * <p>Note: this differs from then number of vertices in this row, as the column count
 	 * includes columns that have no vertex.
-	 * 
+	 *
 	 * @return the number of columns in this row, including empty columns between start and end
 	 */
 	public int getColumnCount() {
@@ -113,7 +113,7 @@ public class Row<V> {
 
 	/**
 	 * Returns the smallest column index in this row
-	 * 
+	 *
 	 * @return the smallest column index in this row
 	 */
 	public Integer getStartColumn() {
@@ -122,7 +122,7 @@ public class Row<V> {
 
 	/**
 	 * Returns the largest column index in this row
-	 * 
+	 *
 	 * @return the largest column index in this row
 	 */
 	public int getEndColumn() {
@@ -130,11 +130,11 @@ public class Row<V> {
 	}
 
 	/**
-	 * Returns all vertices in this row, sorted by column index (min to max).   
-	 * 
+	 * Returns all vertices in this row, sorted by column index (min to max).
+	 *
 	 * <p>Note: the index of a vertex in the list does not match the column index.  To get the
 	 * column index for a vertex, call {@link #getColumn(Object) getColumn(V)}.
-	 * 
+	 *
 	 * @return all vertices in this row
 	 */
 	public List<V> getVertices() {
@@ -144,7 +144,7 @@ public class Row<V> {
 		Integer start = verticesByColumn.firstKey();
 		Integer n = getColumnCount();
 		IntStream columnIndexes = IntStream.range(start, start + n);
-		List<V> vertices = 
+		List<V> vertices =
 			columnIndexes
 			.mapToObj(col -> verticesByColumn.get(col))
 			.filter(v -> v != null)

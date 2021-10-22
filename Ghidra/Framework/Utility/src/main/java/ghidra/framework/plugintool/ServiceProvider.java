@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ package ghidra.framework.plugintool;
 import ghidra.framework.plugintool.util.ServiceListener;
 
 /**
- * Interface for providing Services 
+ * Interface for providing Services
  */
 public interface ServiceProvider {
 	/**
@@ -27,15 +27,15 @@ public interface ServiceProvider {
 	 * @param serviceClass the interface class.
 	 */
 	public <T> T getService(Class<T> serviceClass);
-	
+
 	/**
-	 * Adds a listener that will be called as services are added and removed from this 
+	 * Adds a listener that will be called as services are added and removed from this
 	 * ServiceProvider.
-	 * 
+	 *
 	 * @param listener The listener to add.
 	 */
 	public void addServiceListener( ServiceListener listener );
-	
+
 	/**
 	 * Removes the given listener from this ServiceProvider.  This method does nothing if the
 	 * given listener is not contained by this ServiceProvider.

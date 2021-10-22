@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,17 +38,17 @@ import resources.ResourceManager;
 
 /**
  * An action to delete data from a table.   If your model is a {@link ThreadedTableModel}, then
- * this class is self-contained.  If you have some other kind of model, then you must 
- * override {@link #removeSelectedItems()} in order to remove items from your model when the 
+ * this class is self-contained.  If you have some other kind of model, then you must
+ * override {@link #removeSelectedItems()} in order to remove items from your model when the
  * action is executed.
  * <p>
  * Note: deleting a row object is simply removing it from the given table/model.  This code is
  * not altering the database.
  * <p>
- * Tip: if you are a plugin that uses transient providers, then use 
+ * Tip: if you are a plugin that uses transient providers, then use
  * {@link #registerDummy(PluginTool, String)} at creation time to install a dummy representative of
  * this action in the Tool's options so that user's can update keybindings, regardless of whether
- * they have ever shown one of your transient providers.  
+ * they have ever shown one of your transient providers.
  */
 public class DeleteTableRowAction extends DockingAction {
 
@@ -63,7 +63,7 @@ public class DeleteTableRowAction extends DockingAction {
 	 * A special method that triggers the registration of this action's shared/dummy keybinding.
 	 * This is needed for plugins that produce transient component providers that do not exist
 	 * at the time the plugin is loaded.
-	 * 
+	 *
 	 * @param tool the tool whose options will updated with a dummy keybinding
 	 * @param owner the owner of the action that may be installed
 	 */

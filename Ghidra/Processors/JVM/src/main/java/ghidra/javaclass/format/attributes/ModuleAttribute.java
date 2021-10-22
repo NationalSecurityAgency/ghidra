@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.util.exception.DuplicateNameException;
  *  <li> the modules required by a module </li>
  *  <li> the packages exported and opened by a module </li>
  *  <li> the services used and provided by a module </li>
- * </ul>  
+ * </ul>
  */
 public class ModuleAttribute extends AbstractAttributeInfo {
 
@@ -118,7 +118,7 @@ public class ModuleAttribute extends AbstractAttributeInfo {
 	}
 
 	/**
-	 * The value of the {@code requires_count} item indicates the number of entries in the 
+	 * The value of the {@code requires_count} item indicates the number of entries in the
 	 * {@code requires} table.
 	 * @return the requires count
 	 */
@@ -315,7 +315,7 @@ public class ModuleAttribute extends AbstractAttributeInfo {
 		 * into the constant pool.  The entry at that index must be a {@link ConstantPoolModuleInfo}
 		 * structure denoting a module whose code can access the types and members in this exported
 		 * package
-		 * @param i the entry to retrieve 
+		 * @param i the entry to retrieve
 		 * @return module index
 		 */
 		public int getExportsToEntry(int i) {

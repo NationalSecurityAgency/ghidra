@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,14 +26,14 @@ import java.util.function.BiFunction;
 public interface AsyncHandlerCanExit<R> {
 	/**
 	 * Complete the whole loop
-	 * 
+	 *
 	 * This method is suitable for passing by reference to
 	 * {@link CompletableFuture#handle(BiFunction)}. While it can be invoked directly, consider the
 	 * convenience methods {@link #exit(Object)} and {@link #exit(Throwable)} instead.
-	 * 
+	 *
 	 * When the subordinate completes, the whole construct completes and terminates with the same,
 	 * possibly exceptional, result.
-	 * 
+	 *
 	 * @param result the result of completion
 	 * @param exc the exception if completed exceptionally
 	 * @return
@@ -42,7 +42,7 @@ public interface AsyncHandlerCanExit<R> {
 
 	/**
 	 * Complete the chain with the given result
-	 * 
+	 *
 	 * @param result the result
 	 */
 	public default void exit(R result) {
@@ -58,7 +58,7 @@ public interface AsyncHandlerCanExit<R> {
 
 	/**
 	 * Complete the chain exceptionally
-	 * 
+	 *
 	 * @param exc the exception
 	 */
 	public default void exit(Throwable exc) {

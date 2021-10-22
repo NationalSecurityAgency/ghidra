@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public class PcodeFunctionParser {
 	/**
 	 * Takes pcode ops of a function and parses them to determine whether there are
 	 * any calls to variadic functions that use format Strings.
-	 * 
+	 *
 	 * @param pcodeOps            List of PcodeOpAST for a function
 	 * @param addressToCandidateData map of Addresses to format String data
 	 * @param variadicFunctionNames   Set of variadic functions to look for
@@ -115,7 +115,7 @@ public class PcodeFunctionParser {
 
 	// If addrToCandidateData doesn't have format String data for this call
 	// and we are calling a variadic function, parse the String to determine
-	// whether it's a format String. 
+	// whether it's a format String.
 	private void searchForHiddenFormatStrings(PcodeOpAST ast,
 			List<FunctionCallData> functionCallDataList, String functionName) {
 
@@ -143,7 +143,7 @@ public class PcodeFunctionParser {
 
 	/**
 	 * Looks at bytes at given address and converts to format String
-	 * 
+	 *
 	 * @param address Address of format String
 	 * @return format String
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,9 +27,9 @@ import ghidra.graph.VisualGraph;
 import ghidra.graph.viewer.*;
 
 /**
- * A job that provides an animator and callbacks for transitioning the visibility of 
- * graph vertices.  The opacity value will change from 0 to 1 over the course of the job. 
- * Subclasses can decide how to use the opacity value as it changes.   For example, a 
+ * A job that provides an animator and callbacks for transitioning the visibility of
+ * graph vertices.  The opacity value will change from 0 to 1 over the course of the job.
+ * Subclasses can decide how to use the opacity value as it changes.   For example, a
  * subclass can fade in or out the vertices provided to the job.
  *
  * @param <V> the vertex type
@@ -62,7 +62,7 @@ public abstract class AbstractGraphVisibilityTransitionJob<V extends VisualVerte
 
 	/**
 	 * Returns true if the graph is too large for animation (usually due to performance issues).
-	 * 
+	 *
 	 * @return true if the graph is too large for animation
 	 */
 	protected boolean isTooBigToAnimate() {

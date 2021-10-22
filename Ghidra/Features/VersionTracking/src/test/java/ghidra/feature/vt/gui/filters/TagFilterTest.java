@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ public class TagFilterTest extends VTBaseTestCase {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void testFilterWithNoTags() {
-		// 
+		//
 		// test that a match set with no tags applied has no items filtered
 		//
 		VTSession session = controller.getSession();
@@ -117,7 +117,7 @@ public class TagFilterTest extends VTBaseTestCase {
 	public void testMatchesPassFilterWithIncludedTags() {
 		//
 		// Test that an applied filter will include only those tags chosen to pass the filter
-		// 
+		//
 		VTMatchTag fooTag = new TestMatchTag("Foo");
 		VTMatchTag barTag = new TestMatchTag("Bar");
 		VTMatchTag bazTag = new TestMatchTag("Baz");
@@ -239,7 +239,7 @@ public class TagFilterTest extends VTBaseTestCase {
 
 		assertPassesFilter(fooTagMatch1, untaggedMatch1, barTagMatch1);
 
-		// 
+		//
 		// now filter out an item and then remove that item
 		//
 		excludedTagChooser.setExcludedTags(fooTag);

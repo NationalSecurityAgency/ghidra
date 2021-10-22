@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.graph.*;
 
 /**
  * Dijkstra's shortest-path algorithm
- * 
+ *
  * <p>
  * This implementation computes the shortest paths between two vertices using Dijkstra's
  * single-source shortest path finding algorithm. Any time a new source is given, it explores all
@@ -46,11 +46,11 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 
 	/**
 	 * Use Dijkstra's algorithm on the given graph
-	 * 
+	 *
 	 * <p>
 	 * This constructor assumes the graph's edges are {@link GWeightedEdge}s. If not, you will
 	 * likely encounter a {@link ClassCastException}.
-	 * 
+	 *
 	 * @param graph the graph
 	 */
 	public DijkstraShortestPathsAlgorithm(GImplicitDirectedGraph<V, E> graph) {
@@ -61,11 +61,11 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 
 	/**
 	 * Use Dijkstra's algorithm on the given graph with the given maximum distance
-	 * 
+	 *
 	 * <p>
 	 * This constructor assumes the graph's edges are {@link GWeightedEdge}s. If not, you will
 	 * likely encounter a {@link ClassCastException}.
-	 * 
+	 *
 	 * @param graph the graph
 	 * @param maxDistance the maximum distance, or null for no maximum
 	 */
@@ -77,7 +77,7 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 
 	/**
 	 * Use Dijstra's algorithm on the given graph with a custom edge weight metric
-	 * 
+	 *
 	 * @param graph the graph
 	 * @param metric the function to compute the weight of an edge
 	 */
@@ -91,7 +91,7 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 	/**
 	 * Use Dijstra's algorithm on the given graph with the given maximum distance and a custom edge
 	 * weight metric
-	 * 
+	 *
 	 * @param graph the graph
 	 * @param maxDistance the maximum distance, or null for no maximum
 	 * @param metric the function to compute the weight of an edge
@@ -105,7 +105,7 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 
 	/**
 	 * Compute the shortest distance to all reachable vertices from the given source
-	 * 
+	 *
 	 * @param v the source vertex
 	 * @return a map of destinations to distances from the given source
 	 */
@@ -116,11 +116,11 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 
 	/**
 	 * Compute the shortest paths from the given source to the given destination
-	 * 
+	 *
 	 * <p>
 	 * This implementation differs from typical implementations in that paths tied for the shortest
 	 * distance are all returned. Others tend to choose one arbitrarily.
-	 * 
+	 *
 	 * @param src the source
 	 * @param dst the destination
 	 * @return a collection of paths of shortest distance from source to destination
@@ -132,7 +132,7 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 	/**
 	 * A class representing all optimal paths from a given source to every other (reachable) vertex
 	 * in the graph
-	 * 
+	 *
 	 * <p>
 	 * This is the workhorse of path computation, and implements Dijkstra's Shortest Path algorithm
 	 * from one source to all destinations. We considered using JUNG to store the graph and compute
@@ -154,7 +154,7 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 		/**
 		 * Compute the shortest paths from a given vertex to all other reachable vertices in the
 		 * graph
-		 * 
+		 *
 		 * @param src the source (seed) vertex
 		 */
 		protected OneSourceToAll(V src) {
@@ -165,7 +165,7 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 
 		/**
 		 * Recover the shortest paths from the source to the given destination, if it is reachable
-		 * 
+		 *
 		 * @param dst the destination
 		 * @return a collection of the shortest paths from source to destination, or the empty set
 		 */
@@ -177,10 +177,10 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 
 		/**
 		 * Add the shortest paths from the source to the given destination into the given collection
-		 * 
+		 *
 		 * <p>
 		 * This is used internally to recover the shortest paths
-		 * 
+		 *
 		 * @param paths a place to store the recovered paths
 		 * @param dst the destination
 		 */
@@ -191,12 +191,12 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 		/**
 		 * Add the shortest paths from source to a given intermediate, continuing along a given path
 		 * to the final destination, into the given collection
-		 * 
+		 *
 		 * <p>
 		 * This is a recursive method for constructing the shortest paths overall. Assuming the
 		 * given path from intermediate to final destination is the shortest, we can show by
 		 * induction, the computed paths from source to destination are the shortest.
-		 * 
+		 *
 		 * @param paths a place to store the recovered paths
 		 * @param prev the intermediate destination
 		 * @param soFar a (shortest) path from intermediate to final destination
@@ -226,21 +226,21 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 
 		/**
 		 * Update the record for the given destination with a new offer of shortest distance
-		 * 
+		 *
 		 * <p>
 		 * If either the record doesn't exist yet, or the new offer beats the current best, then a
 		 * new record is created and replaces the current record. If present, the list of best
 		 * inbound edges is cleared -- because they all correspond to a distance that has just been
 		 * beat. The node is also added and/or moved forward in the queue of unvisited vertices.
-		 * 
+		 *
 		 * <p>
 		 * If the record exists, and the new offer ties the current offer, nothing happens, but the
 		 * method still returns true, since the corresponding inbound edge could be optimal.
-		 * 
+		 *
 		 * <p>
 		 * If the record's current best beats the offer, nothing happens, and the method returns
 		 * false, indicating the inbound edge is definitely not optimal.
-		 * 
+		 *
 		 * @param dest the destination whose record to update
 		 * @param newDist the distance offer
 		 * @return true iff the offer is equal to or better than the record's current best
@@ -282,7 +282,7 @@ public class DijkstraShortestPathsAlgorithm<V, E extends GEdge<V>> {
 
 		/**
 		 * Perform one iteration of Dijskstra's path finding algorithm
-		 * 
+		 *
 		 * @param from the vertex to visit for this iteration
 		 */
 		protected void fillStep(V from, double dist) {

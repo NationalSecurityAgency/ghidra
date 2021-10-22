@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.util.Msg;
 
 /**
  * A single-threaded executor which creates and exclusively accesses the {@code dbgeng.dll} client.
- * 
+ *
  * <p>
  * The executor also has a priority mechanism, so that callbacks may register follow-on handlers
  * which take precedence over other tasks in the queue (which could trigger additional callbacks).
@@ -66,7 +66,7 @@ public abstract class AbstractClientThreadExecutor extends AbstractExecutorServi
 
 	/**
 	 * Obtain a reference to the client, only if the calling thread is this executor's thread.
-	 * 
+	 *
 	 * @return the client
 	 */
 	public DebugClient getClient() {
@@ -102,7 +102,7 @@ public abstract class AbstractClientThreadExecutor extends AbstractExecutorServi
 		 * life, since only it can access the client. Granted, if it turns out to be too difficult,
 		 * we can always create a new thread and client, using the existing client's reentrant
 		 * methods.
-		 * 
+		 *
 		 * <p>
 		 * As stated in the MSDN, this thread repeatedly calls {@code DispatchEvents} in order to
 		 * receive callbacks regarding events caused by other clients. If, however, an wait is
@@ -197,11 +197,11 @@ public abstract class AbstractClientThreadExecutor extends AbstractExecutorServi
 
 	/**
 	 * Schedule a task with a given priority.
-	 * 
+	 *
 	 * <p>
 	 * Smaller priority values indicate earlier execution. The default priority is
 	 * {@link #DEFAULT_PRIORITY}.
-	 * 
+	 *
 	 * @param priority the priority
 	 * @param command the task
 	 */
@@ -226,11 +226,11 @@ public abstract class AbstractClientThreadExecutor extends AbstractExecutorServi
 
 	/**
 	 * Schedule a task with the given priority, taking a reference to the client.
-	 * 
+	 *
 	 * <p>
 	 * This is a convenience which spares a call to {@link #getClient()}. See
 	 * {@link #execute(int, Runnable)} about priority.
-	 * 
+	 *
 	 * @param priority the priority
 	 * @param command the task
 	 */

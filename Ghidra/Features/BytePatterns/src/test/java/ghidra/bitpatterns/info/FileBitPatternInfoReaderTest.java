@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -163,9 +163,9 @@ public class FileBitPatternInfoReaderTest extends AbstractGenericTest {
 		assertEquals(0, filteredAddresses.size());
 	}
 
-	//possibly combine ContextRegisterFilter and ContextAction? 	
+	//possibly combine ContextRegisterFilter and ContextAction?
 
-	//fsReader: re-write to use dummy monitors?  is this possible?		
+	//fsReader: re-write to use dummy monitors?  is this possible?
 
 	//change hashcode method for ditted sequences
 	//what to do about bits of check?
@@ -182,7 +182,7 @@ public class FileBitPatternInfoReaderTest extends AbstractGenericTest {
 	//change references to the functionStartAnalyzer to refer to a PatternFactory object?
 	//possible start code: check whether this is already in the body of function?
 
-	//calc_win7.exe: 100030e0d: write some scripts: is this the start of a block? 
+	//calc_win7.exe: 100030e0d: write some scripts: is this the start of a block?
 	// it has a label...
 
 	//understand patternfactories, match actions, and context actions
@@ -192,7 +192,7 @@ public class FileBitPatternInfoReaderTest extends AbstractGenericTest {
 	//MatchAction: this is an action that should be applied to a program at an
 	//address where the pattern matches, such as setting a context register
 	//PostRule: this is a rule to check after the pattern matches, such
-	//as whether the address alignment is correct	
+	//as whether the address alignment is correct
 
 	//evaluation:
 	//  scripts to evaluate patterns over repositories?

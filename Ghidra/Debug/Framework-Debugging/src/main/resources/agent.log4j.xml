@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-	Basic Log4j configuration. 
-	
+	Basic Log4j configuration.
+
 	Note the 'packages' attribute; this is required if an appender needs to reference a class
-	in the codebase. For this configuration it's necessary for the 'logPanel' appender, which 
+	in the codebase. For this configuration it's necessary for the 'logPanel' appender, which
 	references LogPanelAppender.java.
 -->
-<Configuration monitorInterval="30" xmlns:xi="http://www.w3.org/2001/XInclude" packages="log"> 
+<Configuration monitorInterval="30" xmlns:xi="http://www.w3.org/2001/XInclude" packages="log">
 	<Appenders>
 		<xi:include href="log4j-appender-console.xml"/>
 		<xi:include href="log4j-appender-logpanel.xml"/>
@@ -19,10 +19,10 @@
 		<Logger name="ghidra" level="DEBUG"/>
 		<Logger name="reverse" level="DEBUG"/>
 		<Logger name="util" level="DEBUG"/>
-		
+
 		<Root level="ALL">
-			<AppenderRef ref="console" level="DEBUG"/>      
-			<AppenderRef ref="logPanel" level="DEBUG"/> 
-		</Root>    	 
+			<AppenderRef ref="console" level="DEBUG"/>
+			<AppenderRef ref="logPanel" level="DEBUG"/>
+		</Root>
 	</Loggers>
 </Configuration>

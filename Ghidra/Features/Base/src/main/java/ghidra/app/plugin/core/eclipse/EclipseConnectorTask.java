@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ class EclipseConnectorTask extends Task {
 
 	/**
 	 * Constructs a new Eclipse connector task.
-	 * 
+	 *
 	 * @param eclipseService The Eclipse integration service.
 	 * @param port The port to connect to Eclipse on.
 	 */
@@ -84,7 +84,7 @@ class EclipseConnectorTask extends Task {
 			}
 		}
 
-		// Make sure GhidraDev is installed in Eclipse.  If it's not, offer to install it for the 
+		// Make sure GhidraDev is installed in Eclipse.  If it's not, offer to install it for the
 		// user.  After offering, check again to see if it's installed.
 		if (!isGhidraDevInstalled(eclipseService)) {
 			eclipseService.offerGhidraDevInstallation(monitor);
@@ -151,7 +151,7 @@ class EclipseConnectorTask extends Task {
 
 	/**
 	 * Gets the Eclipse connection.
-	 * 
+	 *
 	 * @return The Eclipse connection.
 	 */
 	public EclipseConnection getConnection() {
@@ -160,7 +160,7 @@ class EclipseConnectorTask extends Task {
 
 	/**
 	 * Creates a {@link ProcessBuilder} to launch Eclipse.
-	 * 
+	 *
 	 * @param eclipseExecutableFile The Eclipse executable file.
 	 * @param eclipseWorkspaceDir The Eclipse workspace directory.  Could be null.
 	 * @return A {@link ProcessBuilder} to launch Eclipse.
@@ -192,7 +192,7 @@ class EclipseConnectorTask extends Task {
 
 	/**
 	 * Checks to see if the GhidraDev plugin is installed in Eclipse.
-	 * 
+	 *
 	 * @param service An {@link EclipseIntegrationService}.
 	 * @return True if the GhidraDev plugin is installed in Eclipse; otherwise, false.
 	 */

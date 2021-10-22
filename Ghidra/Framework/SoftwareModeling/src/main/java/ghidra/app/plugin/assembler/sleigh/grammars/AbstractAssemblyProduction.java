@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ public abstract class AbstractAssemblyProduction<NT extends AssemblyNonTerminal>
 
 	/**
 	 * Get the index of the production
-	 * 
+	 *
 	 * Instead of using deep comparison, the index is often used as the identify of the production
 	 * within a grammar.
 	 * @return the index
@@ -130,7 +130,7 @@ public abstract class AbstractAssemblyProduction<NT extends AssemblyNonTerminal>
 
 	/**
 	 * Get the "name" of this production
-	 * 
+	 *
 	 * This is mostly just notional and for debugging. The name is taken as the name of the LHS.
 	 * @return the name of the LHS
 	 */

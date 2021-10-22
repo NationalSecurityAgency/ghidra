@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,7 +74,7 @@ public interface ProgramContext {
 	 * at that address.
 	 * @param register the register for which to get its value.
 	 * @param address the address at which to get a value.
-	 * @param signed if true, interprets the fix-bit size register value as a signed value.  
+	 * @param signed if true, interprets the fix-bit size register value as a signed value.
 	 * @return a BigInteger object containing the value of the registe at the given address or null
 	 * if no value has been assigned.
 	 */
@@ -93,7 +93,7 @@ public interface ProgramContext {
 	 * @param start   the start address to set values
 	 * @param end     the end address to set values
 	 * @param value   the actual values to store at address
-	 * @throws ContextChangeException if failed to modifiy context across specified range 
+	 * @throws ContextChangeException if failed to modifiy context across specified range
 	 * (e.g., instruction exists).
 	 */
 	public void setRegisterValue(Address start, Address end, RegisterValue value)
@@ -102,8 +102,8 @@ public interface ProgramContext {
 	/**
 	 * Returns the (non-default)value assigned to a register at a given address.
 	 * @param register the register for which to get its value.
-	 * @param address the address at which to get a value. 
-	 * @return a RegisterValue object containing the value of the register at the given address or 
+	 * @param address the address at which to get a value.
+	 * @return a RegisterValue object containing the value of the register at the given address or
 	 * possibly null if no value has been assigned.
 	 */
 	public RegisterValue getNonDefaultValue(Register register, Address address);
@@ -115,15 +115,15 @@ public interface ProgramContext {
 	 * @param start the start address.
 	 * @param end the end address (inclusive).
 	 * @param value the value to assign.  A value of null will effective clear any existing values.
-	 * @throws ContextChangeException if failed to modifiy context across specified range 
+	 * @throws ContextChangeException if failed to modifiy context across specified range
 	 * (e.g., instruction exists).
 	 */
 	public void setValue(Register register, Address start, Address end, BigInteger value)
 			throws ContextChangeException;
 
 	/**
-	 * Returns an AddressRangeIterator over all addresses that have an associated value for the given 
-	 * register.  Each range returned will have the same value associated with the register for all 
+	 * Returns an AddressRangeIterator over all addresses that have an associated value for the given
+	 * register.  Each range returned will have the same value associated with the register for all
 	 * addresses in that range.
 	 * @param register the register for which to get set value ranges.
 	 * @return An AddressRangeIterator over all address that have values for the given register.
@@ -153,8 +153,8 @@ public interface ProgramContext {
 	public AddressRange getRegisterValueRangeContaining(Register register, Address addr);
 
 	/**
-	 * Returns an AddressRangeIterator over all addresses that have an associated default value for the given 
-	 * register.  Each range returned will have the same default value associated with the register for all 
+	 * Returns an AddressRangeIterator over all addresses that have an associated default value for the given
+	 * register.  Each range returned will have the same default value associated with the register for all
 	 * addresses in that range.
 	 * @param register the register for which to get set default value ranges.
 	 * @return An AddressRangeIterator over all address that have default values for the given register.
@@ -185,16 +185,16 @@ public interface ProgramContext {
 	 * @param start starting address.
 	 * @param end ending adddress.
 	 * @param register handle to the register to be set.
-	 * @throws ContextChangeException thrown if context change not permitted over specified 
+	 * @throws ContextChangeException thrown if context change not permitted over specified
 	 * range (e.g., instructions exist)
 	 */
 	public void remove(Address start, Address end, Register register) throws ContextChangeException;
 
 	/**
-	 * Get an alphabetical sorted unmodifiable list of original register names 
+	 * Get an alphabetical sorted unmodifiable list of original register names
 	 * (including context registers).  Names correspond to orignal register
 	 * name and not aliases which may be defined.
-	 * 
+	 *
 	 * @return alphabetical sorted unmodifiable list of original register names.
 	 */
 	public List<String> getRegisterNames();

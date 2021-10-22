@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,7 @@ public class SimpleBlockIterator implements CodeBlockIterator {
 
 	/**
 	 * Creates a new iterator that will iterate over the
-	 * program within a given address range set. All blocks which 
+	 * program within a given address range set. All blocks which
 	 * overlap the address set will be returned.
 	 * <P>
 	 *
@@ -181,7 +181,7 @@ public class SimpleBlockIterator implements CodeBlockIterator {
 
 //        Data data = getDefinedDataAfter(addr);
 //        Address dataAddr = data != null ? data.getMinAddress() : null;
-//        
+//
 //        if (instrAddr != null) {
 //        	if (dataAddr != null) {
 //        		return (instrAddr.compareTo(dataAddr) < 0) ? instrAddr : dataAddr;
@@ -221,24 +221,24 @@ public class SimpleBlockIterator implements CodeBlockIterator {
 //    	noMoreData = true;
 //    	return null;
 //    }
-//    
+//
 //    private Data nextData = null; // used to remember last data returned
 //    private boolean noMoreData = false;
-//    
+//
 //    /**
 //     * Determine if the specified data object contains a code reference.
 //     * @param data a data object.
 //     * @return true if data has a code reference (example: data is a pointer to code).
 //     */
 //    private boolean dataReferencesInstruction(Data data) {
-//    	
+//
 //		MemReference[] refs = data.getReferencesFrom();
 //		for (int i = 0; i < refs.length; i++) {
 //			Instruction instr = listing.getInstructionContaining(refs[i].getToAddress());
 //			if (instr != null) {
 //				return true;
 //			}
-//		}	
+//		}
 //    	return false;
 //    }
 
@@ -269,7 +269,7 @@ public class SimpleBlockIterator implements CodeBlockIterator {
 //		    	}
 //		    	else {
 //		    		// Instruction block is always valid
-//		    		return block;	
+//		    		return block;
 //		    	}
 				addr = block.getMaxAddress();
 			}

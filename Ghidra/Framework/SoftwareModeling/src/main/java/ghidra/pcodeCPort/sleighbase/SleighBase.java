@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,12 +35,12 @@ public abstract class SleighBase extends Translate implements NamedSymbolProvide
 	// implementation
 
 	/**
-	 * Note: The values of {@link #SLA_FORMAT_VERSION} and {@link #MAX_UNIQUE_SIZE} 
+	 * Note: The values of {@link #SLA_FORMAT_VERSION} and {@link #MAX_UNIQUE_SIZE}
 	 * must match the corresponding values defined by sleighbase.cc
 	 */
 	public static final int SLA_FORMAT_VERSION = 3;
 
-	public static final long MAX_UNIQUE_SIZE = 128;  //Maximum size of a varnode in the unique space.  
+	public static final long MAX_UNIQUE_SIZE = 128;  //Maximum size of a varnode in the unique space.
 													//Should match value in sleighbase.cc
 
 	private VectorSTL<String> userop = new VectorSTL<>();

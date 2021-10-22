@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ class ElfRelrRelocationTableDataType extends FactoryStructureDataType {
 	 * Constructor
 	 * @param structName structure name for resulting structure
 	 * @param length total length of RELR table in bytes
-	 * @param entrySize RELR entry size.  This size also generally corresponds to the 
+	 * @param entrySize RELR entry size.  This size also generally corresponds to the
 	 * size if a stored pointer.
 	 */
 	ElfRelrRelocationTableDataType(String structName, int length, int entrySize) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -102,7 +102,7 @@ public class PathManager {
 
 	/**
 	 * Add a new file path and set its enablement
-	 * @param file 
+	 * @param file
 	 * @param enabled
 	 * @return true if the enabled path did not already exist
 	 */
@@ -395,7 +395,7 @@ public class PathManager {
 	}
 
 	/**
-	 * Restore paths from user Preferences using the specified keys.  
+	 * Restore paths from user Preferences using the specified keys.
 	 * If preferences have never been saved, the specified {@code defaultEnablePaths}
 	 * will be used.  Note: the encoded path list must have been stored
 	 * using the same keys using the {@link #savePathsToPreferences(String, String, Path[])}
@@ -414,7 +414,7 @@ public class PathManager {
 	}
 
 	/**
-	 * Restore paths from user Preferences using the specified keys.  
+	 * Restore paths from user Preferences using the specified keys.
 	 * If preferences have never been saved, the specified {@code defaultEnablePaths}
 	 * will be returned.  Note: the encoded path list must have been stored
 	 * using the same keys using the {@link #savePathsToPreferences(String, String, Path[])}
@@ -481,7 +481,7 @@ public class PathManager {
 
 	/**
 	 * Save the specified paths to the user Preferences using the specified keys.
-	 * Note: The encoded path Preferences are intended to be decoded by the 
+	 * Note: The encoded path Preferences are intended to be decoded by the
 	 * {@link #restoreFromPreferences(String, Path[], String)} and
 	 * {@link #getPathsFromPreferences(String, Path[], String)} methods.
 	 * @param enablePathKey preference key for storing enabled paths

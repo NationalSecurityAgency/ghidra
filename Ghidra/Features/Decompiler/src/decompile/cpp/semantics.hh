@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ class Translate;		// Forward declaration
 class HandleTpl;		// Forward declaration
 class ConstTpl {
 public:
-  enum const_type { real=0, handle=1, j_start=2, j_next=3, j_curspace=4, 
+  enum const_type { real=0, handle=1, j_start=2, j_next=3, j_curspace=4,
 		    j_curspace_size=5, spaceid=6, j_relative=7,
 		    j_flowref=8, j_flowref_size=9, j_flowdest=10, j_flowdest_size=11 };
   enum v_field { v_space=0, v_offset=1, v_size=2, v_offset_plus=3 };

@@ -102,7 +102,7 @@
             </interleave>
           </element>
         </optional>
-        
+
         <zeroOrMore>
           <element name="callfixup">
             <attribute name="name"/>
@@ -110,11 +110,11 @@
               <element name="target">
                 <attribute name="name"/>
               </element>
-            </zeroOrMore>          
-            <element name="pcode"><ref name="pcode_type"/></element>  
+            </zeroOrMore>
+            <element name="pcode"><ref name="pcode_type"/></element>
           </element>
         </zeroOrMore>
-        
+
         <zeroOrMore>
           <element name="callotherfixup">
             <attribute name="targetop"/>
@@ -128,7 +128,7 @@
             <ref name="context_data_type"/>
           </element>
         </optional>
-        
+
         <optional>
           <element name="enum">
             <attribute name="size"/>
@@ -200,7 +200,7 @@
             </optional>
           </element>
         </optional>
- 
+
         <optional>
           <element name="returnaddress">
             <ref name="varnode_tags_type"/>
@@ -212,7 +212,7 @@
             <attribute name="align"/>
           </element>
         </optional>
-        
+
         <zeroOrMore>
           <element name="spacebase">
             <attribute name="name"/>
@@ -220,7 +220,7 @@
             <attribute name="space"/>
           </element>
         </zeroOrMore>
-        
+
         <zeroOrMore>
           <element name="deadcodedelay">
             <attribute name="space"/>
@@ -312,14 +312,14 @@
 
   <!--
 	Specifies generic calling convention for PrototypeModels
-      
+
 	unknown: Unspecified convention (default)
 
-	stdcall: An MS Windows specific calling convention which 
+	stdcall: An MS Windows specific calling convention which
 				uses the stack to pass all parameters and where
 				the called-function is responsible for purging the stack.
-	
-	cdecl: A standard/default calling convention which uses 
+
+	cdecl: A standard/default calling convention which uses
 				the stack to pass all parameters and where the
 				caller is responsible for purging the stack.
 
@@ -327,7 +327,7 @@
 	 			in which only registers are used to pass parameters
 
 	thiscall: A C++ instance method calling convention
-      
+
     -->
   <define name="generic_calling_convention_type">
     <choice>
@@ -355,9 +355,9 @@
           <value>standard</value>
           <value>register</value>
         </choice>
-      </attribute>  
+      </attribute>
     </optional>
-    
+
     <optional> <attribute name="hasthis"/> </optional>
     <optional> <attribute name="constructor"/> </optional>
 
@@ -450,7 +450,7 @@
           <ref name="rangelist_type"/>
         </element>
       </optional>
-      
+
     </interleave>
   </define>
 

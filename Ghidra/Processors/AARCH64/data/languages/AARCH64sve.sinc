@@ -4687,7 +4687,7 @@ is sve_b_2431=0b00000100 & sve_size_2223 & sve_b_21=0 & sve_zm_1620 & sve_b_1415
 # mov_dup_z_zi.xml: MOV (SIMD&FP scalar, unpredicated) variant SVE
 # ALIASEDBY DUP <Zd>.<T>, <Zn>.<T>[0] if BitCount(imm2:tsz) == 1
 # ALIASEDBY DUP <Zd>.<T>, <Zn>.<T>[<imm>] if BitCount(imm2:tsz) > 1
-# PATTERN 
+# PATTERN
 
 # SKIPPING mov_dup_z_zi.xml because there is a mismatch between the XML asmtemplate(4) and regdiagram(1)
 

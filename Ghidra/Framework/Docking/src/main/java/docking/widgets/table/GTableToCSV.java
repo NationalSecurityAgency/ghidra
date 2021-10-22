@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -163,7 +163,7 @@ public final class GTableToCSV {
 	}
 
 	/**
-	 * Attempts to get the text value for the cell so that the data will match what the user sees. 
+	 * Attempts to get the text value for the cell so that the data will match what the user sees.
 	 */
 	private static String getTableCellValue(JTable table, TableModel model, int row, int column) {
 		TableCellRenderer renderer = table.getCellRenderer(row, column);

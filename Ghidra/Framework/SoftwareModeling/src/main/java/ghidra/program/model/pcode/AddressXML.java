@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,11 +28,11 @@ import ghidra.xml.XmlParseException;
 /**
  * Utility class for the myriad ways of marshaling/unmarshaling an address and an optional size,
  * to/from XML for the various configuration files.
- * 
+ *
  * An object of the class itself is the most general form, where the specified address
  *   - MAY have an associated size given in bytes
  *   - MAY be in the JOIN address space, with physical pieces making up the logical value explicitly provided.
- * 
+ *
  * The static buildXML methods write out an \<addr> tag given component elements without allocating an object.
  * The static readXML methods read XML tags (presented in different forms) and returns an Address object.
  * The static appendAttributes methods write out attributes of an address to an arbitrary XML tag.
@@ -160,11 +160,11 @@ public class AddressXML {
 	 * The tag can have any name, but it must either have:
 	 *    - A "name" attribute, indicating a register name  OR
 	 *    - A "space" and "offset" attribute, indicating the address space and offset
-	 *    
+	 *
 	 * If a register name is given, size is obtained from the register.  If an offset is
 	 * given, the size can optionally be specified using a "size" attribute.
 	 * If not explicitly described, the size is set to zero.
-	 * 
+	 *
 	 * This method supports the "join" address space attached to the compiler specification
 	 * @param el is the XML tag
 	 * @param cspec is the compiler spec for looking up registers
@@ -213,7 +213,7 @@ public class AddressXML {
 	 * The tag can have any name, but it must either have:
 	 *    - A "name" attribute, indicating a register name  OR
 	 *    - A "space" and "offset" attribute, indicating the address space and offset
-	 *    
+	 *
 	 * If a register name is given, size is obtained from the register.  If an offset is
 	 * given, the size can optionally be specified using a "size" attribute.
 	 * If not explicitly described, the size is set to zero.
@@ -255,9 +255,9 @@ public class AddressXML {
 
 	/**
 	 * A memory range is read from attributes of an XML tag. The tag must either have:
-	 *    - "name" attribute - indicating a register 
+	 *    - "name" attribute - indicating a register
 	 *    - "space" attribute - with optional "first" and "last" attributes
-	 * 
+	 *
 	 * With the "space" attribute, "first" defaults to 0 and "last" defaults to the last offset in the space.
 	 * @param el is the XML element
 	 * @param cspec is a compiler spec to resolve address spaces and registers
@@ -364,7 +364,7 @@ public class AddressXML {
 	 *   - \<addr>
 	 *   - \<spaceid> or
 	 *   - any tag with a "space" and "offset" attribute
-	 * 
+	 *
 	 * @param addrstring  is the string containing the XML tag
 	 * @param addrfactory is the factory that can produce addresses
 	 * @return the created Address or Address.NO_ADDRESS in some special cases
@@ -445,7 +445,7 @@ public class AddressXML {
 	 *   - \<spaceid>
 	 *   - \<iop> or
 	 *   - any tag with "space" and "offset" attributes
-	 * 
+	 *
 	 * An empty \<addr> tag, with no attributes, results in Address.NO_ADDRESS being returned.
 	 * @param el is the parse tree element
 	 * @param addrFactory address factory used to create valid addresses
@@ -482,7 +482,7 @@ public class AddressXML {
 	 *   - \<spaceid>
 	 *   - \<iop>
 	 *   - any tag with "space" or "offset" attributes
-	 * 
+	 *
 	 * An empty \<addr> tag, with no attributes, results in Address.NO_ADDRESS being returned.
 	 * @param localName is the name of the tag
 	 * @param attr is the collection of attributes for the tag
@@ -585,7 +585,7 @@ public class AddressXML {
 
 	/**
 	 * Write out the given Address as an \<addr> tag to the XML stream
-	 * 
+	 *
 	 * @param buf is the XML stream
 	 * @param addr -- Address to convert to XML
 	 */
@@ -602,7 +602,7 @@ public class AddressXML {
 
 	/**
 	 * Write out the given Address and a size as an \<addr> tag to the XML stream
-	 * 
+	 *
 	 * @param buf is the XML stream
 	 * @param addr is the given Address
 	 * @param size is the given size
@@ -632,7 +632,7 @@ public class AddressXML {
 	 * If there is more than one Varnode, or if the logical size is non-zero,
 	 * the \<addr> tag will specify the address space as "join" and will have
 	 * additional "piece" attributes.
-	 * 
+	 *
 	 * @param buf is the XML stream
 	 * @param varnodes is the sequence of storage varnodes
 	 * @param logicalsize is the logical size value of the varnode

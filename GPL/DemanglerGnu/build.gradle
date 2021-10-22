@@ -23,14 +23,14 @@ def srcVersion33_1 = "src/demangler_gnu_v2_33_1"
 def srcVersion24 = "src/demangler_gnu_v2_24"
 
 /**
- * This project has some native 'c' code we need to include in the zip for licensing 
- * and build reasons. So include them here, but we have to do something special: the 
+ * This project has some native 'c' code we need to include in the zip for licensing
+ * and build reasons. So include them here, but we have to do something special: the
  * source is divided up into folders for makefiles, headers and .c files:
  * 		/headers
  * 		/c
  * 		/build
  *
- * The contents of all these need to be merged into the same folder for distribution.  
+ * The contents of all these need to be merged into the same folder for distribution.
  * Hence the following 3 'from' clauses:
  */
 task zipBuildableSource(type:Zip) {
@@ -39,10 +39,10 @@ task zipBuildableSource(type:Zip) {
 	description "Collects the source files needed to build this module."
 	archiveBaseName = project.name + "-src-for-build"
 	archiveExtension = 'zip'
-				
+
 	//
 	// Version 2.33.1
-	// 
+	//
 	from (project.projectDir.toString() + "/" + srcVersion33_1 + "c") {
 		into "/" + srcVersion33_1
 	}
@@ -53,11 +53,11 @@ task zipBuildableSource(type:Zip) {
 		into "/" + srcVersion33_1
 	}
 	from (project.projectDir.toString() + "/" + srcVersion33_1 + "/README.txt")
-	
-	
+
+
 	//
 	// Version 2.24
-	// 
+	//
 	from (project.projectDir.toString() + "/" + srcVersion24 + "c") {
 		into "/" + srcVersion24
 	}
@@ -71,7 +71,7 @@ task zipBuildableSource(type:Zip) {
 }
 
 model {
-				
+
 	//
 	// Version 2.33.1
 	//
@@ -91,9 +91,9 @@ model {
 						srcDir srcVersion33_1 + "/headers"
 					}
 				}
-			}			
+			}
 		}
-		
+
 		//
 		// Version 2.24
 		//
@@ -112,23 +112,23 @@ model {
 						srcDir srcVersion24 + "/headers"
 					}
 				}
-			}			
-		}	
+			}
+		}
 	}
 }
 
 model {
 	binaries {
-	
+
 		/*
 			Note: 'all' will pass all binary output, which is each platform for each version
 		*/
 		all{ b ->
-		
+
 			def version = b.getApplication().getName()
-		
+
 			if (version.equals(v33_1)) {
-				if (toolChain in Gcc) {							
+				if (toolChain in Gcc) {
 					//cCompiler.args "-DCP_DEMANGLE_DEBUG"
 					cCompiler.args "-DHAVE_STDLIB_H"
 					cCompiler.args "-DHAVE_STRING_H"
@@ -161,8 +161,8 @@ model {
 					cCompiler.args "-DHAVE_STRING_H"
 				}
 			}
-		
-			
+
+
 		}
 	}
 }

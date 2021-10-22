@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ void LanguageDescription::restoreXml(const Element *el)
   deprecated = false;
   for(int4 i=0;i<el->getNumAttributes();++i) {
     if (el->getAttributeName(i)=="deprecated")
-      deprecated = xml_readbool(el->getAttributeValue(i)); 
+      deprecated = xml_readbool(el->getAttributeValue(i));
   }
   const List &sublist(el->getChildren());
   List::const_iterator subiter;
@@ -178,7 +178,7 @@ void SleighArchitecture::resolveArchitecture(void)
     archid.erase(0,7);
   else if (archid.find("default-")==0)
     archid.erase(0,8);
-  
+
   archid = normalizeArchitecture(archid);
   string baseid = archid.substr(0,archid.rfind(':'));
   int4 i;
@@ -191,7 +191,7 @@ void SleighArchitecture::resolveArchitecture(void)
       break;
     }
   }
-  
+
   if (languageindex == -1)
     throw LowlevelError("No sleigh specification for "+baseid);
 }
@@ -203,16 +203,16 @@ void SleighArchitecture::buildSpecFile(DocumentStorage &store)
   const LanguageDescription &language(description[languageindex]);
   string compiler = archid.substr(archid.rfind(':')+1);
   const CompilerTag &compilertag( language.getCompiler(compiler));
-  
+
   string processorfile;
   string compilerfile;
   string slafile;
-  
+
   specpaths.findFile(processorfile,language.getProcessorSpec());
   specpaths.findFile(compilerfile,compilertag.getSpec());
   if (!language_reuse)
     specpaths.findFile(slafile,language.getSlaFile());
-  
+
   try {
     Document *doc = store.openDocument(processorfile);
     store.registerTag(doc->getRoot());
@@ -229,7 +229,7 @@ void SleighArchitecture::buildSpecFile(DocumentStorage &store)
     serr << "\n " << err.explain;
     throw SleighError(serr.str());
   }
-  
+
   try {
     Document *doc = store.openDocument(compilerfile);
     store.registerTag(doc->getRoot());
@@ -358,7 +358,7 @@ string SleighArchitecture::normalizeSize(const string &nm)
 {
   string res = nm;
   string::size_type pos;
-  
+
   pos = res.find("bit");
   if (pos != string::npos)
     res.erase(pos,3);
@@ -381,7 +381,7 @@ string SleighArchitecture::normalizeArchitecture(const string &nm)
   string size;
   string variant;
   string compile;
-  
+
   string::size_type pos[4];
   int4 i;
   string::size_type curpos=0;
@@ -395,7 +395,7 @@ string SleighArchitecture::normalizeArchitecture(const string &nm)
   processor = nm.substr(0,pos[0]);
   endian = nm.substr(pos[0]+1,pos[1]-pos[0]-1);
   size = nm.substr(pos[1]+1,pos[2]-pos[1]-1);
-  
+
   if (i==4) {
     variant = nm.substr(pos[2]+1,pos[3]-pos[2]-1);
     compile = nm.substr(pos[3]+1);
@@ -404,7 +404,7 @@ string SleighArchitecture::normalizeArchitecture(const string &nm)
     variant = nm.substr(pos[2]+1);
     compile = "default";
   }
-  
+
   processor = normalizeProcessor(processor);
   endian = normalizeEndian(endian);
   size = normalizeSize(size);
@@ -436,11 +436,11 @@ void SleighArchitecture::scanForSleighDirectories(const string &rootpath)
     vector<string> datadirs;
     for(uint4 i=0;i<procdir2.size();++i)
       FileManage::scanDirectoryRecursive(datadirs,"data",procdir2[i],1);
-    
+
     vector<string> languagedirs;
     for(uint4 i=0;i<datadirs.size();++i)
       FileManage::scanDirectoryRecursive(languagedirs,"languages",datadirs[i],1);
-    
+
     for(uint4 i=0;i<languagedirs.size();++i)
       languagesubdirs.push_back( languagedirs[i] );
 

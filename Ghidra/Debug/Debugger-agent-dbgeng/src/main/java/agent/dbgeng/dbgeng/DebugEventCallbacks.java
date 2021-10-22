@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,9 @@ import ghidra.comm.util.BitmaskUniverse;
 
 /**
  * The interface for receiving event callbacks via {@code IDebugEventCallbacks} or a newer variant.
- * 
+ *
  * Note: The wrapper implementation will select the appropriate native interface version.
- * 
+ *
  * Note: Even though {@link #changeDebuggeeState(BitmaskSet, long)},
  * {@link #changeEngineState(BitmaskSet, long)} and {@link #changeSymbolState(BitmaskSet, long)}
  * purport to return a {@link DebugStatus}, the returned value is ignored by {@code dbgeng.dll}.
@@ -67,7 +67,7 @@ public interface DebugEventCallbacks {
 	static @interface ForInterest {
 		/**
 		 * The flag corresponding to the annotated callback method
-		 * 
+		 *
 		 * @return the flag
 		 */
 		DebugEvent value();

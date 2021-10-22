@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ import ghidra.util.task.TaskLauncher;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * 
- * Objects in this class are used to display a closed pattern found by the 
+ *
+ * Objects in this class are used to display a closed pattern found by the
  * pattern miner.
  *
  */
@@ -100,7 +100,7 @@ public class ClosedPatternRowObject {
 
 	/**
 	 * Mine closed patterns from the byte sequences.
-	 * 
+	 *
 	 * @param byteSeqRowObjects byte sequences to mine
 	 * @param minPercentage minimum percentage of byte sequences that a pattern should be in
 	 * @param minFixedBits minimum number of fixed bits that a pattern should contain
@@ -250,7 +250,7 @@ public class ClosedPatternRowObject {
 	}
 
 	/**
-	 * Get the {@link PatternInfoRowObject} for this closed pattern 
+	 * Get the {@link PatternInfoRowObject} for this closed pattern
 	 * @return the {@link PatternInfoRowObject}
 	 */
 	public PatternInfoRowObject getPatternInfo() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,14 +50,14 @@ public interface ProjectData {
 	public DomainFolder getFolder(String path);
 
 	/**
-	 * Get the approximate number of files contained within the project.  The number 
-	 * may be reduced if not connected to the shared repository.  Only the newer 
+	 * Get the approximate number of files contained within the project.  The number
+	 * may be reduced if not connected to the shared repository.  Only the newer
 	 * indexed file-system supports this capability, a value of -1 will be
 	 * returned for older projects utilizing the mangled file-system or if an
 	 * IO Error occurs.
 	 * An approximate number is provided since the two underlying file systems
 	 * are consulted separately and the local private file-system does not
-	 * distinguish between checked-out files and private files.  This number 
+	 * distinguish between checked-out files and private files.  This number
 	 * is currently intended as a rough sizing number to disable certain features
 	 * when very large projects are in use.  Generally the larger of the two
 	 * file counts will be returned.
@@ -80,14 +80,14 @@ public interface ProjectData {
 	public void findOpenFiles(List<DomainFile> list);
 
 	/**
-	 * Get domain file specified by its unique fileID. 
+	 * Get domain file specified by its unique fileID.
 	 * @param fileID domain file ID
 	 * @return domain file or null if file not found
 	 */
 	public DomainFile getFileByID(String fileID);
 
 	/**
-	 * Get a URL for a shared domain file which is available 
+	 * Get a URL for a shared domain file which is available
 	 * within a remote repository.
 	 * @param path the absolute path of domain file relative to the root folder.
 	 * @return URL object for accessing shared file from outside of a project, or
@@ -145,22 +145,22 @@ public interface ProjectData {
 	 * Convert a local project to a shared project. NOTE: The project should be closed and
 	 * then reopened after this method is called.
 	 * @param repository the repository that the project will be associated with.
-	 * @param monitor task monitor 
+	 * @param monitor task monitor
 	 * @throws IOException thrown if files under version control are still checked out, or
 	 * if there was a problem accessing the filesystem
 	 * @throws CancelledException if the conversion was cancelled while versioned files were being
-	 * converted to private files. 
-	 * 
+	 * converted to private files.
+	 *
 	 */
 	public void convertProjectToShared(RepositoryAdapter repository, TaskMonitor monitor)
 			throws IOException, CancelledException;
 
 	/**
-	 * Update the repository for this project; the server may have changed or a different 
+	 * Update the repository for this project; the server may have changed or a different
 	 * repository is being used.  NOTE: The project should be closed and then reopened after this
 	 * method is called.
 	 * @param repository new repository to use
-	 * @param monitor task monitor 
+	 * @param monitor task monitor
 	 * @throws IOException thrown if files are still checked out, or if there was a problem accessing
 	 * the filesystem
 	 * @throws CancelledException if the user canceled the update

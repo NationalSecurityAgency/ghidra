@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ public class PasswordValue implements Closeable {
 
 	/**
 	 * Creates a new PasswordValue using a copy the specified characters.
-	 * 
+	 *
 	 * @param password password characters
 	 * @return new PasswordValue instance
 	 */
@@ -43,7 +43,7 @@ public class PasswordValue implements Closeable {
 	 * <p>
 	 * The new instance will take ownership of the char array, and
 	 * clear it when the instance is {@link #close() closed}.
-	 * 
+	 *
 	 * @param password password characters
 	 * @return new PasswordValue instance
 	 */
@@ -75,7 +75,7 @@ public class PasswordValue implements Closeable {
 
 	/**
 	 * Returns a reference to the current password characters.
-	 * 
+	 *
 	 * @return reference to the current password characters
 	 */
 	public char[] getPasswordChars() {

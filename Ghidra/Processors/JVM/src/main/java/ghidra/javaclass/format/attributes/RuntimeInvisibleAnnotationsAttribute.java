@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
  * NOTE: THE FOLLOWING TEXT EXTRACTED FROM JVMS7.PDF
  * <p>
  * The RuntimeVisibleAnnotations attribute is a variable-length attribute in the
- * attributes table of a ClassFile, field_info or method_info structure. 
+ * attributes table of a ClassFile, field_info or method_info structure.
  * <p>
  * The RuntimeVisibleAnnotations attribute records runtimevisible
  * Java programming language annotations on the corresponding class, field,

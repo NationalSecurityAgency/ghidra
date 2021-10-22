@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,24 +71,24 @@ import resources.Icons;
 
 /**
  * Delegates to a {@link VisualizationViewer} to draw a graph visualization
- * 
+ *
  * <P>This graph uses the following properties:
  * <UL>
  *  <LI>selectedVertexColor - hex color using '0x' or '#', with 6 digits
  *  </LI>
  *  <LI>selectedEdgeColor - hex color using '0x' or '#', with 6 digits
  *  </LI>
- *  <LI>displayVerticesAsIcons - if true, shapes will be used to draw vertices based upon 
- *      {@link GhidraIconCache}; false, then vertex shapes will be created from 
+ *  <LI>displayVerticesAsIcons - if true, shapes will be used to draw vertices based upon
+ *      {@link GhidraIconCache}; false, then vertex shapes will be created from
  *      {@link ProgramGraphFunctions#getVertexShape(Attributed)}
  *  </LI>
  *  <LI>vertexLabelPosition - see {@link Position}
  *  </LI>
- *  <LI>initialLayoutAlgorithm - the name of the layout algorithm to be used for the initial 
+ *  <LI>initialLayoutAlgorithm - the name of the layout algorithm to be used for the initial
  *      graph layout
  *  </LI>
  * </UL>
- * 
+ *
  */
 public class DefaultGraphDisplay implements GraphDisplay {
 
@@ -1301,7 +1301,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 			}
 		});
 
-		// We control tooltips with the PopupRegulator.  Use null values to disable the default 
+		// We control tooltips with the PopupRegulator.  Use null values to disable the default
 		// tool tip mechanism
 		vv.setVertexToolTipFunction(v -> null);
 		vv.setEdgeToolTipFunction(e -> null);
@@ -1454,7 +1454,7 @@ public class DefaultGraphDisplay implements GraphDisplay {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	// class passed to the PopupRegulator to help construct info popups for the graph
 	private class GraphDisplayPopupSource implements PopupSource<AttributedVertex, AttributedEdge> {
@@ -1468,8 +1468,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 		@Override
 		public ToolTipInfo<?> getToolTipInfo(MouseEvent event) {
 
-			// check for a vertex hit first, otherwise, we get edge hits when we are hovering 
-			// over a vertex, due to how edges are interpreted as existing all the way to the 
+			// check for a vertex hit first, otherwise, we get edge hits when we are hovering
+			// over a vertex, due to how edges are interpreted as existing all the way to the
 			// center point of a vertex
 			AttributedVertex vertex = getVertex(event);
 			if (vertex != null) {
@@ -1523,8 +1523,8 @@ public class DefaultGraphDisplay implements GraphDisplay {
 	}
 
 	/**
-	 * Item listener for selection changes in the graph with the additional 
-	 * capability of being able to disable the listener without removing it. 
+	 * Item listener for selection changes in the graph with the additional
+	 * capability of being able to disable the listener without removing it.
 	 */
 	private class SwitchableSelectionItemListener implements ItemListener {
 		boolean enabled = true;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ import mdemangler.naming.MDQualifiedName;
 // that String at the appropriate time in the processing of
 // outputting a demangled String.  So, we first, purposefully
 // insert this null character, and later look for it in order
-// to properly truncate the substring in question, in order to 
+// to properly truncate the substring in question, in order to
 // mimic what we believe is happening in Microsoft demangler
 // code.... but this is true only if we care to mimic Microsoft
 // code, which we do and do not want to do, depending on which

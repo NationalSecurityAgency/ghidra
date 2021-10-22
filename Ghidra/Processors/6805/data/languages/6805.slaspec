@@ -35,7 +35,7 @@ define token data (16)
 define pcodeop readIRQ;
 
 ################################################################
-REL: reloc		is rel	[ reloc = inst_next + rel; ] { export *:2 reloc; } 
+REL: reloc		is rel	[ reloc = inst_next + rel; ] { export *:2 reloc; }
 
 OP1: "#"imm8	is op4_6=2; imm8		{ tmp:1 = imm8; export tmp; }
 OP1: imm8 		is op4_6=3; imm8		{ export *:1 imm8; }
@@ -58,7 +58,7 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	 local op1 = OP1;
 
 	# compute half carry
-	local halfop1 = op1 & 0xF;	
+	local halfop1 = op1 & 0xF;
 	local halfA = A & 0xF;
 	local halfresult = halfop1 + halfA + C;
 	H = (halfresult >> 4) & 1;
@@ -73,73 +73,73 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	N = (A s< 0);
 }
 :ADD OP1     is (op=0xAB | op=0xBB | op=0xCB | op=0xDB | op=0xEB | op=0xFB) ... & OP1
-{ 
+{
 	local op1 = OP1;
 
 	# compute half carry
-	local halfop1 = op1 & 0xF;	
+	local halfop1 = op1 & 0xF;
 	local halfA = A & 0xF;
 	local halfresult = halfop1 + halfA;
 	H = (halfresult >> 4) & 1;
 
 	C = carry(A, op1);
-	A = A + op1; 
+	A = A + op1;
 	Z = (A == 0);
 	N = (A s< 0);
 }
 
 :AND OP1     is (op=0xA4 | op=0xB4 | op=0xC4 | op=0xD4 | op=0xE4 | op=0xF4) ... & OP1
-{ 
-	A = A & OP1; 
+{
+	A = A & OP1;
 	Z = (A == 0);
 	N = (A s< 0);
 }
 
-:ASLA		is op=0x48 
+:ASLA		is op=0x48
 {
 	C = A >> 7;
 	A = A << 1;
 	Z = (A == 0);
-	N = (A s< 0);	
+	N = (A s< 0);
 }
-:ASLX		is op=0x58 
+:ASLX		is op=0x58
 {
 	C = X >> 7;
 	X = X << 1;
 	Z = (X == 0);
-	N = (X s< 0);	
+	N = (X s< 0);
 }
-:ASL OP1	is (op=0x38 | op=0x68 | op=0x78) ... & OP1 
+:ASL OP1	is (op=0x38 | op=0x68 | op=0x78) ... & OP1
 {
 	local tmp = OP1;
 	C = tmp >> 7;
 	tmp = tmp << 1;
 	OP1 = tmp;
 	Z = (tmp == 0);
-	N = (tmp s< 0);	
+	N = (tmp s< 0);
 }
-:ASRA		is op=0x47 
+:ASRA		is op=0x47
 {
 	C = A & 1;
 	A = A s>> 1;
 	Z = (A == 0);
-	N = (A s< 0);	
+	N = (A s< 0);
 }
-:ASRX		is op=0x57 
+:ASRX		is op=0x57
 {
 	C = X & 1;
 	X = X s>> 1;
 	Z = (X == 0);
-	N = (X s< 0);	
+	N = (X s< 0);
 }
-:ASR OP1	is (op=0x37 | op=0x67 | op=0x77) ... & OP1 
+:ASR OP1	is (op=0x37 | op=0x67 | op=0x77) ... & OP1
 {
 	local tmp = OP1;
 	C = tmp & 1;
 	tmp = tmp s>> 1;
 	OP1 = tmp;
 	Z = (tmp == 0);
-	N = (tmp s< 0);	
+	N = (tmp s< 0);
 }
 
 :BCC REL	is op=0x24;REL
@@ -247,11 +247,11 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	DIRECT = DIRECT | mask;
 }
 
-:BSR REL		is op=0xAD; REL 
+:BSR REL		is op=0xAD; REL
 {
 	SP=SP-1;
 	*:2 SP = inst_next;
-	SP=SP-1; 
+	SP=SP-1;
 	call REL;
 }
 
@@ -264,26 +264,26 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 {
 	I = 0;
 }
-:CLRA		is op=0x4F 
+:CLRA		is op=0x4F
 {
 	A = 0;
 	Z = 1;
 	N = 0;
 }
-:CLRX		is op=0x5F 
+:CLRX		is op=0x5F
 {
 	X = 0;
 	Z = 1;
 	N = 0;
 }
-:CLR OP1	is (op=0x3F | op=0x6F | op=0x7F) ... & OP1 
+:CLR OP1	is (op=0x3F | op=0x6F | op=0x7F) ... & OP1
 {
 	OP1 = 0;
 	Z = 1;
 	N = 0;
 }
 :CMP OP1     is (op=0xA1 | op=0xB1 | op=0xC1 | op=0xD1 | op=0xE1 | op=0xF1) ... & OP1
-{ 
+{
 	local op1 = OP1;
 	local tmp = A - op1;
 	Z = tmp == 0;
@@ -291,21 +291,21 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	C = (A < op1);
 }
 
-:COMA		is op=0x43 
+:COMA		is op=0x43
 {
 	A = ~A;
 	Z = (A == 0);
 	N = (A s< 0);
 	C = 1;
 }
-:COMX		is op=0x53 
+:COMX		is op=0x53
 {
 	X = ~X;
 	Z = (X == 0);
 	N = (X s< 0);
 	C = 1;
 }
-:COM OP1	is (op=0x33 | op=0x63 | op=0x73) ... & OP1 
+:COM OP1	is (op=0x33 | op=0x63 | op=0x73) ... & OP1
 {
 	local tmp = ~OP1;
 	OP1 = tmp;
@@ -314,26 +314,26 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	C = 1;
 }
 :CPX OP1     is (op=0xA3 | op=0xB3 | op=0xC3 | op=0xD3 | op=0xE3 | op=0xF3) ... & OP1
-{ 
+{
 	local op1 = OP1;
 	local tmp = X - op1;
 	Z = tmp == 0;
 	N = tmp s< 0;
 	C = (X < op1);
 }
-:DECA		is op=0x4A 
+:DECA		is op=0x4A
 {
 	A = A - 1;
 	Z = (A == 0);
 	N = (A s< 0);
 }
-:DECX		is op=0x5A 
+:DECX		is op=0x5A
 {
 	X = X - 1;
 	Z = (X == 0);
 	N = (X s< 0);
 }
-:DEC OP1	is (op=0x3A | op=0x6A | op=0x7A) ... & OP1 
+:DEC OP1	is (op=0x3A | op=0x6A | op=0x7A) ... & OP1
 {
 	local tmp = OP1 - 1;
 	OP1 = tmp;
@@ -341,25 +341,25 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	N = (tmp s< 0);
 }
 :EOR OP1     is (op=0xA8 | op=0xB8 | op=0xC8 | op=0xD8 | op=0xE8 | op=0xF8) ... & OP1
-{ 
+{
 	local op1 = OP1;
 	A = A ^ op1;
 	Z = A == 0;
 	N = A s< 0;
 }
-:INCA		is op=0x4C 
+:INCA		is op=0x4C
 {
 	A = A + 1;
 	Z = (A == 0);
 	N = (A s< 0);
 }
-:INCX		is op=0x5C 
+:INCX		is op=0x5C
 {
 	X = X + 1;
 	Z = (X == 0);
 	N = (X s< 0);
 }
-:INC OP1	is (op=0x3C | op=0x6C | op=0x7C) ... & OP1 
+:INC OP1	is (op=0x3C | op=0x6C | op=0x7C) ... & OP1
 {
 	local tmp = OP1 + 1;
 	OP1 = tmp;
@@ -380,56 +380,56 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 :JSR ADDR	is (op=0xBD | op=0xCD) ... & ADDR
 {
 	*:2 (SP-1) = inst_next;
-	SP=SP-2; 
+	SP=SP-2;
 	call ADDR;
 }
 :JSR ADDRI	is (op=0xDD | op=0xED | op=0xFD) ... & ADDRI
 {
 	*:2 (SP-1) = inst_next;
-	SP=SP-2; 
+	SP=SP-2;
 	call [ADDRI];
 }
 
 :LDA OP1     is (op=0xA6 | op=0xB6 | op=0xC6 | op=0xD6 | op=0xE6 | op=0xF6) ... & OP1
-{ 
+{
 	A = OP1;
 	Z = A == 0;
 	N = A s< 0;
 }
 
 :LDX OP1     is (op=0xAE | op=0xBE | op=0xCE | op=0xDE | op=0xEE | op=0xFE) ... & OP1
-{ 
+{
 	X = OP1;
 	Z = X == 0;
 	N = X s< 0;
 }
 
 ## Logical Shift left is same as arithmetic shift left
-#:LSLA		is op=0x48 
-#:LSLX		is op=0x58 
-#:LSL OP1	is (op=0x38 | op=0x68 | op=0x78) ... & OP1 
-:LSRA		is op=0x44 
+#:LSLA		is op=0x48
+#:LSLX		is op=0x58
+#:LSL OP1	is (op=0x38 | op=0x68 | op=0x78) ... & OP1
+:LSRA		is op=0x44
 {
 	C = A & 1;
 	A = A >> 1;
 	Z = (A == 0);
-	N = 0;	
+	N = 0;
 }
-:LSRX		is op=0x54 
+:LSRX		is op=0x54
 {
 	C = X & 1;
 	X = X >> 1;
 	Z = (X == 0);
-	N = 0;	
+	N = 0;
 }
-:LSR OP1	is (op=0x34 | op=0x64 | op=0x74) ... & OP1 
+:LSR OP1	is (op=0x34 | op=0x64 | op=0x74) ... & OP1
 {
 	local tmp = OP1;
 	C = tmp & 1;
 	tmp = tmp >> 1;
 	OP1 = tmp;
 	Z = (tmp == 0);
-	N = 0;	
+	N = 0;
 }
 
 :MUL		is op=0x42
@@ -442,21 +442,21 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	X = result:1;
 }
 
-:NEGA		is op=0x40 
+:NEGA		is op=0x40
 {
 	C = A != 0;
 	A = -A;
 	Z = (A == 0);
 	N = (A s< 0);
 }
-:NEGX		is op=0x50 
+:NEGX		is op=0x50
 {
 	C = X != 0;
 	X = -X;
 	Z = (X == 0);
 	N = (X s< 0);
 }
-:NEG OP1	is (op=0x30 | op=0x60 | op=0x70) ... & OP1 
+:NEG OP1	is (op=0x30 | op=0x60 | op=0x70) ... & OP1
 {
 	local op1 = OP1;
 	C = op1 != 0;
@@ -470,31 +470,31 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 }
 
 :ORA OP1     is (op=0xAA | op=0xBA | op=0xCA | op=0xDA | op=0xEA | op=0xFA) ... & OP1
-{ 
-	A = A | OP1; 
+{
+	A = A | OP1;
 	Z = (A == 0);
 	N = (A s< 0);
 }
 
-:ROLA		is op=0x49 
+:ROLA		is op=0x49
 {
 	local tmp = C ;
 	C = A >> 7;
 	A = A << 1;
 	A = A | tmp;
 	Z = (A == 0);
-	N = (A s< 0);	
+	N = (A s< 0);
 }
-:ROLX		is op=0x59 
+:ROLX		is op=0x59
 {
 	local tmp = C;
 	C = X >> 7;
 	X = X << 1;
 	X = X | tmp;
 	Z = (X == 0);
-	N = (X s< 0);	
+	N = (X s< 0);
 }
-:ROL OP1	is (op=0x39 | op=0x69 | op=0x79) ... & OP1 
+:ROL OP1	is (op=0x39 | op=0x69 | op=0x79) ... & OP1
 {
 	local tmpC = C;
 	local op1 = OP1;
@@ -503,27 +503,27 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	result = result | tmpC;
 	OP1 = result;
 	Z = (result == 0);
-	N = (result s< 0);	
+	N = (result s< 0);
 }
-:RORA		is op=0x46 
+:RORA		is op=0x46
 {
 	local tmpC = C << 7;
 	C = A & 1;
 	A = A s>> 1;
 	A = A | tmpC;
 	Z = (A == 0);
-	N = (A s< 0);	
+	N = (A s< 0);
 }
-:RORX		is op=0x56 
+:RORX		is op=0x56
 {
 	local tmpC = C << 7;
 	C = X & 1;
 	X = X s>> 1;
 	X = X | tmpC;
 	Z = (X == 0);
-	N = (X s< 0);	
+	N = (X s< 0);
 }
-:ROR OP1	is (op=0x36 | op=0x66 | op=0x76) ... & OP1 
+:ROR OP1	is (op=0x36 | op=0x66 | op=0x76) ... & OP1
 {
 	local tmpC = C << 7;
 	local tmp = OP1;
@@ -532,7 +532,7 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	tmp = tmp | tmpC;
 	OP1 = tmp;
 	Z = (tmp == 0);
-	N = (tmp s< 0);	
+	N = (tmp s< 0);
 }
 
 :RSP		is op = 0x9C
@@ -549,16 +549,16 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	N = ccr[2,1];
 	Z = ccr[1,1];
 	C = ccr[0,1];
-	
+
 	SP = SP+1;
 	A = *:1 SP;
-	
+
 	SP = SP+1;
 	X = *:1 SP;
 	SP = SP+1;
 	tmp:2 = *:2 SP;
 	SP = SP+1;
-	
+
 	return [tmp];
 }
 
@@ -567,12 +567,12 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	SP = SP+1;
 	tmp:2 = *:2 SP;
 	SP = SP+1;
-	
+
 	return [tmp];
 }
 
 :SBC OP1     is (op=0xA2 | op=0xB2 | op=0xC2 | op=0xD2 | op=0xE2 | op=0xF2) ... & OP1
-{ 
+{
 	local op1 = OP1;
 	local tmp = A - op1 - C;
 	Z = tmp == 0;
@@ -581,12 +581,12 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	A = tmp;
 }
 
-:SEC 		is op = 0x99 
+:SEC 		is op = 0x99
 {
 	C = 1;
 }
 
-:SEI 		is op = 0x9B 
+:SEI 		is op = 0x9B
 {
 	I = 1;
 }
@@ -611,7 +611,7 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 }
 
 :SUB OP1     is (op=0xA0 | op=0xB0 | op=0xC0 | op=0xD0 | op=0xE0 | op=0xF0) ... & OP1
-{ 
+{
 	local op1 = OP1;
 	C = (A < op1);
 	A = A - op1;
@@ -624,7 +624,7 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 {
 	SP=SP-1;
 	*:2 SP = inst_next;
-	SP=SP-1; 
+	SP=SP-1;
 	*:1 SP = X;
 	SP=SP-1;
 	*:1 SP = A;
@@ -635,35 +635,35 @@ DIRECT: imm8	is imm8					{ export *:1 imm8; }
 	call [SWI_VECTOR];
 }
 
-:TAX	is op=0x97 
+:TAX	is op=0x97
 {
 	X = A;
 }
- 
-:TSTA		is op=0x4D 
+
+:TSTA		is op=0x4D
 {
 	Z = (A == 0);
-	N = (A s< 0);	
+	N = (A s< 0);
 }
-:TSTX		is op=0x5D 
+:TSTX		is op=0x5D
 {
 	Z = (X == 0);
-	N = (X s< 0);	
+	N = (X s< 0);
 }
-:TST OP1	is (op=0x3D | op=0x6D | op=0x7D) ... & OP1 
+:TST OP1	is (op=0x3D | op=0x6D | op=0x7D) ... & OP1
 {
 	local op1 = OP1;
 	Z = (op1 == 0);
-	N = (op1 s< 0);	
+	N = (op1 s< 0);
 }
- 
-:TXA	is op=0x9F 
+
+:TXA	is op=0x9F
 {
 	A = X;
 }
 
-:WAIT	is op=0x8f 
+:WAIT	is op=0x8f
 {
 	I = 0;
 }
- 
+

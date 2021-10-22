@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	 * established dynamically based upon the data organization associated with the
 	 * specified dtm but can adapt to another data type manager's data organization
 	 * when resolved.
-	 * 
+	 *
 	 * @param dtm data-type manager whose data organization should be used
 	 */
 	public PointerDataType(DataTypeManager dtm) {
@@ -77,7 +77,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	 * Construct a dynamically-sized pointer to a referencedDataType A dynamic
 	 * pointer size of 4-bytes will be in used, but will adapt to a data type
 	 * manager's data organization when resolved.
-	 * 
+	 *
 	 * @param referencedDataType data type this pointer points to
 	 */
 	public PointerDataType(DataType referencedDataType) {
@@ -89,7 +89,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	 * is preferred to use default sized pointers when possible (i.e., length=-1,
 	 * see {@link #PointerDataType(DataType)}) instead of explicitly specifying the
 	 * pointer length value.
-	 * 
+	 *
 	 * @param referencedDataType data type this pointer points to
 	 * @param length             pointer length (values &lt;= 0 will result in
 	 *                           dynamically-sized pointer)
@@ -103,7 +103,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	 * size is established dynamically based upon the data organization associated
 	 * with the specified dtm but can adapt to another data type manager's data
 	 * organization when resolved.
-	 * 
+	 *
 	 * @param referencedDataType data type this pointer points to
 	 * @param dtm                data-type manager whose data organization should be
 	 *                           used
@@ -117,7 +117,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	 * is preferred to use default sized pointers when possible (i.e., length=-1,
 	 * see {@link #PointerDataType(DataType, DataTypeManager)}) instead of
 	 * explicitly specifying the pointer length value.
-	 * 
+	 *
 	 * @param referencedDataType data type this pointer points to
 	 * @param length             pointer length (-1 will result in dynamically-sized
 	 *                           pointer)
@@ -339,7 +339,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	/**
 	 * Generate an address value based upon bytes stored at the specified buf
 	 * location
-	 * 
+	 *
 	 * @param buf         memory buffer and stored pointer location
 	 * @param size        pointer size in bytes
 	 * @param targetSpace address space for returned pointer
@@ -387,7 +387,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 	/**
 	 * Read segmented address from memory. NOTE: little-endian memory assumed.
-	 * 
+	 *
 	 * @param buf     memory buffer associated with a segmented-address space
 	 *                positioned at start of address value to be read
 	 * @param dataLen pointer-length (2 and 4-byte pointers supported)
@@ -482,12 +482,12 @@ public class PointerDataType extends BuiltIn implements Pointer {
 			return false;
 		}
 
-		// TODO: The pointer deep-dive equivalence checking on the referenced datatype can 
+		// TODO: The pointer deep-dive equivalence checking on the referenced datatype can
 		// cause types containing pointers (composites, functions) to conflict when in
 		// reality the referenced type simply has multiple implementations which differ.
 		// Although without doing this Ghidra may fail to resolve dependencies which differ
 		// from those already contained within a datatype manager.
-		// Ghidra's rigid datatype relationships prevent the flexibility to handle 
+		// Ghidra's rigid datatype relationships prevent the flexibility to handle
 		// multiple implementations of a named datatype without inducing a conflicted
 		// datatype hierarchy.
 
@@ -558,7 +558,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 
 	/**
 	 * Get a pointer data-type instance with a default size
-	 * 
+	 *
 	 * @param dt  data-type referenced by pointer
 	 * @param dtm program data-type manager (required) a generic data-type will be
 	 *            returned if possible.
@@ -575,7 +575,7 @@ public class PointerDataType extends BuiltIn implements Pointer {
 	 * is specified. If an invalid pointerSize is specified, a dynamically-size
 	 * pointer will be returned whose length is based upon the
 	 * default-data-organization.
-	 * 
+	 *
 	 * @param dt          data-type referenced by pointer
 	 * @param pointerSize pointer size
 	 * @return signed integer data type

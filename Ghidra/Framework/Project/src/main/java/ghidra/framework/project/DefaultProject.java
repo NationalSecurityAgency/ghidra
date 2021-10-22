@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,7 +71,7 @@ public class DefaultProject implements Project {
 
 	/**
 	 * Constructor for creating a New project
-	 * 
+	 *
 	 * @param projectManager the manager of this project
 	 * @param projectLocator location and name of project
 	 * @param repository shared repository associated with the new project. Can
@@ -110,7 +110,7 @@ public class DefaultProject implements Project {
 
 	/**
 	 * Constructor for opening a project.
-	 * 
+	 *
 	 * @param projectManager the manager of this project
 	 * @param projectLocator location and name of project
 	 * @param resetOwner if true, set the owner to the current user
@@ -150,7 +150,7 @@ public class DefaultProject implements Project {
 
 	/**
 	 * Constructor for opening a URL-based project
-	 * 
+	 *
 	 * @param connection project connection
 	 * @throws IOException if I/O error occurs.
 	 */
@@ -191,7 +191,7 @@ public class DefaultProject implements Project {
 	/**
 	 * Creates a ProjectLock and attempts to lock it. This handles the case
 	 * where the project was previously locked.
-	 * 
+	 *
 	 * @param locator the project locator
 	 * @param allowInteractiveForce if true, when a lock cannot be obtained, the
 	 *            user will be prompted
@@ -322,7 +322,7 @@ public class DefaultProject implements Project {
 
 	/**
 	 * Get the local tool chest for the user logged in.
-	 * 
+	 *
 	 * @return the tool chest
 	 */
 	@Override

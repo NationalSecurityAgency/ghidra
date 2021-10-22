@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public final class AddressLabelPair implements Serializable {
 
 	/**
 	 * Creates a new <CODE>AddressLabelPair</CODE>.
-	 * @param addr the address 
+	 * @param addr the address
 	 * @param label the label
 	 */
     public AddressLabelPair(Address addr, String label) {
@@ -54,7 +54,7 @@ public final class AddressLabelPair implements Serializable {
 
 
 	/**
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
     @Override
@@ -65,11 +65,11 @@ public final class AddressLabelPair implements Serializable {
         if(!(obj instanceof AddressLabelPair)) {
             return false;
         }
-        
+
         AddressLabelPair objPair = (AddressLabelPair) obj;
 
         // must have both labels being non-null
-        return SystemUtilities.isEqual( objPair.label, this.label ) && 
+        return SystemUtilities.isEqual( objPair.label, this.label ) &&
         	objPair.addr.equals(this.addr);
     }
 

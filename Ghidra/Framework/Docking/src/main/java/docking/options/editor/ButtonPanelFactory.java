@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import resources.ResourceManager;
 
 /**
  * Class with static methods to create a JButton with a raised bevel border,
- * and to create a JPanel with buttons created by calling the 
+ * and to create a JPanel with buttons created by calling the
  * createButton() method.
  */
 public class ButtonPanelFactory {
@@ -71,7 +71,7 @@ public class ButtonPanelFactory {
 	 * Button for OK.
 	 */
 	public final static int OK_TYPE = 5;
-	/** 
+	/**
 	 * Button that has a left arrow.
 	 */
 	public final static int ARROW_LEFT_TYPE = 6;
@@ -225,7 +225,7 @@ public class ButtonPanelFactory {
 	/**
 	 * Create an button that has an icon created from the given imageFile.
 	 * @param imageFile icon filename
-	 * @param alternateText text to use if the icon could not be loaded 
+	 * @param alternateText text to use if the icon could not be loaded
 	 * @param preferredSize size that the button would like to be
 	 * @return JButton new button
 	 */

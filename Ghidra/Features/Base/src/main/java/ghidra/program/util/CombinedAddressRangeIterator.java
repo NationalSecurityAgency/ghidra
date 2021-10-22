@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -109,8 +109,8 @@ public class CombinedAddressRangeIterator implements AddressRangeIterator {
 		 * Makes this manager's begin range equal to that of the given manager's end range plus
 		 * one so that this manager's next range is after the current range. The given manager's
 		 * range is advanced to its next range. This method returns
-		 * the current range shared by both managers before truncation. 
-		 * @param manager The manager whose end range this manager will use for its beginning range. 
+		 * the current range shared by both managers before truncation.
+		 * @param manager The manager whose end range this manager will use for its beginning range.
 		 * @return The current range shared by the two managers.
 		 */
 		public AddressRange severMyHeadAndAdvanceOtherManager(AddressRangeManager manager) {

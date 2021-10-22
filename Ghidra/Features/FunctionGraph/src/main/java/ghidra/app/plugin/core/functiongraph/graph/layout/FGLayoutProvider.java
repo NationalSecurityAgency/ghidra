@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,9 +35,9 @@ public abstract class FGLayoutProvider implements LayoutProvider<FGVertex, FGEdg
 	}
 
 	/**
-	 * Creates an options object for layouts created by this provider. Returns null if there 
+	 * Creates an options object for layouts created by this provider. Returns null if there
 	 * are not options for layouts created by this provider.
-	 * 
+	 *
 	 * @param options the tool options into which layout options should be registered
 	 * @return the new options; null if there are no options
 	 */

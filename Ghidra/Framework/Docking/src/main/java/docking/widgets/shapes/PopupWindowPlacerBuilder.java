@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,10 +25,10 @@ import docking.widgets.shapes.PopupWindowPlacer.*;
  * that are composed of edge placers.
  * <p>
  * <BR>
- * <BR> 
- * 
+ * <BR>
+ *
  * <H1>Edge Placers</H1>
- *  
+ *
  * <p>
  * The <B>edge</B> placers are the leftEdge, rightEdge, topEdge, and bottomEdge methods that take
  * Location arguments that one can think of as "cells" for optimal placement, but which have some
@@ -42,9 +42,9 @@ import docking.widgets.shapes.PopupWindowPlacer.*;
  * same way for each method, though some arguments are not valid for some edges; for instance,
  * <code>Location.TOP</code> is only valid for left and right edges.
  * <p>
- * 
+ *
  * <H2>Two or More Location Arguments</H2>
- * 
+ *
  * <p>
  * When two or more arguments are used, the first argument specifies the nominal placement cell
  * and the second argument specifies how far the solution is allowed to shift.  If a solution is
@@ -53,9 +53,9 @@ import docking.widgets.shapes.PopupWindowPlacer.*;
  * far the solution is allowed to shift. To specify a "no-shift" solution, one specifies the same
  * placement cell twice (e.g., <code>rightEdge(Location.TOP, Location.TOP)</code>).
  * <p>
- * 
+ *
  * <H2>One Location Argument</H2>
- * 
+ *
  * <p>
  * When one argument is used, the solution is the same as when two arguments are specified except
  * that the second argument is automatically set to the nearest neighboring cell.  Thus,
@@ -64,16 +64,16 @@ import docking.widgets.shapes.PopupWindowPlacer.*;
  * <code>Location.CENTER</code>, two attempts are built, the first being the BOTTOM or RIGHT cell
  * and the second being the TOP or LEFT cell.
  * <p>
- * 
+ *
  * <H2>No Arguments</H2>
- * 
+ *
  * <p>
  * When no arguments are specified, two arguments to the underlying placer are automatically set
  * to BOTTOM or RIGHT for the first and TOP or LEFT for the second.
  * <p>
- * 
+ *
  * <H2>Examples</H2>
- * 
+ *
  * <p>
  * Builds a placer that first attempts a placement at the bottom of the right edge with no
  * shift, then tries the top of the right edge with no shift, then top center with no shift:
@@ -95,9 +95,9 @@ import docking.widgets.shapes.PopupWindowPlacer.*;
  * <p>
  * <BR>
  * <BR>
- * 
+ *
  * <H1>Rotational Placers</H1>
- * 
+ *
  * <p>
  * There are clockwise and counter-clockwise rotational placers that built up from edge placers.
  * These are:
@@ -118,9 +118,9 @@ import docking.widgets.shapes.PopupWindowPlacer.*;
  * <p>
  * <BR>
  * <BR>
- * 
+ *
  * <H1>Overlapping Corner Placer</H1>
- * 
+ *
  * <p>
  * There is one corner placer, <code>leastOverlapCorner()</code>.  This placer tries to make a
  * placement at each of the corners of the context area and shifts into the context region as much
@@ -132,9 +132,9 @@ import docking.widgets.shapes.PopupWindowPlacer.*;
  * <p>
  * <BR>
  * <BR>
- * 
+ *
  * <H1>Assert Placer</H1>
- * 
+ *
  * <p>
  * The <code>throwsAssertException()</code> placer is available, which automatically throws an
  * AssertException.  This placer is only intended to be used by the client in such as case when
@@ -144,9 +144,9 @@ import docking.widgets.shapes.PopupWindowPlacer.*;
  * <p>
  * <BR>
  * <BR>
- * 
+ *
  * <H1>Composite Placer</H1>
- * 
+ *
  * <p>
  * Builds a placer that first attempts a placement at the right edge from bottom to top, then
  * left edge from bottom to top, then top edge from right to left, then bottom edge from right to

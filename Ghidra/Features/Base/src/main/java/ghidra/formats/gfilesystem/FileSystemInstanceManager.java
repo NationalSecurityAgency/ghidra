@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -126,7 +126,7 @@ class FileSystemInstanceManager implements FileSystemEventListener {
 		if (fsci != null) {
 			return fsci.ref.dup();
 		}
-		// If the query FSRL doesn't have a MD5, do a slow scan 
+		// If the query FSRL doesn't have a MD5, do a slow scan
 		// for filesystems that match by equiv.
 		if (fsrl.getMD5() == null) {
 			for (Entry<FSRLRoot, FSCacheInfo> entry : filesystems.entrySet()) {
@@ -270,7 +270,7 @@ class FileSystemInstanceManager implements FileSystemEventListener {
 
 	/**
 	 * Closes the specified ref, and if no other refs to the file system remain, closes the file system.
-	 *  
+	 *
 	 * @param ref {@link FileSystemRef} to close
 	 */
 	public synchronized void releaseImmediate(FileSystemRef ref) {

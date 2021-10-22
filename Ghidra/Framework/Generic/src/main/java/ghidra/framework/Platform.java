@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,16 +72,16 @@ public enum Platform {
 
 	/**
 	 * Identifies a Windows 64-bit OS.
-	 * 
+	 *
 	 * @deprecated Use {@link #WIN_X86_64} instead.
 	 */
 	@Deprecated(since = "10.1", forRemoval = true)
 	WIN_64(OperatingSystem.WINDOWS, Architecture.X86_64, "win_x86_64", ".dll", ".exe"),
-	
+
 	/**
 	 * Identifies a Windows OS, the architecture for which we do not know or have not encountered.
 	 * We'll treat it as {@link #WIN_X86_64} and hope for the best.
-	 * 
+	 *
 	 * @deprecated Unknown architectures are not supported
 	 */
 	@Deprecated(since = "10.1", forRemoval = true)
@@ -89,7 +89,7 @@ public enum Platform {
 
 	/**
 	 * Identifies a Linux X86 32-bit OS.
-	 * 
+	 *
 	 * @deprecated Use {@link #LINUX_X86_32} instead.
 	 */
 	@Deprecated(since = "10.1", forRemoval = true)
@@ -97,16 +97,16 @@ public enum Platform {
 
 	/**
 	 * Identifies a Linux X86 64-bit OS.
-	 * 
+	 *
 	 * @deprecated Use {@link #LINUX_X86_64} instead.
 	 */
 	@Deprecated(since = "10.1", forRemoval = true)
 	LINUX_64(OperatingSystem.LINUX, Architecture.X86_64, "linux_x86_64", ".so", ""),
-	
+
 	/**
 	 * Identifies a Linux OS, the architecture for which we do not know or have not encountered.
 	 * We'll treat it as {@link #LINUX_X86_64} and hope for the best.
-	 * 
+	 *
 	 * @deprecated Unknown architectures are not supported
 	 */
 	@Deprecated(since = "10.1", forRemoval = true)
@@ -114,7 +114,7 @@ public enum Platform {
 
 	/**
 	 * Identifies a macOS X86 32-bit OS.
-	 * 
+	 *
 	 * @deprecated Use {@link #MAC_OSX_32} instead.
 	 */
 	@Deprecated(since = "10.1", forRemoval = true)
@@ -122,16 +122,16 @@ public enum Platform {
 
 	/**
 	 * Identifies a macOS X86 64-bit OS.
-	 * 
+	 *
 	 * @deprecated Use {@link #MAC_X86_64} instead.
 	 */
 	@Deprecated(since = "10.1", forRemoval = true)
 	MAC_OSX_64(OperatingSystem.MAC_OS_X, Architecture.X86_64, "mac_x86_64", ".dylib", ""),
-	
+
 	/**
 	 * Identifies a macOS OS, the architecture for which we do not know or have not encountered.
 	 * We'll treat it as {@link #MAC_X86_64} and hope for the best.
-	 * 
+	 *
 	 * @deprecated Use {@link #MAC_X86_64} instead.
 	 */
 	@Deprecated(since = "10.1", forRemoval = true)
@@ -191,7 +191,7 @@ public enum Platform {
 	}
 
 	/**
-	 * Based on the current platform, 
+	 * Based on the current platform,
 	 * returns an operating system specific
 	 * library paths that are not found on the
 	 * PATH environment variable.

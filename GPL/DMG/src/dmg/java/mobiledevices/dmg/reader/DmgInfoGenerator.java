@@ -20,7 +20,7 @@ import mobiledevices.dmg.decmpfs.DecmpfsHeader;
 import mobiledevices.dmg.hfsplus.AttributesFileParser;
 
 /**
- * 
+ *
  * @see org.catacombae.hfsexplorer.gui.FSEntrySummaryPanel
  *
  */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,13 +28,13 @@ import ghidra.util.Msg;
 import java.util.ArrayList;
 
 /**
- * Determines where instructions couldn't be matched and where they differ between sets of 
- * addresses as provided by a ListingAddressCorrelation. Initially this will be byte 
- * differences and instruction operand differences for any instructions that were determined 
+ * Determines where instructions couldn't be matched and where they differ between sets of
+ * addresses as provided by a ListingAddressCorrelation. Initially this will be byte
+ * differences and instruction operand differences for any instructions that were determined
  * to be matched.
- * <br>Important: This class is not intended to be used for an entire program. Instead it is 
- * for comparing smaller portions such as functions. If the correlation handed to this class 
- * associates two large address sets, then the address sets, such as byte differences, that are 
+ * <br>Important: This class is not intended to be used for an entire program. Instead it is
+ * for comparing smaller portions such as functions. If the correlation handed to this class
+ * associates two large address sets, then the address sets, such as byte differences, that are
  * created by this class could potentially consume large amounts of memory.
  */
 public class ListingDiff {
@@ -55,7 +55,7 @@ public class ListingDiff {
 		new ArrayList<ListingDiffChangeListener>();
 
 	/**
-	 * Creates a ListingDiff to determine where instructions couldn't be matched and where they 
+	 * Creates a ListingDiff to determine where instructions couldn't be matched and where they
 	 * differ between sets of addresses as provided by a ListingAddressCorrelation.
 	 */
 	public ListingDiff() {
@@ -63,11 +63,11 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Sets the address correlation that is used to determine matching addresses between the two 
+	 * Sets the address correlation that is used to determine matching addresses between the two
 	 * listings. Differences can then be determined where a matching address is found.
-	 * <br>Important: This class is not intended to be used for an entire program. Instead it is 
-	 * for comparing smaller portions such as functions. If the correlation handed to this class 
-	 * associates two large address sets, then the address sets, such as byte differences, that are 
+	 * <br>Important: This class is not intended to be used for an entire program. Instead it is
+	 * for comparing smaller portions such as functions. If the correlation handed to this class
+	 * associates two large address sets, then the address sets, such as byte differences, that are
 	 * created by this class could potentially consume large amounts of memory.
 	 * @param correlation the address correlation. Otherwise, null to clear the correlation.
 	 * @throws MemoryAccessException if memory can't be read.
@@ -226,7 +226,7 @@ public class ListingDiff {
 	 * being ignored.
 	 * @param codeUnit1 the first code unit
 	 * @param codeUnit2 the second code unit
-	 * @return an array of operand indices where the operands differ between the two code units 
+	 * @return an array of operand indices where the operands differ between the two code units
 	 * based on the current settings that indicate what differences can be ignored.
 	 */
 	public int[] getOperandsThatDiffer(CodeUnit codeUnit1, CodeUnit codeUnit2) {
@@ -271,7 +271,7 @@ public class ListingDiff {
 
 	/**
 	 * Determine if the first and second instructions objects for a particular operand differ.
-	 * The opObjects are checked using the currently specified ignore flags for determining 
+	 * The opObjects are checked using the currently specified ignore flags for determining
 	 * instruction operand differences.
 	 * @param opObjects1 the operand objects that compose an operand for the first instruction
 	 * @param opObjects2 the operand objects that compose an operand for the second instruction
@@ -386,7 +386,7 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Gets the addresses in the first listing where matching code couldn't be determined in the 
+	 * Gets the addresses in the first listing where matching code couldn't be determined in the
 	 * second listing.
 	 * @return the addresses of the unmatched code in the first listing.
 	 */
@@ -395,7 +395,7 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Gets the addresses in the second listing where matching code couldn't be determined in the 
+	 * Gets the addresses in the second listing where matching code couldn't be determined in the
 	 * first listing.
 	 * @return the addresses of the unmatched code in the second listing.
 	 */
@@ -404,7 +404,7 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Gets the addresses in the first listing where differences were found based on the current 
+	 * Gets the addresses in the first listing where differences were found based on the current
 	 * difference settings.
 	 * @return the addresses with differences in the first listing.
 	 */
@@ -415,7 +415,7 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Gets the addresses in the second listing where differences were found based on the current 
+	 * Gets the addresses in the second listing where differences were found based on the current
 	 * difference settings.
 	 * @return the addresses with differences in the second listing.
 	 */
@@ -426,7 +426,7 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Gets the addresses in the first listing where code unit (mnemonic and/or operand) differences 
+	 * Gets the addresses in the first listing where code unit (mnemonic and/or operand) differences
 	 * were found based on the current difference settings.
 	 * @return the addresses with code unit differences in the first listing.
 	 */
@@ -435,7 +435,7 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Gets the addresses in the second listing where code unit (mnemonic and/or operand) differences 
+	 * Gets the addresses in the second listing where code unit (mnemonic and/or operand) differences
 	 * were found based on the current difference settings.
 	 * @return the addresses with code unit differences in the second listing.
 	 */
@@ -444,7 +444,7 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Gets the addresses in the first listing where byte differences were found based on the 
+	 * Gets the addresses in the first listing where byte differences were found based on the
 	 * current difference settings.
 	 * @return the addresses with byte differences in the first listing.
 	 */
@@ -456,7 +456,7 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Gets the addresses in the second listing where byte differences were found based on the 
+	 * Gets the addresses in the second listing where byte differences were found based on the
 	 * current difference settings.
 	 * @return the addresses with byte differences in the second listing.
 	 */
@@ -486,8 +486,8 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Outputs an information message, primarily for debugging, that indicates where code was 
-	 * unmatched with the other listing and where various differences, such as bytes and 
+	 * Outputs an information message, primarily for debugging, that indicates where code was
+	 * unmatched with the other listing and where various differences, such as bytes and
 	 * code units, were found.
 	 */
 	public void printFunctionComparisonDiffs() {
@@ -532,7 +532,7 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Gets the setting indicating if values of operand constants that differ are currently 
+	 * Gets the setting indicating if values of operand constants that differ are currently
 	 * being ignored when determining code unit differences.
 	 * @return true if code unit differences are ignoring differences in values of operand
 	 * constants.
@@ -542,9 +542,9 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Changes the setting indicating if values of operand constants that differ should be 
+	 * Changes the setting indicating if values of operand constants that differ should be
 	 * ignored when determining code unit differences.
-	 * @param ignore true means code unit differences should ignore differences in values of 
+	 * @param ignore true means code unit differences should ignore differences in values of
 	 * operand constants.
 	 */
 	public void setIgnoreConstants(boolean ignore) {
@@ -558,7 +558,7 @@ public class ListingDiff {
 	/**
 	 * Gets the setting indicating if operand registers that differ other than in size
 	 * are currently being ignored when determining code unit differences.
-	 * @return true if code unit differences are ignoring operand register differences other 
+	 * @return true if code unit differences are ignoring operand register differences other
 	 * than in size.
 	 */
 	public boolean isIgnoringRegisters() {
@@ -566,7 +566,7 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Changes the setting indicating if operand registers that differ other than in size 
+	 * Changes the setting indicating if operand registers that differ other than in size
 	 * should be ignored when determining code unit differences.
 	 * @param ignore true means code unit differences should ignore operand register differences
 	 * other than in size.
@@ -586,7 +586,7 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Adds the indicated listener to those that get notified when the ListingDiff's set of 
+	 * Adds the indicated listener to those that get notified when the ListingDiff's set of
 	 * differences and unmatched addresses changes.
 	 * @param listener the listener to be notified
 	 */
@@ -595,7 +595,7 @@ public class ListingDiff {
 	}
 
 	/**
-	 * Removes the indicated listener from those that get notified when the ListingDiff's set of 
+	 * Removes the indicated listener from those that get notified when the ListingDiff's set of
 	 * differences and unmatched addresses changes.
 	 * @param listener the listener to be removed
 	 */

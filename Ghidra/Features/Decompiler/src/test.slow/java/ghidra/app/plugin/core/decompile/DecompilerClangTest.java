@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testClangTextField_getTokenIndex() {
 
 		/*
-			 1|	
+			 1|
 			 2|	int _main(int argc,char **argv)
 			 3|
 			 4|	{
@@ -92,7 +92,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 			24|	  return 0;
 			25|	}
 			16|
-		 	
+
 		 */
 
 		decompile("100000bf0"); // 'main'
@@ -115,7 +115,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testClangTextField_getNextTokenIndex() {
 
 		/*
-			 1|	
+			 1|
 			 2|	int _main(int argc,char **argv)
 			 3|
 			 4|	{
@@ -141,7 +141,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 			24|	  return 0;
 			25|	}
 			16|
-		 	
+
 		 */
 
 		decompile("100000bf0"); // 'main'
@@ -165,9 +165,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testCommentAnnotation() {
 
 		/*
-		 	
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -180,7 +180,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		String commentAddress = "100000d80";
@@ -220,9 +220,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testDecompiler_CopyFromSymbolWithoutSelection() throws Exception {
 
 		/*
-		 	
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -235,7 +235,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -260,9 +260,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testPrimaryHighlighting_ParenthesesContents() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -275,7 +275,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -292,9 +292,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -307,7 +307,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -354,9 +354,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting_ClearHighlight_WithMultipleHighlights() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -369,7 +369,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -409,9 +409,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting_ClearAll() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -424,7 +424,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -460,9 +460,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting_RenameHighlightedVariable() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -475,7 +475,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -503,9 +503,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting_HighlightColorGetsReused() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -518,7 +518,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -546,9 +546,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting_InteractionWithPrimaryHighlighting_LeftClick() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -561,7 +561,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -598,9 +598,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting_ForwardSliceDoesNotClearSecondaryHighlight() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -613,7 +613,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -644,9 +644,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting_CombinedWithPrimaryHighlight() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -659,7 +659,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -696,9 +696,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting_MiddleMouseDoesNotClearSecondaryHighlight() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -711,7 +711,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -738,9 +738,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting_CloneDecompiler() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -753,7 +753,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -782,9 +782,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting_ChooseColors() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -797,7 +797,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -819,9 +819,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting_ChooseColors_ColorIsLaterReusedForSameToken() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -834,7 +834,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -860,9 +860,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting_GetsReappliedAfterRefresh() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -875,7 +875,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -900,9 +900,9 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	public void testSecondaryHighlighting_GetsReappliedAfterReturningToPreviousFunction() {
 
 		/*
-		
+
 		 Decomp of '_call_structure_A':
-		 
+
 			1|
 			2| void _call_structure_A(A *a)
 			3|
@@ -915,7 +915,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		   10|  	_call_structure_B(&a->b);
 		   11|  	return;
 		   12|	}
-		
+
 		 */
 
 		decompile("100000d60"); // '_call_structure_A'
@@ -1195,7 +1195,7 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		ColorMatcher cm = new ColorMatcher(color, combinedColor);
 		assertAllFieldsHighlighted(theProvider, name, cm, ignores);
 
-		// test the token under the cursor directly, as that may have a combined highlight applied		
+		// test the token under the cursor directly, as that may have a combined highlight applied
 		Color actual = token.getHighlight();
 		assertTrue("Token is not highlighted: '" + token + "'" + "\n\texpected: " + cm +
 			"; found: " + toString(actual), cm.matches(actual));

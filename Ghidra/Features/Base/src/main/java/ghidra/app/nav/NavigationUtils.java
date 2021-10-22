@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class NavigationUtils {
 	/**
 	 * Locate all possible linkage addresses which correspond to the specified external address.
 	 * This will correspond to either a generic reference type (DATA or EXTERNAL_REF) on a pointer
-	 * or a thunk to the external location.  Both pointers and thunk contructs are utilized to 
+	 * or a thunk to the external location.  Both pointers and thunk contructs are utilized to
 	 * perform dynamic linking between programs and external libraries they reference.  These
 	 * linkage locations facilitate the function calls into any dynamically
 	 * linked external program (i.e., library).
@@ -126,7 +126,7 @@ public class NavigationUtils {
 	}
 
 	/**
-	 * Determine if the specified thunkFunction's body contains any references to addresses 
+	 * Determine if the specified thunkFunction's body contains any references to addresses
 	 * contained within the linkageSet provided.
 	 * @param thunkFunction possible linkage thunk
 	 * @param linkageSet set of previously discovered linkage pointer locations

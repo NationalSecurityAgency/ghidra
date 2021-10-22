@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1055,7 +1055,7 @@ public class ListingCodeComparisonPanel
 		saveState.remove("_BYTE_ADDR");
 		Address desiredByteAddress = null;
 		if (byteAddress != null) {
-			// Try to get the indicated side's byte address using one of the address 
+			// Try to get the indicated side's byte address using one of the address
 			// correlators or by inferring it.
 			desiredByteAddress = inferDesiredByteAddress(address, desiredAddress, byteAddress,
 				programLocation.getProgram(), programs[leftOrRight]);
@@ -1160,13 +1160,13 @@ public class ListingCodeComparisonPanel
 	}
 
 	/**
-	 * Infers a desired byte address based on the specified <code>byteAddress</code> as well 
+	 * Infers a desired byte address based on the specified <code>byteAddress</code> as well
 	 * as the <code>address</code> and <code>desiredAddress</code> that were matched.
 	 * @param address matches up with the <code>desiredAddress</code> from the other function/data.
 	 * @param desiredAddress matches up with the <code>address</code> from the other function/data.
 	 * @param byteAddress the byte address that is associated with <code>address</code>
 	 * @param program the program for the <code>address</code> and <code>byteAddress</code>.
-	 * @param desiredProgram the program for the <code>desiredAddress</code> and 
+	 * @param desiredProgram the program for the <code>desiredAddress</code> and
 	 * <code>desiredByteAddress</code>.
 	 * @return the desired byte address that matches up with the indicated <code>byteAddress</code>
 	 * or null if it can't be determined.
@@ -1189,20 +1189,20 @@ public class ListingCodeComparisonPanel
 	}
 
 	/**
-	 * This infers the desired byte address within Data based on the code units at 
+	 * This infers the desired byte address within Data based on the code units at
 	 * <code>codeUnitAddress</code> and <code>desiredCodeUnitAddress</code>.
-	 * The inferred address will be at an offset from the <code>desiredCodeUnitAddress</code> 
+	 * The inferred address will be at an offset from the <code>desiredCodeUnitAddress</code>
 	 * that is the same distance the <code>byteAddress</code> is from the <code>codeUnitAddress</code>.
-	 * 
-	 * @param codeUnitAddress matches up with the <code>desiredCodeUnitAddress</code> from 
+	 *
+	 * @param codeUnitAddress matches up with the <code>desiredCodeUnitAddress</code> from
 	 * the other data.
-	 * @param desiredCodeUnitAddress matches up with the <code>codeUnitAddress</code> from 
+	 * @param desiredCodeUnitAddress matches up with the <code>codeUnitAddress</code> from
 	 * the other data.
 	 * @param byteAddress the byte address that is associated with <code>codeUnitAddress</code>
 	 * @param program the program for the <code>codeUnitAddress</code> and <code>byteAddress</code>.
-	 * @param desiredProgram the program for the <code>desiredCodeUnitAddress</code> and 
+	 * @param desiredProgram the program for the <code>desiredCodeUnitAddress</code> and
 	 * <code>desiredByteAddress</code>.
-	 * @return the desired byte address within the data that matches up with the indicated 
+	 * @return the desired byte address within the data that matches up with the indicated
 	 * <code>byteAddress</code> or null if it can't be determined.
 	 */
 	private Address inferDesiredDataAddress(Address codeUnitAddress, Address desiredCodeUnitAddress,
@@ -1229,18 +1229,18 @@ public class ListingCodeComparisonPanel
 	}
 
 	/**
-	 * This infers the desired byte address within a function based on the code units at 
+	 * This infers the desired byte address within a function based on the code units at
 	 * <code>address</code> and <code>desiredAddress</code>.
-	 * If the inferred address would be beyond the last byte of the code unit then it 
+	 * If the inferred address would be beyond the last byte of the code unit then it
 	 * will get set to the last byte of the code unit at the <code>desiredAddress</code>.
-	 * 
+	 *
 	 * @param address matches up with the <code>desiredAddress</code> from the other function.
 	 * @param desiredAddress matches up with the <code>address</code> from the other function.
 	 * @param byteAddress the byte address that is associated with <code>address</code>
 	 * @param program the program for the <code>address</code> and <code>byteAddress</code>.
-	 * @param desiredProgram the program for the <code>desiredAddress</code> and 
+	 * @param desiredProgram the program for the <code>desiredAddress</code> and
 	 * <code>desiredByteAddress</code>.
-	 * @return the desired byte address within the data that matches up with the indicated 
+	 * @return the desired byte address within the data that matches up with the indicated
 	 * <code>byteAddress</code> or null if it can't be determined.
 	 */
 	private Address inferDesiredFunctionAddress(Address address, Address desiredAddress,
@@ -1834,7 +1834,7 @@ public class ListingCodeComparisonPanel
 		titlePanels[LEFT] = new TitledPanel(leftProgramName, listingPanels[LEFT], 5);
 		titlePanels[RIGHT] = new TitledPanel(rightProgramName, listingPanels[RIGHT], 5);
 
-		// Set the MINIMUM_PANEL_WIDTH for the left and right panel to prevent the split pane's 
+		// Set the MINIMUM_PANEL_WIDTH for the left and right panel to prevent the split pane's
 		// divider from becoming locked (can't be moved) due to extra long title names.
 		titlePanels[LEFT].setMinimumSize(
 			new Dimension(MINIMUM_PANEL_WIDTH, titlePanels[LEFT].getMinimumSize().height));
@@ -2146,15 +2146,15 @@ public class ListingCodeComparisonPanel
 	}
 
 	/**
-	 * Gets an address in the program indicated by <code>leftOrRight</code> that matches the 
+	 * Gets an address in the program indicated by <code>leftOrRight</code> that matches the
 	 * <code>otherSidesAddress</code> that is an address in a function in the other program.
 	 * @param leftOrRight indicates whether to get the address from the LEFT or RIGHT program.
-	 * @param otherSidesAddress address in the other program that is equivalent to the 
+	 * @param otherSidesAddress address in the other program that is equivalent to the
 	 * desired address.
 	 * @return the matching address in the indicated program or null.
 	 */
 	private Address getFunctionAddress(int leftOrRight, Address otherSidesAddress) {
-		// Try to get the address using the correlator. 
+		// Try to get the address using the correlator.
 		// If the correlator couldn't determine it, then try to infer it.
 		int otherSide = (leftOrRight == RIGHT) ? LEFT : RIGHT;
 		// Finding desired side's address.
@@ -2182,7 +2182,7 @@ public class ListingCodeComparisonPanel
 	}
 
 	private Address getDataAddress(int leftOrRight, Address otherSidesAddress) {
-		// Correlator doesn't handle data compare, so associate beginning of data and 
+		// Correlator doesn't handle data compare, so associate beginning of data and
 		// infer the others based on relative position.
 		Address leftDataAddress = getLeftDataAddress();
 		Address rightDataAddress = getRightDataAddress();

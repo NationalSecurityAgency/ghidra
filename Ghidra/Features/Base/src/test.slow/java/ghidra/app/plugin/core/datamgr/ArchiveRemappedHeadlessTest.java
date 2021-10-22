@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ public class ArchiveRemappedHeadlessTest extends AbstractGhidraHeadlessIntegrati
 	@Before
 	public void setUp() throws Exception {
 
-		// Create windows_VS9 archive copy before DataTypeManagerHandler initializes 
+		// Create windows_VS9 archive copy before DataTypeManagerHandler initializes
 		// static list of known archives
 		win32ArchiveDir =
 			Application.getModuleDataSubDirectory("Base", "typeinfo/win32").getFile(false);

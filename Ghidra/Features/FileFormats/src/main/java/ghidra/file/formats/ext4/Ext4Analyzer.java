@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 public class Ext4Analyzer extends FileFormatAnalyzer {
-	
+
 	private int blockSize;
 
 	@Override
@@ -55,7 +55,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 		if( start == -1 ) {
 			return false;
 		}
-		
+
 		reader.setPointerIndex(start + 0x38);
 		short magic = -1;
 		try {
@@ -84,7 +84,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 		reader.setPointerIndex(start);
 		Ext4SuperBlock superBlock = new Ext4SuperBlock(reader);
 		createData(program, toAddr(program, start), superBlock.toDataType());
-		
+
 
 		boolean is64Bit = (superBlock.getS_desc_size() > 32) && ((superBlock.getS_feature_incompat() & 0x80) > 0);
 		long numBytes = program.getMaxAddress().getOffset() - program.getMinAddress().getOffset() + 1;
@@ -93,7 +93,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 		if( numBytes % groupSize != 0) {
 			numGroups++;
 		}
-		
+
 		long groupDescOffset = groupStart + blockSize;
 		Address groupDescAddress = toAddr(program, groupDescOffset);
 		reader.setPointerIndex(groupDescOffset);
@@ -105,22 +105,22 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 			groupDescriptors[i] = new Ext4GroupDescriptor(reader, is64Bit);
 			DataType groupDescDataType = groupDescriptors[i].toDataType();
 			createData(program, groupDescAddress, groupDescDataType);
-			groupDescAddress = groupDescAddress.add(groupDescDataType.getLength());	
+			groupDescAddress = groupDescAddress.add(groupDescDataType.getLength());
 			monitor.incrementProgress(1);
 		}
-		
+
 		boolean isSparseSuper = (superBlock.getS_feature_ro_compat() & 1) != 0;
 		createSuperBlockCopies(program, reader, groupSize, numGroups, is64Bit, isSparseSuper, monitor);
-		
+
 		createInodeTables(program, reader, superBlock, groupDescriptors, is64Bit, monitor);
-		
+
 //		test(program, reader);
 		return true;
 	}
-	
+
 	private void createInodeTables(Program program, BinaryReader reader, Ext4SuperBlock superBlock,
 			Ext4GroupDescriptor[] groupDescriptors, boolean is64Bit, TaskMonitor monitor) throws DuplicateNameException, Exception {
-		
+
 		int inodeCount = superBlock.getS_inodes_count();
 		Ext4Inode inodes[] = new Ext4Inode[inodeCount];
 
@@ -138,7 +138,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 			} catch (Exception e ) {
 				throw new IOException("offset " + offset + " not in program.");
 			}
-			
+
 			int inodesPerGroup = superBlock.getS_inodes_per_group();
 			monitor.setMessage("Creating inode table " + i + " of " + (groupDescriptors.length - 1) + "...");
 			monitor.setMaximum(inodesPerGroup);
@@ -173,7 +173,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 				processDirectory(program, reader, superBlock, inode, monitor);
 			} else if( (mode & Ext4Constants.S_IFREG) != 0 ) {
 				processFile(program, reader, superBlock, inode, monitor);
-			} 
+			}
 		}
 	}
 
@@ -209,10 +209,10 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 //						}
 //					}
 //				}
-//					
-//			} 
+//
+//			}
 		}
-		
+
 	}
 
 	private void processHashTreeDirectory(Program program, BinaryReader reader,
@@ -234,8 +234,8 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 			reader.setPointerIndex(offset);
 			Ext4SuperBlock superBlock = new Ext4SuperBlock(reader);
 			createData(program, address, superBlock.toDataType());
-			
-			
+
+
 			long groupDescOffset = offset + blockSize;
 			Address groupDescAddress = toAddr(program, groupDescOffset);
 			reader.setPointerIndex(groupDescOffset);
@@ -243,13 +243,13 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 				Ext4GroupDescriptor groupDesc = new Ext4GroupDescriptor(reader, is64Bit);
 				DataType groupDescDataType = groupDesc.toDataType();
 				createData(program, groupDescAddress, groupDescDataType);
-				groupDescAddress = groupDescAddress.add(groupDescDataType.getLength());			
+				groupDescAddress = groupDescAddress.add(groupDescDataType.getLength());
 			}
 			monitor.incrementProgress(1);
 		}
-		
+
 	}
-	
+
 	private boolean isXpowerOfY( int x, int y ) {
 		if( x == 0 ) {
 			return false;
@@ -290,5 +290,5 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 		}
 		return -1;
 	}
-	
+
 }

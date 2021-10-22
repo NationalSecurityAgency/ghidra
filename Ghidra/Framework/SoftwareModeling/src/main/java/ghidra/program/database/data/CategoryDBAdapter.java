@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ abstract class CategoryDBAdapter {
 	/**
 	 * Returns a list of categoryIDs that have the given parent ID.
 	 * @param categoryID the key into the catagory table
-	 * @return an array of categoryIDs that have the specified parent.  Field array 
+	 * @return an array of categoryIDs that have the specified parent.  Field array
 	 * returned with LongField key values.
 	 * @throws IOException if IO error occurs
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ dependencies {
 	// include Base src/test/resources when running decompiler integration tests (uses defaultTools)
 	integrationTestImplementation project(path: ':Base', configuration: 'testArtifacts')
 	testImplementation "org.jmockit:jmockit:1.44"
-	
+
     helpPath project(path: ":Base", configuration: 'helpPath')
 }
 
@@ -47,9 +47,9 @@ rootProject.assembleDistribution {
 ext.cppSourceDir = "src/decompile/cpp"
 
 /**
- * The bison and flex generated files are maintained in source control and 
+ * The bison and flex generated files are maintained in source control and
  * do not need regeneration unless changes have been made to the yacc (*.y),
- * lex (*.l) or any critical header file.  This stand-alone task should be 
+ * lex (*.l) or any critical header file.  This stand-alone task should be
  * executed as needed prior to building the decompiler or sleigh native
  * executables.
  */
@@ -59,30 +59,30 @@ task generateParsers {
 
  /**
  * This task calls bison to process the grammar.y and xml.y files (yacc) to
- * generate the corresponding *.cc files that will then be compiled with the rest 
+ * generate the corresponding *.cc files that will then be compiled with the rest
  * of the decompiler code.
  */
 task yaccDecompiler {
 
 	Task t1 = createBisonTask("xml", "decompile", false, true);
 	Task t2 = createBisonTask("grammar", "decompile", false, true);
-	
+
 	if (t1 != null) {
 		dependsOn t1, t2
 	}
 }
 
 /**
- * This task calls bison to process the slghparse.y, pcodeparse.y and xml.y 
- * files (yacc) to generate the corresponding *.cc files that will then be compiled 
+ * This task calls bison to process the slghparse.y, pcodeparse.y and xml.y
+ * files (yacc) to generate the corresponding *.cc files that will then be compiled
  * with the rest of the sleigh code.
  */
 task yaccSleigh {
-	
+
 	Task t1 = createBisonTask("slghparse", "sleigh", true, false); // also produces slghparse.hh header file
 	Task t2 = createBisonTask("pcodeparse", "sleigh", false, true);
 	Task t3 = createBisonTask("xml", "sleigh", false, true);
-	
+
 	if (t1 != null) {
 		dependsOn t1,t2,t3
 	}
@@ -93,11 +93,11 @@ task yaccSleigh {
  * be compiled with the rest of the sleigh code.
  */
  task lexSleigh {
- 
+
  	dependsOn "yaccSleigh"
- 	
+
 	Task t1 = createLexTask("slghscan", "sleighlex")
-	
+
 	if (t1 != null) {
 		// TODO: add missing task input file dependencies
 		dependsOn t1
@@ -167,7 +167,7 @@ task buildDecompilerHelpHtml(type: Exec) {
 
 task buildDecompilerHelpPdf(type: Exec) {
 	// Check the OS before enabling task.
-	if (!(org.gradle.internal.os.OperatingSystem.current().isLinux() 
+	if (!(org.gradle.internal.os.OperatingSystem.current().isLinux()
 		|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
 			it.enabled = false
 	}
@@ -175,10 +175,10 @@ task buildDecompilerHelpPdf(type: Exec) {
 	workingDir 'src/main/doc'
 
 	// 'which' returns the number of failed arguments
-	// Using 'which' first will allow the entire command to fail if the required 
+	// Using 'which' first will allow the entire command to fail if the required
 	// executables are not installed.
 	//
-	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// The bash commands end with "2>&1" to redirect stderr to stdout and have all
 	// messages print in sequence
 	//
 	// 'commandLine' takes one command, so wrap multiple commands in bash.
@@ -203,7 +203,7 @@ task buildDecompilerHelpPdf(type: Exec) {
 		echo '** Done. **'
 		"""
 
-	// Allows doLast block regardless of exit value. Task does not fail if bash command fails. 
+	// Allows doLast block regardless of exit value. Task does not fail if bash command fails.
 	ignoreExitValue true
 
 	// Store the output instead of printing to the console.
@@ -244,10 +244,10 @@ task buildDecompilerDocumentationPdfs(type: Exec) {
 	outputs.file "$workingDir/$buildDir/sleigh.pdf"
 
 	// 'which' returns the number of failed arguments
-	// Using 'which' first will allow the entire command to fail if the required 
+	// Using 'which' first will allow the entire command to fail if the required
 	// executables are not installed.
 	//
-	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// The bash commands end with "2>&1" to redirect stderr to stdout and have all
 	// messages print in sequence
 	//
 	// 'commandLine' takes one command, so wrap multiple commands in bash.
@@ -273,7 +273,7 @@ task buildDecompilerDocumentationPdfs(type: Exec) {
 		echo '** Done. **'
 		"""
 
-	// Allows doLast block regardless of exit value. Task does not fail if bash command fails. 
+	// Allows doLast block regardless of exit value. Task does not fail if bash command fails.
 	ignoreExitValue true
 
 	// Store the output instead of printing to the console.
@@ -306,13 +306,13 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 	// declared outputs.
 	outputs.file "$workingDir/$buildDir/index.html"
 	outputs.dir  "$workingDir/$buildDir/html"
-	
+
 
 	// 'which' returns the number of failed arguments
-	// Using the 'which' command first will allow the task to fail if the required 
+	// Using the 'which' command first will allow the task to fail if the required
 	// executables are not installed.
 	//
-	// The bash commands end with "2>&1" to redirect stderr to stdout and have all 
+	// The bash commands end with "2>&1" to redirect stderr to stdout and have all
 	// messages print in sequence
 	//
 	// 'commandLine' takes one command, so wrap multiple commands in bash.
@@ -360,7 +360,7 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 
 		// Check the OS before executing command.
 		doFirst {
-			if ( !(org.gradle.internal.os.OperatingSystem.current().isLinux() 
+			if ( !(org.gradle.internal.os.OperatingSystem.current().isLinux()
 				|| org.gradle.internal.os.OperatingSystem.current().isMacOsX())) {
 				throw new TaskExecutionException( it,
 					new Exception( "The '$it.name' task only works on Linux or Mac Os X" ))
@@ -381,9 +381,9 @@ task buildDecompilerDocumentationHtml(type: Exec) {
 }
 
 
-// Perform simple dependency change detection for generated files 
+// Perform simple dependency change detection for generated files
 // produced by bison or flex.  A 5-second tolerance is used
-// to avoid arbitrary last-modified times which may be produced 
+// to avoid arbitrary last-modified times which may be produced
 // by a git checkout.
 boolean isUpToDate(File srcFile, File resultFile) {
 	long resultLm = resultFile.lastModified()
@@ -406,7 +406,7 @@ Task createBisonTask(String filename, String binaryName, boolean generateHeader,
 
 	def outputCppDir = "${cppSourceDir}"
 	def outputHeadersDir = "${cppSourceDir}"
-	
+
 	def yaccFile = "${cppSourceDir}/${filename}.y"
 	def ccFile = "${outputCppDir}/${filename}.cc"
 	def headerFile = "${outputCppDir}/${filename}.hh"
@@ -418,30 +418,30 @@ Task createBisonTask(String filename, String binaryName, boolean generateHeader,
 		if (generateHeader) {
 			outputs.file "${headerFile}"
 		}
-		
+
 		// doFirst {
 		//	file(outputCppDir).mkdirs()
 		//	file(outputHeadersDir)mkdirs()
-		// }		
-		
+		// }
+
 		executable 'bison'			// use bison program to process yacc files
-		
+
 		// specify the bison's output file
 		args "-o", "${ccFile}"
-		
+
 		// most of the yacc files should be compiled with a variable qualifyer to avoid dupes.
-		// Unfortunately there is one (slghparse) that can't use a qualifyer because it 
+		// Unfortunately there is one (slghparse) that can't use a qualifyer because it
 		// declares a variable used by other files.
-		
+
 		if (qualifyVariables) {
 			args "-p", filename
 		}
-		
+
 		// tell bison where to put the hh file.
 		if (generateHeader) {
 			args "--defines=${headerFile}"
 		}
-		
+
 		// tell bison the file to compile
 		args "${yaccFile}"
 	}
@@ -453,12 +453,12 @@ Task createBisonTask(String filename, String binaryName, boolean generateHeader,
 Task createLexTask(String filename, String binaryName) {
 
 	def outputCppDir = "${cppSourceDir}"
-	
+
 	def lexFile = "${cppSourceDir}/${filename}.l"
 	def ccFile = "${outputCppDir}/${filename}.cc"
-	
+
 	return task("lex_${binaryName}_$filename", type: Exec) {
-		
+
 		// set up inputs and outputs so that gradle knows when this needs to be rebuilt
 		inputs.file "${lexFile}"
 		outputs.files "${ccFile}"
@@ -466,12 +466,12 @@ Task createLexTask(String filename, String binaryName) {
 		// doFirst {
 		//	file(outputCppDir).mkdirs();
 		// }
-		
+
 		executable 'flex'			// the program to execute
 
 		// tell flex where to put the output
 		args "-o", "${ccFile}"
-		
+
 		// tell flex the input file
 		args "${lexFile}"
 	}
@@ -479,11 +479,11 @@ Task createLexTask(String filename, String binaryName) {
 
 rootProject.createInstallationZip {
 	dependsOn buildDecompilerDocumentationPdfs
-	
-	
+
+
 	def decompilerPdfZipPath = rootProject.ext.ZIP_DIR_PREFIX + "/docs/languages/"
 
-	// Add decompiler pdf files to zip. If the pdf files do not exist during execution time 
+	// Add decompiler pdf files to zip. If the pdf files do not exist during execution time
 	// (if there was an error or wrong platform), the zip task will move on.
 	buildDecompilerDocumentationPdfs.outputs.each { output ->
 		output.files.each { file ->

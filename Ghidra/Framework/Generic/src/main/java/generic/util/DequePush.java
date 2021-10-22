@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class DequePush<E> implements AutoCloseable {
 	 * @param stack the stack
 	 * @param elem the element
 	 * @return a context used to pop the element
-	 * 
+	 *
 	 * This is an idiomatic convenience, as in a try-with-resources block:
 	 * <pre>
 	 * {@code
@@ -49,7 +49,7 @@ public class DequePush<E> implements AutoCloseable {
 	 * }
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * This idiom can be very useful if there is complex logic between the push and pop. It's easy
 	 * to forget to pop; however, this convenience comes at the cost of a heap allocation.
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,7 @@ public class CDexCodeItem extends CodeItem {
 		triesSize = (short) ((fields_ >> kOutsSizeShift) & 0xf);
 
 		/*
-		 * 5 bits, if either of the fields required preheader extension, 
+		 * 5 bits, if either of the fields required preheader extension,
 		 * 11 bits for the number of instruction code units.
 		 */
 		insns_count_and_flags_ = reader.readNextShort();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -306,28 +306,28 @@ public class XRefFieldFactory extends FieldFactory {
 		Create a series of fields: 1 row per function and the xrefs it contains and 1 wrapping
 		field for all xrefs not in any function.  The wrapping field will go below the function
 		based xrefs.  It will look something like this:
-			
+
 			foo1: 123, 223
 			foo2: 323, 333
 			423, 433, 567,
 			899, [more]
-		
+
 		The fields and elements created by this method have this structure:
-		
+
 			XrefListingField
-			
+
 				CompositeVerticalLayoutTextField
-					
+
 					0+ ClippingTextField
 							CompositeFieldElement
 								XrefFieldEleent
 									XrefAttributedString
-									
+
 					0+ FlowLayoutTextField
 							XrefFieldEleent
 									XrefAttributedString
-									
-									
+
+
 	*/
 	private ListingField getFieldByFunction(ProxyObj<?> proxy, int varWidth,
 			List<Reference> xrefs, List<Reference> offcuts) {
@@ -515,20 +515,20 @@ public class XRefFieldFactory extends FieldFactory {
 		Create a series of fields: 1 row per function and the xrefs it contains and 1 wrapping
 		field for all xrefs not in any function.  The wrapping field will go below the function
 		based xrefs.  It will look something like this:
-						
+
 			foo1:423,
 			foo1:433,
 			foo2:567,
 			899, [more]
-		
+
 		The fields and elements created by this method have this structure:
-		
+
 			XrefListingField
 				1+ FlowLayoutTextField
 						XrefFieldEleent
 							XrefAttributedString
-								
-								
+
+
 	*/
 	private ListingField getFieldByAddress(ProxyObj<?> proxy, int varWidth, List<Reference> xrefs,
 			List<Reference> offcuts) {

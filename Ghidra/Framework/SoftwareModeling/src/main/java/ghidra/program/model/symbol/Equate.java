@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,8 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * An Equate associates a string with a scalar value in the program, 
- * and contains a list of addresses and operand positions that refer 
+ * An Equate associates a string with a scalar value in the program,
+ * and contains a list of addresses and operand positions that refer
  * to this equate.
  */
 public interface Equate {
@@ -32,7 +32,7 @@ public interface Equate {
 	/**
 	 * Get the actual name of this equate.  Note that this name may be different than the
 	 * "display name," which is what the user will see.
-	 * 
+	 *
 	 * @return The actual name of this equate.
 	 */
 	public String getName();
@@ -40,7 +40,7 @@ public interface Equate {
 	/**
 	 * Gets the "display name" of this equate.  Note that the display name may be different
 	 * than the equate's actual name if the equate is based off a data type id.
-	 * 
+	 *
 	 * @return The "display name" of this equate.
 	 */
 	public String getDisplayName();
@@ -52,7 +52,7 @@ public interface Equate {
 
 	/**
 	 * Gets a more accurate representation of the equate value. Used for rendering as close to the
-	 * listing as possible. 
+	 * listing as possible.
 	 * @return A more accurate representation of the equate value.
 	 */
 	public String getDisplayValue();
@@ -66,7 +66,7 @@ public interface Equate {
 	 * Add a reference (at the given operand position) to this equate.  If a reference already
 	 * exists for the instruction at this address, then the old reference will be removed
 	 * before the new reference is added.
-	 * 
+	 *
 	 * @param refAddr the address where the equate is used.
 	 * @param opndPosition the operand index where the equate is used.
 	 */
@@ -76,7 +76,7 @@ public interface Equate {
 	 * Add a reference (at the given dynamic hash position) to this equate. If a reference already
 	 * exists for the instruction at this address, then the old reference will be removed
 	 * before the new reference is added.
-	 * 
+	 *
 	 * @param dynamicHash constant varnode dynamic hash value
 	 * @param refAddr the address where the equate is used.
 	 */
@@ -94,7 +94,7 @@ public interface Equate {
 
 	/**
 	 * Get the references for this equate.
-	 * @return a array of EquateReferences. 
+	 * @return a array of EquateReferences.
 	 */
 	public EquateReference[] getReferences();
 

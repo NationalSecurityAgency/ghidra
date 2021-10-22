@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ class ProgramTreeXmlMgr {
 	/**
 	 * Constructor
 	 * @param program program
-	 * @param log message log 
+	 * @param log message log
 	 */
 	ProgramTreeXmlMgr(Program program, MessageLog log) {
 		this.log = log;
@@ -134,7 +134,7 @@ class ProgramTreeXmlMgr {
 				root = listing.createRootModule(treeName);
 			}
 			catch (DuplicateNameException dne) {
-				// if name already existed, then attempt to create a 
+				// if name already existed, then attempt to create a
 				// unique "one-up" name
 				//
 				int oneUp = 1;

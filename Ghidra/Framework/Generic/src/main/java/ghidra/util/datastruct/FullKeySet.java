@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import java.io.Serializable;
  */
 
 public class FullKeySet implements ShortKeySet, Serializable {
-    
+
     private int numKeys; // keys range from 0 to numKeys-1
 
 	/**
@@ -42,7 +42,7 @@ public class FullKeySet implements ShortKeySet, Serializable {
     }
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.util.datastruct.ShortKeySet#containsKey(short)
 	 */
     public boolean containsKey(short key) {
@@ -53,7 +53,7 @@ public class FullKeySet implements ShortKeySet, Serializable {
     }
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.util.datastruct.ShortKeySet#getFirst()
 	 */
     public short getFirst() {
@@ -61,7 +61,7 @@ public class FullKeySet implements ShortKeySet, Serializable {
     }
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.util.datastruct.ShortKeySet#getLast()
 	 */
     public short getLast() {
@@ -69,7 +69,7 @@ public class FullKeySet implements ShortKeySet, Serializable {
     }
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.util.datastruct.ShortKeySet#put(short)
 	 */
     public void put(short key) {
@@ -79,7 +79,7 @@ public class FullKeySet implements ShortKeySet, Serializable {
     }
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.util.datastruct.ShortKeySet#remove(short)
 	 */
     public boolean remove(short key) {
@@ -91,7 +91,7 @@ public class FullKeySet implements ShortKeySet, Serializable {
     }
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.util.datastruct.ShortKeySet#removeAll()
 	 */
     public void removeAll() {
@@ -99,7 +99,7 @@ public class FullKeySet implements ShortKeySet, Serializable {
     }
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.util.datastruct.ShortKeySet#getNext(short)
 	 */
     public short getNext(short key) {
@@ -113,7 +113,7 @@ public class FullKeySet implements ShortKeySet, Serializable {
     }
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.util.datastruct.ShortKeySet#getPrevious(short)
 	 */
     public short getPrevious(short key) {
@@ -127,7 +127,7 @@ public class FullKeySet implements ShortKeySet, Serializable {
     }
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.util.datastruct.ShortKeySet#isEmpty()
 	 */
     public boolean isEmpty() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,11 +38,11 @@ import utility.application.ApplicationLayout;
 
 class ClassJar extends ClassLocation {
 
-	/** 
+	/**
 	 * Pattern for matching jar files in a module lib dir
 	 * <p>
-	 * The pattern roughly states to accept any path that contains <tt>lib</tt> or 
-	 * <tt>build/libs</tt>, ending in <tt>.jar</tt> (non-capturing) and then 
+	 * The pattern roughly states to accept any path that contains <tt>lib</tt> or
+	 * <tt>build/libs</tt>, ending in <tt>.jar</tt> (non-capturing) and then
 	 * grab that dir's parent and the name of the jar file.
 	 */
 	private static final Pattern ANY_MODULE_LIB_JAR_FILE_PATTERN =
@@ -92,7 +92,7 @@ class ClassJar extends ClassLocation {
 
 		//
 		// Note: keep this algorithm simple enough that users can add their own plugins via
-		//       jar files.		
+		//       jar files.
 		//
 
 		//
@@ -104,7 +104,7 @@ class ClassJar extends ClassLocation {
 
 		//
 		// Dev Mode - let everything else through
-		// 
+		//
 		if (SystemUtilities.isInDevelopmentMode()) {
 			return false;
 		}
@@ -117,9 +117,9 @@ class ClassJar extends ClassLocation {
 			return false;
 		}
 
-		// 
+		//
 		// Production Mode - allow users to enter code in the 'patch' directory
-		//		
+		//
 		if (isPatchJar(forwardSlashedPathName)) {
 			return false;
 		}

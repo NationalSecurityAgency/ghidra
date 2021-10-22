@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package docking.action.builder;
 import docking.ActionContext;
 import docking.action.ToggleDockingAction;
 
-/** 
+/**
  * Builder for {@link ToggleDockingAction}s
  */
 public class ToggleActionBuilder extends
@@ -61,7 +61,7 @@ public class ToggleActionBuilder extends
 	/**
 	 * Configure the initial select state for the toggle action.
 	 * @param b the initial select state
-	 * 
+	 *
 	 * @return self Builder (for chaining)
 	 */
 	public ToggleActionBuilder selected(boolean b) {

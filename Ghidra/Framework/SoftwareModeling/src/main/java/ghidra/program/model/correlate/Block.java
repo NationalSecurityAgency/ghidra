@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public class Block {		// Basic block within the function
 	protected CodeBlock origBlock;	// The underlying basic-block being described
 	private int matchHash;		// If block has been matched, this value is fed to hashes to deconflict further matches
 	protected InstructHash[] instList;	// List of Instructions (and corresponding hashing info) for this block
-	
+
 	public Block(CodeBlock codeBlock) {
 		isMatched = false;
 		isVisited = false;
@@ -142,7 +142,7 @@ public class Block {		// Basic block within the function
 			// If an n-gram contains the block's starting instruction (and the block is big) this is encoded
 			// in the hash by changing the initial hash accumulator value.
 			int accum = (i==0 && instList.length > 8) ? Hash.SEED: Hash.ALTERNATE_SEED;	// For big blocks, encode starting instruction
-			
+
 			// Perform the intermediate hashes,  0 to minLength-1
 			for(int j=0;j<minLength-1;++j) {
 				if (accum != 0) {
@@ -153,7 +153,7 @@ public class Block {		// Basic block within the function
 					accum = hashCalc.calcHash(accum, instList[i + j].instruction);
 				}
 			}
-			
+
 			// Extend to final hashes, saving the resulting nGram each time
 			for(int j=0;j<num;++j) {
 				// Hash in one more value
@@ -164,7 +164,7 @@ public class Block {		// Basic block within the function
 						accum = hashCalc.calcHash(accum, instList[i + j + minLength-1].instruction);
 				}
 				// Create a hash record
-				if (accum != 0) {										
+				if (accum != 0) {
 					instList[i].nGrams[j] = new Hash(accum ^ matchHash,minLength+j);	// XOR in non-zero value if block has already been matched
 				}
 				else

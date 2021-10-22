@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -120,7 +120,7 @@ public:
   void setDelaySlot(int4 val) { delayslot = val; }
   int4 getDelaySlot(void) const { return delayslot; }
 };
-  
+
 class ParserWalker {		// A class for walking the ParserContext
   const ParserContext *const_context;
   const ParserContext *cross_context;
@@ -137,7 +137,7 @@ public:
   bool isState(void) const { return (point != (ConstructState *)0); }
   void pushOperand(int4 i) { breadcrumb[depth++] = i+1; point = point->resolve[i]; breadcrumb[depth] = 0; }
   void popOperand(void) { point = point->parent; depth-= 1; }
-  uint4 getOffset(int4 i) const { if (i<0) return point->offset; 
+  uint4 getOffset(int4 i) const { if (i<0) return point->offset;
     ConstructState *op=point->resolve[i]; return op->offset + op->length; }
   Constructor *getConstructor(void) const { return point->ct; }
   int4 getOperand(void) const { return breadcrumb[depth]; }

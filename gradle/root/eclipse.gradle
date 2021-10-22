@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-true-false-GhidraTest'
        }
-     }          
+     }
      resourceFilter {
        appliesTo = 'FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -39,7 +39,7 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-Features'
        }
-     }     
+     }
      resourceFilter {
        appliesTo = 'FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -47,7 +47,7 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-Framework'
        }
-     }     
+     }
      resourceFilter {
        appliesTo = 'FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -55,7 +55,7 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-Processors'
        }
-     }     
+     }
      resourceFilter {
        appliesTo = 'FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -63,7 +63,7 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-Test'
        }
-     }     
+     }
      resourceFilter {
        appliesTo = 'FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -71,7 +71,7 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-ProcessorTest'
        }
-     }     
+     }
      resourceFilter {
        appliesTo = 'FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -79,7 +79,7 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-Configurations'
        }
-     }     
+     }
      resourceFilter {
        appliesTo = 'FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -87,7 +87,7 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-Extensions'
        }
-     }     
+     }
      resourceFilter {
        appliesTo = 'FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -95,7 +95,7 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-RuntimeScripts'
        }
-     }     
+     }
      resourceFilter {
        appliesTo = 'FILES_AND_FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -103,7 +103,7 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-true-false-GhidraBuild'
        }
-     }     
+     }
      resourceFilter {
        appliesTo = 'FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -111,7 +111,7 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-Debug'
        }
-     }     
+     }
      resourceFilter {
        appliesTo = 'FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -119,7 +119,7 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-Dev'
        }
-     }     
+     }
      resourceFilter {
        appliesTo = 'FILES_AND_FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -127,7 +127,7 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-GhidraDocs'
        }
-     }  
+     }
      resourceFilter {
        appliesTo = 'FILES_AND_FOLDERS'
        type = 'EXCLUDE_ALL'
@@ -159,9 +159,9 @@ eclipse {
          id = 'org.eclipse.ui.ide.multiFilter'
          arguments = '1.0-name-matches-false-false-dist'
        }
-	 }     
+	 }
    }
  }
- 
+
  // the GhidraLauncher depends on this file to build the classpath in dev mode
  tasks.eclipse.dependsOn { generateLibraryDependencyMapping }

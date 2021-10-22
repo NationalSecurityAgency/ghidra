@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ public class LSDAActionRecord extends GccAnalysisClass {
 
 	/**
 	 * Constructor for an action record.
-	 * <br>Note: The <code>create(Address)</code> method must be called after constructing an 
+	 * <br>Note: The <code>create(Address)</code> method must be called after constructing an
 	 * LSDAActionRecord to associate it with an address before any of its "get..." methods are called.
 	 * @param monitor task monitor to see if the user has cancelled analysis.
 	 * @param program the program containing the action record.
@@ -155,7 +155,7 @@ public class LSDAActionRecord extends GccAnalysisClass {
 
 	/**
 	 * Gets the next address indicating the address after this action record.
-	 * @return the next address after this action record or null if this action record hasn't been 
+	 * @return the next address after this action record or null if this action record hasn't been
 	 * created at any address yet.
 	 */
 	public Address getNextAddress() {
@@ -164,7 +164,7 @@ public class LSDAActionRecord extends GccAnalysisClass {
 
 	/**
 	 * Gets the base address (minimum address) indicating the start of this action record.
-	 * @return the address of this action record or null if this action record hasn't been 
+	 * @return the address of this action record or null if this action record hasn't been
 	 * created at any address yet.
 	 */
 	public Address getAddress() {
@@ -172,9 +172,9 @@ public class LSDAActionRecord extends GccAnalysisClass {
 	}
 
 	/**
-	 * Gets the record for the next action that the catch should fall to if the type isn't 
+	 * Gets the record for the next action that the catch should fall to if the type isn't
 	 * the one for this action.
-	 * @return the next action's record or null if there isn't another specific type of 
+	 * @return the next action's record or null if there isn't another specific type of
 	 * exception for this try.
 	 */
 	public LSDAActionRecord getNextAction() {
@@ -196,7 +196,7 @@ public class LSDAActionRecord extends GccAnalysisClass {
 	}
 
 	/**
-	 * Gets the size of the action record or 0 if this action record hasn't been created at any 
+	 * Gets the size of the action record or 0 if this action record hasn't been created at any
 	 * address yet.
 	 * @return the size of the action record or 0;
 	 */

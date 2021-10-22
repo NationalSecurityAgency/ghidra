@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,9 +43,9 @@ import utilities.util.reflection.ReflectionUtilities;
 
 /**
  * Class that uses JavaHelp browser to show context sensitive help.
- * 
+ *
  * <p>Note: this manager will validate all registered help when in development mode.  In order
- * to catch items that have not registered help at all, we rely on those items to register a 
+ * to catch items that have not registered help at all, we rely on those items to register a
  * default {@link HelpLocation} that will get flagged as invalid.  Examples of this usage are
  * the {@link DockingActionIf} and the {@link ComponentProvider} base classes.
  */
@@ -78,7 +78,7 @@ public class HelpManager implements HelpService {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param url url for the main HelpSet file for the application.
 	 * @throws HelpSetException if HelpSet could not be created
 	 */
@@ -104,7 +104,7 @@ public class HelpManager implements HelpService {
 
 	/**
 	 * Add the help set for the given URL.
-	 * 
+	 *
 	 * @param url url for the HelpSet (.hs) file
 	 * @param classLoader the help classloader that knows how to find help modules in the classpath
 	 * @throws HelpSetException if the help set could not be created from the given URL.
@@ -160,8 +160,8 @@ public class HelpManager implements HelpService {
 		}
 
 		// Implementation Note: the same object can have different help registered.  For example,
-		//                      DockingActions do this as part of their construction process. 
-		//                      These actions will register a default help location and then 
+		//                      DockingActions do this as part of their construction process.
+		//                      These actions will register a default help location and then
 		//                      subclasses may change that location.  We always use the most
 		//                      recently registered action.
 		helpLocations.put(helpObject, location);
@@ -195,10 +195,10 @@ public class HelpManager implements HelpService {
 
 	/**
 	 * Display the help page for the given URL.  This is a specialty method for displaying
-	 * help when a specific file is desired, like an introduction page.  Showing help for 
-	 * objects within the system is accomplished by calling 
+	 * help when a specific file is desired, like an introduction page.  Showing help for
+	 * objects within the system is accomplished by calling
 	 * {@link #showHelp(Object, boolean, Component)}.
-	 * 
+	 *
 	 * @param url the URL to display
 	 * @see #showHelp(Object, boolean, Component)
 	 */
@@ -400,7 +400,7 @@ public class HelpManager implements HelpService {
 			((DefaultHelpBroker) mainHB).setActivationWindow(owner);
 		}
 
-		// make sure we are visible before we set data (prevents bugs in JavaHelp)		
+		// make sure we are visible before we set data (prevents bugs in JavaHelp)
 		mainHB.setDisplayed(true);
 
 		if (!wasDisplayed) {
@@ -493,7 +493,7 @@ public class HelpManager implements HelpService {
 	}
 
 	private Map<Object, HelpLocation> copyHelpLocations() {
-		// we must copy the help locations, since we are in a background thread and the 
+		// we must copy the help locations, since we are in a background thread and the
 		// locations map is frequently updated by the Swing thread
 		return Swing.runNow(() -> new HashMap<>(helpLocations));
 	}
@@ -501,9 +501,9 @@ public class HelpManager implements HelpService {
 	//
 	// 				Warning!
 	// This code has timing implications.  DockingActions register themselves with the help
-	// system as part of their construction.  At that point, they are not usually fully 
+	// system as part of their construction.  At that point, they are not usually fully
 	// constructed, as most clients will use the newly constructed action to set the various
-	// toolbar/menu/popup data elements.  For us to know if the action is really only for 
+	// toolbar/menu/popup data elements.  For us to know if the action is really only for
 	// keybinding purposes, we have to do this check after the action is fully constructed.
 	//
 	private boolean isKeybindingOnly(Object helpee) {
@@ -630,7 +630,7 @@ public class HelpManager implements HelpService {
 		}
 
 		// Note: not sure if we ever need to merge again after the initial load.  If so, then
-		//       this flag doesn't make sense.  However, as of this writing, we do not discover 
+		//       this flag doesn't make sense.  However, as of this writing, we do not discover
 		//       new help sets on the fly.
 		hasMergedHelpSets = true;
 		helpSetsPendingMerge.clear();
@@ -657,7 +657,7 @@ public class HelpManager implements HelpService {
 	/**
 	 * Create a new help set for the given url, if one does
 	 * not already exist.
-	 * @param classLoader 
+	 * @param classLoader
 	 */
 	private HelpSet createHelpSet(URL url, GHelpClassLoader classLoader) throws HelpSetException {
 		if (!urlToHelpSets.containsKey(url)) {
@@ -668,7 +668,7 @@ public class HelpManager implements HelpService {
 		return null;
 	}
 
-	/** 
+	/**
 	 * Set the color resources on the JEditorPane for selection so that
 	 * you can see the highlights when you do a search in the JavaHelp.
 	 */

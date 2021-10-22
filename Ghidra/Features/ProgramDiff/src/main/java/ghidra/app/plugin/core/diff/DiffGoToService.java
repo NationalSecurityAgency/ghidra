@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A service that provides the ability to go to a particular address or location in the 
+ * A service that provides the ability to go to a particular address or location in the
  * right-hand listing of the Diff.
  */
 public class DiffGoToService implements GoToService {
@@ -36,7 +36,7 @@ public class DiffGoToService implements GoToService {
 	private GoToHelper helper;
 
 	/**
-	 * Creates a service that provides the ability to go to a particular address or location 
+	 * Creates a service that provides the ability to go to a particular address or location
 	 * in the right-hand listing of the Diff.
 	 * @param goToService basic GoToService for the left-side listing that this will override
 	 * so it can go to addresses and locations in the right-side listing.
@@ -214,7 +214,7 @@ public class DiffGoToService implements GoToService {
 	 * The second program's location (the right listing) isn't saved since the navigation is
 	 * relative to a program in the tool's main listing. Also, if the second program's
 	 * locations were saved in the history, their program wouldn't be found and would cause
-	 * errors when restarting the application with the tool and primary program displayed, but 
+	 * errors when restarting the application with the tool and primary program displayed, but
 	 * no Diff program.
 	 */
 	private void saveLocation() {

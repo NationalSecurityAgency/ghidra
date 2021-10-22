@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ public class GTreeSelectPathsTask extends GTreeTask {
 	 * Tells the JTree to not expand paths for each selection that is set upon it.  Doing this
 	 * will speed-up performance.   However, only call this when some other task is going to
 	 * ensure that paths are properly expanded.
-	 * 
+	 *
 	 * @param disabled true to disable
 	 */
 	public void setExpandingDisabled(boolean disabled) {
@@ -98,7 +98,7 @@ public class GTreeSelectPathsTask extends GTreeTask {
 		selectionModel.setSelectionPaths(treePaths, origin);
 
 		if (treePaths != null && treePaths.length > 0) {
-			// Scroll to the last item, as the tree will make the given path appear at the 
+			// Scroll to the last item, as the tree will make the given path appear at the
 			// bottom of the view.  By scrolling the last item, all the selected items above
 			// this one will appear in the view as well.
 			jTree.scrollPathToVisible(treePaths[treePaths.length - 1]);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public class CliTableExportedType extends CliAbstractTable {
 		public int typeNameIndex;
 		public int typeNamespaceIndex;
 		public int implementationIndex;
-		
+
 		public CliExportedTypeRow(int flags, int typeDefIdIndex, int typeNameIndex,
 				int typeNamespaceIndex, int implementationIndex) {
 			super();
@@ -63,7 +63,7 @@ public class CliTableExportedType extends CliAbstractTable {
 				// TODO: getRowFromTable(TableName.TypeDef, typeDefIdIndex) instead of "", need to verify the meaning of the field. can there be multiple modules per assembly?
 		}
 	}
-	
+
 	public CliTableExportedType(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
@@ -75,7 +75,7 @@ public class CliTableExportedType extends CliAbstractTable {
 		}
 		reader.setPointerIndex(this.readerOffset);
 	}
-	
+
 	@Override
 	public StructureDataType getRowDataType() {
 		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "ExportedType Row", 0);

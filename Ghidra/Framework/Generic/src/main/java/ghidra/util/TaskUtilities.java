@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,11 +47,11 @@ public class TaskUtilities {
 	}
 
 	/**
-	 * Adds a Task to the list of tasks that have not yet finished running.  
+	 * Adds a Task to the list of tasks that have not yet finished running.
 	 * <P>
-	 * Note: it is safe to add the same task more than once, as it will not be repeatedly 
+	 * Note: it is safe to add the same task more than once, as it will not be repeatedly
 	 * tracked.
-	 * 
+	 *
 	 * @param task The task to watch
 	 * @param monitor the task monitor for the given task
 	 */

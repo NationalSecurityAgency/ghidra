@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,7 @@ public class FVTable extends GTable
 
 	/**
 	 * Ctor.
-	 * 
+	 *
 	 * @param reader
 	 * @param viewportUtility
 	 * @param model
@@ -101,7 +101,7 @@ public class FVTable extends GTable
 
 		createKeyBindings(reader, model, eventListener);
 
-		// Set this to enable the columns to set to the proper widths; we don't want swing 
+		// Set this to enable the columns to set to the proper widths; we don't want swing
 		// resizing them or we won't be able to get horizontal scrolling to work.
 		setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		getTableHeader().setResizingAllowed(false);
@@ -134,7 +134,7 @@ public class FVTable extends GTable
 
 	/**
 	 * Sets the status of the shift key.
-	 * 
+	 *
 	 * @param isDown
 	 */
 	public void setShiftDown(boolean isDown) {
@@ -147,7 +147,7 @@ public class FVTable extends GTable
 
 	/**
 	 * Adds the given row to the table.
-	 * 
+	 *
 	 * @param row
 	 */
 	public void addRow(String row) {
@@ -156,7 +156,7 @@ public class FVTable extends GTable
 
 	/**
 	 * Adds the list of rows to the table.
-	 * 
+	 *
 	 * @param rows
 	 */
 	public void addRows(List<String> rows) {
@@ -164,13 +164,13 @@ public class FVTable extends GTable
 	}
 
 	/**
-	 * Set any previously selected table rows to a selected state. This should be called any 
-	 * time a chunk is read into the table. 
-	 * 
-	 * Note: This is critically important when the user has selected a row, then scrolled such that 
+	 * Set any previously selected table rows to a selected state. This should be called any
+	 * time a chunk is read into the table.
+	 *
+	 * Note: This is critically important when the user has selected a row, then scrolled such that
 	 * the selected row is in a chunk that has been swapped out and is no longer in the table. When
 	 * that chunk is scrolled back into view, this will restore the selection.
-	 * 
+	 *
 	 * Note2: If there is a range of selected values and the table is somewhere in the middle of
 	 * that range, just select the entire table.
 	 */
@@ -188,7 +188,7 @@ public class FVTable extends GTable
 		long firstRowStart = firstRowChunk.start;
 		long lastRowEnd = lastRowChunk.end;
 
-		// CASE 1: Selection encompasses all of the table. 
+		// CASE 1: Selection encompasses all of the table.
 		if (model.selectedByteStart <= firstRowStart && model.selectedByteEnd >= lastRowEnd) {
 			setRowSelectionInterval(0, getRowCount() - 1);
 		}
@@ -234,7 +234,7 @@ public class FVTable extends GTable
 	/**
 	 * Increments the selection by the given number of rows, but doesn't affect any previously
 	 * selected rows. This is typically called when selecting while dragging.
-	 * 
+	 *
 	 * @param rows
 	 */
 	public void incrementAndAddSelection(int rows) {
@@ -282,7 +282,7 @@ public class FVTable extends GTable
 							return;
 						}
 						((FVTableModel) getModel()).removeRowsFromTop(chunk.linesInChunk);
-	
+
 						// Now slide the viewport back up to account for what we just read in.
 						viewportUtility.moveViewportUp(chunk.linesInChunk, false);
 					}
@@ -298,7 +298,7 @@ public class FVTable extends GTable
 	/**
 	 * Moves the table selection down by the number of rows specified, ensuring that selection
 	 * does not go beyond the bounds of the file.
-	 * 
+	 *
 	 * @param rows
 	 */
 	public void incrementSelection(int rows) {
@@ -354,7 +354,7 @@ public class FVTable extends GTable
 							return;
 						}
 						((FVTableModel) getModel()).removeRowsFromTop(chunk.linesInChunk);
-	
+
 						// Now slide the viewport back up to account for what we just read in.
 						viewportUtility.moveViewportUp(chunk.linesInChunk, false);
 					}
@@ -368,9 +368,9 @@ public class FVTable extends GTable
 	}
 
 	/**
-	 * Decrements the selection by the number of rows given, and adds the new rows to the 
+	 * Decrements the selection by the number of rows given, and adds the new rows to the
 	 * selection.
-	 * 
+	 *
 	 * @param rows
 	 */
 	public void decrementAndAddSelection(int rows) {
@@ -413,7 +413,7 @@ public class FVTable extends GTable
 
 					// Now slide the viewport back up to account for what we just read in.
 					viewportUtility.moveViewportDown(lines.size(), false);
-	
+
 					if (model.getSize() > model.MAX_VISIBLE_CHUNKS) {
 						Chunk chunk = model.remove(model.getSize() - 1);
 						if (chunk == null) {
@@ -433,7 +433,7 @@ public class FVTable extends GTable
 	/**
 	 * Moves the table selection up by the number of rows specified, ensuring that selection
 	 * does not go beyond the beginning of the file.
-	 * 
+	 *
 	 * @param rows
 	 */
 	public void decrementSelection(int rows) {
@@ -488,7 +488,7 @@ public class FVTable extends GTable
 
 					// Now slide the viewport back up to account for what we just read in.
 					viewportUtility.moveViewportDown(lines.size(), false);
-					
+
 					// And remove chunks if necessary.
 					if (model.getSize() > model.MAX_VISIBLE_CHUNKS) {
 						Chunk chunk = model.remove(model.getSize() - 1);
@@ -499,7 +499,7 @@ public class FVTable extends GTable
 					}
 				});
 
-				
+
 			}
 			catch (IOException e) {
 				Msg.error(this, "Error reading previous chunk of data", e);
@@ -508,9 +508,9 @@ public class FVTable extends GTable
 	}
 
 	/**
-	 * Invoked when a new row has been selected in the table. Update our chunk model to 
+	 * Invoked when a new row has been selected in the table. Update our chunk model to
 	 * reflect as much.
-	 * 
+	 *
 	 * @param e
 	 */
 	@Override
@@ -522,8 +522,8 @@ public class FVTable extends GTable
 		// be problematic).
 		//
 		// IF the shift key is down, then we're selecting a range. It may be the case that the start
-		// of the range is no longer in the table (ie: click one row, then scroll 7 chunks down, 
-		// hold shift, and click again). To make sure we handle this case, ONLY reset the 
+		// of the range is no longer in the table (ie: click one row, then scroll 7 chunks down,
+		// hold shift, and click again). To make sure we handle this case, ONLY reset the
 		// selected end position if the shift key is down.
 		//
 		// However, if the user is selecting a row ABOVE the currently-selected one(s), then
@@ -546,7 +546,7 @@ public class FVTable extends GTable
 			else {
 				Pair filePosFirstRow = model.getFilePositionForRow(selectedRows[0]);
 				Pair filePosLastRow  = model.getFilePositionForRow(selectedRows[selectedRows.length - 1]);
-				
+
 				if (filePosFirstRow == null || filePosLastRow == null) {
 					return;
 				}
@@ -578,9 +578,9 @@ public class FVTable extends GTable
 	 *   - end
 	 *   - Ctrl-C (Command-C for mac) for copy
 	 *   - Ctrl-A (Command-A for mac) for select all
-	 *   - Shift pressed 
+	 *   - Shift pressed
 	 *   - Shift released
-	 * 
+	 *
 	 * @param reader
 	 * @param model
 	 * @param eventListener
@@ -606,7 +606,7 @@ public class FVTable extends GTable
 		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, 0), "End");
 		am_table.put("End", new EndAction(eventListener));
 
-		// Handle arrow up and arrow down when the shift key is pressed, meaning we need to 
+		// Handle arrow up and arrow down when the shift key is pressed, meaning we need to
 		// move the viewport AND maintain selection.
 		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, InputEvent.SHIFT_DOWN_MASK),
 			"DownArrowSelection");
@@ -615,7 +615,7 @@ public class FVTable extends GTable
 			"UpArrowSelection");
 		am_table.put("UpArrowSelection", new ArrowUpSelectionAction(eventListener));
 
-		// Handle Page up and Page down when the shift key is pressed, meaning we need to 
+		// Handle Page up and Page down when the shift key is pressed, meaning we need to
 		// move the viewport AND maintain selection.
 		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, InputEvent.SHIFT_DOWN_MASK),
 			"PageDownSelection");
@@ -637,7 +637,7 @@ public class FVTable extends GTable
 
 		});
 
-		// Recognize when the shift key has been pressed and released, so we know how to handle 
+		// Recognize when the shift key has been pressed and released, so we know how to handle
 		// selection.
 		im_table.put(KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, InputEvent.SHIFT_DOWN_MASK, false),
 			"ShiftPressed");
@@ -684,7 +684,7 @@ public class FVTable extends GTable
 
 	/**
 	 * Returns true if the rows provided are both in the table.
-	 * 
+	 *
 	 * @param rowStart
 	 * @param rowEnd
 	 * @return
@@ -706,8 +706,8 @@ public class FVTable extends GTable
 		int tableTop = (int) this.getParent().getLocationOnScreen().getY();
 		int tableBottom = (int) (tableTop + this.getSize().getHeight());
 
-		// See if the last row is selected; if so, and we're dragging up, we need to load a new 
-		// chunk. 
+		// See if the last row is selected; if so, and we're dragging up, we need to load a new
+		// chunk.
 		if (e.getLocationOnScreen().getY() < tableTop) {
 			if (IntStream.of(selectedRows).anyMatch(x -> x == 0)) {
 				FVEvent decrementEvt = new FVEvent(EventType.DECREMENT_AND_ADD_SELECTION, 1);

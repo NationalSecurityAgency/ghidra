@@ -1,8 +1,8 @@
 /* ###
  * IP: Public Domain
  */
-// Recurse root project subdirectories and include all discovered projects 
-// (directories containing a build.gradle file) 
+// Recurse root project subdirectories and include all discovered projects
+// (directories containing a build.gradle file)
 fileTree(rootProject.projectDir) {
 	exclude 'build.gradle' // exclude root project
 	include '**/build.gradle'

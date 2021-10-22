@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,7 +81,7 @@ public abstract class AbstractInstructionTable extends GhidraTable {
 		// the first column, and that operand columns are in a particular order.
 		this.getTableHeader().setReorderingAllowed(false);
 
-		// The default cell size is a bit small and makes the text a bit hard 
+		// The default cell size is a bit small and makes the text a bit hard
 		// to read, so increase it to provide some space around the text.
 		this.setRowHeight(this.getRowHeight() + CELL_HEIGHT_PADDING);
 	}
@@ -93,7 +93,7 @@ public abstract class AbstractInstructionTable extends GhidraTable {
 	/**
 	 * Returns the data object at the given cell location. We need to check
 	 * first to make sure the row/col values map to a valid cell.
-	 * 
+	 *
 	 * @param row
 	 * @param col
 	 * @return
@@ -122,7 +122,7 @@ public abstract class AbstractInstructionTable extends GhidraTable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	public JToolBar getToolbar() {
@@ -156,7 +156,7 @@ public abstract class AbstractInstructionTable extends GhidraTable {
 	/**
 	 * Creates the array of strings that will be our column headers. Clients
 	 * must implement this since each implementation will be unique.
-	 * 
+	 *
 	 * @return array of column names
 	 */
 	protected abstract Object[] createColumnHeaders();

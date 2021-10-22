@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * Database implementation of a Variable. 
+ * Database implementation of a Variable.
  *
  */
 public abstract class VariableDB implements Variable {
@@ -413,7 +413,7 @@ public abstract class VariableDB implements Variable {
 
 //	/**
 //	 * Flush the current variable storage to the underlying symbol.  This method assumes
-//	 * that the dynamically assigned storage was previously set via 
+//	 * that the dynamically assigned storage was previously set via
 //	 * {@link #setDynamicStorage(VariableStorage)} when transitioning from
 //	 * dynamic to custom.
 //	 */

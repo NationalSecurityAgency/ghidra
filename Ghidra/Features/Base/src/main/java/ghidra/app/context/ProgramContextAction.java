@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ public abstract class ProgramContextAction extends DockingAction {
 	public ProgramContextAction(String name, String owner) {
 		super(name, owner);
 	}
-	
+
 	@Override
 	public boolean isEnabledForContext(ActionContext actionContext) {
 		if (!(actionContext instanceof ProgramActionContext)) {
@@ -40,7 +40,7 @@ public abstract class ProgramContextAction extends DockingAction {
 	public final void actionPerformed(ActionContext context) {
 		actionPerformed((ProgramActionContext)context);
 	}
-	
+
 	@Override
 	public boolean isValidContext(ActionContext context) {
 		if (!(context instanceof ProgramActionContext)) {
@@ -56,22 +56,22 @@ public abstract class ProgramContextAction extends DockingAction {
 		}
 		return isAddToPopup((ProgramActionContext)context);
 	}
-	
+
 	protected boolean isAddToPopup(ProgramActionContext context) {
 		return isEnabledForContext( context );
 	}
-	
+
 	protected boolean isValidContext(ProgramActionContext context) {
 		return true;
 	}
-	
+
 	protected boolean isEnabledForContext(ProgramActionContext context) {
 		return true;
 	}
 	protected abstract void actionPerformed(ProgramActionContext programContext);
-	
+
 	protected final void actionPerformed(ProgramActionContext programContext, ActionContext actionContext) {
-		
+
 	}
 
 }

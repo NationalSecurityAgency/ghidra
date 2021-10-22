@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -300,7 +300,7 @@ public abstract class AbstractModularizationCmd extends BackgroundCommand {
 
 	/**
 	 * Method cleanTree. Removes all empty fragments and empty modules
-	 * 
+	 *
 	 * @param module the root branch to be cleaned. Can be branch or entire tree
 	 * @throws NotEmptyException if attempting to remove a module or fragment that is not empty
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public class SkeletonFileSystem implements GFileSystem {
 
 	/**
 	 * File system constructor.
-	 * 
+	 *
 	 * @param fsFSRL The root {@link FSRL} of the file system.
 	 * @param provider The file system provider.
 	 */
@@ -56,13 +56,13 @@ public class SkeletonFileSystem implements GFileSystem {
 
 	/**
 	 * Mounts (opens) the file system.
-	 * 
+	 *
 	 * @param monitor A cancellable task monitor.
 	 */
 	public void mount(TaskMonitor monitor) {
 		monitor.setMessage("Opening " + SkeletonFileSystem.class.getSimpleName() + "...");
 
-		// TODO: Customize how things in the file system are stored.  The following should be 
+		// TODO: Customize how things in the file system are stored.  The following should be
 		// treated as pseudo-code.
 		for (MyMetadata metadata : new MyMetadata[10]) {
 			if (monitor.isCancelled()) {
@@ -159,8 +159,8 @@ public class SkeletonFileSystem implements GFileSystem {
 		public boolean probe(ByteProvider byteProvider, FileSystemService fsService,
 				TaskMonitor monitor) throws IOException, CancelledException {
 
-			// TODO: Quickly and efficiently examine the bytes in 'byteProvider' to determine if 
-			// it's a valid file system.  If it is, return true. 
+			// TODO: Quickly and efficiently examine the bytes in 'byteProvider' to determine if
+			// it's a valid file system.  If it is, return true.
 
 			return false;
 		}

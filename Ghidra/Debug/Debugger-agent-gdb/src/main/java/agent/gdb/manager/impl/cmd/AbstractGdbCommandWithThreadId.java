@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ public abstract class AbstractGdbCommandWithThreadId<T> extends AbstractGdbComma
 
 	/**
 	 * Construct a thread-specific command to be executed by the given manager
-	 * 
+	 *
 	 * @param manager the manager to execute the command
 	 * @param threadId the ID of the thread to pass to "{@code --thread}"
 	 */
@@ -48,7 +48,7 @@ public abstract class AbstractGdbCommandWithThreadId<T> extends AbstractGdbComma
 
 	/**
 	 * Get the ID of the thread to pass to "{@code --thread}"
-	 * 
+	 *
 	 * @return the thread ID
 	 */
 	public Integer getThreadId() {
@@ -62,15 +62,15 @@ public abstract class AbstractGdbCommandWithThreadId<T> extends AbstractGdbComma
 
 	/**
 	 * Encode the command in GDB/MI, given the pre-constructed thread argument part
-	 * 
+	 *
 	 * <p>
 	 * The given thread argument is preceded by a space, but not followed by one. For example, a
 	 * command can be properly constructed as:
-	 * 
+	 *
 	 * <pre>
 	 * return "-some-command" + threadPart + " some-argument";
 	 * </pre>
-	 * 
+	 *
 	 * @param threadPart the "{@code --thread [ID]}" part
 	 * @return the encoded command
 	 */

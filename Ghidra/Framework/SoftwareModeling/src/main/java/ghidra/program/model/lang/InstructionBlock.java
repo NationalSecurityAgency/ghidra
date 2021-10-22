@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class InstructionBlock implements Iterable<Instruction> {
 	}
 
 	/**
-	 * @return true if this block should be treated as the start of a new 
+	 * @return true if this block should be treated as the start of a new
 	 * flow when added to a InstructionSet.
 	 */
 	public boolean isFlowStart() {
@@ -95,7 +95,7 @@ public class InstructionBlock implements Iterable<Instruction> {
 	 * @param min the minimum intersection address
 	 * @param max the maximum intersection address
 	 * @return instruction within this block which intersects the specified range or null
-	 * if not found 
+	 * if not found
 	 */
 	public Instruction findFirstIntersectingInstruction(Address min, Address max) {
 		Instruction intersectInstr = null;
@@ -172,7 +172,7 @@ public class InstructionBlock implements Iterable<Instruction> {
 
 	/**
 	 * Sets the fall through address for this block and is used by the block flow
-	 * iterator of the associated InstructionSet.  The fallthrough should not be 
+	 * iterator of the associated InstructionSet.  The fallthrough should not be
 	 * set if it is added as a block flow.
 	 * @param fallthroughAddress the address of the fallthrough
 	 */
@@ -191,7 +191,7 @@ public class InstructionBlock implements Iterable<Instruction> {
 
 	/**
 	 * Returns a list of all block flows that were added to this instruction block as
-	 * a list of InstructionBlockFlow objects.  NOTE: These flows may not be contained 
+	 * a list of InstructionBlockFlow objects.  NOTE: These flows may not be contained
 	 * within the associated InstructionSet.
 	 * @return a list of all flows that were added to this instruction block.
 	 */
@@ -200,7 +200,7 @@ public class InstructionBlock implements Iterable<Instruction> {
 	}
 
 	/**
-	 * Returns the fallthrough address.  Null is returned if there is no fall through. 
+	 * Returns the fallthrough address.  Null is returned if there is no fall through.
 	 * @return the fallthrough address.
 	 */
 	public Address getFallThrough() {
@@ -208,8 +208,8 @@ public class InstructionBlock implements Iterable<Instruction> {
 	}
 
 	/**
-	 * Sets this block to have an instruction error.  
-	 * @param type The type of error/conflict. 
+	 * Sets this block to have an instruction error.
+	 * @param type The type of error/conflict.
 	 * @param intendedInstructionAddress address of intended instruction which failed to be created
 	 * @param conflictAddress the address of the exiting code unit that is preventing the instruction in this
 	 * block to be laid down (required for CODE_UNIT or DUPLCIATE conflict error).
@@ -259,7 +259,7 @@ public class InstructionBlock implements Iterable<Instruction> {
 	 */
 	public void setCodeUnitConflict(Address codeUnitAddr, Address newInstrAddr,
 			Address flowFromAddr, boolean isInstruction, boolean isOffcut) {
-		// NOTE: CodeManager relies on conflict address being the address of the existing 
+		// NOTE: CodeManager relies on conflict address being the address of the existing
 		// code unit which triggered the conflict - any conflict bookmark on an undefined code unit
 		// runs the risk of becoming offcut within a subsequent larger code unit.
 		InstructionErrorType errorType;
@@ -278,7 +278,7 @@ public class InstructionBlock implements Iterable<Instruction> {
 
 	/**
 	 * Sets this block to have a PARSE conflict which means that the instruction parse failed
-	 * at the specified conflictAddress using the specified contextValue.  
+	 * at the specified conflictAddress using the specified contextValue.
 	 * @param conflictAddress the address of the exiting code unit that is preventing the instruction in this
 	 * block to be laid down.
 	 * @param contextValue the context-register value used during the failed parse attempt

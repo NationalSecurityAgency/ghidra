@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -313,7 +313,7 @@ public class DebuggerModelServiceProxyPlugin extends Plugin
 		public int compare(DebuggerProgramLaunchOffer o1, DebuggerProgramLaunchOffer o2) {
 			int i1 = fastIndex.getOrDefault(o1, -1);
 			int i2 = fastIndex.getOrDefault(o2, -1);
-			int result = i1 - i2; // reversed, yes. Most recent is last in list 
+			int result = i1 - i2; // reversed, yes. Most recent is last in list
 			if (result != 0) {
 				return result;
 			}

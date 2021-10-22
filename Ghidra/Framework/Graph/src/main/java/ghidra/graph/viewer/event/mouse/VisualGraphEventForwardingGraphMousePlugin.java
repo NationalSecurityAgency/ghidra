@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,9 @@ import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
 import ghidra.graph.viewer.*;
 
 //@formatter:off
-public class VisualGraphEventForwardingGraphMousePlugin<V extends VisualVertex, 
+public class VisualGraphEventForwardingGraphMousePlugin<V extends VisualVertex,
 														E extends VisualEdge<V>>
-		extends AbstractGraphMousePlugin 
+		extends AbstractGraphMousePlugin
 		implements MouseListener, MouseMotionListener, VisualGraphMousePlugin<V, E> {
 //@formatter:on
 
@@ -133,7 +133,7 @@ public class VisualGraphEventForwardingGraphMousePlugin<V extends VisualVertex,
 				return;
 			}
 
-			// Compare the mouse pressed Java component with the mouse released Java 
+			// Compare the mouse pressed Java component with the mouse released Java
 			// component.  If they are different, then forward the released event to the
 			// original, mouse pressed component.  This helps fix issues where dragging started
 			// in the contents of a vertex, but ended on the header.
@@ -182,8 +182,8 @@ public class VisualGraphEventForwardingGraphMousePlugin<V extends VisualVertex,
 	}
 
 	/*
-	 * The user has initiated a mouse operation, going from inside a vertex to outside the vertex, 
-	 * and we want to make sure that event are still given to the original vertex (this allows 
+	 * The user has initiated a mouse operation, going from inside a vertex to outside the vertex,
+	 * and we want to make sure that event are still given to the original vertex (this allows
 	 * operations like dragging inside of vertices to work as expected)
 	 */
 	private void handleMouseEventAfterLeavingVertex(MouseEvent e,

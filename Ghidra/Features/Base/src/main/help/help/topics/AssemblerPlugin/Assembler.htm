@@ -28,7 +28,7 @@ ol.ratings li {
     complete instruction. Activating a completion suggestion will input that text at your cursor.
     Activating a byte sequence will complete the action, replacing the instruction at your cursor.
     Pressing ESC or clicking outside of the assembly editor will cancel the action.</P>
-    
+
     <P align="center"><IMG border="1" src="images/Assembler.png"></P>
 
     <P align="center">Assembly Editor</P>
@@ -42,19 +42,19 @@ ol.ratings li {
 
     <P>Ghidra's assembler is based on the same SLEIGH modeling that powers the disassembler. This
     offers some nice benefits:</P>
-    
+
     <UL>
       <LI>There is no need for an external tool chain.
       <LI>The assembler and disassembler share the same mnemonic syntax.
       <LI>Most Ghidra-supported processors are also supported by the assembler.
       <LI>Processors added to Ghidra automatically get an assembler.
     </UL>
-    
+
     <P>Keep in mind, the above list is in an ideal world. We are in the process of improving the
     assembly engine and processor modules to eventually support assembly for all of Ghidra's
     processors. In the meantime, we test several popular processors and assign a performance rating
     to each. The possible ratings are:</P>
-    
+
     <OL class="ratings">
       <LI><B>Platinum:</B> Our automated tests did not find any errors. This offers the best
       possible user experience.</LI>
@@ -69,9 +69,9 @@ ol.ratings li {
       <LI><B>Unrated:</B> The processor is not tested, or the test failed before a rating could be
       assigned. You might get lucky, but don't count on it.</LI>
     </OL>
-    
+
     <P>As of this release, our tested processors fall under Platinum, Gold, or Poor.</P>
-    
+
     <UL>
       <LI>Platinum</LI>
       <UL>

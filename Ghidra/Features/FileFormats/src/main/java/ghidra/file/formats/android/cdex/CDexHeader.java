@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,10 +25,10 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * CDEX Header extends DEX header, but adds additional members
- * 
+ *
  * class Header : public DexFile::Header {
- * 
- * 
+ *
+ *
  * https://android.googlesource.com/platform/art/+/master/libdexfile/dex/compact_dex_file.h
  */
 public class CDexHeader extends DexHeader {

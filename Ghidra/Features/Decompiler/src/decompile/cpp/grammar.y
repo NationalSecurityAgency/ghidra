@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ declaration:
   | declaration_specifiers init_declarator_list ';' { $$ = parse->mergeSpecDecVec($1,$2); }
 ;
 
-declaration_specifiers: 
+declaration_specifiers:
   STORAGE_CLASS_SPECIFIER { $$ = parse->newSpecifier(); parse->addSpecifier($$,$1); }
   | type_specifier { $$ = parse->newSpecifier(); parse->addTypeSpecifier($$,$1); }
   | TYPE_QUALIFIER { $$ = parse->newSpecifier(); parse->addSpecifier($$,$1); }
@@ -819,7 +819,7 @@ bool TypeDeclarator::isValid(void) const
     count += 1;
   if (count > 1)
     throw ParseError("Multiple type qualifiers");
-  
+
   for(uint4 i=0;i<mods.size();++i) {
     if (!mods[i]->isValid())
       return false;
@@ -1023,7 +1023,7 @@ Datatype *CParse::newStruct(const string &ident,vector<TypeDeclarator *> *declis
 { // Build a new structure
   TypeStruct *res = glb->types->getTypeStruct(ident); // Create stub (for recursion)
   vector<TypeField> sublist;
-  
+
   for(uint4 i=0;i<declist->size();++i) {
     TypeDeclarator *decl = (*declist)[i];
     if (!decl->isValid()) {
@@ -1352,7 +1352,7 @@ void parse_protopieces(PrototypePieces &pieces,
   TypeDeclarator *decl = (*decls)[0];
   if (!decl->isValid())
     throw ParseError("Parsed type is invalid");
-  
+
   if (!decl->getPrototype(pieces,glb))
     throw ParseError("Did not parse a prototype");
 }

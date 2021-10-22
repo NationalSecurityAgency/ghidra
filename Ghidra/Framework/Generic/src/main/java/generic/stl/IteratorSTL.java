@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package generic.stl;
 
 
 public interface IteratorSTL<T> {
-	
+
 	/**
 	 * Returns the current value of the iterator.
 	 * @return the current value of the iterator.
@@ -26,7 +26,7 @@ public interface IteratorSTL<T> {
 	 * after the last value.
 	 */
 	T get();
-	
+
 	/**
 	 * Sets the current value of the iterator to the given value.
 	 * @param value the value to set at the iterator position
@@ -34,7 +34,7 @@ public interface IteratorSTL<T> {
 	 * after the last value.
 	 */
 	void set(T value);
-	
+
 	/**
 	 * Advances the iterator to the next position.
 	 * @return a reference to the iterator itself
@@ -48,10 +48,10 @@ public interface IteratorSTL<T> {
 	 * @throws IndexOutOfBoundsException if the n value pushes past the end of the collection.
 	 */
 	IteratorSTL<T> increment(int n);
-	
-	
+
+
 	/**
-	 * Devance the iterator to the previous position.  This method is only supported in 
+	 * Devance the iterator to the previous position.  This method is only supported in
 	 * bidirectional iterators.
 	 * @return a reference to the iterator itself
 	 */
@@ -70,7 +70,7 @@ public interface IteratorSTL<T> {
 	 * @return true if the iterator is positioned on the first element of the collection.
 	 */
 	boolean isBegin();
-	
+
 	/**
 	 * Returns true if the iterator is positioned past the last element of the collection.  If the
 	 * collection is empty, this will always return true.

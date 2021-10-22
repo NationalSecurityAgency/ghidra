@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,22 +54,22 @@ public class ResourceDirectory implements StructConverter {
     private short  numberOfIdEntries;
     private ArrayList<ResourceDirectoryEntry> entries = new ArrayList<ResourceDirectoryEntry>();
 
-    public ResourceDirectory(FactoryBundledWithBinaryReader reader, 
-    						int index, 
-    						int resourceBase, 
+    public ResourceDirectory(FactoryBundledWithBinaryReader reader,
+    						int index,
+    						int resourceBase,
     						boolean isFirstLevel,
     						NTHeader ntHeader) throws IOException {
 
     	if (!ntHeader.checkPointer(index)) {
         	Msg.error(this, "Invalid file index "+Integer.toHexString(index));
-        	return;	
+        	return;
     	}
     	if (ResourceDataDirectory.directoryMap.contains(index)) {
     		Msg.error(this, "Duplicate ResourceDirectory at "+index+" ignored.");
     		return;
     	}
     	ResourceDataDirectory.directoryMap.add(index);
-    	
+
     	characteristics      = reader.readInt  (index); index += BinaryReader.SIZEOF_INT;
         timeDataStamp        = reader.readInt  (index); index += BinaryReader.SIZEOF_INT;
         majorVersion         = reader.readShort(index); index += BinaryReader.SIZEOF_SHORT;
@@ -85,7 +85,7 @@ public class ResourceDirectory implements StructConverter {
 	    for (int i = 0 ; i < numberOfNamedEntries ; ++i) {
         	if (!ntHeader.checkPointer(index)) {
             	Msg.error(this, "Invalid file index "+Integer.toHexString(index));
-        		return;	
+        		return;
         	}
 	    	ResourceDirectoryEntry entry = new ResourceDirectoryEntry(reader, index, resourceBase, true, isFirstLevel, ntHeader);
 	    	if (!entry.isValid()) {
@@ -97,7 +97,7 @@ public class ResourceDirectory implements StructConverter {
 		for (int i = 0 ; i < numberOfIdEntries ; ++i) {
         	if (!ntHeader.checkPointer(index)) {
             	Msg.error(this, "Invalid file index "+Integer.toHexString(index));
-        		return;	
+        		return;
         	}
 			ResourceDirectoryEntry entry = new ResourceDirectoryEntry(reader, index, resourceBase, false, isFirstLevel, ntHeader);
 	    	if (!entry.isValid()) {
@@ -113,7 +113,7 @@ public class ResourceDirectory implements StructConverter {
 	}
 
     /**
-     * Theoretically, this field could hold flags for the resource, but appears to always be 0. 
+     * Theoretically, this field could hold flags for the resource, but appears to always be 0.
      * @return the flags for the resource
      */
     public int getCharacteristics() {
@@ -127,14 +127,14 @@ public class ResourceDirectory implements StructConverter {
         return timeDataStamp;
     }
     /**
-     * Returns the number of array elements that use names and that follow this structure. 
+     * Returns the number of array elements that use names and that follow this structure.
      * @return the number of array elements that use names and that follow this structure
      */
     public int getNumberOfNamedEntries() {
         return numberOfNamedEntries;
     }
     /**
-     * Returns the number of array elements that use integer IDs, and which follow this structure. 
+     * Returns the number of array elements that use integer IDs, and which follow this structure.
      * @return the number of array elements that use integer IDs, and which follow this structure
      */
     public int getNumberOfIdEntries() {

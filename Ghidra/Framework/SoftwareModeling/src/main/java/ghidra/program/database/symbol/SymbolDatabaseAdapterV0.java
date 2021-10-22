@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,10 +27,10 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>SymbolDatabaseAdapterV0</code> handles symbol tables which were created 
- * prior to the addition of Namespace support and Function symbols.  Function symbols 
- * are synthesized for those functions whose entry point currently has a 
- * label symbol.  The ID of these synthesized function symbols is the max ID plus 
+ * <code>SymbolDatabaseAdapterV0</code> handles symbol tables which were created
+ * prior to the addition of Namespace support and Function symbols.  Function symbols
+ * are synthesized for those functions whose entry point currently has a
+ * label symbol.  The ID of these synthesized function symbols is the max ID plus
  * the function ID.  The function Namespace ID is the same as the Function ID.
  * The upgrade of this version may also add additional Function symbols for which there
  * is no corresponding label symbol.
@@ -38,7 +38,7 @@ import ghidra.util.task.TaskMonitor;
 class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 
 /* Do not remove the following commented out schema! It shows the version 0 symbol table schema. */
-//	static final Schema SYMBOL_SCHEMA = new Schema(0, "Key", 
+//	static final Schema SYMBOL_SCHEMA = new Schema(0, "Key",
 //			new Class[] {StringField.class,
 //				BooleanField.class, BooleanField.class,
 //				BooleanField.class, LongField.class},
@@ -78,7 +78,7 @@ class SymbolDatabaseAdapterV0 extends SymbolDatabaseAdapter {
 	 * is so old, we don't have enough information in the record to upgrade during the normal
 	 * upgrade time. So we store off the information and will complete this upgrade when
 	 * {@link SymbolManager#programReady(int, int, TaskMonitor)} is called
-	 * 
+	 *
 	 * @param handle handle to temporary database
 	 * @param monitor the {@link TaskMonitor}
 	 * @return the next available database key after all the records are store

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ class PyDevUtilsInternal {
 
 	/**
 	 * Checks to see if PyDev is installed.
-	 * 
+	 *
 	 * @return True if PyDev is installed; otherwise, false.
 	 * @throws NoClassDefFoundError if PyDev is not installed.
 	 */
@@ -63,7 +63,7 @@ class PyDevUtilsInternal {
 
 	/**
 	 * Gets a list of discovered Jython 2.7 interpreter names.
-	 *  
+	 *
 	 * @return a list of discovered Jython 2.7 interpreter names.
 	 * @throws NoClassDefFoundError if PyDev is not installed or it does not support this operation.
 	 * @throws NoSuchMethodError if PyDev is not installed or it does not support this operation.
@@ -85,7 +85,7 @@ class PyDevUtilsInternal {
 
 	/**
 	 * Adds the given Jython interpreter to PyDev.
-	 * 
+	 *
 	 * @param interpreterName The name of the interpreter to add.
 	 * @param interpreterFile The interpreter to add.
 	 * @param interpreterLibDir The interpreter library directory to add.
@@ -113,7 +113,7 @@ class PyDevUtilsInternal {
 
 	/**
 	 * Sets up Python for the given Java project.
-	 * 
+	 *
 	 * @param javaProject The Java project to setup Python for.
 	 * @param classpathEntries The classpath entries to add to the Python path.
 	 * @param jythonInterpreterName The name of the Jython interpreter to use for Python support.
@@ -140,7 +140,7 @@ class PyDevUtilsInternal {
 
 	/**
 	 * Starts the PyDev remote debugger.
-	 * 
+	 *
 	 * @throws NoClassDefFoundError if PyDev is not installed or it does not support this operation.
 	 * @throws NoSuchMethodError if PyDev is not installed or it does not support this operation.
 	 */
@@ -149,6 +149,6 @@ class PyDevUtilsInternal {
 	}
 
 	private PyDevUtilsInternal() throws NoClassDefFoundError {
-		// Prevent instantiation 
+		// Prevent instantiation
 	}
 }

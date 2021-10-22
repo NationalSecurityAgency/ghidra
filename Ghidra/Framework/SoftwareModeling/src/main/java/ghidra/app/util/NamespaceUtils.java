@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.exception.*;
  * <b>Assumptions for creating namespaces from a path string: </b>
  * <ul>
  *     <li>All elements of a namespace path should be namespace symbols and not other
- *         symbol types.         
+ *         symbol types.
  *     <li>Absolute paths can optionally start with the global namespace.
  *     <li>You can provide a relative path that will start at the given
  *         parent namespace (or global if there is no parent provided).
@@ -128,7 +128,7 @@ public class NamespaceUtils {
 
 	/**
 	 * Returns a list of all namespaces with the given name in the parent namespace
-	 * 
+	 *
 	 * @param program the program to search
 	 * @param parent the parent namespace from which to find all namespaces with the given name;
 	 *        if null, the global namespace will be used
@@ -154,7 +154,7 @@ public class NamespaceUtils {
 	 * the global namespace name.
 	 *
 	 * <P>Note: this path must only contain Namespace names and no other symbol types.
-	 * 
+	 *
 	 * @param program the program to search
 	 * @param parent the namespace to use as the root for relative paths. If null, the
 	 * 		  global namespace will be used
@@ -330,11 +330,11 @@ public class NamespaceUtils {
 	 * and uses the given address to resolve functions with duplicate names.  When
 	 * resolving down the namespace path, a function that matches a name will only
 	 * be used if the given address is contained in the body of that function.
-	 * 
+	 *
 	 * <p>The root namespace can be a function.
-	 * 
-	 * <p>If an address is passed, then the path can contain a function name provided the 
-	 * address is in the body of the function; otherwise the names must all be namespaces other 
+	 *
+	 * <p>If an address is passed, then the path can contain a function name provided the
+	 * address is in the body of the function; otherwise the names must all be namespaces other
 	 * than functions.
 	 *
 	 * @param  namespacePath The namespace name or path string to be parsed
@@ -387,11 +387,11 @@ public class NamespaceUtils {
 
 	/**
 	 * Returns the existing Function at the given address if its {@link SymbolPath} matches the
-	 * given path  
+	 * given path
 	 *
 	 * @param program the program
 	 * @param symbolPath the path of namespace
-	 * @param address the address 
+	 * @param address the address
 	 * @return the namespace represented by the given path, or null if no such namespace exists
 	 */
 	public static Namespace getFunctionNamespaceAt(Program program, SymbolPath symbolPath,
@@ -412,12 +412,12 @@ public class NamespaceUtils {
 	}
 
 	/**
-	 * Returns the existing Function containing the given address if its 
-	 * {@link SymbolPath} matches the given path  
+	 * Returns the existing Function containing the given address if its
+	 * {@link SymbolPath} matches the given path
 	 *
 	 * @param program the program
 	 * @param symbolPath the path of namespace
-	 * @param address the address 
+	 * @param address the address
 	 * @return the namespace represented by the given path, or null if no such namespace exists
 	 */
 	public static Namespace getFunctionNamespaceContaining(Program program, SymbolPath symbolPath,
@@ -524,7 +524,7 @@ public class NamespaceUtils {
 	/**
 	 * Convert a namespace to a class by copying all namespace children into a newly created class
 	 * and then removing the old namespace
-	 * 
+	 *
 	 * @param namespace namespace to be converted
 	 * @return new class namespace
 	 * @throws InvalidInputException if namespace was contained within a function and can not be

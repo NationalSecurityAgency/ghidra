@@ -36,7 +36,7 @@ rdPlus1: is erd0=0xe {export inst_start;}#PC register
 	erd0 = operand1 + operand2;
 	addflags(operand1, operand2, erd0);
  }
- 
+
 #---------------------------------------------------------------------
 # MACHH.D - Multiply Halfwords and Accumulate in Doubleword
 # I.   d 		-> {0, 2, 4, ..., 14}
@@ -81,7 +81,7 @@ rdPlus1: is erd0=0xe {export inst_start;}#PC register
 #      part 	-> {t,b}
 #---------------------------------------------------------------------
 # MACWH.D Format I
-# Operation:	Operand1 = Rx;    
+# Operation:	Operand1 = Rx;
 #				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
 #				(Rd+1:Rd)[63:16] <- (operand1*operand2)[47:0] + (Rd+1:Rd)[63:16];
 #				Rd[15:0] <- 0;
@@ -110,7 +110,7 @@ rdPlus1: is erd0=0xe {export inst_start;}#PC register
 :MULHH.W erd0, rx9^operand1, ry0^operand2 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop8_4=0x7 & eop6_2=0x2 & selectorxy4_2 & erd0)) & operand1 & operand2 {
 	erd0 = operand1 * operand2;
  }
- 
+
 #---------------------------------------------------------------------
 # MULWH.D - Multiply Word with Halfword
 # I.   d 		-> {0, 2, 4, ..., 14}
@@ -118,7 +118,7 @@ rdPlus1: is erd0=0xe {export inst_start;}#PC register
 #      part 	-> {t,b}
 #---------------------------------------------------------------------
 # MULWH.D Format I
-# Operation:	Operand1 = Rx;    
+# Operation:	Operand1 = Rx;
 #				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
 #				(Rd+1:Rd)[63:16] <- (operand1*operand2);
 #				Rd[15:0] <- 0;
@@ -144,10 +144,10 @@ rdPlus1: is erd0=0xe {export inst_start;}#PC register
 # 111x xxx0 0000 yyyy 0000 0001 10XY dddd
 # Assumption: t = 1, b = 0 using XY
 :MULNHH.W erd0, rx9^operand1, ry0^operand2 is ((op13_3=0x7 & rx9 & op4_5=0x0 & ry0) ; (eop12_4=0x0 & eop8_4=0x1 & eop6_2=0x2 & selectorxy4_2 & erd0)) & operand1 & operand2 {
-	neg1:4 = 0xffffffff;  
+	neg1:4 = 0xffffffff;
 	erd0 = (neg1 * (operand1 * operand2));
  }
- 
+
 #---------------------------------------------------------------------
 # MULNWH.D - Multiply Word with Negated Halfword
 # I.   d 		-> {0, 2, 4, ..., 14}
@@ -155,7 +155,7 @@ rdPlus1: is erd0=0xe {export inst_start;}#PC register
 #      part 	-> {t,b}
 #---------------------------------------------------------------------
 # MULNWH.D Format I
-# Operation:	Operand1 = Rx;    
+# Operation:	Operand1 = Rx;
 #				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
 #				(Rd+1:Rd)[63:16] <- -(operand1*operand2);
 #				Rd[15:0] <- 0;
@@ -178,13 +178,13 @@ macro addSatWflags(RX, RY, TEMP, RD){
 	#Q = (RX[31,1] && RY[31,1] && !TEMP[31,1]) ||
 	#    (!RX[31,1] && !RY[31,1] && TEMP[31,1]) || Q
 	Q = sborrow(RX, RY);
-	
+
 	#V = (RX[31,1] && RY[31,1] && !TEMP[31,1]) ||
 	#    (!RX[31,1] && !RY[31,1] && TEMP[31,1])
 	V = sborrow(RX, RY);
-	
+
 	NZSTATUS(RD);
-	
+
 	C = 0x0;
 }
 
@@ -218,13 +218,13 @@ macro addSatHflags(RX, RY, TEMP, RD){
 	#Q = (RX[15,1] && RY[15,1] && !TEMP[15,1]) ||
 	#    (!RX[15,1] && !RY[15,1] && TEMP[15,1]) || Q
 	Q = sborrow(RX[0,15], RY[0,15]);
-	
+
 	#V = (RX[15,1] && RY[15,1] && !TEMP[15,1]) ||
 	#    (!RX[15,1] && !RY[15,1] && TEMP[15,1])
 	V = sborrow(RX[0,15], RY[0,15]);
-	
+
 	NZSTATUS(RD[0,15]);
-	
+
 	C = 0x0;
 }
 
@@ -260,13 +260,13 @@ macro subSatWflags(OP1, OP2, TEMP, RD){
 	#Q = (OP1[31,1] && !OP2[31,1] && !TEMP[31,1]) ||
 	#    (!OP1[31,1] && OP2[31,1] && TEMP[31,1]) || Q
 	Q = sborrow(OP1, OP2);
-	
+
 	#V = (OP1[31,1] && !OP2[31,1] && !TEMP[31,1]) ||
 	#    (!OP1[31,1] && OP2[31,1] && TEMP[31,1])
 	V = sborrow(OP1, OP2);
-	
+
 	NZSTATUS(RD);
-	
+
 	C = 0x0;
 }
 # SATSUB.W Format I
@@ -302,7 +302,7 @@ macro subSatWflags(OP1, OP2, TEMP, RD){
 #					 Rd <- temp;
 # Syntax:       satsub.w Rd, Rx, Ry
 # 111x xxx0 1101 dddd iiii iiii iiii iiii
-:SATSUB.W rd0, rx9, simm16 is ((op13_3=0x7 & rx9 & op4_5=0xd & rd0) ; (simm16)) 
+:SATSUB.W rd0, rx9, simm16 is ((op13_3=0x7 & rx9 & op4_5=0xd & rd0) ; (simm16))
 {
 	temp:4 = rx9 - simm16;
 	simm16Masked:4 = (simm16 & 0x80000000);
@@ -322,13 +322,13 @@ macro subSatHflags(RX, RY, TEMP, RD){
 	#Q = (RX[15,1] && !RY[15,1] && !TEMP[15,1]) ||
 	#    (!RX[15,1] && RY[15,1] && TEMP[15,1]) || Q
 	Q = sborrow(RX[0,15], RY[0,15]);
-	
+
 	#V = (RX[15,1] && !RY[15,1] && !TEMP[15,1]) ||
 	#    (!RX[15,1] && RY[15,1] && TEMP[15,1])
 	V = sborrow(RX[0,15], RY[0,15]);
-	
+
 	NZSTATUS(RD[0,15]);
-	
+
 	C = 0x0;
 }
 # SATSUB.H Format I
@@ -390,8 +390,8 @@ SAMINUS1_CALC: is (rd0 ;  esa0_5=0x1d) {RDMask:4 = (rd0 & 0x10000000); export RD
 SAMINUS1_CALC: is (rd0 ;  esa0_5=0x1e) {RDMask:4 = (rd0 & 0x20000000); export RDMask;}#30
 SAMINUS1_CALC: is (rd0 ;  esa0_5=0x1f) {RDMask:4 = (rd0 & 0x40000000); export RDMask;}#31
 
-GET_TEMP_FINAL_VAL: is (rd0 ; esa0_5) & SAMINUS1_CALC  
-{	
+GET_TEMP_FINAL_VAL: is (rd0 ; esa0_5) & SAMINUS1_CALC
+{
 	sa:4 = (esa0_5 & 0xffffffff);
 	local if_state_1 = (sa != 0x0);
 	tempRDShiftTempVal:4 = rd0 >> esa0_5;
@@ -403,158 +403,158 @@ GET_TEMP_FINAL_VAL: is (rd0 ; esa0_5) & SAMINUS1_CALC
 GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x0 & esa0_5)){ if_state_2_calc:1 = 0x1; export if_state_2_calc;}
 GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1 & esa0_5)) & GET_TEMP_FINAL_VAL
 {	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,1]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,1]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x2 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x2 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,2]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,2]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x3 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x3 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,3]);  
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,3]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x4 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x4 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,4]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,4]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x5 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x5 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,5]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,5]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x6 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x6 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,6]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,6]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x7 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x7 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,7]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,7]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x8 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x8 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,8]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,8]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x9 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x9 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,9]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,9]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xa & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xa & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,10]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,10]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xb & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xb & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,11]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,11]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xc & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xc & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,12]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,12]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xd & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xd & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,13]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,13]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xe & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xe & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,14]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,14]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xf & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0xf & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,15]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,15]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x10 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x10 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,16]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,16]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x11 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x11 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,17]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,17]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x12 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x12 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,18]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,18]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x13 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x13 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,19]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,19]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x14 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x14 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,20]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,20]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x15 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x15 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 =sext(tempRDShiftFinal[0,21]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 =sext(tempRDShiftFinal[0,21]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x16 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x16 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,22]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,22]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x17 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x17 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,23]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,23]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x18 & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x18 & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,24]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,24]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
 GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x19 & esa0_5)) & GET_TEMP_FINAL_VAL    #?NOT SURE WHY I"M GETTING "Unnecessary SEXT warning from here on?
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,25];#sext(tempRDShiftFinal[0,25]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,25];#sext(tempRDShiftFinal[0,25]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1a & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1a & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,26];#sext(tempRDShiftFinal[0,26]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,26];#sext(tempRDShiftFinal[0,26]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1b & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1b & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,27];#sext(tempRDShiftFinal[0,27]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,27];#sext(tempRDShiftFinal[0,27]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1c & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1c & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,28];#sext(tempRDShiftFinal[0,28]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,28];#sext(tempRDShiftFinal[0,28]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1d & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1d & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,29];#sext(tempRDShiftFinal[0,29]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,29];#sext(tempRDShiftFinal[0,29]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1e & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1e & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,30];#sext(tempRDShiftFinal[0,30]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,30];#sext(tempRDShiftFinal[0,30]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1f & esa0_5)) & GET_TEMP_FINAL_VAL 
+GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1f & esa0_5)) & GET_TEMP_FINAL_VAL
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,31];  
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,31];
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
 
 
@@ -622,8 +622,8 @@ GET_IF_STATE2_CALC: is (rd0 ; (ebp5_5=0x1f & esa0_5)) & GET_TEMP_FINAL_VAL
 # I.  {d} -> {0, 1, ..., 15}
 #     {sa, bp} -> {0, 1, ..., 31}
 #---------------------------------------------------------------------
-GET_TEMP_FINAL_VAL_NR: is (rd0 ; esa0_5) & SAMINUS1_CALC  
-{	
+GET_TEMP_FINAL_VAL_NR: is (rd0 ; esa0_5) & SAMINUS1_CALC
+{
 	tempRDShiftFinalVal:4 = rd0 >> esa0_5;
 	export tempRDShiftFinalVal;
 }
@@ -631,158 +631,158 @@ GET_TEMP_FINAL_VAL_NR: is (rd0 ; esa0_5) & SAMINUS1_CALC
 GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x0 & esa0_5)){ if_state_2_calc:1 = 0x1; export if_state_2_calc;}
 GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 {	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,1]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,1]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x2 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x2 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,2]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,2]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x3 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x3 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,3]);  
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,3]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x4 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x4 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,4]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,4]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x5 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x5 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,5]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,5]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x6 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x6 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,6]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,6]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x7 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x7 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,7]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,7]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x8 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x8 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,8]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,8]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x9 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x9 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,9]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,9]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xa & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xa & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,10]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,10]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xb & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xb & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,11]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,11]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xc & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xc & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,12]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,12]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xd & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xd & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,13]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,13]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xe & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xe & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,14]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,14]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xf & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0xf & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,15]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,15]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x10 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x10 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,16]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,16]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x11 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x11 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,17]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,17]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x12 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x12 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,18]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,18]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x13 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x13 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,19]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,19]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x14 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x14 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,20]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,20]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x15 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x15 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 =sext(tempRDShiftFinal[0,21]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 =sext(tempRDShiftFinal[0,21]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x16 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x16 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,22]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,22]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x17 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x17 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,23]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,23]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x18 & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x18 & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,24]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = sext(tempRDShiftFinal[0,24]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
 GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x19 & esa0_5)) & GET_TEMP_FINAL_VAL_NR    #?NOT SURE WHY I"M GETTING "Unnecessary SEXT warning from here on?
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,25];#sext(tempRDShiftFinal[0,25]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,25];#sext(tempRDShiftFinal[0,25]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1a & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1a & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,26];#sext(tempRDShiftFinal[0,26]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,26];#sext(tempRDShiftFinal[0,26]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1b & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1b & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,27];#sext(tempRDShiftFinal[0,27]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,27];#sext(tempRDShiftFinal[0,27]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1c & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1c & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,28];#sext(tempRDShiftFinal[0,28]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,28];#sext(tempRDShiftFinal[0,28]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1d & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1d & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,29];#sext(tempRDShiftFinal[0,29]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,29];#sext(tempRDShiftFinal[0,29]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1e & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1e & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,30];#sext(tempRDShiftFinal[0,30]); 
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,30];#sext(tempRDShiftFinal[0,30]);
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
-GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1f & esa0_5)) & GET_TEMP_FINAL_VAL_NR 
+GET_IF_STATE2_CALC_NR: is (rd0 ; (ebp5_5=0x1f & esa0_5)) & GET_TEMP_FINAL_VAL_NR
 { 	tempRDShiftFinal:4 = GET_TEMP_FINAL_VAL_NR;
-	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,31];  
-	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc; 
+	tempRDShiftFinalMask:4 = tempRDShiftFinal[0,31];
+	local if_state_2_calc = (tempRDShiftFinal == tempRDShiftFinalMask);  export if_state_2_calc;
 }
 #SATS Format I
 #Operation: 	temp <- Rd >> sa;
@@ -853,8 +853,8 @@ bp:4 = (ebp5_5 & 0xffffffff);
 	erd0 = operand1 - operand2;
 	subflags(operand1, operand2, erd0);
  }
- 
- 
+
+
 #---------------------------------------------------------------------
 # MULSATHH.W - Multiply Halfwords with Saturation into Halfword
 # I.  {d, x, y} -> {0, 1, ..., 15}
@@ -863,7 +863,7 @@ bp:4 = (ebp5_5 & 0xffffffff);
 # MULSATHH.W Format I
 # Operation:	If(Rx-part==t) then operand1=SE(Rx[31:16]) else operand1=SE(Rx[15:0]);
 #				If(Ry-part==t) then operand2=SE(Ry[31:16]) else operand2=SE(Ry[15:0]);
-#				If(operand1 == operand2 == 0x8000)	
+#				If(operand1 == operand2 == 0x8000)
 #					Rd <- 0x7FFF;
 #				else
 #					Rd <- sext((operand1 * operand2) >> 15);
@@ -879,6 +879,6 @@ bp:4 = (ebp5_5 & 0xffffffff);
 	sat_clamp_val:4 = 0x7FFF;
 	nonSatMultVal:4 = ((operand1 * operand2) >> 15);
 	erd0 = ((zext(if_state_3) * sat_clamp_val) + (zext(else_state_3) * nonSatMultVal));
-	
+
  }
 

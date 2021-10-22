@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,7 +72,7 @@ public interface FieldElement {
 	/**
 	 * Returns the color for a given character within this element, since different colors may be
 	 * applied to different characters.
-	 * 
+	 *
 	 * @param charIndex The character index
 	 * @return the color for a given character within this element.
 	 */
@@ -80,7 +80,7 @@ public interface FieldElement {
 
 	/**
 	 * Returns a new FieldElement containing just the characters beginning at the given index.
-	 * 
+	 *
 	 * @param start The starting index (inclusive) from which to substring this element.
 	 * @return a new FieldElement containing just the characters beginning at the given index.
 	 */
@@ -89,7 +89,7 @@ public interface FieldElement {
 	/**
 	 * Returns a new FieldElement containing just the characters beginning at the given start
 	 * index (inclusive) and ending at the given end index (exclusive).
-	 * 
+	 *
 	 * @param start The starting index (inclusive) from which to substring this element.
 	 * @param end The end index (exclusive) to which the substring will be performed.
 	 * @return a new FieldElement containing just the characters beginning at the given index.
@@ -109,7 +109,7 @@ public interface FieldElement {
 	/**
 	 * As the name implies, this method returns the maximum number of characters from this field
 	 * element that will fit within the given width.
-	 * 
+	 *
 	 * @param width The width constraint
 	 * @return the maximum number of characters from this field element that will fit within
 	 * the given width.
@@ -119,7 +119,7 @@ public interface FieldElement {
 	/**
 	 * Translates the given character index to a data location related to the data model, as
 	 * determined by the FieldFactory.
-	 * 
+	 *
 	 * @param characterIndex The character index to translate.
 	 * @return The data location in the model coordinates.
 	 */

@@ -2,7 +2,7 @@
  * IP: BSD
  */
 /*
- * Copyright (c) 2005, The JUNG Authors 
+ * Copyright (c) 2005, The JUNG Authors
  *
  * All rights reserved.
  *
@@ -30,22 +30,22 @@ import edu.uci.ics.jung.visualization.VisualizationViewer;
 import edu.uci.ics.jung.visualization.control.AbstractGraphMousePlugin;
 import edu.uci.ics.jung.visualization.picking.PickedState;
 
-/** 
+/**
  * PickingGraphMousePlugin supports the picking of graph elements
  * with the mouse. MouseButtonOne picks a single vertex
  * or edge, and MouseButtonTwo adds to the set of selected Vertices
  * or EdgeType. If a Vertex is selected and the mouse is dragged while
  * on the selected Vertex, then that Vertex will be repositioned to
  * follow the mouse until the button is released.
- * 
+ *
  * @author Tom Nelson
- * 
- * 
+ *
+ *
  * Note: this class was copied completely from Jung 2.   Minimal changes were applied to get
  * correct mouse behavior by using {@link MouseEvent#getModifiersEx()}.
  * @param <V> the vertex type
  * @param <E> the edge type
- * 
+ *
  */
 public class JungPickingGraphMousePlugin<V, E> extends AbstractGraphMousePlugin
 		implements MouseListener, MouseMotionListener {
@@ -166,7 +166,7 @@ public class JungPickingGraphMousePlugin<V, E> extends AbstractGraphMousePlugin
 	 * If no vertex or Edge is under the pointer, set up
 	 * to draw a multiple selection rectangle (as above)
 	 * but do not unpick previously picked elements.
-	 * 
+	 *
 	 * @param e the event
 	 */
 	@Override
@@ -250,7 +250,7 @@ public class JungPickingGraphMousePlugin<V, E> extends AbstractGraphMousePlugin
 	/**
 	 * If the mouse is dragging a rectangle, pick the
 	 * Vertices contained in that rectangle
-	 * 
+	 *
 	 * clean up settings from mousePressed
 	 */
 	@Override
@@ -292,7 +292,7 @@ public class JungPickingGraphMousePlugin<V, E> extends AbstractGraphMousePlugin
 	 * vertices with the mouse.
 	 * If the mouse is not over a Vertex, draw the rectangle
 	 * to select multiple Vertices
-	 * 
+	 *
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
@@ -340,7 +340,7 @@ public class JungPickingGraphMousePlugin<V, E> extends AbstractGraphMousePlugin
 	/**
 	 * pick the vertices inside the rectangle created from points 'down' and 'out' (two diagonally
 	 * opposed corners of the rectangle)
-	 * 
+	 *
 	 * @param vv the viewer containing the layout and picked state
 	 * @param down one corner of the rectangle
 	 * @param out the other corner of the rectangle

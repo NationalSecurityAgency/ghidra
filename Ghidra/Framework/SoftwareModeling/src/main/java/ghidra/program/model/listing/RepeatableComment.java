@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,21 +17,21 @@
 package ghidra.program.model.listing;
 
 /**
- * Interface to define a comment that can be shared by more 
+ * Interface to define a comment that can be shared by more
  * than one code unit.
  */
 public interface RepeatableComment {
 
 	/**
 	 * Get the text of the repeatable comment.
-	 * 
+	 *
 	 * @return comment
 	 */
     public String getComment();
-	
+
 	/**
 	 * Set the text of this repeatable comment.
-	 * 
+	 *
 	 * @param comment new text for the repeatable comment
 	 */
     public void setComment(String comment);

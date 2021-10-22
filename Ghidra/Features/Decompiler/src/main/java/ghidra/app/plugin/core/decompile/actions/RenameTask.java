@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public abstract class RenameTask {
 	protected Program program;
 	protected DecompilerPanel decompilerPanel;
 	protected ClangToken tokenAtCursor;
-	
+
 	public RenameTask(PluginTool tool, Program program, DecompilerPanel panel, ClangToken token,
 			String old) {
 		this.tool = tool;
@@ -48,15 +48,15 @@ public abstract class RenameTask {
 		this.tokenAtCursor = token;
 		oldName = old;
 	}
-	
+
 	public abstract String getTransactionName();
-	
+
 	public abstract boolean isValid(String newNm);
-	
+
 	public abstract void commit() throws DuplicateNameException, InvalidInputException;
-	
+
 	public String getNewName() { return newName; }
-	
+
 	/**
 	 * Bring up a dialog that is initialized with the old name, and allows the user to select a new name
 	 * @param oldNameIsCancel is true if the user keeping/entering the old name is considered a cancel
@@ -82,21 +82,21 @@ public abstract class RenameTask {
 				return res;
 			}
 		};
-		
+
 		String label = "Rename " + oldName + ":";
-        InputDialog renameVarDialog = new InputDialog( getTransactionName(), 
+        InputDialog renameVarDialog = new InputDialog( getTransactionName(),
                 new String[]{ label }, new String[]{ oldName }, listener );
-        
+
         tool.showDialog(renameVarDialog);
-            
+
         if (renameVarDialog.isCanceled()) {
         	return false;
         }
 		if (oldNameIsCancel && newName.equals(oldName)) {
 			return false;
 		}
-        return true;		
-		
+        return true;
+
 	}
 
 	/**

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -246,7 +246,7 @@ withblockmid: withblockstart
   | withblockmid constructorlike
   ;
 withblock: withblockmid '}'  { slgh->popWith(); }
-  
+
 id_or_nil: /* empty */  { $$ = (SubtableSymbol *)0; }
   | SUBTABLESYM         { $$ = $1; }
   | STRING              { $$ = slgh->newTable($1); }
@@ -319,8 +319,8 @@ constraint: familysymbol '=' pexpression { $$ = new EqualEquation($1->getPattern
   | familysymbol OP_LESSEQUAL pexpression { $$ = new LessEqualEquation($1->getPatternValue(),$3); }
   | familysymbol '>' pexpression	{ $$ = new GreaterEquation($1->getPatternValue(),$3); }
   | familysymbol OP_GREATEQUAL pexpression { $$ = new GreaterEqualEquation($1->getPatternValue(),$3); }
-  | OPERANDSYM '=' pexpression		{ $$ = slgh->constrainOperand($1,$3); 
-                                          if ($$ == (PatternEquation *)0) 
+  | OPERANDSYM '=' pexpression		{ $$ = slgh->constrainOperand($1,$3);
+                                          if ($$ == (PatternEquation *)0)
                                             { string errmsg="Constraining currently undefined operand "+$1->getName(); yyerror(errmsg.c_str()); } }
   | OPERANDSYM				{ $$ = new OperandEquation($1->getIndex()); slgh->selfDefine($1); }
   | SPECSYM                             { $$ = new UnconstrainedEquation($1->getPatternExpression()); }
@@ -448,7 +448,7 @@ expr: varnode { $$ = new ExprTree($1); }
   | BITSYM                      { $$=slgh->pcode.createBitRange($1->getParentSymbol(),$1->getBitOffset(),$1->numBits()); }
   | USEROPSYM '(' paramlist ')' { $$ = slgh->pcode.createUserOp($1,$3); }
   | OP_CPOOLREF '(' paramlist ')'  { if ((*$3).size() < 2) { string errmsg = "Must at least two inputs to cpool"; yyerror(errmsg.c_str()); YYERROR; } $$ = slgh->pcode.createVariadic(CPUI_CPOOLREF,$3); }
-  ;  
+  ;
 sizedstar: '*' '[' SPACESYM ']' ':' INTEGER { $$ = new StarQuality; $$->size = *$6; delete $6; $$->id=ConstTpl($3->getSpace()); }
   | '*' '[' SPACESYM ']'	{ $$ = new StarQuality; $$->size = 0; $$->id=ConstTpl($3->getSpace()); }
   | '*' ':' INTEGER		{ $$ = new StarQuality; $$->size = *$3; delete $3; $$->id=ConstTpl(slgh->getDefaultCodeSpace()); }

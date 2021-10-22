@@ -24,7 +24,7 @@
         [ imm = (imm9_4 << 17) | (imm4_1 << 16) | imm16; ]
 {
        rd0 = imm;
-}       
+}
 
 # MOV Format III
 # 000s sss0 1001 dddd
@@ -171,7 +171,7 @@
 # LD.UB Format IV
 # 111p ppp1 0011 dddd   nnnn nnnn nnnn nnnn
 
-:LD.UB rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x13 & rd0) ... & RPDisp16 { 
+:LD.UB rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x13 & rd0) ... & RPDisp16 {
         rd0 = zext(*:1 RPDisp16);
 }
 
@@ -180,7 +180,7 @@
 
 :LD.UB erd0,RB9Shift is (op13_3=0x7 & op4_5=0 & ri0;
                               eop12_4=0 & eop8_4=0x7 & eop6_2=0 & erd0)
-                              & RB9Shift { 
+                              & RB9Shift {
         erd0 = zext(*:1 RB9Shift);
 }
 
@@ -192,7 +192,7 @@
 # 111p ppp1 1111 dddd cccc 100n nnnn nnnn
 
 :LD.UB^{COND_e12} rd0,RPbDisp9 is (op13_3=0x7 & op4_5=0x1f & rd0;
-                                       eop9_3=0x4 & COND_e12) & RPbDisp9 { 
+                                       eop9_3=0x4 & COND_e12) & RPbDisp9 {
         build COND_e12;
         rd0 = zext(*:1 RPbDisp9);
 }
@@ -204,7 +204,7 @@
 # LD.SB Format I
 # 111p ppp1 0010 dddd   nnnn nnnn nnnn nnnn
 
-:LD.SB rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x12 & rd0) ... & RPDisp16 { 
+:LD.SB rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x12 & rd0) ... & RPDisp16 {
         rd0 = sext(*:1 RPDisp16);
 }
 
@@ -212,7 +212,7 @@
 # 111b bbb0 0000 iiii   0000 0110 00tt dddd
 
 :LD.SB erd0,RB9Shift is (op13_3=0x7 & op4_5=0 & ri0;
-                               eop12_4=0 & eop8_4=0x6 & eop6_2=0 & erd0) & RB9Shift { 
+                               eop12_4=0 & eop8_4=0x6 & eop6_2=0 & erd0) & RB9Shift {
         erd0 = sext(*:1 RB9Shift);
 }
 
@@ -224,7 +224,7 @@
 # 111p ppp1 1111 dddd   cccc 011n nnnn nnnn
 
 :LD.SB^{COND_e12} rd0,RPbDisp9 is (op13_3=0x7 & op4_5=0x1f & rd0;
-                                       eop9_3=0x3 & COND_e12) & RPbDisp9 { 
+                                       eop9_3=0x3 & COND_e12) & RPbDisp9 {
         build COND_e12;
         rd0 = sext(*:1 RPbDisp9);
 }
@@ -257,7 +257,7 @@
 # LD.UH Format IV
 # 111p ppp1 0001 dddd   nnnn nnnn nnnn nnnn
 
-:LD.UH rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x11 & rd0) ... & RPDisp16 { 
+:LD.UH rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x11 & rd0) ... & RPDisp16 {
         rd0 = zext(*:2 RPDisp16);
 }
 
@@ -266,7 +266,7 @@
 
 :LD.UH erd0,RB9Shift is (op13_3=0x7 & op4_5=0 & ri0;
                              eop12_4=0 & eop8_4=0x5 & eop6_2=0 & erd0)
-                             & RB9Shift { 
+                             & RB9Shift {
         erd0 = zext(*:2 RB9Shift);
 }
 
@@ -278,7 +278,7 @@
 # 111p ppp1 1111 dddd   cccc 010n nnnn nnnn
 
 :LD.UH^{COND_e12} rd0,RPhDisp9 is (op13_3=0x7 & op4_5=0x1f & rd0;
-                                       eop9_3=0x2 & COND_e12) & RPhDisp9 { 
+                                       eop9_3=0x2 & COND_e12) & RPhDisp9 {
         build COND_e12;
         rd0 = zext(*:2 RPhDisp9);
 }
@@ -311,7 +311,7 @@
 # LD.SH Format IV
 # 111p ppp1 0000 dddd   nnnn nnnn nnnn nnnn
 
-:LD.SH rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x10 & rd0) ... & RPDisp16 { 
+:LD.SH rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x10 & rd0) ... & RPDisp16 {
         rd0 = sext(*:2 RPDisp16);
 }
 
@@ -320,7 +320,7 @@
 
 :LD.SH erd0,RB9Shift is (op13_3=0x7 & op4_5=0 & ri0;
                               eop12_4=0 & eop8_4=0x4 & eop6_2=0 & erd0)
-                             & RB9Shift { 
+                             & RB9Shift {
         erd0 = sext(*:2 RB9Shift);
 }
 
@@ -332,7 +332,7 @@
 # 111p ppp1 1111 dddd   cccc 001n nnnn nnnn
 
 :LD.SH^{COND_e12} rd0,RPhDisp9 is (op13_3=0x7 & op4_5=0x1f & rd0;
-                                       eop9_3=0x1 & COND_e12) & RPhDisp9 { 
+                                       eop9_3=0x1 & COND_e12) & RPhDisp9 {
         build COND_e12;
         rd0 = sext(*:2 RPhDisp9);
 }
@@ -380,11 +380,11 @@
 # LD.W Format IV
 # 111p ppp0 1111 dddd   nnnn nnnn nnnn nnnn
 
-:LD.W rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x0f & rd0) ... & RPDisp16 { 
+:LD.W rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x0f & rd0) ... & RPDisp16 {
         rd0 = *:4 RPDisp16;
 }
 
-:LD.W rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x0f & rd0 & rs0=0xf) ... & RPDisp16 { 
+:LD.W rd0,RPDisp16 is (op13_3=0x7 & op4_5=0x0f & rd0 & rs0=0xf) ... & RPDisp16 {
 		PC = *:4 RPDisp16;
         goto [PC];
 }
@@ -394,14 +394,14 @@
 
 :LD.W erd0,RB9Shift is (op13_3=0x7 & op4_5=0 & ri0;
                              eop12_4=0 & eop8_4=0x3 & eop6_2=0 & erd0)
-                            & RB9Shift { 
+                            & RB9Shift {
         erd0 = *:4 RB9Shift;
 }
 
 :LD.W erd0,RB9Shift is (op13_3=0x7 & op4_5=0 & ri0;
                              eop12_4=0 & eop8_4=0x3 & eop6_2=0 & erd0 & erd0=0xf)
                             & RB9Shift
-{ 
+{
 		PC = *:4 RB9Shift;
         goto [PC];
 }
@@ -411,13 +411,13 @@
 
 :LD.W erd0,RBSelector is (op13_3=0x7 & op4_5=0 & ri0;
                                 eop12_4=0 & eop8_4=0xf & eop6_2=2 & erd0)
-                                & RBSelector { 
+                                & RBSelector {
         erd0 = *:4 RBSelector;
 }
 
 :LD.W erd0,RBSelector is (op13_3=0x7 & op4_5=0 & ri0;
                                 eop12_4=0 & eop8_4=0xf & eop6_2=2 & erd0 & erd0=0xf)
-                                & RBSelector { 
+                                & RBSelector {
 		PC = *:4 RBSelector;
         goto [PC];
 }
@@ -430,10 +430,10 @@
 # 111p ppp1 1111 dddd   cccc 000n nnnn nnnn
 
 :LD.W^{COND_e12} rd0,RPwDisp9 is (op13_3=0x7 & op4_5=0x1f & rd0;
-                                      eop9_3=0x0 & COND_e12) & RPwDisp9 { 
+                                      eop9_3=0x0 & COND_e12) & RPwDisp9 {
         build COND_e12;
         rd0 = *:4 RPwDisp9;
-        
+
 }
 
 #---------------------------------------------------------------------
@@ -529,7 +529,7 @@ LDSTSWPW: val		is disp0_12 [ val = disp0_12 << 2; ] { export *[const]:2 val; }
 :LDSWP.SH rd0, rp9[LDSTSWPH] is op13_3=0x7 & op4_5=0x1d & rp9 & rd0 ; eop12_4=0x2 & LDSTSWPH {
 	tmp:4 = sext(LDSTSWPH);
 	tmpa:4 = rp9 + tmp;
-	tmpb:2 = *[RAM]:2 tmpa; 
+	tmpb:2 = *[RAM]:2 tmpa;
 	tmpc:2 = (tmpb << 8) | (tmpb >> 8);
 	rd0 = sext(tmpc);
 }
@@ -537,7 +537,7 @@ LDSTSWPW: val		is disp0_12 [ val = disp0_12 << 2; ] { export *[const]:2 val; }
 :LDSWP.UH rd0, rp9[LDSTSWPH] is op13_3=0x7 & op4_5=0x1d & rp9 & rd0 ; eop12_4=0x3 & LDSTSWPH {
 	tmp:4 = sext(LDSTSWPH);
 	tmpa:4 = rp9 + tmp;
-	tmpb:2 = *[RAM]:2 tmpa; 
+	tmpb:2 = *[RAM]:2 tmpa;
 	tmpc:2 = (tmpb << 8) | (tmpb >> 8);
 	rd0 = zext(tmpc);
 }
@@ -546,7 +546,7 @@ LDSTSWPW: val		is disp0_12 [ val = disp0_12 << 2; ] { export *[const]:2 val; }
 	tmp:4 = sext(LDSTSWPW);
 	tmpa:4 = rp9 + tmp;
 	tmpb:4 = *[RAM]:4 tmpa;
-	rd0 = (tmpb << 24) | (tmpb >> 24) | ((tmpb & 0x0000FF00) << 8) | ((tmpb & 0x00FF0000) >> 8);  
+	rd0 = (tmpb << 24) | (tmpb >> 24) | ((tmpb & 0x0000FF00) << 8) | ((tmpb & 0x00FF0000) >> 8);
 }
 
 :STSWP.H rp9[LDSTSWPH], rs0 is op13_3=0x7 & op4_5=0x1d & rp9 & rs0 ; eop12_4=0x9 & LDSTSWPH {
@@ -570,7 +570,7 @@ LDSTSWPW: val		is disp0_12 [ val = disp0_12 << 2; ] { export *[const]:2 val; }
 # 000p ppp0 1100 ssss
 
 :ST.B RP9bInc, rs0 is op13_3=0x0 & op4_5=0x0c & RP9bInc & rs0 {
-        *:1 RP9bInc = rs0:1; 
+        *:1 RP9bInc = rs0:1;
 }
 
 # ST.B Format II
@@ -584,14 +584,14 @@ LDSTSWPW: val		is disp0_12 [ val = disp0_12 << 2; ] { export *[const]:2 val; }
 # 101p ppp0 1nnn ssss
 
 :ST.B RPbDisp3, rs0 is op13_3=0x5 & op7_2=0x1 & rs0 & RPbDisp3 {
-        *:1 RPbDisp3 = rs0:1; 
+        *:1 RPbDisp3 = rs0:1;
 }
 
 # ST.B Format IV
 # 111p ppp1 0110 ssss   nnnn nnnn nnnn nnnn
 
 :ST.B RPDisp16, rs0 is (op13_3=0x7 & op4_5=0x16 & rs0) ... & RPDisp16 {
-        *:1 RPDisp16 = rs0:1; 
+        *:1 RPDisp16 = rs0:1;
 }
 
 # ST.B Format V
@@ -610,7 +610,7 @@ LDSTSWPW: val		is disp0_12 [ val = disp0_12 << 2; ] { export *[const]:2 val; }
 # 111p ppp1 1111 ssss   cccc 111n nnnn nnnn
 
 :ST.B^{COND_e12} RPwDisp9, rs0 is (op13_3=0x7 & op4_5=0x1f & rs0;
-                                      eop9_3=0x7 & COND_e12) & RPwDisp9 { 
+                                      eop9_3=0x7 & COND_e12) & RPwDisp9 {
         build COND_e12;
         *:4 RPwDisp9 = rs0:1;
 }
@@ -666,7 +666,7 @@ LDSTSWPW: val		is disp0_12 [ val = disp0_12 << 2; ] { export *[const]:2 val; }
 :ST.D RB9Shift, ers0_low is (op13_3=0x7 & op4_5=0 & ri0;
                              eop12_4=0 & eop8_4=0x8 & eop6_2=0
                              & ers0 & ers0_hi & ers0_low) & RB9Shift
-{ 
+{
         low:8 = zext(ers0_low);
         hi:8 = zext(ers0_hi) << 32;
         *:8 RB9Shift = hi | low;
@@ -680,7 +680,7 @@ LDSTSWPW: val		is disp0_12 [ val = disp0_12 << 2; ] { export *[const]:2 val; }
 # 000p ppp0 1011 ssss
 
 :ST.H RPhInc, rs0 is op13_3=0x0 & op4_5=0x0b & RPhInc & rs0 {
-        *:2 RPhInc = rs0:2; 
+        *:2 RPhInc = rs0:2;
 }
 
 # ST.H Format II
@@ -694,14 +694,14 @@ LDSTSWPW: val		is disp0_12 [ val = disp0_12 << 2; ] { export *[const]:2 val; }
 # 101p ppp0 0nnn ssss
 
 :ST.H RPhDisp3, rs0 is op13_3=0x5 & op7_2=0x0 & rs0 & RPhDisp3 {
-        *:2 RPhDisp3 = rs0:2; 
+        *:2 RPhDisp3 = rs0:2;
 }
 
 # ST.H Format IV
 # 111p ppp1 0101 ssss   nnnn nnnn nnnn nnnn
 
 :ST.H RPDisp16, rs0 is (op13_3=0x7 & op4_5=0x15 & rs0) ... & RPDisp16 {
-        *:2 RPDisp16 = rs0:2; 
+        *:2 RPDisp16 = rs0:2;
 }
 
 # ST.H Format V
@@ -720,7 +720,7 @@ LDSTSWPW: val		is disp0_12 [ val = disp0_12 << 2; ] { export *[const]:2 val; }
 # 111p ppp1 1111 ssss   cccc 110n nnnn nnnn
 
 :ST.H^{COND_e12} RPhDisp9, rs0 is (op13_3=0x7 & op4_5=0x1f & rs0;
-                                      eop9_3=0x6 & COND_e12) & RPhDisp9 { 
+                                      eop9_3=0x6 & COND_e12) & RPhDisp9 {
         build COND_e12;
         *:4 RPhDisp9 = rs0:2;
 }
@@ -794,7 +794,7 @@ STHHD: val	is edisp4_8 [ val = edisp4_8 << 2; ] { export *[const]:2 val; }
 
 :ST.W RB9Shift,ers0 is (op13_3=0x7 & op4_5=0 & ri0;
                              eop12_4=0 & eop8_4=0x9 & eop6_2=0 & ers0)
-                            & RB9Shift { 
+                            & RB9Shift {
         *:4 RB9Shift = ers0;
 }
 
@@ -806,7 +806,7 @@ STHHD: val	is edisp4_8 [ val = edisp4_8 << 2; ] { export *[const]:2 val; }
 # 111p ppp1 1111 ssss   cccc 101n nnnn nnnn
 
 :ST.W^{COND_e12} RPwDisp9, rs0 is (op13_3=0x7 & op4_5=0x1f & rs0;
-                                      eop9_3=0x5 & COND_e12) & RPwDisp9 { 
+                                      eop9_3=0x5 & COND_e12) & RPwDisp9 {
         build COND_e12;
         *:4 RPwDisp9 = rs0;
 }
@@ -814,9 +814,9 @@ STHHD: val	is edisp4_8 [ val = edisp4_8 << 2; ] { export *[const]:2 val; }
 :STCOND rp9[disp_16],rs0  	is op13_3=0x7 & rp9 & op4_5=0x17 & rs0 ; disp_16 {
 	Z = L;
 	CZTOSR();
-	
+
 	if (!L) goto inst_next;
-	
+
 	tmp:2 = disp_16;
 	tmpa:4 = sext(tmp);
 	tmpa = tmpa + rp9;
@@ -839,7 +839,7 @@ STHHD: val	is edisp4_8 [ val = edisp4_8 << 2; ] { export *[const]:2 val; }
         ptr:4 = (SP & 0xfffffffc) + (disp4_7 << 2);
         #ptr:4 = (((SP >> 2) + disp4_7) << 2);
         # assuming SP was pointing into RAM...
-        *:4 ptr = rs0;        
+        *:4 ptr = rs0;
 }
 
 #---------------------------------------------------------------------
@@ -864,7 +864,7 @@ macro status_r12() {
 LoadAddress: is rp0=0xf ; eb15=1 { ldadd = SP;         } # Rp=PC and Reglist16[PC]=1
 LoadAddress: is rp0=0xf ; eb15   { ldadd = inst_start; } # Rp=PC and Reglist16[PC]=0
 LoadAddress: is rp0     ; eb15   { ldadd = rp0;        } # Rp!=PC
-LoadAddressTS: is rp0   ; eb15   { ldadd = rp0;        } 
+LoadAddressTS: is rp0   ; eb15   { ldadd = rp0;        }
 
 LDMinc15:   ", PC"     is eb15=1  { PC = *:4 ldadd; ldadd = ldadd + 4; }
 LDMinc14ab: ", LR"     is eb14=1  { LR = *:4 ldadd; ldadd = ldadd + 4; }
@@ -1029,11 +1029,11 @@ POPMinc9b: ",R12=1"  is b11=1 & b10=0 & b09=1 { R12 = 1; }
 POPMinc9b: ",R12=-1" is b11=1 & b10=1         { R12 = -1; }
 POPMinc9a: COM9^"R12"    is b09=1                 & COM9 { build COM9; R12 = *:4 SP; SP = SP + 4; }
 POPMinc9s:            is b11=1                 { status_r12(); }
-POPMinc8: COM8^"R11"     is b08=1 & COM8 { build COM8; 
+POPMinc8: COM8^"R11"     is b08=1 & COM8 { build COM8;
 								 R11 = *:4 SP; SP = SP + 4; }
 POPMinc7: COM7^"R10"     is b07=1 & COM7 { build COM7;
 								 R10 = *:4 SP; SP = SP + 4; }
-POPMinc6: COM6^"R8-R9"   is b06=1 & COM6 { build COM6; 
+POPMinc6: COM6^"R8-R9"   is b06=1 & COM6 { build COM6;
 								 R9 = *:4 SP; SP = SP + 4;
                                  R8 = *:4 SP; SP = SP + 4; }
 POPMinc5: COM5^"R4-R7"   is b05=1 & COM5 { build COM5;
@@ -1132,12 +1132,12 @@ PUSHMdec4: "R0-R3" is b04=1 { SP = SP - 4; *:4 SP = R0;
                                 SP = SP - 4; *:4 SP = R1;
                                 SP = SP - 4; *:4 SP = R2;
                                 SP = SP - 4; *:4 SP = R3; }
-PUSHMdec5: COM5^"R4-R7" is b05=1 & COM5 { build COM5; 
+PUSHMdec5: COM5^"R4-R7" is b05=1 & COM5 { build COM5;
 								SP = SP - 4; *:4 SP = R4;
                                 SP = SP - 4; *:4 SP = R5;
                                 SP = SP - 4; *:4 SP = R6;
                                 SP = SP - 4; *:4 SP = R7; }
-PUSHMdec6: COM6^"R8-R9" is b06=1 & COM6{ build COM6; 
+PUSHMdec6: COM6^"R8-R9" is b06=1 & COM6{ build COM6;
 								SP = SP - 4; *:4 SP = R8;
                                 SP = SP - 4; *:4 SP = R9; }
 PUSHMdec7: COM7^"R10"   is b07=1 & COM7 { build COM7; SP = SP - 4; *:4 SP = R10; }
@@ -1154,7 +1154,7 @@ PUSHMdec9: is b09=0 { }
 PUSHMdec10: is b10=0 { }
 PUSHMdec11: is b11=0 { }
 
-PUSHMdisp: PUSHMdec4^PUSHMdec5^PUSHMdec6^PUSHMdec7^PUSHMdec8^PUSHMdec9^PUSHMdec10^PUSHMdec11 is      PUSHMdec4 & PUSHMdec5 & PUSHMdec6 & PUSHMdec7 
+PUSHMdisp: PUSHMdec4^PUSHMdec5^PUSHMdec6^PUSHMdec7^PUSHMdec8^PUSHMdec9^PUSHMdec10^PUSHMdec11 is      PUSHMdec4 & PUSHMdec5 & PUSHMdec6 & PUSHMdec7
         & PUSHMdec8 & PUSHMdec9 & PUSHMdec10 & PUSHMdec11
 {
         build PUSHMdec4;
@@ -1167,7 +1167,7 @@ PUSHMdisp: PUSHMdec4^PUSHMdec5^PUSHMdec6^PUSHMdec7^PUSHMdec8^PUSHMdec9^PUSHMdec1
         build PUSHMdec11;
 }
 
-:PUSHM PUSHMdisp is 
+:PUSHM PUSHMdisp is
         op12_4=0xd & op0_4=0x1 & PUSHMdisp
 {
         build PUSHMdisp;
@@ -1248,9 +1248,9 @@ STMdec13: is rp0 ; eb13=0 { }
 STMdec14: is rp0 ; eb14=0 { }
 STMdec15: is rp0 ; eb15=0 { }
 
-STMdecdisp: STMdec0^STMdec1^STMdec2^STMdec3^STMdec4^STMdec5^STMdec6^STMdec7^STMdec8^STMdec9^STMdec10^STMdec11^STMdec12^STMdec13^STMdec14^STMdec15 is      STMdec0 & STMdec1 & STMdec2 & STMdec3 & 
-        STMdec4 & STMdec5 & STMdec6 & STMdec7 & 
-        STMdec8 & STMdec9 & STMdec10 & STMdec11 & 
+STMdecdisp: STMdec0^STMdec1^STMdec2^STMdec3^STMdec4^STMdec5^STMdec6^STMdec7^STMdec8^STMdec9^STMdec10^STMdec11^STMdec12^STMdec13^STMdec14^STMdec15 is      STMdec0 & STMdec1 & STMdec2 & STMdec3 &
+        STMdec4 & STMdec5 & STMdec6 & STMdec7 &
+        STMdec8 & STMdec9 & STMdec10 & STMdec11 &
         STMdec12 & STMdec13 & STMdec14 & STMdec15
 {
         build STMdec0;
@@ -1271,9 +1271,9 @@ STMdecdisp: STMdec0^STMdec1^STMdec2^STMdec3^STMdec4^STMdec5^STMdec6^STMdec7^STMd
         build STMdec15;
 }
 
-STMincdisp: STMinc0^STMinc1^STMinc2^STMinc3^STMinc4^STMinc5^STMinc6^STMinc7^STMinc8^STMinc9^STMinc10^STMinc11^STMinc12^STMinc13^STMinc14^STMinc15 is      STMinc0 & STMinc1 & STMinc2 & STMinc3 & 
-        STMinc4 & STMinc5 & STMinc6 & STMinc7 & 
-        STMinc8 & STMinc9 & STMinc10 & STMinc11 & 
+STMincdisp: STMinc0^STMinc1^STMinc2^STMinc3^STMinc4^STMinc5^STMinc6^STMinc7^STMinc8^STMinc9^STMinc10^STMinc11^STMinc12^STMinc13^STMinc14^STMinc15 is      STMinc0 & STMinc1 & STMinc2 & STMinc3 &
+        STMinc4 & STMinc5 & STMinc6 & STMinc7 &
+        STMinc8 & STMinc9 & STMinc10 & STMinc11 &
         STMinc12 & STMinc13 & STMinc14 & STMinc15 & StoreAddress
 {
         build StoreAddress;
@@ -1294,7 +1294,7 @@ STMincdisp: STMinc0^STMinc1^STMinc2^STMinc3^STMinc4^STMinc5^STMinc6^STMinc7^STMi
         build STMinc1;
         build STMinc0;
 }
- 
+
 :STM "--"^rp0^STMdecdisp
 is
         (op10_6=0x3a & op4_5=0x1c & op9_1=1 & rp0) ... & STMdecdisp
@@ -1308,14 +1308,14 @@ is
 }
 
 :STMTS "--"^rp0^STMdecdisp
-is 
-		(op10_6=0x3b & op4_5=0x1c & op9_1=1 & rp0) ... & STMdecdisp 
+is
+		(op10_6=0x3b & op4_5=0x1c & op9_1=1 & rp0) ... & STMdecdisp
 {
 }
 
-:STMTS rp0^STMincdisp  
-is 
-		(op10_6=0x3b & op4_5=0x1c & op9_1=0 & rp0) ... & STMincdisp 
+:STMTS rp0^STMincdisp
+is
+		(op10_6=0x3b & op4_5=0x1c & op9_1=0 & rp0) ... & STMincdisp
 {
 }
 

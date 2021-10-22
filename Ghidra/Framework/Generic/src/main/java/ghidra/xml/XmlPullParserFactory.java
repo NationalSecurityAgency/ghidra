@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public class XmlPullParserFactory {
 
 	/**
 	 * Constructs a new parser using the specified stream and name.
-	 * 
+	 *
 	 * @param input
 	 *            the input XML stream
 	 * @param inputName
@@ -41,7 +41,7 @@ public class XmlPullParserFactory {
 	 *            true if the parse should validate against the DTD
 	 * @throws SAXException
 	 *             if an XML parse error occurs
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public static XmlPullParser create(InputStream input, String inputName,
 			ErrorHandler errHandler, boolean validate) throws SAXException, IOException {
@@ -50,7 +50,7 @@ public class XmlPullParserFactory {
 
 	/**
 	 * Constructs a new parser using the specified XML file.
-	 * 
+	 *
 	 * @param file
 	 *            the input XML file
 	 * @param errHandler
@@ -69,7 +69,7 @@ public class XmlPullParserFactory {
 
 	/**
 	 * Constructs a new parser using the specified XML file.
-	 * 
+	 *
 	 * @param file
 	 *            the input XML file
 	 * @param errHandler
@@ -88,10 +88,10 @@ public class XmlPullParserFactory {
 
 	/**
 	 * Constructs a new parser using the specified XML file.
-	 * 
+	 *
 	 * @param input
 	 *            A string that contains the XML input data
-	 * @param inputName 
+	 * @param inputName
 	 *            A descriptive name for the XML process (this will appear as the thread name)
 	 * @param errHandler
 	 *            the XML error handler

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,22 +39,22 @@ public abstract class AbstractDebuggerModelScenarioMemoryTest extends AbstractDe
 
 	/**
 	 * This specimen must perform some observable action, which can be affected by a memory write
-	 * 
+	 *
 	 * <p>
 	 * A common example is to exit with a code read from memory. It may also be useful for debugging
 	 * purposes to print a message from the same memory.
-	 * 
+	 *
 	 * @return the specimen
 	 */
 	protected abstract DebuggerTestSpecimen getSpecimen();
 
 	/**
 	 * Get the destination address to write to
-	 * 
+	 *
 	 * <p>
 	 * The most reliable way to do this is to ensure an easily identifiable symbol for the
 	 * destination address is exported, then use the debugging API to obtain its address.
-	 * 
+	 *
 	 * @param process the process running the specimen
 	 * @return the destination address
 	 * @throws Throwable if anything goes wrong
@@ -63,30 +63,30 @@ public abstract class AbstractDebuggerModelScenarioMemoryTest extends AbstractDe
 
 	/**
 	 * Get the bytes to write
-	 * 
+	 *
 	 * <p>
 	 * It's probably best to use a string encoded in the platform's preferred format.
-	 * 
+	 *
 	 * @return the bytes
 	 */
 	protected abstract byte[] getBytesToWrite();
 
 	/**
 	 * Get the expected bytes after read
-	 * 
+	 *
 	 * <p>
 	 * This should be the same as {@link #getBytesToWrite()}, but preferably includes some
 	 * additional bytes after, so that memory reads can be verified to come from the actual target,
 	 * and not just from a cached write. A common scenario is to partially write over a string, then
 	 * read the entire string, verifying both the overwritten part and the remainder.
-	 * 
+	 *
 	 * @return the bytes
 	 */
 	protected abstract byte[] getExpectedBytes();
 
 	/**
 	 * Perform whatever preparation is necessary to observe the expected effect
-	 * 
+	 *
 	 * @param process the process trapped at launch -- typically at {@code main()}.
 	 * @throws Throwable if anything goes wrong
 	 */
@@ -95,7 +95,7 @@ public abstract class AbstractDebuggerModelScenarioMemoryTest extends AbstractDe
 
 	/**
 	 * Verify, using {@link Assert}, that the target exhibited the effect of the memory write
-	 * 
+	 *
 	 * <p>
 	 * Note that the given process may be invalid, depending on the model's implementation. The
 	 * tester should know how the model under test behaves. If the object is invalid, it's possible
@@ -106,7 +106,7 @@ public abstract class AbstractDebuggerModelScenarioMemoryTest extends AbstractDe
 	 * Do not place assertions in the event callback, since the failures they could produce will not
 	 * be recorded as test failures. If the effect can be observed in multiple ways, it is best to
 	 * verify all of them.
-	 * 
+	 *
 	 * @param process the target process, which may no longer be valid
 	 * @throws Throwable if anything goes wrong or an assertion fails
 	 */
@@ -114,7 +114,7 @@ public abstract class AbstractDebuggerModelScenarioMemoryTest extends AbstractDe
 
 	/**
 	 * Test the following scenario:
-	 * 
+	 *
 	 * <ol>
 	 * <li>Obtain a launcher and use it to start the specimen</li>
 	 * <li>Overwrite bytes at a designated address in memory</li>

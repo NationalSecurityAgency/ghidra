@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public class StructureEditorUnlockedCellEdit2Test
 		init(simpleStructure, pgmBbCat);
 		int colNum = model.getOffsetColumn();
 
-		// TODO these should not rely on mouse clicking; we should also get an error when 
+		// TODO these should not rely on mouse clicking; we should also get an error when
 		//      we call edit cell
 		clickTableCell(getTable(), 1, colNum, 2);
 		assertStatus("Offset field is not editable");
@@ -64,7 +64,7 @@ public class StructureEditorUnlockedCellEdit2Test
 		init(simpleStructure, pgmBbCat);
 		int colNum = model.getLengthColumn();
 
-		// TODO these should not rely on mouse clicking; we should also get an error when 
+		// TODO these should not rely on mouse clicking; we should also get an error when
 		//      we call edit cell
 		clickTableCell(getTable(), 1, colNum, 2);
 		assertStatus("Length field is not editable");
@@ -77,7 +77,7 @@ public class StructureEditorUnlockedCellEdit2Test
 		init(simpleStructure, pgmBbCat);
 		int colNum = model.getMnemonicColumn();
 
-		// TODO these should not rely on mouse clicking; we should also get an error when 
+		// TODO these should not rely on mouse clicking; we should also get an error when
 		//      we call edit cell
 		// editCell(getTable(), 1, colNum);
 		clickTableCell(getTable(), 1, colNum, 2);

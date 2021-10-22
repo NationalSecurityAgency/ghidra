@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 
 	/**
 	 * Constructs a new Ghidra application layout object.
-	 * 
+	 *
 	 * @throws FileNotFoundException if there was a problem getting a user
 	 *             directory.
 	 * @throws IOException if there was a problem getting the application
@@ -76,7 +76,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	 * <p>
 	 * This is used when something external to Ghidra needs Ghidra's layout
 	 * (like the Eclipse GhidraDevPlugin).
-	 * 
+	 *
 	 * @param applicationInstallationDir The application installation directory.
 	 * @throws FileNotFoundException if there was a problem getting a user
 	 *             directory.
@@ -101,21 +101,21 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 		userCacheDir = ApplicationUtilities.getDefaultUserCacheDir(getApplicationProperties());
 		userSettingsDir = ApplicationUtilities.getDefaultUserSettingsDir(getApplicationProperties(),
 			getApplicationInstallationDir());
-		
+
 		// Extensions
 		extensionInstallationDirs = findExtensionInstallationDirectories();
 		extensionArchiveDir = findExtensionArchiveDirectory();
 
 		// Patch directory
 		patchDir = findPatchDirectory();
-		
+
 		// Modules
 		modules = findGhidraModules();
 	}
 
 	/**
 	 * Finds the application root directories for this application layout.
-	 * 
+	 *
 	 * @return A collection of the application root directories for this layout.
 	 */
 	protected Collection<ResourceFile> findGhidraApplicationRootDirs() {
@@ -125,7 +125,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	/**
 	 * Finds the application installation directory for this Ghidra application
 	 * layout.
-	 * 
+	 *
 	 * @return The application installation directory for this Ghidra
 	 *         application layout. Could be null if there is no application
 	 *         installation directory.
@@ -144,7 +144,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 
 	/**
 	 * Finds the modules for this Ghidra application layout.
-	 * 
+	 *
 	 * @return The modules for this Ghidra application layout.
 	 * @throws IOException if there was a problem finding the modules on disk.
 	 */
@@ -161,7 +161,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 			if (extensionModuleDirs != null) {
 				for (File extensionModuleDir : extensionModuleDirs) {
 
-					// Skip extensions that live in an application root directory...we've already 
+					// Skip extensions that live in an application root directory...we've already
 					// found those.
 					if (applicationRootDirs.stream()
 							.anyMatch(dir -> FileUtilities.isPathContainedWithin(dir.getFile(false),
@@ -234,7 +234,7 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	 * <ul>
 	 * <li><code>[application root]/Extensions/Ghidra</code></li>
 	 * </ul>
-	 * 
+	 *
 	 * @return the archive folder, or null if can't be determined
 	 */
 	protected ResourceFile findExtensionArchiveDirectory() {
@@ -250,23 +250,23 @@ public class GhidraApplicationLayout extends ApplicationLayout {
 	}
 
 	/**
-	 * Returns a prioritized list of directories where Ghidra extensions are installed. These 
+	 * Returns a prioritized list of directories where Ghidra extensions are installed. These
 	 * should be at the following locations:<br>
 	 * <ul>
 	 * <li><code>[user settings dir]/Extensions</code></li>
 	 * <li><code>[application install dir]/Ghidra/Extensions</code></li>
 	 * <li><code>ghidra/Ghidra/Extensions</code> (development mode)</li>
 	 * </ul>
-	 * 
+	 *
 	 * @return the install folder, or null if can't be determined
 	 */
 	protected List<ResourceFile> findExtensionInstallationDirectories() {
 
 		List<ResourceFile> dirs = new ArrayList<>();
-		
+
 		// Would like to find a better way to do this, but for the moment this seems the
-		// only solution. We want to get the 'Extensions' directory in ghidra, but there's 
-		// no way to retrieve that directory directly. We can only get the full set of 
+		// only solution. We want to get the 'Extensions' directory in ghidra, but there's
+		// no way to retrieve that directory directly. We can only get the full set of
 		// application root dirs and search for it, hoping we don't encounter one with the
 		// name 'Extensions' in one of the other root dirs.
 		if (SystemUtilities.isInDevelopmentMode()) {

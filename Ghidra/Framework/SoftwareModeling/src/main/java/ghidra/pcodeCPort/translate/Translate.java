@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -154,7 +154,7 @@ public abstract class Translate implements BasicSpaceProvider {
 	}
 
 	/// Pcode represents constant values within an operation as
-	/// offsets within a special \e constant address space. 
+	/// offsets within a special \e constant address space.
 	/// (See ConstantSpace)
 	/// \return a pointer to the \b constant space
 	@Override
@@ -185,7 +185,7 @@ public abstract class Translate implements BasicSpaceProvider {
 
 	// This returns the total number of address spaces used by the
 	// processor, including all special spaces, like the \b constant
-	// space and the \b iop space. 
+	// space and the \b iop space.
 	// \return the number of spaces
 	public int numSpaces() {
 		return baselist.size();
@@ -551,7 +551,7 @@ public abstract class Translate implements BasicSpaceProvider {
 	}
 
 	public void setLanguage(String processorFile) {
-//		spaceOrderMap = SpaceOrderMap.getSpaceOrderMapForProcessor( processorFile );		
+//		spaceOrderMap = SpaceOrderMap.getSpaceOrderMapForProcessor( processorFile );
 	}
 
 	public void allowContextSet(boolean val) {

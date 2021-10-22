@@ -5,19 +5,19 @@
   + Sleigh compiler options are read from the sleighArgs.txt file.
   + Eclipse: right-click on this file and choose menu item "Run As->Ant Build"
   -->
-                                     
+
 <project name="privateBuildDeveloper" default="sleighCompile">
-	
+
 	<property name="sleigh.compile.class" value="ghidra.pcodeCPort.slgh_compile.SleighCompile"/>
 
 	<!--Import optional ant properties.  GhidraDev Eclipse plugin produces this so this file can find the Ghidra installation-->
 	<import file="../.antProperties.xml" optional="false" />
-	
+
 	<target name="sleighCompile">
-	    
+
 		<!-- If language module is detached from installation, get Ghidra installation directory path from imported properties -->
 		<property name="framework.path" value="${ghidra.install.dir}/Ghidra/Framework"/>
-		
+
 		<path id="sleigh.class.path">
 			<fileset dir="${framework.path}/SoftwareModeling/lib">
 				<include name="*.jar"/>
@@ -29,11 +29,11 @@
 				<include name="*.jar"/>
 			</fileset>
 		</path>
-		
+
 		<available classname="${sleigh.compile.class}" classpathref="sleigh.class.path" property="sleigh.compile.exists"/>
-			
+
 		<fail unless="sleigh.compile.exists" />
-		
+
 		<java classname="${sleigh.compile.class}"
 			classpathref="sleigh.class.path"
 			fork="true"
@@ -44,7 +44,7 @@
 			<arg value="-a"/>
 			<arg value="./languages"/>
 		</java>
-		
+
  	</target>
 
 </project>

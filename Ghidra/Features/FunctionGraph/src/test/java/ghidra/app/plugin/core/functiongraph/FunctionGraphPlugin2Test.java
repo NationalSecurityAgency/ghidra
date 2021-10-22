@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -265,7 +265,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 	public void testSharedColorExperience() throws Exception {
 		//
 		// Tests the new way of coloring vertices, by way of the ColorizerService, which will
-		// set the color in both the vertex and the listing (really just in the listing, but 
+		// set the color in both the vertex and the listing (really just in the listing, but
 		// the vertex displays this color.
 		//
 
@@ -290,7 +290,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		Color vBg = vertex.getBackgroundColor();
 		assertEquals(appliedBackgroundColor, vBg);
 
-		// 
+		//
 		// Reload and make sure the color is re-applied to the vertex (this was broken)
 		//
 		Address vertexAddress = vertex.getVertexAddress();
@@ -304,7 +304,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 	@Test
 	public void testSetMostRecentColorAction() throws Exception {
 		//
-		// Test that the 'set most recent color' action will set the color of the vertex *and* 
+		// Test that the 'set most recent color' action will set the color of the vertex *and*
 		// in the Listing.
 		//
 		// install ColorizerPlugin
@@ -340,8 +340,8 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 	// TODO: see SCR 9208 - we don't currently support this, although we could
 	public void dont_testNavigatingBackwardsRestoresPerspectiveInfo_ZoomOutOn() throws Exception {
 		//
-		// Test, that with the default 'zoomed-out' option *on* for new graphs, we will restore the 
-		// user's previous graph perspective data when they navigate back to a function that 
+		// Test, that with the default 'zoomed-out' option *on* for new graphs, we will restore the
+		// user's previous graph perspective data when they navigate back to a function that
 		// were examining (instead of zooming back out to the full view).
 		//
 
@@ -423,8 +423,8 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 	// TODO: see SCR 9208 - we don't currently support this, although we could
 	public void dontTestNavigatingBackwardsRestoresPerspectiveInfo_ZoomOutOff() throws Exception {
 		//
-		// Test, that with the default 'zoomed-out' option *off* for new graphs, we will restore the 
-		// user's previous graph perspective data when they navigate back to a function that 
+		// Test, that with the default 'zoomed-out' option *off* for new graphs, we will restore the
+		// user's previous graph perspective data when they navigate back to a function that
 		// were examining (instead of zooming back out to the full view).
 		//
 
@@ -461,7 +461,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 	//	      This tests verifies that a group will not be created if there is only one vertex
 	//        found upon restoring settings.  If we want to put that code back, then this test
 	//        is again valid.
-	// 
+	//
 	@Override
 	public void dontTestRestoringWhenCodeBlocksHaveChanged_DoesntRegroup() {
 		int transactionID = -1;
@@ -477,14 +477,14 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 	public void doTestSplitAndMergeNodesOnStaleGraph_ForReference() {
 		//
 		// Test that we can split a node into two for reference operations:
-		// 1) Adding a reference splits a node 
+		// 1) Adding a reference splits a node
 		// 2) Removing a reference merges a node
 		// 2) The above actions do not take place with automatic updates on
 		//
 		// Edges cases:
 		// 1) Adding a reference to a location already containing a symbol does not split the node
 		// 2) Removing a reference with other references at the vertex entry point does not merge nodes
-		// 
+		//
 
 		// Find a good test function.
 		goToAddress("01002cf5");
@@ -562,7 +562,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 
 		assertEquals(newOldVertex, newOldChildVertex);// this should be the same after the merge
 
-		// 
+		//
 		// Edge Cases
 		//
 
@@ -588,7 +588,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		// Verify the node was not split
 		assertTrue(graph.containsVertex(fromVertex));
 
-		// Now remove the reference we added 
+		// Now remove the reference we added
 		reference = referenceManager.getReference(fromAddress, toAddress, -1);
 		assertNotNull(reference);
 		deleteCmd = new RemoveReferenceCmd(reference);
@@ -602,19 +602,19 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 	}
 
 	protected void doTestRestoringWhenCodeBlocksHaveChanged_DoesntRegroup() {
-		// 
-		// Tests the behavior of how group vertices are restored when one or more of the vertices 
+		//
+		// Tests the behavior of how group vertices are restored when one or more of the vertices
 		// inside of the grouped vertex is no longer available when the graph attempts to restore
 		// the group vertex user settings (i.e., when restarting Ghidra, the previously grouped
-		// vertices should reappear).  
+		// vertices should reappear).
 		//
 		// In this test, we will be mutating a group of 2 nodes such
-		// that one of the nodes has been split into two.  This leaves only one vertex to 
+		// that one of the nodes has been split into two.  This leaves only one vertex to
 		// be found by the regrouping algorithm.  Furthermore, the regrouping will not take place
 		// if at least two vertices cannot be found.
 		//
 
-		// 
+		//
 		// Pick a function and group some nodes.
 		//
 		FGData graphData = graphFunction("01002cf5");
@@ -625,8 +625,8 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 
 		group(ungroupedVertices);
 
-		// 5 edges expected: 
-		// -01002cf5: 2 out 
+		// 5 edges expected:
+		// -01002cf5: 2 out
 		// -01002cf5: 2 in, 1 out
 		int expectedGroupedEdgeCount = 5;
 		GroupedFunctionGraphVertex groupedVertex = validateNewGroupedVertexFromVertices(
@@ -636,10 +636,10 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		Address minAddress = addresses.getMinAddress();
 
 		//
-		// Ideally, we would like to save, close and re-open the program so that we can get 
-		// a round-trip saving and reloading.  However, in the test environment, we cannot save 
+		// Ideally, we would like to save, close and re-open the program so that we can get
+		// a round-trip saving and reloading.  However, in the test environment, we cannot save
 		// our programs.  So, we will instead just navigate away from the current function, clear
-		// the cache (to make sure that we read the settings again), and then verify that the 
+		// the cache (to make sure that we read the settings again), and then verify that the
 		// data saved in the program has been used to re-group.
 		//
 		graphFunction("0100415a");
@@ -663,14 +663,14 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 	protected void doTestSplitAndMergeNodesOnStaleGraph_ForSymbol() {
 		//
 		// Test that we can split a node into two for symbol operations:
-		// 1) Adding a symbol splits a node 
+		// 1) Adding a symbol splits a node
 		// 2) Removing a symbol merges a node
 		// 2) The above actions do not take place with automatic updates on
 		//
 		// Edges cases:
 		// 1) Adding a symbol to a location already containing a symbol does not split the node
 		// 2) Removing a symbol with other symbols at the vertex entry point does not merge nodes
-		// 
+		//
 
 		// Find a good test function.
 		goToAddress("01002cf5");
@@ -745,7 +745,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		// Verify the graph is still stale
 		assertTrue(view.isGraphViewStale());
 
-		// 
+		//
 		// Edge Cases
 		//
 
@@ -769,7 +769,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		// Verify the graph is stale
 		assertTrue(view.isGraphViewStale());
 
-		// Now remove the label we added 
+		// Now remove the label we added
 		deleteCmd = new DeleteLabelCmd(vertexAddress, labelName);
 		deleteCmd.applyTo(program);
 		program.flushEvents();
@@ -780,10 +780,10 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 		assertTrue(graph.containsVertex(vertexWithLabel));
 	}
 
-	// note: unreliable--garbage collection works differently across platforms (sad face)	
+	// note: unreliable--garbage collection works differently across platforms (sad face)
 //		public void testClearCacheAndMemoryLeak() {
 //			//
-//			// Test that when we clear the cache of a graph the vertices of that graph will be 
+//			// Test that when we clear the cache of a graph the vertices of that graph will be
 //			// garbage collected
 //			//
 //			WeakSet<FunctionGraphVertex> weakSet =
@@ -800,7 +800,7 @@ public class FunctionGraphPlugin2Test extends AbstractFunctionGraphTest {
 //			weakSet.add(rootVertex);
 //			assertTrue(weakSet.iterator().hasNext());
 	//
-//			// move to a new function so that we the FG will not be holding a reference to the 
+//			// move to a new function so that we the FG will not be holding a reference to the
 //			// originally graphed function
 //			String address = "01002239";
 //			goToAddress(address);

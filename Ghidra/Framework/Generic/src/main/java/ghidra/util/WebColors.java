@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -183,7 +183,7 @@ public abstract class WebColors {
 	 * Tries to find a color for the given String value. The String value can either be
 	 * a hex string (see {@link Color#decode(String)}) or a web color name as defined
 	 * above
-	 * 
+	 *
 	 * @param value the string value to interpret as a color
 	 * @param defaultColor a default color to return if the string can't be converted to a color
 	 * @return a color for the given string value or the default color if the string can't be translated
@@ -197,7 +197,7 @@ public abstract class WebColors {
 	 * Tries to find a color for the given String value. The String value can either be
 	 * a hex string (see {@link Color#decode(String)}) or a web color name as defined
 	 * in {@link WebColors}
-	 * 
+	 *
 	 * @param value the string value to interpret as a color
 	 * @return a color for the given string value or null if the string can't be translated
 	 */
@@ -217,9 +217,9 @@ public abstract class WebColors {
 	/**
 	 * Converts a color to a string value. If there is a defined color for the given color value,
 	 * the color name will be returned. Otherwise, it will return a hex string for the color as
-	 * defined by {@link Color#toString()}. The result of this call can be passed to 
-	 * {@link #getColor(String)} and be guaranteed that a color will be returned 
-	 * 
+	 * defined by {@link Color#toString()}. The result of this call can be passed to
+	 * {@link #getColor(String)} and be guaranteed that a color will be returned
+	 *
 	 * @param color the color to convert to a string.
 	 * @return the string representation for the given color.
 	 */

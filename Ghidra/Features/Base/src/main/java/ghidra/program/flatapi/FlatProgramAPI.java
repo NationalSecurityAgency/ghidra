@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -2391,7 +2391,7 @@ public class FlatProgramAPI {
 	 * <br>
 	 * NOTE: if a <code>NOTE</code> bookmark already exists at the address, it will be replaced.
 	 * This is intentional and is done to match the behavior of setting bookmarks from the UI.
-	 * 
+	 *
 	 * @param address  the address to create the bookmark
 	 * @param category the bookmark category (it may be null)
 	 * @param note  the bookmark text
@@ -2460,11 +2460,11 @@ public class FlatProgramAPI {
 	 * If path is NULL, the program will be saved into the root folder.  If parts of the path are
 	 * missing, they will be created if possible.
 	 * <p>
-	 * If a program already exists with the specified name, then a time stamp will be appended 
+	 * If a program already exists with the specified name, then a time stamp will be appended
 	 * to the name to make it unique.
 	 * <p>
 	 * @param program the program to save
-	 * @param path list of string path elements (starting at the root of the project) that specify 
+	 * @param path list of string path elements (starting at the root of the project) that specify
 	 * the project folder to save the program info.  Example: { "folder1", "subfolder2", "finalfolder" }
 	 * @throws Exception
 	 */

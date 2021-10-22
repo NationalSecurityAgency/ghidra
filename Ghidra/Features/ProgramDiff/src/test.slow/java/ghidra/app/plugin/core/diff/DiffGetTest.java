@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -182,7 +182,7 @@ public class DiffGetTest extends DiffTestAdapter {
 	public void testDeselectAndSelectAllTypesOfDiffs() throws Exception {
 		openSecondProgram(diffTestP1, diffTestP2);
 //		AddressSet selectionSet = new AddressSet(addrFactory, addr("1001708"), addr("1003001"));
-//		tool.firePluginEvent(new ProgramSelectionPluginEvent("test", 
+//		tool.firePluginEvent(new ProgramSelectionPluginEvent("test",
 //				new ProgramSelection(selectionSet), program));
 
 		invokeLater(getDiffs);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 	/**
 	 * {@link BundleStatusComponentProvider} visualizes bundle status and exposes actions for
 	 * adding, removing, enabling, disabling, activating, and deactivating bundles.
-	 * 
+	 *
 	 * @param tool the tool
 	 * @param owner the owner name
 	 * @param bundleHost the bundle host
@@ -187,7 +187,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 	/**
 	 * get the currently selected rows and translate to model rows
-	 * 
+	 *
 	 * @return selected model rows
 	 */
 	int[] getSelectedModelRows() {
@@ -352,9 +352,9 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 	/**
 	 * This is for testing only!  during normal execution, statuses are only added through BundleHostListener bundle(s) added events.
-	 * 
+	 *
 	 * <p>each new bundle will be enabled and writable
-	 * 
+	 *
 	 * @param bundleFiles the files to use
 	 */
 	public void setBundleFilesForTesting(List<ResourceFile> bundleFiles) {
@@ -403,7 +403,7 @@ public class BundleStatusComponentProvider extends ComponentProviderAdapter {
 
 		/**
 		 * A task to enable and activate bundles.
-		 * 
+		 *
 		 * @param title the title
 		 * @param statuses the bundle statuses
 		 * @param inStages see {@link BundleHost#activateInStages}

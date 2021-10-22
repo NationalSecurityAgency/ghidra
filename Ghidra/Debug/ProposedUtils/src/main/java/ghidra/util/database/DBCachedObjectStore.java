@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -726,7 +726,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 	/**
 	 * Get the number of objects (records) in this store
-	 * 
+	 *
 	 * @return the record count
 	 */
 	public int getRecordCount() {
@@ -737,9 +737,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 	/**
 	 * Get the maximum key which has ever existed in this store
-	 * 
+	 *
 	 * Note, the key need not actually be present
-	 * 
+	 *
 	 * @return the maximum, or null if the store is unused
 	 */
 	public Long getMaxKey() {
@@ -754,9 +754,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 	/**
 	 * Count the number of keys in a given range.
-	 * 
+	 *
 	 * This implementation is not very efficient. It must visit at least every record in the range.
-	 * 
+	 *
 	 * @param keyRange the range of keys
 	 * @return the count of records whose keys fall within the range
 	 */
@@ -784,10 +784,10 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 	/**
 	 * Check if any keys exist within the given range.
-	 * 
+	 *
 	 * This implementation is more efficient than using {@link #getKeyCount(Range)} and comparing to
 	 * 0, since there's no need to visit more than one record in the range.
-	 * 
+	 *
 	 * @param keyRange the range of keys
 	 * @return true if at least one record has a key within the range
 	 */
@@ -851,9 +851,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 	/**
 	 * Create a new object with the given key.
-	 * 
+	 *
 	 * If the key already exists in the table, the existing record is overwritten.
-	 * 
+	 *
 	 * @param key the key for the new object
 	 * @return the new object
 	 */
@@ -869,7 +869,7 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 	/**
 	 * Create a new object with the next available key.
-	 * 
+	 *
 	 * @return the new object
 	 */
 	public T create() {
@@ -1046,9 +1046,9 @@ public class DBCachedObjectStore<T extends DBAnnotatedObject> implements ErrorHa
 
 	/**
 	 * Display useful information about this cached store
-	 * 
+	 *
 	 * Please avoid calling this except for debugging.
-	 * 
+	 *
 	 * @return a string representation of the store's cache
 	 */
 	@Override

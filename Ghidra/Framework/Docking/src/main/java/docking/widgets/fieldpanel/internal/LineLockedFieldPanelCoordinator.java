@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import docking.widgets.fieldpanel.FieldPanel;
 import ghidra.util.exception.AssertException;
 
 /**
- * A LineLockedFieldPanelCoordinator coordinates the scrolling of a set of field panels by sharing 
+ * A LineLockedFieldPanelCoordinator coordinates the scrolling of a set of field panels by sharing
  * bound scroll models that are locked together by a set of line numbers.
  * All the field panels are locked together at the line numbers specified in the locked line array.
  * In other words this coordinator tries to keep the indicated line for each field panel
@@ -53,7 +53,7 @@ public class LineLockedFieldPanelCoordinator extends FieldPanelCoordinator {
 	}
 
 	/**
-	 * Call this method whenever you want to change the line numbers that are locked together 
+	 * Call this method whenever you want to change the line numbers that are locked together
 	 * for the associated field panels.
 	 * @param lockedLineNumbers the array of locked line numbers that are directly associated with
 	 * the array of field panels.<BR>

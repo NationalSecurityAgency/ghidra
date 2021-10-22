@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,8 +46,8 @@ import ghidra.util.task.TaskMonitor;
  *
  * This model does not implement the pure simple block model
  * because unreachable code is still considered a block.
- * 
- * This model handles delay slot instructions with the following 
+ *
+ * This model handles delay slot instructions with the following
  * assumptions:<ol>
  * <li>A delayed instruction is always corresponds to a change in
  *     flow and terminates a block.  The delay slot instructions
@@ -234,7 +234,7 @@ public class SimpleBlockModel implements CodeBlockModel {
 
 	/**
 	 * Examine an instruction for out-bound flows which qualify it
-	 * as an end-of-block. 
+	 * as an end-of-block.
 	 * @param instr
 	 * @return true if end-of-block flow exists from specified instruction.
 	 */
@@ -247,7 +247,7 @@ public class SimpleBlockModel implements CodeBlockModel {
 	}
 
 	/**
-	 * Create a new block over an address range with a single entry-point. 
+	 * Create a new block over an address range with a single entry-point.
 	 * @param start the first address which is also the only entry-point.
 	 * @param end the last address.
 	 * @return CodeBlock
@@ -564,7 +564,7 @@ public class SimpleBlockModel implements CodeBlockModel {
 			}
 			FlowType flowType = instr.getFlowType();
 			if (block.getStartAddresses().length > 1) {
-				// modify flow type to a conditional	
+				// modify flow type to a conditional
 				if (flowType == RefType.UNCONDITIONAL_CALL) {
 					flowType = RefType.CONDITIONAL_CALL;
 				}
@@ -592,7 +592,7 @@ public class SimpleBlockModel implements CodeBlockModel {
 		Data data = listing.getDefinedDataContaining(block.getMinAddress());
 		if (data != null) {
 			return RefType.INDIRECTION;
-//            
+//
 //            // if no label here
 //            Symbol sym = program.getSymbolTable().getSymbol(data.getMinAddress());
 //            if (sym == null) {

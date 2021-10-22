@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.pcode.Varnode;
 
 /**
- * 
+ *
  */
 
 public class BinaryExpression implements OperandValue, ExpressionValue {
@@ -41,11 +41,11 @@ public class BinaryExpression implements OperandValue, ExpressionValue {
 	private int wordSize;
 //	private long wordMask;
 	private AddressSpace constantSpace;
-	
+
 	private int opType;
 	private ExpressionTerm left, right;
 
-	public BinaryExpression(int op, ExpressionTerm l, ExpressionTerm r, AddressSpace c) 
+	public BinaryExpression(int op, ExpressionTerm l, ExpressionTerm r, AddressSpace c)
 		throws SledException {
 		opType = op;
 		left = l;
@@ -76,14 +76,14 @@ public class BinaryExpression implements OperandValue, ExpressionValue {
 	public int length(MemBuffer buf,int off) throws Exception {
 		int leftLen = left.length(buf,off);
 		int rightLen = right.length(buf, off);
-		
+
 		return (leftLen > rightLen ? leftLen : rightLen);
 	}
 
 	@Override
 	public ConstructorInfo getInfo(MemBuffer buf, int off) throws Exception {
 		return new ConstructorInfo(length(buf,off),0);
-	}	
+	}
 
 	@Override
 	public long longValue(MemBuffer buf, int off) throws Exception {
@@ -138,7 +138,7 @@ public class BinaryExpression implements OperandValue, ExpressionValue {
 	public void getAllHandles(ArrayList<Handle> handles,Position position,int off) throws Exception {
 		handles.add(getHandle(position,off));
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see ghidra.app.plugin.processors.generic.OperandValue#toList(java.util.ArrayList, ghidra.program.model.mem.MemBuffer, int)
 	 */

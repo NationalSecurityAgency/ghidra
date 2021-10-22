@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import java.util.Properties;
 import ghidra.launch.JavaFinder.JavaFilter;
 
 /**
- * Class to determine and represent a required Java configuration, including minimum and maximum 
+ * Class to determine and represent a required Java configuration, including minimum and maximum
  * supported versions, compiler compliance level, etc.
  */
 public class JavaConfig {
@@ -42,9 +42,9 @@ public class JavaConfig {
 
 	/**
 	 * Creates a new Java configuration for the given installation.
-	 * 
+	 *
 	 * @param installDir The installation directory.
-	 * @throws FileNotFoundException if a required file was not found. 
+	 * @throws FileNotFoundException if a required file was not found.
 	 * @throws IOException if there was a problem reading a required file.
 	 * @throws ParseException if there was a problem parsing a required file.
 	 */
@@ -57,7 +57,7 @@ public class JavaConfig {
 	/**
 	 * Gets the launch properties associated with this Java configuration.  Certain aspects of the
 	 * Java configuration are stored in the launch properties.
-	 * 
+	 *
 	 * @return The launch properties associated with this Java configuration.  Could be null if
 	 *   this Java configuration does not use launch properties.
 	 */
@@ -67,7 +67,7 @@ public class JavaConfig {
 
 	/**
 	 * Gets the Java configuration's minimum supported major Java version.
-	 *  
+	 *
 	 * @return The Java configuration's minimum supported major Java version.
 	 */
 	public int getMinSupportedJava() {
@@ -76,7 +76,7 @@ public class JavaConfig {
 
 	/**
 	 * Gets the Java configuration's maximum supported major Java version.
-	 *  
+	 *
 	 * @return The Java configuration's maximum supported major Java version.  If there is no
 	 *   restriction, the value will be 0.
 	 */
@@ -85,19 +85,19 @@ public class JavaConfig {
 	}
 
 	/**
-	 * Gets the Java configuration's supported Java architecture.  All supported Java 
+	 * Gets the Java configuration's supported Java architecture.  All supported Java
 	 * configurations must have an architecture of <code>64</code>.
-	 * 
-	 * @return The Java configuration's supported Java architecture (64).  
+	 *
+	 * @return The Java configuration's supported Java architecture (64).
 	 */
 	public int getSupportedArchitecture() {
 		return 64;
 	}
 
 	/**
-	 * Gets the Java configuration's compiler compliance level that was used to build the 
+	 * Gets the Java configuration's compiler compliance level that was used to build the
 	 * associated installation.
-	 * 
+	 *
 	 * @return The Java configuration's compiler compliance level.
 	 */
 	public String getCompilerComplianceLevel() {
@@ -106,7 +106,7 @@ public class JavaConfig {
 
 	/**
 	 * Gets the Java home directory from the user's Java home save file.
-	 * 
+	 *
 	 * @return The Java home directory from the user's Java home save file, or null if the file
 	 *   does not exist or is empty.
 	 * @throws IOException if there was a problem reading the Java home save file.
@@ -127,7 +127,7 @@ public class JavaConfig {
 	/**
 	 * Saves the given Java home directory to the user's Java home save file.  If the save
 	 * file does not exist, it will be created.
-	 * 
+	 *
 	 * @param javaHomeDir The Java home directory to save.
 	 * @return The user's Java home save file.
 	 * @throws IOException if there was a problem saving to the file.
@@ -149,7 +149,7 @@ public class JavaConfig {
 	/**
 	 * Tests to see if the given directory is a supported Java home directory for this Java
 	 * configuration.
-	 * 
+	 *
 	 * @param dir The directory to test.
 	 * @param javaFilter A filter used to restrict what kind of Java installations we support.
 	 * @return True if the given directory is a supported Java home directory for this Java
@@ -166,7 +166,7 @@ public class JavaConfig {
 
 	/**
 	 * Tests to see if the given Java version is supported by this Java launch configuration.
-	 * 
+	 *
 	 * @param javaVersion The java version to check.
 	 * @return True if the given Java version is supported by this Java launch configuration.
 	 */
@@ -182,14 +182,14 @@ public class JavaConfig {
 
 	/**
 	 * Gets the Java version of the given Java home directory.
-	 * 
+	 *
 	 * @param javaHomeDir The Java home directory to get the version of.
 	 * @param javaFilter A filter used to restrict what kind of Java installations we support.
 	 * @return The Java version of the given Java home directory.
 	 * @throws FileNotFoundException if the given directory is missing a required Java file
-	 *   or directory based on the provided filter.  The exception's message will have more 
+	 *   or directory based on the provided filter.  The exception's message will have more
 	 *   details.
-	 * @throws IOException if there was a problem executing the java executable with the 
+	 * @throws IOException if there was a problem executing the java executable with the
 	 *   "-version" argument.
 	 * @throws ParseException if the version string failed to parse.
 	 */
@@ -234,10 +234,10 @@ public class JavaConfig {
 
 	/**
 	 * Gets the version of the given Java executable from the output of running "java -version".
-	 * 
+	 *
 	 * @param javaExecutable The Java executable to run and get the version of.
 	 * @return The version of the given Java executable.
-	 * @throws IOException if there was a problem executing the given Java executable with the 
+	 * @throws IOException if there was a problem executing the given Java executable with the
 	 *   "-version" argument.
 	 * @throws ParseException if the version string failed to parse.
 	 */
@@ -257,7 +257,7 @@ public class JavaConfig {
 				if (line.startsWith(searchString)) {
 					version = line.substring(searchString.length());
 				}
-				
+
 				searchString = "sun.arch.data.model = ";
 				if (line.startsWith(searchString)) {
 					arch = line.substring(searchString.length());
@@ -275,10 +275,10 @@ public class JavaConfig {
 
 	/**
 	 * Initializes the required application properties for the given installation.
-	 * 
+	 *
 	 * @param installDir The Ghidra installation directory.  This is the directory that has the
 	 *   "Ghidra" subdirectory in it.
-	 * @throws FileNotFoundException if the application.properties file was not found. 
+	 * @throws FileNotFoundException if the application.properties file was not found.
 	 * @throws IOException if there was a problem reading the application.properties file.
 	 * @throws ParseException if there was a problem parsing the required application properties.
 	 */
@@ -293,7 +293,7 @@ public class JavaConfig {
 		try (FileInputStream fin = new FileInputStream(applicationPropertiesFile)) {
 			applicationProperties.load(fin);
 		}
-		
+
 		// Required properties
 		applicationName = getDefinedProperty(applicationProperties, "application.name");
 		applicationVersion = getDefinedProperty(applicationProperties, "application.version");
@@ -328,7 +328,7 @@ public class JavaConfig {
 
 	/**
 	 * Initializes the launch properties for the given installation.
-	 *  
+	 *
 	 * @param installDir The Ghidra installation directory.  This is the directory that has the
 	 *   "Ghidra" subdirectory in it.
 	 * @throws FileNotFoundException if the given launch properties file does not exist.
@@ -352,7 +352,7 @@ public class JavaConfig {
 
 	/**
 	 * Initializes the Java home save file.
-	 *  
+	 *
 	 * @param installDir The Ghidra installation directory.  This is the directory that has the
 	 *   "Ghidra" subdirectory in it.
 	 * @throws FileNotFoundException if the user's home directory was not found.
@@ -387,9 +387,9 @@ public class JavaConfig {
 
 	/**
 	 * Gets the property value with the given key.
-	 * 
+	 *
 	 * @param properties The properties to get the property from.
-	 * @param key The property's key. 
+	 * @param key The property's key.
 	 * @return The property's corresponding value.
 	 * @throws ParseException if the property with the given key did not have a defined value.
 	 */

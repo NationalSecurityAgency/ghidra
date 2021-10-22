@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,17 +23,17 @@ import ghidra.program.model.data.DataTypeManagerDomainObject;
 import ghidra.program.model.listing.DataTypeArchive;
 import ghidra.program.model.listing.DataTypeArchiveChangeSet;
 
-/** 
+/**
  * Top level object that manages each step of the merge/resolve conflicts
  * process.
  */
-public class DataTypeArchiveMergeManager extends MergeManager { 
+public class DataTypeArchiveMergeManager extends MergeManager {
 
-	public DataTypeArchiveMergeManager(	DataTypeManagerDomainObject resultDtArchive, 
-										DataTypeManagerDomainObject myDtArchive, 
-										DataTypeManagerDomainObject originalDtArchive, 
+	public DataTypeArchiveMergeManager(	DataTypeManagerDomainObject resultDtArchive,
+										DataTypeManagerDomainObject myDtArchive,
+										DataTypeManagerDomainObject originalDtArchive,
 										DataTypeManagerDomainObject latestDtArchive,
-										DataTypeArchiveChangeSet latestChangeSet, 
+										DataTypeArchiveChangeSet latestChangeSet,
 										DataTypeArchiveChangeSet myChangeSet) {
 		super(resultDtArchive, myDtArchive, originalDtArchive, latestDtArchive, latestChangeSet, myChangeSet);
 	}
@@ -43,19 +43,19 @@ public class DataTypeArchiveMergeManager extends MergeManager {
 		// create the merge resolvers
 		int idx = 0;
 		mergeResolvers = new MergeResolver[1];
-		
-		mergeResolvers[idx++] = new DataTypeMergeManager(	this, 
-															(DataTypeManagerDomainObject)resultDomainObject, 
-															(DataTypeManagerDomainObject)myDomainObject, 
-															(DataTypeManagerDomainObject)originalDomainObject, 
-															(DataTypeManagerDomainObject)latestDomainObject, 
-															(DataTypeArchiveChangeSet)latestChangeSet, 
+
+		mergeResolvers[idx++] = new DataTypeMergeManager(	this,
+															(DataTypeManagerDomainObject)resultDomainObject,
+															(DataTypeManagerDomainObject)myDomainObject,
+															(DataTypeManagerDomainObject)originalDomainObject,
+															(DataTypeManagerDomainObject)latestDomainObject,
+															(DataTypeArchiveChangeSet)latestChangeSet,
 															(DataTypeArchiveChangeSet)myChangeSet);
 	}
 
 	/**
 	 * Returns one of the four programs involved in the merge as indicated by the version.
-	 * 
+	 *
 	 * @param version
 	 *            the program version to return. (LATEST, MY, ORIGINAL, or RESULT).
 	 * @return the indicated program version or null if a valid version isn't specified.
@@ -75,11 +75,11 @@ public class DataTypeArchiveMergeManager extends MergeManager {
 				return null;
 		}
 	}
-	
+
 	@Override
 	protected MergeManagerPlugin createMergeManagerPlugin(ModalPluginTool mergePluginTool,
 			MergeManager multiUserMergeManager, UndoableDomainObject modifiableDomainObject) {
-		return new DataTypeArchiveMergeManagerPlugin(mergeTool, DataTypeArchiveMergeManager.this, 
+		return new DataTypeArchiveMergeManagerPlugin(mergeTool, DataTypeArchiveMergeManager.this,
 														(DataTypeArchive)resultDomainObject);
 	}
 

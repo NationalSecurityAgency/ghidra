@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import agent.gdb.manager.parsing.GdbParsingUtils;
 
 /**
  * A location of a breakpoint
- * 
+ *
  * Some breakpoint information blocks list multiple locations. Keeping this information in a
  * separate object allows the parsing and tracking of these locations. Usually multiple locations
  * are presented by GDB when a single location specification resolves to multiple addresses.
@@ -37,7 +37,7 @@ public class GdbBreakpointLocation {
 
 	/**
 	 * Construct a breakpoint location
-	 * 
+	 *
 	 * @param number the number of breakpoint location, i.e., {@code x} in {@code x.y}
 	 * @param sub the number of the breakpoint location, i.e., {@code y} in {@code x.y}
 	 * @param enabled true if the location is enabled, false otherwise
@@ -61,7 +61,7 @@ public class GdbBreakpointLocation {
 
 	/**
 	 * Get the breakpoint number, i.e., {@code x} in {@code x.y}
-	 * 
+	 *
 	 * @return the breakpoint number
 	 */
 	public long getNumber() {
@@ -70,7 +70,7 @@ public class GdbBreakpointLocation {
 
 	/**
 	 * If present, get the location number, i.e., {@code y} in {@code x.y}
-	 * 
+	 *
 	 * @return the location number, or 0
 	 */
 	public long getSub() {
@@ -79,7 +79,7 @@ public class GdbBreakpointLocation {
 
 	/**
 	 * Check if the location is enabled
-	 * 
+	 *
 	 * @return true if enabled, false otherwise
 	 */
 	public boolean isEnabled() {
@@ -88,7 +88,7 @@ public class GdbBreakpointLocation {
 
 	/**
 	 * Get the address, usually resolved, but maybe not
-	 * 
+	 *
 	 * @see {@link GdbBreakpointInfo#getPending()}
 	 * @return the address
 	 */
@@ -98,7 +98,7 @@ public class GdbBreakpointLocation {
 
 	/**
 	 * If numerical, get the address as a long
-	 * 
+	 *
 	 * @return the address
 	 */
 	public long addrAsLong() {
@@ -107,7 +107,7 @@ public class GdbBreakpointLocation {
 
 	/**
 	 * Get a list of inferior IDs to which this location applies
-	 * 
+	 *
 	 * @return the list of inferiors
 	 */
 	public List<Integer> getInferiorIds() {

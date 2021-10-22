@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,15 +19,15 @@ import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
 
 public class DataTypeNamingUtil {
-	
+
 	private DataTypeNamingUtil() {
 		// no construct
 	}
-	
+
 	/**
 	 * Generate a simple mangled function definition name and apply it to the specified functionDefinition.
 	 * @param functionDefinition function definition whose name should be set
-	 * @param namePrefix prefix to be applied to generated name.  An underscore will separate this prefix from the 
+	 * @param namePrefix prefix to be applied to generated name.  An underscore will separate this prefix from the
 	 * remainder of the mangled name.  If null specified a prefix of "_function" will be used.
 	 * @return name applied to functionDefinition
 	 * @throws IllegalArgumentException if generated name contains unsupported characters

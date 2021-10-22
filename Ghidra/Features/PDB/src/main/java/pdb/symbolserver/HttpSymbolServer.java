@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * A {@link SymbolServer} that is accessed via HTTP.
  * <p>
- * 
+ *
  */
 public class HttpSymbolServer extends AbstractSymbolServer {
 	private static final String GHIDRA_USER_AGENT = "Ghidra_HttpSymbolServer_client";
@@ -44,9 +44,9 @@ public class HttpSymbolServer extends AbstractSymbolServer {
 
 	/**
 	 * Predicate that tests if the location string is an instance of a HttpSymbolServer location.
-	 * 
+	 *
 	 * @param locationString symbol server location string
-	 * @return boolean true if the string should be handled by the HttpSymbolServer class 
+	 * @return boolean true if the string should be handled by the HttpSymbolServer class
 	 */
 	public static boolean isHttpSymbolServerLocation(String locationString) {
 		return locationString.startsWith("http://") || locationString.startsWith("https://");
@@ -56,8 +56,8 @@ public class HttpSymbolServer extends AbstractSymbolServer {
 
 	/**
 	 * Creates a new instance of a HttpSymbolServer.
-	 * 
-	 * @param serverURI URI / URL of the symbol server 
+	 *
+	 * @param serverURI URI / URL of the symbol server
 	 */
 	public HttpSymbolServer(URI serverURI) {
 		String path = serverURI.getPath();

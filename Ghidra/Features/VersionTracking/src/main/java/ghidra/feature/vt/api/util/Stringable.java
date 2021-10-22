@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,15 +26,15 @@ import ghidra.util.exception.AssertException;
 
 /**
  * Generically, this represents the concept that the implementation of this class is an item
- * that can be turned into a String and restored from String form.  This is similar to 
- * Java's Bean serialization mechanism, which allows you to turn object to Strings and then 
+ * that can be turned into a String and restored from String form.  This is similar to
+ * Java's Bean serialization mechanism, which allows you to turn object to Strings and then
  * back again.
  */
 public abstract class Stringable implements ExtensionPoint, DisplayStringProvider {
 
 //==================================================================================================
 // Static Initialization
-//==================================================================================================    
+//==================================================================================================
 
 	private static Map<String, Class<? extends Stringable>> shortNameToClassnameMap;
 
@@ -89,7 +89,7 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 
 //==================================================================================================
 // End Initialization
-//==================================================================================================    
+//==================================================================================================
 
 	public static final String DELIMITER = "\t";
 	public static final String DOUBLE_DELIMITER = "\n";
@@ -154,8 +154,8 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 	}
 
 	/**
-	 * Encodes a comment string that may contain tabs, carriage returns, and linefeeds so that it 
-	 * can be saved as part of a Stringable. Tabs, carriage returns, and linefeeds are typically 
+	 * Encodes a comment string that may contain tabs, carriage returns, and linefeeds so that it
+	 * can be saved as part of a Stringable. Tabs, carriage returns, and linefeeds are typically
 	 * used as delimiters for separating tokens within the Stringable.
 	 * @param unencodedComment the actual comment text containing tabs, etc.
 	 * @return the encoded comment to be saved as part of the stringable.
@@ -204,8 +204,8 @@ public abstract class Stringable implements ExtensionPoint, DisplayStringProvide
 	}
 
 	/**
-	 * Decodes a encoded comment string that may contain encoded tabs, carriage returns, and 
-	 * linefeeds back to its original form where tabs, carriage returns, and linefeeds were 
+	 * Decodes a encoded comment string that may contain encoded tabs, carriage returns, and
+	 * linefeeds back to its original form where tabs, carriage returns, and linefeeds were
 	 * not intended as delimiters for separating tokens within a Stringable.
 	 * @param encodedComment the encoded comment that was saved as part of the stringable.
 	 * @return the actual unencoded comment text containing tabs, etc.

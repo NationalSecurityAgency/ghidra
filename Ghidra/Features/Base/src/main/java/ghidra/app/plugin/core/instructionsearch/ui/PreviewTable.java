@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,7 +78,7 @@ public class PreviewTable extends AbstractInstructionTable {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param numColumns the number of columns in the table
 	 * @param plugin the parent plugin
 	 * @param dialog the search dialog
@@ -99,7 +99,7 @@ public class PreviewTable extends AbstractInstructionTable {
 	 * isn't automatically given when embedding a jtable in a scrollpanel; the
 	 * preferred width of the table must be explicitly set to the width of the
 	 * contents of the widest cell.
-	 * 
+	 *
 	 * Note: We could override getPreferredSize() instead but we don't want to
 	 * change the default behavior for setting the preferred height, only the
 	 * width. So it's better to do it here.
@@ -119,7 +119,7 @@ public class PreviewTable extends AbstractInstructionTable {
 		// existing preferred height.
 		this.setPreferredSize(new Dimension(width, getPreferredSize().height));
 
-		// Return true if the viewport has changed such that the table columns need to 
+		// Return true if the viewport has changed such that the table columns need to
 		// be resized.
 		return getPreferredSize().width < getParent().getWidth();
 	}
@@ -138,7 +138,7 @@ public class PreviewTable extends AbstractInstructionTable {
 	/**
 	 * Replaces the contents of the preview table at the given row with the
 	 * given string.
-	 * 
+	 *
 	 * @param row the row to replace
 	 * @param val the new text
 	 */
@@ -180,7 +180,7 @@ public class PreviewTable extends AbstractInstructionTable {
 				// instruction.
 				int posptr = 0;
 
-				// Loop over all instructions, extracting information for each, and 
+				// Loop over all instructions, extracting information for each, and
 				// converting the binary instruction to a string we can display.
 				for (int i = 0; i < numInstructions; i++) {
 
@@ -190,7 +190,7 @@ public class PreviewTable extends AbstractInstructionTable {
 
 					monitor.incrementProgress(1);
 
-					// Keep track of the instruction size as we're processing; we use this to 
+					// Keep track of the instruction size as we're processing; we use this to
 					// increment our byte position.
 					int instrSize = 0;
 
@@ -235,7 +235,7 @@ public class PreviewTable extends AbstractInstructionTable {
 	 * PROTECTED METHODS
 	 ********************************************************************************************/
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	protected Object[] createColumnHeaders() {
@@ -247,7 +247,7 @@ public class PreviewTable extends AbstractInstructionTable {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	@Override
 	protected JToolBar createToolbar() {
@@ -300,7 +300,7 @@ public class PreviewTable extends AbstractInstructionTable {
 	private void buildPreviewString(int instrSize, String valueStr, String maskStr, int posptr,
 			int row) {
 
-		// Extract the number of bytes from the full string created above, both for the value 
+		// Extract the number of bytes from the full string created above, both for the value
 		// and the mask;
 		String instrValTmp = valueStr.substring(posptr, posptr + (instrSize * 8));
 		String instrMaskTmp = maskStr.substring(posptr, posptr + (instrSize * 8));
@@ -364,7 +364,7 @@ public class PreviewTable extends AbstractInstructionTable {
 	/**
 	 * Gathers the search strings for each instruction and returns them as a
 	 * single string.
-	 * 
+	 *
 	 * @return the complete search string
 	 */
 	private String buildSearchString() {
@@ -421,7 +421,7 @@ public class PreviewTable extends AbstractInstructionTable {
 			switch (currentView) {
 				case BINARY:
 					// If it's binary, just grab the value of the preview string
-					// in the map; they're stored there as binary so nothing to 
+					// in the map; they're stored there as binary so nothing to
 					// do but format it with the correct mask settings.
 					previewString =
 						InstructionSearchUtils.addSpaceOnByteBoundary(instr, InputMode.BINARY);

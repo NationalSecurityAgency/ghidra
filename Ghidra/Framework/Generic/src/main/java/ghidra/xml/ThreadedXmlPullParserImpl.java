@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,7 @@ class ThreadedXmlPullParserImpl extends AbstractXmlPullParser {
 
 	/**
 	 * Constructs a new parser using the specified XML file.
-	 * 
+	 *
 	 * @param file the input XML file
 	 * @param errHandler the XML error handler
 	 * @param validate true if the parse should validate against the DTD
@@ -72,7 +72,7 @@ class ThreadedXmlPullParserImpl extends AbstractXmlPullParser {
 
 	/**
 	 * Constructs a new parser using the specified XML file.
-	 * 
+	 *
 	 * @param file the input XML file
 	 * @param errHandler the XML error handler
 	 * @param validate true if the parse should validate against the DTD
@@ -98,7 +98,7 @@ class ThreadedXmlPullParserImpl extends AbstractXmlPullParser {
 	 * XML files that use an external dtd file you should call
 	 * {@link #XmlParser(File, ErrorHandler, boolean)}.
 	 * <p>
-	 * 
+	 *
 	 * @param input the XML input stream
 	 * @param inputName the name of the input stream
 	 * @param errHandler the XML error handler
@@ -129,7 +129,7 @@ class ThreadedXmlPullParserImpl extends AbstractXmlPullParser {
 	/**
 	 * Returns the value of the attribute of the processing instruction. For
 	 * example, <code>&lt;?program_dtd version="1"?&gt;</code>
-	 * 
+	 *
 	 * @param piName the name of the processing instruction
 	 * @param attribute the name of the attribute
 	 * @return the value of the attribute of the processing instruction
@@ -146,7 +146,7 @@ class ThreadedXmlPullParserImpl extends AbstractXmlPullParser {
 
 	/**
 	 * Returns true if the parser has more elements to read.
-	 * 
+	 *
 	 * @return true if the parser has more elements to read
 	 */
 	@Override
@@ -173,7 +173,7 @@ class ThreadedXmlPullParserImpl extends AbstractXmlPullParser {
 
 	/**
 	 * Returns the next element to be read, but does not increment the iterator.
-	 * 
+	 *
 	 * @return the next element to be read, but does not increment the iterator
 	 */
 	@Override
@@ -186,7 +186,7 @@ class ThreadedXmlPullParserImpl extends AbstractXmlPullParser {
 
 	/**
 	 * Returns the next element to be read and increments the iterator.
-	 * 
+	 *
 	 * @return the next element to be read and increments the iterator
 	 */
 	@Override
@@ -272,7 +272,7 @@ class ThreadedXmlPullParserImpl extends AbstractXmlPullParser {
 				//       exception may not be discovered by clients (for example, if the client
 				//       is done reading elements before the exception is encountered by this
 				//       thread).  By logging it here, we can inspect the logs for ill-formatted
-				//       XML content that is not manifesting a bug.   If this causes undue 
+				//       XML content that is not manifesting a bug.   If this causes undue
 				//       noise, then we can make this a trace() call.
 				//Msg.debug(this, "Exception parsing XML", e);
 				ThreadedXmlPullParserImpl.this.exception = e;

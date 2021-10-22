@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * Applies the signature of the function in the currently active side of a 
+ * Applies the signature of the function in the currently active side of a
  * code comparison panel to the function in the other side of the panel
  * <p>
  * Each CodeComparisonPanel can extend this class in order to provide this action
@@ -44,7 +44,7 @@ public abstract class AbstractApplyFunctionSignatureAction extends DockingAction
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param owner the owner of this action
 	 */
 	public AbstractApplyFunctionSignatureAction(String owner) {
@@ -102,9 +102,9 @@ public abstract class AbstractApplyFunctionSignatureAction extends DockingAction
 	 * Returns true if the comparison panel opposite the one with focus,
 	 * is read-only
 	 * <p>
-	 * eg: if the right-side panel has focus, and the left-side panel is 
+	 * eg: if the right-side panel has focus, and the left-side panel is
 	 * read-only, this will return true
-	 *  
+	 *
 	 * @param codeComparisonPanel the comparison panel
 	 * @return true if the non-focused panel is read-only
 	 */
@@ -127,8 +127,8 @@ public abstract class AbstractApplyFunctionSignatureAction extends DockingAction
 	/**
 	 * Attempts to change the signature of a function to that of another
 	 * function
-	 * 
-	 * @param provider the parent component provider 
+	 *
+	 * @param provider the parent component provider
 	 * @param destinationFunction the function to change
 	 * @param sourceFunction the function to copy
 	 * @return true if the operation was successful

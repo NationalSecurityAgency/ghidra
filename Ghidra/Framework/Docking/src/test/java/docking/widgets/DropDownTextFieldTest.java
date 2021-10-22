@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import org.junit.Test;
 
 /**
  * This test achieves partial coverage of {@link DropDownTextField}.  Further coverage is
- * provided by {@link DropDownSelectionTextFieldTest}, as that test enables item selection 
+ * provided by {@link DropDownSelectionTextFieldTest}, as that test enables item selection
  * in the widget being tested.
  */
 public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String> {
@@ -112,13 +112,13 @@ public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String>
 
 	// Tests that:
 	// -the completion window is made hidden, the text field is updated upon an 'Enter', and
-	//  that an editingStopped() *is* fired (this last part only happens when we are not 
+	//  that an editingStopped() *is* fired (this last part only happens when we are not
 	//  consuming the Enter event)
 	@Test
 	public void testEnterKey_MatchingWindowOpen_DontConsumeEvent() {
 
 		//
-		// The default is to consume the event.  The test executes the code paths when the 
+		// The default is to consume the event.  The test executes the code paths when the
 		// event is not to be consumed.
 		//
 
@@ -128,7 +128,7 @@ public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String>
 		typeText("d", true);
 		assetNoListSelection();
 
-		// press the 'Enter' key; the window does will go away in this case, as we are not 
+		// press the 'Enter' key; the window does will go away in this case, as we are not
 		// consuming the event--we assume the client will use the ENTER as a signal to grab
 		// the text content, regardless of the fact that there is no selected item
 		enter();
@@ -155,7 +155,7 @@ public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String>
 	public void testEnterKey_MatchingWindowClosed_EnterKeyDisabled() {
 
 		//
-		// By default, the ENTER key will trigger an editingStopped() notification when the 
+		// By default, the ENTER key will trigger an editingStopped() notification when the
 		// matching list is not showing.  When we disable the ENTER key listener, we should
 		// not get any events.
 		//
@@ -272,7 +272,7 @@ public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String>
 		up();
 		assertNoSelectedListItem();
 
-		// repeated presses will cycle through the list when selections are enabled; they 
+		// repeated presses will cycle through the list when selections are enabled; they
 		// should do nothing when selections are disabled
 		up();
 		assertNoSelectedListItem();
@@ -287,7 +287,7 @@ public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String>
 		down();
 		assertNoSelectedListItem();
 
-		// repeated presses will cycle through the list when selections are enabled; they 
+		// repeated presses will cycle through the list when selections are enabled; they
 		// should do nothing when selections are disabled
 		down();
 		assertNoSelectedListItem();
@@ -303,7 +303,7 @@ public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String>
 		// insert some text and make sure the window is created
 		typeText("d", true);
 
-		// hide the window to test its triggering on up		
+		// hide the window to test its triggering on up
 		hideWindowPressKeyThenValidate(KeyEvent.VK_UP);
 
 		// hide the window to test its triggering on down
@@ -370,7 +370,7 @@ public class DropDownTextFieldTest extends AbstractDropDownTextFieldTest<String>
 
 		//
 		// The field is wired to show the popup list as the user moves the caret around the
-		// field.  
+		// field.
 		//
 
 		// use a string that allows us to move the caret and still have matches

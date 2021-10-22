@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,8 @@ import ghidra.util.exception.AssertException;
 
 /**
  * <code>Record</code> provides a portable container for data
- * associated with a fixed schema.  
- * A record instance contains both a primary key and zero or more data fields.  
+ * associated with a fixed schema.
+ * A record instance contains both a primary key and zero or more data fields.
  */
 public class DBRecord implements Comparable<DBRecord> {
 
@@ -125,7 +125,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	}
 
 	/**
-	 * Determine if this record's schema is compatible with the specified schema.  
+	 * Determine if this record's schema is compatible with the specified schema.
 	 * This check factors column count and column field types only.
 	 * Index and sparse column checks are not performed.
 	 * @param otherSchema other schema
@@ -237,7 +237,7 @@ public class DBRecord implements Comparable<DBRecord> {
 
 	/**
 	 * Get the stored record length.
-	 * This method is used to determine the space required to store the data 
+	 * This method is used to determine the space required to store the data
 	 * fields within this record when written to a standard Buffer.
 	 * @return int stored record length
 	 */
@@ -464,7 +464,7 @@ public class DBRecord implements Comparable<DBRecord> {
 	}
 
 	/**
-	 * Compares the key associated with this record with the 
+	 * Compares the key associated with this record with the
 	 * key of another record (obj).
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */

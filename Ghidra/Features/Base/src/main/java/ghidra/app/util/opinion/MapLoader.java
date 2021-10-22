@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,13 +39,13 @@ import ghidra.util.task.TaskMonitor;
  *   ...
  *
  *   Address         Publics by Value              Rva+Base               Lib:Object
- *   
+ *
  *  0000:00000000       ___safe_se_handler_table   0000000000000000     &lt;absolute&gt;
  *  0000:00000000       ___safe_se_handler_count   0000000000000000     &lt;absolute&gt;
  *  0000:00000000       __ImageBase                0000000140000000     &lt;linker-defined&gt;
  *  0001:00000040       foo                        0000000140001040 f   foo.obj
  *  0001:000000c0       bar                        00000001400010c0 f   foo.obj
- *  
+ *
  *  ...
  *  ...
  *  ...
@@ -58,7 +58,7 @@ public class MapLoader extends AbstractLibrarySupportLoader {
 
 	/**
 	 * Parses exported symbol information from the MAP file represented by the given provider.
-	 * 
+	 *
 	 * @param provider The bytes representing a MAP file
 	 * @param log An optional log to write to (could be null)
 	 * @return A {@link List} of {@link MapExport}s representing exported symbol information
@@ -145,7 +145,7 @@ public class MapLoader extends AbstractLibrarySupportLoader {
 	}
 
 	/**
-	 * Represents a single exported symbol from a MAP file. 
+	 * Represents a single exported symbol from a MAP file.
 	 */
 	private static class MapExport {
 		private String name;
@@ -158,7 +158,7 @@ public class MapLoader extends AbstractLibrarySupportLoader {
 
 		/**
 		 * Parses a single exported symbol from the given MAP file line.
-		 * 
+		 *
 		 * @param exportLine The line to parse
 		 * @param lineNumber The line number of the line to parse
 		 * @return A {@link MapExport} object representing the parsed exported symbol info
@@ -168,7 +168,7 @@ public class MapLoader extends AbstractLibrarySupportLoader {
 			String name;
 			long addr;
 			StringTokenizer st = new StringTokenizer(exportLine);
-			
+
 			// Ignore first field
 			if (st.hasMoreTokens()) {
 				st.nextToken();
@@ -177,7 +177,7 @@ public class MapLoader extends AbstractLibrarySupportLoader {
 				throw new ParseException("Line " + lineNumber + ": Failed to parse first field",
 					lineNumber);
 			}
-			
+
 			// Parse name field
 			if (st.hasMoreTokens()) {
 				name = st.nextToken();
@@ -201,7 +201,7 @@ public class MapLoader extends AbstractLibrarySupportLoader {
 				throw new ParseException(
 					"Line " + lineNumber + ": Failed to parse third (addr) field", lineNumber);
 			}
-			
+
 			return new MapExport(name, addr);
 		}
 	}

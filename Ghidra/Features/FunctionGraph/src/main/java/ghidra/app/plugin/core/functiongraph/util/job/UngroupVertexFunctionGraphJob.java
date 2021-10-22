@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ public class UngroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraph
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param controller the controller of the graph to be ungrouped
 	 * @param groupVertex The group vertex to be ungrouped
 	 * @param useAnimation whether to use animation
@@ -46,7 +46,7 @@ public class UngroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraph
 
 //==================================================================================================
 // Required Template Methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	protected void notifyGroupChange() {
@@ -73,15 +73,15 @@ public class UngroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraph
 		//
 		// This may be the same as the current locations, or they may be updated, depending upon
 		// user options
-		// 
+		//
 		LayoutPositions<FGVertex, FGEdge> positions = updateDestinationLocations();
 		Map<FGVertex, Point2D> vertexDestinationLocations = positions.getVertexLocations();
 		finalEdgeArticulations = positions.getEdgeArticulations();
 
 		//
-		// We want the vertices to start at the group vertex's current position and end 
+		// We want the vertices to start at the group vertex's current position and end
 		// up at their new location; to start at/behind the group vertex and then move
-		// outward toward their final location.  
+		// outward toward their final location.
 		//
 		Point2D oldLocation = toLocation(groupVertex);
 		Point2D groupVertexPoint = (Point2D) oldLocation.clone();
@@ -89,7 +89,7 @@ public class UngroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraph
 		//
 		// This group of vertices (all those besides the 'verticesToBeRemoved') will be moved
 		// to either 1) their new layout positions, or 2) they will stay just where they are.  The
-		// 'verticesToBeRemoved' will always be moved somewhere, depending upon the 'relayout' 
+		// 'verticesToBeRemoved' will always be moved somewhere, depending upon the 'relayout'
 		// variable.
 		//
 		Collection<FGVertex> vertices = getVerticesToMove();
@@ -117,7 +117,7 @@ public class UngroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraph
 		}
 
 		//
-		// We have to move edge articulations--create transition points. Depending upon the 
+		// We have to move edge articulations--create transition points. Depending upon the
 		// value of 'relayout', there may be no edges to update.
 		//
 		Map<FGEdge, List<Point2D>> edgeArticulations = positions.getEdgeArticulations();
@@ -183,7 +183,7 @@ public class UngroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraph
 
 		List<ArticulationTransitionPoints> transitionPoints = new ArrayList<>();
 
-		// 
+		//
 		// In this case we will have to add articulations to the current edge now so that we can
 		// animate their creation.
 		//
@@ -234,7 +234,7 @@ public class UngroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraph
 
 		Point2D endPoint = destinationLocations.get(vertex);
 		if (endPoint == null) {
-			// this can happen when the vertex is the group vertex being removed; just 
+			// this can happen when the vertex is the group vertex being removed; just
 			// use the start point
 			endPoint = startPoint;
 		}

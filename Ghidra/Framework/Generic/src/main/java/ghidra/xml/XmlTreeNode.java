@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import org.xml.sax.SAXParseException;
 /**
  * A class to represent a corresponding start and end tag. This value is one
  * node on the XML parse tree.
- * 
+ *
  */
 public class XmlTreeNode {
 	private final XmlElement startElement;
@@ -33,7 +33,7 @@ public class XmlTreeNode {
 
 	/**
 	 * Constructs a new XML tree node given the specified parser.
-	 * 
+	 *
 	 * @param parser
 	 *            the XML parser
 	 * @throws SAXParseException
@@ -53,7 +53,7 @@ public class XmlTreeNode {
 
 	/**
 	 * Returns the start element of this node.
-	 * 
+	 *
 	 * @return the start element of this node
 	 */
 	public XmlElement getStartElement() {
@@ -62,7 +62,7 @@ public class XmlTreeNode {
 
 	/**
 	 * Returns the end element of this node.
-	 * 
+	 *
 	 * @return the end element of this node
 	 */
 	public XmlElement getEndElement() {
@@ -71,7 +71,7 @@ public class XmlTreeNode {
 
 	/**
 	 * Returns the number of children below this node.
-	 * 
+	 *
 	 * @return the number of children below this node
 	 */
 	public int getChildCount() {
@@ -80,7 +80,7 @@ public class XmlTreeNode {
 
 	/**
 	 * Returns an iterator over all of the children of this node.
-	 * 
+	 *
 	 * @return an iterator over all of the children of this node
 	 */
 	public Iterator<XmlTreeNode> getChildren() {
@@ -90,7 +90,7 @@ public class XmlTreeNode {
 	/**
 	 * Returns an iterator over all of the children of this node with the
 	 * specfied name.
-	 * 
+	 *
 	 * @param name
 	 *            the name of the desired children
 	 * @return an iterator over all of the children of this node with the
@@ -102,7 +102,7 @@ public class XmlTreeNode {
 
 	/**
 	 * Returns the first child element with the specified name.
-	 * 
+	 *
 	 * @param name
 	 *            the name of the desired child element
 	 * @return the first child element with the specified name
@@ -162,7 +162,7 @@ public class XmlTreeNode {
 
 	/**
 	 * Deletes the specified child node.
-	 * 
+	 *
 	 * @param node
 	 *            the node to delete
 	 */

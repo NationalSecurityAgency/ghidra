@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,14 +34,14 @@ public interface IDebugControl extends IUnknown {
 		GET_INTERRUPT_TIMEOUT, //
 		SET_INTERRUPT_TIMEOUT, //
 		GET_LOG_FILE, //
-		OPEN_LOG_FILE, // 
+		OPEN_LOG_FILE, //
 		CLOSE_LOG_FILE, //
 		GET_LOG_MASK, //
 		SET_LOG_MASK, //
 		INPUT, //
 		RETURN_INPUT, //
 		OUTPUT, //
-		OUTPUT_VA_LIST, // 
+		OUTPUT_VA_LIST, //
 		CONTROLLED_OUTPUT, //
 		CONTROLLED_OUTPUT_VA_LIST, //
 		OUTPUT_PROMPT, //

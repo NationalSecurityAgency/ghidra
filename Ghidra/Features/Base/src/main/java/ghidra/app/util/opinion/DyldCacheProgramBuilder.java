@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,12 +58,12 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Creates a new {@link DyldCacheProgramBuilder} based on the given information.
-	 * 
+	 *
 	 * @param program The {@link Program} to build up
 	 * @param provider The {@link ByteProvider} that contains the DYLD Cache bytes
 	 * @param fileBytes Where the Mach-O's bytes came from
 	 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
-	 * @param shouldCreateDylibSections True if memory blocks should be created for DYLIB sections; 
+	 * @param shouldCreateDylibSections True if memory blocks should be created for DYLIB sections;
 	 *   otherwise, false
 	 * @param shouldAddRelocationEntries True to create a relocation entry for each fixed up pointer in pointer chain
 	 * @param log The log
@@ -80,12 +80,12 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Builds up a DYLD Cache {@link Program}.
-	 * 
+	 *
 	 * @param program The {@link Program} to build up
 	 * @param provider The {@link ByteProvider} that contains the DYLD Cache's bytes
 	 * @param fileBytes Where the Mach-O's bytes came from
 	 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
-	 * @param shouldCreateDylibSections True if memory blocks should be created for DYLIB sections; 
+	 * @param shouldCreateDylibSections True if memory blocks should be created for DYLIB sections;
 	 *   otherwise, false
 	 * @param addRelocationEntries True to create a relocation entry for each fixed up pointer in pointer chain
 	 * @param log The log
@@ -122,7 +122,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Sets the program's image base.
-	 * 
+	 *
 	 * @throws Exception if there was problem setting the program's image base
 	 */
 	private void setDyldCacheImageBase() throws Exception {
@@ -134,7 +134,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Processes the DYLD Cache's memory mappings and creates memory blocks for them.
-	 * 
+	 *
 	 * @throws Exception if there was a problem creating the memory blocks
 	 */
 	private void processDyldCacheMemoryBlocks() throws Exception {
@@ -167,7 +167,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Marks up the DYLD Cache headers.
-	 * 
+	 *
 	 * @throws Exception if there was a problem marking up the headers
 	 */
 	private void markupHeaders() throws Exception {
@@ -180,7 +180,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Marks up the DYLD Cache branch islands.
-	 * 
+	 *
 	 * @throws Exception if there was a problem marking up the branch islands.
 	 */
 	private void markupBranchIslands() throws Exception {
@@ -204,7 +204,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Creates the DYLD Cache symbols.
-	 * 
+	 *
 	 * @throws Exception if there was a problem creating the symbols
 	 */
 	private void createSymbols() throws Exception {
@@ -231,7 +231,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Fixes any chained pointers within each of the data pages.
-	 * 
+	 *
 	 * @throws MemoryAccessException if there was a problem reading/writing memory.
 	 * @throws CancelledException if user cancels
 	 */
@@ -316,14 +316,14 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 	/**
 	 * Fixes up any chained pointers, starting at the given address.
-	 * 
+	 *
 	 * @param unchainedLocList list of locations that were unchained
 	 * @param page within data pages that has pointers to be unchained
 	 * @param nextOff offset within the page that is the chain start
 	 * @param deltaMask delta offset mask for each value
 	 * @param deltaShift shift needed for the deltaMask to extract the next offset
 	 * @param valueAdd value to be added to each chain pointer
-	 * 
+	 *
 	 * @throws MemoryAccessException IO problem reading file
 	 * @throws CancelledException user cancels
 	 */
@@ -371,11 +371,11 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	/**
 	 * Processes the DYLD Cache's DYLIB files.  This will mark up the DYLIB files, added them to the
 	 * program tree, and make memory blocks for them.
-	 * 
+	 *
 	 * @throws Exception if there was a problem processing the DYLIB files
 	 */
 	private void processDylibs() throws Exception {
-		// Create an "info" object for each DyldCache DYLIB, which will make processing them 
+		// Create an "info" object for each DyldCache DYLIB, which will make processing them
 		// easier
 		monitor.setMessage("Parsing DYLIB's...");
 		monitor.initialize(dyldCacheHeader.getImageInfos().size());
@@ -389,7 +389,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			monitor.incrementProgress(1);
 		}
 
-		// Markup DyldCache Mach-O headers 
+		// Markup DyldCache Mach-O headers
 		monitor.setMessage("Marking up DYLIB headers...");
 		monitor.initialize(infoSet.size());
 		for (DyldCacheMachoInfo info : infoSet) {
@@ -436,7 +436,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		/**
 		 * Creates a new {@link DyldCacheMachoInfo} object with the given parameters.
-		 * 
+		 *
 		 * @param provider The {@link ByteProvider} that contains the Mach-O's bytes
 		 * @param offset The offset in the provider to the start of the Mach-O
 		 * @param headerAddr The Mach-O's header address
@@ -455,7 +455,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		/**
 		 * Processes memory blocks for this Mach-O.
-		 * 
+		 *
 		 * @throws Exception If there was a problem processing memory blocks for this Mach-O
 		 * @see DyldCacheProgramBuilder#processMemoryBlocks(MachHeader, String, boolean, boolean)
 		 */
@@ -466,7 +466,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		/**
 		 * Marks up the Mach-O headers.
-		 * 
+		 *
 		 * @throws Exception If there was a problem marking up the Mach-O's headers
 		 * @see DyldCacheProgramBuilder#markupHeaders(MachHeader, Address)
 		 */
@@ -480,7 +480,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
 		/**
 		 * Adds an entry to the program tree for this Mach-O
-		 * 
+		 *
 		 * @param next The Mach-O that comes directly after this one.  Could be null if this
 		 *   is the last one.
 		 * @throws Exception If there was a problem adding this Mach-O to the program tree
@@ -491,7 +491,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 				fragment.move(headerAddr, next.headerAddr.subtract(1));
 			}
 			else {
-				// This is the last Mach-O, so we'll assume it ends where the mapping that contains 
+				// This is the last Mach-O, so we'll assume it ends where the mapping that contains
 				// it ends.
 				for (DyldCacheMappingInfo mappingInfo : dyldCacheHeader.getMappingInfos()) {
 					Address mappingAddr = space.getAddress(mappingInfo.getAddress());

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,7 +112,7 @@ public class CallFixupAnalyzer extends AbstractAnalyzer {
 				}
 
 				if (!isfallthru) {
-					// Must ensure that calls through thunks are also fixed-up 
+					// Must ensure that calls through thunks are also fixed-up
 					AddressSet functionAddresses = new AddressSet();
 					functionAddresses.add(function.getEntryPoint());
 					addInThunkedFunctionsToList(program, set, function, functionAddresses);
@@ -223,12 +223,12 @@ public class CallFixupAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Repair a non-returning function which includes all calling points and the functions containing those calling points.
-	 * 
+	 *
 	 * @param program functions are contained in
 	 * @param func non-returning function that is causing fixes to be made
 	 * @param entry point of the function that is non-returning
 	 * @param monitor so we can cancel
-	 * 
+	 *
 	 * @return location of all calling locations to the non-returning function that were fixed
 	 */
 	private AddressSet repairLocationsForNonReturningFunction(Program program, Function func,
@@ -266,10 +266,10 @@ public class CallFixupAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Sets all locations that call the function at entry to be non-returning.
-	 * 
+	 *
 	 * @param program function is found within
 	 * @param nonReturningFunctionEntry function to be made non-returning
-	 * 
+	 *
 	 * @return set of all locations that call the function that was set to non-returning.
 	 */
 	protected AddressSet setNoFallThru(Program program, Address nonReturningFunctionEntry) {
@@ -305,13 +305,13 @@ public class CallFixupAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Fix the bodies of all functions that called the non-returning function.
-	 * 
+	 *
 	 * @param program containing the functions
 	 * @param callLocations that need the bodies of the functions containing them fixed
 	 * @param monitor to allow canceling
-	 * 
+	 *
 	 * @return the set of all repaired function entry points
-	 * 
+	 *
 	 * @throws CancelledException
 	 */
 	protected AddressSet fixCallingFunctionBody(Program program, AddressSet callLocations,

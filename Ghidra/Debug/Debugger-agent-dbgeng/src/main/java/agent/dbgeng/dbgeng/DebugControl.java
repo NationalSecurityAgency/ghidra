@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -187,7 +187,7 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * A shortcut for {@link #print(BitmaskSet, String)} that includes a newline.
-	 * 
+	 *
 	 * @param levels the log levels for the message
 	 * @param message the message
 	 */
@@ -195,7 +195,7 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * A shortcut for {@link #print(BitmaskSet, String)} that applies to a single level.
-	 * 
+	 *
 	 * @param level the log level for the message
 	 * @param message the message
 	 */
@@ -206,7 +206,7 @@ public interface DebugControl extends DebugControlReentrant {
 	/**
 	 * A shortcut for {@link #print(BitmaskSet, String)} that includes a newline and applies to a
 	 * single level.
-	 * 
+	 *
 	 * @param level the log level for the message
 	 * @param message the message
 	 */
@@ -216,7 +216,7 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * A shortcut for {@link #print(BitmaskSet, String)} at normal level.
-	 * 
+	 *
 	 * @param message the message
 	 */
 	default void out(String message) {
@@ -225,7 +225,7 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * A shortcut for {@link #println(BitmaskSet, String)} at normal level.
-	 * 
+	 *
 	 * @param message the message
 	 */
 	default void outln(String message) {
@@ -234,7 +234,7 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * A shortcut for {@link #print(BitmaskSet, String)} at warning level.
-	 * 
+	 *
 	 * @param message the message
 	 */
 	default void warn(String message) {
@@ -243,7 +243,7 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * A shortcut for {@link #println(BitmaskSet, String)} at warning level.
-	 * 
+	 *
 	 * @param message the message
 	 */
 	default void warnln(String message) {
@@ -252,7 +252,7 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * A shortcut for {@link #print(BitmaskSet, String)} at error level.
-	 * 
+	 *
 	 * @param message the message
 	 */
 	default void err(String message) {
@@ -261,7 +261,7 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * A shortcut for {@link #println(BitmaskSet, String)} at error level.
-	 * 
+	 *
 	 * @param message the message
 	 */
 	default void errln(String message) {
@@ -270,7 +270,7 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * A shortcut for {@link #print(BitmaskSet, String)} at verbose level.
-	 * 
+	 *
 	 * @param message the message
 	 */
 	default void verb(String message) {
@@ -279,7 +279,7 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * A shortcut for {@link #println(BitmaskSet, String)} at verbose level.
-	 * 
+	 *
 	 * @param message the message
 	 */
 	default void verbln(String message) {
@@ -293,7 +293,7 @@ public interface DebugControl extends DebugControlReentrant {
 	/**
 	 * A shortcut for {@link #execute(BitmaskSet, String, BitmaskSet)} outputting to all clients
 	 * with the default execution flag.
-	 * 
+	 *
 	 * @param str the command string
 	 */
 	default void execute(String str) {
@@ -316,11 +316,11 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * Shortcut to retrieve all breakpoints for the current process.
-	 * 
+	 *
 	 * <p>
 	 * Uses {@link #getNumberBreakpoints()} and {@link #getBreakpointByIndex(int)} to enumerate all
 	 * breakpoints for the current process.
-	 * 
+	 *
 	 * @return the list of retrieved breakpoints.
 	 */
 	default List<DebugBreakpoint> getBreakpoints() {
@@ -342,10 +342,10 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * Get a breakpoint by ID
-	 * 
+	 *
 	 * According to the MSDN, though the IDs may be global, this method should only succeed for
 	 * breakpoints belonging to the current process.
-	 * 
+	 *
 	 * @param id
 	 * @return
 	 */
@@ -353,10 +353,10 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * Add a (resolved) breakpoint with the given type and desired id
-	 * 
+	 *
 	 * <p>
 	 * This is equivalent, in part, to the {@code bp} command.
-	 * 
+	 *
 	 * @param type the type
 	 * @param desiredId the desired id
 	 * @return the breakpoint, disabled at offset 0
@@ -365,10 +365,10 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * Add a (resolved) breakpoint with the given type and any id
-	 * 
+	 *
 	 * <p>
 	 * This is equivalent, in part, to the {@code bp} command.
-	 * 
+	 *
 	 * @param type the type
 	 * @return the breakpoint, disable at offset 0
 	 */
@@ -376,11 +376,11 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * Add an unresolved breakpoint with the given type and desired id
-	 * 
+	 *
 	 * <p>
 	 * This is equivalent, in part, to the {@code bu} command. See the MSDN for a comparison of
 	 * {@code bu} and {@code bp}.
-	 * 
+	 *
 	 * @param type the type
 	 * @param desiredId the desired id
 	 * @return the breakpoint, disabled at offset 0
@@ -389,11 +389,11 @@ public interface DebugControl extends DebugControlReentrant {
 
 	/**
 	 * Add an unresolved breakpoint with the given type and any id
-	 * 
+	 *
 	 * <p>
 	 * This is equivalent, in part, to the {@code bu} command. See the MSDN for a comparison of
 	 * {@code bu} and {@code bp}.
-	 * 
+	 *
 	 * @param desiredId the desired id
 	 * @return the breakpoint, disabled at offset 0
 	 */

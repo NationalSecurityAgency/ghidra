@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,7 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 
 	/**
 	 * Return the single instance of the DefaultLanguageService.  If not already
-	 * instantiated in the default mode, the factory will be lazy and limit 
+	 * instantiated in the default mode, the factory will be lazy and limit
 	 * it set of languages to those defined by the specified Sleigh language definition
 	 * file (*.ldefs) or those provided by subsequent calls to this method.
 	 * @param sleighLdefsFile sleigh language definition file
@@ -91,7 +91,7 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 		searchCompleted = true;
 
 		//@formatter:off
-		TaskBuilder.withRunnable(monitor -> {			
+		TaskBuilder.withRunnable(monitor -> {
 				processProviders(languageProviders); // load and cache
 			})
 			.setTitle("Language Search")
@@ -242,7 +242,7 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 	 * is null all available compiler spec pairs will be added allowing the user
 	 * to choose one. This method will always add a minimum of one pair to the
 	 * result.
-	 * 
+	 *
 	 * @param languageDescription
 	 *            language description
 	 * @param preferredCompilerSpecId
@@ -381,15 +381,15 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 			}
 
 			//@formatter:off
-			TaskBuilder.withRunnable(monitor -> {			
-					provider.getLanguage(id); // load and cache				
+			TaskBuilder.withRunnable(monitor -> {
+					provider.getLanguage(id); // load and cache
 				})
 				.setTitle("Loading language '" + id + "'")
 				.setCanCancel(false)
 				.setHasProgress(false)
 				.launchModal()
 				;
-			//@formatter:on	
+			//@formatter:on
 
 			return provider.getLanguage(id);
 		}
@@ -416,7 +416,7 @@ public class DefaultLanguageService implements LanguageService, ChangeListener {
 
 		@Override
 	public void stateChanged(ChangeEvent e) {
-		// NOTE: this is only intended to pickup new language providers 
+		// NOTE: this is only intended to pickup new language providers
 		// which is not really supported with the introduction of Sleigh.
 		searchForProviders();
 	}

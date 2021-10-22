@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,8 @@ import java.awt.dnd.*;
 import ghidra.util.Msg;
 
 /**
- * Class to handle notifications of drag and drop operations that occur on the DropTarget 
- * object. The DropTarget is the component that accepts drops during a drag and drop operation. 
+ * Class to handle notifications of drag and drop operations that occur on the DropTarget
+ * object. The DropTarget is the component that accepts drops during a drag and drop operation.
  * The <code>drop</code> method actually transfers the data.
  */
 public class DropTgtAdapter implements DropTargetListener {
@@ -34,7 +34,7 @@ public class DropTgtAdapter implements DropTargetListener {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param dropComponent the drop target
 	 * @param acceptableDropActions a DnDConstants variable that defines dnd actions
 	 * @param acceptableDropFlavors acceptable data formats that the drop target can handle
@@ -84,7 +84,7 @@ public class DropTgtAdapter implements DropTargetListener {
 	public void dragExit(DropTargetEvent e) {
 		dropComponent.undoDragUnderFeedback();
 
-		// Note: at this point, there is no way to tell whether the drop actually occurred; 
+		// Note: at this point, there is no way to tell whether the drop actually occurred;
 		// so, there is no notification for a "drop canceled"
 	}
 
@@ -161,7 +161,7 @@ public class DropTgtAdapter implements DropTargetListener {
 	 * 	<LI>the drop is accepted by the Droppable component
 	 * 	</LI>
 	 * </OL>
-	 * 
+	 *
 	 * @param e event that has current state of drag and drop operation
 	 * @return true if the drop operation is OK
 	 */

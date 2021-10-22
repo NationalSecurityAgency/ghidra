@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,10 @@ import ghidra.util.Saveable;
 
 /**
  * <code>GenericSaveable</code> is used by the <code>DBPropertyMapManager</code>
- * when the class can not be found and loaded for the class path name of a 
- * property in the database. This allows the properties for that class to be 
- * accessed in a generic way so that the manager can copy or remove the property 
- * at a particular address. This allows the Diff and MultiUser Merge to compare 
+ * when the class can not be found and loaded for the class path name of a
+ * property in the database. This allows the properties for that class to be
+ * accessed in a generic way so that the manager can copy or remove the property
+ * at a particular address. This allows the Diff and MultiUser Merge to compare
  * and manipulate the property as needed.
  */
 public class GenericSaveable implements Saveable {

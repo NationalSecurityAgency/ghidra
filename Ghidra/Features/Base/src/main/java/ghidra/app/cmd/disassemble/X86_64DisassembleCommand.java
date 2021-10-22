@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,12 +30,12 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Command object for performing 64-/32-bit x86 disassembly
- * 
+ *
  * <p>
  * This generally only comes up when debugging, since there can be multiple images loaded by an
  * x86-64 target. For WoW64, the images may be mixed. Thus, this command allows you to disassemble
  * 64-bit or 32-bit instructions whenever the language is set to 64-bit x86.
- * 
+ *
  * <p>
  * <b>WARNING:</b> If used in static programs, i.e., not debug traces, there are some potential
  * remaining issues, particularly dealing with stored context and follow-on disassembly -- typically
@@ -49,7 +49,7 @@ public class X86_64DisassembleCommand extends DisassembleCommand {
 
 	/**
 	 * Constructor for X86_64DisassembleCommand.
-	 * 
+	 *
 	 * @param startSet set of addresses to be the start of disassembly. The Command object will
 	 *            attempt to start a disassembly at each address in this set.
 	 * @param restrictedSet addresses that can be disassembled. a null set implies no restrictions.
@@ -64,7 +64,7 @@ public class X86_64DisassembleCommand extends DisassembleCommand {
 
 	/**
 	 * Constructor for X86_64DisassembleCommand.
-	 * 
+	 *
 	 * @param start address to be the start of a disassembly.
 	 * @param restrictedSet addresses that can be disassembled. a null set implies no restrictions.
 	 * @param size32Mode pass true if disassembling in 32-bit compatibility mode, otherwise normal

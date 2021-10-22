@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,8 +30,8 @@ import ghidra.program.model.symbol.*;
 
 /**
  * Test for the {@link DeleteFunctionCmd}.
- * 
- * 
+ *
+ *
  * @since  Tracker Id 268
  */
 public class DeleteFunctionCmdTest extends AbstractGenericTest {
@@ -40,7 +40,7 @@ public class DeleteFunctionCmdTest extends AbstractGenericTest {
 
 	/**
 	 * Constructs this test class with the given test method name.
-	 * 
+	 *
 	 */
 	public DeleteFunctionCmdTest() {
 		super();
@@ -64,7 +64,7 @@ public class DeleteFunctionCmdTest extends AbstractGenericTest {
 		// create a function at an address that has a valid code unit
 		Address address = addr(0x0);
 
-		// get a function from the program with a default name        
+		// get a function from the program with a default name
 		String defaultName = SymbolUtilities.getDefaultFunctionName(address);
 
 		int transactionID = program.startTransaction("TEST");
@@ -91,7 +91,7 @@ public class DeleteFunctionCmdTest extends AbstractGenericTest {
 
 		//
 		// repeat above steps for another function that has a user-defined name
-		// 
+		//
 		String customName = "CustomFunctionName";
 		function = createFunction(customName, address, new AddressSet(address, address.add(200L)));
 
@@ -115,7 +115,7 @@ public class DeleteFunctionCmdTest extends AbstractGenericTest {
 		program.endTransaction(transactionID, false);
 	}
 
-	// looks through the given symbol array to see if any have the same name 
+	// looks through the given symbol array to see if any have the same name
 	// as the provided string
 	private boolean containsMatchingSymbolName(Symbol[] symbols, String name) {
 		for (Symbol symbol : symbols) {

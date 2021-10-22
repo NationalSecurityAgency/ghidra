@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,7 +55,7 @@ public enum GdbParsingUtils {
 
 		/**
 		 * Peek at the next character
-		 * 
+		 *
 		 * @param chompWhitespace true to consume all whitespace at the current position first
 		 * @return the next character
 		 */
@@ -80,7 +80,7 @@ public enum GdbParsingUtils {
 
 		/**
 		 * Check that the parser has reached the end of the line (EOL)
-		 * 
+		 *
 		 * @throws GdbParseError if there is text remaining
 		 */
 		protected void checkEmpty(boolean chompWhitespace) throws GdbParseError {
@@ -99,7 +99,7 @@ public enum GdbParsingUtils {
 	public static class GdbParseError extends Exception {
 		/**
 		 * Construct a description of a parse error
-		 * 
+		 *
 		 * @param expected the character(s) expected
 		 * @param s the tail from the first rejected character
 		 */
@@ -110,10 +110,10 @@ public enum GdbParsingUtils {
 
 	/**
 	 * Parse a hex string to a long
-	 * 
+	 *
 	 * <P>
 	 * The string must have the {@code 0x} prefix
-	 * 
+	 *
 	 * @param hex the string
 	 * @return the parsed long
 	 */
@@ -126,10 +126,10 @@ public enum GdbParsingUtils {
 
 	/**
 	 * Parse a hex string to a big integer
-	 * 
+	 *
 	 * <P>
 	 * The string must have the {@code 0x} prefix
-	 * 
+	 *
 	 * @param hex the string
 	 * @return the parsed big integer
 	 */
@@ -142,10 +142,10 @@ public enum GdbParsingUtils {
 
 	/**
 	 * Parse an octal string to a long
-	 * 
+	 *
 	 * <P>
 	 * The string must have the {@code 0} prefix
-	 * 
+	 *
 	 * @param oct the string
 	 * @return the parsed long
 	 */
@@ -158,10 +158,10 @@ public enum GdbParsingUtils {
 
 	/**
 	 * Parse an inferior id
-	 * 
+	 *
 	 * <P>
 	 * The id must have the {@code i} prefix
-	 * 
+	 *
 	 * @param id the string
 	 * @return the parsed integer
 	 */

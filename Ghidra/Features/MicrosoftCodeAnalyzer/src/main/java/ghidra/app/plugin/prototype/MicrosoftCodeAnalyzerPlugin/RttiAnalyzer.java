@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,7 +56,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 	public RttiAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.BYTE_ANALYZER);
 		setSupportsOneTimeAnalysis();
-		// Set priority of RTTI analyzer to run after Demangler so can see if better 
+		// Set priority of RTTI analyzer to run after Demangler so can see if better
 		// plate comment or label already exists from Demangler.
 		setPriority(AnalysisPriority.REFERENCE_ANALYSIS.before());
 		setDefaultEnablement(true);
@@ -78,9 +78,9 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 		if (commonVfTableAddress == null) {
 			return true;
 		}
-		
+
 		RttiUtil.createTypeInfoVftableSymbol(program,commonVfTableAddress);
-		
+
 		Set<Address> possibleTypeAddresses = locatePotentialRTTI0Entries(program, set, monitor);
 		if (possibleTypeAddresses == null) {
 			return true;
@@ -201,7 +201,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 	}
 
 	/** For each of the RTTI0 locations found locate the associated RTTI4 structure referring to it.
-	 * 
+	 *
 	 * @param program program to be searched
 	 * @param dataBlocks dataBlocks to search
 	 * @param rtti0Locations list of known rtti0 locations
@@ -250,7 +250,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Add a search pattern, to the searcher, for the set of bytes representing an address
-	 * 
+	 *
 	 * @param searcher pattern searcher
 	 * @param validationOptions RTTI4 validation options
 	 * @param addresses list of found valid RTTI4 locations accumulated during actual search
@@ -288,7 +288,7 @@ public class RttiAnalyzer extends AbstractAnalyzer {
 					return; // Only process valid RTTI 4 data.
 				}
 
-				// Check that the RTTI 0 is referred to both directly from the RTTI 4 and indirectly 
+				// Check that the RTTI 0 is referred to both directly from the RTTI 4 and indirectly
 				// through the RTTI 3.
 				boolean refersToRtti0 = rtti4Model.refersToRtti0(getMatchValue());
 				if (!refersToRtti0) {

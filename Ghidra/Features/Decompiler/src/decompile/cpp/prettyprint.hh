@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -412,7 +412,7 @@ public:
   ///
   /// \param v (if non-null) is the storage location for the return value
   /// \return an id associated with the return type
-  int4 beginReturnType(const Varnode *v) { 
+  int4 beginReturnType(const Varnode *v) {
     tagtype=rtyp_b; delimtype=begin; ptr_second.vn=v; count=countbase++; return count; }
 
   /// \brief Create an "end return type declaration" command
@@ -693,7 +693,7 @@ void circularqueue<_type>::expand(int4 amount)
 
 {
   _type *newcache = new _type [ max + amount ];
-  
+
   int4 i=left;
   int4 j=0;
 
@@ -705,10 +705,10 @@ void circularqueue<_type>::expand(int4 amount)
   newcache[j] = cache[i];	// Copy rightmost
   left=0;
   right = j;
-  
+
   delete [] cache;
   cache = newcache;
-  max += amount; 
+  max += amount;
 }
 
 /// \brief A generic source code pretty printer

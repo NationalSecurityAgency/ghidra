@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,7 +59,7 @@ import ghidra.util.exception.DuplicateNameException;
  * } IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
  * </pre>
  *
- * 
+ *
  */
 public class DOSHeader implements StructConverter, Writeable {
     /** The name to use when converting into a structure data type. */
@@ -67,7 +67,7 @@ public class DOSHeader implements StructConverter, Writeable {
 	public final static int IMAGE_DOS_SIGNATURE = 0x5A4D; // MZ
     public final static int SIZEOF_DOS_HEADER   = 64;
 
-    private short e_magic;                     // Magic number							
+    private short e_magic;                     // Magic number
     private short e_cblp;                      // Bytes on last page of file
     private short e_cp;                        // Pages in file
     private short e_crlc;                      // Relocations
@@ -85,7 +85,7 @@ public class DOSHeader implements StructConverter, Writeable {
     private short e_oemid;                     // OEM identifier (for e_oeminfo)
     private short e_oeminfo;                   // OEM information; e_oemid specific
     private short [] e_res2 = new short[10];   // Reserved words
-    private int   e_lfanew;                    // File address of new exe header		
+    private int   e_lfanew;                    // File address of new exe header
 
 	private byte [] stubBytes;
 
@@ -153,7 +153,7 @@ public class DOSHeader implements StructConverter, Writeable {
      * @return the size of header in paragraphs
      */
     public short e_cparhdr() {
-        return e_cparhdr; 
+        return e_cparhdr;
     }
     /**
      * Returns the minimum extra paragraphs needed.
@@ -193,7 +193,7 @@ public class DOSHeader implements StructConverter, Writeable {
     /**
      * Returns the initial IP value.
      * @return the initial IP value
-     */ 
+     */
     public short e_ip() {
         return e_ip;
     }
@@ -253,7 +253,7 @@ public class DOSHeader implements StructConverter, Writeable {
     public int e_lfanew() {
         return e_lfanew;
     }
-    
+
 	/**
 	 * Returns true if a new EXE header exists.
 	 * @return true if a new EXE header exists
@@ -261,7 +261,7 @@ public class DOSHeader implements StructConverter, Writeable {
 	public boolean hasNewExeHeader() {
         if (e_lfanew >= 0 && e_lfanew <= 0x10000) {
         	if (e_lfarlc == 0x40) {
-				// There are some non-NE files out there than may have e_lfarlc == 0x40, so we need 
+				// There are some non-NE files out there than may have e_lfarlc == 0x40, so we need
 				// to actually read the bytes at e_lfanew and check for the required NE signature.
 				try {
 					new WindowsHeader(reader, null, (short) e_lfanew);
@@ -379,7 +379,7 @@ public class DOSHeader implements StructConverter, Writeable {
      * <p>
      * In other words:
      * <code>e_lfanew() - SIZEOF_DOS_HEADER</code>
-     * 
+     *
      * @return  the length (in bytes)
      */
     public int getProgramLen() {
@@ -416,11 +416,11 @@ public class DOSHeader implements StructConverter, Writeable {
 
 		if (isDosSignature() && e_lfanew < 0x10000) {
 			try {
-				stubBytes = e_lfanew > SIZEOF_DOS_HEADER ? 
+				stubBytes = e_lfanew > SIZEOF_DOS_HEADER ?
 					reader.readByteArray(SIZEOF_DOS_HEADER, e_lfanew - SIZEOF_DOS_HEADER) : new byte[0];
 			}
 			catch (Exception exc) {
-				stubBytes = new byte[0];				
+				stubBytes = new byte[0];
 			}
 		}
 		else {
@@ -431,11 +431,11 @@ public class DOSHeader implements StructConverter, Writeable {
 	public void decrementStub(int start) {
 		if (stubBytes.length > 0) {
 			try {
-				stubBytes = start > SIZEOF_DOS_HEADER ? 
+				stubBytes = start > SIZEOF_DOS_HEADER ?
 					reader.readByteArray(SIZEOF_DOS_HEADER, start - SIZEOF_DOS_HEADER) : new byte[0];
 			}
 			catch (Exception exc) {
-				stubBytes = new byte[0];				
+				stubBytes = new byte[0];
 			}
 		}
 	}
@@ -468,6 +468,6 @@ public class DOSHeader implements StructConverter, Writeable {
 			raf.write(dc.getBytes(element));
 		}
 		raf.write(dc.getBytes(e_lfanew));
-		raf.write(stubBytes);		
+		raf.write(stubBytes);
 	}
 }

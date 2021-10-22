@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,11 @@ import ghidra.util.table.GhidraTable;
 /**
  * Creates a comparison between a set of functions extracted from selections in
  * a ghidra table. By default this table is assumed to be constructed using a
- * {@link FunctionTableModel}. If the {@link ActionContext context} for 
- * this action does NOT meet those parameters this action will not even be 
+ * {@link FunctionTableModel}. If the {@link ActionContext context} for
+ * this action does NOT meet those parameters this action will not even be
  * enabled.
  * <p>
- * If this action is to be used with a different type of table, simply 
+ * If this action is to be used with a different type of table, simply
  * extend this class and override {@link #getSelectedFunctions(ActionContext) getSelectedFunctions}
  * and {@link #isModelSupported(ActionContext) isModelSupported} as-needed.
  */
@@ -39,7 +39,7 @@ public class CompareFunctionsFromFunctionTableAction extends CompareFunctionsAct
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param tool the plugin tool
 	 * @param owner the action owner
 	 */
@@ -77,13 +77,13 @@ public class CompareFunctionsFromFunctionTableAction extends CompareFunctionsAct
 
 	/**
 	 * Helper method to determine if the current context is one that this
-	 * action supports (eg: is this action being applied to a table that 
+	 * action supports (eg: is this action being applied to a table that
 	 * contains function information?).
 	 * <p>
-	 * By default this method verifies that the table in question is a 
+	 * By default this method verifies that the table in question is a
 	 * {@link FunctionTableModel}. If another table is being used, override this
 	 * method.
-	 * 
+	 *
 	 * @param context the action context
 	 * @return true if the context is a function table model
 	 */

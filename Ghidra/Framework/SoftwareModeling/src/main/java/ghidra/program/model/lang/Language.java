@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,16 +46,16 @@ public interface Language {
 
 	/**
 	 * Returns a parallel instruction helper for this language or null
-	 * if one has not been defined. 
+	 * if one has not been defined.
 	 * @return parallel instruction helper or null if not applicable
 	 */
 	public ParallelInstructionLanguageHelper getParallelInstructionHelper();
 
 	/**
 	 * Returns the processor name on which this language is based.
-	 * 
+	 *
 	 * For example, 30386, Pentium, 68010, etc.
-	 * 
+	 *
 	 * @return the processor name
 	 */
 	public Processor getProcessor();
@@ -65,7 +65,7 @@ public interface Language {
 	 * different than before could cause the program to try and "update" itself.
 	 * Those languages which do not support this feature may always return a
 	 * constant value of 1.
-	 * 
+	 *
 	 * @return the language version number
 	 */
 	public int getVersion();
@@ -75,18 +75,18 @@ public interface Language {
 	 * number different than before could cause the program to try and "update"
 	 * itself. Those languages which do not support this feature may always
 	 * return a constant value of 0.
-	 * 
+	 *
 	 * @return the language minor version number
 	 */
 	public int getMinorVersion();
 
 	/**
 	 * Get the AddressFactory for this language. The returned Address factory will allow
-	 * addresses associated with physical, constant and unique spaces to be instantiated.  
-	 * NOTE! this factory does not know about compiler or program specified spaces.  
-	 * Spaces such as stack and overlay spaces are not defined by the language - 
+	 * addresses associated with physical, constant and unique spaces to be instantiated.
+	 * NOTE! this factory does not know about compiler or program specified spaces.
+	 * Spaces such as stack and overlay spaces are not defined by the language -
 	 * if these are needed, Program.getAddressFactory() should be used instead.
-	 * 
+	 *
 	 * @return the AddressFactory for this language.
 	 * @see Program#getAddressFactory()
 	 */
@@ -107,21 +107,21 @@ public interface Language {
 	/**
 	 * get the Endian type for this language. (If a language supports both, then
 	 * this returns an initial or default value.)
-	 * 
+	 *
 	 * @return true for BigEndian, false for LittleEndian.
 	 */
 	public boolean isBigEndian();
 
 	/**
 	 * Get instruction alignment in terms of bytes.
-	 * 
+	 *
 	 * @return instruction alignment
 	 */
 	public int getInstructionAlignment();
 
 	/**
 	 * Return true if the instructions in this language support Pcode.
-	 * 
+	 *
 	 * @return true if language supports the use of pcode
 	 */
 	public boolean supportsPcode();
@@ -129,7 +129,7 @@ public interface Language {
 	/**
 	 * Returns true if the language has defined the specified location as
 	 * volatile.
-	 * 
+	 *
 	 * @param addr location address
 	 * @return true if specified address is within a volatile range
 	 */
@@ -138,7 +138,7 @@ public interface Language {
 	/**
 	 * Get the InstructionPrototype that matches the bytes presented by the
 	 * MemBuffer object.
-	 * 
+	 *
 	 * @param buf
 	 *            the MemBuffer that presents the bytes in Memory at some
 	 *            address as if they were an array of bytes starting at index 0.
@@ -147,7 +147,7 @@ public interface Language {
 	 * @param inDelaySlot
 	 *            true if this instruction should be parsed as if it were in a
 	 *            delay slot
-	 * 
+	 *
 	 * @return the InstructionPrototype that matches the bytes in buf.
 	 * @exception InsufficientBytesException
 	 *                thrown if there are not enough bytes in memory to satisfy
@@ -161,9 +161,9 @@ public interface Language {
 
 	/**
 	 * Get the total number of user defined pcode names.
-	 * 
+	 *
 	 * Note: only works for Pcode based languages
-	 * 
+	 *
 	 * @return number of user defined pcodeops
 	 */
 	public int getNumberOfUserDefinedOpNames();
@@ -172,9 +172,9 @@ public interface Language {
 	 * Get the user define name for a given index. Certain pcode has operations
 	 * defined only by name that when the pcode returns, only the index is
 	 * known.
-	 * 
+	 *
 	 * Note: only works for Pcode based languages
-	 * 
+	 *
 	 * @param index user defined pcodeop index
 	 * @return pcodeop name or null if not defined
 	 */
@@ -183,7 +183,7 @@ public interface Language {
 	/**
 	 * Returns all the registers (each different size is a different register)
 	 * for an address.
-	 * 
+	 *
 	 * @param address
 	 *            the register address for which to return all registers.
 	 * @return all the registers (each different size is a different register)
@@ -194,7 +194,7 @@ public interface Language {
 	/**
 	 * Get a register given the address space it is in, its offset in the space
 	 * and its size.
-	 * 
+	 *
 	 * @param addrspc
 	 *            address space the register is in
 	 * @param offset
@@ -208,23 +208,23 @@ public interface Language {
 	/**
 	 * Get an unsorted unmodifiable list of Register objects that this language defines
 	 * (including context registers).
-	 * 
+	 *
 	 * @return unmodifiable list of processor registers.
 	 */
 	public List<Register> getRegisters();
 
 	/**
-	 * Get an alphabetical sorted unmodifiable list of original register names 
+	 * Get an alphabetical sorted unmodifiable list of original register names
 	 * (including context registers).  Names correspond to orignal register
 	 * name and not aliases which may be defined.
-	 * 
+	 *
 	 * @return alphabetical sorted unmodifiable list of original register names.
 	 */
 	public List<String> getRegisterNames();
 
 	/**
 	 * Get a register given the name of the register
-	 * 
+	 *
 	 * @param name
 	 *            Register name
 	 * @return the register
@@ -233,11 +233,11 @@ public interface Language {
 
 	/**
 	 * Get a register given it's underlying address location and size.
-	 * 
+	 *
 	 * @param addr
 	 *            location of the register in its address space
-	 * @param size 
-	 *            the size of the register (in bytes).  A value of 0 will return the 
+	 * @param size
+	 *            the size of the register (in bytes).  A value of 0 will return the
 	 *            largest register at the specified addr
 	 * @return the register
 	 */
@@ -246,14 +246,14 @@ public interface Language {
 	/**
 	 * Get the default program counter register for this language if there is
 	 * one.
-	 * 
+	 *
 	 * @return default program counter register.
 	 */
 	public Register getProgramCounter();
 
 	/**
 	 * Returns processor context base register or null if one has not been defined by the
-	 * language. 
+	 * language.
 	 * @return base context register or Register.NO_CONTEXT if not defined
 	 */
 	public Register getContextBaseRegister();
@@ -261,7 +261,7 @@ public interface Language {
 	/**
 	 * Get an unsorted unmodifiable list of processor context registers that this language defines
 	 * (includes context base register and its context field registers).
-	 * 
+	 *
 	 * @return unmodifiable list of processor registers.
 	 */
 	public List<Register> getContextRegisters();
@@ -273,7 +273,7 @@ public interface Language {
 	public MemoryBlockDefinition[] getDefaultMemoryBlocks();
 
 	/**
-	 * Returns the default symbols for this language.  This list does not 
+	 * Returns the default symbols for this language.  This list does not
 	 * contain registers.
 	 * @return the default symbols for this language
 	 */
@@ -296,14 +296,14 @@ public interface Language {
 	/**
 	 * Apply context settings to the ProgramContext as specified by the
 	 * configuration
-	 * 
+	 *
 	 * @param ctx
 	 *            is the default program context
 	 */
 	public void applyContextSettings(DefaultProgramContext ctx);
 
 	/**
-	 * Refreshes the definition of this language if possible.  Use of this method is 
+	 * Refreshes the definition of this language if possible.  Use of this method is
 	 * intended for development purpose only since stale references to prior
 	 * language resources (e.g., registers) may persist.
 	 * @param taskMonitor monitor for progress back to the user
@@ -333,7 +333,7 @@ public interface Language {
 	 * program had no compiler spec registered (seriously old program, like
 	 * Ghidra 4.1 or earlier).  NOTE: this has NOTHING to do with the
 	 * compiler spec registered for a program.  Use Program.getCompilerSpec()
-	 * for that! 
+	 * for that!
 	 * @return the default compiler spec for this language
 	 */
 	public CompilerSpec getDefaultCompilerSpec();
@@ -390,10 +390,10 @@ public interface Language {
 
 	/**
 	 * Get the ManualEntry for the given instruction mnemonic.
-	 * 
+	 *
 	 * @param instructionMnemonic
 	 *            the instruction mnemonic
-	 * @return the ManualEntry or null.  A default manual entry will be returned if 
+	 * @return the ManualEntry or null.  A default manual entry will be returned if
 	 * an instruction can not be found within the index and a manual exists.
 	 */
 	public ManualEntry getManualEntry(String instructionMnemonic);
@@ -401,7 +401,7 @@ public interface Language {
 	/**
 	 * Returns a read-only set view of the instruction mnemonic keys defined on
 	 * this language.
-	 * 
+	 *
 	 * @return read-only set of instruction mnemonic keys
 	 */
 	public Set<String> getManualInstructionMnemonicKeys();

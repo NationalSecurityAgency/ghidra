@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.graph.viewer.VisualVertex;
 import ghidra.graph.viewer.vertex.AbstractVisualVertexRenderer;
 
 /**
- * A renderer for vertices for the satellite view.  This is really just a basic renderer 
+ * A renderer for vertices for the satellite view.  This is really just a basic renderer
  * that adds emphasis capability, as seen in the primary function graph renderer.
  */
 public class VisualVertexSatelliteRenderer<V extends VisualVertex, E extends VisualEdge<V>>
@@ -51,9 +51,9 @@ public class VisualVertexSatelliteRenderer<V extends VisualVertex, E extends Vis
 		}
 
 // POSTERITY NOTE: we used to let the satellite paint the emphasis of nodes, as a way to call
-//		           attention to the selected node.  Now that we use caching, this has the odd 
-//		           side-effect of painting a large vertex in the cached image.  Also, we have 
-//		           changed how the satellite paints selected vertices, so the effect being 
+//		           attention to the selected node.  Now that we use caching, this has the odd
+//		           side-effect of painting a large vertex in the cached image.  Also, we have
+//		           changed how the satellite paints selected vertices, so the effect being
 //		           performed below is no longer necessary.
 //		GraphicsDecorator emphasisGraphics = getEmphasisGraphics(defaultGraphics, v, rc, layout);
 //		rc.setGraphicsContext(emphasisGraphics);
@@ -70,7 +70,7 @@ public class VisualVertexSatelliteRenderer<V extends VisualVertex, E extends Vis
 		// DEBUG original behavior; this can show the true shape of the vertex
 		// return super.prepareFinalVertexShape(rc, v, layout, coords);
 
-		// use the compact shape in the satellite view		
+		// use the compact shape in the satellite view
 		return getCompactShape(rc, layout, v);
 	}
 
@@ -91,7 +91,7 @@ public class VisualVertexSatelliteRenderer<V extends VisualVertex, E extends Vis
 //		int offset = (int) adjustValueForCurrentScale(rc, 10D, .25);
 		int offset = 10;
 
-		// scale the offset with the scale of the view, but not as fast, so that as we scale down, 
+		// scale the offset with the scale of the view, but not as fast, so that as we scale down,
 		// the size of the paint area starts to get larger than the vertex
 		offset = (int) adjustValueForCurrentScale(rc, offset, .9);
 		g.fillOval(bounds.x - offset, bounds.y - offset, bounds.width + (offset * 2),

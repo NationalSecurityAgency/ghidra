@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,8 @@ import java.net.URL;
 import ghidra.util.classfinder.ExtensionPoint;
 
 /**
- * <code>GhidraProtocolHandler</code> provides the extension point for 
- * Ghidra protocol extensions.  A Ghidra protocol extension will be identified 
+ * <code>GhidraProtocolHandler</code> provides the extension point for
+ * Ghidra protocol extensions.  A Ghidra protocol extension will be identified
  * within by the optional <i>extProtocolName</i> appearing within a Ghidra URL:
  * {@literal ghidra:[<extProtocolName>:]/...} In the absence of a protocol extension
  * the {@link DefaultGhidraProtocolHandler} will be used.

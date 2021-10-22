@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,11 +97,11 @@ public class AddressMapDB implements AddressMap {
 	private Address[] baseAddrs; // these are normalized addrs
 	private Address[] sortedBaseStartAddrs; // these are normalized addrs
 	private Address[] sortedBaseEndAddrs;
-	private List<KeyRange> allKeyRanges; // all existing key ranges (includes non-absolute memory, and external space) 
+	private List<KeyRange> allKeyRanges; // all existing key ranges (includes non-absolute memory, and external space)
 	private HashMap<Address, Integer> addrToIndexMap = new HashMap<Address, Integer>();
 
 	private long baseImageOffset; // pertains to default address space only
-	private List<AddressRange> segmentedRanges; // when using segmented memory, this list contains	
+	private List<AddressRange> segmentedRanges; // when using segmented memory, this list contains
 	// the ranges for each memory block for normalization
 
 	private static final long EXT_FROM_ADDRESS_LONG = -2;
@@ -156,7 +156,7 @@ public class AddressMapDB implements AddressMap {
 	};
 
 	/**
-	 * Comparator used to identify if an addr occurs before or after the 
+	 * Comparator used to identify if an addr occurs before or after the
 	 * start of a key range.
 	 */
 	private Comparator<Object> addressInsertionKeyRangeComparator = new Comparator<Object>() {
@@ -381,7 +381,7 @@ public class AddressMapDB implements AddressMap {
 	 * @param addr address
 	 * @param normalize if true image base offset will be applied to addr
 	 * @param indexOperation see INDEX_CREATE, INDEX_MATCH, INDEX_MATCH_OR_NEXT or INDEX_MATCH_OR_PREVIOUS
-	 * @return base address index or Integer.MIN_VALUE if index not found and create is false.  A negative 
+	 * @return base address index or Integer.MIN_VALUE if index not found and create is false.  A negative
 	 * value other than Integer.MIN_VALUE indicates a NEXT or PREVIOUS base index = -(return_value)-1.
 	 */
 	private int getBaseAddressIndex(Address addr, boolean normalize, int indexOperation) {
@@ -481,7 +481,7 @@ public class AddressMapDB implements AddressMap {
 	 * "absoluteEncoding" method
 	 * @param value the long value to convert to an address.
 	 * @param useMemorySegmentation if true and the program's default address space is segmented (i.e., SegmentedAddressSpace).
-	 * the address returned will be normalized to defined segmented memory blocks if possible.  This parameter should 
+	 * the address returned will be normalized to defined segmented memory blocks if possible.  This parameter should
 	 * generally always be true except when used by the Memory map objects to avoid recursion problems.
 	 */
 	public synchronized Address decodeAddress(long value, boolean useMemorySegmentation) {
@@ -606,7 +606,7 @@ public class AddressMapDB implements AddressMap {
 	/**
 	 * Stack space changed from a common 32-bit space to a compiler-specific
 	 * stack space.  This makes bad stack addresses which previously existed
-	 * impossible to decode.  Instead of return NO_ADDRESS, we will simply truncate such 
+	 * impossible to decode.  Instead of return NO_ADDRESS, we will simply truncate such
 	 * bad stack offsets to the MIN or MAX offsets.
 	 * @param offset
 	 * @param stackSpace

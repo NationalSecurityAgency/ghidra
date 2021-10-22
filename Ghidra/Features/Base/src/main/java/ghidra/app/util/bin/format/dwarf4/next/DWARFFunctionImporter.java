@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -267,7 +267,7 @@ public class DWARFFunctionImporter {
 					":" + childDT.getName() + ", omitting from definition of " +
 					dfunc.dni.getName() + "@" + dfunc.address);
 				// skip this parameter because its data type is a zero-width type that typically does
-				// not generate code.  If this varies compiler-to-compiler, setting 
+				// not generate code.  If this varies compiler-to-compiler, setting
 				// skipFuncSignature=true may be a better choice
 				continue;
 			}

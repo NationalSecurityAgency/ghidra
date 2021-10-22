@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,13 +24,13 @@ import java.awt.Color;
 public interface PluginConstants {
 
 	/**
-	 * Delimiter used to denote sub-categories for specifying 
+	 * Delimiter used to denote sub-categories for specifying
 	 * a plugin's category.
 	 */
 	String CATEGORY_DELIMITER = ".";
 
 	/**
-	 * Plugin descriptive name suffix used when a Plugin is still in 
+	 * Plugin descriptive name suffix used when a Plugin is still in
 	 * a "prototype" stage, where a test
 	 * plan hasn't been fully written to thoroughly test the plugin's
 	 * functionality to stamp it "released".
@@ -82,7 +82,7 @@ public interface PluginConstants {
 
 	/**
 	 * Option name for highlight color used when something to highlight is at the current
-	 * address. 
+	 * address.
 	 */
 	public static final String SEARCH_HIGHLIGHT_CURRENT_COLOR_NAME =
 		"Highlight Color for Current Match";
@@ -97,7 +97,7 @@ public interface PluginConstants {
 	public static final Color SEARCH_HIGHLIGHT_COLOR = new Color(255, 255, 200);
 	/**
 	 * Default highlight color used when something to highlight is at the current
-	 * address. 
+	 * address.
 	 */
 	public static final Color SEARCH_HIGHLIGHT_CURRENT_ADDR_COLOR = Color.YELLOW;
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,7 +50,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param tool the plugin tool
 	 */
 	public ExtensionTableProvider(PluginTool tool) {
@@ -60,7 +60,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 
 	/**
 	 * Creates the main panel for the extension dialog.
-	 * 
+	 *
 	 * @param tool the current tool
 	 * @return the new panel
 	 */
@@ -110,7 +110,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 
 	/**
 	 * Creates an action to allow users to manually add new extensions.
-	 * 
+	 *
 	 * @param panel The extensions table panel.
 	 */
 	private void createAddAction(ExtensionTablePanel panel) {
@@ -190,7 +190,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 	/**
 	 * Verifies that the extension(s) represented by the given file (or directory) have
 	 * a version that is compatible with the current version of Ghidra.
-	 * 
+	 *
 	 * @param file the file or directory to inspect
 	 * @return true if the extension(s) has the correct version
 	 */
@@ -238,7 +238,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 
 	/**
 	 * Creates an action to refresh the extensions list.
-	 * 
+	 *
 	 * @param tablePanel the table to be refreshed
 	 * @param detailsPanel the details to be refreshed
 	 */
@@ -264,7 +264,7 @@ public class ExtensionTableProvider extends DialogComponentProvider {
 	}
 
 	/**
-	 * Filter for a {@link GhidraFileChooser} that restricts selection to those 
+	 * Filter for a {@link GhidraFileChooser} that restricts selection to those
 	 * files that are Ghidra Extensions (zip files with an extension.properties
 	 * file) or folders.
 	 */

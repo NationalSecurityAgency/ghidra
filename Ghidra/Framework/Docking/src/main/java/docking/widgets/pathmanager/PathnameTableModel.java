@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,11 @@ class PathnameTableModel extends AbstractTableModel {
 
 	private ArrayList<String> pathList;
 	private boolean isEditable;
-	
+
 	/**
-	 * @param paths initial list of paths; may be null 
+	 * @param paths initial list of paths; may be null
 	 * @param isEditable true if the path should be editable
-	 * 
+	 *
 	 */
 	PathnameTableModel(String[] paths, boolean isEditable) {
 		super();
@@ -79,19 +79,19 @@ class PathnameTableModel extends AbstractTableModel {
 	void setEditingEnabled(boolean isEditable) {
 		this.isEditable = isEditable;
 	}
-	
+
 	void remove(int[] selectedRows) {
 		String[] paths = new String[selectedRows.length];
 		for (int i=0; i<selectedRows.length; i++) {
 			paths[i] = pathList.get(selectedRows[i]);
 		}
-		
+
 		for (int i=0; i<paths.length; i++) {
 			pathList.remove(paths[i]);
 		}
 		fireTableDataChanged();
 	}
-	
+
 	void moveUp(JTable table, int index) {
 		if (index < 0 || index >= pathList.size()) {
 			return;
@@ -146,7 +146,7 @@ class PathnameTableModel extends AbstractTableModel {
 		pathList.clear();
 		addPaths(paths, false);
 	}
-	
+
 	private void notifyDataChanged(JTable table, int newIndex) {
 		fireTableDataChanged();
 		table.setRowSelectionInterval(newIndex, newIndex);

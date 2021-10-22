@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,13 +33,13 @@ public class GenericRunInfo {
 	private static final Logger LOG = LogManager.getLogger(GenericRunInfo.class);
 
 	/**
-	 * Get all of the applications's settings directories 
-	 * (<tt>.<i>application_name_version</i></tt>) for various versions in descending order by the 
-	 * modification time. In other words, <tt>list.get(0)</tt> will be the directory 
-	 * with the most recent modification time. If two directories have the same time then the 
+	 * Get all of the applications's settings directories
+	 * (<tt>.<i>application_name_version</i></tt>) for various versions in descending order by the
+	 * modification time. In other words, <tt>list.get(0)</tt> will be the directory
+	 * with the most recent modification time. If two directories have the same time then the
 	 * directories will simply be sorted based on their pathnames as a string.
 	 * <p>
-	 * <b>Note: </b>This method ignores Test directories 
+	 * <b>Note: </b>This method ignores Test directories
 	 */
 	private static List<File> getUserSettingsDirsByTime() {
 		File userDataDirectory = Application.getUserSettingsDirectory();
@@ -52,7 +52,7 @@ public class GenericRunInfo {
 			//
 			// We want to use a real file to tell the last time Ghidra was run, as we cannot
 			// trust the directory's last modified time on all platforms
-			// 
+			//
 			File prefs1 = new File(f1, Preferences.APPLICATION_PREFERENCES_FILENAME);
 			File prefs2 = new File(f2, Preferences.APPLICATION_PREFERENCES_FILENAME);
 			if (!prefs1.exists() || !prefs2.exists()) {
@@ -95,12 +95,12 @@ public class GenericRunInfo {
 	}
 
 	/**
-	 * Searches previous Application Settings directories 
-	 * ({@link #getUserSettingsDirsByTime()}) to find a file by the given name.   This is 
+	 * Searches previous Application Settings directories
+	 * ({@link #getUserSettingsDirsByTime()}) to find a file by the given name.   This is
 	 * useful for loading previous user settings, such as preferences.
-	 * 
+	 *
 	 * <p>Note: this method will ignore any test versions of settings directories.
-	 * 
+	 *
 	 * @param filename the name for which to seek; must be relative to a settings directory
 	 * @return the most recent file matching that name found in a previous settings dir
 	 */
@@ -125,10 +125,10 @@ public class GenericRunInfo {
 		return null;
 	}
 
-	/** 
-	 * This is the same as {@link #getUserSettingsDirsByTime()} except that it doesn't include the 
+	/**
+	 * This is the same as {@link #getUserSettingsDirsByTime()} except that it doesn't include the
 	 * current installation or installations with different release names
-	 * 
+	 *
 	 * @return the list of previous directories, sorted by time
 	 */
 	public static List<File> getPreviousApplicationSettingsDirsByTime() {
@@ -157,7 +157,7 @@ public class GenericRunInfo {
 			}
 
 			try {
-				// The current release name has to match for it to be considered				
+				// The current release name has to match for it to be considered
 				ApplicationIdentifier identifier = new ApplicationIdentifier(dirName);
 				String release = identifier.getApplicationReleaseName();
 				if (release.equals(myRelease)) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,11 +20,11 @@ import javax.swing.JTable;
 import ghidra.framework.plugintool.Plugin;
 
 /**
- * This action is used by {@link GhidraTable}s to allow the user to trigger navigation when 
+ * This action is used by {@link GhidraTable}s to allow the user to trigger navigation when
  * selections are made.
  * <p>
  * This class will save the state of the action when the tool is saved.
- * 
+ *
  * @see AbstractSelectionNavigationAction
  */
 public class SelectionNavigationAction extends AbstractSelectionNavigationAction {
@@ -35,7 +35,7 @@ public class SelectionNavigationAction extends AbstractSelectionNavigationAction
 	 * Constructor that relies on an instance of {@link GhidraTable} to do the work of
 	 * navigation.  Clients that have {@link JTable}s that are not instances of {@link GhidraTable}
 	 * can use the super class action and define its {@link #navigate()} callback method.
-	 * 
+	 *
 	 * @param plugin The owner plugin
 	 * @param table The {@link GhidraTable} which this action works with
 	 * @see AbstractSelectionNavigationAction
@@ -48,7 +48,7 @@ public class SelectionNavigationAction extends AbstractSelectionNavigationAction
 	 * Constructor that relies on an instance of {@link GhidraTable} to do the work of
 	 * navigation.  Clients that have {@link JTable}s that are not instances of {@link GhidraTable}
 	 * can use the super class action and define its {@link #navigate()} callback method.
-	 * 
+	 *
 	 * @param owner The owner name
 	 * @param table The {@link GhidraTable} which this action works with
 	 * @see AbstractSelectionNavigationAction

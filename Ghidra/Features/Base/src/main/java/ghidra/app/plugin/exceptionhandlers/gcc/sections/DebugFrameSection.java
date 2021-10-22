@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Parses the exception handling structures within a '.debug_frame' memory section, which 
+ * Parses the exception handling structures within a '.debug_frame' memory section, which
  * contains call frame debugging information.
  */
 public class DebugFrameSection extends AbstractFrameSection {
@@ -39,7 +39,7 @@ public class DebugFrameSection extends AbstractFrameSection {
 
 	/**
 	 * Constructor for a debug frame section.
-	 * 
+	 *
 	 * @param monitor a status monitor for indicating progress or allowing a task to be cancelled.
 	 * @param program the program containing this debug frame section.
 	 */
@@ -114,7 +114,7 @@ public class DebugFrameSection extends AbstractFrameSection {
 
 			curAddress = cie.getNextAddress();
 
-			/* 
+			/*
 			 * Add each Frame Description Entry (FDE) for the current CIE.
 			 */
 			List<RegionDescriptor> newRegions = new ArrayList<>();

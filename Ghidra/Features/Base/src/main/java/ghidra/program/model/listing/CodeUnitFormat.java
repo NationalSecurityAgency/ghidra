@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,7 @@ public class CodeUnitFormat {
 
 	/**
 	 * Format constructor.
-	 * 
+	 *
 	 * @param showBlockName whether or not to display block name;
 	 *            {SHOW_BLOCKNAME_ALWAYS, SHOW_BLOCKNAME_NEVER,
 	 *            SHOW_SEGMENT_NON_LOCAL}
@@ -83,7 +83,7 @@ public class CodeUnitFormat {
 	/**
 	 * Format constructor with more options. Extended reference mark-up is
 	 * enabled.
-	 * 
+	 *
 	 * @param options format options
 	 */
 	public CodeUnitFormat(CodeUnitFormatOptions options) {
@@ -93,7 +93,7 @@ public class CodeUnitFormat {
 	/**
 	 * Returns a formatted string representation of the specified code unit,
 	 * including mnemonic and operand(s) only.
-	 * 
+	 *
 	 * @param cu code unit
 	 * @return formatted code unit representation
 	 */
@@ -104,7 +104,7 @@ public class CodeUnitFormat {
 	/**
 	 * Returns a formatted string representation of the specified code unit
 	 * mnemonic and operand(s).
-	 * 
+	 *
 	 * @param cu code unit
 	 * @param includeEOLcomment if true EOL comment will be appended to code
 	 *            unit representation
@@ -147,7 +147,7 @@ public class CodeUnitFormat {
 
 	/**
 	 * Returns a formatted code unit mnemonic
-	 * 
+	 *
 	 * @param cu code unit
 	 * @return mnemonic representation
 	 */
@@ -170,7 +170,7 @@ public class CodeUnitFormat {
 	/**
 	 * Returns a formatted string representation of the specified code unit
 	 * operand.
-	 * 
+	 *
 	 * @param cu code unit
 	 * @param opIndex
 	 * @return formatted code unit representation
@@ -272,7 +272,7 @@ public class CodeUnitFormat {
 	/**
 	 * Perform register markup with explicit and implied register variable
 	 * reference.
-	 * 
+	 *
 	 * @param inst instruction
 	 * @param opIndex
 	 * @param func function containing instruction
@@ -401,7 +401,7 @@ public class CodeUnitFormat {
 	/**
 	 * If primaryRef is not already shown in other markup, add to end of operand
 	 * representation.
-	 * 
+	 *
 	 * @param instr instruction
 	 * @param primaryRef primary reference or null
 	 * @param referencedVariable optional variable corresponding to primaryRef
@@ -441,7 +441,7 @@ public class CodeUnitFormat {
 	/**
 	 * Attempt to markup any or all addresses contained within the
 	 * representationList.
-	 * 
+	 *
 	 * @param instr instruction
 	 * @param opIndex operand index
 	 * @param func function containing instruction
@@ -476,7 +476,7 @@ public class CodeUnitFormat {
 	/**
 	 * Attempt to markup any or all Scalars contained within the
 	 * representationList.
-	 * 
+	 *
 	 * @param inst instruction
 	 * @param opIndex operand index
 	 * @param function function containing instruction
@@ -609,7 +609,7 @@ public class CodeUnitFormat {
 	/**
 	 * Markup scalar with implied register variable reference if one can be
 	 * determined.
-	 * 
+	 *
 	 * @param instr instruction
 	 * @param func function containing instruction
 	 * @param scalarToReplace
@@ -669,7 +669,7 @@ public class CodeUnitFormat {
 	/**
 	 * Markup scalar with equate if an appropriate one is contained within the
 	 * specified equates list
-	 * 
+	 *
 	 * @param scalarToReplace
 	 * @param scalarIndex index of scalarToReplace within representationList
 	 * @param equates equates for the current code unit operand
@@ -714,7 +714,7 @@ public class CodeUnitFormat {
 
 	/**
 	 * Markup scalar with stack variable/reference
-	 * 
+	 *
 	 * @param scalarToReplace
 	 * @param scalarIndex index of scalarToReplace within representationList
 	 * @param primaryRef stack reference
@@ -735,7 +735,7 @@ public class CodeUnitFormat {
 
 	/**
 	 * Markup scalar with register variable
-	 * 
+	 *
 	 * @param scalarToReplace
 	 * @param scalarIndex index of scalarToReplace within representationList
 	 * @param primaryReference primary reference
@@ -758,7 +758,7 @@ public class CodeUnitFormat {
 	/**
 	 * Determine if the referencedVariable corresponds to the specified
 	 * register.
-	 * 
+	 *
 	 * @param variable
 	 * @param register
 	 * @return true if variable is a RegisterVariable corresponding to the
@@ -775,7 +775,7 @@ public class CodeUnitFormat {
 	/**
 	 * Build register index map based upon a raw operand representation list
 	 * where the index corresponds to the index within the list.
-	 * 
+	 *
 	 * @param rawRepresentationList
 	 * @return register index map
 	 */
@@ -800,7 +800,7 @@ public class CodeUnitFormat {
 	 * Add scalar adjustment markup to the specified opObj. If the specified
 	 * addr is a memory address and an adjustment is performed, the "offset "
 	 * prefix will also be added to the modified opObj which is returned.
-	 * 
+	 *
 	 * @param opObj original sub-operand object
 	 * @param addr reference address which corresponds to opObj
 	 * @param originalScalar scalar which was replaced by opObj
@@ -886,7 +886,7 @@ public class CodeUnitFormat {
 
 	/**
 	 * Determine if the specified register is read by the specified instruction.
-	 * 
+	 *
 	 * @param register
 	 * @param instruction
 	 * @return true if register is read
@@ -903,7 +903,7 @@ public class CodeUnitFormat {
 	/**
 	 * Determine if the specified register is written by the specified
 	 * instruction.
-	 * 
+	 *
 	 * @param register
 	 * @param instruction
 	 * @return true if register is written
@@ -920,7 +920,7 @@ public class CodeUnitFormat {
 	/**
 	 * Search for the register which has the specified address among register
 	 * keys contained with in the regIndexMap.
-	 * 
+	 *
 	 * @param addr register address
 	 * @param regIndexMap register index map
 	 * @return register matching register or null if not found.
@@ -937,7 +937,7 @@ public class CodeUnitFormat {
 	/**
 	 * Find a register varnode within a map keyed by acceptable register
 	 * choices.
-	 * 
+	 *
 	 * @param v varnode
 	 * @param regIndexMap register index map
 	 * @return register which matches varnode, or null.
@@ -954,7 +954,7 @@ public class CodeUnitFormat {
 
 	/**
 	 * Check for value equality between a constant varnode and a scalar value.
-	 * 
+	 *
 	 * @param v constant varnode
 	 * @param value scalar value
 	 * @return true if values are equals
@@ -968,7 +968,7 @@ public class CodeUnitFormat {
 	 * Find a register which has a direct association with the specified scalar
 	 * via an INT_ADD p-code operation. Eligible registers are must be contained
 	 * within the regIndexMap.
-	 * 
+	 *
 	 * @param scalar
 	 * @param regIndexMap registers appearing in operand representation
 	 * @param pcode operand p-code
@@ -999,7 +999,7 @@ public class CodeUnitFormat {
 
 	/**
 	 * Search list of equates for scalar value match.
-	 * 
+	 *
 	 * @param scalar
 	 * @param equates list of equates
 	 * @return equate which matches scalar value or null if not found.
@@ -1020,7 +1020,7 @@ public class CodeUnitFormat {
 	 * Returns a formatted data value for the specified data unit. The return
 	 * list will contain a single object which may be an instance of String,
 	 * LabelString, Address, Scalar or Equate
-	 * 
+	 *
 	 * @param data data unit
 	 * @return representation list containing a single object.
 	 */
@@ -1091,7 +1091,7 @@ public class CodeUnitFormat {
 
 	/**
 	 * Returns a formatted data value for the specified data unit.
-	 * 
+	 *
 	 * @param data data unit
 	 * @return data value string
 	 */
@@ -1102,7 +1102,7 @@ public class CodeUnitFormat {
 	/**
 	 * Build a suitable variable or stack reference representation with optional
 	 * scalar replacement.
-	 * 
+	 *
 	 * @param ref variable reference
 	 * @param var associated variable or null
 	 * @param replacedScalar replaced scalar object or null
@@ -1130,7 +1130,7 @@ public class CodeUnitFormat {
 
 	/**
 	 * Returns a marked-up representation of the reference destination.
-	 * 
+	 *
 	 * @param fromCodeUnit
 	 * @param ref
 	 * @return destination as a string or null if a suitable string could not be
@@ -1148,7 +1148,7 @@ public class CodeUnitFormat {
 	/**
 	 * Get a representation object corresponding to the specified reference.
 	 * Format options are considered when generating label.
-	 * 
+	 *
 	 * @param cu
 	 * @param ref
 	 * @param var variable which corresponds to reference or null
@@ -1180,7 +1180,7 @@ public class CodeUnitFormat {
 	 * Get a LabelString object which corresponds to the specified memory
 	 * reference from the specified code unit. Format options are considered
 	 * when generating label.
-	 * 
+	 *
 	 * @param fromCodeUnit code unit
 	 * @param ref memory reference
 	 * @return LabelString representation object

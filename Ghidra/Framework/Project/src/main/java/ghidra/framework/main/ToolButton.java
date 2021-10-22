@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ import ghidra.util.exception.AssertException;
  * If the object contains a domain file that is supported by a tool of
  * this tool template, then a tool is launched with the data in it.
  * <p>
- * This button can be used in one of two ways: to launch new instances of an associated tool 
+ * This button can be used in one of two ways: to launch new instances of an associated tool
  * template, or to represent a running tool.
  */
 class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
@@ -153,9 +153,9 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		doLaunchTool(new DomainFile[] { domainFile });
 	}
 
-//==================================================================================================    
+//==================================================================================================
 // Droppable interface
-//==================================================================================================    
+//==================================================================================================
 
 	/**
 	 * Set drag feedback according to the OK parameter.
@@ -377,8 +377,8 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		return task.getVersionedObject();
 	}
 
-//==================================================================================================    
-// Draggable interface 
+//==================================================================================================
+// Draggable interface
 //==================================================================================================
 
 	/** Fix the button state after dragging/dropping, since this is broken in Java */
@@ -404,7 +404,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 		// Unusual Code Alert!
 		// When dragging, we do not get mouseReleased() events, which we use to launch tools.
-		// In this case, the drag was cancelled; if we are over ourselves, then simulate 
+		// In this case, the drag was cancelled; if we are over ourselves, then simulate
 		// the Java-eaten mouseReleased() call
 		Container parent = getParent();
 		if (parent == null) {
@@ -486,7 +486,7 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 
 //==================================================================================================
 // Package methods
-//==================================================================================================    
+//==================================================================================================
 
 	/**
 	 * Set the tool template for this button.
@@ -602,9 +602,9 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 		// the final point over which the image will be painted
 		Rectangle endBounds = new Rectangle(new Point(0, 0), frameSize);
 
-		// Create our animation code: a zooming effect and an effect to move where the image is 
-		// painted.  These effects are independent code-wise, but work together in that the 
-		// mover will set the location and size, and the zoomer will will paint the image with 
+		// Create our animation code: a zooming effect and an effect to move where the image is
+		// painted.  These effects are independent code-wise, but work together in that the
+		// mover will set the location and size, and the zoomer will will paint the image with
 		// a transparency and a zoom level, which is affected by the movers bounds changing.
 		Image image = ZoomedImagePainter.createIconImage(icon);
 		final ZoomedImagePainter painter = new ZoomedImagePainter(startBounds, image);
@@ -692,8 +692,8 @@ class ToolButton extends EmptyBorderButton implements Draggable, Droppable {
 	}
 
 //==================================================================================================
-// Inner Classes    
-//==================================================================================================    
+// Inner Classes
+//==================================================================================================
 
 	private class ToolChangeListener implements DefaultToolChangeListener {
 		private final ToolTemplate toolTemplate;

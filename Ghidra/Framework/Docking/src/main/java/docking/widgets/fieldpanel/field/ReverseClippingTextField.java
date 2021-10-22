@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,11 +54,11 @@ public class ReverseClippingTextField implements TextField {
 	/**
 	 * Constructs a new ReverseClippingTextField that allows the cursor beyond the end
 	 * of the line. This is just a pass through constructor that makes the call:
-	 * 
+	 *
 	 * <pre>
 	 * this(startX, width, new AttributedString[] { textElement }, hlFactory, true);
 	 * </pre>
-	 * 
+	 *
 	 * @param startX
 	 *            The x position of the field
 	 * @param width
@@ -332,7 +332,7 @@ public class ReverseClippingTextField implements TextField {
 	/**
 	 * Converts a single column value into a MultiStringLocation which specifies
 	 * a string index and a column position within that string.
-	 * 
+	 *
 	 * @param screenColumn
 	 *            the overall column position in the total String.
 	 * @return MultiStringLocation the MultiStringLocation corresponding to the

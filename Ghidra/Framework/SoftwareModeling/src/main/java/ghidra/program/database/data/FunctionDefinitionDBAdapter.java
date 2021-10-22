@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,7 +56,7 @@ abstract class FunctionDefinitionDBAdapter {
 	static final int GENERIC_CALLING_CONVENTION_FLAG_SHIFT = 1;
 
 	/**
-	 * Gets an adapter for working with the function definition data type database table. The adapter is based 
+	 * Gets an adapter for working with the function definition data type database table. The adapter is based
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
@@ -187,7 +187,7 @@ abstract class FunctionDefinitionDBAdapter {
 	/**
 	 * Updates the function definition data type table with the provided record.
 	 * @param record the new record
-	 * @param setLastChangedTime true means change the last change time in the record to the 
+	 * @param setLastChangedTime true means change the last change time in the record to the
 	 * current time before putting the record in the database.
 	 * @throws IOException if the database can't be accessed.
 	 */

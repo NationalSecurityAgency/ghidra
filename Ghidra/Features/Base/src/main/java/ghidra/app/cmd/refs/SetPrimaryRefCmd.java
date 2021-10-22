@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,12 +33,12 @@ public class SetPrimaryRefCmd implements Command {
 	private int opIndex;
 	private Address toAddr;
 	private boolean isPrimary;
-	
+
 	private String status;
 
 	/**
 	 * Creates a command for setting whether or not a reference is the primary reference.
-	 * If isPrimary is true, any other reference that was primary at that 
+	 * If isPrimary is true, any other reference that was primary at that
 	 * address will no longer be primary.
 	 * @param ref the reference
 	 * @param isPrimary true to make the reference primary, false to make it non-primary
@@ -49,7 +49,7 @@ public class SetPrimaryRefCmd implements Command {
 
 	/**
 	 * Creates a command for setting whether or not a reference is the primary reference.
-	 * If isPrimary is true, any other reference that was primary at that 
+	 * If isPrimary is true, any other reference that was primary at that
 	 * address will no longer be primary.
 	 * @param fromAddr the address of the codeunit making the reference.
 	 * @param opIndex the operand index.
@@ -64,11 +64,11 @@ public class SetPrimaryRefCmd implements Command {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
     public boolean applyTo(DomainObject obj) {
-    	
+
     	ReferenceManager refMgr = ((Program)obj).getReferenceManager();
     	Reference ref = refMgr.getReference(fromAddr, toAddr, opIndex);
 
@@ -80,7 +80,7 @@ public class SetPrimaryRefCmd implements Command {
     	refMgr.setPrimary(ref, isPrimary);
 
 		return true;
-    }	
+    }
 
 
     /**

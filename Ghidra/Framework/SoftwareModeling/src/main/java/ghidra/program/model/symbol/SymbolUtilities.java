@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -279,7 +279,7 @@ public class SymbolUtilities {
 	/**
 	 * Tests if the given name is a possible dynamic symbol name.
 	 * WARNING! This method should be used carefully since it will return true for
-	 * any name which starts with a known dynamic label prefix or ends with an '_' 
+	 * any name which starts with a known dynamic label prefix or ends with an '_'
 	 * followed by a valid hex value.
 	 * @param name the name to test
 	 * @param caseSensitive true if case matters.
@@ -393,8 +393,8 @@ public class SymbolUtilities {
 
 	/**
 	 * Create a name for a dynamic symbol with a 3-letter prefix based upon reference level
-	 * and an address.  Acceptable referenceLevel's are: 
-	 * {@link #UNK_LEVEL}, {@link #DAT_LEVEL}, {@link #LAB_LEVEL}, {@link #SUB_LEVEL}, 
+	 * and an address.  Acceptable referenceLevel's are:
+	 * {@link #UNK_LEVEL}, {@link #DAT_LEVEL}, {@link #LAB_LEVEL}, {@link #SUB_LEVEL},
 	 * {@link #EXT_LEVEL}, {@link #FUN_LEVEL}.
 	 * @param referenceLevel the type of reference for which to create a dynamic name.
 	 * @param addr the address at which to create a dynamic name.
@@ -762,7 +762,7 @@ public class SymbolUtilities {
 
 	/**
 	 * Returns true if the given name is a possible default parameter name or local variable name
-	 * 
+	 *
 	 * @param name the name to check to see if it is a possible default local or parameter name
 	 * @return true if the given name is a possible default parameter name or local variable name
 	 */
@@ -775,7 +775,7 @@ public class SymbolUtilities {
 
 	/**
 	 * Checks if the given name could be a default external location name
-	 * 
+	 *
 	 * @param name the name to check
 	 * @return true if the given name is a possible default external location name
 	 */
@@ -828,7 +828,7 @@ public class SymbolUtilities {
 	}
 
 	/**
-	 * Creates the standard symbol name for symbols that have the addresses appended to the 
+	 * Creates the standard symbol name for symbols that have the addresses appended to the
 	 * name following an "@" character in order to make it unique.
 	 * @param name the "true" name of the symbol
 	 * @param address the address to be appended
@@ -839,7 +839,7 @@ public class SymbolUtilities {
 	}
 
 	/**
-	 * Creates the a symbol name for symbols that have the addresses appended to the 
+	 * Creates the a symbol name for symbols that have the addresses appended to the
 	 * name in order to make it unique.
 	 * @param name the "true" name of the symbol
 	 * @param address the address to be appended
@@ -861,9 +861,9 @@ public class SymbolUtilities {
 	}
 
 	/**
-	 * Gets the base symbol name regardless of whether or not the address has been appended 
+	 * Gets the base symbol name regardless of whether or not the address has been appended
 	 * using either the standard "@" separator, or the less preferred "_" separator.  The
-	 * address string extension must match that which is produced by the 
+	 * address string extension must match that which is produced by the
 	 * {@link #getAddressString(Address)} method for it to be recognized.
 	 * @param symbolName a symbol name to get the clean name for.
 	 * @param address the symbol's address
@@ -998,10 +998,10 @@ public class SymbolUtilities {
 
 	/**
 	 * Create label symbol giving preference to non-global symbols.  An existing function symbol
-	 * may be returned.  If attempting to create a global symbol and the name already exists 
-	 * at the address no symbol will be created and null will be returned.  
+	 * may be returned.  If attempting to create a global symbol and the name already exists
+	 * at the address no symbol will be created and null will be returned.
 	 * If attempting to create a non-global symbol, which does not exist,
-	 * and a global symbol does exist with same name its namespace will be changed. 
+	 * and a global symbol does exist with same name its namespace will be changed.
 	 * @param program program within which the symbol should be created
 	 * @param address memory address where symbol should be created
 	 * @param namespace symbol namespace or null for global
@@ -1059,7 +1059,7 @@ public class SymbolUtilities {
 	 * Returns a comparator for symbols.  The comparison is based upon the name.  This call
 	 * replaces the former <code>compareTo</code> method on Symbol.  This comparator returned here
 	 * is case-insensitive.
-	 * 
+	 *
 	 * @return the comparator
 	 */
 	public static Comparator<Symbol> getSymbolNameComparator() {

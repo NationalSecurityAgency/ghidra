@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,7 +97,7 @@ class DNLEdgeLabelRenderer<V extends FGVertex, E extends FGEdge>
 		List<Point2D> articulationPoints = e.getArticulationPoints();
 		if (articulationPoints.isEmpty()) {
 			double vertexBottom = start.getY() + (vertexBounds.height >> 1); // location is centered
-			double textY = (int) (vertexBottom + edgeOffset); // below the vertex; above the bend 
+			double textY = (int) (vertexBottom + edgeOffset); // below the vertex; above the bend
 			double textX = (int) (start.getX() + xDisplacement); // right of the edge
 			labelPointOffset.setLocation(textX, textY);
 		}
@@ -122,13 +122,13 @@ class DNLEdgeLabelRenderer<V extends FGVertex, E extends FGEdge>
 
 			if (articulationPoints.size() == 2) {
 
-				double textX = (int) (vertexSide + edgeOffset); // right of the vertex 
-				double textY = (int) (cy + edgeOffset); // above the edge 
+				double textX = (int) (vertexSide + edgeOffset); // right of the vertex
+				double textY = (int) (cy + edgeOffset); // above the edge
 				labelPointOffset.setLocation(textX, textY);
 			}
 			else { // 3 or 4 articulations
 
-				double textY = (int) (vertexBottom + edgeOffset); // below the vertex; above the bend 
+				double textY = (int) (vertexBottom + edgeOffset); // below the vertex; above the bend
 				double textX = (int) (bx1 + xDisplacement); // right of the edge
 				if (!isRight) {
 					textX = bx1 - xDisplacement - labelWidth;

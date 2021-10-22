@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -306,7 +306,7 @@ public class DataTypeDependencyOrderer {
 
 		// Place noDependents types into the depentsStack and remove edges to types that are
 		//  dependent on them, checking to see if these dependents are no longer dependent on any
-		//  other types, and thus placing them in the noDependents stack for their processing. 
+		//  other types, and thus placing them in the noDependents stack for their processing.
 		while (!noDependentsQueue.isEmpty()) {
 			Entry entry = noDependentsQueue.remove();
 			//dependency stack of all types.

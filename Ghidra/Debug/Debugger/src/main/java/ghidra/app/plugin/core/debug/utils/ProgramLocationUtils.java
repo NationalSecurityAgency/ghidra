@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,12 +37,12 @@ public enum ProgramLocationUtils {
 
 	/**
 	 * Swap out the trace view of a {@link ProgramLocation} if it is not the canonical view
-	 * 
+	 *
 	 * <p>
 	 * If the program location is not associated with a trace, the same location is returned.
 	 * Otherwise, this ensures that the given view is the canonical one for the same trace. If
 	 * matchSnap is true, the view is only replaced when the replacement shares the same snap.
-	 * 
+	 *
 	 * @param location a location possibly in a trace view
 	 * @param matchSnap true to only replace is snap matches, false to always replace
 	 * @return the adjusted location

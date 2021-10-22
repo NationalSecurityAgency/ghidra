@@ -69,7 +69,7 @@
 
     <BLOCKQUOTE>
       <BR>
-       
+
 
       <H3><A name="gotoaddress"></A>Go To Address</H3>
 
@@ -134,7 +134,7 @@
             <LI>Goto address "5"</LI>
 
             <LI>
-              The destination is not ambiguous: 
+              The destination is not ambiguous:
 
               <UL>
                 <LI>The BLOCK1 block has an address "5" so the listing will move to address 5.</LI>
@@ -145,7 +145,7 @@
       </BLOCKQUOTE>
     </BLOCKQUOTE>
 
-  
+
 
     <BLOCKQUOTE>
       <BLOCKQUOTE>
@@ -158,7 +158,7 @@
             <LI>Goto address "5"</LI>
 
             <LI>
-              The destination is ambiguous because: 
+              The destination is ambiguous because:
 
               <UL>
                 <LI>The BLOCK3 block does not have an address "5"</LI>
@@ -202,22 +202,22 @@
           if a label has an exact match, no other labels will be found.<BR>
           </P>
         </BLOCKQUOTE>
-        
+
         <H4>Dynamic Labels</H4>
         <BLOCKQUOTE>
           <P>This option only affects queries that could potentially result in multiple results, i.e
-          when a search must be performed versus a lookup.  This occurs when either the case sensitive 
+          when a search must be performed versus a lookup.  This occurs when either the case sensitive
           is turned off or a wildcard is used. Specifically, this option tells Ghidra, when doing
-          a search versus a direct lookup, to consider all the <I>Dynamic</I> symbols (symbols that are not 
+          a search versus a direct lookup, to consider all the <I>Dynamic</I> symbols (symbols that are not
           stored, but are generated on the fly because of a reference to that location.) If
-          this option is off, only defined labels are searched. 
+          this option is off, only defined labels are searched.
 
           <P><IMG src="../../shared/note.png" border="0"> Turning off this option can result in
            significantly faster results in larger programs.</P><BR>
           </P>
-          
+
         </BLOCKQUOTE>
-        
+
       </BLOCKQUOTE>
 
       <H3><A name="gotoexpression"></A>Go To Expression<BR>
@@ -231,8 +231,8 @@
 	         For example:<BR>
 	        </P>
 
-	
-	
+
+
 			<TABLE BORDER="1">
 				<TR>
 					<TD WIDTH="35%">
@@ -246,19 +246,19 @@
 					<TD><B>0x100000+30</B>
 					</TD>
 					<TD>Positions the cursor at address 0x100030
-					</TD>					
+					</TD>
 				</TR>
 				<TR>
 					<TD><B>0x100000+(2*10)</B>
 					</TD>
 					<TD>Posiitons the cursor at address 0x100020
-					</TD>					
+					</TD>
 				</TR>
 				<TR>
 					<TD><B>+20</B>
 					</TD>
 					<TD>Positions the cursor at an address that is 0x20 past the current location
-					</TD>					
+					</TD>
 				</TR>
 			</TABLE>
 	      </BLOCKQUOTE>
@@ -371,7 +371,7 @@
 
         <OL>
           <LI>
-            Entering an invalid address or non-existing label 
+            Entering an invalid address or non-existing label
 
             <UL>
               <LI>The dialog displays <I>"This is not a query, label, or address."</I></LI>
@@ -379,7 +379,7 @@
           </LI>
 
           <LI>
-            Specifying a query that has no results 
+            Specifying a query that has no results
 
             <UL>
               <LI>The dialog displays <I>"No results for ..."</I>, where "..." is the query
@@ -453,8 +453,8 @@
       <H3><A name="Next_Function"></A>Navigate to Function</H3>
 
       <BLOCKQUOTE>
-        <P>This (<IMG src="images/F.gif" alt="F" border="0">) action will move the cursor to the 
-        next function in the current direction.  If inside a function and the direction is towards 
+        <P>This (<IMG src="images/F.gif" alt="F" border="0">) action will move the cursor to the
+        next function in the current direction.  If inside a function and the direction is towards
         lower addresses, then this action will go to the current function's entry point.</P>
 
       </BLOCKQUOTE>
@@ -463,7 +463,7 @@
 
 
       <P style="margin-left: 40px;">This task (<IMG src="images/notF.gif" alt="F">) will attempt to
-      the navigate to the next instruction block not contained in a function.&nbsp; 
+      the navigate to the next instruction block not contained in a function.&nbsp;
       This can be useful when manually creating functions and
       stepping over them to identify potential function candidates.&nbsp;</P>
 
@@ -472,31 +472,31 @@
 
       <P style="margin-left: 40px;">This task (<IMG src="images/V_slash.png" alt="V">) will attempt to
       the navigate to the first code-unit where the byte value is different from the byte value
-      of the first byte of the current code unit.&nbsp; This can be useful when trying to navigate 
+      of the first byte of the current code unit.&nbsp; This can be useful when trying to navigate
       past a series of 0s or FFs;</P>
-      
+
       <H3><A name="Next_Bookmark"></A>Navigate to Bookmark</H3>
 
       <BLOCKQUOTE>
-        <P>To move the cursor to the next bookmark, click on the Navigate by Bookmark icon, 
-        <IMG src="images/B.gif" alt="B" border="0">. This icon is disabled when no more bookmarks 
-        exist in the current search direction. You may use the pull-down menu to choose a specific 
-        type of bookmark (<IMG src="images/applications-system.png" alt="B" border="0">,  
-        <IMG src="images/edit-delete.png" alt="B" border="0">, 
+        <P>To move the cursor to the next bookmark, click on the Navigate by Bookmark icon,
+        <IMG src="images/B.gif" alt="B" border="0">. This icon is disabled when no more bookmarks
+        exist in the current search direction. You may use the pull-down menu to choose a specific
+        type of bookmark (<IMG src="images/applications-system.png" alt="B" border="0">,
+        <IMG src="images/edit-delete.png" alt="B" border="0">,
         <IMG src="images/information.png" alt="B" border="0">,
         <IMG src="images/notes.gif" alt="B" border="0">,
         <IMG src="images/warning.png" alt="B" border="0">,
         <IMG src="images/unknown.gif" alt="B" border="0">)
         to navigate to as opposed to all types. </P>
       </BLOCKQUOTE>
-      
+
 
       <P class="providedbyplugin">&nbsp;</P>
 
       <P class="providedbyplugin">Provided by: <I>Go To Next-Previous Code Unit</I> plugin</P>
     </BLOCKQUOTE>
-    
-	<!-- 
+
+	<!--
 		This file is different than most, since it has multiple plugins contributing to the
 	    content.  Add some space at the bottom of the file to separate this last contribution
 	 -->
@@ -527,12 +527,12 @@
      <P> This action navigates the cursor to the closest function entry point that is at an
       address less than the current address. The default keybinding is <TT><B>Control-Up&nbsp;Arrow</B></TT>.</P>
       </BLOCKQUOTE>
-    
+
    		<P class="providedbyplugin">Provided by: <I>CodeBrowser</I> plugin</P>
        </BLOCKQUOTE>
 
 
-	<!-- 
+	<!--
 		This file is different than most, since it has multiple plugins contributing to the
 	    content.  Add some space at the bottom of the file to separate this last contribution
 	 -->
@@ -597,16 +597,16 @@
         	list, skipping over any locations that are not in functions or are in the current
         	function.
         </P>
-        
+
       		<BLOCKQUOTE>
         	<P>
         	<IMG src="../../shared/note.png" border="0">The behavior of the previous action will
-        	vary slightly depending upon what component is focused.  It is possible for a 
-        	non-Listing view to be showing a function that is not the current function in the 
+        	vary slightly depending upon what component is focused.  It is possible for a
+        	non-Listing view to be showing a function that is not the current function in the
         	Listing.  In this case, if the Listing has focus, then the previously visited function
         	will be the navigation destination.  <B>Alternatively, if a non-Listing widget
         	(e.g., the Decompiler) has focus and is showing a function, then that function
-        	being displayed will be ignored when navigating to the previous function.</B> 
+        	being displayed will be ignored when navigating to the previous function.</B>
         	</P>
         	</BLOCKQUOTE>
       </BLOCKQUOTE>
@@ -620,11 +620,11 @@
         <P>After clearing the history, the <IMG src="images/left.png" border="0">&nbsp;and <IMG
         src="images/right.png" border="0"> buttons are disabled</P>
       </BLOCKQUOTE>
-    
+
     	<P class="providedbyplugin">Provided by: <I>Next/Previous</I> plugin</P>
       </BLOCKQUOTE>
 
-	<!-- 
+	<!--
 		This file is different than most, since it has multiple plugins contributing to the
 	    content.  Add some space at the bottom of the file to separate this contribution.
 	 -->
@@ -652,11 +652,11 @@
         	Allows the user to switch focus back to the previously focused component provider.
         </P>
       </BLOCKQUOTE>
-	
+
 		<P class="providedbyplugin">Provided by: <I>ProviderNavigation</I> plugin</P>
 	</BLOCKQUOTE>
 
-	<!-- 
+	<!--
 		This file is different than most, since it has multiple plugins contributing to the
 	    content.  Add some space at the bottom of the file to separate this contribution.
 	 -->
@@ -667,70 +667,70 @@
     <BR>
     <BR>
 
-	
+
 	<HR WIDTH="80%">
-	
+
 	<H2><A NAME="Navigation_Options"></A>Navigation Options</H2>
-	
+
 	<BLOCKQUOTE>
-	
-	
+
+
 
 
 
 	    <P>
 		<B>'Go To' in Current Program Only</B> -
-		'Go To' service will only search for and navigate to labels in the current program. 
+		'Go To' service will only search for and navigate to labels in the current program.
 		If this option is off and the search label is not found in the current program, the
 		'Go To' action will search other open programs,
-		possibly resulting in the listing view switching to a different open program tab. 
+		possibly resulting in the listing view switching to a different open program tab.
 		By default, this option is on, thereby guaranteeing that the listing view will not
 		change to a different program when performing a <A HREF="#Go_To_Address_Label">
 		'Go To' action</A>.
 		</P>
-	    
+
 	    <P>
 		<B>External Navigation</B> -
-		Determines the behavior for navigation to external symbols and references. 
-		By default, navigating to an external will attempt to navigate within the 
-		current program to the first linkage reference (pointer or thunk). 
-		Alternatively, if an external program has been associated with an 
+		Determines the behavior for navigation to external symbols and references.
+		By default, navigating to an external will attempt to navigate within the
+		current program to the first linkage reference (pointer or thunk).
+		Alternatively, if an external program has been associated with an
 		import Library, then that program will be opened and positioned to the selected
 		external location if found.
 		</P>
-		
+
 		<P>
 		<B>Follow Indirection</B> -
-		Determines the behavior for navigation on indirect flow references. 
-		By default, this option is disabled providing navigation to the 
-		referenced pointer data.  If enabled, the pointer will be followed 
+		Determines the behavior for navigation on indirect flow references.
+		By default, this option is disabled providing navigation to the
+		referenced pointer data.  If enabled, the pointer will be followed
 		to its referenced destination if contained within the program's memory.
 		</P>
-	    
+
 		<P>
-		<B>Prefer Current Address Space</B> - 
+		<B>Prefer Current Address Space</B> -
 		Determines if the 'Go To' action prefers the current address space when entering address offsets.
 		For example, if your program has multiple address spaces such as 'RAM' or 'DATA' and you
-		enter 1000 into the 'Go To' field, you could mean RAM:1000 or DATA:1000.  If this option 
-		is on, then it will go to the address with the address space that matches the current 
+		enter 1000 into the 'Go To' field, you could mean RAM:1000 or DATA:1000.  If this option
+		is on, then it will go to the address with the address space that matches the current
 		cursor location.  Otherwise, it will show a list of possible addresses for the given offset.
 		The default is on for this option.
 		</P>
-		
+
 		<P>
 		<B>Range Navigation</B> -
 		Determines how <A HREF="help/topics/Selection/Selecting.htm#NavigateOverSelection">
-		navigation of ranges</A> 
-		(i.e., selection ranges and highlight ranges) takes place.  By default, navigating 
-		to ranges will place the cursor at the top of the 
+		navigation of ranges</A>
+		(i.e., selection ranges and highlight ranges) takes place.  By default, navigating
+		to ranges will place the cursor at the top of the
 		next range.  You may use this option to navigate to both the top and the bottom of each
 		range being navigated.
 		</P>
-		
-	</BLOCKQUOTE>
-	
 
-	<!-- 
+	</BLOCKQUOTE>
+
+
+	<!--
 		This file is different than most, since it has multiple plugins contributing to the
 	    content.  Add some space at the bottom of the file to separate this contribution.
 	 -->

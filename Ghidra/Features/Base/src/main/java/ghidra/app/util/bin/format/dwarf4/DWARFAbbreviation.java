@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import java.util.*;
  * <p>
  * A raw DWARF DIE record specifies its abbreviation code (pointing to an instance of
  * this class) and the corresponding DWARFAbbreviation instance has the information
- * about how the raw DIE is laid out. 
+ * about how the raw DIE is laid out.
  */
 public class DWARFAbbreviation
 {
@@ -103,7 +103,7 @@ public class DWARFAbbreviation
 	{
 		return this.abbreviationCode;
 	}
-	
+
 	/**
 	 * Get the tag value.
 	 * @return the tag value
@@ -127,7 +127,7 @@ public class DWARFAbbreviation
 	public DWARFAttributeSpecification[] getAttributes() {
 		return attributes;
 	}
-	
+
 	public int getAttributeCount() {
 		return attributes.length;
 	}
@@ -140,7 +140,7 @@ public class DWARFAbbreviation
 	public DWARFAttributeSpecification getAttributeAt(int index) {
 		return this.attributes[index];
 	}
-	
+
 	/**
 	 * Get the attribute with the given attribute key.
 	 * @param attribute attribute key

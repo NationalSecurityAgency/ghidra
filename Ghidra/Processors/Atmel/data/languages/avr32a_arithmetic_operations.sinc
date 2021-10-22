@@ -63,8 +63,8 @@ macro acrflags(OP1, tmpC, RES) {
 # 010 1110 00100 dddd	(Opcode Form)
 # 0101 1100 0100 dddd	(Byte half Form)
 :ABS rd0 is rd0 & op13_3=0x2 & op9_4=0xe & op4_5=0x4 {
-	rd0 = abs(rd0);	
-	ZSTATUS(rd0); 
+	rd0 = abs(rd0);
+	ZSTATUS(rd0);
 }
 
 
@@ -156,7 +156,7 @@ macro acrflags(OP1, tmpC, RES) {
 
 #---------------------------------------------------------------------
 # ADD{cond4} - Conditional Add
-# I. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al} 
+# I. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al}
 #    {d,x,y} -> {0, 1, ..., 15}
 #---------------------------------------------------------------------
 
@@ -214,7 +214,7 @@ macro acrflags(OP1, tmpC, RES) {
 # 111s sss0 0000 dddd   0001 1000 0000 0000
 
 :CP.B RD0A, RS9A is op13_3=7 & op4_5=0 & RD0A & RS9A; eop0_16=0x1800 {
-		
+
         tmp:1 = RD0A:1 - RS9A:1;
 
         subflags(RD0A:1, RS9A:1, tmp);
@@ -645,10 +645,10 @@ macro acrflags(OP1, tmpC, RES) {
 
 #---------------------------------------------------------------------
 # SUB{cond4} - Conditional Subtract
-# I.  cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al} 
+# I.  cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al}
 #     d       -> {0, 1, ..., 15}
 #     imm     -> {-128, -127, ..., 127}
-# II. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al} 
+# II. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al}
 #     {d,x,y} -> {0, 1, ..., 15}
 #---------------------------------------------------------------------
 

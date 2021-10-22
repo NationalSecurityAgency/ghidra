@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,7 +112,7 @@ public class DataBuffer implements Buffer, Externalizable {
 
 	/**
 	 * Return true if this buffer contains modified data.
-	 * When this buffer is released to the BufferMgr, the data is consumed and 
+	 * When this buffer is released to the BufferMgr, the data is consumed and
 	 * this flag reset to false.
 	 */
 	public boolean isDirty() {
@@ -121,7 +121,7 @@ public class DataBuffer implements Buffer, Externalizable {
 
 	/**
 	 * Set the dirty flag.
-	 * @param state flag state.  
+	 * @param state flag state.
 	 */
 	protected void setDirty(boolean state) {
 		dirty = state;
@@ -325,7 +325,7 @@ public class DataBuffer implements Buffer, Externalizable {
 	 * Deflate data into compressedData array.  Both arrays must have equal lengths.
 	 * @param data
 	 * @param compressedData
-	 * @return length of compressed data within the compressedData array, or -1 if 
+	 * @return length of compressed data within the compressedData array, or -1 if
 	 * unable to compress.
 	 */
 	private static int deflateData(byte[] data, byte[] compressedData) {
@@ -381,12 +381,12 @@ public class DataBuffer implements Buffer, Externalizable {
 	}
 
 	/**
-	 * Perform an unsigned data comparison 
+	 * Perform an unsigned data comparison
 	 * @param otherData other data to be compared
 	 * @param offset offset within this buffer
 	 * @param len length of data within this buffer
 	 * @return unsigned comparison result
-	 * @throws ArrayIndexOutOfBoundsException if specified region is not 
+	 * @throws ArrayIndexOutOfBoundsException if specified region is not
 	 * contained within this buffer.
 	 */
 	public int unsignedCompareTo(byte[] otherData, int offset, int len) {
@@ -405,7 +405,7 @@ public class DataBuffer implements Buffer, Externalizable {
 	}
 
 	/**
-	 * Inflate compressedData into a properly sized data array.  
+	 * Inflate compressedData into a properly sized data array.
 	 * @param compressedData array containing compressed data
 	 * @param data target data array size to receive fully inflated data.
 	 * @throws IOException

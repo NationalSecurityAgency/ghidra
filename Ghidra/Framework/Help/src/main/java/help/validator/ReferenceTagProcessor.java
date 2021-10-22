@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,10 +48,10 @@ public class ReferenceTagProcessor extends TagProcessor {
 		this.anchorManager = anchorManager;
 
 		//
-		// Note: currently all help being built has the required stylesheet living under 
+		// Note: currently all help being built has the required stylesheet living under
 		// <help dir>/shared/<stylesheet name>
-		// 
-		// If we ever need a more robust styling mechanism, then this code would need to be 
+		//
+		// If we ever need a more robust styling mechanism, then this code would need to be
 		// updated to know how to search for the referenced stylesheet
 		Path helpPath = help.getHelpLocation();
 		FileSystem fs = helpPath.getFileSystem();
@@ -119,7 +119,7 @@ public class ReferenceTagProcessor extends TagProcessor {
 		else if ("link".equals(tagType)) {
 			String rel = tagAttributes.get("rel");
 			if (rel != null && "stylesheet".equals(rel.toLowerCase())) {
-// TODO there is at least one help module that has multiple style sheets.  I see no reason to 
+// TODO there is at least one help module that has multiple style sheets.  I see no reason to
 //		enforce this constraint:
 //				if (hasStyleSheet) {
 //					errorCount++;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,17 +30,17 @@ import ghidra.util.datastruct.ListAccumulator;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
-import utility.function.TerminatingConsumer; 
+import utility.function.TerminatingConsumer;
 
 /**
- * <CODE>ProgramMemoryUtil</CODE> contains some static methods for 
+ * <CODE>ProgramMemoryUtil</CODE> contains some static methods for
  * checking Memory block data.
  */
 
 public class ProgramMemoryUtil {
 
 //    /**
-//     * Gets the ProgramMemoryBlocks from a program that contain addresses 
+//     * Gets the ProgramMemoryBlocks from a program that contain addresses
 //     * in the address set.
 //     * @param p the program
 //     * @param as the set of addresses whose blocks are wanted.
@@ -49,7 +49,7 @@ public class ProgramMemoryUtil {
 //        MemoryBlock[] memBlocks = getMemBlocks(p);
 //        AddressRange[] blockRanges = memBlocksToRanges(memBlocks);
 //        AddressRange[] addrRanges = getRangesAsArray(as);
-//        // The following assumes the address ranges are in ascending order and 
+//        // The following assumes the address ranges are in ascending order and
 //        // that the block ranges are also in ascending order.
 //        ArrayList list = new ArrayList(blockRanges.length);
 //        int addrRef = 0;
@@ -95,7 +95,7 @@ public class ProgramMemoryUtil {
 //    }
 
 	/**
-	 * Copies the bytes to one program from another for the specified address 
+	 * Copies the bytes to one program from another for the specified address
 	 * range.
 	 * @param toProgram program that the bytes are copied to.
 	 * @param fromProgram program the bytes are copied from.
@@ -103,7 +103,7 @@ public class ProgramMemoryUtil {
 	 * This address should be derived from the toProgram.
 	 * @param maxAddr the maximum address of the range to be copied.
 	 * This address should be derived from the toProgram.
-	 * 
+	 *
 	 * @throws MemoryAccessException if bytes can't be copied.
 	 */
 	public static void copyBytesInRanges(Program toProgram, Program fromProgram, Address minAddr,
@@ -121,7 +121,7 @@ public class ProgramMemoryUtil {
 	 * @param fromProgram program the bytes are copied from.
 	 * @param addrSet the set of address ranges to be copied.
 	 * The addresses in this set are derived from the "to program".
-	 * 
+	 *
 	 * @throws MemoryAccessException if bytes can't be copied.
 	 * @throws CancelledException if user cancels copy bytes via the monitor.
 	 */
@@ -140,13 +140,13 @@ public class ProgramMemoryUtil {
 	}
 
 	/**
-	 * Copies the bytes to one program memory from another for the specified 
+	 * Copies the bytes to one program memory from another for the specified
 	 * address range.
 	 * @param toMem program memory that the bytes are copied to.
 	 * @param fromMem program memory the bytes are copied from.
 	 * @param range the address range to be copied.
 	 * The addresses in this range are derived from the program associated with the "to memory".
-	 * 
+	 *
 	 * @throws MemoryAccessException if bytes can't be copied.
 	 */
 	private static void copyByteRange(Memory toMem, Memory fromMem, AddressRange range)
@@ -165,7 +165,7 @@ public class ProgramMemoryUtil {
 		}
 	}
 
-	/** Gets the program memory blocks of the indicated type for the 
+	/** Gets the program memory blocks of the indicated type for the
 	 * specified program.
 	 * @param program the program whose memory blocks we want.
 	 * @param withBytes if true include blocks that have their own bytes. If false, include only
@@ -187,7 +187,7 @@ public class ProgramMemoryUtil {
 		return typeBlocks;
 	}
 
-	/** 
+	/**
 	 * Gets the address set for the specified program.
 	 * @param program the program whose address set we want.
 	 * @return the address set
@@ -201,8 +201,8 @@ public class ProgramMemoryUtil {
 		return addrSet;
 	}
 
-	/** 
-	 * Gets a new address set indicating all addresses of the indicated 
+	/**
+	 * Gets a new address set indicating all addresses of the indicated
 	 * memory type in the specified program.
 	 * @param program the program whose address set we want.
 	 * @param blocksWithBytes if true, include memory blocks that have their own bytes.
@@ -239,12 +239,12 @@ public class ProgramMemoryUtil {
 	 * Checks a programs memory for direct references to the addresses indicated in the toAddressSet.
 	 * Direct references are only found at addresses that match the indicated alignment. Each
 	 * direct reference is added to the directReferenceList as a from/to address pair.
-	 * 
+	 *
 	 * @param program the program whose memory is to be checked.
 	 * @param alignment direct references are to only be found at the indicated alignment in memory.
 	 * @param toAddress address that we are interested in finding references to.
-	 * @param toAddressSet address set indicating the addresses that we are interested in 
-	 * 		  finding directly referred to in memory. 
+	 * @param toAddressSet address set indicating the addresses that we are interested in
+	 * 		  finding directly referred to in memory.
 	 * 		  Null if only interested in finding references to the toAddress.
 	 * @param directReferenceList the list to be populated with possible direct references
 	 * @param monitor a task monitor for progress or to allow cancelling.
@@ -262,12 +262,12 @@ public class ProgramMemoryUtil {
 	 * Checks a programs memory for direct references to the addresses indicated in the toAddressSet.
 	 * Direct references are only found at addresses that match the indicated alignment. Each
 	 * direct reference is added to the directReferenceList as a from/to address pair.
-	 * 
+	 *
 	 * @param program the program whose memory is to be checked.
 	 * @param alignment direct references are to only be found at the indicated alignment in memory.
 	 * @param toAddress address that we are interested in finding references to.
-	 * @param toAddressSet address set indicating the addresses that we are interested in 
-	 * 		  finding directly referred to in memory. 
+	 * @param toAddressSet address set indicating the addresses that we are interested in
+	 * 		  finding directly referred to in memory.
 	 * 		  Null if only interested in finding references to the toAddress.
 	 * @param accumulator the datastructure to be populated with possible direct references
 	 * @param monitor a task monitor for progress or to allow cancelling.
@@ -339,7 +339,7 @@ public class ProgramMemoryUtil {
 				}
 				else if (addrSize == 16) {
 					short addrShort = memory.getShort(a);
-					addrLong = addrShort & 0xffffL; // multiply by wordsize because 
+					addrLong = addrShort & 0xffffL; // multiply by wordsize because
 					// address offsets are at the byte level,
 					// not the addressable word level.
 				}
@@ -410,7 +410,7 @@ public class ProgramMemoryUtil {
 
 	/**
 	 * Checks a programs memory for direct references to the CodeUnit indicated.
-	 * Direct references are only found at addresses that match the indicated alignment. 
+	 * Direct references are only found at addresses that match the indicated alignment.
 	 * @param program the program whose memory is to be checked.
 	 * @param alignment direct references are to only be found at the indicated alignment in memory.
 	 * @param codeUnit the code unit to to search for references to.
@@ -453,14 +453,14 @@ public class ProgramMemoryUtil {
 
 	/**
 	 * Checks a programs memory for direct references to the address indicated.
-	 * Direct references are only found at addresses that match the indicated alignment. 
-	 * 
+	 * Direct references are only found at addresses that match the indicated alignment.
+	 *
 	 * @param program the program whose memory is to be checked.
 	 * @param alignment direct references are to only be found at the indicated alignment in memory.
 	 * @param toAddress address that we are interested in finding references to.
 	 * @param monitor a task monitor for progress or to allow canceling.
 	 * @return list of addresses referring directly to the toAddress
-	 * 
+	 *
 	 * @throws CancelledException if the user cancels via the monitor.
 	 */
 	public static Set<Address> findDirectReferences(Program program, int alignment,
@@ -471,19 +471,19 @@ public class ProgramMemoryUtil {
 	}
 
 	/**
-	 * Checks a programs memory for direct references to the address indicated within the 
+	 * Checks a programs memory for direct references to the address indicated within the
 	 * listed memory blocks. If null is passed for the list of memory blocks then all of the
 	 * program's memory blocks will be checked.<br>
-	 * Direct references are only found at addresses that match the indicated alignment. 
-	 * 
+	 * Direct references are only found at addresses that match the indicated alignment.
+	 *
 	 * @param program the program whose memory is to be checked.
-	 * @param blocks the only memory blocks to be checked. A null value indicates all memory 
+	 * @param blocks the only memory blocks to be checked. A null value indicates all memory
 	 * blocks should be checked.
 	 * @param alignment direct references are to only be found at the indicated alignment in memory.
 	 * @param toAddress address that we are interested in finding references to.
 	 * @param monitor a task monitor for progress or to allow canceling.
 	 * @return list of addresses referring directly to the toAddress
-	 * 
+	 *
 	 * @throws CancelledException if the user cancels via the monitor.
 	 */
 	public static Set<Address> findDirectReferences(Program program, List<MemoryBlock> blocks,
@@ -510,7 +510,7 @@ public class ProgramMemoryUtil {
 
 	/**
 	 * Get a representation of an address as it would appear in bytes in memory.
-	 * 
+	 *
 	 * @param program program
 	 * @param toAddress target address
 	 * @return byte representation of toAddress
@@ -558,7 +558,7 @@ public class ProgramMemoryUtil {
 
 	/**
 	 * returns shifted address bytes if they are different than un-shifted
-	 * 
+	 *
 	 * @param program program
 	 * @param toAddress target address
 	 * @return shifted bytes, null if same as un-shifted
@@ -616,18 +616,18 @@ public class ProgramMemoryUtil {
 	}
 
 	/**
-	 * Checks a programs memory for 32 bit image base offset references to the address 
-	 * indicated.  These relative references are only found at addresses that match the 
-	 * indicated alignment. 
-	 * 
+	 * Checks a programs memory for 32 bit image base offset references to the address
+	 * indicated.  These relative references are only found at addresses that match the
+	 * indicated alignment.
+	 *
 	 * @param program the program whose memory is to be checked.
-	 * @param alignment 32 bit image base offset relative references are to only be found 
+	 * @param alignment 32 bit image base offset relative references are to only be found
 	 * at the indicated alignment in memory.
 	 * @param toAddress address that we are interested in finding references to.
 	 * @param monitor a task monitor for progress or to allow canceling.
-	 * @return list of addresses with 32 bit image base offset relative references to the 
+	 * @return list of addresses with 32 bit image base offset relative references to the
 	 * toAddress
-	 * 
+	 *
 	 * @throws CancelledException if the user cancels via the monitor.
 	 */
 	public static Set<Address> findImageBaseOffsets32(Program program, int alignment,
@@ -726,44 +726,44 @@ public class ProgramMemoryUtil {
 			}
 		}
 	}
-    
+
 	/**
-	 * Finds the string in memory indicated by the searchString limited to the indicated 
+	 * Finds the string in memory indicated by the searchString limited to the indicated
 	 * memory blocks and address set.
 	 * @param searchString the string to find
 	 * @param program the program to search
 	 * @param blocks the only blocks to search
 	 * @param set a set of the addresses to limit the results
-	 * @param monitor a task monitor to allow 
+	 * @param monitor a task monitor to allow
 	 * @return a list of addresses where the string was found
 	 * @throws CancelledException if the user cancels
 	 */
 	public static List<Address> findString(String searchString, Program program,
 			List<MemoryBlock> blocks, AddressSetView set, TaskMonitor monitor)
 			throws CancelledException {
-	    
+
 	    List<Address> addresses = new ArrayList<>();
-	    
+
 	    // just add each found location to the list, no termination of search
         TerminatingConsumer<Address> collector = (i) -> addresses.add(i);
-		
+
 		locateString(searchString, collector, program, blocks, set, monitor);
-		
+
 		return addresses;
 	}
 
 	/**
-	 * Finds the string in memory indicated by the searchString limited to the indicated 
+	 * Finds the string in memory indicated by the searchString limited to the indicated
 	 * memory blocks and address set.  Each found location calls the foundLocationConsumer.consume(addr)
 	 * method.  If the search should terminate, (ie. enough results found), then terminateRequested() should
 	 * return true.  Requesting termination is different than a cancellation from the task monitor.
-	 * 
+	 *
 	 * @param searchString the string to find
 	 * @param foundLocationConsumer location consumer with consumer.accept(Address addr) routine defined
 	 * @param program the program to search
 	 * @param blocks the only blocks to search
 	 * @param set a set of the addresses to limit the results
-	 * @param monitor a task monitor to allow 
+	 * @param monitor a task monitor to allow
 	 * @throws CancelledException if the user cancels
 	 */
 	public static void locateString(String searchString, TerminatingConsumer<Address> foundLocationConsumer, Program program,
@@ -804,7 +804,7 @@ public class ProgramMemoryUtil {
 	}
 
 	/**
-	 * Gets a list of memory blocks whose name starts with the indicated name. Only memory 
+	 * Gets a list of memory blocks whose name starts with the indicated name. Only memory
 	 * blocks that are initialized  and part of the indicated address set will be returned.
 	 * @param program the program for obtaining the memory blocks
 	 * @param set the address set to use to limit the blocks returned

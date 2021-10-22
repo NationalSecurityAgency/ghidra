@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ public class CliStreamUserStrings extends CliStreamBlob {
 
 	/**
 	 * Gets the name of this stream.
-	 * 
+	 *
 	 * @return The name of this stream.
 	 */
 	public static String getName() {
@@ -43,9 +43,9 @@ public class CliStreamUserStrings extends CliStreamBlob {
 
 	/**
 	 * Creates a new {@link CliStreamUserStrings}.
-	 * 
+	 *
 	 * @param header The stream header associated with this stream.
-	 * @param fileOffset The file offset where this stream starts. 
+	 * @param fileOffset The file offset where this stream starts.
 	 * @param rva The relative virtual address where this stream starts.
 	 * @param reader A reader that is set to the start of the stream.
 	 * @throws IOException if there is a problem reading the stream.
@@ -57,7 +57,7 @@ public class CliStreamUserStrings extends CliStreamBlob {
 
 	/**
 	 * Gets the user string at the given index.
-	 * 
+	 *
 	 * @param index The index of the user string to get.
 	 * @return The user string at the given index.  Could be null if the index was invalid or
 	 *   there was a problem reading the user string.

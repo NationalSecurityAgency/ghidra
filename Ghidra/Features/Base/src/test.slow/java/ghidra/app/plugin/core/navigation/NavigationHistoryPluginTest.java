@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -422,7 +422,7 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 	@Test
 	public void testNextAfterUndoRedo() throws Exception {
 		//
-		// Note: the addresses used here are arbitrary, except that there is an undefined are 
+		// Note: the addresses used here are arbitrary, except that there is an undefined are
 		//       we can use to create data
 		//
 
@@ -448,7 +448,7 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 		ProgramLocation loc = cb.getCurrentLocation();
 		assertEquals(addr, loc.getAddress());
 
-		// do the next action and make sure it went to 1001020, which is 
+		// do the next action and make sure it went to 1001020, which is
 		// where we were before the undo
 		performAction(prevAction, provider, true);
 		cb.updateNow();
@@ -459,7 +459,7 @@ public class NavigationHistoryPluginTest extends AbstractGhidraHeadedIntegration
 		Address addr3 = getAddr(0x1001030);
 		goToService.goTo(addr3);
 
-		// do the redo and verify we are back to 1001020,  which is 
+		// do the redo and verify we are back to 1001020,  which is
 		// where we were when we did the undo
 		performAction(redoAction, provider, true);
 		cb.updateNow();

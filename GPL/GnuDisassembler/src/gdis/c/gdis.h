@@ -63,31 +63,31 @@ void listSupportedArchMachTargets(void);
 int objdump_sprintf (SFILE *f, const char *format, ...);
 
 void configureDisassembleInfo(bfd* abfd,
-							  disassemble_info* info, 
-							  enum bfd_architecture arch, 
-							  unsigned long mach, 
+							  disassemble_info* info,
+							  enum bfd_architecture arch,
+							  unsigned long mach,
 							  enum bfd_endian end);
-							  
-disassembler_ftype configureBfd(bfd* abfd, 
-								enum bfd_architecture arch, 
-								unsigned long mach, 
-								enum bfd_endian endian, 
+
+disassembler_ftype configureBfd(bfd* abfd,
+								enum bfd_architecture arch,
+								unsigned long mach,
+								enum bfd_endian endian,
 								disassemble_info* DI,
 								disassembler_ftype* disassemble_fn);
 
 int disassemble_buffer( disassembler_ftype disassemble_fn,
 						disassemble_info *info,
-						int* offset,						
+						int* offset,
 						PDIS_INFO pDisInfo);
 
-void processBuffer(unsigned char* buff, 
+void processBuffer(unsigned char* buff,
 		   int buff_len,
 		   bfd_vma buff_vma,
-		   disassembler_ftype disassemble_fn, 
+		   disassembler_ftype disassemble_fn,
 		   struct disassemble_info* DI);
 
-				   
-						
+
+
 
 
 

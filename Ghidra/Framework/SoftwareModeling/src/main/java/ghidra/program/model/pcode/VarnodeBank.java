@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 
 /**
- * 
+ *
  *
  * Container class for VarnodeAST's
  */
@@ -35,7 +35,7 @@ public class VarnodeBank {
 
 	public class LocComparator implements Comparator<VarnodeAST> {
 
-		/* 
+		/*
 		 * Compare objects by location, size, then definition
 		 */
 		@Override
@@ -72,10 +72,10 @@ public class VarnodeBank {
 			return (v1.getUniqueId()<v2.getUniqueId() ? -1 : 1);
 		}
 	}
-	
+
 	public class DefComparator implements Comparator<VarnodeAST> {
 
-		/* 
+		/*
 		 * Compare by definition then location and size
 		 */
 		@Override
@@ -117,12 +117,12 @@ public class VarnodeBank {
 
 	private TreeSet<VarnodeAST> locTree;						// Varnodes sorted by location
 //	private TreeSet defTree;						// Varnodes sorted by definition
-	
+
 	public VarnodeBank() {
 		locTree = new TreeSet<VarnodeAST>(new LocComparator());
 //		defTree = new TreeSet(new DefComparator());
 	}
-	
+
 	public void clear() {
 		locTree.clear();
 //		defTree.clear();
@@ -131,23 +131,23 @@ public class VarnodeBank {
 	public int size() {
 		return locTree.size();
 	}
-	
+
 	public boolean isEmpty() {
 		return locTree.isEmpty();
 	}
-	
+
 	public Varnode create(int s,Address addr,int id) {
 		VarnodeAST vn = new VarnodeAST(addr,s,id);
 		locTree.add(vn);
 //		defTree.add(vn);
 		return vn;
 	}
-	
+
 	public void destroy(Varnode vn) {
 		locTree.remove(vn);
 //		defTree.remove(vn);
 	}
-	
+
 	private Varnode xref(VarnodeAST vn) {
 		SortedSet<VarnodeAST> sset = locTree.tailSet(vn);
 		if (!sset.isEmpty()) {
@@ -161,20 +161,20 @@ public class VarnodeBank {
 //		defTree.add(vn);
 		return vn;
 	}
-	
+
 	public void makeFree(Varnode vn) {
 		VarnodeAST vn1 = (VarnodeAST) vn;
 		locTree.remove(vn1);
 //		defTree.remove(vn1);
-		
+
 		vn1.setDef(null);			// Clear things that make vn non-free
 		vn1.setInput(false);
 		vn1.setFree(true);
-		
+
 		locTree.add(vn1);
 //		defTree.add(vn1);
 	}
-	
+
 	public Varnode setInput(Varnode vn) {
 		if (!vn.isFree()) {
 			return null;
@@ -182,14 +182,14 @@ public class VarnodeBank {
 		if (vn.isConstant()) {
 			return null;
 		}
-		
+
 		VarnodeAST vn1 = (VarnodeAST)vn;
 		locTree.remove(vn1);
 //		defTree.remove(vn1);
 		vn1.setInput(true);
 		return xref(vn1);
 	}
-	
+
 	public Varnode setDef(Varnode vn,PcodeOp op) {
 		if (!vn.isFree()) {
 			return null;
@@ -197,7 +197,7 @@ public class VarnodeBank {
 		if (vn.isConstant()) {
 			return null;
 		}
-		
+
 		VarnodeAST vn1 = (VarnodeAST)vn;
 		locTree.remove(vn1);
 //		defTree.remove(vn1);
@@ -208,14 +208,14 @@ public class VarnodeBank {
 	public Iterator<VarnodeAST> locRange() {
 		return locTree.iterator();
 	}
-	
+
 	public Iterator<VarnodeAST> locRange(AddressSpace spaceid) {
 		VarnodeAST searchvn1 = new VarnodeAST(spaceid.getAddress(0),0,0);
 		searchvn1.setInput(true);
 		VarnodeAST searchvn2 = new VarnodeAST(spaceid.getMaxAddress(), Integer.MAX_VALUE, 0);
 		return locTree.subSet(searchvn1, searchvn2).iterator();
 	}
-	
+
 	public Iterator<VarnodeAST> locRange(Address addr) {
 		VarnodeAST searchvn1 = new VarnodeAST(addr,0,0);
 		searchvn1.setInput(true);
@@ -223,7 +223,7 @@ public class VarnodeBank {
 		searchvn2.setInput(true);
 		return locTree.subSet(searchvn1,searchvn2).iterator();
 	}
-	
+
 	public Iterator<VarnodeAST> locRange(int sz,Address addr) {
 		VarnodeAST searchvn1 = new VarnodeAST(addr,sz,0);
 		searchvn1.setInput(true);
@@ -231,7 +231,7 @@ public class VarnodeBank {
 		searchvn2.setInput(true);
 		return locTree.subSet(searchvn1,searchvn2).iterator();
 	}
-	
+
 	public Varnode find(int sz,Address addr,Address pc,int uniq) {
 		VarnodeAST searchvn = new VarnodeAST(addr,sz,0);
 		int uq = (uniq==-1) ? 0 : uniq;
@@ -255,7 +255,7 @@ public class VarnodeBank {
 		}
 		return null;
 	}
-	
+
 	public Varnode findInput(int sz,Address addr) {
 		VarnodeAST searchvn = new VarnodeAST(addr,sz,0);
 		searchvn.setInput(true);

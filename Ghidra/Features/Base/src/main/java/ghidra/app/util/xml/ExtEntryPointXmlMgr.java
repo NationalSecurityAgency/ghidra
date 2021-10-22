@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ class ExtEntryPointXmlMgr {
 	private SymbolTable symbolTable;
 
 	ExtEntryPointXmlMgr(Program program, MessageLog log) {
-		this.log = log;	
+		this.log = log;
 		symbolTable = program.getSymbolTable();
 		factory = program.getAddressFactory();
 	}
@@ -48,17 +48,17 @@ class ExtEntryPointXmlMgr {
 	 * @param parser xml reader
 	 * @param monitor monitor that can be canceled
 	 */
-	void read(XmlPullParser parser, TaskMonitor monitor) throws AddressFormatException, CancelledException { 
+	void read(XmlPullParser parser, TaskMonitor monitor) throws AddressFormatException, CancelledException {
 		XmlElement element = parser.next();
 		while (true) {
 			if (monitor.isCancelled()) {
-				throw new CancelledException();	
+				throw new CancelledException();
 			}
 			element = parser.peek();
 			if (!element.getName().equals("PROGRAM_ENTRY_POINT")) {
 				break;
 			}
-			element = parser.next();    	
+			element = parser.next();
 			String addrStr = element.getAttribute("ADDRESS");
 			Address addr = XmlProgramUtilities.parseAddress(factory, addrStr);
 			if (addr == null) {
@@ -87,12 +87,12 @@ class ExtEntryPointXmlMgr {
 	 */
 	void write(XmlWriter writer, AddressSetView set, TaskMonitor monitor) throws CancelledException {
 		monitor.setMessage("Getting ENTRY POINTS ...");
-		writer.startElement("PROGRAM_ENTRY_POINTS"); 
+		writer.startElement("PROGRAM_ENTRY_POINTS");
 		AddressIterator iter = symbolTable.getExternalEntryPointIterator();
 		ArrayList<Address> list = new ArrayList<Address>();
 		while (iter.hasNext()) {
 			if (monitor.isCancelled()) {
-				throw new CancelledException();	
+				throw new CancelledException();
 			}
 			list.add(iter.next());
 
@@ -103,12 +103,12 @@ class ExtEntryPointXmlMgr {
 		Iterator<Address> listIter = list.iterator();
 		while (listIter.hasNext()) {
 			if (monitor.isCancelled()) {
-				throw new CancelledException();	
+				throw new CancelledException();
 			}
 		    Address addr = listIter.next();
 			if (set == null || set.contains(addr)) {
 				XmlAttributes attrs = new XmlAttributes();
-				attrs.addAttribute("ADDRESS", addr.toString()); 
+				attrs.addAttribute("ADDRESS", addr.toString());
 				writer.startElement("PROGRAM_ENTRY_POINT", attrs);
 				writer.endElement("PROGRAM_ENTRY_POINT");
 			}

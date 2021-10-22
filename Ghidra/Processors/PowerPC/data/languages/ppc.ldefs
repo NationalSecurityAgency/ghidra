@@ -173,7 +173,7 @@
 	<external_name tool="gnu" name="powerpc:MPC8XX"/>
 	<external_name tool="IDA-PRO" name="ppcl"/>
     <external_name tool="DWARF.register.mapping.file" name="ppc.dwarf"/>
-  </language>  
+  </language>
   <language processor="PowerPC"
             endian="big"
             size="32"

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ import ghidra.util.Msg;
 
 /**
  * Generates CodeCompletions from Python objects.
- * 
- * 
+ *
+ *
  *
  */
 public class PythonCodeCompletionFactory {
@@ -96,7 +96,7 @@ public class PythonCodeCompletionFactory {
 
 		/* Even though the latter is a subclass of the former, this allows
 		 * the user to differentiate visually Java classes from Python classes
-		 * if they so wish.  But we don't do this by default.  
+		 * if they so wish.  But we don't do this by default.
 		 */
 		/* changed for Jython 2.5 */
 //		setupClass("org.python.core.PyJavaClass", CLASS_COLOR,
@@ -134,7 +134,7 @@ public class PythonCodeCompletionFactory {
 
 	/**
 	 * Returns the actual class name for a Class.
-	 * 
+	 *
 	 * @param klass a Class
 	 * @return The actual class name.
 	 */
@@ -144,7 +144,7 @@ public class PythonCodeCompletionFactory {
 
 	/**
 	 * Returns the actual class name for a Class.
-	 * 
+	 *
 	 * @param className name of a Class
 	 * @return The actual class name.
 	 */
@@ -157,7 +157,7 @@ public class PythonCodeCompletionFactory {
 
 	/**
 	 * Sets up a Class mapping.
-	 * 
+	 *
 	 * @param className Class name
 	 * @param defaultColor default Color for this Class
 	 * @param description description of the Class
@@ -178,7 +178,7 @@ public class PythonCodeCompletionFactory {
 
 	/**
 	 * Creates a new CodeCompletion from the given Python objects.
-	 * 
+	 *
 	 * @param description description of the new CodeCompletion
 	 * @param insertion what will be inserted to make the code complete
 	 * @param pyObj a Python Object
@@ -241,13 +241,13 @@ public class PythonCodeCompletionFactory {
 
 	/**
 	 * Handle an Option change.
-	 * 
+	 *
 	 * This is named slightly differently because it is a static method, not
 	 * an instance method.
-	 * 
+	 *
 	 * By the time we get here, we assume that the Option changed is indeed
-	 * ours. 
-	 * 
+	 * ours.
+	 *
 	 * @param options the Options handle
 	 * @param name name of the Option changed
 	 * @param oldValue the old value
@@ -271,12 +271,12 @@ public class PythonCodeCompletionFactory {
 
 	/**
 	 * Returns the Java __call__ methods declared for a Python object.
-	 * 
+	 *
 	 * Some Python "methods" in the new-style Python objects are actually
 	 * classes in and of themselves, re-implementing __call__ methods to
 	 * tell us how to call them.  This returns an array of those Methods
 	 * (for code completion help).
-	 * 
+	 *
 	 * @param obj a PyObject
 	 * @return the Java __call__ methods declared for the Python object
 	 */

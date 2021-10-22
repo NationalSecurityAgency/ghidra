@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.xml.*;
 import ghidra.xml.*;
 
 /**
- * 
+ *
  *
  * A C code token representing a function name
  * It contains a link back to the pcode function object represented by the name
@@ -43,10 +43,10 @@ public class ClangFuncNameToken extends ClangToken {
 		op = null;
 	}
 	public HighFunction getHighFunction() { return hfunc; }
-	
+
 	@Override
 	public PcodeOp getPcodeOp() { return op; }
-	
+
 	@Override
     public Address getMinAddress() {
 		if (op==null) return null;
@@ -57,7 +57,7 @@ public class ClangFuncNameToken extends ClangToken {
 		if (op==null) return null;
 		return op.getSeqnum().getTarget().getPhysicalAddress();
 	}
-	
+
 	@Override
     public void restoreFromXML(XmlElement el,XmlElement end,PcodeFactory pfactory) {
 		super.restoreFromXML(el,end,pfactory);

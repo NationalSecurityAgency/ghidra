@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -249,11 +249,11 @@ public class DebuggerAddMappingDialog extends DialogComponentProvider {
 
 	/**
 	 * Parses a value from 1 to 1<<64. Any value outside the range is "clipped" into the range.
-	 * 
+	 *
 	 * <p>
 	 * Note that a returned value of 0 indicates 2 to the power 64, which is just 1 too high to fit
 	 * into a 64-bit long.
-	 * 
+	 *
 	 * @param text the text to parse
 	 * @param defaultVal the default value should parsing fail altogether
 	 * @return the length, where 0 indicates {@code 1 << 64}.
@@ -308,7 +308,7 @@ public class DebuggerAddMappingDialog extends DialogComponentProvider {
 
 	/**
 	 * Set the values of the fields
-	 * 
+	 *
 	 * @param program the program
 	 * @param trace the trace
 	 * @param progStart the starting static address

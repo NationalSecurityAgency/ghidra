@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ public class WrappingVerticalLayoutTextField extends VerticalLayoutTextField {
 	/**
 	 * This constructor will create a text field from an single AttributedString.  The string will
 	 * be word wrapped.
-	 * 
+	 *
 	 * @param textElement the element to display
 	 * @param startX  the x position to draw the string
 	 * @param width   the max width allocated to this field
@@ -40,7 +40,7 @@ public class WrappingVerticalLayoutTextField extends VerticalLayoutTextField {
 	/**
 	 * This constructor will create a text field from an single AttributedString.  The string will
 	 * be word wrapped.
-	 * 
+	 *
 	 * @param textElement is the element to display
 	 * @param startX is the position to draw the string
 	 * @param width is the max width allocated to this field

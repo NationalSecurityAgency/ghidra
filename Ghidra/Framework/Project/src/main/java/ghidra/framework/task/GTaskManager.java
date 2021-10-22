@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,14 +26,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-/** 
+/**
  * Class for managing a queue of tasks to be executed, one at a time, in priority order.  All the
  * tasks pertain to an UndoableDomainObject and transactions are created on the UndoableDomainObject
  * so that tasks can operate on them.
  * <P>
  * Tasks are organized into groups such that all tasks in a group will be completed before the
  * tasks in the next group, regardless of priority.  Within a group, task are ordered first by
- * priority and then by the order in which they were added to the group. Groups are executed 
+ * priority and then by the order in which they were added to the group. Groups are executed
  * in the order that they are scheduled.
  * <P>
  * All tasks within the same group are executed within the same transaction on the
@@ -48,11 +48,11 @@ import java.util.concurrent.locks.ReentrantLock;
  * even if the GTaskManager is suspended.
  * <P>
  * <U>Yielding to Other Tasks:</U><BR>
- * While running, a GTask can call the method {@link #waitForHigherPriorityTasks()} on the GTaskManager, 
- * which will cause the the GTaskManager to run scheduled tasks (within the same group) that are 
+ * While running, a GTask can call the method {@link #waitForHigherPriorityTasks()} on the GTaskManager,
+ * which will cause the the GTaskManager to run scheduled tasks (within the same group) that are
  * a higher priority than the running task, effectively allowing the running task to yield until all
  * higher priority tasks are executed.
- * 
+ *
  * @see GTask
  * @see GTaskGroup
  */
@@ -86,7 +86,7 @@ public class GTaskManager {
 	 * Creates a new GTaskManager for an UndoableDomainObject
 	 * @param undoableDomainObject the domainObject that tasks scheduled in this GTaskManager will
 	 * operate upon.
-	 * @param threadPool the GThreadPool that will provide the threads that will be used to run 
+	 * @param threadPool the GThreadPool that will provide the threads that will be used to run
 	 * tasks in this GTaskManager.
 	 */
 	public GTaskManager(UndoableDomainObject undoableDomainObject, GThreadPool threadPool) {
@@ -104,12 +104,12 @@ public class GTaskManager {
 
 	/**
 	 * Schedules a task to be run by this TaskManager. Tasks are run one at a time.
-	 * 
+	 *
 	 * @param task the task to be run.
 	 * @param priority the priority of the task.  Lower numbers are run before higher numbers.
 	 * @param useCurrentGroup. If true, this task will be rolled into the current transaction group
-	 * 							if one exists.  If false, any open transaction 
-	 * 							will be closed and a new transaction will be opened before 
+	 * 							if one exists.  If false, any open transaction
+	 * 							will be closed and a new transaction will be opened before
 	 * 							this task is run.
 	 */
 	public GScheduledTask scheduleTask(GTask task, int priority, boolean useCurrentGroup) {
@@ -151,7 +151,7 @@ public class GTaskManager {
 	 * If a group already exists with the given name(either currently running or waiting), the task
 	 * will be added to that group. Otherwise, a new group will be created with the given group name
 	 * and the task will be placed in that group.
-	 * 
+	 *
 	 * @param task the task to be run.
 	 * @param priority the priority of the task.  Lower numbers are run before higher numbers.
 	 * @param groupName. The name of the group that the task will be added to.
@@ -185,10 +185,10 @@ public class GTaskManager {
 	}
 
 	/**
-	 * Schedules a task group to run.  Task groups are run in the order they are scheduled. They 
+	 * Schedules a task group to run.  Task groups are run in the order they are scheduled. They
 	 * have the option of being executed in the current transaction (if it exists) or starting
 	 * a new transaction.
-	 * 
+	 *
 	 * @param group the TaskGroup to be scheduled.
 	 */
 	public void scheduleTaskGroup(GTaskGroup group) {
@@ -208,7 +208,7 @@ public class GTaskManager {
 	/**
 	 * Sets the suspended state of this task queue.  While suspended, this task manager will not
 	 * start any new tasks in its queue.  Any currently running task will continue to run.
-	 * 
+	 *
 	 * @param b true to suspend this manager, false to resume executing new tasks.
 	 */
 	public void setSuspended(boolean b) {
@@ -263,7 +263,7 @@ public class GTaskManager {
 	}
 
 	/**
-	 * Removes the given GTaskListener from this queue. 
+	 * Removes the given GTaskListener from this queue.
 	 * @param listener the listener to remove.
 	 */
 	public void removeTaskListener(GTaskListener listener) {
@@ -357,11 +357,11 @@ public class GTaskManager {
 	}
 
 	/**
-	 * This methods is for currently running tasks to suspend and allow higher priority tasks 
+	 * This methods is for currently running tasks to suspend and allow higher priority tasks
 	 * (within the same task group) to complete before continuing.  If called by any thread other
-	 * than the thread that is currently executing a task for this queue, an exception will be 
+	 * than the thread that is currently executing a task for this queue, an exception will be
 	 * thrown.
-	 * @throws IllegalStateException if this method is called from any thread not currently 
+	 * @throws IllegalStateException if this method is called from any thread not currently
 	 * executing the current task for this queue.
 	 */
 	public void waitForHigherPriorityTasks() {
@@ -487,8 +487,8 @@ public class GTaskManager {
 	}
 
 	/**
-	 * Returns true if this GTaskManager is currently suspended. 
-	 * @return true if this GTaskManager is currently suspended. 
+	 * Returns true if this GTaskManager is currently suspended.
+	 * @return true if this GTaskManager is currently suspended.
 	 */
 	public boolean isSuspended() {
 		lock.lock();

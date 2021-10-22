@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -174,21 +174,21 @@ public class LibraryLookupTable {
 	 * Get the symbol table associated with the DLL name.  If not previously
 	 * generated for the given dllName, it will be constructed from a .exports
 	 * file found within the 'symbols' resource area.  If a .exports file
-	 * is not found a similarly named .ord file will be used if found.  The 
+	 * is not found a similarly named .ord file will be used if found.  The
 	 * .exports file is a Ghidra XML file formatted file, while the .ord file
-	 * is produced with the Visual Studio DUMPBIN /EXPORTS command.  The default 
+	 * is produced with the Visual Studio DUMPBIN /EXPORTS command.  The default
 	 * resource area is located within the directory
 	 * <pre>
 	 *   Ghidra/Features/Base/data/symbols/[win32|win64]
 	 * </pre>
-	 * Alternatively, a user specific resource directory may be used which 
-	 * is located at 
+	 * Alternatively, a user specific resource directory may be used which
+	 * is located at
 	 * <pre>
 	 *   &lt;USER_HOME&gt;/.ghidra/&lt;.ghidraVersion&gt;/symbols/[win32|win64]
 	 * </pre>
 	 * The cacheMap is a static cache which always returns the same
 	 * instance for a given DLL name.
-	 * 
+	 *
 	 * @param dllName The DLL name (including extension)
 	 * @param size The architecture size of the DLL (e.g., 32 or 64).
 	 * @return LibrarySymbolTable associated with dllName

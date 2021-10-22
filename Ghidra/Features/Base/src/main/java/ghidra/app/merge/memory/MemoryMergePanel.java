@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,8 +30,8 @@ import ghidra.app.merge.util.ConflictCountPanel;
 /**
  *
  * Panel to resolve conflicts on memory blocks.
- * 
- * 
+ *
+ *
  */
 class MemoryMergePanel extends JPanel {
 
@@ -58,7 +58,7 @@ class MemoryMergePanel extends JPanel {
 	 * Constructor
 	 * @param mergeManager merge manager needed to enable the Apply button
 	 * when an option is chosen to resolve a conflict
-	 * @param totalConflicts total number of conflicts to be resolved 
+	 * @param totalConflicts total number of conflicts to be resolved
 	 */
 	MemoryMergePanel(ProgramMultiUserMergeManager mergeManager, int totalConflicts) {
 		super(new BorderLayout());

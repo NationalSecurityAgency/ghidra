@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ public final class GhidraLanguagePropertyKeys {
 
 	/**
 	 * CUSTOM_DISASSEMBLER_CLASS is a full class name for a language-specific
-	 * disassembler implementation.  The specified class must extend the generic 
+	 * disassembler implementation.  The specified class must extend the generic
 	 * disassembler {@link Disassembler} implementation and must implement the same
 	 * set of constructors.
 	 */
@@ -101,7 +101,7 @@ public final class GhidraLanguagePropertyKeys {
 	/**
 	 * Shared return analysis, where at the end of one function, the code will jump to another, and use
 	 * the jumped to subroutines return.  Shared Return analysis is enabled by default for all processors.
-	 * 
+	 *
 	 * If calls are used as long-jumps this can cause problems, so it is disabled for older arm processors.
 	 */
 	public static final String ENABLE_SHARED_RETURN_ANALYSIS = "enableSharedReturnAnalysis";
@@ -119,10 +119,10 @@ public final class GhidraLanguagePropertyKeys {
 	 * NOTE: This is an experimental concept which may be removed in the future
 	 */
 	public static final String RESET_CONTEXT_ON_UPGRADE = "resetContextOnUpgrade";
-	
+
 	/**
 	 * Property to indicate the minimum recommended base address within the default
-	 * data space for placing relocatable data sections.  This is intended to 
+	 * data space for placing relocatable data sections.  This is intended to
 	 * avoid loading into low memory regions where registers may be defined.
 	 * The default value for ELF will be just beyond the last memory register defined
 	 * within the default data space.  This option is only utilized by the

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,8 +41,8 @@ import ghidra.util.task.TaskMonitor;
  * selection will be limited to a subset of the original selection.
  * If there isn't a selection before the select action is invoked, then the
  * select will be performed on the entire program.
- * 
- * 
+ *
+ *
  */
 //@formatter:off
 @PluginInfo(
@@ -72,8 +72,8 @@ public class QualifiedSelectionPlugin extends Plugin {
 
 	/**
 	 * Constructs an instance of this plugin.
-	 * 
-	 * @param tool The tool required by this plugin to interact with its 
+	 *
+	 * @param tool The tool required by this plugin to interact with its
 	 *        environment.
 	 */
 	public QualifiedSelectionPlugin(PluginTool tool) {
@@ -125,7 +125,7 @@ public class QualifiedSelectionPlugin extends Plugin {
 
 	/**
 	 * Selects undefined data for the selection or program.
-	 * 
+	 *
 	 * @param taskMonitor The task monitor that will monitor task progress.
 	 */
 	private void selectUndefined(TaskMonitor taskMonitor, NavigatableActionContext context) {
@@ -136,7 +136,7 @@ public class QualifiedSelectionPlugin extends Plugin {
 
 	/**
 	 * Selects instructions for the selection or program.
-	 * 
+	 *
 	 * @param taskMonitor The task monitor that will monitor task progress.
 	 */
 	private void selectInstructions(TaskMonitor taskMonitor, NavigatableActionContext context) {
@@ -147,7 +147,7 @@ public class QualifiedSelectionPlugin extends Plugin {
 
 	/**
 	 * Selects defined data for the selection or program.
-	 * 
+	 *
 	 * @param taskMonitor The task monitor that will monitor task progress.
 	 */
 	private void selectData(TaskMonitor taskMonitor, NavigatableActionContext context) {
@@ -175,7 +175,7 @@ public class QualifiedSelectionPlugin extends Plugin {
 	/**
 	 * <code>getUndefined</code> returns the undefined data associated with the selection
 	 * or with the program if there isn't a selection.
-	 * 
+	 *
 	 * @param taskMonitor The task monitor that will monitor task progress.
 	 * @return AddressSet the undefined data address set.
 	 */
@@ -217,7 +217,7 @@ public class QualifiedSelectionPlugin extends Plugin {
 	/**
 	 * <code>getDefinedData</code> returns the defined data associated with the selection
 	 * or with the program if there isn't a selection.
-	 * 
+	 *
 	 * @param taskMonitor The task monitor that will monitor task progress.
 	 * @return AddressSet the defined data address set.
 	 */
@@ -243,7 +243,7 @@ public class QualifiedSelectionPlugin extends Plugin {
 	/**
 	 * <code>getInstructions</code> returns the instructions associated with the selection
 	 * or with the program if there isn't a selection.
-	 * 
+	 *
 	 * @param taskMonitor The task monitor that will monitor task progress.
 	 * @return AddressSet the instructions address set.
 	 */
@@ -266,10 +266,10 @@ public class QualifiedSelectionPlugin extends Plugin {
 	}
 
 	/**
-	 * Handles the progress bar that allow select process to run in 
+	 * Handles the progress bar that allow select process to run in
 	 * the background
-	 * 
-	 * 
+	 *
+	 *
 	 */
 	private class SelectTask extends Task {
 		private int selectOption;

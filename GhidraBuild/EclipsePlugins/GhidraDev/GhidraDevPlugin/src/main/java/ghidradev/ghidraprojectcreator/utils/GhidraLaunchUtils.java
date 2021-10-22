@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,13 +35,13 @@ import ghidra.GhidraLauncher;
 public class GhidraLaunchUtils {
 
 	/**
-	 * Launch configuration ID for a Ghidra GUI launch. Must match corresponding value in 
+	 * Launch configuration ID for a Ghidra GUI launch. Must match corresponding value in
 	 * plugin.xml.
 	 */
 	public static final String GUI_LAUNCH = "GhidraGuiLaunchConfigurationType";
 
 	/**
-	 * Launch configuration ID for a Ghidra Headless launch. Must match corresponding value in 
+	 * Launch configuration ID for a Ghidra Headless launch. Must match corresponding value in
 	 * plugin.xml.
 	 */
 	public static final String HEADLESS_LAUNCH = "GhidraHeadlessLaunchConfigurationType";
@@ -62,13 +62,13 @@ public class GhidraLaunchUtils {
 
 	/**
 	 * Creates a new launch configuration for the given Java project.
-	 * 
+	 *
 	 * @param javaProject The Java project to create a launch configuration for.
 	 * @param launchConfigTypeId The type of launch configuration.
 	 * @param launchConfigName The name of the launch configuration.
 	 * @param runConfigMemory The run configuration's desired memory.  Could be null.
 	 * @return A launch configuration working copy.
-	 * @throws CoreException If there was an Eclipse-related problem with creating the launch 
+	 * @throws CoreException If there was an Eclipse-related problem with creating the launch
 	 *   configuration.
 	 */
 	public static ILaunchConfigurationWorkingCopy createLaunchConfig(IJavaProject javaProject,
@@ -88,11 +88,11 @@ public class GhidraLaunchUtils {
 
 	/**
 	 * Gets the launch configuration with the given name.
-	 * 
+	 *
 	 * @param name The name of the launch configuration to get.
 	 * @return The launch configuration with the given name, or null if it doesn't exist.
-	 * @throws CoreException If there was an Eclipse-related problem with getting the launch 
-	 *   configuration.	 
+	 * @throws CoreException If there was an Eclipse-related problem with getting the launch
+	 *   configuration.
 	 */
 	public static ILaunchConfiguration getLaunchConfig(String name) throws CoreException {
 		ILaunchManager launchManager = DebugPlugin.getDefault().getLaunchManager();
@@ -106,12 +106,12 @@ public class GhidraLaunchUtils {
 
 	/**
 	 * Gets the launch configuration with the given name and the given type ID.
-	 * 
+	 *
 	 * @param name The name of the launch configuration to get.
 	 * @param id The launch configuration type id of the launch configuration to get.
 	 * @return The launch configuration with the given name and type, or null if it doesn't exist.
-	 * @throws CoreException If there was an Eclipse-related problem with getting the launch 
-	 *   configuration.	 
+	 * @throws CoreException If there was an Eclipse-related problem with getting the launch
+	 *   configuration.
 	 */
 	public static ILaunchConfiguration getLaunchConfig(String name, String id)
 			throws CoreException {
@@ -128,12 +128,12 @@ public class GhidraLaunchUtils {
 	}
 
 	/**
-	 * Sets the main type name attribute in the provided working copy.  For Ghidra projects, this 
+	 * Sets the main type name attribute in the provided working copy.  For Ghidra projects, this
 	 * should be {@link GhidraLauncher}.
 	 * <p>
 	 * TODO: {@link GhidraLauncher#main(String[])} is deprecated.  Fix in future version of
 	 * GhidraDev when we are ready to break backwards compatibility with Ghidra.
-	 * 
+	 *
 	 * @param wc The launch configuration working copy to modify.
 	 * @return The modified working copy.
 	 */
@@ -146,13 +146,13 @@ public class GhidraLaunchUtils {
 
 	/**
 	 * Appends the maximum Java heap size (-Xmx) to the VM arguments in the provided working copy.
-	 * 
-	 * @param memory The desired maximum Java heap size.  Could be null if the default is to be 
+	 *
+	 * @param memory The desired maximum Java heap size.  Could be null if the default is to be
 	 *   used.
 	 * @param wc The launch configuration working copy to modify.
 	 * @return The modified working copy.
 	 * @throws CoreException if there was an Eclipse-related issue appending the VM argument.
-	 * 
+	 *
 	 * @see #ATTR_VM_ARGUMENTS
 	 */
 	public static ILaunchConfigurationWorkingCopy setMemory(ILaunchConfigurationWorkingCopy wc,
@@ -168,9 +168,9 @@ public class GhidraLaunchUtils {
 	}
 
 	/**
-	 * Sets the favorites attribute in the provided working copy to include the launcher in both 
+	 * Sets the favorites attribute in the provided working copy to include the launcher in both
 	 * the run and debug launch groups.
-	 * 
+	 *
 	 * @param wc The launch configuration working copy to modify.
 	 * @return The modified working copy.
 	 * @throws CoreException If there was an Eclipse-related problem with setting the favorites
@@ -190,7 +190,7 @@ public class GhidraLaunchUtils {
 	 * Adds the given launch configuration to the GUI's favorites list.  This is useful to do if
 	 * you create a launch configuration and want it to appear in the favorites list before ever
 	 * launching it.
-	 * 
+	 *
 	 * @param launchConfig The launch configuration to add.
 	 */
 	public static void addToFavorites(ILaunchConfiguration launchConfig) {

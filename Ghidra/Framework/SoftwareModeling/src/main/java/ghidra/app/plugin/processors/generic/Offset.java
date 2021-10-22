@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import java.io.Serializable;
 import java.util.Hashtable;
 
 /**
- * 
+ *
  */
 public class Offset implements Serializable {
 	private int offset;
@@ -40,7 +40,7 @@ public class Offset implements Serializable {
 		this(off,rel.name());
 		relTo = rel;
 	}
-	
+
 	/**
 	 * Method setRelativeOffset.
 	 * @param opHash
@@ -61,7 +61,7 @@ public class Offset implements Serializable {
 	 */
 	public int getOffset(MemBuffer buf, int off) throws Exception {
 		int o = off + offset;  // usually we just add the offset to the incoming off.
-		
+
 		// but if this Offset is relative to an Operand, then we have to add the
 		// length of that operand.
 		if (relTo != null) o += relTo.length(buf, off);

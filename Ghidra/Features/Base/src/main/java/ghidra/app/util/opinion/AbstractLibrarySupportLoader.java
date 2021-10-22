@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -216,7 +216,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param log The log.
 	 * @param consumer A consumer object for {@link DomainObject}s generated.
 	 * @param unprocessedLibs A list of libraries that need to be loaded.
-	 * @param processedLibs A list of libraries that have been loaded (used to prevent the same 
+	 * @param processedLibs A list of libraries that have been loaded (used to prevent the same
 	 *   library from being processed more than once)
 	 * @param programList A list to hold newly loaded programs and libraries.  Any program
 	 *      added to the list is the callers responsibility to release.
@@ -607,7 +607,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 	/**
 	 * Imports a library file into a ghidra project.
-	 * 
+	 *
 	 * @param libName the name of the library to import
 	 * @param libFolder the library folder
 	 * @param libFile the library file to load
@@ -640,7 +640,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	/**
 	 * Imports a library file into a ghidra project. Use this method if you already have
 	 * a {@link ByteProvider} available.
-	 * 
+	 *
 	 * @param libName the name of the library to import
 	 * @param libFolder the library folder
 	 * @param libFile the library file to load
@@ -705,7 +705,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 
 	/**
 	 * Creates the library exports file, if necessary
-	 * 
+	 *
 	 * @param libName the name of the library
 	 * @param libFile the library file
 	 * @param log the message log
@@ -713,7 +713,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	 * @param size the language size
 	 * @param program the loaded library program
 	 * @throws CancelledException thrown is task cancelled
-	 * 
+	 *
 	 */
 	protected void createExportsFile(String libName, File libFile, MessageLog log,
 			TaskMonitor monitor, int size, Program program) throws CancelledException {
@@ -746,7 +746,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	}
 
 	/**
-	 * Applies the library symbol table to the {@link Program} being loaded. For example, if you 
+	 * Applies the library symbol table to the {@link Program} being loaded. For example, if you
 	 * load "mfc42.dll", it will create the named symbols along with the ordinals.
 	 *
 	 * @param program The program being loaded.
@@ -810,7 +810,7 @@ public abstract class AbstractLibrarySupportLoader extends AbstractProgramLoader
 	/**
 	 * Applies the library symbol table to the imported symbols of the specified
 	 * {@link Program}. Symbols may also be demangled (although this could be a mistake).
-	 * 
+	 *
 	 * @param program The {@link Program} whose imports should be resolved.
 	 * @param log import message log
 	 * @param monitor task monitor, if cancelled partial results may exist

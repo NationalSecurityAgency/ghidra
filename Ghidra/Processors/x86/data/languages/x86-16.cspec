@@ -26,7 +26,7 @@
 	</size_alignment_map>
 	-->
   </data_organization>
-  
+
   <global>
     <range space="ram"/>
   </global>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -154,7 +154,7 @@ public class GTreeTest extends AbstractDockingTest {
 				return new DisabledGTreeFilter();
 			}
 		};
-		// Set the filter provider 
+		// Set the filter provider
 		runSwing(() -> gTree.setFilterProvider(provider));
 
 		setFilterOptions(TextFilterStrategy.CONTAINS, false);
@@ -410,9 +410,9 @@ public class GTreeTest extends AbstractDockingTest {
 		assertNotNull("Tree did not select node", selectionPath);
 		assertEquals(anotherNode, selectionPath.getLastPathComponent());
 
-		// 
+		//
 		// try multiple paths
-		// 
+		//
 		List<TreePath> pathsToSelect = new ArrayList<>();
 		pathsToSelect.add(node.getTreePath());
 		pathsToSelect.add(anotherNode.getTreePath());
@@ -502,7 +502,7 @@ public class GTreeTest extends AbstractDockingTest {
 			}
 		};
 		provider.setFilterText("Hey");
-		// Set the filter  (Note: don't use setTextFilterFactory(), as it waits for the tree, 
+		// Set the filter  (Note: don't use setTextFilterFactory(), as it waits for the tree,
 		// which is not what this test wants to do)
 		runSwing(() -> gTree.setFilterProvider(provider));
 
@@ -574,7 +574,7 @@ public class GTreeTest extends AbstractDockingTest {
 	@Test
 	public void testRestoreTreeState_ExpandedStateOnly() {
 		//
-		// Test that we can setup the tree, record its expanded state, change the tree 
+		// Test that we can setup the tree, record its expanded state, change the tree
 		// and then restore the saved state
 		//
 
@@ -672,7 +672,7 @@ public class GTreeTest extends AbstractDockingTest {
 	public void testFilterPathsRestoredWithFurtherFiltering_HaveSelection() throws Exception {
 
 		//
-		// Test to verify that the selection restoration takes precedence over the 'visible 
+		// Test to verify that the selection restoration takes precedence over the 'visible
 		// view' restoration.
 		//
 
@@ -728,8 +728,8 @@ public class GTreeTest extends AbstractDockingTest {
 
 		installLargeTreeModel_WithManyExpandablePaths();
 
-		// generate more than 'max' expanded and selected states to force the algorithm 
-		// to toss some states		
+		// generate more than 'max' expanded and selected states to force the algorithm
+		// to toss some states
 		expandAll();
 		int topRow = 50;
 
@@ -754,8 +754,8 @@ public class GTreeTest extends AbstractDockingTest {
 
 		installLargeTreeModel_WithManyExpandablePaths();
 
-		// generate more than 'max' expanded and selected states to force the algorithm 
-		// to toss some states		
+		// generate more than 'max' expanded and selected states to force the algorithm
+		// to toss some states
 		expandAll();
 		int topRow = 50;
 
@@ -918,7 +918,7 @@ public class GTreeTest extends AbstractDockingTest {
 
 //==================================================================================================
 // Private methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void installLargeTreeModel() {
 		runSwing(() -> frame.getContentPane().remove(gTree));
@@ -988,8 +988,8 @@ public class GTreeTest extends AbstractDockingTest {
 			return; // good
 		}
 
-		// Unusual Code: we add some 'fudge' to the viewable tree rows (1 in the top and 
-		//               bottom direction).  So, the actual path visible may be off by that 
+		// Unusual Code: we add some 'fudge' to the viewable tree rows (1 in the top and
+		//               bottom direction).  So, the actual path visible may be off by that
 		//               much.
 		int fudge = 2; // 1 in both directions
 		int expectedRow = gTree.getRowForPath(expected);
@@ -1321,7 +1321,7 @@ public class GTreeTest extends AbstractDockingTest {
 	}
 
 	/**
-	 * A basic leaf node 
+	 * A basic leaf node
 	 */
 	private class LeafNode extends GTreeNode {
 

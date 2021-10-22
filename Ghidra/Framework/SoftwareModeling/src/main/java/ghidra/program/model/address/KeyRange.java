@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ package ghidra.program.model.address;
 public class KeyRange {
 	public long minKey;
 	public long maxKey;
-	
+
 	/**
 	 * Constructs a new key range.  Keys must be ordered and unsigned.
 	 * @param minKey the min key (inclusive)
@@ -31,7 +31,7 @@ public class KeyRange {
 		this.minKey = minKey;
 		this.maxKey = maxKey;
 	}
-	
+
 	/**
 	 * Tests if the given key is in the range.
 	 * @param key the key to test

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import ghidra.util.exception.VersionException;
 import ghidra.util.search.InstructionSkipper;
 import ghidra.util.task.TaskMonitor;
 
-/** 
+/**
  * Implementation of the easy parts of the service; the complicated methods
  * all delegate to *LibraryCreation or *LibrarySearch utility classes
  */
@@ -157,8 +157,8 @@ public class FidService {
 	 * @param fidQueryService is the set of databases the seeker should query
 	 * @param scoreThreshold is the (codeUnit) threshold matches must meet to be reported by the seeker
 	 * @return the FidProgramSeeker
-	 * @throws IOException 
-	 * @throws VersionException 
+	 * @throws IOException
+	 * @throws VersionException
 	 */
 
 	public FidProgramSeeker getProgramSeeker(Program program, FidQueryService fidQueryService,
@@ -209,8 +209,8 @@ public class FidService {
 	 * @param monitor a task monitor
 	 * @return a list of the FID search results
 	 * @throws CancelledException if the user cancels
-	 * @throws IOException 
-	 * @throws VersionException 
+	 * @throws IOException
+	 * @throws VersionException
 	 */
 
 	public List<FidSearchResult> processProgram(Program program, FidQueryService queryService,

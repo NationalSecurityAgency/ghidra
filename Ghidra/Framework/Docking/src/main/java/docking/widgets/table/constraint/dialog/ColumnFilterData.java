@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,11 +28,11 @@ import ghidra.util.table.column.GColumnRenderer.ColumnConstraintFilterMode;
 
 /**
  * This class provides all known {@link ColumnConstraint}s for a given table column.
- * 
- * <P>Class for maintaining information about a particular table's column for the purpose of 
- * configuring filters based on that column's values.  Instances of this class are generated 
- * by examining a table's column types and finding any {@link ColumnConstraint}s that support 
- * that type. If column constraints are found, a {@link ColumnFilterData} is created for that column 
+ *
+ * <P>Class for maintaining information about a particular table's column for the purpose of
+ * configuring filters based on that column's values.  Instances of this class are generated
+ * by examining a table's column types and finding any {@link ColumnConstraint}s that support
+ * that type. If column constraints are found, a {@link ColumnFilterData} is created for that column
  * which then allows filtering on that columns data via the column constraints mechanism (which
  * is different than the traditional text filter).
  *
@@ -49,7 +49,7 @@ public class ColumnFilterData<T> implements Comparable<ColumnFilterData<T>> {
 	 * Constructs a new ColumnFilterData for a table column
 	 *
 	 * @param model the table model
-	 * @param columnModelIndex the model index of the column 
+	 * @param columnModelIndex the model index of the column
 	 * @param columnViewIndex the view index of the column
 	 * @param columnClass the class (type) of the column
 	 */
@@ -65,10 +65,10 @@ public class ColumnFilterData<T> implements Comparable<ColumnFilterData<T>> {
 	private List<ColumnConstraint<T>> initializeConstraints(RowObjectFilterModel<?> model,
 			Class<T> columnClass) {
 
-		// 
-		// Case 1: the column is not dynamic and thus has no way of overriding the column 
+		//
+		// Case 1: the column is not dynamic and thus has no way of overriding the column
 		//         constraint filtering mechanism.
-		// 
+		//
 		Collection<ColumnConstraint<T>> defaultConstraints =
 			DiscoverableTableUtils.getColumnConstraints(columnClass);
 		if (!(model instanceof DynamicColumnTableModel)) {
@@ -76,7 +76,7 @@ public class ColumnFilterData<T> implements Comparable<ColumnFilterData<T>> {
 		}
 
 		//
-		// Case 2: the column is dynamic, but does not supply a specialized column renderer, 
+		// Case 2: the column is dynamic, but does not supply a specialized column renderer,
 		//         which is the means for overriding the column constraint filtering mechanism.
 		//
 		DynamicColumnTableModel<?> columnBasedModel = (DynamicColumnTableModel<?>) model;
@@ -96,9 +96,9 @@ public class ColumnFilterData<T> implements Comparable<ColumnFilterData<T>> {
 		}
 
 		//
-		// Case 4: the column supports text filtering.   Find any column constraints for the 
+		// Case 4: the column supports text filtering.   Find any column constraints for the
 		//         column's type.  Then, create string-based constraints that will filter on
-		//         the column's conversion from its type to a string (via 
+		//         the column's conversion from its type to a string (via
 		//         GColumnRenderer.getFilterString()).
 		//
 		@SuppressWarnings("unchecked") // See type note on the class below
@@ -110,7 +110,7 @@ public class ColumnFilterData<T> implements Comparable<ColumnFilterData<T>> {
 			return new ArrayList<>(rendererStringConstraints);
 		}
 
-		// 
+		//
 		// Case 5: the renderer supports both text filtering and column constraint filtering.
 		//
 		// assume: mode == ColumnConstraintFilterMode.ALLOW_ALL_FILTERS
@@ -123,7 +123,7 @@ public class ColumnFilterData<T> implements Comparable<ColumnFilterData<T>> {
 	 * Sets the viewIndex
 	 *
 	 * <P>This needs to be updated whenever columns are added, deleted, or moved.
-	 * 
+	 *
 	 * @param viewIndex the new view index
 	 */
 	public void setViewIndex(int viewIndex) {
@@ -173,7 +173,7 @@ public class ColumnFilterData<T> implements Comparable<ColumnFilterData<T>> {
 			"\tname: " + name + ",\n" +
 			"\tmodelColumn" + modelIndex + ",\n" +
 			"\tviewColumn: " + viewIndex + ",\n" +
-			"\tconstraints: " + 
+			"\tconstraints: " +
 				CollectionUtils.collect(applicableConstraints, c -> c.asString()) +"\n" +
 		"}";
 		//@formatter:on
@@ -234,14 +234,14 @@ public class ColumnFilterData<T> implements Comparable<ColumnFilterData<T>> {
 	}
 
 	/**
-	 * This class allows us to turn client columns of type <code>T</code> to a String.  We use 
-	 * the renderer provided at construction time to generate a filter string when 
+	 * This class allows us to turn client columns of type <code>T</code> to a String.  We use
+	 * the renderer provided at construction time to generate a filter string when
 	 * {@link #convert(Object)} is called.
-	 * 
-	 * <P>Implementation Note:  the type 'T' here is used to satisfy the external client's 
+	 *
+	 * <P>Implementation Note:  the type 'T' here is used to satisfy the external client's
 	 *    expected list of constraints.  We will not be able to identify 'T' at runtime.  Rather,
 	 *    our parent's {@link #getSourceType()} will simply be {@link Object}.   This is fine, as
-	 *    this particular class will not have {@link #getSourceType()} called, due to how we 
+	 *    this particular class will not have {@link #getSourceType()} called, due to how we
 	 *    are using it.  (Normally, the source type is used to find compatible constraints; we
 	 *    are not using the discovery mechanism with this private class.)
 	 */

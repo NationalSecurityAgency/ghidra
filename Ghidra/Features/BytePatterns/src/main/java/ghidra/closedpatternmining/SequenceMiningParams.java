@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,8 +16,8 @@
 package ghidra.closedpatternmining;
 
 /**
- * 
- * Objects of this class store information to control runs of the closed sequence pattern mining 
+ *
+ * Objects of this class store information to control runs of the closed sequence pattern mining
  * algorithm.
  *
  */
@@ -29,7 +29,7 @@ public class SequenceMiningParams {
 	private boolean useBinary;
 
 	/**
-	 * Create a new {@link SequenceMiningParams} object 
+	 * Create a new {@link SequenceMiningParams} object
 	 * @param minPercentage percentage of sequences in a database that must contain a pattern for the pattern
 	 * to be deemed "frequent"
 	 * @param minBitsOfCheck minimum number of non-ditted bits a pattern must contain before it is displayed to

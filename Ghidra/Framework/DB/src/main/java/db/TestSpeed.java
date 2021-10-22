@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,26 +17,26 @@
 package db;
 
 public class TestSpeed {
-		
-	private static byte[] createBuf() {	
+
+	private static byte[] createBuf() {
 		byte[] buf = new byte[16*1024];
-	
+
 		for(int i=0;i<2*1024;i++) {
 			putLong(buf, i, i);
 		}
 		return buf;
-	}	
+	}
 	private static void putLong(byte[] data, int index, long v) {
 		int i=index*8;
 		data[i+0] =   (byte) (v >> 56);
 		data[i+1] = (byte) (v >> 48);
 		data[i+2] = (byte) (v >> 40);
-		data[i+3] = (byte) (v >> 32);		
+		data[i+3] = (byte) (v >> 32);
 		data[i+4] = (byte) (v >> 24);
 		data[i+5] = (byte) (v >> 16);
 		data[i+6] = (byte) (v >> 8);
 		data[i+7] = (byte) v;
-	}	
+	}
 	public static void main(String[] args) {
 		byte[] buf = createBuf();
 
@@ -50,7 +50,7 @@ public class TestSpeed {
 		long start = System.currentTimeMillis();
 		for(int j=0;j<1000;j++) {
 			for(int i=0;i<nKeys;i++) {
-				int index = search1.binarySearch(buf, i, nKeys); 
+				int index = search1.binarySearch(buf, i, nKeys);
 				if (index != i) {
 					System.out.println("search failed");
 				}
@@ -66,7 +66,7 @@ public class TestSpeed {
 		long start = System.currentTimeMillis();
 		for(int j=0;j<1000;j++) {
 			for(int i=0;i<nKeys;i++) {
-				int index = search1.binarySearch(buf, i, nKeys); 
+				int index = search1.binarySearch(buf, i, nKeys);
 				if (index != i) {
 					System.out.println("search failed");
 				}
@@ -80,10 +80,10 @@ public class TestSpeed {
 
 class JavaBinarySearcher {
 	public int binarySearch(byte[] buf, long key, int nKeys) {
-		
+
 		int min = 0;
 		int max = nKeys-1;
-		
+
 		while (min <= max) {
 			int i = (min + max)/2;
 			long k = getKey(buf, i);
@@ -121,10 +121,10 @@ class JavaBinarySearcher {
 
 class JavaBinarySearcher2 {
 	public int binarySearch(byte[] buf, long key, int nKeys) {
-		
+
 		int min = 0;
 		int max = nKeys-1;
-		
+
 		while (min <= max) {
 			int i = (min + max)/2;
 			long k = getKey(buf, i);

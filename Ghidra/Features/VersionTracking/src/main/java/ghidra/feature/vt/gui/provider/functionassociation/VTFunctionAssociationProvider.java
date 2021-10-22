@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,7 @@ import resources.Icons;
 import resources.ResourceManager;
 
 /**
- * Provider for the version tracking function association table. 
+ * Provider for the version tracking function association table.
  */
 public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		implements VTControllerListener, PopupActionProvider {
@@ -239,7 +239,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 		Function sourceFunction = getSelectedSourceFunction();
 		Function destinationFunction = getSelectedDestinationFunction();
 
-		// If action is on the function associations table, return a function association context 
+		// If action is on the function associations table, return a function association context
 		// for the popup actions.
 		if (dualTablePanel.isAncestorOf(sourceComponent)) {
 			return new VTFunctionAssociationContext(tool, sourceFunction, destinationFunction,
@@ -267,10 +267,10 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 			else if (isToolbarButtonAction && isShowingDualListing) {
 				listingPanel = dualListingPanel.getFocusedListingPanel();
 			}
-			// If the dual listing is showing and this is a toolbar action or the action is 
+			// If the dual listing is showing and this is a toolbar action or the action is
 			// on one of the listings in the ListingCodeComparisonPanel
 			// then return a special function association listing context. This will allow
-			// popup actions for the ListingDiff and also the function association actions 
+			// popup actions for the ListingDiff and also the function association actions
 			// for the functions selected in the tables.
 			if (listingPanel != null) {
 				VTListingNavigator vtListingNavigator =
@@ -401,7 +401,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 	/**
 	 * Displays or hides the function comparison panel within the function association provider.
-	 * @param show true indicates to show the function comparison within the provider. 
+	 * @param show true indicates to show the function comparison within the provider.
 	 * Otherwise, hide it.
 	 */
 	private void showComparisonPanelWithinProvider(boolean show) {
@@ -783,7 +783,7 @@ public class VTFunctionAssociationProvider extends ComponentProviderAdapter
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class TitleUpdateListener implements TableModelListener {
 		@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.math.BigInteger;
  * The AddressRange interface is used by any object
  * that represents a contiguous inclusive range of
  * addresses from a minimum address to a maximum
- * address.  The entire range must fall within a 
+ * address.  The entire range must fall within a
  * single address space.
  * <P>
  * @see AddressRangeImpl
@@ -78,7 +78,7 @@ public interface AddressRange extends Comparable<AddressRange>, Iterable<Address
 
 	/**
 	 * Compares the given address to this address range.
-	 * 
+	 *
 	 * @param addr the address to compare.
 	 * @return a negative integer if the address is greater than the maximum range address,
 	 *         zero if the address is in the range, and

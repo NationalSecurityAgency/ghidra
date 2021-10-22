@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -734,7 +734,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		             |
 		             |
 		            v11
-		
+
 		*/
 
 		TestV v1 = vertex(1);  // Root
@@ -834,7 +834,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		             |
 		             |
 		            v11
-		
+
 		*/
 
 		TestV v1 = vertex(1);  // Root
@@ -947,7 +947,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		             |
 		             |
 		             v9		 <- sink
-		
+
 		*/
 
 		TestV v1 = vertex(1);
@@ -1089,7 +1089,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testDepthFirstPreOrder_MiddleAlternatingPaths() {
 		/*
-		
+
 		 		v1
 		 		 |
 		 		v2
@@ -1100,7 +1100,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		 	    v5
 		 	     |
 		 	    v6
-		
+
 		 */
 
 		TestV v1 = vertex(1);
@@ -1127,7 +1127,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 	@Test
 	public void testDepthFirstPostOrder_MiddleAlternatingPaths() {
 		/*
-		
+
 		 		v1
 		 		 |
 		 		v2
@@ -1138,7 +1138,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		 	    v5
 		 	     |
 		 	    v6
-		
+
 		 */
 
 		TestV v1 = vertex(1);
@@ -1465,8 +1465,8 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			     \  |  /
 			       \|/
 			        v10
-		
-		
+
+
 			 Paths:
 			 	v1, v2, v10
 			 	v1, v3, v5, v10
@@ -1531,8 +1531,8 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			       |   *
 			       |
 			      v10
-		
-		
+
+
 			Paths: v1, v3, v5, v10
 		*/
 
@@ -1592,8 +1592,8 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			   \   |  /
 			     \ |/
 			      v10
-		
-		
+
+
 			Paths:
 			v1, v2, v10
 			v1, v3, v5, v10
@@ -1663,8 +1663,8 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 			     \  |  /
 			       \|/
 			        v10
-		
-		
+
+
 			 Paths:
 			 	v1, v2, v10
 			 	v1, v3, v5, v10
@@ -1882,9 +1882,9 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		/*
 		 	 One large graph; each box represents a strong component; v8/v9
 		 	 have no entry point, as that component has an incoming edge
-		
+
 		 		v1 -> v2 -> v3
-		
+
 		 		 __
 		 		|v4|
 		 	    ----
@@ -1894,7 +1894,7 @@ public class GraphAlgorithmsTest extends AbstractGraphAlgorithmsTest {
 		 		| \     |  |
 		 		|   v7 <-  |
 		 		------------
-		
+
 		 */
 
 		TestV v1 = vertex(1);

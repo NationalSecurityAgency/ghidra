@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -317,7 +317,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 
 		/**
 		 * Plan to enable a logical breakpoint within the trace.
-		 * 
+		 *
 		 * <p>
 		 * This method prefers to use the existing breakpoint specifications which result in
 		 * breakpoints at this address. In other words, it favors what the user has already done to
@@ -325,13 +325,13 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 		 * specification, then it attempts to place a new breakpoint via the target's breakpoint
 		 * container, usually resulting in a new spec, which should effect exactly the one specified
 		 * address.
-		 * 
+		 *
 		 * <p>
 		 * This method must convert applicable addresses to the target space. If the address cannot
 		 * be mapped, it's usually because this logical breakpoint does not apply to the given
 		 * trace's target. E.g., the trace may not have a live target, or the logical breakpoint may
 		 * be in a module not loaded by the trace.
-		 * 
+		 *
 		 * @param actions the action set to populate
 		 * @param kind the kind of breakpoint
 		 * @return a future which completes when the plan is ready
@@ -401,7 +401,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 
 	/**
 	 * Set the expected address for trace breakpoints in the given trace
-	 * 
+	 *
 	 * @param recorder the recorder for the given trace
 	 * @param address the address of this logical breakpoint in the given trace
 	 */
@@ -411,12 +411,12 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 
 	/**
 	 * Check if this logical breakpoint can subsume the given candidate trace breakpoint
-	 * 
+	 *
 	 * Note that logical breakpoints only include trace breakpoints for traces being actively
 	 * recorded. All statuses regarding trace breakpoints are derived from the target breakpoints,
 	 * i.e., they show the present status, regardless of the view's current time. A separate
 	 * breakpoint history provider handles displaying records from the past, including dead traces.
-	 * 
+	 *
 	 * @param breakpoint the trace breakpoint to check
 	 * @return true if it can be aggregated.
 	 */
@@ -432,7 +432,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 
 	/**
 	 * Collect actions to enable a logical breakpoint.
-	 * 
+	 *
 	 * @param actions the destination action set (plan)
 	 * @param trace a trace, if actions should be limited to the given trace
 	 * @return a future which completes when the actions are populated
@@ -441,7 +441,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 
 	/**
 	 * Collect actions to disable a logical breakpoint.
-	 * 
+	 *
 	 * @param actions the destination action set (plan)
 	 * @param trace a trace, if actions should be limited to the given trace
 	 * @return a future which completes when the actions are populated
@@ -450,7 +450,7 @@ interface LogicalBreakpointInternal extends LogicalBreakpoint {
 
 	/**
 	 * Collect actions to delete a logical breakpoint.
-	 * 
+	 *
 	 * @param actions the destination action set (plan)
 	 * @param trace a trace, if actions should be limited to the given trace
 	 * @return a future which completes when the actions are populated

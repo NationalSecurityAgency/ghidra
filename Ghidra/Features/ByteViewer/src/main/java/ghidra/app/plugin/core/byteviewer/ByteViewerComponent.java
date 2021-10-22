@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param vpanel the byte viewer panel that this component lives in
 	 * @param layoutModel the layout model for this component
 	 * @param model data format model that knows how the data should be displayed
@@ -356,7 +356,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the color for the component that has focus.
-	 * 
+	 *
 	 * @param c the color to set
 	 */
 	void setCurrentCursorColor(Color c) {
@@ -366,7 +366,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the background color for the line containing the cursor.
-	 * 
+	 *
 	 * @param c the color to set
 	 */
 	void setCurrentCursorLineColor(Color c) {
@@ -375,7 +375,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the color for showing gaps in indexes.
-	 * 
+	 *
 	 * @param c the color to set
 	 */
 	void setSeparatorColor(Color c) {
@@ -427,7 +427,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the new group size
-	 * 
+	 *
 	 * @param groupSize the group size
 	 * @throws UnsupportedOperationException if model for this view does not support groups
 	 */
@@ -494,7 +494,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the cursor location; called in response to a location change event
-	 * 
+	 *
 	 * @param block the block
 	 * @param index the index
 	 * @param characterOffset the offset into the UI field
@@ -660,7 +660,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 
 	/**
 	 * Set the edit mode according to the given param if the model for this view supports editing.
-	 * 
+	 *
 	 * @param editMode true means to enable editing, and change the cursor color.
 	 */
 	void setEditMode(boolean editMode) {
@@ -741,7 +741,7 @@ public class ByteViewerComponent extends FieldPanel implements FieldMouseListene
 			@Override
 			public void mouseReleased(MouseEvent e) {
 				if (e.getButton() == MouseEvent.BUTTON3) {
-					// hack to make sure that a right-clicked component becomes the active 
+					// hack to make sure that a right-clicked component becomes the active
 					// component
 					panel.setCurrentView(ByteViewerComponent.this);
 				}

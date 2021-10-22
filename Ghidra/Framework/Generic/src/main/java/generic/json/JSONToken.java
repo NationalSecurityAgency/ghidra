@@ -4,7 +4,7 @@
 package generic.json;
 
 public class JSONToken {
-	
+
 	public JSONType type;
 	public int start;
 	public int end;
@@ -22,7 +22,7 @@ public class JSONToken {
 		setEnd(end);
 		setSize(0);
 	}
-	
+
 	public void setType(JSONType type) {
 		this.type = type;
 	}

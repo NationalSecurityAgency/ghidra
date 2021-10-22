@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,15 +82,15 @@ public class FunctionReachabilityPlugin extends ProgramPlugin {
 			}
 		};
 
-// TODO verify Function menu positioning		
+// TODO verify Function menu positioning
 		showProviderAction.setPopupMenuData(new MenuData(new String[] { "Function",
 			"Function Reachability" }, ICON, "ShowReferences"));
 
-// TODO graph menu?...it is a graph, but not a UI graph		
+// TODO graph menu?...it is a graph, but not a UI graph
 		showProviderAction.setMenuBarData(new MenuData(new String[] { ToolConstants.MENU_GRAPH,
 			"Function Reachability" }, ICON));
 
-// TODO in toolbar menu?		
+// TODO in toolbar menu?
 		showProviderAction.setToolBarData(new ToolBarData(ICON, "View"));
 		showProviderAction.setHelpLocation(new HelpLocation("FunctionReachabilityPlugin",
 			"Function_Reachability_Plugin"));
@@ -116,7 +116,7 @@ public class FunctionReachabilityPlugin extends ProgramPlugin {
 
 	@Override
 	protected void selectionChanged(ProgramSelection sel) {
-		// TODO if we add 'incoming location' following, then select all paths containing selection		
+		// TODO if we add 'incoming location' following, then select all paths containing selection
 		super.selectionChanged(sel);
 	}
 }

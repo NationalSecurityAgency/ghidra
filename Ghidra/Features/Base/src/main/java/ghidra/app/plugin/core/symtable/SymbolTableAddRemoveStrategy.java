@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,13 +28,13 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * The symbol table users a {@link ThreadedTableModel}.  This model does not correctly function
- * with data that can change outside of the table.   The symbol table's row objects are the 
+ * with data that can change outside of the table.   The symbol table's row objects are the
  * {@link Symbol} db objects.   These db objects can be changed by the user and by analysis
- * while table is loaded.   The problem with this is that the table's sort can be broken when 
+ * while table is loaded.   The problem with this is that the table's sort can be broken when
  * symbols are to be added, removed or re-inserted, as this process requires a binary search which
- * will be broken if the criteria used to sort the data has changed.   Effectively, a symbol 
+ * will be broken if the criteria used to sort the data has changed.   Effectively, a symbol
  * change can break the binary search if that symbol stays in a previously sorted position, but
- * has updated data that would put the symbol in a new position if sorted again.  For example, 
+ * has updated data that would put the symbol in a new position if sorted again.  For example,
  * if the table is sorted on name and the name of a symbol changes, then future uses of the
  * binary search will be broken while that symbol is still in the position that matches its old
  * name.
@@ -42,13 +42,13 @@ import ghidra.util.task.TaskMonitor;
  * This issue has been around for quite some time.  To completely fix this issue, each row object
  * of the symbol table would need to be immutable, at least on the sort criteria.   We could fix
  * this in the future if the *mostly correct* sorting behavior is not good enough.  For now, the
- * client can trigger a re-sort (e.g., by opening and closing the table) to fix the slightly 
+ * client can trigger a re-sort (e.g., by opening and closing the table) to fix the slightly
  * out-of-sort data.
  * <p>
  * The likelihood of the sort being inconsistent now relates directly to how many changed symbols
  * are in the table at the time of an insert.   The more changes symbols, the higher the chance
  * of a stale/misplaced symbol being used during a binary search, thus producing an invalid insert
- * position.  
+ * position.
  * <p>
  * This strategy is setup to mitigate the number of invalid symbols in the table at the
  * time the inserts are applied.   The basic workflow of this algorithm is:
@@ -62,12 +62,12 @@ import ghidra.util.task.TaskMonitor;
  *    --all adds as part of a re-insert
  *    --all pure adds
  * </pre>
- * 
- * Step 3, processing failed removals, is done to avoid a brute force lookup at each removal 
- * request.   
- * 
+ *
+ * Step 3, processing failed removals, is done to avoid a brute force lookup at each removal
+ * request.
+ *
  * <P>This strategy has knowledge of client proxy object usage.   The proxy objects
- * are coded such that the {@code hashCode()} and {@code equals()} methods will match those 
+ * are coded such that the {@code hashCode()} and {@code equals()} methods will match those
  * methods of the data's real objects.
  */
 public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<Symbol> {
@@ -78,7 +78,7 @@ public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<Symb
 
 		Set<AddRemoveListItem<Symbol>> items = coalesceAddRemoveItems(addRemoveList);
 
-		// 
+		//
 		// Hash map the existing values so that we can use any object inside the add/remove list
 		// as a key into this map to get the matching existing value.  Using the existing value
 		// enables the binary search to work when the add/remove item is a proxy object, but the
@@ -237,22 +237,22 @@ public class SymbolTableAddRemoveStrategy implements TableAddRemoveStrategy<Symb
 	}
 
 	/*
-	 * Removes the given set of items that were unsuccessfully removed from the table as part of 
-	 * the add/remove process.   These items could not be removed because some part of their 
+	 * Removes the given set of items that were unsuccessfully removed from the table as part of
+	 * the add/remove process.   These items could not be removed because some part of their
 	 * state has changed such that the binary search performed during the normal remove process
-	 * cannot locate the item in the table data.   This algorithm will check the given set of 
-	 * items against the entire list of table data, locating the item to be removed.   
+	 * cannot locate the item in the table data.   This algorithm will check the given set of
+	 * items against the entire list of table data, locating the item to be removed.
 	 */
 	private List<Symbol> expungeLostItems(Set<Symbol> toRemove, List<Symbol> data,
 			TableSortingContext<Symbol> sortContext) {
 
 		if (sortContext.isUnsorted()) {
-			// this can happen if the data is unsorted and we were asked to remove an item that 
+			// this can happen if the data is unsorted and we were asked to remove an item that
 			// was never in the table for some reason
 			return data;
 		}
 
-		// Copy to a new list those items that are not marked for removal.  This saves the 
+		// Copy to a new list those items that are not marked for removal.  This saves the
 		// list move its items every time a remove takes place
 		List<Symbol> newList = new ArrayList<>(data.size() - toRemove.size());
 		for (int i = 0; i < data.size(); i++) {

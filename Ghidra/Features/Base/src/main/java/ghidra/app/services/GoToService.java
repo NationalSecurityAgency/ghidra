@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public interface GoToService {
 	/**
 	 * Generates a GoTo event and handles any history state that needs to be saved.  This method
 	 * will attempt to find the program that contains the given ProgramLocation.
-	 * 
+	 *
 	 * @param loc location to go to
 	 * @return true if the go to was successful
 	 * @see #goTo(ProgramLocation, Program)
@@ -49,13 +49,13 @@ public interface GoToService {
 	public boolean goTo(ProgramLocation loc);
 
 	/**
-	 * Generates a GoTo event and handles any history state that needs to be saved.  This 
-	 * overloaded version of {@link #goTo(Address)} uses the given program as the program 
-	 * within which to perform the GoTo.  If the given program does not contain the given 
-	 * address, then the GoTo will not be performed and false will be returned.  Passing 
+	 * Generates a GoTo event and handles any history state that needs to be saved.  This
+	 * overloaded version of {@link #goTo(Address)} uses the given program as the program
+	 * within which to perform the GoTo.  If the given program does not contain the given
+	 * address, then the GoTo will not be performed and false will be returned.  Passing
 	 * <code>null</code> as the <code>program</code> parameter will cause this method to attempt to find
 	 * a program that contains the given ProgramLocation.
-	 * 
+	 *
 	 * @param loc location to go to
 	 * @param program the program within which to perform the GoTo
 	 * @return true if the go to was successful
@@ -90,11 +90,11 @@ public interface GoToService {
 	/**
 	 * Generates a GoTo event to the gotoAddress.   This overloaded version of
 	 * {@link #goTo(Address)} uses the given program as the program within which to
-	 * perform the GoTo.  If the given program does not contain the given address, then the 
-	 * GoTo will not be performed and false will be returned.  Passing <code>null</code> as the 
+	 * perform the GoTo.  If the given program does not contain the given address, then the
+	 * GoTo will not be performed and false will be returned.  Passing <code>null</code> as the
 	 * <code>program</code> parameter will cause this method to attempt to find
 	 * a program that contains the given ProgramLocation.
-	 * 
+	 *
 	 * @param goToAddress the address to goto
 	 * @param program the program within which to perform the GoTo
 	 * @return true if the go to was successful
@@ -103,12 +103,12 @@ public interface GoToService {
 	public boolean goTo(Address goToAddress, Program program);
 
 	/**
-	 * Navigate to either the external program location or address linkage location.  
+	 * Navigate to either the external program location or address linkage location.
 	 * Specific behavior may vary based upon implementation.
-	
+
 	 * @param externalLoc external location
-	 * @param checkNavigationOption if true the service navigation 
-	 * option will be used to determine if navigation to the external program will be 
+	 * @param checkNavigationOption if true the service navigation
+	 * option will be used to determine if navigation to the external program will be
 	 * attempted, or if navigation to the external linkage location within the current
 	 * program will be attempted.  If false, the implementations default behavior
 	 * will be performed.
@@ -119,13 +119,13 @@ public interface GoToService {
 			boolean checkNavigationOption);
 
 	/**
-	 * Navigate to either the external program location or address linkage location.  
+	 * Navigate to either the external program location or address linkage location.
 	 * Specific behavior may vary based upon implementation.
-	 * 
+	 *
 	 * @param navigatable Navigatable
 	 * @param externalLoc external location
-	 * @param checkNavigationOption if true the service navigation 
-	 * option will be used to determine if navigation to the external program will be 
+	 * @param checkNavigationOption if true the service navigation
+	 * option will be used to determine if navigation to the external program will be
 	 * attempted, or if navigation to the external linkage location within the current
 	 * program will be attempted.  If false, the implementations default behavior
 	 * will be performed.
@@ -136,18 +136,18 @@ public interface GoToService {
 			boolean checkNavigationOption);
 
 	/**
-	 * Parses the input string as either: 
-	 * 	an address/symbol expression (0x1000+5,  or LAB1000+5)  
+	 * Parses the input string as either:
+	 * 	an address/symbol expression (0x1000+5,  or LAB1000+5)
 	 *  a symbol wildcard expression (LAB*,  LAB?100)
 	 *  a symbol lookup
 	 *  an address lookup
-	 * 
+	 *
 	 * If the query results in more than one location, a list of locations will be displayed.
-	 * If the query results in only one location, then a goto event will be fired(except for a 
+	 * If the query results in only one location, then a goto event will be fired(except for a
 	 * wildcard query in which case a list will still be displayed.
-	 * 
+	 *
 	 * The listener will be notified after query and will indicate the query status.
-	 * 
+	 *
 	 * @param fromAddr The address used to determine the scope of the query
 	 * @param queryData the query input data
 	 * @param listener the listener that will be notified when the query completes.

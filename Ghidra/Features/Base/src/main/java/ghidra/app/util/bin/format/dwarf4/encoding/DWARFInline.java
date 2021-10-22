@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,22 +27,22 @@ public enum DWARFInline
 	DW_INL_inlined(0x1),
 	DW_INL_declared_not_inlined(0x2),
 	DW_INL_declared_inlined(0x3);
-	
+
 	private final int value;
-	
+
 	private static final Map<Integer, DWARFInline> valueMap;
-	
+
 	static {
 		valueMap = new HashMap<Integer, DWARFInline>();
 		for(DWARFInline access : DWARFInline.values()) {
 			valueMap.put(access.getValue(), access);
 		}
 	}
-	
+
 	private DWARFInline(int value) {
 		this.value = value;
 	}
-	
+
 	/**
 	 * Get the integer value of this enum.
 	 * @return the integer value of the enum
@@ -50,14 +50,14 @@ public enum DWARFInline
 	public int getValue() {
 		return this.value;
 	}
-	
+
 	/**
 	 * Find the accessibility value given a Number value.
 	 * @param key Number value to check
 	 * @return DWARFAccessibility enum if it exists
-	 * @throws IllegalArgumentException if the key is not found 
+	 * @throws IllegalArgumentException if the key is not found
 	 */
-	public static DWARFInline find(Number key) { 
+	public static DWARFInline find(Number key) {
 		DWARFInline access = valueMap.get(key.intValue());
 		if(access != null)
 			return access;

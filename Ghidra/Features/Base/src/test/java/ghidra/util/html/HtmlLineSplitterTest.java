@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -282,9 +282,9 @@ public class HtmlLineSplitterTest {
 	@Test
 	public void testSplitAtSpace_PreserveWhitespace() {
 		//
-		// Interesting behavior: the second split attempts to split ' spli'.  The algorithm 
+		// Interesting behavior: the second split attempts to split ' spli'.  The algorithm
 		// then looks for a space to split on, to avoid breaking a word.  It finds the first
-		// space and then splits there, creating a line that is just a ' '.  It looks unusual, 
+		// space and then splits there, creating a line that is just a ' '.  It looks unusual,
 		// but it prevents splitting on a word.
 		//
 		List<String> lines = HtmlLineSplitter.split("split split", 5, true);

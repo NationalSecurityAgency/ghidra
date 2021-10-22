@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ class PropertyManagerTableModel extends AbstractTableModel {
 	 * @param searchMarks
 	 */
 	public synchronized void update(Program program, AddressSetView addrSet) {
-		boolean restrictedView = (addrSet != null && !addrSet.isEmpty()); 
+		boolean restrictedView = (addrSet != null && !addrSet.isEmpty());
 		ArrayList<String> list = new ArrayList<String>();
 
 		if (program != null) {
@@ -56,7 +56,7 @@ class PropertyManagerTableModel extends AbstractTableModel {
 					}
 				}
 				else {
-					list.add(name);	
+					list.add(name);
 				}
 			}
 		}
@@ -79,11 +79,11 @@ class PropertyManagerTableModel extends AbstractTableModel {
 	 */
 	public synchronized int getRowCount() {
 		if (propertyNames != null) {
-			return propertyNames.length;	
+			return propertyNames.length;
 		}
 		return 0;
 	}
-	
+
 	/*
 	 * @see javax.swing.table.TableModel#getColumnName(int)
 	 */
@@ -96,7 +96,7 @@ class PropertyManagerTableModel extends AbstractTableModel {
 	 * @see javax.swing.table.TableModel#getValueAt(int, int)
 	 */
 	public synchronized Object getValueAt(int rowIndex, int columnIndex) {
-		if (propertyNames != null && rowIndex < propertyNames.length) {	
+		if (propertyNames != null && rowIndex < propertyNames.length) {
 			return propertyNames[rowIndex];
 		}
 		return null;

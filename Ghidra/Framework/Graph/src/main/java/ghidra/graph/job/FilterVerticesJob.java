@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,12 +30,12 @@ import ghidra.graph.viewer.*;
 
 /**
  * Uses the given filter to fade out vertices that do not pass.  Vertices that pass the filter
- * will be included in the graph.  Not only will passing vertices be included, but so too 
+ * will be included in the graph.  Not only will passing vertices be included, but so too
  * will any vertices reachable from those vertices.
- * 
+ *
  * <P>This job will update the graph so that any previously filtered vertices will be put
- * back into the graph.   
- * 
+ * back into the graph.
+ *
  * @param <V> the vertex type
  * @param <E> the edge type
  */
@@ -58,7 +58,7 @@ public class FilterVerticesJob<V extends VisualVertex, E extends VisualEdge<V>>
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param viewer the viewer upon which to operate
 	 * @param graph the graph to filter
 	 * @param filter the predicate used to determine what passes the filter
@@ -90,13 +90,13 @@ public class FilterVerticesJob<V extends VisualVertex, E extends VisualEdge<V>>
 		// 1) Filter the entire universe of vertices/edges
 		// 2) Get current vertices/edges that need to be removed (this happens by simply
 		//    not restoring those vertices/edges that are already filtered)
-		// 3) Restore any filtered vertices that now pass the filter 
+		// 3) Restore any filtered vertices that now pass the filter
 		//
 
 		// 1)
 		//@formatter:off
 		Iterator<V> vertices = filterGraph.getAllVertices();
-		Set<V> matching = asStream(vertices)			
+		Set<V> matching = asStream(vertices)
 			.filter(filter)
 			.collect(Collectors.toSet())
 	        ;
@@ -134,7 +134,7 @@ public class FilterVerticesJob<V extends VisualVertex, E extends VisualEdge<V>>
 
 		//
 		// Fade Out will start with the current alpha, bringing the value down to the minimum.
-		// This will only have an effect if the current alpha is not already at the minimum, 
+		// This will only have an effect if the current alpha is not already at the minimum,
 		// such as from a previous filter.
 		//
 		double percentRemaining = 1.0 - percentComplete;
@@ -145,7 +145,7 @@ public class FilterVerticesJob<V extends VisualVertex, E extends VisualEdge<V>>
 
 		//
 		// Fade In will start with the current alpha, bringing the value up to 1.0.  This will
-		// only have an effect if the current alpha is not already 1.0, such as from a 
+		// only have an effect if the current alpha is not already 1.0, such as from a
 		// previous filter.
 		//
 		double fadeInAlpha = percentComplete;
@@ -193,7 +193,7 @@ public class FilterVerticesJob<V extends VisualVertex, E extends VisualEdge<V>>
 	@Override
 	protected void finished() {
 
-		// We know that init() will setup our vertices to filter.  If they are null, then 
+		// We know that init() will setup our vertices to filter.  If they are null, then
 		// init() wasn't called, because start() was never called.
 		if (passedVertices == null) {
 			initialize();

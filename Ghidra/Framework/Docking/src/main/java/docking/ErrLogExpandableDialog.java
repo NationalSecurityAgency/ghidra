@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -179,15 +179,15 @@ public class ErrLogExpandableDialog extends AbstractErrDialog {
 
 	private String getHTML(String msg, Collection<Throwable> report) {
 
-		// 
+		//
 		// Usage question: The content herein will be escaped unless you call addHTMLContenet().
 		//                 Further, clients can provide messages that contain HTML.  Is there a
 		//                 use case where we want to show escaped HTML content?
 		//
-		//                 For now, I will assume no such use case exists, and allow HTML to go 
+		//                 For now, I will assume no such use case exists, and allow HTML to go
 		//                 through.
 		//
-		//                 If no such use case exists, then we should update HTMLElement to 
+		//                 If no such use case exists, then we should update HTMLElement to
 		//                 not escape HTML.  If it does exist, then we should put the onus on
 		//                 the client.
 		//

@@ -32,7 +32,7 @@ define pcodeop encls_unknown;
 	if ( EAX != 0x0 ) goto <leaf_1>;
 		encls_ecreate( RBX, RCX );
 		goto <done>;
-		
+
 	<leaf_1>
 	if ( EAX != 0x1 ) goto <leaf_2>;
 		encls_eadd( RBX, RCX );
@@ -165,7 +165,7 @@ define pcodeop encls_unknown;
 	<unknown>
 		encls_unknown();
 
-	<done>		
+	<done>
 }
 
 
@@ -190,7 +190,7 @@ define pcodeop enclu_unknown;
 	if ( EAX != 0x0 ) goto <leaf_1>;
 		enclu_ereport( RBX, RCX, RDX );
 		goto <done>;
-		
+
 	<leaf_1>
 	if ( EAX != 0x1 ) goto <leaf_2>;
 		RAX = enclu_egetkey( RBX, RCX );
@@ -206,7 +206,7 @@ define pcodeop enclu_unknown;
 	if ( EAX != 0x2 ) goto <leaf_3>;
 		tempBX:8 = RBX;
 		tempCX:8 = RCX;
-		
+
 		EAX = enclu_eenter_EAX( tempBX, tempCX );
 		RCX = enclu_eenter_RCX( tempBX, tempCX );
 		TF = enclu_eenter_TF( tempBX, tempCX );
@@ -253,5 +253,5 @@ define pcodeop enclu_unknown;
 	<unknown>
 		enclu_unknown();
 
-	<done>		
+	<done>
 }

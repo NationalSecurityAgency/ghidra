@@ -43,7 +43,7 @@ public class JSONParser {
 	 */
 
 	static boolean JSMN_STRICT = false;
-	
+
 	int pos; /* offset in the JSON string */
 	int toknext; /* next token to allocate */
 	int toksuper; /* suporior token node, e.g parent object or array */
@@ -58,11 +58,11 @@ public class JSONParser {
 	 * Run JSON parser. It parses a JSON data string into and array of tokens, each describing
 	 * a single JSON object.
 	 */
-	//static jsmnerr_t jsmn_parse(jsmn_parser *parser, const char *js, 
+	//static jsmnerr_t jsmn_parse(jsmn_parser *parser, const char *js,
 	//		jsmntok_t *tokens, unsigned int num_tokens);
 
 	/**
-	 * Creates a new parser based over a given  buffer with an array of tokens 
+	 * Creates a new parser based over a given  buffer with an array of tokens
 	 * available.
 	 */
 	public JSONParser() {
@@ -86,15 +86,15 @@ public class JSONParser {
 	 */
 	JSONError parsePrimitive(char [] js, List<JSONToken> tokens) {
 		int start;
-	
+
 		start = pos;
-	
+
 		boolean found = false;
 		if (JSMN_STRICT) {
 			for (; js[pos] != '\0'; pos++) {
 				switch (js[pos]) {
-					case ','  : 
-					case ']'  : 
+					case ','  :
+					case ']'  :
 					case '}' :
 						found = true;
 						break;
@@ -115,12 +115,12 @@ public class JSONParser {
 				switch (js[pos]) {
 					/* In strict mode primitive must be followed by "," or "}" or "]" */
 					case '\t' :
-					case '\r' : 
-					case '\n' : 
-					case ' ' : 
-					case ':': 
-					case ','  : 
-					case ']'  : 
+					case '\r' :
+					case '\n' :
+					case ' ' :
+					case ':':
+					case ','  :
+					case ']'  :
 					case '}' :
 						found = true;
 						break;
@@ -132,7 +132,7 @@ public class JSONParser {
 				}
 			}
 		}
-	
+
 		allocateToken(tokens, JSONType.JSMN_PRIMITIVE, start, pos);
 		pos--;
 		return JSONError.JSMN_SUCCESS;
@@ -143,21 +143,21 @@ public class JSONParser {
 	 */
 	JSONError parseString(char [] js, List<JSONToken> tokens) {
 		int i;
-	
+
 		int start = pos;
-	
+
 		pos++;
-	
+
 		/* Skip starting quote */
 		for (; pos < js.length; pos++) {
 			char c = js[pos];
-	
+
 			/* Quote: end of string */
 			if (c == '\"') {
 				allocateToken(tokens, JSONType.JSMN_STRING, start+1, pos);
 				return JSONError.JSMN_SUCCESS;
 			}
-	
+
 			/* Backslash: Quoted symbol expected */
 			if (c == '\\') {
 				pos++;
@@ -194,11 +194,11 @@ public class JSONParser {
 		JSONError r;
 		int i;
 		JSONToken token;
-		
+
 		for (; pos < js.length; pos++) {
 			char c ;
 			JSONType type;
-	
+
 			c = js[pos];
 			switch (c) {
 				case '{': case '[':
@@ -242,7 +242,7 @@ public class JSONParser {
 						tokens.get(toksuper).incSize();
 					}
 					break;
-				case '\t' : case '\r' : case '\n' : case ':' : case ',': case ' ': 
+				case '\t' : case '\r' : case '\n' : case ':' : case ',': case ' ':
 					break;
 				/* In strict mode primitives are: numbers and booleans */
 				case '-': case '0': case '1' : case '2': case '3' : case '4':
@@ -267,7 +267,7 @@ public class JSONParser {
 					break;
 			}
 		}
-	
+
 		for (i = toknext - 1; i >= 0; i--) {
 			/* Unmatched opened object or array */
 			JSONToken test = tokens.get(i);
@@ -275,7 +275,7 @@ public class JSONParser {
 				return JSONError.JSMN_ERROR_PART;
 			}
 		}
-	
+
 		return JSONError.JSMN_SUCCESS;
 	}
 
@@ -286,14 +286,14 @@ public class JSONParser {
 //		}
 		return s;
 	}
-	
+
 //		int c;
 //		char *r, *w, *z;
 //		unsigned long nlen;
 //		unsigned short u;
 //		unsigned i;
 //		Str *rv;
-//	
+//
 //		rv = mkstr(s, len);
 //		r = s;
 //		w = strdata(rv);
@@ -303,7 +303,7 @@ public class JSONParser {
 //				*w++ = *r++;
 //				continue;
 //			}
-//	
+//
 //			/* escape sequence */
 //			r++;
 //			switch(*r){
@@ -371,13 +371,13 @@ public class JSONParser {
 		Object rv = null, k, v;
 		int i;
 		JSONToken tp;
-	
+
 		if (ndx == t.size()) {
 			System.out.println("array overflow in JSON parser");
 		}
 		tp = t.get(ndx++);
 		String tstr = new String(s, tp.start, tp.end-tp.start);
-		
+
 		switch(tp.type){
 		case JSMN_OBJECT:
 			HashMap<Object, Object> tab = new HashMap<Object, Object>();
@@ -439,7 +439,7 @@ public class JSONParser {
 		default:
 			throw new RuntimeException("invalid json type: "+tp.type);
 		}
-	
+
 		return rv;
 	}
 
@@ -456,12 +456,12 @@ public class JSONParser {
 	}
 
 //	public static void main(String[] args) throws IOException {
-//	    
+//
 //	    GhidraApplication.initialize( new HeadlessGhidraApplicationConfiguration() );
-//        
+//
 //		JSONParser parser = new JSONParser();
 //		BufferedReader in = openReader();
-//		
+//
 //		int n = 4096;
 //		char [] cbuf = new char[n];
 //		int read = in.read(cbuf);
@@ -472,9 +472,9 @@ public class JSONParser {
 //
 //		List<Object> objs = new ArrayList<Object>();
 //		List<JSONToken> tokens = new ArrayList<JSONToken>();
-//	
+//
 //		JSONError r = parser.parse(cbuf, tokens);
-//	
+//
 //		switch(r){
 //		case JSMN_SUCCESS:
 //			break;
@@ -503,7 +503,7 @@ public class JSONParser {
 //		System.out.println("end of parsing");
 //		return;
 //	}
-//	
+//
 //	public static BufferedReader openReader() {
 //		return new BufferedReader(new InputStreamReader(System.in));
 //	}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 
 	/**
 	 * Return whether this block has been initialized (has byte values)
-	 * 
+	 *
 	 * @return true if the block has associated byte values.
 	 */
 	public abstract boolean isInitialized();
@@ -54,9 +54,9 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	}
 
 	/**
-	 * Returns the starting offset for this sub block.  In other words, the first byte in this sub 
+	 * Returns the starting offset for this sub block.  In other words, the first byte in this sub
 	 * block is at this starting offset relative to the containing {@link MemoryBlockDB}
-	 * 
+	 *
 	 * @return the starting offset for this sub block.
 	 */
 	public final long getStartingOffset() {
@@ -73,7 +73,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 
 	/**
 	 * Returns true if the given {@link MemoryBlockDB} offset is in this sub block.
-	 * 
+	 *
 	 * @param memBlockOffset the offset relative to the containing {@link MemoryBlockDB}
 	 * @return true if the offset is valid for this block
 	 */
@@ -86,7 +86,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	 * Returns the byte in this sub block corresponding to the given offset relative to the containing
 	 * {@link MemoryBlockDB}.  In other words, the first byte in this sub block can be retrieved
 	 * using an offset equal to this blocks starting offset.
-	 * 
+	 *
 	 * @param memBlockOffset the offset from the start of the containing {@link MemoryBlockDB}
 	 * @return the byte at the given containing block offset.
 	 * @throws MemoryAccessException if the block is uninitialized.
@@ -96,7 +96,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 
 	/**
 	 * Tries to get len bytes from this block at the given offset (relative to the containing
-	 * {@link MemoryBlockDB} and put them into the given byte array at the specified offset.  
+	 * {@link MemoryBlockDB} and put them into the given byte array at the specified offset.
 	 * May return fewer bytes if the requested length is beyond the end of the block.
 	 * @param memBlockOffset the offset relative to the containing {@link MemoryBlockDB}
 	 * @param b the byte array to populate.
@@ -115,7 +115,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	 * Stores the byte in this sub block at the given offset relative to the containing
 	 * {@link MemoryBlockDB}.  In other words, the first byte in this sub block can be targeted
 	 * using an offset equal to this blocks starting offset.
-	 * 
+	 *
 	 * @param memBlockOffset the offset from the start of the containing {@link MemoryBlockDB}
 	 * @param b the byte value to store at the given offset.
 	 * @throws MemoryAccessException if the block is uninitialized
@@ -128,9 +128,9 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	/**
 	 * Tries to write len bytes to this block at the given offset (relative to the containing
 	 * {@link MemoryBlockDB} using the bytes contained in the given byte array at the specified byte
-	 * array offset.  
+	 * array offset.
 	 * May write fewer bytes if the requested length is beyond the end of the block.
-	 * 
+	 *
 	 * @param memBlockOffset the offset relative to the containing {@link MemoryBlockDB}
 	 * @param b the byte array with the bytes to store.
 	 * @param off the offset into the byte array.
@@ -164,7 +164,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 
 	/**
 	 * Attempts to join the given SubMemoryBlock with this block if possible
-	 * 
+	 *
 	 * @param other the SubMemoryBlock to join with this one.
 	 * @return true if the given SubMemoryBlock was successfully merged into this one
 	 * @throws IOException if a database error occurs.
@@ -173,7 +173,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 
 	/**
 	 * Returns true if this is either a bit-mapped or byte-mapped block.
-	 * 
+	 *
 	 * @return true if this is either a bit-mapped or byte-mapped block.
 	 */
 	protected boolean isMapped() {
@@ -182,7 +182,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 
 	/**
 	 * Get the {@link MemoryBlockType} for this block: DEFAULT, BIT_MAPPED, or BYTE_MAPPED
-	 * 
+	 *
 	 * @return the type for this block: DEFAULT, BIT_MAPPED, or BYTE_MAPPED
 	 */
 	protected MemoryBlockType getType() {
@@ -201,7 +201,7 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	/**
 	 * Splits this SubMemoryBlock into two memory blocks
 	 * @param memBlockOffset the offset relative to the owning MemoryBlock (not this SubMemoryBlock)
-	 * To get the offset relative to this SubMemoryBlock, you have to subtract this sub blocks 
+	 * To get the offset relative to this SubMemoryBlock, you have to subtract this sub blocks
 	 * starting offset.
 	 * @return the new SubMemoryBlock that contains the back half of this block
 	 * @throws IOException if a database error occurs.
@@ -209,8 +209,8 @@ abstract class SubMemoryBlock implements Comparable<SubMemoryBlock> {
 	protected abstract SubMemoryBlock split(long memBlockOffset) throws IOException;
 
 	/**
-	 * Updates this SubMemoryBlock to have a new owning MemoryBlock and offset within that block. 
-	 * This is used when splitting a block and entire sub blocks have to be moved to the new split 
+	 * Updates this SubMemoryBlock to have a new owning MemoryBlock and offset within that block.
+	 * This is used when splitting a block and entire sub blocks have to be moved to the new split
 	 * block.
 	 * @param key the id of the new owning memory block.
 	 * @param startingOffset the starting offset of this sub block in the new block.

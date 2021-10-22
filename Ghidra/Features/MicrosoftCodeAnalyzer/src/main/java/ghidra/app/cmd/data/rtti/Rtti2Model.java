@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,8 @@ import ghidra.program.model.mem.DumbMemBufferImpl;
 import ghidra.program.model.mem.Memory;
 
 /**
- * Model for run-time type information about the RTTI 2 data type, which represents an 
- * array of either pointers or displacements to the BaseClassDescriptors (RTTI 1s) for 
+ * Model for run-time type information about the RTTI 2 data type, which represents an
+ * array of either pointers or displacements to the BaseClassDescriptors (RTTI 1s) for
  * a class.
  * <p>
  * Fields for this RunTimeTypeInformation structure can be found on http://www.openrce.org
@@ -54,7 +54,7 @@ public class Rtti2Model extends AbstractCreateRttiDataModel {
 	 * @param program the program
 	 * @param rtti1Count the number of RTTI1 data type references expected at the RTTI2 address.
 	 * @param rtti2Address the address in the program for the RTTI Base Class Array.
-	 * @param validationOptions options indicating how to validate the data type at the indicated 
+	 * @param validationOptions options indicating how to validate the data type at the indicated
 	 * address.
 	 */
 	public Rtti2Model(Program program, int rtti1Count, Address rtti2Address,
@@ -137,7 +137,7 @@ public class Rtti2Model extends AbstractCreateRttiDataModel {
 	/**
 	 * This gets the data type for an individual entry in the array of RTTI 1 references
 	 * produced by this model.
-	 * @param program the program which will contain this data type. 
+	 * @param program the program which will contain this data type.
 	 * @param rtti1Dt the RTTI 1 data type associated with this RTTI 2.
 	 * @return the data type for an individual array entry.
 	 */
@@ -155,7 +155,7 @@ public class Rtti2Model extends AbstractCreateRttiDataModel {
 	/**
 	 * This gets the data type for an individual entry in the array of RTTI 1 references
 	 * produced by this model.
-	 * @param program the program which will contain this data type. 
+	 * @param program the program which will contain this data type.
 	 * @return the data type for an individual array entry.
 	 */
 	static DataType getSimpleIndividualEntryDataType(Program program) {
@@ -171,7 +171,7 @@ public class Rtti2Model extends AbstractCreateRttiDataModel {
 
 	/**
 	 * This gets the BaseClassArray (RTTI 2) structure for the indicated program.
-	 * @param program the program which will contain this data type. 
+	 * @param program the program which will contain this data type.
 	 * @return the BaseClassArray (RTTI 2) structure or null.
 	 */
 	public DataType getDataType(Program program) {

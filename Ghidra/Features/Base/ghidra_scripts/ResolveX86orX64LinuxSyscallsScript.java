@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,7 +82,7 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 	//if they're both Linux...
 	private String syscallFileName;
 
-	//the type of overriding reference to apply 
+	//the type of overriding reference to apply
 	private RefType overrideType;
 
 	//the calling convention to use for system calls (must be defined in the appropriate .cspec file)
@@ -116,7 +116,7 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 			callingConvention = "syscall";
 		}
 
-		//get the space where the system calls live.  
+		//get the space where the system calls live.
 		//If it doesn't exist, create it.
 		AddressSpace syscallSpace =
 			currentProgram.getAddressFactory().getAddressSpace(SYSCALL_SPACE_NAME);
@@ -169,7 +169,7 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 		//at each system call call site where a constant could be determined, create
 		//the system call (if not already created), then add the appropriate overriding reference
 		//use syscallNumbersToNames to name the created functions
-		//if there's not a name corresponding to the constant use a default 
+		//if there's not a name corresponding to the constant use a default
 		for (Entry<Address, Long> entry : addressesToSyscalls.entrySet()) {
 			Address callSite = entry.getKey();
 			Long offset = entry.getValue();
@@ -264,8 +264,8 @@ public class ResolveX86orX64LinuxSyscallsScript extends GhidraScript {
 	/**
 	 * Uses the symbolic propogator to attempt to determine the constant value in
 	 * the syscall register at each system call instruction
-	 * 
-	 * @param funcsToCalls map from functions containing syscalls to address in each function of 
+	 *
+	 * @param funcsToCalls map from functions containing syscalls to address in each function of
 	 * the system call
 	 * @param program containing the functions
 	 * @return map from addresses of system calls to system call numbers

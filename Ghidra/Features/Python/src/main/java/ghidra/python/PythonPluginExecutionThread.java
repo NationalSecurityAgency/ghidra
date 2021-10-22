@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ class PythonPluginExecutionThread extends Thread {
 
 	/**
 	 * Creates a new python plugin execution thread that executes the given command for the given plugin.
-	 * 
+	 *
 	 * @param plugin The python plugin to execute the command for.
 	 * @param cmd The python command to execute.
 	 * @param moreInputWanted Gets set to indicate that the executed command expects more input.
@@ -94,7 +94,7 @@ class PythonPluginExecutionThread extends Thread {
 			plugin.getConsole().getErrWriter().println("Stack overflow!");
 		}
 		finally {
-			// Re-get the current program in case the user closed the program while a long running 
+			// Re-get the current program in case the user closed the program while a long running
 			// command was executing.
 			program = plugin.getCurrentProgram();
 			if (program != null) {

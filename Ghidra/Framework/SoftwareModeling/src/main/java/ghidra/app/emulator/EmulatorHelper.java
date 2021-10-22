@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -130,12 +130,12 @@ public class EmulatorHelper implements MemoryFaultHandler, EmulatorConfiguration
 	}
 
 	/**
-	 * Provides ability to install a low-level memory fault handler. 
-	 * The handler methods should generally return 'false' to allow 
-	 * the default handler to generate the appropriate target error. 
-	 * Within the fault handler, the EmulateExecutionState can be used 
+	 * Provides ability to install a low-level memory fault handler.
+	 * The handler methods should generally return 'false' to allow
+	 * the default handler to generate the appropriate target error.
+	 * Within the fault handler, the EmulateExecutionState can be used
 	 * to distinguish the pcode-emit state and the actual execution state
-	 * since an attempt to execute an instruction at an uninitialized 
+	 * since an attempt to execute an instruction at an uninitialized
 	 * memory location will cause an uninitializedRead during the PCODE_EMIT
 	 * state.
 	 * @param handler memory fault handler.
@@ -265,7 +265,7 @@ public class EmulatorHelper implements MemoryFaultHandler, EmulatorConfiguration
 	}
 
 	/**
-	 * Read a stack value from the memory state. 
+	 * Read a stack value from the memory state.
 	 * @param relativeOffset offset relative to current stack pointer
 	 * @param size data size in bytes
 	 * @param signed true if value read is signed, false if unsigned
@@ -464,7 +464,7 @@ public class EmulatorHelper implements MemoryFaultHandler, EmulatorConfiguration
 
 	/**
 	 * Continue execution from the current execution address.
-	 * No adjustment will be made to the context beyond the normal 
+	 * No adjustment will be made to the context beyond the normal
 	 * context flow behavior defined by the language.
 	 * Method will block until execution stops.
 	 * @param monitor
@@ -552,7 +552,7 @@ public class EmulatorHelper implements MemoryFaultHandler, EmulatorConfiguration
 
 	/**
 	 * Step execution one instruction which may consist of multiple
-	 * pcode operations.  No adjustment will be made to the context beyond the normal 
+	 * pcode operations.  No adjustment will be made to the context beyond the normal
 	 * context flow behavior defined by the language.
 	 * Method will block until execution stops.
 	 * @return true if execution completes without error
@@ -566,9 +566,9 @@ public class EmulatorHelper implements MemoryFaultHandler, EmulatorConfiguration
 	/**
 	 * Create a new initialized memory block using the current emulator memory state
 	 * @param name block name
-	 * @param start start address of the block 
+	 * @param start start address of the block
 	 * @param length the size of the block
-	 * @param overlay if true, the block will be created as an OVERLAY which means that a new 
+	 * @param overlay if true, the block will be created as an OVERLAY which means that a new
 	 * overlay address space will be created and the block will have a starting address at the same
 	 * offset as the given start address parameter, but in the new address space.
 	 * @param monitor

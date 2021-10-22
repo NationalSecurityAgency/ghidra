@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,9 +19,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ public class PopulateMemviewLocal extends GhidraScript {
 
 	/**
 	 * Create an address in the processor's (x86_64) default space.
-	 * 
+	 *
 	 * @param offset the byte offset
 	 * @return the address
 	 */
@@ -76,7 +76,7 @@ public class PopulateMemviewLocal extends GhidraScript {
 
 	/**
 	 * Create an address range in the processor's default space.
-	 * 
+	 *
 	 * @param min the minimum byte offset
 	 * @param max the maximum (inclusive) byte offset
 	 * @return the range
@@ -87,7 +87,7 @@ public class PopulateMemviewLocal extends GhidraScript {
 
 	/**
 	 * Get a register by name
-	 * 
+	 *
 	 * @param name the name
 	 * @return the register
 	 */
@@ -220,7 +220,7 @@ public class PopulateMemviewLocal extends GhidraScript {
 
 		/**
 		 * Give a program view to Ghidra's program manager
-		 * 
+		 *
 		 * NOTE: Eventually, there will probably be a TraceManager service as well, but to use the
 		 * familiar UI components, we generally take orders from the ProgramManager.
 		 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,7 +88,7 @@ public class VersionControlUndoHijackAction extends VersionControlAction {
 	}
 
 	/**
-	 * Displays the undo hijack confirmation dialog for each hijacked file and then 
+	 * Displays the undo hijack confirmation dialog for each hijacked file and then
 	 * undoes the hijack while keeping a copy of the hijacked file if the user chooses to do so.
 	 * @param hijackList the list of hijacked domain files.
 	 */
@@ -113,7 +113,7 @@ public class VersionControlUndoHijackAction extends VersionControlAction {
 	}
 
 	/**
-	 * Determines a unique keep file name for saving a copy of the hijack file 
+	 * Determines a unique keep file name for saving a copy of the hijack file
 	 * when its hijack is undone.
 	 * @param parent the domain folder where the hijacked file exists.
 	 * @param name the name of the hijacked file.
@@ -143,7 +143,7 @@ public class VersionControlUndoHijackAction extends VersionControlAction {
 		/**
 		 * Creates a task for undoing hijacks of domain files.
 		 * @param hijackFiles the list of hijacked files
-		 * @param saveCopy true indicates that copies of the modified files should be made 
+		 * @param saveCopy true indicates that copies of the modified files should be made
 		 * before undo of the checkout
 		 */
 		UndoHijackTask(DomainFile[] hijackFiles, boolean saveCopy) {

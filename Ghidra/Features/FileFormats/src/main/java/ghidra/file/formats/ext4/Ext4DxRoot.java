@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,16 +42,16 @@ public class Ext4DxRoot implements StructConverter {
 	private byte dx_root_info_hash_version;
 	private byte dx_root_info_info_length;
 	private byte dx_root_info_indirect_levels;
-	private byte dx_root_info_unused_flags; 	
+	private byte dx_root_info_unused_flags;
 	private short limit;
 	private short count;
 	private int block;
-	private Ext4DxEntry[] entries; 
-	
+	private Ext4DxEntry[] entries;
+
 	public Ext4DxRoot(ByteProvider provider) throws IOException {
 		this( new BinaryReader( provider, true ) );
 	}
-	
+
 	public Ext4DxRoot(BinaryReader reader) throws IOException {
 		dot_inode = reader.readNextInt();
 		dot_rec_len = reader.readNextShort();
@@ -67,7 +67,7 @@ public class Ext4DxRoot implements StructConverter {
 		dx_root_info_hash_version = reader.readNextByte();
 		dx_root_info_info_length = reader.readNextByte();
 		dx_root_info_indirect_levels = reader.readNextByte();
-		dx_root_info_unused_flags = reader.readNextByte(); 	
+		dx_root_info_unused_flags = reader.readNextByte();
 		limit = reader.readNextShort();
 		count = reader.readNextShort();
 		block = reader.readNextInt();
@@ -76,7 +76,7 @@ public class Ext4DxRoot implements StructConverter {
 			entries[i] = new Ext4DxEntry(reader);
 		}
 	}
-	
+
 	public int getDot_inode() {
 		return dot_inode;
 	}
@@ -170,11 +170,11 @@ public class Ext4DxRoot implements StructConverter {
 		structure.add(BYTE, "dx_root_info_hash_version", null);
 		structure.add(BYTE, "dx_root_info_info_length", null);
 		structure.add(BYTE, "dx_root_info_indirect_levels", null);
-		structure.add(BYTE, "dx_root_info_unused_flags", null); 	
+		structure.add(BYTE, "dx_root_info_unused_flags", null);
 		structure.add(WORD, "limit", null);
 		structure.add(WORD, "count", null);
 		structure.add(DWORD, "block", null);
-		structure.add(new ArrayDataType(entries[0].toDataType(), count, entries[0].toDataType().getLength()), "entries", null); 
+		structure.add(new ArrayDataType(entries[0].toDataType(), count, entries[0].toDataType().getLength()), "entries", null);
 		return structure;
 	}
 

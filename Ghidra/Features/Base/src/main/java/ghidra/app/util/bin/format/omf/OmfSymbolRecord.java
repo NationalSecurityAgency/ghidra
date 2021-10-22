@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ public class OmfSymbolRecord extends OmfRecord {
 	private int baseFrame;
 	private boolean isStatic;
 	private OmfSymbol[] symbol;
-	
+
 	public OmfSymbolRecord(BinaryReader reader,boolean isStatic) throws IOException {
 		this.isStatic = isStatic;
 		readRecordHeader(reader);
@@ -37,7 +37,7 @@ public class OmfSymbolRecord extends OmfRecord {
 		baseSegmentIndex = OmfRecord.readIndex(reader);
 		if (baseSegmentIndex == 0)
 			baseFrame = reader.readNextShort() & 0xffff;
-		
+
 		ArrayList<OmfSymbol> symbollist = new ArrayList<OmfSymbol>();
 		while(reader.getPointerIndex() < max) {
 			String name = OmfRecord.readString(reader);
@@ -54,19 +54,19 @@ public class OmfSymbolRecord extends OmfRecord {
 	public boolean isStatic() {
 		return isStatic;
 	}
-	
+
 	public int getGroupIndex() {
 		return baseGroupIndex;
 	}
-	
+
 	public int getSegmentIndex() {
 		return baseSegmentIndex;
 	}
-	
+
 	public int numSymbols() {
 		return symbol.length;
 	}
-	
+
 	public OmfSymbol getSymbol(int i) {
 		return symbol[i];
 	}

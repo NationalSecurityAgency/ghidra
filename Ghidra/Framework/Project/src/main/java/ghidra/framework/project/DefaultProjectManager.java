@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -212,7 +212,7 @@ public class DefaultProjectManager implements ProjectManager {
 
 	/**
 	 * Delete the project in the given location and remove it from the list of known projects.
-	 * 
+	 *
 	 * @return false if no project was deleted.
 	 */
 	@Override
@@ -303,7 +303,7 @@ public class DefaultProjectManager implements ProjectManager {
 	/**
 	 * Add the default tools to the given tool chest.  This method does not attempt to merge the
 	 * user's previous tools, as does {@link #installTools(ToolChest)}.
-	 * 
+	 *
 	 * @param toolChest tool chest which to add the default tools
 	 */
 	public void addDefaultTools(ToolChest toolChest) {
@@ -338,7 +338,7 @@ public class DefaultProjectManager implements ProjectManager {
 			return;
 		}
 
-		// get the user's exiting tool, adding any default tools they don't have 
+		// get the user's exiting tool, adding any default tools they don't have
 		Set<ToolTemplate> preExistingUserTools = getPreExistingUserTools(recoveryDirectory);
 		Collection<ToolTemplate> mergedTools =
 			mergeDefaultToolsIntoExisting(tools, preExistingUserTools);
@@ -398,7 +398,7 @@ public class DefaultProjectManager implements ProjectManager {
 					 .collect(Collectors.toMap(t -> t.getName(), Function.identity()))
 					 ;
 		allTools.putAll(defaultMap);
-		allTools.putAll(userMap); // user tools last, overwriting the defaults; they are preferred 
+		allTools.putAll(userMap); // user tools last, overwriting the defaults; they are preferred
 		//@formatter:on
 
 		return allTools.values();
@@ -473,7 +473,7 @@ public class DefaultProjectManager implements ProjectManager {
 		}
 
 		// Note: we call replace here and not add, since we know that we want to put a new tool
-		//       in by the given name.  At this point we can assume there are not yet any 
+		//       in by the given name.  At this point we can assume there are not yet any
 		//       tools to overwrite, since this method is only called when no tools existed and
 		//       we are adding the default set.
 		toolChest.replaceToolTemplate(template);

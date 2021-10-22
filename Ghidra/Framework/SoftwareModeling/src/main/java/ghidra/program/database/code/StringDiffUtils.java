@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,7 +136,7 @@ class StringDiffUtils {
 
 		StringBuilder buffy = new StringBuilder();
 
-		// special case: if this insert is for the end of the line, then we want to add 
+		// special case: if this insert is for the end of the line, then we want to add
 		//               a newline before the remaining text is added since the original text
 		//               did not have this newline
 		if (isAtEnd) {
@@ -264,7 +264,7 @@ class StringDiffUtils {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private static class Line {
 

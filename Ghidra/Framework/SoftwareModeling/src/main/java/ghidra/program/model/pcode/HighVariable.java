@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 /**
- * 
+ *
  *
  * A High-level variable (as in a high-level language like C/C++)
  * built out of Varnodes (low-level variables).  This is a base-class
@@ -101,7 +101,7 @@ public abstract class HighVariable {
 	/**
 	 * A variable can reside in different locations at various times.
 	 * Get all the instances of the variable.
-	 * 
+	 *
 	 * @return all the variables instances
 	 */
 	public Varnode[] getInstances() {
@@ -125,7 +125,7 @@ public abstract class HighVariable {
 
 	/**
 	 * Attach an instance or additional location the variable can be found in.
-	 * 
+	 *
 	 * @param inst varnode where variable can reside.
 	 * @param rep location that variable comes into scope.
 	 */

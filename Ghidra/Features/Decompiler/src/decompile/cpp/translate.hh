@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -188,7 +188,7 @@ public:
 };
 
 /// \brief A record describing how logical values are split
-/// 
+///
 /// The decompiler can describe a logical value that is stored split across multiple
 /// physical memory locations.  This record describes such a split. The pieces must be listed
 /// from \e most \e significant to \e least \e significant.
@@ -443,7 +443,7 @@ inline AddrSpace *AddrSpaceManager::getFspecSpace(void) const {
   return fspecspace;
 }
 
-/// There is a special address space reserved for providing a 
+/// There is a special address space reserved for providing a
 /// logical contiguous memory location for variables that are
 /// really split between two physical locations.  This allows the
 /// the decompiler to work with the logical value. (See JoinSpace)
@@ -492,7 +492,7 @@ inline AddrSpace *AddrSpaceManager::getDefaultDataSpace(void) const {
 }
 
 /// Pcode represents constant values within an operation as
-/// offsets within a special \e constant address space. 
+/// offsets within a special \e constant address space.
 /// (See ConstantSpace)
 /// \return a pointer to the \b constant space
 inline AddrSpace *AddrSpaceManager::getConstantSpace(void) const {
@@ -521,7 +521,7 @@ inline Address AddrSpaceManager::createConstFromSpace(AddrSpace *spc) const {
 
 /// This returns the total number of address spaces used by the
 /// processor, including all special spaces, like the \b constant
-/// space and the \b iop space. 
+/// space and the \b iop space.
 /// \return the number of spaces
 inline int4 AddrSpaceManager::numSpaces(void) const {
   return baselist.size();
@@ -541,7 +541,7 @@ inline AddrSpace *AddrSpaceManager::getSpace(int4 i) const {
 /// is passed in as \b true. Otherwise, the endianness is set to \b small.
 /// \param val is \b true if the endianness should be set to \b big
 inline void Translate::setBigEndian(bool val) {
-  target_isbigendian = val; 
+  target_isbigendian = val;
 }
 
 /// The \e unique address space, for allocating temporary registers,

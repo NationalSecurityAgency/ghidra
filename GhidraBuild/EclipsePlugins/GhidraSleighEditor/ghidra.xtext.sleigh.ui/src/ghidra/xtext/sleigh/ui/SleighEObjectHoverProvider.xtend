@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import org.eclipse.xtext.util.Strings
 class SleighEObjectHoverProvider extends DefaultEObjectHoverProvider {
 
 	EObject model
-	
+
 	override boolean hasHover(EObject o) {
 		if (o instanceof integerValue) { return true; }
 		return super.hasHover(o)
@@ -73,21 +73,21 @@ class SleighEObjectHoverProvider extends DefaultEObjectHoverProvider {
 				return super.getDocumentation(element)
 		}
 	}
-	
+
 	def getIntegerFormats(integerValue value) {
 		var retStr = "";
 		var valueOf = getIntValue(value)
-		
+
 		retStr = retStr + "<p style=\"color:red;line-height:50%;\">" + "0b" + valueOf.toString(2) + "</p>\n"
 		retStr = retStr + "<p style=\"color:red;line-height:50%;\">" + "0x" + valueOf.toString(16) + "</p>\n"
 		retStr = retStr + "<p style=\"color:red;line-height:50%;\">" + "  " + valueOf.toString(10) + "</p>\n"
-		
+
 		if (retStr.length == 0) {
 			return value.value;
 		}
 		return retStr;
 	}
-	
+
 	def getIntValue(integerValue value) {
 		var parseString = value.value;
 		var string = value.value
@@ -145,7 +145,7 @@ class SleighEObjectHoverProvider extends DefaultEObjectHoverProvider {
 		}
 		return retStr;
 	}
-	
+
 	def getSubTableText(aliasSym element) {
 		var retStr = "";
 		model = element.eResource.contents.get(0);

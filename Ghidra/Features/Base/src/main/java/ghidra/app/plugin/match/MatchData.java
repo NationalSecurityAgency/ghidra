@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -144,7 +144,7 @@ public class MatchData {
 		}
 
 		// note that this post-process step is critical; it adds b program locations
-		// into the user items in the trie, which is required to properly measure 
+		// into the user items in the trie, which is required to properly measure
 		// arity.  if the alignment fails or the b location points into already
 		// defined data, the location is omitted
 		monitor.initialize(searchResults.size());

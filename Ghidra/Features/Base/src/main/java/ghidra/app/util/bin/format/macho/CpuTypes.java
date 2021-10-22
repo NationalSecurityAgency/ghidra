@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ public final class CpuTypes {
 	public final static int CPU_TYPE_MC680x0    = 0x6;
 	public final static int CPU_TYPE_X86        = 0x7;
 	public final static int CPU_TYPE_I386       = CPU_TYPE_X86;		/* compatibility */
-	// CPU_TYPE_MIPS                              0x8 
+	// CPU_TYPE_MIPS                              0x8
 	// UNUSED                                     0x9
 	public final static int CPU_TYPE_MC98000    = 0xa;
 	public final static int CPU_TYPE_HPPA       = 0xb;
@@ -59,21 +59,21 @@ public final class CpuTypes {
 	 */
 	public final static Processor getProcessor(int cpuType, int cpuSubtype) {
 		switch (cpuType) {
-			case CPU_TYPE_X86:        
+			case CPU_TYPE_X86:
 				return Processor.findOrPossiblyCreateProcessor("x86");
-			case CPU_TYPE_X86_64:     
+			case CPU_TYPE_X86_64:
 				return Processor.findOrPossiblyCreateProcessor("x86");
-			case CPU_TYPE_POWERPC:    
+			case CPU_TYPE_POWERPC:
 				return Processor.findOrPossiblyCreateProcessor("PowerPC");
-			case CPU_TYPE_POWERPC64:  
+			case CPU_TYPE_POWERPC64:
 				return Processor.findOrPossiblyCreateProcessor("PowerPC");
-			case CPU_TYPE_I860:       
+			case CPU_TYPE_I860:
 				return Processor.findOrPossiblyCreateProcessor("i860");
-			case CPU_TYPE_SPARC:      
+			case CPU_TYPE_SPARC:
 				return Processor.findOrPossiblyCreateProcessor("Sparc");
-			case CPU_TYPE_ARM:        
+			case CPU_TYPE_ARM:
 				return Processor.findOrPossiblyCreateProcessor("ARM");
-			case CPU_TYPE_ARM_64:        
+			case CPU_TYPE_ARM_64:
 				return Processor.findOrPossiblyCreateProcessor("AARCH64");
 		}
 		throw new RuntimeException("Unrecognized CPU type: 0x"+Integer.toHexString(cpuType));
@@ -96,10 +96,10 @@ public final class CpuTypes {
 
 	public static String getMagicString(int cpuType, int cpuSubtype) {
 		switch (cpuType) {
-			case CPU_TYPE_ARM:        
+			case CPU_TYPE_ARM:
 				return ""+cpuType+"."+cpuSubtype;
 		}
 		return ""+cpuType;
 	}
-	
+
 }

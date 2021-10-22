@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,7 +53,7 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 
 		/*
 		 	Disassembly:
-		 	
+
 		 				DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R),
 		                DWORD_ARRAY_010054e8[2]                01005302(R)
 		                DWORD_ARRAY_010054e8
@@ -63,7 +63,7 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 		       010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)
 		       010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)
 		       010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)
-		
+
 		 */
 
 		// go to an unused address
@@ -98,7 +98,7 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 
 		/*
 		 	Disassembly:
-		 	
+
 		 				// 2 offcuts
 		 				DWORD_ARRAY_010054e8[1]+1    XREF[1,2]:   01005300(R), 01005301(R),
 		             	DWORD_ARRAY_010054e8[2]+1                 01005302(R)
@@ -145,7 +145,7 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 
 		/*
 		 	Disassembly:
-		 	
+
 		 				DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R),
 		                DWORD_ARRAY_010054e8[2]                01005302(R)
 		                DWORD_ARRAY_010054e8
@@ -155,7 +155,7 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 		       010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)
 		       010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)
 		       010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)
-		
+
 		 */
 
 		// go to an unused address
@@ -181,7 +181,7 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 
 		/*
 		 	Disassembly:
-		 	
+
 		 				// 2 offcuts
 		 				DWORD_ARRAY_010054e8[1]+1    XREF[1,2]:   01005300(R), 01005301(R),
 		             	DWORD_ARRAY_010054e8[2]+1                 01005302(R)
@@ -216,7 +216,7 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 
 		/*
 		Disassembly:
-		
+
 					DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R),
 		            DWORD_ARRAY_010054e8[2]                01005302(R)
 		            DWORD_ARRAY_010054e8
@@ -226,7 +226,7 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 			   010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)
 			   010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)
 			   010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)
-		
+
 		*/
 
 		// go to an unused address
@@ -255,7 +255,7 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 
 		/*
 		Disassembly:
-		
+
 					DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R),
 		            DWORD_ARRAY_010054e8[2]                01005302(R)
 		            DWORD_ARRAY_010054e8
@@ -265,7 +265,7 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 			   010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)
 			   010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)
 			   010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)
-		
+
 		*/
 
 		// go to an unused address
@@ -289,15 +289,15 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 
 		/*
 		 	Disassembly:
-		 	
+
 		 	The Instruction:
 		 												\/
 		 	 01002252 b9 81 00        MOV        ECX=>DWORD_ARRAY_010054e8,0x81                   =
 		         00 00
-		
-		
+
+
 		 	The Array:
-		 	
+
 		 				DWORD_ARRAY_010054e8[1]   XREF[1,2]:   01005300(R), 01005301(R),
 		                DWORD_ARRAY_010054e8[2]                01005302(R)
 		                DWORD_ARRAY_010054e8
@@ -307,7 +307,7 @@ public class ArrayLocationReferencesTest extends AbstractLocationReferencesTest 
 		       010054e8 00 00 00 00     ddw       0h  [0] XREF[1]:     01005300(R)
 		       010054ec 00 00 00 00     ddw       0h  [1] XREF[1]:     01005301(R)
 		       010054f0 00 00 00 00     ddw       0h  [2] XREF[1]:     01005302(R)
-		
+
 		 */
 
 		// go to an unused address

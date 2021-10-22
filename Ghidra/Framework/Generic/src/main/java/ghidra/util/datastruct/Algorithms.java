@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.util.task.TaskMonitorAdapter;
 import java.util.*;
 
 /**
- * <CODE>Algorithms</CODE> is a class containing static methods that implement 
+ * <CODE>Algorithms</CODE> is a class containing static methods that implement
  * general algorithms based on objects returned from a data model.
  */
 public class Algorithms {
@@ -44,7 +44,7 @@ public class Algorithms {
 	}
 
 	// finds the index of the first element in the given list--this is used in conjunction with
-	// the binary search, which doesn't produce the desired results when searching lists with 
+	// the binary search, which doesn't produce the desired results when searching lists with
 	// duplicates
 
 	private static <T> int findTrueStartIndex(T searchItem, List<T> dataList, int startIndex,
@@ -145,7 +145,7 @@ public class Algorithms {
 	}
 
 //	/**
-//	 * Performs a quick sort on an array of long values. 
+//	 * Performs a quick sort on an array of long values.
 //	 * The entire array is sorted using the provided comparator.
 //	 * @param model the index based model containing the data to be searched.
 //	 * @param monitor provides feedback about the sort progress and allows user to cancel sort.
@@ -155,7 +155,7 @@ public class Algorithms {
 //		qsort(data, 0, data.size()-1, comparator, monitor);
 //	}
 //	/**
-//	 * Performs a quick sort on a portion of an array of long values. 
+//	 * Performs a quick sort on a portion of an array of long values.
 //	 * The array is sorted between the low index and high index inclusive
 //	 * using the provided comparator.
 //	 * @param model the index based model containing the data to be searched.
@@ -167,7 +167,7 @@ public class Algorithms {
 //	public static <T> void qsort(List<T> data, int low, int high, Comparator<T> comparator, TaskMonitor monitor) {
 //		if (monitor.isCancelled()) {
 //			return;
-//		} 
+//		}
 //		if (low+6 > high) {
 //			bubbleSort(data, low, high, comparator);
 //			return;
@@ -183,16 +183,16 @@ public class Algorithms {
 //		int i=low;
 //		int j=high;
 //		while(i<j) {
-//			while(comparator.compare(data.get(++i), pivotObj) < 0){ 
+//			while(comparator.compare(data.get(++i), pivotObj) < 0){
 //				if (monitor.isCancelled()) {
 //					return;
-//				} 
-//			} 
+//				}
+//			}
 //			while(comparator.compare(pivotObj, data.get(--j)) < 0) {
 //				if (monitor.isCancelled()) {
 //					return;
-//				} 
-//			} 
+//				}
+//			}
 //			if (i < j) {
 //				Collections.swap(data, i, j);
 //			}
@@ -214,6 +214,6 @@ public class Algorithms {
 //			Collections.swap(data, high, middle);
 //		}
 //		Collections.swap(data, middle, high-1);
-//	}	
+//	}
 
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.util.UniversalID;
 
 /**
- * 
+ *
  * Basic implementation for the typedef dataType
  */
 public class TypedefDataType extends GenericDataType implements TypeDef {
@@ -54,7 +54,7 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	 * @param path category path for this datatype
 	 * @param name name of this typedef
 	 * @param dt data type that is being typedef'ed (may not be null)
-	 * @param dtm the data type manager associated with this data type. This can be null. 
+	 * @param dtm the data type manager associated with this data type. This can be null.
 	 */
 	public TypedefDataType(CategoryPath path, String name, DataType dt, DataTypeManager dtm) {
 		super(path, name, dtm);
@@ -73,7 +73,7 @@ public class TypedefDataType extends GenericDataType implements TypeDef {
 	 * @param lastChangeTime the last time this data type was changed
 	 * @param lastChangeTimeInSourceArchive the last time this data type was changed in
 	 * its source archive.
-	 * @param dtm the data type manager associated with this data type. This can be null. 
+	 * @param dtm the data type manager associated with this data type. This can be null.
 	 */
 	public TypedefDataType(CategoryPath path, String name, DataType dt, UniversalID universalID,
 			SourceArchive sourceArchive, long lastChangeTime, long lastChangeTimeInSourceArchive,

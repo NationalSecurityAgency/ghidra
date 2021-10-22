@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,21 +61,21 @@ struct B1flex {
 	int c:8; // gcc groups with previous two fields (including non-bitfield)
 	short d:4;
 	long flex[];
-};  
+};
 
 struct B2 {
 	char a;
 	unsigned short b:6; // gcc groups with previous non-bitfield
 	int c:8;
 	int d:4;
-}; 
+};
 
 struct B3 {
 	char a;
 	unsigned short b:6; // gcc groups with previous non-bitfield
 	int c:8;
 	char d; // gcc groups with int bit-field
-}; 
+};
 
 
 
@@ -87,7 +87,7 @@ struct Z1 {
 	unsigned short b:6;
 	int c:8;
 	short d:4;
-}; 
+};
 
 struct Z2 {
 	char a;
@@ -95,7 +95,7 @@ struct Z2 {
 	int c:8;
 	int :0;
 	short d:4;
-}; 
+};
 
 struct Z3 {
 	char a;
@@ -103,7 +103,7 @@ struct Z3 {
 	int c:8; // gcc groups with previous two fields (including non-bitfield)
 	int d:4;
 	long long :0; // trailing :0 imposes alignment onto structure
-}; 
+};
 
 struct Z4 {
 	char a;
@@ -111,7 +111,7 @@ struct Z4 {
 	int c:8;    // gcc groups with previous two fields (including non-bitfield)
 	long long :0; // forced alignment of non-bitfield
 	char d;
-}; 
+};
 
 struct Z5 {
 	char a;
@@ -141,21 +141,21 @@ struct B1p1 {
 	unsigned short b:6;
 	int c:8;
 	short d:4;
-}; 
+};
 
 struct B2p1 {
 	char a;
 	unsigned short b:6;
 	int c:8;
 	int d:4;
-}; 
+};
 
 struct B3p1 {
 	char a;
 	unsigned short b:6;
 	int c:8;
 	char d; // gcc groups with int bit-field
-}; 
+};
 
 
 
@@ -167,7 +167,7 @@ struct Z1p1 {
 	unsigned short b:6;
 	int c:8;
 	short d:4;
-}; 
+};
 
 struct Z2p1 {
 	char a;
@@ -175,7 +175,7 @@ struct Z2p1 {
 	int c:8;
 	int :0;
 	short d:4;
-}; 
+};
 
 struct Z3p1 {
 	char a;
@@ -183,7 +183,7 @@ struct Z3p1 {
 	int c:8;
 	int d:4;
 	long long :0; // trailing :0 (ignore when packing ?) - case needs more testing
-}; 
+};
 
 struct Z4p1 {
 	char a;
@@ -191,12 +191,12 @@ struct Z4p1 {
 	int c:8;
 	long long :0; // forced alignment of non-bitfield
 	char d;
-}; 
+};
 
 
 #pragma pack()
 
-// packed structure contained within default aligned structure 
+// packed structure contained within default aligned structure
 struct Z3p1T {
 	char a;
 	struct Z3p1 z3p1;
@@ -212,21 +212,21 @@ struct B1p2 {
 	unsigned short b:6;
 	int c:8;
 	short d:4;
-}; 
+};
 
 struct B2p2 {
 	char a;
 	unsigned short b:6;
 	int c:8;
 	int d:4;
-}; 
+};
 
 struct B3p2 {
 	char a;
 	unsigned short b:6;
 	int c:8;
 	char d; // gcc groups with int bit-field
-}; 
+};
 
 struct B4p2 {
 	char a;
@@ -234,7 +234,7 @@ struct B4p2 {
 	int c:8;
 	long long d;
 	int e:4;
-}; 
+};
 
 
 
@@ -246,7 +246,7 @@ struct Z1p2 {
 	unsigned short b:6;
 	int c:8;
 	short d:4; // NOTE: gcc appears ignore short alignment constraint due to int :0 ???
-}; 
+};
 
 struct Z1p2x {
 	char a;
@@ -261,7 +261,7 @@ struct Z1p2x {
 	short d5:4;
 	short d6:4;
 	short d7:4;
-	
+
 	short :0;
 	unsigned short _b:6;
 	int _c:8;
@@ -273,7 +273,7 @@ struct Z1p2x {
 	short _d5:4;
 	short _d6:4;
 	short _d7:4;
-	
+
 };
 
 struct Z2p2 {
@@ -282,7 +282,7 @@ struct Z2p2 {
 	int c:8;
 	int :0;
 	short d:4;
-}; 
+};
 
 struct Z3p2 {
 	char a;
@@ -290,7 +290,7 @@ struct Z3p2 {
 	int c:8;
 	int d:4;
 	long long :0; // trailing :0 (ignore when packing ?) - case needs more testing
-}; 
+};
 
 struct Z4p2 {
 	char a;
@@ -298,7 +298,7 @@ struct Z4p2 {
 	int c:8;
 	long long :0; // forced alignment of non-bitfield
 	char d;
-}; 
+};
 
 struct Z5p2 {
 	char a;
@@ -420,7 +420,7 @@ struct S2p2 {
 
 enum myEnum { ONE, TWO, THREE };
 
-typedef enum myEnum enumTypedef; 
+typedef enum myEnum enumTypedef;
 
 typedef int intTypedef;
 

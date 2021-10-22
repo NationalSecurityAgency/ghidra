@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,12 +22,12 @@ import java.io.IOException;
 
 /**
  * A class to represent a new-executable segment relocation.
- * 
+ *
  */
 public class SegmentRelocation {
-	
+
 	public final static int VALUES_SIZE = 5;
-	
+
 	/**Moveable relocation.*/
     public final static short MOVEABLE = 0xff;
     /**A mask indicating that the low-order nibble is the type.*/
@@ -110,7 +110,7 @@ public class SegmentRelocation {
         targetSegment = reader.readNextShort();
         targetOffset  = reader.readNextShort();
     }
-    
+
     SegmentRelocation(byte type, long[] values) {
     	this.type = type;
 		if (values.length != VALUES_SIZE) {
@@ -122,7 +122,7 @@ public class SegmentRelocation {
     	targetSegment = (short)values[3];
     	targetOffset = (short)values[4];
     }
-    
+
     /**
      * Returns true if this relocation is an internal reference.
      * @return true if this relocation is an internal reference

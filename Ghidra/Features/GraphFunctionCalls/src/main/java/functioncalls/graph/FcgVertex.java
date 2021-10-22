@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 	private static final Icon COLLAPSE_ICON =
 		ResourceManager.getScaledIcon(Icons.COLLAPSE_ALL_ICON, 10, 10);
 
-	// higher numbered layers go on top	
+	// higher numbered layers go on top
 	private static final Integer VERTEX_SHAPE_LAYER = new Integer(100);
 	private static final Integer TOGGLE_BUTTON_LAYER = new Integer(200);
 	private static final Integer LABEL_LAYER = new Integer(300);
@@ -60,7 +60,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 	private static final int VERTEX_SHAPE_SIZE = 50;
 
 	// TODO to be made an option in an upcoming ticket
-	// based upon the default function name, plus some extra 
+	// based upon the default function name, plus some extra
 	private static final int MAX_NAME_LENGTH = 30;
 
 	private Function function;
@@ -93,7 +93,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param function the function represented by this vertex
 	 * @param level the level of this vertex
 	 * @param expansionListener the listener for expanding connections to this vertex
@@ -135,7 +135,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 		int start = 0;
 		int end = half + offset;
 
-		// paint top-down: dark to light for incoming; light to dark for outgoing 
+		// paint top-down: dark to light for incoming; light to dark for outgoing
 		inPaint = new LinearGradientPaint(new Point(0, start), new Point(0, end),
 			new float[] { .0f, .2f, 1f }, new Color[] { darkestColor, darkColor, lightColor });
 
@@ -186,7 +186,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 		parent.add(v);
 		parent.add(name);
 
-		// for now, the buttons only appear on hover, but if we want to avoid clipping when 
+		// for now, the buttons only appear on hover, but if we want to avoid clipping when
 		// painting, we need to account for them in the shape's overall bounds
 		Area in = new Area(toggleInsButton.getBounds());
 		Area out = new Area(toggleOutsButton.getBounds());
@@ -287,8 +287,8 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 		vertexImageLabel.setBounds(x, y, size.width, size.height);
 		Dimension shapeSize = vertexShape.getBounds().getSize();
 
-		// setFrame() will make sure the shape's x,y values are where they need to be 
-		// for the later 'full shape' creation		
+		// setFrame() will make sure the shape's x,y values are where they need to be
+		// for the later 'full shape' creation
 		vertexShape.setFrame(x, y, shapeSize.width, shapeSize.height);
 		layeredPane.add(vertexImageLabel, VERTEX_SHAPE_LAYER);
 	}
@@ -366,7 +366,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 
 	/**
 	 * Sets to true if this vertex is showing all edges in the incoming direction
-	 * 
+	 *
 	 * @param setExpanded true if this vertex is showing all edges in the incoming direction
 	 */
 	public void setIncomingExpanded(boolean setExpanded) {
@@ -410,7 +410,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 
 	/**
 	 * Returns true if this vertex is showing all edges in the incoming direction
-	 * 
+	 *
 	 * @return true if this vertex is showing all edges in the incoming direction
 	 */
 	public boolean isIncomingExpanded() {
@@ -419,7 +419,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 
 	/**
 	 * Sets to true if this vertex is showing all edges in the outgoing direction
-	 * 
+	 *
 	 * @param setExpanded true if this vertex is showing all edges in the outgoing direction
 	 */
 	public void setOutgoingExpanded(boolean setExpanded) {
@@ -434,7 +434,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 
 	/**
 	 * Returns true if this vertex is showing all edges in the outgoing direction
-	 * 
+	 *
 	 * @return true if this vertex is showing all edges in the outgoing direction
 	 */
 	public boolean isOutgoingExpanded() {
@@ -443,7 +443,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 
 	/**
 	 * Returns whether this vertex is fully expanded in its current direction
-	 * 
+	 *
 	 * @return whether this vertex is fully expanded in its current direction
 	 */
 	public boolean isExpanded() {
@@ -458,10 +458,10 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 	}
 
 	/**
-	 * Sets whether this vertex has too many incoming references, where too many is subjectively 
-	 * defined by this class.  Too many nodes in the display would ruin rendering and general 
+	 * Sets whether this vertex has too many incoming references, where too many is subjectively
+	 * defined by this class.  Too many nodes in the display would ruin rendering and general
 	 * usability.
-	 * 
+	 *
 	 * @param tooMany if there are too many references
 	 */
 	public void setTooManyIncomingReferences(boolean tooMany) {
@@ -472,10 +472,10 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 	}
 
 	/**
-	 * Sets whether this vertex has too many outgoing references, where too many is subjectively 
-	 * defined by this class.  Too many nodes in the display would ruin rendering and general 
+	 * Sets whether this vertex has too many outgoing references, where too many is subjectively
+	 * defined by this class.  Too many nodes in the display would ruin rendering and general
 	 * usability.
-	 * 
+	 *
 	 * @param tooMany if there are too many references
 	 */
 	public void setTooManyOutgoingReferences(boolean tooMany) {
@@ -486,10 +486,10 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 	}
 
 	/**
-	 * Returns whether this vertex has too many incoming references, where too many is subjectively 
-	 * defined by this class.  Too many nodes in the display would ruin rendering and general 
+	 * Returns whether this vertex has too many incoming references, where too many is subjectively
+	 * defined by this class.  Too many nodes in the display would ruin rendering and general
 	 * usability.
-	 * 
+	 *
 	 * @return true if there are too many references
 	 */
 	public boolean hasTooManyIncomingReferences() {
@@ -497,10 +497,10 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 	}
 
 	/**
-	 * Returns whether this vertex has too many outgoing references, where too many is subjectively 
-	 * defined by this class.  Too many nodes in the display would ruin rendering and general 
+	 * Returns whether this vertex has too many outgoing references, where too many is subjectively
+	 * defined by this class.  Too many nodes in the display would ruin rendering and general
 	 * usability.
-	 * 
+	 *
 	 * @return true if there are too many references
 	 */
 	public boolean hasTooManyOutgoingReferences() {
@@ -508,9 +508,9 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 	}
 
 	/**
-	 * Returns true if this vertex can expand itself in its current direction, or in either 
+	 * Returns true if this vertex can expand itself in its current direction, or in either
 	 * direction if this is a source vertex
-	 * 
+	 *
 	 * @return true if this vertex can be expanded
 	 */
 	public boolean canExpand() {
@@ -536,7 +536,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 
 	/**
 	 * Sets whether this vertex has any incoming references
-	 * 
+	 *
 	 * @param hasIncoming true if this vertex has any incoming references
 	 */
 	public void setHasIncomingReferences(boolean hasIncoming) {
@@ -545,7 +545,7 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 
 	/**
 	 * Sets whether this vertex has any outgoing references
-	 * 
+	 *
 	 * @param hasIncoming true if this vertex has any incoming references
 	 */
 

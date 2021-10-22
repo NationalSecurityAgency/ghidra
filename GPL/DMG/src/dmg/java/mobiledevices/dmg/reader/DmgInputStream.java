@@ -39,5 +39,5 @@ public class DmgInputStream extends InputStream {
 		return stream.read(b, off, len);
 	}
 
-	
+
 }

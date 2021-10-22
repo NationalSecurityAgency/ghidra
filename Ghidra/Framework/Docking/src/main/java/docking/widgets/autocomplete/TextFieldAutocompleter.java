@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,14 +34,14 @@ import ghidra.util.task.SwingUpdateManager;
 
 /**
  * An autocompleter that may be attached to one or more {@link JTextField}.
- * 
+ *
  * Each autocompleter instance has one associated window (displaying the list of suggestions) and
  * one associated model (generating the list of suggestions). Thus, the list can only be active on
  * one of the attached text fields at a time. This is usually the desired behavior, and it allows
  * for one autocompleter to be reused on many fields. Behavior is undefined when multiple
  * autocompleters are attached to the same text field. More likely, you should implement a
  * composite model if you wish to present completions from multiple models on a single text field.
- * 
+ *
  * By default, the autocompleter is activated when the user presses CTRL-SPACE, at which point, the
  * model is queried for possible suggestions. The completer gives the model all the text preceding
  * the current field's caret. This behavior can be changed by overriding the
@@ -53,7 +53,7 @@ import ghidra.util.task.SwingUpdateManager;
  * {@link #getCompletionWindowPosition()} method. As a convenience, the
  * {@link #getCaretPositionOnScreen(JTextField)} method is available to compute the default
  * position.
- * 
+ *
  * Whether or not the list is currently displayed, when the user presses CTRL-SPACE, if only one
  * completion is possible, it is automatically activated. This logic is applied again and again,
  * until either no suggestions are given, or more than one suggestion is given (or until the
@@ -61,19 +61,19 @@ import ghidra.util.task.SwingUpdateManager;
  * by overriding the {@link #getCompletionCanDefault(Object) getCompletionCanDefault(T)} method. This same behavior can be
  * activated by calling the {@link #startCompletion(JTextField)} method, which may be useful, e.g.,
  * to bind a different key sequence to start autocompletion.
- * 
+ *
  * The appearance of each item in the suggestion list can be modified by overriding the various
  * {@code getCompletion...} methods. Note that it's possible for an item to be displayed one way,
  * but cause the insertion of different text. In any case, it is best to ensure any modification
  * produces an intuitive behavior.
- * 
+ *
  * The simplest use case is to create a text field, create an autocompleter with a custom model,
  * and then attach and show.
- * 
+ *
  *
  * <pre>
  * JTextField field = new JTextField();
- * 
+ *
  * {@code AutocompletionModel<String> model = new AutocompletionModel<String>() }{
  *     &#64;Override
  *     {@code public Collection<String> computeCompletions(String text)} {
@@ -84,7 +84,7 @@ import ghidra.util.task.SwingUpdateManager;
  * completer.attachTo(field);
  * ... // Add the field to, e.g., a dialog, and show.
  * }</pre>
- * 
+ *
  * @param <T> the type of suggestions presented by this autocompleter.
  */
 public class TextFieldAutocompleter<T> {
@@ -269,7 +269,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Recompute the display location and move with list window.
-	 * 
+	 *
 	 * This is useful, e.g., when the window containing the associated text field(s) moves.
 	 */
 	public void updateDisplayLocation() {
@@ -280,7 +280,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Update the contents of the suggestion list.
-	 * 
+	 *
 	 * This entails taking the prefix, querying the model, and rendering the list.
 	 */
 	protected void updateDisplayContents() {
@@ -363,7 +363,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Check if the completion list window is visible.
-	 * 
+	 *
 	 * If it is visible, this implies that the user is actively using the autocompleter.
 	 * @return true if shown, false if hidden.
 	 */
@@ -381,7 +381,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Gets the prefix from the given text field, used to query the model.
-	 * 
+	 *
 	 * @param field an attached field, usually the one with focus.
 	 * @return the prefix to use as the query.
 	 */
@@ -396,7 +396,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Get the preferred location (on screen) of the completion list window.
-	 * 
+	 *
 	 * Typically, this is a location near the focused field. Ideally, it is positioned such that
 	 * the displayed suggestions coincide with the applicable text in the focused field. For
 	 * example, if the suggestions display some portion of the prefix, the window could be
@@ -410,7 +410,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Get the preferred dimensions of the completion list window.
-	 * 
+	 *
 	 * Typically, this is the width of the focused field.
 	 * @return the dimension giving the preferred height and width. A value can be -1 to indicate
 	 *         no preference.
@@ -422,7 +422,7 @@ public class TextFieldAutocompleter<T> {
 	/**
 	 * A convenience function that returns the bottom on-screen position of the given field's
 	 * caret.
-	 * 
+	 *
 	 * @param field the field, typically the one having focus
 	 * @return the on-screen position of the caret's bottom.
 	 */
@@ -443,7 +443,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Builds the list cell renderer for the autocompletion list.
-	 * 
+	 *
 	 * A programmer may override this if the various {@code getCompletion...} methods prove
 	 * insufficient for customizing the display of the suggestions. Please remember that
 	 * {@link JLabel}s can render HTML, so {@link #getCompletionDisplay(Object) getCompletionDisplay(T)} is quite powerful
@@ -456,7 +456,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Attach the autocompleter to the given text field.
-	 * 
+	 *
 	 * If this method is never called, then the autocompleter can never appear.
 	 * @param field the field that will gain this autocompletion feature
 	 * @return true, if this field is not already attached
@@ -483,7 +483,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Deprive the given field of this autocompleter.
-	 * 
+	 *
 	 * @param field the field that will lose this autocompletion feature
 	 * @return true, if this field was actually attached
 	 */
@@ -501,7 +501,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Cause the currently-selected suggestion to be activated.
-	 * 
+	 *
 	 * By default, this is called when the user presses ENTER or clicks a suggestion.
 	 */
 	protected void activateCurrentCompletion() {
@@ -515,11 +515,11 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Fire the registered autocompletion listeners on the given event.
-	 * 
+	 *
 	 * Each registered listener is invoked in order of registration. If any listener consumes the
 	 * event, then later-registered listeners will not be notified of the event. If any listener
 	 * cancels the event, then the suggested text will not be inserted.
-	 * 
+	 *
 	 * @param ev the event
 	 * @return true, if no listener cancelled the event
 	 */
@@ -574,9 +574,9 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Get all registered listeners of the given type
-	 * 
+	 *
 	 * @param listenerType the type of listeners to get
-	 * @return an array of registered listeners 
+	 * @return an array of registered listeners
 	 */
 	@SuppressWarnings({ "unchecked", "hiding" })
 	public <T> T[] getListeners(Class<T> listenerType) {
@@ -588,7 +588,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Get the text to insert when the given suggestion is activated
-	 * 
+	 *
 	 * @param sel the activated suggestion
 	 * @return the text to insert
 	 */
@@ -598,7 +598,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Get the (possibly HTML) text to display for the given suggestion in the list
-	 * 
+	 *
 	 * @param sel the suggestion to display
 	 * @return the text or HTML representing the suggestion
 	 */
@@ -608,7 +608,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Get the foreground color to display for the given suggestion in the list
-	 * 
+	 *
 	 * @param sel the suggestion to display
 	 * @param isSelected true if the suggestion is currently selected
 	 * @param cellHasFocus true if the suggestion currently has focus
@@ -620,7 +620,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Get the background color to display for the given suggestion in the list
-	 * 
+	 *
 	 * @param sel the suggestion to display
 	 * @param isSelected true if the suggestion is currently selected
 	 * @param cellHasFocus true if the suggestion currently has focus
@@ -632,7 +632,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Get the icon to display with the given suggestion in the list
-	 * 
+	 *
 	 * @param sel the suggestion to display
 	 * @param isSelected true if the suggestion is currently selected
 	 * @param cellHasFocus true if the suggestion currently has focus
@@ -644,7 +644,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Get the font for the given suggestion in the list
-	 * 
+	 *
 	 * @param sel the suggestion to display
 	 * @param isSelected true if the suggestion is currently selected
 	 * @param cellHasFocus true if the suggestion currently has focus
@@ -659,14 +659,14 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Decide whether the given suggestion can be automatically activated.
-	 * 
+	 *
 	 * When autocompletion is started (via {@link #startCompletion(JTextField)}) or when the user
 	 * presses CTRL-SPACE, if there is only a single suggestion, it is taken automatically, and the
 	 * process repeats until there is not a sole suggestion. Before the suggestion is taken,
 	 * though, it calls this method. If it returns false, the single suggestion is displayed in a
 	 * 1-long list instead. This is useful to prevent consequential actions from being
 	 * automatically activated by the autocompleter.
-	 * 
+	 *
 	 * @param sel the potentially auto-activated suggestion.
 	 * @return true to permit auto-activation, false to prevent it.
 	 */
@@ -676,13 +676,13 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * Starts the autocompleter on the given text field.
-	 * 
+	 *
 	 * First, this repeatedly attempts auto-activation. When there are many suggestions, or when
 	 * auto-activation is prevented (see {@link #getCompletionCanDefault(Object) getCompletionCanDefault(T)}), a list is displayed
 	 * (usually below the caret) containing the suggestions given the fields current contents. The
 	 * list remains open until either the user cancels it (usually via ESC) or the user activates
-	 * a suggestion. 
-	 * 
+	 * a suggestion.
+	 *
 	 * NOTE: The text field must already be attached.
 	 * @param field the field on which to start autocompletion.
 	 */
@@ -952,7 +952,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * A demonstration of the autocompleter on a single text field.
-	 * 
+	 *
 	 * The autocompleter offers the tails from a list of strings that start with the text before
 	 * the caret.
 	 */
@@ -995,7 +995,7 @@ public class TextFieldAutocompleter<T> {
 
 	/**
 	 * A demonstration of the autocompleter on two linked text fields.
-	 * 
+	 *
 	 * This demo was designed to test whether the autocompleter and the {@link TextFieldLinker}
 	 * could be composed correctly.
 	 */

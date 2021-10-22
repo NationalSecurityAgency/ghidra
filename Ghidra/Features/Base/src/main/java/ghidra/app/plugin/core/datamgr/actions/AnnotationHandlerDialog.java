@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,11 +39,11 @@ class AnnotationHandlerDialog extends DialogComponentProvider {
 	private AnnotationHandler handler;
 
 	private boolean success;
-		
+
 	AnnotationHandlerDialog(List<AnnotationHandler> handlerList) {
 		super("Export Format");
 		this.handlerList = handlerList;
-			
+
 		addWorkPanel(create());
 		addOKButton();
 		addCancelButton();
@@ -52,7 +52,7 @@ class AnnotationHandlerDialog extends DialogComponentProvider {
         setRememberSize( false );
 
 	}
-	
+
 	@Override
     protected void cancelCallback() {
 		close();
@@ -70,7 +70,7 @@ class AnnotationHandlerDialog extends DialogComponentProvider {
 
 	JPanel create() {
 		JPanel outerPanel = new JPanel(new BorderLayout());
-		
+
 		handlerComboBox = new GhidraComboBox<>(new Vector<AnnotationHandler>(handlerList));
 		handlerComboBox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -80,8 +80,8 @@ class AnnotationHandlerDialog extends DialogComponentProvider {
 		outerPanel.add(handlerComboBox, BorderLayout.NORTH);
 		return outerPanel;
 	}
-	
+
 	public AnnotationHandler getHandler() { return handler; }
-	
+
 	public boolean wasSuccessful()        { return success; }
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,17 +27,17 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * A collection of utility methods that prevent you from having to do unsafe casts of
  * {@link Collection} classes due to runtime type erasure.
- * 
- * <P>Be sure to check Apache collection utils before using this class, as it's a 
+ *
+ * <P>Be sure to check Apache collection utils before using this class, as it's a
  * standard utility and often more efficient.
- * 
+ *
  * <P>Some examples:
  * <OL>
  *  <LI>{@link org.apache.commons.collections4.CollectionUtils}</LI>
  *  <LI>{@link IterableUtils}</LI>
  *  <LI>{@link IteratorUtils}</LI>
  *  <LI>{@link StringUtils#join(Iterable, char)} - for pretty printing collections with newlines</LI>
- *  <LI><code>Apache CollectionUtils.collect(Collection, Transformer)</code> - to turn a 
+ *  <LI><code>Apache CollectionUtils.collect(Collection, Transformer)</code> - to turn a
  *      collection in to collection of strings when the default <code>toString()</code> is lacking</LI>
  * </OL>
  */
@@ -50,7 +50,7 @@ public class CollectionUtils {
 	/**
 	 * Turns the given items into a set.  If there is only a single item and it is null, then
 	 * an empty set will be returned.
-	 * 
+	 *
 	 * @param items the items to put in the set
 	 * @return the list of items
 	 */
@@ -85,8 +85,8 @@ public class CollectionUtils {
 
 	/**
 	 * Drains the given iterator into a new Set
-	 * 
-	 * @param it the iterator 
+	 *
+	 * @param it the iterator
 	 * @return the set
 	 */
 	public static <T> Set<T> asSet(Iterator<T> it) {
@@ -104,9 +104,9 @@ public class CollectionUtils {
 
 	/**
 	 * Turns the given iterable into a new Set, returning it directly if it is a set, draining
-	 * it into a set if it is not already. 
-	 * 
-	 * @param iterable the iterable 
+	 * it into a set if it is not already.
+	 *
+	 * @param iterable the iterable
 	 * @return the set
 	 */
 	public static <T> Set<T> asSet(Iterable<T> iterable) {
@@ -129,9 +129,9 @@ public class CollectionUtils {
 
 	/**
 	 * Similar to {@link Arrays#asList(Object...)}, except that this method will turn a single
-	 * null parameter into an empty list.  Also, this method creates a new, mutable array, 
+	 * null parameter into an empty list.  Also, this method creates a new, mutable array,
 	 * whereas the former's array is not mutable.
-	 * 
+	 *
 	 * @param items the items to add to the list
 	 * @return the list
 	 */
@@ -361,7 +361,7 @@ public class CollectionUtils {
 
 	/**
 	 * Returns true if the given array is null or has 0 length
-	 * 
+	 *
 	 * @param c the collection to check
 	 * @return true if blank
 	 */
@@ -371,7 +371,7 @@ public class CollectionUtils {
 
 	/**
 	 * Returns true if the given array is null or has 0 length
-	 * 
+	 *
 	 * @param t the items to check
 	 * @return true if blank
 	 */
@@ -399,9 +399,9 @@ public class CollectionUtils {
 	}
 
 	/**
-	 * Combines all collections passed-in into a pass-through not creating a new collection) 
+	 * Combines all collections passed-in into a pass-through not creating a new collection)
 	 * Iterable.
-	 * 
+	 *
 	 * @param iterables the iterables to combine
 	 * @return the iterable
 	 */
@@ -413,7 +413,7 @@ public class CollectionUtils {
 
 	/**
 	 * Turns the given iterator into a stream
-	 * 
+	 *
 	 * @param iterator the iterator
 	 * @return the stream
 	 */
@@ -422,9 +422,9 @@ public class CollectionUtils {
 	}
 
 	/**
-	 * Combines all iterables passed-in into a pass-through (not creating a new collection) Stream. 
-	 * 
-	 * @param iterables the iterables to combine 
+	 * Combines all iterables passed-in into a pass-through (not creating a new collection) Stream.
+	 *
+	 * @param iterables the iterables to combine
 	 * @return the stream
 	 */
 	@SafeVarargs

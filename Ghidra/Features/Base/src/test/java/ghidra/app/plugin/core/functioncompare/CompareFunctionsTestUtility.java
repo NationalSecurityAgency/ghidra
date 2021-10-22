@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,16 +24,16 @@ import ghidra.program.model.listing.Function;
 
 /**
  * Helper methods for use with function comparison tests
- * 
+ *
  * @see {@link CompareFunctionsTest}
  * @see {@link CompareFunctionsSlowTest}
  */
 public class CompareFunctionsTestUtility {
 
 	/**
-	 * Asserts that a given list of functions represents all of the source 
+	 * Asserts that a given list of functions represents all of the source
 	 * functions in a comparison model
-	 * 
+	 *
 	 * @param provider the function comparison provider
 	 * @param functions the source functions
 	 */
@@ -46,9 +46,9 @@ public class CompareFunctionsTestUtility {
 	}
 
 	/**
-	 * Asserts that a given function (source) is mapped to a collection of 
+	 * Asserts that a given function (source) is mapped to a collection of
 	 * functions (targets) in a comparison model
-	 * 
+	 *
 	 * @param provider the function comparison provider
 	 * @param source the source function
 	 * @param targets the target functions
@@ -63,7 +63,7 @@ public class CompareFunctionsTestUtility {
 
 	/**
 	 * Returns the given functions as a {@link Set}
-	 * 
+	 *
 	 * @param functions the functions to return as a set
 	 * @return a set of functions
 	 */
@@ -74,9 +74,9 @@ public class CompareFunctionsTestUtility {
 	}
 
 	/**
-	 * Returns the given functions as a {@link Map} of a function (source) to 
+	 * Returns the given functions as a {@link Map} of a function (source) to
 	 * a set of functions (targets)
-	 * 
+	 *
 	 * @param source the key of the map
 	 * @param targets the value of the map
 	 * @return a map of a function to a set of functions

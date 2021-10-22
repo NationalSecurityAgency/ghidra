@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -704,9 +704,9 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 
 //	public void testDeleteDataFile() throws Exception {
 //		fs.createFolder("/","abc");
-//		DataFileItem df = fs.createDataFile("/abc","fred", null, "Data", null);	
+//		DataFileItem df = fs.createDataFile("/abc","fred", null, "Data", null);
 //		events.clear();
-//		
+//
 //		df.delete();
 //		assertNull(fs.getItem("/abc", "fred"));
 //		assertEquals(1, events.size());
@@ -771,9 +771,9 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 //		long id = dbh.startTransaction();
 //		dbh.createTable("test", new Schema(0,"key", new Class[]{IntField.class}, new String[] {"dummy"} ));
 //		dbh.endTransaction(id, true);
-//		DataFileItem df = fs.createDataFile("/abc","fred", new ByteArrayInputStream(dataBytes), "Data", null);	
-//		DataFileItem df2 = fs.createDataFile("/abc","bob", new ByteArrayInputStream(dataBytes), "Data", null);	
-//		DatabaseItem db = fs.createDatabase("/abc","greg", dbh, "Database", null);	
+//		DataFileItem df = fs.createDataFile("/abc","fred", new ByteArrayInputStream(dataBytes), "Data", null);
+//		DataFileItem df2 = fs.createDataFile("/abc","bob", new ByteArrayInputStream(dataBytes), "Data", null);
+//		DatabaseItem db = fs.createDatabase("/abc","greg", dbh, "Database", null);
 //		dbh.close();
 //
 //		events.clear();
@@ -789,12 +789,12 @@ public abstract class AbstractLocalFileSystemTest extends AbstractGenericTest {
 //		assertEquals(dataBytes.length, n);
 //		String s = new String(buffer, 0, n);
 //		assertEquals(data, s);
-//		
+//
 //		assertEquals(2, events.size());
 //		checkEvent("Item Moved", "/abc", "fred", "/def", null, events.get(1));
 //
-//		 
-//		
+//
+//
 //		fs.moveItem("/abc", "greg", "/def");
 //		items = fs.getItemNames("/def");
 //		assertEquals(2, items.length);

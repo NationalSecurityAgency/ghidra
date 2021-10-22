@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,8 @@ import ghidra.graph.viewer.VisualVertex;
 /**
  * The default {@link VisualGraph} renderer.  By default, the shape returned by this class is
  * a {@link Rectangle} of the given vertex's {@link VisualVertex#getComponent() component}.
- * 
- * <p>This class is aware of {@link VertexShapeProvider}s, which allows vertex creators to 
+ *
+ * <p>This class is aware of {@link VertexShapeProvider}s, which allows vertex creators to
  * provide vertex shapes that differ for rendering and clicking.  See that class for more info.
  *
  * @param <V> the vertex type
@@ -38,10 +38,10 @@ public class VisualGraphVertexShapeTransformer<V extends VisualVertex>
 		implements Function<V, Shape> {
 
 	/**
-	 * Returns the compact shape that the user will see when full, detailed rendering is 
+	 * Returns the compact shape that the user will see when full, detailed rendering is
 	 * not being performed for a vertex, such as in the satellite viewer or when fully-zoomed-out
-	 * 
-	 * @param v the vertex 
+	 *
+	 * @param v the vertex
 	 * @return the shape
 	 */
 	public Shape transformToCompactShape(V v) {
@@ -50,9 +50,9 @@ public class VisualGraphVertexShapeTransformer<V extends VisualVertex>
 	}
 
 	/**
-	 * Returns the full (the actual) shape of a vertex.  This can be used to determine if a 
+	 * Returns the full (the actual) shape of a vertex.  This can be used to determine if a
 	 * mouse point intersects a vertex or to get the real bounding-box of a vertex.
-	 * 
+	 *
 	 * @param v the vertex
 	 * @return the shape
 	 */
@@ -74,11 +74,11 @@ public class VisualGraphVertexShapeTransformer<V extends VisualVertex>
 	private Shape centerShape(Shape s) {
 		//
 		// Center the vertex by moving it's location up and to the left (without this, the
-		// vertex is drawn hanging from it's x,y position).   
+		// vertex is drawn hanging from it's x,y position).
 		//
 		// Note: this is what Jung does for its shapes.  We thought it easier to mimic what
 		//       they do rather then have to change all of the edge renderers to compensate.
-		// 
+		//
 		Rectangle bounds = s.getBounds();
 		Dimension size = bounds.getSize();
 		int halfWidth = -(size.width / 2);
@@ -111,7 +111,7 @@ public class VisualGraphVertexShapeTransformer<V extends VisualVertex>
 	private Shape getDefaultShape(V v) {
 
 		// This used to call vertex.getBounds().   The FGVertex had custom code to make
-		// the bounds get the preferred size.  Revisit this code if the size of the vertices 
+		// the bounds get the preferred size.  Revisit this code if the size of the vertices
 		// is incorrect.
 		JComponent component = v.getComponent();
 		return new Rectangle(new Point(0, 0), component.getPreferredSize());

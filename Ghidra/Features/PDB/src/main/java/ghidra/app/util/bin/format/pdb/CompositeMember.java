@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,8 @@ abstract class CompositeMember {
 
 	/**
 	 * Due to the dynamic restructuring of data type containers, this method should be invoked
-	 * on the root container prior to adding or applying the associated data type to the program.  
-	 * This method will appropriately rename and categorize associated anonymous structures and 
+	 * on the root container prior to adding or applying the associated data type to the program.
+	 * This method will appropriately rename and categorize associated anonymous structures and
 	 * unions to reflect the final organization and check if internal alignment should be enabled.
 	 * @param preferredSize preferred size of composite if known, else <= 0 if unknown
 	 */
@@ -58,7 +58,7 @@ abstract class CompositeMember {
 
 	/**
 	 * Determine if this member is a bit-field member not yet contained within a group.
-	 * If true is returned this instance is ensured to be a {@link DefaultCompositeMember} instance 
+	 * If true is returned this instance is ensured to be a {@link DefaultCompositeMember} instance
 	 * whose data type is {@link BitFieldDataType}.
 	 * @return true if bit-field member not yet contained within a group
 	 */
@@ -96,8 +96,8 @@ abstract class CompositeMember {
 	abstract void setParent(DefaultCompositeMember parent);
 
 	/**
-	 * Add specified member to this member.  If this member is not a composite 
-	 * it will trigger the creation 
+	 * Add specified member to this member.  If this member is not a composite
+	 * it will trigger the creation
 	 * @param member
 	 * @return
 	 */

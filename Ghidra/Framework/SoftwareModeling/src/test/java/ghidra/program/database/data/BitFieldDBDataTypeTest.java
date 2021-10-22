@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ public class BitFieldDBDataTypeTest extends AbstractGTest {
 		// within corresponding data type manager.
 
 		// This is intended to replicate the order of events when a bit-field
-		// component is established where the component size corresponds to the 
+		// component is established where the component size corresponds to the
 		// exact storage size determined by the BitFieldAccumulator during packing
 
 		BitFieldDataType bitFieldDataType =

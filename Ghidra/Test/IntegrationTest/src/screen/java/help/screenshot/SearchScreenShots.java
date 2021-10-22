@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -153,7 +153,7 @@ public class SearchScreenShots extends AbstractSearchScreenShots {
 
 		moveTool(500, 500);
 
-		// Set the search results max to a low number that we know will be hit with the 
+		// Set the search results max to a low number that we know will be hit with the
 		// custom program we've loaded.  Also, we are NOT changing the option so that dialog
 		// that is shown will have the default value
 		searchPlugin = env.getPlugin(SearchTextPlugin.class);

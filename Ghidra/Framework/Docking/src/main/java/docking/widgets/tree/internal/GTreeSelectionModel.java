@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,19 +29,19 @@ import docking.widgets.tree.support.GTreeSelectionListener;
 import ghidra.util.exception.AssertException;
 
 /**
- * This class was created so that GTree users can know the origin of tree selections.  This is 
+ * This class was created so that GTree users can know the origin of tree selections.  This is
  * useful in determining if the tree selection event occurred because the user clicked in the
  * tree, or if an API method was called (or by an event internal to, or trigged by the GTree).
  * <p>
- * 
- * As an example usage, imagine an event cycle, where a change in the tree selection causes a 
- * change in some other GUI component and changes in the other GUI component cause a change 
- * in the tree selection.  
- * In this scenario, to avoid bouncing back and forth, the TreeSelectionListener can check 
- * if the tree selection change was caused by the user or by an API call responding to the 
+ *
+ * As an example usage, imagine an event cycle, where a change in the tree selection causes a
+ * change in some other GUI component and changes in the other GUI component cause a change
+ * in the tree selection.
+ * In this scenario, to avoid bouncing back and forth, the TreeSelectionListener can check
+ * if the tree selection change was caused by the user or by an API call responding to the
  * change in the other GUI component, thereby breaking the cycle.
  * <p>
- * 
+ *
  * With this selection model the user can check the origin of the event with a call to:
  * <pre>
  * 		public void valueChanged(GTreeSelectionEvent e) {
@@ -50,7 +50,7 @@ import ghidra.util.exception.AssertException;
  * 			}
  * 		}
  * </pre>
- * 
+ *
  */
 public class GTreeSelectionModel extends DefaultTreeSelectionModel {
 
@@ -83,7 +83,7 @@ public class GTreeSelectionModel extends DefaultTreeSelectionModel {
 
 	@Override
 	// overridden to signal that this change is caused by internal code
-	// Note: if we want to expose this method in GTree, then create a method similar to 
+	// Note: if we want to expose this method in GTree, then create a method similar to
 	// clearSelection(EventOrigin) as was done for clearSelection()
 	final public void removeSelectionPaths(TreePath[] paths) {
 		currentEventOrigin = EventOrigin.INTERNAL_GENERATED;
@@ -98,7 +98,7 @@ public class GTreeSelectionModel extends DefaultTreeSelectionModel {
 	 * Implementation Note: this method is needed because {@link #removeSelectionPaths(TreePath[])}
 	 * marks all events as {@link EventOrigin#INTERNAL_GENERATED}.  Our intention is to mark any
 	 * tree housekeeping as internal, with user operations being marked appropriately.
-	 * 
+	 *
 	 * @param path the path that is to be removed
 	 */
 	final public void userRemovedSelectionPath(TreePath path) {

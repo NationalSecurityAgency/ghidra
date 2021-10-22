@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ public abstract class AbstractAsyncServer<S extends AbstractAsyncServer<S, H>, H
 
 	/**
 	 * Create a new handler for the given incoming client connection
-	 * 
+	 *
 	 * @param sock the new client connection
 	 * @return a handler for the client
 	 */
@@ -102,7 +102,7 @@ public abstract class AbstractAsyncServer<S extends AbstractAsyncServer<S, H>, H
 
 	/**
 	 * Close the server socket and all current client connections
-	 * 
+	 *
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void terminate() throws IOException {

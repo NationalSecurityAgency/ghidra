@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -90,22 +90,22 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 	@Override
 	protected CompositeEditorTableAction[] createActions() {
 		//@formatter:off
-		return new CompositeEditorTableAction[] { 
-			new ApplyAction(this), 
+		return new CompositeEditorTableAction[] {
+			new ApplyAction(this),
 			new ClearAction(this),
-			new DeleteAction(this), 
-			new PointerAction(this), 
+			new DeleteAction(this),
+			new PointerAction(this),
 			new ArrayAction(this),
-			new ShowComponentPathAction(this), 
+			new ShowComponentPathAction(this),
 			new EditComponentAction(this),
-			new EditFieldAction(this), 
-			new HexNumbersAction(this) 
+			new EditFieldAction(this),
+			new HexNumbersAction(this)
 		};
 		//@formatter:on
 	}
 
 	/**
-	 * Gets the function name for the function stack frame being edited. 
+	 * Gets the function name for the function stack frame being edited.
 	 * @return the name
 	 */
 	String getStackName() {
@@ -113,7 +113,7 @@ public class StackEditorProvider extends CompositeEditorProvider implements Doma
 	}
 
 	/**
-	 * Gets the function for the function stack frame being edited. 
+	 * Gets the function for the function stack frame being edited.
 	 * @return the function
 	 */
 	Function getFunction() {

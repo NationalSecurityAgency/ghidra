@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -236,7 +236,7 @@ public class GraphComponentTest extends AbstractVisualGraphTest {
 
 		//
 		// This test will fail if the vertex locations are not set (usually done by the layout)
-		// 
+		//
 
 		Collection<AbstractTestVertex> vertices = graph.getVertices();
 		AbstractTestVertex v = CollectionUtils.any(vertices);
@@ -255,7 +255,7 @@ public class GraphComponentTest extends AbstractVisualGraphTest {
 
 		//
 		// This test will fail if the vertex locations are not set (usually done by the layout)
-		// 
+		//
 
 		Collection<TestEdge> edges = graph.getEdges();
 		TestEdge e = CollectionUtils.any(edges);
@@ -287,7 +287,7 @@ public class GraphComponentTest extends AbstractVisualGraphTest {
 		// change the zoom
 		setZoom(.5);
 
-		// move the view		
+		// move the view
 		moveVertexToCenter(v);
 
 		// now, set the perspective and make sure the values are restored
@@ -328,8 +328,8 @@ public class GraphComponentTest extends AbstractVisualGraphTest {
 	@Test
 	public void testMouseEvent_HeaderDragEditableVertex() throws Exception {
 		//
-		// Test that a vertex with a drag area (editable vertices for this test) can be 
-		// dragged by the header.  Clicking in the body of that vertex will not trigger a drag, 
+		// Test that a vertex with a drag area (editable vertices for this test) can be
+		// dragged by the header.  Clicking in the body of that vertex will not trigger a drag,
 		// but should instead trigger a selection.
 		//
 
@@ -342,8 +342,8 @@ public class GraphComponentTest extends AbstractVisualGraphTest {
 	@Test
 	public void testMouseEvent_InternalDragEditableVertex() throws Exception {
 		//
-		// Test that a vertex with a drag area (editable vertices for this test) can be 
-		// dragged by the header.  Clicking in the body of that vertex will not trigger a drag, 
+		// Test that a vertex with a drag area (editable vertices for this test) can be
+		// dragged by the header.  Clicking in the body of that vertex will not trigger a drag,
 		// but should instead trigger a selection.
 		//
 
@@ -414,9 +414,9 @@ public class GraphComponentTest extends AbstractVisualGraphTest {
 		press("show.satellite.button");
 		assertUndockedSatelliteVisible();
 
-		// 
-		// When the satellite is docked, the button is present, but hidden behind the 
-		// satellite viewer.  The user cannot press it, but if they could, it should have 
+		//
+		// When the satellite is docked, the button is present, but hidden behind the
+		// satellite viewer.  The user cannot press it, but if they could, it should have
 		// the effect of showing the docked satellite, which is already there; it should *not*
 		// show the undocked satellite.
 		//
@@ -435,7 +435,7 @@ public class GraphComponentTest extends AbstractVisualGraphTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void assertVertexHasTextSelection(TextAreaTestVertex v) {
 		JTextArea textArea = v.getTextArea();
@@ -443,7 +443,7 @@ public class GraphComponentTest extends AbstractVisualGraphTest {
 		assertNotNull(selectedText);
 	}
 
-	// the y offset allows us to move from the header at the top, to the body in the middle, 
+	// the y offset allows us to move from the header at the top, to the body in the middle,
 	// where appropriate
 	private void doTestDrag(AbstractTestVertex v, int yOffset) throws Exception {
 

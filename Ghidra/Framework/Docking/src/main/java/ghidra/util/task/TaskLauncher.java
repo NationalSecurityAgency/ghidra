@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,16 +19,16 @@ import java.awt.Component;
 
 /**
  * Class to initiate a Task in a new Thread, and to show a progress dialog that indicates
- * activity <b>if the task takes too long</b>.  The progress dialog will show an 
+ * activity <b>if the task takes too long</b>.  The progress dialog will show an
  * animation in the event that the task of this class cannot show progress.
  *
  * <p>For complete control of how this class functions, use
  * {@link #TaskLauncher(Task, Component, int, int)}.  Alternatively, for simpler uses,
  * see one of the many static convenience methods.
- * 
+ *
  * <p><b><a id="modal_usage">Modal Usage</a></b><br>
- * Most clients of this class should not be concerned with where 
- * the dialog used by this class will appear.  By default, it will be shown over 
+ * Most clients of this class should not be concerned with where
+ * the dialog used by this class will appear.  By default, it will be shown over
  * the active window, which is the desired
  * behavior for most uses.  If you should need a dialog to appear over a non-active window,
  * then either specify that window, or a child component of that window, by calling a

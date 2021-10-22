@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,11 +51,11 @@ public interface ListingField extends Field {
      * in this field.
      */
 	public ProxyObj getProxy();
-	
+
 	/**
 	 * Returns the object that was clicked on a Field for the given FieldLocation.  This may be the
-	 * field itself or a lower-level entity, such as a FieldElement. 
-	 * 
+	 * field itself or a lower-level entity, such as a FieldElement.
+	 *
 	 * @param fieldLocation The location that was clicked.
 	 * @return the object that was clicked
 	 */

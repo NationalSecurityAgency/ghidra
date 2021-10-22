@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -106,7 +106,7 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 		GhidraTable table = new GhidraTable(tableModel);
 
 		// NOTE: we have to make the table visible for the full persistence mechanism to work.  So,
-		// perform the tests *before* the table is visible, and then perform them after it has 
+		// perform the tests *before* the table is visible, and then perform them after it has
 		// been made visible
 		shakeupTable(table);
 
@@ -131,8 +131,8 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 		// we need a tool in order to get the DockingWindowManager
 		loadGhidraWithNotepad();
 
-		// NOTE:  must make sure that the table is visible, or the persistence will not be activated        
-		// 010039fe - LAB_010039fe 
+		// NOTE:  must make sure that the table is visible, or the persistence will not be activated
+		// 010039fe - LAB_010039fe
 		Address address = getAddress(program, 0x010039fe);
 		int column = 3;
 		assertTrue(codeBrowser.goToField(address, "Label", 0, 0, column));
@@ -158,7 +158,7 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 		String preferenceKey = (String) invokeInstanceMethod("getPreferenceKey", columnModelState);
 		PreferenceState preferenceState = dockingWindowManager.getPreferenceState(preferenceKey);
 
-		// test moving                    
+		// test moving
 		// moveColumn() triggers a saveState()
 		int columnIndex = 0;
 		int newColumnIndex = 1;
@@ -166,7 +166,7 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 		moveColumn(columnModel, columnIndex, newColumnIndex);
 		waitForSwing();
 
-		// get the updated preference state data        
+		// get the updated preference state data
 		preferenceState = dockingWindowManager.getPreferenceState(preferenceKey);
 		List<TableColumn> newColumnList =
 			getTableColumnsFromPreferencesState(table, preferenceState, columnModelState);
@@ -191,8 +191,8 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 		// we need a tool in order to get the DockingWindowManager
 		loadGhidraWithNotepad();
 
-		// NOTE:  must make sure that the table is visible, or the persistence will not be activated        
-		// 010039fe - LAB_010039fe 
+		// NOTE:  must make sure that the table is visible, or the persistence will not be activated
+		// 010039fe - LAB_010039fe
 		Address address = getAddress(program, 0x010039fe);
 		int column = 3;
 		assertTrue(codeBrowser.goToField(address, "Label", 0, 0, column));
@@ -221,7 +221,7 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 		PreferenceState preferenceState =
 			getSavedSortStatePreference(preferenceKey, dockingWindowManager);
 
-		// test moving                    
+		// test moving
 		// moveColumn() triggers a saveState()
 		int columnZero = 0;
 		int columnOne = 1;
@@ -307,8 +307,8 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 		// we need a tool in order to get the DockingWindowManager
 		loadGhidraWithNotepad();
 
-		// NOTE:  must make sure that the table is visible, or the persistence will not be activated        
-		// 010039fe - LAB_010039fe 
+		// NOTE:  must make sure that the table is visible, or the persistence will not be activated
+		// 010039fe - LAB_010039fe
 		Address address = getAddress(program, 0x010039fe);
 		int column = 3;
 		assertTrue(codeBrowser.goToField(address, "Label", 0, 0, column));
@@ -317,7 +317,7 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 		// given location
 		performAction(showReferencesAction, codeBrowser.getProvider(), true);
 
-		// launch the 
+		// launch the
 		LocationReferencesProvider provider = findProvider();
 		GhidraTable table = getTable(provider);
 		waitForTable(table);
@@ -366,8 +366,8 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 		// we need a tool in order to get the DockingWindowManager
 		loadGhidraWithNotepad();
 
-		// NOTE:  must make sure that the table is visible, or the persistence will not be activated        
-		// 010039fe - LAB_010039fe 
+		// NOTE:  must make sure that the table is visible, or the persistence will not be activated
+		// 010039fe - LAB_010039fe
 		Address address = getAddress(program, 0x010039fe);
 		int column = 3;
 		assertTrue(codeBrowser.goToField(address, "Label", 0, 0, column));
@@ -376,7 +376,7 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 		// given location
 		performAction(showReferencesAction, codeBrowser.getProvider(), true);
 
-		// launch the 
+		// launch the
 		LocationReferencesProvider provider = findProvider();
 		GhidraTable table = getTable(provider);
 
@@ -419,7 +419,7 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 
 //==================================================================================================
 // Private methods
-//==================================================================================================    
+//==================================================================================================
 
 	private void waitForTable(GhidraTable table) {
 		int maxWait = 50;

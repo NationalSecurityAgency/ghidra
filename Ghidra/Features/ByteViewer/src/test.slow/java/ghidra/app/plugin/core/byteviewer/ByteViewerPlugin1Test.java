@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -389,38 +389,38 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		 	Test that each view tracks the main view correctly as the user uses the left/right
 		 	arrow keys.  Each view has a different character count, which makes tracking a bit
 		 	tricky.
-		 	
-		 	
+
+
 		 	View		Hex              Octal
-		 	
+
 		 	Bytes 	47 4e 55 00   |    107 116 125 000
 		 	Column  123456789..        123456789......
-		 	
+
 		 	Some examples:
-		 	
+
 		 	 	A) The user clicks in the 'Hex' view at column 4.
 		 	 	   The 'Octal' view cursor will be placed at column 5.
-		 	 	   
+
 		 	 	   The user right-arrows.
 		 	 	   The 'Hex' view is now at column 5.
 		 	 	   The 'Octal' view is now at column 6.
-		 	 	   
+
 		 	 	   The user right-arrows.
 		 	 	   The 'Hex' view is now at column 7.
 		 	 	   The 'Octal' view is now at column 9.
-		 	 	   
-		 	 	   
+
+
 		 	 	B) The user clicks the 'Octal' view at column 5.
 		 	 	   The 'Hex' view is now at column 4.
-		 	 	   
+
 		 	 	   The user right-arrows.
 		 	 	   The 'Octal' view is now at column 6.
 		 	 	   The 'Hex' view is now at column 5.
-		 	 	   
+
 		 	 	   The user right-arrows.
 		 	 	   The 'Octal' view is now at column 6.
 		 	 	   The 'Hex' view is still at column 5.
-		
+
 		 */
 
 		loadViews("Hex", "Octal");
@@ -480,15 +480,15 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 		assertPosition(octal, "125", 0);
 
 		leftArrow();
-		assertPosition(hex, "44", 1);    // end column; 2nd column, as it has not 3rd column 
+		assertPosition(hex, "44", 1);    // end column; 2nd column, as it has not 3rd column
 		assertPosition(octal, "104", 2); // at 3rd column
 
 		leftArrow();
-		assertPosition(hex, "44", 1);    // stayed at end column  
+		assertPosition(hex, "44", 1);    // stayed at end column
 		assertPosition(octal, "104", 1);
 
 		leftArrow();
-		assertPosition(hex, "44", 0);    // stayed at end column  
+		assertPosition(hex, "44", 0);    // stayed at end column
 		assertPosition(octal, "104", 0);
 	}
 
@@ -500,7 +500,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 		// Address: 0x01001100
 		// Mnemonic: ds
-		// Operand: "message" 
+		// Operand: "message"
 		// Bytes: 6d 65 73 73 61 67 65 00
 
 		goToOperand("0x01001100");
@@ -685,7 +685,7 @@ public class ByteViewerPlugin1Test extends AbstractGhidraHeadedIntegrationTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	@SuppressWarnings("unchecked")
 	private void assertOnlyOneProviderToolbarAction() {

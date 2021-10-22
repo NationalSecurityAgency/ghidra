@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,8 +57,8 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 		GhidraOptions.OPERAND_GROUP_TITLE + Options.DELIMITER + "Always Show Primary Reference";
 
 	/**
-	 * Option for whether to follow referenced pointers, for read or indirect reference types, 
-	 * to show pointer's referenced symbol instead of symbol at pointer.  When applied the 
+	 * Option for whether to follow referenced pointers, for read or indirect reference types,
+	 * to show pointer's referenced symbol instead of symbol at pointer.  When applied the
 	 * resulting label will be preceded by -&gt;.
 	 */
 	private final static String FOLLOW_POINTER_REFERENCE_MARKUP_OPTION =
@@ -97,7 +97,7 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 	 * This constructor must be used by the field factory since an OptionsService may
 	 * not obtainable at the time they are constructed.
 	 * @param fieldOptions field options
-	 * @param autoUpdate if true format will auto update if associated options are changed, in 
+	 * @param autoUpdate if true format will auto update if associated options are changed, in
 	 * addition any listeners will be notified when this format is updated.
 	 */
 	BrowserCodeUnitFormatOptions(ToolOptions fieldOptions, boolean autoUpdate) {
@@ -236,9 +236,9 @@ public class BrowserCodeUnitFormatOptions extends CodeUnitFormatOptions
 	}
 
 	/**
-	 * Get current state of the Follow Referenced Pointers option. 
-	 * @return true if operand pointer read of indirect references will be followed and 
-	 * non-dynamic pointer referenced symbol will be rendered in place of pointer label. 
+	 * Get current state of the Follow Referenced Pointers option.
+	 * @return true if operand pointer read of indirect references will be followed and
+	 * non-dynamic pointer referenced symbol will be rendered in place of pointer label.
 	 */
 	public boolean followReferencedPointers() {
 		return followReferencedPointers;

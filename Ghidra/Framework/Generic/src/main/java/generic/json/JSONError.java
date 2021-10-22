@@ -13,5 +13,5 @@ public enum JSONError {
 	JSMN_ERROR_INVAL,
 	/* The string is not a full JSON packet, more bytes expected */
 	JSMN_ERROR_PART
-	
+
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 public class NewExt4Analyzer extends FileFormatAnalyzer {
-	
+
 	private int blockSize;
 
 	private Program program2;
@@ -97,7 +97,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 			transactionId3 = program3.startTransaction( getName( ) );
 		}
 
-		try { 
+		try {
 			ByteProvider provider = new MultiProgramMemoryByteProvider( program, program2, program3 );
 			BinaryReader reader = new BinaryReader( provider, true );
 			int start = getSuperBlockStart( reader );
@@ -106,7 +106,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 			Ext4SuperBlock superBlock = new Ext4SuperBlock( reader );
 			Address superBlockAddress = toAddr( program, start );
 			createData( program, superBlockAddress, superBlock.toDataType( ) );
-			
+
 
 			boolean is64Bit = ( superBlock.getS_desc_size( ) > 32 ) && ( ( superBlock.getS_feature_incompat( ) & 0x80 ) > 0 );
 
@@ -124,7 +124,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 				numGroups++;
 			}
 
-			setPlateComment( program, superBlockAddress, "SuperBlock (main) \n" + 
+			setPlateComment( program, superBlockAddress, "SuperBlock (main) \n" +
 							"Group Size In Bytes: 0x" + Integer.toHexString( groupSize ) + "\n" +
 							"Number of Groups: 0x" + Integer.toHexString( numGroups ) );
 
@@ -149,7 +149,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 			createSuperBlockCopies( program, reader, groupSize, numGroups, is64Bit, isSparseSuper, monitor );
 
 			createInodeTables( program, reader, superBlock, groupDescriptors, is64Bit, monitor );
-			
+
 	//		test(program, reader);
 		}
 		catch ( Exception e ) {
@@ -171,7 +171,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 
 	/**
 	 * This method allows for EXT4 files larger than 2GB to be imported as 2 (or 3) separate programs.
-	 * Then if both programs are opened (and have the same base name), then both will be analyzed. 
+	 * Then if both programs are opened (and have the same base name), then both will be analyzed.
 	 */
 	private Program findOtherProgram( Program program, String suffix ) {
 		AutoAnalysisManager manager = AutoAnalysisManager.getAnalysisManager( program );
@@ -210,13 +210,13 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 		throw new RuntimeException( "Cannot set plate comment, neither program contains that address." );
 	}
 
-	private void createInodeTables( Program program, 
-									BinaryReader reader, 
-									Ext4SuperBlock superBlock, 
-									Ext4GroupDescriptor [] groupDescriptors, 
-									boolean is64Bit, 
+	private void createInodeTables( Program program,
+									BinaryReader reader,
+									Ext4SuperBlock superBlock,
+									Ext4GroupDescriptor [] groupDescriptors,
+									boolean is64Bit,
 									TaskMonitor monitor ) throws DuplicateNameException, Exception {
-		
+
 		int inodeCount = superBlock.getS_inodes_count( );
 		Ext4Inode [] inodes = new Ext4Inode [ inodeCount ];
 		int inodeIndex = 0;
@@ -291,29 +291,29 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 		for ( int i = 0x1; i < inodes.length; i++ ) {
 			monitor.checkCanceled( );
 			Ext4Inode inode = inodes[ i ];
-			
+
 			short mode = inode.getI_mode();
 			if ( ( mode & Ext4Constants.S_IFDIR ) != 0 ) {
 				processDirectory(program, reader, superBlock, inode, monitor );
 			}
 			else if ( (mode & Ext4Constants.S_IFREG ) != 0 ) {
 				processFile( program, reader, superBlock, inode, monitor );
-			} 
+			}
 		}
 	}
 
-	private void processFile(Program program, 
+	private void processFile(Program program,
 							BinaryReader reader,
-							Ext4SuperBlock superBlock, 
-							Ext4Inode inode, 
+							Ext4SuperBlock superBlock,
+							Ext4Inode inode,
 							TaskMonitor monitor ) {
 		// TODO?
 	}
 
-	private void processDirectory( Program program, 
+	private void processDirectory( Program program,
 									BinaryReader reader,
-									Ext4SuperBlock superBlock, 
-									Ext4Inode inode, 
+									Ext4SuperBlock superBlock,
+									Ext4Inode inode,
 									TaskMonitor monitor ) throws Exception {
 
 		if ( (inode.getI_flags() & Ext4Constants.EXT4_INDEX_FL) != 0 ) {
@@ -328,8 +328,8 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 	}
 
 	private void processIBlock( Program program,
-								BinaryReader reader, 
-								boolean isDirEntry2, 
+								BinaryReader reader,
+								boolean isDirEntry2,
 								Ext4IBlock i_block,
 								TaskMonitor monitor ) throws Exception {
 
@@ -392,20 +392,20 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 		}
 	}
 
-	private void processHashTreeDirectory(	Program program, 
+	private void processHashTreeDirectory(	Program program,
 											BinaryReader reader,
-											Ext4SuperBlock superBlock, 
-											Ext4Inode inode, 
+											Ext4SuperBlock superBlock,
+											Ext4Inode inode,
 											TaskMonitor monitor ) {
 		// TODO?
 	}
 
-	private void createSuperBlockCopies(Program program, 
-										BinaryReader reader, 
-										int groupSize, 
-										int numGroups, 
-										boolean is64Bit, 
-										boolean isSparseSuper, 
+	private void createSuperBlockCopies(Program program,
+										BinaryReader reader,
+										int groupSize,
+										int numGroups,
+										boolean is64Bit,
+										boolean isSparseSuper,
 										TaskMonitor monitor ) throws Exception {
 		monitor.setMessage( "Creating super block and group descriptor copies..." );
 		monitor.setMaximum(numGroups);
@@ -431,12 +431,12 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 				createData(program, groupDescAddress, groupDescDataType);
 				setPlateComment( program, groupDescAddress, "SuperBlock Copy 0x" + Integer.toHexString( i ) + " Group 0x" + Integer.toHexString( j ) );
 
-				groupDescAddress = groupDescAddress.add(groupDescDataType.getLength());			
+				groupDescAddress = groupDescAddress.add(groupDescDataType.getLength());
 			}
 			monitor.incrementProgress(1);
 		}
 	}
-	
+
 	private boolean isXpowerOfY( int x, int y ) {
 		if ( x == 0 ) {
 			return false;

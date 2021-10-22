@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -92,17 +92,17 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		assertTrue("Auto Version Tracking Command failed to run", success);
 
 		// verify that the default options are what we expect
-		// if this assert fails then the follow-on tests will probably fail 
+		// if this assert fails then the follow-on tests will probably fail
 		assertCorrectOptionValues(session, "1.0", "10.0");
 
-		// verify that given the above verified conditions the 
+		// verify that given the above verified conditions the
 		// exact unique correlators (which have their own tests to verify which matches are
 		// correct) return the expected number of possible matches and accepted matches
 		// since they are exact and unique and this number is already known based on other tests
-		// this is just verifying that what we expect to happen is happening for debug purposes 
+		// this is just verifying that what we expect to happen is happening for debug purposes
 		// in case something is changed in the future that would alter these numbers.
 		// We need to know that these are as expected before testing the non-exact/unique correlator
-		// results that depend on these answers. 
+		// results that depend on these answers.
 		assertCorrectMatchCountAndAcceptedMatchCount(session, "Exact Symbol Name Match", 203, 203);
 		assertCorrectMatchCountAndAcceptedMatchCount(session, "Exact Data Match", 125, 125);
 		assertCorrectMatchCountAndAcceptedMatchCount(session, "Exact Function Bytes Match", 18, 18);
@@ -133,7 +133,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 	/*
 	 * This tests auto version tracking with the default score/confidence values so some of the
-	 * matches are probably not good matches. This was just to make sure that the expected 
+	 * matches are probably not good matches. This was just to make sure that the expected
 	 * results happen in this case and to show difference between this and the more cautious ones.
 	 */
 	@Test
@@ -147,23 +147,23 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		env.showTool();
 		controller = env.getVTController();
 
-		// Score 0.5 and conf threshold 1.0 allow similarity scores of higher than 0.5 for combined 
+		// Score 0.5 and conf threshold 1.0 allow similarity scores of higher than 0.5 for combined
 		// reference correlator and 1.0 and higher for the log 10 confidence score
 		boolean success = runAutoVTCommand(0.5, 1.0);
 		assertTrue("Auto Version Tracking Command failed to run", success);
 
 		// verify that the default options are what we expect
-		// if this assert fails then the follow-on tests will probably fail 
+		// if this assert fails then the follow-on tests will probably fail
 		assertCorrectOptionValues(session, "0.5", "1.0");
 
-		// verify that given the above verified conditions the 
+		// verify that given the above verified conditions the
 		// exact unique correlators (which have their own tests to verify which matches are
 		// correct) return the expected number of possible matches and accepted matches
 		// since they are exact and unique and this number is already known based on other tests
-		// this is just verifying that what we expect to happen is happening for debug purposes 
+		// this is just verifying that what we expect to happen is happening for debug purposes
 		// in case something is changed in the future that would alter these numbers.
 		// We need to know that these are as expected before testing the non-exact/unique correlator
-		// results that depend on these answers. 
+		// results that depend on these answers.
 		assertCorrectMatchCountAndAcceptedMatchCount(session, "Exact Symbol Name Match", 203, 203);
 		assertCorrectMatchCountAndAcceptedMatchCount(session, "Exact Data Match", 125, 125);
 		assertCorrectMatchCountAndAcceptedMatchCount(session, "Exact Function Bytes Match", 18, 18);
@@ -206,7 +206,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		VTMatch match = createMatch(addr("0x000411860", sourceProgram),
 			addr("0x00411830", destinationProgram), false);
 
-		//make a second match that conflicts with first match and accept it which will cause the 
+		//make a second match that conflicts with first match and accept it which will cause the
 		// first match to be blocked
 		VTMatch match2 = createMatch(addr("0x4117c0", sourceProgram),
 			addr("0x00411830", destinationProgram), true);
@@ -234,7 +234,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		sourceProgram = env.getProgram(TEST_SOURCE_PROGRAM_NAME);
 		destinationProgram = env.getProgram(TEST_DESTINATION_PROGRAM_NAME);
 
-		// Create three functions in both the source and destination program with matching 
+		// Create three functions in both the source and destination program with matching
 		// instructions but different register operands
 		byte[] bytes1 = { (byte) 0x8b, (byte) 0xff, (byte) 0x55, (byte) 0x8b, (byte) 0xec,
 			(byte) 0x33, (byte) 0xc0, (byte) 0x5d, (byte) 0x90, (byte) 0xc3 };  //XOR EAX,EAX;
@@ -256,10 +256,10 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		env.showTool();
 		controller = env.getVTController();
 
-		// run auto VT 
+		// run auto VT
 		runAutoVTCommand(1.0, 10.0);
 
-		// Now test that the correct matches were created based on the duplicate functions we created 
+		// Now test that the correct matches were created based on the duplicate functions we created
 		String correlator = "Duplicate Function Instructions Match";
 
 		assertAcceptedMatch(session, correlator, "0x414c00", "0x414c00");
@@ -274,7 +274,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		sourceProgram = env.getProgram(TEST_SOURCE_PROGRAM_NAME);
 		destinationProgram = env.getProgram(TEST_DESTINATION_PROGRAM_NAME);
 
-		// Create three functions in both the source and destination program with matching 
+		// Create three functions in both the source and destination program with matching
 		// instructions but different register operands
 		byte[] bytes1 = { (byte) 0x8b, (byte) 0xff, (byte) 0x55, (byte) 0x8b, (byte) 0xec,
 			(byte) 0x33, (byte) 0xc0, (byte) 0x5d, (byte) 0x90, (byte) 0xc3 };  //XOR EAX,EAX;
@@ -302,10 +302,10 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		env.showTool();
 		controller = env.getVTController();
 
-		// run auto VT 
+		// run auto VT
 		runAutoVTCommand(1.0, 10.0);
 
-		// Now test that the correct matches were created based on the duplicate functions we created 
+		// Now test that the correct matches were created based on the duplicate functions we created
 		String correlator = "Duplicate Function Instructions Match";
 
 		assertAcceptedMatch(session, correlator, "0x414c00", "0x414c00");
@@ -338,7 +338,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		env.showTool();
 		controller = env.getVTController();
 
-		// run auto VT 
+		// run auto VT
 		runAutoVTCommand(1.0, 10.0);
 
 		// Test to make sure that they weren't matched by something else first so we can
@@ -372,7 +372,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		// AutoVT should also not match them since it can't tell which is which
 
 		byte[] bytes = { (byte) 0x8b, (byte) 0xff, (byte) 0x55, (byte) 0x8b, (byte) 0xec,
-			(byte) 0x83, (byte) 0xf0, (byte) 0x01, (byte) 0x5d, (byte) 0x90, (byte) 0xc3 };  //XOR EAX,1; 
+			(byte) 0x83, (byte) 0xf0, (byte) 0x01, (byte) 0x5d, (byte) 0x90, (byte) 0xc3 };  //XOR EAX,1;
 
 		createFunction(sourceProgram, bytes, addr("0x414c00", sourceProgram));
 		createFunction(destinationProgram, bytes, addr("0x414d00", destinationProgram));
@@ -381,7 +381,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		createFunction(sourceProgram, bytes, addr("0x414e00", sourceProgram));
 		createFunction(destinationProgram, bytes, addr("0x414f00", destinationProgram));
 
-		// Create three functions in each program with same instructions as the above functions but 
+		// Create three functions in each program with same instructions as the above functions but
 		// replace the XOR EAX, 1 with XOR EAX, 2, XOR EAX, 2, XOR EAX, 3 respectively
 
 		byte[] bytes2 = { (byte) 0x8b, (byte) 0xff, (byte) 0x55, (byte) 0x8b, (byte) 0xec,
@@ -407,7 +407,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		env.showTool();
 		controller = env.getVTController();
 
-		// run auto VT 
+		// run auto VT
 		runAutoVTCommand(1.0, 10.0);
 
 		// Test to make sure that they weren't matched by something else first so we can
@@ -437,11 +437,11 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 			}
 		}
 		// 40 = four for the 2x2 matches that already existed and 36 for the 6x6 matches just created
-		// 5 = 2 matches that already existed + 3 valid matches from the ones just created 
+		// 5 = 2 matches that already existed + 3 valid matches from the ones just created
 		assertCorrectMatchCountAndAcceptedMatchCount(session,
 			"Duplicate Function Instructions Match", 40, 5);
 
-		// Now test that the Auto VT duplicate matcher did not accept any matches between the three 
+		// Now test that the Auto VT duplicate matcher did not accept any matches between the three
 		// identical ones but did accept the unique ones and blocked the ones between the unique ones
 		// and the rest
 		List<Address> identicalSourceAddrs = new ArrayList<>();
@@ -455,7 +455,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		String correlator = "Duplicate Function Instructions Match";
 
-		// Checks that the duplicate identical ones are available matches 
+		// Checks that the duplicate identical ones are available matches
 		for (Address sourceAddr : identicalSourceAddrs) {
 			for (Address destAddr : identicalDestAddrs) {
 				assertAvailableMatch(session, correlator, sourceAddr.toString(),
@@ -514,7 +514,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		sourceProgram = env.getProgram(TEST_SOURCE_PROGRAM_NAME);
 		destinationProgram = env.getProgram(TEST_DESTINATION_PROGRAM_NAME);
 
-		// Create three functions in both the source and destination program with matching 
+		// Create three functions in both the source and destination program with matching
 		// instructions but different constant operands and a call with different offset so that
 		// the exact bytes matcher doesn't find it first but it still has the same instructions
 
@@ -522,10 +522,10 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		byte[] bytes1source = { (byte) 0x8b, (byte) 0xff, (byte) 0x55, (byte) 0x8b, (byte) 0xec,
 			(byte) 0x83, (byte) 0xf0, (byte) 0x01, (byte) 0xe8, (byte) 0x04, (byte) 0x00,
-			(byte) 0x00, (byte) 0x00, (byte) 0x5d, (byte) 0xc3 };  //XOR EAX,1; 
+			(byte) 0x00, (byte) 0x00, (byte) 0x5d, (byte) 0xc3 };  //XOR EAX,1;
 		byte[] bytes1dest = { (byte) 0x8b, (byte) 0xff, (byte) 0x55, (byte) 0x8b, (byte) 0xec,
 			(byte) 0x83, (byte) 0xf0, (byte) 0x01, (byte) 0xe8, (byte) 0x08, (byte) 0x00,
-			(byte) 0x00, (byte) 0x00, (byte) 0x5d, (byte) 0xc3 };  //XOR EAX,1; 
+			(byte) 0x00, (byte) 0x00, (byte) 0x5d, (byte) 0xc3 };  //XOR EAX,1;
 
 		createFunction(sourceProgram, retFunction, addr("0x414c11", sourceProgram));
 		createFunction(sourceProgram, bytes1source, addr("0x414c00", sourceProgram));
@@ -561,7 +561,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		env.showTool();
 		controller = env.getVTController();
 
-		// run auto VT 
+		// run auto VT
 		runAutoVTCommand(1.0, 10.0);
 
 		// Test to make sure that they weren't matched by something else first so we can
@@ -583,8 +583,8 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 	/*
 	 * This tests whether the markup from a function gets applied to the destination function
-	 * for the case where all instructions line up exactly between both functions. It tests 
-	 * the apply markup path for unique matches. 
+	 * for the case where all instructions line up exactly between both functions. It tests
+	 * the apply markup path for unique matches.
 	 */
 	@Test
 	public void testMarkup_AllMarkupShouldApply_UniqueMatch() throws Exception {
@@ -640,8 +640,8 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 	/*
 	 * This tests whether the markup from a function gets applied to the destination function
-	 * for the case where all instructions line up exactly between both functions. It tests 
-	 * the apply markup path for duplicate matches. 
+	 * for the case where all instructions line up exactly between both functions. It tests
+	 * the apply markup path for duplicate matches.
 	 */
 	@Test
 	public void testMarkup_AllMarkupShouldApply_DuplicateMatch() throws Exception {
@@ -706,13 +706,13 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		// Override the setup to switch the source and destination programs.
 		// This is because the destination program has a sample match where the length
-		// of a matching function is greater than the one in the source program and 
+		// of a matching function is greater than the one in the source program and
 		// it is needed to test this case.
 
 		sourceProgram = env.getProgram(TEST_DESTINATION_PROGRAM_NAME);
 		destinationProgram = env.getProgram(TEST_SOURCE_PROGRAM_NAME);
 
-		// Now put some markup in the new source function to test such that there is a 
+		// Now put some markup in the new source function to test such that there is a
 		// comment at each code unit called Test Comment "n" where n is a one up value starting
 		// at 0
 		Listing sourceListing = sourceProgram.getListing();
@@ -736,7 +736,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		env.showTool();
 		controller = env.getVTController();
 
-		// Now run the AutoVT command with lower confidence thresholds to allow the match we want to 
+		// Now run the AutoVT command with lower confidence thresholds to allow the match we want to
 		// test in as a match
 		boolean success = runAutoVTCommand(0.5, 1.0);
 		assertTrue("Auto Version Tracking Command failed to run", success);
@@ -746,8 +746,8 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		assertAcceptedMatch(session, correlator, "0x4118c0", "0x4118f0");
 
 		// Check that the expected comments were moved over
-		// The case we have is where the source function has a chunk of five code units in the 
-		// middle that isn't in the destination function. We need to test that the top set of code 
+		// The case we have is where the source function has a chunk of five code units in the
+		// middle that isn't in the destination function. We need to test that the top set of code
 		// units have comments Test Comment 0-n and then skip the five then test the rest that
 		// should match until the end of the function
 		Listing destListing = destinationProgram.getListing();
@@ -769,7 +769,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(null,
 			destListing.getComment(CodeUnit.EOL_COMMENT, addr("0x4119af", destinationProgram)));
 
-		// Now get the bottom section 
+		// Now get the bottom section
 		AddressSet bottomAddressSet = destinationProgram.getAddressFactory().getAddressSet(
 			addr("0x4119b1", destinationProgram), addr("0x4119e9", destinationProgram));
 		CodeUnitIterator codeUnitsDestBottom = destListing.getCodeUnits(bottomAddressSet, true);
@@ -932,7 +932,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		List<VTMatchSet> matchSets = vtSession.getMatchSets();
 
 		for (VTMatchSet matchSet : matchSets) {
-			// Ignore the matchSet with the given correlator name 
+			// Ignore the matchSet with the given correlator name
 			if (matchSet.getProgramCorrelatorInfo().getName().equals(correlatorName)) {
 				continue;
 			}
@@ -992,7 +992,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		assertBlockedMatch(vtSession, correlator, "0x412330", "0x4122e0");
 	}
 
-	// These are the matches when score is 1.0 and log 10 conf threshold is 2.0 
+	// These are the matches when score is 1.0 and log 10 conf threshold is 2.0
 	private void assertCombinedReferenceMatchStatusesHigherScoreAndConfidence(VTSession vtSession) {
 
 		String correlator = "Combined Function and Data Reference Match";

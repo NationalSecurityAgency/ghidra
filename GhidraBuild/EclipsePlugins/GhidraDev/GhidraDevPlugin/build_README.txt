@@ -1,5 +1,5 @@
 GhidraDev is currently built from Eclipse and checked into the bin repo.  Ideally we will use Gradle
-one day, but we aren't there yet.  We do rely on Gradle prepDev to generate the Eclipse project and 
+one day, but we aren't there yet.  We do rely on Gradle prepDev to generate the Eclipse project and
 build GhidraDev's dependencies though, hence the build.gradle file.
 
 NOTE: Only "Eclipse for RCP and RAP Developers" has the ability to do the below instructions.  The

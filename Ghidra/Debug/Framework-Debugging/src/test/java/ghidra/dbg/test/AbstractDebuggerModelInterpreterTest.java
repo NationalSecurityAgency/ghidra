@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 
 	/**
 	 * Get the path of the expected result of {@link #findInterpreter()} for this test
-	 * 
+	 *
 	 * @return the expected path
 	 */
 	public List<String> getExpectedInterpreterPath() {
@@ -48,7 +48,7 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 
 	/**
 	 * Get the CLI command to echo a string back
-	 * 
+	 *
 	 * @param msg the message to echo
 	 * @return the command
 	 */
@@ -56,25 +56,25 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 
 	/**
 	 * If applicable, get the CLI command to terminate the session / model
-	 * 
+	 *
 	 * @return the command
 	 */
 	protected abstract String getQuitCommand();
 
 	/**
 	 * Get the CLI command to attach to the {@link #dummy} process
-	 * 
+	 *
 	 * @return the command
 	 */
 	protected abstract String getAttachCommand();
 
 	/**
 	 * Get the CLI command to detach from the given process
-	 * 
+	 *
 	 * <p>
 	 * Note that the given process should already be the current/active process of the interpreter,
 	 * so the parameter may not be needed.
-	 * 
+	 *
 	 * @param process the process to detach from, which should already be active
 	 * @return the command
 	 */
@@ -82,11 +82,11 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 
 	/**
 	 * Get the CLI command to kill the given process
-	 * 
+	 *
 	 * <p>
 	 * Note that the given process should already be the current/active process of the interpreter,
 	 * so the parameter may not be needed.
-	 * 
+	 *
 	 * @param process the process to kill, which should already be active
 	 * @return the command
 	 */
@@ -94,11 +94,11 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 
 	/**
 	 * Perform an pre-test actions to ensure an interpreter exists where expected
-	 * 
+	 *
 	 * <p>
 	 * The model will have been built already. This method is invoked immediately preceding
 	 * {@link #findInterpreter()}
-	 * 
+	 *
 	 * @throws Throwable if anything goes wrong
 	 */
 	protected void ensureInterpreterAvailable() throws Throwable {
@@ -182,7 +182,7 @@ public abstract class AbstractDebuggerModelInterpreterTest extends AbstractDebug
 
 	/**
 	 * Test that the user quitting via the CLI properly terminates the model
-	 * 
+	 *
 	 * @throws Throwable expected since the model will terminate
 	 */
 	@Test(expected = DebuggerModelTerminatingException.class)

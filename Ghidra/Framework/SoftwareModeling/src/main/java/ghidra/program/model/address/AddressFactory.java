@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public interface AddressFactory {
 	 * the given string.  Each Address Space is given a change to parse
 	 * the string and all the valid results are return in the array.
 	 * @param addrString the address string to parse.
-	 * @param caseSensitive determines if addressSpace names must be case sensitive to match. 
+	 * @param caseSensitive determines if addressSpace names must be case sensitive to match.
 	 * @return Address[] The list of addresses generated from the string.
 	 */
 	public Address[] getAllAddresses(String addrString, boolean caseSensitive);
@@ -78,7 +78,7 @@ public interface AddressFactory {
 	public int getNumAddressSpaces();
 
 	/**
-	 * Tests if the given address is valid for at least one of the 
+	 * Tests if the given address is valid for at least one of the
 	 * Address Spaces in this factory
 	 * @param addr The address to test
 	 * @return boolean true if the address valid, false otherwise
@@ -98,7 +98,7 @@ public interface AddressFactory {
 	public long getIndex(Address addr);
 
 	/**
-	 * Gets the physical address space associated with the given address space. If 
+	 * Gets the physical address space associated with the given address space. If
 	 * the given space is physical, then it will be returned.
 	 * @param space the addressSpace for which the physical space is requested.
 	 * @return the physical address space associated with the given address space.
@@ -147,8 +147,8 @@ public interface AddressFactory {
 	public Address getConstantAddress(long offset);
 
 	/**
-	 * Computes an address set from a start and end address that may span address spaces.  Although 
-	 * in general, it is not meaningful to compare addresses from multiple spaces, but since there 
+	 * Computes an address set from a start and end address that may span address spaces.  Although
+	 * in general, it is not meaningful to compare addresses from multiple spaces, but since there
 	 * is an absolute ordering of address spaces it can be useful for iterating over all addresses
 	 * in a program with multiple address spaces.
 	 * @param min the start address

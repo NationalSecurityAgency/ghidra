@@ -7,7 +7,7 @@
    Contributed by Mark Mitchell (mark@markmitchell.com).
 
 This file is part of GNU CC.
-   
+
 GNU CC is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2, or (at your option)
@@ -54,7 +54,7 @@ Boston, MA 02110-1301, USA.  */
    embedded in another object.  The contents of of the string itself
    are still dynamically allocated.  The string initially is capable
    of holding at least SPACE characeters, including the terminating
-   NUL.  If SPACE is 0, it will silently be increated to 1.  
+   NUL.  If SPACE is 0, it will silently be increated to 1.
 
    If RETURN_ON_ALLOCATION_FAILURE is defined and memory allocation
    fails, returns 0.  Otherwise returns 1.  */
@@ -86,7 +86,7 @@ dyn_string_init (struct dyn_string *ds_struct_ptr, int space)
    defined and memory allocation fails, returns NULL.  Otherwise
    returns the newly allocated string.  */
 
-dyn_string_t 
+dyn_string_t
 dyn_string_new (int space)
 {
   dyn_string_t result;
@@ -108,7 +108,7 @@ dyn_string_new (int space)
 
 /* Free the memory used by DS.  */
 
-void 
+void
 dyn_string_delete (dyn_string_t ds)
 {
   free (ds->s);
@@ -134,12 +134,12 @@ dyn_string_release (dyn_string_t ds)
 
 /* Increase the capacity of DS so it can hold at least SPACE
    characters, plus the terminating NUL.  This function will not (at
-   present) reduce the capacity of DS.  Returns DS on success. 
+   present) reduce the capacity of DS.  Returns DS on success.
 
    If RETURN_ON_ALLOCATION_FAILURE is defined and a memory allocation
    operation fails, deletes DS and returns NULL.  */
 
-dyn_string_t 
+dyn_string_t
 dyn_string_resize (dyn_string_t ds, int space)
 {
   int new_allocated = ds->allocated;
@@ -150,7 +150,7 @@ dyn_string_resize (dyn_string_t ds, int space)
   /* Increase allocation by factors of two.  */
   while (space > new_allocated)
     new_allocated *= 2;
-    
+
   if (new_allocated != ds->allocated)
     {
       ds->allocated = new_allocated;
@@ -307,7 +307,7 @@ dyn_string_insert_char (dyn_string_t dest, int pos, int c)
   ++dest->length;
   return 1;
 }
-     
+
 /* Append S to DS, resizing DS if necessary.  Returns 1 on success.
    On failure, if RETURN_ON_ALLOCATION_FAILURE, deletes DEST and
    returns 0.  */

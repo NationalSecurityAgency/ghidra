@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,18 +21,18 @@ import java.util.ArrayList;
 public class VectorIterator<T> implements IteratorSTL<T> {
 	protected int index;
 	protected ArrayList<T> data;
-	
+
 	public VectorIterator(ArrayList<T> data, int index) {
 		this.data = data;
 		this.index = index;
 	}
-	
+
 	@Override
 	public String toString() {
 	    T value = index >= data.size() ? null : data.get( index );
-		return "VectorIterator: [index=" + index + " - " + value + "]"; 
+		return "VectorIterator: [index=" + index + " - " + value + "]";
 	}
-	
+
 	public void assign( IteratorSTL<T> otherIterator ) {
 		VectorIterator<T> other = (VectorIterator<T>) otherIterator;
 		this.index = other.index;
@@ -87,8 +87,8 @@ public class VectorIterator<T> implements IteratorSTL<T> {
 		index -= count;
 		return this;
 	}
-	
-	
+
+
 	public void insert(T value) {
 		data.add(index, value);
 	}

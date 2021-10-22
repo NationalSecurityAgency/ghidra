@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Enrich the result of {@link Comparable#compareTo(Object)}, given that the two are related
-		 * 
+		 *
 		 * @param compareTo the return from {@code compareTo}
 		 * @return the rich result
 		 */
@@ -65,7 +65,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		/**
 		 * Enrich the result of {@link Comparable#compareTo(Object)}, given that the two are not
 		 * related
-		 * 
+		 *
 		 * @param compareTo the return from {@code compareTo}
 		 * @return the rich result
 		 */
@@ -81,7 +81,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Maintain sort order, but specify the two are not in fact related
-		 * 
+		 *
 		 * @param result the result of another (usually recursive) rich comparison
 		 * @return the modified result
 		 */
@@ -105,11 +105,11 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Parse a step of the form "{@code 3}" or {@code "t1-3"}
-		 * 
+		 *
 		 * <p>
 		 * The first form steps the last thread the given number of times, e.g., 3. The second form
 		 * steps the given thread, e.g., 1, the given number of times.
-		 * 
+		 *
 		 * @param stepSpec the string specification
 		 * @return the parsed step
 		 * @throws IllegalArgumentException if the specification is of the wrong form
@@ -137,7 +137,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Construct a step for the given thread with the given tick count
-		 * 
+		 *
 		 * @param threadKey the key of the thread in the trace, -1 for the "last thread"
 		 * @param tickCount the number of times to step the thread
 		 */
@@ -164,7 +164,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Add to the count of this step
-		 * 
+		 *
 		 * @param steps the count to add
 		 */
 		public void advance(long steps) {
@@ -180,7 +180,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Subtract from the count of this step
-		 * 
+		 *
 		 * <p>
 		 * If this step has a count exceeding that given, then this method simply subtracts the
 		 * given number from the {@code tickCount} and returns the (negative) difference. If this
@@ -189,7 +189,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		 * of this step, this method sets the count to 0 and returns the (positive) difference,
 		 * indicating this step should be removed from the sequence, and the remaining steps rewound
 		 * from the preceding step.
-		 * 
+		 *
 		 * @param steps the count to rewind
 		 * @return the number of steps remaining
 		 */
@@ -204,11 +204,11 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Check if the given step can be combined with this one
-		 * 
+		 *
 		 * <p>
 		 * Two steps applied to the same thread can just be summed. If the given step applies to the
 		 * "last thread" or to the same thread as this step, then it can be combined.
-		 * 
+		 *
 		 * @param step the second step
 		 * @return true if combinable, false otherwise.
 		 */
@@ -246,7 +246,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Richly compare this step to another
-		 * 
+		 *
 		 * @param that the object of comparison (this being the subject)
 		 * @return a result describing the relationship from subject to object
 		 */
@@ -274,7 +274,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Parse (and normalize) a sequence of steps
-		 * 
+		 *
 		 * <p>
 		 * This takes a comma-separated list of steps in the form specified by
 		 * {@link TickStep#parse(String)}. Each step may or may not specify a thread, but it's
@@ -282,7 +282,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		 * is parsed, so any step after the first that omits a thread will be combined with the
 		 * previous step. When the first step applies to the "last thread," it typically means the
 		 * "event thread" of the source trace snapshot.
-		 * 
+		 *
 		 * @param seqSpec the string specification of the sequence
 		 * @return the parsed sequence
 		 * @throws IllegalArgumentException if the specification is of the wrong form
@@ -298,7 +298,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Construct (and normalize) a sequence of the specified steps
-		 * 
+		 *
 		 * @param steps the desired steps in order
 		 * @return the resulting sequence
 		 */
@@ -308,7 +308,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Construct (and normalize) a sequence of the specified steps
-		 * 
+		 *
 		 * @param steps the desired steps in order
 		 * @return the resulting sequence
 		 */
@@ -322,7 +322,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Construct (and normalize) a sequence formed by the steps in a followed by the steps in b
-		 * 
+		 *
 		 * @param a the first sequence
 		 * @param b the second (appended) sequence
 		 * @return the resulting sequence
@@ -351,7 +351,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Append the given step to this sequence
-		 * 
+		 *
 		 * @param step the step to append
 		 */
 		public void advance(TickStep step) {
@@ -372,7 +372,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Append the given sequence to this one
-		 * 
+		 *
 		 * @param seq the sequence to append
 		 */
 		public void advance(TickSequence seq) {
@@ -396,12 +396,12 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Rewind this sequence the given step count
-		 * 
+		 *
 		 * <p>
 		 * This modifies the sequence in place, removing the given count from the end of the
 		 * sequence. Any step whose count is reduced to 0 as a result of rewinding is removed
 		 * entirely from the sequence.
-		 * 
+		 *
 		 * @param count the step count to rewind
 		 * @return if count exceeds the steps of this sequence, the (positive) difference remaining
 		 */
@@ -430,10 +430,10 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Obtain a clone of the steps
-		 * 
+		 *
 		 * <p>
 		 * Modifications to the returned steps have no effect on this sequence.
-		 * 
+		 *
 		 * @return the cloned steps
 		 */
 		public List<TickStep> getSteps() {
@@ -442,7 +442,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Check if this sequence represents any actions
-		 * 
+		 *
 		 * @return true if the sequence is empty, false if not
 		 */
 		public boolean isNop() {
@@ -468,7 +468,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Richly compare to sequences
-		 * 
+		 *
 		 * <p>
 		 * The result indicates not only which is "less" or "greater" than the other, but also
 		 * indicates whether the two are "related." Two sequences are considered related if one is
@@ -476,7 +476,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		 * one into the other solely by truncation (rewind) or solely by concatenation (advance).
 		 * When related, the prefix is considered "less than" the other. Equal sequences are
 		 * trivially related.
-		 * 
+		 *
 		 * <p>
 		 * Examples:
 		 * <ul>
@@ -486,12 +486,12 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 		 * <li>{@code "t1-5"} is related to and less than {@code "t1-5,t2-4"}</li>
 		 * <li>{@code "t1-5"} is un-related to and less than {@code "t1-4,t2-4"}</li>
 		 * </ul>
-		 * 
+		 *
 		 * <p>
 		 * The {@link #compareTo(TickSequence)} implementation defers to this method. Thus, in a
 		 * sorted set of tick sequences, the floor of a given sequence is will be the longest prefix
 		 * in that set to the given sequence, assuming such a prefix is present.
-		 * 
+		 *
 		 * @param that the object of comparison (this being the subject)
 		 * @return a result describing the relationship from subject to object
 		 */
@@ -539,10 +539,10 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Compute the sequence which concatenated to the given prefix would result in this sequence
-		 * 
+		 *
 		 * <p>
 		 * The returned tick sequence should not be manipulated, since it may just be this sequence.
-		 * 
+		 *
 		 * @see #compareSeq(TickSequence)
 		 * @param prefix the prefix
 		 * @return the relative sequence from prefix to this
@@ -575,7 +575,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Compute to total number of steps specified
-		 * 
+		 *
 		 * @return the total
 		 */
 		public long totalTickCount() {
@@ -588,12 +588,12 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Execute this sequence upon the given machine
-		 * 
+		 *
 		 * <p>
 		 * Threads are retrieved from the database by key, then created in the machine (if not
 		 * already present) named by {@link TraceThread#getPath()}. The caller should ensure the
 		 * machine's state is bound to the given trace.
-		 * 
+		 *
 		 * @param trace the trace to which the machine is bound
 		 * @param eventThread the thread for the first step, if it applies to the "last thread"
 		 * @param machine the machine to step
@@ -629,7 +629,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 		/**
 		 * Get the key of the last thread stepped
-		 * 
+		 *
 		 * @return the key, or -1 if no step in the sequence specifies a thread
 		 */
 		public long getLastThreadKey() {
@@ -645,12 +645,12 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Parse schedule in the form "{@code snap[:ticks[.pTicks]]}"
-	 * 
+	 *
 	 * <p>
 	 * A schedule consists of a snap, a optional sequence of thread instruction-level steps (ticks),
 	 * and optional p-code-level steps ({@code pTicks}). The form of {@code ticks} and
 	 * {@code pTicks} is specified by {@link TickSequence#parse(String)}.
-	 * 
+	 *
 	 * @param spec the string specification
 	 * @return the parsed schedule
 	 */
@@ -704,7 +704,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Construct the given schedule
-	 * 
+	 *
 	 * @param snap the initial trace snapshot
 	 * @param ticks the tick sequence
 	 * @param pTicks the of p-code tick sequence
@@ -728,7 +728,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Richly compare two schedules
-	 * 
+	 *
 	 * <p>
 	 * Schedules starting at different snapshots are never related, because there is no
 	 * emulator/simulator stepping action which advances to the next snapshot. Though p-code steps
@@ -736,7 +736,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	 * since we cannot know <em>a priori</em> how many p-code steps comprise a full instruction
 	 * step. Consider, e.g., the user may specify 100 p-code steps, which could effect 20
 	 * instruction steps.
-	 * 
+	 *
 	 * @param that the object of comparison (this being the subject)
 	 * @return a result describing the relationship from subject to object
 	 */
@@ -811,7 +811,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Check if this schedule requires any stepping
-	 * 
+	 *
 	 * @return true if no stepping is required, i.e., the resulting state can be realized simply by
 	 *         loading a snapshot
 	 */
@@ -821,7 +821,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Get the source snapshot
-	 * 
+	 *
 	 * @return
 	 */
 	public long getSnap() {
@@ -830,7 +830,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Get the last thread key stepped by this schedule
-	 * 
+	 *
 	 * @return
 	 */
 	public long getLastThreadKey() {
@@ -843,10 +843,10 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Get the event thread for this schedule in the context of the given trace
-	 * 
+	 *
 	 * <p>
 	 * This is the thread stepped when no thread is specified for the first step of the sequence.
-	 * 
+	 *
 	 * @param trace the trace containing the source snapshot and threads
 	 * @return the thread to use as "last thread" for the sequence
 	 */
@@ -857,7 +857,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Get the last thread stepped by this schedule in the context of the given trace
-	 * 
+	 *
 	 * @param trace the trace containing the source snapshot and threads
 	 * @return the thread last stepped, or the "event thread" when no steps are taken
 	 */
@@ -871,11 +871,11 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Compute the total number of ticks taken, including the p-code ticks
-	 * 
+	 *
 	 * <p>
 	 * This is suitable for use with {@link TaskMonitor#initialize(long)}, where that monitor will
 	 * be passed to {@link #execute(Trace, PcodeMachine, TaskMonitor)} or similar.
-	 * 
+	 *
 	 * @return the number of ticks
 	 */
 	public long totalTickCount() {
@@ -884,7 +884,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Compute the number of ticks taken, excluding p-code ticks
-	 * 
+	 *
 	 * @return the number of ticks
 	 */
 	public long tickCount() {
@@ -893,7 +893,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Compute the number of p-code ticks taken
-	 * 
+	 *
 	 * @return the number of ticks
 	 */
 	public long pTickCount() {
@@ -902,13 +902,13 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Realize the machine state for this schedule using the given trace and machine
-	 * 
+	 *
 	 * <p>
 	 * This method executes this schedule and trailing p-code steps on the given machine, assuming
 	 * that machine is already "positioned" at the initial snapshot. Assuming successful execution,
 	 * that machine is now said to be "positioned" at this schedule, and its state is the result of
 	 * said execution.
-	 * 
+	 *
 	 * @param trace the trace containing the source snapshot and threads
 	 * @param machine a machine bound to the trace whose current state reflects the initial snapshot
 	 * @param monitor a monitor for cancellation and progress reporting
@@ -925,13 +925,13 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Realize the machine state for this schedule using the given trace and pre-positioned machine
-	 * 
+	 *
 	 * <p>
 	 * This method executes the remaining steps of this schedule and trailing p-code steps on the
 	 * given machine, assuming that machine is already "positioned" at another given schedule.
 	 * Assuming successful execution, that machine is now said to be "positioned" at this schedule,
 	 * and its state is the result of said execution.
-	 * 
+	 *
 	 * @param trace the trace containing the source snapshot and threads
 	 * @param position the current schedule of the given machine
 	 * @param machine a machine bound to the trace whose current state reflects the given position
@@ -959,11 +959,11 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	/**
 	 * Returns the equivalent of executing the schedule (ignoring p-code steps) followed by stepping
 	 * the given thread count more instructions
-	 * 
+	 *
 	 * <p>
 	 * This schedule is left unmodified. If it had any p-code steps, those steps are dropped in the
 	 * resulting schedule.
-	 * 
+	 *
 	 * @param thread the thread to step
 	 * @param tickCount the number of ticks to take the thread forward
 	 * @return the resulting schedule
@@ -1001,12 +1001,12 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	/**
 	 * Returns the equivalent of executing count instructions (and all p-code operations) less than
 	 * this schedule
-	 * 
+	 *
 	 * <p>
 	 * This schedule is left unmodified. If it had any p-code steps, those steps are dropped in the
 	 * resulting schedule. If count exceeds this schedule's steps, it will try (recursively) to step
 	 * the source snapshot's schedule backward, if known.
-	 * 
+	 *
 	 * @param trace the trace of this schedule, for context
 	 * @param tickCount the number of ticks to take backward
 	 * @return the resulting schedule or null if it cannot be computed
@@ -1018,7 +1018,7 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 	/**
 	 * Returns the equivalent of executing the schedule followed by stepping the given thread
 	 * {@code pTickCount} more p-code operations
-	 * 
+	 *
 	 * @param thread the thread to step
 	 * @param pTickCount the number of p-code ticks to take the thread forward
 	 * @return the resulting schedule
@@ -1031,12 +1031,12 @@ public class TraceSchedule implements Comparable<TraceSchedule> {
 
 	/**
 	 * Returns the equivalent of executing count p-code operations less than this schedule
-	 * 
+	 *
 	 * <p>
 	 * If {@code pTickCount} exceeds the p-code ticks of this schedule, null is returned, since we
 	 * cannot know <em>a priori</em> how many p-code steps would be required to complete the
 	 * preceding instruction step.
-	 * 
+	 *
 	 * @param pTickCount the number of p-code ticks to take backward
 	 * @return the resulting schedule or null if it cannot be computed
 	 */

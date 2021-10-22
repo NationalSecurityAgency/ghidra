@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import ghidra.util.classfinder.ExtensionPoint;
 /**
  * NOTE:  ALL AnnotationHandler CLASSES MUST END IN "AnnotationHandler".  If not,
  * the ClassSearcher will not find them.
- * 
+ *
  * AnnotationHandlers provide prefix/suffix information for various datatypes
  * for specific C-like languages.
  */
@@ -65,14 +65,14 @@ public interface AnnotationHandler extends ExtensionPoint {
 	 */
 	public String getDescription();
 
-	/** 
+	/**
 	 * Returns the name of the C-like language that this handler supports
 	 * @return the name of the C-like language that this handler supports
 	 */
 	public String getLanguageName();
 
 	/**
-	 * Returns an array of known extensions for the output file type.  If no extensions are 
+	 * Returns an array of known extensions for the output file type.  If no extensions are
 	 * preferred, the an empty array should be returned.
 	 * @return an array of known extensions for the output file type.
 	 */

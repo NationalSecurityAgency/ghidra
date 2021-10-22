@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,12 +30,12 @@ import ghidra.util.Msg;
  * The data is an AddressSetView.
  */
 public class SelectionTransferable implements Transferable, ClipboardOwner {
-    
+
 	/**
 	 * DataFlavor for program selection.
 	 */
-    public static DataFlavor localProgramSelectionFlavor = createLocalProgramSelectionFlavor(); 
-    
+    public static DataFlavor localProgramSelectionFlavor = createLocalProgramSelectionFlavor();
+
     // create a data flavor that is an AddressSetView and a program pathname
     private static DataFlavor createLocalProgramSelectionFlavor() {
         try {
@@ -50,12 +50,12 @@ public class SelectionTransferable implements Transferable, ClipboardOwner {
         }
         return null;
     }
-    private static DataFlavor []flavors= 
+    private static DataFlavor []flavors=
         {localProgramSelectionFlavor};
-    
+
     private static List<DataFlavor> flavorList = Arrays.asList(flavors);
     private SelectionTransferData selectionData;
-    
+
     /**
      * Construct a new SelectionTransferable.
      * @param selectionData the data indicating the selection for the selection transferable
@@ -63,14 +63,14 @@ public class SelectionTransferable implements Transferable, ClipboardOwner {
     public SelectionTransferable(SelectionTransferData selectionData) {
     	this.selectionData = selectionData;
     }
-    
+
     /**
      * Return all data flavors that this class supports.
      */
     public synchronized DataFlavor []getTransferDataFlavors() {
         return flavors;
     }
-    
+
     /**
      * Return whether the specifed data flavor is supported.
      */
@@ -81,14 +81,14 @@ public class SelectionTransferable implements Transferable, ClipboardOwner {
     /**
      * Return the transfer data with the given data flavor.
      */
-    public synchronized Object getTransferData(DataFlavor f) 
+    public synchronized Object getTransferData(DataFlavor f)
         throws UnsupportedFlavorException, IOException {
-            
+
         if (f.equals(localProgramSelectionFlavor)) {
             return selectionData;
         }
         throw new UnsupportedFlavorException(f);
-        
+
     }
     /*
      *  (non-Javadoc)
@@ -98,12 +98,12 @@ public class SelectionTransferable implements Transferable, ClipboardOwner {
     public String toString() {
         return "SelectionTransferable";
     }
- 
+
     /*
      *  (non-Javadoc)
      * @see java.awt.datatransfer.ClipboardOwner#lostOwnership(java.awt.datatransfer.Clipboard, java.awt.datatransfer.Transferable)
      */
     public void lostOwnership(Clipboard clipboard, Transferable contents) {
     }
-    
+
 }

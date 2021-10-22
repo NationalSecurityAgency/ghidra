@@ -161,7 +161,7 @@ macro popPCandPSW(pc) {
 }
 
 macro funcall(target) {
-  ret:2 = inst_next; 
+  ret:2 = inst_next;
   savePSWtoPC(ret);
   push(ret);
   call target;

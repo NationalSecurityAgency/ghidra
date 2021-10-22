@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.io.*;
 
 /**
  * An {@link InputStream} wrapper that de-obfuscates the bytes being read from the underlying
- * stream. 
+ * stream.
  */
 public class ObfuscatedInputStream extends InputStream {
 
@@ -29,7 +29,7 @@ public class ObfuscatedInputStream extends InputStream {
 
 	/**
 	 * Creates instance.
-	 * 
+	 *
 	 * @param delegate {@link InputStream} to wrap
 	 */
 	public ObfuscatedInputStream(InputStream delegate) {
@@ -66,7 +66,7 @@ public class ObfuscatedInputStream extends InputStream {
 	/**
 	 * Entry point to enable command line users to retrieve the contents of an obfuscated
 	 * file.
-	 * 
+	 *
 	 * @param args either ["--help"], or [ "input_filename", "output_filename" ]
 	 * @throws IOException if error
 	 */

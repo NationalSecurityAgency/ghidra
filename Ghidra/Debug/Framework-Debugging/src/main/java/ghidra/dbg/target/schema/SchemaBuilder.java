@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,7 +84,7 @@ public class SchemaBuilder {
 
 	/**
 	 * Define the schema for a child element
-	 * 
+	 *
 	 * @param index the index whose schema to define, or "" for the default
 	 * @param schema the schema defining the element
 	 * @return this builder
@@ -136,11 +136,11 @@ public class SchemaBuilder {
 
 	/**
 	 * Define the schema for a child attribute.
-	 * 
+	 *
 	 * <p>
 	 * If the attribute schema's name is empty, the given schema becomes the default attribute
 	 * schema.
-	 * 
+	 *
 	 * @param schema the attribute schema to add to the definition
 	 * @return this builder
 	 */

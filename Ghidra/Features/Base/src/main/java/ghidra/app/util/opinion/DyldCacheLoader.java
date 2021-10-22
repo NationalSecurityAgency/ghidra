@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,7 +55,7 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 
 	/** Default value for loader option add relocation entries */
 	static final boolean ADD_RELOCATION_ENTRIES_OPTION_DEFAULT = false;
-	
+
 	@Override
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
@@ -131,7 +131,7 @@ public class DyldCacheLoader extends AbstractLibrarySupportLoader {
 	private boolean shouldAddRelocationEntries(List<Option> options) {
 		return OptionUtils.getOption(ADD_RELOCATION_ENTRIES_OPTION_NAME, options, ADD_RELOCATION_ENTRIES_OPTION_DEFAULT);
 	}
-	
+
 	@Override
 	public String getName() {
 		return DYLD_CACHE_NAME;

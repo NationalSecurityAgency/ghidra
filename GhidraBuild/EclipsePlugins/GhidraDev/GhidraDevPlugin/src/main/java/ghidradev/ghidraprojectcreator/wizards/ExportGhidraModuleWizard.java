@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ import ghidradev.ghidraprojectcreator.wizards.pages.ChooseGhidraModuleProjectWiz
 import ghidradev.ghidraprojectcreator.wizards.pages.ConfigureGradleWizardPage;
 
 /**
- * Wizard for exporting a Ghidra module project to a releasable extension zip bundle.  
+ * Wizard for exporting a Ghidra module project to a releasable extension zip bundle.
  */
 @SuppressWarnings("restriction")
 public class ExportGhidraModuleWizard extends Wizard implements INewWizard {
@@ -95,7 +95,7 @@ public class ExportGhidraModuleWizard extends Wizard implements INewWizard {
 
 	/**
 	 * Exports the given Ghidra module project to an extension zip file.
-	 *  
+	 *
 	 * @param javaProject The Ghidra module project to export.
 	 * @param gradleDistribution The Gradle distribution to use to export.
 	 * @param monitor The monitor to use during export.
@@ -112,10 +112,10 @@ public class ExportGhidraModuleWizard extends Wizard implements INewWizard {
 			// Get path to Ghidra installation directory
 			String ghidraInstallDirPath = project.getFolder(
 				GhidraProjectUtils.GHIDRA_FOLDER_NAME).getLocation().toOSString();
-			
+
 			// Get project's java.  Gradle should use the same version.
 			// TODO: It's more correct to get this from the project's classpath, since Ghidra's
-			// saved Java home can change from launch to launch.  
+			// saved Java home can change from launch to launch.
 			GhidraApplicationLayout ghidraLayout = new GhidraApplicationLayout(new File(ghidraInstallDirPath));
 			File javaHomeDir = new JavaConfig(
 				ghidraLayout.getApplicationInstallationDir().getFile(false)).getSavedJavaHome();

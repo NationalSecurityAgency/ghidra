@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,13 +23,13 @@ import db.*;
 
 class MetadataManager {
 	private final static String TABLE_NAME = "Metadata";
-    private final static Schema SCHEMA = new Schema(0,"ID", 
+    private final static Schema SCHEMA = new Schema(0,"ID",
     		new Class[] {StringField.class, StringField.class},
     		new String[] {"Key", "Value"});
 
 	static void loadData(DomainObjectAdapterDB dobj, Map<String, String> metadata) throws IOException {
 		metadata.clear();
-		
+
 		Table table = dobj.getDBHandle().getTable(TABLE_NAME);
 		if (table != null) {
 			RecordIterator iterator = table.iterator();
@@ -41,7 +41,7 @@ class MetadataManager {
 			}
 		}
 	}
-	
+
 	static void saveData(DomainObjectAdapterDB dobj, Map<String, String> metadata) throws IOException {
 		int transactionID = dobj.startTransaction("Update Metadata");
 		try {

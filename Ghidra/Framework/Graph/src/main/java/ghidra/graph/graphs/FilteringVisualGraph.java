@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ import utility.function.Callback;
  * 		<LI>As vertices are filtered, so to will be their edges
  * 		</LI>
  * 		<LI>If additions are made to the graph while it is filtered, the new additions will
- *          not be added to the current graph, but will be kept in the background for later 
+ *          not be added to the current graph, but will be kept in the background for later
  *          restoring
  * 		</LI>
  *  		<LI>
@@ -47,13 +47,13 @@ import utility.function.Callback;
  * </UL>
  *
  * <P>Implementation Note: this class engages in some odd behavior when removals and additions
- * are need to this graph.  A distinction is made between events that are generated from 
+ * are need to this graph.  A distinction is made between events that are generated from
  * external clients and those that happen due to filtering and restoring.  This distinction
  * allows this class to know when to update this graph, based upon whether or not data has
  * been filtered.   Implementation of this is achieved by using a flag.  Currently, this flag
- * is thread-safe.  If this graph is to be multi-threaded (such as if changes are to be 
+ * is thread-safe.  If this graph is to be multi-threaded (such as if changes are to be
  * made by multiple threads, then this update flag will have to be revisited to ensure thread
- * visibility. 
+ * visibility.
  *
  * @param <V> the vertex type
  * @param <E> the edge type
@@ -86,7 +86,7 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 	/**
 	 * Restores the given filtered vertices into the graph.  This will only happen if both
 	 * endpoints are in the graph.
-	 * 
+	 *
 	 * @param toUnfilter the edges to restore
 	 */
 	public void unfilterVertices(Collection<V> toUnfilter) {
@@ -97,7 +97,7 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 	/**
 	 * Restores the given filtered edges into the graph.  This will only happen if both
 	 * endpoints are in the graph.
-	 * 
+	 *
 	 * @param toUnfilter the edges to restore
 	 */
 	public void unfilterEdges(Collection<E> toUnfilter) {
@@ -158,10 +158,10 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 
 	/**
 	 * Returns all vertices that are reachable by the given vertices.
-	 * 
-	 * <P>This method is needed if you wish to find relationships that have been filtered 
+	 *
+	 * <P>This method is needed if you wish to find relationships that have been filtered
 	 * out.
-	 * 
+	 *
 	 * @param sourceVertices the vertices for which to find the other reachable vertices
 	 * @return the reachable vertices
 	 */
@@ -177,10 +177,10 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 
 	/**
 	 * Returns all edges connected to the given vertices.
-	 * 
-	 * <P>This method is needed if you wish to find relationships that have been filtered 
+	 *
+	 * <P>This method is needed if you wish to find relationships that have been filtered
 	 * out.
-	 * 
+	 *
 	 * @param sourceVertices the vertices for which to get the edges
 	 * @return the reachable edges
 	 */
@@ -195,7 +195,7 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void restoreAllVertices() {
 		Collection<V> allVertices = completeGraph.getVertices();
@@ -264,7 +264,7 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 	/**
 	 * This method is to be called internally to remove a vertex from this graph, but not the
 	 * underlying 'complete graph'.
-	 * 
+	 *
 	 * @param v the vertex
 	 */
 	private void removeVertexFromView(V v) {
@@ -274,7 +274,7 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 	/**
 	 * This method is to be called internally to remove an edge from this graph, but not the
 	 * underlying 'complete graph'.
-	 * 
+	 *
 	 * @param e the edge
 	 */
 	private void removeEdgeFromView(E e) {
@@ -297,12 +297,12 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 	 */
 	private void maybePerformRemove(Callback c) {
 		if (isInternalUpdate()) {
-			// 
-			// Ignore internal updates.   
-			// We have to know when a remover operation should update us vs our 'complete graph'. 
+			//
+			// Ignore internal updates.
+			// We have to know when a remover operation should update us vs our 'complete graph'.
 			// When the client calls our public API, we wish to update our 'complete graph', when
-			// we trigger a filter operation to remove content from us, we do NOT want to 
-			// update the 'complete graph', as it stores those removed items for later 
+			// we trigger a filter operation to remove content from us, we do NOT want to
+			// update the 'complete graph', as it stores those removed items for later
 			// retrieval.
 			//
 			return;
@@ -337,7 +337,7 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 
 //==================================================================================================
 // Overridden Methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public boolean removeVertex(V v) {
@@ -451,7 +451,7 @@ public abstract class FilteringVisualGraph<V extends VisualVertex, E extends Vis
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class UnfilteredGraph extends DefaultVisualGraph<V, E> {
 

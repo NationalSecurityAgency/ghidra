@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,10 +30,10 @@ import utilities.util.ArrayUtilities;
  * the minimum number of bytes required to contain the bitfield at its specified offset.
  * The effective bit-size of a bitfield will be limited by the size of the base
  * datatype whose size may be controlled by its associated datatype manager and data organization
- * (e.g., {@link IntegerDataType}). 
+ * (e.g., {@link IntegerDataType}).
  * <p>
- * NOTE: Instantiation of this datatype implementation is intended for internal use only.  
- * Creating and manipulating bitfields should be accomplished directly via Structure or Union 
+ * NOTE: Instantiation of this datatype implementation is intended for internal use only.
+ * Creating and manipulating bitfields should be accomplished directly via Structure or Union
  * bitfield methods.
  */
 public class BitFieldDataType extends AbstractDataType {
@@ -45,9 +45,9 @@ public class BitFieldDataType extends AbstractDataType {
 	private final int effectiveBitSize; // number of bits constrained by size of base type
 
 	// The bitOffset is established during packing and reflects the right-shift amount within the
-	// normalized big-endian view of the allocated byte storage as defined by the corresponding 
+	// normalized big-endian view of the allocated byte storage as defined by the corresponding
 	// composite DataTypeComponent.
-	private final int bitOffset; // indicates right-shift within big-endian view of component storage (range: 0..7) 
+	private final int bitOffset; // indicates right-shift within big-endian view of component storage (range: 0..7)
 	private final int storageSize; // minimal component storage size to which bitOffset applies
 
 	protected Settings defaultSettings;
@@ -57,11 +57,11 @@ public class BitFieldDataType extends AbstractDataType {
 	 * take precedence if specified.  Either baseType or baseDatatype must be specified.
 	 * @param baseDataType base data type (integer/enum type or typedef to same).  This
 	 * bitfield will adopt the same datatype manager as this base type.
-	 * @param bitSize size of bit-field expressed as number of bits (0..255).  The effective 
+	 * @param bitSize size of bit-field expressed as number of bits (0..255).  The effective
 	 * bit size may be reduced based upon the specified base datatype size.
 	 * @param bitOffset right shift factor within storage unit when viewed as a big-endian dd
 	 * scalar value.  Based upon minimal storage bitOffset should be in the range 0 to 7.
-	 * @throws InvalidDataTypeException 
+	 * @throws InvalidDataTypeException
 	 */
 	protected BitFieldDataType(DataType baseDataType, int bitSize, int bitOffset)
 			throws InvalidDataTypeException {
@@ -92,7 +92,7 @@ public class BitFieldDataType extends AbstractDataType {
 	protected BitFieldDataType(DataType baseDataType, int bitSize) throws InvalidDataTypeException {
 		this(baseDataType, bitSize, 0);
 	}
-	
+
 	@Override
 	public boolean isZeroLength() {
 		return bitSize == 0;
@@ -111,7 +111,7 @@ public class BitFieldDataType extends AbstractDataType {
 
 	/**
 	 * Get the minimum storage size in bytes for a given size in bits.
-	 * This does not consider the bit offset which may increase the required 
+	 * This does not consider the bit offset which may increase the required
 	 * storage.
 	 * @param bitSize number of bits within bitfield
 	 * @return minimum storage size in bytes
@@ -121,7 +121,7 @@ public class BitFieldDataType extends AbstractDataType {
 	}
 
 	/**
-	 * Get the minimum storage size in bytes for a given size in bits with 
+	 * Get the minimum storage size in bytes for a given size in bits with
 	 * the specified bitOffset (lsb position within big endian storage)
 	 * @param bitSize number of bits within bitfield
 	 * @param bitOffset normalized bitfield offset within storage (lsb)
@@ -218,7 +218,7 @@ public class BitFieldDataType extends AbstractDataType {
 	}
 
 	/**
-	 * Get the base datatype associated with this bit-field 
+	 * Get the base datatype associated with this bit-field
 	 * (e.g., int, long, etc., or TypeDef to supported base type)
 	 * @return base data type
 	 */
@@ -227,7 +227,7 @@ public class BitFieldDataType extends AbstractDataType {
 	}
 
 	/**
-	 * Get the base datatype associated with this bit-field 
+	 * Get the base datatype associated with this bit-field
 	 * (e.g., int, long, etc., or TypeDef to supported base type)
 	 * @return base data type
 	 */

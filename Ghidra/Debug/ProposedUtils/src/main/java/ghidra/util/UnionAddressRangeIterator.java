@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,10 +31,10 @@ public class UnionAddressRangeIterator extends AbstractPeekableIterator<AddressR
 
 	/**
 	 * Coalesce (by union) ranges from a single iterator
-	 * 
+	 *
 	 * The ranges must be returned in order: in the forward direction, by increasing min address; in
 	 * the reverse direction, by decreasing max address.
-	 * 
+	 *
 	 * @param it the iterator
 	 * @param forward true to coalesce in the forward direction, false for reverse
 	 */
@@ -45,12 +45,12 @@ public class UnionAddressRangeIterator extends AbstractPeekableIterator<AddressR
 
 	/**
 	 * Union into a single range iterator, several range iterators
-	 * 
+	 *
 	 * The ranges will be coalesced so that each returned range is disconnected from any other. The
 	 * ranges of each iterator must be returned in order by direction. While not recommended, the
 	 * ranges of each iterator may overlap, so long as they are sorted as in
 	 * {@link #UnionAddressRangeIterator(Iterator, boolean)}
-	 * 
+	 *
 	 * @param iterators the iterators to union
 	 * @param forward true to union in the forward direction, false for reverse
 	 */

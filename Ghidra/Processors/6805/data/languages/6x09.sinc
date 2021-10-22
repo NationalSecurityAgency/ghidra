@@ -89,37 +89,37 @@ EA: simm5,idxReg    is simm5 & idxReg & noOffset5=0
 {
      local offs:1 = simm5;
      local addr:2 = idxReg + sext(offs);
-     export addr; 
+     export addr;
 }
 EA: ","idxReg    is idxReg & noOffset5=1 & idxMode=4 # no offset
 {
      local addr:2 = idxReg;
-     export addr; 
+     export addr;
 }
 EA: simm8,idxReg    is idxReg & noOffset5=1 & idxMode=8; simm8 # 8-bit offset
 {
      local addr:2 = idxReg + simm8;
-     export addr; 
+     export addr;
 }
 EA: simm16,idxReg    is idxReg & noOffset5=1 & idxMode=9; simm16 # 16-bit offset
 {
      local addr:2 = idxReg + simm16;
-     export addr; 
+     export addr;
 }
 EA: "B,"idxReg    is idxReg & noOffset5=1 & idxMode=5 # B,R
 {
      local addr:2 = idxReg + sext(B);
-     export addr; 
+     export addr;
 }
 EA: "A,"idxReg    is idxReg & noOffset5=1 & idxMode=6 # A,R
 {
      local addr:2 = idxReg + sext(A);
-     export addr; 
+     export addr;
 }
 EA: D,idxReg    is D & idxReg & noOffset5=1 & idxMode=11 # D,R
 {
      local addr:2 = idxReg + D;
-     export addr; 
+     export addr;
 }
 EA: ","idxReg"+"    is idxReg & noOffset5=1 & idxMode=0 # ,R+
 {
@@ -145,49 +145,49 @@ EA: ",--"idxReg    is idxReg & noOffset5=1 & idxMode=3 # ,--R
      local addr:2 = idxReg;
      export addr;
 }
-EA: addr",PCR" is noOffset5=1 & idxMode=12; simm8 [ addr = inst_next + simm8; ] 
+EA: addr",PCR" is noOffset5=1 & idxMode=12; simm8 [ addr = inst_next + simm8; ]
 {
-     export addr; 
+     export addr;
 }
-EA: addr",PCR" is noOffset5=1 & idxMode=13; simm16 [ addr = inst_next + simm16; ] 
+EA: addr",PCR" is noOffset5=1 & idxMode=13; simm16 [ addr = inst_next + simm16; ]
 {
-     export addr; 
+     export addr;
 }
 EA: "[,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=20
 {
      local addr:2 = *:2 idxReg;
-     export addr; 
+     export addr;
 }
 EA: "["simm8,idxReg"]"    is idxReg & noOffset5=1 & idxMode=24; simm8
 {
      local offs:1 = simm8;
      local addr:2 = idxReg + sext(offs);
      addr = *:2 addr;
-     export addr; 
+     export addr;
 }
 EA: "["simm16,idxReg"]"    is idxReg & noOffset5=1 & idxMode=25; simm16
 {
      local addr:2 = idxReg + simm16;
      addr = *:2 addr;
-     export addr; 
+     export addr;
 }
 EA: "[B,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=21
 {
      local addr:2 = idxReg + sext(B);
      addr = *:2 addr;
-     export addr; 
+     export addr;
 }
 EA: "[A,"idxReg"]"    is idxReg & noOffset5=1 & idxMode=22
 {
      local addr:2 = idxReg + sext(A);
      addr = *:2 addr;
-     export addr; 
+     export addr;
 }
 EA: "["D,idxReg"]"    is D & idxReg & noOffset5=1 & idxMode=27
 {
      local addr:2 = idxReg + D;
      addr = *:2 addr;
-     export addr; 
+     export addr;
 }
 EA: "[,"idxReg"++]"    is idxReg & noOffset5=1 & idxMode=17
 {
@@ -203,23 +203,23 @@ EA: "[,--"idxReg"]"    is idxReg & noOffset5=1 & idxMode=19
      addr = *:2 addr;
      export addr;
 }
-EA: "["addr",PCR]" is noOffset5=1 & idxMode=28; simm8 [ addr = inst_next + simm8; ] 
+EA: "["addr",PCR]" is noOffset5=1 & idxMode=28; simm8 [ addr = inst_next + simm8; ]
 {
      local eaddr:2 = inst_next + simm8;
      eaddr = *:2 eaddr;
-     export eaddr; 
+     export eaddr;
 }
-EA: "["addr",PCR]" is noOffset5=1 & idxMode=29; simm16 [ addr = inst_next + simm16; ] 
+EA: "["addr",PCR]" is noOffset5=1 & idxMode=29; simm16 [ addr = inst_next + simm16; ]
 {
      local eaddr:2 = inst_next + simm16;
      eaddr = *:2 eaddr;
-     export eaddr; 
+     export eaddr;
 }
-EA: "["addr"]" is imm8=0x9F; simm16 [ addr = inst_next; ] 
+EA: "["addr"]" is imm8=0x9F; simm16 [ addr = inst_next; ]
 {
      local eaddr:2 = inst_next;
      eaddr = *:2 eaddr;
-     export eaddr; 
+     export eaddr;
 }
 
 ################################################################
@@ -231,8 +231,8 @@ PAGE3: is op=0x11 { } # PAGE3 opcode prefix (0x11)
 
 IMMED1: "#"imm8  is imm8  { tmp:1 = imm8; export tmp; }
 
-REL:  addr    is simm8  [ addr = inst_next + simm8;  ]   { export *:2 addr; } 
-REL2: addr    is simm16 [ addr = inst_next + simm16; ]   { export *:2 addr; } 
+REL:  addr    is simm8  [ addr = inst_next + simm8;  ]   { export *:2 addr; }
+REL2: addr    is simm16 [ addr = inst_next + simm16; ]   { export *:2 addr; }
 
 # 1-byte operand, immediate/direct/indexed/extended addressing mode
 OP1: "#"imm8    is op45=0; imm8
@@ -377,7 +377,7 @@ macro clear(op)
         $(V) = 0;
         op = 0;
         $(Z) = 1;
-        $(N) = 0;	
+        $(N) = 0;
 }
 
 macro addition(reg, op)
@@ -636,86 +636,86 @@ macro PushEntireState()
         logicalShiftLeft(OP1);
 }
 
-:ROLA    is op=0x49 
+:ROLA    is op=0x49
 {
         rotateLeftWithCarry(A);
 }
- 
-:ROLB    is op=0x59 
+
+:ROLB    is op=0x59
 {
         rotateLeftWithCarry(B);
 }
- 
+
 :ROL OP1    is (op=0x09 | op=0x69 | op=0x79) ... & OP1
 {
         rotateLeftWithCarry(OP1);
 }
- 
-:DECA    is op=0x4A 
+
+:DECA    is op=0x4A
 {
         decrement(A);
 }
- 
-:DECB    is op=0x5A 
+
+:DECB    is op=0x5A
 {
         decrement(B);
 }
- 
+
 :DEC OP1    is (op=0x0A | op=0x6A | op=0x7A) ... & OP1
 {
         decrement(OP1);
 }
- 
-:INCA    is op=0x4C 
+
+:INCA    is op=0x4C
 {
         increment(A);
 }
- 
-:INCB    is op=0x5C 
+
+:INCB    is op=0x5C
 {
         increment(B);
 }
- 
+
 :INC OP1    is (op=0x0C | op=0x6C | op=0x7C) ... & OP1
 {
         increment(OP1);
 }
- 
-:TSTA    is op=0x4D 
+
+:TSTA    is op=0x4D
 {
         test(A);
 }
- 
-:TSTB    is op=0x5D 
+
+:TSTB    is op=0x5D
 {
         test(B);
 }
- 
+
 :TST OP1    is (op=0x0D | op=0x6D | op=0x7D) ... & OP1
 {
         test(OP1);
 }
- 
+
 :JMP OP2    is (op=0x0E | op=0x6E | op=0x7E) ... & OP2
 {
         goto OP2;
 }
 
-:CLRA    is op=0x4F 
+:CLRA    is op=0x4F
 {
         clear(A);
 }
- 
-:CLRB    is op=0x5F 
+
+:CLRB    is op=0x5F
 {
         clear(B);
 }
- 
+
 :CLR OP1    is (op=0x0F | op=0x6F | op=0x7F) ... & OP1
 {
         clear(OP1);
 }
- 
+
 ################################################################
 # Opcode 0x10 - 0x1F, misc. addressing
 ################################################################
@@ -733,7 +733,7 @@ macro PushEntireState()
         goto REL2;
 }
 
-:LBSR REL2    is op=0x17; REL2 
+:LBSR REL2    is op=0x17; REL2
 {
         local tmp:2 = inst_next;
         Push2(S, tmp);
@@ -1097,7 +1097,7 @@ macro PushEntireState()
         call REL;
 }
 
-:JSR OP2    is (op=0x9D | op=0xAD | op=0xBD) ... & OP2 
+:JSR OP2    is (op=0x9D | op=0xAD | op=0xBD) ... & OP2
 {
         local addr:2 = inst_next;
         Push2(S, addr);

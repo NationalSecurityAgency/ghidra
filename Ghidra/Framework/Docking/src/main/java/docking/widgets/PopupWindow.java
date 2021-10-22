@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidra.util.bean.GGlassPanePainter;
 /**
  * A generic window intended to be used as a temporary window to show information.  This window is
  * designed to stay open as long as the user mouses over the window.   Once the user mouses away,
- * the window will be closed. 
+ * the window will be closed.
  */
 public class PopupWindow {
 	private static final int X_PADDING = 25;
@@ -264,7 +264,7 @@ public class PopupWindow {
 		if (keepVisibleAea == null) {
 			Point point = new Point(e.getPoint());
 			newArea = new Rectangle(point);
-			newArea.grow(X_PADDING, Y_PADDING); // pad to avoid placing the popup too close 
+			newArea.grow(X_PADDING, Y_PADDING); // pad to avoid placing the popup too close
 		}
 		else {
 			newArea = new Rectangle(keepVisibleAea);

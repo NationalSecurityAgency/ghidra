@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -131,7 +131,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Add register alias
-	 * 
+	 *
 	 * @param aliasReg
 	 */
 	void addAlias(String alias) {
@@ -146,7 +146,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Remove register alias
-	 * 
+	 *
 	 * @param alias
 	 */
 	void removeAlias(String alias) {
@@ -157,7 +157,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Return register aliases. NOTE: This is generally only supported for context register fields.
-	 * 
+	 *
 	 * @return register aliases or null
 	 */
 	public Iterable<String> getAliases() {
@@ -207,7 +207,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Returns the number of bytes spanned by this Register.
-	 * 
+	 *
 	 * <p>
 	 * Compare to {{@link #getMinimumByteSize()}: Suppose a 5-bit register spans 2 bytes: 1 bit in
 	 * the first byte, and the remaining 4 in the following byte. Its value can still be stored in 1
@@ -227,7 +227,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Returns the bit offset from the register address for this register.
-	 * 
+	 *
 	 * @return the bit offset from the register address for this register.
 	 */
 	public int getLeastSignificantBit() {
@@ -277,7 +277,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
@@ -286,7 +286,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -306,7 +306,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -322,7 +322,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
 	@Override
@@ -417,7 +417,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Returns the mask that indicates which bits in the base register apply to this register.
-	 * 
+	 *
 	 * @return the mask that indicates which bits in the base register apply to this register
 	 */
 	public byte[] getBaseMask() {
@@ -465,7 +465,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 	/**
 	 * Determines if reg is contained within this register. Method does not work for bit registers
 	 * (e.g., context-bits)
-	 * 
+	 *
 	 * @param reg another register
 	 * @return true if reg equals this register or is contained within it.
 	 */
@@ -490,7 +490,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Returns true if this is a vector register
-	 * 
+	 *
 	 * @return true precisely when {@code this} is a full vector register (i.e., a register that can
 	 *         be used as input or output for a SIMD operation).
 	 */
@@ -500,7 +500,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Determines whether {@code laneSizeInBytes} is a valid lane size for this register.
-	 * 
+	 *
 	 * @param laneSizeInBytes lane size to check, measured in bytes
 	 * @return true precisely when {@code this} is a vector register and {@code laneSizeInBytes} is
 	 *         a valid lane size.
@@ -517,7 +517,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Returns the sorted array of lane sizes for this register, measured in bytes.
-	 * 
+	 *
 	 * @return array of lane sizes, or {@code null} if {@code this} is not a vector register or no
 	 *         lane sizes have been set.
 	 */
@@ -535,7 +535,7 @@ public class Register implements java.io.Serializable, Comparable<Register> {
 
 	/**
 	 * Adds a lane size.
-	 * 
+	 *
 	 * @param laneSizeInBytes lane size to add
 	 * @throws UnsupportedOperationException if register is unable to support the definition of
 	 *             lanes.

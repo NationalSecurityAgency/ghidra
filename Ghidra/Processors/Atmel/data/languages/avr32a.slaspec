@@ -3,10 +3,10 @@ define alignment=2;
 
 define space RAM type=ram_space size=4 default;
 
-define space register type=register_space size=2;  
+define space register type=register_space size=2;
 
 # for the AVR32A
-define register offset=0x0000 size=4 [ 
+define register offset=0x0000 size=4 [
 
 	SR			EVBA		ACBA		CPUCR		ECR			RSR_SUP		RSR_INT0	RSR_INT1
 	RSR_INT2	RSR_INT3	RSR_EX		RSR_NMI		RSR_DBG		RAR_SUP		RAR_INT0	RAR_INT1
@@ -15,7 +15,7 @@ define register offset=0x0000 size=4 [
 	JBCR
 ];
 
-define register offset=0x0100 size=4 [ 
+define register offset=0x0100 size=4 [
 	CONFIG0	CONFIG1	COUNT	COMPARE	TLBEHI		TLBELO		PTBR	TLBEAR
 	MMUCR	TLBARLO	TLBARHI	PCCNT	PCNT0		PCNT1		PCCR	BEAR
 	MPUAR0	MPUAR1	MPUAR2	MPUAR3	MPUAR4		MPUAR5		MPUAR6	MPUAR7
@@ -235,7 +235,7 @@ define token instr2(16)
     eop8_8 =    (8,15)
 	eop0_9 =	(0,8)
     eop0_4 =    (0,3)
-    eop9_7 =    (9,15)	
+    eop9_7 =    (9,15)
     eop12_1 =   (12,12)
     eop5_11 =   (5,15)
     eop0_8 =    (0,7)
@@ -247,9 +247,9 @@ define token instr2(16)
     eoff5_5 =   (5,9)
     eoff0_5 =   (0,4)
     elen0_5 =   (0,4)
-    eop10_2 = 	(10,11) 
+    eop10_2 = 	(10,11)
     esa0_5	= 	(0,4)
-    ebp5_5  = 	(5,9)             
+    ebp5_5  = 	(5,9)
 	crd8_4 =	(8,11)
 	crd9_3 = 	(9,11)
 	crx4_4 =	(4,7)
@@ -298,7 +298,7 @@ define token instr2(16)
     ypart = 	(4,4)
     upart =		(4,4)
     xpart = 	(5,5)
-    imm16 = 	(0,15)  
+    imm16 = 	(0,15)
     simm16 = 	(0,15) signed
     simm0_8 = 	(0,7) signed
     imm0_8 = 	(0,7)
@@ -336,7 +336,7 @@ attach variables [ rs0_hi rd0_hi erd0_hi ers0_hi ] [
 
 attach variables [ rs0_low rd0_low erd0_low ers0_low ] [
         R0      R2      R4      R6      R8      R10     R12     LR
-];                      
+];
 
 attach variables [ deb0 ] [ R0 R0 ];
 attach variables [ deb1 ] [ R1 R1 ];
@@ -544,7 +544,7 @@ ecc8_4: "AL" is econd8_4=0xf { export ALWAYS_TRUE; }
 ECOND_8_4: ecc8_4       is ecc8_4      { if (!ecc8_4) goto inst_next; }
 ECOND_8_4: ecc8_4       is ecc8_4 & econd8_4=0xf { }
 
-#Cond3 Registers(0 - 2) 
+#Cond3 Registers(0 - 2)
 cc3_0: "eq" 		is cond0_3=0x0	 	{ export Z; }
 cc3_0: "ne" 		is cond0_3=0x1		{ tmp:1 = !Z; export tmp; }
 cc3_0: "cc/hs" 	is cond0_3=0x2			{ tmp:1 = !C; export tmp; }
@@ -608,7 +608,7 @@ RPwDisp8: rp0[disp]	is rp0; disp_8
 [ disp = disp_8 << 2; ]
 { ptr:4 = rp0 + disp; export ptr; }
 
-RPbDisp9: rp9[disp_9]	is rp9; disp_9 { ptr:4 = rp9 + disp_9; export ptr; }	
+RPbDisp9: rp9[disp_9]	is rp9; disp_9 { ptr:4 = rp9 + disp_9; export ptr; }
 
 RPhDisp9: rp9[disp]	is rp9; disp_9
 [ disp = disp_9 << 1; ]
@@ -621,7 +621,7 @@ RPwDisp9: rp9[disp]	is rp9; disp_9
 RPwDisp12: rp0[disp]	is rp0; disp12_4 & disp_8
 [ disp = ((disp12_4 << 8) | disp_8) << 2; ]
 { ptr:4 = rp0 + disp; export ptr; }
-	
+
 PCDisp16: loc			is disp_16 [ loc = inst_start + disp_16; ] { export *[const]:4 loc; }
 
 RPDisp16: rp9[disp_16]  is rp9; disp_16 { ptr:4 = rp9 + disp_16; export ptr; }
@@ -669,8 +669,8 @@ macro addflags(OP1, OP2, RES) {
         #    (!(OP1[31,1]) && !(OP2[31,1]) && RES[31,1]);
 
         V = scarry(OP1, OP2);
-         
-        NZSTATUS(RES);        
+
+        NZSTATUS(RES);
 
         ## The REAL way to do it (in the processor spec)
         #C = (OP1[31,1] && OP2[31,1]) ||
@@ -688,8 +688,8 @@ macro subflags(OP1, OP2, RES) {
         #    (!(OP1[31,1]) && OP2[31,1] && RES[31,1]);
 
         V = sborrow(OP1, OP2);
-        
-        NZSTATUS(RES);        
+
+        NZSTATUS(RES);
 
         ## The REAL way to do it (in the processor spec)
         #C = (!(OP1[31,1]) && (OP2[31,1])) ||

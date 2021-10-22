@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,9 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.util.table.column.GColumnRenderer;
 
 /**
- * A class that is an Adapter in order to allow for the use of existing 
+ * A class that is an Adapter in order to allow for the use of existing
  * {@link DynamicTableColumn}s when the actual row type of the table is
- * not the same as the row type that the {@link DynamicTableColumn} supports. 
+ * not the same as the row type that the {@link DynamicTableColumn} supports.
  *
  * @param <ROW_TYPE> The table's actual row type
  * @param <EXPECTED_ROW_TYPE> The row type expected by the given {@link DynamicTableColumn}
@@ -54,7 +54,7 @@ public class MappedTableColumn<ROW_TYPE, EXPECTED_ROW_TYPE, COLUMN_TYPE, DATA_SO
 
 	/**
 	 * Returns the class of the column that this mapper wraps
-	 * 
+	 *
 	 * @return the class of the column that this mapper wraps
 	 */
 	public Class<?> getMappedColumnClass() {

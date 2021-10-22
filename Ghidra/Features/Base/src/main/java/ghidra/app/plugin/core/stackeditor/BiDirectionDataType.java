@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -188,7 +188,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 	}
 
 	/**
-	 * 
+	 *
 	 * @param idx the min index in the defined component arraylist
 	 * @param offset
 	 * @param deltaOrdinal
@@ -221,14 +221,14 @@ public abstract class BiDirectionDataType extends StructureDataType
 	}
 
 	/*
-	 * 
+	 *
 	 */
 	private void shiftOffsets(int index, int deltaOrdinal, int deltaOffset) {
 		shiftOffsets(index, components.size() - 1, deltaOrdinal, deltaOffset);
 	}
 
 	/**
-	 * 
+	 *
 	 * @param startIndex the min index in the defined component arraylist
 	 * @param endIndex the max index in the defined component arraylist
 	 * @param deltaOrdinal
@@ -398,7 +398,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 	 * Increases the size of the bidirectional data type If amount is positive then the positive
 	 * offset side will grow by the indicated amount. If amount is negative, the data type grows on
 	 * the negative offsets side.
-	 * 
+	 *
 	 * @param amount Positive value indicates number of bytes to add to positive side. Negative
 	 *            value indicates number of bytes to add to negative side.
 	 */
@@ -634,7 +634,7 @@ public abstract class BiDirectionDataType extends StructureDataType
 
 	/**
 	 * Replace the indicated component with a new component containing the specified data type.
-	 * 
+	 *
 	 * @param origDtc the original data type component in this structure.
 	 * @param dataType the data type of the new component
 	 * @param length the length of the new component

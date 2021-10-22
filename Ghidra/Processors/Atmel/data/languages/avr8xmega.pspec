@@ -2,24 +2,24 @@
 
 <processor_spec>
 
-  <programcounter register="PC"/> 
+  <programcounter register="PC"/>
   <data_space space="mem"/>
 
-  <!-- 
-     - NOTE: The settings within this file may be specific to a particular 
-     - processor variant and will likely need to be changed to reflect 
+  <!--
+     - NOTE: The settings within this file may be specific to a particular
+     - processor variant and will likely need to be changed to reflect
      - the specific target processor.
      The RAMPx, EIND, SREG registers are not marked volatile, even though they could be changed
      indirectly with memory references.  If they are made volatile, then the addressing
      won't work in decompiler or reference recovery.
 	 Some registers only appear in newer avr8's, or with large memory spaces
-    --> 
-    
+    -->
+
   <volatile outputop="write_volatile" inputop="read_volatile">
     <range space="mem" first="0x00" last="0x37"/>
     <range space="mem" first="0x40" last="0xfff"/>
   </volatile>
-  
+
   <default_symbols>
 
 
@@ -161,7 +161,7 @@
 
     <symbol name="PORTK_INT0" address="code:0x00C8" entry="true"/>
     <symbol name="PORTK_INT1" address="code:0x00CA" entry="true"/>
-    
+
     <symbol name="PORTM_INT0" address="code:0x00CC" entry="true"/>
     <symbol name="PORTM_INT1" address="code:0x00CE" entry="true"/>
 

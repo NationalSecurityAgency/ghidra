@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class Ext4DirEntry implements StructConverter {
 	protected static final int SIZEOF_FIXEDFIELDS = 8;
-	
+
 	protected int inode;
 	protected short rec_len;
 	protected short name_len;
@@ -34,7 +34,7 @@ public class Ext4DirEntry implements StructConverter {
 
 	/**
 	 * Reads a Ext4DirEntry from the stream.
-	 * 
+	 *
 	 * @param reader BinaryReader to read from
 	 * @return new Ext4DirEntry, or null if eof
 	 * @throws IOException if error when reading
@@ -48,7 +48,7 @@ public class Ext4DirEntry implements StructConverter {
 		result.rec_len = reader.readNextShort();
 		result.name_len = reader.readNextShort();
 		result.name = new String(reader.readNextByteArray(result.name_len), StandardCharsets.UTF_8);
-		
+
 		int extraSize =
 			Short.toUnsignedInt(result.rec_len) - (SIZEOF_FIXEDFIELDS + result.name_len);
 		if( extraSize > 0 ) {
@@ -56,7 +56,7 @@ public class Ext4DirEntry implements StructConverter {
 		}
 		return result;
 	}
-	
+
 	protected Ext4DirEntry() {
 		// empty
 	}
@@ -76,7 +76,7 @@ public class Ext4DirEntry implements StructConverter {
 	public String getName() {
 		return name;
 	}
-	
+
 	public byte[] getExtra() {
 		return extra;
 	}

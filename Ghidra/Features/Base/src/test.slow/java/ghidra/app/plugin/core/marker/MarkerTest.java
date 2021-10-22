@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -380,9 +380,9 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertMarkerColor(program, addressP1, c3);
 		assertMarkerColor(program2, addressP2, c4);
 
-		// 
+		//
 		// Switch programs and repeat color changing with a different active program
-		// 
+		//
 		switchToProgram(program2);
 
 		setMarkerColor(markersP1, c1);
@@ -396,15 +396,15 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/*
 	 	Untested Code as of 9/15/20
-	 	
+
 	 		-Group markers
 	 		-Group marker activation action
-	 	
+
 	 */
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void addMarker(MarkerSet markers, Address address) {
 		runSwing(() -> markers.add(address));

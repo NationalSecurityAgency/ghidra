@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -107,7 +107,7 @@ public abstract class AbstractMsType extends AbstractParsableItem implements MsT
 	/**
 	 * Emits {@link String} output of this class into the provided {@link StringBuilder}.
 	 * @param builder {@link StringBuilder} into which the output is created.
-	 * @param bind Bind ordinal used for determining when parentheses should surround components. 
+	 * @param bind Bind ordinal used for determining when parentheses should surround components.
 	 */
 	public void emit(StringBuilder builder, Bind bind) {
 		builder.append("IncompleteImpl(" + this.getClass().getSimpleName() + ")");

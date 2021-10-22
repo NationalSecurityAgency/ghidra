@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -104,7 +104,7 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 
 	/**
 	 * Create a new OverlayAddressSpace based upon the given overlay blockName and base AddressSpace
-	 * 
+	 *
 	 * @param name the preferred name of the overlay address space to be created. This name may be
 	 *            modified if preserveName is false to produce a valid overlay space name and avoid
 	 *            duplication.
@@ -157,7 +157,7 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 
 	/**
 	 * Get a unique address space name based on the specified baseOverlayName
-	 * 
+	 *
 	 * @param baseOverlayName base overlay address space name
 	 * @return unique overlay space name
 	 */
@@ -177,7 +177,7 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 	/**
 	 * Get base overlay name removing any numeric suffix which may have been added to avoid
 	 * duplication. This method is intended to be used during rename only.
-	 * 
+	 *
 	 * @param overlayName existing overlay space name
 	 * @return base overlay name with any trailing index removed which may have been added to avoid
 	 *         duplication.
@@ -205,7 +205,7 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 	 * Generate an allowed address space name from a block name. Use of unsupported characters will
 	 * be converted to underscore (includes colon and all whitespace chars). double-underscore to
 	 * ensure uniqueness.
-	 * 
+	 *
 	 * @param blockName corresponding memory block name
 	 * @return overlay space name
 	 */
@@ -259,7 +259,7 @@ public class ProgramAddressFactory extends DefaultAddressFactory {
 	/**
 	 * Rename overlay with preferred newName. Actual name used will be returned and may differ from
 	 * specified newName to ensure validity and avoid duplication.
-	 * 
+	 *
 	 * @param oldOverlaySpaceName the existing overlay address space name
 	 * @param newName the preferred new name of the overlay address space. This name may be modified
 	 *            to produce a valid overlay space name to avoid duplication.

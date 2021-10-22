@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -565,7 +565,7 @@ public:
   void clear(void);				///< Clear instance specific data for \b this jump-table
   void saveXml(ostream &s) const;		///< Save \b this jump-table as a \<jumptable> XML tag
   void restoreXml(const Element *el);		///< Recover \b this jump-table from a \<jumptable> XML tag
-};  
+};
 
 /// \param op2 is the other IndexPair to compare with \b this
 /// \return \b true if \b this is ordered before the other IndexPair

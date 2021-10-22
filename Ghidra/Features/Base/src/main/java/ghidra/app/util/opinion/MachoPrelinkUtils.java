@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public class MachoPrelinkUtils {
 
 	/**
 	 * Parses the provider looking for PRELINK XML.
-	 * 
+	 *
 	 * @param provider The provider to parse.
 	 * @param monitor A monitor.
 	 * @return A list of discovered {@link PrelinkMap}s.  An empty list indicates that the provider
@@ -65,13 +65,13 @@ public class MachoPrelinkUtils {
 	}
 
 	/**
-	 * Scans the provider looking for PRELINK Mach-O headers.  
+	 * Scans the provider looking for PRELINK Mach-O headers.
 	 * <p>
 	 * NOTE: The "System" Mach-O at offset 0 is not considered a PRELINK Mach-O.
 	 * <p>
-	 * NOTE: We used to scan on 0x1000, and then 0x10 byte boundaries.  Now iOS 12 seems to 
+	 * NOTE: We used to scan on 0x1000, and then 0x10 byte boundaries.  Now iOS 12 seems to
 	 * put them on 0x8-byte boundaries.
-	 * 
+	 *
 	 * @param provider The provider to scan.
 	 * @param monitor A monitor.
 	 * @return A list of provider offsets where PRELINK Mach-O headers start (not including the
@@ -83,7 +83,7 @@ public class MachoPrelinkUtils {
 		monitor.setMessage("Finding PRELINK Mach-O headers...");
 		monitor.initialize((int) provider.length());
 
-		List<Long> list = new ArrayList<>(); // This list must maintain ordering...don't sort it		
+		List<Long> list = new ArrayList<>(); // This list must maintain ordering...don't sort it
 		for (long offset = 0; offset < provider.length() - 4; offset += 8) {
 			if (monitor.isCancelled()) {
 				break;
@@ -106,10 +106,10 @@ public class MachoPrelinkUtils {
 
 	/**
 	 * Forms a bidirectional mapping of PRELINK XML to Mach-O header offset in the given provider.
-	 * 
+	 *
 	 * @param provider The PRELINK Mach-O provider.
 	 * @param prelinkList A list of {@link PrelinkMap}s.
-	 * @param machoHeaderOffsets A list of provider offsets where PRELINK Mach-O headers start (not 
+	 * @param machoHeaderOffsets A list of provider offsets where PRELINK Mach-O headers start (not
 	 *   including the "System" Mach-O at offset 0).
 	 * @param monitor A monitor
 	 * @return A bidirectional mapping of PRELINK XML to Mach-O header offset in the given provider.
@@ -127,7 +127,7 @@ public class MachoPrelinkUtils {
 
 		// For pre-iOS 12, we can use the PrelinkExecutableLoadAddr field to match PrelinkMap
 		// entries to Mach-O offsets.  For iOS 12, PrelinkExecutableLoadAddr is gone so we use
-		// the new ModuleIndex field instead. 
+		// the new ModuleIndex field instead.
 		long maxModuleIndex =
 			prelinkList.stream().mapToLong(info -> info.getPrelinkModuleIndex()).max().orElse(-1);
 		if (maxModuleIndex >= 0) {
@@ -186,7 +186,7 @@ public class MachoPrelinkUtils {
 	 * NOTE: This method only works for pre iOS 12 binaries.  If called on an iOS 12 binary, it will
 	 * fail and return 0 because the __PRELINK_TEXT segment has a size of 0.  In this case, some
 	 * other means of computing the start address of the PRELINK Mach-O's must be used.
-	 * 
+	 *
 	 * @param header The Mach-O header.
 	 * @return The start address of the PRELINK Mach-O's in memory, or 0 if it could not be found.
 	 */
@@ -201,12 +201,12 @@ public class MachoPrelinkUtils {
 
 	/**
 	 * Checks to see if the provider at the given offset represents a valid Mach-O file that we can
-	 * load (ie, we support the processor).  If it does, a valid {@link LoadSpec} for the Mach-O is 
+	 * load (ie, we support the processor).  If it does, a valid {@link LoadSpec} for the Mach-O is
 	 * returned.
-	 * 
+	 *
 	 * @param provider The provider.
 	 * @param offset The offset within the provider to check.
-	 * @return True A valid {@link LoadSpec} for the Mach-O at the given provider's offset, or null 
+	 * @return True A valid {@link LoadSpec} for the Mach-O at the given provider's offset, or null
 	 *   if it is not a Mach-O or a valid {@link LoadSpec} could not be found.
 	 * @throws IOException if there was an IO-related problem.
 	 */

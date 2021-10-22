@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ public class LimitedByteBuffer {
 	byte value[];
 	int count;			// Current number of characters
 	int absmax;			// Absolute maximum number of characters
-	
+
 	/**
 	 * Create the buffer specifying its initial and limiting capacity
 	 * @param initial is the number of bytes to be initially allocated for the buffer
@@ -39,7 +39,7 @@ public class LimitedByteBuffer {
 		count = 0;
 		absmax = amax;
 	}
-	
+
     /**
      * Append a byte into the buffer.  The buffer's internal storage is expanded as necessary, but only up to
      * the specified maximum. If this append exceeds that maximum, then an exception is thrown
@@ -72,7 +72,7 @@ public class LimitedByteBuffer {
     public ByteArrayInputStream getInputStream() {
     	return new ByteArrayInputStream(value,0,count);
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */

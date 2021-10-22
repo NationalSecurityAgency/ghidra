@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ public class RefdByteProvider implements ByteProvider {
 
 	/**
 	 * Creates a RefdByteProvider instance, taking ownership of the supplied FileSystemRef.
-	 * 
+	 *
 	 * @param fsRef {@link FileSystemRef} that contains the specified ByteProvider
 	 * @param provider {@link ByteProvider} inside the filesystem held open by the ref
 	 * @param fsrl {@link FSRL} identity of this new ByteProvider

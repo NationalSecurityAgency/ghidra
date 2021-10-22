@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,15 +20,15 @@ import java.util.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class is for mining patterns (i.e., closed sequences) in collections of sequences 
+ * This class is for mining patterns (i.e., closed sequences) in collections of sequences
  * of bytes.
- * 
- * <P> Suppose a sequence S occurs n many times in the database.  S is closed if no proper 
+ *
+ * <P> Suppose a sequence S occurs n many times in the database.  S is closed if no proper
  * supersequence occurs >= n many times in the database.
- * 
- * 
+ *
+ *
  * <P>The algorithm implemented in this package is based on that in
- * "BIDE: Efficient Mining of Frequent Closed Sequences" by 
+ * "BIDE: Efficient Mining of Frequent Closed Sequences" by
  * Wang & Han
  *
  */
@@ -36,7 +36,7 @@ import ghidra.util.task.TaskMonitor;
 public class ClosedSequenceMiner {
 
 	private Set<FrequentSequence> frequentClosedSequences;
-	private int minSupport;  //lower bound for how many sequences something must occur in                                      
+	private int minSupport;  //lower bound for how many sequences something must occur in
 	private TreeSet<FrequentSequenceItem> globallyFrequentItems;  //items occuring in at least minSupport sequences
 	private SequenceDatabase database; //database to mine
 
@@ -53,7 +53,7 @@ public class ClosedSequenceMiner {
 
 	/**
 	 * Mine the database for closed sequences.
-	 * 
+	 *
 	 * @param monitor
 	 * @return The discovered sequences
 	 */
@@ -82,7 +82,7 @@ public class ClosedSequenceMiner {
 	 * "bide" is short for "BiDirectional Extension", the name of the algorithm
 	 * in the paper by Wang & Han
 	 * @param projectedDatabase
-	 * @param monitor 
+	 * @param monitor
 	 */
 	private void bide(ProjectedDatabase projectedDatabase, TaskMonitor monitor) {
 		TreeSet<FrequentSequenceItem> locallyFrequentItems =

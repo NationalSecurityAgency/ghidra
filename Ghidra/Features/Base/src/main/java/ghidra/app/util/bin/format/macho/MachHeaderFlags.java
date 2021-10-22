@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,34 +29,34 @@ public final class MachHeaderFlags {
 	 */
 	public final static int MH_NOUNDEFS                 = 0x1;
 	/**
-	 * the object file is the output of an incremental 
-	 * link against a base file and can't be link 
+	 * the object file is the output of an incremental
+	 * link against a base file and can't be link
 	 * edited again.
 	 */
 	public final static int MH_INCRLINK                 = 0x2;
 	/**
-	 * the object file is input for the dynamic 
+	 * the object file is input for the dynamic
 	 * linker and can't be staticly link edited again.
 	 */
 	public final static int MH_DYLDLINK                 = 0x4;
 	/**
-	 * the object file's undefined references 
+	 * the object file's undefined references
 	 * are bound by the dynamic linker when loaded.
 	 */
 	public final static int MH_BINDATLOAD               = 0x8;
 	/**
-	 * the file has its dynamic undefined references 
+	 * the file has its dynamic undefined references
 	 * prebound.
 	 */
 	public final static int MH_PREBOUND                 = 0x10;
 	/**
-	 * the file has its read-only and read-write 
+	 * the file has its read-only and read-write
 	 * segments split.
 	 */
 	public final static int MH_SPLIT_SEGS               = 0x20;
 	/**
-	 * the shared library init routine is to be 
-	 * run lazily via catching memory faults to its 
+	 * the shared library init routine is to be
+	 * run lazily via catching memory faults to its
 	 * writeable segments (obsolete).
 	 */
 	public final static int MH_LAZY_INIT                = 0x40;
@@ -65,37 +65,37 @@ public final class MachHeaderFlags {
 	 */
 	public final static int MH_TWOLEVEL                 = 0x80;
 	/**
-	 * the executable is forcing all images to use 
+	 * the executable is forcing all images to use
 	 * flat name space bindings.
 	 */
 	public final static int MH_FORCE_FLAT               = 0x100;
 	/**
-	 * this umbrella guarantees no multiple defintions 
-	 * of symbols in its sub-images so the two-level 
+	 * this umbrella guarantees no multiple defintions
+	 * of symbols in its sub-images so the two-level
 	 * namespace hints can always be used.
 	 * */
 	public final static int MH_NOMULTIDEFS              = 0x200;
 	/**
-	 * do not have dyld notify the prebinding 
+	 * do not have dyld notify the prebinding
 	 * agent about this executable.
 	 */
 	public final static int MH_NOFIXPREBINDING          = 0x400;
 	/**
-	 * the binary is not prebound but can have 
-	 * its prebinding redone. only used when 
+	 * the binary is not prebound but can have
+	 * its prebinding redone. only used when
 	 * MH_PREBOUND is not set.
 	 */
 	public final static int MH_PREBINDABLE              = 0x800;
 	/**
-	 * indicates that this binary binds to all 
-	 * two-level namespace modules of its dependent 
-	 * libraries. only used when MH_PREBINDABLE and 
+	 * indicates that this binary binds to all
+	 * two-level namespace modules of its dependent
+	 * libraries. only used when MH_PREBINDABLE and
 	 * MH_TWOLEVEL are both set.
 	 */
-	public final static int MH_ALLMODSBOUND             = 0x1000; 
+	public final static int MH_ALLMODSBOUND             = 0x1000;
 	/**
-	 * safe to divide up the sections into 
-	 * sub-sections via symbols for dead code 
+	 * safe to divide up the sections into
+	 * sub-sections via symbols for dead code
 	 * stripping.
 	 */
 	public final static int MH_SUBSECTIONS_VIA_SYMBOLS  = 0x2000;
@@ -112,7 +112,7 @@ public final class MachHeaderFlags {
 	 */
 	public final static int MH_BINDS_TO_WEAK            = 0x10000;
 	/**
-	 * when this bit is set, all stacks in the task 
+	 * when this bit is set, all stacks in the task
 	 * will be given stack execution privilege.
 	 * only used in MH_EXECUTE filetypes.
 	 */
@@ -138,7 +138,7 @@ public final class MachHeaderFlags {
 	 */
 	public final static int MH_PIE                       = 0x200000;
 	/**
-	 * Only for use on dylibs. 
+	 * Only for use on dylibs.
 	 * When linking against a dylib that
 	 * has this bit set, the static linker will automatically not create a
 	 * LC_LOAD_DYLIB load command to the
@@ -157,7 +157,7 @@ public final class MachHeaderFlags {
 	 */
 	public final static int MH_NO_HEAP_EXECUTION        = 0x1000000;
 	/**
-	 * 
+	 *
 	 */
 	public final static int MH_APP_EXTENSION_SAFE        = 0x2000000;
 

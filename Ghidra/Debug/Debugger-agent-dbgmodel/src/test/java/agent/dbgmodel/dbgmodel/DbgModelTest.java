@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1022,7 +1022,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 	public void testFreezeUnfreeze() {
 		try (ProcMaker maker = new ProcMaker(client,"notepad")) {
 			maker.start();
-	
+
 			// Trying to see if any events will help me track frozen threads
 			System.out.println("****Freezing");
 			control.execute("~0 f");
@@ -1058,27 +1058,27 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 				control.outln("*** Breakpoint: " + bp);
 				return DebugStatus.BREAK;
 			}
-	
+
 			@Override
 			public DebugStatus exception(DebugExceptionRecord64 exception, boolean firstChance) {
 				control.outln("*** Exception: " + exception + "," + firstChance);
 				return DebugStatus.BREAK;
 			}
-	
+
 			@Override
 			public DebugStatus createThread(DebugThreadInfo debugThreadInfo) {
 				control.outln("*** CreateThread: " + debugThreadInfo);
 				System.out.println("Threads: " + client.getSystemObjects().getThreads());
 				return DebugStatus.BREAK;
 			}
-	
+
 			@Override
 			public DebugStatus createProcess(DebugProcessInfo debugProcessInfo) {
 				control.outln("*** CreateProcess: " + debugProcessInfo);
 				System.out.println("Threads: " + client.getSystemObjects().getThreads());
 				return DebugStatus.BREAK;
 			}
-	
+
 			@Override
 			public DebugStatus exitThread(int exitCode) {
 				control.outln("*** ExitThread: code=" + exitCode + ", " +
@@ -1086,7 +1086,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 				System.out.println("Threads: " + client.getSystemObjects().getThreads());
 				return DebugStatus.BREAK;
 			}
-	
+
 			@Override
 			public DebugStatus exitProcess(int exitCode) {
 				control.outln("*** ExitProcess: code=" + exitCode + ", " +
@@ -1094,7 +1094,7 @@ public class DbgModelTest extends AbstractGhidraHeadlessIntegrationTest {
 				System.out.println("Threads: " + client.getSystemObjects().getThreads());
 				return DebugStatus.BREAK;
 			}
-	
+
 			@Override
 			public DebugStatus changeEngineState(BitmaskSet<ChangeEngineState> flags,
 					long argument) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,11 +47,11 @@ public class AddressKeyRecordIterator implements RecordIterator {
 	}
 
 	/**
-	 * Construcs a new AddressKeyRecordIterator that iterates over records starting at given 
+	 * Construcs a new AddressKeyRecordIterator that iterates over records starting at given
 	 * start address.  Memory addresses encoded as Absolute are not included.
 	 * @param table the table to iterate.
 	 * @param addrMap the address map
-	 * @param startAddr the address at which to position the iterator.  The iterator will be positioned 
+	 * @param startAddr the address at which to position the iterator.  The iterator will be positioned
 	 * either before or after the start address depending on the before parameter.
 	 * @param before if true, the iterator will be positioned before the start address, otherwise
 	 * it will be positioned after the start address.
@@ -64,19 +64,19 @@ public class AddressKeyRecordIterator implements RecordIterator {
 
 	/**
 	 * Constructs a new AddressKeyRecordIterator that iterates over records that are within an
-	 * address range with an optional start address within that range.  
+	 * address range with an optional start address within that range.
 	 * Memory addresses encoded as Absolute are not included.
 	 * @param table the table to iterate.
 	 * @param addrMap the address map
 	 * @param minAddr the minimum address in the range.
 	 * @param maxAddr tha maximum address in the range.
-	 * @param startAddr the address at which to position the iterator.  The iterator will be positioned 
+	 * @param startAddr the address at which to position the iterator.  The iterator will be positioned
 	 * either before or after the start address depending on the before parameter. If this parameter
-	 * is null, then the iterator will start either before the min address or after the max address 
+	 * is null, then the iterator will start either before the min address or after the max address
 	 * depending on the before parameter.
 	 * @param before if true, the iterator will be positioned before the start address, otherwise
 	 * it will be positioned after the start address. If the start address is null, then if the before
-	 * parameter is true, the iterator is positioned before the min. Otherwise the iterator is 
+	 * parameter is true, the iterator is positioned before the min. Otherwise the iterator is
 	 * positioned after the max address.
 	 * @throws IOException if a database io error occurs.
 	 */
@@ -88,18 +88,18 @@ public class AddressKeyRecordIterator implements RecordIterator {
 
 	/**
 	 * Construcs a new AddressKeyRecordIterator that iterates over records that are contained in
-	 * an address set with an optional start address within that set.  
+	 * an address set with an optional start address within that set.
 	 * Memory addresses encoded as Absolute are not included.
 	 * @param table the table to iterate.
 	 * @param addrMap the address map
 	 * @param set the address set to iterate over.
-	 * @param startAddr the address at which to position the iterator.  The iterator will be positioned 
+	 * @param startAddr the address at which to position the iterator.  The iterator will be positioned
 	 * either before or after the start address depending on the before parameter. If this parameter
-	 * is null, then the iterator will start either before the min address or after the max address 
+	 * is null, then the iterator will start either before the min address or after the max address
 	 * depending on the before parameter.
 	 * @param before if true, the iterator will be positioned before the start address, otherwise
 	 * it will be positioned after the start address. If the start address is null, then if the before
-	 * parameter is true, the iterator is positioned before the min. Otherwise the iterator is 
+	 * parameter is true, the iterator is positioned before the min. Otherwise the iterator is
 	 * postioned after the max address.
 	 * @throws IOException if a database io error occurs.
 	 */
@@ -110,19 +110,19 @@ public class AddressKeyRecordIterator implements RecordIterator {
 
 	/**
 	 * Construcs a new AddressKeyRecordIterator that iterates over records that are contained in
-	 * an address set with an optional start address within that set.  
+	 * an address set with an optional start address within that set.
 	 * @param table the table to iterate.
 	 * @param addrMap the address map
-	 * @param absolute if true, only absolute memory address encodings are considered, otherwise 
+	 * @param absolute if true, only absolute memory address encodings are considered, otherwise
 	 * only standard/relocatable address encodings are considered.
 	 * @param set the address set to iterate over or null for all addresses
-	 * @param startAddr the address at which to position the iterator.  The iterator will be positioned 
+	 * @param startAddr the address at which to position the iterator.  The iterator will be positioned
 	 * either before or after the start address depending on the before parameter. If this parameter
-	 * is null, then the iterator will start either before the min address or after the max address 
+	 * is null, then the iterator will start either before the min address or after the max address
 	 * depending on the before parameter.
 	 * @param before if true, the iterator will be positioned before the start address, otherwise
 	 * it will be positioned after the start address. If the start address is null, then if the before
-	 * parameter is true, the iterator is positioned before the min. Otherwise the iterator is 
+	 * parameter is true, the iterator is positioned before the min. Otherwise the iterator is
 	 * postioned after the max address.
 	 * @throws IOException if a database io error occurs.
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ public class GlossaryScreenShots extends GhidraScreenShotGenerator {
 @Test
     public void testBigEndian() {
 
-		//Draw empty white rectangle		
+		//Draw empty white rectangle
 		image = new BufferedImage(450, 100, BufferedImage.TYPE_INT_ARGB);
 		Graphics g = image.getGraphics();
 		g.setColor(Color.WHITE);
@@ -73,7 +73,7 @@ public class GlossaryScreenShots extends GhidraScreenShotGenerator {
 @Test
     public void testLittleEndian() {
 
-		//Draw empty white rectangle		
+		//Draw empty white rectangle
 		image = new BufferedImage(450, 100, BufferedImage.TYPE_INT_ARGB);
 		Graphics g = image.getGraphics();
 		g.setColor(Color.WHITE);
@@ -108,7 +108,7 @@ public class GlossaryScreenShots extends GhidraScreenShotGenerator {
 		drawArrow(Color.BLACK, 1, p8, p7, 6);
 		drawArrow(Color.BLACK, 1, p10, p9, 6);
 
-		//Draw arrow text		
+		//Draw arrow text
 		drawText("addr A+1", Color.BLACK, new Point(200, 93), 12);
 		drawText("addr A", Color.BLACK, new Point(413, 93), 12);
 

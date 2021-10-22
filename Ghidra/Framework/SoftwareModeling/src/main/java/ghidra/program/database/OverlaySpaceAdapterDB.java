@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -189,7 +189,7 @@ class OverlaySpaceAdapterDB {
 	 * Translate overlay address spaces for a new language provider
 	 * and initialize the new addrFactory with the translated overlay spaces.
 	 * All non-overlay address spaces within the address factory should already
-	 * have been mapped to the new language. 
+	 * have been mapped to the new language.
 	 * @param newLanguage new language to be used
 	 * @param addrFactory old address factory
 	 * @param translator language translator to assist with mapping of address spaces

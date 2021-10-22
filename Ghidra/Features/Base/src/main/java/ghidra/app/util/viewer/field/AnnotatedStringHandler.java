@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import docking.widgets.fieldpanel.field.FieldElement;
 /**
  * NOTE:  ALL AnnotatedStringHandler CLASSES MUST END IN "StringHandler".  If not,
  * the ClassSearcher will not find them.
- * 
+ *
  * An interface that describes a string that has been annotated, which allows for adding
  * rendering and functionality to strings.
  */
@@ -55,7 +55,7 @@ public interface AnnotatedStringHandler extends ExtensionPoint {
 	 *         as needed.
 	 * @param  text An array of Strings used to create the {@link FieldElement} being
 	 *         returned.
-	 * @param  program The program with which the returned string is associated. 
+	 * @param  program The program with which the returned string is associated.
 	 * @return An {@link AnnotatedTextFieldElement} that will be used to render the given text.
 	 * @throws AnnotationException if the given text data does not fit the expected format for
 	 *         the given handler implementation.
@@ -74,11 +74,11 @@ public interface AnnotatedStringHandler extends ExtensionPoint {
 	/**
 	 * A method that is notified when an annotation is clicked.  Returns true if this annotation
 	 * handles the click; return false if this annotation does not do anything with the click.
-	 *  
+	 *
 	 * @param annotationParts The constituent parts of the annotation
 	 * @param sourceNavigatable The location in the program that was clicked.
 	 * @param serviceProvider A service provider for needed services.
-	 * @return true if this annotation handles the click; return false if this annotation does 
+	 * @return true if this annotation handles the click; return false if this annotation does
 	 *         not do anything with the click.
 	 */
 	public boolean handleMouseClick(String[] annotationParts, Navigatable sourceNavigatable,

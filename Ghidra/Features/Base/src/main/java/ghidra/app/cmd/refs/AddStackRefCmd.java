@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,15 +29,15 @@ import ghidra.util.exception.InvalidInputException;
  * Command class for adding stack references to a program.
  */
 public class AddStackRefCmd implements Command {
-	
+
 	private Address fromAddr;
 	private int opIndex;
 	private int stackOffset;
 	private RefType refType;
 	private SourceType source;
-	
+
 	private String status;
-	
+
     /**
      * Constructs a new command for adding a stack reference.
 	 * @param fromAddr "from" address within a function
@@ -51,7 +51,7 @@ public class AddStackRefCmd implements Command {
      	this.stackOffset = stackOffset;
      	this.source = source;
     }
-    
+
     /**
      * Constructs a new command for adding a stack reference.
 	 * @param fromAddr "from" address within a function
@@ -69,22 +69,22 @@ public class AddStackRefCmd implements Command {
     }
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
     public boolean applyTo(DomainObject obj) {
 		Program p = (Program)obj;
-		
+
 		Function f = p.getFunctionManager().getFunctionContaining(fromAddr);
 		if (f == null) {
 			status = "Stack reference may only be created within a function";
 			return false;
 		}
-		
+
 		if (refType == null) {
 			refType = RefTypeFactory.getDefaultStackRefType(p.getListing().getCodeUnitAt(fromAddr), opIndex);
 		}
-		
+
 //		if (refType.isWrite()) {
 			Variable var = f.getStackFrame().getVariableContaining(stackOffset);
 			if (var == null) {

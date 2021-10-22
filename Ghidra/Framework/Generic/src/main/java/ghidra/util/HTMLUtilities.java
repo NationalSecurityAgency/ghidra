@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -520,7 +520,7 @@ public class HTMLUtilities {
 
 	/**
 	 * See {@link #friendlyEncodeHTML(String)}
-	 * 
+	 *
 	 * @param text string to be encoded
 	 * @param skipLeadingWhitespace  true signals to ignore any leading whitespace characters.
 	 * 	      This is useful when line wrapping to force wrapped lines to the left
@@ -604,7 +604,7 @@ public class HTMLUtilities {
 	 * <p>
 	 * See also <code>StringEscapeUtils#escapeHtml3(String)</code> if you need quote-safe html encoding.
 	 * <p>
-	 *  
+	 *
 	 * @param text plain-text that might have some characters that should NOT be interpreted as HTML
 	 * @return string with any html characters replaced with equivalents
 	 */
@@ -639,10 +639,10 @@ public class HTMLUtilities {
 	}
 
 	/**
-	 * Tests a unicode code point (i.e., 32 bit character) to see if it needs to be escaped before 
-	 * being added to a HTML document because it is non-printable or a non-standard control 
+	 * Tests a unicode code point (i.e., 32 bit character) to see if it needs to be escaped before
+	 * being added to a HTML document because it is non-printable or a non-standard control
 	 * character
-	 * 
+	 *
 	 * @param codePoint character to test
 	 * @return boolean true if character should be escaped
 	 */
@@ -797,8 +797,8 @@ public class HTMLUtilities {
 		// formatting tags (like <B>, <FONT>, etc).   So, just normalize the text, not
 		// preserving any of the line breaks.
 		//
-		// Note: Calling this method here causes unwanted removal of newlines.  If the original 
-		//       need for this call is found, this can be revisited. 
+		// Note: Calling this method here causes unwanted removal of newlines.  If the original
+		//       need for this call is found, this can be revisited.
 		//       (see history for condense() code)
 		// String condensed = condense(updated);
 		return updated;

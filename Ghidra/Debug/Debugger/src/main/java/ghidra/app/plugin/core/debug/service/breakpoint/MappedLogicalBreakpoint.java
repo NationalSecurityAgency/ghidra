@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,14 +83,14 @@ public class MappedLogicalBreakpoint implements LogicalBreakpointInternal {
 	/**
 	 * TODO: How best to allow the user to control behavior when a new static mapping is created
 	 * that could generate new breakpoints in the target. Options:
-	 * 
+	 *
 	 * 1) A toggle during mapping creation for how to sync breakpoints.
-	 * 
+	 *
 	 * 2) A prompt when the mapping is created, asking the user to sync breakpoints.
-	 * 
+	 *
 	 * 3) A UI indicator (probably in the breakpoints provider) that some breakpoints are not in
 	 * sync. Different actions for directions of sync.
-	 * 
+	 *
 	 * I'm thinking both 1 and 3. Option 2 is probably too abrasive, esp., if several mappings are
 	 * created at once.
 	 */

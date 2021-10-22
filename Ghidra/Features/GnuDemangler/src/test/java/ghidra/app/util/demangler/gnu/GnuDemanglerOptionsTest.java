@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public class GnuDemanglerOptionsTest extends AbstractGhidraHeadlessIntegrationTe
         GnuDemanglerOptions options = new GnuDemanglerOptions(AUTO, true);
         getNativeProcess(options);
     }
-    
+
     @Test
     public void testAuto_withModern() throws IOException {
         GnuDemanglerOptions options = new GnuDemanglerOptions(AUTO, false);
@@ -42,7 +42,7 @@ public class GnuDemanglerOptionsTest extends AbstractGhidraHeadlessIntegrationTe
         GnuDemanglerOptions options = new GnuDemanglerOptions(GNU, true);
         getNativeProcess(options);
     }
-    
+
     @Test(expected = IllegalArgumentException.class)
     public void testGnu_withModern() {
         new GnuDemanglerOptions(GNU, false);
@@ -53,7 +53,7 @@ public class GnuDemanglerOptionsTest extends AbstractGhidraHeadlessIntegrationTe
         GnuDemanglerOptions options = new GnuDemanglerOptions(LUCID, true);
         getNativeProcess(options);
     }
-    
+
     @Test(expected = IllegalArgumentException.class)
     public void testLucid_withModern() {
         new GnuDemanglerOptions(LUCID, false);
@@ -64,7 +64,7 @@ public class GnuDemanglerOptionsTest extends AbstractGhidraHeadlessIntegrationTe
         GnuDemanglerOptions options = new GnuDemanglerOptions(ARM, true);
         getNativeProcess(options);
     }
-    
+
     @Test(expected = IllegalArgumentException.class)
     public void testArm_withModern() {
         new GnuDemanglerOptions(ARM, false);
@@ -75,7 +75,7 @@ public class GnuDemanglerOptionsTest extends AbstractGhidraHeadlessIntegrationTe
         GnuDemanglerOptions options = new GnuDemanglerOptions(HP, true);
         getNativeProcess(options);
     }
-    
+
     @Test(expected = IllegalArgumentException.class)
     public void testHp_withModern() {
         new GnuDemanglerOptions(HP, false);
@@ -86,7 +86,7 @@ public class GnuDemanglerOptionsTest extends AbstractGhidraHeadlessIntegrationTe
         GnuDemanglerOptions options = new GnuDemanglerOptions(EDG, true);
         getNativeProcess(options);
     }
-    
+
     @Test(expected = IllegalArgumentException.class)
     public void testEdg_withModern() {
         new GnuDemanglerOptions(EDG, false);
@@ -97,7 +97,7 @@ public class GnuDemanglerOptionsTest extends AbstractGhidraHeadlessIntegrationTe
         GnuDemanglerOptions options = new GnuDemanglerOptions(GNUV3, true);
         getNativeProcess(options);
     }
-    
+
     @Test
     public void testGnuV3_withModern() throws IOException {
         GnuDemanglerOptions options = new GnuDemanglerOptions(GNUV3, false);
@@ -109,7 +109,7 @@ public class GnuDemanglerOptionsTest extends AbstractGhidraHeadlessIntegrationTe
         GnuDemanglerOptions options = new GnuDemanglerOptions(JAVA, true);
         getNativeProcess(options);
     }
-    
+
     @Test
     public void testJava_withModern() throws IOException {
         GnuDemanglerOptions options = new GnuDemanglerOptions(JAVA, false);
@@ -121,7 +121,7 @@ public class GnuDemanglerOptionsTest extends AbstractGhidraHeadlessIntegrationTe
         GnuDemanglerOptions options = new GnuDemanglerOptions(GNAT, true);
         getNativeProcess(options);
     }
-    
+
     @Test
     public void testGnat_withModern() throws IOException {
         GnuDemanglerOptions options = new GnuDemanglerOptions(GNAT, false);
@@ -132,7 +132,7 @@ public class GnuDemanglerOptionsTest extends AbstractGhidraHeadlessIntegrationTe
     public void testDlang_withDeprecated() {
         new GnuDemanglerOptions(DLANG, true);
     }
-    
+
     @Test
     public void testDlang_withModern() throws IOException {
         GnuDemanglerOptions options = new GnuDemanglerOptions(DLANG, false);
@@ -143,7 +143,7 @@ public class GnuDemanglerOptionsTest extends AbstractGhidraHeadlessIntegrationTe
     public void testRust_withDeprecated() {
         new GnuDemanglerOptions(RUST, true);
     }
-    
+
     @Test
     public void testRust_withModern() throws IOException {
         GnuDemanglerOptions options = new GnuDemanglerOptions(RUST, false);

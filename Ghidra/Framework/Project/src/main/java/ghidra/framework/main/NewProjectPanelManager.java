@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,17 +34,17 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.UserAccessException;
 
 /**
- * Manage the panels for the "New Project" wizard. The wizard handles 
+ * Manage the panels for the "New Project" wizard. The wizard handles
  * creating a local project and a "shared" project.
- * If the project is shared, the panel order is 
+ * If the project is shared, the panel order is
  * (1) Server Info
  * (2) Repository panel
- * (3) Project access panel (if user has admin privileges AND user is 
+ * (3) Project access panel (if user has admin privileges AND user is
  *      creating a new repository)
  * (4) Specify Project Location panel.
  * If the project is not shared, the only other panel to show is the
  * Specify Project Location panel.
- *  
+ *
  */
 class NewProjectPanelManager implements PanelManager {
 
@@ -355,7 +355,7 @@ class NewProjectPanelManager implements PanelManager {
 
 	/**
 	 * Get the repository adapter associated with the new project.
-	 * After displaying this panel, this method should be invoked to obtain the 
+	 * After displaying this panel, this method should be invoked to obtain the
 	 * repository which will be opended for shared projects.  If the repository is
 	 * not used to create a new project, its disconnect method should be invoked.
 	 * @return null if project is not shared

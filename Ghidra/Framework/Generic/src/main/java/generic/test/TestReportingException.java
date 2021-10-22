@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,11 +23,11 @@ import org.apache.commons.lang3.ArrayUtils;
 import utilities.util.reflection.ReflectionUtilities;
 
 /**
- * A {@link RuntimeException} that will print a custom stack trace.  
- * 
- * <P>This class will print not only the trace info for the exception passed at construction 
+ * A {@link RuntimeException} that will print a custom stack trace.
+ *
+ * <P>This class will print not only the trace info for the exception passed at construction
  * time, but will also print a trace for the test thread at the time of the exception.  Also,
- * the trace information printed will be filtered of entries that are not useful for 
+ * the trace information printed will be filtered of entries that are not useful for
  * debugging, like Java class entries.
  */
 public class TestReportingException extends RuntimeException {
@@ -36,10 +36,10 @@ public class TestReportingException extends RuntimeException {
 		new String[] { "java.awt.WaitDispatchSupport" };
 
 	//@formatter:off
-	private static final String[] SWING_STACK_ELEMENT_PATTERNS = 
-		ArrayUtils.addAll(GENERAL_USELESS_STACK_ELEMET_PATTERNS, 
-						  "java.awt.Event", 
-						  "java.security", 
+	private static final String[] SWING_STACK_ELEMENT_PATTERNS =
+		ArrayUtils.addAll(GENERAL_USELESS_STACK_ELEMET_PATTERNS,
+						  "java.awt.Event",
+						  "java.security",
 						  "java.awt.event");
 	//@formatter:on
 
@@ -49,9 +49,9 @@ public class TestReportingException extends RuntimeException {
 	private StackTraceElement[] testThreadTrace;
 
 	/**
-	 * Creates a new {@link TestReportingException} using an exception that was generated on 
+	 * Creates a new {@link TestReportingException} using an exception that was generated on
 	 * the Swing thread.
-	 * 
+	 *
 	 * @param message an optional custom message that will be printed first in the stack trace
 	 * @param t the original exception
 	 * @return the new {@link TestReportingException}

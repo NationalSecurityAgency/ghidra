@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -213,7 +213,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			long size = section.getSize();
 			long offset = section.getOffset();
 			if (size > 0) {
-				fileMap.paintRange(offset, offset + size - 1, -3); // -3: used by section 
+				fileMap.paintRange(offset, offset + size - 1, -3); // -3: used by section
 			}
 		}
 
@@ -436,7 +436,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	/**
 	 * Processes the GNU version section.
-	 * @throws CancelledException 
+	 * @throws CancelledException
 	 */
 	private void processGNU(TaskMonitor monitor) throws CancelledException {
 		monitor.checkCanceled();
@@ -1626,7 +1626,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	 * Determine if an external ELF symbol has already been established with the
 	 * same name and re-use it.
 	 * @param elfSymbol external ELF symbol
-	 * @return true if processed as a duplicate external symbol and no additional 
+	 * @return true if processed as a duplicate external symbol and no additional
 	 * processing is required, else false
 	 */
 	private boolean processDuplicateExternal(ElfSymbol elfSymbol) {
@@ -1638,7 +1638,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 			lastExternalBlockEntryAddress);
 		if (s != null) {
 			// NOTE: re-use of other fake external address does not support
-			// data allocation.  It may be necessary to ensure that dynamic 
+			// data allocation.  It may be necessary to ensure that dynamic
 			// symbol table is processed last.
 			setElfSymbolAddress(elfSymbol, s.getAddress());
 			return true;
@@ -1647,7 +1647,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	/**
-	 * Process ELF symbol if it has a versioned name.  Attempt to establish as 
+	 * Process ELF symbol if it has a versioned name.  Attempt to establish as
 	 * comment on associated external symbol.
 	 * @param elfSymbol external ELF symbol
 	 * @return true if processed and no additional processing is required, else false
@@ -1661,9 +1661,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		}
 
 		// TODO: Versioned symbols may also exist on real addresses
-		// corresponding to external linkages in the .got, .plt and 
+		// corresponding to external linkages in the .got, .plt and
 		// other memory locations which may relate to external functions.
-		// Unsure if this approach is appropriate since we are not 
+		// Unsure if this approach is appropriate since we are not
 		// handling these versioned symbols in a consistent fashion,
 		// however their existence can interfere with demangling for
 		// externals and related thunks.
@@ -2020,9 +2020,9 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 //	/**
 //	 * Find free address associated with the largest unallocated memory range.
 //	 * The first 0x1000 bytes are considered off-limits for this purpose.  The returned
-//	 * address will be aligned to the nearest 0x100 byte boundary. 
+//	 * address will be aligned to the nearest 0x100 byte boundary.
 //	 * NOTE: addition consideration may be need for spaces with odd word sizes
-//	 * or small 16-bit memory spaces.   In addition, small processors with 
+//	 * or small 16-bit memory spaces.   In addition, small processors with
 //	 * shared memory regions may also have additional constraints not considered here.
 //	 */
 //	private AddressRange findFreeAddressRange(AddressSpace space) {
@@ -2497,7 +2497,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 
 	/**
 	 * Determine preferred section load address address space prior to load.
-	 * Non-allocated sections may return the OTHER space or an existing OTHER 
+	 * Non-allocated sections may return the OTHER space or an existing OTHER
 	 * overlay established by a program header.
 	 * @param elfSectionHeader
 	 * @return section load address space
@@ -2522,7 +2522,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 	}
 
 	/**
-	 * Determine section's load address.  
+	 * Determine section's load address.
 	 * @param elfSectionHeader
 	 * @return section load address
 	 */
@@ -3034,8 +3034,8 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 		// will pack the sections together with proper alignment.
 
 		if (elfSectionToLoad.isAlloc() && elf.isRelocatable() && addr == 0) {
-			// TODO: if program headers are present (very unlikely for object module) 
-			// they should be used to determine section load address since they would 
+			// TODO: if program headers are present (very unlikely for object module)
+			// they should be used to determine section load address since they would
 			// be assigned first.
 			AddressSpace space = getSectionAddressSpace(elfSectionToLoad);
 			long relocOffset = relocatableImageBaseProvider.getNextRelocatableOffset(space);
@@ -3346,7 +3346,7 @@ class ElfProgramBuilder extends MemorySectionResolver implements ElfLoadHelper {
 					computeRelocationStartAddress(defaultDataSpace, getImageDataBase(), monitor);
 				nextRelocationOffsetMap.put(defaultDataSpace.getUnique(), baseOffset);
 			}
-			// In the future, an extension could introduce additional space entries 
+			// In the future, an extension could introduce additional space entries
 		}
 
 		void setNextRelocatableOffset(AddressSpace space, Long nextRelocOffset) {

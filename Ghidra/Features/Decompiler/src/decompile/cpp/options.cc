@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -118,7 +118,7 @@ void OptionDatabase::parseOne(const Element *el)
   const string &optname( el->getName() );
   const List &list(el->getChildren());
   List::const_iterator iter;
-  
+
   string p1,p2,p3;
 
   iter = list.begin();
@@ -720,7 +720,7 @@ string OptionProtoEval::apply(Architecture *glb,const string &p1,const string &p
 
 {
   ProtoModel *model = (ProtoModel *)0;
-  
+
   if (p1.size()==0)
     throw ParseError("Must specify prototype model");
 

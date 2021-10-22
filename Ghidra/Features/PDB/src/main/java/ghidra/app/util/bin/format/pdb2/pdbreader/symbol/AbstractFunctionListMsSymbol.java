@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,7 +50,7 @@ public abstract class AbstractFunctionListMsSymbol extends AbstractMsSymbol {
 			functionTypeList.add(typeRecordNumber);
 		}
 		// Note: the following part of the structure is commented out on the API, but since
-		//  according to that API, there is nothing remaining, so it does no real harm in 
+		//  according to that API, there is nothing remaining, so it does no real harm in
 		//  keeping the parsing here.  It really just means that the invocation counts list
 		//  should not be used.
 		for (int i = 0; i < count; i++) {

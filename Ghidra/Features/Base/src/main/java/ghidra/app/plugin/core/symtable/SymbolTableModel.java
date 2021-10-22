@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -357,12 +357,12 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 	protected Comparator<Symbol> createSortComparator(int columnIndex) {
 		DynamicTableColumn<Symbol, ?, ?> column = getColumn(columnIndex);
 		if (column instanceof NameTableColumn) {
-			// note: we use our own name comparator to increase sorting speed for the name 
-			//       column.  This works because this comparator is called for each *row object* 
-			//       allowing the comparator to compare the Symbols based on name instead of 
+			// note: we use our own name comparator to increase sorting speed for the name
+			//       column.  This works because this comparator is called for each *row object*
+			//       allowing the comparator to compare the Symbols based on name instead of
 			//       having to use the table model's code for getting a column value for the
 			//       row object.   The code for retrieving a column value is slower than just
-			//       working with the row object directly.  See 
+			//       working with the row object directly.  See
 			//       ThreadedTableModel.getCachedColumnValueForRow for more info.
 			return NAME_COL_COMPARATOR;
 		}

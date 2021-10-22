@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,33 +44,33 @@ public class ThreadedXmlParserTest extends AbstractGenericTest {
 		"<project name=\"foo\"/>" + "<project name=\"foo\"/>" + "<project name=\"foo\"/>" +
 		"<project name=\"foo\"/>" + "</doc>";
 
-	
+
 	private static final String XXE_XML = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n" +
 		"<!DOCTYPE foo [\n" + "    <!ELEMENT foo ANY >\n" +
 		"<!ENTITY xxe SYSTEM \"file://@TEMP_FILE@\">]><foo>&xxe; fizzbizz</foo>";
-	
+
 	public ThreadedXmlParserTest() {
 		super();
 	}
 
 	/**
 	 * <p>
-	 * XML External Entities attacks benefit from an XML feature to build documents dynamically at 
-	 * the time of processing.  An XML entity allows inclusion of data dynamically from a given 
-	 * resource.  External entities allow an XML document to include data from an external URI. 
-	 * Unless configured to do otherwise, external entities force the XML parser to access the 
-	 * resource specified by the URI, e.g., a file on the local machine or remote system. 
+	 * XML External Entities attacks benefit from an XML feature to build documents dynamically at
+	 * the time of processing.  An XML entity allows inclusion of data dynamically from a given
+	 * resource.  External entities allow an XML document to include data from an external URI.
+	 * Unless configured to do otherwise, external entities force the XML parser to access the
+	 * resource specified by the URI, e.g., a file on the local machine or remote system.
 	 * This behavior exposes the application to XML External Entity (XXE) attacks.
 	 * <p>
-	 * Normally, a custom Entity Resolver implementing org.xml.sax.EntityResolver should not return null 
-	 * as it will then default to the SAX Entity Resolver that allows and resolves external 
-	 * entities. 
+	 * Normally, a custom Entity Resolver implementing org.xml.sax.EntityResolver should not return null
+	 * as it will then default to the SAX Entity Resolver that allows and resolves external
+	 * entities.
 	 * <p>
-	 * This test ensures external entities are ignored whether or not a default SAX Entity Resolver 
-	 * is used. Using the ThreadedXmlPullParserImpl constructor which takes an InputStream (rather 
-	 * than ResourceFile) will use a default Entity Resolver. The XmlUtilities.createSecureSAXParserFactory 
+	 * This test ensures external entities are ignored whether or not a default SAX Entity Resolver
+	 * is used. Using the ThreadedXmlPullParserImpl constructor which takes an InputStream (rather
+	 * than ResourceFile) will use a default Entity Resolver. The XmlUtilities.createSecureSAXParserFactory
 	 * factory configurations will disable external entities regardless of which Entity Resolver is used.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -182,7 +182,7 @@ public class ThreadedXmlParserTest extends AbstractGenericTest {
 
 		assertNotNull(parserThread);
 
-		// 
+		//
 		// Empty the queue and make sure that we don't deadlock
 		//
 		final CyclicBarrier startBarrier = new CyclicBarrier(1);
@@ -202,12 +202,12 @@ public class ThreadedXmlParserTest extends AbstractGenericTest {
 			container[0] = true;
 		}).start();
 
-		// 
+		//
 		// Interrupt the thread to make sure that this doesn't destroy the world (or deadlock)
 		//
 		parserThread.interrupt();
 
-		startBarrier.await();// tell the 
+		startBarrier.await();// tell the
 
 		waitForFinish(container);
 
@@ -234,7 +234,7 @@ public class ThreadedXmlParserTest extends AbstractGenericTest {
 				testName.getMethodName(), errHandler, false, 3);
 
 		//
-		// Depending upon how quickly the parser thread starts, the code below will fail at 
+		// Depending upon how quickly the parser thread starts, the code below will fail at
 		// either the start() call or the hasNext() call.
 		//
 

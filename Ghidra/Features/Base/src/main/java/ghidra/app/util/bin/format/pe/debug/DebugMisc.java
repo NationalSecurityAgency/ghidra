@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.util.exception.DuplicateNameException;
  * A class to represent the <code>IMAGE_DEBUG_MISC</code> struct
  * as defined in <b><code>winnt.h</code></b>.
  * <br>
- * 
+ *
  * <pre>
  * typedef struct _IMAGE_DEBUG_MISC {
  *     DWORD       DataType;               // type of misc data, see defines
@@ -60,7 +60,7 @@ public class DebugMisc implements StructConverter {
 	 * Constructor
 	 * @param reader the binary reader
 	 * @param debugDir the debug directory associated to this MISC debug
-	 * @param ntHeader 
+	 * @param ntHeader
 	 */
 	static DebugMisc createDebugMisc(FactoryBundledWithBinaryReader reader,
 			DebugDirectory debugDir, OffsetValidator validator) throws IOException {

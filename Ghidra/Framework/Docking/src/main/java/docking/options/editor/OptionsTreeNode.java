@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ class OptionsTreeNode extends GTreeLazyNode {
 	@Override
 	protected List<GTreeNode> generateChildren() {
 		List<GTreeNode> childList = new ArrayList<GTreeNode>();
-		if (options.getOptionsEditor() == null) { // if hasOptionsEditor, don't show child options	
+		if (options.getOptionsEditor() == null) { // if hasOptionsEditor, don't show child options
 			List<Options> childOptionsList = options.getChildOptions();
 			for (Options childOptions : childOptionsList) {
 				childList.add(new OptionsTreeNode(childOptions));
@@ -59,22 +59,22 @@ class OptionsTreeNode extends GTreeLazyNode {
 
 //	/**
 //	 * This method will get the last name in a delimited string. For example, if given
-//	 * <tt>a.b.c.</tt>, then this method will return <tt>c</tt>.  As another example, if given 
-//	 * <tt>a.</tt>, then this method will return <tt>a</tt> 
+//	 * <tt>a.b.c.</tt>, then this method will return <tt>c</tt>.  As another example, if given
+//	 * <tt>a.</tt>, then this method will return <tt>a</tt>
 //	 */
 //	static String getLastNameInPrefix( String prefixString ) {
 //		// assume the delimiter is on the end of the string--chop it off!
 //		// ex: a.b.c., where the last '.' we do not want
 //		int length = prefixString.length();
 //		String substring = prefixString.substring(0, length-1);
-//		
+//
 //		// find the last delimiter in the remaining prefix, as we want the name after that
 //		// ex: a.b.c, where the '.' after 'b' is what we are looking for
 //		int lastDelimiterIndex = substring.lastIndexOf( EditableOptions.DELIMITER );
 //		if ( lastDelimiterIndex < 0 ) {
 //			return substring;  // no more delimiters in the string, so we want the string itself
 //		}
-//		
+//
 //		// the name is all text from the last delimiter
 //		// ex: a.b.c, where the last delimiter is at index 3, substring from 4 to the end, or "c"
 //		length = substring.length();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,25 +64,25 @@ public class CombinedStringSearcher {
 		String string = StringUtils.defaultString(foundString.getString(program.getMemory()));
 		return string.length() >= options.getMinStringSize();
 	}
-	
+
 	/**
 	 * Searches the current program for strings based on the user-defined settings in
 	 * {@link StringTableOptions}.
-	 * 
+	 *
 	 * @param monitor the task monitor
-	 * @throws CancelledException 
+	 * @throws CancelledException
 	 */
 	public void search(TaskMonitor monitor) throws CancelledException {
-					
+
 		AbstractStringSearcher searcher = createSearcher();
-		
+
 		// Save off the set of addresses to search. This will be modified during the
-		// search operation depending on whether loaded or unloaded blocks are to be 
-		// searched.	
+		// search operation depending on whether loaded or unloaded blocks are to be
+		// searched.
 		AddressSetView updatedAddressSet = options.getAddressSet();
-		
+
 		updateNextString();
-		
+
 		if (options.includeUndefinedStrings() || options.includePartiallyDefinedStrings() ||
 			options.includeConflictingStrings()) {
 			updatedAddressSet = searcher.search(options.getAddressSet(), new AccumulatorAdapter(), options.useLoadedBlocksOnly(), monitor);
@@ -109,7 +109,7 @@ public class CombinedStringSearcher {
 			updateNextString();
 		}
 	}
-	
+
 	private void updateNextString() {
 		nextDefinedString = findNextDefinedString();
 	}
@@ -174,7 +174,7 @@ public class CombinedStringSearcher {
 
 	/**
 	 * Uses the StringsAnalyzer model to determine if the current FoundString is a high confidence word.
-	 * 
+	 *
 	 * @param foundString
 	 */
 	private void setIsWordStatus(FoundStringWithWordStatus foundString) {
@@ -206,7 +206,7 @@ public class CombinedStringSearcher {
 				updateNextString();
 			}
 			else {
-				// found string does not overlap any existing string, see if it conflicts with 
+				// found string does not overlap any existing string, see if it conflicts with
 				// anything else at its start address
 				CodeUnit cu = program.getListing().getCodeUnitAt(foundString.getAddress());
 				if (!isUndefined(cu)) {

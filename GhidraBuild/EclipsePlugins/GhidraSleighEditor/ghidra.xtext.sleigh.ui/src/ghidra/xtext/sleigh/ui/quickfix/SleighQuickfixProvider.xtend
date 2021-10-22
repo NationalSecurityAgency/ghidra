@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -103,7 +103,7 @@ class SleighQuickfixProvider extends DefaultQuickfixProvider {
 					}
 //				switch cause {
 //					case constraint:
-//						
+//
 //					default: {
 //						var x = cause
 //					}
@@ -143,7 +143,7 @@ class SleighQuickfixProvider extends DefaultQuickfixProvider {
 			]
 		);
 	}
-	
+
 	def missingSubConstructor(Issue issue, IssueResolutionAcceptor acceptor, String to, String linkName, EObject cause) {
 		acceptor.accept(
 			issue,
@@ -154,7 +154,7 @@ class SleighQuickfixProvider extends DefaultQuickfixProvider {
 				var model = cause.rootContainer as Model;
 
 				var container = EcoreUtil2.getContainerOfType(cause, constructor)
-				
+
 				// create subconstructor template
 				val sub = SleighFactory::eINSTANCE.createsubconstructor() => [
 					tableName = SleighFactory.eINSTANCE.createSUBTABLESYM() => [

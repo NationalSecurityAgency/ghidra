@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package ghidra.util.task;
 /**
  * A monitor that is designed for sub-tasks, where the outer task handles reporting messages and
  * progress.  This class is really just for checking cancelled.
- * 
+ *
  * <P>This class wants the following methods related to cancelling to work normally:
  * <UL>
  *  <LI>isCancelled()</LI>
@@ -29,9 +29,9 @@ package ghidra.util.task;
  *	<LI>addIssueListener(IssueListener)</LI>
  *	<LI>removeIssueListener(IssueListener)</LI>
  *	<LI>isCancelEnabled()</LI>
- *	</UL>		
+ *	</UL>
  *
- *	<P>The rest of TaskMonitor should be stubbed out.  This means that if any methods are 
+ *	<P>The rest of TaskMonitor should be stubbed out.  This means that if any methods are
  *	added to the TaskMonitor interface, and subsequently implemented in this class's parent,
  *	then this class needs to override them.
  */

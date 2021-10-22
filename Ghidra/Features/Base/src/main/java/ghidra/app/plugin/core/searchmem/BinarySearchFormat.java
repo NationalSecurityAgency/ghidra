@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.util.HTMLUtilities;
 public class BinarySearchFormat extends SearchFormat {
 	private static final String VALID_CHARS = "01x?.";
 	private String statusText;
-	
+
 	public BinarySearchFormat(ChangeListener listener) {
 		super("Binary", listener);
 	}
@@ -44,11 +44,11 @@ public class BinarySearchFormat extends SearchFormat {
         int n = st.countTokens();
         byte[] bytes = new byte[n];
         byte[] mask = new byte[n];
-        
+
         int index = 0;
         while (st.hasMoreTokens()) {
             String token = st.nextToken();
-            
+
             if (!isValidBinary(token)) {
                 return SearchData.createInvalidInputSearchData(statusText);
             }
@@ -72,7 +72,7 @@ public class BinarySearchFormat extends SearchFormat {
         }
         return true;
     }
-	
+
 	private byte getByte(String token) {
 		byte b = 0;
 		for(int i=0;i<token.length();i++) {
@@ -84,10 +84,10 @@ public class BinarySearchFormat extends SearchFormat {
 		}
 		return b;
 	}
-	
+
 	/**
 	 * Return a mask byte that has a bit set to 1 for each bit that is not a wildcard.  Any bits
-	 * that aren't specified (i.e. token.lenght &lt; 8) are treated as valid test bits. 
+	 * that aren't specified (i.e. token.lenght &lt; 8) are treated as valid test bits.
 	 * @param token the string of bits to determine a mask for.
 	 */
 	private byte getMask(String token) {
@@ -103,14 +103,14 @@ public class BinarySearchFormat extends SearchFormat {
 			else {
 				b |= 1;
 			}
-			
+
 		}
-		
+
 		return b;
 	}
 	@Override
     public boolean usesEndieness() {
 		return false;
 	}
-	
+
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public class MemoryByteProvider implements ByteProvider {
 	/**
 	 * Constructs a new {@link MemoryByteProvider} for a specific {@link AddressSpace}.  Bytes will be
 	 * provided starting at address 0 in the space.
-	 * 
+	 *
 	 * @param memory the {@link Memory}
 	 * @param space the {@link AddressSpace}
 	 */
@@ -42,7 +42,7 @@ public class MemoryByteProvider implements ByteProvider {
 
 	/**
 	 * Constructs a new {@link MemoryByteProvider} relative to the specified base address.
-	 * 
+	 *
 	 * @param memory the {@link Memory}
 	 * @param baseAddress the base address
 	 */
@@ -54,10 +54,10 @@ public class MemoryByteProvider implements ByteProvider {
 	/**
 	 * Converts an index into this ByteProvider into an {@link Address}.
 	 * <p>
-	 * 
+	 *
 	 * @param index absolute index in this ByteProvider to convert into an Address
 	 * @return {@link Address}
-	 * @throws AddressOutOfBoundsException if wrapping is not supported by the 
+	 * @throws AddressOutOfBoundsException if wrapping is not supported by the
 	 * corresponding address space and the addition causes an out-of-bounds
 	 * error
 	 */

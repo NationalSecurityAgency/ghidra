@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public final class DexConstants {
 	/**
 	 * Dex version 036 skipped because of an old dalvik bug on some versions
 	 * of android where dex files with that version number would erroneously
-	 * be accepted and run. 
+	 * be accepted and run.
 	 */
 	public final static String DEX_VERSION_036 = "036";
 	/**
@@ -45,13 +45,13 @@ public final class DexConstants {
 	public final static String DEX_VERSION_037 = "037";
 	/**
 	 * Dex version 038: Android "O" and beyond.
-	 * 
+	 *
 	 * V038 was introduced in API LEVEL 26
 	 */
 	public final static String DEX_VERSION_038 = "038";
 	/**
 	 * Dex version 039: Android "P" and beyond.
-	 * 
+	 *
 	 * V039 was introduced in API LEVEL 28
 	 */
 	public final static String DEX_VERSION_039 = "039";

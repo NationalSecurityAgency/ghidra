@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -190,7 +190,7 @@ enum ValueType {
 }
 
 message Parameter {
-	ValueType type = 1;	
+	ValueType type = 1;
 	string name = 2;
 	Value defaultValue = 3;
 	bool required = 4;
@@ -234,7 +234,7 @@ message NamedValue {
 	Value value = 2;
 }
 
-message ModelObjectStub {	
+message ModelObjectStub {
 }
 
 message ModelObjectDelta {
@@ -477,7 +477,7 @@ message ConfigureRequest {
 
 message ConfigureReply {
 }
-	
+
 enum TargetEventType {
 	EV_STOPPED = 0;
 	EV_RUNNING = 1;
@@ -574,7 +574,7 @@ message RootMessage {
 
 		MemoryReadRequest memory_read_request = 117;
 		MemoryReadReply memory_read_reply = 217;
-		
+
 		MemoryWriteRequest memory_write_request = 118;
 		MemoryWriteReply memory_write_reply = 218;
 

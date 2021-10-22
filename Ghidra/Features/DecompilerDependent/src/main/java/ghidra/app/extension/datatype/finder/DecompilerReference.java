@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public abstract class DecompilerReference {
 	 * The <tt>fieldName</tt> is optional.  If not included, then only data type matches will
 	 * be sought.  If it is included, then a match is only included when it is a reference
 	 * to the given data type where that type is being accessed by the given field name.
-	 * 
+	 *
 	 * @param dt the data type to find
 	 * @param fieldName the optional field name used to restrict matches.
 	 * @param results the accumulator object into which will be placed any matches

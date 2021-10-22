@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,20 +28,20 @@ import ghidra.util.exception.InvalidInputException;
 /**
  * Describes the ManifestResources table. Each row is a reference to an external or internal resource.
  */
-public class CliTableManifestResource extends CliAbstractTable {	
+public class CliTableManifestResource extends CliAbstractTable {
 	public class CliManifestResourceRow extends CliAbstractTableRow {
 		public int offset;
 		public int flags;
 		public int nameIndex;
 		public int implIndex;
-		
+
 		public CliManifestResourceRow(int offset, int flags, int nameIndex, int implIndex) {
 			this.offset = offset;
 			this.flags = flags;
 			this.nameIndex = nameIndex;
 			this.implIndex = implIndex;
 		}
-		
+
 		@Override
 		public String getRepresentation() {
 			String implRep;
@@ -57,11 +57,11 @@ public class CliTableManifestResource extends CliAbstractTable {
 				implRep);
 		}
 	}
-	
+
 	public CliTableManifestResource(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
-			CliManifestResourceRow row = new CliManifestResourceRow(reader.readNextInt(), reader.readNextInt(), readStringIndex(reader), 
+			CliManifestResourceRow row = new CliManifestResourceRow(reader.readNextInt(), reader.readNextInt(), readStringIndex(reader),
 				CliIndexImplementation.readCodedIndex(reader, stream));
 			rows.add(row);
 			strings.add(row.nameIndex);

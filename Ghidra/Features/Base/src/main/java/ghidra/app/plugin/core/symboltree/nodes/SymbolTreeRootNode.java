@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,9 +65,9 @@ public class SymbolTreeRootNode extends SymbolCategoryNode {
 	public GTreeNode findSymbolTreeNode(SymbolNode key, boolean loadChildren, TaskMonitor monitor) {
 
 		//
-		// The finding of nodes starts here, at the root.  Optimize searching by using the 
+		// The finding of nodes starts here, at the root.  Optimize searching by using the
 		// implicit knowledge of how the tree builds/stores symbols by their type:
-		// -Function - search only the function nodes, no recursive searching		
+		// -Function - search only the function nodes, no recursive searching
 		// -External function - search only the imports node, no recursive searching
 		// -Params/Locals - find the function node, then search that node
 		// -Classes - search the classes node, need recursive searching
@@ -100,9 +100,9 @@ public class SymbolTreeRootNode extends SymbolCategoryNode {
 
 		//@formatter:off
 		List<SymbolCategoryNode> categories = Arrays.asList(
-			getLabelsNode(),					
+			getLabelsNode(),
 			getNamespacesNode(),
-			getClassesNode(),	
+			getClassesNode(),
 			getFunctionsNode()
 		);
 		//@formatter:on

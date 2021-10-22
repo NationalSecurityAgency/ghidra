@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,16 +45,16 @@ public class InetNameLookup {
 
 	/**
 	 * Gets the fully qualified domain name for this IP address or hostname.
-	 * Best effort method, meaning we may not be able to return 
+	 * Best effort method, meaning we may not be able to return
 	 * the FQDN depending on the underlying system configuration.
-	 * 
+	 *
 	 * @param host IP address or hostname
-	 * 
-	 * @return  the fully qualified domain name for this IP address, 
+	 *
+	 * @return  the fully qualified domain name for this IP address,
 	 *    or if the operation is not allowed/fails
 	 *    the original host name specified.
-	 *    
-	 * @throws UnknownHostException the forward lookup of the specified address 
+	 *
+	 * @throws UnknownHostException the forward lookup of the specified address
 	 * failed
 	 */
 	public static String getCanonicalHostName(String host) throws UnknownHostException {

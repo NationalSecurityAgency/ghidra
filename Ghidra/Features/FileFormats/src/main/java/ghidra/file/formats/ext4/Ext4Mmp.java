@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.util.exception.DuplicateNameException;
 import java.io.IOException;
 
 public class Ext4Mmp implements StructConverter {
-	
+
 	private int mmp_magic;
 	private int mmp_seq;
 	private long mmp_time;
@@ -37,7 +37,7 @@ public class Ext4Mmp implements StructConverter {
 	private short mmp_pad1;
 	private int[] mmp_pad2; //226 ints long.
 	private int mmp_checksum;
-	
+
 	public Ext4Mmp(ByteProvider provider) throws IOException {
 		this( new BinaryReader( provider, true ) );
 	}
@@ -53,7 +53,7 @@ public class Ext4Mmp implements StructConverter {
 		mmp_pad2 = reader.readNextIntArray(226);
 		mmp_checksum = reader.readNextInt();
 	}
-	
+
 	public int getMmp_magic() {
 		return mmp_magic;
 	}

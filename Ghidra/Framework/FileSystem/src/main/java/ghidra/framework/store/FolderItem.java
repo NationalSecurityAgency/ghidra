@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * <code>FolderItem</code> represents an individual file
- * contained within a FileSystem and is uniquely identified 
+ * contained within a FileSystem and is uniquely identified
  * by a path string.
  */
 public interface FolderItem {
@@ -75,7 +75,7 @@ public interface FolderItem {
 	/**
 	 * Returns the length of this domain file.  This size is the minimum disk space
 	 * used for storing this file, but does not account for additional storage space
-	 * used to tracks changes, etc. 
+	 * used to tracks changes, etc.
 	 * @return file length
 	 * @throws IOException thrown if IO or access error occurs
 	 */
@@ -105,7 +105,7 @@ public interface FolderItem {
 	/**
 	 * Set the state of the read-only indicator for this non-shared item.
 	 * @param state read-only state
-	 * @throws IOException if an IO error occurs or item is 
+	 * @throws IOException if an IO error occurs or item is
 	 * stored on a shared file-system
 	 */
 	void setReadOnly(boolean state) throws IOException;
@@ -120,7 +120,7 @@ public interface FolderItem {
 	 * Sets the version for the content type. This will change whenever the domain objects
 	 * are upgraded.
 	 * @param version the new version for the content type.
-	 * @throws IOException if an IO error occurs or item is 
+	 * @throws IOException if an IO error occurs or item is
 	 * stored on a shared file-system
 	 */
 	void setContentTypeVersion(int version) throws IOException;
@@ -152,7 +152,7 @@ public interface FolderItem {
 	boolean isVersioned() throws IOException;
 
 	/**
-	 * Returns the checkoutId for this file.  A value of -1 indicates 
+	 * Returns the checkoutId for this file.  A value of -1 indicates
 	 * a private item.
 	 * NOTE: This method is only valid for a local non-versioned file-system.
 	 * @throws IOException if an IO error occurs
@@ -160,8 +160,8 @@ public interface FolderItem {
 	long getCheckoutId() throws IOException;
 
 	/**
-	 * Returns the item version which was checked-out.  A value of -1 indicates 
-	 * a private item. 
+	 * Returns the item version which was checked-out.  A value of -1 indicates
+	 * a private item.
 	 * NOTE: This method is only valid for a local non-versioned file-system.
 	 * @throws IOException
 	 */
@@ -169,7 +169,7 @@ public interface FolderItem {
 
 	/**
 	 * Returns the local item version at the time the checkout was
-	 * completed.  A value of -1 indicates a private item.  
+	 * completed.  A value of -1 indicates a private item.
 	 * NOTE: This method is only valid for a local non-versioned file-system.
 	 */
 	int getLocalCheckoutVersion();
@@ -183,7 +183,7 @@ public interface FolderItem {
 	 * by ItemCheckoutStatus).
 	 * @param localVersion the local item version at the time the checkout was
 	 * completed.
-	 * @throws IOException if an IO error occurs or item is 
+	 * @throws IOException if an IO error occurs or item is
 	 * stored on a shared file-system
 	 */
 	void setCheckout(long checkoutId, boolean exclusive, int checkoutVersion, int localVersion)
@@ -197,12 +197,12 @@ public interface FolderItem {
 	void clearCheckout() throws IOException;
 
 	/**
-	 * Deletes the item or a specific version.  If a specific version 
+	 * Deletes the item or a specific version.  If a specific version
 	 * is specified, it must either be the oldest or latest (i.e., current).
 	 * @param version specific version to be deleted, or -1 to remove
 	 * all versions.
 	 * @param user user name
-	 * @throws IOException if an IO error occurs, including the inability 
+	 * @throws IOException if an IO error occurs, including the inability
 	 * to delete a version because this item is checked-out, the user does
 	 * not have permission, or the specified version is not the oldest or
 	 * latest.
@@ -217,7 +217,7 @@ public interface FolderItem {
 	Version[] getVersions() throws IOException;
 
 	/**
-	 * Checkout this folder item. 
+	 * Checkout this folder item.
 	 * @param checkoutType type of checkout
 	 * @param user user requesting checkout
 	 * @param projectPath path of project where checkout was made
@@ -228,7 +228,7 @@ public interface FolderItem {
 			throws IOException;
 
 	/**
-	 * Terminates a checkout.  The checkout ID becomes invalid, therefore the 
+	 * Terminates a checkout.  The checkout ID becomes invalid, therefore the
 	 * associated checkout copy should either be removed or converted to a
 	 * private file.
 	 * @param checkoutId checkout ID

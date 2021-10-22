@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -180,7 +180,7 @@ public class DisassembledFormatModel implements ProgramDataFormatModel {
 	/**
 	 * Set the number of units in a group. This format does not
 	 * support groups.
-	 * @throws UnsupportedOperationException 
+	 * @throws UnsupportedOperationException
 	 */
 	@Override
 	public void setGroupSize(int groupSize) {
@@ -204,7 +204,7 @@ public class DisassembledFormatModel implements ProgramDataFormatModel {
 	}
 
 	/**
-	 * Set the program.  This formatter is dependent upon listing from program.  
+	 * Set the program.  This formatter is dependent upon listing from program.
 	 * There are two cases where this dependency only appears.  All Formatters that
 	 * are added as a view to Memory Viewer are created via a Factory within their
 	 * respective Formatter Plugin.

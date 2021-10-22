@@ -11,12 +11,12 @@
 <h1><a name="ByteViewerPlugin"></a><a name="Bytes"></a>The Byte Viewer </h1>
 	<p>The Byte Viewer displays bytes in memory in various formats, e.g.,
 	Hex, Ascii, Octal, etc.&nbsp;The figure below shows the Byte Viewer
-	plugin in a separate window from the 
+	plugin in a separate window from the
 	<a href="help/topics/Tool/Ghidra_Tool_Administration.htm#DefaultTools">default
 	tool</a>, the Code Browser.&nbsp;</p>
-	
+
 	<p align="center"><img alt="" src="images/ByteViewer.png" ><br> &nbsp;</p>
-	
+
 	<p>To show the Byte Viewer, select the icon, <img
  	src="images/binaryData.gif" border="0">,
 	on the Code Browser toolbar, OR, choose the <b>Window</b><img
@@ -32,7 +32,7 @@
 			 style="font-style: italic;">Byte Viewer Options </span>dialog that
 			lists the data formats that
 			may be added to your view.&nbsp;To add or remove a data format view
-			from the tool, press the&nbsp;<img alt="" src="images/wrench.png"> 
+			from the tool, press the&nbsp;<img alt="" src="images/wrench.png">
 			icon to bring up the&nbsp; <span
 			 style="font-style: italic;">Byte Vieweer Options </span>dialog.&nbsp;
 			Select the formats that you want and press the <span
@@ -49,7 +49,7 @@
 
     			<p> This view supports byte <a href="#EditBytes">editing</a>.&nbsp;</p>
   			</blockquote>
-  
+
   		<h3><a name="Ascii"></a><a name="Add_Byteviewer_Ascii_Panel"></a>Ascii </h3>
   			<blockquote>
     			<p>The Ascii view shows each byte as its equivalent Ascii character.
@@ -57,13 +57,13 @@
 				it as a tic (".").</p>
     			<p> This view supports byte <a href="#EditBytes">editing</a>.&nbsp;</p>
   			</blockquote>
-  
+
   		<h3><a name="Add_Byteviewer_Address_Panel"></a><a name="Address"></a>Address</h3>
   			<blockquote>
     			<p> The Address view displays&nbsp; a tic (".") for all bytes whose
 				formed address does not fall within the range of memory for the
 				program. For those addresses that can be formed and are in memory, the
-				view shows the symbol, <img src="images/addressMark.png" border="0"> 
+				view shows the symbol, <img src="images/addressMark.png" border="0">
 				&nbsp; So if you go to that address in the <a
 				 href="help/topics/CodeBrowserPlugin/CodeBrowser.htm"> Code Browser</a>, and <font
 				 color="#000000"><a href="help/topics/DataPlugin/Data.htm#Pointer">make a
@@ -72,10 +72,10 @@
 				you go to a "tic" address in the Code Browser and make a pointer, the
 				address pointed to is not in memory (the operand is
 				rendered in red).</font></p>
-    
+
     			<p><font color="#000000">This view does not support <a href="#EditBytes">editing</a>.</font></p>
   			</blockquote>
-  
+
   		<h3><a name="Add_Byteviewer_Disassembled_Panel"></a><a name="Disassembled"></a>Disassembled</h3>
   			<blockquote>
     		<p> The Disassemble view shows a "box" (<img src="images/box.gif"
@@ -88,7 +88,7 @@
 				program have been disassembled.</p>
     		<p>This view does not support <a href="#EditBytes">editing</a>.</p>
   			</blockquote>
-  
+
   		<h3><a name="Add_Byteviewer_HexInteger_Panel"></a><a name="HexInteger"></a>HexInteger </h3>
   			<blockquote>
 	    		<p>This format shows four byte numbers represented as an eight digit hex number.&nbsp;</p>
@@ -102,13 +102,13 @@
     			<p>This view shows four byte numbers represented in decimal format.&nbsp;</p>
     			<p> This view does not support <a href="#EditBytes">editing</a>.</p>
   			</blockquote>
-  
+
   		<h3><a name="Octal"></a><a name="Add_Byteviewer_Octal_Panel"></a>Octal </h3>
   			<blockquote>
     			<p>The octal view shows each byte as a three character octal value.&nbsp;</p>
     			<p> This view supports <a href="The_Byte_Viewer.htm#EditBytes">editing</a>.</p>
   			</blockquote>
-  		
+
   		<h3><a name="Binary"></a><a name="Add_Byteviewer_Binary_Panel"></a>Binary </h3>
   			<blockquote>
     			<p>The binary view shows each byte as an eight character binary value.&nbsp;</p>
@@ -121,7 +121,7 @@
   			<p>The&nbsp; labels below the scroll pane that contains the views shows the following information:</p>
   			<p>&nbsp;</p>
   			<div align="left">
-  			
+
   			<table border="1" width="65%">
     			<tbody>
 		      	<tr>
@@ -173,7 +173,7 @@
  			color="#0000ff"> </font><font color="#000000">by double-clicking on
 			the <i><a href="ByteViewerOptions.htm#EditColor">Edit Color</a></i>
 			field</font>.</p>
-			
+
   			<p><font color="#000000">Undo the edit by hitting the Undo button (<img
  			src="../../shared/undo.png" border="0" > ) on
 			the tool. The byte reverts to its original value. Redo your edit by
@@ -183,7 +183,7 @@
 		<blockquote>
   			<p><font color="#000000">To turn off byte editing, click the
 			Enable/Disable
-			Edit toolbar button </font><img src="images/editbytes.gif" alt=""> 
+			Edit toolbar button </font><img src="images/editbytes.gif" alt="">
 			so that it no longer appears pushed-in<font
 			 color="#000000">.</font></p>
 			  <p><img src="../../shared/note.png" border="0">If
@@ -249,12 +249,12 @@
 			this example.</p>
     		<p align="center"><img src="images/ByteViewerResults.png" border="0" ></p>
 		</blockquote>
- 
+
   		<h3>Set Bytes Per Line <br></h3>
 	  		<blockquote>
     			<p>The bytes per line indicates how many bytes are displayed in one
 				line in a view. The default value is 16. <br></p>
-    			<p><img src="../../shared/note.png" border="0"> 
+    			<p><img src="../../shared/note.png" border="0">
     			All formats shown must be able to support the new value.
 				For example,&nbsp; since the HexInteger and Integer&nbsp; formats show
 				bytes in groups of four, the bytes per line must be a multiple of four.
@@ -262,14 +262,14 @@
 				error message will appear and the <span style="font-weight: bold;">OK</span>
 				button will be disabled.<br></p>
   			</blockquote>
-  
+
   		<h3><a name="GroupSize"></a>Set Group Size</h3>
   			<blockquote>
     			<p>The group size is the number of bytes that the Hex view shows as
 				a "unit." For example, a group size of two means to show two bytes
 				grouped together with no spaces. <br></p>
   			</blockquote>
-  
+
   		<h3>View Selection<br></h3>
   			<blockquote>
     			<p>Each potential view is listed as a checkbox.&nbsp; Select the

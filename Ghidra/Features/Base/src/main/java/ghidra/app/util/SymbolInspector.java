@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ public class SymbolInspector implements OptionsChangeListener {
 	/**
 	 * Constructs a new symbol inspector
 	 * It uses the tool to get the CATEGORY_BROWSER_DISPLAY options
-	 * 
+	 *
 	 * @param serviceProvider a service provider for getting services
 	 * @param repaintComp the component to repaint when the options change
 	 */
@@ -58,7 +58,7 @@ public class SymbolInspector implements OptionsChangeListener {
 
 	/**
 	 * Constructs a new symbol inspector
-	 * 
+	 *
 	 * @param options the options from which to get colors
 	 * @param repaintComp the component to repaint when the options change
 	 */
@@ -110,7 +110,7 @@ public class SymbolInspector implements OptionsChangeListener {
 	}
 
 	/**
-	 * Call this when you are done with this inspector and will not use it again. 
+	 * Call this when you are done with this inspector and will not use it again.
 	 * Cleans up listeners, etc.
 	 */
 	public void dispose() {
@@ -306,10 +306,10 @@ public class SymbolInspector implements OptionsChangeListener {
 	}
 
 	/**
-	 * Gets the color and style used to render the given symbol.  Calling this method is 
-	 * faster than calling {@link #getColor(Symbol)} and {@link #getStyle(Symbol)} 
+	 * Gets the color and style used to render the given symbol.  Calling this method is
+	 * faster than calling {@link #getColor(Symbol)} and {@link #getStyle(Symbol)}
 	 * separately.
-	 * 
+	 *
 	 * @param s the symbol
 	 * @return the color and style
 	 */
@@ -339,7 +339,7 @@ public class SymbolInspector implements OptionsChangeListener {
 	}
 
 	/**
-	 * Get the ScreenElement corresponding to the type of the symbol 
+	 * Get the ScreenElement corresponding to the type of the symbol
 	 * @param s symbol to inspect
 	 * @return the screen element
 	 */

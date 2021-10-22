@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -192,7 +192,7 @@ public final class NumericUtilities {
 	/**
 	 * returns the value of the specified long as hexadecimal, prefixing with the HEX_PREFIX_x
 	 * string.
-	 * 
+	 *
 	 * @param value the long value to convert
 	 */
 	public final static String toHexString(long value) {
@@ -202,7 +202,7 @@ public final class NumericUtilities {
 	/**
 	 * returns the value of the specified long as hexadecimal, prefixing with the HEX_PREFIX_x
 	 * string.
-	 * 
+	 *
 	 * @param value the long value to convert
 	 * @param size number of bytes to be represented
 	 */
@@ -216,7 +216,7 @@ public final class NumericUtilities {
 	/**
 	 * returns the value of the specified long as signed hexadecimal, prefixing with the
 	 * HEX_PREFIX_x string.
-	 * 
+	 *
 	 * @param value the long value to convert
 	 */
 	public final static String toSignedHexString(long value) {
@@ -230,14 +230,14 @@ public final class NumericUtilities {
 	}
 
 	/**
-	 * Converts a <strong>unsigned</strong> long value, which is currently stored in a 
+	 * Converts a <strong>unsigned</strong> long value, which is currently stored in a
 	 * java <strong>signed</strong> long, into a {@link BigInteger}.
 	 * <p>
-	 * In other words, the full 64 bits of the primitive java <strong>signed</strong> 
-	 * long is being used to store an <strong>unsigned</strong> value.  This 
+	 * In other words, the full 64 bits of the primitive java <strong>signed</strong>
+	 * long is being used to store an <strong>unsigned</strong> value.  This
 	 * method converts this into a positive BigInteger value.
-	 *  
-	 * @param value java <strong>unsigned</strong> long value stuffed into a 
+	 *
+	 * @param value java <strong>unsigned</strong> long value stuffed into a
 	 * java <strong>signed</strong> long
 	 * @return new {@link BigInteger} with the positive value of the unsigned long value
 	 */
@@ -258,7 +258,7 @@ public final class NumericUtilities {
 	/**
 	 * Get an unsigned aligned value corresponding to the specified unsigned value which will be
 	 * greater than or equal the specified value.
-	 * 
+	 *
 	 * @param unsignedValue value to be aligned
 	 * @param alignment alignment
 	 * @return aligned value
@@ -384,7 +384,7 @@ public final class NumericUtilities {
 	 * Philosophically, it is hexadecimal, but the only valid digits are 0 and F. Any
 	 * partially-included nibble will be broken down into bracketed bits. Displaying masks in this
 	 * way is convenient when shown proximal to related masked values.
-	 * 
+	 *
 	 * @param msk the mask
 	 * @param n the number of nibbles, starting at the right
 	 * @param truncate true if leading Xs may be truncated
@@ -441,7 +441,7 @@ public final class NumericUtilities {
 
 	/**
 	 * The reverse of {@link #convertMaskedValueToHexString(long, long, int, boolean, int, String)}
-	 * 
+	 *
 	 * @param msk an object to receive the resulting mask
 	 * @param val an object to receive the resulting value
 	 * @param hex the input string to parse
@@ -669,7 +669,7 @@ public final class NumericUtilities {
 	 * <td>-64h</td>
 	 * </tr>
 	 * </table>
-	 * 
+	 *
 	 * @param number The number to represent
 	 * @param radix The base in which <code>number</code> is represented
 	 * @param mode Specifies how the number is formatted with respect to its signed-ness
@@ -849,7 +849,7 @@ public final class NumericUtilities {
 
 	/**
 	 * Determine if the provided Number is an integer type -- Byte, Short, Integer, or Long.
-	 * 
+	 *
 	 * @param number the object to check for for integer-type
 	 * @return true if the provided number is an integer-type, false otherwise
 	 */
@@ -860,7 +860,7 @@ public final class NumericUtilities {
 
 	/**
 	 * Determine if the provided Number class is an integer type.
-	 * 
+	 *
 	 * @param numClass Class of an object
 	 * @return true if the class parameter is a integer type, false otherwise
 	 */
@@ -870,7 +870,7 @@ public final class NumericUtilities {
 
 	/**
 	 * Determine if the provided Number is a floating-point type -- Float or Double.
-	 * 
+	 *
 	 * @param number the object to check for for floating-point-type
 	 * @return true if the provided number is a floating-point-type, false otherwise
 	 */
@@ -881,7 +881,7 @@ public final class NumericUtilities {
 
 	/**
 	 * Determine if the provided Number class is a floating-point type.
-	 * 
+	 *
 	 * @param numClass Class of an object
 	 * @return true if the class parameter is a floating-point type, false otherwise
 	 */
@@ -895,7 +895,7 @@ public final class NumericUtilities {
 	private static interface IntegerRadixRenderer {
 		/**
 		 * Format the given number in the provided radix base.
-		 * 
+		 *
 		 * @param number the number to render
 		 * @param radix the base in which to render
 		 * @return a string representing the provided number in the given base

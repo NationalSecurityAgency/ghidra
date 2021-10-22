@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -135,7 +135,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 
 	/**
 	 * Get the schema name for an annotated target object class
-	 * 
+	 *
 	 * @param cls the class
 	 * @return the schema name
 	 */
@@ -218,7 +218,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 
 	/**
 	 * Get a populated builder for an annotated target object class
-	 * 
+	 *
 	 * @param cls the class
 	 * @return the builder
 	 */
@@ -228,7 +228,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 
 	/**
 	 * Get a populated builder for an annotated target object class
-	 * 
+	 *
 	 * @param cls the class
 	 * @param name a custom name for the schema
 	 * @return the builder
@@ -378,11 +378,11 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 
 	/**
 	 * Get the schema for an annotated target object class
-	 * 
+	 *
 	 * <p>
 	 * This will ensure all the schemas of the given class' dependencies are constructed and added
 	 * to the context.
-	 * 
+	 *
 	 * @param cls the class
 	 * @return the schema
 	 */

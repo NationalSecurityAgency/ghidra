@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ public interface DataTypeWithCharset extends DataType {
 
 	/**
 	 * Utility for character data types to encode a value.
-	 * 
+	 *
 	 * @param value the character value to encode.
 	 * @param buf a buffer representing the eventual destination of the bytes.
 	 * @param settings the settings to use.
@@ -57,7 +57,7 @@ public interface DataTypeWithCharset extends DataType {
 
 	/**
 	 * Utility for character data types to encode a representation.
-	 * 
+	 *
 	 * @param repr the single-character string to encode.
 	 * @param buf a buffer representing the eventual destination of the bytes.
 	 * @param settings the settings to use.
@@ -77,7 +77,7 @@ public interface DataTypeWithCharset extends DataType {
 
 	/**
 	 * Get the character set for a specific data type and settings
-	 * 
+	 *
 	 * @param settings data instance settings
 	 * @return Charset for this datatype and settings
 	 */

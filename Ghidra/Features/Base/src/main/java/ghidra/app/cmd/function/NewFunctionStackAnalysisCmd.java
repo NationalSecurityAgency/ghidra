@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 
 	/**
 	 * Constructs a new command for analyzing the Stack.
-	 * @param entries and address set indicating the entry points of functions that have 
+	 * @param entries and address set indicating the entry points of functions that have
 	 * stacks to be analyzed.
 	 * @param forceProcessing flag to force processing of stack references even if the stack
 	 *           has already been defined.
@@ -87,7 +87,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
 	 */
 	@Override
@@ -132,7 +132,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 
 	/**
 	 * Analyze a function to build a stack frame based on stack references.
-	 * 
+	 *
 	 * @param entry   The address of the entry point for the new function
 	 * @param monitor the task monitor that is checked to see if the command has
 	 * been cancelled.
@@ -194,7 +194,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 			//addMissingStackVariables(func);
 
 			if (oldSignatureSource != func.getSignatureSource()) {
-				// preserve signature source 
+				// preserve signature source
 				func.setSignatureSource(oldSignatureSource);
 			}
 		}
@@ -235,7 +235,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 	/**
 	 * Create locals and parameters based on references involving purely the stack pointer.
 	 * Pushes, Pops, and arithmetic manipulation of the stack pointer must be tracked.
-	 * 
+	 *
 	 * @param func - function to analyze stack pointer references
 	 */
 	private int createStackPointerVariables(Function func, TaskMonitor monitor)
@@ -258,7 +258,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 		symEval.setStoredRefCheck(false);
 
 		// follow all flows building up context
-		// use context to fill out addresses on certain instructions 
+		// use context to fill out addresses on certain instructions
 		ContextEvaluator eval = new ContextEvaluatorAdapter() {
 
 			@Override
@@ -522,7 +522,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 			++nextCopyParamIndex;
 		}
 
-		// fill-in missing params - don't bother if we already have 
+		// fill-in missing params - don't bother if we already have
 		// too many or no stack param block defined
 		int nextOrdinal = newParamList.size();
 		if ((!hasStackParams) || nextOrdinal >= MAX_PARAM_FILLIN_COUNT) {
@@ -686,10 +686,10 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 
 	/**
 	 * Look at the result register to try and figure out stack access size.
-	 * 
+	 *
 	 * @param instr instruction being analyzed
 	 * @param opIndex operand that has a stack reference.
-	 * 
+	 *
 	 * @return size of value referenced on the stack
 	 */
 	private int getRefSize(Instruction instr, int opIndex) {
@@ -766,7 +766,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Add non-overlapping stack variable to sorted variable list.  
+	 * Add non-overlapping stack variable to sorted variable list.
 	 * The caller is responsible for ensuring that no overlap/conflict
 	 * with other variables in the list exist.
 	 * @param var

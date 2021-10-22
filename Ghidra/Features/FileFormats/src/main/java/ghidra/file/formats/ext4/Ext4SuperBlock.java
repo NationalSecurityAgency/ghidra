@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,7 +59,7 @@ public class Ext4SuperBlock implements StructConverter {
 	private byte[] s_volume_name; // 16 bytes long
 	private byte[] s_last_mounted; // 64 bytes long
 	private int s_algorithm_usage_bitmap;
-	// Performance hints.  Directory preallocation should only happen if 
+	// Performance hints.  Directory preallocation should only happen if
 	// the EXT4_FEATURE_COMPAT_DIR_PREALLOC flag is on. (s_feature_compat & 0x1 != 0)
 	private byte s_prealloc_blocks;
 	private byte s_prealloc_dir_blocks;
@@ -119,11 +119,11 @@ public class Ext4SuperBlock implements StructConverter {
 	private int s_checksum_seed;
 	private int[] s_reserved; // 98 ints long
 	private int s_checksum;
-	
+
 	public Ext4SuperBlock( ByteProvider provider ) throws IOException {
 		this( new BinaryReader( provider, true ) );
 	}
-	
+
 	public Ext4SuperBlock( BinaryReader reader ) throws IOException {
 		s_inodes_count = reader.readNextInt();
 		s_blocks_count_lo = reader.readNextInt();
@@ -597,7 +597,7 @@ public class Ext4SuperBlock implements StructConverter {
 	public int getS_checksum() {
 		return s_checksum;
 	}
-	
+
 	public boolean isValid() {
 		return Short.toUnsignedInt(s_magic) == Ext4Constants.SUPER_BLOCK_MAGIC;
 	}
@@ -710,5 +710,5 @@ public class Ext4SuperBlock implements StructConverter {
 		structure.add(DWORD, "s_checksum", null);
 		return structure;
 	}
-	
+
 }

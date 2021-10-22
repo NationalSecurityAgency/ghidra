@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -119,8 +119,8 @@ public class CodeItem implements StructConverter {
 	}
 
 	/**
-	 * The number of try_items for this instance. 
-	 * If non-zero, then these appear as the tries array just 
+	 * The number of try_items for this instance.
+	 * If non-zero, then these appear as the tries array just
 	 * after the insns in this instance.
 	 * @return number of try_items for this instance
 	 */
@@ -129,9 +129,9 @@ public class CodeItem implements StructConverter {
 	}
 
 	/**
-	 * Offset from the start of the file to the debug info 
-	 * (line numbers + local variable info) sequence for this code, or 0 if there 
-	 * simply is no information. The offset, if non-zero, should be to a location 
+	 * Offset from the start of the file to the debug info
+	 * (line numbers + local variable info) sequence for this code, or 0 if there
+	 * simply is no information. The offset, if non-zero, should be to a location
 	 * in the data section. The format of the data is specified by "debug_info_item" below.
 	 * @return offset from the start of the file to the debug info
 	 */
@@ -148,11 +148,11 @@ public class CodeItem implements StructConverter {
 	}
 
 	/**
-	 * Actual array of bytecode. 
-	 * The format of code in an insns array is specified by the companion document Dalvik bytecode. 
-	 * Note that though this is defined as an array of ushort, 
-	 * there are some internal structures that prefer four-byte alignment. 
-	 * Also, if this happens to be in an endian-swapped file, then the swapping is 
+	 * Actual array of bytecode.
+	 * The format of code in an insns array is specified by the companion document Dalvik bytecode.
+	 * Note that though this is defined as an array of ushort,
+	 * there are some internal structures that prefer four-byte alignment.
+	 * Also, if this happens to be in an endian-swapped file, then the swapping is
 	 * only done on individual ushorts and not on the larger internal structures.
 	 * @return array of bytecode
 	 */
@@ -165,7 +165,7 @@ public class CodeItem implements StructConverter {
 	}
 
 	/**
-	 * Two bytes of padding to make tries four-byte aligned. 
+	 * Two bytes of padding to make tries four-byte aligned.
 	 * This element is only present if tries_size is non-zero and insns_size is odd.
 	 * @return 2-bytes of padding
 	 */
@@ -174,8 +174,8 @@ public class CodeItem implements StructConverter {
 	}
 
 	/**
-	 * Array indicating where in the code exceptions are caught and how to handle them. 
-	 * Elements of the array must be non-overlapping in range and in order from low to high address. 
+	 * Array indicating where in the code exceptions are caught and how to handle them.
+	 * Elements of the array must be non-overlapping in range and in order from low to high address.
 	 * This element is only present if tries_size is non-zero.
 	 * @return array of Try's
 	 */
@@ -184,8 +184,8 @@ public class CodeItem implements StructConverter {
 	}
 
 	/**
-	 * Bytes representing lists of catch types and associated handler addresses. 
-	 * Each try_item has a byte-wise offset into this structure. 
+	 * Bytes representing lists of catch types and associated handler addresses.
+	 * Each try_item has a byte-wise offset into this structure.
 	 * This element is only present if tries_size is non-zero.
 	 * @return lists of catch types
 	 */

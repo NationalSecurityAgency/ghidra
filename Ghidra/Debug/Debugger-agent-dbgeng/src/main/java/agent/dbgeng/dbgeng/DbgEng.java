@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,19 +30,19 @@ import ghidra.util.Msg;
 
 /**
  * A wrapper for Microsoft's {@code dbgeng.dll} that presents a Java-friendly interface.
- * 
+ *
  * This is the "root interface" from which all other interfaces to {@code dbgeng.dll} are generated.
  * Not every method listed in the documentation, nor every method present in the header, is
  * implemented. Only those that were necessary to implement the SCTL adapter. However, the class and
  * interface hierarchy was designed so that adding the remaining methods should be fairly
  * straightforward. This wrapper attempts to obtain the most capable COM interfaces for the debug
  * client that it knows. Again, newer interfaces should be fairly straightforward to add.
- * 
+ *
  * Methods that are "obviously" wrappers for a COM method are left undocumented, unless there is
  * some nuance to how it has been wrapped. In many cases, a parameter which is an integer in the COM
  * method may be presented as an {@code enum} or {@link BitmaskSet} by the wrapper. Consult the MSDN
  * for the meaning of the various values and bit flags.
- * 
+ *
  * Each wrapper interface is implemented by several COM interface wrappers: one for each known COM
  * interface version. The wrapper is optimistic, in that it declares wrapper methods even for COM
  * methods that are only available in later versions. The implementations limited to earlier COM
@@ -52,7 +52,7 @@ import ghidra.util.Msg;
  * {@code *Wide} variants of existing methods. Since Java also uses a UTF-16-like string encoding
  * internally, JNA permits wide strings to be passed by reference. Thus, the wide variant is always
  * preferred.
- * 
+ *
  * Pay careful attention to the threading requirements imposed by {@code dbgeng.dll} these can be
  * found in the MSDN. As a general rule of thumb, if the method is reentrant (i.e., it can be called
  * from any thread), it is declared in the {@code *Reentrant} variant of the wrapper interface.
@@ -61,7 +61,7 @@ import ghidra.util.Msg;
  * latent issues. A practice to prevent accidental use of non-reentrant methods outside of the
  * client's owning thread is to ensure that only the owning thread can see the full interface. All
  * other threads should only have access to the reentrant interface.
- * 
+ *
  * If you implement methods that introduce a new callback class, use the existing callback type
  * hierarchies as a model. There are many classes to implement. Furthermore, be sure to keep a
  * reference to any active callback instances within the wrapper that uses them. The JNA has no way
@@ -123,9 +123,9 @@ public class DbgEng {
 
 	/**
 	 * Connect to a debug session.
-	 * 
+	 *
 	 * See {@code DebugConnect} or {@code DebugConnectWide} on the MSDN.
-	 * 
+	 *
 	 * @param remoteOptions the options, like those given to {@code -remote}
 	 * @return a new client connected as specified
 	 */
@@ -137,10 +137,10 @@ public class DbgEng {
 
 	/**
 	 * Create a debug client.
-	 * 
+	 *
 	 * Typically, this client is connected to the "local server". See {@code DebugCreate} on the
 	 * MSDN.
-	 * 
+	 *
 	 * @return a new client
 	 */
 	public static DebugClient debugCreate() {
@@ -149,9 +149,9 @@ public class DbgEng {
 
 	/**
 	 * Create a debug client with the given options.
-	 * 
+	 *
 	 * See {@code DebugCreateEx} on the MSDN.
-	 * 
+	 *
 	 * @param options the options
 	 * @return a new client
 	 */

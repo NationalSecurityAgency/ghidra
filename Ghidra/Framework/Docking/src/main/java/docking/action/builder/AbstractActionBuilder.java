@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,23 +31,23 @@ import resources.ResourceManager;
 
 /**
  * Base class for DockingAction builders.
- * 
+ *
  * <p>Building an action requires a few steps.  One of the few required calls when using a builder
  * is {@link #onAction(Consumer)}.   This is the callback used when the action is invoked.   A
  * typical action will also complete the {@link #enabledWhen(Predicate)} method, which tells the
  * tool when an action is valid.
- * 
+ *
  * <p>To see more detailed documentation for a given method of this builder, or to understand
- * how actions are used in the tool, see the {@link DockingActionIf} 
+ * how actions are used in the tool, see the {@link DockingActionIf}
  * interface.
  *
  * @param <T> The type of DockingAction to build
  * @param <B> the Type of action builder
  * @param <C> The type of ActionContext. By default, the ActionContext type always starts as
- * the base ActionContext class.  If the client calls the {@link #withContext(Class)} method on 
+ * the base ActionContext class.  If the client calls the {@link #withContext(Class)} method on
  * the builder, then that class (which must be a subclass of ActionContext) becomes the ActionContext
  * type that will be used for future calls to the builder methods that take predicates with
- * ActionContext (i.e. {@link #enabledWhen(Predicate)} and {@link #validContextWhen(Predicate)}. 
+ * ActionContext (i.e. {@link #enabledWhen(Predicate)} and {@link #validContextWhen(Predicate)}.
  * This works by substituting a builder with a different ActionContext type when chaining after
  * the {@link #withContext(Class)} call.
  */
@@ -176,7 +176,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * Set to true if the action supports using the default tool context if the local context is invalid
 	 */
 	private boolean supportsDefaultToolContext;
-	
+
 	/**
 	 * Specifies when the action should appear in a window.
 	 */
@@ -192,7 +192,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 		ALWAYS, 	    // action should appear in all windows
 		CONTEXT_MATCHES // action should appear if and only if the window has
 	}					// has a provider that generates the appropriate context.
-	
+
 	/**
 	 * Builder constructor
 	 * @param name the name of the action to be built
@@ -211,16 +211,16 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	protected abstract B self();
 
 	/**
-	 * Builds the action.  To build and install the action in one step, use 
+	 * Builds the action.  To build and install the action in one step, use
 	 * {@link #buildAndInstall(Tool)} or {@link #buildAndInstallLocal(ComponentProvider)}.
 	 * {@link #inWindow(When)}
-	 * @return the newly build action 
+	 * @return the newly build action
 	 */
 	public abstract T build();
 
 	/**
 	 * Builds and adds the action globally to the tool
-	 * 
+	 *
 	 * @param tool the tool to add the action to
 	 * @return the newly created action
 	 * @see #build()
@@ -234,7 +234,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 	/**
 	 * Builds and adds the action as a local action for the given provider
-	 * 
+	 *
 	 * @param provider the provider to add the action to
 	 * @return the newly created action
 	 * @see #build()
@@ -249,7 +249,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	/**
 	 * Configure the description for the action.  This description will appear as a tooltip
 	 * over tool bar buttons.
-	 * 
+	 *
 	 * @param text the description
 	 * @return this builder (for chaining)
 	 */
@@ -260,11 +260,11 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 	/**
 	 * Configure whether this {@code DockingAction} is enabled.
-	 * 
-	 * <p><b>Note: most clients do not need to use this method.  Enablement is controlled by 
+	 *
+	 * <p><b>Note: most clients do not need to use this method.  Enablement is controlled by
 	 * {@link #validContextWhen(Predicate)}.
 	 * </b>
-	 * 
+	 *
 	 * @param b {@code true} if enabled
 	 * @return this builder (for chaining)
 	 * @see #validContextWhen(Predicate)
@@ -278,10 +278,10 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * Marks this action as one that shares a key binding with other actions in the tool.  This
 	 * allows multiple clients to supply actions that use the same key binding, each working
 	 * within its respective action context.  See {@link KeyBindingType}.
-	 * 
-	 * <p>Actions are not shared by default; they are {@link KeyBindingType#INDIVIDUAL}.  This 
+	 *
+	 * <p>Actions are not shared by default; they are {@link KeyBindingType#INDIVIDUAL}.  This
 	 * means that each action must have its key binding assigned individually.
-	 * 
+	 *
 	 * @return this builder (for chaining)
 	 */
 	public B sharedKeyBinding() {
@@ -291,12 +291,12 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 	/**
 	 * Configure {@link HelpLocation} for this {@code DockingAction}
-	 * 
+	 *
 	 * <p>Clients are free to specify their help location directly, but many do not.  A default
 	 * help location is created that uses the action name as the anchor name and the action
-	 * owner as the topic.   If your anchor or topic do not follow this convention, then you 
-	 * need to set help topic yourself. 
-	 * 
+	 * owner as the topic.   If your anchor or topic do not follow this convention, then you
+	 * need to set help topic yourself.
+	 *
 	 * @param help the {@link HelpLocation} to configure
 	 * @return this builder (for chaining)
 	 */
@@ -308,7 +308,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	/**
 	 * Sets the menu bar path for the action.  Setting this attribute is what causes the action
 	 * to appear on the tools menu bar.
-	 * 
+	 *
 	 * @param pathElement the menu bar path for the action
 	 * @return this builder (for chaining)
 	 */
@@ -321,7 +321,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * Sets the group for the action in the menu bar.  Actions in the same group will appear
 	 * next to other actions in the same group and actions in different groups will be separated
 	 * by menu dividers.
-	 * 
+	 *
 	 * @param group for this action
 	 * @return this builder (for chaining)
 	 */
@@ -331,10 +331,10 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	}
 
 	/**
-	 * Sets the group and sub-group for the action in the menu bar.  Actions in the same group 
-	 * will appear next to other actions in the same group and actions in different groups will 
+	 * Sets the group and sub-group for the action in the menu bar.  Actions in the same group
+	 * will appear next to other actions in the same group and actions in different groups will
 	 * be separated by menu dividers.  The sub-group is used to order the actions within the group.
-	 * 
+	 *
 	 * @param group the group used to clump actions together
 	 * @param subGroup the sub-group used to order actions within a group
 	 * @return this builder (for chaining)
@@ -348,8 +348,8 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 	/**
 	 * Sets the icon to use in this action's menu bar item
-	 * 
-	 * @param icon the icon to use in the action's menu bar item 
+	 *
+	 * @param icon the icon to use in the action's menu bar item
 	 * @return this builder (for chaining)
 	 */
 	public B menuIcon(Icon icon) {
@@ -359,8 +359,8 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 	/**
 	 * Sets the mnemonic to use in this action's menu bar item
-	 * 
-	 * @param mnemonic the mnemonic to use for this action's menu bar item. 
+	 *
+	 * @param mnemonic the mnemonic to use for this action's menu bar item.
 	 * @return this builder (for chaining)
 	 */
 	public B menuMnemonic(int mnemonic) {
@@ -371,7 +371,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	/**
 	 * Sets the pop-up menu path for the action.  Setting this attribute is what causes the action
 	 * to appear on the tool's pop-up menu (assuming it is applicable for the context).
-	 * 
+	 *
 	 * @param pathElement the menu path for the action in the pop-up menu
 	 * @return this builder (for chaining)
 	 * @see #popupMenuGroup(String)
@@ -385,7 +385,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * Sets the group for the action in the pop-up menu.  Actions in the same group will appear
 	 * next to other actions in the same group and actions in different groups will be separated
 	 * by menu dividers.
-	 * 
+	 *
 	 * @param group for this action
 	 * @return this builder (for chaining)
 	 */
@@ -398,7 +398,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * Sets the group and sub-group for the action in the pop-up menu.  Actions in the same group
 	 * will appear next to other actions in the same group and actions in different groups will
 	 * be separated by menu dividers.  The sub-group is used to order the actions within the group
-	 * 
+	 *
 	 * @param group the group used to clump actions together
 	 * @param subGroup the sub-group used to order actions within a group
 	 * @return this builder (for chaining)
@@ -412,8 +412,8 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 	/**
 	 * Sets the icon to use in this action's pop-up menu item
-	 * 
-	 * @param icon the icon to use in the action's pop-up menu item 
+	 *
+	 * @param icon the icon to use in the action's pop-up menu item
 	 * @return this builder (for chaining)
 	 */
 	public B popupMenuIcon(Icon icon) {
@@ -422,9 +422,9 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	}
 
 	/**
-	 * Sets the icon to use in this action's tool bar button.  Setting this attribute is what 
+	 * Sets the icon to use in this action's tool bar button.  Setting this attribute is what
 	 * causes the action to appear on the tool's or component provider's action tool bar.
-	 * 
+	 *
 	 * @param icon the icon to use in the action's tool bar
 	 * @return this builder (for chaining)
 	 * @see #toolBarIcon(String)
@@ -437,7 +437,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	/**
 	 * Sets the path for the icon to use in this action's tool bar button.  Setting this attribute
 	 * causes the action to appear on the tool's or component provider's action tool bar.
-	 * 
+	 *
 	 * @param iconFilepath the module-relative path for the icon to use in the action's tool bar
 	 * @return this builder (for chaining)
 	 * @see #toolBarIcon(Icon)
@@ -451,12 +451,12 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * Sets the group for the action in the tool bar.  Actions in the same group will appear
 	 * next to other actions in the same group and actions in different groups will be separated
 	 * by menu dividers.
-	 * 
+	 *
 	 * <p><b>Note: you must call {@link #toolBarIcon(Icon)} or {@link #toolBarIcon(String)} for
-	 * this action to appear in the toolbar.  Calling this method without the other will not 
+	 * this action to appear in the toolbar.  Calling this method without the other will not
 	 * cause this action to be placed in the tool bar.
 	 * </b>
-	 * 
+	 *
 	 * @param group for this action
 	 * @return this builder (for chaining)
 	 * @see #toolBarGroup(String, String)
@@ -470,12 +470,12 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * Sets the group and sub-group for the action in the tool bar.  Actions in the same group
 	 * will appear next to other actions in the same group and actions in different groups will
 	 * be separated by menu dividers.  The sub-group is used to order the actions within the group.
-	 * 
+	 *
 	 * <p><b>Note: you must call {@link #toolBarIcon(Icon)} or {@link #toolBarIcon(String)} for
-	 * this action to appear in the toolbar.  Calling this method without the other will not 
+	 * this action to appear in the toolbar.  Calling this method without the other will not
 	 * cause this action to be placed in the tool bar.
 	 * </b>
-	 * 
+	 *
 	 * @param group the group used to clump actions together.
 	 * @param subGroup the sub-group used to order actions within a group.
 	 * @return this builder (for chaining)
@@ -489,7 +489,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 	/**
 	 * Sets the key binding for this action
-	 * 
+	 *
 	 * @param keyStroke the KeyStroke to bind to this action
 	 * @return this builder (for chaining)
 	 */
@@ -500,7 +500,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 	/**
 	 * Sets the key binding for this action
-	 * 
+	 *
 	 * @param keyStrokeString the string to parse as a KeyStroke. See
 	 *  {@link KeyStroke#getKeyStroke(String)} for the format of the string.
 	 * @return this builder (for chaining)
@@ -517,7 +517,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * Sets the primary callback to be executed when this action is invoked.  This builder will
 	 * throw an {@link IllegalStateException} if one of the build methods is called without
 	 * providing this callback.
-	 * 
+	 *
 	 * @param action the callback to execute when the action is invoked
 	 * @return this builder (for chaining)
 	 */
@@ -527,15 +527,15 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	}
 
 	/**
-	 * Sets a predicate for dynamically determining the action's enabled state.  See 
+	 * Sets a predicate for dynamically determining the action's enabled state.  See
 	 * {@link DockingActionIf#isEnabledForContext(ActionContext)}
-	 * 
-	 * <p>If this predicate is not set, the action's enable state must be controlled 
+	 *
+	 * <p>If this predicate is not set, the action's enable state must be controlled
 	 * directly using the {@link DockingAction#setEnabled(boolean)} method.  We do not recommend
-	 * controlling enablement directly. And, of course, if you do set this predicate, you should 
+	 * controlling enablement directly. And, of course, if you do set this predicate, you should
 	 * not later call {@link DockingAction#setEnabled(boolean)} to manually manage enablement.
-	 *  
-	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 *
+	 * @param predicate the predicate that will be used to dynamically determine an action's
 	 *        enabled state
 	 * @return this builder (for chaining)
 	 */
@@ -547,17 +547,17 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	/**
 	 * Sets a predicate for dynamically determining if this action should be included in
 	 * an impending pop-up menu.  If this predicate is not set, the action will be included
-	 * in an impending pop-up, if it is enabled. See 
+	 * in an impending pop-up, if it is enabled. See
 	 * {@link DockingActionIf#isAddToPopup(ActionContext)}.
-	 * 
+	 *
 	 * <p>Note: use this method when you wish for an action to be added to a popup menu regardless
 	 * of whether it is enabled.  As mentioned above, standard popup actions will only be added
-	 * to the popup when they are enabled. 
-	 *  
-	 * <p>Note: using this method is not sufficient to cause the action to appear in a popup 
+	 * to the popup when they are enabled.
+	 *
+	 * <p>Note: using this method is not sufficient to cause the action to appear in a popup
 	 * menu.  You must also use {@link #popupMenuPath(String...)}.
-	 *  
-	 * @param predicate the predicate that will be used to dynamically determine whether an 
+	 *
+	 * @param predicate the predicate that will be used to dynamically determine whether an
 	 *        action is added to a popup menu
 	 * @return this builder (for chaining)
 	 * @see #popupMenuPath(String...)
@@ -568,23 +568,23 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	}
 
 	/**
-	 * Sets a predicate for dynamically determining if this action is valid for the current 
+	 * Sets a predicate for dynamically determining if this action is valid for the current
 	 * {@link ActionContext}.  See {@link DockingActionIf#isValidContext(ActionContext)}.
-	 * 
-	 * <p>Note: most actions will not use this method, but rely instead on 
-	 * {@link #enabledWhen(Predicate)}. 
-	 * 
-	 * <p>Note: this triggers automatic action enablement so you should not later call 
+	 *
+	 * <p>Note: most actions will not use this method, but rely instead on
+	 * {@link #enabledWhen(Predicate)}.
+	 *
+	 * <p>Note: this triggers automatic action enablement so you should not later call
 	 * {@link DockingAction#setEnabled(boolean)} to manually manage action enablement.
-	 *  
-	 * @param predicate the predicate that will be used to dynamically determine an action's 
+	 *
+	 * @param predicate the predicate that will be used to dynamically determine an action's
 	 * validity for a given {@link ActionContext}
 	 * @return this builder (for chaining)
 	 */
 	public B validContextWhen(Predicate<C> predicate) {
 		validContextPredicate = Objects.requireNonNull(predicate);
 
-		// automatic enablement management triggered, make sure there is a existing enablement 
+		// automatic enablement management triggered, make sure there is a existing enablement
 		// predicate. The default behavior of manual management interferes with automatic management.
 		if (enabledPredicate == null) {
 			enabledPredicate = ALWAYS_TRUE;
@@ -600,7 +600,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 * By default, actions only work on the current focused provider's context.  Setting this
 	 * to true will cause the action to be evaluated against the default tool context if the
 	 * focused context is not valid for this action.
-	 * 
+	 *
 	 * @param b the new value
 	 * @return this builder (for chaining)
 	 */
@@ -608,23 +608,23 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 		supportsDefaultToolContext = b;
 		return self();
 	}
-	
+
 	/**
 	 * Specifies when a global action should appear in a window (main or secondary).
 	 * <P>
-	 * Global menu or toolbar actions can be configured to appear in 1) only the main 
+	 * Global menu or toolbar actions can be configured to appear in 1) only the main
 	 * window, or 2) all windows, or 3) any window that has a provider that
 	 * generates an action context that matches the context that this action
-	 * consumes. If the "context matches" options is chosen, then the 
+	 * consumes. If the "context matches" options is chosen, then the
 	 * {@link #withContext(Class)} method must also be called to specify the matching
 	 * context; otherwise an exception will be thrown when the action is built.
 	 * <P>
-	 *  
+	 *
 	 *  The default is that the action will only appear in the main window.
 	 *
 	 * @param when use the {@link When} enum to specify the windowing behavior
 	 * of the action.
-	 * 
+	 *
 	 * @return this builder (for chaining)
 	 */
 	public B inWindow(When when) {
@@ -633,14 +633,14 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	}
 
 	/**
-	 * Sets the specific ActionContext type to use for the various predicate calls 
-	 * ({@link #validContextWhen(Predicate)}, {@link #enabledWhen(Predicate)}, and 
+	 * Sets the specific ActionContext type to use for the various predicate calls
+	 * ({@link #validContextWhen(Predicate)}, {@link #enabledWhen(Predicate)}, and
 	 * {@link #popupWhen(Predicate)}).
 	 * <P>
 	 * In other words, this allows the client to specify the type of ActionContext that is valid for
 	 * the action being built.
 	 * <P>
-	 * To be effective, this method must be called  <b>before</b> setting any of the predicates 
+	 * To be effective, this method must be called  <b>before</b> setting any of the predicates
 	 * such as the {@link #enabledWhen(Predicate)}.  Once this method is called you can define your
 	 * predicates using the more specific ActionContext and be assured your predicates will only
 	 * be called when the current action context is the type (or sub-type) of the context you have
@@ -657,17 +657,17 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	 *     return ((FooContext) context).isAwesome();
 	 * });
 	 * </pre>
-	 * But by first calling the builder method <CODE>withContext(FooContext.class)</CODE>, you can 
+	 * But by first calling the builder method <CODE>withContext(FooContext.class)</CODE>, you can
 	 * simply write:
 	 *
 	 * <pre>
 	 * {@literal builder.enabledWhen(context -> return context.isAwesome() }}
 	 * </pre>
 	 *
-	 * <p>Note: this triggers automatic action enablement so you should not later call 
+	 * <p>Note: this triggers automatic action enablement so you should not later call
 	 * {@link DockingAction#setEnabled(boolean)} to manually manage action enablement.
-	 *  
-	
+	 *
+
 	 * @param newActionContextClass the more specific ActionContext type.
 	 * @param <AC2> The new ActionContext type (as determined by the newActionContextClass) that
 	 * the returned builder will have.
@@ -683,7 +683,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 			throw new IllegalStateException("Can't set the ActionContext type more than once");
 		}
 
-		// automatic enablement management triggered, make sure there is a existing enablement 
+		// automatic enablement management triggered, make sure there is a existing enablement
 		// predicate. The default behavior of manual management interferes with automatic management.
 		if (enabledPredicate == null) {
 			enabledPredicate = ALWAYS_TRUE;
@@ -694,7 +694,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 		//
 		// Since we "know" that the only thing that matters regarding the ActionContext type is that
 		// the template type (AC) must match the type of actionContextClass instance variable, we
-		// can get away with returning this same builder and casting it to be a builder with type 
+		// can get away with returning this same builder and casting it to be a builder with type
 		// AC2 instead of AC.  We can do this since we set the actionContextClass below
 
 		actionContextClass = newActionContextClass;
@@ -711,7 +711,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 		if (windowWhen == When.CONTEXT_MATCHES && actionContextClass == null) {
 			throw new IllegalStateException("The InWindow state was set to "
 					+ "\"CONTEXT_MATCHES\", but no context class was set. Use"
-					+ " the \"withContext\" method"); 
+					+ " the \"withContext\" method");
 		}
 	}
 
@@ -735,7 +735,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 
 		action.validContextWhen(adaptPredicate(validContextPredicate));
 		action.popupWhen(adaptPredicate(popupPredicate));
-		
+
 		if (windowWhen == When.ALWAYS) {
 			action.setAddToAllWindows(true);
 		}
@@ -746,7 +746,7 @@ public abstract class AbstractActionBuilder<T extends DockingActionIf, C extends
 	}
 
 	/**
-	 * Since the built action will need a predicate that handles any action type, this method 
+	 * Since the built action will need a predicate that handles any action type, this method
 	 * creates a predicate that adapts a user supplied predicate for a more specific ActionContext
 	 * to a general predicate that can accept any ActionContext.
 	 * @param predicate the client supplied predicate that expects a more specific ActionContext

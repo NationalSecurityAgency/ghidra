@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,7 +137,7 @@ public class SecurityDataDirectory extends DataDirectory implements ByteArrayCon
         list.toArray(certificates);
         return true;
     }
-	
+
     /**
      * @see ghidra.app.util.bin.StructConverter#toDataType()
      */
@@ -168,7 +168,7 @@ public class SecurityDataDirectory extends DataDirectory implements ByteArrayCon
 	 * @see ghidra.app.util.bin.format.pe.DataDirectory#writeBytes(java.io.RandomAccessFile, ghidra.util.DataConverter, ghidra.app.util.bin.format.pe.PortableExecutable)
 	 */
 	@Override
-    public void writeBytes(RandomAccessFile raf, DataConverter dc, PortableExecutable template) 
+    public void writeBytes(RandomAccessFile raf, DataConverter dc, PortableExecutable template)
 		throws IOException {
 
 		if (size == 0) {
@@ -177,7 +177,7 @@ public class SecurityDataDirectory extends DataDirectory implements ByteArrayCon
 
 		DataDirectory [] originalDataDirs = template.getNTHeader().getOptionalHeader().getDataDirectories();
 		if (originalDataDirs.length > OptionalHeader.IMAGE_DIRECTORY_ENTRY_SECURITY) {
-			if (originalDataDirs[OptionalHeader.IMAGE_DIRECTORY_ENTRY_SECURITY] == null || 
+			if (originalDataDirs[OptionalHeader.IMAGE_DIRECTORY_ENTRY_SECURITY] == null ||
 				originalDataDirs[OptionalHeader.IMAGE_DIRECTORY_ENTRY_SECURITY].getSize() == 0) {
 				return;
 			}

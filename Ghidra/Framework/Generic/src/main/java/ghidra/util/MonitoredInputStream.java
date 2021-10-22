@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,13 +47,13 @@ public class MonitoredInputStream extends InputStream {
 	}
 
 	/**
-	 * Reads the next byte of data from this input stream. The value 
-	 * byte is returned as an <code>int</code> in the range 
-	 * <code>0</code> to <code>255</code>. If no byte is available 
-	 * because the end of the stream has been reached, the value 
-	 * <code>-1</code> is returned. This method blocks until input data 
-	 * is available, the end of the stream is detected, or an exception 
-	 * is thrown. 
+	 * Reads the next byte of data from this input stream. The value
+	 * byte is returned as an <code>int</code> in the range
+	 * <code>0</code> to <code>255</code>. If no byte is available
+	 * because the end of the stream has been reached, the value
+	 * <code>-1</code> is returned. This method blocks until input data
+	 * is available, the end of the stream is detected, or an exception
+	 * is thrown.
 	 * <p>
 	 * This method
 	 * simply performs <code>in.read()</code> and returns the result.
@@ -80,9 +80,9 @@ public class MonitoredInputStream extends InputStream {
 	}
 
 	/**
-	 * Reads up to <code>byte.length</code> bytes of data from this 
-	 * input stream into an array of bytes. This method blocks until some 
-	 * input is available. 
+	 * Reads up to <code>byte.length</code> bytes of data from this
+	 * input stream into an array of bytes. This method blocks until some
+	 * input is available.
 	 * <p>
 	 * This method simply performs the call
 	 * <code>read(b, 0, b.length)</code> and returns
@@ -105,11 +105,11 @@ public class MonitoredInputStream extends InputStream {
 	}
 
 	/**
-	 * Reads up to <code>len</code> bytes of data from this input stream 
-	 * into an array of bytes. This method blocks until some input is 
-	 * available. 
+	 * Reads up to <code>len</code> bytes of data from this input stream
+	 * into an array of bytes. This method blocks until some input is
+	 * available.
 	 * <p>
-	 * This method simply performs <code>in.read(b, off, len)</code> 
+	 * This method simply performs <code>in.read(b, off, len)</code>
 	 * and returns the result.
 	 *
 	 * @param      b     the buffer into which the data is read.
@@ -136,11 +136,11 @@ public class MonitoredInputStream extends InputStream {
 	}
 
 	/**
-	 * Skips over and discards <code>n</code> bytes of data from the 
-	 * input stream. The <code>skip</code> method may, for a variety of 
-	 * reasons, end up skipping over some smaller number of bytes, 
-	 * possibly <code>0</code>. The actual number of bytes skipped is 
-	 * returned. 
+	 * Skips over and discards <code>n</code> bytes of data from the
+	 * input stream. The <code>skip</code> method may, for a variety of
+	 * reasons, end up skipping over some smaller number of bytes,
+	 * possibly <code>0</code>. The actual number of bytes skipped is
+	 * returned.
 	 * <p>
 	 * This method
 	 * simply performs <code>in.skip(n)</code>.
@@ -155,8 +155,8 @@ public class MonitoredInputStream extends InputStream {
 	}
 
 	/**
-	 * Returns the number of bytes that can be read from this input 
-	 * stream without blocking. 
+	 * Returns the number of bytes that can be read from this input
+	 * stream without blocking.
 	 * <p>
 	 * This method
 	 * simply performs <code>in.available()</code> and
@@ -172,8 +172,8 @@ public class MonitoredInputStream extends InputStream {
 	}
 
 	/**
-	 * Closes this input stream and releases any system resources 
-	 * associated with the stream. 
+	 * Closes this input stream and releases any system resources
+	 * associated with the stream.
 	 * This
 	 * method simply performs <code>in.close()</code>.
 	 *
@@ -185,13 +185,13 @@ public class MonitoredInputStream extends InputStream {
 	}
 
 	/**
-	 * Marks the current position in this input stream. A subsequent 
-	 * call to the <code>reset</code> method repositions this stream at 
+	 * Marks the current position in this input stream. A subsequent
+	 * call to the <code>reset</code> method repositions this stream at
 	 * the last marked position so that subsequent reads re-read the same bytes.
 	 * <p>
-	 * The <code>readlimit</code> argument tells this input stream to 
-	 * allow that many bytes to be read before the mark position gets 
-	 * invalidated. 
+	 * The <code>readlimit</code> argument tells this input stream to
+	 * allow that many bytes to be read before the mark position gets
+	 * invalidated.
 	 * <p>
 	 * This method simply performs <code>in.mark(readlimit)</code>.
 	 *
@@ -205,8 +205,8 @@ public class MonitoredInputStream extends InputStream {
 	}
 
 	/**
-	 * Repositions this stream to the position at the time the 
-	 * <code>mark</code> method was last called on this input stream. 
+	 * Repositions this stream to the position at the time the
+	 * <code>mark</code> method was last called on this input stream.
 	 * <p>
 	 * This method
 	 * simply performs <code>in.reset()</code>.
@@ -230,8 +230,8 @@ public class MonitoredInputStream extends InputStream {
 	}
 
 	/**
-	 * Tests if this input stream supports the <code>mark</code> 
-	 * and <code>reset</code> methods. 
+	 * Tests if this input stream supports the <code>mark</code>
+	 * and <code>reset</code> methods.
 	 * This method
 	 * simply performs <code>in.markSupported()</code>.
 	 *

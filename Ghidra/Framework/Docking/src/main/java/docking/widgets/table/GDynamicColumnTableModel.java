@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -124,7 +124,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	/**
 	 * Allows clients to defer column creation until after this parent class's constructor has
 	 * been called.   This method will not restore any column settings that have been changed
-	 * after construction.  Thus, this method is intended only to be called during the 
+	 * after construction.  Thus, this method is intended only to be called during the
 	 * construction process.
 	 */
 	protected void reloadColumns() {
@@ -153,7 +153,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 
 	private DynamicTableColumn<ROW_TYPE, ?, ?> getColumnForDefaultColumnIdentifier(Class<?> clazz) {
 
-		// note: we may have multiple columns with the same class.  It is not the normal case, 
+		// note: we may have multiple columns with the same class.  It is not the normal case,
 		//       but it can happen for re-usable column classes.
 
 		//@formatter:off
@@ -255,7 +255,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	 * Adds the given column at the end of the list of columns.  This method is intended for
 	 * implementations to add custom column objects, rather than relying on generic, discovered
 	 * DynamicTableColumn implementations.
-	 * 
+	 *
 	 * <p><b>Note: this method assumes that the columns have already been sorted</b>
 	 * @param column The field to add
 	 */
@@ -267,9 +267,9 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 	 * Adds the given columns to the end of the list of columns.  This method is intended for
 	 * implementations to add custom column objects, rather than relying on generic, discovered
 	 * DynamicTableColumn implementations.
-	 * 
+	 *
 	 * <p><b>Note: this method assumes that the columns have already been sorted.</b>
-	 * 
+	 *
 	 * @param columns The columns to add
 	 */
 	protected void addTableColumns(Set<DynamicTableColumn<ROW_TYPE, ?, ?>> columns) {
@@ -466,7 +466,7 @@ public abstract class GDynamicColumnTableModel<ROW_TYPE, DATA_SOURCE>
 
 	/**
 	 * Returns the column index of the given column class
-	 * 
+	 *
 	 * @param columnClass the class for the type of DynamicTableColumn you want to find.
 	 * @return the column index for the specified DynamicTableColumn. -1 if not found.
 	 */

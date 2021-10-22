@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,11 +31,11 @@ import ghidra.util.task.TaskMonitor;
  * a database.
  * <p>
  * Public constructors are only provided for use with "Non-Versioned" databases.
- * This class should be extended when additional management features are needed, 
+ * This class should be extended when additional management features are needed,
  * such as for a "Versioned" database.
  * <p>
- * This class assumes exclusive control of the associated files contained within the 
- * associated database directory and relies on the proper establishment of a 
+ * This class assumes exclusive control of the associated files contained within the
+ * associated database directory and relies on the proper establishment of a
  * syncObject to midigate potential concurrent modification issues.
  */
 public abstract class Database {
@@ -117,7 +117,7 @@ public abstract class Database {
 
 	/**
 	 * Set the object to be used for synchronization.
-	 * @param syncObject 
+	 * @param syncObject
 	 */
 	public void setSynchronizationObject(Object syncObject) {
 		this.syncObject = syncObject;
@@ -133,7 +133,7 @@ public abstract class Database {
 	/**
 	 * Delete a directory and all of its contents.
 	 * @param dir
-	 * @return true if delete was successful.  
+	 * @return true if delete was successful.
 	 * If false is returned, a partial delete may have occurred.
 	 */
 	protected final static boolean deleteDir(File dir) {
@@ -197,7 +197,7 @@ public abstract class Database {
 	/**
 	 * Returns the length of this domain file.  This size is the minimum disk space
 	 * used for storing this file, but does not account for additional storage space
-	 * used to tracks changes, etc. 
+	 * used to tracks changes, etc.
 	 * @return file length
 	 * @throws IOException thrown if IO or access error occurs
 	 */
@@ -293,10 +293,10 @@ public abstract class Database {
 				}
 				//			else if (fname.endsWith(LocalBufferFile.PRESAVE_FILE_EXT) ||
 				//					fname.endsWith(LocalBufferFile.TEMP_FILE_EXT)) {
-				//				// Attempt to remove all presave and temp files 
+				//				// Attempt to remove all presave and temp files
 				//				// Open files on Windows will not be deleted, however they will under Unix
 				// TODO This can cause problems under UNIX since it can be deleted while open
-				//				delFiles.add(fname);	
+				//				delFiles.add(fname);
 				//			}
 			}
 
@@ -334,7 +334,7 @@ public abstract class Database {
 					}
 				}
 
-				// Check change files		
+				// Check change files
 				int[] changes = getFileVersions(changeFiles);
 				int minChangeVer = currentVersion;
 				for (int i = changes.length - 1; i >= 0; i--) {

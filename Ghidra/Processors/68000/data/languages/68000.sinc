@@ -147,8 +147,8 @@ define token extword (16)
   ctl    = (0,11)
 @ifdef COLDFIRE
   sfact = (9,10)
-  accmsb = (4,4)  
-@endif  
+  accmsb = (4,4)
+@endif
 ;
 
 define token extword2 (16)
@@ -215,17 +215,17 @@ define token fpword (16)
 
 define token disp16  (16)  d16  = (0,15) signed;
 define token disp32  (32)  d32  = (0,31) signed;
-define token disp64  (64)  
+define token disp64  (64)
   signD = (63,63)
   exponentD = (52,62)
   mantissaD = (0,51)
   d64  = (0,63) signed
 ;
-define token disp96X_1 (32)  
+define token disp96X_1 (32)
   signX = (31,31)
   exponentX = (16,30)
 ;
-define token disp96X_2 (64)  
+define token disp96X_2 (64)
   expintbitX = (63,63)
   mantissaX = (0,62)
 ;
@@ -585,7 +585,7 @@ ctlreg: RAMBAR1    is RAMBAR1 & ctl=0xc05    { export RAMBAR1; }
 #  ctlreg: PCR    is PCR & ctl=0x808    { export PCR; }
 ctlreg: CAC    is CAC & ctl=0xffe    { export CAC; }
 ctlreg: MBB    is MBB & ctl=0xfff    { export MBB; }
-ctlreg: "UNK_CTL_"^ctl   is ctl     { tmp:4 = 0xffffffff; export tmp; } 
+ctlreg: "UNK_CTL_"^ctl   is ctl     { tmp:4 = 0xffffffff; export tmp; }
 
 
 # Relative jump destinations
@@ -854,7 +854,7 @@ define pcodeop countLeadingZeros;
 :callm "#"^d8,e2l			is opbig=6 & op67=3 & $(CTL_ADDR_MODES); d8; e2l 			[ savmod2=savmod1; regtsan=regtfan; ] unimpl
 
 #TODO: should constrain CAS to ignore mode=7 & regan=4 (place CAS2 before CAS to avoid problem)
-:cas2.w regdcw:regdc2w,regduw:regdu2w,(regda):(regda2)	is op015=0x0cfc; regda & ext_911=0 & regduw & ext_35=0 & regdcw; regda2 & ext2_911=0 & regdu2w & ext2_35=0 & regdc2w	{ 
+:cas2.w regdcw:regdc2w,regduw:regdu2w,(regda):(regda2)	is op015=0x0cfc; regda & ext_911=0 & regduw & ext_35=0 & regdcw; regda2 & ext2_911=0 & regdu2w & ext2_35=0 & regdc2w	{
    dc1:4 = zext(regdcw);
    dc2:4 = zext(regdc2w);
    if(dc1!=regda) goto <ne>;
@@ -870,7 +870,7 @@ define pcodeop countLeadingZeros;
    ZF = 0;
    NF = 1;
 }
-:cas2.l regdc:regdc2,regdu:regdu2,(regda):(regda2)	is op015=0x0efc; regda & ext_911=0 & regdu & ext_35=0 & regdc; regda2 & ext2_911=0 & regdu2 & ext2_35=0 & regdc2	{ 
+:cas2.l regdc:regdc2,regdu:regdu2,(regda):(regda2)	is op015=0x0efc; regda & ext_911=0 & regdu & ext_35=0 & regdc; regda2 & ext2_911=0 & regdu2 & ext2_35=0 & regdc2	{
    if(regdc!=regda) goto <ne>;
    if(regdc2!=regda2) goto <ne>;
    regda = regdu;
@@ -885,7 +885,7 @@ define pcodeop countLeadingZeros;
    NF = 1;
 }
 
-:cas.b regdcb,regdub,e2b	is opbig=0x0a & op67=3 & $(MEM_ALTER_ADDR_MODES); regda=0 & ext_911=0 & regdub & ext_35=0 & regdcb; e2b	[ savmod2=savmod1; regtsan=regtfan; ] { 
+:cas.b regdcb,regdub,e2b	is opbig=0x0a & op67=3 & $(MEM_ALTER_ADDR_MODES); regda=0 & ext_911=0 & regdub & ext_35=0 & regdcb; e2b	[ savmod2=savmod1; regtsan=regtfan; ] {
    if(e2b==regdcb) goto <eq>;
    regdcb = e2b;
    ZF = 0;
@@ -896,7 +896,7 @@ define pcodeop countLeadingZeros;
    ZF = 1;
    NF = 0;
 }
-:cas.w regdcw,regduw,e2w	is opbig=0x0c & op67=3 & $(MEM_ALTER_ADDR_MODES); regda=0 & ext_911=0 & regduw & ext_35=0 & regdcw; e2w	[ savmod2=savmod1; regtsan=regtfan; ] { 
+:cas.w regdcw,regduw,e2w	is opbig=0x0c & op67=3 & $(MEM_ALTER_ADDR_MODES); regda=0 & ext_911=0 & regduw & ext_35=0 & regdcw; e2w	[ savmod2=savmod1; regtsan=regtfan; ] {
    if(e2w==regdcw) goto <eq>;
    regdcw = e2w;
    ZF = 0;
@@ -905,9 +905,9 @@ define pcodeop countLeadingZeros;
   <eq>
    e2w = regduw;
    ZF = 1;
-   NF = 0; 
+   NF = 0;
 }
-:cas.l regdc,regdu,e2l		is opbig=0x0e & op67=3 & $(MEM_ALTER_ADDR_MODES); regda=0 & ext_911=0 & regdu & ext_35=0 & regdc; e2l	[ savmod2=savmod1; regtsan=regtfan; ] { 
+:cas.l regdc,regdu,e2l		is opbig=0x0e & op67=3 & $(MEM_ALTER_ADDR_MODES); regda=0 & ext_911=0 & regdu & ext_35=0 & regdc; e2l	[ savmod2=savmod1; regtsan=regtfan; ] {
    if(e2l==regdc) goto <eq>;
    regdc = e2l;
    ZF = 0;
@@ -916,7 +916,7 @@ define pcodeop countLeadingZeros;
   <eq>
    e2l = regdu;
    ZF = 1;
-   NF = 0; 
+   NF = 0;
 }
 
 :chk.w eaw,reg9dnw		is (op=4 & reg9dnw & op68=6 & $(DAT_ALTER_ADDR_MODES))... & eaw				unimpl
@@ -983,7 +983,7 @@ cachetype: "both"		is op67=3							{ export 3:4; }
 
 :divs.w eaw,reg9dn		is (op=8 & reg9dn & op68=7)... & eaw				{ local denom=sext(eaw); local div=reg9dn s/ denom; local rem=reg9dn s% denom; CF=0; resflags(div);
 												  reg9dn = (rem<<16) | (div & 0xffff); }
-											  
+
 :divu.w eaw,reg9dn		is (op=8 & reg9dn & op68=3)... & eaw				{ local denom=zext(eaw); local div=reg9dn / denom; local rem=reg9dn %denom; CF=0; resflags(div);
 												  reg9dn = (rem<<16) | (div & 0xffff); }
 
@@ -1090,7 +1090,7 @@ macro shiftCXFlags(cntreg) {
 :move eaw,SR			is SR; (opbig=0x46 & op67=3 & $(DAT_ALTER_ADDR_MODES))... & eaw				{ SR = eaw; unpackflags(SR); }
 :move USP,regan			is opbig=0x4e & op37=13 & regan & USP			{ regan = USP; }
 :move regan,USP			is opbig=0x4e & op37=12 & regan & USP			{ USP = regan; }
- 
+
 :movea.w eaw,reg9an		is (op=3 & reg9an & mode2=1)... & eaw				{ reg9an = sext(eaw); }
 :movea.l eal,reg9an		is (op=2 & reg9an & mode2=1)... & eal				{ reg9an = eal; }
 
@@ -1374,7 +1374,7 @@ m2rfl0: { m2rfl1}		is mvm15=0 & m2rfl1			{ }
 :movem.l (d16)".w",m2rfl0	is opbig=0x4c & op67=3 & mode=7 & regan=0; m2rfl0; d16	{ movemptr = d16; build m2rfl0; }
 :movem.l (d32)".l",m2rfl0	is opbig=0x4c & op67=3 & mode=7 & regan=1; m2rfl0; d32	{ movemptr = d32; build m2rfl0; }
 
-:movep.w (d16,regan),reg9dnw	is op=0 & reg9dnw & op68=4 & op35=1 & regan; d16 { src:4 = (regan + d16); ho:1 = *:1 src; lo:1 = *:1(src+2); reg9dnw = (zext(ho) << 8) | zext(lo);  }	
+:movep.w (d16,regan),reg9dnw	is op=0 & reg9dnw & op68=4 & op35=1 & regan; d16 { src:4 = (regan + d16); ho:1 = *:1 src; lo:1 = *:1(src+2); reg9dnw = (zext(ho) << 8) | zext(lo);  }
 :movep.l (d16,regan),reg9dn	  is op=0 & reg9dn & op68=5 & op35=1 & regan; d16		{ src:4 = (regan + d16); ho:1 = *:1 src; mu:1 = *:1(src+2); ml:1 = *(src+4); lo:1 = *:1(src+6); reg9dn = (zext(ho) << 24) | (zext(mu) << 16) | (zext(ml) << 8) | zext(lo);  }
 :movep.w reg9dnw,(d16,regan)	is op=0 & reg9dnw & op68=6 & op35=1 & regan; d16	{ src:4 = (regan + d16);  local tmp = (reg9dnw >> 8); *:1 src = tmp:1; src = src+2; *:1 src = reg9dnw:1; }
 :movep.l reg9dn,(d16,regan)	    is op=0 & reg9dn & op68=7 & op35=1 & regan; d16		{ src:4 = (regan + d16); local tmp = (reg9dn >> 24); *:1 src = tmp:1; src = src+2; tmp = (reg9dn >> 16); *:1 src = tmp:1; src = src+2; tmp = (reg9dn >> 8); *:1 src = tmp:1; src = src+2; *:1 src = reg9dn:1; }
@@ -1393,7 +1393,7 @@ m2rfl0: { m2rfl1}		is mvm15=0 & m2rfl1			{ }
 
 :muls.w eaw,reg9dn		is (op=12 & reg9dn & op68=7)... & eaw			{ tmp1:4 = sext( reg9dn:2 ); tmp2:4 = sext(eaw);
 											  reg9dn = tmp1 * tmp2; resflags(reg9dn); CF=0; VF=0; }
-											  											  
+
 :mulu.w eaw,reg9dn		is (op=12 & reg9dn & op68=3)... & eaw			{ tmp1:4 = zext( reg9dn:2 ); tmp2:4 = zext(eaw);
 											  reg9dn = tmp1 * tmp2; resflags(reg9dn); CF=0; VF=0; }
 
@@ -1499,9 +1499,9 @@ FCmask: "#"^fcmask	is fcmask	{ export *[const]:1 fcmask; }
 
 :pflush FC,FCmask,e2l	is opbig=0xf0 & op67=0 & $(CTL_ADDR_MODES); bigopx=0x38 & FCmask & FC; e2l    [ savmod2=savmod1; regtsan=regtfan; ]  unimpl
 
-:ploadr FC,e2l		is opbig=0xf0 & op67=0 & $(CTL_ADDR_MODES); opx515=0x110 & FC; e2l  [ savmod2=savmod1; regtsan=regtfan; ]  unimpl 
+:ploadr FC,e2l		is opbig=0xf0 & op67=0 & $(CTL_ADDR_MODES); opx515=0x110 & FC; e2l  [ savmod2=savmod1; regtsan=regtfan; ]  unimpl
 
-:ploadw FC,e2l		is opbig=0xf0 & op67=0 & $(CTL_ADDR_MODES); opx515=0x100 & FC; e2l  [ savmod2=savmod1; regtsan=regtfan; ]  unimpl 
+:ploadw FC,e2l		is opbig=0xf0 & op67=0 & $(CTL_ADDR_MODES); opx515=0x100 & FC; e2l  [ savmod2=savmod1; regtsan=regtfan; ]  unimpl
 
 :pmove.l TC,e2l		is TC & opbig=0xf0 & op67=0 & $(CTL_ADDR_MODES); opx1315=2 & mregn=0 & rwx=1 & fbit=0 & d8=0; e2l	[ savmod2=savmod1; regtsan=regtfan; ]  unimpl
 :pmove.l e2l,TC		is TC & opbig=0xf0 & op67=0 & $(CTL_ADDR_MODES); opx1315=2 & mregn=0 & rwx=0 & fbit=0 & d8=0; e2l	[ savmod2=savmod1; regtsan=regtfan; ]  unimpl
@@ -1695,7 +1695,7 @@ ptestLevel: "#"^mregn	is mregn  { export *[const]:1 mregn; }
 :tst.l eal			is (opbig=0x4a & op67=2)... & eal				{ logflags(); resflags(eal); }
 
 @ifdef COLDFIRE
-:tas eab			is (opbig=0x4a & op67=3)... & eab				{ logflags(); resflags(eab); eab = eab | 0x80; } 
+:tas eab			is (opbig=0x4a & op67=3)... & eab				{ logflags(); resflags(eab); eab = eab | 0x80; }
 @endif # COLDFIRE
 
 :unlk regan			is opbig=0x4e & op37=11 & regan					{ SP = regan; regan = *SP; SP = SP+4; }
@@ -1771,24 +1771,24 @@ fprec: "b"                  is ffmt=6              {}
 fprec: "p"                  is ffmt=7              {}
 
 
-:fabs.^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fopmode=0x18; e2l  
-											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2l); fdst = abs(tmp); } 
-:fabs.^fprec e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_XP) & fopmode=0x18; e2x  
-											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2x); fdst = abs(tmp); } 
-:fabs.^fprec e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x18; e2d  
-											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2d); fdst = abs(tmp); } 
-:fabs fsrc, fdst		is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x18	      { fdst = abs(fsrc); } 
+:fabs.^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fopmode=0x18; e2l
+											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2l); fdst = abs(tmp); }
+:fabs.^fprec e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_XP) & fopmode=0x18; e2x
+											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2x); fdst = abs(tmp); }
+:fabs.^fprec e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x18; e2d
+											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2d); fdst = abs(tmp); }
+:fabs fsrc, fdst		is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x18	      { fdst = abs(fsrc); }
 
 @ifdef MC68040
 
 fabsrnd: "s"                   is fopmode=0x58        {}
 fabsrnd: "d"                   is fopmode=0x5c        {}
 
-:f^fabsrnd^"abs."^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fabsrnd & $(FPREC_BWLS) & (fopmode=0x58 | fopmode=0x5c); e2l  
+:f^fabsrnd^"abs."^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fabsrnd & $(FPREC_BWLS) & (fopmode=0x58 | fopmode=0x5c); e2l
 											[ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:f^fabsrnd^"abs."^fprec e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fabsrnd & $(FPREC_XP) & (fopmode=0x58 | fopmode=0x5c); e2x  
+:f^fabsrnd^"abs."^fprec e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fabsrnd & $(FPREC_XP) & (fopmode=0x58 | fopmode=0x5c); e2x
 											[ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:f^fabsrnd^"abs."^fprec e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fabsrnd & $(FPREC_D) & (fopmode=0x58 | fopmode=0x5c); e2d  
+:f^fabsrnd^"abs."^fprec e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fabsrnd & $(FPREC_D) & (fopmode=0x58 | fopmode=0x5c); e2d
 											[ savmod2=savmod1; regtsan=regtfan; ] unimpl
 :f^fabsrnd^"abs" fsrc, fdst		is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fabsrnd	& (fopmode=0x58 | fopmode=0x5c)	      unimpl
 
@@ -1799,11 +1799,11 @@ fabsrnd: "d"                   is fopmode=0x5c        {}
 :facos.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x1c; e2d  [ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2d); fdst = acos(tmp);}
 :facos			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x1c		    { fdst = acos(fsrc);}
 
-:fadd.^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fopmode=0x22; e2l  
+:fadd.^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fopmode=0x22; e2l
 											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2l); fdst = fdst f+ tmp; }
 :fadd.^fprec e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_XP) & fopmode=0x22; e2x
 											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2x); fdst = fdst f+ tmp; }
-:fadd.^fprec e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x22; e2d  
+:fadd.^fprec e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x22; e2d
 											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2d); fdst = fdst f+ tmp; }
 :fadd fsrc, fdst		is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x22     { fdst = fdst f+ fsrc; }
 
@@ -1812,11 +1812,11 @@ fabsrnd: "d"                   is fopmode=0x5c        {}
 faddrnd: "s"                   is fopmode=0x62        {}
 faddrnd: "d"                   is fopmode=0x66        {}
 
-:f^faddrnd^"add."^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & faddrnd & $(FPREC_BWLS) & (fopmode=0x62 | fopmode=0x66); e2l  
+:f^faddrnd^"add."^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & faddrnd & $(FPREC_BWLS) & (fopmode=0x62 | fopmode=0x66); e2l
 											[ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:f^faddrnd^"add."^fprec e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & faddrnd & $(FPREC_XP) & (fopmode=0x62 | fopmode=0x66); e2x  
+:f^faddrnd^"add."^fprec e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & faddrnd & $(FPREC_XP) & (fopmode=0x62 | fopmode=0x66); e2x
 											[ savmod2=savmod1; regtsan=regtfan; ] unimpl
-:f^faddrnd^"add."^fprec e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & faddrnd & $(FPREC_D) & (fopmode=0x62 | fopmode=0x66); e2d  
+:f^faddrnd^"add."^fprec e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & faddrnd & $(FPREC_D) & (fopmode=0x62 | fopmode=0x66); e2d
 											[ savmod2=savmod1; regtsan=regtfan; ] unimpl
 :f^faddrnd^"add" fsrc, fdst		is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & faddrnd & (fopmode=0x62 | fopmode=0x66)     unimpl
 
@@ -2210,11 +2210,11 @@ fmulrnd: "d"                   is fopmode=0x67        {}
 									    {fdst = fdst f* fsrc; }
 @endif # MC68040
 
-:fneg.^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fopmode=0x1a; e2l  
+:fneg.^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fopmode=0x1a; e2l
 											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = -1; fdst = int2float(tmp) f* float2float(e2l); }
-:fneg.^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_XP) & fopmode=0x1a; e2x  
+:fneg.^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_XP) & fopmode=0x1a; e2x
 											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = -1; fdst = int2float(tmp) f* float2float(e2x); }
-:fneg.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x1a; e2d  
+:fneg.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x1a; e2d
 											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = -1; fdst = int2float(tmp) f* float2float(e2d); }
 :fneg			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x1a
 										    { tmp:12 = -1; fdst = int2float(tmp) f* fsrc; }
@@ -2223,11 +2223,11 @@ fmulrnd: "d"                   is fopmode=0x67        {}
 fnegrnd: "s"                   is fopmode=0x5a        {}
 fnegrnd: "d"                   is fopmode=0x5e        {}
 
-:f^fnegrnd^"neg."^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fnegrnd & (fopmode=0x5a | fopmode=0x5e); e2l  
+:f^fnegrnd^"neg."^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fnegrnd & (fopmode=0x5a | fopmode=0x5e); e2l
 											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = -1; fdst = int2float(tmp) f* float2float(e2l); }
-:f^fnegrnd^"neg."^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_XP) & fnegrnd & (fopmode=0x5a | fopmode=0x5e); e2x  
+:f^fnegrnd^"neg."^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_XP) & fnegrnd & (fopmode=0x5a | fopmode=0x5e); e2x
 											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = -1; fdst = int2float(tmp) f* float2float(e2x); }
-:f^fnegrnd^"neg."^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fnegrnd & (fopmode=0x5a | fopmode=0x5e); e2d  
+:f^fnegrnd^"neg."^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fnegrnd & (fopmode=0x5a | fopmode=0x5e); e2d
 											[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = -1; fdst = int2float(tmp) f* float2float(e2d); }
 :f^fnegrnd^"neg"			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fnegrnd & (fopmode=0x5a | fopmode=0x5e)
 										    { tmp:12 = -1; fdst = int2float(tmp) f* fsrc; }
@@ -2289,11 +2289,11 @@ fnegrnd: "d"                   is fopmode=0x5e        {}
 :fsinh.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x02; e2d  [ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2d); fdst = sinh(tmp); }
 :fsinh			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x02		    { tmp:12 = float2float(fsrc); fdst = sinh(tmp); }
 
-:fsqrt.^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fopmode=0x04; e2l 
+:fsqrt.^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fopmode=0x04; e2l
 												[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2l); fdst = sqrt(tmp); }
-:fsqrt.^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_XP) & fopmode=0x04; e2x 
+:fsqrt.^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_XP) & fopmode=0x04; e2x
 												[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2x); fdst = sqrt(tmp); }
-:fsqrt.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x04; e2d 
+:fsqrt.^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x04; e2d
 												[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2d); fdst = sqrt(tmp); }
 :fsqrt.x fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x04
 											    { tmp:12 = float2float(fsrc); fdst = sqrt(tmp); }
@@ -2302,21 +2302,21 @@ fnegrnd: "d"                   is fopmode=0x5e        {}
 fsqrtrnd: "s"                   is fopmode=0x41        {}
 fsqrtrnd: "d"                   is fopmode=0x45        {}
 
-:f^fsqrtrnd^"sqrt."^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fsqrtrnd & (fopmode=0x41 | fopmode=0x45); e2l 
+:f^fsqrtrnd^"sqrt."^fprec	e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fsqrtrnd & (fopmode=0x41 | fopmode=0x45); e2l
 												[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2l); fdst = sqrt(tmp); }
-:f^fsqrtrnd^"sqrt."^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_XP) & fsqrtrnd & (fopmode=0x41 | fopmode=0x45); e2x 
+:f^fsqrtrnd^"sqrt."^fprec	e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_XP) & fsqrtrnd & (fopmode=0x41 | fopmode=0x45); e2x
 												[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2x); fdst = sqrt(tmp); }
-:f^fsqrtrnd^"sqrt."^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fsqrtrnd & (fopmode=0x41 | fopmode=0x45); e2d 
+:f^fsqrtrnd^"sqrt."^fprec	e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fsqrtrnd & (fopmode=0x41 | fopmode=0x45); e2d
 												[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2d); fdst = sqrt(tmp); }
 :f^fsqrtrnd^"sqrt.x"			fsrc, fdst	is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fsqrtrnd & (fopmode=0x41 | fopmode=0x45)
 											    { tmp:12 = float2float(fsrc); fdst = sqrt(tmp); }
 @endif # MC68040
 
-:fsub.^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fopmode=0x28; e2l  
+:fsub.^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_BWLS) & fopmode=0x28; e2l
 												[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2l); fdst = fdst f- tmp; }
-:fsub.^fprec e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_XP) & fopmode=0x28; e2x  
+:fsub.^fprec e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_XP) & fopmode=0x28; e2x
 												[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2x); fdst = fdst f- tmp; }
-:fsub.^fprec e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x28; e2d  
+:fsub.^fprec e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & $(FPREC_D) & fopmode=0x28; e2d
 												[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2d); fdst = fdst f- tmp; }
 :fsub.x fsrc, fdst		is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fopmode=0x28  { tmp:12 = float2float(fsrc); fdst = fdst f- tmp; }
 
@@ -2325,11 +2325,11 @@ fsqrtrnd: "d"                   is fopmode=0x45        {}
 fsubrnd: "s"                   is fopmode=0x68        {}
 fsubrnd: "d"                   is fopmode=0x6c        {}
 
-:f^fsubrnd^"sub."^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fsubrnd & $(FPREC_BWLS) & (fopmode=0x68 | fopmode=0x6c); e2l  
+:f^fsubrnd^"sub."^fprec e2l, fdst	is op=15 & $(FP_COP) & op68=0 & $(DAT_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fsubrnd & $(FPREC_BWLS) & (fopmode=0x68 | fopmode=0x6c); e2l
 												[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2l); fdst = fdst f- tmp; }
-:f^fsubrnd^"sub."^fprec e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fsubrnd & $(FPREC_XP) & (fopmode=0x68 | fopmode=0x6c); e2x  
+:f^fsubrnd^"sub."^fprec e2x, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fsubrnd & $(FPREC_XP) & (fopmode=0x68 | fopmode=0x6c); e2x
 												[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2x); fdst = fdst f- tmp; }
-:f^fsubrnd^"sub."^fprec e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fsubrnd & $(FPREC_D) & (fopmode=0x68 | fopmode=0x6c); e2d  
+:f^fsubrnd^"sub."^fprec e2d, fdst	is op=15 & $(FP_COP) & op68=0 & $(MEM_ALTER_ADDR_MODES); frm=1 & f1515=0 & f1313=0 & fdst & fsubrnd & $(FPREC_D) & (fopmode=0x68 | fopmode=0x6c); e2d
 												[ savmod2=savmod1; regtsan=regtfan; ] { tmp:12 = float2float(e2d); fdst = fdst f- tmp; }
 :f^fsubrnd^"sub.x" fsrc, fdst		is op=15 & $(FP_COP) & op68=0 & mode=0 & regan=0; frm=0 & f1515=0 & f1313=0 & fsrc & fdst & fsubrnd & (fopmode=0x68 | fopmode=0x6c)  { tmp:12 = float2float(fsrc); fdst = fdst f- tmp; }
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.pdb2.pdbreader;
 
 /**
  * This is a utility class, containing state, used for providing delimiters in a sequence
- *  of outputs. 
+ *  of outputs.
  */
 public class DelimiterState {
 
@@ -26,7 +26,7 @@ public class DelimiterState {
 	private boolean first;
 
 	/**
-	 * Constructor. 
+	 * Constructor.
 	 * @param delimStart {@link String} output to be provided before the first item in a list, only
 	 *  when at least one item is found in the list.
 	 * @param delim Delimiter char(s) to be output prior to any outputs subsequent to a first

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,27 +42,27 @@ public class CompareSleighExternal extends GhidraScript {
 		if (set == null || set.isEmpty()) {
 			set = currentProgram.getMemory().getLoadedAndInitializedAddressSet();
 		}
-			
+
 		putEquivalent("xzr", "x31");  // Think they messed up and allowed x31, there is no x31
 		putEquivalent("wzr", "w31");  // Think they messed up and allowed w31, there is no w31
 		putEquivalent("r12", "ip");
-		
+
 		int completed = 0;
 		monitor.initialize(set.getNumAddresses());
 
 		AddressIterator addresses = set.getAddresses(true);
-		
+
 		PseudoDisassembler pseudoDisassembler = new PseudoDisassembler(currentProgram);
 
 		GNUExternalDisassembler dis = new GNUExternalDisassembler();
-		
+
 		long align = currentProgram.getLanguage().getInstructionAlignment();
 		while (addresses.hasNext()) {
 			monitor.checkCanceled();
 			Address addr = addresses.next();
-			
+
 			completed++;
-			
+
 			// only on valid boundaries
 			if ((addr.getOffset() % align) != 0) {
 				continue;
@@ -76,9 +76,9 @@ public class CompareSleighExternal extends GhidraScript {
 				continue;
 			}
 			String str = dis.getDisassembly(cu);
-			
+
 			str = str.toLowerCase();
-			
+
 			PseudoInstruction pinst = null;
 			try {
 				pinst = pseudoDisassembler.disassemble(addr);
@@ -94,38 +94,38 @@ public class CompareSleighExternal extends GhidraScript {
 			if (pinst == null && str.startsWith(".inst") && str.endsWith("undefined")) {
 				continue;
 			}
-			
+
 			if (pinst == null) {
 				markErrorBad(addr,"Unimplemented Instruction", str);
 				continue;
 			}
-			
+
 			// collapse both instruction to strings, compare removing whitespace, and to-lower
 			String pStr = pinst.toString().toLowerCase().replaceAll("\\s","");
 			String eStr = str.toLowerCase().replaceAll("\\s", "");
-			
+
 			// simple equivalence
 			if (pStr.equals(eStr)) {
 				continue;
 			}
-			
+
 			String mnemonic = pinst.getMnemonicString().toLowerCase();
 			if (!str.startsWith(mnemonic)) {
 				markBad(addr,"Mnemonic Disagreement", str + " != " + mnemonic);
 				continue;
 			}
-			
+
 			int start = str.indexOf(" ");
 
 			for (int opIndex = 0; opIndex < pinst.getNumOperands(); opIndex++) {
 				// try to parse the operand string from the instruction
 				int sepEnd = str.indexOf(",", start);
-				
+
 				String extOp = getExtOpStr(str, start, sepEnd);
 				start = sepEnd + 1;
-				
+
 				String valStr = null;
-				
+
 				// TODO: could remove all characters, making sure none are left!
 				int loc = 0;
 				boolean subRegList = false;
@@ -145,7 +145,7 @@ public class CompareSleighExternal extends GhidraScript {
 							}
 							// gotta move into next string, must be embedded comma
 							sepEnd = str.indexOf(",", start);
-							
+
 							extOp = getExtOpStr(str, start, sepEnd);
 							start = sepEnd + 1;
 							continue;
@@ -214,17 +214,17 @@ public class CompareSleighExternal extends GhidraScript {
 							}
 							continue;
 						}
-						
+
 						// check for equivalent register
 						String equivReg = regGetEquivalent(reg.getName());
-						if (equivReg != null) { 
+						if (equivReg != null) {
 							loc = extOp.indexOf(equivReg);
 							if (loc != -1) {
 								extOp = extOp.substring(0,loc) + extOp.substring(loc+equivReg.length());
 								continue;
 							}
 						}
-						
+
 						loc = extOp.indexOf('-'); // could be a register list, assume we will find beginning and end register
 						if (loc != -1) {
 							continue;
@@ -273,11 +273,11 @@ public class CompareSleighExternal extends GhidraScript {
 	}
 
 	HashMap<String, String> equivRegisters = new HashMap<String, String>();
-	
+
 	private String regGetEquivalent(String name) {
 		return equivRegisters.get(name);
 	}
-	
+
 	private void putEquivalent(String name, String equiv) {
 		equivRegisters.put(name,  equiv);
 	}
@@ -301,13 +301,13 @@ public class CompareSleighExternal extends GhidraScript {
 			type,
 			error);
 	}
-	
+
 	private void markErrorBad(Address addr, String type, String error) {
 		currentProgram.getBookmarkManager().setBookmark(addr, BookmarkType.ERROR,
 			Disassembler.ERROR_BOOKMARK_CATEGORY,
 			error);
 	}
-	
+
 	private void clearBad(Address addr) {
 		AddressSet set = new AddressSet(addr);
 		try {

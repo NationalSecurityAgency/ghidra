@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,10 @@ import java.util.Date;
 import ghidra.docking.settings.Settings;
 
 /**
- * A convenience interface of {@link GColumnRenderer} for primitive-based/wrapper-based 
- * renderers.   This class implements {@link #getFilterString(Object, Settings)} to 
+ * A convenience interface of {@link GColumnRenderer} for primitive-based/wrapper-based
+ * renderers.   This class implements {@link #getFilterString(Object, Settings)} to
  * throw an exception, as it should not be called for primitive types.
- * 
+ *
  * <P>The basic wrapper types, like Number, and some others, like {@link Date}, have special
  * built-in filtering capabilities.  Columns whose column type is one of the wrapper classes
  * will not have their {@link #getFilterString(Object, Settings)} methods called.  They can

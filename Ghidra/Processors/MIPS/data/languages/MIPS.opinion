@@ -41,7 +41,7 @@ Elf e_flags are used for the secondary attribute, the following are pulled from 
 0x00000004      EF_MIPS_CPIC            leftover from IRIX pic (don't care)
 0x00000008      EF_MIPS_XGOT            large GOT (don't care)
 
-0x00000000                              When arch is MIPS64, then 0s in bits 4-7 means n64 ABI 64-bit addresses 
+0x00000000                              When arch is MIPS64, then 0s in bits 4-7 means n64 ABI 64-bit addresses
                                         When arch is MIPS32, means o32 ABI, 32-bit addresses
 0x00000010      EF_MIPS_UCODE		obsolete
 0x00000020      EF_MIPS_ABI2            n32 abi 32-bit addresses, used with MIPS64, similar to n64

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,7 +79,7 @@ class PatternValue : public PatternExpression {
 public:
   virtual TokenPattern genPattern(intb val) const=0;
   virtual void listValues(vector<const PatternValue *> &list) const { list.push_back(this); }
-  virtual void getMinMax(vector<intb> &minlist,vector<intb> &maxlist) const { 
+  virtual void getMinMax(vector<intb> &minlist,vector<intb> &maxlist) const {
     minlist.push_back(minValue()); maxlist.push_back(maxValue()); }
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const { return replace[listpos++]; }
   virtual intb minValue(void) const=0;
@@ -151,7 +151,7 @@ public:
   virtual void saveXml(ostream &s) const { s << "<start_exp/>"; }
   virtual void restoreXml(const Element *el,Translate *trans) {}
 };
-                                                                                        
+
 class EndInstructionValue : public PatternValue {
 public:
   EndInstructionValue(void) {}
@@ -220,7 +220,7 @@ public:
   }
   virtual void saveXml(ostream &s) const;
   virtual void restoreXml(const Element *el,Translate *trans);
-};  
+};
 
 class PlusExpression : public BinaryExpression {
 public:
@@ -230,7 +230,7 @@ public:
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
   virtual void saveXml(ostream &s) const;
 };
-  
+
 class SubExpression : public BinaryExpression {
 public:
   SubExpression(void) {}	// For use with restoreXml
@@ -239,7 +239,7 @@ public:
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
   virtual void saveXml(ostream &s) const;
 };
-  
+
 class MultExpression : public BinaryExpression {
 public:
   MultExpression(void) {}	// For use with restoreXml
@@ -248,7 +248,7 @@ public:
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
   virtual void saveXml(ostream &s) const;
 };
-  
+
 class LeftShiftExpression : public BinaryExpression {
 public:
   LeftShiftExpression(void) {}
@@ -275,7 +275,7 @@ public:
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
   virtual void saveXml(ostream &s) const;
 };
-  
+
 class OrExpression : public BinaryExpression {
 public:
   OrExpression(void) {}
@@ -284,7 +284,7 @@ public:
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
   virtual void saveXml(ostream &s) const;
 };
-  
+
 class XorExpression : public BinaryExpression {
 public:
   XorExpression(void) {}
@@ -310,7 +310,7 @@ public:
   virtual intb getValue(ParserWalker &walker) const;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
   virtual void saveXml(ostream &s) const;
-};  
+};
 
 class NotExpression : public UnaryExpression {
 public:
@@ -319,7 +319,7 @@ public:
   virtual intb getValue(ParserWalker &walker) const;
   virtual intb getSubValue(const vector<intb> &replace,int4 &listpos) const;
   virtual void saveXml(ostream &s) const;
-};  
+};
 
 struct OperandResolve {
   vector<OperandSymbol *> &operands;

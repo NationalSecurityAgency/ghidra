@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,8 +34,8 @@ import ghidra.util.datastruct.WeakSet;
 import ghidra.util.exception.*;
 
 /**
- * <code>RepositoryServerAdapter</code> provides a persistent wrapper for a 
- * <code>RepositoryServerHandle</code> which may become invalid if the 
+ * <code>RepositoryServerAdapter</code> provides a persistent wrapper for a
+ * <code>RepositoryServerHandle</code> which may become invalid if the
  * remote connection were to fail.
  */
 public class RepositoryServerAdapter {
@@ -98,7 +98,7 @@ public class RepositoryServerAdapter {
 
 	/**
 	 * Returns true if the connection was cancelled by the user.
-	 * 
+	 *
 	 * @return try if cancelled by user
 	 */
 	public boolean isCancelled() {
@@ -236,7 +236,7 @@ public class RepositoryServerAdapter {
 
 	/**
 	 * Returns true if the server handle is already connected
-	 * and functioning properly.  A simple remote call is made 
+	 * and functioning properly.  A simple remote call is made
 	 * to the handle's connected() method to verify the connection.
 	 */
 	synchronized boolean verifyConnection() {
@@ -267,17 +267,17 @@ public class RepositoryServerAdapter {
 	}
 
 //	/**
-//	 * Following an error, this method may be invoked to reestablish 
+//	 * Following an error, this method may be invoked to reestablish
 //	 * the remote connection if needed.  If the connection is not
 //	 * down, the RemoteException passed in is simply re-thrown.
-//	 * @param re remote exception which may have been caused by a 
+//	 * @param re remote exception which may have been caused by a
 //	 * broken connection.
 //	 * @throws RemoteException re is re-thrown if connection is OK
 //	 * @throws NotConnectedException thrown if connection recovery failed.
 //	 */
 //	void recover(RemoteException re) throws RemoteException, NotConnectedException {
 //		if (verifyConnection()) {
-////			Err.error(this, null, "Error", "Unexpected Exception: " + re.getMessage(), re); 
+////			Err.error(this, null, "Error", "Unexpected Exception: " + re.getMessage(), re);
 //			throw re;
 //		}
 //		serverHandle = null;
@@ -324,8 +324,8 @@ public class RepositoryServerAdapter {
 
 	/**
 	 * Get a handle to an existing repository.  The repository adapter is
-	 * initially disconnected - the connect() method or another repository 
-	 * action method must be invoked to establish a repository connection. 
+	 * initially disconnected - the connect() method or another repository
+	 * action method must be invoked to establish a repository connection.
 	 * @param name repository name.
 	 * @return repository handle or null if repository not found.
 	 */
@@ -508,7 +508,7 @@ public class RepositoryServerAdapter {
 	}
 
 	/**
-	 * Returns the amount of time in milliseconds until the 
+	 * Returns the amount of time in milliseconds until the
 	 * user's password will expire.
 	 * @return time until expiration or -1 if it will not expire
 	 * @throws IOException

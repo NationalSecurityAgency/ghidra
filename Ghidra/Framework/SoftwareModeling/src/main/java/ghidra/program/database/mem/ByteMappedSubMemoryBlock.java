@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -170,11 +170,11 @@ class ByteMappedSubMemoryBlock extends SubMemoryBlock {
 	@Override
 	protected SubMemoryBlock split(long memBlockOffset) throws IOException {
 
-		// NOTE - GUI does not support any split of any byte-mapped blocks although API does.  
+		// NOTE - GUI does not support any split of any byte-mapped blocks although API does.
 		//        Not sure we really need to support it for byte-mapped block.
 
 		if (!byteMappingScheme.isOneToOneMapping()) {
-			// byte-mapping scheme alignment restrictions would apply to split 
+			// byte-mapping scheme alignment restrictions would apply to split
 			// boundary if we were to support
 			throw new UnsupportedOperationException(
 				"split not supported for byte-mapped block with " + byteMappingScheme);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,7 +82,7 @@ public class StringAttribute<T extends KeyedObject> extends Attribute<T> {
 //  }
 
 	/** Returns the elements of the owningSet sorted by their
-	 * values of this Attribute. 
+	 * values of this Attribute.
 	 */
 	public KeyedObject[] toSortedArray() {
 		KeyedObject[] keyedObjects = this.owningSet().toArray();
@@ -90,7 +90,7 @@ public class StringAttribute<T extends KeyedObject> extends Attribute<T> {
 		return keyedObjects;
 	}
 
-	/** Sorts the array of keyedObjects by their values of this 
+	/** Sorts the array of keyedObjects by their values of this
 	 * Attribute.
 	 */
 	public KeyedObject[] toSortedArray(KeyedObject[] keyedObjects) {
@@ -112,8 +112,8 @@ public class StringAttribute<T extends KeyedObject> extends Attribute<T> {
 			int returnValue = 0;
 			String value1 = null;
 			String value2 = null;
-			value1 = getValue(ko1); //}catch( NoValueException exc ){value1 = null;}          	
-			value2 = getValue(ko2); //} catch( NoValueException exc){value2 = null;}          	
+			value1 = getValue(ko1); //}catch( NoValueException exc ){value1 = null;}
+			value2 = getValue(ko2); //} catch( NoValueException exc){value2 = null;}
 
 			if (value1 != null) {
 				if (value2 != null) {

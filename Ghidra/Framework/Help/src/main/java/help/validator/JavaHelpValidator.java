@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +65,7 @@ public class JavaHelpValidator {
 		// resolve all links that can be found (any unresolved links are either external or bad)
 		// Link resolution issues:
 		// -Can't find file
-		// -Found file, can't find internal anchor        
+		// -Found file, can't find internal anchor
 		List<InvalidLink> unresolvedLinks = new ArrayList<>();
 		Collection<HREF> helpDirHREFs = helpCollection.getAllHREFs();
 		debug("\tHREF count: " + helpDirHREFs.size());
@@ -80,7 +80,7 @@ public class JavaHelpValidator {
 
 		//
 		// now resolve all image links
-		// 
+		//
 		Collection<IMG> helpDirIMGs = helpCollection.getAllIMGs();
 		debug("\tIMG count: " + helpDirIMGs.size());
 		for (IMG img : helpDirIMGs) {
@@ -89,7 +89,7 @@ public class JavaHelpValidator {
 
 		linkDatabase.addUnresolvedLinks(unresolvedLinks);
 
-		// 
+		//
 		// check for duplicate anchor references
 		//
 		Map<HelpFile, Map<String, List<AnchorDefinition>>> duplicateAnchors =
@@ -113,7 +113,7 @@ public class JavaHelpValidator {
 	}
 
 	private void validateIMGFile(IMG img, List<InvalidLink> unresolvedLinks) {
-		// 
+		//
 		// Try to resolve the given image link
 		//
 		if (img.isRemote()) {
@@ -125,7 +125,7 @@ public class JavaHelpValidator {
 			//
 			// The tool will load this image at runtime--don't perform normal validation
 			// (runtime means an icon to be loaded from a Java file)
-			// 
+			//
 			if (img.isInvalid()) {
 				unresolvedLinks.add(new InvalidRuntimeIMGFileInvalidLink(img));
 				return;
@@ -362,9 +362,9 @@ public class JavaHelpValidator {
 		}
 
 		//
-		// Note: we have to validate the target links of the TOC file here, *after* we 
+		// Note: we have to validate the target links of the TOC file here, *after* we
 		//       validate the links, as until then, references aren't resolved
-		// 
+		//
 		Collection<HREF> TOC_HREFs = help.getTOC_HREFs();
 		debug("\tvalidating TOC links: " + TOC_HREFs.size());
 		for (HREF href : TOC_HREFs) {

@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
+//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS.
 package classrecovery;
 
 import java.util.*;
@@ -51,7 +51,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	}
 
 	// Return true if the passed data is an array or structure of pointers.
-	// Return false otherwise. 
+	// Return false otherwise.
 	public boolean isArrayOrStructureOfAllPointers(Data data)
 			throws CancelledException {
 
@@ -109,7 +109,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	}
 
 	/**
-	 * Method to check to see if there is a valid function pointer at the given address. If it is 
+	 * Method to check to see if there is a valid function pointer at the given address. If it is
 	 * valid but not created, create it
 	 * @param address the given address
 	 * @param allowNullFunctionPointer if true, allow null pointers as a valid function pointer
@@ -154,7 +154,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 
 	/**
 	 * Method to determine if the given address is a null pointer. If it isn't but is valid length
-	 * of zeros, try creating one. 
+	 * of zeros, try creating one.
 	 * @param address the given address
 	 * @return true if given address is a valid null pointer, false otherwise
 	 * @throws CancelledException if cancelled
@@ -238,7 +238,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 			}
 		}
 
-		//if function is a thunk, get the thunked function					
+		//if function is a thunk, get the thunked function
 		if (function.isThunk()) {
 			Function thunkedFunction = function.getThunkedFunction(true);
 			function = thunkedFunction;
@@ -396,7 +396,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 					continue;
 				}
 				// if same filler value fills in all addresses between two functions then get the
-				// filler value 
+				// filler value
 				Byte currentFiller = getByte(fillerAddress);
 				if (filler == null) {
 					filler = currentFiller;
@@ -447,7 +447,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	 * Method to create functions given the list of addresses known to be contained in a function but
 	 * that are not yet created
 	 * @param containedAddresses list of address contained in an undefined function
-	 * @throws CancelledException, MemoryAccessException 
+	 * @throws CancelledException, MemoryAccessException
 	 * @throws MemoryAccessException if issue accessing memory
 	 */
 	public void createUndefinedFunctions(List<Address> containedAddresses)
@@ -598,7 +598,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	 * Method to return the referenced address at the given address
 	 * Note: this will work whether there is a created reference or not
 	 * @param address the address to look for a referenced address at
-	 * @param getIboIf64bit if true, get the address corresponding to the image base offset instead 
+	 * @param getIboIf64bit if true, get the address corresponding to the image base offset instead
 	 * of the full reference address
 	 * @return the first referenced address from the given address
 	 */
@@ -642,7 +642,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	}
 
 	/**
-	 * Method to return a list of symbols with the given name and namespace. 
+	 * Method to return a list of symbols with the given name and namespace.
 	 * @param symbolName the symbol name to retrieve
 	 * @param namespace the namespace to look for symbols with the given name
 	 * @param exact if true, return only exact symbol names, if false, return symbols that contain the given n name
@@ -719,10 +719,10 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	}
 
 	/**
-	 * Method to retrieve an ordered list (ordered by reference address low to high) of 
+	 * Method to retrieve an ordered list (ordered by reference address low to high) of
 	 * ReferenceAddressPairs of called functions given the calling function
 	 * @param callingFunction the calling function
-	 * @return an ordered list (ordered by reference address low to high) of ReferenceAddressPairs 
+	 * @return an ordered list (ordered by reference address low to high) of ReferenceAddressPairs
 	 * of called functions given the calling function
 	 * @throws CancelledException if cancelled
 	 */
@@ -893,7 +893,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 
 	/**
 	 * Method to retrieve the referenced Functions from the given referenceToClassMap
-	 * @param referenceToClassMap map of addresses that contain a reference to either a vftable or 
+	 * @param referenceToClassMap map of addresses that contain a reference to either a vftable or
 	 * called function for a particular function
 	 * @return List of functions referenced in the map
 	 * @throws CancelledException if cancelled
@@ -1044,7 +1044,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	 * Create data type manager path that will be used when data types are created to place them in the correct folder
 	 * @param parent parent CategoryPath
 	 * @param categoryName name of the new category in the parent path
-	 * @return CategoryPath for new categoryName 
+	 * @return CategoryPath for new categoryName
 	 */
 	public CategoryPath createDataTypeCategoryPath(CategoryPath parent, String categoryName) {
 
@@ -1056,13 +1056,13 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 			return dataTypePath;
 		}
 
-		// if category name contains :: but not valid template info then just 
+		// if category name contains :: but not valid template info then just
 		// replace ::'s with /'s to form multi level path
 		if (!containsTemplate(categoryName)) {
 			categoryName = categoryName.replace("::", "/");
 		}
 
-		// if category name contains both :: and matched template brackets then only replace the 
+		// if category name contains both :: and matched template brackets then only replace the
 		// :: that are not contained inside template brackets
 		else {
 			boolean insideBrackets = false;
@@ -1189,7 +1189,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 			}
 		}
 
-		// iterate over map and remove entries that already have unique shortened names on map and 
+		// iterate over map and remove entries that already have unique shortened names on map and
 		// add those unique names to class as shorted name
 		// for those with non-unique names, process them as a group of matched names
 		List<RecoveredClass> classesToProcess = new ArrayList<RecoveredClass>(classesWithTemplates);
@@ -1226,7 +1226,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 
 				// if removing the middle of template results in duplicate names then
 				// check for a simple internal to the template (ie just one item in it
-				// if that is the case then just keep the original name 
+				// if that is the case then just keep the original name
 				if (containsSimpleTemplate(classWithSameShortName.getName())) {
 					classWithSameShortName.addShortenedTemplatedName(new String());
 					classesWithSameShortnameIterator.remove();
@@ -1239,7 +1239,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 				continue;
 			}
 
-			// if only one left after removing the simple templates then use it with first part of 
+			// if only one left after removing the simple templates then use it with first part of
 			// template internal
 			if (classesWithSameShortenedName.size() == 1) {
 				RecoveredClass classWithSameShortName = classesWithSameShortenedName.get(0);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,8 +42,8 @@ import ghidra.util.Msg;
 import ghidra.util.bean.GGlassPane;
 import resources.ResourceManager;
 
-// NOTE: for JH 2.0, this class has been rewritten to not 
-// access the 'frame' and 'dialog' variable directly 
+// NOTE: for JH 2.0, this class has been rewritten to not
+// access the 'frame' and 'dialog' variable directly
 
 /**
  * Ghidra help broker that displays the help set; sets the Ghidra icon on
@@ -62,7 +62,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 	private HelpModelListener helpModelListener = new HelpIDChangedListener();
 	private Window activationWindow;
 
-	// Create the zoom in/out icons that will be added to the default jHelp toolbar.  
+	// Create the zoom in/out icons that will be added to the default jHelp toolbar.
 	private static final ImageIcon ZOOM_OUT_ICON =
 		ResourceManager.loadImage("images/list-remove.png");
 	private static final ImageIcon ZOOM_IN_ICON = ResourceManager.loadImage("images/list-add.png");
@@ -76,7 +76,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 	}
 
 	@Override
-	// Overridden so that we can call the preferred version of setCurrentURL on the HelpModel, 
+	// Overridden so that we can call the preferred version of setCurrentURL on the HelpModel,
 	// which fixes a bug with the history list (SCR 7639)
 	public void setCurrentURL(final URL URL) {
 
@@ -119,12 +119,12 @@ public class GHelpBroker extends DefaultHelpBroker {
 	private JEditorPane getHTMLEditorPane(JHelpContentViewer contentViewer) {
 		//
 		// Intimate Knowledge - construction of the viewer:
-		// 
+		//
 		// -BorderLayout
 		// -JScrollPane
 		// 		-Viewport
 		//      	-JHEditorPane extends JEditorPane
-		// 				
+		//
 		//
 		Component[] components = contentViewer.getComponents();
 		JScrollPane scrollPane = (JScrollPane) components[0];
@@ -136,11 +136,11 @@ public class GHelpBroker extends DefaultHelpBroker {
 	private HelpModel getHelpModel() {
 		//
 		// Unusual Code Alert!: We have opened up access to the help system's HelpModel by way
-		//                      of our CustomTOCView object that we install elsewhere.  We need 
-		//                      access to the model because of a bug in the help system 
+		//                      of our CustomTOCView object that we install elsewhere.  We need
+		//                      access to the model because of a bug in the help system
 		//                      (SCR 7639).  Unfortunately, the Java Help system does not give us
 		//                      access to the model directly, but we have opened up the access from
-		//                      one of our overriding components.  The following code is 
+		//                      one of our overriding components.  The following code is
 		//                      digging-out our custom component to get at the model.  An
 		//                      alternative approach would be to just use reflection and violate
 		//                      security restrictions, but that seemed worse than this solution.
@@ -185,7 +185,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 
 		if (activationWindow == null) {
 			// This can happen when we show the 'What's New' help page on a fresh install.  In
-			// that case, we were not activated from an existing window, thus, there may 
+			// that case, we were not activated from an existing window, thus, there may
 			// be no parent window.
 			return;
 		}
@@ -245,8 +245,8 @@ public class GHelpBroker extends DefaultHelpBroker {
 		installActions(jHelp);
 	}
 
-	/** 
-	 * Create zoom in/out buttons on the default help window toolbar.  
+	/**
+	 * Create zoom in/out buttons on the default help window toolbar.
 	 * @param jHelp the java help object used to retrieve the help components
 	 */
 	protected void addCustomToolbarItems(final JHelp jHelp) {
@@ -262,7 +262,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 				zoomOutBtn.addActionListener(e -> {
 					GHelpHTMLEditorKit.zoomOut();
 
-					// Need to reload the page to force the scroll panes to resize properly. A 
+					// Need to reload the page to force the scroll panes to resize properly. A
 					// simple revalidate/repaint won't do it.
 					reloadHelpPage(getCurrentURL());
 				});
@@ -274,7 +274,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 				zoomInBtn.addActionListener(e -> {
 					GHelpHTMLEditorKit.zoomIn();
 
-					// Need to reload the page to force the scroll panes to resize properly. A 
+					// Need to reload the page to force the scroll panes to resize properly. A
 					// simple revalidate/repaint won't do it.
 					reloadHelpPage(getCurrentURL());
 				});
@@ -365,7 +365,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 		boolean wasModal = isModalWindow(helpWindow);
 		boolean willBeModal = isModalWindow(window);
 		if (!wasModal && willBeModal) {
-			// in this condition, a new window will be shown, but the old one is not properly 
+			// in this condition, a new window will be shown, but the old one is not properly
 			// closed by JavaHelp
 			helpWindow.setVisible(false);
 		}
@@ -442,10 +442,10 @@ public class GHelpBroker extends DefaultHelpBroker {
 	 * help pages and when the UI is adjusted in response to those changes.
 	 * <p>
 	 * Note: this method will call itself if the view is not yet updated for the requested
-	 *       model change.  In that case, this method will call itself again later.  This may 
-	 *       need to happen more than once.  However, we will only try a few times and 
+	 *       model change.  In that case, this method will call itself again later.  This may
+	 *       need to happen more than once.  However, we will only try a few times and
 	 *       then just give up.
-	 * 
+	 *
 	 * @param area the area to call out
 	 * @param callCount the number number of times this method has already been called
 	 */
@@ -483,14 +483,14 @@ public class GHelpBroker extends DefaultHelpBroker {
 		}
 
 		//
-		// The area of the HTML content is absolute inside of the entire document.  
-		// However, the user is viewing the document inside of a scroll pane.  So, we 
+		// The area of the HTML content is absolute inside of the entire document.
+		// However, the user is viewing the document inside of a scroll pane.  So, we
 		// want the offset of the element within the viewer, not the absolute position.
 		//
 		area.y -= viewPosition.y;
 
 		//
-		// Update the coordinates to be relative to the content pane, which is where we 
+		// Update the coordinates to be relative to the content pane, which is where we
 		// are doing the painting.
 		//
 		Rectangle relativeArea = SwingUtilities.convertRectangle(scrollPane, area, contentPane);
@@ -683,7 +683,7 @@ public class GHelpBroker extends DefaultHelpBroker {
 			Shape box = scaler.createTransformedShape(b);
 			g2d.setColor(Color.GREEN);
 			g2d.fill(box);
-			
+
 			box = transform.createTransformedShape(box);
 			g2d.setColor(Color.YELLOW);
 			g2d.fill(box);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.util.Msg;
 import resources.ResourceManager;
 
 /**
- * <code>ImageIconWrapper</code> provides the ability to instantiate 
+ * <code>ImageIconWrapper</code> provides the ability to instantiate
  * an ImageIcon with delayed loading.  In addition to delayed loading
  * it has the added benefit of allowing the use of static initialization
  * of ImageIcons without starting the Swing thread which can cause
@@ -252,7 +252,7 @@ public class ImageIconWrapper extends ImageIcon implements FileBasedIcon {
 	private ImageIcon getDefaultIcon() {
 		ImageIcon defaultIcon = ResourceManager.getDefaultIcon();
 		if (this == defaultIcon) {
-			// this can happen under just the right conditions when loading the default 
+			// this can happen under just the right conditions when loading the default
 			// icon's bytes fails (probably due to disk or network issues)
 			throw new IllegalStateException("Unexpected failure loading the default icon!");
 		}

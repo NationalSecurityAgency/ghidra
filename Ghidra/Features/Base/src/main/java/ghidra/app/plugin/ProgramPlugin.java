@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,13 +30,13 @@ import ghidra.program.util.ProgramSelection;
 
 /**
  * Base class to handle common program events: Program Open/Close,
- * Program Location, Program Selection, and Program Highlight. 
+ * Program Location, Program Selection, and Program Highlight.
  * <p>
  * Subclasses should override the following methods if they are interested
  * in the corresponding events:
  * <ul>
- * <LI> <code>programOpened(Program)</code> 
- * <LI> <code>programClosed(Program)</code> 
+ * <LI> <code>programOpened(Program)</code>
+ * <LI> <code>programClosed(Program)</code>
  * <LI> <code>locationChanged(ProgramLocation)</code>
  * <LI> <code>selectionChanged(ProgramSelection) </code>
  * <LI> <code>highlightChanged(ProgramSelection) </code>
@@ -294,11 +294,11 @@ public abstract class ProgramPlugin extends Plugin {
 
 	/**
 	 * Subclass should override this method if it is interested when programs become active.
-	 * Note: this method is called in response to a ProgramActivatedPluginEvent. 
-	 * 
-	 * At the time this method is called, 
+	 * Note: this method is called in response to a ProgramActivatedPluginEvent.
+	 *
+	 * At the time this method is called,
 	 * the "currentProgram" variable will be set the new active program.
-	 * 
+	 *
 	 * @param program the new program going active.
 	 */
 	protected void programActivated(Program program) {
@@ -306,10 +306,10 @@ public abstract class ProgramPlugin extends Plugin {
 
 	/**
 	 * Subclasses should override this method if it is interested when a program is closed.
-	 * 
+	 *
 	 * This event has no affect on the "current Program".  A "programDeactivated" call will
 	 * occur that affects the active program.
-	 * 
+	 *
 	 * @param program the program being closed.
 	 */
 	protected void programClosed(Program program) {
@@ -318,10 +318,10 @@ public abstract class ProgramPlugin extends Plugin {
 
 	/**
 	 * Subclasses should override this method if it is interested when a program is opened.
-	 * 
+	 *
 	 * This event has no affect on the "current Program".  A "programActivated" call will
 	 * occur that affects the active program.
-	 * 
+	 *
 	 * @param program the program being opened.
 	 */
 	protected void programOpened(Program program) {
@@ -330,13 +330,13 @@ public abstract class ProgramPlugin extends Plugin {
 
 	/**
 	 * Subclass should override this method if it is interested when programs become inactive.
-	 * Note: this method is called in response to a ProgramActivatedPluginEvent and there is 
+	 * Note: this method is called in response to a ProgramActivatedPluginEvent and there is
 	 * a currently active program.
-	 * 
-	 * At the time this method is called, 
-	 * the "currentProgram" variable will be set the 
+	 *
+	 * At the time this method is called,
+	 * the "currentProgram" variable will be set the
 	 * new active program or null if there is no new active program.
-	 * 
+	 *
 	 * @param program the old program going inactive.
 	 */
 	protected void programDeactivated(Program program) {

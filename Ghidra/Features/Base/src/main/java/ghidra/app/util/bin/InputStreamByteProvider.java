@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import java.io.*;
  * data to be read, as long as there are no operations that request data from a previous
  * offset.
  * <p>
- * In other words, this {@link ByteProvider} can only be used to read data at ever increasing 
+ * In other words, this {@link ByteProvider} can only be used to read data at ever increasing
  * offsets.
  * <p>
  */
@@ -33,7 +33,7 @@ public class InputStreamByteProvider implements ByteProvider {
 
 	/**
 	 * Constructs a {@link InputStreamByteProvider} from the specified {@link InputStream}
-	 * 
+	 *
 	 * @param inputStream the underlying {@link InputStream}
 	 * @param length the length of the {@link InputStreamByteProvider}
 	 */

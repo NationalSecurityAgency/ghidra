@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,9 +38,9 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 		 * 		inner
 		 * 			byte
 		 * 			word
-		 * 
+		 *
 		 * 	Latest  (Remove inner)
-		 * 
+		 *
 		 * 	My  (Create outer containing inner as last component. Change inner)
 		 * 		outer
 		 * 			byte
@@ -198,9 +198,9 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 		 * 		inner
 		 * 			byte
 		 * 			word
-		 * 
+		 *
 		 * 	Latest  (Remove inner)
-		 * 
+		 *
 		 * 	My  (Create outer containing inner as last component. Don't change inner)
 		 * 		outer
 		 * 			byte
@@ -307,9 +307,9 @@ public class DataTypeMergeFixupTest extends AbstractDataTypeMergeTest {
 		 * 		inner
 		 * 			byte
 		 * 			word
-		 * 
+		 *
 		 * 	Latest  (Remove inner)
-		 * 
+		 *
 		 * 	My  (Create outer containing inner as 2nd component. Change inner.
 		 * 	     Add new structure other so it comes later in struct than inner.)
 		 * 		outer

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,15 +28,15 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.*;
 
 /**
- * The RTTI2 data type represents an array of either pointers or displacements to the 
+ * The RTTI2 data type represents an array of either pointers or displacements to the
  * BaseClassDescriptors (RTTI 1s) for a class.
  * <p>
  * Fields for this RunTimeTypeInformation structure can be found on http://www.openrce.org
  * <p>
  * RTTI_Base_Class_Array is the label for the RTTI2 data structure.
  *
- * @deprecated Use of this dynamic data type class is no longer recommended. Instead an 
- * array of either pointers or displacements to BaseClassDescriptor structures can be 
+ * @deprecated Use of this dynamic data type class is no longer recommended. Instead an
+ * array of either pointers or displacements to BaseClassDescriptor structures can be
  * obtained using the Rtti2Model.
  */
 @Deprecated
@@ -56,7 +56,7 @@ public class RTTI2DataType extends RTTIDataType {
 
 	/**
 	 * Creates a dynamic Base Class Array data type.
-	 * 
+	 *
 	 * @param rtti1Count the number of rtti1 refs
 	 */
 	public RTTI2DataType(long rtti1Count) {
@@ -65,7 +65,7 @@ public class RTTI2DataType extends RTTIDataType {
 
 	/**
 	 * Creates a dynamic Base Class Array data type.
-	 * 
+	 *
 	 * @param dtm the data type manager for this data type.
 	 */
 	public RTTI2DataType(DataTypeManager dtm) {
@@ -75,7 +75,7 @@ public class RTTI2DataType extends RTTIDataType {
 
 	/**
 	 * Creates a dynamic Base Class Array data type.
-	 * 
+	 *
 	 * @param rtti1Count the number of rtti1 refs
 	 * @param dtm the data type manager for this data type.
 	 */
@@ -153,12 +153,12 @@ public class RTTI2DataType extends RTTIDataType {
 	}
 
 	/**
-	 * Gets the total length of the data created when this data type is placed at the indicated 
+	 * Gets the total length of the data created when this data type is placed at the indicated
 	 * address in memory.
 	 * @param memory the program memory for this data.
 	 * @param address the start address of the data.
 	 * @param bytes the bytes for this data.
-	 * @return the length of the data. zero is returned if valid data can't be created at the 
+	 * @return the length of the data. zero is returned if valid data can't be created at the
 	 * indicated address using this data type.
 	 */
 	public int getLength(Memory memory, Address address, byte[] bytes) {
@@ -177,7 +177,7 @@ public class RTTI2DataType extends RTTIDataType {
 	}
 
 	/**
-	 * Gets address referred to by the RTTI 1 pointer at the specified index in the RTTI2's 
+	 * Gets address referred to by the RTTI 1 pointer at the specified index in the RTTI2's
 	 * array that is at the rtti2Address.
 	 * @param memory the program memory containing the RTTI 2
 	 * @param rtti2Address the address of the RTTI 2
@@ -189,7 +189,7 @@ public class RTTI2DataType extends RTTIDataType {
 	}
 
 	/**
-	 * Gets address referred to by the RTTI 1 pointer at the specified index in the RTTI2's 
+	 * Gets address referred to by the RTTI 1 pointer at the specified index in the RTTI2's
 	 * array that is at the rtti2Address.
 	 * @param program the program containing the RTTI 2
 	 * @param rtti2Address the address of the RTTI 2
@@ -206,9 +206,9 @@ public class RTTI2DataType extends RTTIDataType {
 	 * @param program the program
 	 * @param startAddress the address of the RTTI 2 structure
 	 * @param pointerIndex index of the element in the array that makes up the RTTI 2.
-	 * @param overwriteInstructions true indicates that existing instructions can be overwritten 
+	 * @param overwriteInstructions true indicates that existing instructions can be overwritten
 	 * by this data type.
-	 * @param overwriteDefinedData true indicates that existing defined data can be overwritten 
+	 * @param overwriteDefinedData true indicates that existing defined data can be overwritten
 	 * by this data type.
 	 * @return true if the indicated RTTI1 pointer is valid.
 	 */

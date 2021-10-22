@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -134,7 +134,7 @@ class UnionEditorModel extends CompEditorModel {
 
 	/**
 	 * Gets called to update/validate the current editable location in the table
-	 * 
+	 *
 	 * @param value the new cell value
 	 * @param rowIndex the row index in the component table
 	 * @param columnIndex the column index for the table cell in the current model
@@ -201,7 +201,7 @@ class UnionEditorModel extends CompEditorModel {
 
 //==================================================================================================
 // Begin methods for determining if a type of edit action is allowed.
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public boolean isBitFieldAllowed() {
@@ -304,7 +304,7 @@ class UnionEditorModel extends CompEditorModel {
 
 //==================================================================================================
 // End of methods for determining if a type of edit action is allowed.
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Gets the maximum number of bytes available for a data type that is added at the indicated
@@ -319,14 +319,14 @@ class UnionEditorModel extends CompEditorModel {
 	}
 
 	/**
-	 * Gets the maximum number of bytes available for a new data type that 
+	 * Gets the maximum number of bytes available for a new data type that
 	 * will replace the current data type at the indicated index.
-	 * If there isn't a component with the indicated index, the max length 
+	 * If there isn't a component with the indicated index, the max length
 	 * will be determined by the lock mode.
 	 * Note: This method doesn't care whether there is a selection or not.
 	 *
 	 * @param currentIndex index of the component in the union.
-	 * @return the maximum number of bytes that can be replaced 
+	 * @return the maximum number of bytes that can be replaced
 	 */
 	@Override
 	public int getMaxReplaceLength(int currentIndex) {

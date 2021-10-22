@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public interface VersionedDBListener {
 	 * @param time
 	 * @param comment
 	 * @param checkinId
-	 * @return true if version is allowed, if false is returned 
+	 * @return true if version is allowed, if false is returned
 	 * the version will be removed.
 	 */
 	public boolean versionCreated(VersionedDatabase db, int version, long time, String comment,
@@ -53,7 +53,7 @@ public interface VersionedDBListener {
 
 	/**
 	 * Returns the checkout version associated with the specified
-	 * checkoutId.  A returned version of -1 indicates that the 
+	 * checkoutId.  A returned version of -1 indicates that the
 	 * checkoutId is not valid.
 	 * @param checkoutId
 	 * @return checkout version

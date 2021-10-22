@@ -9,8 +9,8 @@ import mobiledevices.dmg.ghidra.GBinaryReader;
 
 /**
  * Represents a User Data Record.
- * 
- * @see <a href="https://developer.apple.com/library/archive/technotes/tn/tn1150.html">User Data Record</a> 
+ *
+ * @see <a href="https://developer.apple.com/library/archive/technotes/tn/tn1150.html">User Data Record</a>
  */
 public class BTreeUserDataRecord /*implements StructConverter*/ {
 

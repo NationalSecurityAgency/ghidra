@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ class RootNode extends WindowNode {
 	 * Constructs a new root node for the given DockingWindowsManager.
 	 * @param mgr the DockingWindowsManager
 	 * @param toolName the name of the tool to be displayed in all the top-level windows.
-	 * @param factory a factory for creating drop targets for this nodes windows; may be null 
+	 * @param factory a factory for creating drop targets for this nodes windows; may be null
 	 */
 	RootNode(DockingWindowManager mgr, String toolName, List<Image> images, boolean isModal,
 			DropTargetFactory factory) {
@@ -72,7 +72,7 @@ class RootNode extends WindowNode {
 		else {
 			DockingFrame frame = new DockingFrame(toolName);
 			setFrameIcon(frame, images);
-			windowWrapper = new JFrameWindowWrapper(frame); // default to a frame type			
+			windowWrapper = new JFrameWindowWrapper(frame); // default to a frame type
 		}
 
 		Container c = windowWrapper.getContentPane();
@@ -591,7 +591,7 @@ class RootNode extends WindowNode {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	/** Interface to wrap JDialog and JFrame so that they can be used by one handle */
 	private interface SwingWindowWrapper {

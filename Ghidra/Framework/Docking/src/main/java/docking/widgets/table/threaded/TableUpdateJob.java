@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,8 +46,8 @@ import ghidra.util.task.TaskMonitor;
  * are no add/removes in the list, then that step does nothing.
  * <p>
  * Before the job completes, new calls to sort and filter can be called.  If the job is past the
- * stage of the new call, the <code>monitor</code> is cancelled, causing the current stage to abort.  
- * The next state of this job is set to the appropriate state for the call, the monitor is 
+ * stage of the new call, the <code>monitor</code> is cancelled, causing the current stage to abort.
+ * The next state of this job is set to the appropriate state for the call, the monitor is
  * reset, and the job begins executing the next stage, based upon the new call.
  *
  * @param <T> the type of data that each row in the table represents.
@@ -56,12 +56,12 @@ public class TableUpdateJob<T> {
 
 	//@formatter:off
 	static enum JobState {
-		NOT_RUNNING, 
-		LOADING, 
-		FILTERING, 
-		ADD_REMOVING, 
-		SORTING, 
-		APPLYING, 
+		NOT_RUNNING,
+		LOADING,
+		FILTERING,
+		ADD_REMOVING,
+		SORTING,
+		APPLYING,
 		DONE
 	}
 	//@formatter:on
@@ -98,9 +98,9 @@ public class TableUpdateJob<T> {
 	}
 
 	/**
-	 * Meant to be called by subclasses, not clients.  This method will trigger this job not 
+	 * Meant to be called by subclasses, not clients.  This method will trigger this job not
 	 * to load data, but rather to use the given data.
-	 * 
+	 *
 	 * @param data The data to process.
 	 */
 	protected void setData(TableData<T> data) {
@@ -108,10 +108,10 @@ public class TableUpdateJob<T> {
 	}
 
 	/**
-	 * Allows the precise disabling of the filter operation.  For example, when the user sorts, 
-	 * no filtering is needed.  If the filter has changed, then a filter will take place, 
+	 * Allows the precise disabling of the filter operation.  For example, when the user sorts,
+	 * no filtering is needed.  If the filter has changed, then a filter will take place,
 	 * regardless of the state of this variable.
-	 * 
+	 *
 	 * @param force false to reuse the current filter, if possible.
 	 */
 	protected void setForceFilter(boolean force) {
@@ -163,10 +163,10 @@ public class TableUpdateJob<T> {
 	/**
 	 * Adds the Add/Remove item to the list of items to be processed in the add/remove phase. This
 	 * call is not allowed on running jobs, only pending jobs.
-	 *   
+	 *
 	 * @param item the add/remove item to add to the list of items to be processed in the add/remove
 	 *            phase of this job.
-	 * @param maxAddRemoveCount the maximum number of add/remove jobs to queue before performing 
+	 * @param maxAddRemoveCount the maximum number of add/remove jobs to queue before performing
 	 *        a full reload
 	 */
 	public synchronized void addRemove(AddRemoveListItem<T> item, int maxAddRemoveCount) {
@@ -190,15 +190,15 @@ public class TableUpdateJob<T> {
 	 * the currently running job as well as the pending job.  If called on the running job, the effect
 	 * depends on the running job's state:
 	 * <ul>
-	 *     <li>If the sort state hasn't happened yet, all it does is set the comparator for when 
-	 *     the sort occurs.  
+	 *     <li>If the sort state hasn't happened yet, all it does is set the comparator for when
+	 *     the sort occurs.
 	 *     <li>If the sort state has already been started or completed, then this method attempts
 	 *      to stop the current process phase and cause the state
 	 * 		machine to return to the sort phase.
-	 *     <li>If the current job has already entered the DONE state, then the sort cannot 
+	 *     <li>If the current job has already entered the DONE state, then the sort cannot
 	 *     take effect in this job and a false value is returned to indicate the
 	 * sort was not handled by this job.
-	 * </ul>  
+	 * </ul>
 	 * @param newSortingContext the TableColumnComparator to use to sort the data.
 	 * @param forceSort True signals to re-sort, even if this is already sorted
 	 * @return true if the sort can be processed by this job, false if this job is essentially already
@@ -221,18 +221,18 @@ public class TableUpdateJob<T> {
 
 	/**
 	 * Tells the job that the filter criteria has changed.  This method can be called on
-	 * the currently running job as well as the pending job.  If called on the running job, the 
+	 * the currently running job as well as the pending job.  If called on the running job, the
 	 * effect depends on the running job's state:
 	 * <ul>
-	 * 	  <li>If the filter state hasn't happened yet, then nothing needs to be done as this job 
-	 * 			will filter later anyway. 
-	 *    <li>If the filter state has already been started or completed, then this method 
-	 *    		attempts to stop the current process phase and cause the state machine to 
-	 *    		return to the filter phase. 
+	 * 	  <li>If the filter state hasn't happened yet, then nothing needs to be done as this job
+	 * 			will filter later anyway.
+	 *    <li>If the filter state has already been started or completed, then this method
+	 *    		attempts to stop the current process phase and cause the state machine to
+	 *    		return to the filter phase.
 	 *    <li>If the current job has already entered the DONE state, then the filter cannot take
-	 *     		effect in this job and a false value is returned to indicate the filter was 
+	 *     		effect in this job and a false value is returned to indicate the filter was
 	 *     		not handled by this job.
-	 * </ul> 
+	 * </ul>
 	 * @return true if the filter can be processed by this job, false if this job is essentially already
 	 * completed and therefor cannot perform the filter job.
 	 */
@@ -369,19 +369,19 @@ public class TableUpdateJob<T> {
 
 	/**
 	 * Picks the table data to use for all future states (e.g., filtering, sorting, etc).  Data
-	 * can be reused if its filter is a superset of the pending filter.  Likewise, if the 
-	 * pending filter is itself a superset of the current filter, then this code will walk 
+	 * can be reused if its filter is a superset of the pending filter.  Likewise, if the
+	 * pending filter is itself a superset of the current filter, then this code will walk
 	 * backwards, starting at the current table data, until it finds either the root dataset or
 	 * a child of the root whose filter is a superset of the pending filter.
 	 * <p>
 	 * Reusing table data in this way has the potential to consume too much memory (in the case
-	 * where the initial dataset is large and each subsequent filter is a subset of the 
+	 * where the initial dataset is large and each subsequent filter is a subset of the
 	 * previous filter, where each filter does't significantly reduce the newly filtered dataset.
 	 * <p>
 	 * Since much memory could be consumed, we provide an option in the tool to disable this
 	 * reuse of filtered data.  When not in use, each filter change will perform a full refilter.
 	 * This is not an issue for tables with moderate to small-sized datasets.
-	 * 
+	 *
 	 * @return the initial data to use for future filter and sort operations.
 	 */
 	private TableData<T> pickExistingTableData() {
@@ -399,9 +399,9 @@ public class TableUpdateJob<T> {
 		return copy;
 	}
 
-	/** 
+	/**
 	 * Gets any existing data that matches the current filter, if any.
-	 * @return data that should be the start point for the next filter state; null if there 
+	 * @return data that should be the start point for the next filter state; null if there
 	 *          is no filter set or if the current data's filter does not match the pending filter
 	 */
 	private TableData<T> getReusableFilteredData() {
@@ -437,8 +437,8 @@ public class TableUpdateJob<T> {
 		}
 
 		if (tableSortDiffersFromSourceData()) {
-			// The source of the data we are manipulating is sorted in a way that may be 
-			// different from the sort state of the table.  In that case, we have to sort the 
+			// The source of the data we are manipulating is sorted in a way that may be
+			// different from the sort state of the table.  In that case, we have to sort the
 			// data we are creating to match the table and not the source data--the table is
 			// always the truth keeper of the correct sort.
 			newSortContext = model.getSortingContext();
@@ -460,8 +460,8 @@ public class TableUpdateJob<T> {
 	/** True if the sort applied to the table is not the same as that in the source dataset */
 	private boolean tableSortDiffersFromSourceData() {
 		// Note: at this point in time we do not check to see if the table is user-unsorted.  It
-		//       doesn't seem to hurt to leave the original source data sorted, even if the 
-		//       current context is 'unsorted'.  In that case, this method will return true, 
+		//       doesn't seem to hurt to leave the original source data sorted, even if the
+		//       current context is 'unsorted'.  In that case, this method will return true,
 		//       that the sorts are different.  But, later in this job, we check the new sort and
 		//       do not perform sorting when 'unsorted'
 		return !SystemUtilities.isEqual(sourceData.getSortContext(), model.getSortingContext());
@@ -523,9 +523,9 @@ public class TableUpdateJob<T> {
 	private void maybeSortSourceData() {
 		//
 		// Usually the source data is sorted before any filter is applied.  However, this is not
-		// the case when a load of new data is followed directly by a filter action.  We rely on 
-		// the source data being sorted in order to perform fast translations from the table's 
-		// view to the table's model when it is filtered.  Thus, make sure that any time we are 
+		// the case when a load of new data is followed directly by a filter action.  We rely on
+		// the source data being sorted in order to perform fast translations from the table's
+		// view to the table's model when it is filtered.  Thus, make sure that any time we are
 		// sorting the filtered data, that the source data too is sorted.
 		//
 		if (sourceData == updatedData) {
@@ -613,8 +613,8 @@ public class TableUpdateJob<T> {
 		lastSortContext = updatedData.getSortContext();
 	}
 
-	/** 
-	 * The current data can be re-used when the data and filter have not changed 
+	/**
+	 * The current data can be re-used when the data and filter have not changed
 	 * (this implies a sort only operation)
 	 */
 	private boolean canReuseCurrentFilteredData() {
@@ -623,8 +623,8 @@ public class TableUpdateJob<T> {
 		// -we have not been told to filter
 		// -the table is not currently filtered, or is filtered, but
 		// --the source data that the filtered data is based upon hasn't changed
-		// --the filter hasn't changed		
-		//		
+		// --the filter hasn't changed
+		//
 		if (doForceFilter) {
 			return false;
 		}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,23 +40,23 @@ import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
 /**
  * This class houses various methods for translating location and size data from the various
  * graph coordinate spaces.
- * 
+ *
  * <a id="graph_spaces">Graph Spaces</a>
  * Size and location information is represented in multiple coordinate spaces, as listed below.
- * To translate from one to the other, use {@link GraphViewerUtils}; for example, to see if a 
+ * To translate from one to the other, use {@link GraphViewerUtils}; for example, to see if a
  * mouse click is on a given vertex.
- * 
+ *
  * <ul>
  * 	<li>Layout Space - the layout contains Point2D objects that represent positions of the
- *                     vertices. 
- *  <li>Graph Space - the space where the Layout points are transformed as the view is moved 
+ *                     vertices.
+ *  <li>Graph Space - the space where the Layout points are transformed as the view is moved
  *                    around the screen (e.g., as the user pans)
  *  <li>View Space - the coordinate system of Java 2D rendering; scaling (zooming) transformations
  *                   are applied at this layer
  * </ul>
- * 
+ *
  * <P> Note: vertex relative means that the value is from inside the vertex, or the vertex's
- *       coordinate space (like a component that is inside the vertex), where it's 
+ *       coordinate space (like a component that is inside the vertex), where it's
  *       coordinate values are relative to the component's parent.
  */
 public class GraphViewerUtils {
@@ -185,8 +185,8 @@ public class GraphViewerUtils {
 	}
 
 	//@formatter:off
-	public static <V extends VisualVertex, E extends VisualEdge<V>> 
-		VertexMouseInfo<V, E> convertMouseEventToVertexMouseEvent(GraphViewer<V, E> viewer, 
+	public static <V extends VisualVertex, E extends VisualEdge<V>>
+		VertexMouseInfo<V, E> convertMouseEventToVertexMouseEvent(GraphViewer<V, E> viewer,
 											  					  MouseEvent mouseEvent) {
 	//@formatter:on
 
@@ -324,7 +324,7 @@ public class GraphViewerUtils {
 	}
 
 	// Note: vertex relative means that the value is from inside the vertex, or the vertex's
-	//       coordinate space (like a component that is inside the vertex), where it's 
+	//       coordinate space (like a component that is inside the vertex), where it's
 	//       coordinate values are relative to the component's parent.
 	public static <V, E> Rectangle translateRectangleFromVertexRelativeSpaceToViewSpace(
 			VisualizationServer<V, E> viewer, V vertex, Rectangle rectangle) {
@@ -363,10 +363,10 @@ public class GraphViewerUtils {
 		return pickSupport.getVertex(layout, point.getX(), point.getY());
 	}
 
-	/** 
+	/**
 	 * Get the upper-left point of vertex in the view space (Java component space)
-	 *  
-	 * @param viewer the viewer containing the UI 
+	 *
+	 * @param viewer the viewer containing the UI
 	 * @param vertex the vertex
 	 * @return the upper-left point of the vertex
 	 */
@@ -444,10 +444,10 @@ public class GraphViewerUtils {
 	}
 
 	/**
-	 * Moves the selected vertices to the end of the list of vertices so that when picked (or 
+	 * Moves the selected vertices to the end of the list of vertices so that when picked (or
 	 * painted), we will prefer the selected vertices, since we have configured the algorithms for
 	 * the graph stuff to prefer the last accessed vertex (like when picking and painting).
-	 * 
+	 *
 	 * @param vertices the vertices to order
 	 * @return the given vertices, ordered by selected/emphasized state
 	 */
@@ -479,11 +479,11 @@ public class GraphViewerUtils {
 		// to make a hollow shape (so shape detection misses in middle)
 
 		/*
-		
+
 		 Coordinate space is on a graph with 1 unit in each direction
-		
+
 				-1
-		
+
 		        |
 		        |
 		        |
@@ -493,12 +493,12 @@ public class GraphViewerUtils {
 		 	    |
 		 	    |
 		 	    |
-		
+
 		 	    1
-		
-		
+
+
 		 Origin in Java2D space--center of the graph (note that positive y is down and not up)
-		
+
 		0,0
 		 ------------      1) Move up by the radius amount so we can then go down and to the left
 		 |                    with each pass until we head back in the other direction.
@@ -512,18 +512,18 @@ public class GraphViewerUtils {
 		 								  |
 		 								  |
 		 							    0 -------
-		
+
 		 				   2) Move backwards (-x) and down (to 0 from -y)
-		
+
 		 				   						|
 		 				   						|
 		 				            -.75 -------|- 0
 		 				   						|
 		 				   						|
-		
-		
+
+
 		 		 	    Each new point is the last two values in the method call
-		
+
 		 */
 
 		// NOTE: this cubic bezier path approximates a circle
@@ -606,14 +606,14 @@ public class GraphViewerUtils {
 		/*
 		 	x, y - vertex coordinates; these are the center of the vertex shape
 		 	vertexShape - the is the shape of the vertex; it will be centered over the x,y
-		 	
+
 		 		shape x,y
 		 				---------
 		 				|       |
 		 				|  x,y (|)   edge circle, clipped by the vertex
 		 				|       |
 		 				---------
-		 	
+
 		 */
 
 		// note: the edge shape will be drawn around its center
@@ -624,13 +624,13 @@ public class GraphViewerUtils {
 		double scale = .2; // edge size as a proportion of vertex size
 
 		/*
-		 	This code allows the edge position to move closer to the shape when not using 
+		 	This code allows the edge position to move closer to the shape when not using
 		 	a rectangular shape.   If we ever have unusual shapes, then this may be worth using.
 		 	For now, it seems excessive to perform the math, as this code is currently called
 		 	for each loop edge, for each paint.   If we ever cache edge info, this is available.
-		
-		 	
-		 	// 
+
+
+		 	//
 			// The 'endX' is the right edge of the *rectangle bounds* of the vertex.  The actual
 			// shape of the vertex may not be rectangular.  So, keep moving the edge shape closer
 			// to the vertex until it is slightly obscured (as noted above).
@@ -638,16 +638,16 @@ public class GraphViewerUtils {
 			double move = .1;
 			Point2D p = new Point2D.Double(endX, y);
 			while (p.getX() > x) {
-		
+
 				if (vertexShape.contains(p)) {
 					break;
 				}
-		
+
 				double offset = move * radius;
 				p.setLocation(endX - offset, y);
 				move += .1;
 			}
-			double edgeX = p.getX();		  
+			double edgeX = p.getX();
 		 */
 
 		double radius = vHeight * scale;
@@ -724,8 +724,8 @@ public class GraphViewerUtils {
 			if (v instanceof VisualVertex) {
 				VisualVertex vv = (VisualVertex) v;
 
-				// Note: it is a bit odd that we 'know' to use the compact shape here for 
-				// 		 hit detection, but this is how the edge is painted, so we want the 
+				// Note: it is a bit odd that we 'know' to use the compact shape here for
+				// 		 hit detection, but this is how the edge is painted, so we want the
 				//       view to match the mouse.
 				return ((VisualGraphVertexShapeTransformer) vertexShaper).transformToCompactShape(
 					vv);
@@ -833,7 +833,7 @@ public class GraphViewerUtils {
 	}
 
 	//@formatter:off
-	public static <V extends VisualVertex, E extends VisualEdge<V>> 
+	public static <V extends VisualVertex, E extends VisualEdge<V>>
 		Rectangle getTotalGraphSizeInLayoutSpace(VisualizationServer<V, E> viewer) {
 	//@formatter:on
 
@@ -854,7 +854,7 @@ public class GraphViewerUtils {
 	}
 
 	//@formatter:off
-	private static <V extends VisualVertex, E extends VisualEdge<V>> Function<V, Rectangle> 
+	private static <V extends VisualVertex, E extends VisualEdge<V>> Function<V, Rectangle>
 		createVertexToBoundsTransformer(VisualizationServer<V, E> viewer) {
 	//@formatter:on
 
@@ -875,7 +875,7 @@ public class GraphViewerUtils {
 	}
 
 	//@formatter:off
-	public static <V extends VisualVertex, E extends VisualEdge<V>> 
+	public static <V extends VisualVertex, E extends VisualEdge<V>>
 			Rectangle getTotalGraphSizeInLayoutSpace(
 												Collection<V> vertices,
 												Collection<E> edges,
@@ -916,9 +916,9 @@ public class GraphViewerUtils {
 
 	/**
 	 * Returns a rectangle that contains all give vertices
-	 * 
+	 *
 	 * @param viewer the viewer containing the UI
-	 * @param vertices the vertices 
+	 * @param vertices the vertices
 	 * @return a rectangle that contains all give vertices
 	 */
 	public static <V, E> Rectangle getBoundsForVerticesInLayoutSpace(
@@ -941,9 +941,9 @@ public class GraphViewerUtils {
 
 	/**
 	 * Returns a rectangle that contains all vertices, in the layout space
-	 * 
+	 *
 	 * @param vertices the vertices for which to calculate the bounds
-	 * 
+	 *
 	 * @param vertexToBounds a function that can turn a single vertex into a rectangle
 	 * @return the bounds
 	 */
@@ -993,7 +993,7 @@ public class GraphViewerUtils {
 	}
 
 	//@formatter:off
-	public static <V extends VisualVertex, E extends VisualEdge<V>> 
+	public static <V extends VisualVertex, E extends VisualEdge<V>>
 		boolean layoutUsesEdgeArticulations(Layout<V, E> graphLayout) {
 	//@formatter:on
 
@@ -1005,7 +1005,7 @@ public class GraphViewerUtils {
 	}
 
 	//@formatter:off
-	public static <V extends VisualVertex, E extends VisualEdge<V>> 
+	public static <V extends VisualVertex, E extends VisualEdge<V>>
 		VisualGraphLayout<V, E> getVisualGraphLayout(Layout<V, E> graphLayout) {
 	//@formatter:on
 
@@ -1022,8 +1022,8 @@ public class GraphViewerUtils {
 	}
 
 	//@formatter:off
-	public static <V extends VisualVertex, E extends VisualEdge<V>> Collection<V> 
-		getVerticesOfHoveredEdges(Graph<V, E> graph) { 
+	public static <V extends VisualVertex, E extends VisualEdge<V>> Collection<V>
+		getVerticesOfHoveredEdges(Graph<V, E> graph) {
 	//@formatter:on
 
 		return getVerticesOfSelectedOrHoveredEdges(graph, true);
@@ -1031,12 +1031,12 @@ public class GraphViewerUtils {
 
 	/**
 	 * Returns a collection of vertices that are incident to selected edges.
-	 * 
+	 *
 	 * @param graph the graph from which to retrieve vertices
 	 * @return a collection of vertices that are incident to selected edges.
 	 */
 	//@formatter:off
-	public static <V extends VisualVertex, E extends VisualEdge<V>> Collection<V> 
+	public static <V extends VisualVertex, E extends VisualEdge<V>> Collection<V>
 		getVerticesOfSelectedEdges(Graph<V, E> graph) {
 	//@formatter:on
 
@@ -1044,7 +1044,7 @@ public class GraphViewerUtils {
 	}
 
 	//@formatter:off
-	private static <V extends VisualVertex, E extends VisualEdge<V>> Collection<V> 
+	private static <V extends VisualVertex, E extends VisualEdge<V>> Collection<V>
 		getVerticesOfSelectedOrHoveredEdges(Graph<V, E> graph, boolean useHover) {
 	//@formatter:on
 

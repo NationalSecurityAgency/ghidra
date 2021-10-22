@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.util.classfinder.ClassSearcher;
 
 public class Annotation {
 	/**
-	 * A pattern to match text between two quote characters and to capture that text.  This 
+	 * A pattern to match text between two quote characters and to capture that text.  This
 	 * pattern does not match quote characters that are escaped with a '\' character.
 	 */
 	private static final Pattern QUOTATION_PATTERN =
@@ -47,7 +47,7 @@ public class Annotation {
 		return ANNOTATED_STRING_MAP;
 	}
 
-	// locates AnnotatedStringHandler implementations to handle annotations 
+	// locates AnnotatedStringHandler implementations to handle annotations
 	private static Map<String, AnnotatedStringHandler> createAnnotatedStringHandlerMap() {
 		Map<String, AnnotatedStringHandler> map = new HashMap<>();
 
@@ -68,9 +68,9 @@ public class Annotation {
 	/**
 	 * Constructor
 	 * <b>Note</b>: This constructor assumes that the string starts with "{<pre>@</pre>" and ends with '}'
-	 * 
+	 *
 	 * @param annotationText The complete annotation text.
-	 * @param prototypeString An AttributedString that provides the attributes for the display 
+	 * @param prototypeString An AttributedString that provides the attributes for the display
 	 * text this Annotation can create
 	 */
 	public Annotation(String annotationText, AttributedString prototypeString, Program program) {
@@ -124,9 +124,9 @@ public class Annotation {
 
 	/**
 	 * Called when a mouse click occurs on a FieldElement containing this Annotation.
-	 * 
+	 *
 	 * @param sourceNavigatable The source navigatable associated with the mouse click.
-	 * @param serviceProvider The service provider to be used when creating 
+	 * @param serviceProvider The service provider to be used when creating
 	 * {@link AnnotatedStringHandler} instances.
 	 * @return true if the handler desires to handle the mouse click.
 	 */
@@ -143,13 +143,13 @@ public class Annotation {
 		buffer.delete(0, 2); // remove '{' and '@'
 		buffer.deleteCharAt(buffer.length() - 1);
 
-		// first split out the tokens on '"' so that annotations can have groupings with 
+		// first split out the tokens on '"' so that annotations can have groupings with
 		// whitespace
 		int unqouotedOffset = 0;
 		List<String> tokens = new ArrayList<>();
 		Matcher matcher = QUOTATION_PATTERN.matcher(buffer.toString());
 		while (matcher.find()) {
-			// put all text in the buffer, 
+			// put all text in the buffer,
 			int quoteStart = matcher.start();
 			String contentBeforeQuote = buffer.substring(unqouotedOffset, quoteStart);
 			grabTokens(tokens, contentBeforeQuote);

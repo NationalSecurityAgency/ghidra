@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -242,7 +242,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		// struct structA { int f1, f2, f3, f4; }
 		// Redefine structB with the same info, but to a fully
 		// specified structA instance instead of missing fwd decl.
-		// The order of the DIE records is important.  The structure (structB) 
+		// The order of the DIE records is important.  The structure (structB)
 		// containing the problematic structA needs to be hit first so we can
 		// test that cached types are handled correctly.
 		DebugInfoEntry int2DIE = addInt(cu2);
@@ -569,7 +569,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 	 * datatype name as the impl struct.  The embedded db struct needs to be empty and default
 	 * sized (1 byte), and the outer impl struct needs to be bigger.
 	 * <p>
-	 * Currently the DTM resolve() will ignore the conflict handlers attempt to 
+	 * Currently the DTM resolve() will ignore the conflict handlers attempt to
 	 * replace since it will result in cyclic dependency issue.  It will instead
 	 * rename the new structure as a conflict with its field refering to the original
 	 * structure.
@@ -593,7 +593,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		DataTypeComponent dtc = x3.getComponent(0);
 		DataType dtcDT = dtc.getDataType();
 		assertEquals("f1", dtc.getFieldName());
-		assertEquals("X", dtcDT.getName()); // undefined field is current behavior 
+		assertEquals("X", dtcDT.getName()); // undefined field is current behavior
 	}
 
 	@Test
@@ -1036,7 +1036,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		assertNotNull(arr);
 		assertEquals(10, arr.getNumElements());
 	}
-	
+
 	// not implemented yet
 	public void testSubr() {
 		// func ptrs

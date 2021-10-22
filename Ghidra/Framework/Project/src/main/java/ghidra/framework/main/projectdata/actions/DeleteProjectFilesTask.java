@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ public class DeleteProjectFilesTask extends Task {
 	/**
 	 * Construct a new DeleteProjectFilesTask with the list of folders and files to delete.
 	 *
-	 * @param folders the fist of DomainFolders (and all files contained recursively 
+	 * @param folders the fist of DomainFolders (and all files contained recursively
 	 * in those folders) to delete
 	 * @param files the list of DomainFiles to delete
 	 * @param fileCount the number of files being deleted
@@ -189,7 +189,7 @@ public class DeleteProjectFilesTask extends Task {
 		if (versionedDialogBuilder == null) {
 
 			//@formatter:off
-			versionedDialogBuilder = 
+			versionedDialogBuilder =
 				new OptionDialogBuilder("Confirm Delete Versioned File")
 				.addOption("Yes")
 				.addOption("No")
@@ -216,7 +216,7 @@ public class DeleteProjectFilesTask extends Task {
 		if (checkedOutDialogBuilder == null) {
 
 			//@formatter:off
-			checkedOutDialogBuilder = 
+			checkedOutDialogBuilder =
 				new OptionDialogBuilder("Delete Not Allowed")
 				.addOption("OK")
 				.addCancel()
@@ -241,7 +241,7 @@ public class DeleteProjectFilesTask extends Task {
 		if (fileInUseDialogBuilder == null) {
 
 			//@formatter:off
-			fileInUseDialogBuilder = 
+			fileInUseDialogBuilder =
 				new OptionDialogBuilder("Delete Not Allowed")
 				.addOption("OK")
 				.setMessageType(OptionDialog.ERROR_MESSAGE)
@@ -266,7 +266,7 @@ public class DeleteProjectFilesTask extends Task {
 		if (readOnlyDialogBuilder == null) {
 
 			//@formatter:off
-			readOnlyDialogBuilder = 
+			readOnlyDialogBuilder =
 					new OptionDialogBuilder("Confirm Delete Read-only File")
 					.addOption("Yes")
 					.addOption("No")

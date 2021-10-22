@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,28 +24,28 @@ import javax.swing.tree.TreePath;
 import util.CollectionUtils;
 
 /**
- * A class to remember the current state of the tree, for things like expanded paths, 
+ * A class to remember the current state of the tree, for things like expanded paths,
  * selected paths and the view location.
- * 
+ *
  * <p>This class is used to restore state for uses so that updates to the tree do not cause the
- * user to lose their spot.   
- * 
+ * user to lose their spot.
+ *
  * <p>Issues:
  * <ul>
- * 	<li>If the number of expanded items is too large, then the tree will spend a large 
+ * 	<li>If the number of expanded items is too large, then the tree will spend a large
  *      amount of time restoring, thus we limit the size of the expanded paths</li>
  *  <li>If we have to trim the number of items we remember, we need to do so intelligently so
- *      that the user experience seems natural (for example, when trimming what to keep, 
- *      be sure to first keep what is visible to the user, versus expanded/selected items 
+ *      that the user experience seems natural (for example, when trimming what to keep,
+ *      be sure to first keep what is visible to the user, versus expanded/selected items
  *      that are scrolled off the top of the view.</li>
  * </ul>
  */
 public class GTreeState {
 
 	/**
-	 * A super arbitrary number to limit how many expanded paths and selected paths we try 
+	 * A super arbitrary number to limit how many expanded paths and selected paths we try
 	 * to restore.   We reason that some number of items is not worth restoring--would the user
-	 * be able to make use of 1,000,000 items selected.    
+	 * be able to make use of 1,000,000 items selected.
 	 */
 	private static final int MAX_ITEM_COUNT = 50; // 50 seems more than sufficient for now
 
@@ -84,17 +84,17 @@ public class GTreeState {
 		//
 		// Once we have too many items to deal with, what should be done?  We could:
 		// 1) trim the items to the max size, preferring those that are in the view, grabbing
-		//    surrounding paths as will fit		
+		//    surrounding paths as will fit
 		// 2) keep just the items in the view, limited to the max size
 		// 3) pick a single item to select that is in the view
 		//
 		// The benefit of the last approach is that it will be easier to see that not all
-		// of your state was restored.  The benefit of the other approaches is that items the 
-		// user was viewing will probably be restored, since we are going to restore more 
+		// of your state was restored.  The benefit of the other approaches is that items the
+		// user was viewing will probably be restored, since we are going to restore more
 		// items than will fit in the view.  So, do we err on the side of showing the user that
-		// there were to many items, at the expense of jarring their view when the tree is 
+		// there were to many items, at the expense of jarring their view when the tree is
 		// updated? Or, do we somewhat hide from the user the fact that we could not restore
-		// all of their view? 
+		// all of their view?
 		//
 		// We've decided for now that the max limit is probably only exceeded in one of a few
 		// cases, such as:
@@ -102,9 +102,9 @@ public class GTreeState {
 		// -the user has expanded the entire tree
 		//
 		// In these cases, the user most likely cannot make use of the entire tree and will those
-		// probably not miss any functionality if we do not restore all selected and expanded 
+		// probably not miss any functionality if we do not restore all selected and expanded
 		// items.
-		// 
+		//
 
 		LinkedHashSet<TreePath> limitedViewPaths = getViewPaths(maxSize);
 
@@ -116,11 +116,11 @@ public class GTreeState {
 			return;
 		}
 
-		// 
-		// Special case: the user has selected one or a few items--we should keep those, 
+		//
+		// Special case: the user has selected one or a few items--we should keep those,
 		// regardless of whether they are in the view.  Just add these to the list of expanded
 		// paths so they get expanded.
-		// 
+		//
 		expandedPaths.addAll(selectionPaths);
 	}
 
@@ -194,8 +194,8 @@ public class GTreeState {
 		int top = jTree.getClosestRowForLocation(r.x, r.y);
 		int bottom = jTree.getClosestRowForLocation(r.x, r.y + r.height);
 
-		// JTree Note: the getClosestRowForLocation() call will return the row that is 
-		//             closest to the point *and* that is not clipped.   So, when we get the 
+		// JTree Note: the getClosestRowForLocation() call will return the row that is
+		//             closest to the point *and* that is not clipped.   So, when we get the
 		//             top and bottom values, the user can see more items at the edges past the
 		//             top and bottom.   Lets compensate by adding 1 to both values so that the
 		//             rows in the view contains all that the user can see.
@@ -207,7 +207,7 @@ public class GTreeState {
 		//
 		// Due to how the JTree scrolls, the best path to save is the bottom-most path.  When
 		// you ask the tree to scroll to a path, it will only scroll until that path is just
-		// in the view, which is at the bottom.  By saving the bottom-most, even if we don't 
+		// in the view, which is at the bottom.  By saving the bottom-most, even if we don't
 		// save all of the view paths, the view will often appear unchanged, since by putting
 		// the bottom path in the view, those paths above it may still be visible.
 		//

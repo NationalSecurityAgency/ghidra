@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,8 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * More data type merge tests.
- * 
- * 
+ *
+ *
  */
 public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 
@@ -170,7 +170,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		// DLL_Table should not exist
 		assertNull(dtm.getDataType(CategoryPath.ROOT, "DLL_Table"));
 
-		// CoolUnion should not have DLL_Table components but should have Float 
+		// CoolUnion should not have DLL_Table components but should have Float
 		DataTypeComponent[] dtcs = union.getComponents();
 		assertEquals(4, dtcs.length);
 		DataType dt = dtcs[3].getDataType();
@@ -242,7 +242,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		Structure dll = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
 		assertNotNull(dll);
 
-		// CoolUnion should not have DLL_Table components but should have Float 
+		// CoolUnion should not have DLL_Table components but should have Float
 		DataTypeComponent[] dtcs = union.getComponents();
 		assertEquals(6, dtcs.length);
 		assertEquals(dll, dtcs[3].getDataType());
@@ -314,11 +314,11 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		DataTypeComponent[] fooComps = foo.getComponents();
 		assertEquals(6, fooComps.length);
 
-		// Foo should not contain CoolUnion because CoolUnion already 
+		// Foo should not contain CoolUnion because CoolUnion already
 		// contains Foo (from Latest)
 		assertEquals("Foo", coolUnionComps[5].getDataType().getDisplayName());
 
-		// Foo.conflict should contain CoolUnion.conflict because CoolUnion already 
+		// Foo.conflict should contain CoolUnion.conflict because CoolUnion already
 		// contains Foo (from Latest), so Foo (From My) becomes Foo.conflict and its
 		// original CoolUnion becomes CoolUnion.conflict.
 		assertEquals("float", fooComps[5].getDataType().getDisplayName());
@@ -397,11 +397,11 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		DataTypeComponent[] fooComps = foo.getComponents();
 		assertEquals(6, fooComps.length);
 
-		// Foo should not contain CoolUnion because CoolUnion already 
+		// Foo should not contain CoolUnion because CoolUnion already
 		// contains Foo (from Latest)
 		assertEquals("Foo", coolUnionComps[5].getDataType().getDisplayName());
 
-		// Foo.conflict should contain CoolUnion.conflict because CoolUnion already 
+		// Foo.conflict should contain CoolUnion.conflict because CoolUnion already
 		// contains Foo (from Latest), so Foo (From My) becomes Foo.conflict and its
 		// original CoolUnion becomes CoolUnion.conflict.
 		assertEquals("float", fooComps[5].getDataType().getDisplayName());
@@ -1340,7 +1340,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		assertTrue(dt instanceof Structure);
 		Structure s = (Structure) dt;
 		/** Current Result for /Category5/Test
-		 * 
+		 *
 				Unaligned
 				Structure Test {
 				   4   int:2(6)   1   bf1   ""
@@ -1349,20 +1349,20 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 				   7   qword   8   null   ""
 				}
 				Size = 15   Actual Alignment = 1
-		 *	
+		 *
 		 * See assertion below for preferred result
 		 */
 		//@formatter:off
-		assertEquals("/Category5/Test\n" + 
-			"Unaligned\n" + 
-			"Structure Test {\n" + 
-			"   0   NewBF   4   null   \"\"\n" + 
-			"   4   NewBF:2(6)   1   bf1   \"\"\n" + 
-			"   4   NewBF:2(4)   1   bf2   \"\"\n" + 
-			"   5   word   2   null   \"\"\n" + 
-			"   7   qword   8   null   \"\"\n" + 
+		assertEquals("/Category5/Test\n" +
+			"Unaligned\n" +
+			"Structure Test {\n" +
+			"   0   NewBF   4   null   \"\"\n" +
+			"   4   NewBF:2(6)   1   bf1   \"\"\n" +
+			"   4   NewBF:2(4)   1   bf2   \"\"\n" +
+			"   5   word   2   null   \"\"\n" +
+			"   7   qword   8   null   \"\"\n" +
 			"   Undefined1[0]   0   foo   \"\"\n" +  // reflects removal of /MISC/FooTypedef
-			"}\n" + 
+			"}\n" +
 			"Size = 15   Actual Alignment = 1\n", s.toString());
 		//@formatter:on
 	}
@@ -1605,7 +1605,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		});
 		executeMerge();
 
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY CoolUnion
 
@@ -1693,7 +1693,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		});
 		executeMerge();
 
-		chooseOption(DataTypeMergeManager.OPTION_LATEST);// delete DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_LATEST);// delete DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// MY CoolUnion
 
@@ -1782,7 +1782,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		});
 		executeMerge();
 
-		chooseOption(DataTypeMergeManager.OPTION_MY);// my DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_MY);// my DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_LATEST);// delete CoolUnion
 
@@ -1872,7 +1872,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		});
 		executeMerge();
 
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 
@@ -1969,7 +1969,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		});
 		executeMerge();
 
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 
@@ -2075,7 +2075,7 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		});
 		executeMerge();
 
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 
@@ -2206,17 +2206,17 @@ public class DataTypeMerge3Test extends AbstractDataTypeMergeTest {
 		Union union =
 			(Union) dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
 		//@formatter:off
-		assertEquals("/Category1/Category2/CoolUnion\n" + 
-			"pack(disabled)\n" + 
-			"Union CoolUnion {\n" + 
-			"   0   qword   8   null   \"\"\n" + 
-			"   0   byte:4(4)   1   BF1   \"my bf1\"\n" + 
-			"   0   byte:2(6)   1   BF2   \"my bf2\"\n" + 
-			"   0   word   2   null   \"\"\n" + 
-			"   0   undefined * * * * *   4   null   \"\"\n" + 
-			"   0   DLL_Table   96   null   \"\"\n" + 
-			"   0   DLL_Table *32   4   null   \"\"\n" + 
-			"}\n" + 
+		assertEquals("/Category1/Category2/CoolUnion\n" +
+			"pack(disabled)\n" +
+			"Union CoolUnion {\n" +
+			"   0   qword   8   null   \"\"\n" +
+			"   0   byte:4(4)   1   BF1   \"my bf1\"\n" +
+			"   0   byte:2(6)   1   BF2   \"my bf2\"\n" +
+			"   0   word   2   null   \"\"\n" +
+			"   0   undefined * * * * *   4   null   \"\"\n" +
+			"   0   DLL_Table   96   null   \"\"\n" +
+			"   0   DLL_Table *32   4   null   \"\"\n" +
+			"}\n" +
 			"Size = 96   Actual Alignment = 1\n", union.toString());
 		//@formatter:on
 	}

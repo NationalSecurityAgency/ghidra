@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.text.*;
 
 /**
- * 
+ *
  */
 public class RegisterField extends JTextField {
 //	private static Color UNSET_COLOR = new Color(204,0,204);
@@ -45,15 +45,15 @@ public class RegisterField extends JTextField {
     public RegisterField(int bitSize, Long initialValue) {
     	this(bitSize, initialValue, true);
     }
-    
+
     public RegisterField(int bitSize, Long initialValue, boolean useNoValue) {
         this.useNoValue = useNoValue;
     	setBitSize( bitSize );
-    	
+
     	doc = new PlainDocument();
     	doc.setDocumentFilter(new MyDocFilter());
     	this.setDocument(doc);
-		doSetValue(initialValue);    	
+		doSetValue(initialValue);
 
     	this.addFocusListener(new FocusListener() {
             public void focusGained(FocusEvent ev) {
@@ -70,7 +70,7 @@ public class RegisterField extends JTextField {
 	public Long getValue() {
 		return currentValue;
 	}
-	
+
 	public void setNoValueColor(Color c) {
 		noValueColor = c;
 		updateColor();
@@ -163,7 +163,7 @@ public class RegisterField extends JTextField {
 	}
 	private boolean processText() {
 		String text = getText();
-	
+
 		if (text.length() == 0){
 			if (currentValue != null) {
 				currentValue = null;
@@ -171,7 +171,7 @@ public class RegisterField extends JTextField {
 			}
 			return true;
 		}
-		
+
 		if (text.equals("0x") || text.equals("0X")) {
 		 	if ((currentValue == null) || (currentValue.longValue() != 0)) {
 				currentValue = new Long(0);
@@ -183,9 +183,9 @@ public class RegisterField extends JTextField {
 			if (!text.startsWith("0x") && !text.startsWith("0X")) {
 				while(text.length() > 1 && text.charAt(0)== '0') {
 					text = text.substring(1);
-				}		
+				}
 			}
-			Long newValue = Long.decode(text);	
+			Long newValue = Long.decode(text);
 			if ( isValidValue( newValue ) ) {
 				if (!newValue.equals(currentValue)) {
 					currentValue = newValue;
@@ -208,7 +208,7 @@ public class RegisterField extends JTextField {
         return (l >= 0) && (l <= maxValue);
     }
 
-    	
+
 	class MyDocFilter extends DocumentFilter {
         /**
          * @see javax.swing.text.DocumentFilter#insertString(FilterBypass, int, String, AttributeSet)
@@ -222,7 +222,7 @@ public class RegisterField extends JTextField {
 			}
 
 			String oldText = getText();
-			fb.insertString(offset, string, attr);	
+			fb.insertString(offset, string, attr);
 			if (!processText()) {
 				fb.replace(0, doc.getLength(), oldText, attr);
 			}
@@ -257,7 +257,7 @@ public class RegisterField extends JTextField {
 				return;
 			}
 			String oldText = getText();
-			fb.replace(offset, length, text, attrs);	
+			fb.replace(offset, length, text, attrs);
 			if (!processText()) {
 				fb.replace(0, doc.getLength(), oldText, attrs);
 			}
@@ -273,13 +273,13 @@ public class RegisterField extends JTextField {
 		f.getContentPane().add(panel);
 		f.pack();
 		f.setVisible(true);
-	}	
-		
+	}
+
 	private void notifyListeners() {
 		if (listener != null) {
 			listener.stateChanged( null );
 		}
-	}		    	
+	}
 	public int getBitSize() {
 		return bitSize;
 	}
@@ -288,4 +288,4 @@ public class RegisterField extends JTextField {
 	}
 }
 
-	
+

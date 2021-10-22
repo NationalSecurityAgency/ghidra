@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,13 +29,13 @@ public class SubDataFieldLocation extends CodeUnitLocation {
 
 	/**
 	 * Construct a new SubDataFieldLocation object.
-	 * 
-	 * @param program the program of the location 
+	 *
+	 * @param program the program of the location
 	 * @param addr address of the location
 	 * @param path path associated with the address (an address could
 	 * appear at more than one group path); may be null
 	 * @param componentPath array of indexes for each nested data component;
-	 * the index is the data component's index within its parent; may be null 
+	 * the index is the data component's index within its parent; may be null
 	 * @param refAddr the "referred to" address if the location is
 	 * over a reference; may be null
 	 * @param rep the String representation of the operand.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,13 +23,13 @@
 //
 // Any existing Ghidra symbol table entries that collide with VxWorks symbol
 // table entries are deleted.  Mangled C++ symbol names are demangled.
-// 
+//
 // The VxWorks symbol table is an array [0..n-1] of (struct SYMBOL) entries.
 // The table may be immediately followed or preceeded by an (int) vxSymTblLen
 // value.
 //
 // Prerequisites:
-//	
+//
 //		- Program memory block(s) is(are) aligned with actual load addresses
 //		  (run something like MemAlignARM_LE.java)
 //
@@ -589,11 +589,11 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 
 	/**
 	 * Look before/after the table to see if there is a size value there and mark it if it agrees with TableLen
-	 * 
+	 *
 	 * @param symTbl
 	 * @param vxSymbol
 	 * @param tableLen
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	private void markSymbolTableLen(Address symTbl, VxSymbol vxSymbol, int symTblLen)
 			throws Exception {
@@ -735,7 +735,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 			return;
 		}
 
-		// Process VxWorks symbol table entries 
+		// Process VxWorks symbol table entries
 		println("Processing symbol table entries.");
 		Address symEntry = symTbl;
 		for (int i = 0; (i < symTblLen) && !monitor.isCancelled(); i++, symEntry =
@@ -798,7 +798,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 					println("NULL symType!");
 					break;
 
-				case 2: // Local Absolute 
+				case 2: // Local Absolute
 				case 3: // Global Absolute
 				case 6: // Local Data
 				case 7: // Global Data
@@ -809,7 +809,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 					break;
 
 				case 4: // Local .text
-				case 5: // Global .text  
+				case 5: // Global .text
 					doLocalDisassemble(symLoc);
 					createFunction(symLoc, symName);
 					if (getFunctionAt(symLoc) != null) {

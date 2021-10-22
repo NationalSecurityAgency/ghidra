@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,8 @@ import ghidra.util.ErrorDisplay;
 import ghidra.util.ErrorLogger;
 
 /**
- * An error display wrapper that allows us to fail tests when errors are encountered.  This is 
- * a way for us to fail for exceptions that come from client code, but are handled by the 
+ * An error display wrapper that allows us to fail tests when errors are encountered.  This is
+ * a way for us to fail for exceptions that come from client code, but are handled by the
  * error display service, while running tests.
  */
 public class TestFailingErrorDisplayWrapper implements ErrorDisplay {
@@ -45,7 +45,7 @@ public class TestFailingErrorDisplayWrapper implements ErrorDisplay {
 			String title, Object message, Throwable throwable) {
 
 		if (!ConcurrentTestExceptionHandler.isEnabled()) {
-			// cheat: we don't want stack traces being printed to the log when we errors are 
+			// cheat: we don't want stack traces being printed to the log when we errors are
 			//        disabled
 			throwable = null;
 		}
@@ -67,7 +67,7 @@ public class TestFailingErrorDisplayWrapper implements ErrorDisplay {
 			String title, Object message, Throwable throwable) {
 
 		if (!ConcurrentTestExceptionHandler.isEnabled()) {
-			// cheat: we don't want stack traces being printed to the log when we errors are 
+			// cheat: we don't want stack traces being printed to the log when we errors are
 			//        disabled
 			throwable = null;
 		}
@@ -76,7 +76,7 @@ public class TestFailingErrorDisplayWrapper implements ErrorDisplay {
 
 		if (throwable != null) {
 			// For now, only report exceptions; warning messages don't' seem important enough
-			// to fail a test.  We can always change this.  
+			// to fail a test.  We can always change this.
 			ConcurrentTestExceptionHandler.handle(Thread.currentThread(), throwable);
 		}
 	}

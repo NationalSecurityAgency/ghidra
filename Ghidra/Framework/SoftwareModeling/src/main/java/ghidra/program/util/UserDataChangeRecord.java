@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ public class UserDataChangeRecord extends DomainObjectChangeRecord {
     private Object oldValue;
     private Object newValue;
     private String propertyName;
-	
+
     /**
      * Constructor
      * @param propertyName name of the property
@@ -32,13 +32,13 @@ public class UserDataChangeRecord extends DomainObjectChangeRecord {
      */
     public UserDataChangeRecord(String propertyName,
                                         Object oldValue,
-                                        Object newValue) { 
+                                        Object newValue) {
         super(ChangeManager.DOCR_USER_DATA_CHANGED);
         this.propertyName = propertyName;
         this.oldValue = oldValue;
         this.newValue = newValue;
     }
-    
+
 	/**
 	 * Constructor for change record for removing a range of properties.
 	 * @param propertyName name of the property
@@ -47,7 +47,7 @@ public class UserDataChangeRecord extends DomainObjectChangeRecord {
 		super(ChangeManager.DOCR_CODE_UNIT_PROPERTY_RANGE_REMOVED);
 		this.propertyName = propertyName;
 	}
-		
+
     /**
      * Get the name of the property being changed.
      */
@@ -70,5 +70,5 @@ public class UserDataChangeRecord extends DomainObjectChangeRecord {
     public Object getNewValue() {
         return newValue;
     }
-    
+
 }

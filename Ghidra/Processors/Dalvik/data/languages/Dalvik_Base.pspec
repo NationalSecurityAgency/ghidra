@@ -16,7 +16,7 @@
   <inferptrbounds>
     <range space="ram" first="0" last="0"/>   <!-- Don't try to infer pointers from constants in the body of a function -->
   </inferptrbounds>
-  
+
   <jumpassist name="switchAssist">
     <case_pcode>
       <input name="index" size="4"/>
@@ -27,7 +27,7 @@
       <output name="finaladdr" size="4"/>
       <body><![CDATA[
         finaladdr = *(table + distance + 4 + index * 4);
-      ]]></body>      
+      ]]></body>
     </case_pcode>
     <addr_pcode>
       <input name="index" size="4"/>
@@ -39,7 +39,7 @@
       <body><![CDATA[
         finaladdr = *(table + distance + 4 + tableSize * 4 + index * 4);
         finaladdr = table + finaladdr * 2;
-      ]]></body>      
+      ]]></body>
     </addr_pcode>
     <default_pcode>
       <input name="index" size="4"/>
@@ -50,7 +50,7 @@
       <output name="finaladdr" size="4"/>
       <body><![CDATA[
         finaladdr = defaultAddr;
-      ]]></body>      
+      ]]></body>
     </default_pcode>
   </jumpassist>
 </processor_spec>

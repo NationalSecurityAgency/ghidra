@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,12 +30,12 @@ import ghidra.util.Msg;
 
 /**
  * Type information for a particular value or {@link TargetObject}
- * 
+ *
  * <p>
  * This allows a client to inspect predictable aspects of a model before fetching any actual
  * objects. This also helps a client understand where to listen for particular types of objects and
  * comprehend the model's structure in general.
- * 
+ *
  * <p>
  * For a primitive type, the type is given by {@link #getType()}. For {@link TargetObject}s,
  * supported interfaces are given by {@link #getInterfaces()}. The types of children are determined
@@ -49,7 +49,7 @@ public interface TargetObjectSchema {
 
 	/**
 	 * An identifier for schemas within a context.
-	 * 
+	 *
 	 * This is essentially a wrapper on {@link String}, but typed so that strings and names cannot
 	 * be accidentally interchanged.
 	 */
@@ -58,11 +58,11 @@ public interface TargetObjectSchema {
 
 		/**
 		 * Create an identifier with the given name
-		 * 
+		 *
 		 * <p>
 		 * In most cases, this constructor should always be wrapped in a cache, e.g.,
 		 * {@link Map#computeIfAbsent(Object, java.util.function.Function)}.
-		 * 
+		 *
 		 * @param name the name
 		 */
 		public SchemaName(String name) {
@@ -71,7 +71,7 @@ public interface TargetObjectSchema {
 
 		/**
 		 * {@inheritDoc}
-		 * 
+		 *
 		 * @return the name
 		 */
 		@Override
@@ -104,7 +104,7 @@ public interface TargetObjectSchema {
 
 	/**
 	 * A mode describing what "promise" a model makes when keeping elements or attributes up to date
-	 * 
+	 *
 	 * <p>
 	 * Each object specifies a element sync mode, and an attribute sync mode. These describe when
 	 * the client must call {@link TargetObject#resync(boolean, boolean)} to refresh/resync to
@@ -114,7 +114,7 @@ public interface TargetObjectSchema {
 	enum ResyncMode {
 		/**
 		 * The object's elements are kept up to date via unsolicited push notifications / callbacks
-		 * 
+		 *
 		 * <p>
 		 * The client should never have to call {@link TargetObject#resync()}. This is the default,
 		 * and it is preferred for attributes. It is most appropriate for small-ish collections that
@@ -130,7 +130,7 @@ public interface TargetObjectSchema {
 		},
 		/**
 		 * The object must be explicitly synchronized once
-		 * 
+		 *
 		 * <p>
 		 * This mode is appropriate for large collections, e.g., the symbols of a module. To push
 		 * these without solicitation could be expensive, both for the model to retrieve them from
@@ -147,7 +147,7 @@ public interface TargetObjectSchema {
 		},
 		/**
 		 * The object's elements are only updated when requested
-		 * 
+		 *
 		 * <p>
 		 * This is the default for elements. It is appropriate for collections where the client
 		 * doesn't necessarily need an up-to-date copy. Please note the higher likelihood that the
@@ -189,38 +189,38 @@ public interface TargetObjectSchema {
 
 		/**
 		 * Get the name of the attribute
-		 * 
+		 *
 		 * @return the name of the attribute
 		 */
 		String getName();
 
 		/**
 		 * Get the schema name for the named attribute
-		 * 
+		 *
 		 * @return the schema name
 		 */
 		SchemaName getSchema();
 
 		/**
 		 * Check if the named attribute must always be present
-		 * 
+		 *
 		 * @return true if required, false if optional
 		 */
 		boolean isRequired();
 
 		/**
 		 * Check if the named attribute can be modified
-		 * 
+		 *
 		 * @return true if immutable, false if mutable
 		 */
 		boolean isFixed();
 
 		/**
 		 * Check if the named attribute should be displayed be default
-		 * 
+		 *
 		 * <p>
 		 * This is purely a UI hint. It has no other semantic consequence.
-		 * 
+		 *
 		 * @return true if hidden, false if visible
 		 */
 		boolean isHidden();
@@ -228,79 +228,79 @@ public interface TargetObjectSchema {
 
 	/**
 	 * Get the context of which this schema is a member
-	 * 
+	 *
 	 * <p>
 	 * All schema names are resolved in this same context
-	 * 
+	 *
 	 * @return the context
 	 */
 	SchemaContext getContext();
 
 	/**
 	 * Get the name of this schema
-	 * 
+	 *
 	 * @return the name
 	 */
 	SchemaName getName();
 
 	/**
 	 * Get the Java class that best represents this type.
-	 * 
+	 *
 	 * <p>
 	 * Note that this is either a primitive, or {@link TargetObject}. Even though an object
 	 * implementation is necessarily a sub-type of {@link TargetObject}, for any object schema, this
 	 * return {@link TargetObject}. Information about a "sub-type" of object is communicated via
 	 * interfaces, element schemas, and attribute schemas.
-	 * 
+	 *
 	 * @return the Java class for this type
 	 */
 	Class<?> getType();
 
 	/**
 	 * Get the minimum interfaces supported by a conforming object
-	 * 
+	 *
 	 * @return the set of required interfaces
 	 */
 	Set<Class<? extends TargetObject>> getInterfaces();
 
 	/**
 	 * Check if this object is the canonical container for its elements
-	 * 
+	 *
 	 * <p>
 	 * This is generally in reference to the default type of this object's elements. For example, if
 	 * elements of this object are all expected to support the "Process" interface, then this is the
 	 * canonical Process container. Any Process ought to have a (canonical) path in this container.
 	 * Any other path referring to such a Process ought to be a link.
-	 * 
+	 *
 	 * <p>
 	 * NOTE: the concept of links is still in incubation, as some native debugging APIs seem to have
 	 * made it difficult to detect object identity. Additionally, it's possible a caller's first
 	 * encounter with an object is not via its canonical path, and it may be difficult to assign a
 	 * path having only the native-API-given object in hand.
-	 * 
+	 *
 	 * @return true if this is a canonical container, false otherwise
 	 */
 	boolean isCanonicalContainer();
 
 	/**
 	 * Get the map of element indices to named schemas
-	 * 
+	 *
 	 * <p>
 	 * It is uncommon for this map to be populated, since the elements of a given container are
 	 * typically uniform in type. Nevertheless, there can be restrictions imposed on -- and
 	 * information provided for -- specific indices.
-	 * 
+	 *
 	 * @return the map
 	 */
 	Map<String, SchemaName> getElementSchemas();
 
 	/**
 	 * Get the default schema for elements
-	 * 
+	 *
 	 * <p>
 	 * Since elements of a given container are typically uniform in type, this is the primary means
 	 * of specifying element schemas.
-	 * 
+	 *
 	 * @return the default named schema
 	 */
 	default SchemaName getDefaultElementSchema() {
@@ -309,11 +309,11 @@ public interface TargetObjectSchema {
 
 	/**
 	 * Get the named schema for a given element index
-	 * 
+	 *
 	 * <p>
 	 * If there's a schema specified for the given index, that schema is taken. Otherwise, the
 	 * default element schema is taken.
-	 * 
+	 *
 	 * @param index the index
 	 * @return the named schema
 	 */
@@ -328,27 +328,27 @@ public interface TargetObjectSchema {
 
 	/**
 	 * Get the re-synchronization mode for the object's elements
-	 * 
+	 *
 	 * @return the element re-synchronization mode
 	 */
 	ResyncMode getElementResyncMode();
 
 	/**
 	 * Get the map of attribute names to named schemas
-	 * 
+	 *
 	 * @return the map
 	 */
 	Map<String, AttributeSchema> getAttributeSchemas();
 
 	/**
 	 * Get the default schema for attributes
-	 * 
+	 *
 	 * <p>
 	 * Since the expected attributes and their respective schemas are generally enumerated, this
 	 * most commonly returns {@link AttributeSchema#DEFAULT_ANY}, to allow unrestricted use of
 	 * additional attributes, or {@link AttributeSchema#DEFAULT_VOID}, to forbid any additional
 	 * attributes.
-	 * 
+	 *
 	 * @return the default attribute schema
 	 */
 	default AttributeSchema getDefaultAttributeSchema() {
@@ -357,11 +357,11 @@ public interface TargetObjectSchema {
 
 	/**
 	 * Get the attribute schema for a given attribute name
-	 * 
+	 *
 	 * <p>
 	 * If there's a schema specified for the given name, that schema is taken. Otherwise, the
 	 * default attribute schema is taken.
-	 * 
+	 *
 	 * @param name the name
 	 * @return the attribute schema
 	 */
@@ -376,14 +376,14 @@ public interface TargetObjectSchema {
 
 	/**
 	 * Get the re-synchronization mode for attributes
-	 * 
+	 *
 	 * @return the attribute re-synchronization mode
 	 */
 	ResyncMode getAttributeResyncMode();
 
 	/**
 	 * Get the named schema for a child having the given key
-	 * 
+	 *
 	 * @param key the key
 	 * @return the named schema
 	 */
@@ -396,11 +396,11 @@ public interface TargetObjectSchema {
 
 	/**
 	 * Get the schema for a child having the given key
-	 * 
+	 *
 	 * <p>
 	 * This is the preferred method for navigating a schema and computing the expected type of a
 	 * child.
-	 * 
+	 *
 	 * @param key the key
 	 * @return the schema
 	 */
@@ -411,11 +411,11 @@ public interface TargetObjectSchema {
 
 	/**
 	 * Get the schema for a successor at the given (sub) path
-	 * 
+	 *
 	 * <p>
 	 * If this is the schema of the root object, then this gives the schema of the object at the
 	 * given path in the model.
-	 * 
+	 *
 	 * @param path the relative path from an object having this schema to the desired successor
 	 * @return the schema for the successor
 	 */
@@ -436,11 +436,11 @@ public interface TargetObjectSchema {
 
 	/**
 	 * Find (sub) path patterns that match objects implementing a given interface
-	 * 
+	 *
 	 * <p>
 	 * Each returned path pattern accepts relative paths from an object having this schema to a
 	 * successor implementing the interface.
-	 * 
+	 *
 	 * @param type the sub-type of {@link TargetObject} to search for
 	 * @param prefix the prefix for each relative path pattern
 	 * @param requireCanonical only return patterns matching a canonical location for the type
@@ -635,10 +635,10 @@ public interface TargetObjectSchema {
 
 	/**
 	 * Find the (sub) path to the canonical container for objects implementing a given interface
-	 * 
+	 *
 	 * <p>
 	 * If more than one container is found having the shortest path, then {@code null} is returned.
-	 * 
+	 *
 	 * @param type the sub-type of {@link TargetObject} to search for
 	 * @return the single path to that container
 	 */
@@ -730,7 +730,7 @@ public interface TargetObjectSchema {
 
 	/**
 	 * Check if the given key should be hidden for an object having this schema
-	 * 
+	 *
 	 * <p>
 	 * Elements ought never to be hidden. Otherwise, this defers to the attribute schema. As a
 	 * special case, if the attribute schema is {@link AttributeSchema#DEFAULT_ANY} or
@@ -739,7 +739,7 @@ public interface TargetObjectSchema {
 	 * rely on that prefix. The special case provides a transition point for client-side code that
 	 * would like to use the schema's definition for controlling visibility, but still support
 	 * models which have not implemented schemas.
-	 * 
+	 *
 	 * @param key the child key to check
 	 * @return true if hidden
 	 */
@@ -758,7 +758,7 @@ public interface TargetObjectSchema {
 	/**
 	 * Verify that the given value is of this schema's required type and, if applicable, implements
 	 * the required interfaces
-	 * 
+	 *
 	 * @param value the value
 	 */
 	default void validateTypeAndInterfaces(Object value, List<String> parentPath, String key,
@@ -792,7 +792,7 @@ public interface TargetObjectSchema {
 
 	/**
 	 * Verify that all required attributes are present
-	 * 
+	 *
 	 * <p>
 	 * Note: this should be called not at construction, but when the object is actually added to the
 	 * model, e.g., when it appears in the "added" set of
@@ -818,17 +818,17 @@ public interface TargetObjectSchema {
 
 	/**
 	 * Verify that the given change does not cause a violation of the attribute schema
-	 * 
+	 *
 	 * <p>
 	 * For attributes, there are multiple possibilities of violation:
 	 * </p>
-	 * 
+	 *
 	 * <ul>
 	 * <li>The type of an added attribute does not conform</li>
 	 * <li>A required attribute is removed</li>
 	 * <li>A fixed attribute is changed</li>
 	 * </ul>
-	 * 
+	 *
 	 * @param delta the delta, before or after the fact
 	 */
 	default void validateAttributeDelta(List<String> parentPath, Delta<?, ?> delta,
@@ -879,11 +879,11 @@ public interface TargetObjectSchema {
 
 	/**
 	 * Verify that the given change does not cause a violation of the element schema
-	 * 
+	 *
 	 * <p>
 	 * For elements, we can only check whether the type conforms. Important within that, however, is
 	 * that we verify the elements all have their required attributes.
-	 * 
+	 *
 	 * @param delta the delta, before or after the fact
 	 */
 	default void validateElementDelta(List<String> parentPath,

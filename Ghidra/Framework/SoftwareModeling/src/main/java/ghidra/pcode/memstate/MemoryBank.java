@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -90,7 +90,7 @@ public abstract class MemoryBank {
 	/// \param res is a pointer to where fetched data should be written
 	/// \param skip is the offset \e into \e the \e page to get the bytes from
 	/// \param size is the number of bytes to retrieve
-	/// \param ignoreFault if true ignore fault and return 
+	/// \param ignoreFault if true ignore fault and return
 	//protected abstract void getPage(long addr,MemoryPage res,int skip,int size, int bufOffset);
 
 	protected abstract MemoryPage getPage(long addr);
@@ -109,7 +109,7 @@ public abstract class MemoryBank {
 	/// \param bufOffset the offset in val from which to get the bytes
 	protected abstract void setPage(long addr, byte[] val, int skip, int size, int bufOffset);
 
-	/// This routine marks a range within a single \e page of the memory bank as initialized or 
+	/// This routine marks a range within a single \e page of the memory bank as initialized or
 	/// uninitialized. A page is a
 	/// fixed number of bytes, and the address of a page is always aligned based on this size.
 	/// This routine may be overridden for a page based implementation of the MemoryBank. The
@@ -126,7 +126,7 @@ public abstract class MemoryBank {
 	/// This the most general method for writing a sequence of bytes into the memory bank.
 	/// The initial offset and page writes will be wrapped within the address space.
 	/// \param offset is the start of the byte range to be written.  This offset will be wrapped
-	/// within the space 
+	/// within the space
 	/// \param size is the number of bytes to write
 	/// \param val is a pointer to the sequence of bytes to be written into the bank
 	public void setChunk(long offset, int size, byte[] val) {
@@ -194,7 +194,7 @@ public abstract class MemoryBank {
 	/// \param offset is the start of the byte range to read
 	/// \param size is the number of bytes to read
 	/// \param res is a pointer to where the retrieved bytes should be stored
-	/// \param stopOnUnintialized if true a partial read is permitted and returned size may be 
+	/// \param stopOnUnintialized if true a partial read is permitted and returned size may be
 	///        smaller than size requested if uninitialized data is encountered.
 	/// \return number of bytes actually read
 	public int getChunk(long addrOffset, int size, byte[] res, boolean stopOnUnintialized) {
@@ -231,7 +231,7 @@ public abstract class MemoryBank {
 			cursize -= initializedByteCount;
 
 			if (cursize != 0) {
-				// Handle incomplete read from current page 
+				// Handle incomplete read from current page
 				skip += initializedByteCount;
 				if (faultHandler.uninitializedRead(getSpace().getAddress(offalign + skip), cursize,
 					page.data, skip)) {

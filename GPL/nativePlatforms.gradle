@@ -13,7 +13,7 @@
 /****************************************************************************
  * Create a list containing all the platforms we support for building native
  * artifacts.  Each platform has the following fields:
- *   name: Ghidra's naming convention for the platform.  This is used in the 
+ *   name: Ghidra's naming convention for the platform.  This is used in the
            native build tasks, and is the name of the os/ subdirectories.
  *   os:   Gradle's NativePlatform operatingSystem property naming convention.
  *   arch: Gradle's NativePlatform architecture property naming convention.
@@ -36,7 +36,7 @@ ext.getCurrentPlatformName = {
 
 	if (currentPlatformName) {
 		return currentPlatformName
-	} 
+	}
 
 	def osGradle = DefaultNativePlatform.currentOperatingSystem.getName()
 	def osJvm = System.getProperty("os.name");

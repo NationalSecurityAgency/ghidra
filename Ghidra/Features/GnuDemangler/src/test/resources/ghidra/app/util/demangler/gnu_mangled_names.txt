@@ -116,7 +116,7 @@ _ZSt10__distanceISt14_List_iteratorIN6Magick10CoordinateERKS2_PS3_EENSt15iterato
 _ZNSt24__default_alloc_templateILb1ELi0EE8allocateEj                             # std::__default_alloc_template<(bool)1, (int)0>::allocate(unsigned)
 
 ###############################################################################################
-_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_EPKS3_RKS6_                           # 
+_ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_EPKS3_RKS6_                           #
 ###############################################################################################
 _ZTch0_h40_NK8KHotKeys14Window_trigger4copyEPNS_11Action_dataE                   # covariant_return_thunk[0,40] KHotKeys::Window_trigger::copy(KHotKeys::Action_data *) const
 _ZTch0_h40_NK8KHotKeys23Active_window_condition4copyEPNS_19Condition_list_baseE  # covariant_return_thunk[0,40] KHotKeys::Active_window_condition::copy(KHotKeys::Condition_list_base *) const
@@ -189,10 +189,10 @@ _ZGRZNK17KSimpleFileFilter12passesFilterEPK9KFileItemE6dotdot                   
 _ZZN11KFileDialog16staticMetaObjectEvE12param_slot_0        # KFileDialog::staticMetaObject(void)::param_slot_0
 _ZZN11KFileDialog16staticMetaObjectEijE12param_slot_0       # KFileDialog::staticMetaObject(int,unsigned_int)::param_slot_0
 _ZZN11KFileDialog16staticMetaObjectEvE12param_slot_1        # KFileDialog::staticMetaObject(void)::param_slot_1
-_ZZNK9KFileItem6pixmapEiiE17defaultFolderIcon               # KFileItem::pixmap(int,int)::defaultFolderIcon 
+_ZZNK9KFileItem6pixmapEiiE17defaultFolderIcon               # KFileItem::pixmap(int,int)::defaultFolderIcon
 _ZZNK10KDirLister13matchesFilterEPK9KFileItemE6dotdot       # KDirLister::matchesFilter(const_KFileItem_*)::dotdot
 _ZZN8Observer16staticMetaObjectEvE7slot_10                  # Observer::staticMetaObject(void)::slot_10
-_ZZN9KMimeType9findByURLERK4KURLjbbE9dotkdelnk              # KMimeType::findByURL(const_KURL_&,unsigned_int,bool,bool)::dotkdelnk 
+_ZZN9KMimeType9findByURLERK4KURLjbbE9dotkdelnk              # KMimeType::findByURL(const_KURL_&,unsigned_int,bool,bool)::dotkdelnk
 _ZZN3KIO9http_postERK4KURLRK9QMemArrayIcEbE9bad_ports       # KIO::http_post(const_KURL_&,const_QMemArray<char>_&,bool)::bad_ports
 #_ZZN9__gnu_cxx20__common_pool_policyINS_6__poolELb1EE11_S_get_poolEvE7_S_pool           # __gnu_cxx::__common_pool_policy<__gnu_cxx::__pool, true>::_S_get_pool()::_S_pool
 ###############################################################################################

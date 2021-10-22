@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,9 @@ import java.util.ArrayList;
 import ghidra.util.ObjectStorage;
 
 /**
- * <code>ObjectStorageAdapterDB</code> provides an ObjectStorage 
- * implementation for use by Saveable objects.  This allows Saveable objects 
- * to save or restore their state using a fixed set of primitives and primitive arrays. 
+ * <code>ObjectStorageAdapterDB</code> provides an ObjectStorage
+ * implementation for use by Saveable objects.  This allows Saveable objects
+ * to save or restore their state using a fixed set of primitives and primitive arrays.
  * This implementation provides various data access methods for storing/retrieving data.
  * In addition, support is provided for utilizing a Record object for data storage
  * using a suitable schema.

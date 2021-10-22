@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.service.graph.*;
 public interface GraphRenderer {
 
 	/**
-	 * Initializes the {@link VisualizationViewer}. When a new {@link DefaultGraphDisplay} is 
+	 * Initializes the {@link VisualizationViewer}. When a new {@link DefaultGraphDisplay} is
 	 * created, it uses a JungraphT {@link VisualizationViewer} to display a graph. That viewer
 	 * has many configuration settings. The GraphRender needs to initialize the viewer so that
 	 * it calls back to this renderer to get the vertex and edge data/functions that it needs

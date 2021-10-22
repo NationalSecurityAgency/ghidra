@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,12 +42,12 @@ public class SelectBackRefsAction extends NavigatableContextAction {
 
 		String group = "references";
 		setMenuBarData( new MenuData( new String[] {"Select", "Back Refs"}, null, group ) );
-		
+
 		setKeyBindingData( new KeyBindingData(KeyEvent.VK_SEMICOLON, InputEvent.CTRL_MASK ) );
 		setHelpLocation(new HelpLocation(HelpTopics.SELECTION, "Backward"));
 		addToWindowWhen(NavigatableActionContext.class);
 	}
-	
+
 	@Override
 	protected boolean isEnabledForContext(NavigatableActionContext context) {
 		return context.getAddress() != null || context.hasSelection();
@@ -59,13 +59,13 @@ public class SelectBackRefsAction extends NavigatableContextAction {
 	@Override
     public void actionPerformed(NavigatableActionContext context) {
 		AddressSetView addressSet = null;
-		
+
 		if (context.hasSelection()) {
 			addressSet = context.getSelection();
 		} else {
 			addressSet = new AddressSet(context.getAddress());
 		}
-				
+
 		ProgramSelection selection = getSelection(context.getProgram(), addressSet);
 		NavigationUtils.setSelection(tool, context.getNavigatable(), selection);
 	}
@@ -74,7 +74,7 @@ public class SelectBackRefsAction extends NavigatableContextAction {
 		AddressSet addressSet = new AddressSet();
 
 		AddressIterator refAddrIter = program.getReferenceManager().getReferenceDestinationIterator(addressSetView,true);
-		
+
 		while (refAddrIter.hasNext()) {
 			Address reffedAddr = refAddrIter.next();
 
@@ -86,7 +86,7 @@ public class SelectBackRefsAction extends NavigatableContextAction {
 				    addressSet.addRange(addr,addr);
 				}
 			}
-		}	
-		return new ProgramSelection(addressSet);	
+		}
+		return new ProgramSelection(addressSet);
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.util.Msg;
 
 /**
  * <code>DefaultGhidraProtocolConnector</code> provides support for the
- * Ghidra URL protocol without extension for accessing the legacy Ghidra Server 
+ * Ghidra URL protocol without extension for accessing the legacy Ghidra Server
  * over an RMI interface.
  */
 public class DefaultGhidraProtocolConnector extends GhidraProtocolConnector {
@@ -33,7 +33,7 @@ public class DefaultGhidraProtocolConnector extends GhidraProtocolConnector {
 	private boolean readOnly;
 
 	/**
-	 * Construct a protocol connector for use with a legacy Ghidra Server 
+	 * Construct a protocol connector for use with a legacy Ghidra Server
 	 * repository (RMI-based server)
 	 * @param ghidraURL Ghidra Server repository URL (ghidra://server/repo/...)
 	 * @throws MalformedURLException if URL is invalid

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,18 +30,18 @@ import ghidra.util.exception.NotFoundException;
 
 /**
  * <code>ElfRelocationHandler</code> provides the base class for processor specific
- * ELF relocation handlers.  
+ * ELF relocation handlers.
  */
 abstract public class ElfRelocationHandler implements ExtensionPoint {
 
 	abstract public boolean canRelocate(ElfHeader elf);
 
 	/**
-	 * Get the architecture-specific relative relocation type 
+	 * Get the architecture-specific relative relocation type
 	 * which should be applied to RELR relocations.  The
-	 * default implementation returns 0 which indicates 
+	 * default implementation returns 0 which indicates
 	 * RELR is unsupported.
-	 * @return RELR relocation type 
+	 * @return RELR relocation type
 	 */
 	public int getRelrRelocationType() {
 		return 0;
@@ -75,7 +75,7 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	/**
 	 * Determine if symbolAddr is contained within the EXTERNAL block.  If so, relocationAddress will be marked
 	 * with a <code<Unsupported EXTERNAL Data Elf Relocation</code> error bookmark.
-	 * NOTE: This method should only be invoked when the symbol offset will be adjust with a non-zero 
+	 * NOTE: This method should only be invoked when the symbol offset will be adjust with a non-zero
 	 * value (i.e., addend).
 	 * @param program
 	 * @param relocationAddress relocation address to be bookmarked if EXTERNAL block relocation
@@ -115,9 +115,9 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	}
 
 	/**
-	 * Generate error log entry and bookmark at relocationAddress indicating 
+	 * Generate error log entry and bookmark at relocationAddress indicating
 	 * an unhandled relocation.
-	 * @param program 
+	 * @param program
 	 * @param relocationAddress relocation address to be bookmarked
 	 * @param type relocation type
 	 * @param symbolIndex associated symbol index within symbol table
@@ -138,9 +138,9 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	}
 
 	/**
-	 * Generate error log entry and bookmark at relocationAddress indicating 
+	 * Generate error log entry and bookmark at relocationAddress indicating
 	 * an unsupported RELR relocation.
-	 * @param program 
+	 * @param program
 	 * @param relocationAddress relocation address to be bookmarked
 	 */
 	public static void markAsUnsupportedRelr(Program program, Address relocationAddress) {
@@ -152,7 +152,7 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	/**
 	 * Generate error log entry and bookmark at relocationAddress where
 	 * import failed to transition block to initialized while processing relocation.
-	 * @param program 
+	 * @param program
 	 * @param relocationAddress relocation address to be bookmarked
 	 * @param type relocation type
 	 * @param symbolIndex associated symbol index within symbol table
@@ -177,7 +177,7 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	/**
 	 * Generate error log entry and bookmark at relocationAddress where
 	 * import failed to be applied.
-	 * @param program 
+	 * @param program
 	 * @param relocationAddress relocation address to be bookmarked
 	 * @param type relocation type
 	 * @param symbolName associated symbol name
@@ -192,7 +192,7 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	/**
 	 * Generate error log entry and bookmark at relocationAddress where
 	 * import failed to be applied.
-	 * @param program 
+	 * @param program
 	 * @param relocationAddress relocation address to be bookmarked
 	 * @param type relocation type
 	 * @param symbolName associated symbol name
@@ -213,7 +213,7 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	/**
 	 * Generate warning log entry and bookmark at relocationAddress where
 	 * import issue occurred.
-	 * @param program 
+	 * @param program
 	 * @param relocationAddress relocation address to be bookmarked
 	 * @param type relocation type
 	 * @param msg message associated with warning
@@ -228,7 +228,7 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	/**
 	 * Generate warning log entry and bookmark at relocationAddress where
 	 * import issue occurred.
-	 * @param program 
+	 * @param program
 	 * @param relocationAddress relocation address to be bookmarked
 	 * @param type relocation type
 	 * @param symbolName symbol name
@@ -238,7 +238,7 @@ abstract public class ElfRelocationHandler implements ExtensionPoint {
 	 */
 	public static void markAsWarning(Program program, Address relocationAddress, String type,
 			String symbolName, long symbolIndex, String msg, MessageLog log) {
-		
+
 		symbolName = symbolName == null ? "<no name>" : symbolName;
 		log.appendMsg("Elf Relocation Warning: Type = " + type + " at " + relocationAddress +
 			", Symbol = " + symbolName + ": " + msg);

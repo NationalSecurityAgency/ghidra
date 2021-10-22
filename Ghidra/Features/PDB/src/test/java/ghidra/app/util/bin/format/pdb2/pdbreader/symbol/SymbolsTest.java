@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -292,10 +292,10 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedInt(0); // flags
 		writer.putUnsignedShort(processor.getValue()); // Processor value.
 		writer.putUnsignedShort(0x0001); // front end major version number
-		writer.putUnsignedShort(0x0002); // front end minor version number 
+		writer.putUnsignedShort(0x0002); // front end minor version number
 		writer.putUnsignedShort(0x0003); // front end build version number
 		writer.putUnsignedShort(0x0004); // back end major version number
-		writer.putUnsignedShort(0x0005); // back end minor version number 
+		writer.putUnsignedShort(0x0005); // back end minor version number
 		writer.putUnsignedShort(0x0006); // back end build version number
 		writer.putByteLengthPrefixedUtf8String("CompilerVersionString"); // This is len pref.
 		writer.putNullTerminatedUtf8String("optionalString1"); // These are null term.
@@ -324,10 +324,10 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedInt(0); // flags
 		writer.putUnsignedShort(processor.getValue()); // Processor value.
 		writer.putUnsignedShort(0x0001); // front end major version number
-		writer.putUnsignedShort(0x0002); // front end minor version number 
+		writer.putUnsignedShort(0x0002); // front end minor version number
 		writer.putUnsignedShort(0x0003); // front end build version number
 		writer.putUnsignedShort(0x0004); // back end major version number
-		writer.putUnsignedShort(0x0005); // back end minor version number 
+		writer.putUnsignedShort(0x0005); // back end minor version number
 		writer.putUnsignedShort(0x0006); // back end build version number
 		writer.putNullTerminatedUtf8String("CompilerVersionString"); // These are null term.
 		writer.putNullTerminatedUtf8String("optionalString1"); // These are null term.
@@ -356,13 +356,13 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedInt(0); // flags
 		writer.putUnsignedShort(processor.getValue()); // Processor value.
 		writer.putUnsignedShort(0x0001); // front end major version number
-		writer.putUnsignedShort(0x0002); // front end minor version number 
+		writer.putUnsignedShort(0x0002); // front end minor version number
 		writer.putUnsignedShort(0x0003); // front end build version number
-		writer.putUnsignedShort(0x0004); // front end QFE version number 
+		writer.putUnsignedShort(0x0004); // front end QFE version number
 		writer.putUnsignedShort(0x0005); // back end major version number
-		writer.putUnsignedShort(0x0006); // back end minor version number 
+		writer.putUnsignedShort(0x0006); // back end minor version number
 		writer.putUnsignedShort(0x0007); // back end build version number
-		writer.putUnsignedShort(0x0008); // back end QFE version number 
+		writer.putUnsignedShort(0x0008); // back end QFE version number
 		writer.putNullTerminatedUtf8String("CompilerVersionString"); // These are null term.
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
@@ -3771,7 +3771,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedInt(0x1000); // section-relative offset to the base for switch offsets
 		writer.putUnsignedShort(1); // section index of the base
 		writer.putUnsignedShort(1); // (0 - 10)
-		writer.putUnsignedInt(0x2000); // section-relative offset to the table branch instruction 
+		writer.putUnsignedInt(0x2000); // section-relative offset to the table branch instruction
 		writer.putUnsignedInt(0x3000); // section-relative offset to the start of the table
 		writer.putUnsignedShort(1); // section index of the table branch instruction
 		writer.putUnsignedShort(1); // section index of the table
@@ -3929,7 +3929,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		//   bit  2: function uses longjmp()
 		//   bit  3: function uses inline asm
 		//   bit  4: function has EH states
-		//   bit  5: function was specified as inline 
+		//   bit  5: function was specified as inline
 		//   bit  6: function has SEH
 		//   bit  7: function is __declspec(naked)
 		//   bit  8: function has buffer security check introduced by /GS
@@ -3938,8 +3938,8 @@ public class SymbolsTest extends AbstractGenericTest {
 		//   bit 11: function was inline within another function
 		//   bit 12: function is __declspec(strict_gs_check)
 		//   bit 13: function is __declspec(safebuffers)
-		//   bits 14-15: record function's local pointer explicitly 
-		//   bits 16-17: record function's parameter pointer explicitly 
+		//   bits 14-15: record function's local pointer explicitly
+		//   bits 16-17: record function's parameter pointer explicitly
 		//   bit  18: function was compiled with PGO/PGU
 		//   bit  19: function Do we have valid Pogo counts?
 		//   bit  20: function Did we optimized for speed?
@@ -3981,7 +3981,7 @@ public class SymbolsTest extends AbstractGenericTest {
 		writer.putUnsignedShort(1); // unknown
 		writer.putUnsignedShort(2); // unknown
 		writer.putUnsignedShort(3); // unknown
-		writer.putNullTerminatedUtf8String("UnknownX1167String"); // string 
+		writer.putNullTerminatedUtf8String("UnknownX1167String"); // string
 		PdbByteReader reader = new PdbByteReader(writer.get());
 		AbstractMsSymbol symbol = symbolParser.parse(reader);
 		assertEquals(symbol instanceof UnknownX1167MsSymbol, true);

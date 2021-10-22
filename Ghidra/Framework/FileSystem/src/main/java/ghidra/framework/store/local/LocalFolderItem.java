@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,8 +63,8 @@ public abstract class LocalFolderItem implements FolderItem {
 	long checkinId = DEFAULT_CHECKOUT_ID;
 
 	/**
-	 * Construct an existing item which corresponds to the specified 
-	 * property file.  If a data directory is found it will be 
+	 * Construct an existing item which corresponds to the specified
+	 * property file.  If a data directory is found it will be
 	 * associated with this item.
 	 * @param fileSystem file system
 	 * @param propertyFile property file
@@ -81,11 +81,11 @@ public abstract class LocalFolderItem implements FolderItem {
 	}
 
 	/**
-	 * Constructor for a new or existing item which corresponds to the specified 
-	 * property file.  
+	 * Constructor for a new or existing item which corresponds to the specified
+	 * property file.
 	 * @param fileSystem file system
 	 * @param propertyFile property file
-	 * @param useDataDir if true the getDataDir() method must return an appropriate 
+	 * @param useDataDir if true the getDataDir() method must return an appropriate
 	 * directory for data storage.
 	 * @param create if true the data directory will be created
 	 * @throws IOException
@@ -275,7 +275,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	}
 
 	/**
-	 * Abort the creation of 
+	 * Abort the creation of
 	 *
 	 */
 	void abortCreate() {
@@ -409,7 +409,7 @@ public abstract class LocalFolderItem implements FolderItem {
 
 	/**
 	 * Move this item into a newFolder which has a path of newPath.
-	 * @param newFolder new parent directory/folder 
+	 * @param newFolder new parent directory/folder
 	 * @param newStorageName new storage name
 	 * @param newPath new parent path
 	 * @throws DuplicateFileException
@@ -657,7 +657,7 @@ public abstract class LocalFolderItem implements FolderItem {
 		synchronized (fileSystem) {
 
 			ItemCheckoutStatus coStatus =
-				checkoutMgr.newCheckout(checkoutType, 
+				checkoutMgr.newCheckout(checkoutType,
 						user, getCurrentVersion(), projectPath);
 			if (checkoutType != CheckoutType.NORMAL && coStatus != null && getFileID() == null) {
 				// Establish missing fileID for on exclusive checkout
@@ -792,7 +792,7 @@ public abstract class LocalFolderItem implements FolderItem {
 	}
 
 	/**
-	 * Returns the appropriate instantiation of a LocalFolderItem 
+	 * Returns the appropriate instantiation of a LocalFolderItem
 	 * based upon a specified property file which resides within a
 	 * LocalFileSystem.
 	 * @param fileSystem local file system which contains property file
@@ -857,8 +857,8 @@ public abstract class LocalFolderItem implements FolderItem {
 	 * @param versionedFolderItem versioned item which corresponds to this
 	 * non-versioned item.
 	 * @param updateItem if true this items content is updated using the versionedFolderItem
-	 * @param monitor progress monitor for update 
-	 * @throws IOException if this file is not a checked-out non-versioned file 
+	 * @param monitor progress monitor for update
+	 * @throws IOException if this file is not a checked-out non-versioned file
 	 * or an IO error occurs.
 	 * @throws CancelledException if monitor cancels operation
 	 */
@@ -866,12 +866,12 @@ public abstract class LocalFolderItem implements FolderItem {
 			TaskMonitor monitor) throws IOException, CancelledException;
 
 	/**
-	 * Update this non-versioned item with the contents of the specified item which must be 
-	 * within the same non-versioned fileSystem.  If successful, the specified item will be 
+	 * Update this non-versioned item with the contents of the specified item which must be
+	 * within the same non-versioned fileSystem.  If successful, the specified item will be
 	 * removed after its content has been moved into this item.
 	 * @param item
 	 * @param checkoutVersion
-	 * @throws IOException if this file is not a checked-out non-versioned file 
+	 * @throws IOException if this file is not a checked-out non-versioned file
 	 * or an IO error occurs.
 	 */
 	public abstract void updateCheckout(FolderItem item, int checkoutVersion) throws IOException;

@@ -7,22 +7,22 @@
 # ==========================================================================================================
 # VSX use of XA,XB,XC,XT
 # ==========================================================================================================
-# PowerPC VSX allows for VSX registers values to come from a combination of 2 different fields 
+# PowerPC VSX allows for VSX registers values to come from a combination of 2 different fields
 # XA is the value of A and AX concatenated.  (A has 5 bits and AX 1 so allows for 6 bits or 64 registers).
 # XB is the value of B and BX concatenated.  (B has 5 bits and BX 1 so allows for 6 bits or 64 registers).
 # XC is the value of C and CX concatenated.  (C has 5 bits and CX 1 so allows for 6 bits or 64 registers).
 # XT is the value of T and TX concatenated.  (T has 5 bits and TX 1 so allows for 6 bits or 64 registers).
 #
 # NOTE: A,B,C,T are all 5 bits long and AX,BX,CX,TX are all 1 bit long.
-# 
+#
 # In order to print the registers defined in XA,XB,XC,XT we need to play some tricks.
 # Normally you use a "attach variables [ field ...] [ name1 ... ]; to attach names to fields but because
 # we need to attach names to 2 fields and that is not directly supported in sleigh.
-# 
+#
 # We attach the low registers (0 to 31) to fields that overlap the normal A,B,C,T named Avsa, Bvsa, Bvsa, Bvsa.
 # We attach the high registers (31 to 63) to fields that overlap the normal A,B,C,T named Avsb, Bvsb, Bvsb, Bvsb.
 #
-# Then we make constructors dependent on the AX,BX,CX,TX values to switch between them as needed. 
+# Then we make constructors dependent on the AX,BX,CX,TX values to switch between them as needed.
 #define token instr(32)
 #...
 # support VSX args
@@ -36,22 +36,22 @@
 #	Tvsb=(21,25)
 #...
 #;
-# Attach low VSX registers 
+# Attach low VSX registers
 attach variables [ Avsa Bvsa Cvsa Svsa Tvsa ]
-	[ vs0    vs1   vs2   vs3   vs4   vs5   vs6   vs7   vs8   vs9  vs10  vs11  vs12  vs13  vs14  vs15  
-      vs16  vs17  vs18  vs19  vs20  vs21  vs22  vs23  vs24  vs25  vs26  vs27  vs28  vs29  vs30  vs31 
+	[ vs0    vs1   vs2   vs3   vs4   vs5   vs6   vs7   vs8   vs9  vs10  vs11  vs12  vs13  vs14  vs15
+      vs16  vs17  vs18  vs19  vs20  vs21  vs22  vs23  vs24  vs25  vs26  vs27  vs28  vs29  vs30  vs31
     ];
 # Attach hi VSX registers
 attach variables [ Avsb Bvsb Cvsb Svsb Tvsb ]
 	[ vs32  vs33  vs34  vs35  vs36  vs37  vs38  vs39  vs40  vs41  vs42  vs43  vs44  vs45  vs46  vs47
-      vs48  vs49  vs50  vs51  vs52  vs53  vs54  vs55  vs56  vs57  vs58  vs59  vs60  vs61  vs62  vs63 
+      vs48  vs49  vs50  vs51  vs52  vs53  vs54  vs55  vs56  vs57  vs58  vs59  vs60  vs61  vs62  vs63
     ];
-    
+
 attach variables [ Svsbx Tvsbx ]
-	[ vr0_64_0  vr1_64_0  vr2_64_0   vr3_64_0   vr4_64_0   vr5_64_0   vr6_64_0   vr7_64_0  
+	[ vr0_64_0  vr1_64_0  vr2_64_0   vr3_64_0   vr4_64_0   vr5_64_0   vr6_64_0   vr7_64_0
 	  vr8_64_0  vr9_64_0  vr10_64_0  vr11_64_0  vr12_64_0  vr13_64_0  vr14_64_0  vr15_64_0
-      vr16_64_0 vr17_64_0 vr18_64_0  vr19_64_0  vr20_64_0  vr21_64_0  vr22_64_0  vr23_64_0  
-      vr24_64_0  vr25_64_0  vr26_64_0  vr27_64_0  vr28_64_0  vr29_64_0  vr30_64_0  vr31_64_0 	
+      vr16_64_0 vr17_64_0 vr18_64_0  vr19_64_0  vr20_64_0  vr21_64_0  vr22_64_0  vr23_64_0
+      vr24_64_0  vr25_64_0  vr26_64_0  vr27_64_0  vr28_64_0  vr29_64_0  vr30_64_0  vr31_64_0
 	];
 XA: Avsa is Avsa & AX=0 { export Avsa; } # Low register version of XA (i.e A and AX fields)
 XA: Avsb is Avsb & AX=1 { export Avsb; } # Hi  register version of XA (i.e A and AX fields)
@@ -70,8 +70,8 @@ XT3: Tvsb is Tvsb & TX3=1 { export Tvsb; } # Hi  register version of XT (i.e T a
 
 XSF: fS is fS & SX=0 { export fS; }
 XSF: Svsbx is Svsbx & SX=1 { export Svsbx; }
-XTF: fT is fT & TX=0 { export fT; } 
-XTF: Tvsbx is Tvsbx & TX=1 { export Tvsbx; } 
+XTF: fT is fT & TX=0 { export fT; }
+XTF: Tvsbx is Tvsbx & TX=1 { export Tvsbx; }
 
 
 DBUILD: val		is DX & DM2 & DC6 [ val = (DC6 << 6) | (DM2 << 5) | DX; ] { export *[const]:1 val; }
@@ -81,7 +81,7 @@ DBUILD: val		is DX & DM2 & DC6 [ val = (DC6 << 6) | (DM2 << 5) | DX; ] { export 
 define pcodeop lxvdsxOp;
 # ISA-info: lxvdsx - Form "XX1" Page 339 Category "VSX"
 # binutils: vsx.d:    8:	7d 0a a2 99 	lxvdsx  vs40,r10,r20
-:lxvdsx XT,A,B is $(NOTVLE) & OP=31 & XT & A & B & XOP_1_10=332 & TX { XT = lxvdsxOp(A,B); } 
+:lxvdsx XT,A,B is $(NOTVLE) & OP=31 & XT & A & B & XOP_1_10=332 & TX { XT = lxvdsxOp(A,B); }
 
 # lxsdx XT,RA,RB
 # ISA-info: lxsdx - Form "XX1" Page 338 Category "VSX"
@@ -91,7 +91,7 @@ define pcodeop lxvdsxOp;
 	XT[0,64] = *:8 ea;
 }
 
-# name	 lxvd2x	 code	 7c000698	 mask	 fe0700fc00000000	 flags	 @VSX 	 operands	69	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+# name	 lxvd2x	 code	 7c000698	 mask	 fe0700fc00000000	 flags	 @VSX 	 operands	69	31	38	0	0	0	0	0
 :lxvd2x XT,RA_OR_ZERO,B is $(NOTVLE) & OP=31 & XT & RA_OR_ZERO & B & XOP_1_10=844 {
 	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	XT[64,64] = *:8 ea;
@@ -104,14 +104,14 @@ define pcodeop stxsdxOp;
 :stxsdx XT,RA_OR_ZERO,B is $(NOTVLE) & OP=31 & XT & RA_OR_ZERO & B & XOP_1_10=716 & TX  {
 	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	*[ram]:8 EA = stxsdxOp(RA_OR_ZERO,B);
-} 
+}
 
-# name	 stxvd2x	 code	 7c000798	 mask	 fe0700fc00000000	 flags	 @VSX 	 operands	69	31	38	0	0	0	0	0	 																																																																																																																																																																																																																																														
+# name	 stxvd2x	 code	 7c000798	 mask	 fe0700fc00000000	 flags	 @VSX 	 operands	69	31	38	0	0	0	0	0
 :stxvd2x XS,RA_OR_ZERO,B is $(NOTVLE) & OP=31 & XS & RA_OR_ZERO & B & XOP_1_10=972 {
 	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	*:8 ea = XS(8);
 	*:8 (ea+8) = XS:8;
-} 
+}
 
 # ISA-cmt: lxvw4x - Load VSR Vector Word*4 Indexed
 # ISA-info: lxvw4x - Form "XX1" Page 339 Category "VSX"
@@ -119,10 +119,10 @@ define pcodeop stxsdxOp;
 :lxvw4x XT,RA_OR_ZERO,B is $(NOTVLE) & OP=31 & XT & RA_OR_ZERO & B & XOP_1_10=780 {
 	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	XT[96,32] = *:4 ea;
-	XT[64,32] = *:4 (ea + 4); 
-	XT[32,32] = *:4 (ea + 8); 
-	XT[0,32] = *:4 (ea + 12); 
-} 
+	XT[64,32] = *:4 (ea + 4);
+	XT[32,32] = *:4 (ea + 8);
+	XT[0,32] = *:4 (ea + 12);
+}
 
 # ISA-cmt: stxvw4x - Store VSR Vector Word*4 Indexed
 # ISA-info: stxvw4x - Form "XX1" Page 341 Category "VSX"
@@ -130,7 +130,7 @@ define pcodeop stxsdxOp;
 :stxvw4x XS,RA_OR_ZERO,B is $(NOTVLE) & OP=31 & XS & RA_OR_ZERO & B & XOP_1_10=908 {
 	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	*:16 ea = XS;
-} 
+}
 
 # ISA-cmt: xxsldwi - VSX Shift Left Double by Word Immediate
 # ISA-info: xxsldwi - Form "XX3" Page 501 Category "VSX"
@@ -148,7 +148,7 @@ define pcodeop xxselOp;
 :xxsel  XT,XA,XB,XC is $(NOTVLE) & OP=60 & XT & XA & XB & XC & BITS_4_5=3 {  xxselOp(XA,XB,XC);  }
 
 define pcodeop xxpermdiOp;
-# :xxpermdi BITS_21_25,TX,A,AX,B,BX,DM is $(NOTVLE) & OP=60 & XOP_3_10=10 & BITS_21_25 & TX & A & AX & B & BX & DM { xxpermdiOp(A,B); } 
+# :xxpermdi BITS_21_25,TX,A,AX,B,BX,DM is $(NOTVLE) & OP=60 & XOP_3_10=10 & BITS_21_25 & TX & A & AX & B & BX & DM { xxpermdiOp(A,B); }
 # ISA-cmt: xxpermdi - VSX Permute Doubleword Immediate
 # ISA-info: xxpermdi - Form "XX3" Page 500 Category "VSX"
 # binutils: power7.d:   30:	f0 64 29 50 	xxpermdi vs3,vs4,vs5,1
@@ -1097,18 +1097,18 @@ define pcodeop vsx300_103;
 # v2.07 additions
 :lxsiwax XT,A,B 		is $(NOTVLE) & OP=31 & XT & A & B & XOP_1_10=76 {
 	XT = vsx207_1(A,B);
-} 
+}
 
 :lxsiwzx XT,A,B 			is $(NOTVLE) & OP=31 & XT & A & B & XOP_1_10=12 {
 	XT = vsx207_2(A,B);
-} 
+}
 
 :lxsspx XT,A,B 			is $(NOTVLE) & OP=31 & XT & A & B & XOP_1_10=524 {
-	XT = vsx207_3(A,B);	
-} 
+	XT = vsx207_3(A,B);
+}
 
 :mfvsrd A,XSF				is $(NOTVLE) & OP=31 & XOP_1_10=51 & BITS_11_15=0 & XSF & A {
-	A = XSF;	
+	A = XSF;
 }
 
 :mfvsrwz A,XSF				is $(NOTVLE) & OP=31 & XOP_1_10=115 & BITS_11_15=0 & XSF & A {
@@ -1117,29 +1117,29 @@ define pcodeop vsx300_103;
 }
 
 :mtvsrd XTF,A				is $(NOTVLE) & OP=31 & XOP_1_10=179 & BITS_11_15=0 & XTF & A {
-	XTF = A;			
+	XTF = A;
 }
 
 :mtvsrwa XTF,A				is $(NOTVLE) & OP=31 & XOP_1_10=211 & BITS_11_15=0 & XTF & A {
-	XTF = sext(A:4);				
+	XTF = sext(A:4);
 }
 
 :mtvsrwz XTF,A				is $(NOTVLE) & OP=31 & XOP_1_10=243 & BITS_11_15=0 & XTF & A {
-	XTF = zext(A:4);	
+	XTF = zext(A:4);
 }
 
 :stxsiwx XS,RA_OR_ZERO,B 	is $(NOTVLE) & OP=31 & XS & RA_OR_ZERO & B & XOP_1_10=140 {
 	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
-	*[ram]:4 EA = vsx207_9(XS,RA_OR_ZERO,B);				
+	*[ram]:4 EA = vsx207_9(XS,RA_OR_ZERO,B);
 }
 
 :stxsspx XS,RA_OR_ZERO,B 	is $(NOTVLE) & OP=31 & XS & RA_OR_ZERO & B & XOP_1_10=652 {
 	EA:$(REGISTER_SIZE) = RA_OR_ZERO + B;
-	*[ram]:4 EA = vsx207_10(XS,RA_OR_ZERO,B);				
+	*[ram]:4 EA = vsx207_10(XS,RA_OR_ZERO,B);
 }
 
 :xsaddsp  XT,XA,XB 			is $(NOTVLE) & OP=60 & XOP_3_10=0 & XA & XB & XT {
-	XT = vsx207_11(XA,XB);		
+	XT = vsx207_11(XA,XB);
 }
 
 :xscvdpspn XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=0 & XOP_2_10=267 & XB & XT
@@ -1149,87 +1149,87 @@ define pcodeop vsx300_103;
 }
 
 :xscvspdpn XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=0 & XOP_2_10=331 & XB & XT {
-	XT = vsx207_13(XB);				
+	XT = vsx207_13(XB);
 }
 
 :xscvsxdsp XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=0 & XOP_2_10=312 & XB & XT {
-	XT = vsx207_14(XB);			
+	XT = vsx207_14(XB);
 }
 
 :xscvuxdsp XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=0 & XOP_2_10=296 & XB & XT {
-	XT = vsx207_15(XB);				
+	XT = vsx207_15(XB);
 }
 
 :xsdivsp  XT,XA,XB 			is $(NOTVLE) & OP=60 & XOP_3_10=24 & XA & XB & XT {
-	XT = vsx207_16(XA,XB);			
+	XT = vsx207_16(XA,XB);
 }
 
 :xsmaddasp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=1 & XA & XB & XT {
-	XT = vsx207_17(XA,XB);				
+	XT = vsx207_17(XA,XB);
 }
 
 :xsmaddmsp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=9 & XA & XB & XT {
-	XT = vsx207_18(XA,XB);				
+	XT = vsx207_18(XA,XB);
 }
 
 :xsmsubasp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=17 & XA & XB & XT {
-	XT = vsx207_19(XA,XB);	
+	XT = vsx207_19(XA,XB);
 }
 
 :xsmsubmsp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=25 & XA & XB & XT {
-	XT = vsx207_20(XA,XB);				
+	XT = vsx207_20(XA,XB);
 }
 
 :xsmulsp  XT,XA,XB 			is $(NOTVLE) & OP=60 & XOP_3_10=16 & XA & XB & XT {
-	XT = vsx207_21(XA,XB);				
+	XT = vsx207_21(XA,XB);
 }
 
 :xsnmaddasp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=129 & XA & XB & XT {
-	XT = vsx207_22(XA,XB);				
+	XT = vsx207_22(XA,XB);
 }
 
 :xsnmaddmsp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=137 & XA & XB & XT {
-	XT = vsx207_23(XA,XB);				
+	XT = vsx207_23(XA,XB);
 }
 
 :xsnmsubasp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=145 & XA & XB & XT {
-	XT = vsx207_24(XA,XB);				
+	XT = vsx207_24(XA,XB);
 }
 
 :xsnmsubmsp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=153 & XA & XB & XT {
-	XT = vsx207_25(XA,XB);				
+	XT = vsx207_25(XA,XB);
 }
 
 :xsresp XT,XB 				is $(NOTVLE) & OP=60 & BITS_16_20=0 & XOP_2_10=26 & XB & XT {
-	XT = vsx207_26(XB);					
+	XT = vsx207_26(XB);
 }
 
 :xsrsp XT,XB 				is $(NOTVLE) & OP=60 & BITS_16_20=0 & XOP_2_10=281 & XB & XT {
-	XT = vsx207_27(XB);					
+	XT = vsx207_27(XB);
 }
 
 :xsrsqrtesp XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=0 & XOP_2_10=10 & XB & XT {
-	XT = vsx207_28(XB);					
+	XT = vsx207_28(XB);
 }
 
 :xssqrtsp XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=0 & XOP_2_10=11 & XB & XT {
-	XT = vsx207_29(XB);					
+	XT = vsx207_29(XB);
 }
 
 :xssubsp  XT,XA,XB 			is $(NOTVLE) & OP=60 & XOP_3_10=8 & XA & XB & XT {
-	XT = vsx207_30(XA,XB);					
+	XT = vsx207_30(XA,XB);
 }
 
 :xxleqv  XT,XA,XB 			is $(NOTVLE) & OP=60 & XOP_3_10=186 & XA & XB & XT {
-	XT = ~(XA ^ XB);						
+	XT = ~(XA ^ XB);
 }
 
 :xxlnand  XT,XA,XB 			is $(NOTVLE) & OP=60 & XOP_3_10=178 & XA & XB & XT {
-	XT = ~(XA & XB);						
+	XT = ~(XA & XB);
 }
 
 :xxlorc  XT,XA,XB 			is $(NOTVLE) & OP=60 & XOP_3_10=170 & XA & XB & XT {
-	XT = XA | (~XB);						
+	XT = XA | (~XB);
 }
 
 #######################
@@ -1243,14 +1243,14 @@ define pcodeop vsx300_103;
 
 :lxsibzx XT,A,B 			is $(NOTVLE) & OP=31 & XT & A & B & XOP_1_10=781 {
 	XT = vsx300_2(A,B);
-} 
+}
 
 :lxsihzx XT,A,B 			is $(NOTVLE) & OP=31 & XT & A & B & XOP_1_10=813 {
-	XT = vsx300_3(A,B);	
-} 
+	XT = vsx300_3(A,B);
+}
 
 :lxssp vrD,DSs(RA_OR_ZERO) is $(NOTVLE) & OP=57 & vrD & RA_OR_ZERO & BITS_0_1=3 & DSs {
-	vrD = vsx300_4(DSs:2,RA_OR_ZERO);	
+	vrD = vsx300_4(DSs:2,RA_OR_ZERO);
 }
 
 # The endian behavior of the storage has not been modelled
@@ -1265,51 +1265,51 @@ define pcodeop vsx300_103;
 }
 
 :lxvb16x XT,A,B 			is $(NOTVLE) & OP=31 & XT & A & B & XOP_1_10=876 {
-	XT = vsx300_7(A,B);	
-} 
+	XT = vsx300_7(A,B);
+}
 
 :lxvh8x XT,A,B 				is $(NOTVLE) & OP=31 & XT & A & B & XOP_1_10=812 {
-	XT = vsx300_8(A,B);	
-} 
+	XT = vsx300_8(A,B);
+}
 
 :lxvl XT,A,B 				is $(NOTVLE) & OP=31 & XT & A & B & XOP_1_10=269 {
-	XT = vsx300_9(A,B);		
-} 
+	XT = vsx300_9(A,B);
+}
 
 :lxvll XT,A,B 				is $(NOTVLE) & OP=31 & XT & A & B & XOP_1_10=301 {
-	XT = vsx300_10(A,B);	
-} 
+	XT = vsx300_10(A,B);
+}
 
 :lxvwsx XT,A,B 				is $(NOTVLE) & OP=31 & XT & A & B & XOP_1_10=364 {
-	XT = vsx300_11(A,B);	
-} 
+	XT = vsx300_11(A,B);
+}
 
 :mfvsrld A,XSF				is $(NOTVLE) & OP=31 & XOP_1_10=307 & BITS_11_15=0 & XSF & A {
-	A = vsx300_12(XSF);	
+	A = vsx300_12(XSF);
 }
 
 :mtvsrdd XTF,A,B 			is $(NOTVLE) & OP=31 & XTF & A & B & XOP_1_10=435 {
-	XTF = vsx300_13(A,B);	
-} 
+	XTF = vsx300_13(A,B);
+}
 
 :mtvsrws XTF,A				is $(NOTVLE) & OP=31 & XOP_1_10=403 & BITS_11_15=0 & XTF & A {
-	XTF = vsx300_14(A);	
+	XTF = vsx300_14(A);
 }
 
 :stxsd vrS,DSs(RA_OR_ZERO) is $(NOTVLE) & OP=61 & vrS & RA_OR_ZERO & BITS_0_1=2 & DSs {
-	vsx300_15(vrS,DSs:2,RA_OR_ZERO);	
+	vsx300_15(vrS,DSs:2,RA_OR_ZERO);
 }
 
 :stxsibx XS,A,B 			is $(NOTVLE) & OP=31 & XS & A & B & XOP_1_10=909 {
-	vsx300_16(XS,A,B);	
-} 
+	vsx300_16(XS,A,B);
+}
 
 :stxsihx XS,A,B 			is $(NOTVLE) & OP=31 & XS & A & B & XOP_1_10=941 {
-	vsx300_17(XS,A,B);	
-} 
+	vsx300_17(XS,A,B);
+}
 
 :stxssp vrS,DSs(RA_OR_ZERO)	is $(NOTVLE) & OP=61 & vrS & RA_OR_ZERO & BITS_0_1=3 & DSs {
-	vsx300_18(vrS,DSs:2,RA_OR_ZERO);	
+	vsx300_18(vrS,DSs:2,RA_OR_ZERO);
 }
 
 # The endian behavior of the storage has not been modelled
@@ -1319,340 +1319,340 @@ define pcodeop vsx300_103;
 }
 
 :stxvb16x XS,A,B 			is $(NOTVLE) & OP=31 & XS & A & B & XOP_1_10=1004 {
-	vsx300_20(XS,A,B);	
-} 
+	vsx300_20(XS,A,B);
+}
 
 :stxvh8x XS,A,B 			is $(NOTVLE) & OP=31 & XS & A & B & XOP_1_10=940 {
 	vsx300_21(XS,A,B);
-} 
+}
 
 :stxvl XS,A,B 				is $(NOTVLE) & OP=31 & XS & A & B & XOP_1_10=397 {
-	vsx300_22(XS,A,B);	
-} 
+	vsx300_22(XS,A,B);
+}
 
 :stxvll XS,A,B 				is $(NOTVLE) & OP=31 & XS & A & B & XOP_1_10=429 {
-	vsx300_23(XS,A,B);	
-} 
+	vsx300_23(XS,A,B);
+}
 
 :stxvx XS,RA_OR_ZERO,B 				is $(NOTVLE) & OP=31 & XS & RA_OR_ZERO & B & XOP_1_10=396 {
 	ea:$(REGISTER_SIZE) = RA_OR_ZERO + B;
 	*:16 ea = XS;
-} 
+}
 
 :xsabsqp vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=0 & BIT_0=0 & XOP_1_10=804 & vrD & vrB {
-	vrD = vsx300_25(vrB);	
+	vrD = vsx300_25(vrB);
 }
 
 :xsaddqp vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=4 & R0=0 & vrD & vrA & vrB {
-	vrD = vsx300_26(vrA,vrB);		
+	vrD = vsx300_26(vrA,vrB);
 }
 
 :xsaddqpo vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=4 & R0=1 & vrD & vrA & vrB {
-	vrD = vsx300_27(vrA,vrB);			
+	vrD = vsx300_27(vrA,vrB);
 }
 
 :xscmpeqdp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=3 & XA & XB & XT {
-	XT = vsx300_28(XA,XB);		
+	XT = vsx300_28(XA,XB);
 }
 
 :xscmpexpdp  BF2,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=59 & BITS_21_22=0 & BIT_0=0 & XA & XB & BF2 {
-	vsx300_29(BF2:1,XA,XB);			
+	vsx300_29(BF2:1,XA,XB);
 }
 
 :xscmpexpqp BF2,vrA,vrB 	is $(NOTVLE) & OP=63 & BITS_21_22=0 & BIT_0=0 & XOP_1_10=164 & R0=0 & BF2 & vrA & vrB {
-	vsx300_30(BF2:1,vrA,vrB);				
+	vsx300_30(BF2:1,vrA,vrB);
 }
 
 :xscmpgedp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=19 & XA & XB & XT {
-	XT = vsx300_31(XA,XB);			
+	XT = vsx300_31(XA,XB);
 }
 
 :xscmpgtdp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=11 & XA & XB & XT {
-	XT = vsx300_32(XA,XB);			
+	XT = vsx300_32(XA,XB);
 }
 
 :xscmpnedp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=27 & XA & XB & XT {
-	XT = vsx300_33(XA,XB);			
+	XT = vsx300_33(XA,XB);
 }
 
 :xscmpoqp  BF2,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=132 & BITS_21_22=0 & BIT_0=0 & vrA & vrB & BF2 {
-	vsx300_34(BF2:1,vrA,vrB);				
+	vsx300_34(BF2:1,vrA,vrB);
 }
 
 :xscmpuqp  BF2,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=644 & BITS_21_22=0 & BIT_0=0 & vrA & vrB & BF2 {
-	vsx300_35(BF2:1,vrA,vrB);				
+	vsx300_35(BF2:1,vrA,vrB);
 }
 
 :xscpsgnqp vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & BIT_0=0 & XOP_1_10=100 & vrD & vrA & vrB {
-	vrD = vsx300_36(vrA,vrB);		
+	vrD = vsx300_36(vrA,vrB);
 }
 
 :xscvdphp XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=17 & XOP_2_10=347 & XB & XT {
-	XT = vsx300_37(XB);			
+	XT = vsx300_37(XB);
 }
 
 :xscvdpqp vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=22 & BIT_0=0 & XOP_1_10=836 & vrD & vrB {
-	vrD = vsx300_38(vrB);	
+	vrD = vsx300_38(vrB);
 }
 
 :xscvhpdp XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=16 & XOP_2_10=347 & XB & XT {
-	XT = vsx300_39(XB);			
+	XT = vsx300_39(XB);
 }
 
 :xscvqpdp vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=20 & XOP_1_10=836 & R0=0 & vrD & vrB {
-	vrD = vsx300_40(vrB);	
+	vrD = vsx300_40(vrB);
 }
 
 :xscvqpdpo vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=20 & XOP_1_10=836 & R0=1 & vrD & vrB {
-	vrD = vsx300_41(vrB);	
+	vrD = vsx300_41(vrB);
 }
 
 :xscvqpsdz vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=25 & XOP_1_10=836 & BIT_0=0 & vrD & vrB {
-	vrD = vsx300_42(vrB);	
+	vrD = vsx300_42(vrB);
 }
 
 :xscvqpswz vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=9 & XOP_1_10=836 & BIT_0=0 & vrD & vrB {
-	vrD = vsx300_43(vrB);	
+	vrD = vsx300_43(vrB);
 }
 
 :xscvqpudz vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=17 & XOP_1_10=836 & BIT_0=0 & vrD & vrB {
-	vrD = vsx300_44(vrB);	
+	vrD = vsx300_44(vrB);
 }
 
 :xscvqpuwz vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=1 & XOP_1_10=836 & BIT_0=0 & vrD & vrB {
-	vrD = vsx300_45(vrB);	
+	vrD = vsx300_45(vrB);
 }
 
 :xscvsdqp vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=10 & XOP_1_10=836 & BIT_0=0 & vrD & vrB {
-	vrD = vsx300_46(vrB);	
+	vrD = vsx300_46(vrB);
 }
 
 :xscvudqp vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=2 & XOP_1_10=836 & BIT_0=0 & vrD & vrB {
-	vrD = vsx300_47(vrB);	
+	vrD = vsx300_47(vrB);
 }
 
 :xsdivqp vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=548 & R0=0 & vrD & vrA & vrB {
-	vrD = vsx300_47(vrA,vrB);	
+	vrD = vsx300_47(vrA,vrB);
 }
 
 :xsdivqpo vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=548 & R0=1 & vrD & vrA & vrB {
-	vrD = vsx300_48(vrA,vrB);	
+	vrD = vsx300_48(vrA,vrB);
 }
 
 :xsiexpdp XT,A,B 			is $(NOTVLE) & OP=60 & XT & A & B & XOP_1_10=918 {
-	vsx300_49(A,B);	
-} 
+	vsx300_49(A,B);
+}
 
 :xsiexpqp vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & BIT_0=0 & XOP_1_10=868 & vrD & vrA & vrB {
-	vrD = vsx300_50(vrA,vrB);	
+	vrD = vsx300_50(vrA,vrB);
 }
 
 :xsmaddqp vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=388 & R0=0 & vrD & vrA & vrB {
-	vrD = vsx300_51(vrA,vrB);	
+	vrD = vsx300_51(vrA,vrB);
 }
 
 :xsmaddqpo vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=388 & R0=1 & vrD & vrA & vrB {
-	vrD = vsx300_52(vrA,vrB);	
+	vrD = vsx300_52(vrA,vrB);
 }
 
 :xsmaxcdp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=128 & XA & XB & XT {
-	XT = vsx300_53(XA,XB);		
+	XT = vsx300_53(XA,XB);
 }
 
 :xsmaxjdp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=144 & XA & XB & XT {
-	XT = vsx300_54(XA,XB);		
+	XT = vsx300_54(XA,XB);
 }
 
 :xsmincdp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=136 & XA & XB & XT {
-	XT = vsx300_55(XA,XB);		
+	XT = vsx300_55(XA,XB);
 }
 
 :xsminjdp  XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_10=152 & XA & XB & XT {
-	XT = vsx300_56(XA,XB);		
+	XT = vsx300_56(XA,XB);
 }
 
 :xsmsubqp vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=420 & R0=0 & vrD & vrA & vrB {
-	vrD = vsx300_57(vrA,vrB);	
+	vrD = vsx300_57(vrA,vrB);
 }
 
 :xsmsubqpo vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=420 & R0=1 & vrD & vrA & vrB {
-	vrD = vsx300_58(vrA,vrB);	
+	vrD = vsx300_58(vrA,vrB);
 }
 
 :xsmulqp vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=36 & R0=0 & vrD & vrA & vrB {
-	vrD = vsx300_59(vrA,vrB);	
+	vrD = vsx300_59(vrA,vrB);
 }
 
 :xsmulqpo vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=36 & R0=1 & vrD & vrA & vrB {
-	vrD = vsx300_60(vrA,vrB);	
+	vrD = vsx300_60(vrA,vrB);
 }
 
 :xsnabsqp vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=8 & XOP_1_10=804 & BIT_0=0 & vrD & vrB {
-	vrD = vsx300_61(vrB);	
+	vrD = vsx300_61(vrB);
 }
 
 :xsnegqp vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=16 & XOP_1_10=804 & BIT_0=0 & vrD & vrB {
-	vrD = vsx300_62(vrB);	
+	vrD = vsx300_62(vrB);
 }
 
 :xsnmaddqp vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=452 & R0=0 & vrD & vrA & vrB {
-	vrD = vsx300_63(vrA,vrB);	
+	vrD = vsx300_63(vrA,vrB);
 }
 
 :xsnmaddqpo vrD,vrA,vrB 	is $(NOTVLE) & OP=63 & XOP_1_10=452 & R0=1 & vrD & vrA & vrB {
-	vrD = vsx300_64(vrA,vrB);	
+	vrD = vsx300_64(vrA,vrB);
 }
 
 :xsnmsubqp vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=484 & R0=0 & vrD & vrA & vrB {
-	vrD = vsx300_65(vrA,vrB);	
+	vrD = vsx300_65(vrA,vrB);
 }
 
 :xsnmsubqpo vrD,vrA,vrB 	is $(NOTVLE) & OP=63 & XOP_1_10=484 & R0=1 & vrD & vrA & vrB {
-	vrD = vsx300_66(vrA,vrB);	
+	vrD = vsx300_66(vrA,vrB);
 }
 
 :xsrqpi R16,vrD,vrB,RMC		is $(NOTVLE) & OP=63 & BITS_17_20=0 & XOP_1_8=5 & EX=0 & vrD & vrB & R16 & RMC {
-	vrD = vsx300_67(vrB,RMC:1,R16:1);	
+	vrD = vsx300_67(vrB,RMC:1,R16:1);
 }
 
 :xsrqpix R16,vrD,vrB,RMC	is $(NOTVLE) & OP=63 & BITS_17_20=0 & XOP_1_8=5 & EX=1 & vrD & vrB & R16 & RMC {
-	vrD = vsx300_68(vrB,RMC:1,R16:1);	
+	vrD = vsx300_68(vrB,RMC:1,R16:1);
 }
 
 :xsrqpxp R16,vrD,vrB,RMC	is $(NOTVLE) & OP=63 & BITS_17_20=0 & XOP_1_8=37 & BIT_0=0 & vrD & vrB & R16 & RMC {
-	vrD = vsx300_69(vrB,RMC:1,R16:1);	
+	vrD = vsx300_69(vrB,RMC:1,R16:1);
 }
 
 :xssqrtqp vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=27 & XOP_1_10=804 & R0=0 & vrD & vrB {
-	vrD = vsx300_70(vrB);	
+	vrD = vsx300_70(vrB);
 }
 
 :xssqrtqpo vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=27 & XOP_1_10=804 & R0=1 & vrD & vrB {
-	vrD = vsx300_71(vrB);	
+	vrD = vsx300_71(vrB);
 }
 
 :xssubqp vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=516 & R0=0 & vrD & vrA & vrB {
-	vrD = vsx300_72(vrA,vrB);	
+	vrD = vsx300_72(vrA,vrB);
 }
 
 :xssubqpo vrD,vrA,vrB 		is $(NOTVLE) & OP=63 & XOP_1_10=516 & R0=1 & vrD & vrA & vrB {
-	vrD = vsx300_73(vrA,vrB);	
+	vrD = vsx300_73(vrA,vrB);
 }
 
 :xststdcdp BF2,XB,DCMX 		is $(NOTVLE) & OP=60 & BIT_0=0 & XOP_2_10=362 & XB & BF2 & DCMX {
-	vsx300_74(XB,BF2:1,DCMX:1);		
+	vsx300_74(XB,BF2:1,DCMX:1);
 }
 
 :xststdcqp BF2,vrB,DCMX 	is $(NOTVLE) & OP=63 & XOP_1_10=708 & BIT_0=0 & vrB & BF2 & DCMX {
-	vsx300_75(vrB,BF2:1,DCMX:1);		
+	vsx300_75(vrB,BF2:1,DCMX:1);
 }
 
 :xststdcsp BF2,XB,DCMX 		is $(NOTVLE) & OP=60 & BIT_0=0 & XOP_2_10=298 & XB & BF2 & DCMX {
-	vsx300_76(XB,BF2:1,DCMX:1);		
+	vsx300_76(XB,BF2:1,DCMX:1);
 }
 
 :xsxexpdp D,XB 				is $(NOTVLE) & OP=60 & BITS_16_20=0 & BIT_0=0 & XOP_2_10=347 & XB & D {
-	D = vsx300_77(XB);		
+	D = vsx300_77(XB);
 }
 
 :xsxexpqp vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=2 & XOP_1_10=804 & BIT_0=0 & vrD & vrB {
-	vrD = vsx300_78(vrB);	
+	vrD = vsx300_78(vrB);
 }
 
 :xsxsigdp D,XB 				is $(NOTVLE) & OP=60 & BITS_16_20=1 & BIT_0=0 & XOP_2_10=347 & XB & D {
-	D = vsx300_79(XB);		
+	D = vsx300_79(XB);
 }
 
 :xsxsigqp vrD,vrB 			is $(NOTVLE) & OP=63 & BITS_16_20=18 & XOP_1_10=804 & BIT_0=0 & vrD & vrB {
-	vrD = vsx300_80(vrB);	
+	vrD = vsx300_80(vrB);
 }
 
 :xvcmpnedp XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_9=123 & Rc2=0 & XA & XB & XT {
-	XT = vsx300_81(XA,XB);	
+	XT = vsx300_81(XA,XB);
 }
 
 :xvcmpnedp. XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_9=123 & Rc2=1 & XA & XB & XT {
-	XT = vsx300_82(XA,XB);	
+	XT = vsx300_82(XA,XB);
 }
 
 :xvcmpnesp XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_9=91 & Rc2=0 & XA & XB & XT {
-	XT = vsx300_83(XA,XB);	
+	XT = vsx300_83(XA,XB);
 }
 
 :xvcmpnesp. XT,XA,XB 		is $(NOTVLE) & OP=60 & XOP_3_9=91 & Rc2=1 & XA & XB & XT {
-	XT = vsx300_84(XA,XB);	
+	XT = vsx300_84(XA,XB);
 }
 
 :xvcvhpsp XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=24 & XOP_2_10=475 & XB & XT {
-	XT = vsx300_85(XB);	
+	XT = vsx300_85(XB);
 }
 
 :xvcvsphp XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=25 & XOP_2_10=475 & XB & XT {
-	XT = vsx300_86(XB);	
+	XT = vsx300_86(XB);
 }
 
 :xviexpdp XT,XA,XB 			is $(NOTVLE) & OP=60 & XOP_3_10=248 & XA & XB & XT {
-	XT = vsx300_87(XA,XB);	
+	XT = vsx300_87(XA,XB);
 }
 
 :xviexpsp XT,XA,XB 			is $(NOTVLE) & OP=60 & XOP_3_10=216 & XA & XB & XT {
-	XT = vsx300_88(XA,XB);	
+	XT = vsx300_88(XA,XB);
 }
 
 :xvtstdcdp XT,XB,DBUILD		is $(NOTVLE) & OP=60 & XOP_3_5=5 & XOP_7_10=15 & XA & XB & XT & DBUILD {
-	XT = vsx300_89(XB,DBUILD);	
+	XT = vsx300_89(XB,DBUILD);
 }
 
 :xvtstdcsp XT,XB,DBUILD		is $(NOTVLE) & OP=60 & XOP_3_5=5 & XOP_7_10=13 & XA & XB & XT & DBUILD {
-	XT = vsx300_90(XB,DBUILD);	
+	XT = vsx300_90(XB,DBUILD);
 }
 
 :xvxexpdp XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=0 & XOP_2_10=475 & XB & XT {
-	XT = vsx300_91(XB);	
+	XT = vsx300_91(XB);
 }
 
 :xvxexpsp XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=8 & XOP_2_10=475 & XB & XT {
-	XT = vsx300_92(XB);	
+	XT = vsx300_92(XB);
 }
 
 :xvxsigdp XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=1 & XOP_2_10=475 & XB & XT {
-	XT = vsx300_93(XB);	
+	XT = vsx300_93(XB);
 }
 
 :xvxsigsp XT,XB 			is $(NOTVLE) & OP=60 & BITS_16_20=9 & XOP_2_10=475 & XB & XT {
-	XT = vsx300_94(XB);	
+	XT = vsx300_94(XB);
 }
 
 :xxbrd XT,XB 				is $(NOTVLE) & OP=60 & BITS_16_20=23 & XOP_2_10=475 & XB & XT {
-	XT = vsx300_95(XB);	
+	XT = vsx300_95(XB);
 }
 
 :xxbrh XT,XB 				is $(NOTVLE) & OP=60 & BITS_16_20=7 & XOP_2_10=475 & XB & XT {
-	XT = vsx300_96(XB);	
+	XT = vsx300_96(XB);
 }
 
 :xxbrq XT,XB 				is $(NOTVLE) & OP=60 & BITS_16_20=31 & XOP_2_10=475 & XB & XT {
-	XT = vsx300_97(XB);	
+	XT = vsx300_97(XB);
 }
 
 :xxbrw XT,XB 				is $(NOTVLE) & OP=60 & BITS_16_20=15 & XOP_2_10=475 & XB & XT {
-	XT = vsx300_98(XB);	
+	XT = vsx300_98(XB);
 }
 
 :xxextractuw XT,XB,UIMB 	is $(NOTVLE) & OP=60 & BIT_20=0 & XOP_2_10=165 & XB & XT & UIMB {
-	XT = vsx300_99(XB,UIMB:1);	
+	XT = vsx300_99(XB,UIMB:1);
 }
 
 :xxinsertw XT,XB,UIMB 		is $(NOTVLE) & OP=60 & BIT_20=0 & XOP_2_10=181 & XB & XT & UIMB {
-	XT = vsx300_100(XB,UIMB:1);	
+	XT = vsx300_100(XB,UIMB:1);
 }
 
 :xxperm XT,XA,XB 			is $(NOTVLE) & OP=60 & XOP_3_10=26 & XA & XB & XT {
-	XT = vsx300_101(XA,XB);	
+	XT = vsx300_101(XA,XB);
 }
 
 :xxpermr XT,XA,XB 			is $(NOTVLE) & OP=60 & XOP_3_10=58 & XA & XB & XT {
-	XT = vsx300_102(XA,XB);	
+	XT = vsx300_102(XA,XB);
 }
 
 :xxspltib XT,UIMM8 			is $(NOTVLE) & OP=60 & BITS_19_20=0 & XOP_1_10=360 & XT & UIMM8 {

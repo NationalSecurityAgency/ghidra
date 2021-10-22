@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 	/**
 	 * Creates a new generic CLI metadata table.  This is intended to be called by a subclass
 	 * metadata table during its creation.
-	 * 
+	 *
 	 * @param reader A reader that is used to read the table.
 	 * @param metadataStream The metadata stream that the table lives in.
 	 * @param tableType The type of table to create.
@@ -70,7 +70,7 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 
 	/**
 	 * Gets this table's table type.
-	 * 
+	 *
 	 * @return This table's table type.
 	 */
 	public CliTypeTable getTableType() {
@@ -79,7 +79,7 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 
 	/**
 	 * Gets the number of rows in this table.
-	 * 
+	 *
 	 * return The number of rows in this table.
 	 */
 	public int getNumRows() {
@@ -88,7 +88,7 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 
 	/**
 	 * Gets the size in bytes of a row in this table.
-	 * 
+	 *
 	 * return The size in bytes of a row in this table.
 	 */
 	public int getRowSize() {
@@ -97,7 +97,7 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 
 	/**
 	 * Gets the size in bytes of this table.
-	 * 
+	 *
 	 * @return The size in bytes of this table.
 	 */
 	public int getTableSize() {
@@ -108,8 +108,8 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 	 * Gets the row at the given index.
 	 * <p>
 	 * NOTE: Per ISO/IEC 23271:2012(E) III.1.9, Row indices start from 1, while heap/stream indices start from 0.
-	 * 
-	 * @param rowIndex The index of the row to get (starting at 1). 
+	 *
+	 * @param rowIndex The index of the row to get (starting at 1).
 	 * @return The row at the given index.
 	 * @throws IndexOutOfBoundsException if the row index is invalid.
 	 */
@@ -126,7 +126,7 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 
 	/**
 	 * Gets the data type of a row in this table.
-	 * 
+	 *
 	 * @return The data type of a row in this table.
 	 */
 	public abstract DataType getRowDataType();
@@ -153,7 +153,7 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 
 	/**
 	 * Reads the blob index that the reader is positioned at.
-	 * 
+	 *
 	 * @param reader A reader that is positioned at the blob index to read.
 	 * @return The blob index that the reader is positioned at.
 	 * @throws IOException if there is a problem reading the blob index.
@@ -166,7 +166,7 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 
 	/**
 	 * Reads the string index that the reader is positioned at.
-	 * 
+	 *
 	 * @param reader A reader that is positioned at the string index to read.
 	 * @return The string index that the reader is positioned at.
 	 * @throws IOException if there is a problem reading the string index.
@@ -179,7 +179,7 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 
 	/**
 	 * Reads the GUID index that the reader is positioned at.
-	 * 
+	 *
 	 * @param reader A reader that is positioned at the GUID index to read.
 	 * @return The GUID index that the reader is positioned at.
 	 * @throws IOException if there is a problem reading the GUID index.
@@ -192,7 +192,7 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 
 	/**
 	 * Reads the table index that the reader is positioned at.
-	 * 
+	 *
 	 * @param reader A reader that is positioned at the table index to read.
 	 * @return The table index that the reader is positioned at.
 	 * @throws IOException if there is a problem reading the table index.
@@ -205,7 +205,7 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 
 	/**
 	 * Convenience method for getting the row representation of a table.
-	 * 
+	 *
 	 * @param table The table that has the row.
 	 * @param index The index of the row.
 	 * @return The row representation of a table.
@@ -216,7 +216,7 @@ public abstract class CliAbstractTable implements StructConverter, PeMarkupable 
 
 	/**
 	 * Convenience method for getting a safe row representation of a table.
-	 * 
+	 *
 	 * @param otherTable The table that has the row.
 	 * @param index The index of the row.
 	 * @return The safe row representation of a table.

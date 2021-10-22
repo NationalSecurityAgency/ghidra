@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,13 +25,13 @@ import org.apache.logging.log4j.core.config.plugins.*;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 
 /**
- * Log4j appender that writes messages to the log panel in the main Ghidra window. 
- * This is configured in the various log4j configuration files 
+ * Log4j appender that writes messages to the log panel in the main Ghidra window.
+ * This is configured in the various log4j configuration files
  * (generic.log4j.xml, generic.logjdev.xml, etc...).
  * <p>
- * Note: This appender is created when the log4j configuration is processed and will 
- * start receiving log messages immediately. These messages will be dropped on the 
- * floor however, until an implementation of {@link LogListener} is instantiated and 
+ * Note: This appender is created when the log4j configuration is processed and will
+ * start receiving log messages immediately. These messages will be dropped on the
+ * floor however, until an implementation of {@link LogListener} is instantiated and
  * the {@link #setLogListener(LogListener)} method is invoked.
  */
 @Plugin(name = "LogPanelAppender", category = "Core", elementType = "appender", printObject = true)
@@ -51,7 +51,7 @@ public class LogPanelAppender extends AbstractAppender {
 		if (logListener == null) {
 			return;
 		}
-		
+
 		// An error is identified as any log that is tagged ERROR or FATAL.
 		boolean isError = event.getLevel().isMoreSpecificThan(Level.ERROR);
 		String message = event.getMessage().getFormattedMessage();
@@ -74,7 +74,7 @@ public class LogPanelAppender extends AbstractAppender {
 	}
 
 	public void setLogListener(LogListener listener) {
-		// Note: this method may be called multiple times in a single JVM instance, such as 
+		// Note: this method may be called multiple times in a single JVM instance, such as
 		//       when testing.
 		this.logListener = listener;
 	}

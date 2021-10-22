@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
 import java.io.IOException;
 
 public class Ext4GroupDescriptor implements StructConverter {
-	
+
 	private int bg_block_bitmap_lo;
 	private int bg_inode_bitmap_lo;
 	private int bg_inode_table_lo;
@@ -51,16 +51,16 @@ public class Ext4GroupDescriptor implements StructConverter {
 	private short bg_block_bitmap_csum_hi;
 	private short bg_inode_bitmap_csum_hi;
 	private int bg_reserved;
-	
+
 	private boolean is64Bit;
 
 	public Ext4GroupDescriptor( ByteProvider provider, boolean is64Bit ) throws IOException {
 		this( new BinaryReader( provider, true ), is64Bit );
 	}
-	
+
 	public Ext4GroupDescriptor( BinaryReader reader, boolean is64Bit ) throws IOException {
 		this.is64Bit = is64Bit;
-		
+
 		bg_block_bitmap_lo = reader.readNextInt();
 		bg_inode_bitmap_lo = reader.readNextInt();
 		bg_inode_table_lo = reader.readNextInt();
@@ -88,7 +88,7 @@ public class Ext4GroupDescriptor implements StructConverter {
 		bg_inode_bitmap_csum_hi = reader.readNextShort();
 		bg_reserved = reader.readNextInt();
 	}
-	
+
 	public int getBg_block_bitmap_lo() {
 		return bg_block_bitmap_lo;
 	}

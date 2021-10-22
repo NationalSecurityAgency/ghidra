@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,14 +46,14 @@ public interface MarkerSet extends Comparable<MarkerSet> {
 
 	/**
 	 * Sets the AddressSetCollection to be used for this this marker set.
-	 *  
-	 * <p><strong>Warning!</strong> 
+	 *
+	 * <p><strong>Warning!</strong>
 	 * Using this method will cause this MarkerSet to directly use the given AddressSetCollection.
 	 * If the given AddressSetCollection is not an instance of ModifiableAddressSetCollection,
 	 * then the markerSet methods that add and remove addresses will thrown an
 	 * IllegalArgumentException.
-	 * 
-	 * @param set the addressSetCollection to use as this markerSet's addressSetCollection. 
+	 *
+	 * @param set the addressSetCollection to use as this markerSet's addressSetCollection.
 	 */
 	public void setAddressSetCollection(AddressSetCollection set);
 
@@ -202,7 +202,7 @@ public interface MarkerSet extends Comparable<MarkerSet> {
 	 */
 	public Address getMaxAddress();
 
-	/** 
+	/**
 	 * Returns true if any address in this MarkerSet is contained in the range defined by
 	 * start and end.
 	 * @param start the start address of the range to check for intersection.

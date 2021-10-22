@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public class Handler extends URLStreamHandler {
 
 	/**
 	 * Register the "ghidra" URL protocol Handler.
-	 * Alternatively, the protocol handler can be explicitly used when instantiating 
+	 * Alternatively, the protocol handler can be explicitly used when instantiating
 	 * a ghidra URL:
 	 * <pre>
 	 *   URL url = new URL(null, "ghidra://myGhidraServer/Test", new ghidra.framework.protocol.ghidra.Handler());
@@ -59,9 +59,9 @@ public class Handler extends URLStreamHandler {
 
 		System.setProperty(PROTOCOL_HANDLER_PKGS_PROPERTY, pkgs);
 	}
-	
+
 	/**
-	 * Determine if the specified url is supported and that any required 
+	 * Determine if the specified url is supported and that any required
 	 * protocol extensions are recognized.
 	 * @param url
 	 * @return true if support ghidra URL
@@ -81,7 +81,7 @@ public class Handler extends URLStreamHandler {
 			return false;
 		}
 	}
-	
+
 	private static GhidraProtocolHandler getProtocolExtensionHandler(URL url) throws MalformedURLException, NotFoundException {
 		String path = url.getPath();
 		int index = path.indexOf("://");
@@ -108,7 +108,7 @@ public class Handler extends URLStreamHandler {
 		// Example:  ghidra:http://host/repo/folder/filename
 		if (url.getAuthority() == null && !url.getPath().startsWith("/")) {
 			// check for protocol handler which provides access to a full repository
-			// while specifying a specific folder/file within the repository.  
+			// while specifying a specific folder/file within the repository.
 			// The repository root is inferred from the URL path.
 			try {
 				GhidraProtocolHandler protocolHandler = getProtocolExtensionHandler(url);

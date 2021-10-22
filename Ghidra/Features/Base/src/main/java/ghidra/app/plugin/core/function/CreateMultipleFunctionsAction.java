@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,10 +24,10 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.program.util.ProgramSelection;
 
 /**
- * <CODE>CreateMultipleFunctionsAction</CODE> allows the user to create functions from the 
- * selection in the browser. This tries to create functions by working from the minimum address 
- * to the maximum address in the selection. Any addresses in the selection that are already in 
- * existing functions are discarded. Every time a function is created, all the other addresses 
+ * <CODE>CreateMultipleFunctionsAction</CODE> allows the user to create functions from the
+ * selection in the browser. This tries to create functions by working from the minimum address
+ * to the maximum address in the selection. Any addresses in the selection that are already in
+ * existing functions are discarded. Every time a function is created, all the other addresses
  * for that function are also discarded.<BR>
  * Action in FunctionPlugin.
  */

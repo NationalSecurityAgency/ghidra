@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,8 @@ import docking.widgets.label.GDLabel;
 import docking.widgets.label.GHtmlLabel;
 
 /**
- * A dialog that has text fields to get user input. 
- * 
+ * A dialog that has text fields to get user input.
+ *
  */
 public class InputWithChoicesDialog extends DialogComponentProvider {
 
@@ -39,12 +39,12 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 	/**
 	 * Creates a provider for a generic input dialog with the specified title,
 	 * a label and a editable comboBox pre-populated with selectable values. The user
-	 * can check the value of {@link #isCanceled()} to know whether or not 
+	 * can check the value of {@link #isCanceled()} to know whether or not
 	 * the user canceled the operation. To get the user selected value use the
 	 * {@link #getValue()} value(s) entered by the user.  If the user cancelled the operation, then
 	 * null will be returned from <code>getValue()</code>.
 	 * <P>
-	 * 
+	 *
 	 * @param dialogTitle used as the name of the dialog's title bar
 	 * @param label value to use for the label of the text field
 	 * @param optionValues values to populate the combo box
@@ -69,12 +69,12 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 	/**
 	 * Creates a provider for a generic input dialog with the specified title,
 	 * a label and a editable comboBox pre-populated with selectable values. The user
-	 * can check the value of {@link #isCanceled()} to know whether or not 
+	 * can check the value of {@link #isCanceled()} to know whether or not
 	 * the user canceled the operation. To get the user selected value use the
 	 * {@link #getValue()} value(s) entered by the user.  If the user cancelled the operation, then
 	 * null will be returned from <code>getValue()</code>.
 	 * <P>
-	 * 
+	 *
 	 * @param dialogTitle used as the name of the dialog's title bar
 	 * @param label value to use for the label of the text field
 	 * @param optionValues values to populate the combo box
@@ -188,7 +188,7 @@ public class InputWithChoicesDialog extends DialogComponentProvider {
 	 * Set the current choice to value.
 	 * @param value updated choice
 	 * @throws NoSuchElementException if choice does not permit edits and value is
-	 * not a valid choice. 
+	 * not a valid choice.
 	 */
 	public void setValue(String value) {
 		combo.setSelectedItem(value);

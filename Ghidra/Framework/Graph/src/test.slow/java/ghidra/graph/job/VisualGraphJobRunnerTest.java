@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 	// something reasonable: too large makes the test slower; too small, then the test can timeout
 	private static final int RUN_TIME_MILLIS_JOB_THREAD_MAX = 1000;
 
-	// keep this relatively low, since non-shortcut-able jobs run to completion	
+	// keep this relatively low, since non-shortcut-able jobs run to completion
 	private static final int RUN_TIME_MILLIS_NON_SHORTCUTTABLE = 1000;
 
 	private static final int RUN_TIME_MILLIS_FOR_JOB_TO_GET_STARTED = DEFAULT_WAIT_TIMEOUT;
@@ -60,7 +60,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 		LoggingInitialization.initializeLoggingSystem();
 		logger = LogManager.getLogger(GraphJobRunner.class);
 
-		// enable tracing for debugging (note: this still requires the active log4j file 
+		// enable tracing for debugging (note: this still requires the active log4j file
 		// to have the 'console' appender set to 'TRACE'
 //		Configurator.setLevel(logger.getName(), org.apache.logging.log4j.Level.TRACE);
 //
@@ -102,7 +102,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 	@Test
 	public void testRunJobShortCutsRunningJob() {
 		//
-		// Test that running a new job will shortcut any currently running job that is 
+		// Test that running a new job will shortcut any currently running job that is
 		// shortcut-able
 		//
 
@@ -125,7 +125,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 	@Test
 	public void testRunJobDoesNotShortCutJobsThatCannotBeShortcut() {
 		//
-		// Test that running a new job will not shortcut any currently running job that is 
+		// Test that running a new job will not shortcut any currently running job that is
 		// not shortcut-able
 		//
 
@@ -146,7 +146,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 
 	@Test
 	public void testRunJobShortCutsQueuedJobsButLastOne() {
-		// 
+		//
 		// Test that we can add many jobs and that they all will be shortcut except for the last
 		// one, which will be executed.
 		//
@@ -177,7 +177,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 
 	@Test
 	public void testSchedule_ShortCutsQueuedJobs_ButNotThoseThatCannotBeShortcutOrThoseThatFollow() {
-		// 
+		//
 		// Test that we can add many jobs, with some in the middle that are not shortcut-able.
 		// We expect those before that element to be shortcut.  Those after that element should
 		// be run.
@@ -399,7 +399,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 		jobRunner.schedule(pending2);
 
 		//
-		// At this point, the latch job is waiting for us to signal a finish.  We will not 
+		// At this point, the latch job is waiting for us to signal a finish.  We will not
 		// call finish, but instead, dispose the queue.
 		//
 		jobRunner.dispose();
@@ -431,7 +431,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void schedule(GraphJob job) {
 		jobRunner.schedule(job);
@@ -814,7 +814,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 		}
 	}
 
-	// A job that will block until told to proceed, which allows this test to manipulate how 
+	// A job that will block until told to proceed, which allows this test to manipulate how
 	// the job runner queue get managed; this job will actually block the job queue
 	private class NonShortcuttableLatchJob extends AbstractTestGraphJob {
 
@@ -857,7 +857,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 		}
 	}
 
-	// A job that will block until told to proceed, which allows this test to manipulate how 
+	// A job that will block until told to proceed, which allows this test to manipulate how
 	// the job runner queue get managed; this job will actually block the job queue
 	private class ShortcuttableLatchJob extends AbstractTestGraphJob {
 
@@ -865,7 +865,7 @@ public class VisualGraphJobRunnerTest extends AbstractGenericTest {
 
 		@Override
 		public boolean canShortcut() {
-			// this class needs to be shortcut-able so that the job runner being tested 
+			// this class needs to be shortcut-able so that the job runner being tested
 			// will attempt to shortcut it
 			return true;
 		}

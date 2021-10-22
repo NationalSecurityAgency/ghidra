@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,12 +40,12 @@ import utilities.util.FileUtilities;
  * <p>
  * <pre>
  * <code>password1   [tab]   myfirstzipfile.zip</code> <b>&larr; supplies a password for the named file located in any directory</b>
- * <code>someOtherPassword   [tab]   /full/path/tozipfile.zip</code> <b>&larr; supplies password for file at specified location</b> 
+ * <code>someOtherPassword   [tab]   /full/path/tozipfile.zip</code> <b>&larr; supplies password for file at specified location</b>
  * <code>anotherPassword [tab]   file:///full/path/tozipfile.zip|zip:///subdir/in/zip/somefile.txt</code> <b>&larr; supplies password for file embedded inside a zip</b>
  * <code>yetAnotherPassword</code> <b>&larr; a password to try for any file that needs a password</b>
  * </pre>
- * 
- * 
+ *
+ *
  */
 public class CmdLinePasswordProvider implements PasswordProvider {
 	public static final String CMDLINE_PASSWORD_PROVIDER_PROPERTY_NAME = "filesystem.passwords";

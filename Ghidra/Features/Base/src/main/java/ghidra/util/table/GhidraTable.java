@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,10 +33,10 @@ import ghidra.program.util.ProgramSelection;
 /**
  * Navigation is only supported if the underlying table model
  * implements <code>ProgramTableModel</code> and the <code>setGoToService()</code> method
- * has been called with a valid reference.  When both of these conditions are met, then the 
- * table will navigate on a user's double-click or on an <code>Enter</code> key press.  Also, if 
+ * has been called with a valid reference.  When both of these conditions are met, then the
+ * table will navigate on a user's double-click or on an <code>Enter</code> key press.  Also, if
  * selection navigation is enabled, then this table will navigate <b>any time the selection of
- * the table changes</b>.  To prevent this feature call 
+ * the table changes</b>.  To prevent this feature call
  * {@link #setNavigateOnSelectionEnabled(boolean)} with a value of false.
  * <p>
  */
@@ -57,7 +57,7 @@ public class GhidraTable extends GTable {
 		super(model);
 	}
 
-	/** 
+	/**
 	 * Installs the default {@link TableCellRenderer}s for known Ghidra table cell data classes.
 	 * Subclasses can override this method to add additional types or to change the default
 	 * associations.
@@ -135,7 +135,7 @@ public class GhidraTable extends GTable {
 	}
 
 	/**
-	 * Returns the program selection equivalent to the rows currently selected in the table. 
+	 * Returns the program selection equivalent to the rows currently selected in the table.
 	 * This method is only valid when the underlying table model implements
 	 * {@link ProgramTableModel}.
 	 * <P>
@@ -154,7 +154,7 @@ public class GhidraTable extends GTable {
 	/**
 	 * Returns the program being used by this table; null if the underlying model does not
 	 * implement {@link ProgramTableModel}
-	 * 
+	 *
 	 * @return the table's program
 	 */
 	public Program getProgram() {
@@ -173,13 +173,13 @@ public class GhidraTable extends GTable {
 	}
 
 	/**
-	 * Does nothing if no {@link GoToService} has been installed from 
-	 * {@link #installNavigation(GoToService, Navigatable)}.  Also, this method will do 
-	 * nothing if this table's <code>TableModel</code> is not an instance of {@link ProgramTableModel}.  
-	 * Otherwise, this method will attempt to go to the program location denoted by the 
+	 * Does nothing if no {@link GoToService} has been installed from
+	 * {@link #installNavigation(GoToService, Navigatable)}.  Also, this method will do
+	 * nothing if this table's <code>TableModel</code> is not an instance of {@link ProgramTableModel}.
+	 * Otherwise, this method will attempt to go to the program location denoted by the
 	 * given row and column.
-	 * 
-	 * @param row the row 
+	 *
+	 * @param row the row
 	 * @param column the column
 	 */
 	public void navigate(int row, int column) {
@@ -207,11 +207,11 @@ public class GhidraTable extends GTable {
 	}
 
 	/**
-	 * Does nothing if no {@link GoToService} has been installed from 
-	 * {@link #installNavigation(GoToService, Navigatable)}.  Otherwise, this method will attempt 
+	 * Does nothing if no {@link GoToService} has been installed from
+	 * {@link #installNavigation(GoToService, Navigatable)}.  Otherwise, this method will attempt
 	 * to go to the program location denoted by the given row and column.
 	 * <p>
-	 * This method differs from {@link #navigate(int, int)} in that this method will not 
+	 * This method differs from {@link #navigate(int, int)} in that this method will not
 	 * navigate if {@link #navigateOnSelection} is <code>false</code>.
 	 */
 	private void navigateOnCurrentSelection(int row, int column) {
@@ -242,9 +242,9 @@ public class GhidraTable extends GTable {
 		// Protect against a timing issue whereby program-based table models have had their
 		// program closed while an edit is open.  Sometimes, when the table repaints, the table
 		// will trigger an editingStopped(), which attempts to commit the active edit.  This can
-		// trigger an exception when the model attempts to access the program.  Here we are 
+		// trigger an exception when the model attempts to access the program.  Here we are
 		// attempting to prevent the edit from being committed.
-		// 
+		//
 		if (programIsClosed()) {
 			return;
 		}

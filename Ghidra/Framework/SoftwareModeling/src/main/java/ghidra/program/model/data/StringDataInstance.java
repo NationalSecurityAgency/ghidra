@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ public class StringDataInstance {
 	 * Arrays of char-like elements (see {@link ArrayStringable}) are treated as string data types.
 	 * The actual data instance needs to be inspected to determine if the array is an actual string.
 	 * <p>
-	 * 
+	 *
 	 * @param dt DataType to test
 	 * @return boolean true if data type is or could be a string
 	 */
@@ -89,7 +89,7 @@ public class StringDataInstance {
 
 	/**
 	 * Returns true if the {@link Data} instance is one of the many 'char' data types.
-	 * 
+	 *
 	 * @param data {@link Data} instance to test, null ok
 	 * @return boolean true if char data
 	 */
@@ -106,7 +106,7 @@ public class StringDataInstance {
 	 * Returns a string representation of the character(s) contained in the byte array, suitable for
 	 * display as a single character, or as a sequence of characters.
 	 * <p>
-	 * 
+	 *
 	 * @param dataType the {@link DataType} of the element containing the bytes (most likely a
 	 *            ByteDataType)
 	 * @param bytes the big-endian ordered bytes to convert to a char representation
@@ -132,7 +132,7 @@ public class StringDataInstance {
 	/**
 	 * Determine if bytes contain only a single ASCII value within least-significant-byte of
 	 * big-endian byte array
-	 * 
+	 *
 	 * @param bytes value byte array in big-endian order
 	 * @return true if bytes contain a single ASCII value within least-significant-byte
 	 */
@@ -153,7 +153,7 @@ public class StringDataInstance {
 	/**
 	 * Returns a new {@link StringDataInstance} using the bytes in the data codeunit.
 	 * <p>
-	 * 
+	 *
 	 * @param data {@link Data} item
 	 * @return new {@link StringDataInstance}, never NULL. See {@link #NULL_INSTANCE}.
 	 */
@@ -180,7 +180,7 @@ public class StringDataInstance {
 	/**
 	 * Returns a new {@link StringDataInstance} using the bytes in the MemBuffer.
 	 * <p>
-	 * 
+	 *
 	 * @param dataType {@link DataType} of the bytes in the buffer.
 	 * @param buf memory buffer containing the bytes.
 	 * @param settings the Settings object
@@ -258,7 +258,7 @@ public class StringDataInstance {
 	/**
 	 * Creates a string instance using the data in the {@link MemBuffer} and the settings pulled
 	 * from the {@link AbstractStringDataType string data type}.
-	 * 
+	 *
 	 * @param dataType {@link DataType} of the string, either a {@link AbstractStringDataType}
 	 *            derived type or an {@link ArrayStringable} element-of-char-array type.
 	 * @param settings {@link Settings} attached to the data location.
@@ -274,7 +274,7 @@ public class StringDataInstance {
 	/**
 	 * Creates a string instance using the data in the {@link MemBuffer} and the settings pulled
 	 * from the {@link AbstractStringDataType string data type}.
-	 * 
+	 *
 	 * @param dataType {@link DataType} of the string, either a {@link AbstractStringDataType}
 	 *            derived type or an {@link ArrayStringable} element-of-char-array type.
 	 * @param settings {@link Settings} attached to the data location.
@@ -292,7 +292,7 @@ public class StringDataInstance {
 		this.buf = buf;
 		this.charsetName = getCharsetNameFromDataTypeOrSettings(dataType, settings);
 		this.charSize = CharsetInfo.getInstance().getCharsetCharSize(charsetName);
-		// NOTE: for now only handle padding for charSize == 1 and the data type is an array of elements, not a "string" 
+		// NOTE: for now only handle padding for charSize == 1 and the data type is an array of elements, not a "string"
 		this.paddedCharSize = (dataType instanceof ArrayStringable) && (charSize == 1) //
 				? getDataOrganization(dataType).getCharSize()
 				: charSize;
@@ -905,7 +905,7 @@ public class StringDataInstance {
 	 * {@link TranslationSettingsDefinition#getTranslatedValue(Settings) translated settings}
 	 * string.
 	 * <p>
-	 * 
+	 *
 	 * @return previously translated string.
 	 */
 	public String getTranslatedValue() {
@@ -1015,7 +1015,7 @@ public class StringDataInstance {
 	 * If the requested offset is not valid, the base string instance (itself) will be returned
 	 * instead of a new instance.
 	 * <p>
-	 * 
+	 *
 	 * @param byteOffset number of bytes from start of data instance to start new instance.
 	 * @return new StringDataInstance, or <code>this</code> if offset not valid.
 	 */
@@ -1034,7 +1034,7 @@ public class StringDataInstance {
 	 * Create a new {@link StringDataInstance} that points to a portion of this instance, starting
 	 * at a character offset (whereever that may be) into the data.
 	 * <p>
-	 * 
+	 *
 	 * @param offsetChars number of characters from the beginning of the string to start the new
 	 *            StringDataInstance.
 	 * @return new {@link StringDataInstance} pointing to a subset of characters, or the
@@ -1079,7 +1079,7 @@ public class StringDataInstance {
 	 * <p>
 	 * I dare myself to type Type one more time.
 	 * <p>
-	 * 
+	 *
 	 * @return {@link DataType}, defaulting to {@link StringDataType} if no direct match found.
 	 */
 	public DataType getStringDataTypeGuess() {
@@ -1109,7 +1109,7 @@ public class StringDataInstance {
 
 	/**
 	 * Encode a string to replace the current value
-	 * 
+	 *
 	 * @param value the value to encode
 	 * @return the encoded value
 	 * @throws CharacterCodingException if a character could not be encoded
@@ -1123,7 +1123,7 @@ public class StringDataInstance {
 
 	/**
 	 * Parse and encode a string from its representation to replace the current value
-	 * 
+	 *
 	 * @param repr the representation of the string
 	 * @return the encoded value
 	 * @throws StringParseException if the representation could not be parsed
@@ -1141,7 +1141,7 @@ public class StringDataInstance {
 
 	/**
 	 * Encode a single character to replace the current value
-	 * 
+	 *
 	 * @param value a single code point to encode
 	 * @return the encoded value
 	 * @throws CharacterCodingException if the character could not be encoded
@@ -1154,7 +1154,7 @@ public class StringDataInstance {
 
 	/**
 	 * Parse and encode a single character from its representation to replace the current value
-	 * 
+	 *
 	 * @param repr the representation of a single character
 	 * @return the encoded value
 	 * @throws StringParseException if the representation could not be parsed

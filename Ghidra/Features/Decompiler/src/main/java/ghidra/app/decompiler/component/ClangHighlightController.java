@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,19 +31,19 @@ import util.CollectionUtils;
 
 /**
  * Class to handle highlights for a decompiled function.
- * 
+ *
  * <p>This class does not painting directly.  Rather, this class tracks the currently highlighted
- * tokens and then sets the highlight color on the token when it is highlighted and clears the 
+ * tokens and then sets the highlight color on the token when it is highlighted and clears the
  * highlight color when the highlight is removed.
- * 
- * <p>This class maintains the notion of 'primary' highlights and 'secondary' highlights.  
+ *
+ * <p>This class maintains the notion of 'primary' highlights and 'secondary' highlights.
  * Primary highlights are considered transient and get cleared whenever the location changes.
  * Secondary highlights will stay until they are manually cleared by a user action.  Primary
  * highlights happen when the user clicks around the Decompiler.  They show state such as the
- * current field, impact of a variable (via a slicing action), or related syntax (such as 
+ * current field, impact of a variable (via a slicing action), or related syntax (such as
  * matching braces).  Secondary highlights are triggered by the user to show all occurrences of
- * a particular variable.  Further,  the user can apply multiple secondary highlights at the 
- * same time, with different colors for each highlight.  
+ * a particular variable.  Further,  the user can apply multiple secondary highlights at the
+ * same time, with different colors for each highlight.
  */
 public abstract class ClangHighlightController {
 

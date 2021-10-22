@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,11 @@ import ghidra.util.Msg;
 /**
  * Custom UI for a slider that dynamically adjusts the thumb height based on the size of the
  * given {@link JScrollPane} and {JTable}.
- * 
+ *
  * Note: This is used instead of a {link BasicScrollBarUI} instance because of the complexity
- * of trying to adjust the thumb size of a {@link JScrollBar} that is not attached to a 
+ * of trying to adjust the thumb size of a {@link JScrollBar} that is not attached to a
  * {@link JScrollPane} instance.
- * 
+ *
  */
 public class FVSliderUI extends BasicSliderUI {
 
@@ -46,7 +46,7 @@ public class FVSliderUI extends BasicSliderUI {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param slider
 	 * @param scrollPane
 	 * @param table
@@ -67,9 +67,9 @@ public class FVSliderUI extends BasicSliderUI {
 	 */
 	@Override
 	protected void calculateThumbSize() {
-		
+
 		super.calculateThumbSize();
-		
+
 		// Average the number of bytes in a row to get a reasonable row-to-byte factor.
 		long fileSize;
 		try {
@@ -79,7 +79,7 @@ public class FVSliderUI extends BasicSliderUI {
 			Msg.error(this,  "error reading file size: " + e);
 			return;
 		}
-		
+
 		int rows = table.getRowCount();
 		if (rows == 0) {
 			return;
@@ -98,6 +98,6 @@ public class FVSliderUI extends BasicSliderUI {
 			viewableRatio = (float) scrollPane.getViewport().getHeight() / totalLinesInFile;
 			float thumbHeight = viewableRatio * table.getRowHeight();
 			thumbRect.setSize(THUMB_WIDTH, MINIMUM_THUMB_HEIGHT + (int) thumbHeight);
-		}		
+		}
 	}
 }

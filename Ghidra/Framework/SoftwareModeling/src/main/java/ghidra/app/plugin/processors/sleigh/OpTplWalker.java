@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.program.model.pcode.PcodeOp;
  *
  */
 public class OpTplWalker {
-	
+
 	private ConstructState point;		// The current node being visited
 	private OpTpl[] oparray;			// current array of ops being traversed
 	private int depth;					// Depth of current node within the tree
@@ -45,7 +45,7 @@ public class OpTplWalker {
 			if (tpl == null)
 				return;
 		}
-		else 
+		else
 			tpl = ct.getNamedTempl(sectionnum);
 		if (tpl == null) {			// Empty named section implies straight list of build directives
 			maxsize = ct.getNumOperands();
@@ -53,10 +53,10 @@ public class OpTplWalker {
 		else {
 			oparray = tpl.getOpVec();
 			maxsize = oparray.length;
-		}		
-		
+		}
+
 	}
-	
+
 	/**
 	 * Constructor for walking an entire parse tree
 	 * @param root is the root ConstructState of the tree
@@ -71,7 +71,7 @@ public class OpTplWalker {
 		breadcrumb[0] = 0;
 		setupPoint();
 	}
-	
+
 	/**
 	 * Constructor for walking a single template
 	 * @param tpl
@@ -84,17 +84,17 @@ public class OpTplWalker {
 		oparray = tpl.getOpVec();
 		maxsize = oparray.length;
 	}
-	
+
 	public ConstructState getState() {
 		return point;
 	}
-	
+
 	public boolean isState() {
 		if (point != null)
 			return true;
 		return (maxsize > 0);
 	}
-	
+
 	/**
 	 * While walking the OpTpl's in order, follow a particular BUILD directive into its respective Constructor and ContructTpl
 	 * Use popBuild to backtrack
@@ -106,7 +106,7 @@ public class OpTplWalker {
 		breadcrumb[depth] = 0;
 		setupPoint();
 	}
-	
+
 	/**
 	 * Move to the parent of the current node
 	 */
@@ -125,7 +125,7 @@ public class OpTplWalker {
 			oparray = null;
 		}
 	}
-	
+
 	public Object nextOpTpl() {
 		int curind = breadcrumb[depth]++;
 		if (curind >= maxsize)

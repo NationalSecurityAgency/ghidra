@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,14 +19,14 @@ package ghidra.util.layout;
 import java.awt.*;
 
 /**
- * LayoutManger for arranging components into exactly two columns.  
+ * LayoutManger for arranging components into exactly two columns.
  */
 public class VariableHeightPairLayout implements LayoutManager {
 	private static final int MIN_COMP_2 = 80;
 	private int vgap;
 	private int hgap;
 	private int preferredWidth2;
-	
+
 	/**
 	 * Constructor for PairLayout.
 	 */
@@ -41,7 +41,7 @@ public class VariableHeightPairLayout implements LayoutManager {
 	public VariableHeightPairLayout(int vgap, int hgap) {
 		this(vgap, hgap, MIN_COMP_2);
 	}
-	
+
 	/**
 	 * Constructs a new PairLayout.
 	 * @param vgap the gap (in pixels) between rows.
@@ -53,7 +53,7 @@ public class VariableHeightPairLayout implements LayoutManager {
 		this.hgap = hgap;
 		this.preferredWidth2 = preferredWidth2;
 	}
-	
+
 
 
 	/**
@@ -88,7 +88,7 @@ public class VariableHeightPairLayout implements LayoutManager {
 		d.height -= vgap;
 		d.height += insets.top+insets.bottom;
 		return d;
-	} 
+	}
 
 	/**
 	 * @see LayoutManager#minimumLayoutSize(Container)
@@ -108,7 +108,7 @@ public class VariableHeightPairLayout implements LayoutManager {
 		int x = insets.left;
 		int y = insets.top;
 		int width1 = widths[0];
-		int width2 = width - (width1 + hgap); 
+		int width2 = width - (width1 + hgap);
 
 		int nRows = parent.getComponentCount();
 		for(int i=0;i<nRows;i+=2) {
@@ -134,7 +134,7 @@ public class VariableHeightPairLayout implements LayoutManager {
 			int index = i % 2;
 			widths[index] = Math.max(widths[index], d.width);
 		}
-		return widths;	
+		return widths;
 	}
 
 }

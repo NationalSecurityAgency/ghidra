@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -520,56 +520,56 @@ public:
   TypeOpBoolNegate(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opBoolNegate(op); }
 };
-  
+
 /// \brief Information about the BOOL_XOR op-code
 class TypeOpBoolXor : public TypeOpBinary {
 public:
   TypeOpBoolXor(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opBoolXor(op); }
 };
-  
+
 /// \brief Information about the BOOL_AND op-code
 class TypeOpBoolAnd : public TypeOpBinary {
 public:
   TypeOpBoolAnd(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opBoolAnd(op); }
 };
-  
+
 /// \brief Information about the BOOL_OR op-code
 class TypeOpBoolOr : public TypeOpBinary {
 public:
   TypeOpBoolOr(TypeFactory *t);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opBoolOr(op); }
 };
-  
+
 /// \brief Information about the FLOAT_EQUAL op-code
 class TypeOpFloatEqual : public TypeOpBinary {
 public:
   TypeOpFloatEqual(TypeFactory *t,const Translate *trans);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatEqual(op); }
 };
-  
+
 /// \brief Information about the FLOAT_NOTEQUAL op-code
 class TypeOpFloatNotEqual : public TypeOpBinary {
 public:
   TypeOpFloatNotEqual(TypeFactory *t,const Translate *trans);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatNotEqual(op); }
 };
-  
+
 /// \brief Information about the FLOAT_LESS op-code
 class TypeOpFloatLess : public TypeOpBinary {
 public:
   TypeOpFloatLess(TypeFactory *t,const Translate *trans);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatLess(op); }
 };
-  
+
 /// \brief Information about the FLOAT_LESSEQUAL op-code
 class TypeOpFloatLessEqual : public TypeOpBinary {
 public:
   TypeOpFloatLessEqual(TypeFactory *t,const Translate *trans);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatLessEqual(op); }
 };
-  
+
 /// \brief Information about the FLOAT_NAN op-code
 class TypeOpFloatNan : public TypeOpFunc {
 public:
@@ -583,7 +583,7 @@ public:
   TypeOpFloatAdd(TypeFactory *t,const Translate *trans);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatAdd(op); }
 };
-  
+
 /// \brief Information about the FLOAT_DIV op-code
 class TypeOpFloatDiv : public TypeOpBinary {
 public:
@@ -597,14 +597,14 @@ public:
   TypeOpFloatMult(TypeFactory *t,const Translate *trans);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatMult(op); }
 };
-  
+
 /// \brief Information about the FLOAT_SUB op-code
 class TypeOpFloatSub : public TypeOpBinary {
 public:
   TypeOpFloatSub(TypeFactory *t,const Translate *trans);			///< Constructor
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opFloatSub(op); }
 };
-  
+
 /// \brief Information about the FLOAT_NEG op-code
 class TypeOpFloatNeg : public TypeOpUnary {
 public:
@@ -714,7 +714,7 @@ public:
   virtual void push(PrintLanguage *lng,const PcodeOp *op,const PcodeOp *readOp) const { lng->opCast(op); }
   virtual void printRaw(ostream &s,const PcodeOp *op);
 };
-  
+
 /// \brief Information about the PTRADD op-code
 class TypeOpPtradd : public TypeOp {
 public:

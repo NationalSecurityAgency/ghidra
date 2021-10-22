@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public class DynamicDataTypeLocationReferencesTest extends AbstractLocationRefer
 
 		//
 		// References: one to each member; no offcut
-		//		
+		//
 		Address field0 = rttiAddr;
 		Address from1 = addr(0x01005300);
 		createReference(from1, field0);
@@ -66,7 +66,7 @@ public class DynamicDataTypeLocationReferencesTest extends AbstractLocationRefer
 
 		//
 		// References: one regular; 2 offcut
-		//		
+		//
 		Address field0 = rttiAddr;
 		Address from1 = addr(0x01005300);
 		createReference(from1, field0);
@@ -94,7 +94,7 @@ public class DynamicDataTypeLocationReferencesTest extends AbstractLocationRefer
 
 		//
 		// References: one to each member; no offcut
-		//	
+		//
 		createRTTI0DataType(rttiAddr);
 
 		Address field0 = rttiAddr;
@@ -126,7 +126,7 @@ public class DynamicDataTypeLocationReferencesTest extends AbstractLocationRefer
 
 		//
 		// References: one regular; 2 offcut
-		//		
+		//
 		Address field0 = rttiAddr;
 		Address from1 = addr(0x01005300);
 		createReference(from1, field0);
@@ -155,7 +155,7 @@ public class DynamicDataTypeLocationReferencesTest extends AbstractLocationRefer
 
 		//
 		// References: one to each member; no offcut
-		//	
+		//
 		createRTTI0DataType(rttiAddr);
 
 		Address field0 = rttiAddr;
@@ -185,7 +185,7 @@ public class DynamicDataTypeLocationReferencesTest extends AbstractLocationRefer
 
 		//
 		// References: one to each member; no offcut
-		//	
+		//
 		createRTTI0DataType(rttiAddr);
 
 		Address field0 = rttiAddr;
@@ -212,21 +212,21 @@ public class DynamicDataTypeLocationReferencesTest extends AbstractLocationRefer
 	}
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void createRTTI0DataType(Address addr) throws Exception {
 
 		/*
 		   01005470 60 54 00        RTTI_0     DAT_01005460
-		            01 64 54 
-		            00 01 48 
+		            01 64 54
+		            00 01 48
 		       01005470 60 54 00 01     addr      DAT_01005460       vfTablePointer
 		       01005474 64 54 00 01     addr      DAT_01005464       dataPointer
 		       01005478 48 65 6c 6c 6f  ds        "Hello World!",00  name
-		                20 57 6f 72 6c 
+		                20 57 6f 72 6c
 		                64 21 00
 		       01005485 00 00 00        db[3]                        alignmentBytes
-		
+
 		 */
 
 		// bytes: 0x01005460

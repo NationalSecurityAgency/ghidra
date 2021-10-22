@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,7 @@ public class DebugInfoItem implements StructConverter {
 
 	/**
 	 * <pre>
-	 * The initial value for the state machine's line register. 
+	 * The initial value for the state machine's line register.
 	 * Does not represent an actual positions entry.
 	 * </pre>
 	 */
@@ -68,7 +68,7 @@ public class DebugInfoItem implements StructConverter {
 
 	/**
 	 * <pre>
-	 * The number of parameter names that are encoded. 
+	 * The number of parameter names that are encoded.
 	 * There should be one per method parameter, excluding an instance method's this, if any.
 	 * </pre>
 	 */
@@ -78,8 +78,8 @@ public class DebugInfoItem implements StructConverter {
 
 	/**
 	 * <pre>
-	 * String index of the method parameter name. 
-	 * An encoded value of NO_INDEX indicates that no name is available for the associated parameter. 
+	 * String index of the method parameter name.
+	 * An encoded value of NO_INDEX indicates that no name is available for the associated parameter.
 	 * The type descriptor and signature are implied from the method descriptor and signature.
 	 * </pre>
 	 */

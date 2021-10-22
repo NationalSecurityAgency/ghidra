@@ -15,10 +15,10 @@
 
     <BLOCKQUOTE>
       <P>Most trees and tables in Ghidra support filtering and have a text filter located at the
-      bottom of the tree or table.   Tables also support the concept of 
-      <A HREF="#Column_Filters">Column Filters</A> described below. 
+      bottom of the tree or table.   Tables also support the concept of
+      <A HREF="#Column_Filters">Column Filters</A> described below.
       </P>
-      
+
       <P>Below is an example from the Data Type Manager. The filter is
       currently set to "Starts With", but you can select a different filter strategy.</P>
 
@@ -42,7 +42,7 @@
       </BLOCKQUOTE>
     </BLOCKQUOTE><BR>
      <BR>
-     
+
 
     <H2>Clear Filter</H2>
 
@@ -70,7 +70,7 @@
       </CENTER>
     </BLOCKQUOTE><BR>
      <BR>
-     
+
 
     <H2>The Filter Options Dialog<A name="Filter_Options" id="Filter_Options"></A></H2>
 
@@ -96,7 +96,7 @@
 
             <TD>
               Tree nodes will match if its name contains the text in the filter text field. Table
-              rows will match if any of the columns contains the filter text. 
+              rows will match if any of the columns contains the filter text.
 
               <BLOCKQUOTE>
                 <BR>
@@ -267,49 +267,49 @@
     <P><BR>
     <BR>
     </P>
-    <A name="Column_Filters"></A> 
+    <A name="Column_Filters"></A>
 
     <H2>Ghidra Table Column Filters</H2>
 
     <BLOCKQUOTE>
       <P>Most filterable tables in Ghidra support advanced filtering based on column values. This
       allows for complex filtering where you can logically combine column specific clauses.</P>
-      
-      
+
+
       <BLOCKQUOTE>
 	      <P><IMG src="../../shared/warning.png">
 	      Some columns in tables are not filterable via the filter text field below the table.
-	      For example, many numeric columns are ignored by the text filter because they can be 
+	      For example, many numeric columns are ignored by the text filter because they can be
 	      slow to calculate and they are better filtered by using a range filter, as is available
 	      using column filters.
 	      </p>
        </BLOCKQUOTE>
-      
+
       <BR>
-       
+
 
       <CENTER>
         <IMG alt="" src="images/TableColumnFilter.png" border="0">
       </CENTER><BR>
-       
+
 
       <P>The <IMG alt="" src="images/view-filter.png"> button in lower right corner will bring up
       the Column Filter Dialog.</P>
       <BR>
       <BR>
-       
+
 
       <CENTER>
         <IMG alt="" src="images/TableColumnFilterDialog.png" border="1">
       </CENTER><BR>
-       
+
 
       <BLOCKQUOTE>
         <P style="margin-left: 30%; margin-right: 30%;">This dialog describes a filter that will
         narrow the list of functions to those whose <I>name starts with "FUN_00" or contains
         "401"</I> <B>and</B> <I>the Function Size is at least 80</I>.</P>
       </BLOCKQUOTE><BR>
-       
+
 
       <H3>Filters Panel</H3>
 
@@ -369,7 +369,7 @@
           configuration to the tool. A dialog will appear that will allow you to name the
           filter</LI>
 
-  
+
           <LI><A name="Load_Filter"></A><B>Load Filter <IMG alt="" src="Icons.OPEN_FOLDER_ICON"></B> - Pops up a dialog with
           a list of saved filters. Selecting one will load that filter into the dialog.</LI>
         </UL>
@@ -377,7 +377,7 @@
         <P>Dialog actions</P>
 
         <UL>
-  
+
           <LI><A name="Apply_Button"></A><B>Apply</B> - Applies the dialog's filter to the table. Only enabled if all the
           conditions in the dialog are valid.</LI>
 
@@ -460,12 +460,12 @@
       <BLOCKQUOTE>
         <P>After applying the the filter show above, the table would appear as follows:</P>
         <BR>
-         
+
 
         <CENTER>
           <IMG alt="" src="images/TableColumnFilterAfterFilterApplied.png" border="0">
         </CENTER><BR>
-         
+
 
         <P>Notice that the headers for both the <B>Label</B> and <B>Function Size</B> columns have
         the <IMG alt="" src="images/view-filter.png"> icon. This indicates that there is an applied
@@ -473,20 +473,20 @@
         filter.</P>
       </BLOCKQUOTE>
     </BLOCKQUOTE>
-    
-    
+
+
       <!-- extra space at the bottom of the page (for readability) -->
   <br>
   <br>
   <br>
   <br>
-  
+
       <P class="relatedtopic">Related Topics</P>
 
     <UL>
       <LI><A href="help/topics/Tables/GhidraTableHeaders.html">Table Sorting</A></LI>
     </UL>
-  
-    
+
+
   </BODY>
 </HTML>

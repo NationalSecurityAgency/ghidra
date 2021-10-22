@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -203,7 +203,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 	 * Generate an XML error handler suitable for parsing a specification document.
 	 *   - Warnings are logged.
 	 *   - Errors cause a SAXParseException
-	 * 
+	 *
 	 * @param docTitle is the title of the document
 	 * @return the error handler object
 	 */
@@ -453,7 +453,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 	 * Build the model arrays given a complete list of models.
 	 * The array -models- contains all normal PrototypeModel objects
 	 * The array -allmodels- contains all models, including merge models.
-	 * 
+	 *
 	 * @param modelList is the complete list of models
 	 */
 	private void buildModelArrays(List<PrototypeModel> modelList) {
@@ -486,7 +486,7 @@ public class BasicCompilerSpec implements CompilerSpec {
 	/**
 	 * Establish cross referencing to prototype models.
 	 * All xrefs are regenerated from a single complete list of PrototypeModels
-	 * 
+	 *
 	 * @param modelList is the complete list of models
 	 * @param defaultName is the name to use for the default model (or null)
 	 * @param evalCurrent is the name to use for evaluating the current function (or null)

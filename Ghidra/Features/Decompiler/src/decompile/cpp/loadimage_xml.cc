@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ LoadImageXml::LoadImageXml(const string &f,const Element *el) : LoadImage(f)
 {
   manage = (const AddrSpaceManager *)0;
   rootel = el;
-  
+
   // Extract architecture information
   if (rootel->getName() != "binaryimage")
     throw LowlevelError("Missing binaryimage tag in "+filename);
@@ -195,7 +195,7 @@ void LoadImageXml::loadFill(uint1 *ptr,int4 size,const Address &addr)
   map<Address,vector<uint1> >::const_iterator iter;
   Address curaddr;
   bool emptyhit = false;
-  
+
   curaddr = addr;
   iter = chunk.upper_bound(curaddr); // First one greater than
   if (iter != chunk.begin())

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import resources.ResourceManager;
 import utilities.util.FileUtilities;
 
 /**
- * Window to display version information about the current release of 
+ * Window to display version information about the current release of
  * the ghidra application.
  */
 class InfoPanel extends JPanel {
@@ -105,7 +105,7 @@ class InfoPanel extends JPanel {
 		// If the splash.txt file contains non-HTML text, view is null
 		View view = (View) resizer.getClientProperty(javax.swing.plaf.basic.BasicHTML.propertyKey);
 		if (view == null) {
-			// must not be HTML content in the splash screen text (this shouldn't 
+			// must not be HTML content in the splash screen text (this shouldn't
 			// happen, but let's just protect against this anyway).
 			JLabel label = new GDLabel(content) {
 				@Override

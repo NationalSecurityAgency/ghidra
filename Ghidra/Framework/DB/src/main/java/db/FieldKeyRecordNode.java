@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package db;
 import java.io.IOException;
 
 /**
- * <code>FieldKeyRecordNode</code> defines a common interface for {@link FieldKeyNode} 
+ * <code>FieldKeyRecordNode</code> defines a common interface for {@link FieldKeyNode}
  * implementations which are also a {@link RecordNode} (i.e., leaf node).
  */
 interface FieldKeyRecordNode extends RecordNode, FieldKeyNode {
@@ -94,7 +94,7 @@ interface FieldKeyRecordNode extends RecordNode, FieldKeyNode {
 	FieldKeyNode deleteRecord(Field key, Table table) throws IOException;
 
 	/**
-	 * Get the record with the minimum key value which is greater than or equal 
+	 * Get the record with the minimum key value which is greater than or equal
 	 * to the specified key.
 	 * @param key search key
 	 * @param schema record data schema
@@ -104,7 +104,7 @@ interface FieldKeyRecordNode extends RecordNode, FieldKeyNode {
 	DBRecord getRecordAtOrAfter(Field key, Schema schema) throws IOException;
 
 	/**
-	 * Get the record with the maximum key value which is less than or equal 
+	 * Get the record with the maximum key value which is less than or equal
 	 * to the specified key.
 	 * @param key search key
 	 * @param schema record data schema
@@ -114,7 +114,7 @@ interface FieldKeyRecordNode extends RecordNode, FieldKeyNode {
 	DBRecord getRecordAtOrBefore(Field key, Schema schema) throws IOException;
 
 	/**
-	 * Get the record with the minimum key value which is greater than 
+	 * Get the record with the minimum key value which is greater than
 	 * the specified key.
 	 * @param key search key
 	 * @param schema record data schema
@@ -124,7 +124,7 @@ interface FieldKeyRecordNode extends RecordNode, FieldKeyNode {
 	DBRecord getRecordAfter(Field key, Schema schema) throws IOException;
 
 	/**
-	 * Get the record with the maximum key value which is less than  
+	 * Get the record with the maximum key value which is less than
 	 * the specified key.
 	 * @param key search key
 	 * @param schema record data schema

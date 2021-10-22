@@ -383,7 +383,7 @@
         <H4><A name="ExternalsAuto"></A>External Functions and Labels</H4>
 
         <BLOCKQUOTE>
-          <P>If you make any change to the external locations (external functions or external labels) 
+          <P>If you make any change to the external locations (external functions or external labels)
           defined within the program, such as creating,
           updating, or removing an external location, the external location gets marked as changed
           and it may be merged.</P>
@@ -391,19 +391,19 @@
           <P>The following types of changes will get merged automatically:</P>
 
           <UL>
-            <LI>Changing the name, external memory address, or data type for an external location as 
+            <LI>Changing the name, external memory address, or data type for an external location as
             long as the latest version didn't change the same attribute of the external location.</LI>
 
-            <LI>Changing from an external label to an external function as long as the latest version 
+            <LI>Changing from an external label to an external function as long as the latest version
             didn't set the data type for the same external label or remove the label.</LI>
 
-            <LI>Changing from an external function to a label or removing an external function as 
+            <LI>Changing from an external function to a label or removing an external function as
             long as the latest version didn't change the external function.</LI>
 
-            <LI>Setting the data type on an external label as long as the latest version didn't 
+            <LI>Setting the data type on an external label as long as the latest version didn't
             also set the data type or change the label into an external function.</LI>
 
-            <LI>Changing an external function as long as the latest version also didn't make 
+            <LI>Changing an external function as long as the latest version also didn't make
             changes to the function.<BR>
              Conflicts could be:</LI>
 
@@ -729,11 +729,11 @@
 
         <LI>Original version (values from the file when you originally checked it out)</LI>
       </UL>
-      
-      <P>However, there may be other conflict options that let you choose to add or rename the type of 
+
+      <P>However, there may be other conflict options that let you choose to add or rename the type of
       item that is in conflict in addition to keeping the one that was checked in the Latest version
-      in the repository. Some conflicts, such as comment conflicts, allow you to check one or both 
-      check boxes for the comment conflict. This allows you to keep the Latest comment, your comment, 
+      in the repository. Some conflicts, such as comment conflicts, allow you to check one or both
+      check boxes for the comment conflict. This allows you to keep the Latest comment, your comment,
       or a combined copy of both the Latest and your (Checked Out) comments.</P>
 
       <H3><A name="MemoryConflict"></A>Memory</H3>
@@ -1172,14 +1172,14 @@
             version.<BR>
             </LI>
 
-            <LI>An instruction had a flow override applied in one version and a reference was added 
+            <LI>An instruction had a flow override applied in one version and a reference was added
             in the other version.<BR>
             </LI>
           </UL>
-          <P><IMG src="../../shared/note.png" alt=""> If an instruction change conflicts with a 
-          reference change, the references can be viewed by right clicking on an instruction in 
-          one of the four listings (Result, Latest, Checked Out, Original) and choosing the 
-          <B>View Instruction Details...</B> action. This will pop up a dialog indicating any 
+          <P><IMG src="../../shared/note.png" alt=""> If an instruction change conflicts with a
+          reference change, the references can be viewed by right clicking on an instruction in
+          one of the four listings (Result, Latest, Checked Out, Original) and choosing the
+          <B>View Instruction Details...</B> action. This will pop up a dialog indicating any
           fallthrough override or flow override and the references for that instruction.
           </P>
 
@@ -1250,24 +1250,24 @@
           <UL>
             <LI>
               If you add an external function or label and it appears to be the same external as
-              one that was added in the latest version. (i.e. It has the same name or is 
+              one that was added in the latest version. (i.e. It has the same name or is
               referenced from the same code.)
             </LI>
 
-            <LI>If an existing external function or label is removed in your version and changed 
+            <LI>If an existing external function or label is removed in your version and changed
             in the latest version in any way or vice versa.</LI>
 
-            <LI>If you change an external label into an external function and the latest sets the 
+            <LI>If you change an external label into an external function and the latest sets the
             data type on the external label or vice versa.</LI>
 
-            <LI>If you change the number of parameters, the parameter storage, or the parameter type 
-            (stack versus register) and the latest also changed parameters in any way, then you must 
-            select to keep all of your parameters or all of the latest version's parameters. The 
+            <LI>If you change the number of parameters, the parameter storage, or the parameter type
+            (stack versus register) and the latest also changed parameters in any way, then you must
+            select to keep all of your parameters or all of the latest version's parameters. The
             same is true if the latest version changed the number or type of parameters and you changed
             parameters in any way.</LI>
 
             <LI>
-              If you change a piece of an external functions information and the latest version 
+              If you change a piece of an external functions information and the latest version
               changes the same piece of function information to a different value.<BR>
               For example, if one changes the function's name and the other changes the return
               type, then both changes occur without a conflict. If both change the name, this is a
@@ -1277,7 +1277,7 @@
             <LI>
               If you change a piece of stack information and the latest version changes the same
               piece of stack information to a different value.<BR>
-              Stack information includes: 
+              Stack information includes:
 
               <UL>
                 <LI>return address offset</LI>
@@ -1291,7 +1291,7 @@
             <LI>
               If you change a piece of parameter information and the latest version changes the
               same piece of parameter information to a different value.<BR>
-              Parameter information includes: 
+              Parameter information includes:
 
               <UL>
                 <LI>name</LI>
@@ -1324,19 +1324,19 @@
         <BLOCKQUOTE>
 
           <P>In this case you must select the radio button indicating which external(s) to keep:</p>
-          
+
              <UL>
                 <LI><P align="left"><I>Keep 'Latest'</I> will keep the external label.</P></LI>
 
                 <LI><P align="left"><I>Keep 'Checked Out'</I> will keep the external function.</P></LI>
 
-                <LI><P align="left"><I>Keep Both</I> will keep Both the external label and the 
-                external function. If the label and function had the same name, the function would 
+                <LI><P align="left"><I>Keep Both</I> will keep Both the external label and the
+                external function. If the label and function had the same name, the function would
                 get renamed with a new name containing a conflict extension.</P></LI>
 
-                <LI><P align="left"><I>Merge Together</I> will merge the external label and 
-                function together. In this case, the result would be an external function, 
-                but after pressing the Apply button, you would be prompted 
+                <LI><P align="left"><I>Merge Together</I> will merge the external label and
+                function together. In this case, the result would be an external function,
+                but after pressing the Apply button, you would be prompted
                 with an additional name conflict that you would need to resolve.</P></LI>
              </UL>
 
@@ -1344,7 +1344,7 @@
           <B>Apply</B> button to continue with the merge process.</P>
 
           <P><U>Example 2</U> : The following image illustrates a conflict due to an external label
-          having its data type set in the latest version while you changed it into a function. 
+          having its data type set in the latest version while you changed it into a function.
           </P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
@@ -1375,7 +1375,7 @@
 
           <P><BR>
           <U>Example 3</U> : The following image illustrates a conflict because you created the
-          same external function as was created in the latest version. However, parameter storage 
+          same external function as was created in the latest version. However, parameter storage
           has been defined differently in each version. You must choose which parameter signature
           and its associated storage should be kept.</P>
         </BLOCKQUOTE>
@@ -1405,7 +1405,7 @@
           <P align="left">Select a radio button and press the <B>Apply</B> button to continue with
           the merge process.</P>
 
-          <P align="left">After all external label and external function conflicts are resolved, 
+          <P align="left">After all external label and external function conflicts are resolved,
           the merge process continues
           with any regular Function conflicts in the Listing.</P>
         </BLOCKQUOTE>
@@ -1423,7 +1423,7 @@
           <UL>
             <LI>
               If you create or change a function causing its body to overlap one or more functions
-              that are defined in the latest version. 
+              that are defined in the latest version.
 
               <UL>
                 <LI>Functions with bodies that have addresses in common are said to <I>overlap</I>
@@ -1448,7 +1448,7 @@
             <LI>
               If you change a piece of function information and the latest version changes the same
               piece of function information to a different value.<BR>
-              Function information includes: 
+              Function information includes:
 
               <UL>
                 <LI>name</LI>
@@ -1464,7 +1464,7 @@
             <LI>
               If you change a piece of stack information and the latest version changes the same
               piece of stack information to a different value.<BR>
-              Stack information includes: 
+              Stack information includes:
 
               <UL>
                 <LI>return address offset</LI>
@@ -1480,7 +1480,7 @@
             <LI>
               If you change a piece of parameter information and the latest version changes the
               same piece of parameter information to a different value.<BR>
-              Parameter information includes: 
+              Parameter information includes:
 
               <UL>
                 <LI>name</LI>
@@ -1498,7 +1498,7 @@
             <LI>
               If you change a piece of local variable information and the latest version changes
               the same piece of local variable information to a different value.<BR>
-              Local variable information includes: 
+              Local variable information includes:
 
               <UL>
                 <LI>name</LI>
@@ -2123,7 +2123,7 @@
             <UL>
               <LI>
                 Your version and the latest version each added a different <I>reference type</I>
-                (memory, stack, or external). 
+                (memory, stack, or external).
 
                 <P>If your checked out version and the latest version both have changes to the
                 references for a mnemonic or operand, the references are in conflict whenever your

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,10 +28,10 @@ import org.jungrapht.visualization.transform.MutableTransformer;
 /**
  * Note: this class is based on {@link TranslatingGraphMousePlugin}.
  * <p>
- * TranslatingGraphMousePlugin uses a MouseButtonOne press and drag gesture to translate 
+ * TranslatingGraphMousePlugin uses a MouseButtonOne press and drag gesture to translate
  * the graph display in the x and y direction. The default MouseButtonOne modifier can be overridden
  * to cause a different mouse gesture to translate the display.
- * 
+ *
  * @param <V> the vertex type
  * @param <E> the edge type
  */
@@ -77,7 +77,7 @@ public class JgtTranslatingPlugin<V, E>
 		installCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR), e);
 
 		// NOTE: we are only consuming the event here if we actually did pan...this allows follow-on
-		// mouse handlers to process the mouseReleased() event.  This is a bit odd and not the 
+		// mouse handlers to process the mouseReleased() event.  This is a bit odd and not the
 		// normal event processing (which is to consume all related events).
 		if (wasHandlingEvent && panning) {
 			e.consume();
@@ -168,7 +168,7 @@ public class JgtTranslatingPlugin<V, E>
 
 //==================================================================================================
 // Private methods
-//==================================================================================================    
+//==================================================================================================
 
 	private boolean isInDraggingArea(MouseEvent e) {
 		return !(isOverVertex(e) || isOverEdge(e));

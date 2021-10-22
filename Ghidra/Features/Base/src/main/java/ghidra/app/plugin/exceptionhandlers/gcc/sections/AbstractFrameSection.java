@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Extend this class to parse the call frame information exception handling structures within a 
+ * Extend this class to parse the call frame information exception handling structures within a
  * particular frame memory section.
  */
 abstract class AbstractFrameSection implements CieSource {
@@ -49,7 +49,7 @@ abstract class AbstractFrameSection implements CieSource {
 
 	/**
 	 * Constructor for an individual frame section.
-	 * 
+	 *
 	 * @param monitor a status monitor for indicating progress or allowing a task to be cancelled.
 	 * @param program the program containing this particular frame section.
 	 */
@@ -59,7 +59,7 @@ abstract class AbstractFrameSection implements CieSource {
 	}
 
 	/**
-	 * Creates data structures for the specified Common Information Entry (CIE) 
+	 * Creates data structures for the specified Common Information Entry (CIE)
 	 * and its Frame Description Entries (FDEs) as indicated by the regions.
 	 * @param regions the region descriptors for the FDEs.
 	 * @param cie the CIE for the FDEs.
@@ -116,7 +116,7 @@ abstract class AbstractFrameSection implements CieSource {
 	}
 
 	/**
-	 * This class maintains a lookup of common information entry (CIE) objects; this 
+	 * This class maintains a lookup of common information entry (CIE) objects; this
 	 * retrieves an existing object (by address), and creates a new CIE if not found.
 	 * @param curAddress the address with the CIE
 	 * @param isInDebugFrame true indicates the frame containing this CIE is a debug frame.

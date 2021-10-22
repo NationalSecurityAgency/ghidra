@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,11 +43,11 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	public static final String NAME = "CLI_METADATA_HEADER";
 	public static final String PATH = "/PE/CLI";
-    
+
 	private BinaryReader reader;
     private long fileOffset;
     private int rva;
-    
+
     private int signature;
     private short majorVersion;
     private short minorVersion;
@@ -64,10 +64,10 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 	private CliStreamStrings stringsStream;
 	private CliStreamBlob blobStream;
 	private CliStreamMetadata metadataStream;
-    
+
     /**
 	 * Constructs a new CLI Metadata Root datatype. Matches ISO 23271 II.24.2.
-	 * 
+	 *
 	 * @param reader A binary reader set to start reading at the start of this header.
 	 * @param rva The RVA of this header.
 	 * @throws IOException if there is a problem reading the header.
@@ -77,7 +77,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 		this.reader = reader;
 		this.fileOffset = reader.getPointerIndex();
 		this.rva = rva;
-		
+
 		this.signature = reader.readNextInt();
 		this.majorVersion = reader.readNextShort();
 		this.minorVersion = reader.readNextShort();
@@ -102,7 +102,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	public boolean parse() throws IOException {
 		boolean success = true;
-	
+
 		// #GUID
 		CliStreamHeader header = streamHeaderMap.get(CliStreamGuid.getName());
 		if (header != null) {
@@ -196,16 +196,16 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the file offset of this header.
-	 * 
+	 *
 	 * @return The file offset of this header.
 	 */
 	public long getFileOffset() {
 		return fileOffset;
 	}
-	
+
 	/**
 	 * Gets the relative virtual address of this header.
-	 * 
+	 *
 	 * @return The relative virtual address of this header.
 	 */
 	public int getRva() {
@@ -213,10 +213,10 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 	}
 
 	/**
-	 * Gets the signature.  
+	 * Gets the signature.
 	 * <p>
 	 * Should always be 0x424a5342.
-	 * 
+	 *
 	 * @return The signature.
 	 */
 	public int getSignature() {
@@ -225,7 +225,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the major version.
-	 * 
+	 *
 	 * @return The major version.
 	 */
 	public short getMajorVersion() {
@@ -234,7 +234,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the minor version.
-	 * 
+	 *
 	 * @return The minor version.
 	 */
 	public short getMinorVersion() {
@@ -242,10 +242,10 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 	}
 
 	/**
-	 * Gets the reserved field.  
+	 * Gets the reserved field.
 	 * <p>
 	 * Should always be 0.
-	 * 
+	 *
 	 * @return The reserved field.
 	 */
 	public int getReserved() {
@@ -254,7 +254,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the length of the version string that follows the length field.
-	 * 
+	 *
 	 * @return The length of the version string that follows the length field.
 	 */
 	public int getVersionLength() {
@@ -263,7 +263,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the version string.
-	 * 
+	 *
 	 * @return The version string.  Could be null if the version length appeared
 	 *   too long during parsing of the header.
 	 */
@@ -275,7 +275,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 	 * Gets the flags.
 	 * <p>
 	 * Should always be 0.
-	 * 
+	 *
 	 * @return The flags.
 	 */
 	public short getFlags() {
@@ -284,7 +284,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the number of streams present in the metadata.
-	 * 
+	 *
 	 * @return The number of streams present in the metadata.
 	 */
 	public short getStreamsCount() {
@@ -293,7 +293,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the GUID stream.
-	 * 
+	 *
 	 * @return The GUID stream.  Could be null if it did not parse correctly.
 	 */
 	public CliStreamGuid getGuidStream() {
@@ -302,7 +302,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the user strings stream.
-	 * 
+	 *
 	 * @return The user strings stream.  Could be null if it did not parse correctly.
 	 */
 	public CliStreamUserStrings getUserStringsStream() {
@@ -311,7 +311,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the strings stream.
-	 * 
+	 *
 	 * @return The strings stream.  Could be null if it did not parse correctly.
 	 */
 	public CliStreamStrings getStringsStream() {
@@ -320,7 +320,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the blob stream.
-	 * 
+	 *
 	 * @return The blob stream.  Could be null if it did not parse correctly.
 	 */
 	public CliStreamBlob getBlobStream() {
@@ -329,7 +329,7 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the Metadata stream.
-	 * 
+	 *
 	 * @return The Metadata stream.  Could be null if it did not parse correctly.
 	 */
 	public CliStreamMetadata getMetadataStream() {
@@ -338,23 +338,23 @@ public class CliMetadataRoot implements StructConverter, PeMarkupable {
 
 	/**
 	 * Gets the stream headers.
-	 * 
+	 *
 	 * @return A collection of stream headers.
 	 */
 	public Collection<CliStreamHeader> getStreamHeaders() {
 		return streamHeaderMap.values();
 	}
-	
+
 	/**
 	 * Gets the stream header with the given name.
-	 * 
+	 *
 	 * @param name The name of the stream header to get.
 	 * @return The stream header that matches the given name, or null if it wasn't found.
 	 */
 	public CliStreamHeader getStreamHeader(String name) {
 		return streamHeaderMap.get(name);
 	}
-	
+
 	public int getBlobOffsetAtIndex(int index) {
 		CliStreamHeader blobHdr = getStreamHeader("#Blob");
 		if (blobHdr == null) return -1; // TODO: this isn't a nice way of doing this

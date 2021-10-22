@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ import ghidra.util.task.*;
  * an alternate method for getting actions to appear in the popup context menu (see
  * {@link #addPopupActionProvider(PopupActionProvider)}).   The popup listener mechanism is generally not
  * needed and should only be used in special circumstances (see {@link PopupActionProvider}).
- * 
+ *
  * <p>The PluginTool also manages tasks that run in the background, and options used by the plugins.
  *
  */
@@ -1137,7 +1137,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * <br>Note: This forces plugins to terminate any tasks they have running and
 	 * apply any unsaved data to domain objects or files. If they can't do
 	 * this or the user cancels then this returns false.
-	 * 
+	 *
 	 * @param isExiting whether the tool is exiting
 	 * @return false if this tool has tasks in progress or can't be closed
 	 * since the user has unfinished/unsaved changes.
@@ -1172,7 +1172,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * <br>Note: This forces plugins to terminate any tasks they have running for the
 	 * indicated domain object and apply any unsaved data to the domain object. If they can't do
 	 * this or the user cancels then this returns false.
-	 * 
+	 *
 	 * @param domainObject the domain object to check
 	 * @return false any of the plugins reports that the domain object
 	 * should not be closed
@@ -1363,7 +1363,7 @@ public abstract class PluginTool extends AbstractDockingTool {
 	 * time the dialog is shown.
 	 *
 	 * @param dialogComponent the DialogComponentProvider object to be shown in a dialog.
-	 * 
+	 *
 	 * @deprecated dialogs are now always shown over the active window when possible
 	 */
 	@Deprecated

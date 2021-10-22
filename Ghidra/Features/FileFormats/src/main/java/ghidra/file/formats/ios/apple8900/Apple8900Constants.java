@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ public final class Apple8900Constants {
 
 	public final static byte FORMAT_ENCRYPTED  =  3; // AES-128-CBC, 0x837 key and all zero IV
 	public final static byte FORMAT_PLAIN      =  4;
-	
+
 	public final static String AES_KEY_STRING = "188458A6D15034DFE386F23B61D43774";
 
 	public final static byte [] AES_KEY_BYTES = NumericUtilities.convertStringToBytes(AES_KEY_STRING);

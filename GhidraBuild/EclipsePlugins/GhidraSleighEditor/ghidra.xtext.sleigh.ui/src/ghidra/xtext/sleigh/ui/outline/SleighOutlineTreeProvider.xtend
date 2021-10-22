@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,49 +33,49 @@ class SleighOutlineTreeProvider extends DefaultOutlineTreeProvider {
 	//   Displaying the outline can be expensive
 	// TODO: figure out performance issue, possibly carefully
 	//       building the outline based on Sleigh ideas not pure grammer
-	
+
 	override createRoot(IXtextDocument document) {
 		if (document.numberOfLines < 100) {
 			super.createRoot(document);
 		} else {
 			new IOutlineNode() {
-				
+
 				override getChildren() {
 					new ArrayList<IOutlineNode>();
 				}
-				
+
 				override getFullTextRegion() {
 					throw new UnsupportedOperationException("TODO: auto-generated method stub")
 				}
-				
+
 				override getImage() {
 					return null
 				}
-				
+
 				override getParent() {
 					return null
 				}
-				
+
 				override getSignificantTextRegion() {
 					throw new UnsupportedOperationException("TODO: auto-generated method stub")
 				}
-				
+
 				override getText() {
 					return "suppressed outline"
 				}
-				
+
 				override hasChildren() {
 					return false
 				}
-				
+
 				override <T> getAdapter(Class<T> adapter) {
 					throw new UnsupportedOperationException("TODO: auto-generated method stub")
 				}
-				
+
 				override <Result> readOnly(IUnitOfWork<Result, EObject> work) {
 					throw new UnsupportedOperationException("TODO: auto-generated method stub")
 				}
-				
+
 			}
 		}
 	}

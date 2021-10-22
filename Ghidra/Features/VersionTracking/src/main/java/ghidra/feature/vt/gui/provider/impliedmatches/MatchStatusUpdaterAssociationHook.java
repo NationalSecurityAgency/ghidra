@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,7 +76,7 @@ public class MatchStatusUpdaterAssociationHook implements AssociationHook, VTCon
 
 		// changed getting markup items from a matchInfo to using the association directly.
 		// The matchInfo way sets the destination addresses which is expensive.  Going directly to
-		// the association should be quicker. The only thing we care about concerning the markup 
+		// the association should be quicker. The only thing we care about concerning the markup
 		// items is their status, therefor it doesn't matter that the destination address may not be
 		// set, which is required to apply them.
 

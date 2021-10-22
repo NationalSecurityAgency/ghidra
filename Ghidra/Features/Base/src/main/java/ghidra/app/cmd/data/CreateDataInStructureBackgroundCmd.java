@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  *
  * Background command to create data across a selection inside of a structure.
- *  
+ *
  */
 public class CreateDataInStructureBackgroundCmd extends BackgroundCommand {
 
@@ -52,10 +52,10 @@ public class CreateDataInStructureBackgroundCmd extends BackgroundCommand {
 
 	/**
 	 * This is the same as {@link #CreateDataInStructureBackgroundCmd(Address, int[], int, DataType )} except that
-	 * it allows the caller to control whether or not a pointer data type is created when a 
+	 * it allows the caller to control whether or not a pointer data type is created when a
 	 * non-pointer data type is applied at a location that previously contained a pointer data
 	 * type.
-	 *  
+	 *
 	 * @param addr The address of the existing structure.
 	 * @param startPath the componentPath where to begin applying the datatype.
 	 * @param length the number of bytes to apply the data type to.
@@ -74,7 +74,7 @@ public class CreateDataInStructureBackgroundCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
 	 */
 	@Override
@@ -130,7 +130,7 @@ public class CreateDataInStructureBackgroundCmd extends BackgroundCommand {
 			int numCreated = 0;
 			while (length > 0) {
 				try {
-//			        MemBuffer memBuf = new ProgramStructureProviderContext(program,addr, 
+//			        MemBuffer memBuf = new ProgramStructureProviderContext(program,addr,
 //    	    	    					struct, struct.getComponent(index).getOffset());
 					DataTypeInstance dti =
 						DataTypeInstance.getDataTypeInstance(newDataType, length);

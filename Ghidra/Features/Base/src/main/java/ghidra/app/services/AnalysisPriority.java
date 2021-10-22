@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,21 +29,21 @@ public class AnalysisPriority {
 	 *   up, set a higher priority than the reference analyzer.  If the analyzer depends on data having
 	 *   been created because of the reference analyzer, schedule with a lower priority than
 	 *   REFERENCE_ANALYZER.
-	 *   
+	 *
 	 * Analyzers that are higher priority happen earlier, and are generally more sure about
 	 *   the information they lay down.
-	 * 
+	 *
 	 * Analyzers that happen later in analysis pipeline because of a low priority depend on
 	 *   prior analysis.  For example, you can't analyze functions before you have laid down code
 	 *   and found call references to those functions.
-	 * 
+	 *
 	 * Analyzers that are of the lowest priority, tend to be more speculative in the information
 	 *   they lay down.  For example taking a scalar value and using it as a pointer without
 	 *   any other corroborating information that it is a pointer is speculative and should
 	 *   happen with a low priority.
-	 * 
+	 *
 	 */
-	
+
 
 	/**
 	 * Defines a full format analysis as the first priority for automatic analysis.
@@ -51,7 +51,7 @@ public class AnalysisPriority {
 	 * Possibly there is a need to move blocks around, or create headers.
 	 * Analyzers that will look binary as a full file format analysis
 	 * should run with this priority.
-	 * 
+	 *
 	 * NOTE: there may be analyzers that run before this that need to fix issues like Non-Returning
 	 * functions.  Be very careful running an analyzer with a higher priority.
 	 */
@@ -152,7 +152,7 @@ public class AnalysisPriority {
 
 	/**
 	 * Get a priority that is a little higher than this one.
-	 * 
+	 *
 	 * @return a higher priority
 	 */
 	public AnalysisPriority before() {
@@ -161,7 +161,7 @@ public class AnalysisPriority {
 
 	/**
 	 * Get a piority that is a little lower than this one.
-	 * 
+	 *
 	 * @return a lower priority
 	 */
 	public AnalysisPriority after() {

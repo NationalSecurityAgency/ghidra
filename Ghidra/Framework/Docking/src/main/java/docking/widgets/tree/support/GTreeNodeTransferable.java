@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public class GTreeNodeTransferable implements Transferable {
 	/**
 	 * Creates this transferable based upon the selected data and uses the given transfer
 	 * handler to perform {@link Transferable} operations
-	 * 
+	 *
 	 * @param handler the handler used to perform transfer operations
 	 * @param selectedData The selected tree nodes
 	 */
@@ -51,7 +51,7 @@ public class GTreeNodeTransferable implements Transferable {
 
 	/**
 	 * Gets the transfer data from the selection based upon the given flavor
-	
+
 	 * @param flavor The flavor of data to retrieve from the given selection.
 	 * @return the transfer data from the selection based upon the given flavor.
 	 * @throws UnsupportedFlavorException if the given flavor is not one of the supported flavors
@@ -66,7 +66,7 @@ public class GTreeNodeTransferable implements Transferable {
 	/**
 	 * Returns the DataFlavors for the types of data that this transferable supports, based upon
 	 * the given selection
-	 * 
+	 *
 	 * @return the DataFlavors for the types of data that this transferable supports, based upon
 	 * the given selection
 	 */

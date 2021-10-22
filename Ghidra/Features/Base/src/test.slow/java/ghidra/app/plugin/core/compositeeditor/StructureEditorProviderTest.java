@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -232,7 +232,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}
 	}
 
-	// Test add a structure containing inner struct, start to edit inner struct, and then undo the 
+	// Test add a structure containing inner struct, start to edit inner struct, and then undo the
 	// program so it goes away. This should close the edit session.
 	@Test
 	public void testProgramRestoreRemovesEditedDtComp() throws Exception {
@@ -303,7 +303,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}
 	}
 
-	// Test add a structure, start to edit a structure that contains it, and then undo the program 
+	// Test add a structure, start to edit a structure that contains it, and then undo the program
 	// so it goes away. The editor stays since the structure existed previously, but editor reloads.
 	@Test
 	public void testProgramRestoreRemovesEditedComponentDtYes() throws Exception {
@@ -371,7 +371,7 @@ public class StructureEditorProviderTest extends AbstractStructureEditorTest {
 		}
 	}
 
-	// Test add a structure, start to edit a structure that contains it, and then undo the program 
+	// Test add a structure, start to edit a structure that contains it, and then undo the program
 	// so it goes away. The editor stays since the structure existed previously, but doesn't reload.
 	@Test
 	public void testProgramRestoreRemovesEditedComponentDtNo() throws Exception {

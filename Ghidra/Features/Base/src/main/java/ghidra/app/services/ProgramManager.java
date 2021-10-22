@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 
 /**
- * Service for managing programs. Multiple programs may be open in a tool, but only one is active 
+ * Service for managing programs. Multiple programs may be open in a tool, but only one is active
  * at any given time.
  */
 @ServiceInfo(defaultProvider = ProgramManagerPlugin.class, description = "Get the currently open program")
@@ -72,11 +72,11 @@ public interface ProgramManager {
 	public boolean closeProgram();
 
 	/**
-	 * Open the program corresponding to the given url. 
+	 * Open the program corresponding to the given url.
 	 * @param ghidraURL valid server-based program URL
-	 * @param state initial open state (OPEN_HIDDEN, OPEN_CURRENT, OPEN_VISIBLE).  
+	 * @param state initial open state (OPEN_HIDDEN, OPEN_CURRENT, OPEN_VISIBLE).
 	 * The visibility states will be ignored if the program is already open.
-	 * @return null if the user canceled the "open" for the new program or an error 
+	 * @return null if the user canceled the "open" for the new program or an error
 	 * occurred and was displayed.
 	 * @see GhidraURL
 	 */
@@ -92,9 +92,9 @@ public interface ProgramManager {
 
 	/**
 	 * Open the program for the given domainFile.  Once open it will become the active program.
-	 * 
+	 *
 	 * <P>Note: this method functions exactly as {@link #openProgram(DomainFile)}
-	 * 
+	 *
 	 * @param domainFile domain file that has the program
 	 * @param dialogParent unused
 	 * @return the program
@@ -116,11 +116,11 @@ public interface ProgramManager {
 	/**
 	 * Open the program for the given domainFile
 	 * @param domainFile domain file that has the program
-	 * @param version the version of the Program to open. Specify 
+	 * @param version the version of the Program to open. Specify
 	 * DomainFile.DEFAULT_VERSION for file update mode.
-	 * @param state initial open state (OPEN_HIDDEN, OPEN_CURRENT, OPEN_VISIBLE).  
+	 * @param state initial open state (OPEN_HIDDEN, OPEN_CURRENT, OPEN_VISIBLE).
 	 * The visibility states will be ignored if the program is already open.
-	 * @return null if the user canceled the "open" for the new program or an error 
+	 * @return null if the user canceled the "open" for the new program or an error
 	 * occurred and was displayed.
 	 */
 	public Program openProgram(DomainFile domainFile, int version, int state);
@@ -146,13 +146,13 @@ public interface ProgramManager {
 	/**
 	 * Open the specified program in the tool.
 	 * @param program the program
-	 * @param state initial open state (OPEN_HIDDEN, OPEN_CURRENT, OPEN_VISIBLE).  
+	 * @param state initial open state (OPEN_HIDDEN, OPEN_CURRENT, OPEN_VISIBLE).
 	 * The visibility states will be ignored if the program is already open.
 	 */
 	public void openProgram(Program program, int state);
 
 	/**
-	 * Establish a persistent owner on an open program. This will cause the program manager to 
+	 * Establish a persistent owner on an open program. This will cause the program manager to
 	 * imply make a program hidden if it is closed.
 	 * @param program the program
 	 * @param owner the owner
@@ -165,8 +165,8 @@ public interface ProgramManager {
 	/**
 	 * Release the persistent ownership of a program.
 	 * <p>
-	 * The program will automatically be closed if it is hidden or was marked as temporary.  If 
-	 * any of these closures corresponds to a program with changes the user will be given an 
+	 * The program will automatically be closed if it is hidden or was marked as temporary.  If
+	 * any of these closures corresponds to a program with changes the user will be given an
 	 * opportunity to save or keep the program open.
 	 * <p>
 	 * If persistentOwner is not the correct owner, the method will have no affect.
@@ -184,14 +184,14 @@ public interface ProgramManager {
 	 * @param program the program to close.
 	 * @param ignoreChanges if true, the program is closed without saving any changes.
 	 * @return true if the program was closed. Returns false if the user canceled the close
-	 * while being prompted to save. Also returns false if the program passed in as a parameter 
+	 * while being prompted to save. Also returns false if the program passed in as a parameter
 	 * is null.
 	 */
 	boolean closeProgram(Program program, boolean ignoreChanges);
 
 	/**
-	 * Closes all open programs in this tool except the current program.  
-	 * If this tool is the only tool with a program open and that program has changes, 
+	 * Closes all open programs in this tool except the current program.
+	 * If this tool is the only tool with a program open and that program has changes,
 	 * then the user will be prompted to close each such file.
 	 * (Providing the ignoreChanges flag is false)
 	 * @param ignoreChanges if true, the programs will be closed without saving changes.
@@ -220,7 +220,7 @@ public interface ProgramManager {
 	 * Returns the first program in the list of open programs that contains the given address.
 	 * Programs are searched in the order they were opened within a given priority.
 	 * Program are initially opened with the PRIORITY_NORMAL priority, but can be set to have
-	 * PRIORITY_HIGH or PRIORITY_LOW. 
+	 * PRIORITY_HIGH or PRIORITY_LOW.
 	 * @param addr the address for which to search.
 	 * @return the first program that can be found to contain the given address.
 	 */
@@ -233,7 +233,7 @@ public interface ProgramManager {
 	public Program[] getAllOpenPrograms();
 
 	/**
-	 * Allows program manager state to be locked/unlocked.  While locked, the program manager will 
+	 * Allows program manager state to be locked/unlocked.  While locked, the program manager will
 	 * not support opening additional programs.
 	 * @param state locked if true, unlocked if false
 	 * @deprecated deprecated for 10.1; removal for 10.3 or later

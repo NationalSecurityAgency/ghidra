@@ -17,32 +17,32 @@ import java.io.IOException;
 public class SparseHeader implements StructConverter {
 
 	private int		magic;			// 0xED26FF3A
-	private short	major_version;	
-	private short	minor_version;	
-	private short	file_hdr_sz;	
-	private short	chunk_hdr_sz;	
-	private int		blk_sz;			
-	private int		total_blks;		
-	private int		total_chunks;	
-	private int		image_checksum; 
-	
-	
+	private short	major_version;
+	private short	minor_version;
+	private short	file_hdr_sz;
+	private short	chunk_hdr_sz;
+	private int		blk_sz;
+	private int		total_blks;
+	private int		total_chunks;
+	private int		image_checksum;
+
+
 	public SparseHeader(ByteProvider provider) throws IOException {
 		this( new BinaryReader(provider, true) );
 	}
-	
+
 	public SparseHeader(BinaryReader reader) throws IOException {
-		magic = reader.readNextInt();			
-		major_version = reader.readNextShort();	
-		minor_version = reader.readNextShort();	
-		file_hdr_sz = reader.readNextShort();	
-		chunk_hdr_sz = reader.readNextShort();	
-		blk_sz = reader.readNextInt();			
-		total_blks = reader.readNextInt();		
-		total_chunks = reader.readNextInt();	
+		magic = reader.readNextInt();
+		major_version = reader.readNextShort();
+		minor_version = reader.readNextShort();
+		file_hdr_sz = reader.readNextShort();
+		chunk_hdr_sz = reader.readNextShort();
+		blk_sz = reader.readNextInt();
+		total_blks = reader.readNextInt();
+		total_chunks = reader.readNextInt();
 		image_checksum = reader.readNextInt();
 	}
-	
+
 	public int getMagic() {
 		return magic;
 	}
@@ -82,14 +82,14 @@ public class SparseHeader implements StructConverter {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = new StructureDataType("sparse_header", 0);
-		structure.add(DWORD, "magic", null);			
-		structure.add(WORD, "major_version", null);	
-		structure.add(WORD, "minor_version", null);	
-		structure.add(WORD, "file_hdr_sz", null);	
-		structure.add(WORD, "chunk_hdr_sz", null);	
-		structure.add(DWORD, "blk_sz", null);			
-		structure.add(DWORD, "total_blks", null);		
-		structure.add(DWORD, "total_chunks", null);	
+		structure.add(DWORD, "magic", null);
+		structure.add(WORD, "major_version", null);
+		structure.add(WORD, "minor_version", null);
+		structure.add(WORD, "file_hdr_sz", null);
+		structure.add(WORD, "chunk_hdr_sz", null);
+		structure.add(DWORD, "blk_sz", null);
+		structure.add(DWORD, "total_blks", null);
+		structure.add(DWORD, "total_chunks", null);
 		structure.add(DWORD, "image_checksum", null);
 		return structure;
 	}

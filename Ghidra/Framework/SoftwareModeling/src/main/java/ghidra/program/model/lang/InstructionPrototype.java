@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import java.util.ArrayList;
 
 /**
  * InstructionPrototype is designed to describe one machine level instruction.
- * A language parser can return the same InstructionProtoype object for the 
+ * A language parser can return the same InstructionProtoype object for the
  * same type node. Prototypes for instructions will normally be fixed for a node.
  */
 public interface InstructionPrototype {
@@ -70,7 +70,7 @@ public interface InstructionPrototype {
 	/**
 	 * @return true if instruction semantics have a CrossBuild instruction
 	 * dependency which may require a robust InstructionContext with access
-	 * to preceding instructions  
+	 * to preceding instructions
 	 */
 	public boolean hasCrossBuildDependency();
 
@@ -83,7 +83,7 @@ public interface InstructionPrototype {
 	public String getMnemonic(InstructionContext context);
 
 	/**
-	 * Get the length of this CodeProtoype. 
+	 * Get the length of this CodeProtoype.
 	 *
 	 * @return the length of this CodeProtoype.
 	 */
@@ -124,7 +124,7 @@ public interface InstructionPrototype {
 	 * processor executes more than one instruction from a delay slot.
 	 *
 	 * @param context the instruction context
-	 * 
+	 *
 	 * @return the number of delay slot instructions for this instruction.
 	 */
 	public int getDelaySlotDepth(InstructionContext context);
@@ -168,12 +168,12 @@ public interface InstructionPrototype {
 	/**
 	 * Get the byte offset to the default flow after instruction.
 	 * If this instruction does not have a fall-through due to flow
-	 * behavior, this method will still return an offset which accounts for 
-	 * the instruction length including delay slotted instructions if 
+	 * behavior, this method will still return an offset which accounts for
+	 * the instruction length including delay slotted instructions if
 	 * applicable.
-	 * 
+	 *
 	 * @param context the instruction context
-	 * 
+	 *
 	 * @return int how much to add to the current address to get
 	 * the fall through address.
 	 */
@@ -191,10 +191,10 @@ public interface InstructionPrototype {
 
 	/**
 	 * Get the separator strings between an operand.
-	 * 
+	 *
 	 * The separator string for 0 are the characters before the first operand.
 	 * The separator string for numOperands+1 are the characters after the last operand.
-	 * 
+	 *
 	 * @param opIndex valid values are 0 thru numOperands+1
 	 * @param context the instruction context
 	 * @return separator string, or null if there is no string
@@ -203,17 +203,17 @@ public interface InstructionPrototype {
 
 	/**
 	 * Get a List of Objects that can be used to render an operands representation.
-	 * 
+	 *
 	 * @param opIndex operand to get the Representation List
 	 * @param context the instruction context
-	 * 
+	 *
 	 * @return ArrayList of Register, Address, Scalar, VariableOffset and Character objects
 	 *         of null if the operation isn't supported
 	 */
 	public ArrayList<Object> getOpRepresentationList(int opIndex, InstructionContext context);
 
 	/**
-	 * If the indicated operand is an address, this gets the address value for 
+	 * If the indicated operand is an address, this gets the address value for
 	 * that operand
 	 * @param opIndex index of the operand.
 	 * @param context the instruction context.
@@ -222,7 +222,7 @@ public interface InstructionPrototype {
 	public Address getAddress(int opIndex, InstructionContext context);
 
 	/**
-	 * If the indicated operand is a scalar, this gets the scalar value for 
+	 * If the indicated operand is a scalar, this gets the scalar value for
 	 * that operand
 	 * @param opIndex index of the operand.
 	 * @param context the instruction context
@@ -231,7 +231,7 @@ public interface InstructionPrototype {
 	public Scalar getScalar(int opIndex, InstructionContext context);
 
 	/**
-	 * If the indicated operand is a register, this gets the register value 
+	 * If the indicated operand is a register, this gets the register value
 	 * for that operand
 	 * @param opIndex index of the operand.
 	 * @param context the instruction context
@@ -267,9 +267,9 @@ public interface InstructionPrototype {
 	/**
 	 * Get the Result objects produced/affected by this instruction
 	 * These would probably only be Register or Address
-	 * 
+	 *
 	 * @param context the instruction context
-	 * 
+	 *
 	 * @return an array of objects that are used by this instruction
 	 */
 	public Object[] getInputObjects(InstructionContext context);
@@ -277,9 +277,9 @@ public interface InstructionPrototype {
 	/**
 	 * Get the Result objects produced/affected by this instruction
 	 * These would probably only be Register or Address
-	 * 
+	 *
 	 * @param context the instruction context
-	 * 
+	 *
 	 * @return an array of objects that are affected by this instruction
 	 */
 	public Object[] getResultObjects(InstructionContext context);
@@ -287,7 +287,7 @@ public interface InstructionPrototype {
 	/**
 	 * Get an array of PCode operations (micro code) that this instruction
 	 * performs.
-	 * 
+	 *
 	 * @param context the instruction context
 	 * @param override if not null, may indicate that different elements of the pcode generation are overridden
 	 * @param uniqueFactory must be specified if flowOverride is not null
@@ -313,7 +313,7 @@ public interface InstructionPrototype {
 	 *
 	 * @param context the instruction context
 	 * @param opIndex the index of the operand for which to get PCode.
-	 * 
+	 *
 	 * @return array of PCODE,
 	 *         zero length array if language doesn't support PCODE for this instruction
 	 */

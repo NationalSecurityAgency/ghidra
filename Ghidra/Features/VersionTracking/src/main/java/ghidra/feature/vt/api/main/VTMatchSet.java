@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public interface VTMatchSet {
 
 	/**
 	 * Creates a match based on the given info and adds it to this match set.
-	 * 
+	 *
 	 * @param info the info for the match to add to this match set.
 	 * @return the new VTMatch that was added.
 	 */
@@ -63,7 +63,7 @@ public interface VTMatchSet {
 
 	/**
 	 * Returns a unique id for this match set.  The ids are one-up numbers indicating the order this
-	 * match set was generated in relation to other match sets in the VTSession. 
+	 * match set was generated in relation to other match sets in the VTSession.
 	 * @return
 	 */
 	public int getID();
@@ -79,10 +79,10 @@ public interface VTMatchSet {
 	/**
 	 * Returns a collection of matches for the given source and destination address.  This is
 	 * equivalent to calling {@link #getMatches(VTAssociation)}.
-	 * 
-	 * @param sourceAddress The address in the source program for the association represented 
+	 *
+	 * @param sourceAddress The address in the source program for the association represented
 	 *        by the two given addresses.
-	 * @param destinationAddress The address in the destination program for the association 
+	 * @param destinationAddress The address in the destination program for the association
 	 *        represented by the two given addresses.
 	 * @return a collection of all matches for the association represented by the given addresses
 	 * @see #getMatches(VTAssociation)

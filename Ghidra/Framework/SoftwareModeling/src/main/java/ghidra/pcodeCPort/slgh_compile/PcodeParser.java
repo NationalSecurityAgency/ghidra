@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -275,7 +275,7 @@ public class PcodeParser extends PcodeCompile {
 	 * @param pcodeStatements
 	 * @param srcFile source filename from which pcodeStatements came (
 	 * @param srcLine line number in srcFile corresponding to pcodeStatements
-	 * @return ConstructTpl. A null may be returned or 
+	 * @return ConstructTpl. A null may be returned or
 	 * an exception thrown if parsing/compiling fails (see application log for errors).
 	 * @throws SleighException pcode compile error
 	 */

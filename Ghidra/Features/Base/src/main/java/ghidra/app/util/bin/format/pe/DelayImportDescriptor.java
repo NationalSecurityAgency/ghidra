@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * A class to represent the 
+ * A class to represent the
  * <code>ImgDelayDescr</code>
  * data structure defined in <b><code>DELAYIMP.H</code></b>.
  * <p>
@@ -67,7 +67,7 @@ public class DelayImportDescriptor implements StructConverter {
 
 	private List<ImportInfo> delayImportInfoList = new ArrayList<ImportInfo>();
 	private Map<ThunkData, ImportByName> importByNameMap = new HashMap<ThunkData, ImportByName>();
-	
+
 	private boolean isValid;
 
 	static DelayImportDescriptor createDelayImportDescriptor(NTHeader ntHeader,
@@ -86,7 +86,7 @@ public class DelayImportDescriptor implements StructConverter {
 
 	private void initDelayImportDescriptor(NTHeader ntHeader,
 			FactoryBundledWithBinaryReader reader, int index) throws IOException {
-		
+
         if (!ntHeader.checkPointer(index)) {
 			Msg.error(this, "Invalid file index for " + Integer.toHexString(index));
 			return;

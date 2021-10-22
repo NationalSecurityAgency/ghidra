@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -120,7 +120,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testSimilarSymbolName() throws Exception {
-		// Test a function match created by the Similar Symbol Name correlator where the 
+		// Test a function match created by the Similar Symbol Name correlator where the
 		// two programs are for the same language and processor.
 		createSession(TEST_SOURCE_PROGRAM_NAME, TEST_DESTINATION_PROGRAM_NAME);
 		vtTestEnv.showTool();
@@ -138,7 +138,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testSimilarSymbolNameDiffLanguages() throws Exception {
-		// Test a function match created by the Similar Symbol Name correlator where the 
+		// Test a function match created by the Similar Symbol Name correlator where the
 		// two programs are for different processors.
 		Program languageProgram1 = buildProgram1("language1");
 		Program languageProgram2 = buildProgram2("language2");
@@ -158,7 +158,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testSimilarSymbolNameDiffLanguages2() throws Exception {
-		// Test a function match created by the Similar Symbol Name correlator where the 
+		// Test a function match created by the Similar Symbol Name correlator where the
 		// two programs are for different languages but the same processor with different
 		// instructions.
 		Program languageProgram1 = buildProgram1("language1");
@@ -177,11 +177,11 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testEntryPointPlateCommentMatchingInstructions() throws Exception {
-		// Test that plate comments should have a destination address if the 
-		// instructions can be correlated, and entry point plates should get the other 
-		// function entry point as the destination. This uses a function match created by 
-		// the Similar Symbol Name correlator where the two programs are for different 
-		// processors with matching instructions. 
+		// Test that plate comments should have a destination address if the
+		// instructions can be correlated, and entry point plates should get the other
+		// function entry point as the destination. This uses a function match created by
+		// the Similar Symbol Name correlator where the two programs are for different
+		// processors with matching instructions.
 		Program p1 = buildProgram1("language1");
 		Program p2 = buildProgram2("language2");
 
@@ -205,11 +205,11 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 
 	@Test
 	public void testEntryPointPlateCommentDifferringInstructions() throws Exception {
-		// Test that plate comments shouldn't have a destination address if the 
-		// instructions can't be correlated, except entry point plates should get the other 
-		// function entry point as the destination. This uses a function match created by 
-		// the Similar Symbol Name correlator where the two programs are for different 
-		// languages but the same processor with different instructions. 
+		// Test that plate comments shouldn't have a destination address if the
+		// instructions can't be correlated, except entry point plates should get the other
+		// function entry point as the destination. This uses a function match created by
+		// the Similar Symbol Name correlator where the two programs are for different
+		// languages but the same processor with different instructions.
 		Program languageProgram1 = buildProgram1("language1");
 		Program languageProgram2 = buildProgram3("language3");
 
@@ -233,7 +233,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 
 //==================================================================================================
 // Helper Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Gets the destination address that has been correlated to the indicated source address
@@ -365,7 +365,7 @@ public class AddressCorrelationTest extends AbstractGhidraHeadedIntegrationTest 
 
 	/**
 	 * Checks the address correlation being used for the current testMatch and its current
-	 * sourceFunction and destinationFunction to verify it is the one indicated by the 
+	 * sourceFunction and destinationFunction to verify it is the one indicated by the
 	 * addressCorrelationName.
 	 * @param addressCorrelationName the name of the expected address correlation for determining
 	 * the destination address of markup for the current function match.

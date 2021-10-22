@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -100,7 +100,7 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 
 	/**
 	 * Overridden to ensure that we return a {@link MemoryBlockStartFieldLocation} instance.
-	 * 
+	 *
 	 * @see ghidra.app.util.viewer.field.FieldFactory#getProgramLocation(int, int, ghidra.app.util.viewer.field.ListingField)
 	 */
 	@Override
@@ -129,9 +129,9 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 	}
 
 	/**
-	 * Overridden to ensure that we only place block comments on the first {@link CodeUnit} of 
+	 * Overridden to ensure that we only place block comments on the first {@link CodeUnit} of
 	 * the block.
-	 * 
+	 *
 	 * @see ghidra.app.util.viewer.field.FieldFactory#getFieldLocation(ghidra.app.util.viewer.field.ListingField, BigInteger, int, ghidra.program.util.ProgramLocation)
 	 */
 	@Override
@@ -192,7 +192,7 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 	 *   - block type
 	 *   - block start/end address (size)
 	 *   - block comment
-	 * 
+	 *
 	 * @param cu
 	 */
 	protected List<AttributedString> createBlockStartText(CodeUnit cu) {
@@ -241,7 +241,7 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 
 	/**
 	 * Creates {@link FieldElement} instances for each given {@link AttributedString}.
-	 * 
+	 *
 	 * @param attributedStrings
 	 * @return
 	 */
@@ -263,7 +263,7 @@ public class MemoryBlockStartFieldFactory extends FieldFactory {
 
 	/**
 	 * Returns the length of the longest string in the given list.
-	 * 
+	 *
 	 * @param lines
 	 * @return
 	 */

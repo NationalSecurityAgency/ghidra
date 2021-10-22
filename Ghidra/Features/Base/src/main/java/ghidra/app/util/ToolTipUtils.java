@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,8 +36,8 @@ import ghidra.util.StringUtilities;
 
 /**
  * A utility class that creates tool tip text for given data types.
- * 
- * 
+ *
+ *
  * @since Tracker Id 616
  */
 public class ToolTipUtils {
@@ -65,10 +65,10 @@ public class ToolTipUtils {
 	/**
 	 * Examines the give <code>dataType</code> and creates a tool tip for it,
 	 * depending upon its actual class type.
-	 * 
+	 *
 	 * <P>Note: the text returned here will be truncated as needed for the type of data.  To
 	 * get the full tool tip text, use {@link #getFullToolTipText(DataType)}.
-	 * 
+	 *
 	 * @param  dataType The data type from which a tool tip will be
 	 *         created.
 	 * @return tool tip text for the given data type.
@@ -80,11 +80,11 @@ public class ToolTipUtils {
 	/**
 	 * Examines the give <code>dataType</code> and creates a tool tip for it,
 	 * depending upon its actual class type.
-	 * 
+	 *
 	 * <P>Note: the text returned here will not be truncated.  This can result in tool tip windows
 	 * that are too large to fit in the screen.  For truncated tool tip text, use
 	 * {@link #getToolTipText(DataType)}.
-	 * 
+	 *
 	 * @param  dataType The data type from which a tool tip will be
 	 *         created.
 	 * @return tool tip text for the given data type.
@@ -131,7 +131,7 @@ public class ToolTipUtils {
 
 	/**
 	 * Return an HTML formatted rendering of an external location/function.
-	 * 
+	 *
 	 * @param extLoc the location
 	 * @param includeSymbolDetails true to include details of the symbol
 	 * @return tool tip text for the given external location/function
@@ -173,7 +173,7 @@ public class ToolTipUtils {
 
 	/**
 	 * Return an HTML formatted rendering of a function
-	 * 
+	 *
 	 * @param function the function
 	 * @param includeSymbolDetails true to include details of the symbol
 	 * @return tool tip text for the given function
@@ -283,7 +283,7 @@ public class ToolTipUtils {
 		/*
 		 * The flags (namely 'noreturn'), return type, calling convention, and name are all
 		 * streamed directly to the output buffer.
-		 * 
+		 *
 		 *  Parameters are encoded into individual strings, and a non-HTML length is tallied
 		 *  as each parameter is processed. If the non-HTML length exceeds
 		 *  PARAM_LENGTH_WRAP_THRESHOLD, the parameter strings are streamed into an HTML table

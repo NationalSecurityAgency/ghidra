@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,7 +137,7 @@ public class MDFunctionType extends MDType {
 		// output on underscore-based access-level types (from MDTypeInfoParser '_' prefix),
 		// specifically based5 variants.  This could possibly be put into the MDMangVS2015
 		//  demangler, but then we would probably need to describe the standard MDMang output
-		//  as "invalid," as based-on-basedptr is supposed to be invalid. 
+		//  as "invalid," as based-on-basedptr is supposed to be invalid.
 		StringBuilder conventionBuilder = new StringBuilder();
 		convention.insert(conventionBuilder);
 		if (based != null) {

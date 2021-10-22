@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -274,33 +274,33 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 		}
 		return highlightColor;
 	}
-	
+
 	/**
 	 * Creates a darker shade of the color passed-in, based on the given amount.
-	 * 
+	 *
 	 * algorithm: 1) grab individual rgb elements
 	 *            2) multiply each by a factor.
-	 *            
+	 *
 	 *            ie: int newRed = (int)(oldRed * 0.85);
-	 * 
+	 *
 	 * @param color the color to shade
 	 * @param amount number between 0..1 (the smaller the number, the darker the shade)
 	 * @return
 	 */
 	private static Color shade(Color color, double amount) {
 		if (color != null) {
-		
+
 			int r = color.getRed();
 			int g = color.getGreen();
 			int b = color.getBlue();
-			
+
 			double newR = (r * amount);
 			double newG = (g * amount);
 			double newB = (b * amount);
-			
+
 			return new Color((int)newR, (int)newG, (int)newB);
 		}
-		
+
 		return null;
 	}
 
@@ -652,7 +652,7 @@ public class VTDualListingHighlightProvider implements HighlightProvider {
 			}
 
 			// Use the following to get just the data types.
-			// Otherwise use the highlight below the while loop to get both data types and names 
+			// Otherwise use the highlight below the while loop to get both data types and names
 			// in the function signature.
 //			int nextParamIndex = startParamsIndex;
 //			while (nextParamIndex >= 0) {

@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
+//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS.
 package classrecovery;
 import ghidra.app.decompiler.*;
 import ghidra.framework.options.ToolOptions;
@@ -92,10 +92,10 @@ public class DecompilerScriptUtils {
 	}
 
 	/**
-	 * Method to get the decompiler version of the given function's return type (which is not always 
+	 * Method to get the decompiler version of the given function's return type (which is not always
 	 * the same as the listing version)
 	 * @param function the given function
-	 * @return the decompiler version of the given function's return type (which is not always the 
+	 * @return the decompiler version of the given function's return type (which is not always the
 	 * same as the listing version)
 	 */
 	public DataType getDecompilerReturnType(Function function) {
@@ -242,7 +242,7 @@ public class DecompilerScriptUtils {
 	}
 
 	/**
-	 * Method to get the called address from the given CALL pcodeOp's input Varnode 
+	 * Method to get the called address from the given CALL pcodeOp's input Varnode
 	 * @param pcodeOpInput the Varnode from a CALL pcodeOp input
 	 * @return the calledAddress
 	 */

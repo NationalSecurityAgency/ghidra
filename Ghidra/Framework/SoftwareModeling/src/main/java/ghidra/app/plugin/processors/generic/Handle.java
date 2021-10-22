@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,13 +21,13 @@ import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.pcode.Varnode;
 
 /**
- * 
+ *
  */
 public class Handle implements Serializable {
 	public static final int SPACE = 0;
 	public static final int OFFSET = 1;
 	public static final int SIZE = 2;
-	
+
 	private Varnode ptr;
 	private int spaceID;
 	private int size;
@@ -48,7 +48,7 @@ public class Handle implements Serializable {
 		switch(select1) {
 			case SPACE:
 				return spaceID;
-			case OFFSET: 
+			case OFFSET:
 				try {
 					switch(select2) {
 						case SPACE:
@@ -69,24 +69,24 @@ public class Handle implements Serializable {
 				return 0;
 		}
 	}
-	
+
 	public long getSpace() {
-		return spaceID;	
+		return spaceID;
 	}
-	
+
 	public long getSize() {
 		return size;
 	}
-	
+
 	public Varnode getPtr() {
 		return ptr;
 	}
-	
+
 	public boolean isAddress() {
 		int spaceType = AddressSpace.ID_TYPE_MASK & spaceID;
 		return (spaceType == AddressSpace.TYPE_RAM );
 	}
-	
+
 	@Deprecated
 	public boolean isCodeAddress() {
 		throw new UnsupportedOperationException();
@@ -111,7 +111,7 @@ public class Handle implements Serializable {
 		int type = AddressSpace.ID_TYPE_MASK & spaceID;
 		return (type == AddressSpace.TYPE_UNIQUE);
 	}
-	
+
 	public boolean dynamic() {
 		return !ptr.isConstant();
 	}

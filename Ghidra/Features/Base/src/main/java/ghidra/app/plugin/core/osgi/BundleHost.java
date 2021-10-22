@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,14 +43,14 @@ import ghidra.util.task.*;
 
 /**
  * Hosts the embedded OSGi framework and manages {@link GhidraBundle}s.
- * 
+ *
  * <br/><br/>
- * note: {@link GhidraBundle}, its implementations, and this class constitute 
+ * note: {@link GhidraBundle}, its implementations, and this class constitute
  * a bridge between OSGi's {@link Bundle} and Ghidra.
  * <ul>
  * <li> unqualified, "bundle" will mean {@link GhidraBundle}
- * <li> use of OSGi types, including {@link Bundle} and {@link Framework}, should be package 
- * scoped (not public)  
+ * <li> use of OSGi types, including {@link Bundle} and {@link Framework}, should be package
+ * scoped (not public)
  * <li> bundle lifecycle is simplified to "active"(same as OSGi "active" state)
  * and "inactive" (OSGi "uninstalled" state)
  * </ul>
@@ -83,11 +83,11 @@ public class BundleHost {
 	}
 
 	/**
-	 * If a {@link GhidraBundle} hasn't already been added for {@bundleFile}, add it now as a 
+	 * If a {@link GhidraBundle} hasn't already been added for {@bundleFile}, add it now as a
 	 * non-system bundle.
-	 * 
+	 *
 	 * <p>Enable the bundle.
-	 * 
+	 *
 	 * @param bundleFile the bundle file to (add and) enable
 	 * @return false if the bundle was already enabled
 	 */
@@ -102,7 +102,7 @@ public class BundleHost {
 
 	/**
 	 * Enable a bundle and notify listeners.
-	 * 
+	 *
 	 * @param bundle the bundle to enable
 	 * @return false if the bundle was already enabled
 	 */
@@ -117,7 +117,7 @@ public class BundleHost {
 
 	/**
 	 * Disable a bundle and notify listeners.
-	 * 
+	 *
 	 * @param bundle the bundle to disable
 	 * @return true if the bundle was enabled
 	 */
@@ -132,8 +132,8 @@ public class BundleHost {
 
 	/**
 	 * Assuming there is currently a bundle managed with file {@code bundleFile},
-	 * return its {@link GhidraBundle}, otherwise show an error dialog and return {@code null}. 
-	 * 
+	 * return its {@link GhidraBundle}, otherwise show an error dialog and return {@code null}.
+	 *
 	 * @param bundleFile the bundleFile of the sought bundle
 	 * @return a {@link GhidraBundle} or {@code null}
 	 */
@@ -149,8 +149,8 @@ public class BundleHost {
 
 	/**
 	 * If there is currently a bundle managed with file {@code bundleFile},
-	 * return its {@link GhidraBundle}, otherwise return {@code null}. 
-	 * 
+	 * return its {@link GhidraBundle}, otherwise return {@code null}.
+	 *
 	 * @param bundleFile the bundleFile of the sought bundle
 	 * @return a {@link GhidraBundle} or {@code null}
 	 */
@@ -180,7 +180,7 @@ public class BundleHost {
 
 	/**
 	 * Create a new GhidraBundle and add to the list of managed bundles
-	 * 
+	 *
 	 * @param bundleFile the bundle file
 	 * @param enabled if the new bundle should be enabled
 	 * @param systemBundle if the new bundle is a system bundle
@@ -194,9 +194,9 @@ public class BundleHost {
 	}
 
 	/**
-	 * Create new GhidraBundles and add to the list of managed bundles.  All GhidraBundles created 
-	 * with the same {@code enabled} and {@code systemBundle} values. 
-	 * 
+	 * Create new GhidraBundles and add to the list of managed bundles.  All GhidraBundles created
+	 * with the same {@code enabled} and {@code systemBundle} values.
+	 *
 	 * @param bundleFiles a list of new bundle files to add
 	 * @param enabled if the new bundles should be enabled
 	 * @param systemBundle if the new bundles are system bundles
@@ -212,7 +212,7 @@ public class BundleHost {
 
 	/**
 	 * Add bundles to the list of managed bundles.
-	 * 
+	 *
 	 * @param bundles the bundles to add
 	 */
 	private void add(List<GhidraBundle> bundles) {
@@ -222,7 +222,7 @@ public class BundleHost {
 
 	/**
 	 * Remove a bundle from the list of managed bundles.
-	 * 
+	 *
 	 * @param bundleFile the file of the bundle to remove
 	 */
 	public void remove(ResourceFile bundleFile) {
@@ -232,7 +232,7 @@ public class BundleHost {
 
 	/**
 	 * Remove a bundle from the list of managed bundles.
-	 * 
+	 *
 	 * @param bundleLocation the location id of the bundle to remove
 	 */
 	public void remove(String bundleLocation) {
@@ -242,7 +242,7 @@ public class BundleHost {
 
 	/**
 	 * Remove a bundle from the list of managed bundles.
-	 * 
+	 *
 	 * @param bundle the bundle to remove
 	 */
 	public void remove(GhidraBundle bundle) {
@@ -252,7 +252,7 @@ public class BundleHost {
 
 	/**
 	 * Remove bundles from the list of managed bundles.
-	 * 
+	 *
 	 * @param bundles the bundles to remove
 	 */
 	public void remove(Collection<GhidraBundle> bundles) {
@@ -266,7 +266,7 @@ public class BundleHost {
 
 	/**
 	 * Try to install a bundle.
-	 * 
+	 *
 	 * @param bundle the bundle to install
 	 * @return the OSGi bundle returned by the framework
 	 * @throws GhidraBundleException if install fails
@@ -299,9 +299,9 @@ public class BundleHost {
 		}
 	}
 
-	/** 
+	/**
 	 * return all of the currently managed bundles
-	 *  
+	 *
 	 * @return all the bundles
 	 */
 	public Collection<GhidraBundle> getGhidraBundles() {
@@ -310,7 +310,7 @@ public class BundleHost {
 
 	/**
 	 * return the list of currently managed bundle files
-	 * 
+	 *
 	 * @return all the bundle files
 	 */
 	public Collection<ResourceFile> getBundleFiles() {
@@ -327,8 +327,8 @@ public class BundleHost {
 
 	/**
 	 * Attempt to resolve a list of BundleRequirements with active Bundle capabilities.
-	 * 
-	 * @param requirements list of requirements -- satisfied requirements are removed as 
+	 *
+	 * @param requirements list of requirements -- satisfied requirements are removed as
 	 * capabilities are found
 	 * @return list of {@link BundleWiring} objects corresponding to matching capabilities
 	 */
@@ -359,7 +359,7 @@ public class BundleHost {
 
 	/**
 	 * Attempt to resolve {@code requirements} against the currently active bundles.
-	 * 
+	 *
 	 * @param requirements a list of {@link BundleRequirement} objects
 	 * @return true if all of the requirements can be resolved
 	 */
@@ -377,7 +377,7 @@ public class BundleHost {
 
 	/**
 	 * A subdirectory of the user settings directory for storing OSGi artifacts.
-	 * 
+	 *
 	 * @return the path
 	 */
 	public static Path getOsgiDir() {
@@ -387,7 +387,7 @@ public class BundleHost {
 
 	/**
 	 * A directory for use by the OSGi framework as a cache
-	 * 
+	 *
 	 * @return the directory
 	 */
 	protected static Path getCacheDir() {
@@ -457,7 +457,7 @@ public class BundleHost {
 
 	/**
 	 * start the framework
-	 * 
+	 *
 	 * @throws OSGiException framework failures
 	 * @throws IOException filesystem setup
 	 */
@@ -518,7 +518,7 @@ public class BundleHost {
 
 	/**
 	 * Get the OSGi bundle with the given bundle location identifier.
-	 * 
+	 *
 	 * @param bundleLocation the bundle location identifier
 	 * @return the OSGi bundle or null
 	 */
@@ -528,7 +528,7 @@ public class BundleHost {
 
 	/**
 	 * Activate a bundle. Either an exception is thrown or the bundle will be in "ACTIVE" state.
-	 * 
+	 *
 	 * @param bundle the bundle
 	 * @throws GhidraBundleException if there's a problem activating
 	 */
@@ -549,7 +549,7 @@ public class BundleHost {
 
 	/**
 	 * Activate a bundle. Either an exception is thrown or the bundle will be in "ACTIVE" state.
-	 * 
+	 *
 	 * @param bundleLocation the bundle location identifier
 	 * @throws InterruptedException if the wait is interrupted
 	 * @throws GhidraBundleException if there's a problem activating
@@ -565,7 +565,7 @@ public class BundleHost {
 
 	/**
 	 * Deactivate a bundle. Either an exception is thrown or the bundle will be in "UNINSTALLED" state.
-	 * 
+	 *
 	 * @param bundle the bundle
 	 * @throws GhidraBundleException if there's a problem activating
 	 */
@@ -596,7 +596,7 @@ public class BundleHost {
 
 	/**
 	 * Deactivate a bundle. Either an exception is thrown or the bundle will be in "UNINSTALLED" state.
-	 * 
+	 *
 	 * @param bundleLocation the bundle location identifier
 	 * @throws InterruptedException if the wait is interrupted
 	 * @throws GhidraBundleException if there's a problem activating
@@ -610,9 +610,9 @@ public class BundleHost {
 	}
 
 	/**
-	 * Refreshes the specified bundles. This forces the update (replacement) 
+	 * Refreshes the specified bundles. This forces the update (replacement)
 	 * or removal of packages exported by the specified bundles.
-	 * 
+	 *
 	 * @param bundles the bundles to refresh
 	 * @see FrameworkWiring#refreshBundles
 	 */
@@ -640,7 +640,7 @@ public class BundleHost {
 
 	/**
 	 * Remove a listener for OSGi framework events.
-	 * 
+	 *
 	 * @param bundleHostListener the listener
 	 */
 	public void removeListener(BundleHostListener bundleHostListener) {
@@ -650,7 +650,7 @@ public class BundleHost {
 	/**
 	 * Activate a set of bundles and any dependencies in topological order.  This method doesn't rely on the
 	 * framework, and so will add non-active dependencies.
-	 * 
+	 *
 	 * @param bundles bundles to activate
 	 * @param monitor a task monitor
 	 * @param console where to write build messages
@@ -682,7 +682,7 @@ public class BundleHost {
 	/**
 	 * Activate a set of bundles in dependency topological order by resolving against currently
 	 * active bundles in stages.  No bundles outside those requested will be activated.
-	 * 
+	 *
 	 * @param bundles bundles to activate
 	 * @param monitor a task monitor
 	 * @param console where to write build messages
@@ -742,7 +742,7 @@ public class BundleHost {
 
 	/**
 	 * Used by {@link GhidraBundle}s to notify the host that a bundle has been built.
-	 * 
+	 *
 	 * @param bundle the bundle that was built
 	 * @param summary a summary of anything notable (errors or warnings) during the build
 	 */
@@ -800,7 +800,7 @@ public class BundleHost {
 
 	/**
 	 * Add a listener for OSGi framework events.
-	 * 
+	 *
 	 * @param bundleHostListener the listener
 	 */
 	public void addListener(BundleHostListener bundleHostListener) {
@@ -809,11 +809,11 @@ public class BundleHost {
 
 	/**
 	 * Restore the list of managed bundles from {@code saveState} and each bundle's state.
-	 * 
+	 *
 	 * <p>Bundles that had been active are reactivated.
-	 * 
+	 *
 	 * <p>note: This is done once on startup after system bundles have been added.
-	 * 
+	 *
 	 * @param saveState the state object
 	 * @param tool the tool
 	 */
@@ -869,7 +869,7 @@ public class BundleHost {
 
 	/**
 	 * Save the list of managed bundles and each bundle's state.
-	 * 
+	 *
 	 * @param saveState the state object
 	 */
 	public void saveManagedBundleState(SaveState saveState) {
@@ -921,7 +921,7 @@ public class BundleHost {
 			// An edge A->B indicates that the capabilities of A resolve some requirement(s) of B
 
 			// "front" accumulates bundles and links to bundles already in the graph that they provide capabilities for.
-			//   e.g.  if front[A]=[B,...] then A->B, B is already in the graph, and we will add A next iteration. 
+			//   e.g.  if front[A]=[B,...] then A->B, B is already in the graph, and we will add A next iteration.
 			Map<GhidraBundle, Set<GhidraBundle>> front = new HashMap<>();
 			for (GhidraBundle bundle : startingBundles) {
 				front.put(bundle, null);
@@ -1023,7 +1023,7 @@ public class BundleHost {
 					}
 				}
 			}
-			// if requirements remain, some will be resolved by system 
+			// if requirements remain, some will be resolved by system
 			//  and others will generate helpful errors for the user during activation
 		}
 	}

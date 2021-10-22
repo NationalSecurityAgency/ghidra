@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -222,7 +222,7 @@ public class DexHeader implements StructConverter {
 
 	/**
 	 * Adler32 checksum of the rest of the file (everything but magic and this field);
-	 * used to detect file corruption 
+	 * used to detect file corruption
 	 * @return the checksum
 	 */
 	public int getChecksum() {
@@ -230,8 +230,8 @@ public class DexHeader implements StructConverter {
 	}
 
 	/**
-	 * SHA-1 signature (hash) of the rest of the file (everything but magic, checksum, and this field); 
-	 * used to uniquely identify files 
+	 * SHA-1 signature (hash) of the rest of the file (everything but magic, checksum, and this field);
+	 * used to uniquely identify files
 	 * @return the signature
 	 */
 	public byte[] getSignature() {
@@ -239,7 +239,7 @@ public class DexHeader implements StructConverter {
 	}
 
 	/**
-	 * Size of the entire file (including the header), in bytes 
+	 * Size of the entire file (including the header), in bytes
 	 * @return the file size in bytes
 	 */
 	public int getFileSize() {
@@ -247,9 +247,9 @@ public class DexHeader implements StructConverter {
 	}
 
 	/**
-	 * Size of the header (this entire section), in bytes. 
-	 * This allows for at least a limited amount of 
-	 * backwards/forwards compatibility without invalidating the format. 
+	 * Size of the header (this entire section), in bytes.
+	 * This allows for at least a limited amount of
+	 * backwards/forwards compatibility without invalidating the format.
 	 * @return the header size in bytes
 	 */
 	public int getHeaderSize() {
@@ -257,7 +257,7 @@ public class DexHeader implements StructConverter {
 	}
 
 	/**
-	 * Endianness tag. Either "ENDIAN_CONSTANT or REVERSE_ENDIAN_CONSTANT". 
+	 * Endianness tag. Either "ENDIAN_CONSTANT or REVERSE_ENDIAN_CONSTANT".
 	 * @return the endianness
 	 */
 	public int getEndianTag() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,10 +24,10 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * This table model of addresses is used when you already have an
- * Address array built. 
+ * Address array built.
  * <p>
  * If you need to compute the address array, then you should
- * extend {@link AddressPreviewTableModel} and override the 
+ * extend {@link AddressPreviewTableModel} and override the
  * {@link AddressPreviewTableModel#doLoad(Accumulator, TaskMonitor)
  * doLoad(Accumulator&lt;Address&gt; accumulator, TaskMonitor monitor)}
  *  method which will be called in a dedicated thread.
@@ -40,11 +40,11 @@ public class AddressArrayTableModel extends AddressPreviewTableModel {
 	private Address[] addrs;
 
 	/**
-	 * Constructor. 
-	 * 
+	 * Constructor.
+	 *
 	 * @param title title of the query
 	 * @param serviceProvider from which to get services
-	 * @param prog program 
+	 * @param prog program
 	 * @param addrs array of addresses in the model
 	 * @param monitor monitor that is used to show progress; may be null
 	 */
@@ -56,10 +56,10 @@ public class AddressArrayTableModel extends AddressPreviewTableModel {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param title title of the query
 	 * @param serviceProvider from which to get services
-	 * @param prog program 
+	 * @param prog program
 	 * @param addrs array of addresses in the model
 	 */
 	public AddressArrayTableModel(String title, ServiceProvider serviceProvider, Program prog,

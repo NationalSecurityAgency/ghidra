@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,15 +39,15 @@ public class CompositeZeroArrayTest extends AbstractCompositeZeroArrayTest {
 	public void testStructureZeroArrayS1() {
 		Structure struct = getStructure("zeroArrayStruct1");
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/zeroArrayStruct1\n" + 
-			"pack()\n" + 
-			"Structure zeroArrayStruct1 {\n" + 
-			"   0   int   4   a   \"\"\n" + 
-			"   4   char[2]   2   a1   \"\"\n" + 
-			"   6   char[0]   0   x   \"\"\n" + 
-			"   8   int[0]   0   y   \"\"\n" + 
-			"   8   int   4   b   \"\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/zeroArrayStruct1\n" +
+			"pack()\n" +
+			"Structure zeroArrayStruct1 {\n" +
+			"   0   int   4   a   \"\"\n" +
+			"   4   char[2]   2   a1   \"\"\n" +
+			"   6   char[0]   0   x   \"\"\n" +
+			"   8   int[0]   0   y   \"\"\n" +
+			"   8   int   4   b   \"\"\n" +
+			"}\n" +
 			"Size = 12   Actual Alignment = 4", struct);
 		//@formatter:on
 	}
@@ -56,14 +56,14 @@ public class CompositeZeroArrayTest extends AbstractCompositeZeroArrayTest {
 	public void testStructureZeroArrayS2() {
 		Structure struct = getStructure("zeroArrayStruct2");
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/zeroArrayStruct2\n" + 
-			"pack()\n" + 
-			"Structure zeroArrayStruct2 {\n" + 
-			"   0   int   4   a   \"\"\n" + 
-			"   4   char[2]   2   a1   \"\"\n" + 
-			"   6   char[0]   0   x   \"\"\n" + 
-			"   8   int[0]   0   y   \"\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/zeroArrayStruct2\n" +
+			"pack()\n" +
+			"Structure zeroArrayStruct2 {\n" +
+			"   0   int   4   a   \"\"\n" +
+			"   4   char[2]   2   a1   \"\"\n" +
+			"   6   char[0]   0   x   \"\"\n" +
+			"   8   int[0]   0   y   \"\"\n" +
+			"}\n" +
 			"Size = 8   Actual Alignment = 4", struct);
 		//@formatter:on
 	}
@@ -72,12 +72,12 @@ public class CompositeZeroArrayTest extends AbstractCompositeZeroArrayTest {
 	public void testStructureZeroArrayS3() {
 		Structure struct = getStructure("zeroArrayStruct3");
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/zeroArrayStruct3\n" + 
-			"pack()\n" + 
-			"Structure zeroArrayStruct3 {\n" + 
-			"   0   int   4   a   \"\"\n" + 
-			"   4   zeroArrayStruct2   8   s   \"\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/zeroArrayStruct3\n" +
+			"pack()\n" +
+			"Structure zeroArrayStruct3 {\n" +
+			"   0   int   4   a   \"\"\n" +
+			"   4   zeroArrayStruct2   8   s   \"\"\n" +
+			"}\n" +
 			"Size = 12   Actual Alignment = 4", struct);
 		//@formatter:on
 	}
@@ -86,15 +86,15 @@ public class CompositeZeroArrayTest extends AbstractCompositeZeroArrayTest {
 	public void testStructureZeroArrayU1() {
 		Union union = getUnion("zeroArrayUnion1");
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/zeroArrayUnion1\n" + 
-			"pack()\n" + 
-			"Union zeroArrayUnion1 {\n" + 
-			"   0   int   4   a   \"\"\n" + 
-			"   0   char[2]   2   a1   \"\"\n" + 
-			"   0   char[0]   0   x   \"\"\n" + 
-			"   0   int[0]   0   y   \"\"\n" + 
-			"   0   int   4   b   \"\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/zeroArrayUnion1\n" +
+			"pack()\n" +
+			"Union zeroArrayUnion1 {\n" +
+			"   0   int   4   a   \"\"\n" +
+			"   0   char[2]   2   a1   \"\"\n" +
+			"   0   char[0]   0   x   \"\"\n" +
+			"   0   int[0]   0   y   \"\"\n" +
+			"   0   int   4   b   \"\"\n" +
+			"}\n" +
 			"Size = 4   Actual Alignment = 4", union);
 		//@formatter:on
 	}
@@ -103,14 +103,14 @@ public class CompositeZeroArrayTest extends AbstractCompositeZeroArrayTest {
 	public void testStructureZeroArrayU2() {
 		Union union = getUnion("zeroArrayUnion2");
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/zeroArrayUnion2\n" + 
-			"pack()\n" + 
-			"Union zeroArrayUnion2 {\n" + 
-			"   0   int   4   a   \"\"\n" + 
-			"   0   char[2]   2   a1   \"\"\n" + 
-			"   0   char[0]   0   x   \"\"\n" + 
-			"   0   int[0]   0   y   \"\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/zeroArrayUnion2\n" +
+			"pack()\n" +
+			"Union zeroArrayUnion2 {\n" +
+			"   0   int   4   a   \"\"\n" +
+			"   0   char[2]   2   a1   \"\"\n" +
+			"   0   char[0]   0   x   \"\"\n" +
+			"   0   int[0]   0   y   \"\"\n" +
+			"}\n" +
 			"Size = 4   Actual Alignment = 4", union);
 		//@formatter:on
 	}
@@ -119,12 +119,12 @@ public class CompositeZeroArrayTest extends AbstractCompositeZeroArrayTest {
 	public void testStructureZeroArrayU3() {
 		Union union = getUnion("zeroArrayUnion3");
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/zeroArrayUnion3\n" + 
-			"pack()\n" + 
-			"Union zeroArrayUnion3 {\n" + 
-			"   0   int   4   a   \"\"\n" + 
-			"   0   zeroArrayStruct2   8   s   \"\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/zeroArrayUnion3\n" +
+			"pack()\n" +
+			"Union zeroArrayUnion3 {\n" +
+			"   0   int   4   a   \"\"\n" +
+			"   0   zeroArrayStruct2   8   s   \"\"\n" +
+			"}\n" +
 			"Size = 8   Actual Alignment = 4", union);
 		//@formatter:on
 	}

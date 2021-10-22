@@ -339,7 +339,7 @@ pequation_ellipsis_right
 	|	pequation_atomic
 	;
 
-pequation_atomic	
+pequation_atomic
 	:	constraint
 	|	lc=LPAREN pequation RPAREN -> ^(OP_PARENTHESIZED[$lc,"(...)"] pequation)
 	;

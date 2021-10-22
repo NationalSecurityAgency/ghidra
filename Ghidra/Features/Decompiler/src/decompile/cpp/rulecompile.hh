@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -162,10 +162,10 @@ public:
                          '#' for named constants
 
   A "statement" is a sequence of "steps", ending in a semicolon
-  Steps are sequential, proceeding left to right.  Each step is either a 
+  Steps are sequential, proceeding left to right.  Each step is either a
   building step (which defines a new entity in terms of an existing entity), or a
   constraint (which forces a condition to be true)
-  
+
   Building steps:
 
   o -> v                v is the output of o
@@ -174,7 +174,7 @@ public:
   o <-(0) v             v is input 0 of o
   o <-(1) #c            input 1 to o is a constant (now named c)
   o <-(1) #0            input 1 to o is a constant with value 0
-  
+
   v <- o                o is the defining op of v
   v -> o                o is ANY of the ops taking v as an input (may be inefficient)
   v ->! o               o is the one and only op taking v as input
@@ -192,7 +192,7 @@ public:
   There is an OR operator
 
   '['   statementlist
-      | statementlist 
+      | statementlist
       ...
   ']'
 

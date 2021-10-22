@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.util.NumericUtilities;
  *   - getFlatOffset
  *   - getOffsetFromFlat
  *   - getAddressInSegment
- * 
+ *
  * These 5 methods can be overridden to get a different mapping. This base class is
  * set up to map as for x86 16-bit real-mode.
  */
@@ -119,7 +119,7 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 	 * the same flat address offset.  This method tries to select between the different
 	 * encodings.  If the flat offset cannot be encoded with the preferred segment,
 	 * null is returned.
-	 * 
+	 *
 	 * @param flat is the flat offset
 	 * @param preferredSegment is the 16-bit preferred segment value
 	 * @return the segment encoded address or null
@@ -135,7 +135,7 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.AddressSpace#getAddress(java.lang.String)
 	 */
 	@Override
@@ -169,7 +169,7 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.AddressSpace#subtract(ghidra.program.model.address.Address,
 	 *      long)
 	 */
@@ -199,7 +199,7 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.AddressSpace#add(ghidra.program.model.address.Address,
 	 *      long)
 	 */
@@ -330,7 +330,7 @@ public class SegmentedAddressSpace extends GenericAddressSpace {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.address.AddressSpace#getPhysicalSpace()
 	 */
 	@Override

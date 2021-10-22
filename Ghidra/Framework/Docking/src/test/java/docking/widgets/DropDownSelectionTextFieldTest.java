@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,13 +61,13 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 
 	// Tests that:
 	// -the completion window is made hidden, the text field is updated upon an 'Enter', and
-	//  that an editingStopped() *is* fired (this last part only happens when we are not 
+	//  that an editingStopped() *is* fired (this last part only happens when we are not
 	//  consuming the Enter event)
 	@Test
 	public void testEnterKey_MatchingWindowOpen_DontConsumeEvent() {
 
 		//
-		// The default is to consume the event.  The test executes the code paths when the 
+		// The default is to consume the event.  The test executes the code paths when the
 		// event is not to be consumed.
 		//
 
@@ -83,7 +83,7 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 		assertMatchingWindowHidden();
 		assertTextFieldText(item);
 
-		// for this test, editing events should be triggered on ENTER press while the 
+		// for this test, editing events should be triggered on ENTER press while the
 		// drop-down is open
 		assertEditingStoppedEvent();
 	}
@@ -92,7 +92,7 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 	public void testEnterKey_MatchingWindowOpen_WithNoSelection_DontConsumeEvent() {
 
 		//
-		// The default is to consume the event.  The test executes the code paths when the 
+		// The default is to consume the event.  The test executes the code paths when the
 		// event is not to be consumed.
 		//
 
@@ -103,13 +103,13 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 
 		clearListSelection();
 
-		// press the 'Enter' key; this normally will not close the window, but since we are 
+		// press the 'Enter' key; this normally will not close the window, but since we are
 		// consuming the event, it will close the window and keep the text unchanged.
 		enter();
 		assertMatchingWindowHidden();
 		assertTextFieldText("d");
 
-		// for this test, editing events should be triggered on ENTER press while the 
+		// for this test, editing events should be triggered on ENTER press while the
 		// drop-down is open
 		assertEditingStoppedEvent();
 	}
@@ -240,7 +240,7 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 	public void testNavigationKeys_UpArrow_NoListSelection() {
 
 		//
-		// This tests is designed to get code coverage based upon the user pressing an 
+		// This tests is designed to get code coverage based upon the user pressing an
 		// arrow key.  This code functions differently depending upon what item is selected in
 		// the drop-down list.
 		//
@@ -259,7 +259,7 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 	public void testNavigationKeys_UpArrow_FirstListItemSelected() {
 
 		//
-		// This tests is designed to get code coverage based upon the user pressing an 
+		// This tests is designed to get code coverage based upon the user pressing an
 		// arrow key.  This code functions differently depending upon what item is selected in
 		// the drop-down list.
 		//
@@ -280,7 +280,7 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 	public void testNavigationKeys_UpArrow_LastListItemSelected() {
 
 		//
-		// This tests is designed to get code coverage based upon the user pressing an 
+		// This tests is designed to get code coverage based upon the user pressing an
 		// arrow key.  This code functions differently depending upon what item is selected in
 		// the drop-down list.
 		//
@@ -307,7 +307,7 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 	public void testNavigationKeys_UpArrow_MiddleListItemSelected() {
 
 		//
-		// This tests is designed to get code coverage based upon the user pressing an 
+		// This tests is designed to get code coverage based upon the user pressing an
 		// arrow key.  This code functions differently depending upon what item is selected in
 		// the drop-down list.
 		//
@@ -327,7 +327,7 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 	public void testNavigationKeys_DownArrow_NoListSelection() {
 
 		//
-		// This tests is designed to get code coverage based upon the user pressing an 
+		// This tests is designed to get code coverage based upon the user pressing an
 		// arrow key.  This code functions differently depending upon what item is selected in
 		// the drop-down list.
 		//
@@ -346,7 +346,7 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 	public void testNavigationKeys_DownArrow_FirstListItemSelected() {
 
 		//
-		// This tests is designed to get code coverage based upon the user pressing an 
+		// This tests is designed to get code coverage based upon the user pressing an
 		// arrow key.  This code functions differently depending upon what item is selected in
 		// the drop-down list.
 		//
@@ -365,7 +365,7 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 	public void testNavigationKeys_DownArrow_LastListItemSelected() {
 
 		//
-		// This tests is designed to get code coverage based upon the user pressing an 
+		// This tests is designed to get code coverage based upon the user pressing an
 		// arrow key.  This code functions differently depending upon what item is selected in
 		// the drop-down list.
 		//
@@ -386,7 +386,7 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 	public void testNavigationKeys_DownArrow_MiddleListItemSelected() {
 
 		//
-		// This tests is designed to get code coverage based upon the user pressing an 
+		// This tests is designed to get code coverage based upon the user pressing an
 		// arrow key.  This code functions differently depending upon what item is selected in
 		// the drop-down list.
 		//
@@ -406,7 +406,7 @@ public class DropDownSelectionTextFieldTest extends AbstractDropDownTextFieldTes
 	public void testSetSelectedValue_TextInField_ItemSelected() {
 
 		//
-		// Tests that the API can set the selected item when there was already a selected 
+		// Tests that the API can set the selected item when there was already a selected
 		// item choice made by the user.
 		//
 

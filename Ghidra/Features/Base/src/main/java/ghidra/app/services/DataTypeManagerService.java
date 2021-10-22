@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,7 +85,7 @@ public interface DataTypeManagerService extends DataTypeQueryService {
 	public HelpLocation getEditorHelpLocation(DataType dataType);
 
 	/**
-	 * Determine if the indicated data type can be edited 
+	 * Determine if the indicated data type can be edited
 	 * (i.e. it has an editor that this service knows how to invoke).
 	 * @param dt data type to be edited
 	 * @return true if this service can invoke an editor for changing the data type.
@@ -94,7 +94,7 @@ public interface DataTypeManagerService extends DataTypeQueryService {
 
 	/**
 	 * Pop up an editor dialog for the given data type.
-	 * 
+	 *
 	 * @param dt data type that either a Structure or a Union; built in types cannot be edited
 	 * @throws IllegalArgumentException if the given has not been resolved by a DataTypeManager;
 	 *         in other words, if {@link DataType#getDataTypeManager()} returns null.
@@ -102,9 +102,9 @@ public interface DataTypeManagerService extends DataTypeQueryService {
 	public void edit(DataType dt);
 
 	/**
-	 * Closes the archive for the given {@link DataTypeManager}.  This will ignore request to 
-	 * close the open Program's manager and the built-in manager.  
-	 * 
+	 * Closes the archive for the given {@link DataTypeManager}.  This will ignore request to
+	 * close the open Program's manager and the built-in manager.
+	 *
 	 * @param dtm the data type manager of the archive to close
 	 */
 	public void closeArchive(DataTypeManager dtm);
@@ -122,10 +122,10 @@ public interface DataTypeManagerService extends DataTypeQueryService {
 	public DataTypeManager openDataTypeArchive(String archiveName)
 			throws IOException, DuplicateIdException;
 
-	/** 
+	/**
 	 * A method to open an Archive for the given, pre-existing DataTypeArchive (like one that
 	 * was opened during the import process.
-	 * 
+	 *
 	 * @param dataTypeArchive the archive from which to create an Archive
 	 * @return an Archive based upon the given DataTypeArchive
 	 */
@@ -133,7 +133,7 @@ public interface DataTypeManagerService extends DataTypeQueryService {
 
 	/**
 	 * A method to open an Archive for the given, pre-existing archive file (*.gdt)
-	 * 
+	 *
 	 * @param file data type archive file
 	 * @param acquireWriteLock true if write lock should be acquired (i.e., open for update)
 	 * @return an Archive based upon the given archive files
@@ -146,7 +146,7 @@ public interface DataTypeManagerService extends DataTypeQueryService {
 	/**
 	 * Selects the given data type in the display of data types.  A null <code>dataType</code>
 	 * value will clear the current selection.
-	 * 
+	 *
 	 * @param dataType The data type to select.
 	 */
 	public void setDataTypeSelected(DataType dataType);
@@ -154,7 +154,7 @@ public interface DataTypeManagerService extends DataTypeQueryService {
 	/**
 	 * Shows the user a dialog that allows them to choose a data type from a tree of all available
 	 * data types.
-	 * 
+	 *
 	 * @param selectedPath An optional tree path to select in the tree
 	 * @return A data type chosen by the user
 	 */

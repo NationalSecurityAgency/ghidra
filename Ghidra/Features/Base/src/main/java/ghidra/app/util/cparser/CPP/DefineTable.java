@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.util.Msg;
 import ghidra.util.NumericUtilities;
 
 /**
- * 
+ *
  */
 public class DefineTable {
 	// Hastable for storing #defs
@@ -39,7 +39,7 @@ public class DefineTable {
 	private final static String VALUE = "value";
 
 	/**
-	 * 
+	 *
 	 */
 	public DefineTable() {
 		super();
@@ -92,7 +92,7 @@ public class DefineTable {
 
 	/**
 	 * Associate a define "name" with a Preprocessor parser token match.
-	 * 
+	 *
 	 * @param string - name of define
 	 * @param val - token value from parsing
 	 */
@@ -124,7 +124,7 @@ public class DefineTable {
 	/**
 	 * Add an args definition for a define with arguments
 	 *     #define bubba(a,b)   (a or b)
-	 *     
+	 *
 	 * @param string name of define
 	 * @param val set of arg token names
 	 */
@@ -134,7 +134,7 @@ public class DefineTable {
 
 	/**
 	 * See if the define table contains a definition
-	 * 
+	 *
 	 * @param def
 	 * @return
 	 */
@@ -144,7 +144,7 @@ public class DefineTable {
 
 	/**
 	 * Size of the define table.
-	 * 
+	 *
 	 * @return
 	 */
 	public int size() {
@@ -153,7 +153,7 @@ public class DefineTable {
 
 	/**
 	 * Remove a definition from the known defines.
-	 * 
+	 *
 	 * @param string name of define
 	 * @return return the defined token for the named define.
 	 */
@@ -241,7 +241,7 @@ public class DefineTable {
 
 	/**
 	 * Check if the token that defined this define was numeric
-	 * 
+	 *
 	 * @param defName
 	 * @return
 	 */
@@ -271,9 +271,9 @@ public class DefineTable {
 	 */
 	private String macroSub(String image, int pos, ArrayList<String> sublist) {
 		int replaceCount = 0;
-		
+
 		StringBuffer buf = new StringBuffer(image);
-		
+
 		// don't replace an infinite number of times.
 		//HashMap<String,Integer> lastReplStrings = new HashMap<String,Integer>();
 		while (pos < buf.length() && replaceCount < 900000) {
@@ -312,12 +312,12 @@ public class DefineTable {
 		return buf.toString();
 	}
 
-	
+
 	private boolean shouldReplace(StringBuffer buf, String defName, int pos) {
 		if (defName == null) {
 			return false;
 		}
-		
+
 		//String nextRepl = "";
 		int currIndex = buf.indexOf(defName, pos);
 		if (currIndex < 0)
@@ -341,7 +341,7 @@ public class DefineTable {
 		String replacementString = defs.get(defName).image;		// get replacement text
 		if (replacementString.equals(defName))
 			return false; // no need to replace
-		
+
 //		// check that macro argv arguments match
 //		Vector<PPToken> argv = getArgs(defName);
 //		if (argv != null && argv.size() > 0) {
@@ -360,13 +360,13 @@ public class DefineTable {
 //				return false;
 //			}
 //		}
-			
+
 		return true;
 	}
 
 	int replace(StringBuffer buf, String currKey, int fromIndex, ArrayList<String> sublist) {
 		String replacementString = null;
-		
+
 		if (sublist == null) {
 			sublist = new ArrayList<String>();
 		}
@@ -394,7 +394,7 @@ public class DefineTable {
 		replacementString = defs.get(currKey).image;		// get replacement text
 		if (replacementString.equals(currKey))
 			return -1; // no need to replace
-		
+
 		// if current def has args, take care of the replacement of them
 		Vector<PPToken> argv = getArgs(currKey);
 		int replacedSubpieceLen = currKey.length();
@@ -417,19 +417,19 @@ public class DefineTable {
 			if (!parms.startsWith("(") || !parms.endsWith(")")) {
 				return -1;
 			}
-			
+
 			parms = parms.substring(1, parms.length() - 1);
 			replacementString = subParams(replacementString, currKey, parms, argv);
 
 			replacementString = joinPdPd(replacementString);
-			
+
 			replacedSubpieceLen += parmslen;
 		}
 		// you may add an else if{} block to warn of malformed macros
 			// but the actual culprit may be the Define() non-terminal
 		//if (replString != null)
 		//	nextRepl += replString;
-		
+
 		sublist = new ArrayList<String>(sublist);
 		sublist.add(currKey);
 		String newReplString = macroSub(replacementString,0, sublist);
@@ -440,10 +440,10 @@ public class DefineTable {
 		//nextRepl += image.substring(currIndex + currKey.length());
 		return currIndex+replacementString.length();
 	}
-	
+
 	/**
 	 * expand a define with arguments
-	 * 
+	 *
 	 * @return the newly expanded string
 	 */
 	String subParams(String replString, String defName, String parms, Vector<PPToken> argv) {
@@ -583,7 +583,7 @@ public class DefineTable {
 
 	/**
 	 * do the final expansion of "##" concats in the define strings that protect normal macro substitution.
-	 * 
+	 *
 	 * @param image
 	 * @param join
 	 * @return
@@ -640,12 +640,12 @@ public class DefineTable {
 		image = buf.toString();
 		return image;
 	}
-	
+
 	/**
 	 * Given a data type manager, populate defines with constant values as Enums
-	 * 
+	 *
 	 */
-	
+
 	public void populateDefineEquates(DataTypeManager dtMgr) {
 		int transactionID = dtMgr.startTransaction("Add Equates");
 
@@ -663,10 +663,10 @@ public class DefineTable {
 			String strValue = getValue(defName);
 			String strExpanded = expand(strValue, true);
 			strValue = strExpanded;
-			
+
 			// strip off any casting/parentheses
 			strValue = stripCast(strValue);
-			
+
 			long value = 0;
 			Long lvalue = getCValue(strValue);
 
@@ -698,7 +698,7 @@ public class DefineTable {
 
 	/**
 	 * Parse a C format integer value
-	 * 
+	 *
 	 * @param strValue value to parse
 	 * @return long value if parsable as an integer, null otherwise
 	 */
@@ -712,7 +712,7 @@ public class DefineTable {
 				radix = 16;
 			} else if (strValue.startsWith("0")) {
 				start = 1;
-				radix = 8;	
+				radix = 8;
 			}
 			if (strValue.endsWith("ul") || strValue.endsWith("ll")) {
 				strValue = strValue.substring(0, strValue.length() - 2);
@@ -720,11 +720,11 @@ public class DefineTable {
 			else if (strValue.endsWith("l") || strValue.endsWith("u")) {
 				strValue = strValue.substring(0, strValue.length() - 1);
 			}
-			
+
 			if (start != 0) {
 				strValue = strValue.substring(start);
 			}
-			
+
 			return Long.parseLong(strValue, radix);
 		}
 		catch (RuntimeException e) {
@@ -732,7 +732,7 @@ public class DefineTable {
 		}
 		return null;
 	}
-	
+
 	/*
 	 * create a category path based on a name, or the root category with no name
 	 */
@@ -757,13 +757,13 @@ public class DefineTable {
 		}
 		return path.substring(slashpos + 1);
 	}
-	
+
 	/*
 	 * Strip off any casts
 	 */
 	private static String stripCast(String strValue) {
 		strValue = strValue.trim();
-		
+
 		int pos = 0;
 		while (pos < strValue.length()) {
 			int procLen = 1;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param dataMgr
 	 * @param cache
 	 * @param compositeAdapter
@@ -108,14 +108,14 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	 * <p>
 	 * NOTE: When {@link DataTypeManagerDB} is instantiated for update an upgrade must be forced based upon the
 	 * {@link CompositeDBAdapter#isFlexArrayMigrationRequired()} indicator.  The upgrade logic
-	 * (see {@link DataTypeManagerDB#migrateOldFlexArrayComponentsIfRequired(ghidra.util.task.TaskMonitor)}) 
+	 * (see {@link DataTypeManagerDB#migrateOldFlexArrayComponentsIfRequired(ghidra.util.task.TaskMonitor)})
 	 * istantiates all structures within the databases with an open transaaction allowing this method
 	 * to perform the neccessary flex-array record migration.
 	 * <p>
-	 * NOTE: The offset of the migrated flex array component and structure length may change during upgrade 
+	 * NOTE: The offset of the migrated flex array component and structure length may change during upgrade
 	 * when packing is enabled when the original packed structure length did not properly factor the flex-array
-	 * alignment.  Repack does not occur in the read-only case. 
-	 * 
+	 * alignment.  Repack does not occur in the read-only case.
+	 *
 	 * @param oldFlexArrayRecord record which corresponds to an olf flex-array component
 	 * @throws IOException if a database error occurs
 	 */
@@ -554,7 +554,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	/**
 	 * Removes a defined component at the specified index without
-	 * any alteration to other components. 
+	 * any alteration to other components.
 	 * @param index defined component index
 	 * @return the defined component which was removed.
 	 * @throws IOException if an IO error occurs
@@ -568,7 +568,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	/**
 	 * Removes a defined component at the specified index.
-	 * If this corresponds to a zero-length or bit-field component it will 
+	 * If this corresponds to a zero-length or bit-field component it will
 	 * be cleared without an offset shift to the remaining components.  Removal of
 	 * other component types will result in an offset and ordinal shift
 	 * to the remaining components.  In the case of a non-packed
@@ -669,7 +669,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				updateComposite(-1, structLength + offsetAdjustment, -1, true); // update length only
 				if (bitFieldRemoved) {
 					repack(false, false);
-				}			
+				}
 				notifySizeChanged(false);
 			}
 		}
@@ -781,11 +781,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	}
 
 	/**
-	 * Create copy of structure for target dtm (source archive information is discarded). 
+	 * Create copy of structure for target dtm (source archive information is discarded).
 	 * <p>
 	 * WARNING! copying non-packed structures which contain bitfields can produce invalid results when
 	 * switching endianess due to the differences in packing order.
-	 * 
+	 *
 	 * @param dtm target data type manager
 	 * @return cloned structure
 	 */
@@ -802,7 +802,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	 * Create cloned structure for target dtm preserving source archive information. WARNING!
 	 * cloning non-packed structures which contain bitfields can produce invalid results when
 	 * switching endianess due to the differences in packing order.
-	 * 
+	 *
 	 * @param dtm target data type manager
 	 * @return cloned structure
 	 */
@@ -914,7 +914,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	}
 
 	/**
-	 * Backup from specified defined-component index to the first component which contains the specified offset. 
+	 * Backup from specified defined-component index to the first component which contains the specified offset.
 	 * @param index any defined component index which contains offset
 	 * @param offset offset within structure
 	 * @return index of first defined component containing specific offset.
@@ -935,7 +935,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	/**
 	 * Identify defined-component index of the first non-zero-length component which contains the specified offset.
-	 * If only zero-length components exist, the last zero-length component which contains the offset will be returned. 
+	 * If only zero-length components exist, the last zero-length component which contains the offset will be returned.
 	 * @param index any defined component index which contains offset
 	 * @param offset offset within structure
 	 * @return index of first defined component containing specific offset.
@@ -1011,7 +1011,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			lock.release();
 		}
 	}
-	
+
 	@Override
 	public void clearAtOffset(int offset) {
 		lock.acquire();
@@ -1109,7 +1109,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 			lock.release();
 		}
 	}
-	
+
 	@Override
 	public List<DataTypeComponent> getComponentsContaining(int offset) {
 		lock.acquire();
@@ -1156,7 +1156,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	 * Generate an undefined component following a binary search across the defined components.
 	 * @param offset the offset within this structure which was searched for
 	 * @param missingComponentIndex the defined component binary search index result (must be negative)
-	 * @return undefined component 
+	 * @return undefined component
 	 */
 	private DataTypeComponentDB generateUndefinedComponent(int offset, int missingComponentIndex) {
 		if (missingComponentIndex >= 0) {
@@ -1335,7 +1335,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				// defined component
 				DataTypeComponentDB origDtc = components.get(index);
 				offset = origDtc.getOffset();
-				
+
 				if (isPackingEnabled() || length == 0) {
 					// case 1: packed structure or zero-length replacement - do 1-for-1 replacement
 					replacedComponents.add(origDtc);
@@ -1371,7 +1371,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 					}
 				}
 				else {
-					// case 4: sized component replacemnt - do 1-for-1 replacement 
+					// case 4: sized component replacemnt - do 1-for-1 replacement
 					replacedComponents.add(origDtc);
 				}
 			}
@@ -1424,11 +1424,11 @@ class StructureDB extends CompositeDB implements StructureInternal {
 		if (offset < 0) {
 			throw new IllegalArgumentException("Offset cannot be negative.");
 		}
-		
+
 		lock.acquire();
 		try {
 			checkDeleted();
-			
+
 			if (offset >= structLength) {
 				throw new IllegalArgumentException(
 					"Offset " + offset + " is beyond end of structure (" + structLength + ").");
@@ -1452,7 +1452,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				// case 1: only defined component(s) at offset are zero-length
 				if (origDtc.getLength() == 0) {
 					if (isPackingEnabled()) {
-						// if packed: insert after zero-length component 
+						// if packed: insert after zero-length component
 						return insert(index + 1, dataType, length, name, comment);
 					}
 					// if non-packed: replace undefined component which immediately follows the zero-length component
@@ -1526,7 +1526,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	/**
 	 * Replaces the internal components of this structure with components of the given structure.
-	 * 
+	 *
 	 * @param dataType the structure to get the component information from.
 	 * @throws IllegalArgumentException if any of the component data types are not allowed to
 	 *             replace a component in this composite data type. For example, suppose dt1
@@ -1562,7 +1562,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	/**
 	 * Replaces the internal components of this structure with components of the given structure
 	 * including packing and alignment settings.
-	 * 
+	 *
 	 * @param struct structure to be copied
 	 * @param notify provide notification if true
 	 * @throws DataTypeDependencyException if circular dependency detected
@@ -1968,7 +1968,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	/**
 	 * Check for available undefined bytes within a non-packed structure for a component
-	 * update with the specified ordinal.  
+	 * update with the specified ordinal.
 	 * @param lastOrdinalReplacedOrUpdated the ordinal of a component to be updated
 	 * or the last ordinal with in a sequence of components being replaced.
 	 * @param bytesNeeded number of additional bytes required to complete operation
@@ -1995,10 +1995,10 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 	/**
 	 * Replace the specified components with a new component containing the specified data type.
-	 * If {@link DataType#DEFAULT} is specified as the resolvedDataType only a clear operation 
+	 * If {@link DataType#DEFAULT} is specified as the resolvedDataType only a clear operation
 	 * is performed.
-	 * 
-	 * @param origComponents the original sequence of data type components in this structure 
+	 *
+	 * @param origComponents the original sequence of data type components in this structure
 	 *        to be replaced.  These components must be adjacent components in sequential order.
 	 *        If an non-packed undefined component is specified no other component may be included.
 	 * @param resolvedDataType the data type of the new component
@@ -2008,7 +2008,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	 * @param comment the comment for the new component
 	 * @return the new component or null if only a clear operation was performed.
 	 * @throws IOException if database IO error occurs
-	 * @throws IllegalArgumentException if unable to identify/make sufficient space 
+	 * @throws IllegalArgumentException if unable to identify/make sufficient space
 	 */
 	private DataTypeComponent replaceComponents(LinkedList<DataTypeComponentDB> origComponents,
 			DataType resolvedDataType, int newOffset, int length, String name, String comment)
@@ -2106,7 +2106,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	/**
 	 * Gets the number of Undefined bytes beginning at the indicated component ordinal. Undefined
 	 * bytes that have a field name or comment specified are also included.
-	 * 
+	 *
 	 * @param ordinal the component ordinal to begin checking at.
 	 * @return the number of contiguous undefined bytes
 	 */
@@ -2305,9 +2305,9 @@ class StructureDB extends CompositeDB implements StructureInternal {
 
 			int oldLength = structLength;
 			int oldAlignment = getComputedAlignment(true); // ensure that alignment has been stored
-			
+
 			computedAlignment = -1; // clear cached alignment
-			
+
 			boolean changed;
 			if (!isPackingEnabled()) {
 				changed = adjustNonPackedComponents(!isAutoChange);
@@ -2319,7 +2319,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 				changed |= updateComposite(components.size(), packResult.structureLength,
 					packResult.alignment, !isAutoChange);
 			}
-			
+
 			if (changed && notify) {
 				if (oldLength != structLength) {
 					notifySizeChanged(isAutoChange);

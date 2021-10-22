@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public interface LiveMemoryHandler {
 	 * @throws MemoryAccessException if the byte can't be read.
 	 */
 	public byte getByte(Address addr) throws MemoryAccessException;
-	
+
 	/**
 	 * Get the bytes at the given address and size and put them into the destination buffer.
 	 * @param address the address of the first byte to be retrieved.
@@ -54,7 +54,7 @@ public interface LiveMemoryHandler {
 	 * @throws MemoryAccessException if the value can not be written to the memory.
 	 */
 	public void putByte(Address address, byte value) throws MemoryAccessException;
-	
+
 	/**
 	 * Writes the given bytes to memory starting at the given address.
 	 * @param address the address in memory to write the bytes.
@@ -72,7 +72,7 @@ public interface LiveMemoryHandler {
 	 * @param listener the listener to be notified of memory byte value changes.
 	 */
 	public void addLiveMemoryListener(LiveMemoryListener listener);
-	
+
 	/**
 	 * Removes the LiveMemoryListener from this handler.
 	 * @param listener the listener to be removed.

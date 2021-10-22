@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,7 +77,7 @@ public abstract class AbstractGTableModel<T> extends AbstractTableModel
 	}
 
 	/**
-	 * The default implementation of {@link TableModel#getValueAt(int, int)} that calls the 
+	 * The default implementation of {@link TableModel#getValueAt(int, int)} that calls the
 	 * abstract {@link #getColumnValueForRow(Object, int)}.
 	 */
 	@Override
@@ -95,23 +95,23 @@ public abstract class AbstractGTableModel<T> extends AbstractTableModel
 	/**
 	 * A convenience method to search for the index of a given
 	 * row object <b>that is visible in the GUI</b>.  The <i>visible</i> limitation is due to the
-	 * fact that the data searched is retrieved from {@link #getModelData()}, which may be 
-	 * filtered.  
-	 * 
-	 * <p>Note: this operation is O(n).  For quick lookups, consider using the sorted version 
+	 * fact that the data searched is retrieved from {@link #getModelData()}, which may be
+	 * filtered.
+	 *
+	 * <p>Note: this operation is O(n).  For quick lookups, consider using the sorted version
 	 * of this class.
-	 * 
+	 *
 	 * @param rowObject The object for which to search.
-	 * @return the index of the item in the data returned by 
+	 * @return the index of the item in the data returned by
 	 */
 	protected int getIndexForRowObject(T rowObject) {
 		return getIndexForRowObject(rowObject, getModelData());
 	}
 
 	/**
-	 * Returns the index for the given object in the given list; -1 when the item is not in 
-	 * the list. 
-	 * 
+	 * Returns the index for the given object in the given list; -1 when the item is not in
+	 * the list.
+	 *
 	 * @param rowObject the item
 	 * @param data the data
 	 * @return the index

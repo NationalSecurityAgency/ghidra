@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.program.model.address.Address;
 import java.awt.Color;
 import java.util.List;
 /**
- * 
+ *
  *
  * Generic tree interface
  */
@@ -37,7 +37,7 @@ public interface ClangNode {
 	public Address getMinAddress();
 	public Address getMaxAddress();
 	public void setHighlight(Color c);
-	public int numChildren(); 
+	public int numChildren();
 	public ClangNode Child(int i);
 	public ClangFunction getClangFunction();
 	public void flatten(List<ClangNode> list);

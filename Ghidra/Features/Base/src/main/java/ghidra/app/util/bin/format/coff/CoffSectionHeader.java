@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -99,9 +99,9 @@ public class CoffSectionHeader implements StructConverter {
 
 	/**
 	 * Returns the physical address offset.
-	 * This is the address at which the section 
+	 * This is the address at which the section
 	 * should be loaded into memory and reflects a addressable word offset.
-	 * For linked executables, this is the absolute 
+	 * For linked executables, this is the absolute
 	 * address within the program space.
 	 * For unlinked objects, this address is relative
 	 * to the object's address space (i.e. the first section
@@ -123,9 +123,9 @@ public class CoffSectionHeader implements StructConverter {
 
 	/**
 	 * Returns the physical address.
-	 * This is the address at which the section 
+	 * This is the address at which the section
 	 * should be loaded into memory.
-	 * For linked executables, this is the absolute 
+	 * For linked executables, this is the absolute
 	 * address within the program space.
 	 * For unlinked objects, this address is relative
 	 * to the object's address space (i.e. the first section
@@ -228,7 +228,7 @@ public class CoffSectionHeader implements StructConverter {
 	/**
 	 * Returns an input stream that will supply the bytes
 	 * for this section.
-	 * @return the input stream 
+	 * @return the input stream
 	 * @throws IOException if an I/O error occurs
 	 */
 	public InputStream getRawDataStream(ByteProvider provider, Language language)
@@ -389,7 +389,7 @@ public class CoffSectionHeader implements StructConverter {
 	/**
 	 * Convert address offset to an Address object.  The default data space (defined by pspec)
 	 * will be used if section is null or corresponds to a data section.  The language default
-	 * space (defined by slaspec) will be used for all non-data sections.  If pspec does not 
+	 * space (defined by slaspec) will be used for all non-data sections.  If pspec does not
 	 * specify a default data space, the default language space is used.
 	 * @param language
 	 * @param offset address offset (byte offset assumed if section is null or is not explicitly

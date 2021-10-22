@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,10 +42,10 @@ public abstract class AbstractDebuggerModelScenarioCloneExitTest extends Abstrac
 
 	/**
 	 * This specimen must clone or similar, and then both parent and child must exit immediately
-	 * 
+	 *
 	 * <p>
 	 * They may optionally print information, but they cannot spin, sleep, or otherwise hang around.
-	 * 
+	 *
 	 * @return the specimen
 	 */
 	protected abstract DebuggerTestSpecimen getSpecimen();
@@ -53,11 +53,11 @@ public abstract class AbstractDebuggerModelScenarioCloneExitTest extends Abstrac
 	/**
 	 * Perform whatever preparation is necessary to ensure the child will remain attached and be
 	 * trapped upon its being clone from its parent
-	 * 
+	 *
 	 * <p>
 	 * If this cannot be done without a handle to the parent process, override
 	 * {@link #postLaunch(TargetObject, TargetProcess)} instead.
-	 * 
+	 *
 	 * @param launcher the launcher
 	 * @throws Throwable if anything goes wrong
 	 */
@@ -67,10 +67,10 @@ public abstract class AbstractDebuggerModelScenarioCloneExitTest extends Abstrac
 	/**
 	 * Perform whatever preparation is necessary to ensure the child will remain attached and be
 	 * trapped upon its being cloned from its parent
-	 * 
+	 *
 	 * <p>
 	 * For most debuggers, no special setup is necessary.
-	 * 
+	 *
 	 * @param process the process trapped at launch -- typically at {@code main()}.
 	 * @throws Throwable if anything goes wrong
 	 */
@@ -79,21 +79,21 @@ public abstract class AbstractDebuggerModelScenarioCloneExitTest extends Abstrac
 
 	/**
 	 * Get a breakpoint expression that will trap both threads post-clone
-	 * 
+	 *
 	 * @return the expression
 	 */
 	protected abstract String getBreakpointExpression();
 
 	/**
 	 * Test the following scenario:
-	 * 
+	 *
 	 * <ol>
 	 * <li>Obtain a launcher and use it to start the specimen</li>
 	 * <li>Place a breakpoint on the new process</li>
 	 * <li>Resume the process until it is TERMINATED</li>
 	 * <li>Verify exactly two unique threads were trapped by the breakpoint</li>
 	 * </ol>
-	 * 
+	 *
 	 * <p>
 	 * Note because some platforms, notably Windows, may produce additional threads before executing
 	 * {@code main}, we cannot simply count THREAD_CREATED events. We mitigate this by using a

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -104,7 +104,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	 *      <li>We don't do any processing if the active window is an instance of
 	 *          <code>DockingDialog</code>.</li>
 	 * </ol>
-	 * 
+	 *
 	 * @see java.awt.KeyEventDispatcher#dispatchKeyEvent(java.awt.event.KeyEvent)
 	 */
 	@Override
@@ -226,7 +226,7 @@ public class KeyBindingOverrideKeyEventDispatcher implements KeyEventDispatcher 
 	/**
 	 * A check to see if a given keystroke is something that should not be processed, depending
 	 * upon the current state of the system.
-	 * 
+	 *
 	 * @param keyStroke The keystroke to check.
 	 * @return true if the caller of this method should handle the keystroke; false if the
 	 *         keystroke should be ignored.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,12 +33,12 @@ import ghidra.lifecycle.Internal;
 
 /**
  * A handle to a target object in a debugger
- * 
+ *
  * <p>
  * This object supports querying for and obtaining the interfaces which constitute what the object
  * is and define how the client may interact with it. The object may also have children, e.g., a
  * process should likely have threads.
- * 
+ *
  * <p>
  * This interface is the focal point of the "debug target model." A debugger may present itself as
  * an arbitrary directory of "target objects." The root object is typically the debugger's session,
@@ -51,18 +51,18 @@ import ghidra.lifecycle.Internal;
  * path correctly identifies that same object in the model directory. The root has the empty path.
  * Every object must have a unique path; thus, every object must have a unique key among its
  * sibling.
- * 
+ *
  * <p>
  * The objects are arranged in a directory with links permitted. Links come in the form of
  * object-valued attributes or elements where the path does not match the object value's path. Thus,
  * the overall structure remains a tree, but by resolving links, the model may be treated as a
  * directed graph, likely containing cycles. See {@link PathUtils#isLink(List, String, List)}.
- * 
+ *
  * <p>
  * The implementation must guarantee that distinct {@link TargetObject}s from the same model do not
  * share the same path. That is, checking for object identity is sufficient to check that two
  * variables refer to the same object.
- * 
+ *
  * <p>
  * Various conventions govern where the client/user should search to obtain a given interface in the
  * context of some target object. For example, if the user is interacting with a thread, and wishes
@@ -71,7 +71,7 @@ import ghidra.lifecycle.Internal;
  * {@link DebugModelConventions#findSuitable(Class, TargetObject)} and
  * {@link DebugModelConventions#findInAggregate(Class, TargetObject)} for details. In summary, the
  * order is:
- * 
+ *
  * <ol>
  * <li><b>The object itself:</b> Test if the context target object supports the desired interface.
  * If it does, take it.</li>
@@ -80,7 +80,7 @@ import ghidra.lifecycle.Internal;
  * recursively if any child attribute is also marked with {@link TargetAggregate}.</li>
  * <li><b>Ancestry:</b> Apply these same steps to the object's (canonical) parent, recursively.</li>
  * </ol>
- * 
+ *
  * <p>
  * For some situations, exactly one object is required. In that case, take the first obtained by
  * applying the above rules. In other situations, multiple objects may be acceptable. Again, apply
@@ -89,12 +89,12 @@ import ghidra.lifecycle.Internal;
  * memories present disjoint regions. There should not be conflicts among sibling. If there are,
  * then either the model or the query is not sound. The order siblings considered should not matter.
  * These rules are incubating and are implemented in {@link DebugModelConventions}.
- * 
+ *
  * <p>
  * This relatively free structure and corresponding conventions allow for debuggers to present a
  * model which closely reflects the structure of its session. For example, the following structure
  * may be presented by a user-space debugger for a desktop operating system:
- * 
+ *
  * <ul>
  * <li>"Session" : {@link TargetAccessConditioned}, {@link TargetInterpreter},
  * {@link TargetAttacher}, {@link TargetLauncher}, {@link TargetInterruptible}</li>
@@ -143,11 +143,11 @@ import ghidra.lifecycle.Internal;
  * </ul>
  * </ul>
  * </ul>
- * 
+ *
  * <p>
  * TODO: Should I have a different type for leaf vs. branch objects? Attribute-/element-only
  * objects?
- * 
+ *
  * <p>
  * Note that several methods of this interface and its sub-types return {@link CompletableFuture},
  * because they are actions which may be transported over a network, or otherwise require
@@ -177,7 +177,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Initializer for {@link #INTERFACES_BY_NAME}
-	 * 
+	 *
 	 * @return interfaces indexed by name
 	 */
 	@Internal
@@ -196,7 +196,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * A conventional prefix of hidden attributes defined by the {@code TargetObject} interfaces
-	 * 
+	 *
 	 * <p>
 	 * When the "hidden" field of attributes can be overridden, this prefix should be removed
 	 */
@@ -222,7 +222,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 		/**
 		 * Get all {@link DebuggerTargetObjectIface}-annotated interfaces in the given class's
 		 * hierarchy.
-		 * 
+		 *
 		 * @param cls the class
 		 */
 		protected static Collection<Class<? extends TargetObject>> getInterfacesOf(
@@ -279,17 +279,17 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Check for target object equality
-	 * 
+	 *
 	 * <p>
 	 * Because interfaces cannot provide default implementations of {@link #equals(Object)}, this
 	 * methods provides a means of quickly implementing it within a class. Because (model, path)
 	 * uniquely identifies an object, there should never be a need to perform more comparison than
 	 * is provided here.
-	 * 
+	 *
 	 * <p>
 	 * TODO: Since refs are no longer a thing, is custom equality needed at all? Seems object
 	 * identity would be sufficient.
-	 * 
+	 *
 	 * @param obj the other object
 	 * @return true if they are equal
 	 */
@@ -306,18 +306,18 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Pre-compute this object's hash code
-	 * 
+	 *
 	 * <p>
 	 * Because interfaces cannot provide default implementations of {@link #hashCode()}, this method
 	 * provides a means of quickly implementing it within a class. Because (model, path) is
 	 * immutable and uniquely identifes an object, this hash should be pre-computed a construction.
 	 * There should never be a need to incorporate more fields into the hash than is incorporated
 	 * here.
-	 * 
+	 *
 	 * <p>
 	 * TODO: Since refs are no longer a thing, is custom equality needed at all? Seems object
 	 * identity would be sufficient.
-	 * 
+	 *
 	 * @return the hash
 	 */
 	default int computeHashCode() {
@@ -326,10 +326,10 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * <p>
 	 * A friendly reminder to override
-	 * 
+	 *
 	 * @see #doEquals(Object)
 	 */
 	@Override
@@ -337,10 +337,10 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * <p>
 	 * A friendly reminder to override
-	 * 
+	 *
 	 * @see #computeHashCode()
 	 */
 	@Override
@@ -348,7 +348,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * <p>
 	 * Along with {@link #doEquals(Object)} and {@link #computeHashCode()}, these obey the Rule of
 	 * Three, comparing first the objects' models (by name, then identity), then their paths. Like
@@ -381,35 +381,35 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get the model to which this object belongs
-	 * 
+	 *
 	 * @return the model
 	 */
 	public DebuggerObjectModel getModel();
 
 	/**
 	 * Get the path (i.e., list of names from root to this object).
-	 * 
+	 *
 	 * <p>
 	 * Every object must have a unique path. Keys in the path which are indices, i.e., which
 	 * navigate the elements, are enclosed in brackets @{code []}. Keys which navigate attributes
 	 * are simply the attribute name.
-	 * 
+	 *
 	 * <p>
 	 * More than just a location, the path provides a hint to the object's scope of applicability.
 	 * For example, a {@link TargetMemory} attribute of a process is assumed accessible to every
 	 * thread of that process, since those threads are descendants.
-	 * 
+	 *
 	 * @return the canonical path of the object
 	 */
 	public List<String> getPath();
 
 	/**
 	 * Get the path joined by the given separator
-	 * 
+	 *
 	 * <p>
 	 * Note that no check is applied to guarantee the path separator does not appear in an element
 	 * name. Conventionally, `.` should be the separator. The separator is omitted before indices.
-	 * 
+	 *
 	 * @see #getPath()
 	 * @param sep the path separator
 	 * @return the joined path
@@ -420,12 +420,12 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get the key for this object
-	 * 
+	 *
 	 * <p>
 	 * The object's key should be that assigned by the actual debugger, if applicable. If this is an
 	 * element, the key should include the brackets {@code []}. If it is an attribute, it should
 	 * simply be the name.
-	 * 
+	 *
 	 * @return the key, or {@code null} if this is the root
 	 */
 	public default String getName() {
@@ -434,7 +434,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get the index for this object, omitting the brackets
-	 * 
+	 *
 	 * @return they index, or {@code null} if this is the root
 	 * @throws IllegalArgumentException if this object's key is not an index
 	 */
@@ -444,7 +444,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Check if this is the root target debug object
-	 * 
+	 *
 	 * @return true if root, false otherwise
 	 */
 	public default boolean isRoot() {
@@ -453,26 +453,26 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get this object's canonical parent
-	 * 
+	 *
 	 * @return the parent or {@code null} if this is the root
 	 */
 	public TargetObject getParent();
 
 	/**
 	 * Get an informal name identifying the type of this object
-	 * 
+	 *
 	 * <p>
 	 * This is an informal notion of type and may only be used for visual styling, logging, or other
 	 * informational purposes. Scripts should not rely on this to predict behavior, but instead on
 	 * {@link #getAs(Class)}, {@link #getInterfaces()}, or {@link #getSchema()}.
-	 * 
+	 *
 	 * @return an informal name of this object's type
 	 */
 	public String getTypeHint();
 
 	/**
 	 * Get this object's schema
-	 * 
+	 *
 	 * @return the schema
 	 */
 	public default TargetObjectSchema getSchema() {
@@ -481,9 +481,9 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get the interfaces this object actually supports, and that the client recognizes
-	 * 
+	 *
 	 * @implNote Proxy implementations should likely override this method.
-	 * 
+	 *
 	 * @return the set of interfaces
 	 */
 	public default Collection<? extends Class<? extends TargetObject>> getInterfaces() {
@@ -492,11 +492,11 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get the interface names this object actually supports
-	 * 
+	 *
 	 * <p>
 	 * When this object is a proxy, this set must include the names of all interfaces reported by
 	 * the agent, whether or not they are recognized by the client.
-	 * 
+	 *
 	 * @return the set of interface names
 	 */
 	public default Collection<String> getInterfaceNames() {
@@ -505,25 +505,25 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Check that this object is still valid
-	 * 
+	 *
 	 * <p>
 	 * In general, an invalid object should be disposed by the user immediately on discovering it is
 	 * invalid. See {@link DebuggerModelListener#invalidated(TargetObject)} for a means of reacting
 	 * to object invalidation. Nevertheless, it is acceptable to access stale attributes and element
 	 * keys, for informational purposes only. Implementors must reject all commands, including
 	 * fetches, on an invalid object by throwing an {@link IllegalStateException}.
-	 * 
+	 *
 	 * @return true if valid, false if invalid
 	 */
 	public boolean isValid();
 
 	/**
 	 * Fetch all the attributes of this object
-	 * 
+	 *
 	 * <p>
 	 * Attributes are usually keyed by a string, and the types are typically not uniform. Some
 	 * attributes are primitives, while others are other target objects.
-	 * 
+	 *
 	 * @param refresh true to invalidate all caches involved in handling this request
 	 * @return a future which completes with a name-value map of attributes
 	 */
@@ -533,7 +533,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Fetch all attributes of this object, without refreshing
-	 * 
+	 *
 	 * @see #fetchAttributes(boolean)
 	 */
 	public default CompletableFuture<? extends Map<String, ?>> fetchAttributes() {
@@ -542,7 +542,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Fetch an attribute by name
-	 * 
+	 *
 	 * @see #fetchAttributes()
 	 * @see PathUtils#isInvocation(String)
 	 * @implNote for attributes representing method invocations, the name will not likely be in the
@@ -575,7 +575,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get the cached elements of this object
-	 * 
+	 *
 	 * @see #getCallbackElements()
 	 * @return the map of indices to element references
 	 */
@@ -583,24 +583,24 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get the cached elements of this object synchronized with the callbacks
-	 * 
+	 *
 	 * <p>
 	 * Whereas {@link #getCachedElements()} gets the map of elements <em>right now</em>, it's
 	 * possible that view of elements is far ahead of the callback processing queue. This view is of
 	 * the elements as the change callbacks have been processed so far. When accessing this from the
 	 * {@link DebuggerModelListener#elementsChanged(TargetObject, Collection, Map)} callback, this
 	 * map will have just had the given delta applied to it.
-	 * 
+	 *
 	 * <p>
 	 * <b>WARNING:</b>The returned map must only be accessed by the callback thread.
-	 * 
+	 *
 	 * @return the map of indices to element references
 	 */
 	public Map<String, ? extends TargetObject> getCallbackElements();
 
 	/**
 	 * Fetch all the elements of this object
-	 * 
+	 *
 	 * <p>
 	 * Elements are usually keyed numerically, but allows strings for flexibility. The values are
 	 * target objects, typically uniform in type, and so generally share the same attributes. The
@@ -613,7 +613,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * and then sort using the left-most indices first. Indices which cannot be converted to numbers
 	 * should be sorted lexicographically. It is the implementation's responsibility to ensure all
 	 * indices follow a consistent scheme.
-	 * 
+	 *
 	 * @param refresh true to invalidate all caches involved in handling this request
 	 * @return a future which completes with a index-value map of elements
 	 */
@@ -624,7 +624,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Fetch all elements of this object, without refreshing
-	 * 
+	 *
 	 * @see #fetchElements(boolean)
 	 */
 	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchElements() {
@@ -633,7 +633,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Fetch an element by its index, omitting the brackets
-	 * 
+	 *
 	 * @return a future which completes with the element or with {@code null} if it does not exist
 	 */
 	public default CompletableFuture<? extends TargetObject> fetchElement(String index) {
@@ -642,14 +642,14 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Fetch all children (elements and attributes) of this object
-	 * 
+	 *
 	 * <p>
 	 * Note that keys for element indices here must contain the brackets {@code []} to distinguish
 	 * them from attribute names.
-	 * 
+	 *
 	 * @see #fetchElements()
 	 * @see #fetchAttributes()
-	 * 
+	 *
 	 * @param refresh true to invalidate all caches involved in handling this request
 	 * @return a future which completes with a name-value map of children
 	 */
@@ -667,7 +667,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Fetch all children of this object, without refreshing
-	 * 
+	 *
 	 * @see #fetchChildren(boolean)
 	 */
 	public default CompletableFuture<? extends Map<String, ?>> fetchChildren() {
@@ -676,12 +676,12 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Fetch a child (element or attribute) by key (index or name, respectively)
-	 * 
+	 *
 	 * <p>
 	 * Indices are distinguished from names by the presence or absence of brackets {@code []}. If
 	 * the key is a bracket-enclosed index, this will retrieve an element, otherwise, it will
 	 * retrieve an attribute.
-	 * 
+	 *
 	 * @see #fetchAttribute(String)
 	 * @see #fetchElement(String)
 	 * @return a future which completes with the child
@@ -696,10 +696,10 @@ public interface TargetObject extends Comparable<TargetObject> {
 	/**
 	 * Fetch the children (elements and attributes) of this object which support the requested
 	 * interface
-	 * 
+	 *
 	 * <p>
 	 * If no children support the given interface, the result is the empty set.
-	 * 
+	 *
 	 * @param <T> the requested interface
 	 * @param iface the class of the requested interface
 	 * @return a future which completes with a name-value map of children supporting the given
@@ -715,11 +715,11 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Fetch the value at the given sub-path from this object
-	 * 
+	 *
 	 * <p>
 	 * Extend this reference's path with the given sub-path and request that value from the same
 	 * model.
-	 * 
+	 *
 	 * @param sub the sub-path to the value
 	 * @return a future which completes with the value or with {@code null} if the path does not
 	 *         exist
@@ -737,12 +737,12 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Fetch the successor object at the given sub-path from this object
-	 * 
+	 *
 	 * <p>
 	 * Extend this reference's path with the given sub-path and request that object from the same
 	 * model. Note unlike {@link #fetchValue(List)}, this can return objects which have been
 	 * created, but not yet added to the model.
-	 * 
+	 *
 	 * @param sub the sub-path to the successor
 	 * @return a future which completes with the object or with {@code null} if it does not exist
 	 */
@@ -759,10 +759,10 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get the cached successor of this object
-	 * 
+	 *
 	 * <p>
 	 * Extend this object's path with the given sub-path, and search the model's cache for it.
-	 * 
+	 *
 	 * @param sub the sub-path to the successor
 	 * @return the successor or {@code null} if it doesn't exist in the cache
 	 */
@@ -779,7 +779,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Fetch the attributes of a successor to this object
-	 * 
+	 *
 	 * @param sub the sub-path to the successor whose attributes to list
 	 * @return a future map of attributes
 	 */
@@ -797,11 +797,11 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Fetch the attribute of a successor object, using a sub-path from this object
-	 * 
+	 *
 	 * <p>
 	 * Extends this object's path with the given sub-path and request that attribute from the same
 	 * model.
-	 * 
+	 *
 	 * @param sub the sub-path to the attribute
 	 * @return a future which completes with the value or with {@code null} if it does not exist
 	 */
@@ -818,7 +818,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Fetch the elements of a successor to this object
-	 * 
+	 *
 	 * @param sub the sub-path to the successor whose elements to list
 	 * @return a future map of elements
 	 */
@@ -837,7 +837,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get a description of the object, suitable for display in the UI
-	 * 
+	 *
 	 * @return the display description
 	 */
 	@TargetAttributeType(name = DISPLAY_ATTRIBUTE_NAME, hidden = true)
@@ -847,7 +847,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get a brief description of the object, suitable for display in the UI
-	 * 
+	 *
 	 * @return the display description
 	 */
 	@TargetAttributeType(name = SHORT_DISPLAY_ATTRIBUTE_NAME, hidden = true)
@@ -857,12 +857,12 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get a hint to the "kind" of object this represents
-	 * 
+	 *
 	 * <p>
 	 * This is useful when the native debugger presents a comparable tree-like model. If this object
 	 * is simply proxying an object from that model, and that model provides additional type
 	 * information that would not otherwise be encoded in this model.
-	 * 
+	 *
 	 * @return the kind of the object
 	 */
 	@TargetAttributeType(name = KIND_ATTRIBUTE_NAME, fixed = true, hidden = true)
@@ -872,7 +872,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * A custom ordinal for positioning this item on screen
-	 * 
+	 *
 	 * <p>
 	 * Ordinarily, children are ordered by key, attributes followed by elements. The built-in
 	 * comparator does a decent job ordering them, so long as indices keep a consistent format among
@@ -880,7 +880,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * thus keys) need to be presented with an alternative ordering. This attribute can be used by
 	 * model implementations to recommend an alternative ordering, where siblings are instead sorted
 	 * according to this ordinal.
-	 * 
+	 *
 	 * @return the recommended display position for this element
 	 */
 	@TargetAttributeType(name = ORDER_ATTRIBUTE_NAME, hidden = true)
@@ -890,15 +890,15 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * For values, check if it was "recently" modified
-	 * 
+	 *
 	 * <p>
 	 * TODO: This should probably be moved to a new {@code TargetObject} interface.
-	 * 
+	 *
 	 * <p>
 	 * "Recently" generally means since (or as a result of ) the last event affecting a target in
 	 * the same scope. This is mostly used as a UI hint, to bring the user's attention to modified
 	 * values.
-	 * 
+	 *
 	 * @return true if modified, false if not
 	 */
 	@TargetAttributeType(name = MODIFIED_ATTRIBUTE_NAME, hidden = true)
@@ -908,13 +908,13 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * For values, get the type of the value
-	 * 
+	 *
 	 * <p>
 	 * TODO: This should probably be moved to a new {@code TargetObject} interface. How does this
 	 * differ from "kind" when both are present? Can this be a {@link TargetNamedDataType} instead?
 	 * Though, I suppose that would imply the object is a value in the target execution state, e.g.,
 	 * a register, variable, field, etc.
-	 * 
+	 *
 	 * @return the name of the type
 	 */
 	@TargetAttributeType(name = TYPE_ATTRIBUTE_NAME, hidden = true)
@@ -924,10 +924,10 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * For values, get the actual value
-	 * 
+	 *
 	 * <p>
 	 * TODO: This should probably be moved to a new {@code TargetObject} interface.
-	 * 
+	 *
 	 * @return the value
 	 */
 	@TargetAttributeType(name = VALUE_ATTRIBUTE_NAME, hidden = true)
@@ -937,7 +937,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Refresh the children of this object
-	 * 
+	 *
 	 * <p>
 	 * The default fetch implementations follow the prescription of
 	 * {@link TargetObjectSchema#getElementResyncMode()} and
@@ -946,7 +946,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * circumstances indicate an implementation error, but this method may provide a means to
 	 * recover. When a {@code refresh} parameter is set, the model should be aggressive in updating
 	 * its respective cache(s).
-	 * 
+	 *
 	 * @param refreshAttributes ask the model to refresh attributes, querying the debugger if needed
 	 * @param refreshElements as the model to refresh elements, querying the debugger if needed
 	 * @return a future which completes when the children are updated.
@@ -955,7 +955,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Refresh the elements of this object
-	 * 
+	 *
 	 * @return a future which completes when the children are updated.
 	 */
 	default CompletableFuture<Void> resync() {
@@ -964,28 +964,28 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get the (usually opaque) identifier that the underlying connection uses for this object
-	 * 
+	 *
 	 * <p>
 	 * The opaque identifier should implement proper {@link Object#hashCode()} and
 	 * {@link Object#equals(Object)}, so that paired with the model, it forms a unique key for this
 	 * target object. It should also implement {@link Object#toString()}; however, it is for
 	 * debugging or informational purposes only. It is common for this identifier to be the object's
 	 * path.
-	 * 
+	 *
 	 * @return the identifier
 	 */
 	public Object getProtocolID();
 
 	/**
 	 * Get this same object, cast to the requested interface, if supported
-	 * 
+	 *
 	 * <p>
 	 * This differs from Java-style casting in two ways: 1) The receiver cannot be {@code null}, and
 	 * 2) It throws a different exception. Server-side proxy implementations must marshall the
 	 * {@link DebuggerModelTypeException} to the client; whereas, for {@link ClassCastException}, it
 	 * may simply report "Server-side Error," because that exception may have been thrown by an
 	 * unrelated cast.
-	 * 
+	 *
 	 * @param <T> the requested interface
 	 * @param iface the class of the requested interface
 	 * @return the same object, cast to the interface
@@ -997,7 +997,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get the cached attributes of this object
-	 * 
+	 *
 	 * @see #getCallbackAttributes()
 	 * @return the cached name-value map of attributes
 	 */
@@ -1005,24 +1005,24 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Get the cached attributes of this object synchronized with the callbacks
-	 * 
+	 *
 	 * <p>
 	 * Whereas {@link #getCachedAttributes()} gets the map of attributes <em>right now</em>, it's
 	 * possible that view of attributes if far ahead of the callback processing queue. This view is
 	 * of the attributes as the change callbacks have been processed so far. When accessing this
 	 * from the {@link DebuggerModelListener#attributesChanged(TargetObject, Collection, Map)}
 	 * callback, this map will have just had the given delta applied to it.
-	 * 
+	 *
 	 * <p>
 	 * <b>WARNING:</b>The returned map must only be accessed by the callback thread.
-	 * 
+	 *
 	 * @return the cached name-value map of attributes
 	 */
 	public Map<String, ?> getCallbackAttributes();
 
 	/**
 	 * Get the named attribute from the cache
-	 * 
+	 *
 	 * @param name the name of the attribute
 	 * @return the value
 	 */
@@ -1032,11 +1032,11 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Cast the named attribute to the given type, if possible
-	 * 
+	 *
 	 * <p>
 	 * If the attribute value is {@code null} or cannot be cast to the given type, the fallback
 	 * value is returned.
-	 * 
+	 *
 	 * @param <T> the expected type of the attribute
 	 * @param name the name of the attribute
 	 * @param cls the class giving the expected type
@@ -1052,17 +1052,17 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Invalidate caches associated with this object, other than those for cached children
-	 * 
+	 *
 	 * <p>
 	 * Some objects, e.g., memories and register banks, may have caches to reduce requests and
 	 * callbacks. This method should clear such caches, if applicable, but <em>must not</em> clear
 	 * caches of elements or attributes.
-	 * 
+	 *
 	 * <p>
 	 * In the case of a proxy, the proxy must invalidate all local caches, as well as request the
 	 * remote object invalidate its caches. In this way, all caches between the user and the actual
 	 * data, no matter where they are hosted, are invalidated.
-	 * 
+	 *
 	 * @return a future which completes when the caches are invalidated
 	 */
 	public default CompletableFuture<Void> invalidateCaches() {
@@ -1071,7 +1071,7 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Listen for object events
-	 * 
+	 *
 	 * <p>
 	 * The client must maintain a strong reference to the listener. To allow stale listeners to be
 	 * garbage collected, the implementation should use weak or soft references. That said, the
@@ -1080,13 +1080,13 @@ public interface TargetObject extends Comparable<TargetObject> {
 	 * exception is when an object is invalidated. The client may safely neglect removing any
 	 * listeners it registered with that object. If the object does not keep listeners, i.e., it
 	 * produces no events, this method may do nothing.
-	 * 
+	 *
 	 * <p>
 	 * Clients ought to listen on the model instead of specific objects, especially since an object
 	 * may emit events immediately after its creation, but before the client has a chance to add a
 	 * listener. Worse yet, the object could be invalidated before the client can retrieve its
 	 * children. Listening on the model ensures the reception of a complete log of events.
-	 * 
+	 *
 	 * @see DebuggerObjectModel#addModelListener(DebuggerModelListener)
 	 * @param l the listener
 	 */
@@ -1096,10 +1096,10 @@ public interface TargetObject extends Comparable<TargetObject> {
 
 	/**
 	 * Remove a listener
-	 * 
+	 *
 	 * <p>
 	 * If the given listener is not registered with this object, this method does nothing.
-	 * 
+	 *
 	 * @param l the listener
 	 */
 	public default void removeListener(DebuggerModelListener l) {

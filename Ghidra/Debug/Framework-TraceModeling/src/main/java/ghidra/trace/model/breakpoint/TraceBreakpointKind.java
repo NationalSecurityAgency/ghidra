@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,10 @@ import org.apache.commons.collections4.set.AbstractSetDecorator;
 
 /**
  * The kind of breakpoint
- * 
+ *
  * <p>
  * This identifies the sort of access that would trap execution
- * 
+ *
  * <p>
  * TODO: This is identical to {@code TargetBreakpointKind} (not in the classpath here). Is there a
  * common place we could factor both? Should we? CAUTION: Encoding in a trace database depends on
@@ -48,7 +48,7 @@ public enum TraceBreakpointKind {
 
 		/**
 		 * Convert a comma-separated list of kind names to a set of kinds.
-		 * 
+		 *
 		 * @param encoded the encoded list
 		 * @param strict true to report unrecognized kinds, false to ignore
 		 * @return the decoded set
@@ -69,9 +69,9 @@ public enum TraceBreakpointKind {
 
 		/**
 		 * Convert a set (or collection) of kinds to a comma-separated list of names.
-		 * 
+		 *
 		 * The list is always encoded in order of the declaration of kinds (enum order).
-		 * 
+		 *
 		 * @param col the set
 		 * @return the encoded list
 		 */

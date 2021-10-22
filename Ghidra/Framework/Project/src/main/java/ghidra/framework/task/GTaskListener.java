@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ package ghidra.framework.task;
  */
 public interface GTaskListener {
 
-	/** 
+	/**
 	 * Called when a task listener is added so that the listener can get all the initial state of
 	 * the taskManger while the taskManager is in a locked state where nothing will change.
 	 */
@@ -36,7 +36,7 @@ public interface GTaskListener {
 	/**
 	 * Notification that a task is no longer running regardless of whether it completed normally,
 	 * was cancelled, or threw an unhandled exception.
-	 * 
+	 *
 	 * @param task the ScheduledTask that was running.
 	 * @param result the result state for the task.
 	 */
@@ -68,7 +68,7 @@ public interface GTaskListener {
 
 	/**
 	 * Notification that the GTaskManager has been suspended or resumed.
-	 * 
+	 *
 	 * @param suspended true if the GTaskManger has been suspended, or false if it has been resumed.
 	 */
 	public void suspendedStateChanged(boolean suspended);

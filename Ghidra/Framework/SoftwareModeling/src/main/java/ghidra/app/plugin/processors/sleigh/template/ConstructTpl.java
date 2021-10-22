@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.xml.XmlPullParser;
  *   - Certain p-code operations may still need expansion to include a dynamic LOAD or STORE operation.
  *   - The list may hold "build" directives for sub-constructor templates.
  *   - The list may still hold "label" information for the final resolution of relative jump offsets.
- * 
+ *
  * The final PcodeOps are produced by handing this to the build() method of PcodeEmit which has
  * the InstructionContext necessary for final resolution.
  */

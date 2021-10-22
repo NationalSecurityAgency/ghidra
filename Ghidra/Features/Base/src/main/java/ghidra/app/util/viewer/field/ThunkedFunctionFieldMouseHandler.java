@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,18 +41,18 @@ public class ThunkedFunctionFieldMouseHandler implements FieldMouseHandlerExtens
 		if (mouseEvent.getClickCount() != 2 || mouseEvent.getButton() != MouseEvent.BUTTON1) {
 			return false;
 		}
-		
+
 		GoToService goToService = serviceProvider.getService(GoToService.class);
 		if (goToService == null) {
 			return false;
 		}
-		
+
 		Program program = location.getProgram();
-		
+
 		Address gotoAddr = null;
 		if (location instanceof FunctionNameFieldLocation) {
 			FunctionNameFieldLocation fieldLocation = (FunctionNameFieldLocation) location;
-			
+
 			Function refFunction = program.getFunctionManager().getFunctionAt(
 					fieldLocation.getFunctionAddress());
 			if (refFunction != null) {

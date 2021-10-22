@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,9 @@ import java.io.Serializable;
 /**
  * Stores ranges of short values throughout "long" space.
  * Every "long" index has an associated short value (initially 0).
- * Users can paint (set) ranges of indexes to a given short integer value, 
+ * Users can paint (set) ranges of indexes to a given short integer value,
  * overwriting any value that currently exists in that range.
- * 
+ *
  * This class is implemented using an ShortPropertySet.  The first index
  * (0) will always contain a value.  The value at any other given
  * index will either be the value stored at that index, or if no
@@ -38,7 +38,7 @@ public class ShortRangeMap implements Serializable {
     private final static long serialVersionUID = 1;
     /** The maximum end of range index allowed. */
 	public static final long LARGEST = 0xffffffffffffffffl;
-	
+
 	ShortPropertySet map;
 
 	/**
@@ -46,7 +46,7 @@ public class ShortRangeMap implements Serializable {
 	 */
 	public ShortRangeMap() {
 		map = new ShortPropertySet("RangeMap");
-		map.putShort(0, (short)0);		
+		map.putShort(0, (short)0);
 	}
 
 	/**
@@ -69,7 +69,7 @@ public class ShortRangeMap implements Serializable {
 			}
 		}
 
-		
+
 		// now remove any values stored from start to end
 		LongIterator it = map.getPropertyIterator(start);
 		while(it.hasNext()) {
@@ -82,13 +82,13 @@ public class ShortRangeMap implements Serializable {
 
 		if (start == 0) {
 			map.putShort(0,value);
-		} 
+		}
 		else {
 			short startValue = getValue(start);
 			if (startValue != value) {
 				map.putShort(start, value);
 			}
-		}			
+		}
 	}
 
 	/**
@@ -101,14 +101,14 @@ public class ShortRangeMap implements Serializable {
 		}
 		catch(NoValueException e) {
 			try {
-				index = map.getPreviousPropertyIndex(index);	
+				index = map.getPreviousPropertyIndex(index);
 				return map.getShort(index);
 			}
 			catch(NoSuchIndexException ex) {
 			}
 			catch(NoValueException ex) {
 			}
-		}		
+		}
 		return 0;
 	}
 	/**
@@ -127,7 +127,7 @@ public class ShortRangeMap implements Serializable {
 	 * @return an iterator over all indexes where the value changes.
 	 */
 	public LongIterator getChangePointIterator(long start, long end) {
-		return map.getPropertyIterator(start, end);	
+		return map.getPropertyIterator(start, end);
 	}
 
 }

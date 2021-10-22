@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import java.util.Stack;
  * <code>IndexProvider</code> maintains the free index list associated
  * with a BufferFile.  This provider will exhaust the free index list
  * before allocating new indexes.  This provider relies on the BufferFile
- * growing automatically when buffers having indexes beyond the end-of-file 
+ * growing automatically when buffers having indexes beyond the end-of-file
  * are written.
  */
 class IndexProvider {
@@ -36,7 +36,7 @@ class IndexProvider {
 	 */
 	IndexProvider() {
 	}
-	
+
 	/**
 	 * Constructor with initial state.
 	 * @param indexCount previously allocated buffer count.
@@ -48,14 +48,14 @@ class IndexProvider {
 			freeIndexStack.push(new Integer(freeIndexes[i]));
 		}
 	}
-	
+
 	/**
 	 * Return the total number of buffer indexes which have been allocated.
 	 */
 	int getIndexCount() {
 		return nextIndex;
 	}
-	
+
 	/**
 	 * Returns the number of free indexes within the
 	 * allocated index space.
@@ -75,7 +75,7 @@ class IndexProvider {
 		}
 		return freeIndexStack.pop().intValue();
 	}
-	
+
 	/**
 	 * Allocate a specific index.  Current index count will be adjusted if
 	 * specified index exceeds current index count;
@@ -92,14 +92,14 @@ class IndexProvider {
 			nextIndex = index + 1;
 			return true;
 		}
-		
+
 		return freeIndexStack.remove(new Integer(index));
 	}
-	
+
 	boolean isFree(int index) {
 		return freeIndexStack.contains(new Integer(index));
 	}
-	
+
 	/**
 	 * Free the specified buffer
 	 * @param index buffer index
@@ -107,12 +107,12 @@ class IndexProvider {
 	void freeIndex(int index) {
 		freeIndexStack.push(new Integer(index));
 	}
-	
+
 	/**
-	 * Truncate this buffer file.  This method has no affect if the specified 
+	 * Truncate this buffer file.  This method has no affect if the specified
 	 * newBufferCnt is greater than the current buffer count.
 	 * @param newIndexCnt new index count
-	 * @return true if successful, false if newIndexCnt is larger than current 
+	 * @return true if successful, false if newIndexCnt is larger than current
 	 * index count.
 	 */
 	boolean truncate(int newIndexCnt) {
@@ -120,7 +120,7 @@ class IndexProvider {
 			return false;
 		}
 		nextIndex = newIndexCnt;
-		
+
 		// Remove free indexes which have been lost
 		int cnt = freeIndexStack.size();
 		for (int i = cnt-1; i >= 0; --i) {
@@ -131,7 +131,7 @@ class IndexProvider {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Returns the current list of free indexes for this index provider.
 	 * @return free index list

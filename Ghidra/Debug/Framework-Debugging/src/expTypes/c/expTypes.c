@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,15 +85,15 @@ mylist_p mylist_p_var;
 int main(int argc, char** argv) {
     printf("complex: %d\n", sizeof(complex_var));
     printf("double complex: %d\n", sizeof(double_complex_var));
-    
+
     register mycomplex_p cparts = &complex_var;
     printf("single real: %f\n", cparts->real);
     printf("single imag: %f\n", cparts->imag);
-    
+
     mydoublex_p dparts = &double_complex_var;
     printf("double real: %g\n", dparts->real);
     printf("double imag: %g\n", dparts->imag);
-    
+
     /*myldoublex_p ldparts = &long_double_complex_var;
     printf("long double real: %lg\n", ldparts->real);
     printf("long double imag: %lg\n", ldparts->imag);*/

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,27 +47,27 @@ import ghidra.util.task.TaskMonitor;
 /**
  * This script populates a trace database for demonstrations purposes and opens it in the current
  * tool.
- * 
+ *
  * <p>
  * Your current tool had better be the "TraceBrowser"! The demonstration serves two purposes. 1) It
  * puts interesting data into the TraceBrowser and leaves some annotations as an exercise. 2) It
  * demonstrates how a decent portion the Trace API works.
- * 
+ *
  * <p>
  * A Trace is basically a collection of observations of memory and registers over the lifetime of an
  * application or computer system. In Ghidra, the Trace object also supports many of the same
  * annotations as does Program. In the same way that Program brings knowledge markup to an image of
  * bytes, Trace brings knowledge markup to bytes observed over time.
- * 
+ *
  * <p>
  * Effectively, if you take the cross-product of Program with time and add Threads, Breakpoints,
  * etc., you get Trace. It's a lot. In order to use all the UI components which take a Program,
  * Trace can present itself as a Program at a particular point in time.
- * 
+ *
  * <p>
  * Each particular component will be introduced as its used in the script below, but for now some
  * core concepts:
- * 
+ *
  * <ul>
  * <li>A point in time is called a "snap." These don't necessarily correspond to any real unit of
  * time, though they may. The only requirement is that they are numbered in chronological
@@ -89,7 +89,7 @@ import ghidra.util.task.TaskMonitor;
  * space. Most the the API components require you to obtain a special "register space" for a given
  * thread before recording observations of or applying annotations to that thread.</li>
  * </ul>
- * 
+ *
  * <p>
  * After you've run this script, a trace should appear in the UI. Note that there is not yet a way
  * to save a trace in the UI. As an exercise, try adding data units to analyze the threads' stacks.
@@ -98,7 +98,7 @@ import ghidra.util.task.TaskMonitor;
  * into the future they are effective. In general, it defaults to "from here on out." However, two
  * conditions may cause the trace to choose an ending tick: 1) The underlying bytes change sometime
  * in the future, and 2) There is an overlapping code unit sometime in the future.
- * 
+ *
  * <p>
  * The trace chooses the latest tick possible preceding any byte change or existing code unit, so
  * that the unit's underlying bytes remain constant for its lifespan, and the unit does not overlap
@@ -136,7 +136,7 @@ public class PopulateDemoTrace extends GhidraScript {
 
 	/**
 	 * Labels I will place in the trace, and whose addresses I'll use instead of hardcoding.
-	 * 
+	 *
 	 * Note that the other symbol types are implemented, but not demonstrated here as they haven't
 	 * been tested in the UI.
 	 */
@@ -159,7 +159,7 @@ public class PopulateDemoTrace extends GhidraScript {
 
 	/**
 	 * Create an address in the processor's (x86_64) default space.
-	 * 
+	 *
 	 * @param offset the byte offset
 	 * @return the address
 	 */
@@ -169,7 +169,7 @@ public class PopulateDemoTrace extends GhidraScript {
 
 	/**
 	 * Create an address range in the processor's default space.
-	 * 
+	 *
 	 * @param min the minimum byte offset
 	 * @param max the maximum (inclusive) byte offset
 	 * @return the range
@@ -180,7 +180,7 @@ public class PopulateDemoTrace extends GhidraScript {
 
 	/**
 	 * Get an x86_64 register by name
-	 * 
+	 *
 	 * @param name the name
 	 * @return the register
 	 */
@@ -190,7 +190,7 @@ public class PopulateDemoTrace extends GhidraScript {
 
 	/**
 	 * Set RIP at the given tick for the given space to the address of a given instruction
-	 * 
+	 *
 	 * @param tick the tick
 	 * @param regs the register space for a given thread
 	 * @param ins the instructions
@@ -202,17 +202,17 @@ public class PopulateDemoTrace extends GhidraScript {
 
 	/**
 	 * (Re-)place a data unit if necessary.
-	 * 
+	 *
 	 * This is a TODO item in the Trace database. Currently, the API allows a caller to modify bytes
 	 * in the middle of a code unit's lifespan. The intended rule is: If the modification is at the
 	 * unit's start tick, the behavior should be the same as Program (permit changes under static
 	 * data types only). If the modification is after, then the code unit's lifespan should be
 	 * truncated to allow the modification. Additionally, for static data types, a new unit should
 	 * be placed to fill out the old lifespan.
-	 * 
+	 *
 	 * Because that TODO is not implemented yet, this method corrects the issue by implementing
 	 * effectively the same rule.
-	 * 
+	 *
 	 * @param tick the tick where a register change may have occurred
 	 * @param thread the thread whose registers to check/correct
 	 * @param reg the register to check/correct
@@ -245,7 +245,7 @@ public class PopulateDemoTrace extends GhidraScript {
 
 	/**
 	 * Invoke the above method for the three registers I modify during this demonstration.
-	 * 
+	 *
 	 * @param tick the tick where the registers may have changed
 	 * @param thread the thread to check/correct
 	 * @throws CodeUnitInsertionException shouldn't happen
@@ -314,7 +314,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			 * Long.MAX will be normalized to negative and positive infinity, respectively. In
 			 * general, observations should be given the range [currentTick..INF) meaning "from here
 			 * on out". Most annotations allow mutation of the end tick.
-			 * 
+			 *
 			 * The trace database DOES permit recording and retrieving observations outside any
 			 * recorded region. However, when viewed as a Program, only the current regions are
 			 * presented as memory blocks. Thus, observations outside a region are not visible in
@@ -331,7 +331,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			thread1 = trace.getThreadManager().addThread("Thread 1", Range.atLeast(snap));
 			/**
 			 * Get a handle to the main thread's register values.
-			 * 
+			 *
 			 * Note that the values are accessed via the memory manager. The memory implementation
 			 * is re-used to record register values, since registers to Ghidra are just special
 			 * addresses. As a convenience, the register-space interface of the memory manager
@@ -369,20 +369,20 @@ public class PopulateDemoTrace extends GhidraScript {
 			 * view which can seek to a different tick. The variable-tick version is generally for
 			 * UI compatibility, whereas the fixed-tick version is generally for API compatibility.
 			 * Here we use it to apply the assembler.
-			 * 
+			 *
 			 * This is the "main" function of the demonstration. it is imagined with a decent bit of
 			 * fidelity, but some bits are elided for my sanity and to stay succinct.
-			 * 
+			 *
 			 * It starts with the typical stack frame setup and then immediately clones a second
 			 * thread. I arbitrarily decided which thread would execute for each step. The cloned
 			 * thread then jumps to the "child" portion of the code while the main thread falls
 			 * through. Each places some data on its stack and then terminate. The "clone" and
 			 * "exit" functions are stubbed out, but one should imagine they are system calls.
-			 * 
+			 *
 			 * A call to "clone" results in the creation of a second thread with stack. That stack
 			 * contains only the return address. The caller's RAX is set to 0, the clone's RAX is
 			 * set to 1.
-			 * 
+			 *
 			 * A call to "exit" results in the immediate termination of the calling thread.
 			 */
 			Assembler asm = Assemblers.getAssembler(trace.getFixedProgramView(snap));
@@ -446,7 +446,7 @@ public class PopulateDemoTrace extends GhidraScript {
 			putRIP(snap, regs1, mainInstructions.get(++pc1));
 			/**
 			 * This demonstrates recording a memory observation, i.e., writing to trace memory.
-			 * 
+			 *
 			 * The ByteBuffer API can be a bit annoying, but it generally follows the same pattern,
 			 * and it permits packing an arbitrary number of "fields" into the buffer (limited by
 			 * the allocated size of the buffer). If this API is too inconvenient, you can also use
@@ -478,7 +478,7 @@ public class PopulateDemoTrace extends GhidraScript {
 
 		/**
 		 * Emulate the clone "syscall"
-		 * 
+		 *
 		 * While this is a complicated call, there is nothing new to demonstrate in its
 		 * implementation. As an exercise, see if you can follow what is happening within.
 		 */
@@ -717,7 +717,7 @@ public class PopulateDemoTrace extends GhidraScript {
 
 		/**
 		 * Give a program view to Ghidra's program manager
-		 * 
+		 *
 		 * NOTE: Eventually, there will probably be a TraceManager service as well, but to use the
 		 * familiar UI components, we generally take orders from the ProgramManager.
 		 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,19 +37,19 @@ import ghidra.program.model.address.AddressFactory;
 import ghidra.program.model.listing.*;
 
 /**
- * Test for the {@link FunctionTagListingMerger} and {@link FunctionTagMerger}. These are tests 
+ * Test for the {@link FunctionTagListingMerger} and {@link FunctionTagMerger}. These are tests
  * that involve creating/editing/deleting tags from the system, as well as adding or
  * removing tags from functions.
- * 
+ *
  * Note that the two mergers mentioned above are always run in sequence, the tag merger
  * running before the listing merger. This sequence is done here for all test.
  * @see #doMerge(int, int)
- * 
+ *
  */
 public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 	// Set up some tag names that we will use in various tests. These can
-	// be used for any purpose but the names should make their intended 
+	// be used for any purpose but the names should make their intended
 	// use obvious.
 	private String TAG_NAME_A = "testTagA";
 	private String TAG_NAME_B = "testTagB";
@@ -72,7 +72,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	/**
 	 * Tests that we can add the same tag to two programs and have there
 	 * be no conflict.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -100,9 +100,9 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	}
 
 	/**
-	 * Tests that different tags created in Latest and My will be merged with 
+	 * Tests that different tags created in Latest and My will be merged with
 	 * no conflict.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -133,7 +133,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	/**
 	 * Tests that we can create tags with different names and different comments, and
 	 * there's no conflict.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -162,9 +162,9 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	}
 
 	/**
-	 * Tests that creating tags with different comments (same name) causes a conflict, 
+	 * Tests that creating tags with different comments (same name) causes a conflict,
 	 * and that we can add the correct one to the result.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -200,7 +200,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	/**
 	 * Tests that editing just the comment of tags with the same name will cause
 	 * a conflict.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -260,8 +260,8 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	/**
 	 * Tests that we can create different tags in different orders and have no conflict. This
 	 * ensures that there is no issue with how IDs are compared.
-	 * 
-	 * @throws Exception 
+	 *
+	 * @throws Exception
 	 */
 	@Test
 	public void testCreateDifferentTagsDifferentOrderNoConflict() throws Exception {
@@ -292,7 +292,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 	/**
 	 * Tests that two users can delete the same tag with no conflict.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -338,7 +338,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 		executeMerge(ASK_USER);
 		waitForMergeCompletion();
 
-		// Get the result program and check that: 
+		// Get the result program and check that:
 		// 1. The tag does not exist in Result
 		assertTrue(!isTagInProgram(TAG_NAME_A, mtf.getResultProgram()));
 	}
@@ -346,7 +346,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	/**
 	 * Test that we can edit a tag in Latest and add it to a function
 	 * in My to create a conflict.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -408,7 +408,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	/**
 	 * Test that we can add different tags to different functions in My and
 	 * Latest.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -465,9 +465,9 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	}
 
 	/**
-	 * Tests that we can add different tags to the same function and have them 
+	 * Tests that we can add different tags to the same function and have them
 	 * mere with no conflicts.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -524,13 +524,13 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	}
 
 	/**
-	 * Tests that we can correctly recognize multiple conflicts with the 
+	 * Tests that we can correctly recognize multiple conflicts with the
 	 * tag merge resolver. In this case we do the following:
 	 * 1. Add tags A & B to both programs
 	 * 2. Rename A and B in Latest
 	 * 3. Rename A and B in My
 	 * 4. Verify we have 2 conflicts.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -596,9 +596,9 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	 * 1. Add tags A, B and C to both programs
 	 * 2. Rename A in Latest, and delete B
 	 * 3. Rename A and C in My, and add B to a function
-	 * 4. Verify we have 2 conflicts (the edit of A, and the add of a 
+	 * 4. Verify we have 2 conflicts (the edit of A, and the add of a
 	 *    deleted tag - B, in My).
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -659,10 +659,10 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 	/**
 	 * Tests that the use-for-all checkbox works correctly in the tag merge
-	 * panel. To do this we create 3 conflicts by editing the name of 
+	 * panel. To do this we create 3 conflicts by editing the name of
 	 * 3 tags in each program. We then verify that the version in the Result
 	 * program is from the checked-out version.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -729,7 +729,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	 * the Latest program, while adding those same three tags to a function
 	 * in My. We then verify that the version in the Result
 	 * program is from the checked-out (My) version.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -795,10 +795,10 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	}
 
 	/**
-	 * Tests that we handle the conflict case where a tag name has been edited in both 
-	 * My and Latest versions of the program. For this test, keep the one in 
+	 * Tests that we handle the conflict case where a tag name has been edited in both
+	 * My and Latest versions of the program. For this test, keep the one in
 	 * Latest.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -853,9 +853,9 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	}
 
 	/**
-	 * Tests that we handle the conflict case where a tag name has been edited in both 
+	 * Tests that we handle the conflict case where a tag name has been edited in both
 	 * My and Latest versions of the program. For this test, keep the version in My.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -912,12 +912,12 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	/**
 	 * Tests that we handle the conflict case where a tag name has been deleted in Latest
 	 * but added to a function in My; keep My.
-	 * 
-	 * This is arguably the most complicated type of test case as it involves two 
+	 *
+	 * This is arguably the most complicated type of test case as it involves two
 	 * mergers: {@link FunctionTagMerger} and {@link FunctionTagListingMerger}. First the
-	 * delete is handled (and approved) by the former, then the tag is brought back in by 
+	 * delete is handled (and approved) by the former, then the tag is brought back in by
 	 * latter.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -974,13 +974,13 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	/**
 	 * Tests that we handle the conflict case where a tag name has been deleted in Latest
 	 * but added to a function in My; keep Latest;
-	 * 
-	 * This is arguably the most complicated type of test case as it involves two 
+	 *
+	 * This is arguably the most complicated type of test case as it involves two
 	 * mergers: {@link FunctionTagMerger} and {@link FunctionTagListingMerger}. First the
 	 * delete is handled (and approved) by the former, then the tag recognized by the
 	 * latter as a conflict, but ignored since its been told to keep the LATEST version (where
 	 * the delete happened).
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -1035,9 +1035,9 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	}
 
 	/**
-	 * Tests that we can edit a tag in Latest, delete it in My, and 
+	 * Tests that we can edit a tag in Latest, delete it in My, and
 	 * correctly resolve the conflict to keep the edited version.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -1092,9 +1092,9 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 	}
 
 	/**
-	 * Tests that we can edit a tag in Latest, delete it in My, and 
+	 * Tests that we can edit a tag in Latest, delete it in My, and
 	 * correctly resolve the conflict to keep the deleted version.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -1163,9 +1163,9 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 	/**
 	 * Returns the comment for the tag provided.
-	 * 
-	 * @param tagName the name of the tag 
-	 * @param program the program 
+	 *
+	 * @param tagName the name of the tag
+	 * @param program the program
 	 * @return
 	 * @throws IOException
 	 */
@@ -1181,7 +1181,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 	/**
 	 * Searches a function for a tag.
-	 * 
+	 *
 	 * @param name the tag to search for
 	 * @param program the program to search
 	 * @param address the address of the function, as a string
@@ -1205,9 +1205,9 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 	/**
 	 * Searches a program for a tag.
-	 * 
+	 *
 	 * Note: This has nothing to do with functions; only checks that the tag exists.
-	 * 
+	 *
 	 * @param name the tag to search for
 	 * @param program the program to search
 	 * @return true if found
@@ -1219,14 +1219,14 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 		// @formatter:off
        	return resultTags.stream()
-		      		     .filter(t -> t.getName().equals(name)) 
+		      		     .filter(t -> t.getName().equals(name))
 		       		     .count() > 0;
 		// @formatter:on
 	}
 
 	/**
 	 * Adds a tag to a function.
-	 * 
+	 *
 	 * @param name the name of the tag to add
 	 * @param program the program where the function resides
 	 * @param address the entry point of the function, as a string
@@ -1248,7 +1248,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 	/**
 	 * Creates a new tag.
-	 * 
+	 *
 	 * @param program the program to add the tag go
 	 * @param name the tag name
 	 * @param comment the tag comment
@@ -1266,7 +1266,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 	/**
 	 * Deletes a tag from the database.
-	 * 
+	 *
 	 * @param program the program to delete the tag from
 	 * @param name the tag name
 	 * @throws IOException
@@ -1285,7 +1285,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 	/**
 	 * Updates a tag with a new name.
-	 * 
+	 *
 	 * @param program the program version to use
 	 * @param origName the tag to change
 	 * @param newName the new tag name
@@ -1300,7 +1300,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 	/**
 	 * Updates a tag with a new comment.
-	 * 
+	 *
 	 * @param program the program version to use
 	 * @param tagName the tag to change
 	 * @param newComment the new tag comment
@@ -1316,7 +1316,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 	/**
 	 * Returns the tag manager for the given program.
-	 * 
+	 *
 	 * @param program the program version
 	 * @return
 	 */
@@ -1327,7 +1327,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 	/**
 	 * Returns all tags in the given program.
-	 * 
+	 *
 	 * @param program the program version
 	 * @return
 	 * @throws IOException
@@ -1339,7 +1339,7 @@ public class FunctionTagMergeTest extends AbstractListingMergeManagerTest {
 
 	/**
 	 * Converts a string address (ie: "01001001") to an {@link Address} object.
-	 * 
+	 *
 	 * @param address the stringified address
 	 * @param program the program version
 	 * @return

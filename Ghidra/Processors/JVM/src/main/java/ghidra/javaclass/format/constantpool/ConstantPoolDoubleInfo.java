@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,21 +60,21 @@ public class ConstantPoolDoubleInfo extends AbstractConstantPoolInfoJava {
 	 * 		((long) high_bytes << 32) + low_bytes
 	 * Then:
 	 * 		If bits is 0x7ff0000000000000L, the double value will be positive infinity.
-	 * 
+	 *
 	 * 		If bits is 0xfff0000000000000L, the double value will be negative infinity.
-	 * 
+	 *
 	 * 		If bits is in the range 0x7ff0000000000001L through 0x7fffffffffffffffL
 	 * 		or in the range 0xfff0000000000001L through 0xffffffffffffffffL, the
 	 * 		double value will be NaN.
-	 * 
+	 *
 	 * 		In all other cases, let s, e, and m be three values that might be computed from bits:
-	 * 
+	 *
 	 * 			int s = ((bits >> 63) == 0) ? 1 : -1;
 	 * 			int e = (int)((bits >> 52) & 0x7ffL);
 	 * 			long m = (e == 0) ?
 	 * 						(bits & 0xfffffffffffffL) << 1 :
 	 * 						(bits & 0xfffffffffffffL) | 0x10000000000000L;
-	 * 
+	 *
 	 * Then the floating-point value equals the double value of the mathematical
 	 * expression s ? m ? 2e-1075.
 	 * @return the double value

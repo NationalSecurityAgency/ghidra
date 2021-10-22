@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.util.Msg;
 
 /**
  * Command to create an array.  All conflicting data will be cleared.
- * 
+ *
  */
 public class CreateArrayCmd implements Command {
 	private String msg;
@@ -37,12 +37,12 @@ public class CreateArrayCmd implements Command {
 	/**
 	 * Constructs a new command for creating arrays.
 	 * @param addr The address at which to create an array.
-	 * @param numElements the number of elements in the array to be created.  
+	 * @param numElements the number of elements in the array to be created.
 	 * A 0 element count is permitted but a minimum length will apply for all array instances.
 	 * @param dt the dataType of the elements in the array to be created.
 	 * @param elementLength the size of an element in the array.  Only used for Dynamic
 	 * datatype <code>dt</code> when {@link Dynamic#canSpecifyLength()} returns true.
-	 */	
+	 */
 	public CreateArrayCmd(Address addr, int numElements, DataType dt, int elementLength) {
 		this.addr = addr;
 		this.numElements = numElements;
@@ -81,7 +81,7 @@ public class CreateArrayCmd implements Command {
 			Msg.error(this, msg, e);
 			return false;
 		}
-		return true; 
+		return true;
 	}
 
 	@Override

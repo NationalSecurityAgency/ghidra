@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import resources.Icons;
 
 /**
  * <a id="description"></a>
- * An action used to trigger navigation callback on instances of {@link JTable}.  Users can 
+ * An action used to trigger navigation callback on instances of {@link JTable}.  Users can
  * toggle this action to control navigation that is based upon selection.
  * <p>
  * Subclasses need to implement {@link #navigate()}, which will be called when a navigation is
@@ -123,14 +123,14 @@ public abstract class AbstractSelectionNavigationAction extends ToggleDockingAct
 //==================================================================================================
 
 	private void initialize() {
-		// We want to load our state after we have been associated with a DockingWindowManager. 
+		// We want to load our state after we have been associated with a DockingWindowManager.
 		// If the table is displayable, then we are are properly setup...
 		if (table.isDisplayable()) {
 			restoreState();
 			return;
 		}
 
-		// ...otherwise, we are using this listener to know when the table has been added to 
+		// ...otherwise, we are using this listener to know when the table has been added to
 		// the component hierarchy, as it has been connected to a DockingWindowManager by then.
 		table.addHierarchyListener(new HierarchyListener() {
 			@Override
@@ -139,7 +139,7 @@ public abstract class AbstractSelectionNavigationAction extends ToggleDockingAct
 				if (HierarchyEvent.DISPLAYABILITY_CHANGED == (changeFlags &
 					HierarchyEvent.DISPLAYABILITY_CHANGED)) {
 
-					// check for the first time we are put together                    
+					// check for the first time we are put together
 					if (table.isDisplayable()) {
 						restoreState();
 						table.removeHierarchyListener(this); // cleanup

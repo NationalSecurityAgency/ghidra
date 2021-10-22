@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,8 @@ import resources.icons.EmptyIcon;
 import resources.icons.ScaledImageIconWrapper;
 
 /**
- * An icon that allows sub-icons to be added at key perimeter locations. Each position can 
- * be manipulated independently, adding and removing icons as desired. Additionally, 
+ * An icon that allows sub-icons to be added at key perimeter locations. Each position can
+ * be manipulated independently, adding and removing icons as desired. Additionally,
  * each position can be toggled enabled or disabled, or visible or invisible.
  */
 public class BadgedIcon implements Icon {
@@ -38,11 +38,11 @@ public class BadgedIcon implements Icon {
 	 * The top-edge horizontal positions move up 20% from origin
 	 * The middle horizontal positions are at origin+30%
 	 * The bottom-edge horizontal positions are at origin+60%
-	 * 
+	 *
 	 * The left-edge vertical positions move left 20% from origin
 	 * The middle vertical positions are at origin+30%
 	 * The right-edge vertical positions are at origin+60%
-	 *  
+	 *
 	 */
 	public enum BadgePosition {
 		TopLeft(-.2, -.2),
@@ -253,7 +253,7 @@ public class BadgedIcon implements Icon {
 		return width;
 	}
 
-	/** 
+	/**
 	 * Determine the overall enablement appearance state.
 	 * @return true if the if the entire icon is rendered as 'enabled'; false otherwise.
 	 */

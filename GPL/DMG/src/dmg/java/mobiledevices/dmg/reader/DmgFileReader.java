@@ -215,7 +215,7 @@ public class DmgFileReader implements Closeable {
 		return null;
 	}
 
-	private InputStream decompressResourceFork( FSEntry entry, 
+	private InputStream decompressResourceFork( FSEntry entry,
 												ReadableRandomAccessStream resourceForkStream,
 												int expectedLength ) throws IOException {
 
@@ -231,8 +231,8 @@ public class DmgFileReader implements Closeable {
 
 		byte [] sizeBytes = new byte[ 4 ];
 		input.read( sizeBytes );
-		int size = sizeBytes[ 0 ] == 0 ? 
-							bedc.getInt( sizeBytes ) : 
+		int size = sizeBytes[ 0 ] == 0 ?
+							bedc.getInt( sizeBytes ) :
 							ledc.getInt( sizeBytes );
 
 		byte [] flagsBytes = new byte[ 4 ];
@@ -309,9 +309,9 @@ public class DmgFileReader implements Closeable {
 
 	/**
 	 * Convert path to string array.
-	 * 
+	 *
 	 * For example, "/a/b/c.txt" will be converted to [ "a", "b", "c.txt" ].
-	 * 
+	 *
 	 * Note: the "a" will be stripped because it corresponds to the file system handler.
 	 */
 	public String [] convertPathToArrayAndStripFileSystemName( String path ) {

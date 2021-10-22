@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,9 @@ import ghidra.util.task.TaskMonitor;
  * This represents a table that stores all possible function tags available for use.
  * The table consists of two columns: one for the tag name, and one indicating
  * whether this tag is modifiable.
- * 
+ *
  * Non-modifiable tags cannot be deleted or edited by any user. These are typically
- * tags that have been pre-loaded via some external mechanism and need to be 
+ * tags that have been pre-loaded via some external mechanism and need to be
  * preserved as originally defined.
  */
 abstract class FunctionTagAdapter {
@@ -41,7 +41,7 @@ abstract class FunctionTagAdapter {
 	static final int COMMENT_COL = 1;
 
 	/**
-	 * 
+	 *
 	 * @param handle database handle
 	 * @param openMode CREATE, UPDATE, UPGRADE
 	 * @param monitor task monitor
@@ -84,7 +84,7 @@ abstract class FunctionTagAdapter {
 
 	/**
 	 * Returns all tag records in the database.
-	 * 
+	 *
 	 * @return list of tags
 	 * @throws IOException
 	 */
@@ -92,7 +92,7 @@ abstract class FunctionTagAdapter {
 
 	/**
 	 * Returns a record matching the given tag name, or null if not found.
-	 * 
+	 *
 	 * @param tag the tag name
 	 * @return Record, or null if not found
 	 * @throws IOException
@@ -101,7 +101,7 @@ abstract class FunctionTagAdapter {
 
 	/**
 	 * Returns the tag record with the given id.
-	 * 
+	 *
 	 * @param id the tag index
 	 * @return Record, or null if not found
 	 * @throws IOException
@@ -110,7 +110,7 @@ abstract class FunctionTagAdapter {
 
 	/**
 	 * Creates a {@link DBRecord} with the given tag name.
-	 * 
+	 *
 	 * @param tag the tag name to create
 	 * @param comment tag comment
 	 * @return
@@ -124,10 +124,10 @@ abstract class FunctionTagAdapter {
 	 * @throws IOException
 	 */
 	abstract void updateRecord(DBRecord record) throws IOException;
-	
+
 	/**
 	 * Removes the tag with the given name from the database.
-	 * 
+	 *
 	 * @param id tag id
 	 * @throws IOException
 	 */
@@ -135,7 +135,7 @@ abstract class FunctionTagAdapter {
 
 	/**
 	 * Returns the total number of tags in the database.
-	 * 
+	 *
 	 * @return the number of tags
 	 */
 	abstract int getNumTags();

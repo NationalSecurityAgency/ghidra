@@ -5,7 +5,7 @@ package mobiledevices.dmg.ghidra;
 
 
 /**
- * Class with static methods that deal with string manipulation. 
+ * Class with static methods that deal with string manipulation.
  */
 public class GStringUtilities {
 

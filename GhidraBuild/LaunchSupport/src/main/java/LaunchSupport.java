@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,19 +24,19 @@ import ghidra.launch.*;
 import ghidra.launch.JavaFinder.JavaFilter;
 
 /**
- * Tool that helps gather information needed to launch Ghidra/GhidraServer.  This is intended 
+ * Tool that helps gather information needed to launch Ghidra/GhidraServer.  This is intended
  * to be a helper for the launch scripts so that most of the "heavy-lifting" can be done in Java
  * rather than in OS-specific scripts.
  */
 public class LaunchSupport {
-	
+
 	private static final int EXIT_SUCCESS = 0;
 	private static final int EXIT_FAILURE = 1;
 
 	/**
-	 * {@link LaunchSupport} entry point.  Uses standard exit codes to tell the user if 
+	 * {@link LaunchSupport} entry point.  Uses standard exit codes to tell the user if
 	 * the desired operation succeeded for failed.
-	 * 
+	 *
 	 * @param args [INSTALL_DIR] [-java_home | -jdk_home | -vmargs] [-ask | -save]
 	 * <ul>
 	 *   <li><b>-java_home: </b> Get Java home (JDK or JRE)</li>
@@ -55,7 +55,7 @@ public class LaunchSupport {
 			System.err.println("LaunchSupport expected 2 to 4 arguments but got " + args.length);
 			System.exit(exitCode);
 		}
-		
+
 		// Parse command line arguments
 		String installDirPath = args[0];
 		String mode = args[1];
@@ -76,7 +76,7 @@ public class LaunchSupport {
 		}
 
 		try {
-			
+
 			File installDir = new File(installDirPath).getCanonicalFile(); // change relative path to absolute
 			JavaConfig javaConfig = new JavaConfig(installDir);
 			JavaFinder javaFinder = JavaFinder.create();
@@ -106,17 +106,17 @@ public class LaunchSupport {
 	}
 
 	/**
-	 * Handles figuring out a Java home directory to use for the launch.  If it is successfully 
+	 * Handles figuring out a Java home directory to use for the launch.  If it is successfully
 	 * determined, an exit code that indicates success is returned.
-	 * 
+	 *
 	 * @param javaConfig The Java configuration that defines what we support.
 	 * @param javaFinder The Java finder.
 	 * @param javaFilter A filter used to restrict what kind of Java installations we search for.
 	 * @param ask True to interact with the user to they can specify a Java home directory.
 	 *   False if the Java home directory should be searched for and output on STDOUT once
 	 *   discovered.
-	 * @param save True if the determined Java home directory should get saved to a file. 
-	 * @return A suggested exit code based on whether or not a Java home directory was 
+	 * @param save True if the determined Java home directory should get saved to a file.
+	 * @return A suggested exit code based on whether or not a Java home directory was
 	 *   successfully determined.
 	 * @throws IOException if there was a disk-related problem.
 	 */
@@ -129,15 +129,15 @@ public class LaunchSupport {
 	}
 
 	/**
-	 * Handles finding a Java home directory to use for the launch.  If one is successfully 
-	 * found, its path is printed to STDOUT and an exit code that indicates success is 
+	 * Handles finding a Java home directory to use for the launch.  If one is successfully
+	 * found, its path is printed to STDOUT and an exit code that indicates success is
 	 * returned.  Otherwise, nothing is printed to STDOUT and an error exit code is returned.
-	 * 
+	 *
 	 * @param javaConfig The Java configuration that defines what we support.
 	 * @param javaFinder The Java finder.
 	 * @param javaFilter A filter used to restrict what kind of Java installations we search for.
-	 * @param save True if the determined Java home directory should get saved to a file. 
-	 * @return A suggested exit code based on whether or not a supported Java home directory was 
+	 * @param save True if the determined Java home directory should get saved to a file.
+	 * @return A suggested exit code based on whether or not a supported Java home directory was
 	 *   successfully determined.
 	 * @throws IOException if there was a problem saving the java home to disk.
 	 */
@@ -160,7 +160,7 @@ public class LaunchSupport {
 		}
 
 		// PRIORITY 2: Java on PATH
-		// This program (LaunchSupport) was started with the Java on the PATH. Try to use this one 
+		// This program (LaunchSupport) was started with the Java on the PATH. Try to use this one
 		// next because it is most likely the one that is being upgraded on the user's system.
 		javaHomeDir = javaFinder.findSupportedJavaHomeFromCurrentJavaHome(javaConfig, javaFilter);
 		if (javaHomeDir != null) {
@@ -195,11 +195,11 @@ public class LaunchSupport {
 	}
 
 	/**
-	 * Handles interacting with the user to choose a Java home directory to use for the launch.  
+	 * Handles interacting with the user to choose a Java home directory to use for the launch.
 	 * If a valid Java home directory was successfully determined, it is saved to the the user's
 	 * Java home save file, and an exit code that indicates success is returned.
-	 * 
-	 * @param javaConfig The Java configuration that defines what we support.  
+	 *
+	 * @param javaConfig The Java configuration that defines what we support.
 	 * @param javaFinder The Java finder.
 	 * @param javaFilter A filter used to restrict what kind of Java installations we search for.
 	 * * @return A suggested exit code based on whether or not a valid Java home directory was
@@ -278,10 +278,10 @@ public class LaunchSupport {
 
 	/**
 	 * Handles getting the VM arguments. If they are successfully determined, they are printed
-	 * to STDOUT as a string that can be added to the command line, and an exit code that 
-	 * indicates success is returned. 
-	
-	 * @param javaConfig The Java configuration that defines what we support.  
+	 * to STDOUT as a string that can be added to the command line, and an exit code that
+	 * indicates success is returned.
+
+	 * @param javaConfig The Java configuration that defines what we support.
 	 * @return A suggested exit code based on whether or not the VM arguments were successfully
 	 *   gotten.
 	 */

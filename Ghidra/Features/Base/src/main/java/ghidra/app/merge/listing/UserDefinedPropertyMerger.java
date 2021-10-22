@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ import javax.swing.event.ChangeListener;
  * checked out version. It can then manually merge the conflicting user defined properties.
  * Wherever a user defined property conflict is detected, the user will be allowed to choose
  * the property at the address in conflict from the latest, my or original program.
- * <br>Important: This class is intended to be used only for a single program 
+ * <br>Important: This class is intended to be used only for a single program
  * version merge. It should be constructed, followed by an autoMerge(), and lastly
  * each address with a conflict should have mergeConflicts() called on it.
  */
@@ -187,7 +187,7 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 	}
 
 	/**
-	 * Gets the property, if there is one, from the specified property map for 
+	 * Gets the property, if there is one, from the specified property map for
 	 * the indicated address.
 	 * @param map the property map
 	 * @param address the address
@@ -283,7 +283,7 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 
 	/**
 	 * Creates a conflict panel and adds it to the indicated listing panel.
-	 * 
+	 *
 	 * @param listingPanel the merge listing panel
 	 * @param propertyName the name of the property in conflict.
 	 * @param addr the address where the property is in conflict.
@@ -381,7 +381,7 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 //	}
 
 	/* (non-Javadoc)
-	 * @see ghidra.app.merge.listing.ListingMerger#mergeConflicts(ghidra.app.merge.tool.ListingMergePanel, 
+	 * @see ghidra.app.merge.listing.ListingMerger#mergeConflicts(ghidra.app.merge.tool.ListingMergePanel,
 	 * ghidra.program.model.address.Address, int, ghidra.util.task.TaskMonitor)
 	 */
 	public void mergeConflicts(ListingMergePanel listingPanel, Address addr,
@@ -410,11 +410,11 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 	}
 
 	/**
-	 * Merges from the property at the indicated address into the result program 
+	 * Merges from the property at the indicated address into the result program
 	 * from the program (latest, my, or original) based on the conflict option.
 	 * @param propName the name of the property to merge.
 	 * @param addr the address wheree the property is to be merged.
-	 * @param mergeConflictOption the conflict option indicating which program 
+	 * @param mergeConflictOption the conflict option indicating which program
 	 * to merge from. (KEEP_ORIGINAL, KEEP_LATEST, or KEEP_MY)
 	 */
 	private void merge(String propName, Address addr, int mergeConflictOption) {

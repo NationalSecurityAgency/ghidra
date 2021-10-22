@@ -1,12 +1,12 @@
 ## ###
 #  IP: GHIDRA
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
-#  
+#
 #       http://www.apache.org/licenses/LICENSE-2.0
-#  
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ AUTO_WAIT = True
 def is_ida_version_supported():
     '''
     Determines if IDA version is supported by this idaxml module.
-    
+
     Returns:
         True if IDA version is supported, else False.
     '''
@@ -103,7 +103,7 @@ class IdaXml:
         self.tags = []
         self.xmlfile = 0
         self.options = None
-    
+
 
     def cleanup(self):
         """
@@ -127,13 +127,13 @@ class IdaXml:
     def dbg(self, message):
         """
         Outputs debug message if debug flag is enabled.
-        
+
         Args:
             message: String containing the debug message.
         """
         if (self.debug == True):
             idc.msg(message)
-        
+
 
     def display_summary(self, what):
         """
@@ -162,9 +162,9 @@ class IdaXml:
     def display_version(self, what):
         """
         Displays XML version info in IDA output window.
-        
+
         Args:
-            what: String indicating Exporter, Importer, or Loader 
+            what: String indicating Exporter, Importer, or Loader
         """
         f = ida_diskio.idadir('python') + '/idaxml.py'
         ftime = time.localtime(os.path.getmtime(f))
@@ -173,19 +173,19 @@ class IdaXml:
         version += " : SDK " + str(IDA_SDK_VERSION)
         version += " : Python : "+ ts + '\n'
         idc.msg(version)
-        
-    
+
+
     def open_file(self, filename, mode):
         """
         Opens filename to specified mode.
-        
+
         Args:
             filename: String representing absolute filepath.
             mode: String representing mode for open.
-            
+
         Returns
             File handle.
-        
+
         Exceptions:
             Displays a warning and raises FileError exception
             if open fails.
@@ -202,11 +202,11 @@ class IdaXml:
             idc.warning(fmt)
             raise FileError
 
-    
+
     def update_counter(self, tag):
         """
         Updates the counter for the element tag.
-        
+
         Args:
             tag: String representing element tag.
         """
@@ -216,12 +216,12 @@ class IdaXml:
             self.elements[tag] = len(self.elements)
             self.counters.append(1)
             self.tags.append(tag)
-    
+
 
     def update_status(self, tag):
         """
         Displays the processing status in the IDA window.
-        
+
         Args:
             tag: String representing XML element tag
         """
@@ -229,7 +229,7 @@ class IdaXml:
         idc.msg('\n%-35s' % status)
         ida_kernwin.hide_wait_box()
         ida_kernwin.show_wait_box(status)
-    
+
 
 class XmlExporter(IdaXml):
     """
@@ -249,7 +249,7 @@ class XmlExporter(IdaXml):
         self.seg_addr = False
         self.has_overlays = False
         self.hexrays = False
-        
+
         # initialize class variables from database
         self.inf = ida_idaapi.get_inf_structure()
         self.min_ea = self.inf.min_ea
@@ -265,78 +265,78 @@ class XmlExporter(IdaXml):
         """
         self.display_version('Exporter')
         self.check_and_load_decompiler()
-        
+
         self.get_options()
-    
+
         if (self.autorun == True):
             (self.filename, ext) = os.path.splitext(idc.get_idb_path())
             self.filename += ".xml"
         else:
             self.filename=ida_kernwin.ask_file(1, "*.xml",
                                          "Enter name of export xml file:")
-            
+
         if self.filename == None or len(self.filename) == 0:
             raise Cancelled
         self.xmlfile = self.open_file(self.filename, "w")
-        
+
         ida_kernwin.show_wait_box("Exporting XML <PROGRAM> document ....")
         idc.msg("\n------------------------------------------------" +
                    "-----------")
         idc.msg("\nExporting XML <PROGRAM> document ....")
         begin = time.clock()
-        
+
         self.write_xml_declaration()
         self.export_program()
-        
+
         # export database items based on options
         if (self.options.DataTypes.checked         == True or
-            self.options.DataDefinitions.checked   == True or 
+            self.options.DataDefinitions.checked   == True or
             self.options.Functions.checked         == True):
             self.export_datatypes()
         if (self.options.MemorySections.checked    == True or
             self.options.MemoryContent.checked     == True):
             self.export_memory_map()
         if (self.options.RegisterValues.checked    == True):
-            self.export_register_values()   
+            self.export_register_values()
         if (self.options.CodeBlocks.checked        == True):
-            self.export_code()  
+            self.export_code()
         if (self.options.DataDefinitions.checked   == True):
-            self.export_data()  
+            self.export_data()
         if (self.options.Comments.checked          == True):
             self.export_comments()
-            self.export_bookmarks()     
+            self.export_bookmarks()
         if (self.options.EntryPoints.checked       == True):
-            self.export_program_entry_points()  
+            self.export_program_entry_points()
         if (self.options.Symbols.checked           == True):
-            self.export_symbol_table()  
+            self.export_symbol_table()
         if (self.options.Functions.checked         == True):
-            self.export_functions() 
-        if (self.options.MemoryReferences.checked  == True or 
+            self.export_functions()
+        if (self.options.MemoryReferences.checked  == True or
             self.options.StackReferences.checked   == True or
             self.options.Manual.checked            == True or
             self.options.DataTypes.checked         == True):
-            self.export_markup()    
+            self.export_markup()
         self.end_element(PROGRAM)
-        
+
         idc.msg('\n%35s' % 'Total ')
         self.display_cpu_time(begin)
-        ida_kernwin.hide_wait_box()  
+        ida_kernwin.hide_wait_box()
         self.display_summary('Export')
         idc.msg('\nDatabase exported to: ' + self.filename + '\n')
-        
+
 
     # TODO: Test decompiler comments in batch and gui modes
     def check_and_load_decompiler(self):
         """
         Checks for the presence of a decompiler plugin for the database.
-        
+
         Note: The decompiler must be loaded by the XML Exporter plugin
             if it is running in batch mode. IDA will load the decompiler
             plugin automatically if not in batch mode.
-        
+
         Note: There was no support for decompiler plugins in IDAPython until
             IDA 6.6, so skip if this is an older version.
-        
+
         Note: Currently the 4 decompiler plugins for the  x86, x64,
             ARM32, and ARM64 are supported.
         """
@@ -360,15 +360,15 @@ class XmlExporter(IdaXml):
                 self.hexrays = ida_hexrays.init_hexrays_plugin()
             except:
                 return
-    
+
 
     def check_char(self, ch):
         """
         Replaces a special XML character with an entity string.
-        
+
         Args:
             ch: String containing the character to check.
-            
+
         Returns:
             String containing either the character or the entity
             substition string.
@@ -383,15 +383,15 @@ class XmlExporter(IdaXml):
         elif ch == '\x7F': return ''
         elif ord(ch) > 0x7F: return '&#x' + format(ord(ch),"x") + ";"
         return ch
-    
+
 
     def check_for_entities(self, text):
         """
         Checks all characters in a string for special XML characters.
-        
+
         Args:
             text: String to check for special XML characters.
-            
+
         Returns:
             String containing original string with substitutions for
                 any special XML characters.
@@ -400,15 +400,15 @@ class XmlExporter(IdaXml):
         for c in text:
             new += self.check_char(c)
         return new
-    
+
 
     def check_if_seg_contents(self, seg):
         """
         Determines if any address in a segment contains a value.
-        
+
         Args:
             seg: IDA segment object
-            
+
         Returns:
             True if any address in a segment contains a value.
             False if no address in a segment contains a value.
@@ -422,10 +422,10 @@ class XmlExporter(IdaXml):
     def check_stack_frame(self, sframe):
         """
         Determines if stack frame contains any parameters or local variables.
-        
+
         Args:
             sframe: IDA stack frame for a function.
-            
+
         Returns:
             True if stack frame has parameters or local variables.
             False if stack frame has no parameters or local variables.
@@ -436,7 +436,7 @@ class XmlExporter(IdaXml):
             if member == None:
                 continue
             mname = ida_struct.get_member_name(member.id)
-            if mname != None and len(mname) > 0: 
+            if mname != None and len(mname) > 0:
                 if mname != " s" and mname != " r":
                     return True
         return False
@@ -454,7 +454,7 @@ class XmlExporter(IdaXml):
     def close_tag(self, has_contents=False):
         """
         Closes the start tag for an XML element.
-        
+
         Args:
             has_contents: Boolean indicating if the element has
             sub-elements or text.
@@ -465,21 +465,21 @@ class XmlExporter(IdaXml):
         else:
             self.write_to_xmlfile(" />")
 
-    
+
     def display_cpu_time(self, start):
         """
         Displays the elapsed CPU time since the start time.
-        
+
         Args:
             start: Floating-point value representing start time in seconds.
         """
         idc.msg('CPU time: %6.4f' % (time.clock() - start))
-            
+
 
     def end_element(self, tag, newline=True):
         """
         Writes the element end tag to the XML file.
-        
+
         Args:
             tag: String containing the element name.
             newline: Boolean indicating if end tag should go on new line.
@@ -497,7 +497,7 @@ class XmlExporter(IdaXml):
     def export_bitmask(self, eid, mask):
         """
         Exports an enum bitmask member as BIT_MASK element.
-        
+
         Args:
             eid: Integer representing the IDA enum id
             mask: Integer representing the IDA enum mask value
@@ -634,7 +634,7 @@ class XmlExporter(IdaXml):
         """
         Exports a <COMMENT> element with ADDRESS and TYPE attributes.
         The comment is exported as the element text (parsed character data).
-        
+
         Args:
             addr: Integers representing address of comment.
             cmt_type: String indicating the comment type.
@@ -740,7 +740,7 @@ class XmlExporter(IdaXml):
             addr = ida_bytes.next_that(addr, self.max_ea, idc.is_data)
         self.end_element(DATA)
         self.display_cpu_time(timer)
-        
+
 
     def export_datatypes(self):
         """
@@ -766,7 +766,7 @@ class XmlExporter(IdaXml):
             bf: Boolean indicates if a bitfield
             mask: Integer representing bitmask if bitfield
             radix: Integer representing numeric display format
-            signness: Boolean indicating if signed value 
+            signness: Boolean indicating if signed value
         """
         cname = ida_enum.get_enum_member_name(cid)
         if cname == None or len(cname) == 0:
@@ -794,8 +794,8 @@ class XmlExporter(IdaXml):
         """
         Exports the members of an enum.
 
-        This function can only be called by IDA versions newer than 6.3 
-        
+        This function can only be called by IDA versions newer than 6.3
+
         Args:
             eid: Integer representing id of enum
             bf: Boolean indicates if a bitfield
@@ -829,7 +829,7 @@ class XmlExporter(IdaXml):
     def export_enum_reference(self, addr, op):
         """
         Exports the enum reference for an operand at an address.
-        
+
         Args:
             addr: Integer representing the instruction address.
             op: Integer representing the operand index (0-based)
@@ -862,12 +862,12 @@ class XmlExporter(IdaXml):
         if idc.is_bf(eid) == True:
             self.write_numeric_attribute("BIT_MASK", mask);
         self.close_tag()
-        
+
 
     def export_enum_references(self, addr):
         """
         Finds and exports enum references at an address.
-        
+
         Args:
             addr: Integer representing the instruction address.
         """
@@ -875,7 +875,7 @@ class XmlExporter(IdaXml):
         for op in range(2):
             if ida_bytes.is_enum(f, op) == True:
                 self.export_enum_reference(addr, op)
-                
+
 
     def export_enums(self):
         """
@@ -926,7 +926,7 @@ class XmlExporter(IdaXml):
     def export_extra_comment(self, addr, cmt_type, extra):
         """
         Exports pre- and post- comments for an address.
-        
+
         Args:
             addr: Integer representing the instruction address.
             cmt_type: String indicating comment type
@@ -940,13 +940,13 @@ class XmlExporter(IdaXml):
             extra += 1
             nextline = idc.get_extra_cmt(addr, extra)
             if (nextline != None):
-                cmt += '\n' 
+                cmt += '\n'
         self.export_comment(addr, cmt_type, cmt)
 
 
     def export_functions(self):
         """
-        Exports information about all functions. 
+        Exports information about all functions.
         """
         functions = idautils.Functions()
         if functions == None:
@@ -1002,7 +1002,7 @@ class XmlExporter(IdaXml):
     def export_manual_instruction(self, addr):
         """
         Exports user-entered "manual instruction" at an address.
-        
+
         Args:
             addr: Integer representing instruction address.
         """
@@ -1014,12 +1014,12 @@ class XmlExporter(IdaXml):
         self.close_tag(True)
         self.write_text(text)
         self.end_element(MANUAL_INSTRUCTION, False)
-        
+
 
     def export_manual_operand(self, addr):
         """
         Exports user-entered "manual operands" at an address.
-        
+
         Args:
             addr: Integer representing instruction address.
         """
@@ -1074,7 +1074,7 @@ class XmlExporter(IdaXml):
     def export_members(self, s):
         """
         Exports the members of a structure or union.
-        
+
         Args:
             s: IDA structure/union instance
         """
@@ -1126,7 +1126,7 @@ class XmlExporter(IdaXml):
     def export_memory_contents(self, binfilename, binfile, start, end):
         """
         Exports the binary memory contents in the database.
-        
+
         A MEMORY_CONTENTS element is generated for each contiguous address
         range where each address in the range contains a value.
         The binary values are store in a separate file (not the XML file),
@@ -1167,7 +1167,7 @@ class XmlExporter(IdaXml):
     def export_memory_map(self):
         """
         Exports information about all memory blocks in the database.
-        
+
         A MEMORY_SECTION is generated for each block (segment). If the
         memory block is initialized (has values), the contents are exported
         using the MEMORY_CONTENTS element.
@@ -1195,14 +1195,14 @@ class XmlExporter(IdaXml):
     def export_memory_reference(self, addr, op):
         """
         Exports the memory reference for operand at the address.
-        
+
         Args:
             addr: Integer representing the instruction address.
             op: Integer representing the operand index (0-based)
         """
         f = idc.get_full_flags(addr)
         ri = ida_nalt.refinfo_t()
-        if ida_nalt.get_refinfo(ri, addr, op) == 1: 
+        if ida_nalt.get_refinfo(ri, addr, op) == 1:
             if ri.target != BADADDR:
                 target = ri.target
             elif idc.is_code(f) == True:
@@ -1223,12 +1223,12 @@ class XmlExporter(IdaXml):
         self.write_address_attribute(TO_ADDRESS, target)
         self.write_attribute(PRIMARY, "y")
         self.close_tag()
-        
+
 
     def export_memory_references(self, addr):
         """
         Exports the memory references for any operands at the address.
-        
+
         Args:
             addr: Integer representing the instruction address.
         """
@@ -1238,12 +1238,12 @@ class XmlExporter(IdaXml):
                     (idc.is_code(f) == True and
                     self.is_imm_op(addr, op) == True)):
                 self.export_memory_reference(addr, op)
-    
+
 
     def export_memory_section(self, seg, binfilename):
         """
         Exports segment information as a MEMORY_SECTIONS element.
-        
+
         Args:
             seg: IDA segment instance
             binfilename: String containing absolute filepath for binary file.
@@ -1259,7 +1259,7 @@ class XmlExporter(IdaXml):
             if (seg.perm & ida_segment.SEGPERM_READ  != 0):
                 perms += 'r'
             if (seg.perm & ida_segment.SEGPERM_WRITE != 0):
-                perms += 'w' 
+                perms += 'w'
             if (seg.perm & ida_segment.SEGPERM_EXEC  != 0):
                 perms += 'x'
             if (len(perms) > 0):
@@ -1296,7 +1296,7 @@ class XmlExporter(IdaXml):
         if input_md5 != None:
             self.write_attribute(INPUT_MD5,input_md5)
         self.close_tag(True)
-    
+
         # output the INFO_SOURCE element
         self.start_element(INFO_SOURCE)
         tool  = 'IDA-Pro ' + ida_kernwin.get_kernel_version()
@@ -1310,7 +1310,7 @@ class XmlExporter(IdaXml):
         ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
         self.write_attribute(TIMESTAMP, ts)
         self.close_tag()
-    
+
         # output the PROCESSOR element
         self.start_element(PROCESSOR)
         self.write_attribute(NAME, self.inf.procname)
@@ -1345,7 +1345,7 @@ class XmlExporter(IdaXml):
             self.seg_addr = True
         # find any overlayed memory before processing addressable items
         self.find_overlay_memory()
-    
+
         # output compiler info
         self.start_element(COMPILER)
         self.write_attribute(NAME, ida_typeinf.get_compiler_name(self.inf.cc.id))
@@ -1423,28 +1423,28 @@ class XmlExporter(IdaXml):
     def export_regular_cmt(self, cmt):
         """
         Exports the regular comment for an item.
-        
+
         Args:
             cmt: String containing the regular comment.
         """
         self.write_comment_element(REGULAR_CMT, cmt)
-    
+
 
     def export_repeatable_cmt(self, cmt):
         """
         Exports the repeatable comment for an item.
-        
+
         Args:
             cmt: String containing the repeatable comment.
         """
         self.write_comment_element(REPEATABLE_CMT, cmt)
-    
+
 
     def export_stack_frame(self, function):
         """
         Export information about a function stack frame including
         variables allocated on the stack.
-        
+
         Args:
             function: IDA function instance
         """
@@ -1467,7 +1467,7 @@ class XmlExporter(IdaXml):
     def export_stack_reference(self, addr):
         """
         Exports references to stack variables at the address.
-        
+
         Args:
             addr: Integer containing instruction address.
         """
@@ -1507,7 +1507,7 @@ class XmlExporter(IdaXml):
     def export_stack_vars(self, function, sframe):
         """
         Exports the stack variables (parameters and locals) in a stack frame.
-        
+
         Args:
             function: IDA function instance.
             sframe: IDA stack frame instance.
@@ -1594,13 +1594,13 @@ class XmlExporter(IdaXml):
                 if s.memqty > 0:
                     self.export_members(s)
                 self.end_element(stype)
-    
+
 
     def export_symbol(self, addr, name, stype=""):
         """
         Exports name for an address as a SYMBOL element. If the name is a
         demangled name, add the mangled name as the MANGLED attribute.
-        
+
         Args:
             addr: Integer representing the symbol address.
             name: String containing the symbol name.
@@ -1614,7 +1614,7 @@ class XmlExporter(IdaXml):
         if name != None and mangled != name:
             self.write_attribute("MANGLED", mangled)
         self.close_tag()
-        
+
 
     def export_symbol_table(self):
         """
@@ -1647,12 +1647,12 @@ class XmlExporter(IdaXml):
                                    ida_bytes.has_any_name)
         self.end_element(SYMBOL_TABLE)
         self.display_cpu_time(timer)
-        
+
 
     def export_typeinfo_cmt(self, cmt):
         """
         Exports comment containing type information for data and functions.
-        
+
         Args:
             cmt: String containing type info.
         """
@@ -1660,14 +1660,14 @@ class XmlExporter(IdaXml):
         if(len(cmt) > 0):
             while cmt[-1] == '\n':
                 cmt = cmt[:-1]
-        
+
         self.write_comment_element(TYPEINFO_CMT, cmt)
-        
+
 
     def export_user_memory_reference(self, addr):
         """
         Exports a user-specified memory reference at the address.
-        
+
         Args:
             addr: Integer representing the instruction address.
         """
@@ -1683,7 +1683,7 @@ class XmlExporter(IdaXml):
     def find_overlay_memory(self):
         """
         Determines if any memory blocks (segments) are overlays.
-        
+
         A segment is an overlay if it translates to the same logical
         address as another segment. This is rare, but may occur, for
         example when a processor has a small logical address space
@@ -1710,7 +1710,7 @@ class XmlExporter(IdaXml):
                 if space == space2:
                     start = self.translate_address(s2.start_ea)
                     end   = self.translate_address(s2.end_ea - 1)
-                    if ((saddr >= start and saddr <= end) or 
+                    if ((saddr >= start and saddr <= end) or
                         (eaddr >= start and eaddr <= end)):
                         is_overlay = True
                         self.has_overlays = True
@@ -1721,11 +1721,11 @@ class XmlExporter(IdaXml):
     def get_address_string(self, addr):
         """
         Returns a string representing the address.
-        
+
         The representation is typically a hex string of the address,
         but may include a segment or space name prefixe based on the
         processor or architecture.
-        
+
         Args:
             addr: Integer representing a program address.
         """
@@ -1751,7 +1751,7 @@ class XmlExporter(IdaXml):
     def get_data_value(self, addr):
         """
         Returns the data item value at an address based on its size.
-        
+
         Args:
             addr: Integer representing a program address.
         """
@@ -1761,15 +1761,15 @@ class XmlExporter(IdaXml):
         if size == 4:   return ida_bytes.get_32bit(addr)
         if size == 8:   return ida_bytes.get_64bit(addr)
         return 0
-    
+
 
     def get_datatype(self, addr):
         """
         Returns the datatype at an address.
-        
+
         The type could be a basic type (byte, word, dword, etc.),
         a structure, an array, a pointer, or a string type.
-        
+
         Args:
             addr: Integer representing a program address.
         """
@@ -1797,10 +1797,10 @@ class XmlExporter(IdaXml):
     def get_format(self, flags):
         """
         Returns the display format of a data item based on its flags.
-        
+
         Args:
             flags: Integer representing IDA item flags
-            
+
         Returns:
             String representing IDA display format.
         """
@@ -1810,15 +1810,15 @@ class XmlExporter(IdaXml):
         if radix == 8:  return "octal"
         if radix == 10: return "decimal"
         return "hex" # default
-    
+
 
     def get_member_type(self, m):
         """
         Returns the datatype of a structure member.
-        
+
         Args:
             m: IDA member instance.
-            
+
         Returns:
             String representing member datatype.
         """
@@ -1839,7 +1839,7 @@ class XmlExporter(IdaXml):
 
     def get_options(self):
         """
-        Displays the options menu and retrieves the option settings. 
+        Displays the options menu and retrieves the option settings.
         """
         fmt =  "HELP\n"
         fmt += "XML plugin (Python)\n"
@@ -1884,7 +1884,7 @@ class XmlExporter(IdaXml):
 
         self.options = ida_kernwin.Form(fmt, Opts)
         self.options.Compile()
-        
+
         self.options.MemorySections.checked   = True
         self.options.MemoryContent.checked    = True
         self.options.DataTypes.checked        = True
@@ -1908,16 +1908,16 @@ class XmlExporter(IdaXml):
     def get_space_name(self, addr):
         """
         Returns the memory space name associated with an address.
-        
+
         Args:
             addr: Integer representing a program address.
-            
+
         Returns:
             String containg the memory space name.
             None if single address space architecture.
 
         Used for Harvard architectures (Intel 8051 and TMS, add others
-        as needed). 
+        as needed).
         """
         pid = ida_idp.ph_get_id()
         stype = ida_segment.segtype(addr)
@@ -1944,13 +1944,13 @@ class XmlExporter(IdaXml):
     def get_symbol_name(self, ea):
         """
         Returns the symbol name for the address.
-        
+
         Args:
             ea: Integer representing the symbol address.
-            
+
         Returns:
             String containing the symbol name.
-        
+
         The demangled name will be returned if it exists, otherwise the
         displayed name is returned. Spaces (' ') will be replaced with '_'.
         """
@@ -1966,10 +1966,10 @@ class XmlExporter(IdaXml):
     def get_type(self, flags):
         """
         Returns a datatype string based on the item flags.
-        
+
         Args:
             flags: IDA item flags.
-            
+
         Returns:
             String representing item datatype.
         """
@@ -1994,11 +1994,11 @@ class XmlExporter(IdaXml):
     def is_imm_op(self, addr, op):
         """
         Returns true if instruction operand at address is an immediate value.
-        
+
         Args:
             addr: Integer representing instruction address.
             op: Integer representing operand index (0-based).
-            
+
         Returns:
             True if instruction operand at address is an immediate value.
             False otherwise.
@@ -2008,15 +2008,15 @@ class XmlExporter(IdaXml):
         if (insn.ops[op].type == idc.o_imm):
             return True
         return False
-        
+
 
     def is_overlay(self, addr):
         """
         Checks if memory block (segment) is an overlay.
-        
+
         Args:
             addr: Integer representing a program address.
-            
+
         Returns:
             True if memory block (segment) is an overlay.
         """
@@ -2027,7 +2027,7 @@ class XmlExporter(IdaXml):
             return self.overlay[s.startEA]
         return False
 
-    
+
     def is_signed_data(self, flags):
         return (flags & ida_bytes.FF_SIGN) != 0
 
@@ -2035,7 +2035,7 @@ class XmlExporter(IdaXml):
     def start_element(self, tag, close=False):
         """
         Outputs the start of a new element on a new indented line.
-        
+
         Args:
             tag: String representing the element tag
             close: Boolean indicating if tag is should be closed.
@@ -2046,7 +2046,7 @@ class XmlExporter(IdaXml):
         if (close):
             self.close_tag(True)
         self.update_counter(tag)
-        
+
 
     def translate_address(self, addr):
         """
@@ -2054,10 +2054,10 @@ class XmlExporter(IdaXml):
 
         The logical address is adjusted for the segment base address.
         For 16-bit segmented memory, return the 20-bit address.
-        
+
         Args:
             addr: Integer representing a program address.
-            
+
         Returns:
             Integer representing the logical address.
         """
@@ -2065,23 +2065,23 @@ class XmlExporter(IdaXml):
             return addr - ida_segment.get_segm_base(ida_segment.getseg(addr))
         base = ida_segment.get_segm_para(ida_segment.getseg(addr))
         return (base << 16) + (addr - (base << 4))
-    
+
 
     def write_address_attribute(self, name, addr):
         """
         Outputs an address attribute for an element.
-        
+
         Args:
             name: String representing attribute name.
             addr: Integer representing a program address.
         """
         self.write_attribute(name, self.get_address_string(addr))
-    
+
 
     def write_attribute(self, name, value):
         """
         Outputs an attribute (name and value) for an element.
-        
+
         Args:
             name: String representing attribute name.
             value: String representing attribute value.
@@ -2092,13 +2092,13 @@ class XmlExporter(IdaXml):
             return
         attr = " " + name + '="' + self.check_for_entities(value) + '"'
         self.write_to_xmlfile(attr)
-        
+
 
     def write_comment_element(self, name, cmt):
         """
         Outputs the tag and text for a comment element.
         Comment elements can be REGULAR_CMT, REPEATABLE_CMT, or TYPEINFO_CMT.
-        
+
         Args:
             name: String representing the comment element name.
             cmt: String containing the comment.
@@ -2106,12 +2106,12 @@ class XmlExporter(IdaXml):
         self.start_element(name, True)
         self.write_text(cmt)
         self.end_element(name, False)
-        
+
 
     def write_numeric_attribute(self, name, value, base=16, signedhex=False):
         """
         Outputs a numeric value attribute (name and value) for an element.
-        
+
         Args:
             name: String representing the attribute name.
             value: Integer representing the attribute value.
@@ -2133,23 +2133,23 @@ class XmlExporter(IdaXml):
         """
         Outputs the parsed character text for an element.
         The text is checked for special characters.
-        
+
         Args:
             text: String representing the element text.
         """
         self.write_to_xmlfile(self.check_for_entities(text))
-    
+
 
     def write_to_xmlfile(self, buf):
         """
         Writes the buffer to the XML file.
-        
+
         Args:
             buf: String containg data to write to XML file.
         """
         self.xmlfile.write(buf)
         self.dbg(buf)
-    
+
 
     def write_xml_declaration(self):
         """
@@ -2172,7 +2172,7 @@ class XmlImporter(IdaXml):
 
         Args:
             as_plugin:
-            debug: 
+            debug:
         """
         IdaXml.__init__(self, arg)
         self.plugin = as_plugin
@@ -2262,7 +2262,7 @@ class XmlImporter(IdaXml):
                                                 events=("start","end")):
             if ida_kernwin.user_cancelled() == True:
                 raise Cancelled
-            
+
             if self.debug == True and event == 'start':
                 msg = ''
                 if element.tag != None:
@@ -2273,7 +2273,7 @@ class XmlImporter(IdaXml):
                     msg += str(element.text)
                 if len(msg) > 0:
                     idc.msg('\n' + msg)
-            
+
             if event in self.callbacks:
                 if element.tag in self.callbacks[event]:
                     if event == 'start':
@@ -2288,11 +2288,11 @@ class XmlImporter(IdaXml):
         self.display_summary('Import' if self.plugin else "Load")
         idc.msg('\nXML Elements parsed: ' + str(n) + '\n\n')
         return 1
-    
+
 
     def get_options(self, display):
         """
-        Displays the options menu and retrieves the option settings. 
+        Displays the options menu and retrieves the option settings.
         """
         fmt =  "HELP\n"
         fmt += "XML PROGRAM loader/importer plugin (Python)\n"
@@ -2314,8 +2314,8 @@ class XmlImporter(IdaXml):
         fmt += "\n <Equate/Enum References:{EquateReferences}>"
         fmt += "\n <Manual Instructions/Operands:{Manual}>{cGroup1}>"
         fmt += "\n\n"
-    
-        Opts =  { 'cGroup1': ida_kernwin.Form.ChkGroupControl (( 
+
+        Opts =  { 'cGroup1': ida_kernwin.Form.ChkGroupControl ((
                     "CodeBlocks",
                     "EntryPoints",
                     "RegisterValues",
@@ -2329,10 +2329,10 @@ class XmlImporter(IdaXml):
                     "EquateReferences",
                     "Manual"
                 ))}
-        
+
         self.options = ida_kernwin.Form(fmt, Opts)
         self.options.Compile()
-    
+
         self.options.CodeBlocks.checked       = True
         self.options.EntryPoints.checked      = True
         self.options.RegisterValues.checked   = True
@@ -2355,7 +2355,7 @@ class XmlImporter(IdaXml):
     def display_timer(self, element):
         """
         Displays the elapsed processing time for XML elements.
-        
+
         Args:
             element: XML element object value containing the element tag.
         """
@@ -2364,29 +2364,29 @@ class XmlImporter(IdaXml):
         if element.tag in self.timers:
             idc.msg('elapsed time: %.4f' %
                     (time.clock()-self.timers[element.tag]))
-    
-    
+
+
     def display_total_time(self, element):
         """
         Displays the total processing time.
-        
+
         Args:
             element: XML element object value (not used).
         """
         TOTAL = 'Total '
         idc.msg('\n%35selapsed time: %.4f' %
                 (TOTAL,time.clock()-self.timers[PROGRAM]))
-    
-    
+
+
 
     def get_address(self, element, attr):
         """
         Returns the address value for an element.
-        
+
         Args:
             element: XML element object.
             attr: String containing the address attribute name.
-            
+
         Returns:
             Numeric value representing the address.
         """
@@ -2406,30 +2406,30 @@ class XmlImporter(IdaXml):
             return addr
         else:
             return int(element.get(attr), 16)
-    
+
 
     def get_attribute(self, element, attr):
         """
         Returns the attribute value string.
-        
+
         Args:
             element: XML element object.
             attr: String containing the attribute name.
-            
+
         Returns:
             String representing the attribute value.
         """
         return element.get(attr)
-    
+
 
     def get_attribute_value(self, element, attr):
         """
         Returns the numeric attribute value.
-        
+
         Args:
             element: XML element object.
             attr: String containing the attribute name.
-            
+
         Returns:
             Numeric value representing the attribute value.
         """
@@ -2441,23 +2441,23 @@ class XmlImporter(IdaXml):
         except:
             idc.msg('\nUnable to decode string as value: ' + val)
             return 0
-        
+
 
     def get_cbsize(self):
         """
         Returns the size of the addressable codebyte for the processor.
-        
+
         Returns:
             Integer representing the number of 8-bit bytes in an
             addressable codebyte.
         """
         return (ida_idp.ph_get_cnbits()+7)/8
-    
+
 
     def get_datatype_flags(self, datatype, size):
         """
         Returns the flags bitmask for the datatype.
-        
+
         Args:
             datatype: String representing the datatype.
             size: Integer representing the datatype size.
@@ -2479,7 +2479,7 @@ class XmlImporter(IdaXml):
         if self.is_structure(datatype):             return ida_bytes.stru_flag()
         #if size == 4:                               return ida_bytes.dword_flag()
         return 0
-    
+
 
     def get_string_type(self, datatype):
         if datatype.lower() == 'mbcstring':
@@ -2491,98 +2491,98 @@ class XmlImporter(IdaXml):
         if datatype.lower().find('pascal') != -1:
             return ida_nalt.STRTYPE_C_16
         return ida_nalt.STRTYPE_TERMCHR
-            
-    
+
+
     def has_attribute(self, element, attr):
         """
         Returns true if the XML element contains the named attribute.
-        
+
         Args:
             element: XML element object
             attr: String containing name of the attribute
-        
+
         Returns:
             True if the element contains the named attribute, otherwise False.
         """
         return attr in element.attrib
-    
+
 
     def is_enumeration(self, datatype):
         """
         Returns true if datatype is an existing enumeration in the database.
-        
+
         Args:
             datatype: String representing the datatype.
-            
+
         Returns:
             True if the datatype is an enumeration in the database,
             otherwise False.
         """
         if ida_enum.get_enum(datatype) == BADNODE:  return False
         return True
-    
-    
+
+
     def is_int(self, s):
         try:
             int(s, 16)
             return True
         except:
             return False
-        
+
 
     def is_pointer_type(self, dtype):
         """
         Returns true if the datatype represents a pointer.
-        
+
         Args:
             dtype: String representing the datatype.
-            
+
         Returns:
             True if the datatype represents a pointer, otherwise False.
         """
         if dtype.lower().startswith("pointer") or dtype.endswith('*'):
             return True
         return False
-    
+
 
     def is_string_type(self, datatype):
         """
         Returns true if the datatype represents a string type.
-        
+
         Args:
             datatype: String representing the datatype.
-            
+
         Returns:
             True if the datatype represents a string, otherwise False.
         """
         if datatype.lower().startswith("unicode"):  return True
         if datatype.lower().startswith("string"):   return True
         return False
-    
+
 
     def is_structure(self, datatype):
         """
         Returns true if the datatype represents a structure in the database.
-        
+
         Args:
             dtype: String representing the datatype.
-            
+
         Returns:
             True if the datatype represents an existing structure,
             otherwise False.
         """
         if ida_struct.get_struc_id(datatype) == BADNODE:  return False
         return True
-    
+
 
     def import_address_range(self, address_range):
         """
         Processes ADDRESS_RANGE element.
-        
+
         Args:
             address_range: XML element object containing start and end address
                 attributes for the address range.
-                
+
         Returns:
             Tuple containing two integers, the start and end address values.
         """
@@ -2590,12 +2590,12 @@ class XmlImporter(IdaXml):
         end = self.get_address(address_range, END)
         self.update_counter(ADDRESS_RANGE)
         return (start, end)
-    
+
 
     def import_bit_mask(self, bitmask, eid):
         """
         Processes a BIT_MASK element as an enum bitmask member.
-        
+
         Args:
             bitmask: XML element object representing the IDA enum bitmask.
             eid: Integer representing the IDA enum id
@@ -2613,12 +2613,12 @@ class XmlImporter(IdaXml):
         if rptcmt != None:
             ida_enum.set_enum_member_cmt(cid, rptcmt.txt, True);
             self.update_counter(BIT_MASK + ':' + REPEATABLE_CMT)
-    
+
 
     def import_bookmark(self, bookmark):
         """
         Processes a BOOKMARK element.
-        
+
         Args:
             bookmark: XML element object containing bookmark data.
         """
@@ -2648,12 +2648,12 @@ class XmlImporter(IdaXml):
         except:
             msg = "** Exception occurred in import_bookmark **"
             print "\n" + msg + "\n", sys.exc_type, sys.exc_value
-    
+
 
     def import_cmts(self, element, sid, typ):
         """
         Processes REGULAR_CMT and REPEATABLE_CMT elements for structures.
-        
+
         Args:
             element: XML element object containing a REGULAR_CMT or
                 REPEATABLE_CMT element
@@ -2668,12 +2668,12 @@ class XmlImporter(IdaXml):
         if rptcmt != None:
             ida_struct.set_struc_cmt(sid, rptcmt.text, True)
             self.update_counter(typ + ':' + REPEATABLE_CMT)
-            
-        
+
+
     def import_codeblock(self, code_block):
         """
         Processes a CODE_BLOCK element by disassembling the address range.
-        
+
         Args:
             code_block: XML element containing codeblock start and end
                 addresses.
@@ -2688,12 +2688,12 @@ class XmlImporter(IdaXml):
             length = ida_ua.create_insn(addr)
             addr += ida_bytes.get_item_size(addr) * self.get_cbsize()
         self.update_counter(CODE_BLOCK)
-    
+
 
     def import_comment(self, comment):
         """
         Processes a COMMENT element by creating the comment at the address.
-        
+
         Args:
             comment: XML element containing the comment address, type,
                 and text.
@@ -2712,19 +2712,19 @@ class XmlImporter(IdaXml):
         elif ctype == 'post':
             ida_lines.add_extra_cmt(addr, False, text)
         self.update_counter(COMMENT+':' + ctype)
-    
+
 
     def import_compiler(self, compiler):
         """
         Processes the COMPILER element containing the compiler name.
-        
+
         Args:
             compiler: XML element containing the compiler name.
         """
         name = self.get_attribute(compiler, NAME)
         self.update_counter(COMPILER)
         if self.plugin:
-            return        
+            return
         comp = idc.COMP_UNK
         if   name == "Visual C++":      comp = ida_typeinf.COMP_MS
         elif name == "Borland C++":     comp = ida_typeinf.COMP_BC
@@ -2733,13 +2733,13 @@ class XmlImporter(IdaXml):
         elif name == "Visual Age C++":  comp = ida_typeinf.COMP_VISAGE
         elif name == "Delphi":          comp = ida_typeinf.COMP_BP
         ida_typeinf.set_compiler_id(comp)
-    
+
 
     def import_defined_data(self, defined_data):
         """
         Processes a DEFINED_DATA element by creating a data item at the
             specified address.
-        
+
         Args:
             defined_data: XML element containing the address and
                 datatype information for the data item
@@ -2749,7 +2749,7 @@ class XmlImporter(IdaXml):
         addr = self.get_address(defined_data, ADDRESS)
         datatype = self.get_attribute(defined_data, DATATYPE)
         size = self.get_attribute_value(defined_data, SIZE)
-        self.update_counter(DEFINED_DATA)        
+        self.update_counter(DEFINED_DATA)
         ti = ida_nalt.opinfo_t()
         if self.is_pointer_type(datatype):
             #idaapi.set_refinfo(ti, 0, 0, 0, REF_OFF32)
@@ -2762,16 +2762,16 @@ class XmlImporter(IdaXml):
         elif flag == ida_bytes.stru_flag():
             idc.create_struct(addr, size, datatype)
         else:
-            idc.create_data(addr, flag, size, BADNODE)        
+            idc.create_data(addr, flag, size, BADNODE)
         typecmt = defined_data.find(TYPEINFO_CMT)
         if typecmt != None:
             self.update_counter(DEFINED_DATA + ':' + TYPEINFO_CMT)
-            
-            
+
+
     def import_description(self, description):
         """
         Processes the DESCRIPTION element.
-        
+
         Args:
             description: DESCRIPTION XML element.
         """
@@ -2783,7 +2783,7 @@ class XmlImporter(IdaXml):
     def import_enum(self, enum):
         """
         Processes an ENUM element by creating the enumeration.
-        
+
         Args:
             enum: XML element containing the enumeration name and
                 member data.
@@ -2812,12 +2812,12 @@ class XmlImporter(IdaXml):
         enum_entries = enum.findall(ENUM_ENTRY)
         for enum_entry in enum_entries:
             self.import_enum_entry(enum_entry, eid)
-    
+
 
     def import_enum_entry(self, enum_entry, eid):
         """
         Processes an ENUM_ENTRY by creating a member in the enumeration.
-        
+
         Args:
             enum_entry: XML element containing the member name and value.
             eid: Integer representing the id of the enumeration.
@@ -2835,12 +2835,12 @@ class XmlImporter(IdaXml):
         if rptcmt != None:
             idc.set_enum_member_cmt(cid, rptcmt.text, True);
             self.update_counter(ENUM_ENTRY + ':' + REPEATABLE_CMT)
-    
+
 
     def import_equate(self, equate, eid):
         """
         Processes EQUATE element as member of an enumeration.
-        
+
         Args:
             enum_entry: XML element containing the equate name and value.
             eid: Integer representing the id for the enumeration.
@@ -2853,7 +2853,7 @@ class XmlImporter(IdaXml):
         idc.add_enum_member(eid, name, value, bm)
         cid = idc.get_enum_member_by_name(name)
         self.update_counter(EQUATE)
-        regcmt = equate.find(REGULAR_CMT) 
+        regcmt = equate.find(REGULAR_CMT)
         if regcmt != None:
             idc.set_enum_member_cmt(cid, regcmt.text, False);
             self.update_counter(EQUATE + ':' + REGULAR_CMT)
@@ -2861,12 +2861,12 @@ class XmlImporter(IdaXml):
         if rptcmt != None:
             idc.set_enum_member_cmt(cid, rptcmt.text, True);
             self.update_counter(EQUATE + ':' + REPEATABLE_CMT)
-    
+
 
     def import_equate_group(self, equate_group):
         """
         Processes EQUATE_GROUP as IDA enumeration type.
-        
+
         Args:
             equate_group: XML element containing the group name and
                 equate definitions.
@@ -2897,7 +2897,7 @@ class XmlImporter(IdaXml):
         bit_masks = equate_group.findall(BIT_MASK)
         for bit_mask in bit_masks:
             self.import_bit_mask(bit_mask, eid)
-    
+
 
     def import_equate_reference(self, equate_reference):
         if (self.options.DataTypes.checked == False or
@@ -2923,12 +2923,12 @@ class XmlImporter(IdaXml):
         if eid == BADNODE:
             return
         idc.op_enum(addr, opnd, eid, 0)
-        
+
 
     def import_function(self, function):
         """
         Creates a function using the FUNCTION attributes.
-        
+
         Args:
             function: XML element containing the function address and
                 attributes.
@@ -2989,13 +2989,13 @@ class XmlImporter(IdaXml):
         if self.options.DataTypes.checked == False:
             return
         self.update_counter(FUNCTION_DEF)
-        
+
 
     def import_info_source(self, info_source):
         """
         Processes INFO_SOURCE containing information about the
             source of the XML PROGRAM file.
-        
+
         Args:
             info_source: XML element containing attributes that identify
                 the source of the PROGRAM data.
@@ -3009,12 +3009,12 @@ class XmlImporter(IdaXml):
         if self.has_attribute(info_source, TIMESTAMP):
             ts = self.get_attribute(info_source, TIMESTAMP)
         self.update_counter(INFO_SOURCE)
-    
+
 
     def import_manual_instruction(self, manual_instruction):
         """
         Creates a manual instruction.
-        
+
         Args:
             manual_instruction: XML element containing MANUAL_INSTRUCTION.
         """
@@ -3023,12 +3023,12 @@ class XmlImporter(IdaXml):
         addr = self.get_address(manual_instruction, ADDRESS)
         idc.set_manual_insn(addr, manual_instruction.text)
         self.update_counter(MANUAL_INSTRUCTION)
-    
+
 
     def import_manual_operand(self, manual_operand):
         """
         Creates a manual operand at an address.
-        
+
         Args:
             manual_operand: MANUAL_OPERAND XML element.
         """
@@ -3045,9 +3045,9 @@ class XmlImporter(IdaXml):
         """
         Processes the list of deferred structure members when the
         DATATYPES end element is encountered.
-        
+
         Args:
-            element: XML end element for DATATYPES 
+            element: XML end element for DATATYPES
         """
         for (member, sptr) in self.deferred:
             self.import_member(member, sptr, False)
@@ -3057,7 +3057,7 @@ class XmlImporter(IdaXml):
     def import_member(self, member, sptr, defer=True):
         """
         Creates a member for a structure.
-        
+
         Args:
             member: MEMBER XML element.
             sptr:
@@ -3098,12 +3098,12 @@ class XmlImporter(IdaXml):
         mbr = ida_struct.get_member(sptr, offset)
         self.import_member_cmts(member, mbr)
         self.update_counter(MEMBER)
-        
-        
+
+
     def import_member_cmts(self, member, mbr):
         """
         Processes REGULAR_CMT and REPEATABLE_CMT elements for members.
-        
+
         Args:
             element: XML element object containing a REGULAR_CMT or
                 REPEATABLE_CMT element
@@ -3117,12 +3117,12 @@ class XmlImporter(IdaXml):
         if rptcmt != None:
             ida_struct.set_member_cmt(mbr, rptcmt.text, True)
             self.update_counter(MEMBER + ':' + REPEATABLE_CMT)
-        
+
 
     def import_members(self, element, sptr):
         """
         Add data members to a structure.
-        
+
         Args:
             element: STRUCTURE XML element containing MEMBER sub-elements.
             sptr:
@@ -3130,12 +3130,12 @@ class XmlImporter(IdaXml):
         members = element.findall(MEMBER)
         for member in members:
             self.import_member(member, sptr)
-                
+
 
     def import_memory_contents(self, memory_contents, start, size):
         """
         Processes MEMORY_CONTENTS to load data for a memory block.
-        
+
         Args:
             memory_contents: MEMORY_CONTENTS XML element.
         """
@@ -3158,15 +3158,15 @@ class XmlImporter(IdaXml):
         binfile.file2base(offset,saddr,saddr+length,False)
         binfile.close()
         self.update_counter(MEMORY_CONTENTS)
-    
+
 
     def import_memory_map(self, memory_map):
         """
         Processes the MEMORY_MAP element.
-        
+
         Args:
             memory_map: MEMORY_MAP XML element.
-            
+
         MEMORY_MAP is only processed by the IDA loader. It is ignored when
             run as an IDA plugin.
         """
@@ -3174,13 +3174,13 @@ class XmlImporter(IdaXml):
         if self.plugin:
             return
         self.update_import(memory_map)
-    
+
 
     def import_memory_reference(self, memory_reference):
         """
         Processes the MEMORY_REFERENCE element.
         Currently nothing is done with MEMORY_REFERENCEs.
-        
+
         Args:
             memory_reference: MEMORY_REFERENCE XML element.
         """
@@ -3208,15 +3208,15 @@ class XmlImporter(IdaXml):
             #print "%08X %08X" % (addr, to_addr), op, primary
             pass
         '''
- 
- 
+
+
     def import_memory_section(self, memory_section):
         """
         Creates a memory segment in the database.
-        
+
         Args:
             memory_section: MEMORY_SECTION XML element.
-            
+
         MEMORY_SECTION is only processed by the IDA loader. It is ignored
             when run as an IDA plugin.
         """
@@ -3251,12 +3251,12 @@ class XmlImporter(IdaXml):
         else:
             sel = ida_segment.allocate_selector(0)
             start = self.get_address(memory_section, START_ADDR)
-        
+
         s.sel = sel
         s.start_ea = start
         s.end_ea = start+length
         s.bitness = self.addr_mode
-        
+
         perms = ''
         if self.has_attribute(memory_section, PERMISSIONS):
             perms = self.get_attribute(memory_section, PERMISSIONS)
@@ -3269,12 +3269,12 @@ class XmlImporter(IdaXml):
         self.update_counter(MEMORY_SECTION)
         for memory_contents in memory_section.findall(MEMORY_CONTENTS):
             self.import_memory_contents(memory_contents, start, length)
-    
+
 
     def import_processor(self, processor):
         """
         Processes the PROCESSOR element.
-        
+
         Args:
             processor: PROCESSOR XML element.
         """
@@ -3296,12 +3296,12 @@ class XmlImporter(IdaXml):
                 self.addr_mode = 2
                 idc.set_flag(idc.INF_LFLAGS, idc.LFLG_PC_FLAT, 1)
                 idc.set_flag(idc.INF_LFLAGS, idc.LFLG_64BIT, 1)
-        
+
 
     def import_program(self, program):
         """
         Processes the PROGRAM element.
-        
+
         Args:
             program: PROGRAM XML element.
         """
@@ -3328,11 +3328,11 @@ class XmlImporter(IdaXml):
             md5 = ida_netnode.netnode(INPUT_MD5, len(INPUT_MD5), True)
             md5.supset(ida_nalt.RIDX_MD5, input_md5)
 
-        
+
     def import_program_entry_point(self, program_entry_point):
         """
         Defines a program entry point.
-        
+
         Args:
             program_entry_point: PROGRAM_ENTRY_POINT XML element.
                 Contains the entry point address.
@@ -3342,12 +3342,12 @@ class XmlImporter(IdaXml):
         addr = self.get_address(program_entry_point, ADDRESS)
         idc.add_entry(addr, addr, "", True)
         self.update_counter(PROGRAM_ENTRY_POINT)
-    
+
 
     def import_register_value_range(self, register_value_range):
         """
         Defines the address range for a register value.
-        
+
         Args:
             register_value_range: REGISTER_VALUE_RANGE XML element.
                 Contains the register, value, start address and range length.
@@ -3363,12 +3363,12 @@ class XmlImporter(IdaXml):
         r = ida_idp.str2reg(reg)
         if r >= ida_idp.ph_get_reg_first_sreg() and r <= ida_idp.ph_get_reg_last_sreg():
             ida_segregs.split_sreg_range(addr, r, value, idc.SR_user, True)
-    
+
 
     def import_register_var(self, register_var, func):
         """
         Defines a register variable for a function.
-        
+
         Args:
             register_var: REGISTER_VAR XML element.
                 Contains register, variable name, and datatype.
@@ -3382,12 +3382,12 @@ class XmlImporter(IdaXml):
             namespace = self.get_attribute(register_var, DATATYPE_NAMESPACE)
         idc.define_local_var(func.startEA, func.endEA, reg, name)
         self.update_counter(REGISTER_VAR)
-    
+
 
     def import_stack_frame(self, stack_frame, func):
         """
         Defines a stack frame for a function.
-        
+
         Args:
             stack_frame: STACK_FRAME element with STACK_VAR child elements.
         """
@@ -3406,24 +3406,24 @@ class XmlImporter(IdaXml):
         self.update_counter(STACK_FRAME)
         for stack_var in stack_frame.findall(STACK_VAR):
             self.import_stack_var(stack_var, func)
-    
+
 
     def import_stack_reference(self, stack_reference):
         # import_stack_reference: NOT IMPLEMENTED
         self.update_counter(STACK_REFERENCE)
         pass
-                    
+
 
     def import_stack_var(self, stack_var, func):
         """
         Processes STACK_VAR element.
-        
+
         Args:
             stack_var: STACK_VAR XML element.
-            
-        Stack variables are created by IDA's function analysis. 
+
+        Stack variables are created by IDA's function analysis.
         Only the STACK_VAR NAME attribute is used to set the name for
-        a stack variable at the specified stack/frame offset. 
+        a stack variable at the specified stack/frame offset.
         """
         spoffset = self.get_attribute_value(stack_var, STACK_PTR_OFFSET)
         datatype = self.get_attribute(stack_var, DATATYPE)
@@ -3442,12 +3442,12 @@ class XmlImporter(IdaXml):
         sf = ida_frame.get_frame(func)
         if name != '':
             ida_struct.set_member_name(sf, offset, name)
-    
+
 
     def import_structure(self, structure):
         """
         Adds a structure.
-        
+
         Args:
             structure: STRUCTURE XML element.
                 Contains the STRUCTURE attributes and child elements.
@@ -3473,7 +3473,7 @@ class XmlImporter(IdaXml):
             size = self.get_attribute_value(structure, SIZE)
         if self.has_attribute(structure, VARIABLE_LENGTH):
             vl = self.get_attribute_value(structure, VARIABLE_LENGTH)
-            isVariableLength = vl == 'y'        
+            isVariableLength = vl == 'y'
         sid = idc.add_struc(-1, name, 0)
         sptr = ida_struct.get_struc(sid)
         self.update_counter(STRUCTURE)
@@ -3482,12 +3482,12 @@ class XmlImporter(IdaXml):
         if idc.get_struc_size(sptr) < size:
             t = ida_nalt.opinfo_t()
             ida_struct.add_struc_member(sptr,"",size-1,ida_bytes.byte_flag(),t,1)
-        
+
 
     def import_symbol(self, symbol):
         """
         Adds a symbol name at the specified address.
-        
+
         Args:
             symbol: SYMBOL XML element.
                 Contains symbol name and address. Optionally includes
@@ -3505,19 +3505,19 @@ class XmlImporter(IdaXml):
             if  typ == 'local': flag |= idc.SN_LOCAL
         idc.set_name(addr, name, flag)
         self.update_counter(SYMBOL)
-    
+
 
     def import_typedef(self, type_def):
         # import_typedef: NOT IMPLEMENTED
         if self.options.DataTypes.checked == False:
             return
         self.update_counter(TYPE_DEF)
-        
+
 
     def import_union(self, union):
         """
         Adds a union datatype.
-        
+
         Args:
             union: UNION XML element.
                 Contains UNION attributes and child elements.
@@ -3549,22 +3549,22 @@ class XmlImporter(IdaXml):
         if idc.get_struc_size(sptr) < size:
             t = ida_nalt.opinfo_t()
             ida_struct.add_struc_member(sptr,"", size-1, ida_bytes.byte_flag(), t, 1)
-            
+
 
     def update_import(self, element):
         """
         Update the element counter and processing status.
-        
+
         Args:
             element: XML element
-            
+
         This function is used to process certain high-level elements
         (such as COMMENTS, CODE_BLOCKS, SYMBOL_TABLE, FUNCTIONS, etc.)
         that are used to group sub-elements.
         """
         self.update_counter(element.tag)
         self.update_status(element.tag)
-    
+
 
 # Global constants
 # mangled name inhibit flags are not currently exposed in python api
@@ -3575,7 +3575,7 @@ DEMANGLED_FORM = 0x0ea3ffe7
 # DEMANGLED_TYPEINFO (MNG_LONG_FORM)
 DEMANGLED_TYPEINFO = 0x06400007
 
-        
+
 # Global XML string constants for elements and attributes
 ADDRESS = 'ADDRESS'
 ADDRESS_MODEL = 'ADDRESS_MODEL'

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -582,9 +582,9 @@ public class DWARFUtil {
 	/**
 	 * Read a variable-length length value from the stream.
 	 * <p>
-	 * 
+	 *
 	 * @param reader {@link BinaryReader} stream to read from
-	 * @param program Ghidra {@link Program} 
+	 * @param program Ghidra {@link Program}
 	 * @return new {@link LengthResult}, never null; length == 0 should be checked for and treated
 	 * specially
 	 * @throws IOException if io error
@@ -610,7 +610,7 @@ public class DWARFUtil {
 		else if (length == 0) {
 			// Test for special case of weird BE MIPS 64bit length value.
 			// Instead of following DWARF std (a few lines above with length == MAX_INT),
-			// it writes a raw 64bit long (BE). The upper 32 bits (already read as length) will 
+			// it writes a raw 64bit long (BE). The upper 32 bits (already read as length) will
 			// always be 0 since super-large binaries from that system weren't really possible.
 			// The next 32 bits will be the remainder of the value.
 			if ( reader.isBigEndian() && program.getDefaultPointerSize() == 8) {

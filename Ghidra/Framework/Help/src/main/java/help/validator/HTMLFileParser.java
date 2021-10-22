@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,7 +86,7 @@ public class HTMLFileParser {
 			}
 		}
 
-		// now, finish processing the text on the line, either: the rest of the tag we found, 
+		// now, finish processing the text on the line, either: the rest of the tag we found,
 		// or the rest of the line when no tag
 		if (tagStartIndex < 0) {
 			// no tag found
@@ -146,7 +146,7 @@ public class HTMLFileParser {
 
 		int index = line.indexOf(COMMENT_END_TAG, 0);
 		if (index >= 0) {
-			// update the line to move past the comment closing tag 
+			// update the line to move past the comment closing tag
 			comment += line.substring(0, index).text;
 			line = line.substring(index + COMMENT_END_TAG.length());
 		}
@@ -210,7 +210,7 @@ public class HTMLFileParser {
 
 				case LOOKING_FOR_VALUE:
 					if (c == ' ' || c == '\t') {
-						// we now allow spaces after the '=', but before the '"' starts, as our 
+						// we now allow spaces after the '=', but before the '"' starts, as our
 						// tidy tool breaks on the '=' sometimes
 						//map.put(attr, null);
 						//mode = LOOKING_FOR_NEXT_ATTR;

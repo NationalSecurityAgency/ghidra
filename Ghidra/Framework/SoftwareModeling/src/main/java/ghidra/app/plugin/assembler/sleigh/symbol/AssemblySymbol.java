@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,15 +19,15 @@ import ghidra.app.plugin.assembler.sleigh.grammars.AbstractAssemblyGrammar;
 
 /**
  * A symbol in a context-free grammar
- * 
+ *
  * Symbols can be either terminals or non-terminals. Non-terminals must have a defining production,
- * i.e., it must appear as the left-hand side of some production in the grammar. 
- * 
+ * i.e., it must appear as the left-hand side of some production in the grammar.
+ *
  * Traditionally, when displayed, non-terminals should be immediately distinguishable from
  * terminals. In classic CS literature, this usually means non-terminals are in CAPS, and terminals
  * are in lower-case. Because the assembler doesn't control the names provided by SLEIGH, we
  * surround non-terminals in [brackets].
- * 
+ *
  * @see AbstractAssemblyGrammar
  */
 public abstract class AssemblySymbol implements Comparable<AssemblySymbol> {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,16 +23,16 @@ import ghidra.util.exception.DuplicateNameException;
 
 public class Ext4ExtentHeader implements StructConverter {
 	private static final int SIZEOF = 12;
-	
+
 	private short eh_magic;
 	private short eh_entries;
 	private short eh_max;
 	private short eh_depth;
 	private int eh_generation;
-	
+
 	/**
 	 * Read a Ext4ExtentHeader from the stream.
-	 * 
+	 *
 	 * @param reader BinaryReader to read from
 	 * @return new Ext4ExtentHeader instance, or null if eof or no magic value
 	 * @throws IOException if error
@@ -48,7 +48,7 @@ public class Ext4ExtentHeader implements StructConverter {
 	public Ext4ExtentHeader( ByteProvider provider ) throws IOException {
 		this( new BinaryReader( provider, true ) );
 	}
-	
+
 	public Ext4ExtentHeader( BinaryReader reader ) throws IOException {
 		eh_magic = reader.readNextShort();
 		eh_entries = reader.readNextShort();

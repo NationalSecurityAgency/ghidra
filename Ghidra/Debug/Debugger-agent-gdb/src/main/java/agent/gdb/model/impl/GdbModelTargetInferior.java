@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -424,7 +424,7 @@ public class GdbModelTargetInferior
 
 	/**
 	 * Handle state changes for this inferior
-	 * 
+	 *
 	 * <p>
 	 * Desired order of updates:
 	 * <ol>
@@ -432,7 +432,7 @@ public class GdbModelTargetInferior
 	 * <li>Thread states/stacks updated</li>
 	 * <li>Memory regions updated (Ew)</li>
 	 * </ol>
-	 * 
+	 *
 	 * <p>
 	 * Note that the event thread may not belong to this inferior. When it does not, this inferior
 	 * will not emit any event(). Presumably, this same method will be called on the relevant
@@ -443,7 +443,7 @@ public class GdbModelTargetInferior
 	 * <li>The event() gets replicated on a different inferior<br>
 	 * (We only need to report state changes, not event, for non-event inferiors</li>
 	 * </ol>
-	 * 
+	 *
 	 * @param sco the record of the change
 	 */
 	public CompletableFuture<Void> stateChanged(GdbStateChangeRecord sco) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.awt.*;
 /**
  * This layout arranges components in rows, putting as many components as possible on a
  * row and using as many rows as necessary. All components are sized the same, the largest width
- * and the largest height of all components.  The components prefer to be layout as close to 
+ * and the largest height of all components.  The components prefer to be layout as close to
  * a square as possible.
  */
 public class RowColumnLayout implements LayoutManager {

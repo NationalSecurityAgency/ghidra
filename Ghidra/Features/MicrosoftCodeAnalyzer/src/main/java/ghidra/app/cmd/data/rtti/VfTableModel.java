@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 	 * Creates the model for the vf table data.
 	 * @param program the program
 	 * @param vfTableAddress the address in the program for the vf table data.
-	 * @param validationOptions options indicating how to validate the data type at the indicated 
+	 * @param validationOptions options indicating how to validate the data type at the indicated
 	 * address.
 	 */
 	public VfTableModel(Program program, Address vfTableAddress,
@@ -61,7 +61,7 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 			validationOptions);
 		elementCount= RttiUtil.getVfTableCount(program, vfTableAddress);
 	}
-	
+
 	/**
 	 * Get the number of vftable elements in this vftable
 	 * @return number of elements
@@ -122,7 +122,7 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 
 	/**
 	 * This gets the vf table structure for the indicated program.
-	 * @param program the program which will contain this data. 
+	 * @param program the program which will contain this data.
 	 * @return the vf table structure as an array.
 	 */
 	private DataType getDataType(Program program) {
@@ -133,7 +133,7 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 			lastProgram = program;
 			lastDataType = null;
 			lastElementCount = elementCount;
-			
+
 			if (lastElementCount > 0) {
 				DataTypeManager dataTypeManager = program.getDataTypeManager();
 				PointerDataType pointerDt = new PointerDataType(dataTypeManager);
@@ -166,7 +166,7 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address of the virtual function pointed to by the vf table element at the index 
+	 * Gets the address of the virtual function pointed to by the vf table element at the index
 	 * specified by <code>tableElementIndex</code>.
 	 * @param tableElementIndex index of the vf table element
 	 * @return the virtual function's address or null
@@ -189,7 +189,7 @@ public class VfTableModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address of the location containing the meta pointer, which points to the RTTI 4 
+	 * Gets the address of the location containing the meta pointer, which points to the RTTI 4
 	 * associated with this vf table.
 	 * @return the address of the meta pointer
 	 */

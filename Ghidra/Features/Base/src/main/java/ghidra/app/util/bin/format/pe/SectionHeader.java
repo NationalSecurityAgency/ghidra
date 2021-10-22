@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,12 +43,12 @@ import ghidra.util.exception.DuplicateNameException;
  *    WORD    NumberOfRelocations;
  *    WORD    NumberOfLinenumbers;
  *    DWORD   Characteristics;				// MANDATORY
- * } IMAGE_SECTION_HEADER, *PIMAGE_SECTION_HEADER; * 
+ * } IMAGE_SECTION_HEADER, *PIMAGE_SECTION_HEADER; *
  * </pre>
  * <br>
- * <code>#define IMAGE_SIZEOF_SECTION_HEADER 40</code> * 
- * 
- * 
+ * <code>#define IMAGE_SIZEOF_SECTION_HEADER 40</code> *
+ *
+ *
  */
 public class SectionHeader implements StructConverter, ByteArrayConverter {
 	/**
@@ -84,27 +84,27 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	public final static int IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080;
 //  public final static int IMAGE_SCN_LNK_OTHER                  = 0x00000100;
 	/**
-	 * Section contains information for use by the linker. 
+	 * Section contains information for use by the linker.
 	 * Only exists in OBJs.
 	 */
 	public final static int IMAGE_SCN_LNK_INFO = 0x00000200;
 //  public final static int IMAGE_SCN_TYPE_OVER                  = 0x00000400;
 	/**
-	 * Section contents will not become part of the image. 
+	 * Section contents will not become part of the image.
 	 * This only appears in OBJ files.
 	 */
 	public final static int IMAGE_SCN_LNK_REMOVE = 0x00000800;
 	/**
-	 * Section contents is communal data (comdat). 
-	 * Communal data is data (or code) that can be 
-	 * defined in multiple OBJs. The linker will select 
-	 * one copy to include in the executable. Comdats 
-	 * are vital for support of C++ template functions 
-	 * and function-level linking. Comdat sections only 
+	 * Section contents is communal data (comdat).
+	 * Communal data is data (or code) that can be
+	 * defined in multiple OBJs. The linker will select
+	 * one copy to include in the executable. Comdats
+	 * are vital for support of C++ template functions
+	 * and function-level linking. Comdat sections only
 	 * appear in OBJ files.
 	 */
 	public final static int IMAGE_SCN_LNK_COMDAT = 0x00001000;
-//  Reserved.                                                    = 0x00002000; 
+//  Reserved.                                                    = 0x00002000;
 //  public final static int IMAGE_SCN_MEM_PROTECTED - Obsolete   = 0x00004000;
 	/**
 	 * Reset speculative exceptions handling bits in the TLB entries for this section.
@@ -183,8 +183,8 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	 */
 	public final static int IMAGE_SCN_LNK_NRELOC_OVFL = 0x01000000;
 	/**
-	 * The section can be discarded from the final executable. 
-	 * Used to hold information for the linker's use, 
+	 * The section can be discarded from the final executable.
+	 * Used to hold information for the linker's use,
 	 * including the .debug$ sections.
 	 */
 	public final static int IMAGE_SCN_MEM_DISCARDABLE = 0x02000000;
@@ -193,18 +193,18 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	 */
 	public final static int IMAGE_SCN_MEM_NOT_CACHED = 0x04000000;
 	/**
-	 * The section is not pageable, so it should 
-	 * always be physically present in memory. 
+	 * The section is not pageable, so it should
+	 * always be physically present in memory.
 	 * Often used for kernel-mode drivers.
 	 */
 	public final static int IMAGE_SCN_MEM_NOT_PAGED = 0x08000000;
 	/**
-	 * Section is shareable. The physical pages containing this 
-	 * section's data will be shared between all processes 
-	 * that have this executable loaded. Thus, every process 
-	 * will see the exact same values for data in this section. 
-	 * Useful for making global variables shared between all 
-	 * instances of a process. To make a section shared, 
+	 * Section is shareable. The physical pages containing this
+	 * section's data will be shared between all processes
+	 * that have this executable loaded. Thus, every process
+	 * will see the exact same values for data in this section.
+	 * Useful for making global variables shared between all
+	 * instances of a process. To make a section shared,
 	 * use the /section:name,S linker switch.
 	 */
 	public final static int IMAGE_SCN_MEM_SHARED = 0x10000000;
@@ -239,7 +239,7 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 
 	/**
 	 * Read a {@link SectionHeader} from the specified stream starting at {@code index}.
-	 *  
+	 *
 	 * @param reader {@link BinaryReader} to read from
 	 * @param index long offset in the reader where the section header starts
 	 * @param stringTableOffset offset of the string table, or -1 if not available
@@ -321,24 +321,24 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Returns the ASCII name of the section. A 
-	 * section name is not guaranteed to be 
-	 * null-terminated. If you specify a section name 
-	 * longer than eight characters, the linker 
-	 * truncates it to eight characters in the 
-	 * executable. A mechanism exists for allowing 
-	 * longer section names in OBJ files. Section 
-	 * names often start with a period, but this is 
-	 * not a requirement. Section names with a $ in 
-	 * the name get special treatment from the linker. 
-	 * Sections with identical names prior to the $ 
-	 * character are merged. The characters following 
-	 * the $ provide an alphabetic ordering for how the 
-	 * merged sections appear in the final section. 
-	 * There's quite a bit more to the subject of sections 
-	 * with $ in the name and how they're combined, but 
+	 * Returns the ASCII name of the section. A
+	 * section name is not guaranteed to be
+	 * null-terminated. If you specify a section name
+	 * longer than eight characters, the linker
+	 * truncates it to eight characters in the
+	 * executable. A mechanism exists for allowing
+	 * longer section names in OBJ files. Section
+	 * names often start with a period, but this is
+	 * not a requirement. Section names with a $ in
+	 * the name get special treatment from the linker.
+	 * Sections with identical names prior to the $
+	 * character are merged. The characters following
+	 * the $ provide an alphabetic ordering for how the
+	 * merged sections appear in the final section.
+	 * There's quite a bit more to the subject of sections
+	 * with $ in the name and how they're combined, but
 	 * the details are outside the scope of this article
-	 * 
+	 *
 	 * @return the ASCII name of the section
 	 */
 	public String getName() {
@@ -374,7 +374,7 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * In executables, returns the RVA where 
+	 * In executables, returns the RVA where
 	 * the section begins in memory. Should be set to 0 in OBJs.
 	 * this section should be loaded into memory.
 	 * @return the RVA where the section begins in memory.
@@ -384,14 +384,14 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Returns the actual, used size of the section. 
-	 * This field may be larger or 
-	 * smaller than the SizeOfRawData field. 
-	 * If the VirtualSize is larger, the 
-	 * SizeOfRawData field is the size of the 
-	 * initialized data from the executable, 
-	 * and the remaining bytes up to the VirtualSize 
-	 * should be zero-padded. This field is set 
+	 * Returns the actual, used size of the section.
+	 * This field may be larger or
+	 * smaller than the SizeOfRawData field.
+	 * If the VirtualSize is larger, the
+	 * SizeOfRawData field is the size of the
+	 * initialized data from the executable,
+	 * and the remaining bytes up to the VirtualSize
+	 * should be zero-padded. This field is set
 	 * to 0 in OBJ files.
 	 * @return the actual, used size of the section
 	 */
@@ -403,8 +403,8 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Returns the size (in bytes) of data stored for the section 
-	 * in the executable or OBJ. 
+	 * Returns the size (in bytes) of data stored for the section
+	 * in the executable or OBJ.
 	 * @return the size (in bytes) of data stored for the section
 	 */
 	public int getSizeOfRawData() {
@@ -412,13 +412,13 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Returns the file offset where the data 
-	 * for the section begins. For executables, 
-	 * this value must be a multiple of the file 
+	 * Returns the file offset where the data
+	 * for the section begins. For executables,
+	 * this value must be a multiple of the file
 	 * alignment given in the PE header.
 	 * <p>
 	 * If a section is uninitialized, this value will be 0.
-	 * 
+	 *
 	 * @return the file offset where the data for the section begins
 	 */
 	public int getPointerToRawData() {
@@ -429,7 +429,7 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Returns the file offset of relocations for this section. 
+	 * Returns the file offset of relocations for this section.
 	 * @return the file offset of relocations for this section
 	 */
 	public int getPointerToRelocations() {
@@ -437,8 +437,8 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Returns the number of relocations pointed 
-	 * to by the PointerToRelocations field. 
+	 * Returns the number of relocations pointed
+	 * to by the PointerToRelocations field.
 	 * @return the number of relocations
 	 */
 	public short getNumberOfRelocations() {
@@ -446,8 +446,8 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Return the file offset for COFF-style line 
-	 * numbers for this section. 
+	 * Return the file offset for COFF-style line
+	 * numbers for this section.
 	 * @return the file offset for COFF-style line numbers for this section
 	 */
 	public int getPointerToLinenumbers() {
@@ -455,9 +455,9 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Returns the flags OR'ed together, indicating the 
-	 * attributes of this section. Many of these flags 
-	 * can be set with the linker's /SECTION option. 
+	 * Returns the flags OR'ed together, indicating the
+	 * attributes of this section. Many of these flags
+	 * can be set with the linker's /SECTION option.
 	 * Common values include those listed in Figure 7.
 	 * @return the flags OR'ed together, indicating the attributes of this section
 	 */
@@ -466,8 +466,8 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Returns the number of line numbers pointed to by the 
-	 * NumberOfRelocations field. 
+	 * Returns the number of line numbers pointed to by the
+	 * NumberOfRelocations field.
 	 * @return the number of line numbers
 	 */
 	public short getNumberOfLinenumbers() {
@@ -543,7 +543,7 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Writes this section header to the specified random access file. 
+	 * Writes this section header to the specified random access file.
 	 * @param raf the random access file
 	 * @param dc  the data converter
 	 * @throws IOException if an I/O error occurs
@@ -570,14 +570,14 @@ public class SectionHeader implements StructConverter, ByteArrayConverter {
 	 * Writes the bytes from this section into the specified random access file.
 	 * The bytes will be written starting at the byte position
 	 * specified by <code>getPointerToRawData()</code>.
-	 * 
+	 *
 	 * @param raf           the random access file
 	 * @param rafIndex      the index into the RAF where the bytes will be written
 	 * @param dc            the data converter
 	 * @param block         the memory block corresponding to this section
-	 * @param useBlockBytes if true, then use the bytes from the memory block, 
+	 * @param useBlockBytes if true, then use the bytes from the memory block,
 	 *                      otherwise use the bytes from this section.
-	 *  
+	 *
 	 * @throws IOException if there are errors writing to the file
 	 * @throws MemoryAccessException if the byte from the memory block cannot be accesses
 	 */

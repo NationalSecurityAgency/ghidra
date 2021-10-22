@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +35,8 @@ import utilities.util.FileUtilities;
  * Caches files based on a hash of the contents of the file.<br>
  * Files are retrieved using the hash string.<br>
  * Cached files are stored in a file with a name that is the hex encoded value of the hash.<br>
- * Cached files are obfuscated/de-obfuscated when written/read to/from disk.  See 
- * {@link ObfuscatedFileByteProvider}, {@link ObfuscatedInputStream}, 
+ * Cached files are obfuscated/de-obfuscated when written/read to/from disk.  See
+ * {@link ObfuscatedFileByteProvider}, {@link ObfuscatedInputStream},
  * {@link ObfuscatedOutputStream}.<br>
  * Cached files are organized into a nested directory structure to prevent
  * overwhelming a single directory with thousands of files.
@@ -53,7 +53,7 @@ import utilities.util.FileUtilities;
  */
 public class FileCache {
 	/**
-	 * Max size of a file that will be kept in {@link #memCache} (2Mb)  
+	 * Max size of a file that will be kept in {@link #memCache} (2Mb)
 	 */
 	public static final int MAX_INMEM_FILESIZE = 2 * 1024 * 1024; // 2mb
 	private static final long FREESPACE_RESERVE_BYTES = 50 * 1024 * 1024; // 50mb
@@ -74,7 +74,7 @@ public class FileCache {
 	/**
 	 * Backwards compatible with previous cache directories to age off the files located
 	 * therein.
-	 * 
+	 *
 	 * @param oldCacheDir the old 2-level cache directory
 	 * @deprecated Marked as deprecated to ensure this is removed in a few versions after most
 	 * user's old-style cache dirs have been cleaned up.
@@ -138,7 +138,7 @@ public class FileCache {
 					" to store file sized: " + sizeHint);
 			}
 		}
-		
+
 	}
 
 	/**
@@ -186,7 +186,7 @@ public class FileCache {
 
 	/**
 	 * Creates a randomly generated file name in the temp directory.
-	 * 
+	 *
 	 * @return randomly generated file name in the cache's temp directory
 	 */
 	private File createTempFile() {
@@ -197,7 +197,7 @@ public class FileCache {
 	 * Creates a new {@link FileCacheEntryBuilder} that will accept bytes written to it
 	 * (via its {@link OutputStream} methods).  When finished writing, the {@link FileCacheEntryBuilder}
 	 * will give the caller a {@link FileCacheEntry}.
-	 * 
+	 *
 	 * @param sizeHint a hint about the size of the file being added.  Use -1 if unsure or unknown
 	 * @return new {@link FileCacheEntryBuilder}
 	 * @throws IOException if error
@@ -297,8 +297,8 @@ public class FileCache {
 	 * Only called during construction, and the only known multi-process conflict that can occur
 	 * is when re-writing the "lastMaint" timestamp file, which isn't a problem as its the
 	 * approximate timestamp of that file that is important, not the contents.
-	 * 
-	 * @param cacheDir cache directory location 
+	 *
+	 * @param cacheDir cache directory location
 	 * @param nestingLevel the depth of directory nesting, 2 for old style, 1 for newer style
 	 * @return {@link FileCacheMaintenanceDaemon} instance if started, null otherwise
 	 */
@@ -519,7 +519,7 @@ public class FileCache {
 
 	/**
 	 * Represents a cached file.  It may be an actual file if {@link FileCacheEntry#file file}
-	 * is set, or if smaller than {@link FileCache#MAX_INMEM_FILESIZE 2Mb'ish} just an 
+	 * is set, or if smaller than {@link FileCache#MAX_INMEM_FILESIZE 2Mb'ish} just an
 	 * in-memory byte array that is weakly pinned in the {@link FileCache#memCache} map.
 	 */
 	public static class FileCacheEntry {
@@ -564,7 +564,7 @@ public class FileCache {
 
 		/**
 		 * Returns the MD5 of this cache entry.
-		 * 
+		 *
 		 * @return the MD5 (as a string) of this cache entry
 		 */
 		public String getMD5() {

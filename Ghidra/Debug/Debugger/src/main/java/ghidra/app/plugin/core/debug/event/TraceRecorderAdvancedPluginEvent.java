@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ public class TraceRecorderAdvancedPluginEvent extends PluginEvent {
 
 	/**
 	 * Construct a new plugin event.
-	 * 
+	 *
 	 * @param source name of the plugin that created this event
 	 * @param recorder the recorder that has advanced to its next snap
 	 * @param snap the snap to which the recorder advanced
@@ -39,7 +39,7 @@ public class TraceRecorderAdvancedPluginEvent extends PluginEvent {
 
 	/**
 	 * Get the recorder that has advanced to its next snap
-	 * 
+	 *
 	 * @return the recorder
 	 */
 	public TraceRecorder getRecorder() {
@@ -48,7 +48,7 @@ public class TraceRecorderAdvancedPluginEvent extends PluginEvent {
 
 	/**
 	 * Get the snap to which the recorder advanced
-	 * 
+	 *
 	 * @return the snap
 	 */
 	public long getSnap() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,11 +41,11 @@ import ghidra.util.task.TaskMonitor;
 public class InstructionSearchData extends Observable {
 
 	// This is the entire set of instructions that will be searched on when/if the user
-	// selects the 'search' or 'search all' buttons. Each time a new selection is made, this 
+	// selects the 'search' or 'search all' buttons. Each time a new selection is made, this
 	// list will be updated.
 	private List<InstructionMetadata> instructions = new ArrayList<InstructionMetadata>();
 
-	// Specifies the type of model updates this class can issue.  
+	// Specifies the type of model updates this class can issue.
 	//
 	// A RELOAD type should trigger any GUI clients to perform a full reload; this is issued when
 	// the instruction set has changed completely.
@@ -61,7 +61,7 @@ public class InstructionSearchData extends Observable {
 	 * If this data model is being run in a headed environment, this method
 	 * should be called to have the model be notified when users have toggled
 	 * masks via the gui.
-	 * 
+	 *
 	 * @param table the table to register for
 	 */
 	public void registerForGuiUpdates(InstructionTable table) {
@@ -71,7 +71,7 @@ public class InstructionSearchData extends Observable {
 	/**
 	 * This method ensures that all mask settings in the dialog are applied to
 	 * the {@link #instructions} list.
-	 * 
+	 *
 	 * @see InstructionSearchData
 	 */
 	public void applyMasks(InstructionTable table) {
@@ -86,7 +86,7 @@ public class InstructionSearchData extends Observable {
 	 * Parses the given {@link AddressRange} from the given {@link Program} to
 	 * extract all instructions; results are stored in the local
 	 * {@link InstructionMetadata} list.
-	 * 
+	 *
 	 * @param program the current program
 	 * @param addressRange the addresses to load instructions for
 	 * @throws InvalidInputException if there's an error parsing the
@@ -103,7 +103,7 @@ public class InstructionSearchData extends Observable {
 			return;
 		}
 
-		// Now we have to use the sleigh logger to parse each of the code units in the 
+		// Now we have to use the sleigh logger to parse each of the code units in the
 		// requested address set.
 		Listing listing = program.getListing();
 		AddressSet addrSet = new AddressSet(addressRange);
@@ -129,7 +129,7 @@ public class InstructionSearchData extends Observable {
 
 				InstructionMetadata instructionMetadata;
 
-				// If this CU is an instruction, we can use the Sleigh debug logger to build the 
+				// If this CU is an instruction, we can use the Sleigh debug logger to build the
 				// mask info.  If not, we don't need to create anything complex for masking - it's either
 				// on or off.
 				if (cu instanceof Instruction) {
@@ -170,7 +170,7 @@ public class InstructionSearchData extends Observable {
 	/**
 	 * Clears out the instruction list in this model, and fires off a
 	 * notification to subscribers.
-	 * 
+	 *
 	 */
 	public void clearAndReload() {
 
@@ -185,9 +185,9 @@ public class InstructionSearchData extends Observable {
 
 	/**
 	 * Returns the list of all instructions.
-	 * 
+	 *
 	 * @return the list of instructions
-	 * 
+	 *
 	 */
 	public List<InstructionMetadata> getInstructions() {
 		return instructions;
@@ -196,7 +196,7 @@ public class InstructionSearchData extends Observable {
 	/**
 	 * Replaces the instructions in this model with the given list, and fires
 	 * off a notification to subscribers.
-	 * 
+	 *
 	 * @param instructions the instructions to replace
 	 */
 	public void setInstructions(List<InstructionMetadata> instructions) {
@@ -208,7 +208,7 @@ public class InstructionSearchData extends Observable {
 	 * Returns the maximum number of operands across all instructions. ie: if
 	 * one instruction has 2 operands, another has 3, and another has 5, this
 	 * will return 5.
-	 * 
+	 *
 	 * @return the max number of operands
 	 */
 	public int getMaxNumOperands() {
@@ -227,7 +227,7 @@ public class InstructionSearchData extends Observable {
 	/**
 	 * Returns the mask and value for all instructions, combined into one binary
 	 * string.
-	 * 
+	 *
 	 * @return the combined string
 	 */
 	public String getCombinedString() {
@@ -236,7 +236,7 @@ public class InstructionSearchData extends Observable {
 
 	/**
 	 * Returns the mask for all instructions as a binary string.
-	 * 
+	 *
 	 * @return the mask string
 	 */
 	public String getMaskString() {
@@ -245,7 +245,7 @@ public class InstructionSearchData extends Observable {
 
 	/**
 	 * Returns the value for all instructions as a binary string.
-	 * 
+	 *
 	 * @return the value string
 	 */
 	public String getValueString() {
@@ -254,7 +254,7 @@ public class InstructionSearchData extends Observable {
 
 	/**
 	 * Masks all operands in the instruction set that have the given type.
-	 * 
+	 *
 	 * @param operandType {@link OperandType}
 	 */
 	public void maskOperandsByType(int operandType) {
@@ -296,7 +296,7 @@ public class InstructionSearchData extends Observable {
 	/**
 	 * Must be called whenever the set of instructions has changed. When this
 	 * happens we have to notify subscribers.
-	 * 
+	 *
 	 * @param updateType reload or update change type
 	 */
 	private void modelChanged(UpdateType updateType) {
@@ -307,7 +307,7 @@ public class InstructionSearchData extends Observable {
 	/**
 	 * Gets the mask values for the given instruction, and stores them in the
 	 * {@link InstructionSearchData} object.
-	 * 
+	 *
 	 * @param table the table containing the instructions
 	 * @param row the specific instruction row
 	 */
@@ -318,7 +318,7 @@ public class InstructionSearchData extends Observable {
 
 		for (int i = 0; i < getMaxNumOperands(); i++) {
 
-			// Make sure we have a valid set of data for this operand.  If not, continue to 
+			// Make sure we have a valid set of data for this operand.  If not, continue to
 			// the next one.
 			if (table.getCellData(row, i + 1) == null) {
 				continue;
@@ -332,7 +332,7 @@ public class InstructionSearchData extends Observable {
 	/**
 	 * Gets the mask value set by the user for the given operand, and stores it
 	 * in the {@link InstructionSearchData} object.
-	 * 
+	 *
 	 * @param table the table containing the instructions
 	 * @param row the specific instruction row
 	 * @param col the specific operand column
@@ -356,7 +356,7 @@ public class InstructionSearchData extends Observable {
 	/**
 	 * Gets the mask value set by the user for the given mnemonic, and stores it
 	 * in the {@link InstructionSearchData} object.
-	 * 
+	 *
 	 * @param table the table containing the instructions
 	 * @param row the specific instruction row
 	 */
@@ -374,7 +374,7 @@ public class InstructionSearchData extends Observable {
 	/**
 	 * Builds a {@link MaskContainer} containing the mask and value byte arrays
 	 * for all instructions.
-	 * 
+	 *
 	 * @return the mask container object
 	 */
 	private MaskContainer getAllMasks() {
@@ -431,7 +431,7 @@ public class InstructionSearchData extends Observable {
 		// to be created.
 		int cuSize = codeUnit.getLength();
 
-		// Create mask/value arrays for the code unit.  The value array is initialized with the 
+		// Create mask/value arrays for the code unit.  The value array is initialized with the
 		// byte value of the code unit; the mask is filled with -1's.
 		byte[] mask = new byte[cuSize];
 		Arrays.fill(mask, (byte) -1);
@@ -451,7 +451,7 @@ public class InstructionSearchData extends Observable {
 	 * Creates an {@link InstructionMetadata} object based on the given inputs.
 	 * No special processing is done here, it's just creating a data container
 	 * for what is given.
-	 * 
+	 *
 	 * @param codeUnit the code unit containing the instruction
 	 * @param mask the byte mask
 	 * @param value the byte value
@@ -473,7 +473,7 @@ public class InstructionSearchData extends Observable {
 	/**
 	 * Iterates over all operands in the given instruction, creating
 	 * {@link OperandMetadata} for each.
-	 * 
+	 *
 	 * @param logger the sleigh debug logger
 	 * @param codeUnit the code unit containing the operands
 	 * @param instructionMetadata The structure to fill with results
@@ -500,7 +500,7 @@ public class InstructionSearchData extends Observable {
 	private OperandMetadata getOperandMetadata(SleighDebugLogger logger, CodeUnit codeUnit,
 			int operand) {
 
-		// First get the mask/value strings for this operand.  The logger easily gives us these; 
+		// First get the mask/value strings for this operand.  The logger easily gives us these;
 		// note that the getMaskedBytes method is simply applying the operand mask to the full
 		// instruction value string, to return a string that consists of the full value string
 		// with everything BUT The operand masked out.
@@ -528,7 +528,7 @@ public class InstructionSearchData extends Observable {
 	 * containing all the pertinent mask and value information. This mask
 	 * container contains the mask/value arrays for the entire instruction, both
 	 * mnemonic and operands.
-	 * 
+	 *
 	 * @param instruction the instruction to parse
 	 */
 	private MaskContainer buildSingleInstructionMask(InstructionMetadata instruction) {
@@ -546,7 +546,7 @@ public class InstructionSearchData extends Observable {
 			return null;
 		}
 
-		// Now Create the mask/value arrays. Populating these is the main point of this method; these 
+		// Now Create the mask/value arrays. Populating these is the main point of this method; these
 		// will be placed in the return object when we're done. Note that they're initialized to
 		// be the size of the mask/value arrays in the given instruction; these are guaranteed
 		// to be the correct size (if they're not, there's a serious problem).
@@ -557,7 +557,7 @@ public class InstructionSearchData extends Observable {
 		// MNEMONIC
 		//////////////////
 
-		// First look at the mnemonic.  If it's supposed to be masked, then we want to leave the 
+		// First look at the mnemonic.  If it's supposed to be masked, then we want to leave the
 		// mnemonic portion of the arrays set to 0 (they were set to 0 above, when initialized).  If
 		// not masked, then we need to put the actual mnemonic bytes in the temp/value arrays.
 		if (!instruction.isMasked()) {
@@ -599,7 +599,7 @@ public class InstructionSearchData extends Observable {
 			result = new MaskContainer(tempMask, tempValue);
 		}
 		catch (IllegalArgumentException e) {
-			// If we're here, then there's a problem with the mask/value arrays we used to 
+			// If we're here, then there's a problem with the mask/value arrays we used to
 			// create the mask container.  Just return null.
 			return null;
 		}
@@ -610,7 +610,7 @@ public class InstructionSearchData extends Observable {
 	/**
 	 * Creates a {@link MaskContainer} object representing the bytes to be
 	 * searched for, along with any masking information.
-	 * 
+	 *
 	 * @param masks List of all masks for all instructions
 	 * @param values List of all values for all instructions
 	 */
@@ -622,7 +622,7 @@ public class InstructionSearchData extends Observable {
 			throw new IllegalArgumentException();
 		}
 
-		// Now figure out the size of the final array we need to construct.  We 
+		// Now figure out the size of the final array we need to construct.  We
 		// could use ArrayList objects instead but that would be too inefficient.
 		int totalLength = 0;
 		for (int i = 0; i < values.size(); i++) {
@@ -630,7 +630,7 @@ public class InstructionSearchData extends Observable {
 		}
 
 		// This takes the masks and values from each command and concats them together to form
-		// a single mask and value byte array. 
+		// a single mask and value byte array.
 		byte[] value = new byte[totalLength];
 		byte[] mask = new byte[totalLength];
 
@@ -657,7 +657,7 @@ public class InstructionSearchData extends Observable {
 	/**
 	 * Searches through instructions in the given program for a specific byte
 	 * pattern. If found, returns the instruction. i
-	 * 
+	 *
 	 * @param program the program to search
 	 * @param searchBounds the addresses to search
 	 * @param taskMonitor the task monitor
@@ -672,7 +672,7 @@ public class InstructionSearchData extends Observable {
 			throw new IllegalArgumentException("Program provided to search is null");
 		}
 
-		// Do a quick check to make sure the search bounds are within the bounds of the 
+		// Do a quick check to make sure the search bounds are within the bounds of the
 		// program.
 		if (searchBounds.getMinAddress().compareTo(
 			plugin.getCurrentProgram().getMinAddress()) < 0 ||
@@ -698,7 +698,7 @@ public class InstructionSearchData extends Observable {
 
 	/**
 	 * Searches for a specific byte pattern in the positive direction.
-	 * 
+	 *
 	 * @param plugin the instruction pattern search plugin
 	 * @param searchBounds the addresses to search
 	 * @param taskMonitor the task monitor
@@ -715,9 +715,9 @@ public class InstructionSearchData extends Observable {
 		taskMonitor.setShowProgressValue(false);// no need to show the number of bytes
 		taskMonitor.setProgress(0);
 
-		// The maximum value for the monitor is the number of bytes to be checked - this will 
+		// The maximum value for the monitor is the number of bytes to be checked - this will
 		// NOT always be the size of the range passed-in. If the cursor is in the middle of
-		// the range already, then only the number of bytes in the range PAST the cursor will 
+		// the range already, then only the number of bytes in the range PAST the cursor will
 		// will be checked.
 		long max = searchBounds.getLength();
 		if (currentPosition.compareTo(searchBounds.getMinAddress()) > 0) {
@@ -756,7 +756,7 @@ public class InstructionSearchData extends Observable {
 
 	/**
 	 * Searches for a specific byte pattern in the reverse direction.
-	 * 
+	 *
 	 * @param plugin the instruction pattern search plugin
 	 * @param searchBounds the addresses to search
 	 * @param taskMonitor the task monitor
@@ -773,9 +773,9 @@ public class InstructionSearchData extends Observable {
 		taskMonitor.setShowProgressValue(false);
 		taskMonitor.setProgress(0);
 
-		// The maximum value for the monitor is the number of bytes to be checked - this will 
+		// The maximum value for the monitor is the number of bytes to be checked - this will
 		// NOT always be the size of the range passed-in. If the cursor is in the middle of
-		// the range already, then only the number of bytes in the range BEFORE the cursor will 
+		// the range already, then only the number of bytes in the range BEFORE the cursor will
 		// will be checked.
 		long max = searchBounds.getLength();
 		if (currentPosition.compareTo(searchBounds.getMaxAddress()) < 0) {
@@ -831,7 +831,7 @@ public class InstructionSearchData extends Observable {
 			throw new IllegalArgumentException("Program provided to search is null");
 		}
 
-		// Do a quick check to make sure the search bounds are within the bounds of the 
+		// Do a quick check to make sure the search bounds are within the bounds of the
 		// program.
 		if (searchBounds.getMinAddress().compareTo(program.getMinAddress()) < 0 ||
 			searchBounds.getMaxAddress().compareTo(program.getMaxAddress()) > 0) {

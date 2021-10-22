@@ -195,7 +195,7 @@ macro additionWithCarry(operand1, operand2, result) {
 
 @elif defined(HC05)
 
-# V is not implemented in HC05	
+# V is not implemented in HC05
 
 macro additionFlags(operand1, operand2, result) {
 	local AFmask = -1 >> 4;
@@ -243,7 +243,7 @@ macro subtractWithCarry(operand1, operand2, result) {
 
 @elif defined(HC05)
 macro subtractionFlags(operand1, operand2, result) {
-    # V is not implemented in HC05	
+    # V is not implemented in HC05
 
 	$(N) = (result s< 0);
 	$(Z) = (result == 0);
@@ -252,7 +252,7 @@ macro subtractionFlags(operand1, operand2, result) {
 
 macro subtractWithCarry(operand1, operand2, result) {
 	local Ccopy = zext($(C));
-	# V is not implemented in HC05	
+	# V is not implemented in HC05
 
 	$(C) = operand1 < operand2;
 	local tempResult = operand1 - operand2;
@@ -281,7 +281,7 @@ macro V_equals_C() {} # empty macro because V is not implemented in HC05
 
 @if defined(HCS08) || defined(HC08)
 macro V_equals_N_xor_C() {
-	$(V) = $(N) ^ $(C);	
+	$(V) = $(N) ^ $(C);
 }
 @elif defined(HC05)
 macro V_equals_N_xor_C() {} # empty macro because V is not implemented in HC05
@@ -398,7 +398,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
 :ADD OP1                 is (op=0xAB | op=0xBB | op=0xCB | op=0xDB | op=0xEB | op=0xFB) ... & OP1
-{ 
+{
 	op1:1 = OP1;
 
 	result:1 = A + op1;
@@ -409,7 +409,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :ADD oprx16_8_SP                 is (op16=0x9EDB); oprx16_8_SP
-{ 
+{
 	op1:1 = oprx16_8_SP;
 
 	result:1 = A + op1;
@@ -420,7 +420,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :ADD oprx8_8_SP                 is (op16=0x9EEB); oprx8_8_SP
-{ 
+{
 	op1:1 = oprx8_8_SP;
 
 	result:1 = A + op1;
@@ -432,7 +432,7 @@ macro Push2(operand) {
 @if  defined(HCS08) || defined(HC08)
 :AIS iopr8is                 is op=0xA7; iopr8is
 {
-	SP = SP + sext(iopr8is);	
+	SP = SP + sext(iopr8is);
 }
 @endif
 
@@ -445,9 +445,9 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
 :AND OP1                 is (op=0xA4 | op=0xB4 | op=0xC4 | op=0xD4 | op=0xE4 | op=0xF4) ... & OP1
-{ 
+{
 	A = A & OP1;
-	V_equals_0(); 
+	V_equals_0();
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
 }
@@ -455,9 +455,9 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :AND oprx16_8_SP                 is (op16=0x9ED4); oprx16_8_SP
-{ 
+{
 	A = A & oprx16_8_SP;
-	V_equals_0(); 
+	V_equals_0();
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
 }
@@ -465,38 +465,38 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :AND oprx8_8_SP                 is (op16=0x9EE4); oprx8_8_SP
-{ 
+{
 	A = A & oprx8_8_SP;
-	V_equals_0(); 
+	V_equals_0();
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:ASLA                    is op=0x48 
+:ASLA                    is op=0x48
 {
 	$(C) = A >> 7;
 	A = A << 1;
 	$(Z) = (A == 0);
-	$(N) = (A s< 0);	
-	V_equals_N_xor_C();	
+	$(N) = (A s< 0);
+	V_equals_N_xor_C();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:ASLX                    is op=0x58 
+:ASLX                    is op=0x58
 {
 	$(C) = X >> 7;
 	X = X << 1;
 	$(Z) = (X == 0);
-	$(N) = (X s< 0);	
-	V_equals_N_xor_C();	
+	$(N) = (X s< 0);
+	V_equals_N_xor_C();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:ASL OP1                 is (op=0x38 | op=0x68 | op=0x78) ... & OP1 
+:ASL OP1                 is (op=0x38 | op=0x68 | op=0x78) ... & OP1
 {
 	tmp:1 = OP1;
 	$(C) = tmp >> 7;
@@ -504,7 +504,7 @@ macro Push2(operand) {
 	OP1 = tmp;
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
-	V_equals_N_xor_C();	
+	V_equals_N_xor_C();
 }
 @endif
 
@@ -517,42 +517,42 @@ macro Push2(operand) {
 	oprx8_8_SP = tmp;
 	$(Z) = (tmp == 0);
 	$(N) = (tmp s< 0);
-	V_equals_N_xor_C();	
+	V_equals_N_xor_C();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:ASRA                    is op=0x47 
+:ASRA                    is op=0x47
 {
 	$(C) = A & 1;
 	A = A s>> 1;
 	$(Z) = (A == 0);
-	$(N) = (A s< 0);	
-	V_equals_N_xor_C();	
+	$(N) = (A s< 0);
+	V_equals_N_xor_C();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:ASRX                    is op=0x57 
+:ASRX                    is op=0x57
 {
 	$(C) = X & 1;
 	X = X s>> 1;
 	$(Z) = (X == 0);
-	$(N) = (X s< 0);	
-	V_equals_N_xor_C();	
+	$(N) = (X s< 0);
+	V_equals_N_xor_C();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:ASR OP1                 is (op=0x37 | op=0x67 | op=0x77) ... & OP1 
+:ASR OP1                 is (op=0x37 | op=0x67 | op=0x77) ... & OP1
 {
 	tmp:1 = OP1;
 	$(C) = tmp & 1;
 	tmp = tmp s>> 1;
 	OP1 = tmp;
 	$(Z) = (tmp == 0);
-	$(N) = (tmp s< 0);	
-	V_equals_N_xor_C();	
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();
 }
 @endif
 
@@ -564,8 +564,8 @@ macro Push2(operand) {
 	tmp = tmp s>> 1;
 	oprx8_8_SP = tmp;
 	$(Z) = (tmp == 0);
-	$(N) = (tmp s< 0);	
-	V_equals_N_xor_C();	
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();
 }
 @endif
 
@@ -785,17 +785,17 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:BSR REL                 is op=0xAD; REL 
+:BSR REL                 is op=0xAD; REL
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
-	
+
 	call REL;
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08)
-:CBEQ opr8a_8, REL           is (op=0x31); opr8a_8; REL 
+:CBEQ opr8a_8, REL           is (op=0x31); opr8a_8; REL
 {
 	if (A == opr8a_8) goto REL;
 }
@@ -816,27 +816,27 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08)
-:CBEQ oprx8, X"+,", REL      is (op=0x61) & X; oprx8; REL 
+:CBEQ oprx8, X"+,", REL      is (op=0x61) & X; oprx8; REL
 {
 	tmp:1 = *:1 (HIX + zext(oprx8));
 	HIX = HIX + 1;
-	
+
 	if (A == tmp) goto REL;
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08)
-:CBEQ ","X"+,", REL      is (op=0x71) & X; REL 
+:CBEQ ","X"+,", REL      is (op=0x71) & X; REL
 {
 	tmp:1 = *:1 (HIX);
 	HIX = HIX + 1;
-	
+
 	if (A == tmp) goto REL;
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08)
-:CBEQ oprx8_8_SP, REL      is (op16=0x9E61); oprx8_8_SP; REL 
+:CBEQ oprx8_8_SP, REL      is (op16=0x9E61); oprx8_8_SP; REL
 {
 	if (A == oprx8_8_SP) goto REL;
 }
@@ -857,7 +857,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:CLRA                    is op=0x4F 
+:CLRA                    is op=0x4F
 {
 	A = 0;
 	$(Z) = 1;
@@ -867,7 +867,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:CLRX                    is op=0x5F 
+:CLRX                    is op=0x5F
 {
 	X = 0;
 	$(Z) = 1;
@@ -877,7 +877,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08)
-:CLRH                    is op=0x8C 
+:CLRH                    is op=0x8C
 {
 	HI = 0;
 	$(Z) = 1;
@@ -887,7 +887,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:CLR OP1                 is (op=0x3F | op=0x6F | op=0x7F) ... & OP1 
+:CLR OP1                 is (op=0x3F | op=0x6F | op=0x7F) ... & OP1
 {
 	OP1 = 0;
 	$(Z) = 1;
@@ -908,7 +908,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
 :CMP OP1                 is (op=0xA1 | op=0xB1 | op=0xC1 | op=0xD1 | op=0xE1 | op=0xF1) ... & OP1
-{ 
+{
 	op1:1 = OP1;
 	tmp:1 = A - op1;
 	$(Z) = (tmp == 0);
@@ -920,7 +920,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :CMP oprx16_8_SP                 is (op16=0x9ED1); oprx16_8_SP
-{ 
+{
 	op1:1 = oprx16_8_SP;
 	tmp:1 = A - op1;
 	$(Z) = (tmp == 0);
@@ -932,7 +932,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :CMP oprx8_8_SP                 is (op16=0x9EE1); oprx8_8_SP
-{ 
+{
 	op1:1 = oprx8_8_SP;
 	tmp:1 = A - op1;
 	$(Z) = (tmp == 0);
@@ -943,7 +943,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:COMA                    is op=0x43 
+:COMA                    is op=0x43
 {
 	A = ~A;
 	$(Z) = (A == 0);
@@ -954,7 +954,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:COMX                    is op=0x53 
+:COMX                    is op=0x53
 {
 	X = ~X;
 	$(Z) = (X == 0);
@@ -965,7 +965,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:COM OP1                 is (op=0x33 | op=0x63 | op=0x73) ... & OP1 
+:COM OP1                 is (op=0x33 | op=0x63 | op=0x73) ... & OP1
 {
 	tmp:1 = ~OP1;
 	OP1 = tmp;
@@ -990,7 +990,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08)
 :CPHX opr16a_16       is (op=0x3E); opr16a_16
-{ 
+{
 	op1:2 = opr16a_16;
 	tmp:2 = HIX - op1;
 	$(Z) = (tmp == 0);
@@ -1002,7 +1002,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :CPHX iopr16i       is (op=0x65); iopr16i
-{ 
+{
 	op1:2 = iopr16i;
 	tmp:2 = HIX - op1;
 	$(Z) = (tmp == 0);
@@ -1014,7 +1014,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :CPHX opr8a_16       is (op=0x75); opr8a_16
-{ 
+{
 	op1:2 = *:2 opr8a_16;
 	tmp:2 = HIX - op1;
 	$(Z) = (tmp == 0);
@@ -1026,7 +1026,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08)
 :CPHX oprx8_16_SP       is (op16=0x9EF3); oprx8_16_SP
-{ 
+{
 	op1:2 = oprx8_16_SP;
 	tmp:2 = HIX - op1;
 	$(Z) = (tmp == 0);
@@ -1038,7 +1038,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
 :CPX OP1                 is (op=0xA3 | op=0xB3 | op=0xC3 | op=0xD3 | op=0xE3 | op=0xF3) ... & OP1
-{ 
+{
 	op1:1 = OP1;
 	tmp:1 = X - op1;
 	$(Z) = (tmp == 0);
@@ -1050,7 +1050,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :CPX oprx16_8_SP                 is (op16=0x9ED3); oprx16_8_SP
-{ 
+{
 	op1:1 = oprx16_8_SP;
 	tmp:1 = X - op1;
 	$(Z) = (tmp == 0);
@@ -1062,7 +1062,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :CPX oprx8_8_SP                 is (op16=0x9EE3); oprx8_8_SP
-{ 
+{
 	op1:1 = oprx8_8_SP;
 	tmp:1 = X - op1;
 	$(Z) = (tmp == 0);
@@ -1073,7 +1073,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08)
-:DAA                     is op=0x72 
+:DAA                     is op=0x72
 {
 	A = decimalAdjustAccumulator(A, $(C), $(H));
 	$(C) = decimalAdjustCarry(A, $(C), $(H));
@@ -1100,7 +1100,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08)
-:DBNZ OP1, REL           is (op=0x3B | op=0x6B | op=0x7B) ... & OP1; REL 
+:DBNZ OP1, REL           is (op=0x3B | op=0x6B | op=0x7B) ... & OP1; REL
 {
 	OP1 = OP1 - 1;
 	if (OP1 != 0) goto REL;
@@ -1117,7 +1117,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:DECA                    is op=0x4A 
+:DECA                    is op=0x4A
 {
 	tmp:1 = A;
 	A = tmp - 1;
@@ -1128,7 +1128,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:DECX                    is op=0x5A 
+:DECX                    is op=0x5A
 {
 	tmp:1 = X;
 	X = tmp - 1;
@@ -1139,7 +1139,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:DEC OP1                 is (op=0x3A | op=0x6A | op=0x7A) ... & OP1 
+:DEC OP1                 is (op=0x3A | op=0x6A | op=0x7A) ... & OP1
 {
 	tmp:1 = OP1;
 	result:1 = tmp - 1;
@@ -1163,7 +1163,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08)
-:DIV                     is op=0x52 
+:DIV                     is op=0x52
 {
 	tmp:2 = (zext(HI) << 8) | (zext(A));
 	resultQ:2 = tmp / zext(X);
@@ -1177,7 +1177,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
 :EOR OP1                 is (op=0xA8 | op=0xB8 | op=0xC8 | op=0xD8 | op=0xE8 | op=0xF8) ... & OP1
-{ 
+{
 	op1:1 = OP1;
 	A = A ^ op1;
 	$(Z) = (A == 0);
@@ -1188,7 +1188,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :EOR oprx16_8_SP                 is (op16=0x9ED8); oprx16_8_SP
-{ 
+{
 	op1:1 = oprx16_8_SP;
 	A = A ^ op1;
 	$(Z) = (A == 0);
@@ -1199,7 +1199,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :EOR oprx8_8_SP                 is (op16=0x9EE8); oprx8_8_SP
-{ 
+{
 	op1:1 = oprx8_8_SP;
 	A = A ^ op1;
 	$(Z) = (A == 0);
@@ -1209,7 +1209,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:INCA                    is op=0x4C 
+:INCA                    is op=0x4C
 {
 	tmp:1 = A;
 	A = tmp + 1;
@@ -1220,7 +1220,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:INCX                    is op=0x5C 
+:INCX                    is op=0x5C
 {
 	tmp:1 = X;
 	X = tmp + 1;
@@ -1231,7 +1231,7 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:INC OP1                 is (op=0x3C | op=0x6C | op=0x7C) ... & OP1 
+:INC OP1                 is (op=0x3C | op=0x6C | op=0x7C) ... & OP1
 {
 	tmp:1 = OP1;
 	result:1 = tmp + 1;
@@ -1273,7 +1273,7 @@ macro Push2(operand) {
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
-	 
+
 	call ADDR;
 }
 @endif
@@ -1283,14 +1283,14 @@ macro Push2(operand) {
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
-	 
+
 	call [ADDRI];
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
 :LDA OP1                 is (op=0xA6 | op=0xB6 | op=0xC6 | op=0xD6 | op=0xE6 | op=0xF6) ... & OP1
-{ 
+{
 	A = OP1;
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
@@ -1300,7 +1300,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :LDA oprx16_8_SP                 is (op16=0x9ED6); oprx16_8_SP
-{ 
+{
 	A = oprx16_8_SP;
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
@@ -1310,7 +1310,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :LDA oprx8_8_SP                 is (op16=0x9EE6); oprx8_8_SP
-{ 
+{
 	A = oprx8_8_SP;
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
@@ -1321,7 +1321,7 @@ macro Push2(operand) {
 @if  defined(HCS08) || defined(HC08)
 :LDHX iopr16i           is (op=0x45); iopr16i
 {
-	HIX = iopr16i; 
+	HIX = iopr16i;
 	$(Z) = (HIX == 0);
 	$(N) = (HI s< 0);
 	V_equals_0();
@@ -1331,7 +1331,7 @@ macro Push2(operand) {
 @if  defined(HCS08) || defined(HC08)
 :LDHX opr8a_16               is (op=0x55); opr8a_16
 {
-	HIX = opr8a_16; 
+	HIX = opr8a_16;
 	$(Z) = (HIX == 0);
 	$(N) = (HI s< 0);
 	V_equals_0();
@@ -1341,7 +1341,7 @@ macro Push2(operand) {
 @if  defined(HCS08)
 :LDHX opr16a_16              is (op=0x32); opr16a_16
 {
-	HIX = opr16a_16; 
+	HIX = opr16a_16;
 	$(Z) = (HIX == 0);
 	$(N) = (HI s< 0);
 	V_equals_0();
@@ -1351,7 +1351,7 @@ macro Push2(operand) {
 @if  defined(HCS08)
 :LDHX ","X              is (op16=0x9EAE) & X
 {
-	HIX = *:2 (HIX); 
+	HIX = *:2 (HIX);
 	$(Z) = (HIX == 0);
 	$(N) = (HI s< 0);
 	V_equals_0();
@@ -1361,7 +1361,7 @@ macro Push2(operand) {
 @if  defined(HCS08)
 :LDHX oprx16_16_X              is (op16=0x9EBE); oprx16_16_X
 {
-	HIX = oprx16_16_X; 
+	HIX = oprx16_16_X;
 	$(Z) = (HIX == 0);
 	$(N) = (HI s< 0);
 	V_equals_0();
@@ -1371,7 +1371,7 @@ macro Push2(operand) {
 @if  defined(HCS08)
 :LDHX oprx8_16_X              is (op16=0x9ECE); oprx8_16_X
 {
-	HIX = oprx8_16_X; 
+	HIX = oprx8_16_X;
 	$(Z) = (HIX == 0);
 	$(N) = (HI s< 0);
 	V_equals_0();
@@ -1381,7 +1381,7 @@ macro Push2(operand) {
 @if  defined(HCS08)
 :LDHX oprx8_16_SP              is (op16=0x9EFE); oprx8_16_SP
 {
-	HIX = oprx8_16_SP; 
+	HIX = oprx8_16_SP;
 	$(Z) = (HIX == 0);
 	$(N) = (HI s< 0);
 	V_equals_0();
@@ -1390,7 +1390,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
 :LDX OP1                 is (op=0xAE | op=0xBE | op=0xCE | op=0xDE | op=0xEE | op=0xFE) ... & OP1
-{ 
+{
 	X = OP1;
 	$(Z) = (X == 0);
 	$(N) = (X s< 0);
@@ -1400,7 +1400,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :LDX oprx16_8_SP                 is (op16=0x9EDE); oprx16_8_SP
-{ 
+{
 	X = oprx16_8_SP;
 	$(Z) = (X == 0);
 	$(N) = (X s< 0);
@@ -1410,7 +1410,7 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :LDX oprx8_8_SP                 is (op16=0x9EEE); oprx8_8_SP
-{ 
+{
 	X = oprx8_8_SP;
 	$(Z) = (X == 0);
 	$(N) = (X s< 0);
@@ -1419,34 +1419,34 @@ macro Push2(operand) {
 @endif
 
 ## Logical Shift left is same as arithmetic shift left
-#:LSLA		is op=0x48 
-#:LSLX		is op=0x58 
-#:LSL OP1	is (op=0x38 | op=0x68 | op=0x78) ... & OP1 
+#:LSLA		is op=0x48
+#:LSLX		is op=0x58
+#:LSL OP1	is (op=0x38 | op=0x68 | op=0x78) ... & OP1
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:LSRA                    is op=0x44 
+:LSRA                    is op=0x44
 {
 	$(C) = (A & 1);
 	A = (A >> 1);
 	$(Z) = (A == 0);
 	$(N) = 0;
-	V_equals_C();	
+	V_equals_C();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:LSRX                    is op=0x54 
+:LSRX                    is op=0x54
 {
 	$(C) = (X & 1);
 	X = (X >> 1);
 	$(Z) = (X == 0);
-	$(N) = 0;	
-	V_equals_C();	
+	$(N) = 0;
+	V_equals_C();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:LSR OP1                 is (op=0x34 | op=0x64 | op=0x74) ... & OP1 
+:LSR OP1                 is (op=0x34 | op=0x64 | op=0x74) ... & OP1
 {
 	tmp:1 = OP1;
 	$(C) = tmp & 1;
@@ -1454,7 +1454,7 @@ macro Push2(operand) {
 	OP1 = tmp;
 	$(Z) = (tmp == 0);
 	$(N) = 0;
-	V_equals_C();	
+	V_equals_C();
 }
 @endif
 
@@ -1467,7 +1467,7 @@ macro Push2(operand) {
 	oprx8_8_SP = tmp;
 	$(Z) = (tmp == 0);
 	$(N) = 0;
-	V_equals_C();	
+	V_equals_C();
 }
 @endif
 
@@ -1531,31 +1531,31 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:NEGA                    is op=0x40 
+:NEGA                    is op=0x40
 {
 	tmp:1 = A;
 	A = -tmp;
 	$(C) = (A != 0);
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
-	V_NEG_flag(tmp, A); 
+	V_NEG_flag(tmp, A);
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:NEGX                    is op=0x50 
+:NEGX                    is op=0x50
 {
 	tmp:1 = X;
 	X = -tmp;
 	$(C) = (X != 0);
 	$(Z) = (X == 0);
 	$(N) = (X s< 0);
-	V_NEG_flag(tmp, X); 
+	V_NEG_flag(tmp, X);
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:NEG OP1                 is (op=0x30 | op=0x60 | op=0x70) ... & OP1 
+:NEG OP1                 is (op=0x30 | op=0x60 | op=0x70) ... & OP1
 {
 	tmp:1 = OP1;
 	result:1 = -tmp;
@@ -1563,7 +1563,7 @@ macro Push2(operand) {
 	$(C) = (result != 0);
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_NEG_flag(tmp, result); 
+	V_NEG_flag(tmp, result);
 }
 @endif
 
@@ -1576,7 +1576,7 @@ macro Push2(operand) {
 	$(C) = (result != 0);
 	$(Z) = (result == 0);
 	$(N) = (result s< 0);
-	V_NEG_flag(tmp, result); 
+	V_NEG_flag(tmp, result);
 }
 @endif
 
@@ -1595,8 +1595,8 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
 :ORA OP1                 is (op=0xAA | op=0xBA | op=0xCA | op=0xDA | op=0xEA | op=0xFA) ... & OP1
-{ 
-	A = A | OP1; 
+{
+	A = A | OP1;
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
 	V_equals_0();
@@ -1605,8 +1605,8 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :ORA oprx16_8_SP                 is (op16=0x9EDA); oprx16_8_SP
-{ 
-	A = A | oprx16_8_SP; 
+{
+	A = A | oprx16_8_SP;
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
 	V_equals_0();
@@ -1615,8 +1615,8 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :ORA oprx8_8_SP                 is (op16=0x9EEA); oprx8_8_SP
-{ 
-	A = A | oprx8_8_SP; 
+{
+	A = A | oprx8_8_SP;
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
 	V_equals_0();
@@ -1666,31 +1666,31 @@ macro Push2(operand) {
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:ROLA                    is op=0x49 
+:ROLA                    is op=0x49
 {
 	tmpC:1 = $(C) ;
 	$(C) = A >> 7;
 	A = (A << 1) | tmpC;
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
-	V_equals_N_xor_C();	
+	V_equals_N_xor_C();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:ROLX                    is op=0x59 
+:ROLX                    is op=0x59
 {
 	tmpC:1 = $(C);
 	$(C) = X >> 7;
 	X = (X << 1) | tmpC;
 	$(Z) = (X == 0);
-	$(N) = (X s< 0);	
-	V_equals_N_xor_C();	
+	$(N) = (X s< 0);
+	V_equals_N_xor_C();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:ROL OP1                 is (op=0x39 | op=0x69 | op=0x79) ... & OP1 
+:ROL OP1                 is (op=0x39 | op=0x69 | op=0x79) ... & OP1
 {
 	tmpC:1 = $(C);
 	op1:1 = OP1;
@@ -1698,8 +1698,8 @@ macro Push2(operand) {
 	result:1 = (op1 << 1) | tmpC;
 	OP1 = result;
 	$(Z) = (result == 0);
-	$(N) = (result s< 0);	
-	V_equals_N_xor_C();	
+	$(N) = (result s< 0);
+	V_equals_N_xor_C();
 }
 @endif
 
@@ -1712,37 +1712,37 @@ macro Push2(operand) {
 	result:1 = (op1 << 1) | tmpC;
 	oprx8_8_SP = result;
 	$(Z) = (result == 0);
-	$(N) = (result s< 0);	
-	V_equals_N_xor_C();	
+	$(N) = (result s< 0);
+	V_equals_N_xor_C();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:RORA                    is op=0x46 
+:RORA                    is op=0x46
 {
 	tmpC:1 = $(C) << 7;
 	$(C) = A & 1;
 	A = (A >> 1) | tmpC;
 	$(Z) = (A == 0);
-	$(N) = (A s< 0);	
-	V_equals_N_xor_C();	
+	$(N) = (A s< 0);
+	V_equals_N_xor_C();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:RORX                    is op=0x56 
+:RORX                    is op=0x56
 {
 	tmpC:1 = $(C) << 7;
 	$(C) = X & 1;
 	X = (X >> 1) | tmpC;
 	$(Z) = (X == 0);
-	$(N) = (X s< 0);	
-	V_equals_N_xor_C();	
+	$(N) = (X s< 0);
+	V_equals_N_xor_C();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:ROR OP1                 is (op=0x36 | op=0x66 | op=0x76) ... & OP1 
+:ROR OP1                 is (op=0x36 | op=0x66 | op=0x76) ... & OP1
 {
 	tmpC:1 = $(C) << 7;
 	tmp:1 = OP1;
@@ -1750,8 +1750,8 @@ macro Push2(operand) {
 	tmp = (tmp >> 1) | tmpC;
 	OP1 = tmp;
 	$(Z) = (tmp == 0);
-	$(N) = (tmp s< 0);	
-	V_equals_N_xor_C();	
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();
 }
 @endif
 
@@ -1764,8 +1764,8 @@ macro Push2(operand) {
 	tmp = (tmp >> 1) | tmpC;
 	oprx8_8_SP = tmp;
 	$(Z) = (tmp == 0);
-	$(N) = (tmp s< 0);	
-	V_equals_N_xor_C();	
+	$(N) = (tmp s< 0);
+	V_equals_N_xor_C();
 }
 @endif
 
@@ -1780,14 +1780,14 @@ macro Push2(operand) {
 :RTI                     is op = 0x80
 {
 	Pull1( CCR );
-	
+
 	Pull1( A );
-	
+
 	Pull1( X );
-	
+
 	tmp:2 = 0;
 	Pull2( tmp );
-	
+
 	return [tmp];
 }
 @endif
@@ -1797,47 +1797,47 @@ macro Push2(operand) {
 {
 	tmp:2 = 0;
 	Pull2( tmp );
-	
+
 	return [tmp];
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
 :SBC OP1                 is (op=0xA2 | op=0xB2 | op=0xC2 | op=0xD2 | op=0xE2 | op=0xF2) ... & OP1
-{ 
+{
 	op1:1 = OP1;
-	
+
 	subtractWithCarry(A, op1, A);
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08)
 :SBC oprx16_8_SP                 is (op16=0x9ED2); oprx16_8_SP
-{ 
+{
 	op1:1 = oprx16_8_SP;
-	
+
 	subtractWithCarry(A, op1, A);
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08)
 :SBC oprx8_8_SP                 is (op16=0x9EE2); oprx8_8_SP
-{ 
+{
 	op1:1 = oprx8_8_SP;
-	
+
 	subtractWithCarry(A, op1, A);
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:SEC                     is op = 0x99 
+:SEC                     is op = 0x99
 {
 	$(C) = 1;
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:SEI                     is op = 0x9B 
+:SEI                     is op = 0x9B
 {
 	$(I) = 1;
 }
@@ -1876,7 +1876,7 @@ macro Push2(operand) {
 @if  defined(HCS08) || defined(HC08)
 :STHX opr8a_16               is (op=0x35); opr8a_16
 {
-	opr8a_16 = HIX; 
+	opr8a_16 = HIX;
 	$(Z) = (HIX == 0);
 	$(N) = (HI s< 0);
 	V_equals_0();
@@ -1886,7 +1886,7 @@ macro Push2(operand) {
 @if  defined(HCS08)
 :STHX opr16a_16              is (op=0x96); opr16a_16
 {
-	opr16a_16 = HIX; 
+	opr16a_16 = HIX;
 	$(Z) = (HIX == 0);
 	$(N) = (HI s< 0);
 	V_equals_0();
@@ -1896,7 +1896,7 @@ macro Push2(operand) {
 @if  defined(HCS08)
 :STHX oprx8_16_SP           is (op16=0x9EFF); oprx8_16_SP
 {
-	oprx8_16_SP = HIX; 
+	oprx8_16_SP = HIX;
 	$(Z) = (HIX == 0);
 	$(N) = (HI s< 0);
 	V_equals_0();
@@ -1943,9 +1943,9 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
 :SUB OP1                 is (op=0xA0 | op=0xB0 | op=0xC0 | op=0xD0 | op=0xE0 | op=0xF0) ... & OP1
-{ 
+{
 	op1:1 = OP1;
-	
+
 	result:1 = A - op1;
 	subtractionFlags(A, op1,result);
 	A = result;
@@ -1954,9 +1954,9 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :SUB oprx16_8_SP                 is (op16=0x9ED0); oprx16_8_SP
-{ 
+{
 	op1:1 = oprx16_8_SP;
-	
+
 	result:1 = A - op1;
 	subtractionFlags(A, op1,result);
 	A = result;
@@ -1965,9 +1965,9 @@ macro Push2(operand) {
 
 @if  defined(HCS08) || defined(HC08)
 :SUB oprx8_8_SP                 is (op16=0x9EE0); oprx8_8_SP
-{ 
+{
 	op1:1 = oprx8_8_SP;
-	
+
 	result:1 = A - op1;
 	subtractionFlags(A, op1,result);
 	A = result;
@@ -1979,66 +1979,66 @@ macro Push2(operand) {
 {
 	tmp:2 = inst_next;
 	Push2( tmp );
-	
+
 	Push1( X );
-	
+
 	Push1( A );
-	
+
 	Push1( CCR );
-	
+
 	$(I) = 1;
-	
+
 	addr:2 = $(VECTOR_SWI);
 	call [addr];
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08)
-:TAP                     is op=0x84 
+:TAP                     is op=0x84
 {
 	CCR = A;
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:TAX                     is op=0x97 
+:TAX                     is op=0x97
 {
 	X = A;
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08)
-:TPA                     is op=0x85 
+:TPA                     is op=0x85
 {
 	A = CCR;
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:TSTA                    is op=0x4D 
+:TSTA                    is op=0x4D
 {
 	$(Z) = (A == 0);
 	$(N) = (A s< 0);
-	V_equals_0();	
+	V_equals_0();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:TSTX                    is op=0x5D 
+:TSTX                    is op=0x5D
 {
 	$(Z) = (X == 0);
-	$(N) = (X s< 0);	
-	V_equals_0();	
+	$(N) = (X s< 0);
+	V_equals_0();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:TST OP1                 is (op=0x3D | op=0x6D | op=0x7D) ... & OP1 
+:TST OP1                 is (op=0x3D | op=0x6D | op=0x7D) ... & OP1
 {
 	op1:1 = OP1;
 	$(Z) = (op1 == 0);
-	$(N) = (op1 s< 0);	
-	V_equals_0();	
+	$(N) = (op1 s< 0);
+	V_equals_0();
 }
 @endif
 
@@ -2047,37 +2047,37 @@ macro Push2(operand) {
 {
 	op1:1 = oprx8_8_SP;
 	$(Z) = (op1 == 0);
-	$(N) = (op1 s< 0);	
-	V_equals_0();	
+	$(N) = (op1 s< 0);
+	V_equals_0();
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08)
-:TSX                     is op=0x95 
+:TSX                     is op=0x95
 {
 	HIX = SP + 1;
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:TXA                     is op=0x9F 
+:TXA                     is op=0x9F
 {
 	A = X;
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08)
-:TXS                     is op=0x94 
+:TXS                     is op=0x94
 {
 	SP = HIX - 1;
 }
 @endif
 
 @if  defined(HCS08) || defined(HC08) || defined(HC05)
-:WAIT                    is op=0x8f 
+:WAIT                    is op=0x8f
 {
 	$(I) = 0;
 	wait();
 }
 @endif
- 
+

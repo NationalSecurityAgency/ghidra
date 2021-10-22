@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Multi pattern/mask/action memory searcher
  * Patterns must be supplied/added, or a pre-initialized searchState supplied
- * 
+ *
  * Preload search patterns and actions, then call search method.
  */
 
@@ -70,7 +70,7 @@ public class MemoryBytePatternSearcher {
 	/**
 	 * Create with no patternList, must add patterns before searching
 	 * @param searchName name of search
-	 * 
+	 *
 	 */
 	public MemoryBytePatternSearcher(String searchName) {
 		this.searchName = searchName;
@@ -78,7 +78,7 @@ public class MemoryBytePatternSearcher {
 	}
 
 	/**
-	 * Add a search pattern 
+	 * Add a search pattern
 	 * @param pattern - pattern(bytes/mask/action)
 	 */
 	public void addPattern(Pattern pattern) {
@@ -92,11 +92,11 @@ public class MemoryBytePatternSearcher {
 	/**
 	 * Search initialized memory blocks for all patterns(bytes/mask/action).
 	 * Call associated action for each pattern matched.
-	 * 
+	 *
 	 * @param program to be searched
 	 * @param searchSet set of bytes to restrict search, if null or empty then search all memory blocks
 	 * @param monitor allow canceling and reporting of progress
-	 * 
+	 *
 	 * @throws CancelledException if canceled
 	 */
 	public void search(Program program, AddressSetView searchSet, TaskMonitor monitor)
@@ -157,10 +157,10 @@ public class MemoryBytePatternSearcher {
 	/**
 	 * Search through bytes of a memory block using the finite state machine -root-
 	 * Apply any additional rules for matching patterns.
-	 * 
+	 *
 	 * @param program is the Program being searched
 	 * @param block is the specific block of bytes being searched
-	 * 
+	 *
 	 * @throws IOException exception during read of memory
 	 * @throws CancelledException canceled search
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -332,7 +332,7 @@ public class FSUtilities {
 
 	/**
 	 * Copy the contents of a {@link ByteProvider} to a file.
-	 * 
+	 *
 	 * @param provider {@link ByteProvider} source of bytes
 	 * @param destFile {@link File} destination file
 	 * @param monitor {@link TaskMonitor} to update
@@ -350,8 +350,8 @@ public class FSUtilities {
 
 	/**
 	 * Copy a stream while updating a TaskMonitor.
-	 * 
-	 * @param is {@link InputStream} source of bytes 
+	 *
+	 * @param is {@link InputStream} source of bytes
 	 * @param os {@link OutputStream} destination of bytes
 	 * @param monitor {@link TaskMonitor} to update
 	 * @return number of bytes copied
@@ -377,7 +377,7 @@ public class FSUtilities {
 	 * Returns the text lines in the specified ByteProvider.
 	 * <p>
 	 * See {@link FileUtilities#getLines(InputStream)}
-	 * 
+	 *
 	 * @param byteProvider {@link ByteProvider} to read
 	 * @return list of text lines
 	 * @throws IOException if error
@@ -408,8 +408,8 @@ public class FSUtilities {
 
 	/**
 	 * Calculate the MD5 of a file.
-	 * 
-	 * @param provider {@link ByteProvider} 
+	 *
+	 * @param provider {@link ByteProvider}
 	 * @param monitor {@link TaskMonitor} to watch for cancel
 	 * @return md5 as a hex encoded string, never null.
 	 * @throws IOException if error
@@ -426,7 +426,7 @@ public class FSUtilities {
 
 	/**
 	 * Calculate the hash of an {@link InputStream}.
-	 * 
+	 *
 	 * @param is {@link InputStream}
 	 * @param monitor {@link TaskMonitor} to update
 	 * @return md5 as a hex encoded string, never null
@@ -519,7 +519,7 @@ public class FSUtilities {
 
 		for (int i = path.length() - 1; i >= 0; i--) {
 			char c = path.charAt(i);
-			if (SEPARATOR_CHARS.indexOf(c) != -1) { // moved past the filename				
+			if (SEPARATOR_CHARS.indexOf(c) != -1) { // moved past the filename
 				return null;
 			}
 			if (c == DOT) {
@@ -544,7 +544,7 @@ public class FSUtilities {
 
 	/**
 	 * Common / unified date formatting for all file system information strings.
-	 * 
+	 *
 	 * @param d {@link Date} to format, or null
 	 * @return formatted date string, or "NA" if date was null
 	 */
@@ -559,7 +559,7 @@ public class FSUtilities {
 
 	/**
 	 * Common / unified size formatting for all file system information strings.
-	 * 
+	 *
 	 * @param length {@link Long} length, null ok
 	 * @return pretty'ish length format string, or "NA" if length was null
 	 */
@@ -572,7 +572,7 @@ public class FSUtilities {
 	/**
 	 * Helper method to invoke close() on a Closeable without having to catch
 	 * an IOException.
-	 * 
+	 *
 	 * @param c {@link Closeable} to close
 	 * @param msg optional msg to log if exception is thrown, null is okay
 	 */

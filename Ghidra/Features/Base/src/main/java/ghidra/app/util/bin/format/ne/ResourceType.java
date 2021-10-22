@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,8 @@ import ghidra.util.Conv;
 
 /**
  * An implementation of the TTYPEINFO structure.
- * 
- * 
+ *
+ *
  */
 public class ResourceType {
 	//0x00 is not defined...?
@@ -59,7 +59,7 @@ public class ResourceType {
 	/**Constant indicating version resource type.*/
 	public final static byte RT_VERSION = 0x10;
 
-	private short typeID;    //if >= 0x8000, then 
+	private short typeID;    //if >= 0x8000, then
 	private short count;     //number of resources of this type
 	private int reserved;  //reserved...for what?
 	private Resource[] resources;

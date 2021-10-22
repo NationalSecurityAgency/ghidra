@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -170,7 +170,7 @@ public class ShortListIndexerTest extends AbstractGenericTest {
         expect(indexer,7,new short[]{42,43,44,45,46,47}, "Add to all lists");
         expect(indexer,8,new short[]{48,49,50,51,52,53}, "Add to all lists");
     }
-    
+
     public static void expect(ShortListIndexer indexer, int listID, short[] values, String test) {
 
         if (indexer.getListSize((short)listID) != values.length) {

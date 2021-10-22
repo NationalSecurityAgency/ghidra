@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -240,7 +240,7 @@ public class DataTypeArchiveGTree extends GTree {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class DataTypeTransformer extends DefaultGTreeDataTransformer {
 
@@ -268,7 +268,7 @@ public class DataTypeArchiveGTree extends GTree {
 
 		private void addFunctionDefinitionStrings(FunctionDefinition function,
 				List<String> results) {
-			// the prototype string will include name, return type and parameter 
+			// the prototype string will include name, return type and parameter
 			// data types and names...so use that, unless it turns out to be bad
 			results.add(function.getPrototypeString());
 
@@ -329,8 +329,8 @@ public class DataTypeArchiveGTree extends GTree {
 			JLabel label = (JLabel) super.getTreeCellRendererComponent(tree, value, isSelected,
 				expanded, leaf, row, focus);
 
-			// Background icon uses the label's color so set it to match the 
-			// tree's background. Otherwise the icon's in the tree might have a 
+			// Background icon uses the label's color so set it to match the
+			// tree's background. Otherwise the icon's in the tree might have a
 			// different background and look odd.
 			MultiIcon multiIcon = new MultiIcon(new BackgroundIcon(ICON_WIDTH, ICON_HEIGHT, false));
 

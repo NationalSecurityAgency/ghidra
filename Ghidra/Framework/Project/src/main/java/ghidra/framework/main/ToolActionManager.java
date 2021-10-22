@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,14 +44,14 @@ class ToolActionManager implements ToolChestChangeListener {
 	private final static int TYPICAL_NUM_TOOLS_IN_TOOLCHEST = 5;
 	private final static int NEWTOOL_ACCELERATOR = KeyEvent.VK_T;
 
-	private static final String MENU_ITEM_CREATE_TOOL = "&Create Tool..."; // Group: ATools	
-	private static final String MENU_ITEM_RUN_TOOL = "&Run Tool"; // Group: BTools	
-	private static final String MENU_ITEM_DELETE_TOOL = "Delete Tool"; // Group: CTools	
+	private static final String MENU_ITEM_CREATE_TOOL = "&Create Tool..."; // Group: ATools
+	private static final String MENU_ITEM_RUN_TOOL = "&Run Tool"; // Group: BTools
+	private static final String MENU_ITEM_DELETE_TOOL = "Delete Tool"; // Group: CTools
 	private static final String MENU_ITEM_IMPORT_TOOL = "&Import Tool..."; // Group: DTools
 	private static final String MENU_ITEM_IMPORT_DEFAULT_TOOLS = "Import &Default Tools...";
 	private static final String MENU_ITEM_EXPORT_TOOL = "&Export Tool";
-	private static final String MENU_ITEM_CONNECT_TOOLS = "Connect &Tools..."; // Group: ETools     
-	private static final String MENU_ITEM_SET_DEFAULT_TOOL = "&Set As Default"; // Group: FTools 
+	private static final String MENU_ITEM_CONNECT_TOOLS = "Connect &Tools..."; // Group: ETools
+	private static final String MENU_ITEM_SET_DEFAULT_TOOL = "&Set As Default"; // Group: FTools
 
 	private FrontEndPlugin plugin;
 	private FrontEndTool tool;
@@ -270,7 +270,7 @@ class ToolActionManager implements ToolChestChangeListener {
 
 	/**
 	 * Remove the action named toolName.
-	 * 
+	 *
 	 * @param map map to search for the action
 	 * @param toolName name of the action (happens to be the name of the tool)
 	 */

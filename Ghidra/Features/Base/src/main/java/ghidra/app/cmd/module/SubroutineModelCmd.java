@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,13 +29,13 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * 
+ *
  * Command that organizes a Module or Fragment according to a specified block
  * model. This organization produces a "flat" (single layer) partitioning.
- * 
+ *
  * @see ghidra.program.model.block.CodeBlockModel
- * 
- * 
+ *
+ *
  *
  */
 public class SubroutineModelCmd extends BackgroundCommand {
@@ -52,7 +52,7 @@ public class SubroutineModelCmd extends BackgroundCommand {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param groupPath group path of the affected Module or Fragment
 	 * @param treeName name of the tree where group exists
 	 * @param blockModelService service that has the known block models
@@ -68,7 +68,7 @@ public class SubroutineModelCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject,
 	 *      ghidra.util.task.TaskMonitor)
 	 */
@@ -178,7 +178,7 @@ public class SubroutineModelCmd extends BackgroundCommand {
 	/**
 	 * Create a fragment with the name as the name of the given block; append a
 	 * one-up number if we get a DuplicateNameException.
-	 * 
+	 *
 	 * @param root parent module
 	 * @param block code block
 	 * @return Fragment new fragment
@@ -204,7 +204,7 @@ public class SubroutineModelCmd extends BackgroundCommand {
 	/**
 	 * Create a fragment with the name as the name of the given block; append a
 	 * one-up number if we get a DuplicateNameException.
-	 * 
+	 *
 	 * @param root parent module
 	 * @param block code block
 	 * @return Fragment new fragment
@@ -231,7 +231,7 @@ public class SubroutineModelCmd extends BackgroundCommand {
 
 	/**
 	 * Method moveCodeUnits. Moves the code units into a Fragment
-	 * 
+	 *
 	 * @param fragment the Fragment where the code units are moved to.
 	 * @param block the CodeBlock containing the code to be moved.
 	 * @param monitor the TaskMonitor to allow for cancelling.

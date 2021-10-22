@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public interface Reference extends Comparable<Reference> {
 
 	/**
 	 * Get the symbol ID associated with this reference.
-	 * 
+	 *
 	 * @return symbol ID or -1 if no symbol is associated with this reference
 	 */
 	public long getSymbolID();
@@ -64,7 +64,7 @@ public interface Reference extends Comparable<Reference> {
 
 	/**
 	 * Get the operand index of where this reference was placed.
-	 * 
+	 *
 	 * @return op index or ReferenceManager.MNEMONIC
 	 */
 	public int getOperandIndex();
@@ -119,7 +119,7 @@ public interface Reference extends Comparable<Reference> {
 
 	/**
 	 * Gets the source of this reference. {@link SourceType}s
-	 * 
+	 *
 	 * @return the source of this reference
 	 */
 	public SourceType getSource();

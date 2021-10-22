@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 package ghidra.xtext.sleigh.validation
 
-	
+
 
 import java.util.HashMap
 import java.util.HashSet
@@ -35,14 +35,14 @@ import static extension org.eclipse.emf.ecore.util.EcoreUtil.*
 import static extension org.eclipse.xtext.EcoreUtil2.*
 
 /**
- * This class contains custom validation rules. 
+ * This class contains custom validation rules.
  *
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#validation
  */
 class SleighValidator extends AbstractSleighValidator {
 
 	var HashMap<Object,HashMap<String,HashSet<Object>>> typeMap;
-	
+
     @Check
     def void checkModelInitialize(Model m) {
     	// model should be validated each time before the sub objects
@@ -52,7 +52,7 @@ class SleighValidator extends AbstractSleighValidator {
 
 	/**
 	 * Add a name entry to the set of names->definitions Object map
-	 */    
+	 */
     def addNameEntryToSet(HashMap<String, HashSet<Object>> map, String name, Object other) {
 		var HashSet<Object> set = map.get(name);
 		if (set == null) {
@@ -69,7 +69,7 @@ class SleighValidator extends AbstractSleighValidator {
 			return;
 		}
 	}
-	
+
 	def boolean checkDuplicate(fielddef f) {
 		var type = typeof(tokendef)
 		var HashMap<String,HashSet<Object>> map = typeMap.get(type);
@@ -91,7 +91,7 @@ class SleighValidator extends AbstractSleighValidator {
 		var HashSet<Object> set = map.get(f.name);
 		return (set != null && set.size > 1)
 	}
-	
+
 	@Check
 	def void checkTokenNameIsUnique(contextfielddef f) {
 		if (checkDuplicate(f)) {
@@ -99,7 +99,7 @@ class SleighValidator extends AbstractSleighValidator {
 			return;
 		}
 	}
-	
+
 	def boolean checkDuplicate(contextfielddef f) {
 		var type = typeof(contextdef)
 		var HashMap<String,HashSet<Object>> map = typeMap.get(type);
@@ -121,7 +121,7 @@ class SleighValidator extends AbstractSleighValidator {
 		}
 		var HashSet<Object> set = map.get(f.name);
 		return (set != null && set.size > 1)
-	}	
+	}
 
 	@Check
 	def void checkTokenNameIsUnique(VARSYM v) {
@@ -130,7 +130,7 @@ class SleighValidator extends AbstractSleighValidator {
 			return;
 		}
 	}
-	
+
 	def boolean checkDuplicate(VARSYM v) {
 		var type = typeof(varnodedef)
 		var HashMap<String,HashSet<Object>> map = typeMap.get(type);
@@ -152,7 +152,7 @@ class SleighValidator extends AbstractSleighValidator {
 		var HashSet<Object> set = map.get(v.name);
 		return (set != null && set.size > 1)
 	}
-	
+
 	@Check
 	def void checkWarnExpensiveOperation(constraint c) {
 		var op = c.compareOp
@@ -161,7 +161,7 @@ class SleighValidator extends AbstractSleighValidator {
 		}
 		// TODO: Could check if the op token size is small, don't warn
 		//     For token sizes, this should not be so expensive 2,3
-		
+
 		// comparison operations can be expensive
 		warning("comparison can be expensive, and should be used sparingly", SleighPackage.eINSTANCE.getconstraint_CompareOp)
 	}

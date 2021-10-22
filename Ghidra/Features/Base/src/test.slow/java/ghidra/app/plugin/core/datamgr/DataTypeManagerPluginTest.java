@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -727,7 +727,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 	@Test
 	public void testEditFunctionDefintionDataType() throws Exception {
-		createFunctionDefinition("Bob", "Joe"); // creates function definition for "undefined Bob(byte Joe)" 
+		createFunctionDefinition("Bob", "Joe"); // creates function definition for "undefined Bob(byte Joe)"
 		FunctionDefinition fun = getFunctionDefinition("Bob");
 		assertParamName(fun, 0, "Joe");
 		editSignature("Bob", "int Bob(long aaa, ...)");
@@ -740,7 +740,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 	@Test
 	public void testEditFunctionDefintionName() throws Exception {
-		createFunctionDefinition("Bob", "Joe"); // creates function definition for "undefined Bob(byte Joe)" 
+		createFunctionDefinition("Bob", "Joe"); // creates function definition for "undefined Bob(byte Joe)"
 		FunctionDefinition fun = getFunctionDefinition("Bob");
 		assertParamName(fun, 0, "Joe");
 		editSignature("Bob", "undefined Tom(byte Joe)");
@@ -752,7 +752,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 
 	@Test
 	public void testEditFunctionDefintionDataTypeParamNameOnly() throws Exception {
-		createFunctionDefinition("Bob", "Joe"); // creates function definition for "undefined Bob(byte Joe)" 
+		createFunctionDefinition("Bob", "Joe"); // creates function definition for "undefined Bob(byte Joe)"
 		FunctionDefinition fun = getFunctionDefinition("Bob");
 		assertParamName(fun, 0, "Joe");
 		editSignature("Bob", "undefined Bob(byte Tom)");
@@ -1030,7 +1030,7 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	/**
-	 * This directory is bin in eclipse; it will be a resources directory in the classpath when run 
+	 * This directory is bin in eclipse; it will be a resources directory in the classpath when run
 	 * in batch mode.   The directory is one specifically created by and for this test.
 	 * @return class output directory
 	 * @throws FileNotFoundException Could not find class output directory

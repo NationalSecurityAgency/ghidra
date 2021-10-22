@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,20 +33,20 @@ import ghidra.generic.util.datastruct.TreeSetValuedTreeMap;
 
 /**
  * Defines a context-free grammar, usually for the purpose of parsing mnemonic assembly instructions
- * 
+ *
  * As in classic computer science, a CFG consists of productions of non-terminals and terminals.
  * The left-hand side of the a production must be a single non-terminal, but the right-hand side
  * may be any string of symbols. To avoid overloading the term "String," here we call it a
  * "Sentential."
- * 
+ *
  * To define a grammar, simply construct an appropriate subclass (probably {@link AssemblyGrammar})
  * and call {@link #addProduction(AbstractAssemblyProduction)} or
  * {@link #addProduction(AssemblyNonTerminal, AssemblySentential)}. The grammar object will collect
  * the non-terminals and terminals.
- * 
+ *
  * By default, the start symbol is taken from the left-hand side of the first production added to
  * the grammar.
- * 
+ *
  * @param <NT> the type of non-terminals
  * @param <P> the type of productions, which must have the same types of (non-)terminals.
  */
@@ -62,7 +62,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 	/**
 	 * Because a subclass may have a different type of production, it must provide a mechanism for
 	 * constructing an appropriate production given just the LHS and RHS.
-	 * 
+	 *
 	 * @param lhs the left-hand side of the production
 	 * @param rhs the right-hand side of the production
 	 * @return the constructed production
@@ -200,7 +200,7 @@ public abstract class AbstractAssemblyGrammar<NT extends AssemblyNonTerminal, P 
 
 	/**
 	 * Check that the grammar is consistent
-	 * 
+	 *
 	 * The grammar is consistent if every non-terminal appearing in the grammar, also appears as
 	 * the left-hand side of some production. If not, such non-terminals are said to be undefined.
 	 * @throws AssemblyGrammarException the grammar is inconsistent, i.e., contains undefined

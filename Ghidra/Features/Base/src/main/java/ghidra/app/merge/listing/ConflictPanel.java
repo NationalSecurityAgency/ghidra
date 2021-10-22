@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import javax.swing.JCheckBox;
 import docking.widgets.checkbox.GCheckBox;
 
 /**
- * Abstract class that should be implemented by the conflict panel that appears 
+ * Abstract class that should be implemented by the conflict panel that appears
  * below the 4 listings in the merge window.
  */
 public abstract class ConflictPanel extends ChoiceComponent {
@@ -47,7 +47,7 @@ public abstract class ConflictPanel extends ChoiceComponent {
 	}
 
 	/**
-	 * Returns an int value that indicates the choices currently selected for 
+	 * Returns an int value that indicates the choices currently selected for
 	 * the Use For All choice in the conflict resolution table. If there are
 	 * multiple rows of choices, then all selected choices must be the same for each
 	 * row or 0 is returned.

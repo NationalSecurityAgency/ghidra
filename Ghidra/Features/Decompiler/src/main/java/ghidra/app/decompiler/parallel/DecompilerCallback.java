@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,12 +27,12 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * An implementation of {@link QCallback} that performs the management of the 
+ * An implementation of {@link QCallback} that performs the management of the
  * {@link DecompInterface} instances using a Pool.
- * 
+ *
  * <P>Clients will get a chance to configure each newly created decompiler via the passed-in
  * {@link DecompileConfigurer}.
- * 
+ *
  * <P>Clients must implement {@link #process(DecompileResults, TaskMonitor)}, which will be
  * called for each function that is decompiled.
  *
@@ -49,7 +49,7 @@ public abstract class DecompilerCallback<R> implements QCallback<Function, R> {
 
 	/**
 	 * This is called when a function is decompiled.
-	 * 
+	 *
 	 * @param results the decompiled results
 	 * @param monitor the task monitor
 	 * @return the client result
@@ -84,7 +84,7 @@ public abstract class DecompilerCallback<R> implements QCallback<Function, R> {
 
 	/**
 	 * Sets the timeout for each decompile
-	 * 
+	 *
 	 * @param timeoutSecs the timeout in seconds
 	 */
 	public void setTimeout(int timeoutSecs) {

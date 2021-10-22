@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param program program used in generating plugin events
 	 * @param memory memory from a program
 	 * @param block block from memory
@@ -54,7 +54,7 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Get the location representation for the given index.
-	 * 
+	 *
 	 * @param index byte index into this block
 	 * @throws IndexOutOfBoundsException if index in not in this block.
 	 */
@@ -103,7 +103,7 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Set the byte at the given index.
-	 * 
+	 *
 	 * @param index byte index
 	 * @param value value to set
 	 * @throws ByteBlockAccessException if the block cannot be updated
@@ -123,7 +123,7 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Get the byte at the given index.
-	 * 
+	 *
 	 * @param index byte index
 	 * @throws ByteBlockAccessException if the block cannot be read
 	 * @throws IndexOutOfBoundsException if the given index is not in this block.
@@ -147,7 +147,7 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Set the long at the given index.
-	 * 
+	 *
 	 * @param index byte index
 	 * @param value value to set
 	 * @throws ByteBlockAccessException if the block cannot be updated
@@ -167,7 +167,7 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Get the long at the given index.
-	 * 
+	 *
 	 * @param index byte index
 	 * @throws ByteBlockAccessException if the block cannot be read
 	 * @throws IndexOutOfBoundsException if the given index is not in this block.
@@ -185,7 +185,7 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Set the block according to the bigEndian parameter.
-	 * 
+	 *
 	 * @param bigEndian true means big endian; false means little endian
 	 */
 	@Override
@@ -196,7 +196,7 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Get the int value at the given index.
-	 * 
+	 *
 	 * @param index byte index
 	 * @throws ByteBlockAccessException if the block cannot be read
 	 * @throws IndexOutOfBoundsException if the given index is not in this block.
@@ -214,7 +214,7 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Set the int at the given index.
-	 * 
+	 *
 	 * @param index byte index
 	 * @param value value to set
 	 * @throws ByteBlockAccessException if the block cannot be updated
@@ -242,7 +242,7 @@ public class MemoryByteBlock implements ByteBlock {
 
 	/**
 	 * Return true if the block is big endian.
-	 * 
+	 *
 	 * @return false if the block is little endian
 	 */
 	@Override

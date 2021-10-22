@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,23 +21,23 @@ import ghidra.util.SystemUtilities;
 
 /**
  * A LRU (Least Recently Used) map that maintains <i>access-order</i> (newest to oldest)
- *  iteration over the elements.  
- * This map is limited to the given size.  
+ *  iteration over the elements.
+ * This map is limited to the given size.
  * As new items are added, the older items will be removed from this map.
  * <p>
- * If you need to be notified of removals, then you can override 
+ * If you need to be notified of removals, then you can override
  *  {@link #eldestEntryRemoved(java.util.Map.Entry)}.
  * <p>
- * If you don't want the eldest removed, override  
+ * If you don't want the eldest removed, override
  *  {@link #removeEldestEntry(java.util.Map.Entry)} and return false;
  * <p>
- * If you would like to have the iteration order of your LRU structure be based upon access, 
+ * If you would like to have the iteration order of your LRU structure be based upon access,
  * but want it to iterate from least recently used to most recently used, then you should see
  * {@link FixedSizeHashMap}.
- *  
- * @param <K> the key type 
+ *
+ * @param <K> the key type
  * @param <V> the value type
- * 
+ *
  * @see LinkedHashMap
  * @see FixedSizeHashMap
  */

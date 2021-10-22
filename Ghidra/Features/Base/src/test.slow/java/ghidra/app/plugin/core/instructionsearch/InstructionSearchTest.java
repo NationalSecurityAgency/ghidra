@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -101,17 +101,17 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	/**
 	 * This builds a small program based on a section of WinHelloCpp.exe.  The specific
 	 * section disassembles as follows:
-	 * 
-	 *	    004065e1 47              INC        EDI 
+	 *
+	 *	    004065e1 47              INC        EDI
 	 *	    004065e2 57              PUSH       EDI
 	 *	    004065e3 8d 45 08        LEA        EAX=>_Ch,[EBP + 0x8]
 	 *	    004065e6 50              PUSH       EAX
 	 *	    004065e7 ff 75 0c        PUSH       [EBP + _File]
-	 *	    004065ea e8 84 2c        CALL       __write                                           
+	 *	    004065ea e8 84 2c        CALL       __write
 	 *	             00 00
 	 *	    004065ef 83 c4 0c        ADD        ESP,nope
 	 *	    004065f2 89 45 fc        MOV        [EBP + local_8],EAX
-	 *	
+	 *
 	 * @throws Exception
 	 */
 	private Program buildProgram() throws Exception {
@@ -441,7 +441,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Test that we can search for results only within the currently-selected
-	 * region.  
+	 * region.
 	 */
 	@Test
 	public void testSearchCurrentSelection() {
@@ -484,7 +484,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	 * Tests that we can perform a search over the entire memory space and return multiple
 	 * results. To do this we're going to have to select the "PUSH EDI" instruction and mask
 	 * out the operand, which should yield 2 matches.
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	@Test
 	public void testSearchEntireProgramMultipleResults() throws Exception {
@@ -562,7 +562,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	/**
 	 * Tests that the hex view correctly formats the preview panel when masking a part
 	 * of a byte.
-	 * 
+	 *
 	 * ie: [01010...]
 	 */
 	@Test
@@ -636,7 +636,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Verify that hex data entered into the manual input field is processed properly.
-	 * 
+	 *
 	 * Note, all bytes must be input in hex format.
 	 */
 	@Test
@@ -690,10 +690,10 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Verify that users can use the {@link InstructionSearchApi} to bring up the 
+	 * Verify that users can use the {@link InstructionSearchApi} to bring up the
 	 * {@link InstructionSearchDialog} loaded with instructions derived from a given string
 	 * of bytes (hex format only).
-	 * 
+	 *
 	 */
 	@Test
 	public void testApi_LoadSearchDialog_Bytes() {
@@ -724,7 +724,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/**
-	 * Verify that users can use the {@link InstructionSearchApi} to bring up the 
+	 * Verify that users can use the {@link InstructionSearchApi} to bring up the
 	 * {@link InstructionSearchDialog} loaded with instructions derived from the given address
 	 * set, which should correspond to addresses in the currently-loaded program.
 	 */
@@ -808,7 +808,7 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Creates a {@link ProgramSelection} with the given address range.
-	 * 
+	 *
 	 * @param min lower range address (ie: 0x000000);
 	 * @param max higher range address (ie: 0x100000);
 	 */
@@ -823,10 +823,10 @@ public class InstructionSearchTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Loads the instructions in the given range into the instruction table.
-	 * 
+	 *
 	 * @param addr1 address in the form "0x01234567"
 	 * @param addr2 address in the form "0x01234567"
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	private void loadSelection(String addr1, String addr2) throws Exception {
 

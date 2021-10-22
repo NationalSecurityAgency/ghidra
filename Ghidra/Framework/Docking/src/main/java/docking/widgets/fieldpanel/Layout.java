@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public interface Layout {
 	/**
 	 * Returns the vertical offset (in pixels) of the start of the primary
 	 * field in the layout.
-	 * 
+	 *
 	 * @return -1 if layout does not have a primary field.
 	 */
 	int getPrimaryOffset();
@@ -73,7 +73,7 @@ public interface Layout {
 	 * Paints this layout on the screen.
 	 *
 	 * @param g The graphics context with which to paint.
-	 * @param context contains various information needed to do the paint 
+	 * @param context contains various information needed to do the paint
 	 * @param rect the screen area that needs to be painted.
 	 * @param layoutColorMap indicates where the selection exists
 	 * @param cursorLocation the location of the cursor or null if the cursor is not in this layout
@@ -86,7 +86,7 @@ public interface Layout {
 	 * to the row column position that is closest to the given point.
 	 * @param cursorLoc the location that is to be filled in.
 	 * @param x the x coordinate of the point to be translated into a cursor location.
-	 * @param y the y coordinate of the point to be translated into a cursor location. 
+	 * @param y the y coordinate of the point to be translated into a cursor location.
 	 * @return the x coordinated of the computed cursor location.
 	 */
 	int setCursor(FieldLocation cursorLoc, int x, int y);

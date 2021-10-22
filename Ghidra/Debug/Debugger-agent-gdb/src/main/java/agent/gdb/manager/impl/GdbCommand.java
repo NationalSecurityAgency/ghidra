@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import agent.gdb.manager.impl.cmd.AbstractGdbCommandWithThreadId;
  * The command implementation is responsible for handling the command result. Implementors ought to
  * use {@link AbstractGdbCommand} or {@link AbstractGdbCommandWithThreadId} to ensure consistent
  * processing.
- * 
+ *
  * <p>
  * Before executing the command, the manager calls {@link #preCheck(GdbPendingCommand)}, giving the
  * implementation an opportunity to cancel the command or complete it early. If the command is
@@ -55,7 +55,7 @@ public interface GdbCommand<T> {
 
 	/**
 	 * Check if this command can be executed given GDB's current state
-	 * 
+	 *
 	 * @param state GDB's state
 	 * @return true if it can be executed, false otherwise
 	 */
@@ -63,45 +63,45 @@ public interface GdbCommand<T> {
 
 	/**
 	 * Perform any pre-execution screening for this command
-	 * 
+	 *
 	 * <p>
 	 * Complete {@code} pending with a result to short-circuit the execution of this command.
-	 * 
+	 *
 	 * @param pending the pend@Override ing command result
 	 */
 	void preCheck(GdbPendingCommand<? super T> pending);
 
 	/**
 	 * Encode the command in GDB/MI
-	 * 
+	 *
 	 * @return the encoded command
 	 */
 	public String encode();
 
 	/**
 	 * If executing this command changes the current thread, return that thread's ID
-	 * 
+	 *
 	 * @return the new current thread ID
 	 */
 	public Integer impliesCurrentThreadId();
 
 	/**
 	 * If executing this command change the current frame, return that frame's ID
-	 * 
+	 *
 	 * @return the new current frame ID
 	 */
 	public Integer impliesCurrentFrameId();
 
 	/**
 	 * Check if focus announcements from this command should be suppressed
-	 * 
+	 *
 	 * @return true to suppress announcements
 	 */
 	public boolean isFocusInternallyDriven();
 
 	/**
 	 * Handle an event that occurred during the execution of this command
-	 * 
+	 *
 	 * @param evt the event
 	 * @param pending a copy of the executing command instance
 	 * @return true if the command is now ready to be completed
@@ -110,10 +110,10 @@ public interface GdbCommand<T> {
 
 	/**
 	 * Called when the manager believes this command is finished executing
-	 * 
+	 *
 	 * <p>
 	 * This is presumed when the manager receives the prompt after issuing the encoded command
-	 * 
+	 *
 	 * @param pending a copy of the now-finished-executing command instance
 	 * @return the object "returned" by the command
 	 */
@@ -121,7 +121,7 @@ public interface GdbCommand<T> {
 
 	/**
 	 * Get the interpreter for which this command is encoded
-	 * 
+	 *
 	 * @return the interpreter
 	 */
 	public Interpreter getInterpreter();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,9 +17,9 @@
 // location. This script only works on programs of size 32 and 64. The results are both printed to
 // the console and are presented in a table with two tabs, one for each size. To apply data types to
 // undefined ones that are found simply select the desired ones from the table then drag either the
-// ImageBaseOffset32 or ImageBaseOffset64 data type, whichever is applicable, onto the selection in 
+// ImageBaseOffset32 or ImageBaseOffset64 data type, whichever is applicable, onto the selection in
 // the listing from the Data Type Manager.
-// 
+//
 //@category Search
 
 import ghidra.app.script.GhidraScript;

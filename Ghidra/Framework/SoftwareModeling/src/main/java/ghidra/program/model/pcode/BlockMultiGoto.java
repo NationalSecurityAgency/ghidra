@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,32 +25,32 @@ import ghidra.xml.XmlPullParser;
 
 /**
  * A block representing a 2-or-more control flow branchpoint
- * 
+ *
  * possible multiple incoming edges
  * 1 or more outgoing edges (as in switch control flow)
  * 2 or more (implied) outgoing edges representing unstructured branch destinations   (switch case with goto statement)
- * 
+ *
  * 1 interior block representing the decision block of the switch
  *
  */
 public class BlockMultiGoto extends BlockGraph {
 	protected ArrayList<PcodeBlock> targets;
-	
+
 	public BlockMultiGoto() {
 		super();
 		targets = new ArrayList<PcodeBlock>();
 		blocktype = PcodeBlock.MULTIGOTO;
 	}
-	
+
 	public void addGotoTarget(PcodeBlock target) {
 		targets.add(target);
 	}
-	
+
 	@Override
 	public void saveXmlBody(Writer writer) throws IOException {
 		super.saveXmlBody(writer);
 		for(int i=0;i<targets.size();++i) {
-			
+
 			PcodeBlock gototarget = targets.get(i);
 			StringBuilder buf = new StringBuilder();
 			buf.append("<target");

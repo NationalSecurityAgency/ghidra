@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -207,7 +207,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //	public void testEditOffsetNoMoveLocalToParam() throws Exception {
 //		init(SIMPLE_STACK);
 //		int colNum = model.getOffsetColumn();
-//			
+//
 //		clickTableCell(getTable(), 0, colNum, 2);
 //		assertIsEditingField(0, colNum);
 //		deleteAllInCellEditor();
@@ -657,18 +657,18 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		int column = model.getDataTypeColumn();
 //		String str = "Char[3][2][4]";
 //		DataType dt = getDataType(1);
-//			
+//
 //		assertEquals(8, model.getLength());
 //		assertEquals(2, dt.getLength());
 //		clickTableCell(getTable(), 1, column, 2);
 //		assertIsEditingField();
 //		assertEquals(1, model.getRow());
 //		assertEquals(column, model.getColumn());
-//			
+//
 //		deleteAllInCellEditor();
 //		type(str);
 //		enter();
-//			
+//
 //		assertNotEditingField();
 //		assertEquals(1, model.getNumSelectedRows());
 //		assertEquals(1, model.getMinIndexSelected());
@@ -682,18 +682,18 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		int column = model.getDataTypeColumn();
 //		String invalidString = "AbCdEfG_12345.,/\\";
 //		DataType dt = getDataType(1);
-//			
+//
 //		assertEquals(8, model.getLength());
 //		assertEquals(2, dt.getLength());
 //		clickTableCell(getTable(), 1, column, 2);
 //		assertIsEditingField();
 //		assertEquals(1, model.getRow());
 //		assertEquals(column, model.getColumn());
-//			
+//
 //		deleteAllInCellEditor();
 //		type(invalidString);
 //		enter();
-//			
+//
 //		assertIsEditingField();
 //		assertStatus("Unrecognized data type of \""+invalidString+"\" entered.");
 //		assertEquals(1, model.getNumSelectedRows());
@@ -701,7 +701,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertEquals("Word", model.getValueAt(1, column));
 //		assertEquals(8, model.getLength());
 //		assertEquals(dt, getDataType(1));
-//			
+//
 //		escape();
 //		assertNotEditingField();
 //		assertEquals(dt, getDataType(1));
@@ -712,18 +712,18 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		int column = model.getDataTypeColumn();
 //		String str = "char[3][2][4]";
 //		DataType dt = getDataType(2);
-//			
+//
 //		assertEquals(29, model.getLength());
 //		assertEquals(2, dt.getLength());
 //		clickTableCell(getTable(), 2, column, 2);
 //		assertIsEditingField();
 //		assertEquals(2, model.getRow());
 //		assertEquals(column, model.getColumn());
-//			
+//
 //		deleteAllInCellEditor();
 //		type(str);
 //		enter();
-//			
+//
 //		assertIsEditingField();
 //		escape();
 //		assertNotEditingField();
@@ -742,16 +742,16 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertEquals(29, model.getLength());
 //		assertEquals(4, dt.getLength());
 //		assertEquals("dword", getDataType(3).getDisplayName());
-//			
+//
 //		clickTableCell(getTable(), 3, column, 2);
 //		assertIsEditingField();
 //		assertEquals(3, model.getRow());
 //		assertEquals(column, model.getColumn());
-//			
+//
 //		deleteAllInCellEditor();
 //		type(str);
 //		enter();
-//			
+//
 //		assertNotEditingField();
 //		assertEquals(1, model.getNumSelectedRows());
 //		assertEquals(3, model.getMinIndexSelected());
@@ -766,7 +766,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		int column = model.getDataTypeColumn();
 //		String str = "Pointer";
 //		DataType dt = getDataType(1);
-//			
+//
 //		assertEquals(8, model.getLength());
 //		assertEquals(2, dt.getLength());
 //		Point pt = getPoint(1, column);
@@ -774,12 +774,12 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertIsEditingField();
 //		assertEquals(1, model.getRow());
 //		assertEquals(column, model.getColumn());
-//			
+//
 //		deleteAllInCellEditor();
 //		type(str);
 //		enter();
 //		assertIsEditingField();
-//			
+//
 //		dialog = (NumberInputDialog)env.waitForWindow(NumberInputDialog.class, 1000);
 //		assertNotNull(dialog);
 //		okInput(dialog, 6);
@@ -801,7 +801,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		int column = model.getDataTypeColumn();
 //		String str = "String[3]";
 //		DataType dt = getDataType(1);
-//			
+//
 //		assertEquals(8, model.getLength());
 //		assertEquals(2, dt.getLength());
 //		Point pt = getPoint(1, column);
@@ -809,12 +809,12 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertIsEditingField();
 //		assertEquals(1, model.getRow());
 //		assertEquals(column, model.getColumn());
-//			
+//
 //		deleteAllInCellEditor();
 //		type(str);
 //		enter();
 //		assertIsEditingField();
-//			
+//
 //		dialog = (NumberInputDialog)env.waitForWindow(NumberInputDialog.class, 1000);
 //		assertNotNull(dialog);
 //		okInput(dialog, 15);
@@ -836,7 +836,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		int column = model.getDataTypeColumn();
 //		String str = "Unicode**[5][2]";
 //		DataType dt = getDataType(1);
-//			
+//
 //		assertEquals(8, model.getLength());
 //		assertEquals(2, dt.getLength());
 //		Point pt = getPoint(1, column);
@@ -844,12 +844,12 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertIsEditingField();
 //		assertEquals(1, model.getRow());
 //		assertEquals(column, model.getColumn());
-//			
+//
 //		deleteAllInCellEditor();
 //		type(str);
 //		enter();
 //		assertIsEditingField();
-//			
+//
 //		dialog = (NumberInputDialog)env.waitForWindow("Specify number of Unicode * * bytes", 1000);
 //		assertNotNull(dialog);
 //		okInput(dialog, 4);
@@ -872,7 +872,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		DataType dt = getDataType(5);
 //		int len = model.getLength();
 //		int num = model.getNumComponents();
-//			
+//
 //		assertEquals(-1, dt.getLength());
 //		assertEquals(4, model.getComponent(5).getLength());
 //		Point pt = getPoint(5, column);
@@ -880,11 +880,11 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertIsEditingField();
 //		assertEquals(5, model.getRow());
 //		assertEquals(column, model.getColumn());
-//		
-//		endKey();	
+//
+//		endKey();
 //		type("*");
 //		enter();
-//			
+//
 //		assertNotEditingField();
 //		assertEquals(1, model.getNumSelectedRows());
 //		assertEquals(5, model.getMinIndexSelected());
@@ -898,7 +898,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //	public void testEditComponentDataTypeSmaller() throws Exception {
 //		init(SIMPLE_STACK);
 //		int column = model.getDataTypeColumn();
-//			
+//
 //		assertEquals(8, model.getLength());
 //		assertEquals(2, getDataType(1).getLength());
 //		Point pt = getPoint(1, column);
@@ -906,13 +906,13 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertIsEditingField();
 //		assertEquals(1, model.getRow());
 //		assertEquals(column, model.getColumn());
-//			
+//
 //		endKey();
 //		typeKey(0, KeyEvent.VK_OPEN_BRACKET, '[');
 //		typeKey(0, KeyEvent.VK_5, '5');
 //		typeKey(0, KeyEvent.VK_CLOSE_BRACKET, ']');
 //		typeKey(0, KeyEvent.VK_ENTER);
-//			
+//
 //		assertNotEditingField();
 //		assertEquals(1, model.getNumSelectedRows());
 //		assertEquals(1, model.getMinIndexSelected());
@@ -924,7 +924,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //	public void testEditComponentDataTypeBigger() throws Exception {
 //		init(SIMPLE_STACK);
 //		int column = model.getDataTypeColumn();
-//			
+//
 //		assertEquals(87, model.getLength());
 //		assertEquals(87, getDataType(12).getLength());
 //		Point pt = getPoint(12, column);
@@ -932,14 +932,14 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertIsEditingField();
 //		assertEquals(12, model.getRow());
 //		assertEquals(column, model.getColumn());
-//			
+//
 //		endKey();
 //		typeKey(0, KeyEvent.VK_BACK_SPACE, '\b');
 //		typeKey(0, KeyEvent.VK_BACK_SPACE, '\b');
 //		typeKey(0, KeyEvent.VK_2, '2');
 //		typeKey(0, KeyEvent.VK_CLOSE_BRACKET, ']');
 //		typeKey(0, KeyEvent.VK_ENTER);
-//			
+//
 //		assertNotEditingField();
 //		assertEquals(1, model.getNumSelectedRows());
 //		assertEquals(12, model.getMinIndexSelected());
@@ -954,7 +954,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		int column = model.getDataTypeColumn();
 //		String str = "complexUnion***[3][3]";
 //		DataType dt = getDataType(1);
-//			
+//
 //		assertEquals(8, model.getLength());
 //		assertEquals(2, dt.getLength());
 //		Point pt = getPoint(1, column);
@@ -962,12 +962,12 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertIsEditingField();
 //		assertEquals(1, model.getRow());
 //		assertEquals(column, model.getColumn());
-//			
+//
 //		deleteAllInCellEditor();
 //		type(str);
 //		enter();
 //		assertIsEditingField();
-//			
+//
 //		dialog = (NumberInputDialog)env.waitForWindow("Specify number of complexUnion * * * bytes", 1000);
 //		assertNotNull(dialog);
 //		okInput(dialog, 4);
@@ -988,7 +988,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		int column = model.getDataTypeColumn();
 //		String str = "PE";
 //		DataType dt = getDataType(1);
-//			
+//
 //		assertEquals(8, model.getLength());
 //		assertEquals(2, dt.getLength());
 //		Point pt = getPoint(1, column);
@@ -996,11 +996,11 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertIsEditingField();
 //		assertEquals(1, model.getRow());
 //		assertEquals(column, model.getColumn());
-//			
+//
 //		deleteAllInCellEditor();
 //		type(str);
 //		enter();
-//			
+//
 //		assertIsEditingField();
 //		assertStatus("Dynamic data types are not allowed in a composite data type.");
 //		assertEquals(1, model.getNumSelectedRows());
@@ -1012,7 +1012,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 
 //	public void testEditComponentName() throws Exception {
 //		init(SIMPLE_STACK);
-//			
+//
 //		int column = model.getNameColumn();
 //		int num = model.getNumComponents();
 //		int len = model.getLength();
@@ -1022,11 +1022,11 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertIsEditingField();
 //		assertEquals(3, model.getRow());
 //		assertEquals(column, model.getColumn());
-//			
+//
 //		endKey();
 //		type("Wow");
 //		enter();
-//			
+//
 //		assertNotEditingField();
 //		assertEquals(1, model.getNumSelectedRows());
 //		assertEquals(3, model.getMinIndexSelected());
@@ -1037,7 +1037,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 
 //	public void testEditComponentComment() throws Exception {
 //		init(SIMPLE_STACK);
-//			
+//
 //		int column = model.getCommentColumn();
 //		int num = model.getNumComponents();
 //		int len = model.getLength();
@@ -1047,11 +1047,11 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertIsEditingField();
 //		assertEquals(3, model.getRow());
 //		assertEquals(column, model.getColumn());
-//			
+//
 //		endKey();
 //		type("My comment.");
 //		enter();
-//			
+//
 //		assertNotEditingField();
 //		assertEquals(1, model.getNumSelectedRows());
 //		assertEquals(3, model.getMinIndexSelected());
@@ -1065,20 +1065,20 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		int rowNum = 3;
 //		int colNum = model.getNameColumn();
 //		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0);
-//			
+//
 //		Point pt = getPoint(rowNum, colNum);
 //		clickMouse(getTable(), 1, pt.x, pt.y, 2, 0);
 //		assertIsEditingField();
-//			
+//
 //		deleteAllInCellEditor();
 //		type("Component_3");
 //		typeKey(ks);
-//			
+//
 //		assertIsEditingField();
 //		assertEquals(rowNum, model.getRow());
 //		assertEquals(colNum+1, model.getColumn());
 //		assertEquals("Component_3", getFieldName(rowNum));
-//			
+//
 //		escape();
 //		assertNotEditingField();
 //	}
@@ -1088,20 +1088,20 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		int rowNum = 3;
 //		int colNum = model.getNameColumn();
 //		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_TAB, KeyEvent.SHIFT_DOWN_MASK);
-//			
+//
 //		Point pt = getPoint(rowNum, colNum);
 //		clickMouse(getTable(), 1, pt.x, pt.y, 2, 0);
 //		assertIsEditingField();
-//			
+//
 //		deleteAllInCellEditor();
 //		type("Component_3");
 //		typeKey(ks);
-//			
+//
 //		assertIsEditingField();
 //		assertEquals(rowNum, model.getRow());
 //		assertEquals(colNum-1, model.getColumn());
 //		assertEquals("Component_3", getFieldName(rowNum));
-//			
+//
 //		escape();
 //		assertNotEditingField();
 //	}
@@ -1111,20 +1111,20 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		int rowNum = 3;
 //		int colNum = model.getNameColumn();
 //		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0);
-//			
+//
 //		Point pt = getPoint(rowNum, colNum);
 //		clickMouse(getTable(), 1, pt.x, pt.y, 2, 0);
 //		assertIsEditingField();
-//			
+//
 //		deleteAllInCellEditor();
 //		type("Component_3");
 //		typeKey(ks);
-//			
+//
 //		assertIsEditingField();
 //		assertEquals(rowNum-1, model.getRow());
 //		assertEquals(colNum, model.getColumn());
 //		assertEquals("Component_3", getFieldName(rowNum));
-//			
+//
 //		escape();
 //		assertNotEditingField();
 //	}
@@ -1134,20 +1134,20 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		int rowNum = 3;
 //		int colNum = model.getNameColumn();
 //		KeyStroke ks = KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0);
-//			
+//
 //		Point pt = getPoint(rowNum, colNum);
 //		clickMouse(getTable(), 1, pt.x, pt.y, 2, 0);
 //		assertIsEditingField();
-//			
+//
 //		deleteAllInCellEditor();
 //		type("Component_3");
 //		typeKey(ks);
-//			
+//
 //		assertIsEditingField();
 //		assertEquals(rowNum+1, model.getRow());
 //		assertEquals(colNum, model.getColumn());
 //		assertEquals("Component_3", getFieldName(rowNum));
-//			
+//
 //		escape();
 //		assertNotEditingField();
 //	}
@@ -1162,16 +1162,16 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //			}
 //		});
 //		// Order is now Offset Name Length Comment Mnemonic DataType
-//			
+//
 //		clickTableCell(getTable(), 3, 1, 2); // Edit name of dword
-//			
+//
 //		assertIsEditingField();
 //		assertEquals(3, model.getRow());
 //		assertEquals(model.getNameColumn(), model.getColumn());
 //
 //		type("Component_3");
 //		type("\t");
-//			
+//
 //		assertEquals("Component_3", getFieldName(3));
 //		assertIsEditingField();
 //		assertEquals(3, model.getRow());
@@ -1179,7 +1179,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //
 //		type("My new comment.");
 //		type("\t");
-//			
+//
 //		assertEquals("My new comment.", getComment(3));
 //		assertIsEditingField();
 //		assertEquals(3, model.getRow());
@@ -1188,7 +1188,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		deleteAllInCellEditor();
 //		type("float");
 //		type("\t");
-//			
+//
 //		assertEquals("float", getDataType(3).getDisplayName());
 //		assertIsEditingField();
 //		assertEquals(4, model.getRow());
@@ -1209,7 +1209,7 @@ public class StackEditorCellEditTest extends AbstractStackEditorTest {
 //		assertEquals(4, model.getRow());
 //		assertEquals(model.getNameColumn(), model.getColumn());
 //		assertNull(getFieldName(4));
-//			
+//
 //		typeActionKey(KeyEvent.SHIFT_DOWN_MASK, KeyEvent.VK_TAB);
 //		waitForPostedSwingRunnables();
 //

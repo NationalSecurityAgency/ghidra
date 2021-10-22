@@ -7,20 +7,20 @@
  *  as the given project is in its repo.
  ******************************************************************************************/
 ext.getProjectLocationInBinRepo = { p ->
-	String relativePath = getGhidraRelativePath(p)	
+	String relativePath = getGhidraRelativePath(p)
 	File binRepoRootProject = new File("${BIN_REPO}")
 	return new File(binRepoRootProject, relativePath)
 }
 /****************************************************************************************
  * Returns the "effective" relative path (Path starting with Ghidra)
- * Normally, for files in the ghidra repo this is just the relative path from 
- * the root project (ghidra) to the given project.  
+ * Normally, for files in the ghidra repo this is just the relative path from
+ * the root project (ghidra) to the given project.
  *
  *  For example <...>/ghidra/Ghidra/Features/Base will return Ghidra/Features/Base
  *
  *  If the project is in a sibling repo (ghidra.<other> that lives in the same directory
  *  as ghidra), then this method returns a relative path as though the project lived
- *  in ghidra.  
+ *  in ghidra.
  *
  *	for example <...>/ghidra.foo/Ghidra/Features/OtherProject will return Ghidra/Features/OtherProject
  ****************************************************************************************/

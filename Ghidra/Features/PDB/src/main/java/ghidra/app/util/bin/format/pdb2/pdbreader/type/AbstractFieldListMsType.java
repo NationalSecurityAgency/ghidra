@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,7 +85,7 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 	}
 
 	/**
-	 * Returns the (ordered?) {@link List}&lt;{@link AbstractMsType}&gt; of base class types. 
+	 * Returns the (ordered?) {@link List}&lt;{@link AbstractMsType}&gt; of base class types.
 	 * @return List of base class types.
 	 */
 	public List<MsTypeField> getBaseClassList() {
@@ -94,7 +94,7 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 
 	/**
 	 * Returns the (ordered?) {@link List}&lt;{@link AbstractMsType}&gt; of type members types of
-	 *  this field list. 
+	 *  this field list.
 	 * @return Field list.
 	 */
 	public List<MsTypeField> getMemberList() {
@@ -103,7 +103,7 @@ public abstract class AbstractFieldListMsType extends AbstractMsType {
 
 	/**
 	 * Returns the (ordered?) {@link List}&lt;{@link AbstractMsType}&gt; of other types. (We have
-	 *  separated these out, but are unsure about what they are at this time.) 
+	 *  separated these out, but are unsure about what they are at this time.)
 	 * @return List of other types.
 	 */
 	public List<MsTypeField> getMethodList() {

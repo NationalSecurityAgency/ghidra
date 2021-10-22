@@ -32,7 +32,7 @@
   </global>
 
   <stackpointer register="sp" space="ram"/>
-  
+
   <funcptr align="2"/>     <!-- Function pointers are word aligned and leastsig bit may encode otherstuff -->
   <default_proto>
     <prototype name="__stdcall" extrapop="0" stackshift="0">
@@ -127,5 +127,5 @@
       </killedbycall>
     </prototype>
   </default_proto>
-  
+
 </compiler_spec>

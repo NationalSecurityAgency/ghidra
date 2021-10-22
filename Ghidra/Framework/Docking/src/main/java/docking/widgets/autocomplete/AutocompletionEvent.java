@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class AutocompletionEvent<T> {
 
 	/**
 	 * Get the item that was selected at the time of the event.
-	 * 
+	 *
 	 * For activation, this is the activated suggestion.
 	 * @return the selected suggestion.
 	 */
@@ -51,7 +51,7 @@ public class AutocompletionEvent<T> {
 
 	/**
 	 * Get the field having focus at the time of the event.
-	 * 
+	 *
 	 * If the autocompleter is attached to multiple fields, this can be used to identify which
 	 * field produced the event.
 	 * @return the focused field
@@ -62,7 +62,7 @@ public class AutocompletionEvent<T> {
 
 	/**
 	 * Prevent this event from being further processed.
-	 * 
+	 *
 	 * The actual completion action will still be completed, though.
 	 */
 	public void consume() {
@@ -79,7 +79,7 @@ public class AutocompletionEvent<T> {
 
 	/**
 	 * Prevent the actual completion action from taking place.
-	 * 
+	 *
 	 * Further listeners may still process this event, though.
 	 */
 	public void cancel() {

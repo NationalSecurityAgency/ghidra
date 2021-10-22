@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class CommentUtils {
 
 	/**
 	 * Makes adjustments as necessary to any annotations in the given text.
-	 * 
+	 *
 	 * @param rawCommentText the text to be updated
 	 * @param program the program associated with the comment
 	 * @return the updated string
@@ -100,17 +100,17 @@ public class CommentUtils {
 	}
 
 	/**
-	 * Returns the display string for the given raw annotation text.  Annotations are 
+	 * Returns the display string for the given raw annotation text.  Annotations are
 	 * encoded strings that fit this pattern: <code>{@literal {@name text}}</code>.  This method
 	 * will parse the given text, converting any annotations into their display version.
-	 * 
+	 *
 	 * @param rawCommentText text that may include annotations
 	 * @param program the program
 	 * @return the display string
 	 */
 	public static String getDisplayString(String rawCommentText, Program program) {
 
-		// Posterity: this code used to duplicate the algorithm of the method we now call, 
+		// Posterity: this code used to duplicate the algorithm of the method we now call,
 		//            but seemed unnecessary.  Refer to the history if needed.
 		AttributedString prototype = createPrototype();
 		FieldElement element = parseTextForAnnotations(rawCommentText, program, prototype, 0);
@@ -119,11 +119,11 @@ public class CommentUtils {
 	}
 
 	/**
-	 * Parses the given text looking for annotations. 
-	 *  
+	 * Parses the given text looking for annotations.
+	 *
 	 * @param text The text to parse.
 	 * @param program the program from which to get information
-	 * @param prototypeString The reference string used to determine the attributes of any 
+	 * @param prototypeString The reference string used to determine the attributes of any
 	 *         newly created AttributedString.
 	 * @param row the row of the newly created FieldElement
 	 * @return A field element containing {@link AttributedString}s
@@ -136,13 +136,13 @@ public class CommentUtils {
 	}
 
 	/**
-	 * Parses the given text looking for annotations. 
-	 *  
+	 * Parses the given text looking for annotations.
+	 *
 	 * @param text The text to parse
-	 * @param fixerUpper a function that will take an annotation and optionally create a new 
+	 * @param fixerUpper a function that will take an annotation and optionally create a new
 	 *        one.  This allows clients to use the annotations to change the text as needed
 	 * @param program the program from which to get information
-	 * @param prototype The reference string used to determine the attributes of any 
+	 * @param prototype The reference string used to determine the attributes of any
 	 *         newly created AttributedString.
 	 * @param row the row of the newly created FieldElement
 	 * @return A field element containing {@link AttributedString}s
@@ -180,9 +180,9 @@ public class CommentUtils {
 	}
 
 	/**
-	 * Split the given text into parts where the returned list contains either a String or 
+	 * Split the given text into parts where the returned list contains either a String or
 	 * an Annotation
-	 * 
+	 *
 	 * @param text the text to parse
 	 * @param fixerUpper a function that is given a chance to convert an Annotation into a new
 	 *        one
@@ -259,12 +259,12 @@ public class CommentUtils {
 		String namePatternString = StringUtils.join(names, "|");
 
 		//@formatter:off
-		return 
+		return
 			Pattern.compile(
 				"(?<!\\\\)" + 		// no preceding '\'
 				"(" +        		// capture the match
-				"\\{@(" +     		// '{@' start characters 
-				namePatternString + // all known annotations with the '|' alternation 
+				"\\{@(" +     		// '{@' start characters
+				namePatternString + // all known annotations with the '|' alternation
 				")\\s+?" +          // a space after the annotation name
 				")"					// end capture
 				);
@@ -272,8 +272,8 @@ public class CommentUtils {
 	}
 
 	/*
-	 * Starts at the given index and looks for the end an annotation, ignoring quoted text 
-	 * and escaped characters along the way.   The value returned is the index after the last 
+	 * Starts at the given index and looks for the end an annotation, ignoring quoted text
+	 * and escaped characters along the way.   The value returned is the index after the last
 	 * matching annotation character.  Thus, the result can be used in substring operations that
 	 * want an exclusive index.
 	 */

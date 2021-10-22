@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -315,8 +315,8 @@ public class XmlLoader extends AbstractProgramLoader {
 			return new ParseResult(lastXmlMgr, lastInfo);
 		}
 		catch (Throwable e) {
-			// This can happen during the import process when this loader attempts to load 
-			// a non-xml file (there really should be 2 methods, a speculative version and 
+			// This can happen during the import process when this loader attempts to load
+			// a non-xml file (there really should be 2 methods, a speculative version and
 			// a version that expects no exception)
 			Msg.trace(this, "Unable to parse XML for " + provider.getName(), e);
 			return new ParseResult(null, null);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,7 +79,7 @@ class ShowComponentAction extends DockingAction
 		ComponentProvider provider = placeholder.getProvider();
 		synchronizeKeyBinding(provider);
 
-		// Use provider Help for this action		
+		// Use provider Help for this action
 		HelpLocation helpLocation = provider.getHelpLocation();
 		if (helpLocation != null) {
 			setHelpLocation(helpLocation);
@@ -133,7 +133,7 @@ class ShowComponentAction extends DockingAction
 	}
 
 	// this compare method must take into account that there is sorting amongst top-level menus
-	// and sub-menus, while understanding that they will all end up in one datastructure 
+	// and sub-menus, while understanding that they will all end up in one datastructure
 	@Override
 	public int compareTo(ShowComponentAction other) {
 		String[] myMenuPath = getMenuBarData().getMenuPath();

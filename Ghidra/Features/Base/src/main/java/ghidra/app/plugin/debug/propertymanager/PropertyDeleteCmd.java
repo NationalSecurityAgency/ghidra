@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,11 @@ import ghidra.program.model.util.PropertyMapManager;
  * PropertyDeletedCmd
  */
 class PropertyDeleteCmd implements Command {
-	
+
 	private String propName;
 	private AddressSetView restrictedView;
 	private String cmdName;
-	
+
 	/**
 	 * Construct command for deleting program properties
 	 * @param propName property name
@@ -43,7 +43,7 @@ class PropertyDeleteCmd implements Command {
 		this.restrictedView = restrictedView;
 		this.cmdName = "Delete " + propName + " Properties";
 	}
-	
+
 	public String getName() {
 		return cmdName;
 	}
@@ -52,23 +52,23 @@ class PropertyDeleteCmd implements Command {
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.plugintool.PluginTool, ghidra.framework.model.DomainObject)
 	 */
 	public boolean applyTo(DomainObject obj) {
-		
+
 		if (!(obj instanceof Program)) {
 			throw new IllegalArgumentException("Program expected");
 		}
 		Program program = (Program)obj;
 		PropertyMapManager propMgr = program.getUsrPropertyManager();
-		
+
 		if (restrictedView != null && !restrictedView.isEmpty()) {
 			PropertyMap map = propMgr.getPropertyMap(propName);
 			AddressRangeIterator ranges = restrictedView.getAddressRanges();
 			while (ranges.hasNext()) {
 				AddressRange range = ranges.next();
-				map.removeRange(range.getMinAddress(), range.getMaxAddress());	
+				map.removeRange(range.getMinAddress(), range.getMaxAddress());
 			}
 		}
 		else {
-			propMgr.removePropertyMap(propName);	
+			propMgr.removePropertyMap(propName);
 		}
 		return true;
 	}

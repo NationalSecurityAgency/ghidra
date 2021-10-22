@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,9 +46,9 @@ public class LazyGraphRegroupSaveableXML extends LazySaveableXML {
 
 	@Override
 	/**
-	 * Overridden to create the {@link Element} to save at the time saving is taking place, 
+	 * Overridden to create the {@link Element} to save at the time saving is taking place,
 	 * instead of construction time.
-	 * 
+	 *
 	 * @param objStorage The object into which the data will be placed.
 	 */
 	public void save(ObjectStorage objStorage) {

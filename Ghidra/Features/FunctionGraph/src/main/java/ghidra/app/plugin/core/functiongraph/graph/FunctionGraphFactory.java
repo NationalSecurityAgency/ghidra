@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,11 +42,11 @@ public class FunctionGraphFactory {
 
 	/**
 	 * Clones the given function graph, creating a new graph with cloned versions of each
-	 * vertex and edge. 
-	 * 
+	 * vertex and edge.
+	 *
 	 * @param data the data of the current graph
 	 * @param newController controller for the new graph
-	 * @return a new data object containing the new graph 
+	 * @return a new data object containing the new graph
 	 */
 	public static FGData createClonedGraph(FGData data, FGController newController) {
 
@@ -129,7 +129,7 @@ public class FunctionGraphFactory {
 
 	/**
 	 * Creates a new function graph for the given function
-	 * 
+	 *
 	 * @param function the function to graph
 	 * @param controller the controller needed by the function graph
 	 * @param program the function's program

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -635,7 +635,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	/**
 	 * Run the currently selected script by pressing the run button and return its output.
-	 * 
+	 *
 	 * @param taskName name for the task listener
 	 * @return script output written to the console
 	 * @throws Exception on failure, e.g. timeout
@@ -656,7 +656,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 	/**
 	 * Run the last script by pressing the last script button and return output.
-	 * 
+	 *
 	 * @param taskName name for the task listener
 	 * @return script output written to the console
 	 * @throws Exception on failure, e.g. timeout
@@ -1112,7 +1112,7 @@ public abstract class AbstractGhidraScriptMgrPluginTest
 
 			//
 			// inside knowledge; brittle code
-			// 
+			//
 			@SuppressWarnings("unchecked")
 			FixedSizeStack<UndoableEdit> undoStack =
 				(FixedSizeStack<UndoableEdit>) getInstanceField("undoStack", editor);

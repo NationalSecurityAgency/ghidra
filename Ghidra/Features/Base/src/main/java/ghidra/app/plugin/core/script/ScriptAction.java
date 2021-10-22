@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,18 +54,18 @@ class ScriptAction extends DockingAction {
 	@Override
 	public void setUnvalidatedKeyBindingData(KeyBindingData keyBindingData) {
 
-		// 
-		// Unobvious Dependencies!: 
+		//
+		// Unobvious Dependencies!:
 		// We have two different ways the user can set the keybinding for this action: 1) By way
 		// of the 'assign keybindings' action in the provider and 2) by including a keybinding
 		// assignment in the metadata of the script itself.  The user-defined binding from the GUI
 		// gets precedence over the script's metadata.
 		//
-		// Also, if we are given a data object whose keystroke is null, then we have 
-		// to decide if the value is being completely cleared, or if the user has cleared 
+		// Also, if we are given a data object whose keystroke is null, then we have
+		// to decide if the value is being completely cleared, or if the user has cleared
 		// the action from the GUI, in which case we should fall back to the
 		// script's metadata, if it defines a keybinding.
-		//	    	    
+		//
 		KeyBindingData newKeyBindingData = checkForFallbackKeybindingCondition(keyBindingData);
 		updateUserDefinedKeybindingStatus(newKeyBindingData);
 		super.setUnvalidatedKeyBindingData(newKeyBindingData);
@@ -91,7 +91,7 @@ class ScriptAction extends DockingAction {
 			return keyBindingData;
 		}
 
-		// check to see if we have a fallback value         
+		// check to see if we have a fallback value
 		ScriptInfo info = infoManager.getExistingScriptInfo(script);
 		KeyStroke metadataKeyStroke = info.getKeyBinding();
 		if (metadataKeyStroke == null) {
@@ -104,7 +104,7 @@ class ScriptAction extends DockingAction {
 	}
 
 	private void updateUserDefinedKeybindingStatus(KeyBindingData keyBindingData) {
-		// we have a user defined keybinding if the keystroke for the action differs from 
+		// we have a user defined keybinding if the keystroke for the action differs from
 		// that which is defined in the metadata of the script
 		KeyStroke actionKeyStroke = keyBindingData.getKeyBinding();
 		ScriptInfo info = infoManager.getExistingScriptInfo(script);

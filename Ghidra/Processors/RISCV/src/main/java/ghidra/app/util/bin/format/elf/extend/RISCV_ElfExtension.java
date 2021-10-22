@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ public class RISCV_ElfExtension extends ElfExtension {
 	//TODO  not sure about these
     public static final String RISCV_PROC="RISCV";
     public static final String RISCV_SUFFIX="_RISCV";
-    
+
     @Override
     public boolean canHandle(ElfHeader elf) {
     	return elf.e_machine() == ElfConstants.EM_RISCV;
@@ -36,7 +36,7 @@ public class RISCV_ElfExtension extends ElfExtension {
     public boolean canHandle(ElfLoadHelper elfLoadHelper) {
     	if (!canHandle(elfLoadHelper.getElfHeader()))
     		return false;
-	
+
     	Language language = elfLoadHelper.getProgram().getLanguage();
     	int size =language.getLanguageDescription().getSize();
     	return ((32 == size || 64 == size) && language.getProcessor().toString().equals(RISCV_PROC));

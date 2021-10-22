@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import javax.swing.ImageIcon;
 
 /**
  * Service to show a component that has a JTable given a table model
- * that builds up its data dynamically (a <code>ThreadedTableModel</code>). 
+ * that builds up its data dynamically (a <code>ThreadedTableModel</code>).
  */
 @ServiceInfo(defaultProvider = TableServicePlugin.class)
 public interface TableService {
@@ -38,7 +38,7 @@ public interface TableService {
 	/**
 	 * Creates a table view using the given model. This version does not create markers.
 	 * @param componentProviderTitle The title of the view
-	 * @param tableTypeName The name of the table's type.  This is used to group like tables 
+	 * @param tableTypeName The name of the table's type.  This is used to group like tables
 	 *        together
 	 * @param model the data model
 	 * @param windowSubMenu the name of a sub-menu to use in the "windows" menu.
@@ -53,7 +53,7 @@ public interface TableService {
 	/**
 	 * Creates a table view using the given model. This version creates markers.
 	 * @param componentProviderTitle The title of the view
-	 * @param tableTypeName The name of the table's type.  This is used to group like tables 
+	 * @param tableTypeName The name of the table's type.  This is used to group like tables
 	 *        together
 	 * @param model the data model
 	 * @param markerColor the color to use for the marker

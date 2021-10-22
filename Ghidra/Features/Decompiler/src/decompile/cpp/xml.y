@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ string Attributes::bogus_uri("http://unused.uri");
 ///
 /// Tokenize a byte stream suitably for the main XML parser.  The scanner expects an ASCII or UTF-8
 /// encoding.  Characters is XML tag and attribute names are restricted to ASCII "letters", but
-/// extended UTF-8 characters can be used in any other character data: attribute values, content, comments. 
+/// extended UTF-8 characters can be used in any other character data: attribute values, content, comments.
 class XmlScan {
 public:
   /// \brief Modes of the scanner
@@ -63,10 +63,10 @@ private:
   /// XML character sequences without consuming.
   /// \return the next byte value as an integer
   int4 getxmlchar(void) {
-    char c;	    
+    char c;
     int4 ret=lookahead[pos];
     if (!endofstream) {
-      s.get(c); 
+      s.get(c);
       if (s.eof()||(c=='\0')) {
 	endofstream = true;
 	lookahead[pos] = '\n';
@@ -82,7 +82,7 @@ private:
   int4 next(int4 i) { return lookahead[(pos+i)&3]; }	///< Peek at the next (i-th) byte without consuming
   bool isLetter(int4 val) { return (((val>=0x41)&&(val<=0x5a))||((val>=0x61)&&(val<=0x7a))); }	///< Is the given byte a \e letter
   bool isInitialNameChar(int4 val);		///< Is the given byte/character the valid start of an XML name
-  bool isNameChar(int4 val);			///< Is the given byte/character valid for an XML name	
+  bool isNameChar(int4 val);			///< Is the given byte/character valid for an XML name
   bool isChar(int4 val);				///< Is the given byte/character valid as an XML character
   int4 scanSingle(void);				///< Scan for the next token in Single Character mode
   int4 scanCharData(void);				///< Scan for the next token is Character Data mode
@@ -172,7 +172,7 @@ Eq: '='
 Misc: Comment
       | PI
       | S ;
-      
+
 VersionInfo: S 'v' 'e' 'r' 's' 'i' 'o' 'n' Eq AttValue { handler->setVersion(*$10); delete $10; };
 EncodingDecl: S 'e' 'n' 'c' 'o' 'd' 'i' 'n' 'g' Eq AttValue { handler->setEncoding(*$11); delete $11; };
 xmldeclstart: COMMBRACE '?' 'x' 'm' 'l' VersionInfo
@@ -252,7 +252,7 @@ int4 XmlScan::scanCharData(void)
 {
   clearlvalue();
   lvalue = new string();
-  
+
   while(next(0) != -1) {		// look for '<' '&' or ']]>'
     if (next(0) == '<') break;
     if (next(0) == '&') break;
@@ -456,7 +456,7 @@ void print_content(const string &str)
   if (i==str.size())
     handler->ignorableWhitespace(str.c_str(),0,str.size());
   else
-    handler->characters(str.c_str(),0,str.size());  
+    handler->characters(str.c_str(),0,str.size());
 }
 
 int4 convertEntityRef(const string &ref)
@@ -554,7 +554,7 @@ Element::~Element(void)
 
 {
   List::iterator iter;
-  
+
   for(iter=children.begin();iter!=children.end();++iter)
     delete *iter;
 }

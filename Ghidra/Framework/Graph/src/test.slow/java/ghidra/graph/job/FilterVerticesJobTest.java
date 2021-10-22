@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,16 +76,16 @@ public class FilterVerticesJobTest extends AbstractFilteringVisualGraphTest {
 			}
 		};
 
-		/*		 
+		/*
 							cat
 		 					/|\
 		 				   / | \
 		 				 bat |  fish---->bee
 		 				     |
 		 				  antelope
-		 				  
+
 		 		    worm     ape------>turtle
-		
+
 		 */
 
 		cat = vertex("cat");
@@ -128,14 +128,14 @@ public class FilterVerticesJobTest extends AbstractFilteringVisualGraphTest {
 		 		-cat, bat, antelope, ape
 		 	Not Matching:
 		 		-fish, worm, turtle, bee
-		 		
+
 		 	Matches by Connection:
 		 		-cat-->fish-->bee
 		 		-ape-->turtle
-		 	
+
 		 	And excluded will be:
 		 		-worm (poor worm)
-		 		
+
 		 */
 
 		assertOnlyTheseAreFiltered(worm);
@@ -163,10 +163,10 @@ public class FilterVerticesJobTest extends AbstractFilteringVisualGraphTest {
 		 		-cat, bat, antelope
 		 	Not Matching:
 		 		-fish, worm, ape, turtle, bee
-		 		
+
 		 	Matches by Connection:
 		 		-cat-->fish-->bee
-		 		
+
 		 	And excluded will be:
 		 		-worm, ape, turtle
 		 		-ape-->turtle
@@ -198,13 +198,13 @@ public class FilterVerticesJobTest extends AbstractFilteringVisualGraphTest {
 		/*
 		  	Matching 'at':
 		 		-cat, bat, antelope
-		 		
+
 		 	Not Matching:
 		 		-fish, worm, ape, turtle, bee
-		 				 				 		
+
 		 	Matches by Connection:
 		 		-cat-->fish-->bee
-		 	
+
 		 	And excluded will be:
 		 		-worm, ape, turtle
 		 		-ape-->turtle
@@ -222,7 +222,7 @@ public class FilterVerticesJobTest extends AbstractFilteringVisualGraphTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/** Validate the alpha of the graph vertices */
 	private void assertAllVisibleBut(AbstractTestVertex... vertices) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	public static final int TYPE_REGISTER = 4;
 	public static final int TYPE_STACK = 5; // signed offset space for stack
 	public static final int TYPE_JOIN = 6; // used for variable join space (see decompiler)
-	public static final int TYPE_OTHER = 7; // used for storing debug info and displaced code in memory 
+	public static final int TYPE_OTHER = 7; // used for storing debug info and displaced code in memory
 
 	public static final int TYPE_SYMBOL = 9; // symbol space used for analysis only
 	public static final int TYPE_EXTERNAL = 10;
@@ -73,7 +73,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 		BasicCompilerSpec.OTHER_SPACE_NAME, 64, TYPE_OTHER, BasicCompilerSpec.OTHER_SPACE_INDEX);
 
 	/**
-	 * The <code>EXTERNAL_SPACE</code> is used to contain all external locations (i.e., data and functions) 
+	 * The <code>EXTERNAL_SPACE</code> is used to contain all external locations (i.e., data and functions)
 	 * defined within a given library namespace.  All external locations within a program
 	 * are given a unique offset within the EXTERNAL space.
 	 */
@@ -81,7 +81,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 		new GenericAddressSpace("EXTERNAL", 32, TYPE_EXTERNAL, 0);
 
 	/**
-	 * The <code>VARIABLE_SPACE</code> is used to contain all variables and parameters 
+	 * The <code>VARIABLE_SPACE</code> is used to contain all variables and parameters
 	 * defined within a given namespace (i.e., function).  All variables within a program
 	 * are given a unique offset within the VARIABLE space.
 	 */
@@ -89,13 +89,13 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 		new GenericAddressSpace("VARIABLE", 32, TYPE_VARIABLE, 0);
 
 	/**
-	 * The <code>HASH_SPACE</code> provides a 60-bit space for encoding of unique hashcodes. 
+	 * The <code>HASH_SPACE</code> provides a 60-bit space for encoding of unique hashcodes.
 	 */
 	public static final AddressSpace HASH_SPACE =
 		new GenericAddressSpace("HASH", 60, TYPE_UNKNOWN, 0);
 
 	/**
-	 * A language may only define a single REGISTER space.  If one is not defined, this 
+	 * A language may only define a single REGISTER space.  If one is not defined, this
 	 * DEFAULT_REGISTER_SPACE definition will be used.
 	 */
 	public static final AddressSpace DEFAULT_REGISTER_SPACE =
@@ -108,7 +108,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 
 	/**
 	 * Get the ID for this space
-	 * 
+	 *
 	 * @return space ID
 	 */
 	int getSpaceID();
@@ -119,7 +119,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	int getSize();
 
 	/**
-	 * Returns the number of data bytes which correspond to each addressable 
+	 * Returns the number of data bytes which correspond to each addressable
 	 * location within this space (i.e., word-size in bytes).
 	 * NOTE: When transforming a byte-offset to an addressable word
 	 * offset the method {@link #getAddressableWordOffset(long)} should
@@ -134,8 +134,8 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	int getAddressableUnitSize();
 
 	/**
-	 * Get the addressable memory word offset which corresponds to the specified 
-	 * memory byte offset.  This method handles some of the issues of unsigned 
+	 * Get the addressable memory word offset which corresponds to the specified
+	 * memory byte offset.  This method handles some of the issues of unsigned
 	 * math when stuck using Java's signed long primitives. No space bounds
 	 * checking is performed.
 	 * @param byteOffset memory byte offset
@@ -190,9 +190,9 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	Address getAddress(long byteOffset) throws AddressOutOfBoundsException;
 
 	/**
-	 * Returns a new address in this space with the given offset.  
+	 * Returns a new address in this space with the given offset.
 	 * NOTE: for those spaces with an addressable unit size other than 1, the address
-	 * returned may not correspond to an addressable unit/word boundary if a byte-offset 
+	 * returned may not correspond to an addressable unit/word boundary if a byte-offset
 	 * is specified.
 	 * @param offset the offset for the new address.
 	 * @param isAddressableWordOffset if true the specified offset is an addressable unit/word offset,
@@ -206,10 +206,10 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 			throws AddressOutOfBoundsException;
 
 	/**
-	 * Returns a new address in this space with the given offset.  The specified 
+	 * Returns a new address in this space with the given offset.  The specified
 	 * offset will be truncated within the space and will not throw an exception.
 	 * NOTE: for those spaces with an addressable unit size other than 1, the address
-	 * returned may not correspond to a word boundary (addressable unit) if a byte-offset 
+	 * returned may not correspond to a word boundary (addressable unit) if a byte-offset
 	 * is specified.
 	 * @param offset the offset for the new address.
 	 * @param isAddressableWordOffset if true the specified offset is an addressable unit/word offset,
@@ -223,10 +223,10 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * Get a byte address from this address space.  Don't allow overlay spaces
 	 * to remap the address into a base space when the address is not
 	 * contained in the bounds of the overlay region.
-	 * 
+	 *
 	 * @param byteOffset the byte offset for the new address.
 	 * @return an address if the offset is valid.
-	 * 
+	 *
 	 * @throws AddressOutOfBoundsException if the offset is less than 0 or greater
 	 * than the max offset allowed for this space.
 	 */
@@ -240,7 +240,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	long truncateOffset(long byteOffset);
 
 	/**
-	 * Truncate the specified addressable unit/word offset within this space to produce a 
+	 * Truncate the specified addressable unit/word offset within this space to produce a
 	 * valid offset.
 	 * @param wordOffset any addressable unit/word offset
 	 * @return truncated word offset
@@ -251,9 +251,9 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 * Get an address that is relative to this address space.
 	 * If this is an overlay space and the address falls within
 	 * this space, return an address based in this space.
-	 * 
+	 *
 	 * @param addr address possibly falling within this overlay space.
-	 * 
+	 *
 	 * @return an address relative to this overlay
 	 */
 	Address getOverlayAddress(Address addr);
@@ -282,7 +282,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	public Address subtractWrap(Address addr, long displacement);
 
 	/**
-	 * Creates a new address by subtracting the displacement from the given 
+	 * Creates a new address by subtracting the displacement from the given
 	 * address. If the offset is greater than the max offset of the address space, the high
 	 * order bits are masked off, making the address wrap.  For non-segmented addresses this
 	 * will be the same as subtractWrap().  For segmented addresses, the address will wrap when
@@ -295,7 +295,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 
 	/**
 	 * Creates a new address by subtracting displacement from addr's offset.
-	 * The new offset will NOT wrap!  
+	 * The new offset will NOT wrap!
 	 * @param addr the original address
 	 * @param displacement  the displacement to subtract.
 	 * @return The new address created by subtracting displacement from addr.offset.
@@ -304,7 +304,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	public Address subtractNoWrap(Address addr, long displacement) throws AddressOverflowException;
 
 	/**
-	 * Creates a new address (possibly in a new space) by subtracting the given 
+	 * Creates a new address (possibly in a new space) by subtracting the given
 	 * displacement from the given address.
 	 * @param addr original address being subtracted from
 	 * @param displacement amount to subtract
@@ -326,7 +326,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	public Address addWrap(Address addr, long displacement);
 
 	/**
-	 * Creates a new address by adding the displacement to the given 
+	 * Creates a new address by adding the displacement to the given
 	 * address. If the offset is greater than the max offset of the address space, the high
 	 * order bits are masked off, making the address wrap.  For non-segmented addresses this
 	 * will be the same as addWrap().  For segmented addresses, the address will wrap when
@@ -339,7 +339,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 
 	/**
 	 * Creates a new address by adding displacement to the given address. The
-	 * new address will NOT wrap!  
+	 * new address will NOT wrap!
 	 * @param addr the original address.
 	 * @param displacement  the displacement to add.
 	 * @return The new address created by adding displacement to addr.offset.
@@ -349,7 +349,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 
 	/**
 	 * Creates a new address by adding displacement to the given address. The
-	 * new address will NOT wrap!  
+	 * new address will NOT wrap!
 	 * @param addr the original address.
 	 * @param displacement  the displacement to add.
 	 * @return The new address created by adding displacement to addr.offset.
@@ -359,7 +359,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 			throws AddressOverflowException;
 
 	/**
-	 * Creates a new address (possibly in a new space) by adding the given 
+	 * Creates a new address (possibly in a new space) by adding the given
 	 * displacement from the given address.
 	 * @param addr original address being subtracted from
 	 * @param displacement amount to subtract
@@ -389,7 +389,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	 */
 	public Address getMaxAddress();
 
-	/** 
+	/**
 	 * Get the min address allowed for this AddressSpace
 	 */
 	public Address getMinAddress();
@@ -404,7 +404,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 
 	/**
 	 * Tests if the offset if valid. If the space is signed, then it sign extends
-	 * the offset. 
+	 * the offset.
 	 * @param offset the offset to test and/or sign extend
 	 * @return the valid positive offset or appropriate sign extended offset.
 	 * @throws AddressOutOfBoundsException if offset is invalid
@@ -412,14 +412,14 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	public long makeValidOffset(long offset) throws AddressOutOfBoundsException;
 
 	/**
-	 * Returns true if this space represents a memory address.  NOTE: It is important to 
+	 * Returns true if this space represents a memory address.  NOTE: It is important to
 	 * make the distinction between Loaded and Non-Loaded memory addresses.  Program importers
 	 * may create memory blocks associated with Non-Loaded file content which are not associated
 	 * with processor defined memory regions.  While Loaded file content is placed into
 	 * memory blocks which are associated with specific memory address spaces defined
 	 * by the processor language specification.
 	 * @see #isLoadedMemorySpace()
-	 * @see #isNonLoadedMemorySpace() 
+	 * @see #isNonLoadedMemorySpace()
 	 */
 	public boolean isMemorySpace();
 
@@ -451,7 +451,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	public boolean isStackSpace();
 
 	/**
-	 * Returns true if this space represents a location in the HASH space. 
+	 * Returns true if this space represents a location in the HASH space.
 	 */
 	public boolean isHashSpace();
 
@@ -473,7 +473,7 @@ public interface AddressSpace extends Comparable<AddressSpace> {
 	/**
 	 * Returns true if this space has registers that are mapped into it.
 	 * This means that registers could actually have pointers to them.
-	 * 
+	 *
 	 * @return true if this space has any registers mapped in it.
 	 */
 	boolean hasMappedRegisters();

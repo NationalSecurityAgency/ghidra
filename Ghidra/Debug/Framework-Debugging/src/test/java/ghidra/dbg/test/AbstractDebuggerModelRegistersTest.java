@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ public abstract class AbstractDebuggerModelRegistersTest extends AbstractDebugge
 	/**
 	 * Get the expected (absolute) path of the target's (inner-most) register
 	 * bank
-	 * 
+	 *
 	 * @param threadPath the path of the target (usually a thread)
 	 * @return the expected path, or {@code null} for no assertion
 	 */
@@ -55,7 +55,7 @@ public abstract class AbstractDebuggerModelRegistersTest extends AbstractDebugge
 
 	/**
 	 * This has been a popular convention, and may soon become required
-	 * 
+	 *
 	 * <p>
 	 * Background: Technically, the descriptions (register container) can be
 	 * higher up the model tree, e.g., to apply to an entire process, rather
@@ -66,7 +66,7 @@ public abstract class AbstractDebuggerModelRegistersTest extends AbstractDebugge
 	 * containers, one for the 64-bit and one for the 32-bit registers,
 	 * assigning the bank's {@link TargetRegisterBank#getDescriptions()}
 	 * attribute accordingly.
-	 * 
+	 *
 	 * <p>
 	 * However, none of that really matters if you choose the
 	 * banks-are-containers convention. The primary motivation for doing this is
@@ -81,7 +81,7 @@ public abstract class AbstractDebuggerModelRegistersTest extends AbstractDebugge
 	 * {@link TargetRegisterBank#readRegistersNamed(Collection)}. TODO:
 	 * Currently the value is given as a string, encoding the value in base-16.
 	 * I'd rather it were a byte array.
-	 * 
+	 *
 	 * @return true if the convention is expected and should be tested, false if
 	 *         not
 	 */
@@ -91,12 +91,12 @@ public abstract class AbstractDebuggerModelRegistersTest extends AbstractDebugge
 
 	/**
 	 * Get the values to write to the registers
-	 * 
+	 *
 	 * <p>
 	 * This collection is used for validation in other tests. The descriptions
 	 * are validated to have lengths consistent with the written values, and the
 	 * read values are expected to have lengths equal to the written values.
-	 * 
+	 *
 	 * @return the name-value map to write, and use for validation
 	 */
 	public abstract Map<String, byte[]> getRegisterWrites();
@@ -104,7 +104,7 @@ public abstract class AbstractDebuggerModelRegistersTest extends AbstractDebugge
 	/**
 	 * This various slightly from the usual find pattern, since we attempt to
 	 * find any thread first
-	 * 
+	 *
 	 * @param seedPath the path to the target or thread
 	 * @return the bank, or {@code null} if one cannot be uniquely identified in
 	 *         a thread, or the target

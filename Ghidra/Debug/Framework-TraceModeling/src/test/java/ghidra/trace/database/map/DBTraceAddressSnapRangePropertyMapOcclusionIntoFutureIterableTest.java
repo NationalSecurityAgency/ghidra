@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -174,7 +174,7 @@ public class DBTraceAddressSnapRangePropertyMapOcclusionIntoFutureIterableTest
 			makeOcclusionIterable(tasr(0x0000, 0xffff, 0, 100));
 
 		assertFalse(it.iterator().hasNext());
-		// This specification is a bit odd, but no one should peek or next in this situation. 
+		// This specification is a bit odd, but no one should peek or next in this situation.
 		try {
 			it.iterator().peek();
 			fail();

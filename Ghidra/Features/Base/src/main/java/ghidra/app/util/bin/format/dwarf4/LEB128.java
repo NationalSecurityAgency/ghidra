@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ public class LEB128 {
 	 * Returns the value as an unsigned int32.  If the actual value
 	 * is outside the positive range of a java int (ie. 0.. {@link Integer#MAX_VALUE}),
 	 * an exception is thrown.
-	 *    
+	 *
 	 * @return int in the range of 0 to  {@link Integer#MAX_VALUE}
 	 * @throws IOException if value is outside range
 	 */
@@ -58,7 +58,7 @@ public class LEB128 {
 	 * Returns the value as an signed int32.  If the actual value
 	 * is outside the range of a java int (ie.  {@link Integer#MIN_VALUE}.. {@link Integer#MAX_VALUE}),
 	 * an exception is thrown.
-	 *    
+	 *
 	 * @return int in the range of {@link Integer#MIN_VALUE} to  {@link Integer#MAX_VALUE}
 	 * @throws IOException if value is outside range
 	 */
@@ -66,21 +66,21 @@ public class LEB128 {
 		ensureInt32s(value);
 		return (int) value;
 	}
-	
+
 	/**
 	 * Returns the value as a 64bit primitive long.  Interpreting the signed-ness of the
 	 * value will depend on the way the value was read (ie. if {@link #readSignedValue(BinaryReader)}
 	 * vs. {@link #readUnsignedValue(BinaryReader)} was used).
-	 * 
+	 *
 	 * @return long value.
 	 */
-	public long asLong() { 
+	public long asLong() {
 		return value;
 	}
 
 	/**
 	 * Returns the offset of the LEB128 value in the stream it was read from.
-	 *   
+	 *
 	 * @return stream offset of the LEB128 value
 	 */
 	public long getOffset() {
@@ -90,7 +90,7 @@ public class LEB128 {
 	/**
 	 * Returns the number of bytes that were used to store the LEB128 value in the stream
 	 * it was read from.
-	 * 
+	 *
 	 * @return number of bytes used to store the read LEB128 value
 	 */
 	public int getLength() {
@@ -108,7 +108,7 @@ public class LEB128 {
 	 * that contains the value along with size and position metadata.
 	 * <p>
 	 * See {@link #readAsLong(BinaryReader, boolean)}.
-	 * 
+	 *
 	 * @param reader {@link BinaryReader} to read bytes from
 	 * @param isSigned true if the value is signed
 	 * @return a {@link LEB128} instance with the read LEB128 value with metadata
@@ -127,7 +127,7 @@ public class LEB128 {
 	 * that contains the value along with size and position metadata.
 	 * <p>
 	 * See {@link #readAsLong(BinaryReader, boolean)}.
-	 * 
+	 *
 	 * @param reader {@link BinaryReader} to read bytes from
 	 * @return a {@link LEB128} instance with the read LEB128 value with metadata
 	 * @throws IOException if an I/O error occurs or value is outside the range of a java
@@ -142,7 +142,7 @@ public class LEB128 {
 	 * that contains the value along with size and position metadata.
 	 * <p>
 	 * See {@link #readAsLong(BinaryReader, boolean)}.
-	 * 
+	 *
 	 * @param reader {@link BinaryReader} to read bytes from
 	 * @return a {@link LEB128} instance with the read LEB128 value with metadata
 	 * @throws IOException if an I/O error occurs or value is outside the range of a java
@@ -199,7 +199,7 @@ public class LEB128 {
 	 * @return long integer value.  Caller must treat it as unsigned if isSigned parameter was
 	 * set to false
 	 * @throws IOException if an I/O error occurs or value is outside the range of a java
-	 * 64 bit int 
+	 * 64 bit int
 	 */
 	public static long readAsLong(BinaryReader reader, boolean isSigned) throws IOException {
 		int nextByte = 0;
@@ -232,7 +232,7 @@ public class LEB128 {
 	 * Decodes a LEB128 number from a byte array and returns it as a long.
 	 * <p>
 	 * See {@link #readAsLong(BinaryReader, boolean)}.
-	 * 
+	 *
 	 * @param bytes the bytes representing the LEB128 number
 	 * @param isSigned true if the value is signed
 	 * @return long integer value.  Caller must treat it as unsigned if isSigned parameter was
@@ -248,9 +248,9 @@ public class LEB128 {
 	 * Decodes a LEB128 number from a byte array and returns it as a long.
 	 * <p>
 	 * See {@link #readAsLong(BinaryReader, boolean)}.
-	 * 
+	 *
 	 * @param bytes the bytes representing the LEB128 number
-	 * @param offset offset in byte array of where to start reading bytes 
+	 * @param offset offset in byte array of where to start reading bytes
 	 * @param isSigned true if the value is signed
 	 * @return long integer value.  Caller must treat it as unsigned if isSigned parameter was
 	 * set to false

@@ -1,12 +1,12 @@
 ## ###
 #  IP: GHIDRA
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
-#  
+#
 #       http://www.apache.org/licenses/LICENSE-2.0
-#  
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ def getYaraRulePath():
   if file is None:
     sys.exit(1)
   else:
-    return file.getPath()     
+    return file.getPath()
 
 #Use Ghidra's Executable Location to identify the executable file that corresponds
 #to the program in the Code Browser if the file does not exist, then prompt
@@ -90,7 +90,7 @@ def getYaraTargetFromGhidra():
     buf2 = buf[0:count]
     FileUtils.writeByteArrayToFile(yaraTargetPath, buf2, True)
   return yaraTargetPath.getPath()
-  
+
 #Each key in the YARA dictionary is a YARA rule name.
 #The values associated with each key are the YARA file offsets
 #where each file offset represents a match for that rule
@@ -102,11 +102,11 @@ def createYaraDictionary(stdout):
   yaraDictionary = {}
   for line in lines:
   #we have the rule name and executable file path
-    if not line.startswith('0x'): 
+    if not line.startswith('0x'):
       ruleName = line.split(' ')[0]
       yaraDictionary[ruleName] = []
     #we have the file offset where the YARA rule matches in the file
-    else: 
+    else:
       yaraDictionary[ruleName].append(line.split(':')[0])
   return yaraDictionary
 
@@ -140,7 +140,7 @@ def launchYaraProcess(yaraRulePath, yaraTargetPath):
   yaraProcess.stdout.close()
   yaraProcess.stderr.close()
   return yaraDictionary
-  
+
 #Start each comment that has at least one YARA match with 'YARA'
 #so users can easily filter through comments in the Ghidra Comments window
 def setGhidraComment(memoryAddress,fileOffset,yaraRuleName):
@@ -220,9 +220,9 @@ def main():
           addressChoice = askChoice('Select the memory address that corresponds to the file offset: ' + hex(myFileOffset), 'Please choose one', addressChoiceList, addressChoiceList[0])
           selectedAddress = addressChoice.split(':')
           addrSelected = currentProgram.getAddressFactory().getDefaultAddressSpace().getAddress(selectedAddress[-1])
-          setGhidraComment(addrSelected,myFileOffset,key)  
+          setGhidraComment(addrSelected,myFileOffset,key)
   else:
     println('No YARA matches.')
-              
+
 if __name__ == "__main__":
   main()

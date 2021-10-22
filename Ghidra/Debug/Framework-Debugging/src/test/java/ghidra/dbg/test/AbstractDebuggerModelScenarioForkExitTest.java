@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,12 +45,12 @@ public abstract class AbstractDebuggerModelScenarioForkExitTest extends Abstract
 
 	/**
 	 * This specimen must fork or similar, and then both parent and child must exit immediately
-	 * 
+	 *
 	 * <p>
 	 * They may optionally print information, but they cannot spin, sleep, or otherwise hang around.
 	 * For platforms without {@code fork()}, e.g., Windows, the nearest equivalent behavior should
 	 * be performed, e.g., roughly {@code CreateProcess("SameSpecimen.exe /child")}.
-	 * 
+	 *
 	 * @return the specimen
 	 */
 	protected abstract DebuggerTestSpecimen getSpecimen();
@@ -58,11 +58,11 @@ public abstract class AbstractDebuggerModelScenarioForkExitTest extends Abstract
 	/**
 	 * Perform whatever preparation is necessary to ensure the child will remain attached and be
 	 * trapped upon its being forked from its parent
-	 * 
+	 *
 	 * <p>
 	 * If this cannot be done without a handle to the parent process, override
 	 * {@link #postLaunch(TargetObject, TargetProcess)} instead.
-	 * 
+	 *
 	 * @param launcher the launcher
 	 * @throws Throwable if anything goes wrong
 	 */
@@ -72,7 +72,7 @@ public abstract class AbstractDebuggerModelScenarioForkExitTest extends Abstract
 	/**
 	 * Perform whatever preparation is necessary to ensure the child will remain attached and be
 	 * trapped upon its being forked from its parent
-	 * 
+	 *
 	 * @param parentProcess the parent process
 	 * @throws Throwable if anything goes wrong
 	 */
@@ -85,23 +85,23 @@ public abstract class AbstractDebuggerModelScenarioForkExitTest extends Abstract
 
 	/**
 	 * Get a breakpoint expression that will trap the parent post-fork
-	 * 
+	 *
 	 * <p>
 	 * Ideally, this same expression will trap the child post-fork as well. Note this test presumes
 	 * the child will be trapped by the debugger upon fork. See
 	 * {@link #getChildBreakpointExpression()}
-	 * 
+	 *
 	 * @return the expression
 	 */
 	protected abstract String getParentBreakpointExpression();
 
 	/**
 	 * Get a breakpoint expression that will trap the child post-fork
-	 * 
+	 *
 	 * <p>
 	 * If breakpoints are not passed from parent to child, the test will need to set a breakpoint to
 	 * trap the child. Override this with a suitable expression, if needed.
-	 * 
+	 *
 	 * @return the expression
 	 */
 	protected String getChildBreakpointExpression() {
@@ -110,20 +110,20 @@ public abstract class AbstractDebuggerModelScenarioForkExitTest extends Abstract
 
 	/**
 	 * This is invoked for both the launch of the specimen and upon fork
-	 * 
+	 *
 	 * <p>
 	 * Because one is forked from the other, we should expect to see the same environment attributes
 	 * for both processes. That said, if a tester <em>does</em> need to distinguish, and please
 	 * think carefully about whether or not you should, you can examine the environment's path to
 	 * determine which process it applies to.
-	 * 
+	 *
 	 * @param environment the environment at the time the process became alive
 	 */
 	public abstract void assertEnvironment(TargetEnvironment environment);
 
 	/**
 	 * Test the following scenario:
-	 * 
+	 *
 	 * <ol>
 	 * <li>Obtain a launcher and use it to start the specimen</li>
 	 * <li>Place a breakpoint on the new (parent) process</li>

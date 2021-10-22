@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import java.io.InputStream;
  * An {@link InputStream} that reads from a {@link ByteProvider}.
  * <p>
  * Does not close the underlying ByteProvider when closed itself.
- * 
+ *
  */
 public class ByteProviderInputStream extends InputStream {
 
@@ -30,7 +30,7 @@ public class ByteProviderInputStream extends InputStream {
 	 * An {@link InputStream} that reads from a {@link ByteProvider}, and <b>DOES</b>
 	 * {@link ByteProvider#close() close()} the underlying ByteProvider when
 	 * closed itself.
-	 * <p> 
+	 * <p>
 	 */
 	public static class ClosingInputStream extends ByteProviderInputStream {
 		/**
@@ -60,7 +60,7 @@ public class ByteProviderInputStream extends InputStream {
 
 	/**
 	 * Creates an InputStream that uses a ByteProvider as its source of bytes.
-	 *  
+	 *
 	 * @param provider the {@link ByteProvider} to wrap
 	 */
 	public ByteProviderInputStream(ByteProvider provider) {
@@ -69,7 +69,7 @@ public class ByteProviderInputStream extends InputStream {
 
 	/**
 	 * Creates an InputStream that uses a ByteProvider as its source of bytes.
-	 *  
+	 *
 	 * @param provider the {@link ByteProvider} to wrap
 	 * @param startPosition starting position in the provider
 	 */

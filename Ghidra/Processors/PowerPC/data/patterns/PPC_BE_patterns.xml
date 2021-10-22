@@ -24,11 +24,11 @@
      <possiblefuncstart/>
     </postpatterns>
   </patternpairs>
-  
-  <pattern> 
+
+  <pattern>
       <data>10010100 00100001 11...... .....000             011111.. ...01000 00000010 10100110 </data> <!-- STWU r1,xx(r1); MFSPR rx,lr -->
       <codeboundary />
       <possiblefuncstart after="defined" /> <!-- must be something defined right before this -->
   </pattern>
-  
+
 </patternlist>

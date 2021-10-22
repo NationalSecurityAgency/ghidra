@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A class to synchronize and track the progress of the items being processed by a concurrentQ. It 
- * provides various wait methods for when one item is completed or all items are completed. 
+ * A class to synchronize and track the progress of the items being processed by a concurrentQ. It
+ * provides various wait methods for when one item is completed or all items are completed.
  */
 class ProgressTracker {
 	private long totalCount;
@@ -30,7 +30,7 @@ class ProgressTracker {
 	private long nextID = 0;
 
 	private final ReentrantLock lock;
-	private final Condition done;        // notifies when all items have been completed or cancelled 
+	private final Condition done;        // notifies when all items have been completed or cancelled
 	private final Condition itemCompleted; // notifies when an item is processed or cancelled
 
 	ProgressTracker(ReentrantLock lock) {

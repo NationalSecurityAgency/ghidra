@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ public class CodeUnitUserDataChangeRecord extends DomainObjectChangeRecord {
     private Object newValue;
     private String propertyName;
     private Address addr;
-	
+
     /**
      * Constructor
      * @param propertyName name of the property
@@ -37,14 +37,14 @@ public class CodeUnitUserDataChangeRecord extends DomainObjectChangeRecord {
     public CodeUnitUserDataChangeRecord(String propertyName,
                                         Address codeUnitAddr,
                                         Object oldValue,
-                                        Object newValue) { 
+                                        Object newValue) {
         super(ChangeManager.DOCR_CODE_UNIT_USER_DATA_CHANGED);
         this.propertyName = propertyName;
         addr = codeUnitAddr;
         this.oldValue = oldValue;
         this.newValue = newValue;
     }
-		
+
     /**
      * Get the name of the property being changed.
      */
@@ -74,5 +74,5 @@ public class CodeUnitUserDataChangeRecord extends DomainObjectChangeRecord {
     public Object getNewValue() {
         return newValue;
     }
-    
+
 }

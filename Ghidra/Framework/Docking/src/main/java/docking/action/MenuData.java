@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,8 +34,8 @@ public class MenuData {
 	private String parentMenuGroup;
 
 	/**
-	 * The subgroup string.  This string is used to sort items within a 
-	 * {@link #getMenuGroup() toolbar group}.  This value is not required.  If not specified, 
+	 * The subgroup string.  This string is used to sort items within a
+	 * {@link #getMenuGroup() toolbar group}.  This value is not required.  If not specified,
 	 * then the value will effectively place this item at the end of its specified group.
 	 */
 	private String menuSubGroup;
@@ -115,7 +115,7 @@ public class MenuData {
 	}
 
 	/**
-	 * Returns the icon assigned to this action's menu. Null indicates that this action does not 
+	 * Returns the icon assigned to this action's menu. Null indicates that this action does not
 	 * have a menu icon
 	 * @return the icon
 	 */
@@ -126,9 +126,9 @@ public class MenuData {
 	/**
 	 * Returns the group for the menu item created by this data.   This value determines which
 	 * section inside of the tool's popup menu the menu item will be placed.   If you need to
-	 * control the ordering <b>within a section</b>, then provide a value for 
+	 * control the ordering <b>within a section</b>, then provide a value for
 	 * {@link #setMenuSubGroup(String)}.
-	 * 
+	 *
 	 * @return the group
 	 */
 	public String getMenuGroup() {
@@ -136,8 +136,8 @@ public class MenuData {
 	}
 
 	/**
-	 * Returns the subgroup string.  This string is used to sort items within a 
-	 * {@link #getMenuGroup() toolbar group}.  This value is not required.  If not specified, 
+	 * Returns the subgroup string.  This string is used to sort items within a
+	 * {@link #getMenuGroup() toolbar group}.  This value is not required.  If not specified,
 	 * then the value will effectively place this item at the end of its specified group.
 	 * @return the sub-group
 	 */
@@ -146,11 +146,11 @@ public class MenuData {
 	}
 
 	/**
-	 * Returns the group for the parent menu of the menu item created by this data.   That is, 
+	 * Returns the group for the parent menu of the menu item created by this data.   That is,
 	 * this value is effectively the same as {@link #getMenuGroup()}, but for the parent menu
 	 * item of this data's item.   Setting this value is only valid if the {@link #getMenuPath()}
 	 * has a length greater than 1.
-	 * 
+	 *
 	 * @return the parent group
 	 */
 	public String getParentMenuGroup() {
@@ -192,7 +192,7 @@ public class MenuData {
 
 	/**
 	 * See the description in {@link #getParentMenuGroup()}
-	 * 
+	 *
 	 * @param newParentMenuGroup the parent group
 	 */
 	public void setParentMenuGroup(String newParentMenuGroup) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ class CommentsDBAdapterV1 extends CommentsDBAdapter {
 //	/** comment type that goes before a code unit */
 //	private static final int PRE_COMMENT_COLUMN = 1;
 //	/** comment type that follows after a code unit */
-//	private static final int POST_COMMENT_COLUMN = 2; 
+//	private static final int POST_COMMENT_COLUMN = 2;
 //	/** Property name for plate comment type */
 //	private static final int PLATE_COMMENT_COLUMN = 3;
 //	/** Property name for plate comment type */

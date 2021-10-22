@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import ghidra.sleigh.grammar.Location;
 public class Utils {
 
 	public static final String endl = System.getProperty( "line.separator" );
-	
+
 	private static long[] uintbmasks = {
 			0, 0xff, 0xffff, 0xffffff, 0xffffffffL, 0xffffffffffL, 0xffffffffffffL,
 			0xffffffffffffffL, 0xffffffffffffffffL
@@ -249,11 +249,11 @@ public class Utils {
     public static void calc_maskword( Location location, int sbit, int ebit, MutableInt num, MutableInt shift, MutableInt mask ) {
         num.set(unsignedDivide(sbit, 8 * 4));
         if(num.get() != unsignedDivide(ebit, 8 * 4)) {
-            throw new SleighError( "Context field not contained within one machine int", location );            
+            throw new SleighError( "Context field not contained within one machine int", location );
         }
         sbit -= (int) (unsignedInt(num.get()) * 8 * 4);
         ebit -= (int) (unsignedInt(num.get()) * 8 * 4);
-        
+
         shift.set(8 * 4 - ebit - 1);
         int m = (-1) >>> (sbit + shift.get());
         m <<= shift.get();
@@ -272,11 +272,11 @@ public class Utils {
 				result <<= 8;
 				result |= (bytes[i] & 0xFF);
 			}
-			
+
 		}
 		return result;
 	}
-	
+
 	public static long shiftLeft(long a, long b) {
 		b &= 0xff;
 		if (b >= 64) {

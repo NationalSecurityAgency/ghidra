@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -217,7 +217,7 @@ public class VTMarkupItemResetTest extends VTBaseTestCase {
 	@Test
 	public void testDBMarkupItemStorageResetDoesntHappen_ClearDestinationAddress() {
 		//
-		// Test that the markup item storage is not removed when the destination address is 
+		// Test that the markup item storage is not removed when the destination address is
 		// cleared, but the considered status was set.
 		//
 		VTMatchSet matchSet = db.createMatchSet(
@@ -246,7 +246,7 @@ public class VTMarkupItemResetTest extends VTBaseTestCase {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	@SuppressWarnings("unchecked")
 	private Collection<VTMarkupItem> getStoredMarkupItems(VTAssociation association) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -347,7 +347,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 		@Override
 		public void domainFileObjectReplaced(DomainFile file, DomainObject oldObject) {
 
-			/** 
+			/**
 			 * Special handling for when a file is checked-in.  The existing program has be moved
 			 * to a proxy file (no longer in the project) so that it can be closed and the program
 			 * re-opened with the new version after the check-in merge.
@@ -364,7 +364,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 			}
 			OpenProgramTask openTask = new OpenProgramTask(file, -1, this);
 			openTask.setSilent();
-//			OpenDomainFileTask openTask = new OpenDomainFileTask(file, -1, tool, 
+//			OpenDomainFileTask openTask = new OpenDomainFileTask(file, -1, tool,
 //					plugin, true, dataState != null ? ProgramManager.OPEN_CURRENT : ProgramManager.OPEN_VISIBLE);
 			new TaskLauncher(openTask, tool.getToolFrame());
 			Program openProgram = openTask.getOpenProgram();

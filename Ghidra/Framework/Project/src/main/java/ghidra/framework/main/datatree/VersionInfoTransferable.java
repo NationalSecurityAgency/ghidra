@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,15 +26,15 @@ import java.util.List;
 import docking.dnd.GenericDataFlavor;
 
 /**
- * Defines a transferable 
+ * Defines a transferable
  */
 public class VersionInfoTransferable implements Transferable, ClipboardOwner {
-    
+
 	/**
 	 * DataFlavor for VersionInfoTransferable.
 	 */
     public static DataFlavor localVersionInfoFlavor = createLocalVersionInfoFlavor();
-    
+
     // create a data flavor that is a path to a domain file and a version
     // number
     private static DataFlavor createLocalVersionInfoFlavor() {
@@ -49,18 +49,18 @@ public class VersionInfoTransferable implements Transferable, ClipboardOwner {
         return null;
     }
 
-    private static DataFlavor []flavors= 
+    private static DataFlavor []flavors=
         {localVersionInfoFlavor};
-    
+
     private static List<DataFlavor> flavorList = Arrays.asList(flavors);
 
 	private VersionInfo versionInfo;
-	
-	
+
+
 	VersionInfoTransferable(String domainFilePath, int version) {
 		versionInfo = new VersionInfo(domainFilePath, version);
 	}
-		
+
 	/* (non-Javadoc)
 	 * @see java.awt.datatransfer.Transferable#getTransferDataFlavors()
 	 */
@@ -98,6 +98,6 @@ public class VersionInfoTransferable implements Transferable, ClipboardOwner {
 	public String toString() {
         return "VersionInfoTransferable";
     }
-    
+
 
 }

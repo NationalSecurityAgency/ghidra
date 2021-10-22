@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <code>LocalManagedBufferFile</code> implements a BufferFile as block-oriented
- * random-access file which utilizes a <code>BufferFileManager</code> to 
+ * random-access file which utilizes a <code>BufferFileManager</code> to
  * identify and facilitate versioning of buffer files.  This type of
  * buffer file supports both save-as and save operations.  The file
  * format used is identical to a LocalBufferFile, although additional
@@ -35,13 +35,13 @@ import ghidra.util.task.TaskMonitorAdapter;
 public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBufferFile {
 
 	/**
-	 * <code>versionFileHandler</code> provides original buffer file data for 
+	 * <code>versionFileHandler</code> provides original buffer file data for
 	 * older non-updatable versions.
 	 */
 	private VersionFileHandler versionFileHandler;
 
 	/**
-	 * <code>versionOutFile</code> tracks changes made to a pre-save file for 
+	 * <code>versionOutFile</code> tracks changes made to a pre-save file for
 	 * reverse reconstruction.
 	 */
 	private VersionFile versionOutFile;
@@ -58,15 +58,15 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	private int version = 0;
 
 	/**
-	 * <code>minChangeDataVer</code> indicates the minimum change-data version 
+	 * <code>minChangeDataVer</code> indicates the minimum change-data version
 	 * which should be associated with this buffer file.  A value of -1 indicates
-	 * that no change-data is associated with this file.  If set, the maximum 
+	 * that no change-data is associated with this file.  If set, the maximum
 	 * change-data version always equals this buffer file's version minus one.
 	 */
 	private int minChangeDataVer = -1;
 
 	/**
-	 * <code>nextChangeDataVer</code> is utilized by the getNextChangeDataFile 
+	 * <code>nextChangeDataVer</code> is utilized by the getNextChangeDataFile
 	 * method in iterating through the various change-data files.
 	 * @see #getNextChangeDataFile
 	 */
@@ -82,8 +82,8 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	//
 	// A non-read-only file which has bfMgr set (i.e., open for-update) is presumed to be
 	// a new version when closed.  To prevent a new version from being created,
-	// the file should be marked as temporary which will force it to be removed 
-	// on close. 
+	// the file should be marked as temporary which will force it to be removed
+	// on close.
 	//
 	// A save file and the use of pre-save only occurs for when a bfMgr has been set
 	// and versionUpdateEnabled was true when initially constructed.  A new save file
@@ -92,8 +92,8 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	//
 
 	/**
-	 * <code>bfMgr</code> manages the various files associated with this buffer 
-	 * file.  When working with versioned files or when Save support is 
+	 * <code>bfMgr</code> manages the various files associated with this buffer
+	 * file.  When working with versioned files or when Save support is
 	 * required <code>bfMgr</code> must be set.  The bufMgr will be null for
 	 * a read-only non-updateable file.
 	 */
@@ -154,7 +154,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	private Object preSaveLock = new Object();
 
 	/**
-	 * <code>preSaveThread</code> corresponds to the PreSaveTask which creates the 
+	 * <code>preSaveThread</code> corresponds to the PreSaveTask which creates the
 	 * preSaveFile when this buffer file is updateable.
 	 */
 	//private Thread preSaveThread;
@@ -533,7 +533,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	}
 
 	/**
-	 * Create a new buffer file version (used for check-in) 
+	 * Create a new buffer file version (used for check-in)
 	 * @param destFile must be an versioned file representing an earlier version
 	 * of srcFile.
 	 * @param fileComment a comment for the new version.
@@ -737,7 +737,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	 * be created within the same directory as the source file.  If this file
 	 * already exists, this method will have no affect.
 	 * @throws IllegalStateException if this method is invoked more than
-	 * once for a given instance or a source file was not used.  This method 
+	 * once for a given instance or a source file was not used.  This method
 	 * may be re-invoked after saveAs is invoked.
 	 */
 	private void startPreSave() {
@@ -757,7 +757,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	/**
 	 * Terminate background save if it is running.
 	 * This may be unsuccessful if this thread is interupted.
-	 * @param endUpdate if true and pre-save successfully terminated, 
+	 * @param endUpdate if true and pre-save successfully terminated,
 	 * notify buffer file manager that update has ended.
 	 */
 	private void stopPreSave(boolean endUpdate) {
@@ -789,9 +789,9 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 
 	/**
 	 * Block until pre-save thread completes
-	 * @param monitor optional monitor allowing the pre-save wait to be interrupted/canceled - the actual pre-save will 
+	 * @param monitor optional monitor allowing the pre-save wait to be interrupted/canceled - the actual pre-save will
 	 * continue since it may be required for a future save operation.
-	 * @throws CancelledException 
+	 * @throws CancelledException
 	 */
 	private void waitForPreSave(TaskMonitor monitor) throws CancelledException {
 
@@ -805,7 +805,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	}
 
 	/**
-	 * <code>PreSaveTask</code> facilitates the pre-saving a copy of this buffer 
+	 * <code>PreSaveTask</code> facilitates the pre-saving a copy of this buffer
 	 * file for update use by a BufferMgr.
 	 */
 	private class PreSaveTask implements Runnable {
@@ -954,7 +954,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	/**
 	 * <code>LocalManagedOutputBlockStream</code> extends <code>LocalOutputBlockStream</code>
 	 * for use when updating versioned buffer file.  This implementation causes change
-	 * map data to be updated.  It is important that the free list is updated after 
+	 * map data to be updated.  It is important that the free list is updated after
 	 * streaming is complete.
 	 */
 	class LocalManagedOutputBlockStream extends LocalOutputBlockStream {
@@ -995,7 +995,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	}
 
 	/**
-	 * Obtain a direct stream to read all blocks of this buffer file 
+	 * Obtain a direct stream to read all blocks of this buffer file
 	 * @return input block stream
 	 * @throws IOException
 	 */
@@ -1009,7 +1009,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	}
 
 	/**
-	 * Obtain a direct stream to read modified blocks of this buffer file 
+	 * Obtain a direct stream to read modified blocks of this buffer file
 	 * based upon the specified changeMap
 	 * @return input block stream
 	 * @throws IOException
@@ -1019,11 +1019,11 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	}
 
 	/**
-	 * Create a new version of this file by updating it from a versionedBufferFile.  
-	 * This file must be open as read-only with versionUpdateEnabled and have been derived 
+	 * Create a new version of this file by updating it from a versionedBufferFile.
+	 * This file must be open as read-only with versionUpdateEnabled and have been derived
 	 * from an oldVersion of the versionedBufferFile (i.e., was based on a check-out of oldVersion).
 	 * The save-file corresponding to this file is updated using those buffers
-	 * which have been modified or added in the specified versionedBufferFile 
+	 * which have been modified or added in the specified versionedBufferFile
 	 * since olderVersion.  When complete, this file should be closed
 	 * as soon as possible.
 	 * @param versionedBufferFile versioned buffer file

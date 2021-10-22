@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,14 +35,14 @@ import ghidra.util.Msg;
 
 /**
  * A cached memory wrapper
- * 
+ *
  * Because debugging channels can be slow, memory reads and writes ought to be cached for the
  * duration a thread (and threads sharing the same memory) are stopped. This highly-recommended
  * convenience implements a write-through single-layer cache. The implementor need only provide
  * references to the basic asynchronous read/write methods. Those are usually private methods of the
  * {@link TargetThread} or {@link TargetProcess} implementation. The public read/write methods just
  * wrap the read/write methods provided by this cache.
- * 
+ *
  * Implementation note: The cache is backed by a {@link SemisparseByteArray}, which is well-suited
  * for reads and writes within a locality. Nothing is evicted from the cache automatically. All
  * eviction is done manually by a call to {@link #clear()}. During a debug session, there are
@@ -69,9 +69,9 @@ public class CachedMemory implements MemoryReader, MemoryWriter {
 
 	/**
 	 * Create a new cache wrapping the given read/write methods
-	 * 
+	 *
 	 * The wrapped read/write methods are usually private
-	 * 
+	 *
 	 * @param reader the read implementation, usually a method reference
 	 * @param writer the write implementation, usually a method reference
 	 */
@@ -161,7 +161,7 @@ public class CachedMemory implements MemoryReader, MemoryWriter {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @implNote In some circumstances, it may actually be less efficient to split a request,
 	 *           especially if the split only saves a few bytes. The logic required to efficiently
 	 *           handle those circumstances would require a bit of calibration based on empirical
@@ -199,7 +199,7 @@ public class CachedMemory implements MemoryReader, MemoryWriter {
 
 	/**
 	 * Update target memory cache by some out-of-band means
-	 * 
+	 *
 	 * @param address the offset of the address
 	 * @param data the contents to cache
 	 */
@@ -211,7 +211,7 @@ public class CachedMemory implements MemoryReader, MemoryWriter {
 
 	/**
 	 * Reset the cache
-	 * 
+	 *
 	 * The next read command is guaranteed to be forwarded in its entirety.
 	 */
 	public void clear() {

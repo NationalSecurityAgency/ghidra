@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,13 +30,13 @@ import ghidra.util.task.TaskMonitor;
 public interface CodeBlockModel {
 
 	public static final CodeBlock[] emptyBlockArray = new CodeBlock[0];
-	
+
 	/**
 	 * Returns the model name.
 	 * @return the model name
 	 */
 	public String getName();
-	
+
     /**
      * Get the code block with a starting address (i.e., entry-point) of addr.
      * @param addr starting address of a codeblock.
@@ -86,7 +86,7 @@ public interface CodeBlockModel {
      * @throws CancelledException if the monitor cancels the operation.
      */
     public CodeBlockReferenceIterator getSources(CodeBlock block, TaskMonitor monitor) throws CancelledException;
-    
+
     /**
      * Get the number of source flows into the block.
      * @param block the code blocks to get the destination flows for.
@@ -115,7 +115,7 @@ public interface CodeBlockModel {
      * Get the basic block model used by this model.
      */
     public CodeBlockModel getBasicBlockModel();
-    
+
     /**
      * Returns true if externals are handled by the model,
      * false if externals are ignored.  When handled, externals
@@ -141,7 +141,7 @@ public interface CodeBlockModel {
      *    however the model can choose any name it wants for its blocks.
      */
     public String getName(CodeBlock block);
-    
+
     /**
      * Returns the program object associated with this CodeBlockModel instance.
      * @return program associated with this CodeBlockModel.

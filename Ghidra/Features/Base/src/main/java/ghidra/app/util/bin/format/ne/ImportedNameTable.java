@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,8 @@ import ghidra.util.Conv;
 
 /**
  * A class to represent the new-executable imported name table.
- * 
- * 
+ *
+ *
  */
 public class ImportedNameTable {
     private FactoryBundledWithBinaryReader reader;
@@ -42,10 +42,10 @@ public class ImportedNameTable {
 
     /**
      * Returns the length/string set at the given offset.
-     * 
+     *
      * @param offset  The offset, from the beginning of the Imported Name Table,
      *                to the length/string set.
-     * 
+     *
      * @return the length/string set at the given offset
      */
     public LengthStringSet getNameAt(short offset) throws IOException {

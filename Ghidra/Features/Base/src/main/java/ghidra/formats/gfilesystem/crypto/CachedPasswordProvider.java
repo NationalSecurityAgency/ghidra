@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public class CachedPasswordProvider implements PasswordProvider {
 
 	/**
 	 * Adds a password / file combo to the cache.
-	 * 
+	 *
 	 * @param fsrl {@link FSRL} file
 	 * @param password password to unlock the file.  Specified PasswordValue is
 	 * only copied, clearing is still callers responsibility
@@ -46,7 +46,7 @@ public class CachedPasswordProvider implements PasswordProvider {
 
 
 	private void addRec(CryptoRec rec) {
-		// index the record by its full FSRL, a simplified FSRL, its plain filename, and any MD5 
+		// index the record by its full FSRL, a simplified FSRL, its plain filename, and any MD5
 		String fsrlStr = rec.fsrl.toString();
 		boolean isNewValue =
 			addIfUnique(values.computeIfAbsent(fsrlStr, x -> new ArrayList<>()), rec);
@@ -87,7 +87,7 @@ public class CachedPasswordProvider implements PasswordProvider {
 
 	/**
 	 * Returns the number of items in cache
-	 * 
+	 *
 	 * @return number of items in cache
 	 */
 	public synchronized int getCount() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -456,8 +456,8 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 					break;
 // FIXME: must resolve cyclic issues before this can be done
 //				case ChangeManager.DOCR_MEM_REFERENCE_ADDED:
-//					// Allow high-priority reference-driven code analyzers a 
-//					// shot at processing computed flows determined during 
+//					// Allow high-priority reference-driven code analyzers a
+//					// shot at processing computed flows determined during
 //					// constant propagation.
 //					pcr = (ProgramChangeRecord) doRecord;
 //					Reference ref = (Reference) pcr.getNewValue();
@@ -1058,7 +1058,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 		}
 		catch (OptionsVetoException e) {
 // FIXME!! Not good to popup for all use cases
-			// This will only happen if an Analyzer author makes a mistake 
+			// This will only happen if an Analyzer author makes a mistake
 			Msg.showError(this, null, "Invalid Analysis Option",
 				"Invalid Analysis option set during initialization", e);
 		}
@@ -1163,7 +1163,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 	/**
 	 * Get the set of addresses that have been protected from clearing
-	 * 
+	 *
 	 * @return protected locations
 	 */
 	public AddressSetView getProtectedLocations() {
@@ -1172,7 +1172,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 	/**
 	 * Add a location that is know good code to be protected from clearing for this Analysis run only.
-	 * 
+	 *
 	 * @param addr address to protect
 	 */
 	public void setProtectedLocation(Address addr) {
@@ -1181,7 +1181,7 @@ public class AutoAnalysisManager implements DomainObjectListener, DomainObjectCl
 
 	/**
 	 * Add a set of known good code locations to be protected from clearing for this Analysis run only.
-	 * 
+	 *
 	 * @param set of addresses to protect
 	 */
 	public void setProtectedLocations(AddressSet set) {

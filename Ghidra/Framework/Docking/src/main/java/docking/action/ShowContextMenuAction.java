@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import docking.ActionContext;
 import docking.DockingWindowManager;
 
 /**
- * An action to trigger a context menu over the focus owner.  This allows context menus to be 
+ * An action to trigger a context menu over the focus owner.  This allows context menus to be
  * triggered from the keyboard.
  */
 public class ShowContextMenuAction extends DockingAction {
@@ -42,7 +42,7 @@ public class ShowContextMenuAction extends DockingAction {
 			return;
 		}
 
-		// use the focused component to determine what should get the context menu  
+		// use the focused component to determine what should get the context menu
 		Component focusOwner = kfm.getFocusOwner();
 		if (focusOwner != null) {
 			DockingWindowManager.showContextMenu(focusOwner);

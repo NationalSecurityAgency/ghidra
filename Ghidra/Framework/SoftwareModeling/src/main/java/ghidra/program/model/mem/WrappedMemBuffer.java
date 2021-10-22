@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,13 +29,13 @@ import ghidra.util.GhidraDataConverter;
  * reduce the overall number of calls to Memory, greatly reducing
  * the overhead of various error checks.  This implementation will not wrap
  * if the end of the memory space is encountered.
- * 
+ *
  * The {@link #getByte(int)}, {@link #getBytes(byte[], int)} methods can cause the bytes in the
  * buffer cache if the request is outside of the current cached bytes.
- * 
+ *
  * WARNING: The underlying MemBuffer should not change its base address. Using a
  * mutable MemBuffer can cause problematic behavior if not controlled carefully.
- * 
+ *
  * WARNING: Not thread-safe.
  */
 
@@ -106,7 +106,7 @@ public class WrappedMemBuffer implements MemBuffer {
 	}
 
 	/**
-	 * Compute offset into original memBuffer, making sure the offset doesn't wrap 
+	 * Compute offset into original memBuffer, making sure the offset doesn't wrap
 	 * @param offset the offset relative to the baseOffset.
 	 * @return the offset relative to the original memBuffer.
 	 */

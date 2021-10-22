@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,11 +68,11 @@ public interface TargetSteppable extends TargetObject {
 	enum TargetStepKind {
 		/**
 		 * Step strictly forward
-		 * 
+		 *
 		 * <p>
 		 * To avoid runaway execution, stepping should cease if execution returns from the current
 		 * frame.
-		 * 
+		 *
 		 * <p>
 		 * In more detail: step until execution reaches the instruction following this one,
 		 * regardless of the current frame. This differs from {@link #UNTIL} in that it doesn't
@@ -81,11 +81,11 @@ public interface TargetSteppable extends TargetObject {
 		ADVANCE,
 		/**
 		 * Step out of the current function.
-		 * 
+		 *
 		 * <p>
 		 * In more detail: step until the object has executed the return instruction that returns
 		 * from the current frame.
-		 * 
+		 *
 		 * <p>
 		 * TODO: This step is geared toward GDB's {@code advance}, which actually takes a parameter.
 		 * Perhaps this API should adjust to accommodate stepping parameters. Would probably want a
@@ -95,7 +95,7 @@ public interface TargetSteppable extends TargetObject {
 		FINISH,
 		/**
 		 * Step a single instruction
-		 * 
+		 *
 		 * <p>
 		 * In more detail: trap after execution of exactly the next instruction. If the instruction
 		 * is a function call, stepping will descend into the function.
@@ -103,7 +103,7 @@ public interface TargetSteppable extends TargetObject {
 		INTO,
 		/**
 		 * Step to the next line of source code.
-		 * 
+		 *
 		 * <p>
 		 * In more detail: if the debugger is a source-based debugger and it has access to debug
 		 * information that includes line numbers, step until execution reaches an instruction
@@ -113,7 +113,7 @@ public interface TargetSteppable extends TargetObject {
 		LINE,
 		/**
 		 * Step over a function call.
-		 * 
+		 *
 		 * <p>
 		 * In more detail: if the instruction to be executed is a function call, step until the
 		 * object returns from that call, but before it executes the instruction following the call.
@@ -122,7 +122,7 @@ public interface TargetSteppable extends TargetObject {
 		OVER,
 		/**
 		 * Step over a function call, to the next line of source code
-		 * 
+		 *
 		 * <p>
 		 * In more detail: if the debugger is a source-based debugger and it has access to debug
 		 * information that includes line numbers, step (over function calls) until execution
@@ -132,7 +132,7 @@ public interface TargetSteppable extends TargetObject {
 		OVER_LINE,
 		/**
 		 * Skip an instruction.
-		 * 
+		 *
 		 * <p>
 		 * In more detail: advance the program counter to the next instruction without actually
 		 * executing the current instruction.
@@ -140,7 +140,7 @@ public interface TargetSteppable extends TargetObject {
 		SKIP,
 		/**
 		 * Skip the remainder of the current function.
-		 * 
+		 *
 		 * <p>
 		 * In more detail: remove the current stack frame and position the program counter as if the
 		 * current function had just returned, i.e., the instruction following the function call.
@@ -150,11 +150,11 @@ public interface TargetSteppable extends TargetObject {
 		RETURN,
 		/**
 		 * Step out of a loop.
-		 * 
+		 *
 		 * <p>
 		 * To avoid runaway execution, stepping should cease if execution returns from the current
 		 * frame.
-		 * 
+		 *
 		 * <p>
 		 * In more detail: if the instruction to be executed is a backward jump, step until
 		 * execution reaches the following instruction in the same stack frame. Alternatively, if
@@ -173,11 +173,11 @@ public interface TargetSteppable extends TargetObject {
 
 	/**
 	 * Get the kinds of multi-stepping implemented by the debugger
-	 * 
+	 *
 	 * <p>
 	 * Different debuggers may provide similar, but slightly different vocabularies of stepping.
 	 * This method queries the connected debugger for its supported step kinds.
-	 * 
+	 *
 	 * @return the set of supported multi-step operations
 	 */
 	@TargetAttributeType(
@@ -192,14 +192,14 @@ public interface TargetSteppable extends TargetObject {
 
 	/**
 	 * Step/resume the object until some condition is met
-	 * 
+	 *
 	 * <p>
 	 * A step command may complete with {@link UnsupportedOperationException} despite the
 	 * implementation reporting its kind as supported. This may happen if the current execution
 	 * context prevents its implementation, e.g., debug information is not available for the current
 	 * frame. In many cases, with some expense, the client user can synthesize the desired stepping
 	 * using information it knows in combination with other step kinds, breakpoints, etc.
-	 * 
+	 *
 	 * <p>
 	 * The step command completes when the object is running, and not when it has actually completed
 	 * the step. If, as is usual, the step completes immediately, then the object will immediately
@@ -207,7 +207,7 @@ public interface TargetSteppable extends TargetObject {
 	 * debugger is limited to user space, then the step may not immediately complete, if ever. A
 	 * client user wishing to wait for the actual step completion should wait for this object to
 	 * re-enter the {@link TargetExecutionState#STOPPED} state.
-	 * 
+	 *
 	 * <p>
 	 * More nuances may be at play depending on the connected debugger and the target platform. For
 	 * example, the debugger may still be reporting some other event, e.g., module load, and may
@@ -217,14 +217,14 @@ public interface TargetSteppable extends TargetObject {
 	 * same instruction. As a general note, we do not intend to "overcome" these nuances. Instead,
 	 * we strive to ensure the view presented by this API (and thus by the Ghidra UI) reflects
 	 * exactly the view presented by the connected debugger, nuances and all.
-	 * 
+	 *
 	 * @return a future which completes when the object is stepping
 	 */
 	public CompletableFuture<Void> step(TargetStepKind kind);
 
 	/**
 	 * Step a target using the given arguments
-	 * 
+	 *
 	 * @param args the map of arguments.
 	 * @return a future which completes when the command is completed
 	 */
@@ -234,10 +234,10 @@ public interface TargetSteppable extends TargetObject {
 
 	/**
 	 * Step a single instruction
-	 * 
+	 *
 	 * <p>
 	 * This convenience is exactly equivalent to calling {@code step(TargetStepKind.INTO)}
-	 * 
+	 *
 	 * @see #step(TargetStepKind)
 	 * @see TargetStepKind#INTO
 	 */

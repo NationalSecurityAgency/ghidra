@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,7 +84,7 @@ public class MethodInfoJava implements StructConverter {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return boolean encoding whether the method is static
 	 */
 	public boolean isStatic() {
@@ -96,7 +96,7 @@ public class MethodInfoJava implements StructConverter {
 	 * The value of the name_index item must be a valid index into the
 	 * constant_pool table. The constant_pool entry at that index must be a
 	 * CONSTANT_Utf8_info structure representing either one of the special
-	 * method names <init> or <clinit>, or a valid unqualified name 
+	 * method names <init> or <clinit>, or a valid unqualified name
 	 * denoting a method.
 	 * @return a valid index into the constant_pool table
 	 */
@@ -128,21 +128,21 @@ public class MethodInfoJava implements StructConverter {
 	 * method can have any number of optional attributes associated with it.
 	 * <p>
 	 * The attributes defined by this specification as appearing in the attributes
-	 * table of a method_info structure are the 
-	 * 		Code, 
-	 * 		Exceptions, 
-	 * 		Synthetic, 
+	 * table of a method_info structure are the
+	 * 		Code,
+	 * 		Exceptions,
+	 * 		Synthetic,
 	 * 		Signature,
 	 * 		Deprecated,
-	 * 		RuntimeVisibleAnnotations, 
+	 * 		RuntimeVisibleAnnotations,
 	 * 		RuntimeInvisibleAnnotations,
 	 * 		RuntimeVisibleParameterAnnotations,
 	 * 		RuntimeInvisibleParameterAnnotations,
 	 * 		AnnotationDefault attributes.
 	 * <p>
-	 * A Java virtual machine implementation must recognize and correctly read 
+	 * A Java virtual machine implementation must recognize and correctly read
 	 * Code  and Exceptions attributes found in the
-	 * attributes table of a method_info structure. 
+	 * attributes table of a method_info structure.
 	 * <p>
 	 * If a Java virtual machine
 	 * implementation recognizes class files whose version number is 49.0
@@ -164,7 +164,7 @@ public class MethodInfoJava implements StructConverter {
 	}
 
 	/**
-	 * Return a text representation of this methods signature.  
+	 * Return a text representation of this methods signature.
 	 * Here are some examples:
 	 * <DL>
 	 *  <DD><CODE>"public int foo(int bar)"</CODE></DD>

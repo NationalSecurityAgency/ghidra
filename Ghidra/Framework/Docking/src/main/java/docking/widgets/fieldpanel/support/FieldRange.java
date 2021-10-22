@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,13 +22,13 @@ import java.math.BigInteger;
 import org.jdom.Element;
 
 /**
- *  Class to a range consisting of a start position within a start row to an end position within an 
- *  end row (exclusive).  
+ *  Class to a range consisting of a start position within a start row to an end position within an
+ *  end row (exclusive).
  *  <p>
- *  Conceptually, this class can be thought of as a range of rows (defined by 
+ *  Conceptually, this class can be thought of as a range of rows (defined by
  *  <code>startIndex</code> and <code>endindex</code>) with sub-positions within those rows (defined by
  *  <code>startField</code> and <code>endField</code>). As an example, consider a text select that begins on
- *  some word in a row and ends on another word in a different row.  
+ *  some word in a row and ends on another word in a different row.
  */
 public class FieldRange implements Comparable<FieldRange> {
 	FieldLocation start;

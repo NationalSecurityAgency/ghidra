@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,10 +26,10 @@ public interface DbgStackFrameOperations {
 
 	/**
 	 * Evaluate an expression
-	 * 
+	 *
 	 * This evaluates an expression in the same way that the CLI commands {@code print},
 	 * {@code output}, and {@code call} would.
-	 * 
+	 *
 	 * @param expression the expression to evaluate
 	 * @return a future that completes with the string representation of the value
 	 */
@@ -37,7 +37,7 @@ public interface DbgStackFrameOperations {
 
 	/**
 	 * Read the values of a given set of registers
-	 * 
+	 *
 	 * @param regs the set of registers
 	 * @return a future that completes with a map of register descriptors to value
 	 */
@@ -45,7 +45,7 @@ public interface DbgStackFrameOperations {
 
 	/**
 	 * Write the values of a given set of registers
-	 * 
+	 *
 	 * @param regVals a map of register descriptors to value
 	 * @return a future that completes when the registers have been written
 	 */
@@ -53,7 +53,7 @@ public interface DbgStackFrameOperations {
 
 	/**
 	 * Execute an arbitrary CLI command, printing output to the CLI console
-	 * 
+	 *
 	 * @param command the command to execute
 	 * @return a future that completes when Dbg has executed the command
 	 */
@@ -61,9 +61,9 @@ public interface DbgStackFrameOperations {
 
 	/**
 	 * Execute an arbitrary CLI command, capturing its console output
-	 * 
+	 *
 	 * The output will not be printed to the CLI console.
-	 * 
+	 *
 	 * @param command the command to execute
 	 * @return a future that completes with the captured output when Dbg has executed the command
 	 */

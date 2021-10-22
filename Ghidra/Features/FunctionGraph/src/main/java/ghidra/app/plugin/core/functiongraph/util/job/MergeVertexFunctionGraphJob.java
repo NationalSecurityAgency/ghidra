@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -123,17 +123,17 @@ public class MergeVertexFunctionGraphJob extends AbstractAnimatorJob {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void initializeVertexLocations() {
-		// 
+		//
 		// We will create the new locations for the new parent and child vertices.  There will
 		// be the initial (start) location for each one and the destination location for each
 		// one.  This allows us to show a transition from the start to the destination point.
-		//		
+		//
 
-		// Update the new parent node to compensate for its new size.  This code effectively 
-		// moves the new vertex up to account for the fact that its overall height has been 
+		// Update the new parent node to compensate for its new size.  This code effectively
+		// moves the new vertex up to account for the fact that its overall height has been
 		// reduced.  This is necessary to prevent the vertex from moving down, as the location of
 		// a vertex is based upon its center point.
 		Rectangle originalBounds = parentVertex.getBounds();
@@ -154,15 +154,15 @@ public class MergeVertexFunctionGraphJob extends AbstractAnimatorJob {
 		mergedVertex.setLocation(oldLocationProperty);
 		graphLayout.setLocation(mergedVertex, mergedDestination); // tell the graph the new location
 
-		// note: due to the caching nature of some layouts, if we don't reset this, then 
-		// some of our GUI calculations will be incorrect (like when we try to fit the 
+		// note: due to the caching nature of some layouts, if we don't reset this, then
+		// some of our GUI calculations will be incorrect (like when we try to fit the
 		// satellite in it's window).  So, we always have to clear the cache when we set locations
 		clearLocationCache();
 	}
 
 	private void updateNewVertexPositions(double percentComplete) {
 		//
-		// The new position is some percentage of the distance between the start 
+		// The new position is some percentage of the distance between the start
 		// position and the destination position
 		//
 		double parentDestinationX = parentDestination.getX();

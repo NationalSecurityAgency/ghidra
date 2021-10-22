@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,7 +71,7 @@ public interface EquateTable {
 	public Equate getEquate(String name);
 
 	/**
-	 * Returns the first equate found that is associated with the given 
+	 * Returns the first equate found that is associated with the given
 	 * value at the given reference address and operand position;
 	 * @param reference address where the equate is used.
 	 * @param opndPosition the operand index of the operand where the equate is used.
@@ -81,7 +81,7 @@ public interface EquateTable {
 	public Equate getEquate(Address reference, int opndPosition, long value);
 
 	/**
-	 * Returns the equates (one for each scalar) at the given reference address 
+	 * Returns the equates (one for each scalar) at the given reference address
 	 * and operand position; For an instruction a given operand can have multiple scalars.
 	 * @param reference address where the equate is used.
 	 * @param opndPosition the operand index of the operand where the equate is used.

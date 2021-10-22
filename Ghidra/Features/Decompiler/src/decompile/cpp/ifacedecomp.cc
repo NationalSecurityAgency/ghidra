@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -295,7 +295,7 @@ void IfcOption::execute(istream &s)
 {
   string optname;
   string p1,p2,p3;
-  
+
   if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No load image present");
   s >> ws >> optname >> ws;
@@ -312,7 +312,7 @@ void IfcOption::execute(istream &s)
       }
     }
   }
-  
+
   try {
     string res = dcp->conf->options->set(optname,p1,p2,p3);
     *status->optr << res << endl;
@@ -335,8 +335,8 @@ void IfcOption::execute(istream &s)
 /// if the symbol already exists, associate the prototype with the symbol.
 void IfcParseFile::execute(istream &s)
 
-{  
-  if (dcp->conf == (Architecture *)0) 
+{
+  if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No load image present");
 
   string filename;
@@ -372,8 +372,8 @@ void IfcParseFile::execute(istream &s)
 /// must already exist.
 void IfcParseLine::execute(istream &s)
 
-{  
-  if (dcp->conf == (Architecture *)0) 
+{
+  if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No load image present");
 
   s >> ws;
@@ -518,7 +518,7 @@ void IfcCleararch::execute(istream &s)
 void IfcReadSymbols::execute(istream &s)
 
 {
-  if (dcp->conf == (Architecture *)0) 
+  if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No load image present");
   if (dcp->conf->loader == (LoadImage *)0)
     throw IfaceExecutionError("No binary loaded");
@@ -815,7 +815,7 @@ void IfcDecompile::execute(istream &s)
     *status->optr << "Clearing old decompilation" << endl;
     dcp->conf->clearAnalysis(dcp->fd);
   }
-    
+
   *status->optr << "Decompiling " << dcp->fd->getName() << endl;
   dcp->conf->allacts.getCurrent()->reset(*dcp->fd);
   res = dcp->conf->allacts.getCurrent()->perform( *dcp->fd );
@@ -850,7 +850,7 @@ void IfcPrintCFlat::execute(istream &s)
 void IfcPrintCGlobals::execute(istream &s)
 
 {
-  if (dcp->conf == (Architecture *)0) 
+  if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No load image present");
 
   dcp->conf->print->setOutputStream(status->fileoptr);
@@ -862,7 +862,7 @@ void IfcPrintCGlobals::execute(istream &s)
 void IfcPrintCTypes::execute(istream &s)
 
 {
-  if (dcp->conf == (Architecture *)0) 
+  if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No load image present");
 
   if (dcp->conf->types != (TypeFactory *)0) {
@@ -974,7 +974,7 @@ void IfcListprototypes::execute(istream &s)
 {
   if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No load image present");
-  
+
   map<string,ProtoModel *>::const_iterator iter;
   for(iter=dcp->conf->protoModels.begin();iter!=dcp->conf->protoModels.end();++iter) {
     ProtoModel *model = (*iter).second;
@@ -1068,7 +1068,7 @@ void IfcSettrackedrange::execute(istream &s)
   int4 size1,size2;
   Address addr1 = parse_machaddr(s,size1,*dcp->conf->types);
   Address addr2 = parse_machaddr(s,size2,*dcp->conf->types);
-  
+
   if (addr1.isInvalid() || addr2.isInvalid())
     throw IfaceParseError("Invalid address range");
   if (addr2 <= addr1)
@@ -1244,20 +1244,20 @@ void IfcRename::execute(istream &s)
 
 {
   string oldname,newname;
-  
+
   s >> ws >> oldname >> ws >> newname >> ws;
   if (oldname.size()==0)
     throw IfaceParseError("Missing old symbol name");
   if (newname.size()==0)
     throw IfaceParseError("Missing new name");
-    
+
   Symbol *sym;
   vector<Symbol *> symList;
   if (dcp->fd != (Funcdata *)0)
     dcp->fd->getScopeLocal()->queryByName(oldname,symList);
   else
     dcp->conf->symboltab->getGlobalScope()->queryByName(oldname,symList);
-  
+
   if (symList.empty())
     throw IfaceExecutionError("No symbol named: "+oldname);
   if (symList.size() == 1)
@@ -1280,7 +1280,7 @@ void IfcRemove::execute(istream &s)
 
 {
   string name;
-  
+
   s >> ws >> name;
   if (name.size()==0)
     throw IfaceParseError("Missing symbol name");
@@ -1290,7 +1290,7 @@ void IfcRemove::execute(istream &s)
     dcp->fd->getScopeLocal()->queryByName(name,symList);
   else
     dcp->conf->symboltab->getGlobalScope()->queryByName(name,symList);
-  
+
   if (symList.empty())
     throw IfaceExecutionError("No symbol named: "+name);
   if (symList.size() > 1)
@@ -1321,7 +1321,7 @@ void IfcRetype::execute(istream &s)
     dcp->fd->getScopeLocal()->queryByName(name,symList);
   else
     dcp->conf->symboltab->getGlobalScope()->queryByName(name,symList);
-  
+
   if (symList.empty())
     throw IfaceExecutionError("No symbol named: "+name);
   if (symList.size() > 1)
@@ -1451,7 +1451,7 @@ void IfcPrintCover::execute(istream &s)
   high = dcp->fd->findHigh(name);
   if (high == (HighVariable *)0)
     throw IfaceExecutionError("Unable to find variable: "+name);
-  
+
   high->printCover(*status->optr);
 }
 
@@ -1629,7 +1629,7 @@ void IfcTypeVarnode::execute(istream &s)
   ct = parse_type(s,name,dcp->conf);
 
   dcp->conf->clearAnalysis(dcp->fd); // Make sure varnodes are cleared
-    
+
   Scope *scope = dcp->fd->getScopeLocal()->discoverScope(loc,size,pc);
   if (scope == (Scope *)0)	// Variable does not have natural scope
     scope = dcp->fd->getScopeLocal();	// force it to be in function scope
@@ -1638,7 +1638,7 @@ void IfcTypeVarnode::execute(istream &s)
   sym->setIsolated(true);
   if (name.size() > 0)
     scope->setAttribute(sym,Varnode::namelock);
-  
+
   *status->fileoptr << "Successfully added " << sym->getName();
   *status->fileoptr << " to scope " << scope->getFullName() << endl;
 }
@@ -1706,7 +1706,7 @@ void IfcForcegoto::execute(istream &s)
 
 {
   int4 discard;
-  
+
   if (dcp->fd == (Funcdata *)0)
     throw IfaceExecutionError("No function selected");
 
@@ -1728,7 +1728,7 @@ void IfcProtooverride::execute(istream &s)
 
 {
   int4 discard;
-  
+
   if (dcp->fd == (Funcdata *)0)
     throw IfaceExecutionError("No function selected");
 
@@ -1852,7 +1852,7 @@ void IfcDeadcodedelay::execute(istream &s)
   string name;
   int4 delay = -1;
   AddrSpace *spc;
-  
+
   s >> name;
   s >> ws;
   s >> delay;
@@ -1882,7 +1882,7 @@ void IfcGlobalAdd::execute(istream &s)
 {
   if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No image loaded");
-  
+
   int4 size;
   Address addr = parse_machaddr(s,size,*dcp->conf->types);
   uintb first = addr.getOffset();
@@ -1902,7 +1902,7 @@ void IfcGlobalRemove::execute(istream &s)
 {
   if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No image loaded");
-  
+
   int4 size;
   Address addr = parse_machaddr(s,size,*dcp->conf->types);
   uintb first = addr.getOffset();
@@ -2221,7 +2221,7 @@ void IfcPrintMap::execute(istream &s)
   Scope *scope;
 
   s >> name;
-  
+
   if (dcp->conf == (Architecture *)0)
     throw IfaceExecutionError("No load image");
   if (name.size() != 0 || dcp->fd==(Funcdata *)0) {
@@ -2230,7 +2230,7 @@ void IfcPrintMap::execute(istream &s)
   }
   else
     scope = dcp->fd->getScopeLocal();
-    
+
   if (scope == (Scope *)0)
     throw IfaceExecutionError("No map named: "+name);
 
@@ -2248,11 +2248,11 @@ void IfcProduceC::execute(istream &s)
 
 {
   string name;
-  
+
   s >> ws >> name;
   if (name.size()==0)
     throw IfaceParseError("Need file name to write to");
-  
+
   ofstream os;
   os.open(name.c_str());
   dcp->conf->print->setOutputStream(&os);
@@ -2908,7 +2908,7 @@ void IfcPreferSplit::execute(istream &s)
     throw IfaceExecutionError("Must specify a size");
   int4 split = -1;
 
-  s >> ws; 
+  s >> ws;
   if (s.eof())
     throw IfaceParseError("Missing split offset");
   s >> dec >> split;
@@ -2949,7 +2949,7 @@ void IfcStructureBlocks::execute(istream &s)
   fs.open(infile.c_str());
   if (!fs)
     throw IfaceExecutionError("Unable to open file: "+infile);
-  
+
   DocumentStorage store;
   Document *doc = store.parseDocument(fs);
   fs.close();
@@ -2957,10 +2957,10 @@ void IfcStructureBlocks::execute(istream &s)
   try {
     BlockGraph ingraph;
     ingraph.restoreXml(doc->getRoot(),dcp->conf);
-    
+
     BlockGraph resultgraph;
     vector<FlowBlock *> rootlist;
-    
+
     resultgraph.buildCopy(ingraph);
     resultgraph.structureLoops(rootlist);
     resultgraph.calcForwardDominator(rootlist);
@@ -3236,7 +3236,7 @@ void IfcTraceBreak::execute(istream &s)
 
 {				// Set a opactdbg trace break point
   int4 count;
-  
+
   if (dcp->fd == (Funcdata *)0)
     throw IfaceExecutionError("No function selected");
 
@@ -3327,7 +3327,7 @@ void IfcTraceList::execute(istream &s)
   for(i=0;i<size;++i)
     dcp->fd->debugPrintRange(i);
 }
-    
+
 static vector<Funcdata *> jumpstack;
 static IfaceDecompData *dcp_callback;
 static IfaceStatus *status_callback;

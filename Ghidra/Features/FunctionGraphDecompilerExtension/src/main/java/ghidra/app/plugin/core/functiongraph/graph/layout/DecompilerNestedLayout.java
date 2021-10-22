@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -533,7 +533,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 		articulations.add(new Point2D.Double(x2, y2)); // out of the bottom of the vertex
 
 		// Use the spacing to move the end x value towards the center of the vertex
-		double x3 = endRightX - VERTEX_BORDER_THICKNESS; // start at the end			
+		double x3 = endRightX - VERTEX_BORDER_THICKNESS; // start at the end
 
 		// spacing moves closer to center as the distance grows
 		x3 -= distanceSpacing;
@@ -712,7 +712,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 					 -p2 - just past the left edge
 					 -p3 - just past the bottom of the vertex
 					 -p4 - back at the original x value
-				
+
 					 	   |
 					   .___|
 					   | .-----.
@@ -780,7 +780,7 @@ public class DecompilerNestedLayout extends AbstractFGLayout {
 
 		int startRow = start.rowIndex;
 		int endRow = end.rowIndex;
-		if (startRow > endRow) { // going upwards			
+		if (startRow > endRow) { // going upwards
 			endRow = start.rowIndex;
 			startRow = end.rowIndex;
 		}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -114,7 +114,7 @@ public class DataTypeIDConverter implements GhidraLaunchable {
 
 	private void loadMap(File idMapFile) throws InvalidInputException, IOException {
 		// Get the IDs and place in a map.
-		// This expects the idMapFile to contains lines where each line has an old ID in hex 
+		// This expects the idMapFile to contains lines where each line has an old ID in hex
 		// followed by a space and then a new ID in Hex.
 		idMap = new LongLongHashtable();
 		FileReader reader = new FileReader(idMapFile);

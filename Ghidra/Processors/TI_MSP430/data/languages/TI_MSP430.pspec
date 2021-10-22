@@ -38,7 +38,7 @@
 			<symbol name="FCTL1" address="RAM:0128" entry="false"/>
 			<symbol name="FCTL2" address="RAM:012A" entry="false"/>
 			<symbol name="FCTL3" address="RAM:012C" entry="false"/>
-		<!-- SVS Registers -->			
+		<!-- SVS Registers -->
 			<symbol name="SVSCTL" address="RAM:0050" entry="false"/>
 		<!-- Hardware Multiply Registers -->
 			<symbol name="MPY"    address="RAM:0130" entry="false"/>
@@ -49,7 +49,7 @@
 			<symbol name="RESLO"  address="RAM:013A" entry="false"/>
 			<symbol name="RESHI"  address="RAM:013C" entry="false"/>
 			<symbol name="SUMEXT" address="RAM:013E" entry="false"/>
-		<!-- DMA Registers -->			
+		<!-- DMA Registers -->
 			<symbol name="DMACTL0" address="RAM:0122" entry="false"/>
 			<symbol name="DMACTL1" address="RAM:0124" entry="false"/>
 			<symbol name="DMA0CTL" address="RAM:01E0" entry="false"/>

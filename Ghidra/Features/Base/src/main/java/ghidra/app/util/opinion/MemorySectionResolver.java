@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,20 +47,20 @@ public abstract class MemorySectionResolver {
 
 	/**
 	 * Add initialized memory "section" based upon a specified data source fileOffset.
-	 * The last "section" defined will take precedence when resolving conflicts. Sections identified 
+	 * The last "section" defined will take precedence when resolving conflicts. Sections identified
 	 * as loaded will take precedence over those that are non-loaded.
-	 * placed into memory  
+	 * placed into memory
 	 * @param key the loadable section key which corresponds to this memory "section"
 	 * @param fileOffset data source file offset.  It is assumed that all initialized
 	 * "sections" draw from a single data source.
-	 * @param numberOfBytes number of bytes within "section" 
+	 * @param numberOfBytes number of bytes within "section"
 	 * @param startAddress desired physical start address of "section" (not overlay address)
-	 * @param sectionName name of "section" 
+	 * @param sectionName name of "section"
 	 * @param isReadable true if "section" has read privilege
 	 * @param isWritable true if "section" has write privilege
 	 * @param isExecutable true if "section" has execute privilege
 	 * @param comment section comment (used as basis for block comment)
-	 * @param isFragmentationOK if true this memory section may be fragmented due to 
+	 * @param isFragmentationOK if true this memory section may be fragmented due to
 	 * @param isLoadedSection if true this memory section will take precedence over non-loaded sections
 	 * conflict/overlap with other memory sections of higher precedence.
 	 * @throws AddressOverflowException
@@ -81,23 +81,23 @@ public abstract class MemorySectionResolver {
 		}
 		else {
 			// ensure that non-loaded sections are processed after loaded sections
-			// by inserting them before the loaded sections 
+			// by inserting them before the loaded sections
 			sections.add(nextNonLoadedSectionInsertionIndex++, memorySection);
 		}
 	}
 
 	/**
 	 * Add uninitialized memory "section".
-	 * The last "section" defined will take precedence when resolving conflicts.  
+	 * The last "section" defined will take precedence when resolving conflicts.
 	 * @param key the loadable section key which corresponds to this memory "section"
-	 * @param numberOfBytes number of bytes within "section" 
+	 * @param numberOfBytes number of bytes within "section"
 	 * @param startAddress desired physical start address of "section" (not overlay address)
-	 * @param sectionName name of "section" 
+	 * @param sectionName name of "section"
 	 * @param isReadable true if "section" has read privilege
 	 * @param isWritable true if "section" has write privilege
 	 * @param isExecutable true if "section" has execute privilege
 	 * @param comment section comment (used as basis for block comment)
-	 * @param isFragmentationOK if true this memory section may be fragmented due to 
+	 * @param isFragmentationOK if true this memory section may be fragmented due to
 	 * conflict/overlap with other memory sections of higher precedence.
 	 * @throws AddressOverflowException
 	 */
@@ -170,7 +170,7 @@ public abstract class MemorySectionResolver {
 		/**
 		 * Construction file allocation range
 		 * @param section memory section
-		 * @param rangeStartFileOffset file byte offset for start of range 
+		 * @param rangeStartFileOffset file byte offset for start of range
 		 * @param rangeSize length of range in bytes
 		 * @param rangeStartAddress range memory address (NOTE: may be a memory overlay address)
 		 */
@@ -190,8 +190,8 @@ public abstract class MemorySectionResolver {
 	}
 
 	/**
-	 * Get the address set as a list of ranges which correspond to a 
-	 * loaded section.  The key object corresponds to the key object 
+	 * Get the address set as a list of ranges which correspond to a
+	 * loaded section.  The key object corresponds to the key object
 	 * provided when the section was added.
 	 * @param key section key object
 	 * @return list of resolved address ranges or null if not found
@@ -211,7 +211,7 @@ public abstract class MemorySectionResolver {
 	}
 
 	/**
-	 * Indicates range must be converted to a named overlay 
+	 * Indicates range must be converted to a named overlay
 	 */
 	private class OverlayAddressRange extends AddressRangeImpl {
 		OverlayAddressRange(Address min, Address max) {
@@ -271,8 +271,8 @@ public abstract class MemorySectionResolver {
 
 	/**
 	 * Resolve the specified section and create the corresponding memory block(s).
-	 * An entry will be added to the sectionMemoryMap to facilitate subsequent 
-	 * MemoryLoadable memory assignment lookups, see {@link #getResolvedLoadAddresses(MemoryLoadable)}. 
+	 * An entry will be added to the sectionMemoryMap to facilitate subsequent
+	 * MemoryLoadable memory assignment lookups, see {@link #getResolvedLoadAddresses(MemoryLoadable)}.
 	 * @param section section to be resolved
 	 * @param fileAllocationMap memory mapping of file for those sections already processed.
 	 * Any new file regions claimed by the specified section will be added to this map.
@@ -305,12 +305,12 @@ public abstract class MemorySectionResolver {
 	 * memoryAllocationList.
 	 * @param section section to be allocated and blocks created
 	 * @param memoryAllocationList memory allocation list.
-	 * Matching ranges allocated to other sections are identified using a ProxyAddressRange, 
+	 * Matching ranges allocated to other sections are identified using a ProxyAddressRange,
 	 * memory-mapped file range conflicts are identified using an OverlayAddressRange, while
 	 * new file-mapped ranges are identified by an AddressRangeImpl.
 	 * @param monitor
 	 * @return memory address ranges corresponding to the specified section. Memory blocks
-	 * will have been created for these ranges but may be shared by other sections.  
+	 * will have been created for these ranges but may be shared by other sections.
 	 * @throws IOException
 	 * @throws AddressOverflowException
 	 * @throws CancelledException
@@ -448,9 +448,9 @@ public abstract class MemorySectionResolver {
 
 	/**
 	 * Allocate section to memory ranges based upon address-mapping of file offsets.
-	 * The fileAllocationMap is used to map regions of the section to previously processed 
-	 * sections or to identify new unclaimed address-mapped file regions.  Those ranges 
-	 * which match memory-mapped file ranges are identified using a ProxyAddressRange, 
+	 * The fileAllocationMap is used to map regions of the section to previously processed
+	 * sections or to identify new unclaimed address-mapped file regions.  Those ranges
+	 * which match memory-mapped file ranges are identified using a ProxyAddressRange,
 	 * memory-mapped file range conflicts are identified using an OverlayAddressRange, while
 	 * new ranges will be identified by an AddressRangeImpl.
 	 * @param section new section to be processed
@@ -557,7 +557,7 @@ public abstract class MemorySectionResolver {
 
 	/**
 	 * Reconcile section load range which has been determined to be in conflict with
-	 * previously resolved section chunks.  Either OverlayAddressRange or 
+	 * previously resolved section chunks.  Either OverlayAddressRange or
 	 * ProxyAddressRange objects will be added to rangeList to provide advice for
 	 * subsequent memory block creation.
 	 * @param section memory section to be loaded which resulted in conflict
@@ -577,7 +577,7 @@ public abstract class MemorySectionResolver {
 			ObjectRangeMap<AllocatedFileSectionRange> fileLoadRangeMap =
 				getFileLoadRangeMap(minPhysicalAddr.getAddressSpace(), false);
 			if (fileLoadRangeMap == null) {
-				// unexpected unless memory already defined 
+				// unexpected unless memory already defined
 				rangeList.add(new OverlayAddressRange(minPhysicalAddr, maxPhysicalAddr));
 				return fileOffset + maxPhysicalAddr.subtract(minPhysicalAddr) + 1;
 			}
@@ -590,7 +590,7 @@ public abstract class MemorySectionResolver {
 
 			// NOTE: Range iterator does not fill-in the gaps, only those
 			// ranges which match-up will be returned, range gaps correspond
-			// to memory conflict. 
+			// to memory conflict.
 			IndexRangeIterator fileOffsetRangeIterator = fileLoadRangeMap.getIndexRangeIterator(
 				fileOffset, fileOffset + conflictRangeSize - 1);
 
@@ -685,15 +685,15 @@ public abstract class MemorySectionResolver {
 
 	/**
 	 * Get program object
-	 * @return program 
+	 * @return program
 	 */
 	public Program getProgram() {
 		return program;
 	}
 
 	/**
-	 * Create a memory block (possible fragment if conflicts resolved) for the specified loadable "section". 
-	 * If multiple blocks are created due to size restrictions only the first block will be returned.  The 
+	 * Create a memory block (possible fragment if conflicts resolved) for the specified loadable "section".
+	 * If multiple blocks are created due to size restrictions only the first block will be returned.  The
 	 * returned block's length can be checked to determine if this has occurred.
 	 * @param key the loadable section key which corresponds to this memory block or null for
 	 * an adhoc block
@@ -706,7 +706,7 @@ public abstract class MemorySectionResolver {
 	 * @param r true if "section" has read privilege
 	 * @param w true if "section" has write privilege
 	 * @param x true if "section" has execute privilege
-	 * @return memory block 
+	 * @return memory block
 	 * @throws IOException
 	 * @throws AddressOverflowException
 	 * @throws CancelledException
@@ -717,8 +717,8 @@ public abstract class MemorySectionResolver {
 			throws IOException, AddressOverflowException, CancelledException;
 
 	/**
-	 * Create a memory block (possible fragment if conflicts resolved) for the specified loadable "section". 
-	 * If multiple blocks are created due to size restrictions only the first block will be returned.  The 
+	 * Create a memory block (possible fragment if conflicts resolved) for the specified loadable "section".
+	 * If multiple blocks are created due to size restrictions only the first block will be returned.  The
 	 * returned block's length can be checked to determine if this has occurred.
 	 * @param key the loadable section key which corresponds to this memory block or null for
 	 * an adhoc block
@@ -730,7 +730,7 @@ public abstract class MemorySectionResolver {
 	 * @param r true if "section" has read privilege
 	 * @param w true if "section" has write privilege
 	 * @param x true if "section" has execute privilege
-	 * @return memory block 
+	 * @return memory block
 	 * @throws IOException
 	 * @throws AddressOverflowException
 	 * @throws CancelledException

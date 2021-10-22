@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,8 @@ import java.text.ParseException;
 /**
  * Class to more conveniently represent a Java version string.
  * <p>
- * Note: this class has a natural ordering that is inconsistent with equals 
- * (the <code>architecture</code> part of the version is disregarded in the 
+ * Note: this class has a natural ordering that is inconsistent with equals
+ * (the <code>architecture</code> part of the version is disregarded in the
  * {@link #compareTo(JavaVersion)} method).
  */
 public class JavaVersion implements Comparable<JavaVersion> {
@@ -33,10 +33,10 @@ public class JavaVersion implements Comparable<JavaVersion> {
 
 	/**
 	 * Creates a new {@link JavaVersion} object from the given version string.
-	 * 
+	 *
 	 * @param version A version string.
 	 * @param architecture An architecture string (32 or 64).
-	 * @throws ParseException if the version or architecture string failed to parse.  
+	 * @throws ParseException if the version or architecture string failed to parse.
 	 *   The exception's message has more detailed information about why it failed.
 	 */
 	public JavaVersion(String version, String architecture) throws ParseException {
@@ -46,7 +46,7 @@ public class JavaVersion implements Comparable<JavaVersion> {
 
 	/**
 	 * Gets the major version.
-	 * 
+	 *
 	 * @return The major version.
 	 */
 	public int getMajor() {
@@ -55,7 +55,7 @@ public class JavaVersion implements Comparable<JavaVersion> {
 
 	/**
 	 * Gets the minor version.
-	 * 
+	 *
 	 * @return The minor version.
 	 */
 	public int getMinor() {
@@ -64,7 +64,7 @@ public class JavaVersion implements Comparable<JavaVersion> {
 
 	/**
 	 * Gets the patch version.
-	 * 
+	 *
 	 * @return The patch version.
 	 */
 	public int getPatch() {
@@ -73,7 +73,7 @@ public class JavaVersion implements Comparable<JavaVersion> {
 
 	/**
 	 * Gets the architecture.
-	 * 
+	 *
 	 * @return The architecture.
 	 */
 	public int getArchitecture() {
@@ -151,9 +151,9 @@ public class JavaVersion implements Comparable<JavaVersion> {
 
 	/**
 	 * Parses the major, minor, and optional patch integers out of the given version string.
-	 * 
+	 *
 	 * @param version A version string.
-	 * @throws ParseException if the version string failed to parse.  The exception's message 
+	 * @throws ParseException if the version string failed to parse.  The exception's message
 	 * has more detailed information about why it failed.
 	 */
 	private void parseVersion(String version) throws ParseException {
@@ -205,11 +205,11 @@ public class JavaVersion implements Comparable<JavaVersion> {
 
 	/**
 	 * Parses a version part string to an integer.
-	 * 
+	 *
 	 * @param versionPart A version part string.
 	 * @param versionPartName The version part name (for error reporting).
 	 * @return The version part string as an integer.
-	 * @throws ParseException if the version part string failed to parse to a valid version part 
+	 * @throws ParseException if the version part string failed to parse to a valid version part
 	 *   integer.
 	 */
 	private int parseVersionPart(String versionPart, String versionPartName) throws ParseException {
@@ -228,7 +228,7 @@ public class JavaVersion implements Comparable<JavaVersion> {
 
 	/**
 	 * Parses the architecture integer out of the given architecture string.
-	 * 
+	 *
 	 * @param architecture An architecture string.
 	 * @throws ParseException if the architecture string failed to parse.
 	 */

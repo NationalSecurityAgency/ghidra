@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  *  This analyzer reads through JVM .class files looking for lookupswitch and tableswitch instructions.
  *  For each such instruction, the analyzer determines all the possible jump targets, disassembles them,
- *  and then newly-disassembled code to the appropriate function body. 
+ *  and then newly-disassembled code to the appropriate function body.
  */
 
 public class JvmSwitchAnalyzer extends AbstractJavaAnalyzer {
@@ -228,7 +228,7 @@ public class JvmSwitchAnalyzer extends AbstractJavaAnalyzer {
 		program.getReferenceManager().addMemoryReference(switchInstruction.getMinAddress(), target,
 			RefType.COMPUTED_JUMP, SourceType.ANALYSIS, CodeUnit.MNEMONIC);
 
-		//put switch table cases into namespace for the switch 
+		//put switch table cases into namespace for the switch
 		//create namespace if necessary
 		Namespace space = null;
 		String switchName =

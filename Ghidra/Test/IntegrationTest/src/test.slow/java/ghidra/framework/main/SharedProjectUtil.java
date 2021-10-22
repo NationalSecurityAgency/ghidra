@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * 
+ *
  */
 package ghidra.framework.main;
 
@@ -188,13 +188,13 @@ public class SharedProjectUtil {
 
 	/**
 	 * Note: This should be called with Err's GUI mode disabled.  When you get a FrontEnd
-	 * tool from TestEnv, that action turns on the GUI display for showing errors, by default.  
-	 * So, you should call this method before accessing any GUI components in the test system. 
-	 * If the GUI error display is enabled when this method is invoked, then server 
+	 * tool from TestEnv, that action turns on the GUI display for showing errors, by default.
+	 * So, you should call this method before accessing any GUI components in the test system.
+	 * If the GUI error display is enabled when this method is invoked, then server
 	 * connection attempts may trigger error dialogs that are considered 'normal' when running
 	 * in the test environment.
-	 * 
-	 * @return the new server adapter 
+	 *
+	 * @return the new server adapter
 	 * @throws Exception if there are any exceptions starting the server
 	 */
 	public static RepositoryAdapter startServer() throws Exception {

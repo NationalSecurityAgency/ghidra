@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import javax.swing.event.TableColumnModelListener;
 import javax.swing.table.*;
 
 /**
- * JTableHeader that uses the default table column model to manage 
+ * JTableHeader that uses the default table column model to manage
  * TableColumns. Sizes the column according to its corresponding viewer
  * component. Allows columns to be moved.
  */
@@ -40,8 +40,8 @@ class ByteViewerHeader extends JTableHeader implements Scrollable {
 	private HashMap<Component, TableColumn> components; // table of components that map to columns
 
 	/**
-	 * Constructor 
-	 * @param container Container that will be used to calculate the 
+	 * Constructor
+	 * @param container Container that will be used to calculate the
 	 * preferred size
 	 */
 	ByteViewerHeader(Component container) {
@@ -65,7 +65,7 @@ class ByteViewerHeader extends JTableHeader implements Scrollable {
 	/**
 	 * Add a new column.
 	 * @param name name that will be displayed in the column
-	 * @param c corresponding viewer component 
+	 * @param c corresponding viewer component
 	 */
 	public void addColumn(String name, Component c) {
 

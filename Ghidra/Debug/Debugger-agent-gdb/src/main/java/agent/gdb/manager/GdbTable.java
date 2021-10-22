@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.util.Msg;
 
 /**
  * A parsed table output from a GDB/MI command
- * 
+ *
  * GDB provides many equivalent GDB/MI commands for CLI commands that output formatted tables of
  * information. The GDB/MI format can be a little obtuse to traverse, but at least it is relatively
  * well structured. This object provides two views of the table: as rows and columns. Generally, a
@@ -53,17 +53,17 @@ public class GdbTable {
 
 	/*
 	 * Implementation of the row-oriented view
-	 * 
+	 *
 	 * view is a list of maps: TableRowView
-	 * 
+	 *
 	 * each item is a map: TableRowCellMap
-	 * 
+	 *
 	 * each map has an entry set, a set of head-cell pairs: TableRowCellSet
-	 * 
+	 *
 	 * each entry set must be iterable, an iterator of head-cell pairs: TableRowCellIterator
-	 * 
+	 *
 	 * each iterator traverses the head-cell pairs: TableRowCellEntry
-	 * 
+	 *
 	 * The other methods are implemented by the abstract base classes provided by Java's
 	 * collections.
 	 */
@@ -155,17 +155,17 @@ public class GdbTable {
 
 	/*
 	 * Implementation of the column-oriented view
-	 * 
+	 *
 	 * view is a map of lists: TableColumnView
-	 * 
+	 *
 	 * the map has an entry set, a set of head-list pairs: TableColumnSet
-	 * 
+	 *
 	 * the set must be iteratable, an iterator of head-list pairs: TableColumnIterator
-	 * 
+	 *
 	 * the iterator traverses head-list pairs: TableColumnEntry
-	 * 
+	 *
 	 * each list is a list of cells: TableColumnCellList
-	 * 
+	 *
 	 * The other methods are implemented by the abstract base classes provided by Java's
 	 * collections.
 	 */
@@ -260,10 +260,10 @@ public class GdbTable {
 
 	/**
 	 * Convert a parsed GDB/MI structure into a table
-	 * 
+	 *
 	 * See GDB's GDB/MI documentation for any command yielding a table for more information on the
 	 * expected structure of GDB/MI table data.
-	 * 
+	 *
 	 * @param dataMap the parsed structure
 	 * @param rowKey the key assigned to each row
 	 */
@@ -302,7 +302,7 @@ public class GdbTable {
 
 	/**
 	 * Get the table as rows: a list of head-to-cell maps
-	 * 
+	 *
 	 * @return the row view
 	 */
 	public TableRowView rows() {
@@ -311,7 +311,7 @@ public class GdbTable {
 
 	/**
 	 * Get the table as columns: a head-to-cell-list map
-	 * 
+	 *
 	 * @return the column view
 	 */
 	public TableColumnView columns() {

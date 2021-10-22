@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 // This script works with Sleigh PIC languages and creates a
-// switch at the current instruction which should be modifying the 
+// switch at the current instruction which should be modifying the
 // program counter.
 
 import ghidra.app.plugin.core.analysis.*;
@@ -42,7 +42,7 @@ public class CreatePICSwitch extends GhidraScript {
                 return;
             }
         }
-		
+
 		boolean ok = false;
 		Instruction instr = null;
 		if (currentLocation != null) {
@@ -56,16 +56,16 @@ public class CreatePICSwitch extends GhidraScript {
 			}
 		}
 		if (!ok) {
-			Msg.showError(this, null, 
+			Msg.showError(this, null,
 					"CreatePICSwitch Script Error", "Switch may only be created when current instruction modifies register PC/PCL\n" +
 					" and where the following code unit is clear.");
 			return;
 		}
-		
+
 		if (!PicSwitchAnalyzer.addSwitch(instr)) {
-			Msg.showError(this, null, 
+			Msg.showError(this, null,
 					"CreatePICSwitch Script Error", "Failed to identify PIC switch code");
 		}
-		
+
 	}
 }

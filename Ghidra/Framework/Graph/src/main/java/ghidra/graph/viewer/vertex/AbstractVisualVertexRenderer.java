@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 		extends BasicVertexRenderer<V, E> {
 
 	/**
-	 * Creates a copy of the given {@link GraphicsDecorator} that may have scaling tweaked to 
+	 * Creates a copy of the given {@link GraphicsDecorator} that may have scaling tweaked to
 	 * handle {@link VisualVertex#getEmphasis()} emphasized vertices.
 	 */
 	protected GraphicsDecorator getEmphasisGraphics(GraphicsDecorator g, V vertex,
@@ -102,13 +102,13 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 
 		int offset = 10;
 
-		// scale the offset with the scale of the view, but not as fast, so that as we scale down, 
+		// scale the offset with the scale of the view, but not as fast, so that as we scale down,
 		// the size of the paint area starts to get larger than the vertex
 		offset = (int) adjustValueForCurrentScale(rc, offset, .9);
 		g.fillOval(bounds.x - offset, bounds.y - offset, bounds.width + (offset * 2),
 			bounds.height + (offset * 2));
 
-// DEBUG		
+// DEBUG
 //		g.setPaint(Color.BLUE);
 //		g.drawRect(bounds.x - offset, bounds.y - offset, bounds.width + (offset * 2),
 //			bounds.height + (offset * 2));
@@ -138,9 +138,9 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 	}
 
 	/**
-	 * Returns true if the view is zoomed far enough out that the user cannot interact with 
+	 * Returns true if the view is zoomed far enough out that the user cannot interact with
 	 * its internal UI widgets
-	 * 
+	 *
 	 * @return true if the vertex is scaled past the interaction threshold
 	 */
 	protected boolean isScaledPastVertexInteractionThreshold(RenderContext<V, E> rc) {
@@ -150,7 +150,7 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 
 	/**
 	 * Uses the render context to create a compact shape for the given vertex
-	 * 
+	 *
 	 * @param rc the render context
 	 * @param layout the layout
 	 * @param vertex the vertex
@@ -178,7 +178,7 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 
 	/**
 	 * Uses the render context to create a compact shape for the given vertex
-	 * 
+	 *
 	 * @param rc the render context
 	 * @param layout the layout
 	 * @param vertex the vertex
@@ -205,7 +205,7 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 
 	/**
 	 * Takes the given shape and translates its coordinates to the view space
-	 * 
+	 *
 	 * @param rc the render context
 	 * @param layout the model space layout
 	 * @param vertex the vertex
@@ -231,7 +231,7 @@ public class AbstractVisualVertexRenderer<V extends VisualVertex, E extends Visu
 	 * Adjusts the given value based upon the current scale applied the the view.  The more
 	 * scaled out the view, the larger the value returned.   This allows view effects to be
 	 * discernable at scale.
-	 * 
+	 *
 	 * @param rc the render context
 	 * @param value the value to scale
 	 * @param ratioToScale the ratio to scale to

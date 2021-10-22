@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -392,7 +392,7 @@ public abstract class AbstractTypeProgramInterface implements TPI {
 				throws IOException, PdbException, CancelledException {
 			// I don't believe we need to parse and process the hash table.  They seemingly are
 			//  used to point from a TypeIndex to a raw (byte[]) Type Record.  We are not
-			//  currently maintaining our records in this raw form; we are processing (parsing) 
+			//  currently maintaining our records in this raw form; we are processing (parsing)
 			//  them as we read each record buffer.
 			// Note that we have no evidence of how the Auxiliary stream is used.  Its
 			//  contents might need to get concatenated with the contents of the primary

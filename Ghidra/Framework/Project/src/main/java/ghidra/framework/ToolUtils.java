@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,7 @@ public class ToolUtils {
 	/**
 	 * Returns all tools found in the classpath that live under a root
 	 * 'defaultTools' directory
-	 * 
+	 *
 	 * @return the default tools
 	 */
 	// synchronized to protect loading of static set
@@ -88,7 +88,7 @@ public class ToolUtils {
 	/**
 	 * Returns all tools found in the classpath that live under a root
 	 * 'extraTools' directory
-	 * 
+	 *
 	 * @return the extra tools
 	 */
 	// synchronized to protect loading of static set
@@ -114,7 +114,7 @@ public class ToolUtils {
 	/**
 	 * Returns all tools found in the classpath that live under a root
 	 * 'defaultTools' directory or a root 'extraTools' directory
-	 * 
+	 *
 	 * @return the tools
 	 */
 	// synchronized to protect loading of static set
@@ -275,7 +275,7 @@ public class ToolUtils {
 		}
 
 		// If we get here, then we have two differently named files (the new one needs to replace
-		// the outdated old one).  Make sure the files live in the same directory (otherwise, 
+		// the outdated old one).  Make sure the files live in the same directory (otherwise,
 		// we can't delete the old one (this implies it is a default tool)).
 		if (correctToolFile.getParentFile().equals(toolFile.getParentFile())) {
 			// same parent directory, but different filename

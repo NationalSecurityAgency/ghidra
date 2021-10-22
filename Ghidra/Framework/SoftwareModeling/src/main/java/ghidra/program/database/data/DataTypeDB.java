@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,7 +83,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	/**
 	 * Subclasses implement this to update the to the database. Implementers can assume that the
 	 * database lock will be acquired when this method is called.
-	 * 
+	 *
 	 * @param newName new data type name
 	 */
 	protected abstract void doSetNameRecord(String newName)
@@ -148,7 +148,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	/**
 	 * Get the current name without refresh. This is intended to be used for event generation when
 	 * an old-name is needed.
-	 * 
+	 *
 	 * @return old name
 	 */
 	protected final String getOldName() {
@@ -392,7 +392,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 
 	/**
 	 * Updates the path for this datatype
-	 * 
+	 *
 	 * @param dt the dataType whose path has changed.
 	 */
 	protected void updatePath(DataTypeDB dt) {
@@ -416,7 +416,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	/**
 	 * Notify all parents that the size of this datatype has changed or other significant change
 	 * that may affect a parent containing this datatype.
-	 * 
+	 *
 	 * @param isAutoChange true if changes are in response to another datatype's change.
 	 */
 	protected void notifySizeChanged(boolean isAutoChange) {
@@ -428,7 +428,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 
 	/**
 	 * Notification that this composite data type's alignment has changed.
-	 * 
+	 *
 	 * @param isAutoChange true if changes are in response to another datatype's change.
 	 */
 	protected void notifyAlignmentChanged(boolean isAutoChange) {
@@ -515,7 +515,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	 * Sets a String briefly describing this DataType. <br>
 	 * If a data type that extends this class wants to allow the description to be changed, then it
 	 * must override this method.
-	 * 
+	 *
 	 * @param description a one-liner describing this DataType.
 	 */
 	@Override
@@ -527,7 +527,7 @@ abstract class DataTypeDB extends DatabaseObject implements DataType {
 	 * setUniversalID is a package level method that allows you to change a data type's universal
 	 * ID. This is only intended to be used when transforming a newly parsed data type archive so
 	 * that it can be used as a replacement of the archive from a previous software release.
-	 * 
+	 *
 	 * @param oldUniversalID the old universal ID value that the user is already referencing with
 	 *            their data types. This is the universal ID that we want the new data type to be
 	 *            known by.

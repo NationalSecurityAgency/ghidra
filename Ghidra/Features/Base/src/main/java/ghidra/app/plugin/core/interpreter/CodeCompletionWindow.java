@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,8 +30,8 @@ import ghidra.app.plugin.core.console.CodeCompletion;
 
 /**
  * This class encapsulates a code completion popup Window for the ConsolePlugin.
- * 
- * 
+ *
+ *
  *
  */
 public class CodeCompletionWindow extends JDialog {
@@ -51,11 +51,11 @@ public class CodeCompletionWindow extends JDialog {
 
 	/**
 	 * Constructs a new CodeCompletionWindow.
-	 * 
+	 *
 	 * We pass in the PluginTool so we can get a reference to the Frame we are
 	 * popping up over, as well as the text field we are coming from (so we
 	 * can fine-tune where we pop up).
-	 * 
+	 *
 	 * @param tool the PluginTool the has the Frame we are popping up over
 	 * @param console the ConsolePlugin we are providing services for
 	 * @param outputTextField the JTextField from whence we came
@@ -104,11 +104,11 @@ public class CodeCompletionWindow extends JDialog {
 
 	/**
 	 * Process a KeyEvent for this Window.
-	 * 
+	 *
 	 * This method is located here so that others (e.g. ConsolePlugin) can
 	 * forward KeyEvents to us, or we can process KeyEvents that were directed
 	 * to us (because we had focus instead).
-	 * 
+	 *
 	 * @param e KeyEvent
 	 */
 	@Override
@@ -118,22 +118,22 @@ public class CodeCompletionWindow extends JDialog {
 
 	/**
 	 * Updates the completion list with the given completion mapping.
-	 * 
+	 *
 	 * The format, as mentioned above, is:
 	 * "attribute" -> "substitution value"
 	 * If the substitution value is null, then that attribute will not be
 	 * selectable for substitution.
-	 * 
+	 *
 	 * After updating the mapping, this Window then updates its size as
 	 * appropriate.
-	 * 
+	 *
 	 * The Window also will attempt to move out of the way of the cursor/caret
 	 * in the textField.  However, if the caret's position had recently been
 	 * changed and the caret had not been repainted yet, then the caret's
 	 * location can be null.  In this case, the Window will not move.
 	 * You can avoid this condition by calling this method in a
 	 * SwingUtilities.invokeLater(Runnable).
-	 * 
+	 *
 	 * @param list List of code completions
 	 */
 	public void updateCompletionList(List<CodeCompletion> list) {
@@ -256,9 +256,9 @@ public class CodeCompletionWindow extends JDialog {
 
 	/**
 	 * Sets the Font on this CodeCompletionWindow.
-	 * 
+	 *
 	 * Basically sets the Font in the completion list.
-	 * 
+	 *
 	 * @param font the new Font
 	 */
 	@Override
@@ -302,9 +302,9 @@ public class CodeCompletionWindow extends JDialog {
 
 	/**
 	 * Returns the currently selected code completion.
-	 * 
+	 *
 	 * Returns "" if there is none.
-	 * 
+	 *
 	 * @return the currently selected code completion, or null if none selected
 	 */
 	public CodeCompletion getCompletion() {
@@ -358,12 +358,12 @@ class CodeCompletionListModel implements ListModel {
 
 /**
  * This data type handles selection changes in the CodeCompletionWindow.
- * 
+ *
  * This contains all the "smarts" to determine whether or not indices can be
  * selected.  So when the user clicks on an entry with the mouse, we choose
  * whether or not that index can actually be highlighted/selected.
- * 
- * 
+ *
+ *
  *
  */
 class CodeCompletionListSelectionModel extends DefaultListSelectionModel {
@@ -371,7 +371,7 @@ class CodeCompletionListSelectionModel extends DefaultListSelectionModel {
 
 	/**
 	 * Constructs a new CodeCompletionListSelectionModel using the given List.
-	 * 
+	 *
 	 * @param l the List to use
 	 */
 	public CodeCompletionListSelectionModel(List<CodeCompletion> l) {
@@ -381,10 +381,10 @@ class CodeCompletionListSelectionModel extends DefaultListSelectionModel {
 
 	/**
 	 * Called when the selection needs updating.
-	 * 
+	 *
 	 * Here we will check the value of the new index and determine whether or
 	 * not we actually want to select it.
-	 * 
+	 *
 	 * @param index0 old index
 	 * @param index1 new index
 	 */
@@ -404,8 +404,8 @@ class CodeCompletionListSelectionModel extends DefaultListSelectionModel {
 
 /**
  * Renders CodeCompletions for the CodeCompletionWindow.
- * 
- * 
+ *
+ *
  *
  */
 class CodeCompletionListCellRenderer extends GListCellRenderer<CodeCompletion> {
@@ -417,7 +417,7 @@ class CodeCompletionListCellRenderer extends GListCellRenderer<CodeCompletion> {
 
 	/**
 	 * Render either a default list cell, or use the one provided.
-	 * 
+	 *
 	 * If the CodeCompletion we got has a Component to be used, then use that.
 	 * Otherwise, we use the DefaultListCellRenderer routine.
 	 */

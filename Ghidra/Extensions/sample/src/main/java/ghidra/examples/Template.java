@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,7 +137,7 @@ public abstract class Template extends Plugin {
             public void actionPerformed(ActionContext e) {
 				Function_1();
 			}
-			
+
 			@Override
 			public boolean isAddToPopup( ActionContext context ) {
 			    if ( !(context.getContextObject() instanceof ListingActionContext) ) {
@@ -147,9 +147,9 @@ public abstract class Template extends Plugin {
 			}
 		};
 
-		action.setMenuBarData( new MenuData( 
+		action.setMenuBarData( new MenuData(
 		    new String[] { "Misc", "Menu", "menu item 1" }, null, null ) );
-		
+
 		if (getProgram() == null) {
 			action.setEnabled(false);
 		}
@@ -171,7 +171,7 @@ public abstract class Template extends Plugin {
             }
         };
 
-		action.setMenuBarData( new MenuData( 
+		action.setMenuBarData( new MenuData(
 		    new String[] { "Misc", "Menu", "Menu item 2" }, null, null ) );
 		if (getProgram() == null) {
 			action.setEnabled(false);
@@ -186,21 +186,21 @@ public abstract class Template extends Plugin {
 		//
 		action =
 			new DockingAction("Function 3 Code", getName() ) {
-            
+
 			@Override
             public void actionPerformed(ActionContext e) {
                 Function_3();
             }
-            
+
             @Override
             public boolean isValidContext( ActionContext context ) {
                 return context instanceof ListingActionContext;
             }
         };
 
-		action.setMenuBarData( new MenuData( 
+		action.setMenuBarData( new MenuData(
 		    new String[] { "Misc", "Menu", "Menu item 3" }, null, null ) );
-		
+
 		if (getProgram() == null) {
 			action.setEnabled(false);
 		}
@@ -223,4 +223,4 @@ public abstract class Template extends Plugin {
 		}
 	}
 
-} 
+}

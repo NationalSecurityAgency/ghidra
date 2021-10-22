@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,7 +76,7 @@ public class PythonPlugin extends ProgramPlugin
 
 	/**
 	 * Creates a new PythonPlugin object.
-	 * 
+	 *
 	 * @param tool The tool associated with this plugin.
 	 */
 	public PythonPlugin(PluginTool tool) {
@@ -85,7 +85,7 @@ public class PythonPlugin extends ProgramPlugin
 
 	/**
 	 * Gets the plugin's interpreter console.
-	 * 
+	 *
 	 * @return The plugin's interpreter console.
 	 */
 	InterpreterConsole getConsole() {
@@ -94,7 +94,7 @@ public class PythonPlugin extends ProgramPlugin
 
 	/**
 	 * Gets the plugin's Python interpreter.
-	 * 
+	 *
 	 * @return The plugin's Python interpreter.  May be null.
 	 */
 	GhidraPythonInterpreter getInterpreter() {
@@ -103,7 +103,7 @@ public class PythonPlugin extends ProgramPlugin
 
 	/**
 	 * Gets the plugin's interactive script
-	 * 
+	 *
 	 * @return The plugin's interactive script.
 	 */
 	PythonScript getInteractiveScript() {
@@ -112,7 +112,7 @@ public class PythonPlugin extends ProgramPlugin
 
 	/**
 	 * Gets the plugin's interactive task monitor.
-	 * 
+	 *
 	 * @return The plugin's interactive task monitor.
 	 */
 	TaskMonitor getInteractiveTaskMonitor() {
@@ -134,7 +134,7 @@ public class PythonPlugin extends ProgramPlugin
 	 * Creates various actions for the plugin.
 	 */
 	private void createActions() {
-		
+
 		// Interrupt Interpreter
 		DockingAction interruptAction = new DockingAction("Interrupt Interpreter", getName()) {
 			@Override
@@ -235,7 +235,7 @@ public class PythonPlugin extends ProgramPlugin
 
 	/**
 	 * Handle a change in one of our options.
-	 * 
+	 *
 	 * @param options the options handle
 	 * @param optionName name of the option changed
 	 * @param oldValue the old value
@@ -257,7 +257,7 @@ public class PythonPlugin extends ProgramPlugin
 
 	/**
 	 * Returns a list of possible command completion values.
-	 * 
+	 *
 	 * @param cmd current command line (without prompt)
 	 * @return A list of possible command completion values.  Could be empty if there aren't any.
 	 */

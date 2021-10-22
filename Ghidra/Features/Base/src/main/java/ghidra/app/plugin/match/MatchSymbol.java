@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -90,7 +90,7 @@ public class MatchSymbol {
 			monitor.checkCanceled();
 
 			//TODO: special namespaces for externals - unknown, etc...
-			//Library.UNKNOWN - similar to global space for normal symbols 
+			//Library.UNKNOWN - similar to global space for normal symbols
 
 			Collection<SymbolIdentifier> aSymbols = match.aSymbols;
 			Collection<SymbolIdentifier> bSymbols = match.bSymbols;
@@ -147,8 +147,8 @@ public class MatchSymbol {
 			monitor.incrementProgress(1);
 			monitor.checkCanceled();
 
-			// Don't include default names except string ones (ie no FUN_*, LAB_*, etc... but 
-			// yes s_*, u_*, etc...	
+			// Don't include default names except string ones (ie no FUN_*, LAB_*, etc... but
+			// yes s_*, u_*, etc...
 			if ((symbol.getSource() == SourceType.DEFAULT) && !isSymbolAString(program, symbol)) {
 				continue;
 			}

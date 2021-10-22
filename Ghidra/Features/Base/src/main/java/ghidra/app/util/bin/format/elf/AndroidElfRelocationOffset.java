@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,13 +31,13 @@ import ghidra.program.model.mem.Memory;
 import ghidra.program.model.scalar.Scalar;
 
 /**
- * <code>AndroidElfRelocationOffset</code> provides a dynamic LEB128 relocation 
+ * <code>AndroidElfRelocationOffset</code> provides a dynamic LEB128 relocation
  * offset adjustment component for packed Android ELF Relocation Table groups.
  * See {@link AndroidElfRelocationGroup}.  The offset adjustment provided
  * by the LEB128 memory data is added to the associated baseOffset to obtain
  * the corresponding relocation offset/address.
  * <br>
- * Secondary purpose is to retain the relocation offset associated with a 
+ * Secondary purpose is to retain the relocation offset associated with a
  * component instance.  This functionality relies on the 1:1 relationship
  * between this dynamic datatype and the single component which references it.
  */
@@ -52,8 +52,8 @@ class AndroidElfRelocationOffset extends AbstractLeb128DataType {
 	 * @param dtm the data type manager to associate with this data type.
 	 * @param baseOffset base offset to which LEB128 offset data should be added
 	 * @param relocationOffset the actual relocation offset value assciated with this
-	 * instance (used by {@link #getValue(MemBuffer, Settings, int)} and 
-	 * returned by {@link #getRelocationOffset()}.  This value should equals 
+	 * instance (used by {@link #getValue(MemBuffer, Settings, int)} and
+	 * returned by {@link #getRelocationOffset()}.  This value should equals
 	 * <code>baseOffset</code> plus decoded value of sleb128 data.
 	 */
 	AndroidElfRelocationOffset(DataTypeManager dtm, long baseOffset, long relocationOffset) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,11 +38,11 @@ public class X86_32_ElfRelocationConstants {
 	public static final int R_386_TLS_LDM = 19; // direct 32 bit for GNU version of LD TLS in LE code
 	public static final int R_386_TLS_GD_32 = 24; // direct 32 bit for GD TLS
 	public static final int R_386_TLS_GD_PUSH = 25; // tag for pushl in GD TLS code
-	public static final int R_386_TLS_GD_CALL = 26; // relocation for call 
+	public static final int R_386_TLS_GD_CALL = 26; // relocation for call
 	public static final int R_386_TLS_GD_POP = 27; // tag for popl in GD TLS code
 	public static final int R_386_TLS_LDM_32 = 28; // direct 32 bit for local dynamic code
 	public static final int R_386_TLS_LDM_PUSH = 29; // tag for pushl in LDM TLS code
-	public static final int R_386_TLS_LDM_CALL = 30; // relocation for call 
+	public static final int R_386_TLS_LDM_CALL = 30; // relocation for call
 	public static final int R_386_TLS_LDM_POP = 31; // tag for popl in LDM TLS code
 	public static final int R_386_TLS_LDO_32 = 32; // offset relative to TLS block
 	public static final int R_386_TLS_IE_32 = 33; // got entry for static TLS block

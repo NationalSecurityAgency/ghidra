@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -204,7 +204,7 @@ public class RowLayout implements Layout {
 
 		Field field = fields[index];
 
-		// y passed-in is 0-based; update y to be relative to our starting position, which is 
+		// y passed-in is 0-based; update y to be relative to our starting position, which is
 		// the tallest field in this group of fields, using that field's height above its font
 		// baseline.
 		int offsetY = y - heightAbove;

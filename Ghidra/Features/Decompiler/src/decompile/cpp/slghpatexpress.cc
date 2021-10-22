@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ int4 TokenPattern::resolveTokens(const TokenPattern &tok1,const TokenPattern &to
 				// still cares about tokens even though none are
 				// specified
   }
-  
+
   if (tok1.leftellipsis) {
     reversedirection = true;
     if (tok2.rightellipsis)
@@ -181,7 +181,7 @@ PatternBlock *TokenPattern::buildBigBlock(int4 size,int4 bitstart,int4 bitend,in
 
   startbit = 8*size - 1 - bitend;
   endbit = 8*size - 1 - bitstart;
-  
+
   block = (PatternBlock *)0;
   while(endbit >= startbit) {
     tmpstart = endbit - (endbit & 7);
@@ -273,7 +273,7 @@ TokenPattern::TokenPattern(bool tf)
   rightellipsis = false;
   pattern = new InstructionPattern(tf);
 }
-  
+
 TokenPattern::TokenPattern(Token *tok)
 
 {
@@ -438,7 +438,7 @@ TokenPattern TokenPattern::commonSubPattern(const TokenPattern &tokpat) const
     if (i<maxnum)
       patres.rightellipsis = true;
   }
-  
+
   patres.pattern = pattern->commonSubPattern(tokpat.pattern,0);
   return patres;
 }
@@ -579,7 +579,7 @@ intb TokenField::getValue(ParserWalker &walker) const
 
 {				// Construct value given specific instruction stream
   intb res = getInstructionBytes(walker,bytestart,byteend,bigendian);
-  
+
   res >>= shift;
   if (signbit)
     sign_extend(res,bitend-bitstart);
@@ -769,7 +769,7 @@ intb OperandValue::maxValue(void) const
 intb OperandValue::getValue(ParserWalker &walker) const
 
 {				// Get the value of an operand when it is used in
-				// an expression. 
+				// an expression.
   OperandSymbol *sym = ct->getOperand(index);
   PatternExpression *patexp = sym->getDefiningExpression();
   if (patexp == (PatternExpression *)0) {
@@ -1651,7 +1651,7 @@ bool EquationLeftEllipsis::resolveOperandLeft(OperandResolve &state) const
   bool res = eq->resolveOperandLeft(state);
   if (!res) return false;
   state.base = cur_base;
-  
+
   return true;
 }
 

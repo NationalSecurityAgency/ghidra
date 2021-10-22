@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ class LongReturnerTests{
         long a= returnLongLong(x);
         return a;
     }
-  
+
     long callsReturnLongLongLong(long x, long y){
         long a = returnLongLongLong(x,y);
         return a;
@@ -49,7 +49,7 @@ class LongReturnerTests{
     int callsReturnIntIntLong(int x, long y){
         int a = returnIntIntLong(x,y);
         return a;
-    }  
+    }
 
     long callsReturnLongLongInt(long x, int y){
         long a = returnLongLongInt(x,y);
@@ -81,7 +81,7 @@ class LongReturnerTests{
     long returnLongInt(int x){
         return 1L;
     }
- 
+
     long returnLongIntInt(int x, int y){
         return 1L;
     }
@@ -89,7 +89,7 @@ class LongReturnerTests{
     long returnLongLong(long x){
         return 1L;
     }
-   
+
     long returnLongLongLong(long x, long y){
         return 1L;
     }
@@ -97,11 +97,11 @@ class LongReturnerTests{
     long returnLongIntLong(int x, long y){
         return 1L;
     }
-    
+
     int returnIntIntLong(int x, long y){
         return 1;
     }
-    
+
     long returnLongLongInt(long x, int y){
         return 1L;
     }
@@ -116,6 +116,6 @@ class LongReturnerTests{
 
     static long staticReturnLongIntLong(int x, long y){
         return 1L;
-    } 
+    }
 
 }

@@ -789,7 +789,7 @@ cc: "E"    is cond=15 { tmp:1 = ($(Z) == 1); export tmp; }
 	ret:2 = inst_next;
 	push(ret);
 	call jmpdest16;
-} 
+}
 
 :LD wreg, oper16                    is op6=0x28 ... & oper16; wreg {
 	wreg = oper16;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,7 +136,7 @@ public class SymbolPath implements Comparable<SymbolPath> {
 
 	/**
 	 * Returns the name of the symbol;
-	 * 
+	 *
 	 * @return the symbol name as string without any path information.
 	 */
 	public String getName() {
@@ -167,7 +167,7 @@ public class SymbolPath implements Comparable<SymbolPath> {
 
 	/**
 	 * Returns the full symbol path as a string.
-	 * 
+	 *
 	 * @return the SymbolPath for the complete name as string, including namespace.
 	 */
 	public String getPath() {
@@ -191,7 +191,7 @@ public class SymbolPath implements Comparable<SymbolPath> {
 
 	/**
 	 * Returns true if this path contains any path entry matching the given text
-	 * 
+	 *
 	 * @param text the text for which to search
 	 * @return true if any path entry matches the given text
 	 */
@@ -231,7 +231,7 @@ public class SymbolPath implements Comparable<SymbolPath> {
 
 	/**
 	 * A convenience method to check if the given symbol's symbol path matches this path
-	 * 
+	 *
 	 * @param s the symbol to check
 	 * @return true if the symbol paths match
 	 */

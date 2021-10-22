@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class StatusLabel extends GDLabel implements FilterStatusListener {
 
 	private void resetBounds() {
 		// My bounds are tied to that of the text field passed in the constructor.  I'd like
-		// to live at the end of the textField, away from the text, which is dependent upon 
+		// to live at the end of the textField, away from the text, which is dependent upon
 		// the text alignment
 		Container myParent = getParent();
 		Container textFieldParent = textField.getParent();
@@ -70,7 +70,7 @@ public class StatusLabel extends GDLabel implements FilterStatusListener {
 		if (alignment == SwingConstants.RIGHT || alignment == SwingConstants.TRAILING) {
 			Dimension size = getPreferredSize();
 			int x = convertedLocation.x;// + size.width;
-			int y = convertedLocation.y; // try this for now...maybe center?                
+			int y = convertedLocation.y; // try this for now...maybe center?
 			setBounds(x, y, size.width, size.height);
 		}
 		else if (alignment == SwingConstants.LEFT || alignment == SwingConstants.LEADING) {

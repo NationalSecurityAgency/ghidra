@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,8 @@ import java.util.Hashtable;
  * and Ghidra needs to know.
  * <p><strong>Important</strong>: Any class that is indicated by the currentClassPath
  * passed to the <code>put</code> method should implement <code>ExtensionPoint</code>.
- * <p>Whenever a class whose name gets stored in the data base is moved to 
- * another package or renamed, the map of the old class path name to the 
+ * <p>Whenever a class whose name gets stored in the data base is moved to
+ * another package or renamed, the map of the old class path name to the
  * new one should get put into the ClassTranslator.
  * <br>Example:  The class <code>ghidra.app.plugin.core.MyPlugin.MyInfo</code> is in Ghidra version 1.
  * In Ghidra version 2, it is moved and renamed to <code>ghidra.app.plugin.core.RenamedPlugin.SubPackage.SaveInfo</code>.
@@ -34,8 +34,8 @@ import java.util.Hashtable;
  *       ClassTranslator.put("ghidra.app.plugin.core.MyPlugin.MyInfo", SaveInfo.class.getName());
  *   }
  * </code>
- * <p>Warning: If the class gets moved or renamed again in a subsequent version 
- * of Ghidra, a new translation (put call) should get added to the static initializer block 
+ * <p>Warning: If the class gets moved or renamed again in a subsequent version
+ * of Ghidra, a new translation (put call) should get added to the static initializer block
  * and any old translations should have their current path name changed to the new
  * class path.
  * <br>Example: The class <code>ghidra.app.plugin.core.MyPlugin.MyInfo</code> is in Ghidra version 1.
@@ -61,7 +61,7 @@ public class ClassTranslator {
 	public static boolean contains(String oldClassPath) {
 		return classPathMap.containsKey(oldClassPath);
 	}
-	
+
 	/**
 	 * Returns the current class path name that is mapped for the indicated old class path name.
 	 * @param oldClassPath the old class path name of the class.
@@ -70,9 +70,9 @@ public class ClassTranslator {
 	public static String get(String oldClassPath) {
 		return classPathMap.get(oldClassPath);
 	}
-	
+
 	/**
-	 * Defines a mapping indicating the class path name of the current Ghidra class 
+	 * Defines a mapping indicating the class path name of the current Ghidra class
 	 * that is the same class as the indicated old class path name from a previous Ghidra version.
 	 * @param oldClassPath the old class path name of the class.
 	 * @param currentClassPath the current class path name of the class.
@@ -82,5 +82,5 @@ public class ClassTranslator {
 	public static void put(String oldClassPath, String currentClassPath) {
 		classPathMap.put(oldClassPath, currentClassPath);
 	}
-	
+
 }

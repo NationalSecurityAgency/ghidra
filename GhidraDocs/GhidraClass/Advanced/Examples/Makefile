@@ -14,16 +14,16 @@ $(OUTDIR):
 all: $(EXAMPLES)
 
 dataMutability: dataMutability.c
-	$(CC) dataMutability.c -o $(OUTDIR)/dataMutability -O2 
+	$(CC) dataMutability.c -o $(OUTDIR)/dataMutability -O2
 
 override: override.c
 	$(CC) override.c -o $(OUTDIR)/override.so -shared -fPIC -O2
 
 custom: custom.c
-	$(CC) custom.c -o $(OUTDIR)/custom -fomit-frame-pointer 
+	$(CC) custom.c -o $(OUTDIR)/custom -fomit-frame-pointer
 
 switch: switch.s
-	$(AS) switch.s -o $(OUTDIR)/switch 
+	$(AS) switch.s -o $(OUTDIR)/switch
 
 jumpWithinInstruction: jumpWithinInstruction.c
 	$(CC) jumpWithinInstruction.c -o $(OUTDIR)/jumpWithinInstruction -O2 -fno-inline
@@ -42,7 +42,7 @@ setRegister: setRegister.c
 	$(CC) setRegister.c -o $(OUTDIR)/setRegister -O2 -fno-inline
 
 compilerVsDecompiler: compilerVsDecompiler.s
-	$(AS) compilerVsDecompiler.s -o $(OUTDIR)/compilerVsDecompiler  
+	$(AS) compilerVsDecompiler.s -o $(OUTDIR)/compilerVsDecompiler
 
 noReturn: noReturn.c
 	$(CC) noReturn.c -o $(OUTDIR)/noReturn -shared -fPIC
@@ -51,7 +51,7 @@ createStructure: createStructure.c
 	$(CC) createStructure.c -o $(OUTDIR)/createStructure -shared -fPIC -O2
 
 animals: animals.cpp
-	$(CXX) animals.cpp -o $(OUTDIR)/animals -O2 -std=c++11 
+	$(CXX) animals.cpp -o $(OUTDIR)/animals -O2 -std=c++11
 
 ldiv: ldiv.c
 	$(CC) ldiv.c -o $(OUTDIR)/ldiv -O2

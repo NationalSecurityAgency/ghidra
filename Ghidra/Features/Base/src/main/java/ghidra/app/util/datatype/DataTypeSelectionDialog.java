@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -166,7 +166,7 @@ public class DataTypeSelectionDialog extends DialogComponentProvider {
 
 	/**
 	 * If true then a Tab key press will work the same as pressing the Enter key.  If false, then
-	 * a Tab key press will trigger navigation, as is normally done in Java.  
+	 * a Tab key press will trigger navigation, as is normally done in Java.
 	 * <p>
 	 * This method is useful for widgets that have embedded editors that launch this dialog.  For
 	 * these editors, like tables, it is nice to be able to tab through various editors.  This

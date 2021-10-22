@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,8 +37,8 @@ public class DwarfDecodeContext {
 
 	/**
 	 * Constructs a Dwarf decode context.
-	 * @param program the program containing the encoded data 
-	 * @param readAddr the address of the encoded data 
+	 * @param program the program containing the encoded data
+	 * @param readAddr the address of the encoded data
 	 */
 	public DwarfDecodeContext(Program program, Address readAddr) {
 		this(program, readAddr, null, null);
@@ -46,8 +46,8 @@ public class DwarfDecodeContext {
 
 	/**
 	 * Constructs a Dwarf decode context.
-	 * @param program the program containing the encoded data 
-	 * @param readAddr the address of the encoded data 
+	 * @param program the program containing the encoded data
+	 * @param readAddr the address of the encoded data
 	 * @param ehBlock the exception handling memory block
 	 */
 	public DwarfDecodeContext(Program program, Address readAddr, MemoryBlock ehBlock) {
@@ -56,8 +56,8 @@ public class DwarfDecodeContext {
 
 	/**
 	 * Constructs a Dwarf decode context.
-	 * @param program the program containing the encoded data 
-	 * @param readAddr the address of the encoded data 
+	 * @param program the program containing the encoded data
+	 * @param readAddr the address of the encoded data
 	 * @param entryPoint the associated function's entry point
 	 */
 	public DwarfDecodeContext(Program program, Address readAddr, Address entryPoint) {
@@ -66,8 +66,8 @@ public class DwarfDecodeContext {
 
 	/**
 	 * Constructs a Dwarf decode context.
-	 * @param program the program containing the encoded data 
-	 * @param readAddr the address of the encoded data 
+	 * @param program the program containing the encoded data
+	 * @param readAddr the address of the encoded data
 	 * @param function the associated function
 	 */
 	public DwarfDecodeContext(Program program, Address readAddr, Function function) {
@@ -76,8 +76,8 @@ public class DwarfDecodeContext {
 
 	/**
 	 * Constructs a Dwarf decode context.
-	 * @param program the program containing the encoded data 
-	 * @param readAddr the address of the encoded data 
+	 * @param program the program containing the encoded data
+	 * @param readAddr the address of the encoded data
 	 * @param ehBlock the exception handling memory block
 	 * @param entryPoint the associated function's entry point
 	 */
@@ -100,7 +100,7 @@ public class DwarfDecodeContext {
 
 	/**
 	 * Constructs a Dwarf decode context.
-	 * @param buffer the memory buffer which provides the program and address of the encoded data 
+	 * @param buffer the memory buffer which provides the program and address of the encoded data
 	 * @param length the length of the encoded data
 	 */
 	public DwarfDecodeContext(MemBuffer buffer, int length) {
@@ -109,7 +109,7 @@ public class DwarfDecodeContext {
 
 	/**
 	 * Constructs a Dwarf decode context.
-	 * @param buf the memory buffer which provides the program and address of the encoded data 
+	 * @param buf the memory buffer which provides the program and address of the encoded data
 	 * @param length the length of the encoded data
 	 * @param ehBlock the exception handling memory block
 	 * @param entryPoint the function entry point

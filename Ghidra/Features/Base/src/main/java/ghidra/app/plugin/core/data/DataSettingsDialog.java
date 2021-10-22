@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,7 +53,7 @@ public class DataSettingsDialog extends DialogComponentProvider {
 	private String name;
 	private Data data;					// Only set for single data unit mode
 	private ProgramSelection selection; // Only set for data selection mode
-	private DataType dataType;			// not set for data selection mode		
+	private DataType dataType;			// not set for data selection mode
 	private DataTypeComponent dtc;		// Only set for single data-type component mode
 	private SettingsDefinition[] settingsDefs; // required
 	private Settings defaultSettings;	// not set for data selection mode

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,7 +79,7 @@ public class DWARFAttributeFactory {
 
 				// DW_FORM_ref_addr and DW_FORM_sec_offset have identical raw forms,
 				// but point to different items (ref_addr points to elements in .debug_info,
-				// sec_offset points to elements in other sections) 
+				// sec_offset points to elements in other sections)
 			case DW_FORM_ref_addr:
 				return new DWARFNumericAttribute(
 					DWARFUtil.readOffsetByDWARFformat(reader, unit.getFormat()));
@@ -141,9 +141,9 @@ public class DWARFAttributeFactory {
 			case DW_FORM_string:
 				return new DWARFStringAttribute(reader.readNextNullTerminatedAsciiString());
 			case DW_FORM_strp:
-				// Note: we can either read the string from the string section (via. the 
+				// Note: we can either read the string from the string section (via. the
 				// string table) here and put it in a DWARFStringAttribute and hope
-				// it is used and not wasted memory, or use a DWARFDeferredStringAttribute 
+				// it is used and not wasted memory, or use a DWARFDeferredStringAttribute
 				// to hold the offset until the string is actually requested in DIEAggregate.getString()
 				long stringOffset = DWARFUtil.readOffsetByDWARFformat(reader, unit.getFormat());
 				if (!debugStrings.isValid(stringOffset))

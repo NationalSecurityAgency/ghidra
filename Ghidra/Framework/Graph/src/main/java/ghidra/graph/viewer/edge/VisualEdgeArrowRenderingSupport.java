@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,7 +79,7 @@ public class VisualEdgeArrowRenderingSupport<V extends VisualVertex, E extends V
 		Line2D right = new Line2D.Double();
 
 		// keep chopping the line in half until it is small enough and lands just outside of the
-		// vertex shape, within the provided tolerance		
+		// vertex shape, within the provided tolerance
 		int iterations = 0; // arbitrary limit to ensure rounding errors do not loop forever
 		while (lengthSquared(line) > arrowPlacementTolerance && iterations++ < 15) {
 			bisect(line, left, right);

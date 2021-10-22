@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.Msg;
 
 /**
  * <code>PCodeTestControlBlock</code> data is read from each binary test file and
- * identified by the MAIN_CONTROL_BLOCK_MAGIC 64-bit character field value at the start of the 
+ * identified by the MAIN_CONTROL_BLOCK_MAGIC 64-bit character field value at the start of the
  * data structure.  Only one instance of this should exist within the binary.
  */
 public class PCodeTestControlBlock extends PCodeTestAbstractControlBlock {
@@ -71,10 +71,10 @@ public class PCodeTestControlBlock extends PCodeTestAbstractControlBlock {
 	 * Construct test control block instance for the specified
 	 * program.  Create TestInfo structure data within program if requested.
 	 * @param program program containing control block structure
-	 * @param restrictedSet the restricted memory area which should be searched 
+	 * @param restrictedSet the restricted memory area which should be searched
 	 * for control structures
 	 * @param testInfoStructAddr address of Main TestInfo structure
-	 * @param testFile original binary test file 
+	 * @param testFile original binary test file
 	 * @param cachedProgramPath program path within program file cache
 	 * @param applyStruct create structure Data within program if true
 	 * @throws InvalidControlBlockException
@@ -220,19 +220,19 @@ public class PCodeTestControlBlock extends PCodeTestAbstractControlBlock {
 					" differs from data-organization size of " + pointerSize + " (" + id + ")");
 			}
 
-			// get onPass function pointer		
+			// get onPass function pointer
 			onPassFunctionAddress = readCodePointer(memBuffer, onPassPtrOffset, applyStruct);
 
-			// get onError function pointer		
+			// get onError function pointer
 			onErrorFunctionAddress = readCodePointer(memBuffer, onErrorPtrOffset, applyStruct);
 
-			// get onDone function pointer		
+			// get onDone function pointer
 			onDoneFunctionAddress = readCodePointer(memBuffer, onDonePtrOffset, applyStruct);
 
-			// get sprintf function pointer		
+			// get sprintf function pointer
 			sprintfFunctionAddress = readCodePointer(memBuffer, sprintfPtrOffset, applyStruct);
 
-			// get sprintf buffer pointer		
+			// get sprintf buffer pointer
 			sprintfBufferAddress = readCodePointer(memBuffer, sprintfBufferPtrOffset, applyStruct);
 
 		}
@@ -240,7 +240,7 @@ public class PCodeTestControlBlock extends PCodeTestAbstractControlBlock {
 			throw new InvalidControlBlockException("TestInfo program read error", e);
 		}
 
-		// Find all test groups by locating corresponding TestInfo structure	
+		// Find all test groups by locating corresponding TestInfo structure
 		findTestGroups(applyStruct);
 
 	}

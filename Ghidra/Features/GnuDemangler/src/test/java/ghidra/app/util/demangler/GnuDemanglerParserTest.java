@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1034,9 +1034,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		 			std::__ndk1::allocator<{lambda(dummy::it::other::Namespace*)#1}>,
 		 			int (dummy::it::other::Namespace*)
 		 		>
-		
+
 		 	'__func' has 3 template parameters, the operator and the allocator
-		
+
 		 */
 
 		String dummyNs = "dummy::it::other::Namespace";
@@ -1103,13 +1103,13 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	public void testOperator_WithTemplatesMissingATemplateArgument() throws Exception {
 
 		/*
-		
+
 		 	Note: the empty template type: '<, std...'
 		 		<, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char>>>
-		 		
-		 		 
+
+
 		 	std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > std::_Bind<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > (EduAppConfigs::*(EduAppConfigs const*))() const>::operator()<, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >()
-		
+
 		 */
 		String mangled =
 			"_ZNSt5_BindIFM13EduAppConfigsKFNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEvEPKS0_EEclIJES6_EET0_DpOT_";
@@ -1163,9 +1163,9 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 	public void testLambdaWithLambdaParameters() throws Exception {
 
 		/*
-		 
+
 		 lambda contents - lambdas in templates and as a parameter
-		 
+
 		 	bool (***
 		 			const* std::
 		 				__addressof<
@@ -1185,7 +1185,7 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		 							{lambda(bool (*** const&)(AssertHandlerContext const&))#1}
 		 					    )
 		 	     )(AssertHandlerContext const&)
-		 
+
 		 */
 
 		String mangled =
@@ -1230,25 +1230,25 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		String demangled = process.demangle(mangled);
 
 		/*
-		 	
+
 		 	Full demangled:
-		 	
+
 			Operator Text
-			
+
 				entt::
 				basic_registry<EntityId>::
 				assure<FilteredTransformationAttributes<PreHillsEdgeTransformation> >() const::
 				{lambda(entt::sparse_set<EntityId>&, entt::basic_registry<EntityId>&, EntityId)#1}::
 				operator void (*)(entt::sparse_set<EntityId>&, entt::basic_registry<EntityId>&, EntityId)() const
-		
+
 			Operartor Without Namespace
-		
+
 		 		operator void (*)(entt::sparse_set<EntityId>&, entt::basic_registry<EntityId>&, EntityId)()
-		 	
+
 		 	Simplified Cast Operator Construct
-		 	
+
 		 		operator void (*)(A,B,C)()
-					 	
+
 		 */
 
 		DemangledObject object = parser.parse(mangled, demangled);
@@ -1872,20 +1872,20 @@ public class GnuDemanglerParserTest extends AbstractGenericTest {
 		//
 
 		/*
-		 
+
 		 	Demangled:
-		 
+
 		  auto && JsonUtil::
 			addMember<std::shared_ptr<JsonUtil::JsonSchemaObjectNode<JsonUtil::EmptyClass,AvoidBlockGoal::Definition>>,AvoidBlockGoal::Definition,float>
 			(
-			
+
 				std::shared_ptr<JsonUtil::JsonSchemaObjectNode<JsonUtil::EmptyClass,AvoidBlockGoal::Definition>>,
 			    float AvoidBlockGoal::Definition::*,
 			    char const *,
 			    float AvoidBlockGoal::Definition::* const&
-			
+
 			)
-		
+
 		 */
 		String mangled =
 			"_ZN8JsonUtil9addMemberISt10shared_ptrINS_20JsonSchemaObjectNodeINS_10EmptyClassEN14AvoidBlockGoal10DefinitionEEEES5_fEEODaT_MT0_T1_PKcRKSC_";

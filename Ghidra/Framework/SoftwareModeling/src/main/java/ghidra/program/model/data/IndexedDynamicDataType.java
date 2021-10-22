@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,10 +27,10 @@ import ghidra.util.Msg;
 /**
  * Indexed Dynamic Data Type template.  Used to create instances of the data type at
  * a given location in memory based on the data found there.
- * 
+ *
  * This data struture is used when there is a structure with key field in a header.
  * The key field, which is a number, sets which of a number of structures follows the header.
- * 
+ *
  *     Header
  *        field a
  *        field b
@@ -43,7 +43,7 @@ import ghidra.util.Msg;
 public abstract class IndexedDynamicDataType extends DynamicDataType {
 
 	/**
-	 * Structures which do not have a body  
+	 * Structures which do not have a body
 	 */
 	public static final String NULL_BODY_DESCRIPTION = "NullBody";
 
@@ -59,7 +59,7 @@ public abstract class IndexedDynamicDataType extends DynamicDataType {
 
 	/**
 	 * Construct and the Index dynamic data type template.
-	 * 
+	 *
 	 * @param name        name of the data type
 	 * @param description description of the data type
 	 * @param header      the header data type that holds the keys to the location of other data types
@@ -98,7 +98,7 @@ public abstract class IndexedDynamicDataType extends DynamicDataType {
 	 * Used when there is one of two structures following and a single value tells which one.
 	 * If the key value in the header structure matches the singleKey, then the first structure is used.
 	 * If the key value does not match the singleKey, then the second structure is used.
-	 * 
+	 *
 	 * @param name        name of the data type
 	 * @param description description of the data type
 	 * @param header      the header data type that holds the keys to the location of other data types

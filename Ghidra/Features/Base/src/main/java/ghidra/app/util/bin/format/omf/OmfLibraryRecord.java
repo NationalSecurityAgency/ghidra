@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class OmfLibraryRecord extends OmfRecord {
 		public String translator;
 		public String machineName;
 	}
-	
+
 	public OmfLibraryRecord(BinaryReader reader) throws IOException {
 		readRecordHeader(reader);
 		pageSize = recordLength + 3;
@@ -44,15 +44,15 @@ public class OmfLibraryRecord extends OmfRecord {
 		flags = reader.readNextByte();
 		// No checksum byte  (just padding)
 	}
-	
+
 	public int getPageSize() {
 		return pageSize;
 	}
-	
+
 	public ArrayList<MemberHeader> getMemberHeaders() {
 		return members;
 	}
-	
+
 	public static boolean checkMagicNumer(BinaryReader reader) throws IOException {
 		byte type = reader.readNextByte();
 		if (type != (byte)0xF0)
@@ -74,14 +74,14 @@ public class OmfLibraryRecord extends OmfRecord {
 		if ((type & 0xfc) != 0x80) return false;
 		return true;
 	}
-	
+
 	public static OmfLibraryRecord parse(BinaryReader reader,TaskMonitor monitor) throws IOException {
 		OmfLibraryRecord res = null;
 		byte type = reader.peekNextByte();
 		if (type != (byte)0xF0)
 			throw new IOException("Not an OMF Library record");
 		res = new OmfLibraryRecord(reader);
-		res.members = new ArrayList<MemberHeader>();		
+		res.members = new ArrayList<MemberHeader>();
 		reader.align(res.pageSize);		// Skip padding to get to next page boundary
 		type = reader.peekNextByte();
 		while(type != (byte)0xF1) {		// Until we see the official "end of library" record
@@ -99,7 +99,7 @@ public class OmfLibraryRecord extends OmfRecord {
 			curheader.machineName = fileheader.getMachineName();
 			curheader.translator = fileheader.getTranslator();
 			curheader.size = (int)(reader.getPointerIndex() - curheader.payloadOffset);
-			res.members.add(curheader);			
+			res.members.add(curheader);
 			reader.align(res.pageSize);		// Skip padding to get to next page boundary
 			type = reader.peekNextByte();
 		}

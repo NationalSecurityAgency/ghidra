@@ -5,7 +5,7 @@
 if (findProject(':Generic') != null) {
 	apply from: "$rootProject.projectDir/gradle/javaProject.gradle"
 	apply from: "$rootProject.projectDir/gradle/distributableGPLModule.gradle"
-	
+
 	rootProject.assembleDistribution {
 		doLast {
 			// eliminate standard module lib directory
@@ -23,14 +23,14 @@ eclipse.project.name = 'GPL DMG'
 
 /*********************************************************************************
  *
- * Define a new source set for dmg source because it is not part of Ghidra, it is 
- * a standalone application that is executed and called from Ghidra. 
- *  			
- * see DmgServerProcessManager 
+ * Define a new source set for dmg source because it is not part of Ghidra, it is
+ * a standalone application that is executed and called from Ghidra.
+ *
+ * see DmgServerProcessManager
  *
  *********************************************************************************/
 sourceSets {
-	
+
 	dmg {
 		java {
 			srcDir 'src/dmg/java'

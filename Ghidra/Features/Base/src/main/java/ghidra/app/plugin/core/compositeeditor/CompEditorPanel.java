@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,7 +88,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	/**
 	 * Constructor for a panel that has a blank line in unlocked mode and
 	 * composite name and description that are editable.
-	 * 
+	 *
 	 * @param model
 	 *            the model for editing the composite data type
 	 * @param provider
@@ -236,7 +236,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 	 * Create the Info Panel that is horizontally resizable. The panel contains
 	 * the name, category, data type, size, and edit mode for the current
 	 * structure in the editor.
-	 * 
+	 *
 	 * @return JPanel the completed composite data type information panel
 	 */
 	@Override
@@ -349,8 +349,8 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	@Override
 	public Dimension getPreferredSize() {
-		// make sure our preferred size accounts for that of our components that the user 
-		// may choose to show 
+		// make sure our preferred size accounts for that of our components that the user
+		// may choose to show
 		Dimension preferredSize = super.getPreferredSize();
 		if (alignPanel.isShowing()) {
 			return preferredSize;
@@ -1064,7 +1064,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	/**
 	 * Sets the currently displayed structure category name.
-	 * 
+	 *
 	 * @param name
 	 *            the new category name
 	 */
@@ -1082,7 +1082,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	/**
 	 * Sets the currently displayed structure name in the edit area.
-	 * 
+	 *
 	 * @param name
 	 *            the new name
 	 */
@@ -1107,7 +1107,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	/**
 	 * Sets the currently displayed structure description.
-	 * 
+	 *
 	 * @param description
 	 *            the new description
 	 */
@@ -1156,7 +1156,7 @@ public class CompEditorPanel extends CompositeEditorPanel {
 
 	/**
 	 * Sets the currently displayed composite's size.
-	 * 
+	 *
 	 * @param size the new size
 	 */
 	public void setCompositeSize(int size) {

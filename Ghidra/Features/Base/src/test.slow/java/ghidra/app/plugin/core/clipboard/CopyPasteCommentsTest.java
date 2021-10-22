@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -625,7 +625,7 @@ public class CopyPasteCommentsTest extends AbstractProgramBasedTest {
 		Address max = addr(programOne, 0x0343);
 		Listing listing = programOne.getListing();
 
-		// create a function over the range 0x31b through 0x0343.		
+		// create a function over the range 0x31b through 0x0343.
 		int transactionID = programOne.startTransaction("test");
 		String name = SymbolUtilities.getDefaultFunctionName(min);
 		programOne.getListing()

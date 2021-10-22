@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ public class FSBFileNode extends FSBNode {
 
 	/**
 	 * Local copy of the original GFile's {@link FileAttributeType#IS_ENCRYPTED_ATTR} attribute.
-	 * 
+	 *
 	 * @return boolean true if file needs a password to be read
 	 */
 	public boolean isEncrypted() {
@@ -78,7 +78,7 @@ public class FSBFileNode extends FSBNode {
 
 	/**
 	 * Local copy of the original GFile's {@link FileAttributeType#HAS_GOOD_PASSWORD_ATTR} attribute.
-	 * 
+	 *
 	 * @return boolean true if a password for the file has been found, false if missing the password
 	 */
 	public boolean hasPassword() {
@@ -96,7 +96,7 @@ public class FSBFileNode extends FSBNode {
 	/**
 	 * Returns true if this node's password status has changed, calling for a complete refresh
 	 * of the status of all files in the file system.
-	 *  
+	 *
 	 * @param monitor {@link TaskMonitor}
 	 * @return boolean true if this nodes password status has changed
 	 */

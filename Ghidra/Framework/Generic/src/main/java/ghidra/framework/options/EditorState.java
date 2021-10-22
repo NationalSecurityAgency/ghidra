@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -165,7 +165,7 @@ public class EditorState implements PropertyChangeListener {
 		Class<? extends PropertyEditor> clazz = editor.getClass();
 		String clazzName = clazz.getSimpleName();
 		if (clazzName.startsWith("String")) {
-			// Most likely some kind of string editor with a null value.  Just use a string 
+			// Most likely some kind of string editor with a null value.  Just use a string
 			// property and let the value be empty.
 			return new PropertyText(editor);
 		}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -151,7 +151,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Use {@link DbgThreadImpl#remove()} instead
-	 * 
+	 *
 	 * @param id the thread ID to remove
 	 */
 	public void removeThread(DebugThreadId id) {
@@ -164,7 +164,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Use {@link DbgProcessImpl#remove(DbgCause)} instead
-	 * 
+	 *
 	 * @param id the process ID to remove
 	 * @param cause the cause of removal
 	 */
@@ -191,7 +191,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Update the selected process
-	 * 
+	 *
 	 * @param process the process that now has focus
 	 * @param cause the cause of the focus change
 	 * @param fire signal listeners
@@ -220,7 +220,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Use {@link DbgSessionImpl#remove(DbgCause)} instead
-	 * 
+	 *
 	 * @param id the session ID to remove
 	 * @param cause the cause of removal
 	 */
@@ -425,7 +425,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Schedule a command for execution
-	 * 
+	 *
 	 * @param cmd the command to execute
 	 * @return the pending command, which acts as a future for later completion
 	 */
@@ -646,7 +646,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Default handler for events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -658,7 +658,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for breakpoint events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -680,7 +680,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for breakpoint events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -700,7 +700,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for thread created events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -726,7 +726,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for thread exited events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -751,7 +751,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for thread selected events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -772,7 +772,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for process created events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -811,7 +811,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for process exited events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -844,7 +844,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for process selected events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -864,7 +864,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for module loaded events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -886,7 +886,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for module unloaded events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -908,7 +908,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for state changed events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -946,7 +946,7 @@ public class DbgManagerImpl implements DbgManager {
 					if (!threads.containsValue(eventThread)) {
 						dbgState = DbgState.EXIT;
 					}
-					// Don't fire 
+					// Don't fire
 					if (dbgState != null && dbgState != DbgState.EXIT) {
 						processEvent(new DbgThreadSelectedEvent(dbgState, eventThread,
 							evt.getFrame(eventThread)));
@@ -998,7 +998,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for session selected events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -1018,7 +1018,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for systems events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -1066,7 +1066,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for breakpoint-created event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1076,7 +1076,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1110,7 +1110,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Handler for breakpoint-deleted event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1120,7 +1120,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Fire breakpoint created event
-	 * 
+	 *
 	 * @param newInfo the new information
 	 * @param cause the cause of the creation
 	 */
@@ -1132,7 +1132,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Fire breakpoint modified event
-	 * 
+	 *
 	 * @param newInfo the new information
 	 * @param cause the cause of the modification
 	 */
@@ -1144,7 +1144,7 @@ public class DbgManagerImpl implements DbgManager {
 
 	/**
 	 * Fire breakpoint deleted event
-	 * 
+	 *
 	 * @param number the deleted breakpoint number
 	 * @param cause the cause of the deletion
 	 */
@@ -1297,7 +1297,7 @@ public class DbgManagerImpl implements DbgManager {
 		checkStarted();
 		Msg.info(this, "Interrupting");
 		// NB: don't use "execute" here - engThread is paused on waitForEvents
-		//  and execute::sequence blocks on engThread 
+		//  and execute::sequence blocks on engThread
 		reentrantClient.getControl().setInterrupt(DebugInterrupt.ACTIVE);
 	}
 

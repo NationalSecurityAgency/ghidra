@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,34 +30,34 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * API for users who wish to perform instruction searching without the GUI. 
- * 
- * Limitations:	
+ * API for users who wish to perform instruction searching without the GUI.
+ *
+ * Limitations:
  * 		1) Searches may only be performed on a single program.
  * 		2) Only a single address range may be searched for.
- * 
+ *
  * Results:
- * 		Can be returned in 2 ways: 
+ * 		Can be returned in 2 ways:
  * 			1) As a list of addresses representing the location of search matches.
  * 			2) As a string (either binary or hex) representing the search string to be used.
  * 		The latter results option is useful if using another tool to perform the search (ie yara).
- * 
+ *
  * Extending:
  * 		This class may be extended to provide an api for specific searching formats.  There is
  * 		currently an extension for Yara: {@link InstructionSearchApi_Yara}.
- * 
+ *
  */
 public class InstructionSearchApi {
 
 	/**
-	 * Searches the given program for the instructions specified by the given address range.  No 
-	 * filtering of results is performed; all matches regardless of operand type will be 
+	 * Searches the given program for the instructions specified by the given address range.  No
+	 * filtering of results is performed; all matches regardless of operand type will be
 	 * returned.
-	 * 
+	 *
 	 * @param program
 	 * @param addressRange
 	 * @return a list of addresses indicating starting positions of matches.
-	 * @throws InvalidInputException 
+	 * @throws InvalidInputException
 	 */
 	public final List<Address> search(Program program, AddressRange addressRange)
 			throws InvalidInputException {
@@ -83,13 +83,13 @@ public class InstructionSearchApi {
 	/**
 	 * Searches the given program for the instructions specified by the given address range, with
 	 * masking set according to the given {@link MaskSettings} object
-	 * 
+	 *
 	 * @param program
 	 * @param addressRange
 	 * @param maskSettings
-	 * 
+	 *
 	 * @return a list of addresses indicating starting positions of matches.
-	 * @throws InvalidInputException 
+	 * @throws InvalidInputException
 	 */
 	public final List<Address> search(Program program, AddressRange addressRange,
 			MaskSettings maskSettings) throws InvalidInputException {
@@ -125,12 +125,12 @@ public class InstructionSearchApi {
 	}
 
 	/**
-	 * Returns a binary string representing the bytes in the address range provided. 
-	 * 
+	 * Returns a binary string representing the bytes in the address range provided.
+	 *
 	 * @param program
 	 * @param addressRange
 	 * @return
-	 * @throws InvalidInputException 
+	 * @throws InvalidInputException
 	 */
 	public final String getBinarySearchString(Program program, AddressRange addressRange)
 			throws InvalidInputException {
@@ -143,11 +143,11 @@ public class InstructionSearchApi {
 
 	/**
 	 * Returns a hex version of the bytes representing the address range given.
-	 * 
+	 *
 	 * @param program
 	 * @param addressRange
 	 * @return
-	 * @throws InvalidInputException 
+	 * @throws InvalidInputException
 	 */
 	public final String getHexSearchString(Program program, AddressRange addressRange)
 			throws InvalidInputException {
@@ -155,16 +155,16 @@ public class InstructionSearchApi {
 	}
 
 	/**
-	 * Returns a binary string representing the bytes in the address range provided, with masked 
+	 * Returns a binary string representing the bytes in the address range provided, with masked
 	 * bits set according to the given {@link MaskSettings} object.
-	 * 
+	 *
 	 * Note: Masked bits will be represented by a '.' character.
-	 * 
+	 *
 	 * @param maskSettings
 	 * @param addressRange
 	 * @param maskSettings
 	 * @return
-	 * @throws InvalidInputException 
+	 * @throws InvalidInputException
 	 */
 	public final String getBinarySearchString(Program program, AddressRange addressRange,
 			MaskSettings maskSettings) throws InvalidInputException {
@@ -189,12 +189,12 @@ public class InstructionSearchApi {
 
 	/**
 	 * Returns a hex version of the bytes representing the address range given.
-	 * 
+	 *
 	 * @param program
 	 * @param addressRange
 	 * @param maskSettings
 	 * @return
-	 * @throws InvalidInputException 
+	 * @throws InvalidInputException
 	 */
 	public final String getHexSearchString(Program program, AddressRange addressRange,
 			MaskSettings maskSettings) throws InvalidInputException {
@@ -204,9 +204,9 @@ public class InstructionSearchApi {
 
 	/**
 	 * Opens the search dialog and populates it with instructions located in the
-	 * address range given. A program must be loaded in Ghidra for this to work, as determining 
+	 * address range given. A program must be loaded in Ghidra for this to work, as determining
 	 * the instructions would be impossible otherwise.
-	 * 
+	 *
 	 * @param addresses the addresses to load
 	 * @param tool the current plugin tool
 	 */
@@ -220,9 +220,9 @@ public class InstructionSearchApi {
 
 	/**
 	 * Opens the search dialog and populates it with instructions represented by the
-	 * bytes given. A program must be loaded in Ghidra for this to work, as determining the 
-	 * instructions would be impossible otherwise. 
-	 * 
+	 * bytes given. A program must be loaded in Ghidra for this to work, as determining the
+	 * instructions would be impossible otherwise.
+	 *
 	 * @param bytes binary or hex string representing the bytes to be loaded
 	 */
 	public void loadInstructions(String bytes, PluginTool tool) {

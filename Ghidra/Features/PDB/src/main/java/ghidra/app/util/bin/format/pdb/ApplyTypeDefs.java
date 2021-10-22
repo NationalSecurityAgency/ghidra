@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ class ApplyTypeDefs {
 
 	/**
 	 * Construct a PDB XML typedef parser.  This will retain all typedef elements for subsequent
-	 * parsing.  The full parse will not be completed until the {@link #buildTypeDefs(TaskMonitor)} 
+	 * parsing.  The full parse will not be completed until the {@link #buildTypeDefs(TaskMonitor)}
 	 * method is invoked after all types and classes have been cached.
 	 * @param pdbParser PDB parser object
 	 * @param xmlParser XML parser positioned immediately after datatypes or classes element
@@ -74,7 +74,7 @@ class ApplyTypeDefs {
 	}
 
 	/**
-	 * Perform parsing and caching of typedefs 
+	 * Perform parsing and caching of typedefs
 	 * @param monitor task monitor
 	 * @throws CancelledException if task cancelled
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -388,7 +388,7 @@ public final class FileUtilities {
 
 	/**
 	 * Delete a file or directory and all of its contents
-	 * 
+	 *
 	 * @param dir the directory to delete
 	 * @return true if delete was successful. If false is returned, a partial
 	 *         delete may have occurred.
@@ -905,7 +905,7 @@ public final class FileUtilities {
 	/**
 	 * Return the relative path string of one resource file in another. If
 	 * no path can be constructed or the files are the same, then null is returned.
-	 * 
+	 *
 	 * Note: unlike {@link #relativizePath(File, File)}, this function does not resolve symbolic links.
 	 *
 	 * <P>For example, given, in this order, two files with these paths
@@ -1240,10 +1240,10 @@ public final class FileUtilities {
 	/**
 	 * A convenience method to list the contents of the given directory path and pass each to the
 	 * given consumer.  If the given path does not represent a directory, nothing will happen.
-	 * 
-	 * <p>This method handles closing resources by using the try-with-resources construct on 
+	 *
+	 * <p>This method handles closing resources by using the try-with-resources construct on
 	 * {@link Files#list(Path)}
-	 * 
+	 *
 	 * @param path the directory
 	 * @param consumer the consumer of each child in the given directory
 	 * @throws IOException if there is any problem reading the directory contents

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidra.program.model.symbol.RefType;
 import ghidra.util.exception.NotYetImplementedException;
 
 /**
- * 
+ *
  *
  * Class for converting ConstructTpl into a pcode ops given
  * a particular InstructionContext
@@ -703,8 +703,8 @@ public abstract class PcodeEmit {
 	 * Build a named p-code section of a constructor that contains only implied BUILD directives
 	 * @param ct Constructor to build section for
 	 * @param secnum index of the section to be built
-	 * @throws MemoryAccessException 
-	 * @throws UnknownInstructionException 
+	 * @throws MemoryAccessException
+	 * @throws UnknownInstructionException
 	 */
 	private void buildEmpty(Constructor ct, int secnum)
 			throws UnknownInstructionException, MemoryAccessException {
@@ -766,7 +766,7 @@ public abstract class PcodeEmit {
 			return opcode;
 		}
 
-		//If there is an overriding call reference on an indirect call, change it to  
+		//If there is an overriding call reference on an indirect call, change it to
 		//to a direct call, unless a call override has already been applied at this instruction
 		if (opcode == PcodeOp.CALLIND && !override.isCallOverrideRefApplied()) {
 			Address callRef = override.getOverridingReference(RefType.CALL_OVERRIDE_UNCONDITIONAL);
@@ -780,8 +780,8 @@ public abstract class PcodeEmit {
 			}
 		}
 
-		//CALLOTHER ops can be overridden with RefType.CALLOTHER_OVERRIDE_CALL 
-		//or RefType.CALLOTHER_OVERRIDE_JUMP  
+		//CALLOTHER ops can be overridden with RefType.CALLOTHER_OVERRIDE_CALL
+		//or RefType.CALLOTHER_OVERRIDE_JUMP
 		//Call overrides take precedence over jump overrides
 		//override at most one callother pcode op per native instruction
 		boolean callOtherOverrideApplied = override.isCallOtherCallOverrideRefApplied() ||
@@ -807,7 +807,7 @@ public abstract class PcodeEmit {
 		}
 
 		// Simple call reference override - grab destination from appropriate reference
-		// Only perform reference override if destination function does not have a call-fixup		
+		// Only perform reference override if destination function does not have a call-fixup
 		if (opcode == PcodeOp.CALL && !override.isCallOverrideRefApplied() &&
 			!override.hasCallFixup(in[0].space.getAddress(in[0].offset))) {
 			VarnodeData dest = in[0];
@@ -870,7 +870,7 @@ public abstract class PcodeEmit {
 		return opcode;
 	}
 
-	// Used to check whether the address from a potentially overriding reference 
+	// Used to check whether the address from a potentially overriding reference
 	// actually changes the call destination
 	private boolean actualOverride(VarnodeData data, Address addr) {
 		if (!data.space.equals(addr.getAddressSpace())) {

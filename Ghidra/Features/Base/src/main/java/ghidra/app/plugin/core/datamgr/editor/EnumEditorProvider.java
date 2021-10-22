@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,7 +81,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	private long originalEnumID = -1;
 
 	/**
-	 * Construct a new enum editor provider. 
+	 * Construct a new enum editor provider.
 	 * @param plugin owner of this provider
 	 * @param enumDT enum data type
 	 */
@@ -251,7 +251,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void updateTitle(DataType dataType) {
 		setTitle(getName() + " - " + getProviderSubTitle(dataType));
@@ -467,9 +467,9 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 	/**
 	 * Prompts the user if the editor has unsaved changes. Saves the changes if
 	 * the user indicates to do so.
-	 * @return CANCEL (0) if the user canceled; 
-	 *   SAVE (1) if the user saved changes; 
-	 *   NO_SAVE (2) if the user did not save changes or no save was required; 
+	 * @return CANCEL (0) if the user canceled;
+	 *   SAVE (1) if the user saved changes;
+	 *   NO_SAVE (2) if the user did not save changes or no save was required;
 	 *   ERROR (3) if there was an error when the changes were applied.
 	 */
 	private int saveChangesForCloseEvent(boolean allowCancel) {
@@ -502,7 +502,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class MyDataTypeManagerChangeListener extends DataTypeManagerChangeListenerAdapter {
 
@@ -547,7 +547,7 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 		@Override
 		public void categoryRemoved(DataTypeManager dtm, CategoryPath path) {
-			// should never get this callback, as we should first have gotten a 
+			// should never get this callback, as we should first have gotten a
 			// dataTypeRemoved(), which will dispose this editor
 		}
 
@@ -665,11 +665,11 @@ public class EnumEditorProvider extends ComponentProviderAdapter
 
 			DataType dataType = dtm.getDataType(otherPath);
 			if (dataType == null) {
-				// 
-				// Unusual Code Alert!: 
+				//
+				// Unusual Code Alert!:
 				// Must have been deleted and we have not yet processed the event...return true
 				// here to signal that the types are the same so that clients will continue the
-				// updating process.  The types may not really be the same, but the fallout is 
+				// updating process.  The types may not really be the same, but the fallout is
 				// only that there will be more updating than is necessary.
 				//
 				return true;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -125,7 +125,7 @@ public class MarkupItemStatusRenderer extends AbstractGhidraColumnRenderer<VTMar
 	@Override
 	public String getFilterString(VTMarkupItemStatus t, Settings settings) {
 		// This is a bit squinky, but this method above sets icons and tooltips on the renderer.
-		// We want the tooltip, but do not want the icon to change the main renderer.  This 
+		// We want the tooltip, but do not want the icon to change the main renderer.  This
 		// should be refactored.   Also, we can't get the exact text for 'FAILED_APPLY', since
 		// we cannot get the item, since we don't have the table model or row number.
 		configureRendererForMarkupStatus(null, -1, dummy, t);

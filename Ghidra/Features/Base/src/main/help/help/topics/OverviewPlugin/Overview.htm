@@ -14,33 +14,33 @@
     <H1><A name="OverviewPlugin"></A>Overview Bars</H1>
 
 	<P>Ghidra supports multiple margin bars on the left side of the Listing
-	that present various overviews for a program. 
-  
+	that present various overviews for a program.
+
     <P>&nbsp;</P>
 
     <P align="center"><IMG border="0" src="images/OverviewPanel.png"></P>
-	
+
 	<P>Each horizontal slice in
-	the margin bar represents a relative address location in the program and is colored to 
+	the margin bar represents a relative address location in the program and is colored to
 	indicate the property associated with that address or region in the program.  The range of
 	addresses represented in the margin bar is determined by the current view which by default is
 	the entire address space of the program.
-	
+
     <BLOCKQUOTE>
 	<UL>
 	<LI>Hovering the mouse on the margin bar will cause a tooltip to appear that gives you detailed
 	information about the property and the address for that location. </LI>
-	
+
 	<LI> Left-clicking on the margin bar will navigate the listing to the associated address for the pixel
 	that was clicked.</LI>
-	
+
 	<LI> Right-clicking on the margin bar will bring up a popup-menu which will at least include an
 	option for displaying a legend for that particular overview.</UL>
-	
-	<P> <IMG border="0" src="../../shared/note.png">Overview margin bars can be turned on or off using the control button 
+
+	<P> <IMG border="0" src="../../shared/note.png">Overview margin bars can be turned on or off using the control button
 	<IMG border="0" src="images/x-office-document-template.png"> on the Listing's toolbar.</P>
     </BLOCKQUOTE>
-	
+
 
 	<H1> Overview Bar Types</H1>
      <H2><A name="AddressTypeOverviewBar"></A>General Overview Bar (Address Type)</H2>
@@ -59,12 +59,12 @@
 
         <LI><B>Instruction</B> - there is an instruction at the address that is not currently
         defined to be in a function. </LI>
-      
+
       	<LI><B>Defined Data</B> - a datatype has been applied to that address.</LI>
 
         <LI><B>Undefined Data</B> - the address has an associated byte value, but no
         datatype has been applied. </LI>
-  		
+
   		<LI><B>Uninitialized</B> - None of the above. The address falls in an uninitialized memory block (no byte values)</LI>
       </OL>
 
@@ -122,7 +122,7 @@
       binary executables, such as machine code, ASCII, and compressed data. An overview of this
       entropy score can often provide an at-a-glance classification of the program into its major
       sections and sub-sections, without requiring the presence of an image format header.</P>
-    
+
         <H3><A name="Calculation"></A>Calculation of Entropy</H3>
 
       <BLOCKQUOTE>
@@ -192,7 +192,7 @@
         </UL>
       </BLOCKQUOTE>
 
- 
+
       <H3><A name="Color_Palette"></A>Color Palette Legend</H3>
         <CENTER>
           <P><IMG src="images/EntropyLegend.png" border="0"></P>
@@ -220,7 +220,7 @@
         <B>Entropy</B> from the tree navigator at the left of the Options dialog. This allows the
         user to configure different ranges incorporated into the palette and the size of chunk used
         in calculating a single entropy score. The Entropy Plugin has the following options:</P>
-   
+
       <H4>Chunk size</H4>
 
       <P>The chunk size can be set to a value of 1024, 512, or 256 bytes. This controls over how
@@ -242,14 +242,14 @@
       values that hit the exact middle of the range will get assigned to the chosen color, and a
       steep gradient, connecting this color with the bounding colors within the base palette, will
       be used to fill out the color range.</P>
-      
+
       </BLOCKQUOTE>
 
    </BLOCKQUOTE>
 
-    
+
     </BLOCKQUOTE>
- 
+
 
     <P class="providedbyplugin">Provided By: <I>OverviewPlugin</I></P>
 

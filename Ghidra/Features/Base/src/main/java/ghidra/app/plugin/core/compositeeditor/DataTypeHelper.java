@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.util.exception.UsrException;
 
 /**
  * DataTypeHelper is a helper class for dealing with data types in the Composite
- * Data Type Editor (Structure or Union Editor). It provides static methods for 
+ * Data Type Editor (Structure or Union Editor). It provides static methods for
  * use with the data type text field in the editor.
  * It also has a static method to prompt the user for the size of a data type.
  */
@@ -82,10 +82,10 @@ public class DataTypeHelper {
 	 * @param dtManager the data type manager of the composite data type being edited.
 	 * @param dtmService the data type manager service to use to determine the
 	 * data type the user specified.
-	 * @return the data type instance or null if the user canceled when prompted 
+	 * @return the data type instance or null if the user canceled when prompted
 	 * for more information.
 	 * @throws InvalidDataTypeException if the specified data type isn't valid.
-	 * @throws UsrException if the specified data type can't be used at the 
+	 * @throws UsrException if the specified data type can't be used at the
 	 * specified index in the composite.
 	 */
 	public static DataType parseDataType(int index, String dtValue, CompositeEditorModel editModel,
@@ -178,7 +178,7 @@ public class DataTypeHelper {
 	 * @param index the component index of where to add the data type.
 	 * @param dt the data type to add
 	 *
-	 * @return the data type and its size or null if the user canceled when 
+	 * @return the data type and its size or null if the user canceled when
 	 * prompted for a size.
 	 */
 	public static DataTypeInstance getFixedLength(CompositeEditorModel model, int index,

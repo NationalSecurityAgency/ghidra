@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,11 +25,11 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * This class does the work of matching subroutines. Every subroutine
- * in the current program is hashed and the start address is put into a 
+ * in the current program is hashed and the start address is put into a
  * table. There are often identical subroutines which may have the same hash
  * value. Then the subroutines in the other program are hashed as well. All unique
  * match pairs are returned as matches. The next step would be to use call graph
- * information or address order to get additional matches. 
+ * information or address order to get additional matches.
   */
 public class MatchFunctions {
 	private MatchFunctions() {

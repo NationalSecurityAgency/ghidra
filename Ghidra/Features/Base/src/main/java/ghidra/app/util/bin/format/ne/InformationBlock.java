@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,7 +62,7 @@ import ghidra.util.Conv;
  *     WORD   ne_expver;                   // Expected Windows version number
  * } IMAGE_OS2_HEADER, *PIMAGE_OS2_HEADER;
  * </pre>
- * 
+ *
  * @see <a href="https://www.fileformat.info/format/exe/corion-ne.htm">The NE EXE File Format</a>
  * @see <a href="https://www.pcjs.org/pubs/pc/reference/microsoft/mspl13/msdos/encyclopedia/appendix-k/">Segmented (New) .EXE File Header Format</a>
  */
@@ -400,7 +400,7 @@ public class InformationBlock {
 	/**
 	 * Returns the index to the start of the segment table,
 	 * relative to the beginning of the NE windows header.
-	 * 
+	 *
 	 * @return the index of start of the segment table
 	 */
 	short getSegmentTableOffset() {
@@ -424,7 +424,7 @@ public class InformationBlock {
 	 * It is typically 4, but the default is 9.
 	 * When the linker command line contains a/: 16, the shift count is 4.
 	 * When the linker command line contains a/:256, the shift count is 9.
-	 * 
+	 *
 	 * @return a shift count that is used to align the logical sector
 	 */
 	short getSegmentAlignmentShiftCount() {

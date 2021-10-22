@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,14 +31,14 @@ import ghidra.util.datastruct.ListenerSet;
 
 /**
  * An abstract implementation of {@link TargetObject}
- * 
+ *
  * <p>
  * Implementors should probably use {@link DefaultTargetObject} as the base class for all objects in
  * the model. If your model employs proxies (i.e., using
  * {@link Proxy#newProxyInstance(ClassLoader, Class[], java.lang.reflect.InvocationHandler)}),
  * please see {@link InvalidatableTargetObjectIf} to ensure subtree invalidation is handled
  * properly.
- * 
+ *
  * @param <P> the type of the parent
  */
 public abstract class AbstractTargetObject<P extends TargetObject> implements SpiTargetObject {
@@ -109,14 +109,14 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 
 	/**
 	 * Get an alternative for {@code this} when invoking the listeners.
-	 * 
+	 *
 	 * <p>
 	 * Some implementations may use on a proxy-delegate pattern to implement target objects with
 	 * various combinations of supported interfaces. When this pattern is employed, the delegate
 	 * will extend {@link DefaultTargetObject}, causing {@code this} to refer to the delegate rather
 	 * than the proxy. When invoking listeners, the proxy given by this method is used instead. The
 	 * proxy is also used for schema interface validation.
-	 * 
+	 *
 	 * @return the proxy or this
 	 */
 	public SpiTargetObject getProxy() {
@@ -140,7 +140,7 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 
 	/**
 	 * Check if this object strictly conforms to the schema
-	 * 
+	 *
 	 * <p>
 	 * This method exists to support the transition to schemas. If this method returns false, schema
 	 * violations are logged, but whatever changes were requested that caused the violation are
@@ -150,7 +150,7 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 	 * explicit schemas should not fail validation, since objects will likely be assigned
 	 * {@link EnumerableTargetObjectSchema#ANY}. When developing a schema for an existing model, it
 	 * may be useful to override this to return true to fail fast.
-	 * 
+	 *
 	 * @return true to throw exceptions on schema violations.
 	 */
 	@Override
@@ -213,7 +213,7 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * Overridden to avoid an infinite loop / stack overflow
 	 */
 	@Override
@@ -228,7 +228,7 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * Overridden to avoid an infinite loop / stack overflow
 	 */
 	@Override
@@ -332,13 +332,13 @@ public abstract class AbstractTargetObject<P extends TargetObject> implements Sp
 
 	/**
 	 * Get the listener set
-	 * 
+	 *
 	 * <p>
 	 * TODO: This method should only be used by the internal implementation. It's not exposed on the
 	 * {@link TargetObject} interface, but it could be dangerous to have it here, since clients
 	 * could cast to {@link AbstractTargetObject} and get at it, even if the implementation's jar is
 	 * excluded from the compile-time classpath.
-	 * 
+	 *
 	 * @return the listener set
 	 */
 	@Internal

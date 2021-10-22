@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,24 +58,24 @@ public class X86_64_ElfRelocationConstants {
 												 * relative
 												 */
 	/**
-	 * Calculates the object identifier of the 
-	 * object containing the TLS symbol. 
+	 * Calculates the object identifier of the
+	 * object containing the TLS symbol.
 	 */
 	public static final int R_X86_64_DTPMOD64 = 16; // ID of module containing symbol
 	/**
 	 * Calculates the offset of the variable relative
-	 * to the start of the TLS block that contains the 
+	 * to the start of the TLS block that contains the
 	 * variable.  The computed value is used as an
 	 * immediate value of an addend and is not associated
-	 * with a specific register. 
-	 * 
+	 * with a specific register.
+	 *
 	 */
-	public static final int R_X86_64_DTPOFF64 = 17; // Offset in module's TLS block 
+	public static final int R_X86_64_DTPOFF64 = 17; // Offset in module's TLS block
 	public static final int R_X86_64_TPOFF64 = 18; // offset in the initial TLS block
-	public static final int R_X86_64_TLSGD = 19; // 32 bit signed PC relative offset to 
+	public static final int R_X86_64_TLSGD = 19; // 32 bit signed PC relative offset to
 													// two GOT entries for GD symbol
-	public static final int R_X86_64_TLSLD = 20; // 32 bit signed PC relative offset to 
-													// two GOT entries for LD symbol 
+	public static final int R_X86_64_TLSLD = 20; // 32 bit signed PC relative offset to
+													// two GOT entries for LD symbol
 	public static final int R_X86_64_DTPOFF32 = 21; // offset in TLS block
 	public static final int R_X86_64_GOTTPOFF = 22; // 32 bit signed pc relative offst to
 													// GOT entry for IE symbol
@@ -91,7 +91,7 @@ public class X86_64_ElfRelocationConstants {
 	public static final int R_X86_64_GOT64 = 27; // 64 bit GOT entry offset
 	public static final int R_X86_64_GOTPCREL64 = 28; // 64 bit pc relative offset to GOT entry
 	public static final int R_X86_64_GOTPC64 = 29; // 64 bit pc relative offset to GOT
-	public static final int R_X86_64_GOTPLT64 = 30; // 
+	public static final int R_X86_64_GOTPLT64 = 30; //
 	public static final int R_X86_64_PLTOFF64 = 31; // 64 bit GOT relative offset to PLT entry
 	/** Z + A */
 	public static final int R_X86_64_SIZE32 = 32; // Size of symbol plus 32 bit addend
@@ -102,14 +102,14 @@ public class X86_64_ElfRelocationConstants {
 	public static final int R_X86_64_TLSDESC = 36; // TLS descriptor; word64  * 2
 	public static final int R_X86_64_IRELATIVE = 37; // Adjust indirectly by program base
 	public static final int R_X86_64_RELATIVE64 = 38; // 64-bit adjust by program base
-	
+
 	public static final int  R_X86_64_PC32_BND  = 39; // deprecated
 	public static final int  R_X86_64_PLT32_BND  = 40; // deprecated
 	public static final int  R_X86_64_GOTPCRELX  = 41;  // G + GOT + A - P
     public static final int  R_X86_64_REX_GOTPCRELX  = 42; //G + GOT + A - P
-	
+
 	public static final int R_X86_64_NUM = 43;
-	
+
 	public static final int R_X86_64_GNU_VTINHERIT = 250;
 	public static final int R_X86_64_GNU_VTENTRY = 251;
 

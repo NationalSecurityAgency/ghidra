@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,14 +51,14 @@ public class RepositoryManager {
 	/**
 	 * Construct a new RepositoryManager.
 	 * @param rootDir directory where repositories will be created; this
-	 * path contains a list of users that can access the repositories 
+	 * path contains a list of users that can access the repositories
 	 * being managed.
-	 * @param enableLocalPasswords if true user passwords will be maintained 
+	 * @param enableLocalPasswords if true user passwords will be maintained
 	 * 			within local 'users' file
-	 * @param defaultPasswordExpirationDays password expiration in days when 
+	 * @param defaultPasswordExpirationDays password expiration in days when
 	 * 			local passwords are enabled (0 = no expiration)
 	 * @param anonymousAccessAllowed if true server permits anonymous access
-	 * to repositories.  
+	 * to repositories.
 	 * @throws IOException if IO error occurs
 	 */
 	public RepositoryManager(File rootDir, boolean enableLocalPasswords,
@@ -233,7 +233,7 @@ public class RepositoryManager {
 	 * Get all defined users. If currentUser is an
 	 * Anonymous user an empty array will be returned.
 	 * @param currentUser current user
-	 * @return array of users known to this manager or empty array if 
+	 * @return array of users known to this manager or empty array if
 	 * we should not reveal to currentUser.
 	 */
 	public synchronized String[] getAllUsers(String currentUser) throws IOException {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -207,7 +207,7 @@ class DataTableModel extends AddressBasedTableModel<DataRowObject> {
 				return null;
 			}
 			DataType dt = data.getDataType();
-			// NOTE: settings definitions are not currently provided by column since every 
+			// NOTE: settings definitions are not currently provided by column since every
 			// data type could have a unique set of supported settings
 			return dt.getRepresentation(data, settings, data.getLength());
 		}

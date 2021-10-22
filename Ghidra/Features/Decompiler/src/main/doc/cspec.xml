@@ -614,7 +614,7 @@ sub-function parameters and into the return value are extraneous.
 </para>
 <para>
 The <emphasis>signext</emphasis> attribute turns the behavior on specifically for the sign-extension
-operation. Currently there is no toggle for  zero-extensions.   
+operation. Currently there is no toggle for  zero-extensions.
 </para>
 <example>
 <programlisting>
@@ -802,7 +802,7 @@ alignment</emphasis>.  Most atomic datatypes get their alignment
 information from the
 <code>&lt;size_alignment_map&gt;</code>.  If the size of a particular datatype
 isn't listed in the map, the <code>&lt;default_alignment&gt;</code> value
-will be used. 
+will be used.
 </para>
 <sect3>
 <title>&lt;size_alignment_map&gt;</title>
@@ -930,7 +930,7 @@ the processor itself supports an ARM/THUMB transition bit in code addresses, whi
 least 2 byte aligned.  This tag informs the decompiler of this region of encoding in function pointers
 so that it can filter it out, allowing it to find the correct address in various situations. The
 <code>align</code> attribute should always be a power of 2 corresponding to the number of bits
-a compiler might use for additional storage.  
+a compiler might use for additional storage.
 </para>
 <example>
 <programlisting>
@@ -994,7 +994,7 @@ storage locations for the compiler's global variables.  The
 word <emphasis>global</emphasis> here refers to the standard scoping
 concept for variables in high-level source code, meaning that the
 variable or memory location is being used as permanent interfunction
-storage. This tag informs the decompiler's <emphasis>discovery</emphasis> 
+storage. This tag informs the decompiler's <emphasis>discovery</emphasis>
 of the scope of particular memory locations.  Any location not marked as global
 in this way is assumed to be local/temporary storage.
 </para>
@@ -1300,12 +1300,12 @@ lists varnodes in the order that a compiler would dole them out when given a lis
 pass. Integer or pointer values are usually passed first in specially designated registers rather than on the
 stack if there are not enough available registers. There can one stack-based
 <code>&lt;pentry&gt;</code> at the end of the list that will typically match any number of
-parameters of any size or type. 
+parameters of any size or type.
 </para>
 <para>
 If there are separate <code>&lt;pentry&gt;</code> tags for dedicated floating-point registers,
 the standard strategy treats them as a separate resource list, independent of the one for
-integer and pointer datatypes. 
+integer and pointer datatypes.
 The <code>&lt;pentry&gt;</code> tags specifying floating-point registers are listed in the same
 <code>&lt;input&gt;</code> tag, immediately after the integer registers, and are distinguished by
 the <code>metatype="float"</code> attribute labeling the individual tags.
@@ -1364,7 +1364,7 @@ datatype is assigned.  Note that this may not make as much sense for hand-coded 
 </para>
 <para>
 There must be exactly one <code>&lt;default_proto&gt;</code> tag, which contains exactly one
-<code>&lt;prototype&gt;</code> sub-tag. Other <code>&lt;prototype&gt;</code> tags can be listed outside 
+<code>&lt;prototype&gt;</code> sub-tag. Other <code>&lt;prototype&gt;</code> tags can be listed outside
 of this tag.  The designated default prototype model.  Where users are given the option of choosing from
 among different prototype models, the name "default" is always presented as an option and refers to this
 prototype model. It is also used in some situations where the prototype model is unknown but analysis needs
@@ -1485,7 +1485,7 @@ to proceed.
 The <code>&lt;prototype&gt;</code> tag specifies a prototype model. It must have a <emphasis>name</emphasis> attribute,
 which gives the name that can be used both in the Ghidra GUI and at other points within the compiler spec. The
 <emphasis>strategy</emphasis> attribute indicates the allocation strategy, as described below.
-If omitted the strategy defaults to <emphasis>standard</emphasis>. 
+If omitted the strategy defaults to <emphasis>standard</emphasis>.
 </para>
 <para>
 Every <code>&lt;prototype&gt;</code> must specify the <emphasis>extrapop</emphasis> attribute. This indicates the change in
@@ -1941,7 +1941,7 @@ parameters. Individual functions will be assumed to use some subset of this regi
 The <emphasis>first</emphasis> and <emphasis>last</emphasis> attributes
 to the <code>&lt;range&gt;</code> tag give offsets relative to the incoming value
 of the stack pointer. This affects the decompiler's reconstruction of the stack frame
-for a function and parameter recovery. 
+for a function and parameter recovery.
 </para>
 <para>
 Omitting this tag and accepting the default is often sufficient. The default sets the local

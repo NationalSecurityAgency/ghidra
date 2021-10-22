@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,13 +29,13 @@ import generic.test.AbstractGenericTest;
 public class SortedRangeListTest extends AbstractGenericTest {
 	private SortedRangeList list;
 	/**
-	 * 
+	 *
 	 */
 	public SortedRangeListTest() {
 		super();
 	}
-	
-	
+
+
     @Before
     public void setUp() throws Exception {
 		list = new SortedRangeList();
@@ -45,20 +45,20 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		list.addRange(5, 7);
 		assertEquals(1, list.getNumRanges());
 		assertEquals(new Range(5, 7), list.getRanges().next());
-		
+
 		list.addRange(20, 22);
 		assertEquals(2, list.getNumRanges());
 		Iterator<Range> it = list.getRanges();
 		assertEquals(new Range(5, 7), it.next());
 		assertEquals(new Range(20, 22), it.next());
-		
+
 		list.addRange(0,2);
 		assertEquals(3, list.getNumRanges());
 		it = list.getRanges();
 		assertEquals(new Range(0, 2), it.next());
 		assertEquals(new Range(5, 7), it.next());
 		assertEquals(new Range(20, 22), it.next());
-		
+
 		list.addRange(12,12);
 		assertEquals(4, list.getNumRanges());
 		it = list.getRanges();
@@ -80,7 +80,7 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		list.addRange(3, 7);
 		assertEquals(1, list.getNumRanges());
 		assertEquals(new Range(3, 10), list.getRanges().next());
-	}	
+	}
 @Test
     public void testAdd4() {
 		list.addRange(3,7);
@@ -95,7 +95,7 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		assertEquals(1, list.getNumRanges());
 		assertEquals(new Range(3, 10), list.getRanges().next());
 	}
-	
+
 @Test
     public void testAdd6() {
 		list.addRange(3,7);
@@ -110,7 +110,7 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		list.addRange(14, 16);
 		assertEquals(1, list.getNumRanges());
 		assertEquals(new Range(12, 20), list.getRanges().next());
-	}	
+	}
 @Test
     public void testAdd8() {
 		list.addRange(0,4);
@@ -119,7 +119,7 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		list.addRange(5,5);
 		assertEquals(1, list.getNumRanges());
 		assertEquals(new Range(0, 10), list.getRanges().next());
-	}	
+	}
 @Test
     public void testAddNegFirst() {
 		list.addRange(-20480, -20352); // -20480, -20352
@@ -144,7 +144,7 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		assertEquals(new Range(-12288, -12224), list.getRange(3));
 		assertEquals(new Range(-8192, 184565760), list.getRange(4));
 		assertEquals(new Range(201334784, 201338880), list.getRange(5));
-	}	
+	}
 @Test
     public void testAddPosFirst() {
 		list.addRange(0, 4);
@@ -171,7 +171,7 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		assertEquals(new Range(6, 10), list.getRange(4));
 		assertEquals(new Range(3500, 4400), list.getRange(5));
 		assertEquals(new Range(135676, 149987), list.getRange(6));
-		
+
 		list.addRange(4200, 4800);
 		list.addRange(149988, 150000);
 		assertEquals(7, list.getNumRanges());
@@ -182,7 +182,7 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		assertEquals(new Range(6, 10), list.getRange(4));
 		assertEquals(new Range(3500, 4800), list.getRange(5));
 		assertEquals(new Range(135676, 150000), list.getRange(6));
-	}	
+	}
 @Test
     public void testRemove1() {
 		list.addRange(0,10);
@@ -224,7 +224,7 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		Iterator<Range> it = list.getRanges();
 		assertEquals(new Range(12, 14), it.next());
 	}
-		
+
 @Test
     public void testRemove5() {
 		list.addRange(Integer.MIN_VALUE, Integer.MIN_VALUE+5);
@@ -241,7 +241,7 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		assertEquals(new Range(-7, -5), it.next());
 		assertEquals(new Range(12, 14), it.next());
 	}
-		
+
 @Test
     public void testContains() {
 		list.addRange(-1234567, -1234555);
@@ -281,7 +281,7 @@ public class SortedRangeListTest extends AbstractGenericTest {
 		list.addRange(2,4);
 		list.addRange(6,8);
 		list.addRange(12,15);
-		
+
 		assertEquals(-1, list.getRangeIndex(Integer.MIN_VALUE));
 		assertEquals(-1, list.getRangeIndex(-232));
 		assertEquals(0, list.getRangeIndex(-231));

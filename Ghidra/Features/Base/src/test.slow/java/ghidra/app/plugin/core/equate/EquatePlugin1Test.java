@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -119,7 +119,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		JCheckBox overwriteExistingEquatesButton =
 			(JCheckBox) findComponentByName(d.getComponent(), "Overwrite");
 
-		//dialog should come up with "current location" enabled and selected in all cases (even if a selection)		
+		//dialog should come up with "current location" enabled and selected in all cases (even if a selection)
 		assertNotNull(applyToCurrentButton);
 		assertTrue(applyToCurrentButton.isEnabled());
 		assertTrue(applyToCurrentButton.isSelected());
@@ -156,16 +156,16 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 	}
 
 	/*
-	 * Tests that the current selection button is the default option on the 
+	 * Tests that the current selection button is the default option on the
 	 * Set Equate dialog if there is a range of addresses selected.
-	 * 
+	 *
 	 * @throws InterruptedException
 	 * @throws InvocationTargetException
 	 */
 	@Test
 	public void testApplyToOptions_SetEquate_Selection() {
 
-		// put the cursor on a scalar 
+		// put the cursor on a scalar
 		putCursorOnOperand(0x1004bbd, 0);
 
 		// make a selection containing the scalar above.
@@ -309,7 +309,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		SetEquateDialog d = showSetEquateDialog();
 
-		// 	the dialog should show the value of the equate being created.			
+		// 	the dialog should show the value of the equate being created.
 
 		JLabel label = (JLabel) findComponentByName(d.getComponent(), "EquateField");
 		// Verify the location in the code browser -- should have the
@@ -342,7 +342,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 	@Test
 	public void testSetEquate_ApplyToCurrentSelection_and_OverwriteInSelection() throws Exception {
 
-		// put the cursor on a scalar 
+		// put the cursor on a scalar
 		putCursorOnOperand(0x01006245, 0);
 
 		// make a selection containing the scalar above
@@ -362,7 +362,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 		assertNoEquateAt("1005128", "0xb7");
 		assertNoEquateAt("1005a01", "EAX,0xb7");
 
-		//run again on selection including all the named scalars and one non-named scalars 
+		//run again on selection including all the named scalars and one non-named scalars
 		//run without overwrite
 		putCursorOnOperand(0x1005128, 0);
 		AddressSet newScalarAddresses =
@@ -378,7 +378,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		flushProgramEvents();
 
-		// only the one originally not a named scalar should be named "Cat"	
+		// only the one originally not a named scalar should be named "Cat"
 		AddressSet newSet = new AddressSet();
 		newSet.add(addr("1005128"));
 
@@ -412,7 +412,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 	public void testSetEquate_ApplyToCurrentSelectionContainingScalarInStackAdd_NewName()
 			throws Exception {
 
-		// put the cursor on a scalar 
+		// put the cursor on a scalar
 		putCursorOnOperand(0x01004bbd, 0);
 
 		// make a selection containing the scalar above
@@ -438,7 +438,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 	@Test
 	public void testSetEquate_ApplyToWholeProgram() throws Exception {
 
-		// put the cursor on a scalar 
+		// put the cursor on a scalar
 		putCursorOnOperand(0x010018d6, 0);
 
 		// grab the dialog and select the radio button for 'apply to whole program'
@@ -484,7 +484,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		SetEquateDialog d = showSetEquateDialog();
 
-		// 	the dialog should show the value of the equate being created.			
+		// 	the dialog should show the value of the equate being created.
 		JLabel label = (JLabel) findComponentByName(d.getComponent(), "EquateField");
 
 		// Verify the location in the code browser -- should have the
@@ -518,7 +518,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 	@Test
 	public void testSetEquate_Overwrite_ApplyToWholeProgram() throws Exception {
 
-		// put the cursor on a scalar 
+		// put the cursor on a scalar
 		putCursorOnOperand(0x01006245, 0);
 
 		// grab the dialog and select the radio button for 'apply to current location'
@@ -549,7 +549,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		flushProgramEvents();
 
-		// All but the one originally called Bob should be named "Cat"	
+		// All but the one originally called Bob should be named "Cat"
 		AddressSet newSet = new AddressSet();
 		newSet.add(addr("1005128"));
 		newSet.add(addr("1005e9d"));
@@ -591,7 +591,7 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 		SetEquateDialog d = showRenameEquatesDialog();
 
-		// 	the dialog should show the value of the equate being created.			
+		// 	the dialog should show the value of the equate being created.
 		JLabel label = (JLabel) findComponentByName(d.getComponent(), "EquateField");
 
 		// Verify the location in the code browser -- should have the
@@ -626,13 +626,13 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 	@Test
 	public void testDuplicateName() throws Exception {
 		// set an equate using an existing equate name, but with a different
-		// value; should get a message in the status area of the dialog.	
+		// value; should get a message in the status area of the dialog.
 
 		putCursorOnOperand(0x010018d6, 0);
 
 		SetEquateDialog d = showSetEquateDialog();
 
-		// 	the dialog should show the value of the equate being created.			
+		// 	the dialog should show the value of the equate being created.
 		JTextField tf = findComponent(d.getComponent(), JTextField.class);
 		setText(tf, "THIRTY");
 		triggerEnter(tf);
@@ -687,8 +687,8 @@ public class EquatePlugin1Test extends AbstractEquatePluginTest {
 
 	/*
 	 * Tests that the user is prompted before attempting to remove an equate within
-	 * a selection. 
-	 * 
+	 * a selection.
+	 *
 	 * @throws Exception
 	 */
 	@Test

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,15 +24,15 @@ import ghidra.util.Msg;
 
 /**
  * Class for parsing a variadic function's format String to determine the proper
- * number of arguments and their DataTypes. It analyzes format strings from variadic functions. 
+ * number of arguments and their DataTypes. It analyzes format strings from variadic functions.
  * Parses format strings adhering to docs https://pubs.opengroup.org/onlinepubs/009695399/functions/fprintf.html
- * and https://en.cppreference.com/w/c/io/fscanf. If a format string doesn't adhere properly 
- * to what is specified in the docs, the string will not continue to be parsed since this is 
+ * and https://en.cppreference.com/w/c/io/fscanf. If a format string doesn't adhere properly
+ * to what is specified in the docs, the string will not continue to be parsed since this is
  * undefined behavior.
  * <br>
  * The standard C formats may make optional use of the following extended precision types
- * which may be defined as a {@link TypeDef} the appropriate Datatype implementation. 
- * If a format string is encountered which refers to one of these types which has not 
+ * which may be defined as a {@link TypeDef} the appropriate Datatype implementation.
+ * If a format string is encountered which refers to one of these types which has not
  * previously been defined, a TypeDef will be fabricated although it may not be correct.
  * <ul>
  * <li>intmax_t - maximum sized signed integer (default: long long)</li>
@@ -58,10 +58,10 @@ public class FormatStringParser {
 	/**
 	 * Constructor for FormatStringParser.
 	 * <br>
-	 * NOTE: Warning messages will be logged once per instantiation when 
+	 * NOTE: Warning messages will be logged once per instantiation when
 	 * appropriate required TypeDef (intmax_t, uintmax_t, size_t, ptrdif_t)
 	 * has not been predefined.
-	 * 
+	 *
 	 * @param program currentProgram
 	 */
 	public FormatStringParser(Program program) {
@@ -69,12 +69,12 @@ public class FormatStringParser {
 	}
 
 	/**
-	 * This function takes in a format string and returns List of Strings each holding 
+	 * This function takes in a format string and returns List of Strings each holding
 	 * format data. Each String is a substring of the given format string that corresponds to one
 	 * or more DataTypes. These DataTypes determine which arguments need to be given to the variadic
-	 * function. For instance, given the format String "%d %4.2s", this function will return 
+	 * function. For instance, given the format String "%d %4.2s", this function will return
 	 * the List ["d", "4.2s"]
-	 * 
+	 *
 	 * @param formatString format String
 	 * @return List of substrings of formatStr
 	 */
@@ -113,7 +113,7 @@ public class FormatStringParser {
 	 * isOutputType is true when using a format string for a function that "outputs"
 	 * Strings (e.g., printf, fprintf, etc.). When it's false, it evaluates the
 	 * String's data types as if the function "inputs" Strings (e.g., scanf)
-	 * 
+	 *
 	 * @param formatString       Format String
 	 * @param formatArgumentList   List of FormatArgument that will be written to
 	 * @param isOutputType Type of variadic function
@@ -277,7 +277,7 @@ public class FormatStringParser {
 	 * format string for output data types (e.g. printf, fprintf, etc.). When it's
 	 * false, it evaluates the String's data types as if they were input types (e.g.
 	 * scanf)
-	 * 
+	 *
 	 * @param formatString format String
 	 * @param isOutputType Type of variadic function
 	 * @return List of FormatArgument
@@ -311,7 +311,7 @@ public class FormatStringParser {
 	}
 
 	/**
-	 * 
+	 *
 	 * Handles format Strings with parameters. In this parser, we define a format
 	 * String parameter to be an integer n provided in the form: "%n$" or "*n$", where n is
 	 * the index of the referred argument. If a placeholder uses a format
@@ -321,15 +321,15 @@ public class FormatStringParser {
 	 * second argument. Any parameter pattern beginning with % or * and ending with
 	 * $ must have integer in between. Failing to adhere by the format string
 	 * parameter requirements returns null.
-	 * 
+	 *
 	 * @param formatString format String
 	 * @return List of FormatArgument
-	 * 
-	 * 
+	 *
+	 *
 	 *         TODO: What if multiple conversion specs refer to the same placeholder
 	 *         with different types? Ex: "%1$*1$x" (uses unsigned int and int)
 	 *         Currently just overwrites previous type
-	 * 
+	 *
 	 */
 	public List<FormatArgument> analyzeFormatStringWithParameters(String formatString) {
 
@@ -486,7 +486,7 @@ public class FormatStringParser {
 	 * In other words, in the following cases: "%n$" and "*n$", return n where n is
 	 * the index of the referred argument. n cannot be less than 1; return 0 if
 	 * there's a problem.
-	 * 
+	 *
 	 * @param formatString format String
 	 * @param i      index within formatStr
 	 * @return formar argument parameter
@@ -515,7 +515,7 @@ public class FormatStringParser {
 	/**
 	 * Skips a series of flags within a format String. returns the index of the
 	 * format string at the last digit before another non-digit character
-	 * 
+	 *
 	 * @param formatString format String
 	 * @param i      index into formatStr
 	 * @return new index into formatStr
@@ -531,7 +531,7 @@ public class FormatStringParser {
 	 * Skips a series of numbers (field width or precision) within a format String.
 	 * returns the index of the format String at the last digit before another
 	 * non-digit character
-	 * 
+	 *
 	 * @param formatString format String
 	 * @param i      index into formatStr
 	 * @return new index into formatString

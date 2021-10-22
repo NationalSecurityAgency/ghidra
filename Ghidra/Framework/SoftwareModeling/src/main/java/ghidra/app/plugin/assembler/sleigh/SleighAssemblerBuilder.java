@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,13 +42,13 @@ import ghidra.util.SystemUtilities;
 
 /**
  * An {@link AssemblerBuilder} capable of supporting almost any {@link SleighLanguage}
- * 
+ *
  * To build an assembler, please use a static method of the {@link Assemblers} class.
- * 
+ *
  * SLEIGH-based assembly is a bit of an experimental feature at this time. Nevertheless, it seems to
  * have come along quite nicely. It's not quite as fast as disassembly, since after all, that's what
  * SLEIGH was designed to do.
- * 
+ *
  * Overall, the method is fairly simple, though its implementation is a bit more complex. First, we
  * gather every pair of pattern and constructor by traversing the decision tree used by disassembly.
  * We then use the "print pieces" to construct a context-free grammar. Each production is associated
@@ -62,7 +62,7 @@ import ghidra.util.SystemUtilities;
  * spaces. For example, in the {@code ia.sinc} file, there is JMP ... and J^cc, meaning, the lexer
  * must consider J as a token as well as JMP, introducing another source of possible backtracking.
  * Despite that, parsing is completed fairly quickly.
- * 
+ *
  * To assemble, we first parse the textual instruction, yielding zero or more parse trees. No parse
  * trees implies an error. For each parse tree, we attempt to resolve the instruction bytes,
  * starting at the leaves and working upwards while tracking and solving context changes. The
@@ -73,7 +73,7 @@ import ghidra.util.SystemUtilities;
  * a production in the parse tree is associated with multiple constructors, different combinations
  * of constructors are explored as we move upward in the tree. If all possible combinations yield
  * semantic errors, then the overall result is an error.
- * 
+ *
  * Some productions are "purely recursive," e.g., {@code :^instruction} lines in the SLEIGH. These
  * are ignored during parser construction. Let such a production be given as I =&gt; I. When resolving
  * the parse tree to bytes, and we encounter a production with I on the left hand side, we then
@@ -81,13 +81,13 @@ import ghidra.util.SystemUtilities;
  * Ideally, we could repeat this indefinitely, stopping when all further applications result in
  * semantic errors; however, there is no guarantee in the SLEIGH specification that such an
  * algorithm will actually halt, so a maximum number (default of 1) of applications are attempted.
- * 
+ *
  * After all the context changes and operands are resolved, we apply the constructor patterns and
  * proceed up the tree. Thus, each branch yields zero or more "resolved constructors," which each
  * specify two masked blocks of data: one for the instruction, and one for the context. These are
  * passed up to the parent production, which, having obtained results from all its children,
  * attempts to apply the corresponding constructors.
- * 
+ *
  * Once we've resolved the root node, any resolved constructors returned are taken as successfully
  * assembled instruction bytes. If applicable, the corresponding context registers are compared to
  * the context at the target address in the program and filtered for compatibility.
@@ -108,7 +108,7 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 
 	/**
 	 * Construct an assembler builder for the given SLEIGH language
-	 * 
+	 *
 	 * @param lang the language
 	 */
 	public SleighAssemblerBuilder(SleighLanguage lang) {
@@ -117,7 +117,7 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 
 	/**
 	 * Do the actual work to construct an assembler from a SLEIGH language
-	 * 
+	 *
 	 * @throws SleighException if there's an issue accessing the language
 	 */
 	protected void generateAssembler() throws SleighException {
@@ -166,7 +166,7 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 
 	/**
 	 * Invert a varnode list to a map suitable for use with {@link AssemblyStringMapTerminal}
-	 * 
+	 *
 	 * @param vnlist the varnode list symbol
 	 * @return the inverted string map
 	 */
@@ -185,7 +185,7 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 
 	/**
 	 * Invert a value map to a map suitable for use with {@link AssemblyNumericMapTerminal}
-	 * 
+	 *
 	 * @param vm the value map symbol
 	 * @return the inverted numeric map
 	 */
@@ -201,7 +201,7 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 
 	/**
 	 * Invert a name table to a map suitable for use with {@link AssemblyStringMapTerminal}
-	 * 
+	 *
 	 * @param ns the name symbol
 	 * @return the inverted string map
 	 */
@@ -219,9 +219,9 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 
 	/**
 	 * Convert the given operand symbol to an {@link AssemblySymbol}
-	 * 
+	 *
 	 * For subtables, this results in a non-terminal, for all others, the result in a terminal.
-	 * 
+	 *
 	 * @param cons the constructor to which the operand belongs
 	 * @param opsym the operand symbol to convert
 	 * @return the converted assembly grammar symbol
@@ -269,17 +269,17 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 
 	/**
 	 * Obtain the size in bits of a textual operand.
-	 * 
+	 *
 	 * This is a little odd, since the variables in pattern expressions do not have an explicit
 	 * size. However, the value exported by a constructor's pCode may have an explicit size given
 	 * (in bytes). Thus, there is a special case, where a constructor prints just one operand and
 	 * exports that same operand with an explicit size. In that case, the size of the operand is
 	 * printed according to that exported size.
-	 * 
+	 *
 	 * For disassembly, this information is used simply to truncate the bits before they are
 	 * displayed. For assembly, we must do two things: 1) Ensure that the provided value fits in the
 	 * given size, and 2) Mask the goal when solving the pattern expression for the operand.
-	 * 
+	 *
 	 * @param cons the constructor from which the production is being derived
 	 * @param opsym the operand symbol corresponding to the grammatical symbol, whose size we wish
 	 *            to determine.
@@ -305,7 +305,7 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 
 	/**
 	 * Build a portion of the grammar representing a table of constructors
-	 * 
+	 *
 	 * @param subtable the table
 	 * @return the partial grammar
 	 */
@@ -424,7 +424,7 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 
 	/**
 	 * Get the built grammar for the language
-	 * 
+	 *
 	 * @return the grammar
 	 */
 	protected AssemblyGrammar getGrammar() {
@@ -433,7 +433,7 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 
 	/**
 	 * Get the built parser for the language
-	 * 
+	 *
 	 * @return the parser
 	 */
 	protected AssemblyParser getParser() {

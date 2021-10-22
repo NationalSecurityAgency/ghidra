@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.util.exception.AssertException;
 /**
  * The non-preferred way of configuring tests for merge testing, which is to use real
  * programs that are files on disk.  You should try to use the
- * {@link InMemoryProgramMTFModel} by using 
+ * {@link InMemoryProgramMTFModel} by using
  * {@link MergeTestFacilitator#initialize(String, MergeProgramModifier)} when writing
  * merge tests.
  */
@@ -31,7 +31,7 @@ import ghidra.util.exception.AssertException;
 public class RealProgramMTFModel extends AbstractMTFModel {
 
 	/**
-	 * We install our test ID generator to ensure that all datatypes we create will share the 
+	 * We install our test ID generator to ensure that all datatypes we create will share the
 	 * same ID across all versions of the programs we create.  If we do not do this, then they will
 	 * be different, which breaks many tests.
 	 */
@@ -78,7 +78,7 @@ public class RealProgramMTFModel extends AbstractMTFModel {
 	}
 
 	/**
-	 * Tests that use this method are creating a new 'original' program, rather than using 
+	 * Tests that use this method are creating a new 'original' program, rather than using
 	 * a pre-fabricated one from a program builder.
 	 */
 	private void createCustomStartingProgram(OriginalProgramModifierListener modifier)
@@ -154,7 +154,7 @@ public class RealProgramMTFModel extends AbstractMTFModel {
 
 	private void clearChanges() {
 
-		// trick each program to think that it hasn't been changed so that the merge process 
+		// trick each program to think that it hasn't been changed so that the merge process
 		// ignores all the work done so far
 		latestProgram.setChangeSet(new ProgramDBChangeSet(resultProgram.getAddressMap(), 20));
 		resultProgram.setChangeSet(new ProgramDBChangeSet(resultProgram.getAddressMap(), 20));

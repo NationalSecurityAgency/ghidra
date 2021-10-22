@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,18 +23,18 @@ import ghidra.graph.jung.JungDirectedGraph;
 import util.CollectionUtils;
 
 /**
- * A class that can wrap a {@link GDirectedGraph} and allows for vertex and edge additions 
+ * A class that can wrap a {@link GDirectedGraph} and allows for vertex and edge additions
  * without changing the underlying graph.
  *
  * <P><B>Warning: </B>As mentioned above, this graph is meant for additive operations.  In its
- * current form, removal operations will not work.  To facilitate removals, this class will 
+ * current form, removal operations will not work.  To facilitate removals, this class will
  * have to be updated to track removed vertices and edges, using them to correctly report
- * the state of the graph for methods like {@link #containsVertex(Object)} and 
+ * the state of the graph for methods like {@link #containsVertex(Object)} and
  *  {@link #containsEdge(GEdge)}.
  *
  * <P>Implementation Note: there is some 'magic' in this class to add 'dummy' vertices to the
  * graph.  To facilitate this, the mutated graph in this class does not have the <code>V</code>
- * type, but rather is typed on Object.   This means that this class can only be used 
+ * type, but rather is typed on Object.   This means that this class can only be used
  * generically, with templated types (like by algorithms and such).  Any usage of this class
  * that expects concrete implementations to be returned can trigger ClassCastExceptions.
  *

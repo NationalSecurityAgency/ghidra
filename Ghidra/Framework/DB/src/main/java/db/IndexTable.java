@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -232,7 +232,7 @@ abstract class IndexTable {
 
 	/**
 	 * Iterate over all the unique index field values within the specified range identified
-	 * by minField and maxField.  Index values are returned in an ascending sorted order with the 
+	 * by minField and maxField.  Index values are returned in an ascending sorted order with the
 	 * initial iterator position corresponding to the startField.
 	 * @param minField minimum index column value, if null absolute minimum is used
 	 * @param maxField maximum index column value, if null absolute maximum is used
@@ -254,7 +254,7 @@ abstract class IndexTable {
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
-	 * The iterator is initially positioned before the first index buffer whose index key 
+	 * The iterator is initially positioned before the first index buffer whose index key
 	 * is greater than or equal to the specified startField value.
 	 * @param startField index key value which determines initial position of iterator
 	 * @return primary key iterator
@@ -264,8 +264,8 @@ abstract class IndexTable {
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
-	 * The iterator is initially positioned after the index buffer whose index key 
-	 * is equal to the specified startField value or immediately before the first 
+	 * The iterator is initially positioned after the index buffer whose index key
+	 * is equal to the specified startField value or immediately before the first
 	 * index buffer whose index key is greater than the specified startField value.
 	 * @param startField index key value which determines initial position of iterator
 	 * @return primary key iterator
@@ -275,8 +275,8 @@ abstract class IndexTable {
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
-	 * The iterator is initially positioned before the primaryKey within the index buffer 
-	 * whose index key is equal to the specified startField value or immediately before the first 
+	 * The iterator is initially positioned before the primaryKey within the index buffer
+	 * whose index key is equal to the specified startField value or immediately before the first
 	 * index buffer whose index key is greater than the specified startField value.
 	 * @param startField index key value which determines initial position of iterator
 	 * @param primaryKey initial position within index buffer if index key matches startField value.
@@ -288,8 +288,8 @@ abstract class IndexTable {
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
-	 * The iterator is initially positioned after the primaryKey within the index buffer 
-	 * whose index key is equal to the specified startField value or immediately before the first 
+	 * The iterator is initially positioned after the primaryKey within the index buffer
+	 * whose index key is equal to the specified startField value or immediately before the first
 	 * index buffer whose index key is greater than the specified startField value.
 	 * @param startField index key value which determines initial position of iterator
 	 * @param primaryKey initial position within index buffer if index key matches startField value.
@@ -302,13 +302,13 @@ abstract class IndexTable {
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
 	 * The iterator is limited to range of index keys of minField through maxField, inclusive.
-	 * If before is true, the iterator is initially positioned before the first index 
-	 * buffer whose index key is greater than or equal to the specified minField value. 
-	 * If before is false, the iterator is initially positioned after the first index 
-	 * buffer whose index key is less than or equal to the specified maxField value. 
+	 * If before is true, the iterator is initially positioned before the first index
+	 * buffer whose index key is greater than or equal to the specified minField value.
+	 * If before is false, the iterator is initially positioned after the first index
+	 * buffer whose index key is less than or equal to the specified maxField value.
 	 * @param minField minimum index key value
 	 * @param maxField maximum index key value
-	 * @param before if true, position iterator before minField value, 
+	 * @param before if true, position iterator before minField value,
 	 * Otherwise, position iterator after maxField value.
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
@@ -319,7 +319,7 @@ abstract class IndexTable {
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
 	 * The iterator is limited to range of index keys of minField through maxField, inclusive.
-	 * The iterator is initially positioned before or after the specified startField index value. 
+	 * The iterator is initially positioned before or after the specified startField index value.
 	 * @param minField minimum index key value
 	 * @param maxField maximum index key value
 	 * @param startField starting indexed value position

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,9 +36,9 @@ public class VTDataReferenceCorrelator_ELF_Test extends AbstractVTCorrelatorTest
 	 */
 
 	/************************************************************************************
-	 * Specify only known data matches referenced by the "bob" functions, then run the Data Reference 
+	 * Specify only known data matches referenced by the "bob" functions, then run the Data Reference
 	 * Correlator and test that only the bob functions match
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -93,9 +93,9 @@ public class VTDataReferenceCorrelator_ELF_Test extends AbstractVTCorrelatorTest
 	}
 
 	/************************************************************************************
-	 * Run the Exact Data Match correlator and accept all matches, 
+	 * Run the Exact Data Match correlator and accept all matches,
 	 * then run the Data Reference Correlator and test that only the expected matches are found
-	 * 
+	 *
 	 * @throws Exception
 	 */
 
@@ -125,7 +125,7 @@ public class VTDataReferenceCorrelator_ELF_Test extends AbstractVTCorrelatorTest
 		// Make the set of expected matches
 		Set<VTAssociationPair> expectedMatchPairs = new HashSet<>();
 
-		expectedMatchPairs.add(associate(addr(srcProg, "0040063e"), addr(destProg, "080484ca")));  // src: bob dst: bob 
+		expectedMatchPairs.add(associate(addr(srcProg, "0040063e"), addr(destProg, "080484ca")));  // src: bob dst: bob
 		expectedMatchPairs.add(associate(addr(srcProg, "0040079c"), addr(destProg, "080485f3")));  // src: main dst: main
 		expectedMatchPairs.add(associate(addr(srcProg, "00400764"), addr(destProg, "080485b7")));  // src: goodbye dst: goodbye
 		expectedMatchPairs.add(associate(addr(srcProg, "00400738"), addr(destProg, "08048581")));  // src: hello dst: hello

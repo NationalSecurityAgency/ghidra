@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,7 +55,7 @@ public class DbgProcessImpl implements DbgProcess {
 
 	/**
 	 * Construct a new inferior
-	 * 
+	 *
 	 * @param manager the manager creating the process
 	 * @param id the dbgeng-assigned process ID
 	 */
@@ -90,7 +90,7 @@ public class DbgProcessImpl implements DbgProcess {
 
 	/**
 	 * Set the exit code
-	 * 
+	 *
 	 * @param exitCode the exit code (status or signal)
 	 */
 	public void setExitCode(Long exitCode) {
@@ -104,7 +104,7 @@ public class DbgProcessImpl implements DbgProcess {
 
 	/**
 	 * Add this process to the manager's list of processes, because of a given cause
-	 * 
+	 *
 	 * @param cause the cause of the new inferior
 	 */
 	public void add() {
@@ -115,7 +115,7 @@ public class DbgProcessImpl implements DbgProcess {
 
 	/**
 	 * Remove this process from the manager's list of processes, because of a given cause
-	 * 
+	 *
 	 * @param cause the cause of removal
 	 */
 	public void remove(DbgCause cause) {
@@ -129,7 +129,7 @@ public class DbgProcessImpl implements DbgProcess {
 
 	/**
 	 * Use {@link DbgThreadImpl#add()} instead
-	 * 
+	 *
 	 * @param thread the thread to add
 	 */
 	public void addThread(DbgThreadImpl thread) {
@@ -153,7 +153,7 @@ public class DbgProcessImpl implements DbgProcess {
 
 	/**
 	 * Use {@link DbgThreadImpl#remove()} instead
-	 * 
+	 *
 	 * @param tid the ID of the thread to remove
 	 */
 	public void removeThread(DebugThreadId tid) {
@@ -164,7 +164,7 @@ public class DbgProcessImpl implements DbgProcess {
 
 	/**
 	 * Use {@link DbgModuleImpl#add()} instead
-	 * 
+	 *
 	 * @param module the thread to add
 	 */
 	public void addModule(DbgModuleImpl module) {
@@ -187,7 +187,7 @@ public class DbgProcessImpl implements DbgProcess {
 
 	/**
 	 * Use {@link DbgModulesImpl#remove()} instead
-	 * 
+	 *
 	 * @param id the ID of the thread to remove
 	 */
 	public void removeModule(String id) {

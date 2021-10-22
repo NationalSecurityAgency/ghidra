@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,9 +30,9 @@ public interface LldbGadpServer extends AutoCloseable {
 
 	/**
 	 * The entry point for the LLDB server in stand-alone mode
-	 * 
+	 *
 	 * Run it to see help.
-	 * 
+	 *
 	 * @param args the command-line arguments
 	 * @throws IOException if an I/O error occurs
 	 * @throws ExecutionException
@@ -44,7 +44,7 @@ public interface LldbGadpServer extends AutoCloseable {
 
 	/**
 	 * Create a new instance of the server
-	 * 
+	 *
 	 * @param addr the address to bind the SCTL server to
 	 * @param busId the client ID the server should use on the bus for synthesized commands
 	 * @return the server instance
@@ -146,39 +146,39 @@ public interface LldbGadpServer extends AutoCloseable {
 
 	/**
 	 * Start the debugging server
-	 * 
+	 *
 	 * @return a future that completes when the server is ready
 	 */
 	CompletableFuture<Void> startLLDB(String[] args);
 
 	/**
 	 * Get the local address to which the SCTL server is bound.
-	 * 
+	 *
 	 * @return the local socket address
 	 */
 	SocketAddress getLocalAddress();
 
 	/**
 	 * Close all connections and ports, GADP and Process Server, and terminate the server
-	 * 
+	 *
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void terminate() throws IOException;
 
 	/**
 	 * Check if the server is running
-	 * 
+	 *
 	 * This will return false: 1) Before the server has been started, 2) After a call to
 	 * {@link #terminate()}, or 3) When an error occurs causing the server to terminate
 	 * unexpectedly. Otherwise, it returns true.
-	 * 
+	 *
 	 * @returns true if the server is currently running.
 	 */
 	public boolean isRunning();
 
 	/**
 	 * Calls {@link #terminate()}
-	 * 
+	 *
 	 * @throws IOException if an I/O error occurs
 	 */
 	@Override

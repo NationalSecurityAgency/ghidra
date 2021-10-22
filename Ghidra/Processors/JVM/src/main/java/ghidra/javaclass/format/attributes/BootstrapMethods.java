@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * 
+ *
  * NOTE: THE COMMENT TEXT EXTRACTED FROM JVMS7.PDF
  * <p>
  */
@@ -43,13 +43,13 @@ public class BootstrapMethods implements StructConverter {
 	 * The value of the bootstrap_method_ref item must be a valid index into
 	 * the constant_pool table. The constant_pool entry at that index must be
 	 * a CONSTANT_MethodHandle_info structure.
-	 * 
+	 *
 	 * Commentary: The reference_kind item of the CONSTANT_MethodHandle_info
-	 * structure should have the value 6 (REF_invokeStatic) or 8 (REF_newInvokeSpecial) 
+	 * structure should have the value 6 (REF_invokeStatic) or 8 (REF_newInvokeSpecial)
 	 * or else invocation of the bootstrap method
 	 * handle during call site specifier resolution for an invokedynamic instruction will
 	 * complete abruptly.
-	 * 
+	 *
 	 * @return a valid index into the constant_pool table
 	 */
 	public int getBootstrapMethodsReference() {
@@ -67,15 +67,15 @@ public class BootstrapMethods implements StructConverter {
 
 	/**
 	 * Each entry in the bootstrap_arguments array must be a valid index into
-	 * the constant_pool table. 
-	 * The constant_pool entry at that index must be: 
-	 * 		CONSTANT_String_info, 
+	 * the constant_pool table.
+	 * The constant_pool entry at that index must be:
+	 * 		CONSTANT_String_info,
 	 * 		CONSTANT_Class_info,
-	 * 		CONSTANT_Integer_info, 
+	 * 		CONSTANT_Integer_info,
 	 * 		CONSTANT_Long_info,
-	 * 		CONSTANT_Float_info, 
+	 * 		CONSTANT_Float_info,
 	 * 		CONSTANT_Double_info,
-	 * 		CONSTANT_MethodHandle_info, or 
+	 * 		CONSTANT_MethodHandle_info, or
 	 * 		CONSTANT_MethodType_info structure.
 	 * @param i entry
 	 * @return index

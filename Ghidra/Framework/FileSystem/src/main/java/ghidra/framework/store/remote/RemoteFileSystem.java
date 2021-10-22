@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,14 +28,14 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>RemoteFileSystem</code> provides access to versioned FolderItem's which 
+ * <code>RemoteFileSystem</code> provides access to versioned FolderItem's which
  * exist within a Repository-based directory structure.  FolderItem
  * caching is provided by the remote implementation which is intended
  * to be shared across multiple clients.
  * <p>
  * FolderItem's must be checked-out to create new versions.
  * <p>
- * FileSystemListener's will be notified of all changes made 
+ * FileSystemListener's will be notified of all changes made
  * within the Repository.
  */
 public class RemoteFileSystem implements FileSystem, RemoteAdapterListener {

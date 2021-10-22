@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ import ghidra.util.task.TaskMonitor;
  *      Number of Pages  Number of pages        2               4               int
  *                         currently used
  *                         in the file
- *      Serialized       Sequence of page		 
+ *      Serialized       Sequence of page
  *        info about       numbers
  *        directory
  *        stream:
@@ -269,7 +269,7 @@ public abstract class AbstractMsf implements AutoCloseable {
 
 	/**
 	 * Returns the number of pages found in sequence that compose the {@link AbstractMsfFreePageMap}
-	 * (for this {@link AbstractMsf}) when on disk. 
+	 * (for this {@link AbstractMsf}) when on disk.
 	 * @return The number of sequential pages in the {@link AbstractMsfFreePageMap}.
 	 */
 	protected int getNumSequentialFreePageMapPages() {
@@ -285,7 +285,7 @@ public abstract class AbstractMsf implements AutoCloseable {
 	}
 
 	/**
-	 * Returns the stream number containing the directory of this MSF file. 
+	 * Returns the stream number containing the directory of this MSF file.
 	 * @return The directory stream number.
 	 */
 	protected int getDirectoryStreamNumber() {

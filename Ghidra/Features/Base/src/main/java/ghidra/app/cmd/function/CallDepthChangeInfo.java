@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,23 +34,23 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * CallDepthChangeInfo.java
- * 
+ *
  * Date: Feb 6, 2003
- * 
+ *
  */
 /**
- * 
+ *
  * Given a function in a program or the start of a function, record information
  * about the change to a stack pointer from a subroutine call. The routine
  * getCallChange() can be called with the address of a call instruction. If the
  * stack could be tracked, the call instruction will return the change in the
  * stack pointer that would result from a call to the function.
- * 
+ *
  * The computation is based on a set of equations that are generated and solved.
  * Each equation represents the stack change for a given basic flow block or
  * call instruction within the function.
- * 
- * 
+ *
+ *
  */
 
 public class CallDepthChangeInfo {
@@ -101,7 +101,7 @@ public class CallDepthChangeInfo {
 	 *            function to examine
 	 * @param monitor
 	 *            monitor used to cancel the operation
-	 * 
+	 *
 	 * @throws CancelledException
 	 *             if the operation was canceled
 	 */
@@ -115,7 +115,7 @@ public class CallDepthChangeInfo {
 	 * @param restrictSet set of addresses to restrict flow flowing to.
 	 * @param frameReg register that is to have it's depth(value) change tracked
 	 * @param monitor monitor used to cancel the operation
-	 * 
+	 *
 	 * @throws CancelledException
 	 *             if the operation was canceled
 	 */
@@ -130,7 +130,7 @@ public class CallDepthChangeInfo {
 
 	/**
 	 * Construct a new CallDepthChangeInfo object.
-	 * 
+	 *
 	 * @param program  program containing the function to examime
 	 * @param addr     address within the function to examine
 	 * @param restrictSet set of addresses to restrict flow flowing to.
@@ -148,7 +148,7 @@ public class CallDepthChangeInfo {
 
 	/**
 	 * initialize codeblocks and call locations.
-	 * 
+	 *
 	 * @param addressSetView
 	 * @param monitor
 	 * @throws CancelledException
@@ -220,10 +220,10 @@ public class CallDepthChangeInfo {
 	 * Inspect the instruction and return how it affects the stack depth. If the
 	 * depth cannot be determined, then return that the stack depth change is
 	 * unknown.
-	 * 
+	 *
 	 * @param instr
 	 *            instruction to analyze
-	 * 
+	 *
 	 * @return int change to stack depth if it can be determined,
 	 *         Function.UNKNOWN_STACK_DEPTH_CHANGE otherwise.
 	 */
@@ -235,10 +235,10 @@ public class CallDepthChangeInfo {
 	 * Inspect the instruction and return how it affects the stack depth. If the
 	 * depth cannot be determined, then return that the stack depth change is
 	 * unknown.
-	 * 
+	 *
 	 * @param instr
 	 *            instruction to analyze
-	 * 
+	 *
 	 * @return int change to stack depth if it can be determined,
 	 *         Function.UNKNOWN_STACK_DEPTH_CHANGE otherwise.
 	 */
@@ -415,7 +415,7 @@ public class CallDepthChangeInfo {
 
 	/**
 	 * Get the default/assumed stack depth change for this language
-	 * 
+	 *
 	 * @param depth stack depth to return if the default is unknown for the language
 	 * @return
 	 */
@@ -431,7 +431,7 @@ public class CallDepthChangeInfo {
 
 	/**
 	 * Gets the stack depth change value that has been set at the indicated address.
-	 * 
+	 *
 	 * @param program the program to be checked
 	 * @param address the program address
 	 * @return the stack depth change value or null if value has not been set
@@ -452,13 +452,13 @@ public class CallDepthChangeInfo {
 	}
 
 	/**
-	 * Sets a new value for the stack depth change at the indicated address. 
-	 * 
+	 * Sets a new value for the stack depth change at the indicated address.
+	 *
 	 * @param program the program where the value will be set
 	 * @param address the program address
 	 * @param stackDepthChange the new stack depth change value
-	 * 
-	 * @throws DuplicateNameException if the property name for stack depth changes conflicted 
+	 *
+	 * @throws DuplicateNameException if the property name for stack depth changes conflicted
 	 * with another property tha has the same name.
 	 */
 	public static void setStackDepthChange(Program program, Address address, int stackDepthChange)
@@ -473,11 +473,11 @@ public class CallDepthChangeInfo {
 	}
 
 	/**
-	 * Removes the value for the stack depth change at the indicated address. 
-	 * 
+	 * Removes the value for the stack depth change at the indicated address.
+	 *
 	 * @param program the program where the value will be removed
 	 * @param address the program address
-	 * 
+	 *
 	 * @return true if a stack depth change existed at the indicated at the address and it was removed.
 	 */
 	public static boolean removeStackDepthChange(Program program, Address address) {
@@ -493,7 +493,7 @@ public class CallDepthChangeInfo {
 	/**
 	 * Gets an iterator indicating all the addresses that have a stack depth change value specified
 	 * within a program's indicated address set.
-	 * 
+	 *
 	 * @param program the program to be checked
 	 * @param addressSet the set of addresses to check for a stack depth change value
 	 * @return the address iterator indicating where stack depth change values have been set
@@ -510,7 +510,7 @@ public class CallDepthChangeInfo {
 	/**
 	 * Do a better job of tracking the stack by attempting to follow the data
 	 * flow of the stack pointer as it moves in and out of other variables.
-	 * 
+	 *
 	 * @param program1 -
 	 *            program containing the function to analyze
 	 * @param func -
@@ -637,12 +637,12 @@ public class CallDepthChangeInfo {
 	/**
 	 * Follow the flows of the subroutine, accumulating information about the
 	 * stack pointer and any other register the stack pointer is assigned to.
-	 * 
+	 *
 	 * @param func
 	 *            function to analyze
 	 * @param monitor
 	 *            monitor to provide feedback and cancel
-	 * @throws CancelledException 
+	 * @throws CancelledException
 	 */
 	private void followFlows(Function func, AddressSetView restrictSet, TaskMonitor monitor)
 			throws CancelledException {
@@ -659,7 +659,7 @@ public class CallDepthChangeInfo {
 		final boolean possiblePurge = purge == -1 || purge > 3200 || purge < -3200;
 
 		// follow all flows building up context
-		// use context to fill out addresses on certain instructions 
+		// use context to fill out addresses on certain instructions
 		final ContextEvaluator eval = new ContextEvaluatorAdapter() {
 
 			@Override
@@ -887,7 +887,7 @@ public class CallDepthChangeInfo {
 	 * Create locals and parameters based on references involving purely the
 	 * stack pointer. Pushes, Pops, and arithmetic manipulation of the stack
 	 * pointer must be tracked.
-	 * 
+	 *
 	 * @param program1 -
 	 *            program containing the function to analyze
 	 * @param func -

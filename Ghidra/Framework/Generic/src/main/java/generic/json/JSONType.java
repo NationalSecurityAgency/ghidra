@@ -12,10 +12,10 @@ public enum JSONType {
 	 * 	o String
 	 * 	o Other primitive: number, boolean (true/false) or null
 	 */
-	
+
 	JSMN_PRIMITIVE,
 	JSMN_OBJECT,
 	JSMN_ARRAY,
 	JSMN_STRING
-	
+
 }

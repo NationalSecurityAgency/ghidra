@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -300,7 +300,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		List<GTreeNode> children = nsParentNode.getChildren();
 
 		//@formatter:off
-		List<String> symbolNames = 
+		List<String> symbolNames =
 			children.stream()
 					.map(node -> ((SymbolNode) node).getSymbol())
 			        .filter(symbol -> symbol.getSymbolType() == SymbolType.NAMESPACE)
@@ -345,7 +345,7 @@ public class SymbolTreePlugin3Test extends AbstractGhidraHeadedIntegrationTest {
 		List<GTreeNode> children = cnode.getChildren();
 
 		//@formatter:off
-		List<String> symbolNames = 
+		List<String> symbolNames =
 			children.stream()
 					.map(node -> ((SymbolNode) node).getSymbol())
 			        .filter(symbol -> symbol.getSymbolType() == SymbolType.CLASS)

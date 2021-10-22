@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import org.jdom.Element;
 
 
 //For specifying a storage space. Could be RAM, ROM, cpu register, data
-//segment, coprocessor, stack, nvram, etc. 
+//segment, coprocessor, stack, nvram, etc.
 //Note: cpui_mach_addr represents an offset ONLY, not an offset and length
 //cpui_mach_addr is expected to print itself and read itself. It can take
 //a size as a "suggestion" for how it should print itself
@@ -55,7 +55,7 @@ public class Address implements Comparable<Address>{
 
 	public Address( AddrSpace id, long off ) {
 		base = id;
-		offset = off;		
+		offset = off;
 	}
 
 	public Address( Address addr ) {
@@ -87,7 +87,7 @@ public class Address implements Comparable<Address>{
 	public int printRaw( PrintStream s ) {
 		return base.printRaw( s, offset );
 	}
-	
+
 	// Convert address to most basic physical address
 	// This routine is only present for backward compatibility
 	// with SLED
@@ -97,7 +97,7 @@ public class Address implements Comparable<Address>{
 	        base = phys;
 	    }
 	}
-	
+
 	@Override
     public String toString() {
 		return base.getName() + ":0x" + base.toString(offset);
@@ -153,7 +153,7 @@ public class Address implements Comparable<Address>{
 	public Address subtract( long off ) {
 		return sub( off );
 	}
-	
+
 	public Address sub( long off ) {
 		return new Address( base, (offset - off) & base.getMask() );
 	}

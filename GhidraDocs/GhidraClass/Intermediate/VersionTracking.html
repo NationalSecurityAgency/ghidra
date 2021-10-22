@@ -34,8 +34,8 @@
 
 <section>
 <header>Version Tracking (continued)</header>
-<ul> 
-  <li>Allows moving of markup from source version to destination version</li>  
+<ul>
+  <li>Allows moving of markup from source version to destination version</li>
   <li>Can rerun using current state and add new information to your current version tracking session</li>
   <li>Drag and drop markup items if necessary</li>
   <li>Has validators to help determine if programs are sufficiently analyzed to get good version tracking results</li>
@@ -89,7 +89,7 @@
   <li>Destination program is the new program that you want to pull match information into.</li>
   <li>Validators check to see if there are any potential issues with the programs that would keep you from getting good results.</li>
 </ul>
-<div role="note"> 
+<div role="note">
   <p>To open the Version Tracking tool do one of the following:</p>
   <ul>
     <li>Click on the blue footprints icon in the Ghidra Program Manager. This will bring up an empty Version Tracking tool. To get started, click on the blue footprints in the empty tool. You will be asked for a session name and to choose the two programs you want to version track.</li>
@@ -115,7 +115,7 @@
     <li>Numer of non-returning functions</li>
     <li>Number of off-cut references</li>
 </ul>
-    
+
 	<li>To get optimal results, users should fix up issues before proceeding to the next step</li>
 <li>Once finished, two Codebrowsers, one containing source program and one containing destination program, and a session manager window will open.
 </ul>
@@ -244,7 +244,7 @@ END COPY -->
     font-size: 80px;
     font-family: 'Times New Roman'
   }
-    
+
   h3 {
     margin: 100px 0 50px 100px;
   }
@@ -262,7 +262,7 @@ END COPY -->
   .big li {
     font-size: 45px;
   }
-   
+
   .big li:before {
       font-size: 200px;
   }
@@ -281,10 +281,10 @@ END COPY -->
     margin: 0px 0px;
     font-size: 30px;
   }
-   
+
   .medium li:before {
       font-size: 120px;
-  } 
+  }
 
   .small ul {
     margin: 0px 0px;
@@ -300,10 +300,10 @@ END COPY -->
     margin: 0px 0px;
     font-size: 25px;
   }
-   
+
   .small li:before {
       font-size: 80px;
-  } 
+  }
 
   .tiny ul {
     margin: 0px 0px;
@@ -319,13 +319,13 @@ END COPY -->
     margin: 0px 0px;
     font-size: 20px;
   }
-   
+
   .tiny li:before {
       font-size: 70px;
   }
 /* end custom list sizes */
 
-/* Standard list size */    
+/* Standard list size */
   ul {
     margin: 10px 50px;
     font-size: 35px;
@@ -333,7 +333,7 @@ END COPY -->
     margin-left: 0;
     padding-left: 1em;
     text-indent: -1em;
-  } 
+  }
 
   ol {
     margin: 10px 50px;
@@ -342,7 +342,7 @@ END COPY -->
     margin-left: 0;
     padding-left: 1em;
     text-indent: -1em;
-  } 
+  }
 
   ol.decimal {
     list-style-position: inside;
@@ -353,7 +353,7 @@ END COPY -->
     margin: 10px 10px;
     font-size: 35px;
   }
-   
+
   ul > li:before {
     content:"·";
     font-size:160px;
@@ -364,7 +364,7 @@ END COPY -->
 
 
 /* end custom list sizes */
-    
+
   p {
     margin: 75px;
     font-size: 100px;
@@ -881,7 +881,7 @@ END COPY -->
       requestFullscreen.apply(html);
     }
   }
-  
+
   Dz.setProgress = function(aIdx, aStep) {
     var slide = $("section:nth-of-type("+ aIdx +")");
     if (!slide)
@@ -891,14 +891,14 @@ END COPY -->
         stepSize = slideSize / steps;
     this.progressBar.style.width = ((aIdx - 1) * slideSize + aStep * stepSize) + '%';
   }
-  
+
   Dz.postMsg = function(aWin, aMsg) { // [arg0, [arg1...]]
     aMsg = [aMsg];
     for (var i = 2; i < arguments.length; i++)
       aMsg.push(encodeURIComponent(arguments[i]));
     aWin.postMessage(aMsg.join(" "), "*");
   }
-  
+
   function init() {
     Dz.init();
     window.onkeydown = Dz.onkeydown.bind(Dz);
@@ -916,7 +916,7 @@ END COPY -->
     Function.prototype.bind = function (oThis) {
 
       // closest thing possible to the ECMAScript 5 internal IsCallable
-      // function 
+      // function
       if (typeof this !== "function")
       throw new TypeError(
         "Function.prototype.bind - what is trying to be fBound is not callable"

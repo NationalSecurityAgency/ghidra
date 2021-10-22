@@ -68,7 +68,7 @@
       </unaffected>
     </prototype>
   </default_proto>
-  
+
     <prototype name="__stackcall" extrapop="unknown" stackshift="4">
 	  <input pointermax="16">
 	    <pentry minsize="1" maxsize="500" align="4">
@@ -86,5 +86,5 @@
 	    <register name="lr"/>
 	  </unaffected>
 	</prototype>
-    
+
 </compiler_spec>

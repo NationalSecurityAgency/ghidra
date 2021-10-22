@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public class GroupPath implements Serializable {
 		groupNames[0] = groupName;
 
     }
-    
+
     /**
      * Construct a new GroupPath with the given names.
      * @param groupNames group names. The first name is the oldest ancestor
@@ -47,7 +47,7 @@ public class GroupPath implements Serializable {
 		System.arraycopy(groupNames, 0, this.groupNames, 0,
 			groupNames.length);
     }
-    
+
 	/**
 	 * Update this group path with the new group name wherever the old group name is found.
 	 * @param oldname old name
@@ -61,7 +61,7 @@ public class GroupPath implements Serializable {
         }
 
     }
-    
+
     /**
      * @see java.lang.Object#equals(Object)
      */
@@ -91,7 +91,7 @@ public class GroupPath implements Serializable {
 		}
 		return true;
     }
-    
+
 	/**
 	 * Get the last name in the path.
 	 * @return String
@@ -174,7 +174,7 @@ public class GroupPath implements Serializable {
 	/**
 	 * Create a new GroupPath object by adding the given
 	 * child name to this group path.
-     * 
+     *
      * @param child name of child to add to path
 	 */
     public GroupPath pathByAddingChild(String child) {
@@ -198,7 +198,7 @@ public class GroupPath implements Serializable {
 		}
         return sb.toString();
     }
-    
+
     /**
      * @see java.lang.Object#hashCode()
      */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,7 +112,7 @@ void OpFollow::restoreXml(const Element *el)
     else
       throw LowlevelError("Bad XML tag in segment pattern: "+el->getAttributeValue(i));
   }
-  
+
 }
 
 /// \param g is the owning Architecture for this instance of the segment operation
@@ -382,10 +382,10 @@ void UserOpManage::registerOp(UserPcodeOp *op)
   SegmentOp *s_op = dynamic_cast<SegmentOp *>(op);
   if (s_op != (SegmentOp *)0) {
     int4 index = s_op->getSpace()->getIndex();
-  
+
     while(segmentop.size() <= index)
       segmentop.push_back((SegmentOp *)0);
-    
+
     if (segmentop[index] != (SegmentOp *)0)
       throw LowlevelError("Multiple segmentops defined for same space");
     segmentop[index] = s_op;

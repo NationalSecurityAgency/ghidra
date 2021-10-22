@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package docking.widgets.tree;
 import java.util.List;
 
 /**
- * Base class for GTreeNodes that populate their children on demand (typically when expanded). 
+ * Base class for GTreeNodes that populate their children on demand (typically when expanded).
  * Also, children of this node can be unloaded by calling {@link #unloadChildren()}.  This
  * can be used by nodes in large trees to save memory by unloading children that are no longer
  * in the current tree view (collapsed).  Of course, that decision would need to be balanced

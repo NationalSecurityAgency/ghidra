@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.util.*;
 import ghidra.util.filechooser.ExtensionFileFilter;
 
 /**
- * Dialog to prompt the user for the archive file to restore 
+ * Dialog to prompt the user for the archive file to restore
  * and where to restore it to.
  */
 public class RestoreDialog extends DialogComponentProvider {
@@ -366,7 +366,7 @@ public class RestoreDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Creates a directory chooser for selecting the directory where the 
+	 * Creates a directory chooser for selecting the directory where the
 	 * archive will be restored..
 	 * @return the file chooser.
 	 */
@@ -382,7 +382,7 @@ public class RestoreDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Brings up a file chooser for the user to specify a directory and 
+	 * Brings up a file chooser for the user to specify a directory and
 	 * filename that are used for the Project location and name
 	 * @param approveButtonText The label for the "Open" button on the file chooser
 	 * @param approveToolTip The tool tip for the "Open" button on the file chooser

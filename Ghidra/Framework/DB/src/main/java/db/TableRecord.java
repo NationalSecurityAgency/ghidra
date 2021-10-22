@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.io.IOException;
 import db.Field.UnsupportedFieldException;
 
 /**
- * <code>TableRecord</code> manages information about a table.  Each TableRecord 
+ * <code>TableRecord</code> manages information about a table.  Each TableRecord
  * corresponds to a stored record within the master table.
  */
 class TableRecord implements Comparable<TableRecord> {
@@ -36,11 +36,11 @@ class TableRecord implements Comparable<TableRecord> {
 	private static final int RECORD_COUNT_COLUMN = 8;
 
 	//@formatter:off
-	private static Field[] fields = { 
-		StringField.INSTANCE, 	// name of table 
+	private static Field[] fields = {
+		StringField.INSTANCE, 	// name of table
 		IntField.INSTANCE,    	// Schema version
 		IntField.INSTANCE,    	// Root buffer ID (first buffer)
-		ByteField.INSTANCE,		// Key field type 
+		ByteField.INSTANCE,		// Key field type
 		BinaryField.INSTANCE, 	// Schema field types
 		StringField.INSTANCE,	// Schema key/field names
 		IntField.INSTANCE,		// indexing column  (-1 = primary)
@@ -162,7 +162,7 @@ class TableRecord implements Comparable<TableRecord> {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param dbh database handle
 	 * @param record record which defines table schema
 	 * @return table schema
@@ -179,7 +179,7 @@ class TableRecord implements Comparable<TableRecord> {
 	}
 
 	/**
-	 * Determine if legacy schema should be forced to use {@link VarKeyNode} 
+	 * Determine if legacy schema should be forced to use {@link VarKeyNode}
 	 * table storage for compatibility. Root buffer node for applicable
 	 * primitive fixed-length key types will be checked.
 	 * @param dbh database handle
@@ -264,7 +264,7 @@ class TableRecord implements Comparable<TableRecord> {
 	/**
 	 * Get the column number which is indexed by this table.
 	 * A value of -1 indicates that this is the primary table indexed
-	 * by a long key value.  Positive values are used to specify that this 
+	 * by a long key value.  Positive values are used to specify that this
 	 * is a secondary index table, where the Index key corresponds to the
 	 * specified column within the named table.
 	 * @return int
@@ -282,7 +282,7 @@ class TableRecord implements Comparable<TableRecord> {
 	}
 
 	/**
-	 * Compares the key associated with this table record with the 
+	 * Compares the key associated with this table record with the
 	 * key of another table record (obj).
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */

@@ -7,7 +7,7 @@
 
 # 0111 00ss ssst tttt dddd d000 0010 0101
 :dclo RD, RSsrc                 is $(AMODE) & ((REL6=0 & prime=0x1C & sa=0x0 & fct=0x25) | (REL6=1 & prime=0x00 & sa=0x1 & fct=0x13 & op=0)) & RD & RSsrc {
-    RD = countLeadingOnes( RSsrc );    
+    RD = countLeadingOnes( RSsrc );
 }
 # 0111 00ss ssst tttt dddd d000 0010 0100
 :dclz RD, RSsrc                 is $(AMODE) & ((REL6=0 & prime=0x1C & sa=0x0 & fct=0x24) | (REL6=1 & prime=0x00 & sa=0x1 & fct=0x12 & op=0)) & RD & RSsrc {
@@ -68,10 +68,10 @@
 }
 
 # 0100 0000 001t tttt dddd d000 0000 0eee
-:dmfc0 RT, RD0                  is $(AMODE) & prime=16 & copop=1 & RT & RD0 & zero6=0 {    
+:dmfc0 RT, RD0                  is $(AMODE) & prime=16 & copop=1 & RT & RD0 & zero6=0 {
     RT = RD0;
 }
-:dmfc1 RT, fs                   is $(AMODE) & prime=17 & copop=1 & RT & fs & bigfunct=0 {    
+:dmfc1 RT, fs                   is $(AMODE) & prime=17 & copop=1 & RT & fs & bigfunct=0 {
     RT = fs;
 }
 :dmfc2 RT, immed                is $(AMODE) & prime=18 & copop=1 & RT & immed {
@@ -79,7 +79,7 @@
 }
 
 # 0100 0000 101t tttt dddd d000 0000 0eee
-:dmtc0 RTsrc, RD0               is $(AMODE) & prime=16 & copop=5 & RTsrc & RD0 & zero6=0 {    
+:dmtc0 RTsrc, RD0               is $(AMODE) & prime=16 & copop=5 & RTsrc & RD0 & zero6=0 {
     RD0 = RTsrc;
 }
 # 0100 0100 101t tttt ssss s000 0000 0000
@@ -97,7 +97,7 @@
     tmp2:8 = tmp << (64 - sa);
     RD = tmp1 + tmp2;
 }
-# 0000 0000 001t tttt dddd daaa aa11 1110    
+# 0000 0000 001t tttt dddd daaa aa11 1110
 :drotr32 RD, RTsrc, sa          is $(AMODE) & prime=0x0 & zero1=0x0 & bit21=0x1 & fct=0x3E & RD & RTsrc & sa {
     shift:1 = sa + 32;
     tmp:8 = RTsrc;
@@ -115,17 +115,17 @@
 }
 
 # 0111 1100 000t tttt dddd d000 1010 0100
-:dsbh RD, RTsrc                 is $(AMODE) & prime=0x1F & rs=0x0 & fct2=0x02 & fct=0x24 & RD & RTsrc { 
-    tmp1:8 = RTsrc & 0xff; 
+:dsbh RD, RTsrc                 is $(AMODE) & prime=0x1F & rs=0x0 & fct2=0x02 & fct=0x24 & RD & RTsrc {
+    tmp1:8 = RTsrc & 0xff;
     tmp2:8 = (RTsrc >> 8) & 0xff;
-    tmp3:8 = (RTsrc >> 16) & 0xff; 
+    tmp3:8 = (RTsrc >> 16) & 0xff;
     tmp4:8 = (RTsrc >> 24) & 0xff;
     tmp5:8 = (RTsrc >> 32) & 0xff;
     tmp6:8 = (RTsrc >> 40) & 0xff;
     tmp7:8 = (RTsrc >> 48) & 0xff;
     tmp8:8 = (RTsrc >> 56) & 0xff;
-    RD = (tmp7 << 56) | (tmp8 << 48) | (tmp5 << 40) | (tmp6 << 32) 
-        | (tmp3 << 24) | (tmp4 << 16) | (tmp1 << 8) | (tmp2);       
+    RD = (tmp7 << 56) | (tmp8 << 48) | (tmp5 << 40) | (tmp6 << 32)
+        | (tmp3 << 24) | (tmp4 << 16) | (tmp1 << 8) | (tmp2);
 }
 # 0111 1100 000t tttt dddd d001 0110 0100
 :dshd RD, RTsrc                 is$(AMODE) &  prime=0x1F & rs=0x0 & fct2=0x05 & fct=0x24 & RD & RTsrc {
@@ -183,80 +183,80 @@
 }
 
 # 1101 11bb bbbt tttt iiii iiii iiii iiii
-:ld RT, OFF_BASE                is $(AMODE) & prime=55 & OFF_BASE & RT {        
-    RT = *[ram]:8 OFF_BASE;    
+:ld RT, OFF_BASE                is $(AMODE) & prime=55 & OFF_BASE & RT {
+    RT = *[ram]:8 OFF_BASE;
 }
 
 @if ENDIAN == "big"
 # 0110 10bb bbbt tttt iiii iiii iiii iiii
-:ldl RT, OFF_BASE               is $(AMODE) & prime=26 & OFF_BASE & RT {        
-    shft:$(ADDRSIZE) = OFF_BASE & 0x7; 
-    addr:$(ADDRSIZE) = OFF_BASE - shft; 
+:ldl RT, OFF_BASE               is $(AMODE) & prime=26 & OFF_BASE & RT {
+    shft:$(ADDRSIZE) = OFF_BASE & 0x7;
+    addr:$(ADDRSIZE) = OFF_BASE - shft;
     valOrig:8 = RT & (0xffffffffffffffff >> ((8-shft) * 8));
-    valLoad:8 = *(addr) << (shft * 8);     
+    valLoad:8 = *(addr) << (shft * 8);
     RT = valLoad | valOrig;
 }
 # 0110 11bb bbbt tttt iiii iiii iiii iiii
 :ldr RT, OFF_BASE               is $(AMODE) & prime=27 & OFF_BASE & RT {
     # no-op
-    # see ldl instruction  
-    
-    shft:$(ADDRSIZE) = OFF_BASE & 0x7; 
-    addr:$(ADDRSIZE) = OFF_BASE - shft; 
+    # see ldl instruction
+
+    shft:$(ADDRSIZE) = OFF_BASE & 0x7;
+    addr:$(ADDRSIZE) = OFF_BASE - shft;
     valOrig:8 = RT & (0xffffffffffffffff << ((shft+1) * 8));
     valLoad:8 = *(addr) >> ((7-shft) * 8);
     RT = valOrig | valLoad;
 }
 @else # ENDIAN == "little
 # 0110 10bb bbbt tttt iiii iiii iiii iiii
-:ldl RT, OFF_BASE               is $(AMODE) & prime=26 & OFF_BASE & RT {        
-    shft:$(ADDRSIZE) = OFF_BASE & 0x7; 
-    addr:$(ADDRSIZE) = OFF_BASE - shft; 
+:ldl RT, OFF_BASE               is $(AMODE) & prime=26 & OFF_BASE & RT {
+    shft:$(ADDRSIZE) = OFF_BASE & 0x7;
+    addr:$(ADDRSIZE) = OFF_BASE - shft;
     valOrig:8 = RT & (0xffffffffffffffff >> ((shft+1) * 8));
-    valLoad:8 = *(addr) << ((7-shft) * 8);     
+    valLoad:8 = *(addr) << ((7-shft) * 8);
     RT = valLoad | valOrig;
 }
 # 0110 11bb bbbt tttt iiii iiii iiii iiii
 :ldr RT, OFF_BASE               is $(AMODE) & prime=27 & OFF_BASE & RT {
     # no-op
-    # see ldl instruction  
-    
-    shft:$(ADDRSIZE) = OFF_BASE & 0x7; 
-    addr:$(ADDRSIZE) = OFF_BASE - shft; 
+    # see ldl instruction
+
+    shft:$(ADDRSIZE) = OFF_BASE & 0x7;
+    addr:$(ADDRSIZE) = OFF_BASE - shft;
     valOrig:8 = RT & (0xffffffffffffffff << ((8-shft) * 8));
     valLoad:8 = *(addr) >> (shft * 8);
     RT = valOrig | valLoad;
 }
 @endif # ENDIAN
 
-# ldl and ldr almost always come in pairs. 
-# When the analyzer does finds a matching ldl/ldr pair, the pcode is simplified so that 
+# ldl and ldr almost always come in pairs.
+# When the analyzer does finds a matching ldl/ldr pair, the pcode is simplified so that
 # ldl does all the loading while ldr is a no-op
 @if ENDIAN == "big"
-:ldl RT, OFF_BASE               is $(AMODE) & prime=26 & OFF_BASE & RT & PAIR_INSTRUCTION_FLAG=1 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {        
+:ldl RT, OFF_BASE               is $(AMODE) & prime=26 & OFF_BASE & RT & PAIR_INSTRUCTION_FLAG=1 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {
     RT = *[ram]:8 OFF_BASE;
-}    
+}
 :ldr RT, OFF_BASE               is $(AMODE) & prime=27 & OFF_BASE & RT & PAIR_INSTRUCTION_FLAG=1 [ PAIR_INSTRUCTION_FLAG = 0; ] {
 }
 @else
-:ldl RT, OFF_BASE               is $(AMODE) & prime=26 & OFF_BASE & RT & PAIR_INSTRUCTION_FLAG=1 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {        
-}    
+:ldl RT, OFF_BASE               is $(AMODE) & prime=26 & OFF_BASE & RT & PAIR_INSTRUCTION_FLAG=1 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {
+}
 :ldr RT, OFF_BASE               is $(AMODE) & prime=27 & OFF_BASE & RT & PAIR_INSTRUCTION_FLAG=1 [ PAIR_INSTRUCTION_FLAG = 0; ] {
     RT = *[ram]:8 OFF_BASE;
 }
 @endif
 
 # 1101 00bb bbbt tttt iiii iiii iiii iiii
-:lld RT, OFF_BASE               is $(AMODE) & prime=52 & OFF_BASE & RT {        
+:lld RT, OFF_BASE               is $(AMODE) & prime=52 & OFF_BASE & RT {
     RT = *[ram]:8 OFF_BASE;
 }
 # 1001 11bb bbbt tttt iiii iiii iiii iiii
-:lwu RT, OFF_BASE               is $(AMODE) & prime=39 & OFF_BASE & RT { 
+:lwu RT, OFF_BASE               is $(AMODE) & prime=39 & OFF_BASE & RT {
     RT = zext( *[ram]:4 OFF_BASE );
 }
 
 # 1111 00bb bbbt tttt iiii iiii iiii iiii
-:scd RTsrc, OFF_BASE            is $(AMODE) & prime=60 & OFF_BASE & RT & RTsrc {        
+:scd RTsrc, OFF_BASE            is $(AMODE) & prime=60 & OFF_BASE & RT & RTsrc {
     *[ram]:8 OFF_BASE = RTsrc;
     RT = 1;
 }
@@ -267,50 +267,50 @@
 
 @if ENDIAN == "big"
 # 1011 00bb bbbt tttt iiii iiii iiii iiii
-:sdl RTsrc, OFF_BASE            is $(AMODE) & prime=44 & OFF_BASE & RTsrc {        
-    shft:$(ADDRSIZE) = OFF_BASE & 0x7; 
-    addr:$(ADDRSIZE) = OFF_BASE - shft; 
+:sdl RTsrc, OFF_BASE            is $(AMODE) & prime=44 & OFF_BASE & RTsrc {
+    shft:$(ADDRSIZE) = OFF_BASE & 0x7;
+    addr:$(ADDRSIZE) = OFF_BASE - shft;
     valOrig:8 = *(addr) & (0xffffffffffffffff << ((8-shft) * 8));
     valStore:8 = RTsrc >> (shft * 8);
-    *(addr) = valOrig | valStore;    
+    *(addr) = valOrig | valStore;
 }
 # 1011 01bb bbbt tttt iiii iiii iiii iiii
 :sdr RTsrc, OFF_BASE            is $(AMODE) & prime=45 & OFF_BASE & RTsrc {
-    shft:$(ADDRSIZE) = OFF_BASE & 0x7;      
-    addr:$(ADDRSIZE) = OFF_BASE - shft; 
+    shft:$(ADDRSIZE) = OFF_BASE & 0x7;
+    addr:$(ADDRSIZE) = OFF_BASE - shft;
     valOrig:8 = *(addr) & (0xffffffffffffffff >> ((shft+1) * 8));
     valStore:8 = RTsrc << ((7-shft)*8);
     *(addr) = valStore | valOrig;
 }
 @else # ENDIAN == "little
 # 1011 00bb bbbt tttt iiii iiii iiii iiii
-:sdl RTsrc, OFF_BASE            is $(AMODE) & prime=44 & OFF_BASE & RTsrc {        
-    shft:$(ADDRSIZE) = OFF_BASE & 0x7; 
-    addr:$(ADDRSIZE) = OFF_BASE - shft; 
+:sdl RTsrc, OFF_BASE            is $(AMODE) & prime=44 & OFF_BASE & RTsrc {
+    shft:$(ADDRSIZE) = OFF_BASE & 0x7;
+    addr:$(ADDRSIZE) = OFF_BASE - shft;
     valOrig:8 = *(addr) & (0xffffffffffffffff << ((shft+1) * 8));
     valStore:8 = RTsrc >> ((7-shft) * 8);
-    *(addr) = valOrig | valStore;    
+    *(addr) = valOrig | valStore;
 }
 # 1011 01bb bbbt tttt iiii iiii iiii iiii
 :sdr RTsrc, OFF_BASE            is $(AMODE) & prime=45 & OFF_BASE & RTsrc {
-    shft:$(ADDRSIZE) = OFF_BASE & 0x7;      
-    addr:$(ADDRSIZE) = OFF_BASE - shft; 
+    shft:$(ADDRSIZE) = OFF_BASE & 0x7;
+    addr:$(ADDRSIZE) = OFF_BASE - shft;
     valOrig:8 = *(addr) & (0xffffffffffffffff >> ((8-shft) * 8));
     valStore:8 = RTsrc << (shft*8);
     *(addr) = valStore | valOrig;
 }
 @endif # ENDIAN
 
-# When the analyzer finds a matching sdl/sdr pair, the pcode is simplified so that 
+# When the analyzer finds a matching sdl/sdr pair, the pcode is simplified so that
 # sdl does all the storing while sdr is a no-op
 @if ENDIAN == "big"
-:sdl RTsrc, OFF_BASE            is $(AMODE) & prime=44 & OFF_BASE & RTsrc & PAIR_INSTRUCTION_FLAG=1 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {        
+:sdl RTsrc, OFF_BASE            is $(AMODE) & prime=44 & OFF_BASE & RTsrc & PAIR_INSTRUCTION_FLAG=1 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {
     *[ram]:8 OFF_BASE = RTsrc;
 }
 :sdr RTsrc, OFF_BASE            is $(AMODE) & prime=45 & OFF_BASE & RTsrc & PAIR_INSTRUCTION_FLAG=1 [ PAIR_INSTRUCTION_FLAG = 0; ] {
 }
 @else
-:sdl RTsrc, OFF_BASE            is $(AMODE) & prime=44 & OFF_BASE & RTsrc & PAIR_INSTRUCTION_FLAG=1 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {        
+:sdl RTsrc, OFF_BASE            is $(AMODE) & prime=44 & OFF_BASE & RTsrc & PAIR_INSTRUCTION_FLAG=1 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {
 }
 :sdr RTsrc, OFF_BASE            is $(AMODE) & prime=45 & OFF_BASE & RTsrc & PAIR_INSTRUCTION_FLAG=1 [ PAIR_INSTRUCTION_FLAG = 0; ] {
     *[ram]:8 OFF_BASE = RTsrc;
@@ -328,21 +328,21 @@
 }
 # 0000 00ss ssst tttt 0000 0000 0001 1111
 :ddivu RSsrc, RTsrc             is $(AMODE) & REL6=0 & prime=0 & fct=31 & RSsrc & RTsrc & rd=0 & sa=0 {
-    lo = RSsrc / RTsrc; 
-    hi = RSsrc % RTsrc; 
+    lo = RSsrc / RTsrc;
+    hi = RSsrc % RTsrc;
 }
 
 # 0000 00ss ssst tttt 0000 0000 0001 1100
 :dmult RSsrc, RTsrc             is $(AMODE) & REL6=0 & prime=0 & fct=28 & RSsrc & RTsrc & rd=0 & sa=0 {
     prod:16 = sext( RSsrc ) * sext( RTsrc );
     lo = prod(0);
-    hi = prod(8);     
+    hi = prod(8);
 }
 # 0000 00ss ssst tttt 0000 0000 0001 1101
 :dmultu RSsrc, RTsrc            is $(AMODE) & REL6=0 & prime=0 & fct=29 & RSsrc & RTsrc & rd=0 & sa=0 {
-    prod:16 = zext( RSsrc ) * zext( RTsrc ); 
-    lo = prod(0); 
-    hi = prod(8); 
+    prod:16 = zext( RSsrc ) * zext( RTsrc );
+    lo = prod(0);
+    hi = prod(8);
 }
 
 

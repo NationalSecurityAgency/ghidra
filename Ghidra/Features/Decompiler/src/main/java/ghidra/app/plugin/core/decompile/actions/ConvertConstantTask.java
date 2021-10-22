@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import utility.function.Callback;
  * Create an equate in the table for the specific Address and hash value.
  * The equate is not assumed to be attached to a particular instruction operand and
  * uses the dynamic hash value to identify the particular constant (within p-code) to label.
- * 
+ *
  * If altAddress is non-null and the other alt* fields are filled in, the task attempts
  * to set the equation on the altAddress first to get the representation of the p-code
  * constant at convertAddress to change.  After the decompilation finishes, the representation
@@ -51,7 +51,7 @@ public class ConvertConstantTask implements Callback {
 	private Address altAddress = null;	// Alternate location of constant
 	private int altIndex;				// Index of alternate scalar
 	private String altName = null;		// Alternate equate name
-	private long altValue;				// Alternate value 
+	private long altValue;				// Alternate value
 
 	public ConvertConstantTask(Varnode vn, boolean isSigned) {
 		convertVn = vn;

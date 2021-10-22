@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ public class InstructionError {
 	public enum InstructionErrorType {
 
 		/**
-		 * Duplicate instruction detected 
+		 * Duplicate instruction detected
 		 * while instructions were being added to program.
 		 * This should not be marked but should prevent additional
 		 * instructions from being added unnecessarily.
@@ -42,7 +42,7 @@ public class InstructionError {
 		DUPLICATE(true),
 
 		/**
-		 * Conflict with existing instruction detected 
+		 * Conflict with existing instruction detected
 		 * while instructions were being added to program.
 		 * Conflict address corresponds to existing code unit.
 		 * The first instruction within the block whose range
@@ -52,7 +52,7 @@ public class InstructionError {
 		INSTRUCTION_CONFLICT(true),
 
 		/**
-		 * Conflict with existing data detected 
+		 * Conflict with existing data detected
 		 * while instructions were being added to program.
 		 * Conflict address corresponds to existing code unit.
 		 * The first instruction within the block whose range
@@ -62,7 +62,7 @@ public class InstructionError {
 		DATA_CONFLICT(true),
 
 		/**
-		 * Offcut conflict with existing instruction detected 
+		 * Offcut conflict with existing instruction detected
 		 * while instructions were being added to program.
 		 * Conflict address corresponds to existing code unit.
 		 * The first instruction within the block whose range
@@ -73,8 +73,8 @@ public class InstructionError {
 
 		/**
 		 * Instruction parsing failed at the conflict address.
-		 * This conflict should only have a conflict address which 
-		 * immediately follows the last instruction within the 
+		 * This conflict should only have a conflict address which
+		 * immediately follows the last instruction within the
 		 * block or matches the block-start if the block is empty.
 		 */
 		PARSE(false),
@@ -82,16 +82,16 @@ public class InstructionError {
 		/**
 		 * Instruction parsing failed at the conflict address due
 		 * to a memory error.
-		 * This conflict should only have a conflict address which 
-		 * immediately follows the last instruction within the 
+		 * This conflict should only have a conflict address which
+		 * immediately follows the last instruction within the
 		 * block or matches the block-start if the block is empty.
 		 */
 		MEMORY(false),
 
 		/**
 		 * Instruction contains an unaligned flow which is indicative
-		 * of a language problem.  The conflict address corresponds to the 
-		 * instruction containing the flow.  While the instruction at the 
+		 * of a language problem.  The conflict address corresponds to the
+		 * instruction containing the flow.  While the instruction at the
 		 * conflict address may be added it should be the last.
 		 */
 		FLOW_ALIGNMENT(false);
@@ -177,7 +177,7 @@ public class InstructionError {
 
 	/**
 	 * @return address of another code unit which conflicts
-	 * with intended instruction (required for CODE_UNIT 
+	 * with intended instruction (required for CODE_UNIT
 	 * and DUPLCIATE errors, null for others)
 	 */
 	public Address getConflictAddress() {

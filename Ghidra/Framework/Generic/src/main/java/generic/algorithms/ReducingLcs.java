@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,19 +22,19 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Calculates the longest common subsequence (LCS) between two sequences of Matchable 
+ * Calculates the longest common subsequence (LCS) between two sequences of Matchable
  * objects, <code>x</code> and <code>y</code>.
- * 
- * <p>This is an optimizing version of the {@link Lcs} that will pre-calculate all similar 
- * items from the beginning and end of the two given sequences.  Doing this will reduce 
- * the size of the matrix created by the parent class, greatly so in the case that the 
- * two inputs are mostly the same in the beginning and end.  (Imagine an edit of a source 
- * code file, where the typical change is somewhere in the middle of the file.  In this example, 
- * the optimization performed here can greatly decrease the amount of work to be performed when 
+ *
+ * <p>This is an optimizing version of the {@link Lcs} that will pre-calculate all similar
+ * items from the beginning and end of the two given sequences.  Doing this will reduce
+ * the size of the matrix created by the parent class, greatly so in the case that the
+ * two inputs are mostly the same in the beginning and end.  (Imagine an edit of a source
+ * code file, where the typical change is somewhere in the middle of the file.  In this example,
+ * the optimization performed here can greatly decrease the amount of work to be performed when
  * calculating the LCS.)
- * 
- * <p>Note: the parent LCS algorithm is bound by {@link #getSizeLimit()}.  However, this class 
- * allows clients to work around this restriction when the data has a similar beginning and ending, 
+ *
+ * <p>Note: the parent LCS algorithm is bound by {@link #getSizeLimit()}.  However, this class
+ * allows clients to work around this restriction when the data has a similar beginning and ending,
  * as the similar parts will not be counted against the size limit.
  *
  * @param <I> The input sequence type
@@ -45,15 +45,15 @@ public abstract class ReducingLcs<I, T> extends Lcs<T> {
 	private I xSource; // full input x
 	private I ySource; // full input y
 
-	private I x; // the reduced input x 
+	private I x; // the reduced input x
 	private I y; // the reduced input y
 
-	private int startn; // number of beginning same entries 
+	private int startn; // number of beginning same entries
 	private int endn;   // number of trailing same entries
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param ix the input sequence <code>x</code>
 	 * @param iy the input sequence <code>y</code>
 	 */
@@ -72,15 +72,15 @@ public abstract class ReducingLcs<I, T> extends Lcs<T> {
 	private int getEnd(I i) {
 		int end = lengthOf(i) - endn;
 		if (end <= startn) {
-			// boundary condition when the change is only a delete or insert 
+			// boundary condition when the change is only a delete or insert
 			end = startn;
 		}
 		return end;
 	}
 
 	/**
-	 * Create a subsequence from the given input sequence.  
-	 *  
+	 * Create a subsequence from the given input sequence.
+	 *
 	 * @param i the input sequence; 0-based (x or y)
 	 * @param start the start index; 0-based (inclusive)
 	 * @param end the end index (exclusive)
@@ -90,7 +90,7 @@ public abstract class ReducingLcs<I, T> extends Lcs<T> {
 
 	/**
 	 * Return the length of the given sequence
-	 * 
+	 *
 	 * @param i the input sequence (x or y)
 	 * @return the length
 	 */
@@ -98,7 +98,7 @@ public abstract class ReducingLcs<I, T> extends Lcs<T> {
 
 	/**
 	 * Return the value at the given 0-based offset
-	 *  
+	 *
 	 * @param i the input sequence (x or y)
 	 * @param offset the offset
 	 * @return the value

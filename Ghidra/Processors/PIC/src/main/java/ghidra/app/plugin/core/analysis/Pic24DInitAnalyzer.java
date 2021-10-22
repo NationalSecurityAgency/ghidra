@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class Pic24DInitAnalyzer extends AbstractAnalyzer {
-	
+
 	private static final int DST_ORDINAL = 0;
 	private static final int LEN_ORDINAL = 1;
 	private static final int FORMAT_ORDINAL = 2;
@@ -43,7 +43,7 @@ public class Pic24DInitAnalyzer extends AbstractAnalyzer {
 		setPriority(AnalysisPriority.BLOCK_ANALYSIS.before());
 		setDefaultEnablement(true);
 	}
-	
+
 	@Override
 	public boolean canAnalyze(Program program) {
 		String processorName = program.getLanguage().getProcessor().toString();
@@ -61,19 +61,19 @@ public class Pic24DInitAnalyzer extends AbstractAnalyzer {
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
-		
+
 		Listing listing = program.getListing();
 		ReferenceManager referenceManager = program.getReferenceManager();
-		
+
 		MemoryBlock dinitBlock = program.getMemory().getBlock(".dinit");
 		if (listing.getDefinedDataContaining(dinitBlock.getStart()) != null) {
 			Msg.info(this, "Skipping .dinit processing due to existing data at " + dinitBlock.getStart());
 			return true;
 		}
-		
+
 		MemoryBufferImpl memBuffer = new MemoryBufferImpl(program.getMemory(), dinitBlock.getStart());
 		long available = dinitBlock.getSize();
-		
+
 		Structure dataRecordType = new StructureDataType("data_record", 0, program.getDataTypeManager());
 		dataRecordType.setPackingEnabled(true);
 		dataRecordType.add(PointerDataType.dataType, "dst", null);
@@ -86,13 +86,13 @@ public class Pic24DInitAnalyzer extends AbstractAnalyzer {
 			throw new AssertException(e);
 		}
 		dataRecordType.add(new ArrayDataType(ByteDataType.dataType, 0, -1), "data", null);
-		
+
 		dataRecordType = (Structure) program.getDataTypeManager().resolve(dataRecordType, null);
-		
+
 		GhidraDataConverter converter = GhidraDataConverter.getInstance(false);
-		
+
 		AddressSpace dataSpace = program.getLanguage().getDefaultDataSpace();
-		
+
 		try {
 			Address addr = dinitBlock.getStart();
 			int offset = 0;
@@ -102,11 +102,11 @@ public class Pic24DInitAnalyzer extends AbstractAnalyzer {
 					break;
 				}
 				Data dataRecord = listing.createData(addr, dataRecordType);
-				
+
 				Scalar len = (Scalar) dataRecord.getComponent(LEN_ORDINAL).getValue();
 				Scalar format = (Scalar) dataRecord.getComponent(FORMAT_ORDINAL).getValue();
 				Scalar page = (Scalar) dataRecord.getComponent(PAGE_ORDINAL).getValue();
-				
+
 				// replace dst reference
 				Reference ref = referenceManager.getPrimaryReferenceFrom(addr, 0);
 				if (ref != null) {
@@ -115,10 +115,10 @@ public class Pic24DInitAnalyzer extends AbstractAnalyzer {
 				// TODO: use page
 				Address dstAddr = dataSpace.getAddress(dst & 0x0ffff);
 				referenceManager.addMemoryReference(addr, dstAddr, RefType.DATA, SourceType.ANALYSIS, 0);
-				
+
 				offset += dataRecordType.getLength();
 				addr = addr.add(dataRecord.getLength());
-				
+
 				Data arrayData = null;
 				long fmt = format.getValue();
 				if (fmt != 0) {
@@ -133,29 +133,29 @@ public class Pic24DInitAnalyzer extends AbstractAnalyzer {
 						Msg.error(this, "Invalid .dinit format value at " + dataRecord.getComponent(FORMAT_ORDINAL).getAddress());
 						break;
 					}
-					
+
 					// bounds check
 					if (flexArrayLen < 0 || (offset + flexArrayLen) > available) {
 						Msg.error(this, "Invalid .dinit len value at " + dataRecord.getComponent(LEN_ORDINAL).getAddress());
 						break;
 					}
-					
+
 					Array flexArray = new ArrayDataType(ByteDataType.dataType, flexArrayLen, 1);
 					arrayData = listing.createData(addr, flexArray);
 
 					offset += flexArrayLen;
 					addr = addr.add(flexArrayLen);
 				}
-				
+
 				// NOTE: ELF Loader already loads initialized data intended for ROM into mapped RAM regions
 				// TODO: determine if it is necessary to perform actual initialization
 				// initializeData(program, dstAddr, arrayData, fmt, len);
-				
+
 			}
 		} catch (MemoryAccessException | CodeUnitInsertionException e) {
 			Msg.error(this, "Failed during .dinit processing: " + e.getMessage());
 		}
-		
+
 		return true;
 	}
 

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,8 +44,8 @@ class DomainObjectDBTransaction implements Transaction {
 
 	// baseId used to improve differentiation between application level transaction id's
 	// nextBaseId is used to prime the base and should also be incremented each time
-	// a sub-transaction is added.  This approach is based upon the fact that 
-	// only a single Transaction object is pending at any given time for a 
+	// a sub-transaction is added.  This approach is based upon the fact that
+	// only a single Transaction object is pending at any given time for a
 	// specific database.
 	private final int baseId;
 
@@ -85,7 +85,7 @@ class DomainObjectDBTransaction implements Transaction {
 		SystemUtilities.runSwingLater(new Runnable() {
 			@Override
 			public void run() {
-				// flush events blocks so that current tool state and domain object are 
+				// flush events blocks so that current tool state and domain object are
 				// consistent prior to restore tool state
 				domainObject.flushEvents();
 				if (beforeState) {
@@ -103,7 +103,7 @@ class DomainObjectDBTransaction implements Transaction {
 	}
 
 	/**
-	 * Mark this fully committed transaction as having a corresponding 
+	 * Mark this fully committed transaction as having a corresponding
 	 * database transaction/checkpoint.
 	 */
 	void setHasCommittedDBTransaction() {
@@ -114,7 +114,7 @@ class DomainObjectDBTransaction implements Transaction {
 	}
 
 	/**
-	 * Returns true if this fully committed transaction has a corresponding 
+	 * Returns true if this fully committed transaction has a corresponding
 	 * database transaction/checkpoint.
 	 */
 	@Override

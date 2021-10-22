@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,16 +24,16 @@ import ghidra.framework.main.logviewer.event.FVEvent.EventType;
 import ghidra.framework.main.logviewer.event.FVEventListener;
 
 /**
- * The FileWatcher *watches* a single file and fires a change notification whenever the file 
+ * The FileWatcher *watches* a single file and fires a change notification whenever the file
  * is modified. A couple notes:
- * 
+ *
  * 1. To keep from processing change events every time the file is modified, which may be
- *    too frequent and cause processing issues, we use a simple polling mechanism.  
- *    
+ *    too frequent and cause processing issues, we use a simple polling mechanism.
+ *
  * 2. Changes in the file are identified by inspecting the {@link File#lastModified()}
- *    timestamp. 
- * 
- * 3. The {@link WatchService} mechanism is not being used here since we cannot specify a 
+ *    timestamp.
+ *
+ * 3. The {@link WatchService} mechanism is not being used here since we cannot specify a
  *    polling rate.
  */
 public class FileWatcher {
@@ -49,9 +49,9 @@ public class FileWatcher {
 	private FVEventListener eventListener;
 
 	/**
-	 * Constructor. Creates a new {@link Executor} that will inspect the file at regular 
+	 * Constructor. Creates a new {@link Executor} that will inspect the file at regular
 	 * intervals.  Users must call {@link #start()} to begin polling.
-	 * 
+	 *
 	 * @param file the file to be watched
 	 */
 	public FileWatcher(File file, FVEventListener eventListener) {
@@ -99,7 +99,7 @@ public class FileWatcher {
 
 	/**
 	 * Checks the timestamp of the given file to see if it has changed.  If so, returns true.
-	 * 
+	 *
 	 * @param file
 	 * @return
 	 */

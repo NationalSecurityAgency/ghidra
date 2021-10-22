@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -194,7 +194,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 
 		// NOTE: data types do not respond to switching the data organization object
 		// since this is cached internal to the data type at time of construction.
-		// We must purge old datatypes and have them re-instantiated by the 
+		// We must purge old datatypes and have them re-instantiated by the
 		// datatype manager
 		List<DataTypePath> dtPaths = getModelDataTypePaths();
 		model.removeAll();
@@ -358,7 +358,7 @@ public class DataTypePreviewPlugin extends ProgramPlugin {
 		try {
 			model.removeAll(dt);
 
-			// Note: do not do this, as there may be user-added composites that are based on 
+			// Note: do not do this, as there may be user-added composites that are based on
 			//       the type being removed.  For now, let the 'fake' DTM grow forever (this should
 			//       never become a problem).
 			// dataTypeManager.remove(dt, null);

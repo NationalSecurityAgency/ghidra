@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,7 +86,7 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 			try {
 				CompletableFuture<ObjectContainer> cf = container.getOffspring();
 				if (cf != null) {
-					// NB: We're allowed to do this because we're guaranteed to be 
+					// NB: We're allowed to do this because we're guaranteed to be
 					//   in our own thread by the GTreeSlowLoadingNode
 					ObjectContainer oc = cf.get(60, TimeUnit.SECONDS);
 					return tree.update(oc);
@@ -121,7 +121,7 @@ public class ObjectNode extends GTreeSlowLoadingNode {  //extends GTreeNode
 		int count = 1;
 		if (!isLoaded()) {
 			return count;
-// This was too aggressive: these children do not have provider or any of 
+// This was too aggressive: these children do not have provider or any of
 //   the necessary fields for constructing a node
 //			if (container.getCurrentChildren() == null) {
 //				return count;

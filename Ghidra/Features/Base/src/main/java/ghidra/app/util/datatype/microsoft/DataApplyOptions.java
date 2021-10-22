@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ public class DataApplyOptions {
 	}
 
 	/**
-	 * An option indicating whether or not to clear existing instructions in order to create 
+	 * An option indicating whether or not to clear existing instructions in order to create
 	 * new data.
 	 * <br>Default is false.
 	 * @return true if existing instructions should be cleared to create the new data.
@@ -77,7 +77,7 @@ public class DataApplyOptions {
 
 	/**
 	 * Sets whether or not to clear existing instructions in order to create new data.
-	 * @param clearInstructions true indicates existing instructions should be cleared to create 
+	 * @param clearInstructions true indicates existing instructions should be cleared to create
 	 * the new data.
 	 */
 	public void setClearInstructions(boolean clearInstructions) {
@@ -85,7 +85,7 @@ public class DataApplyOptions {
 	}
 
 	/**
-	 * An option indicating whether or not to clear existing defined data in order to create 
+	 * An option indicating whether or not to clear existing defined data in order to create
 	 * new data.
 	 * <br>Default is false.
 	 * @return true if existing defined data should be cleared to create the new data.
@@ -96,7 +96,7 @@ public class DataApplyOptions {
 
 	/**
 	 * Sets whether or not to clear existing defined data in order to create new data.
-	 * @param clearDefinedData true indicates existing defined data should be cleared to create 
+	 * @param clearDefinedData true indicates existing defined data should be cleared to create
 	 * the new data.
 	 */
 	public void setClearDefinedData(boolean clearDefinedData) {
@@ -104,10 +104,10 @@ public class DataApplyOptions {
 	}
 
 	/**
-	 * An option indicating whether or not to create a label for the new data or for a 
+	 * An option indicating whether or not to create a label for the new data or for a
 	 * referred to data or function.
 	 * <br>Default is true.
-	 * @return true if a label should be created for this data or for referred to structures 
+	 * @return true if a label should be created for this data or for referred to structures
 	 * and functions.
 	 */
 	public boolean shouldCreateLabel() {
@@ -115,7 +115,7 @@ public class DataApplyOptions {
 	}
 
 	/**
-	 * Sets whether or not to create labels for follow on data or a function that is referred to 
+	 * Sets whether or not to create labels for follow on data or a function that is referred to
 	 * by the current new structure.
 	 * @param createLabel true indicates a label should be created.
 	 */
@@ -134,7 +134,7 @@ public class DataApplyOptions {
 	}
 
 	/**
-	 * Sets whether or not to disassemble and create a function that is referred to 
+	 * Sets whether or not to disassemble and create a function that is referred to
 	 * by the current new structure.
 	 * @param createFunction true indicates a function should be created.
 	 */

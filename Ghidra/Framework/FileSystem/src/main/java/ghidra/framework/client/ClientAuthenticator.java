@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,8 +41,8 @@ public interface ClientAuthenticator extends KeyStorePasswordProvider {
 	 * that the default user name will be used, @see ClientUtil#getUserName()
 	 * @param passCb provides storage for user password, @see PasswordCallback#setPassword(char[])
 	 * @param choiceCb specifies choice between NT Domain authentication (index=0) and local password
-	 * file authentication (index=1).  Set selected index to specify authenticator to be used, 
-	 * @param anonymousCb may be used to request anonymous read-only access to 
+	 * file authentication (index=1).  Set selected index to specify authenticator to be used,
+	 * @param anonymousCb may be used to request anonymous read-only access to
 	 * the server.  A null is specified if anonymous access has not been enabed on the server.
 	 * @param loginError previous login error message or null for first attempt
 	 * @see ChoiceCallback#setSelectedIndex(int)
@@ -67,7 +67,7 @@ public interface ClientAuthenticator extends KeyStorePasswordProvider {
 	 * @param parent dialog parent component or null if not applicable
 	 * @param serverInfo server host info
 	 * @param username
-	 * @return new password or null if password should not be changed, 
+	 * @return new password or null if password should not be changed,
 	 * if not null array will be cleared by caller
 	 */
 	public char[] getNewPassword(Component parent, String serverInfo, String username);

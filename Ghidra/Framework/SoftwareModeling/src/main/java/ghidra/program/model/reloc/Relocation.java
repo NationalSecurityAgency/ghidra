@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public class Relocation {
 
 	/**
 	 * Constructs a new relocation.
-	 * 
+	 *
 	 * @param addr  	the address where the relocation is required
 	 * @param type  	the type of relocation to perform
 	 * @param values the values needed when performing the relocation
@@ -47,7 +47,7 @@ public class Relocation {
 
 	/**
 	 * Returns the address where the relocation is required.
-	 * 
+	 *
 	 * @return the address where the relocation is required
 	 */
 	public Address getAddress() {
@@ -56,7 +56,7 @@ public class Relocation {
 
 	/**
 	 * Returns the type of the relocation to perform.
-	 * 
+	 *
 	 * @return the type of the relocation to perform
 	 */
 	public int getType() {
@@ -65,7 +65,7 @@ public class Relocation {
 
 	/**
 	 * Returns the value needed when performing the relocation.
-	 * 
+	 *
 	 * @return the value needed when performing the relocation
 	 */
 	public long[] getValues() {
@@ -74,7 +74,7 @@ public class Relocation {
 
 	/**
 	 * Returns the original instruction bytes affected by relocation.
-	 * 
+	 *
 	 * @return original instruction bytes affected by relocation
 	 */
 	public byte[] getBytes() {
@@ -83,7 +83,7 @@ public class Relocation {
 
 	/**
 	 * The name of the symbol being relocated or <code>null</code> if there is no symbol name.
-	 * 
+	 *
 	 * @return the name of the symbol being relocated or <code>null</code> if there is no symbol name.
 	 */
 	public String getSymbolName() {

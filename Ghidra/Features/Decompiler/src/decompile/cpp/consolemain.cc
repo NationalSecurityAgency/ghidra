@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ void IfcLoadFile::execute(istream &s)
 {
   string filename,target;
 
-  if (dcp->conf != (Architecture *)0) 
+  if (dcp->conf != (Architecture *)0)
     throw IfaceExecutionError("Load image already present");
   s >> filename;
   if (!s.eof()) {		// If there are two parameters
@@ -58,7 +58,7 @@ void IfcLoadFile::execute(istream &s)
     throw IfaceExecutionError("Unable to recognize imagefile "+filename);
   dcp->conf = capa->buildArchitecture(filename,target,status->optr);
 				// Attempt to open file and discern
-				// the processor architecture  
+				// the processor architecture
   DocumentStorage store;	// temporary storage for xml docs
 
 #ifdef CPUI_RULECOMPILE
@@ -158,7 +158,7 @@ void IfcRestore::execute(istream &s)
   } catch(XmlError &err) {
     throw IfaceExecutionError(err.explain);
   }
-  
+
 #ifdef OPACTION_DEBUG
   dcp->conf->setDebugStream(status->fileoptr);
 #endif

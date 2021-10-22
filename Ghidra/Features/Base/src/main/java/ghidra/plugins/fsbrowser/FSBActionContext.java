@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public class FSBActionContext extends ActionContext {
 
 	/**
 	 * Creates a new {@link FileSystemBrowserPlugin}-specific action context.
-	 * 
+	 *
 	 * @param provider the ComponentProvider that generated this context.
 	 * @param selectedNodes selected nodes in the tree
 	 * @param event MouseEvent that caused the update, or null
@@ -66,7 +66,7 @@ public class FSBActionContext extends ActionContext {
 
 	/**
 	 * Gets the {@link FileSystemBrowserPlugin} provider's  tree.
-	 * 
+	 *
 	 * @return The {@link FileSystemBrowserPlugin} provider's  tree.
 	 */
 	public GTree getTree() {
@@ -75,7 +75,7 @@ public class FSBActionContext extends ActionContext {
 
 	/**
 	 * Returns true if there are selected nodes in the browser tree.
-	 * 
+	 *
 	 * @return boolean true if there are selected nodes in the browser tree
 	 */
 	public boolean hasSelectedNodes() {
@@ -86,7 +86,7 @@ public class FSBActionContext extends ActionContext {
 
 	/**
 	 * Returns a list of the currently selected tree nodes.
-	 * 
+	 *
 	 * @return list of currently selected tree nodes
 	 */
 	public List<FSBNode> getSelectedNodes() {
@@ -96,7 +96,7 @@ public class FSBActionContext extends ActionContext {
 	/**
 	 * Returns the {@link FSRL} of the currently selected item, as long as it conforms to
 	 * the dirsOk requirement.
-	 * 
+	 *
 	 * @param dirsOk boolean flag, if true the selected item can be either a file or directory
 	 * element, if false, it must be a file or the root of a file system that has a container
 	 * file
@@ -144,7 +144,7 @@ public class FSBActionContext extends ActionContext {
 
 	/**
 	 * Returns the currently selected tree node
-	 * 
+	 *
 	 * @return the currently selected tree node, or null if no nodes or more than 1 node is selected
 	 */
 	public FSBNode getSelectedNode() {
@@ -154,7 +154,7 @@ public class FSBActionContext extends ActionContext {
 
 	/**
 	 * Returns the FSBRootNode that contains the currently selected tree node.
-	 * 
+	 *
 	 * @return FSBRootNode that contains the currently selected tree node, or null nothing
 	 * selected
 	 */
@@ -171,7 +171,7 @@ public class FSBActionContext extends ActionContext {
 
 	/**
 	 * Returns the number of selected nodes in the tree.
-	 * 
+	 *
 	 * @return returns the number of selected nodes in the tree.
 	 */
 	public int getSelectedCount() {
@@ -199,7 +199,7 @@ public class FSBActionContext extends ActionContext {
 
 	/**
 	 * Returns a list of FSRLs of the currently selected nodes in the tree.
-	 * 
+	 *
 	 * @param dirsOk boolean flag, if true the selected items can be either a file or directory
 	 * element, if false, it must be a file or the root of a file system that has a container
 	 * file before being included in the resulting list
@@ -212,7 +212,7 @@ public class FSBActionContext extends ActionContext {
 
 	/**
 	 * Returns a list of FSRLs of the currently selected file nodes in the tree.
-	 * 
+	 *
 	 * @return list of FSRLs of the currently selected file items, maybe empty but never null
 	 */
 	public List<FSRL> getFileFSRLs() {
@@ -221,7 +221,7 @@ public class FSBActionContext extends ActionContext {
 
 	/**
 	 * Returns the FSRL of the currently selected file node
-	 * 
+	 *
 	 * @return FSRL of the currently selected file, or null if not file or more than 1 selected
 	 */
 	public FSRL getFileFSRL() {
@@ -231,7 +231,7 @@ public class FSBActionContext extends ActionContext {
 	/**
 	 * Converts the tree-node hierarchy of the currently selected item into a string path using
 	 * "/" separators.
-	 * 
+	 *
 	 * @return string path of the currently selected tree item
 	 */
 	public String getFormattedTreePath() {
@@ -265,7 +265,7 @@ public class FSBActionContext extends ActionContext {
 
 	/**
 	 * Returns the FSRL of the currently selected item, if it is a 'loadable' item.
-	 * 
+	 *
 	 * @return FSRL of the currently selected loadable item, or null if nothing selected or
 	 * more than 1 selected
 	 */
@@ -301,7 +301,7 @@ public class FSBActionContext extends ActionContext {
 
 	/**
 	 * Returns a list of FSRLs of the currently selected loadable items.
-	 * 
+	 *
 	 * @return list of FSRLs of currently selected loadable items, maybe empty but never null
 	 */
 	public List<FSRL> getLoadableFSRLs() {

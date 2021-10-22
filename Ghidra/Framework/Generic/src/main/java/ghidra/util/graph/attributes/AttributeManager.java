@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.util.graph.KeyedObject;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
-/** Class which creates and keeps track of attributes defined 
+/** Class which creates and keeps track of attributes defined
  * for a single KeyIndexableSet.
  */
 public class AttributeManager<T extends KeyedObject>
@@ -130,8 +130,8 @@ public class AttributeManager<T extends KeyedObject>
       names = definedAttributes.keySet().toArray(names);
       return names;
   }
-  
-  /** Clears all of the attributes managed by this AttributeManager 
+
+  /** Clears all of the attributes managed by this AttributeManager
    * while leaving the attributes defined.
    */
   @SuppressWarnings("unchecked")

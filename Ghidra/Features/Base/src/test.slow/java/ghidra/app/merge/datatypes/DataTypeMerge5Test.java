@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,8 +33,8 @@ import ghidra.util.task.TaskMonitorAdapter;
 /**
  *
  * More data type merge tests.
- * 
- * 
+ *
+ *
  */
 public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
@@ -108,7 +108,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 
@@ -344,7 +344,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 
@@ -623,7 +623,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 
@@ -764,7 +764,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 
@@ -781,7 +781,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 		Structure dll = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
 		assertNotNull(dll);
 
-		// Typedef should not have been created because we chose to 
+		// Typedef should not have been created because we chose to
 		// delete FavoriteColors (deleted in LATEST)
 		Enum enumm = (Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
 		assertNull(enumm);
@@ -895,7 +895,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 
@@ -1043,7 +1043,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 
@@ -1201,7 +1201,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 
@@ -1519,7 +1519,7 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table 
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// original DLL_Table
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// my CoolUnion
 

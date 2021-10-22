@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public final class ArrayUtilities {
 
 	/**
 	 * Compares two primitive arrays for equality
-	 * 
+	 *
 	 * @param o1 the first array
 	 * @param o2 the second array
 	 * @return true if each element of the array is equal
@@ -109,7 +109,7 @@ public final class ArrayUtilities {
 	/**
 	 * Returns a copy of the given array with the provided element appended.  The length of
 	 * the returned array will be one element greater than the given array.
-	 * 
+	 *
 	 * @param array The array to copy.
 	 * @param element The element to append to the copy.
 	 * @return A copy of the given array with the provided element appended.
@@ -122,7 +122,7 @@ public final class ArrayUtilities {
 
 	/**
 	 * Compare two byte arrays by their corresponding entries
-	 * 
+	 *
 	 * If the two arrays have differing lengths, the shorter precedes the longer. Otherwise, they
 	 * are compared as in C's {@code memcmp}, except that Java {@code byte}s are signed.
 	 * @param a the first array

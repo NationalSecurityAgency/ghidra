@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -131,18 +131,18 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 	}
 
 	/**
-	 * Calling this method does does not work correctly when used with 
+	 * Calling this method does does not work correctly when used with
 	 * {@link #show(Component)} or {@link #showSelectMultiple(Component)}.   To use this method, you
-	 * must show the dialog by calling: 
+	 * must show the dialog by calling:
 	 * <pre>
 	 * 	DockingWindowManager.showDialog(parent, dialog);
 	 * </pre>
-	 * 
-	 * <P>There is no need to use this method when using either of the aforementioned 
+	 *
+	 * <P>There is no need to use this method when using either of the aforementioned
 	 * {@code show} methods
-	 * 
+	 *
 	 * @param enable true to allow multiple selection
-	 * 
+	 *
 	 * @deprecated to be removed sometime after the 9.3 release
 	 */
 	@Deprecated
@@ -161,7 +161,7 @@ public class ListSelectionTableDialog<T> extends DialogComponentProvider {
 	}
 
 	/**
-	 * Removes the ok button from the dialog.  This is useful if you are using this dialog 
+	 * Removes the ok button from the dialog.  This is useful if you are using this dialog
 	 * as a presentation of data and do not wish to do anything when the user makes selections.
 	 */
 	public void hideOkButton() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 /**
- * A layout provider that works on {@link JungDirectedVisualGraph}s.  This class allows the 
+ * A layout provider that works on {@link JungDirectedVisualGraph}s.  This class allows the
  * Jung layouts to be used where {@link VisualGraph}s are used.
  *
  * @param <V> the vertex type
@@ -37,8 +37,8 @@ import resources.ResourceManager;
  * @param <G> the graph type
  */
 //@formatter:off
-public abstract class JungLayoutProvider<V extends VisualVertex, 
-                                         E extends VisualEdge<V>, 
+public abstract class JungLayoutProvider<V extends VisualVertex,
+                                         E extends VisualEdge<V>,
                                          G extends JungDirectedVisualGraph<V, E>>
 		extends AbstractLayoutProvider<V, E, G> {
 //@formatter:on
@@ -59,7 +59,7 @@ public abstract class JungLayoutProvider<V extends VisualVertex,
 		return new JungLayout<>(jungLayout);
 	}
 
-	// Note: each provider really should load its own icon so that the toolbar item can 
+	// Note: each provider really should load its own icon so that the toolbar item can
 	//       signal to the user which layout is active
 	@Override
 	public Icon getActionIcon() {

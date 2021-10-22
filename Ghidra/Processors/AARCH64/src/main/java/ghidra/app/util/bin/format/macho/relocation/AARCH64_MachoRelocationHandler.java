@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,10 +23,10 @@ import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.Conv;
 import ghidra.util.exception.NotFoundException;
 
-/** 
+/**
  * A {@link MachoRelocationHandler} for AARCH64
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/arm64/reloc.h.auto.html">mach-o/arm64/reloc.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/arm64/reloc.h.auto.html">mach-o/arm64/reloc.h</a>
  */
 public class AARCH64_MachoRelocationHandler extends MachoRelocationHandler {
 
@@ -40,15 +40,15 @@ public class AARCH64_MachoRelocationHandler extends MachoRelocationHandler {
 		return relocation.getType() == ARM64_RELOC_SUBTRACTOR ||
 			relocation.getType() == ARM64_RELOC_ADDEND;
 	}
-	
+
 	@Override
 	public void relocate(MachoRelocation relocation)
 			throws MemoryAccessException, NotFoundException {
-		
+
 		if (!relocation.requiresRelocation()) {
 			return;
 		}
-		
+
 		RelocationInfo relocationInfo = relocation.getRelocationInfo();
 		Address relocAddr = relocation.getRelocationAddress();
 		Address targetAddr;
@@ -57,7 +57,7 @@ public class AARCH64_MachoRelocationHandler extends MachoRelocationHandler {
 			// ARM64_RELOC_ADDEND is a paired relocation, but it's a bit unique because it doesn't
 			// define its own relocation target...simply an addend value to be applied to the 2nd
 			// part of the relocation.  We'll just save off the addend value and proceed as if the
-			// "extra" part of the relocation pair is a normal unpaired relocation.  
+			// "extra" part of the relocation pair is a normal unpaired relocation.
 			targetAddr = relocation.getTargetAddressExtra();
 			addendFromReloc = relocationInfo.getValue();
 			relocationInfo = relocation.getRelocationInfoExtra();
@@ -65,7 +65,7 @@ public class AARCH64_MachoRelocationHandler extends MachoRelocationHandler {
 		else {
 			targetAddr = relocation.getTargetAddress();
 			addendFromReloc = 0;
-			
+
 		}
 		long orig = read(relocation);
 
@@ -135,7 +135,7 @@ public class AARCH64_MachoRelocationHandler extends MachoRelocationHandler {
 				write(relocation, value);
 				break;
 			}
-			
+
 			case ARM64_RELOC_TLVP_LOAD_PAGE21:    // not seen yet
 			case ARM64_RELOC_TLVP_LOAD_PAGEOFF12: // not seen yet
 			case ARM64_RELOC_ADDEND:              // should never see on its own here
@@ -143,10 +143,10 @@ public class AARCH64_MachoRelocationHandler extends MachoRelocationHandler {
 				throw new NotFoundException("Unimplemented relocation");
 		}
 	}
-	
+
 	/**
 	 * Returns the page address of the given address (assumes 4KB page)
-	 * 
+	 *
 	 * @param addr The address to get the page of
 	 * @return The page address of the given address
 	 */

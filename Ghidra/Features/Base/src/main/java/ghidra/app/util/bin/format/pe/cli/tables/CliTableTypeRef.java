@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public class CliTableTypeRef extends CliAbstractTable {
 		public int resolutionScopeIndex;
 		public int typeNameIndex;
 		public int typeNamespaceIndex;
-		
+
 		public CliTypeRefRow(int resolutionScopeIndex, int typeNameIndex, int typeNamespaceIndex) {
 			super();
 			this.resolutionScopeIndex = resolutionScopeIndex;
@@ -54,16 +54,16 @@ public class CliTableTypeRef extends CliAbstractTable {
 				metadataStream.getStringsStream().getString(typeNamespaceIndex),
 				scopeRep);
 		}
-		
+
 		@Override
 		public String getShortRepresentation() {
 			return String.format("%s.%s",
 				metadataStream.getStringsStream().getString(typeNamespaceIndex),
 				metadataStream.getStringsStream().getString(typeNameIndex));
 		}
-		
+
 	}
-	
+
 	public CliTableTypeRef(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
@@ -74,7 +74,7 @@ public class CliTableTypeRef extends CliAbstractTable {
 		}
 		reader.setPointerIndex(this.readerOffset);
 	}
-	
+
 	@Override
 	public StructureDataType getRowDataType() {
 		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "TypeRef Row", 0);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,9 +38,9 @@ public class FGVertexListingPanel extends ListingPanel {
 			//
 			// Unusual Code Alert!: when the data of the listing changes its preferred size
 			// 						may also change.  If we don't invalidate the containing
-			//                      Java component, then the cached preferred size will be 
+			//                      Java component, then the cached preferred size will be
 			//                      invalid.
-			// 
+			//
 			getFieldPanel().invalidate();
 			controller.repaint();
 		}
@@ -93,8 +93,8 @@ public class FGVertexListingPanel extends ListingPanel {
 	 * Overridden to set the view before the parent class notifies the listeners.  This prevents
 	 * our methods that calculate preferred size from going 'out to lunch' when attempting to
 	 * examine the entire program instead of just the given view.
-	 * 
-	 * @param model The listing model needed by the layout model	 * 
+	 *
+	 * @param model The listing model needed by the layout model	 *
 	 * @return the new model adapter
 	 */
 	@Override

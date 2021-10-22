@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -232,7 +232,7 @@ public class DualProgramTest extends DiffTestAdapter {
 
 		Window win;
 		Component comp;
-		//InfoWindow.showSplashScreen(); 
+		//InfoWindow.showSplashScreen();
 		showTool(frontEndTool);
 		env.showTool();
 
@@ -425,8 +425,8 @@ public class DualProgramTest extends DiffTestAdapter {
 	}
 
 	/**
-	 * Selects a tree node in the indicated tree with the specified text. 
-	 * The matching tree node is determined by comparing the specified text 
+	 * Selects a tree node in the indicated tree with the specified text.
+	 * The matching tree node is determined by comparing the specified text
 	 * with the string returned by the tree node's toString() method.
 	 * <br> Note: This method affects the expansion state of the tree. It
 	 * will expand nodes starting at the root until a match is found or all

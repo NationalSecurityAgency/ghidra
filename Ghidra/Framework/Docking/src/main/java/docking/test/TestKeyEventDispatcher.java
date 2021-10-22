@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ public class TestKeyEventDispatcher {
 
 	/**
 	 * Uses the system-overridden {@link KeyEventDispatcher} to send the event.
-	 * 
+	 *
 	 * @param event the event
 	 * @return false if the event was not handled by this class and should continue to be
 	 *         processed; true if the the event was handled and no further processing is needed
@@ -49,7 +49,7 @@ public class TestKeyEventDispatcher {
 		}
 
 		//
-		// Notes: timing and focus can produce inconsistent results here.  Be sure when 
+		// Notes: timing and focus can produce inconsistent results here.  Be sure when
 		//        you attempt to dispatch key events, that the target component has been fully
 		//        realized (parented).
 		//
@@ -65,7 +65,7 @@ public class TestKeyEventDispatcher {
 
 	private static KeyEventDispatcher getOverriddenKeyEventDispatcher() {
 
-		// Note: our custom key event dispatcher has package access, so we cannot refer to 
+		// Note: our custom key event dispatcher has package access, so we cannot refer to
 		//       it directly
 		try {
 			Class<?> clazz = Class.forName("docking.KeyBindingOverrideKeyEventDispatcher");
@@ -75,9 +75,9 @@ public class TestKeyEventDispatcher {
 			}
 
 			//
-			// Dependency Inject our own focus provider so that we can force the event 
+			// Dependency Inject our own focus provider so that we can force the event
 			// dispatcher to deliver events to our component
-			// 
+			//
 			TestUtils.invokeInstanceMethod("setFocusOwnerProvider", customDispatcher,
 				FocusOwnerProvider.class, focusProvider);
 

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import java.awt.LayoutManager;
 import javax.swing.JPanel;
 
 /**
- * AddressEditorPanel should be extended to create a new panel for editing a specific type of 
+ * AddressEditorPanel should be extended to create a new panel for editing a specific type of
  * mark-up item destination address.
  */
 public abstract class AddressEditorPanel extends JPanel {
@@ -53,9 +53,9 @@ public abstract class AddressEditorPanel extends JPanel {
 	public abstract Address getAddress() throws InvalidInputException;
 
 	/**
-	 * Specifies the listener for this address editor panel. The listener gets notified of 
+	 * Specifies the listener for this address editor panel. The listener gets notified of
 	 * address edit changes when double click or <Enter> key actions occur.
-	 * The listener can then call the getAddress() on the editor panel for the current 
+	 * The listener can then call the getAddress() on the editor panel for the current
 	 * address value.
 	 * @param addressPanelListener the address edit action listener.
 	 */

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public interface DragDropManager {
      * Return true if the drop site is valid for the given target and drag event.
      * @param destNode destination for node being dragged
      * @param e the drag event
-     * 
+     *
      */
     public boolean isDropSiteOk(DragDropNode destNode, DropTargetDragEvent e);
 
@@ -50,14 +50,14 @@ public interface DragDropManager {
      * @param chosen data flavor for the data being added
      * @param dropAction user action for drop operation
      */
-    public void add(DragDropNode destNode, Object data, 
+    public void add(DragDropNode destNode, Object data,
                     DataFlavor chosen, int dropAction);
 
     /**
      * Remove the given sourceNodes. (It got moved, so remove it at the source)
-     * @param sourceNodes nodes to remove. 
+     * @param sourceNodes nodes to remove.
      */
-    public void move(DragDropNode[] sourceNodes); 
+    public void move(DragDropNode[] sourceNodes);
 
     /**
      * Return the data flavors that can be dragged and dropped.

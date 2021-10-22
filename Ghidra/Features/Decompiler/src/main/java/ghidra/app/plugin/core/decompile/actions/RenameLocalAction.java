@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ import ghidra.util.UndefinedFunction;
  * an "undefined" datatype, which leaves it un-typelocked, and the decompiler will take
  * the name but lets the data-type continue to "float" and can speculatively merge the
  * variable with others.
- * 
+ *
  * If the selected variable is an input parameter, other input parameters within the decompiler
  * model will need to be committed, if they do not already exist in the database, as any parameters
  * committed to the database are forcing on the decompiler. Any new parameters committed this way

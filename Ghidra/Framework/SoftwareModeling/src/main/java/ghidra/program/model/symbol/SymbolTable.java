@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -173,7 +173,7 @@ public interface SymbolTable {
 	 *
 	 * <P>This is just a convenience method for {@link #getSymbol(String, Address, Namespace)} where
 	 * the namespace is the global namespace.</P>
-	 * 
+	 *
 	 * <p>NOTE: This method will not return a default thunk (i.e., thunk function symbol with default source type)
 	 * since it mirrors the name and parent namespace of the function it thunks.</p>
 	 *
@@ -188,10 +188,10 @@ public interface SymbolTable {
 	 * Returns the first symbol with the given name found in the given namespace. Ghidra now
 	 * allows multiple symbols with the same name in the same namespace, so using this method
 	 * is likely to produce unintended results. Use {@link #getSymbols(String, Namespace)} instead.
-	 * 
-	 * <p>NOTE: This method will not return a default thunk (i.e., 
+	 *
+	 * <p>NOTE: This method will not return a default thunk (i.e.,
 	 * thunk function symbol with default source type).</p>
-	 * 
+	 *
 	 * @param name the name of the symbol to retreive
 	 * @param namespace the namespace of the symbol to retrieve (null assumes global namespace)
 	 * @return the first symbol which satisifies specified criteria or null if not found
@@ -205,10 +205,10 @@ public interface SymbolTable {
 	/**
 	 * Returns the first global symbol that it finds with the given name.  Now that Ghidra
 	 * allows duplicate symbol names, this method is practically useless.
-	 * 
-	 * <p>NOTE: This method will not return a default thunk (i.e., 
+	 *
+	 * <p>NOTE: This method will not return a default thunk (i.e.,
 	 * thunk function symbol with default source type).</p>
-	 * 
+	 *
 	 * @param name the name of the symbol to be retrieved.
 	 * @return first symbol found with specified name or null if no global symbol has that name
 	 * @deprecated Use {@link #getGlobalSymbols(String)} instead.  Ghidra now allows
@@ -220,10 +220,10 @@ public interface SymbolTable {
 
 	/**
 	 * Returns a list of all global symbols with the given name.
-	 * 
-	 * <p>NOTE: This method will not return default thunks (i.e., 
+	 *
+	 * <p>NOTE: This method will not return default thunks (i.e.,
 	 * thunk function symbol with default source type).</p>
-	 * 
+	 *
 	 * @param name the name of the symbols to retrieve.
 	 * @return a list of all global symbols with the given name.
 	 */
@@ -231,10 +231,10 @@ public interface SymbolTable {
 
 	/**
 	 * Returns all the label or function symbols that have the given name in the given namespace.
-	 * 
+	 *
 	 * <p>NOTE: This method will not return a default thunk (i.e., thunk function symbol with default source type)
 	 * since it mirrors the name and parent namespace of the function it thunks.</p>
-	 * 
+	 *
 	 * @param name the name of the symbols to search for.
 	 * @param namespace the namespace to search.  If null, then the global namespace is assumed.
 	 * @return a list of all the label or function symbols with the given name in the given namespace.
@@ -282,10 +282,10 @@ public interface SymbolTable {
 
 	/**
 	 * Returns a list of all symbols with the given name in the given namespace.
-	 * 
-	 * <p>NOTE: The resulting iterator will not return default thunks (i.e., 
+	 *
+	 * <p>NOTE: The resulting iterator will not return default thunks (i.e.,
 	 * thunk function symbol with default source type).</p>
-	 * 
+	 *
 	 * @param name the name of the symbols to retrieve.
 	 * @param namespace the namespace to search for symbols.
 	 * @return all symbols which satisfy specified criteria
@@ -313,10 +313,10 @@ public interface SymbolTable {
 
 	/**
 	 * Returns all the symbols with the given name.
-	 * 
-	 * <p>NOTE: The resulting iterator will not return default thunks (i.e., 
+	 *
+	 * <p>NOTE: The resulting iterator will not return default thunks (i.e.,
 	 * thunk function symbol with default source type).</p>
-	 * 
+	 *
 	 * @param name the name of symbols to search for.
 	 *
 	 * @return array of symbols with the given name
@@ -353,8 +353,8 @@ public interface SymbolTable {
 	 * the primary symbol will be returned in array slot 0.
 	 * WARNING! Use of this method with a Variable address is highly discouraged since
 	 * a single Variable address could be used multiple times by many functions.
-	 * Note that unless all the symbols are needed at once, you should consider using 
-	 * the {@link #getSymbolsAsIterator(Address)} method instead. 
+	 * Note that unless all the symbols are needed at once, you should consider using
+	 * the {@link #getSymbolsAsIterator(Address)} method instead.
 	 * @param addr the address at which to retrieve all symbols.
 	 * @return a zero-length array when no symbols are defined at address.
 	 * @see #getSymbolsAsIterator(Address)
@@ -362,11 +362,11 @@ public interface SymbolTable {
 	public Symbol[] getSymbols(Address addr);
 
 	/**
-	 * Returns a symbol iterator over all the symbols at the given address.  Use this instead of 
-	 * {@link #getSymbols(Address)} when you do not need to get all symbols, but rather are  
+	 * Returns a symbol iterator over all the symbols at the given address.  Use this instead of
+	 * {@link #getSymbols(Address)} when you do not need to get all symbols, but rather are
 	 * searching for a particular symbol.   This method prevents all symbols at the given address
 	 * from being loaded up front.
-	 * 
+	 *
 	 * @param addr the address at which to retrieve all symbols
 	 * @return an iterator over all the symbols at the given address
 	 * @see #getSymbols(Address)
@@ -382,10 +382,10 @@ public interface SymbolTable {
 
 	/**
 	 * Returns an iterator over all the symbols in the given namespace
-	 * 
-	 * <p>NOTE: The resulting iterator will not return default thunks (i.e., 
+	 *
+	 * <p>NOTE: The resulting iterator will not return default thunks (i.e.,
 	 * thunk function symbol with default source type).</p>
-	 * 
+	 *
 	 * @param namespace the namespace to search for symbols.
 	 * @return symbol iterator
 	 */
@@ -393,10 +393,10 @@ public interface SymbolTable {
 
 	/**
 	 * Returns an iterator over all the symbols in the given namespace
-	 * 
-	 * <p>NOTE: This method will not return a default thunk (i.e., 
+	 *
+	 * <p>NOTE: This method will not return a default thunk (i.e.,
 	 * thunk function symbol with default source type).</p>
-	 * 
+	 *
 	 * @param namespaceID the namespace ID to search for symbols.
 	 * @return symbol iterator
 	 */
@@ -421,11 +421,11 @@ public interface SymbolTable {
 
 	/**
 	 * Returns a an iterator over all symbols that match the given search string.
-	 * 
+	 *
 	 * <p>NOTE: The iterator is in the forward direction only and will not return default thunk functions.
-	 * The resulting iterator will not return default thunks (i.e., 
+	 * The resulting iterator will not return default thunks (i.e.,
 	 * thunk function symbol with default source type).</p>
-	 * 
+	 *
 	 * @param searchStr the string to search for (may contain * to match any sequence
 	 * or ? to match a single char)
 	 * @param caseSensitive flag to determine if the search is case sensitive or not.
@@ -587,7 +587,7 @@ public interface SymbolTable {
 	 * @param name name of the namespace
 	 * @param source the source of this class namespace's symbol
 	 * @return new class namespace
-	 * @throws DuplicateNameException thrown if another non function or label symbol 
+	 * @throws DuplicateNameException thrown if another non function or label symbol
 	 * exists with the given name
 	 * @throws InvalidInputException throw if the name has invalid characters or is null
 	 * @throws IllegalArgumentException if you try to set the source to 'Symbol.DEFAULT'.
@@ -597,10 +597,10 @@ public interface SymbolTable {
 
 	/**
 	 * Returns an iterator over all symbols that have the given symbol as its parent.
-	 * 
-	 * <p>NOTE: The resulting iterator will not return default thunks (i.e., 
+	 *
+	 * <p>NOTE: The resulting iterator will not return default thunks (i.e.,
 	 * thunk function symbol with default source type).</p>
-	 * 
+	 *
 	 * @param parentSymbol the parent symbol
 	 * @return symbol iterator
 	 */
@@ -613,7 +613,7 @@ public interface SymbolTable {
 	 * @return the new Library namespace.
 	 * @throws InvalidInputException if the name is invalid.
 	 * @throws IllegalArgumentException if you try to set the source to 'Symbol.DEFAULT'.
-	 * @throws DuplicateNameException thrown if another non function or label 
+	 * @throws DuplicateNameException thrown if another non function or label
 	 * symbol exists with the given name
 	 */
 	public Library createExternalLibrary(String name, SourceType source)
@@ -625,7 +625,7 @@ public interface SymbolTable {
 	 * @param name the name of the new namespace
 	 * @param source the source of this namespace's symbol
 	 * @return the new Namespace object.
-	 * @throws DuplicateNameException thrown if another non function or label symbol 
+	 * @throws DuplicateNameException thrown if another non function or label symbol
 	 * exists with the given name
 	 * @throws InvalidInputException if the name is invalid.
 	 * @throws IllegalArgumentException if you try to set the source to 'Symbol.DEFAULT'.
@@ -635,7 +635,7 @@ public interface SymbolTable {
 
 	/**
 	 * Converts the given namespace to a class namespace
-	 * 
+	 *
 	 * @param namespace the namespace to convert
 	 * @return the new class
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program
@@ -647,12 +647,12 @@ public interface SymbolTable {
 	/**
 	 * Gets an existing namespace with the given name in the given parent.  If no namespace exists,
 	 * then one will be created.
-	 *  
+	 *
 	 * @param parent the parent namespace
 	 * @param name the namespace name
 	 * @param source the source type for the namespace if one is created
 	 * @return the namespace
-	 * @throws DuplicateNameException thrown if another non function or label symbol exists with 
+	 * @throws DuplicateNameException thrown if another non function or label symbol exists with
 	 *         the given name
 	 * @throws InvalidInputException if the name is invalid
 	 * @throws IllegalArgumentException if the given parent namespace is from a different program

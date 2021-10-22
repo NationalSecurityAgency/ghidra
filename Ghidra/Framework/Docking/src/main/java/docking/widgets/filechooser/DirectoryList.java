@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 
 	/**
 	 * Create a new DirectoryList instance.
-	 * 
+	 *
 	 * @param chooser the {@link GhidraFileChooser} this instance is nested in
 	 * @param model the {@link DirectoryListModel}
 	 * @param font the parent component's font, used to calculate row height in the list once
@@ -75,7 +75,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 		// Use 1/3 of the line height of the font to ensure visually consistent
 		// padding between rows.  (historically, 5px was used as the padding
 		// between the default 12pt (15px lineht) rows, so 15px lineht/5px padding
-		// equals .333 ratio.) 
+		// equals .333 ratio.)
 		FontMetrics metrics = cellRenderer.getFontMetrics(font);
 		setFixedCellHeight(
 			Math.max(metrics.getHeight(), DEFAULT_ICON_SIZE) +
@@ -242,7 +242,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 
 		File file = selectedFiles.get(0);
 		if (chooser.getModel().isDirectory(file)) {
-			chooser.setCurrentDirectory(file); // the user wants to navigate into the directory 
+			chooser.setCurrentDirectory(file); // the user wants to navigate into the directory
 		}
 		else {
 			chooser.userChoseFile(file); // the user has chosen the file

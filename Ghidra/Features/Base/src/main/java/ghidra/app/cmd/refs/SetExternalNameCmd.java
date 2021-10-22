@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,8 @@ import ghidra.util.exception.InvalidInputException;
 
 /**
  * Command for setting the external program name and path.
- * 
- * 
+ *
+ *
  */
 public class SetExternalNameCmd implements Command {
 
@@ -32,7 +32,7 @@ public class SetExternalNameCmd implements Command {
 	private String externalPath;
 	private String status;
 	private boolean userDefined = true;
-		
+
 	/**
 	 * Constructs a new command for setting the external program name and path.
 	 * @param externalName the name of the link.
@@ -44,7 +44,7 @@ public class SetExternalNameCmd implements Command {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
 	public boolean applyTo(DomainObject obj) {

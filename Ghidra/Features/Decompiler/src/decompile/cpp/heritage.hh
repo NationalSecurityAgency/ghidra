@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 /// \file heritage.hh
-/// \brief Utilities for building Static Single Assignment (SSA) form 
+/// \brief Utilities for building Static Single Assignment (SSA) form
 
 #ifndef __CPUI_HERITAGE__
 #define __CPUI_HERITAGE__
@@ -198,7 +198,7 @@ class Heritage {
     }
   };
 
-  Funcdata *fd;		        ///< The function \b this is controlling SSA construction 
+  Funcdata *fd;		        ///< The function \b this is controlling SSA construction
   LocationMap globaldisjoint;	///< Disjoint cover of every heritaged memory location
   LocationMap disjoint;		///< Disjoint cover of memory locations currently being heritaged
   vector<vector<FlowBlock *> > domchild; ///< Parent->child edges in dominator tree
@@ -277,7 +277,7 @@ public:
   /// \return the pass number or -1 if the address has not been heritaged
   int4 heritagePass(const Address &addr) const { return globaldisjoint.findPass(addr); }
   int4 numHeritagePasses(AddrSpace *spc) const;
-  void seenDeadCode(AddrSpace *spc); ///< Inform system of dead code removal in given space 
+  void seenDeadCode(AddrSpace *spc); ///< Inform system of dead code removal in given space
   int4 getDeadCodeDelay(AddrSpace *spc) const; ///< Get pass delay for heritaging the given space
   void setDeadCodeDelay(AddrSpace *spc,int4 delay); ///< Set delay for a specific space
   bool deadRemovalAllowed(AddrSpace *spc) const;    ///< Return \b true if it is \e safe to remove dead code

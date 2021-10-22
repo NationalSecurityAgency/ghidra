@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ public class RepackFid extends GhidraScript {
 		String tableName = oldTable.getName();					// Name
 		Schema schema = oldTable.getSchema();					// Schema
 		int[] indexedColumns = oldTable.getIndexedColumns();	// Secondardy indices
-		
+
 		Table newTable = newHandle.createTable(tableName, schema, indexedColumns);	// Create new table
 		monitor.setMessage("Copying table: "+tableName);
 		monitor.setMaximum(oldTable.getRecordCount());
@@ -70,7 +70,7 @@ public class RepackFid extends GhidraScript {
 		for(int i=0;i<tables.length;++i) {
 			long transactionID = newHandle.startTransaction();
 			copyTable(tables[i],newHandle);
-			newHandle.endTransaction(transactionID, true);			
+			newHandle.endTransaction(transactionID, true);
 		}
 		newHandle.saveAs(pdb.getContentType(), saveFile.getParentFile(),saveFile.getName(), TaskMonitorAdapter.DUMMY_MONITOR);
 		newHandle.close();

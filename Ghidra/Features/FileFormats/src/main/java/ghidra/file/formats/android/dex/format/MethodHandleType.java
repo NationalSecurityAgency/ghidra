@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public final class MethodHandleType {
 	public final static short kInvokeStatic = 0x0004;
 	/**
 	 * invoke_instance : an invoker for a given instance method.
-	 * This can be any non-static method on any class (or interface) 
+	 * This can be any non-static method on any class (or interface)
 	 * except for ?<init>?.
 	 */
 	public final static short kInvokeInstance = 0x0005;

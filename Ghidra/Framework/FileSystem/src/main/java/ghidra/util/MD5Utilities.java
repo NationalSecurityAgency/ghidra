@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class MD5Utilities {
 	}
 
 	/**
-	 * Generate salted MD5 hash for specified message.  Supplied salt is 
+	 * Generate salted MD5 hash for specified message.  Supplied salt is
 	 * returned as prefix to returned hash.
 	 * @param salt digest salt (use empty string for no salt)
 	 * @param msg message text
@@ -47,7 +47,7 @@ public class MD5Utilities {
 	}
 
 	/**
-	 * Generate salted MD5 hash for specified message using random salt.  
+	 * Generate salted MD5 hash for specified message using random salt.
 	 * First 4-characters of returned hash correspond to the salt data.
 	 * @param msg message text
 	 * @return salted hash using randomly generated salt which is
@@ -62,7 +62,7 @@ public class MD5Utilities {
 	}
 
 	/**
-	 * Generate MD5 message digest hash for specified input stream.  
+	 * Generate MD5 message digest hash for specified input stream.
 	 * Stream will be read until EOF is reached.
 	 * @param in input stream
 	 * @return message digest hash
@@ -83,7 +83,7 @@ public class MD5Utilities {
 	}
 
 	/**
-	 * Generate combined MD5 message digest hash for all values in the 
+	 * Generate combined MD5 message digest hash for all values in the
 	 * specified values list.
 	 * @param values list of text strings
 	 * @return MD5 message digest hash

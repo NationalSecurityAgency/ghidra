@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,18 +23,18 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.listing.FunctionTag;
 import ghidra.program.model.listing.Program;
 
-/** 
- * Compares the function tags in two programs. 
- * 
+/**
+ * Compares the function tags in two programs.
+ *
  * Two sets of tags are considered equal if they contain the name and comment
  * attributes.
- * 
+ *
  */
 class FunctionTagComparator extends ProgramDiff.ProgramDiffComparatorImpl {
 
-	/** 
+	/**
 	 * Generic constructor for comparing program differences.
-	 * 
+	 *
 	 * @param program1 the first program
 	 * @param program2 the second program
 	 */
@@ -42,14 +42,14 @@ class FunctionTagComparator extends ProgramDiff.ProgramDiffComparatorImpl {
 		super(program1, program2);
 	}
 
-	/** Compares two function tag lists to determine whether the first 
-	 *  tag address is effectively less than (comes before it in memory), 
-	 *  equal to (at the same spot in memory), or greater than (comes after 
+	/** Compares two function tag lists to determine whether the first
+	 *  tag address is effectively less than (comes before it in memory),
+	 *  equal to (at the same spot in memory), or greater than (comes after
 	 *  it in memory) the second comment's address.
-	 *  
+	 *
 	 * @param obj1 the address for the first program's tag.
 	 * @param obj2 the address for the second program's tag.
-	 * @return -1 if the first comes before the second in memory. 
+	 * @return -1 if the first comes before the second in memory.
 	 *          0 if the objects are at the same spot in memory.
 	 *          1 if the first comes after the second in memory.
 	 */
@@ -66,10 +66,10 @@ class FunctionTagComparator extends ProgramDiff.ProgramDiffComparatorImpl {
 		return a1.compareTo(address2CompatibleWith1);
 	}
 
-	/** 
-	 * Returns whether the tag lists for the given functions contain 
+	/**
+	 * Returns whether the tag lists for the given functions contain
 	 * the same items; order is unimportant.
-	 * 
+	 *
 	 * @param obj1 the first {@link FunctionDB} object
 	 * @param obj2 the second {@link FunctionDB} object
 	 * @return true if the tags lists contain the same elements.
@@ -94,9 +94,9 @@ class FunctionTagComparator extends ProgramDiff.ProgramDiffComparatorImpl {
 		return f1Tags.equals(f2Tags);
 	}
 
-	/** 
+	/**
 	 * Returns the address set that contains the address for the tags.
-	 * 
+	 *
 	 * @param obj the object being examined by this comparator.
 	 * @param program the program the object is associated with.
 	 * @return address set containing the tag location.

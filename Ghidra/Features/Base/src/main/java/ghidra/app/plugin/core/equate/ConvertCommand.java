@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,11 +45,11 @@ public class ConvertCommand extends BackgroundCommand {
 	/**
 	 * Constructor for the command to convert scalars and data to the user chosen format. The
 	 * command will work at a single address or over a selection in the case where the current
-	 * location refers to an instruction.  
+	 * location refers to an instruction.
 	 * <br>
 	 * Data convert only supports signed/unsigned and defined FormatSettingsDefinitions
 	 * on data whose data type is based upon the AbstractIntegerDataType.
-	 * 
+	 *
 	 * @param action The action to pull information from
 	 * @param context The action context
 	 */
@@ -152,7 +152,7 @@ public class ConvertCommand extends BackgroundCommand {
 	}
 
 	/*
-	 * Create a new equate. If already created with a different value, then we can't do anything. 
+	 * Create a new equate. If already created with a different value, then we can't do anything.
 	 * If equate name is null, i.e. selection is not letter or digit, then do nothing
 	 */
 	private String applyEquate(Instruction instruction, int opIndex) {
@@ -184,7 +184,7 @@ public class ConvertCommand extends BackgroundCommand {
 		// First, clear any existing equates with the same value
 		for (Equate equate : equates) {
 			if (!valuesAreDifferent(equate, scalar)) {
-				// Clears matching equates 
+				// Clears matching equates
 				ClearEquateCmd cmd = new ClearEquateCmd(equate.getName(), address, opIndex);
 				cmd.applyTo(program);
 			}

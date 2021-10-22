@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -387,7 +387,7 @@ void Funcdata::opInsertBegin(PcodeOp *op,BlockBasic *bl)
 
 {
   list<PcodeOp *>::iterator iter = bl->beginOp();
-  
+
   if (op->code()!=CPUI_MULTIEQUAL) {
     while(iter != bl->endOp()) {
       if ((*iter)->code() != CPUI_MULTIEQUAL)
@@ -859,7 +859,7 @@ bool Funcdata::inlineFlow(Funcdata *inlinefd,FlowInfo &flow,PcodeOp *callop)
   }
 
   obank.setUniqId( inlinefd->obank.getUniqId() );
-  
+
   return true;
 }
 
@@ -980,7 +980,7 @@ bool Funcdata::replaceLessequal(PcodeOp *op)
   Varnode *vn;
   int4 i;
   intb val,diff;
-  
+
   if ((vn=op->getIn(0))->isConstant()) {
     diff = -1;
     i = 0;
@@ -1239,7 +1239,7 @@ PcodeOp *cseFindInBlock(PcodeOp *op,Varnode *vn,BlockBasic *bl,PcodeOp *earliest
 
 {
   list<PcodeOp *>::const_iterator iter;
-  
+
   for(iter=vn->beginDescend();iter!=vn->endDescend();++iter) {
     PcodeOp *res = *iter;
     if (res == op) continue;	// Must not be -op-

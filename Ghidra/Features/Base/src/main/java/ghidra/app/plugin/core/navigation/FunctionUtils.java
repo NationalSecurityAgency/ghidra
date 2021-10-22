@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public class FunctionUtils {
 	/**
 	 * Returns a FieldStringInfo object for the given function's return type.  This info contains
 	 * the return type string and its location in the function signature.
-	 * 
+	 *
 	 * @param function The function from which to get the return type.
 	 * @param functionSignatureString The function signature string from which to get the return
 	 * type string.
@@ -45,7 +45,7 @@ public class FunctionUtils {
 	/**
 	 * Returns a FieldStringInfo object for the given function's name.  This info contains
 	 * the name string and its location in the function signature.
-	 * 
+	 *
 	 * @param function The function from which to get the name.
 	 * @param functionSignatureString The function signature string from which to get the name
 	 * string.
@@ -84,12 +84,12 @@ public class FunctionUtils {
 	/**
 	 * Returns a FieldStringInfo object for the given function's parameters.  This info contains
 	 * the parameter string and their respective locations in the function signature.  Each
-	 * returned FieldStringInfo object will contain a single string retrievable from 
-	 * {@link FieldStringInfo#getFieldString()} that is a space-separated combination of the 
+	 * returned FieldStringInfo object will contain a single string retrievable from
+	 * {@link FieldStringInfo#getFieldString()} that is a space-separated combination of the
 	 * parameter's datatype and name.
-	 * 
+	 *
 	 * @param function The function from which to get the function parameter strings.
-	 * @param functionSignatureString The function signature string from which to get the 
+	 * @param functionSignatureString The function signature string from which to get the
 	 * parameter strings.
 	 * @return Returns a FieldStringInfo object for the given function's parameter strings.
 	 */
@@ -107,7 +107,7 @@ public class FunctionUtils {
 			list.add(new FieldStringInfo(functionSignatureString, dataTypeName + " " +
 				parameterName, startIndex));
 
-			// push the starting point past the name of the current parameter            
+			// push the starting point past the name of the current parameter
 			startIndex =
 				functionSignatureString.indexOf(parameterName, startIndex) + parameterName.length();
 		}

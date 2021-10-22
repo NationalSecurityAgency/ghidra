@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,14 +27,14 @@ import ghidra.util.exception.InvalidInputException;
 
 /**
  * Describes the Event table. Each row represents an event. References to this table are to contiguous runs of events.
- * The "run" begins at the specified index and ends at the next place a reference from EventMap points, or the end of this table. 
+ * The "run" begins at the specified index and ends at the next place a reference from EventMap points, or the end of this table.
  */
 public class CliTableEvent extends CliAbstractTable {
 	public class CliEventRow extends CliAbstractTableRow {
 		public short eventFlags;
 		public int nameIndex;
 		public int eventTypeIndex;
-		
+
 		public CliEventRow(short eventFlags, int nameIndex, int eventTypeIndex) {
 			super();
 			this.eventFlags = eventFlags;
@@ -56,7 +56,7 @@ public class CliTableEvent extends CliAbstractTable {
 				CliEnumEventAttributes.dataType.getName(eventFlags & 0xffff), eventRep);
 		}
 	}
-	
+
 	public CliTableEvent(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
@@ -66,7 +66,7 @@ public class CliTableEvent extends CliAbstractTable {
 		}
 		reader.setPointerIndex(this.readerOffset);
 	}
-	
+
 	@Override
 	public StructureDataType getRowDataType() {
 		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "Event Row", 0);

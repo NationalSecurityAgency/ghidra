@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,13 @@ import java.io.Serializable;
 
 /**
  * Container for a host name and port number.
- * 
+ *
  */
 public class ServerInfo implements Serializable {
 
 	private final String host;
 	private final int portNumber;
-	
+
 	/**
 	 * Construct a new ServerInfo object
 	 * @param host host name
@@ -36,7 +36,7 @@ public class ServerInfo implements Serializable {
 		this.host = host;
 		this.portNumber = portNumber;
 	}
-	
+
 	/**
 	 * Get the server name.
 	 */
@@ -46,12 +46,12 @@ public class ServerInfo implements Serializable {
 
 	/**
 	 * Get the port number.
-	 */	
+	 */
 	public int getPortNumber() {
 		return portNumber;
 	}
-	
-	
+
+
 	/*
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */

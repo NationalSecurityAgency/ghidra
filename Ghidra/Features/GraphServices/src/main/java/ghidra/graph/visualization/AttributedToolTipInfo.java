@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidra.graph.viewer.popup.ToolTipInfo;
 import ghidra.service.graph.*;
 
 /**
- * Generates tool tips for an {@link AttributedVertex} or {@link AttributedEdge} in 
+ * Generates tool tips for an {@link AttributedVertex} or {@link AttributedEdge} in
  * an {@link AttributedGraph}
  */
 public class AttributedToolTipInfo extends ToolTipInfo<Attributed> {
@@ -115,7 +115,7 @@ public class AttributedToolTipInfo extends ToolTipInfo<Attributed> {
 	}
 
 	private void addAttributes(StringBuilder buf, String...excludedKeys) {
-		
+
 		Set<Entry<String, String>> entries = graphObject.entrySet();
 
 		for (Map.Entry<String, String> entry : entries) {

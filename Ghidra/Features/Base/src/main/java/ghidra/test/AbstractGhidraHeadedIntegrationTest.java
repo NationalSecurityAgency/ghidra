@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,7 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 
 	/**
 	 * Flushes the given program's events before waiting for the swing update manager
-	 * 
+	 *
 	 * @param program The program whose events will be flushed; may be null
 	 */
 	public static void waitForProgram(Program program) {
@@ -84,11 +84,11 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 	/**
 	 * Adds the given plugin to the tool and then returns the instance of the plugin that was
 	 * added
-	 * 
+	 *
 	 * @param tool the tool
 	 * @param c the class of the plugin to add
 	 * @return the newly added plugin
-	 * @throws PluginException  if the plugin could not be constructed, or there was problem 
+	 * @throws PluginException  if the plugin could not be constructed, or there was problem
 	 * 		   executing its init() method, or if a plugin of this class already exists in the tool
 	 */
 	public static <T extends Plugin> T addPlugin(PluginTool tool, Class<T> c)
@@ -122,9 +122,9 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 	}
 
 	/**
-	 * Shows the given DialogComponentProvider using the given tool's 
-	 * {@link PluginTool#showDialog(DialogComponentProvider)} method. 
-	 * 
+	 * Shows the given DialogComponentProvider using the given tool's
+	 * {@link PluginTool#showDialog(DialogComponentProvider)} method.
+	 *
 	 * @param tool The tool used to show the given provider.
 	 * @param provider The DialogComponentProvider to show.
 	 * @return The provider once it has been shown, or null if the provider is not shown within
@@ -143,7 +143,7 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 
 	/**
 	 * Waits for the tool to finish executing commands and tasks
-	 * 
+	 *
 	 * @param tool the tool
 	 * @throws AssertionFailedError if the tool does not finish work within a reasonable limit
 	 */
@@ -171,8 +171,8 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 
 	/**
 	 * Save the given tool to the project tool chest.  If the tool already exists, then it will
-	 * be overwritten with the given tool. 
-	 * 
+	 * be overwritten with the given tool.
+	 *
 	 * @param project The project which with the tool is associated.
 	 * @param tool The tool to be saved
 	 * @return the new tool
@@ -194,9 +194,9 @@ public abstract class AbstractGhidraHeadedIntegrationTest
 	}
 
 	/**
-	 * Triggers a browser click at the current cursor location.  Thus, this method should be 
+	 * Triggers a browser click at the current cursor location.  Thus, this method should be
 	 * called only after the browser location is set the the desired field.
-	 * 
+	 *
 	 * @param codeBrowser the CodeBrowserPlugin
 	 * @param clickCount the click count
 	 */

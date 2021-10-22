@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,8 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Represents a dyld_cache_header structure.
- * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a>
  */
 @SuppressWarnings("unused")
 public class DyldCacheHeader implements StructConverter {
@@ -73,7 +73,7 @@ public class DyldCacheHeader implements StructConverter {
 
 	/**
 	 * Create a new {@link DyldCacheHeader}.
-	 * 
+	 *
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD cache header
 	 * @throws IOException if there was an IO-related problem creating the DYLD cache header
 	 */
@@ -139,7 +139,7 @@ public class DyldCacheHeader implements StructConverter {
 
 	/**
 	 * Parses the structures referenced by this {@link DyldCacheHeader} from a file.
-	 * 
+	 *
 	 * @param parseSymbols True if symbols should be parsed (could be very slow); otherwise, false
 	 * @param log The log
 	 * @param monitor A cancellable task monitor
@@ -167,7 +167,7 @@ public class DyldCacheHeader implements StructConverter {
 
 	/**
 	 * Parses the structures referenced by this {@link DyldCacheHeader} from memory.
-	 * 
+	 *
 	 * @param program The {@link Program} whose memory to parse
 	 * @param space The {@link Program}'s {@link AddressSpace}
 	 * @param log The log
@@ -183,7 +183,7 @@ public class DyldCacheHeader implements StructConverter {
 
 	/**
 	 * Marks up this {@link DyldCacheHeader} with data structures and comments.
-	 * 
+	 *
 	 * @param program The {@link Program} to mark up
 	 * @param space The {@link Program}'s {@link AddressSpace}
 	 * @param monitor A cancellable task monitor
@@ -214,7 +214,7 @@ public class DyldCacheHeader implements StructConverter {
 	/**
 	 * Gets the base address of the DYLD cache.  This is where the cache should be loaded in
 	 * memory.
-	 * 
+	 *
 	 * @return The base address of the DYLD cache
 	 */
 	public long getBaseAddress() {
@@ -223,7 +223,7 @@ public class DyldCacheHeader implements StructConverter {
 
 	/**
 	 * Gets the magic bytes, which contain version information.
-	 * 
+	 *
 	 * @return The magic bytes
 	 */
 	public byte[] getMagic() {
@@ -232,7 +232,7 @@ public class DyldCacheHeader implements StructConverter {
 
 	/**
 	 * Gets the {@link List} of {@link DyldCacheMappingInfo}s.  Requires header to have been parsed.
-	 * 
+	 *
 	 * @return The {@link List} of {@link DyldCacheMappingInfo}s
 	 */
 	public List<DyldCacheMappingInfo> getMappingInfos() {
@@ -241,7 +241,7 @@ public class DyldCacheHeader implements StructConverter {
 
 	/**
 	 * Gets the file offset to first {@link DyldCacheImageInfo}.
-	 * 
+	 *
 	 * @return The file offset to first {@link DyldCacheImageInfo}
 	 */
 	public int getImagesOffset() {
@@ -250,7 +250,7 @@ public class DyldCacheHeader implements StructConverter {
 
 	/**
 	 * Gets the number of {@link DyldCacheImageInfo}s.
-	 * 
+	 *
 	 * @return The number of {@link DyldCacheImageInfo}s
 	 */
 	public int getImagesCount() {
@@ -259,7 +259,7 @@ public class DyldCacheHeader implements StructConverter {
 
 	/**
 	 * Gets the {@link List} of {@link DyldCacheImageInfo}s. Requires header to have been parsed.
-	 * 
+	 *
 	 * @return The {@link List} of {@link DyldCacheImageInfo}s
 	 */
 	public List<DyldCacheImageInfo> getImageInfos() {
@@ -268,21 +268,21 @@ public class DyldCacheHeader implements StructConverter {
 
 	/**
 	 * Gets the {@link DyldCacheLocalSymbolsInfo}.
-	 * 
-	 * @return The {@link DyldCacheLocalSymbolsInfo}.  Could be be null if it didn't parse. 
+	 *
+	 * @return The {@link DyldCacheLocalSymbolsInfo}.  Could be be null if it didn't parse.
 	 */
 	public DyldCacheLocalSymbolsInfo getLocalSymbolsInfo() {
 		return localSymbolsInfo;
 	}
-	
+
 	/**
 	 * Gets the {@link DyldCacheSlideInfoCommon}.
-	 * 
+	 *
 	 * @return the {@link DyldCacheSlideInfoCommon}.  Common, or particular version
 	 */
 	public DyldCacheSlideInfoCommon getSlideInfo() {
 		return slideInfo;
-	}	
+	}
 
 	/**
 	 * @return slideInfoOffset
@@ -300,7 +300,7 @@ public class DyldCacheHeader implements StructConverter {
 
 	/**
 	 * Gets the {@link List} of branch pool address.  Requires header to have been parsed.
-	 * 
+	 *
 	 * @return The {@link List} of branch pool address
 	 */
 	public List<Long> getBranchPoolAddresses() {
@@ -309,7 +309,7 @@ public class DyldCacheHeader implements StructConverter {
 
 	/**
 	 * Gets architecture information.
-	 * 
+	 *
 	 * @return architecture information
 	 */
 	public DyldArchitecture getArchitecture() {
@@ -681,7 +681,7 @@ public class DyldCacheHeader implements StructConverter {
 
 	/**
 	 * Gets the given file offset's corresponding memory address.
-	 *  
+	 *
 	 * @param offset The file offset
 	 * @param program The {@link Program}
 	 * @param space The {@link AddressSpace}

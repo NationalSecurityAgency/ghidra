@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,7 +63,7 @@ public class PrivatelyQueuedListener<P> {
 
 	/**
 	 * Create a new privately-queued listener which will invoke the given "output" listener
-	 * 
+	 *
 	 * <p>
 	 * Invoking the listener methods of {@link #in} will cause that invocation to be queued and
 	 * eventually delivered to the given output listener. Note, as a result, it is assumed all
@@ -71,7 +71,7 @@ public class PrivatelyQueuedListener<P> {
 	 * the invocation to complete, which defeats the purpose of the private queue. The invocations
 	 * on {@link #in} will always return {@code null}, which will cause an exception if the return
 	 * type is a different primitive.
-	 * 
+	 *
 	 * @param iface the interface of the listener
 	 * @param executor the executor representing the processing queue
 	 * @param out the listener to receive the queued invocations
@@ -85,7 +85,7 @@ public class PrivatelyQueuedListener<P> {
 
 	/**
 	 * Create a new single-threaded privately-queued listener
-	 * 
+	 *
 	 * @see {@link #PrivatelyQueuedListener(Class, Executor, Object)}
 	 * @param iface the interface of the listener
 	 * @param threadNamePattern a pattern for naming the single thread

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,9 +32,9 @@ import ghidra.util.timer.GTimer;
 import ghidra.util.timer.GTimerMonitor;
 
 /**
- * <code>BlockStreamServer</code> provides a block stream server implementation intended for 
- * integration with the RMI GhidraServer implementation.  The default instance will obtain its 
- * port from the {@link ServerPortFactory} while all instances will bind to the default 
+ * <code>BlockStreamServer</code> provides a block stream server implementation intended for
+ * integration with the RMI GhidraServer implementation.  The default instance will obtain its
+ * port from the {@link ServerPortFactory} while all instances will bind to the default
  * {@link InetAddress#getLocalHost()} or the host address specified via the RMI property
  * <code>java.rmi.server.hostname</code> which is set via the GhidraServer -ip command
  * line option.
@@ -53,10 +53,10 @@ public class BlockStreamServer extends Thread {
 	private static int CLEANUP_PERIOD = 30000;
 
 	/**
-	 * Get the BlockStreamServer singleton instance.  This is intended for use on 
+	 * Get the BlockStreamServer singleton instance.  This is intended for use on
 	 * the server-side only.  The servers TCP port is determined by the {@link ServerPortFactory}
-	 * and default interface binding will be performed unless the optional IP interface 
-	 * binding option has been specified for the Ghidra Server via the 
+	 * and default interface binding will be performed unless the optional IP interface
+	 * binding option has been specified for the Ghidra Server via the
 	 * <i>java.rmi.server.hostname</i> property setting.
 	 * @return BlockStreamServer instance
 	 */
@@ -78,7 +78,7 @@ public class BlockStreamServer extends Thread {
 	private GTimerMonitor cleanupTimerMonitor;
 
 	/**
-	 * Construct a block stream server instance.  
+	 * Construct a block stream server instance.
 	 */
 	private BlockStreamServer() {
 		super("BlockStreamServer");
@@ -135,8 +135,8 @@ public class BlockStreamServer extends Thread {
 	}
 
 	/**
-	 * Register a new block stream to be serviced.  A block stream registration 
-	 * will permit the server to associate an in-bound client connection with the 
+	 * Register a new block stream to be serviced.  A block stream registration
+	 * will permit the server to associate an in-bound client connection with the
 	 * appropriate block stream.
 	 * @param streamHandle the remote block stream handle
 	 * @param blockStream the associated block stream data source/sink
@@ -184,7 +184,7 @@ public class BlockStreamServer extends Thread {
 
 	/**
 	 * Start this server instance. If the server has already been started
-	 * this method will return immediately. 
+	 * this method will return immediately.
 	 * @param s server socket to be used for accepting connections
 	 * @param host remote access hostname to be used by clients
 	 * @throws IOException
@@ -263,7 +263,7 @@ public class BlockStreamServer extends Thread {
 	}
 
 	/**
-	 * <code>BlockStreamHandler</code> services a block stream request in a dedicated 
+	 * <code>BlockStreamHandler</code> services a block stream request in a dedicated
 	 * thread.  When first started the stream request header will be read from the socket
 	 * and the associated registered block stream identified.
 	 */
@@ -320,7 +320,7 @@ public class BlockStreamServer extends Thread {
 			}
 			finally {
 				if (!success && (registration.blockStream instanceof InputBlockStream)) {
-					// ensure input stream is closed since it can be terminated by client, 
+					// ensure input stream is closed since it can be terminated by client,
 					// let client handle error if any
 					try {
 						registration.blockStream.close();
@@ -342,7 +342,7 @@ public class BlockStreamServer extends Thread {
 		}
 
 		/**
-		 * Read the stream request header which must be the first input 
+		 * Read the stream request header which must be the first input
 		 * received from the client.
 		 * @return StreamRequest data presented by client
 		 * @throws IOException

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,7 +68,7 @@ public class ResultsState {
 	private final Listing listing;
 	private final AddressFactory addrFactory;
 	//private final AddressSpace uniqueSpace;
-	private final boolean maintainInstructionResults;  // maintain instruction state instead of block 
+	private final boolean maintainInstructionResults;  // maintain instruction state instead of block
 
 	private SequenceNumber entryPt;
 	private LinkedList<SequenceNumber> flowList;
@@ -212,7 +212,7 @@ public class ResultsState {
 //	public Map<SequenceNumber, ContextState> getContextStateStartingAt(SequenceNumber entry) {
 //		return stateMapByEntry.get(entry);
 //	}
-//	
+//
 //	public Map<SequenceNumber, ContextState> getContextStateEndingAt(SequenceNumber exit) {
 //		return stateMapByExit.get(exit);
 //	}
@@ -225,7 +225,7 @@ public class ResultsState {
 		SequenceNumber flowFrom = null;
 
 		examinedSet = new AddressSet();
-//int testCnt = 0;		
+//int testCnt = 0;
 		try {
 			while (nextSeq != null || !todoList.isEmpty()) {
 
@@ -276,7 +276,7 @@ public class ResultsState {
 						ContextStateSet existingStates = getContextStateSet(pcodeOp.getSeqnum());
 						if (existingStates != null) {
 							if (existingStates.containsKey(flowFrom)) {
-								// TODO: We have processed this flow before 
+								// TODO: We have processed this flow before
 								// TODO: Should we compare existingState with dest.initialState ?
 								if (DEBUG) {
 									Msg.debug(this, "Flow ignored - already processed: " +
@@ -684,7 +684,7 @@ public class ResultsState {
 	 * @return true if state can continue to be propagated, otherwise a new state is
 	 * required due to the processing of a branch operation.
 	 * @throws CancelledException
-	 * @throws InlineCallException 
+	 * @throws InlineCallException
 	 */
 	private boolean emulateOperation(VarnodeOperation op, ContextState currentState,
 			TaskMonitor monitor) throws CancelledException, InlineCallException {
@@ -838,7 +838,7 @@ public class ResultsState {
 				}
 				return false;
 
-			case PcodeOp.CALL:		        // A call with absolute address	  
+			case PcodeOp.CALL:		        // A call with absolute address
 				if (inputs[0].isAddress()) {
 					if (DEBUG) {
 						Msg.debug(this, "Call to " + inputs[0].getAddress());
@@ -1019,7 +1019,7 @@ public class ResultsState {
 				}
 				break;
 
-			case PcodeOp.INT_ZEXT:			// Zero extend operand 
+			case PcodeOp.INT_ZEXT:			// Zero extend operand
 				if (values[0].isConstant()) {
 					result =
 						new Varnode(addrFactory.getConstantAddress(getUnsignedOffset(values[0],
@@ -1061,7 +1061,7 @@ public class ResultsState {
 				}
 				break;
 
-			case PcodeOp.INT_SUB:			// Unsigned subtraction of operands of same size 
+			case PcodeOp.INT_SUB:			// Unsigned subtraction of operands of same size
 				if (values[0].equals(values[1])) {
 					result = new Varnode(addrFactory.getConstantAddress(0), output.getSize());
 				}
@@ -1089,18 +1089,18 @@ public class ResultsState {
 			case PcodeOp.INT_CARRY:       	// TRUE if adding two operands has overflow (carry)
 				return eillimnateCarryOp(pcodeOp, values, addrFactory, monitor);
 
-			case PcodeOp.INT_SCARRY:  		// TRUE if carry in signed addition of 2 ops 
+			case PcodeOp.INT_SCARRY:  		// TRUE if carry in signed addition of 2 ops
 
 // TODO: Implement constant case
 
-			case PcodeOp.INT_SBORROW:  		// TRUE if borrow in signed subtraction of 2 ops 
+			case PcodeOp.INT_SBORROW:  		// TRUE if borrow in signed subtraction of 2 ops
 				if ((values[1].isConstant() && values[1].getOffset() == 0) ||
 					(values[0].isConstant() && values[0].getOffset() == 0)) {
 					result = new Varnode(addrFactory.getConstantAddress(0), 1);
 				}
 				break;
 
-			case PcodeOp.INT_2COMP:   		// Twos complement (for subtracting) of operand 
+			case PcodeOp.INT_2COMP:   		// Twos complement (for subtracting) of operand
 				if (values[0].isConstant()) {
 					result =
 						new Varnode(addrFactory.getConstantAddress(-values[0].getOffset()),
@@ -1116,7 +1116,7 @@ public class ResultsState {
 				}
 				break;
 
-			case PcodeOp.INT_XOR:			// Exclusive OR of two operands of same size 
+			case PcodeOp.INT_XOR:			// Exclusive OR of two operands of same size
 				if (values[0].equals(values[1])) {
 					// Anything XOR'd with itself is Zero
 					result = new Varnode(addrFactory.getConstantAddress(0), output.getSize());
@@ -1211,7 +1211,7 @@ public class ResultsState {
 				}
 
 				break;
-			case PcodeOp.INT_RIGHT:	        // Right shift zero fill 
+			case PcodeOp.INT_RIGHT:	        // Right shift zero fill
 				if (values[1].isConstant() && values[1].getOffset() < 64) {
 					if (values[0].isConstant()) {
 						result =
@@ -1225,7 +1225,7 @@ public class ResultsState {
 				}
 				break;
 
-			case PcodeOp.INT_SRIGHT:       	// Signed right shift 
+			case PcodeOp.INT_SRIGHT:       	// Signed right shift
 				if (values[1].isConstant() && values[0].isConstant() && values[1].getOffset() < 64) {
 					result =
 						new Varnode(
@@ -1234,7 +1234,7 @@ public class ResultsState {
 				}
 				break;
 
-			case PcodeOp.INT_MULT:			// Integer multiplication 
+			case PcodeOp.INT_MULT:			// Integer multiplication
 				if (values[1].isConstant() && values[0].isConstant()) {
 					result =
 						new Varnode(addrFactory.getConstantAddress(values[0].getOffset() *
@@ -1399,11 +1399,11 @@ public class ResultsState {
 			// although the exact operation of these instructions obviously depends on the
 			// format.  For simulation, a "mode" variable specifying the floating point format
 			// will be necessary.
-			case PcodeOp.FLOAT_EQUAL:       // Return TRUE if operand1 == operand2    
-			case PcodeOp.FLOAT_NOTEQUAL:	// Return TRUE if operand1 != operand2    
-			case PcodeOp.FLOAT_LESS:   		// Return TRUE if op1 < op2 
+			case PcodeOp.FLOAT_EQUAL:       // Return TRUE if operand1 == operand2
+			case PcodeOp.FLOAT_NOTEQUAL:	// Return TRUE if operand1 != operand2
+			case PcodeOp.FLOAT_LESS:   		// Return TRUE if op1 < op2
 			case PcodeOp.FLOAT_LESSEQUAL:	// Return TRUE if op1 <= op2
-			case PcodeOp.FLOAT_NAN:			// Return TRUE if neither op1 is NaN 
+			case PcodeOp.FLOAT_NAN:			// Return TRUE if neither op1 is NaN
 
 			case PcodeOp.FLOAT_ADD:         // float addition
 			case PcodeOp.FLOAT_DIV:         // float division
@@ -1694,7 +1694,7 @@ public class ResultsState {
 			Varnode v0 = values[0];
 			Varnode v1 = values[1];
 			if (v1.isConstant() && (v0 instanceof VarnodeOperation)) {
-				// check for add which would not have carry into masked area and would result in 
+				// check for add which would not have carry into masked area and would result in
 				// either one of the operands
 				if ((v1.getOffset() & ~andMask) == 0) {
 					Varnode checkVn =
@@ -1777,7 +1777,7 @@ public class ResultsState {
 	 * @param output output varnode
 	 * @param value assigned value
 	 * @param op pcode operation
-	 * @throws CancelledException 
+	 * @throws CancelledException
 	 */
 	private void checkAssignment(Varnode output, Varnode value, PcodeOp op, TaskMonitor monitor)
 			throws CancelledException {
@@ -2280,7 +2280,7 @@ public class ResultsState {
 
 	/**
 	 * Get the default/assumed stack depth change for this language
-	 * 
+	 *
 	 * @param depth stack depth to return if the default is unknown for the language
 	 * @return
 	 */
@@ -2295,7 +2295,7 @@ public class ResultsState {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return Varnode that represents the stack pointer register
 	 */
 	public Varnode getStackPointerVarnode() {
@@ -2331,7 +2331,7 @@ public class ResultsState {
 //					newOffset = -newOffset;
 //				}
 //				Varnode[] simplifiedInputValues = new Varnode[] {
-//							prevOpValues[0], 
+//							prevOpValues[0],
 //							new Varnode(addrFactory.getConstantAddress(newOffset), currentOp.getOutput().getSize())	// new constant
 //						};
 //				return new VarnodeOperation(currentOp, simplifiedInputValues);

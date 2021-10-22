@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,11 +37,11 @@ public class ListingDiffHighlightProvider implements HighlightProvider {
 
 	/**
 	 * Constructor for this highlight provider.
-	 * @param listingDiff the ListingDiff to use to determine where there are differences that 
+	 * @param listingDiff the ListingDiff to use to determine where there are differences that
 	 * need highlighting.
 	 * @param isListing1 true means that these are the highlights for the first listing.
 	 * false means the highlights are for the second listing.
-	 * @param comparisonOptions the tool options that indicate the current 
+	 * @param comparisonOptions the tool options that indicate the current
 	 * background colors for the Listing code comparison panel.
 	 */
 	public ListingDiffHighlightProvider(ListingDiff listingDiff, boolean isListing1,
@@ -169,7 +169,7 @@ public class ListingDiffHighlightProvider implements HighlightProvider {
 	}
 
 	/**
-	 * Gets an array of start/end positions for each operand within the operand field's full text. 
+	 * Gets an array of start/end positions for each operand within the operand field's full text.
 	 * @param text the full text from the operand field
 	 * @param codeUnit the code unit whose operand text is provided
 	 * @return the operand pairs indicating the start and end offsets for each individual operand

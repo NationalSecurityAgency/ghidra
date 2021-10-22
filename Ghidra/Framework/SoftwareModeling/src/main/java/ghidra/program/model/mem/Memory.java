@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public interface Memory extends AddressSetView {
 	public static final long MAX_BINARY_SIZE = (long) MAX_BINARY_SIZE_GB << GBYTE_SHIFT_FACTOR;
 
 	/**
-	 * The current max size of a memory block. 
+	 * The current max size of a memory block.
 	 */
 	public static final int MAX_BLOCK_SIZE_GB = 16;  // set to 16 because anything larger, ghidra bogs down
 	public static final long MAX_BLOCK_SIZE = (long) MAX_BLOCK_SIZE_GB << GBYTE_SHIFT_FACTOR;
@@ -159,7 +159,7 @@ public interface Memory extends AddressSetView {
 
 	/**
 	 * Create an initialized memory block using bytes from a {@link FileBytes} object.
-	 * 
+	 *
 	 * @param name block name (See {@link Memory#isValidMemoryBlockName(String)} for
 	 * naming rules)
 	 * @param start starting address of the block
@@ -174,7 +174,7 @@ public interface Memory extends AddressSetView {
 	 * @throws MemoryConflictException if the new block overlaps with a
 	 * previous block
 	 * @throws AddressOverflowException if the start is beyond the address space
-	 * @throws IndexOutOfBoundsException if file bytes range specified by offset and size 
+	 * @throws IndexOutOfBoundsException if file bytes range specified by offset and size
 	 * is out of bounds for the specified fileBytes.
 	 * @throws IllegalArgumentException if invalid block name specified
 	 */
@@ -296,7 +296,7 @@ public interface Memory extends AddressSetView {
 			AddressOverflowException;
 
 	/**
-	 * Remove the memory block.  
+	 * Remove the memory block.
 	 *
 	 * @param block the block to be removed.
 	 * @param monitor monitor that is used to cancel the remove operation
@@ -771,7 +771,7 @@ public interface Memory extends AddressSetView {
 	 * @param offset the offset into the file for the first byte in the input stream.
 	 * @param size the number of bytes to store from the input stream.
 	 * @param is the input stream that will supply the bytes to store in the program.
-	 * @param monitor 
+	 * @param monitor
 	 * @return a FileBytes that was created to access the bytes.
 	 * @throws IOException if there was an IOException saving the bytes to the program database.
 	 * @throws CancelledException if the user cancelled this operation. Note: the database will
@@ -789,9 +789,9 @@ public interface Memory extends AddressSetView {
 	/**
 	 * Deletes a stored sequence of file bytes.  The file bytes can only be deleted if there
 	 * are no memory block references to the file bytes.
-	 * 
+	 *
 	 * @param fileBytes the FileBytes for the file bytes to be deleted.
-	 * @return true if the FileBytes was deleted.  If any memory blocks are referenced by this 
+	 * @return true if the FileBytes was deleted.  If any memory blocks are referenced by this
 	 * FileBytes or it is invalid then it will not be deleted and false will be returned.
 	 * @throws IOException if there was an error updating the database.
 	 */
@@ -806,7 +806,7 @@ public interface Memory extends AddressSetView {
 	public AddressSourceInfo getAddressSourceInfo(Address address);
 
 	/**
-	 * Validate the given block name: cannot be null, cannot be an empty string, 
+	 * Validate the given block name: cannot be null, cannot be an empty string,
 	 * cannot contain control characters (ASCII 0..0x19).
 	 * <BR>
 	 * NOTE: When producing an overlay memory space which corresponds to a block, the space
@@ -830,9 +830,9 @@ public interface Memory extends AddressSetView {
 
 	/**
 	 * Gets a {@link List} of {@link Address addresses} that correspond to the given file offset.
-	 * @param fileOffset the file offset that will be used to locate the corresponding memory 
+	 * @param fileOffset the file offset that will be used to locate the corresponding memory
 	 *   addresses
-	 * @return a {@link List} of {@link Address}es that are associated with the provided file offset 
+	 * @return a {@link List} of {@link Address}es that are associated with the provided file offset
 	 */
 	public default List<Address> locateAddressesForFileOffset(long fileOffset) {
 		List<Address> list = new ArrayList<>();
@@ -850,11 +850,11 @@ public interface Memory extends AddressSetView {
 	/**
 	 * Gets a list of addresses where the byte at the given offset
 	 * from the given FileBytes was loaded into memory.
-	 * @param offset the file offset in the given FileBytes of the byte that is to be 
+	 * @param offset the file offset in the given FileBytes of the byte that is to be
 	 * located in memory
 	 * @param fileBytes the FileBytesobject whose byte is to be located in memory
 	 * @return a list of addresses that are associated with the given
-	 * FileBytes and offset 
+	 * FileBytes and offset
 	 */
 	public default List<Address> locateAddressesForFileBytesOffset(FileBytes fileBytes, long offset) {
 		List<Address> list = new ArrayList<>();

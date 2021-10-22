@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,15 +20,15 @@ import ghidra.util.task.CancelledListener;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * TaskMonitor implementation that is useful for monitor work when traversing trees.  
- * 
+ * TaskMonitor implementation that is useful for monitor work when traversing trees.
+ *
  * It works by subdividing the distance of the top-most progress bar (represented by the top-most
- * monitor) into equal size chunks depending on how many children have to be visited.  For example, 
+ * monitor) into equal size chunks depending on how many children have to be visited.  For example,
  * assume the root node has 5 children, then the task bar for that node would increment 20% of
- * the bar as it completed work on each of its children. Now, assume each child of the root node 
- * has 10 children. The task monitor for each root child will operate entirely with its 20% as 
- * mentioned above.  So the first child of the first child will increment the progress bar 
- * 2% (10% of 20%) when it is complete.  
+ * the bar as it completed work on each of its children. Now, assume each child of the root node
+ * has 10 children. The task monitor for each root child will operate entirely with its 20% as
+ * mentioned above.  So the first child of the first child will increment the progress bar
+ * 2% (10% of 20%) when it is complete.
  */
 public class TreeTaskMonitor implements TaskMonitor {
 	// initialize to a huge number that can be subdivided many times
@@ -103,7 +103,7 @@ public class TreeTaskMonitor implements TaskMonitor {
 		if (maxValue > 0) {
 			this.max = maxValue;
 
-			// The size of the current window/section of the overall monitor 
+			// The size of the current window/section of the overall monitor
 			long currentRange = currentRangeMax - currentRangeMin;
 
 			// the size of one increment within the current range

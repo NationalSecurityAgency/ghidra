@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,21 +34,21 @@ import ghidra.util.SystemUtilities;
 
 /**
  * Ghidra help set that creates a GhidraHelpBroker, installs some custom HTML handling code via
- * the GHelpHTMLEditorKit, and most importantly, changes how the JavaHelp system works with 
+ * the GHelpHTMLEditorKit, and most importantly, changes how the JavaHelp system works with
  * regard to integrating Help Sets.
  * <p>
  * The HelpSet class uses a javax.help.Map object to locate HTML files by javax.help.map.ID objects.
- * This class has overridden that basic usage of the Map object to allow ID lookups to take 
- * place across GHelpSet objects.  We need to do this due to how we merge help set content 
+ * This class has overridden that basic usage of the Map object to allow ID lookups to take
+ * place across GHelpSet objects.  We need to do this due to how we merge help set content
  * across modules.  More specifically, in order to merge, we have to make all {@code <tocitem>} xml tags
- * the same, including the target HTML file they may reference.  Well, when a module uses a 
- * {@code <tocitem>} tag that references an HTML file <b>not inside of it's module</b>, then JavaHelp 
+ * the same, including the target HTML file they may reference.  Well, when a module uses a
+ * {@code <tocitem>} tag that references an HTML file <b>not inside of it's module</b>, then JavaHelp
  * considers this an error and does not correctly merge the HelpSets that share the reference.
  * Further, it does not properly locate the shared HTML file reference.  This class allows lookups
  * across modules by overridden the lookup functionality done by the map object.  More specifically,
  * we override {@link #getCombinedMap()} and {@link #getLocalMap()} to use a custom delegate map
  * object that knows how do do this "cross-module" help lookup.
- * 
+ *
  *
  *@see GHelpHTMLEditorKit
  */
@@ -123,7 +123,7 @@ public class GHelpSet extends HelpSet {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	/** A special class to allow us to handle help ID lookups across help sets */
 	private class GHelpMap implements Map {
@@ -272,7 +272,7 @@ public class GHelpSet extends HelpSet {
 
 			HelpService service = Help.getHelpService();
 			if (!service.helpExists()) {
-				// Treat everything as valid until all help is loaded, otherwise, we 
+				// Treat everything as valid until all help is loaded, otherwise, we
 				// can't be sure that when something is missing, it is just not yet merged in.
 				return true;
 			}
@@ -290,7 +290,7 @@ public class GHelpSet extends HelpSet {
 				}
 			}
 
-			// This can happen for help files that are generated during the build, 
+			// This can happen for help files that are generated during the build,
 			// such as 'What's New'; return true here so the values will still be loaded into
 			// the help system; handle the error condition later.
 			if (ignoreExternalHelp(id)) {

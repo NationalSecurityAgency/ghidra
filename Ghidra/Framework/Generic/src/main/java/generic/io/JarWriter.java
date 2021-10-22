@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public class JarWriter {
 
 	/**
 	 * Outputs an individual file to the jar.
-	 * 
+	 *
 	 * @param baseFile the file to be output
 	 * @param jarPath the base path to prepend to the file as it is written
 	 * to the jar output stream.
@@ -125,11 +125,11 @@ public class JarWriter {
 	/**
 	 * Recursively outputs a directory to the jar output stream
 	 * If baseFile is a file then it is simply output to the jar.
-	 * 
+	 *
 	 * @param baseFile the file or directory to be output
 	 * @param jarPath the base path to prepend to the files as they are written
 	 * to the jar output stream.
-	 * 
+	 *
 	 * @return true if all files are recursively output to the jar file.
 	 */
 	public boolean outputRecursively(File baseFile, String jarPath, TaskMonitor monitor) {

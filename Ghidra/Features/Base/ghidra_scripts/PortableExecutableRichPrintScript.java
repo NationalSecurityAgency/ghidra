@@ -4,22 +4,22 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// This script displays data about Microsoft development tools (compilers, linkers, etc.) 
+// This script displays data about Microsoft development tools (compilers, linkers, etc.)
 // used to build objects within program as stored in the Rich header and table.
 //
 //@category Windows
-//@keybinding 
-//@menupath 
-//@toolbar 
+//@keybinding
+//@menupath
+//@toolbar
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -134,9 +134,9 @@ public class PortableExecutableRichPrintScript extends GhidraScript {
 
 		int checksum = rich.getOffset();
 
-		// Linker version 5 has a product ID of 0x14 and was the last version to use a slightly 
+		// Linker version 5 has a product ID of 0x14 and was the last version to use a slightly
 		// different checksumming algorithm; after v5, the DOS program was also included
-		// in the checksum range.		
+		// in the checksum range.
 
 		int dosChecksum = checksumDosHeader(provider,
 			isToolchainVersionAfterV5(rich) ? pe.getDOSHeader().getProgramLen() : 0);
@@ -155,9 +155,9 @@ public class PortableExecutableRichPrintScript extends GhidraScript {
 		long version5OrGreater = Arrays.stream(rich.getRecords())
 				.map(r -> r.getCompId().getProductId())
 				.filter(id -> id > LINKER_VERSION_5_PRODUCTID)
-				.collect(Collectors.counting());		
+				.collect(Collectors.counting());
 		// @formatter:on
-		
+
 		return version5OrGreater != 0;
 	}
 

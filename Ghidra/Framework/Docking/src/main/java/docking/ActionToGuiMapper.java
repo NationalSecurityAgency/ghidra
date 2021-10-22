@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,7 +53,7 @@ public class ActionToGuiMapper {
 	 * Register a specific Help content location for a component.
 	 * The DocWinListener will be notified with the help location if the specified
 	 * component 'c' has focus and the help key is pressed.
-	 *  
+	 *
 	 * @param c component
 	 * @param helpLocation the help location
 	 */

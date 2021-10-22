@@ -68,14 +68,14 @@ extern "C" {
 /* Disable a limit on the depth of recursion in mangled strings.
    Note if this limit is disabled then stack exhaustion is possible when
    demangling pathologically complicated strings.  Bug reports about stack
-   exhaustion when the option is enabled will be rejected.  */  
-#define DMGL_NO_RECURSE_LIMIT (1 << 18)	
+   exhaustion when the option is enabled will be rejected.  */
+#define DMGL_NO_RECURSE_LIMIT (1 << 18)
 
 /* If DMGL_NO_RECURSE_LIMIT is not enabled, then this is the value used as
    the maximum depth of recursion allowed.  It should be enough for any
    real-world mangled name.  */
 #define DEMANGLE_RECURSION_LIMIT 2048
-  
+
 /* Enumeration of possible demangling styles.
 
    Lucid and ARM styles are still kept logically distinct, even though

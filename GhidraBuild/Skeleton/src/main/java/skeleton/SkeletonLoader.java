@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public class SkeletonLoader extends AbstractLibrarySupportLoader {
 	@Override
 	public String getName() {
 
-		// TODO: Name the loader.  This name must match the name of the loader in the .opinion 
+		// TODO: Name the loader.  This name must match the name of the loader in the .opinion
 		// files.
 
 		return "My loader";
@@ -46,7 +46,7 @@ public class SkeletonLoader extends AbstractLibrarySupportLoader {
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
 
-		// TODO: Examine the bytes in 'provider' to determine if this loader can load it.  If it 
+		// TODO: Examine the bytes in 'provider' to determine if this loader can load it.  If it
 		// can load it, return the appropriate load specifications.
 
 		return loadSpecs;

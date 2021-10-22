@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,14 +31,14 @@ import ghidra.util.task.TaskMonitor;
  * types of differences.
  */
 public class MemoryDiff {
-	
+
 	private Program program1;
 	private Program program2;
 	private Memory memory1;
 	private Memory memory2;
 	private AddressRange[] ranges;
 	private MemoryBlockDiff[] diffs;
-	
+
 	/**
 	 * Constructs an object for determining memory differences between two programs.
 	 * @param p1 the first program
@@ -55,7 +55,7 @@ public class MemoryDiff {
 		computeRanges();
 		computeDifferences();
 	}
-	
+
 	/**
 	 * Gets the first program that is part of this MemoryDiff.
 	 * @return the first program
@@ -63,7 +63,7 @@ public class MemoryDiff {
 	public Program getProgram1() {
 		return program1;
 	}
-	
+
 	/**
 	 * Gets the second program that is part of this MemoryDiff.
 	 * @return the second program
@@ -71,9 +71,9 @@ public class MemoryDiff {
 	public Program getProgram2() {
 		return program2;
 	}
-	
+
 	/**
-	 * Determines the address ranges that the two programs memories must be broken into for 
+	 * Determines the address ranges that the two programs memories must be broken into for
 	 * properly comparing the programs. Each of these address ranges will exist in the first
 	 * program, the second program or both programs.
 	 * @throws ProgramConflictException if the two programs can't be compared.
@@ -87,16 +87,16 @@ public class MemoryDiff {
 		}
 		ranges = rangeList.toArray(new AddressRange[rangeList.size()]);
 	}
-	
+
 	/**
-	 * Gets the number of address ranges that the two programs memories are broken into for 
+	 * Gets the number of address ranges that the two programs memories are broken into for
 	 * comparing the programs.
 	 * @return the number of address ranges.
 	 */
 	public int getNumRanges() {
 		return ranges.length;
 	}
-	
+
 	/**
 	 * Gets the address range as indicated by index. The index is zero based. Address ranges are
 	 * in order from the minimum address to the maximum address range.
@@ -106,7 +106,7 @@ public class MemoryDiff {
 	public AddressRange getRange(int index) {
 		return ranges[index];
 	}
-	
+
 	/**
 	 * Gets the memory difference flags for the address range as indicated by index.
 	 * @param index the index of the address range to get the difference flags for.
@@ -115,7 +115,7 @@ public class MemoryDiff {
 	public MemoryBlockDiff getDifferenceInfo(int index) {
 		return diffs[index];
 	}
-	
+
 	/**
 	 * Determines the memory differences and sets the flags for each associated address range.
 	 */
@@ -128,9 +128,9 @@ public class MemoryDiff {
 			diffs[i] = new MemoryBlockDiff(block1, block2);
 		}
 	}
-	
+
 	/**
-	 * Gets a string representation of the types of memory differences that exist for the memory 
+	 * Gets a string representation of the types of memory differences that exist for the memory
 	 * block that contains the indicated address.
 	 * @param p1Address address that is obtained via the first program.
 	 * @return a string indicating the types of memory differences.
@@ -143,9 +143,9 @@ public class MemoryDiff {
 		MemoryBlockDiff info = getDifferenceInfo(index);
 		return info.getDifferencesAsString();
 	}
-	
+
 	/**
-	 * Gets the index of the address range containing the indicated address, 
+	 * Gets the index of the address range containing the indicated address,
 	 * if it is contained in the list;
      *	       otherwise, <tt>(-(<i>insertion point</i>) - 1)</tt>.
 	 * @param address the address whose range we are interested in finding.
@@ -154,7 +154,7 @@ public class MemoryDiff {
 	private int getAddressRangeIndex(Address address) {
 		int low = 0;
 		int high = diffs.length-1;
-	
+
 		while (low <= high) {
 		    int mid = (low + high) >> 1;
 		    AddressRange range = ranges[mid];
@@ -187,7 +187,7 @@ public class MemoryDiff {
 		}
 		return rangeDiffs.toArray(new AddressRange[rangeDiffs.size()]);
 	}
-	
+
 	/**
 	 * Determines whether the two memory blocks are the same.
 	 * @param block1 the first program's memory block
@@ -233,8 +233,8 @@ public class MemoryDiff {
 		}
 		return true;
 	}
-	
-	
+
+
 	public boolean merge(int row, int mergeFields, TaskMonitor monitor) {
 		if ((mergeFields & MemoryBlockDiff.ALL) == 0) {
 			return false;

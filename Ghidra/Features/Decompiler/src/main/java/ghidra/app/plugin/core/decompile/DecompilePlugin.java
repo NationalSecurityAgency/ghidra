@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,14 +46,14 @@ import ghidra.util.task.SwingUpdateManager;
 	category = PluginCategoryNames.ANALYSIS,
 	shortDescription = "Decompiler",
 	description = "Plugin for producing high-level decompilation",
-	servicesRequired = { 
-		GoToService.class, NavigationHistoryService.class, ClipboardService.class, 
+	servicesRequired = {
+		GoToService.class, NavigationHistoryService.class, ClipboardService.class,
 		DataTypeManagerService.class /*, ProgramManager.class */
-	},	
+	},
 	servicesProvided = { DecompilerHighlightService.class },
-	eventsConsumed = { 
-		ProgramActivatedPluginEvent.class, ProgramOpenedPluginEvent.class, 
-		ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class, 
+	eventsConsumed = {
+		ProgramActivatedPluginEvent.class, ProgramOpenedPluginEvent.class,
+		ProgramLocationPluginEvent.class, ProgramSelectionPluginEvent.class,
 		ProgramClosedPluginEvent.class
 	}
 )

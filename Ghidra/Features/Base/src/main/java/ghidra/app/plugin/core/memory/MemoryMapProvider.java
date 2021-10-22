@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -336,7 +336,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	/**
 	 * Enable/disable the expand up/down actions according to the selected
 	 * block.
-	 * 
+	 *
 	 * @param numSelected number of blocks selected
 	 */
 	private void enableExpandActions(int numSelected) {
@@ -555,7 +555,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	 * Pop up a dialog to expand the block either up or down; "up" means make a
 	 * block have a lesser starting address; "down" means to make the block have
 	 * a greater ending address.
-	 * 
+	 *
 	 * @param dialogType either ExpandBlockDialog.EXPAND_UP or
 	 *            ExpandBlockDialog.EXPAND_DOWN.
 	 */
@@ -612,7 +612,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 
 	/**
 	 * Show the dialog to expand a memory block.
-	 * 
+	 *
 	 * @param dialogType expand up or down
 	 * @param block block to expand
 	 */

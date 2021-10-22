@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import java.io.IOException;
  *   Elf32_Word	vn_aux;			//Offset in bytes to vernaux array
  *   Elf32_Word	vn_next;		//Offset in bytes to next verneed entry
  * } Elf32_Verneed;
- * 
+ *
  * typedef struct {
  *   Elf64_Half	vn_version;		//Version of structure
  *   Elf64_Half	vn_cnt;			//Number of associated aux entries
@@ -42,7 +42,7 @@ import java.io.IOException;
  *   Elf64_Word	vn_aux;			//Offset in bytes to vernaux array
  *   Elf64_Word	vn_next;		//Offset in bytes to next verneed entry
  * } Elf64_Verneed;
- * 
+ *
  * </pre>
  */
 public class GnuVerneed implements StructConverter {

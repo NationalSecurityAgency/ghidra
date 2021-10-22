@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -173,7 +173,7 @@ public interface GdbGadpServer extends AutoCloseable {
 
 	/**
 	 * Start the GDB session
-	 * 
+	 *
 	 * @param gdbCmd the command to execute GDB
 	 * @param args arguments to pass to GDB, except for -i
 	 * @return a future that completes when GDB is ready
@@ -182,28 +182,28 @@ public interface GdbGadpServer extends AutoCloseable {
 
 	/**
 	 * Get the local address to which the SCTL server is bound.
-	 * 
+	 *
 	 * @return the local socket address
 	 */
 	SocketAddress getLocalAddress();
 
 	/**
 	 * Starts the GDB manager's console loop
-	 * 
+	 *
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void consoleLoop() throws IOException;
 
 	/**
 	 * Close all SCTL connections and ports, and terminate the GDB session
-	 * 
+	 *
 	 * @throws IOException if an I/O error occurs
 	 */
 	public void terminate() throws IOException;
 
 	/**
 	 * Calls {@link #terminate()}
-	 * 
+	 *
 	 * @throws IOException if an I/O error occurs
 	 */
 	@Override

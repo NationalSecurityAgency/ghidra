@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ public class LocationReferencesPlugin2Test extends AbstractLocationReferencesTes
 	@Test
 	public void testVariableTypeLocationDescriptor() throws Exception {
 
-		// 0100415a - sscanf  - 
+		// 0100415a - sscanf  -
 		Address address = addr(0x0100415a);
 		assertTrue(codeBrowser.goToField(address, "Variable Type", 1, 0, 1));
 
@@ -111,7 +111,7 @@ public class LocationReferencesPlugin2Test extends AbstractLocationReferencesTes
 		// in memory.
 		//
 
-		// "0x01004480" cc cc cc cc		
+		// "0x01004480" cc cc cc cc
 		Address address = addr(0x01004480);
 		goTo(address, "Operands", 6);
 
@@ -261,7 +261,7 @@ public class LocationReferencesPlugin2Test extends AbstractLocationReferencesTes
 	public void testUnionData_AddressField() {
 
 		//
-		// Ghidra cannot figure out which member of a union was accesses.   Just show all 
+		// Ghidra cannot figure out which member of a union was accesses.   Just show all
 		// references into the Union.
 		//
 
@@ -276,7 +276,7 @@ public class LocationReferencesPlugin2Test extends AbstractLocationReferencesTes
 		createData(unionAddr, union);
 
 		//
-		// Add some refs offcut and not. 
+		// Add some refs offcut and not.
 		//
 		Address from1 = addr(0x01005300);
 		createReference(from1, unionAddr);
@@ -309,7 +309,7 @@ public class LocationReferencesPlugin2Test extends AbstractLocationReferencesTes
 	public void testUnionData_FieldNameField() {
 
 		//
-		// Ghidra cannot figure out which member of a union was accesses.   Just show all 
+		// Ghidra cannot figure out which member of a union was accesses.   Just show all
 		// references into the Union.
 		//
 
@@ -324,7 +324,7 @@ public class LocationReferencesPlugin2Test extends AbstractLocationReferencesTes
 		createData(unionAddr, union);
 
 		//
-		// Add some refs offcut and not. 
+		// Add some refs offcut and not.
 		//
 		Address from1 = addr(0x01005300);
 		createReference(from1, unionAddr);
@@ -403,7 +403,7 @@ public class LocationReferencesPlugin2Test extends AbstractLocationReferencesTes
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private Reference addVariableReference(Address fromAddress, Variable variable, int opindex) {
 		int txId = program.startTransaction("AddVarRef");

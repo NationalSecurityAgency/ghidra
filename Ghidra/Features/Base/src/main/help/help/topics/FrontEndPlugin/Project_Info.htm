@@ -79,42 +79,42 @@
 
     <P align="center"><IMG border="0" src="images/SharedProjectInfo.png"></P>
 
-    <P>The <I>Project Location</I> shows the directory where your project resides, the type of project storage 
+    <P>The <I>Project Location</I> shows the directory where your project resides, the type of project storage
     (the legacy Mangled Filesystem or the newer Indexed Filesystem), and the name of your project.</P>
-    
+
     <P>The <I>Repository Info</I> shows the name and port number of the Ghidra Server and the name
-    of the repository associated with your project.</P> 
-    
+    of the repository associated with your project.</P>
+
     <A name="ConnectToServer"></A>
     <P>The connection button indicates whether you are
     connected to the server. (If you were connected, the button would show as <IMG border="0"
-    src="images/connected.gif">    You can click on the button to attempt to 
+    src="images/connected.gif">    You can click on the button to attempt to
     connect to the server.)</P>
-    
+
     <P>
  	The <A href="Creating_a_Project.htm#UserPrivileges">User
     Access Level</A> indicates your privileges in the project (Administrator, Read Only, or Read/Write).
     The User Access Level is only displayed while in a connected state.</P>
-    
-    <A name="Indexed_Filesystem"></A><P align="left"><IMG border="0" src="../../shared/note.png">As 
+
+    <A name="Indexed_Filesystem"></A><P align="left"><IMG border="0" src="../../shared/note.png">As
     of version 5.5 Ghidra utilizes
     an <i>Indexed Filesystem</i> for storage of project files, however, projects created prior to version 5.5
     utilize a <i>Mangled Filesystem</i>.  The <i>Mangled Filesystem</i> uses a name mangling scheme for files
-    and folders while preserving the folder hierarchy within the actual storage.  Unfortunately, this 
-    can result in IO errors due to native filesystem limits on filename and absolute file path length 
-    which can easily be exceeded under MS Windows.  The <i>Indexed Filesystem</i> 
+    and folders while preserving the folder hierarchy within the actual storage.  Unfortunately, this
+    can result in IO errors due to native filesystem limits on filename and absolute file path length
+    which can easily be exceeded under MS Windows.  The <i>Indexed Filesystem</i>
     implementation attempts to avoid these length limitations by utilizing an index file to record
     the folder hierarchy while a shallow non-hierarchical storage is used for project files.  When attempting to
-    locate the a file database, the folder path and item name can be found within an items associated 
+    locate the a file database, the folder path and item name can be found within an items associated
     property file (*.prp) as separate property values.</P>
 
 	<H2><A name="Convert_Project_Storage"></A>Convert Project Storage to an Indexed Filesystem</H2>
-	
+
 	<BLOCKQUOTE>
-	<P>If your project currently uses the older <i>Mangled Filesystem</i> for data storage, a one-way conversion 
-	to an <i>Indexed Filesystem</i> may be done by clicking the <B>Convert Project Storage to Indexed...</B> 
-	button which should appear near the bottom of the <i>Project Information</i> window.</P> 
-	
+	<P>If your project currently uses the older <i>Mangled Filesystem</i> for data storage, a one-way conversion
+	to an <i>Indexed Filesystem</i> may be done by clicking the <B>Convert Project Storage to Indexed...</B>
+	button which should appear near the bottom of the <i>Project Information</i> window.</P>
+
 	</BLOCKQUOTE>
 
     <H2><A name="Change_Shared_Project_Info"></A>Changing Shared Project Information</H2>

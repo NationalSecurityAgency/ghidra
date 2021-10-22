@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,15 +42,15 @@ public class NGramUtils {
 	 *  Thresholds by string length.  Index represents string length (i.e., length 4 threshold
 	 *  is -2.71). StrLen > 100, use -6.3 as threshold.
 	 *  <p>
-	 *  The 'ngThresholds' array stores thresholds for strings shorter than the minimum string 
-	 *  length, even though they are not scored. This is a convenience so that we can use the 
+	 *  The 'ngThresholds' array stores thresholds for strings shorter than the minimum string
+	 *  length, even though they are not scored. This is a convenience so that we can use the
 	 *  array to look up threshold by string length.
 	 *  <p>
-	 *  Set string lengths in range 0 - 3 to a threshold of 10 -- since scores are always negative, 
+	 *  Set string lengths in range 0 - 3 to a threshold of 10 -- since scores are always negative,
 	 *  there is no way they will be greater than 10!
 	 */
 	//@formatter:off
-	private static final Double[] NG_THRESHOLDS = new Double[] { 
+	private static final Double[] NG_THRESHOLDS = new Double[] {
 		10.0, 10.0, 10.0, 10.0, -2.71, -3.26, -3.52, -3.84, -4.23, -4.49,        	// 0 - 9
 		-4.55, -4.74, -4.88, -5.03, -5.06, -5.2, -5.24, -5.29, -5.29, -5.42, 		// 10 - 19
 		-5.51, -5.52, -5.53, -5.6, -5.6, -5.62, -5.7, -5.7, -5.78, -5.79, 			// 20 - 29
@@ -58,7 +58,7 @@ public class NGramUtils {
 		-5.99, -6.0, -6.0, -6.0, -6.02, -6.02, -6.02, -6.05, -6.06, -6.07,			// 40 - 49
 		-6.08, -6.1, -6.12, -6.12, -6.13, -6.13, -6.13, -6.13, -6.13, -6.13,		// 50 - 59
 		-6.13, -6.15, -6.15, -6.16, -6.16, -6.16, -6.17, -6.19, -6.19, -6.21,		// 60 - 69
-		-6.21, -6.21, -6.21, -6.21, -6.21, -6.25, -6.25, -6.25, -6.25, -6.25,		// 70 - 79 
+		-6.21, -6.21, -6.21, -6.21, -6.21, -6.25, -6.25, -6.25, -6.25, -6.25,		// 70 - 79
 		-6.25, -6.25, -6.26, -6.26, -6.26, -6.26, -6.26, -6.26, -6.26, -6.26, 		// 80 - 89
 		-6.26, -6.29, -6.29, -6.3, -6.3, -6.3, -6.3, -6.3, -6.3, -6.3, -6.3 		// 90 - 100
 		};
@@ -107,9 +107,9 @@ public class NGramUtils {
 	}
 
 	/**
-	 * Invoked when the given model should be loaded, or checked against an existing one to see if it is different (in 
+	 * Invoked when the given model should be loaded, or checked against an existing one to see if it is different (in
 	 * which case, it would be loaded).
-	 * 
+	 *
 	 * @param trigramFile	Name of trigram model file
 	 * @param forceReload	if true, reloads model (even if it is the same name as the previously-loaded model)
 	 * @throws IOException
@@ -137,7 +137,7 @@ public class NGramUtils {
 
 	/**
 	 * Invoked when the given model should be loaded.
-	 * 
+	 *
 	 * @param model  Model to be loaded.
 	 */
 	public static void startNewSession(StringModel model) {
@@ -147,7 +147,7 @@ public class NGramUtils {
 
 	/**
 	 * Invoked when the given model file should be loaded.
-	 * 
+	 *
 	 * @param model  Model file to be loaded
 	 */
 	public static void startNewSession(File model) throws IOException {
@@ -157,7 +157,7 @@ public class NGramUtils {
 
 	/**
 	 * Initializes log probabilities based on counts from the given input file.
-	 * 
+	 *
 	 * @param trigramFile     Name of trigram model file
 	 * @throws IOException
 	 */
@@ -194,7 +194,7 @@ public class NGramUtils {
 
 	/**
 	 * Initializes log probabilities based on counts from the given InputStream.
-	 * 
+	 *
 	 * @param trigramFileStream  InputStream of trigram file contents
 	 * @throws IOException
 	 */
@@ -208,7 +208,7 @@ public class NGramUtils {
 
 	/**
 	 * Initializes log probabilities based on counts from the given model.
-	 * 
+	 *
 	 * @param model  Model object containing trigram counts
 	 */
 	private static void loadStringModels(StringModel model) {
@@ -258,8 +258,8 @@ public class NGramUtils {
 	}
 
 	/**
-	 * Read in model files, smooth counts, and calculate log probabilities. 
-	 * 
+	 * Read in model files, smooth counts, and calculate log probabilities.
+	 *
 	 * @param charFileToSlurp  File containing character ngram counts
 	 * @throws IOException
 	 */
@@ -367,7 +367,7 @@ public class NGramUtils {
 
 	/**
 	 * Smooth any 0-count entries and calculate log probabilities
-	 * 
+	 *
 	 * @param beginTrigramCounts
 	 * @param endTrigramCounts
 	 * @param trigramCounts
@@ -423,7 +423,7 @@ public class NGramUtils {
 
 	/**
 	 * Calculates and stores scores for the [string in the] given StringAndScores object.
-	 *  
+	 *
 	 * @param strAndScores  Object that stores input string and associated scores
 	 */
 	public static void scoreString(StringAndScores strAndScores) {
@@ -450,7 +450,7 @@ public class NGramUtils {
 
 	/**
 	 * Calculates and stores scores for a list of StringAndScores objects.
-	 * 
+	 *
 	 * @param strAndScoresList  List of StringAndScores objects
 	 */
 	public static void scoreStrings(List<StringAndScores> strAndScoresList) {
@@ -465,7 +465,7 @@ public class NGramUtils {
 
 	/**
 	 * Calculate the score for the given ASCII string (characters represented by ASCII codes)
-	 * 
+	 *
 	 * @param asciiCodes  ASCII codes that represent the characters for candidate string
 	 * @return  score for the given string
 	 */
@@ -511,7 +511,7 @@ public class NGramUtils {
 
 	/**
 	 * Returns true if the model is lowercase
-	 * 
+	 *
 	 * @return boolean
 	 */
 	public static boolean isLowerCaseModel() {

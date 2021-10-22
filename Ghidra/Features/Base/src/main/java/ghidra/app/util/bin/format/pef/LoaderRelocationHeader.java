@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import java.util.List;
  *     UInt32   relocCount;       // Number of 16 bit relocation chunks.
  *     UInt32   firstRelocOffset; // Offset of first relocation instruction.
  * };
- * 
+ *
  * typedef UInt16 PEFRelocChunk;
  * </pre>
  */
@@ -67,7 +67,7 @@ public class LoaderRelocationHeader implements StructConverter {
 	}
 
 	/**
-	 * The sectionIndex field (2 bytes) designates the 
+	 * The sectionIndex field (2 bytes) designates the
 	 * section number to which this relocation header refers.
 	 * @return section number to which this relocation header refers
 	 */
@@ -82,7 +82,7 @@ public class LoaderRelocationHeader implements StructConverter {
 		return reservedA;
 	}
 	/**
-	 * The relocCount field (4 bytes) indicates the 
+	 * The relocCount field (4 bytes) indicates the
 	 * number of 16-bit relocation blocks for this section.
 	 * @return number of 16-bit relocation blocks for this section
 	 */
@@ -90,8 +90,8 @@ public class LoaderRelocationHeader implements StructConverter {
 		return relocCount;
 	}
 	/**
-	 * The firstRelocOffset field (4 bytes) indicates the byte 
-	 * offset from the start of the relocations area to the first relocation 
+	 * The firstRelocOffset field (4 bytes) indicates the byte
+	 * offset from the start of the relocations area to the first relocation
 	 * instruction for this section.
 	 * @return offset from the start of the relocations area to the first relocation
 	 */

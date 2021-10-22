@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@
 /// \return the decoded value
 uintb MemoryBank::constructValue(const uint1 *ptr,int4 size,bool bigendian)
 
-{ 
+{
   uintb res = 0;
 
   if (bigendian) {
@@ -132,7 +132,7 @@ void MemoryBank::getPage(uintb addr,uint1 *res,int4 skip,int4 size) const
 /// \param skip is the offset \e into \e the \e page where bytes will be written
 /// \param size is the number of bytes to be written
 void MemoryBank::setPage(uintb addr,const uint1 *val,int4 skip,int4 size)
-  
+
 {  // Default implementation just iterates using insert
    // but could be optimized
   uintb ptraddr = addr + skip;
@@ -251,7 +251,7 @@ uintb MemoryBank::getValue(uintb offset,int4 size) const
 
 {
   uintb res;
- 
+
   uintb alignmask = (uintb) (wordsize-1);
   uintb ind = offset & (~alignmask);
   int4 skip = offset & alignmask;
@@ -435,7 +435,7 @@ void MemoryPageOverlay::insert(uintb addr,uintb val)
     else
       underlie->getPage(pageaddr,pageptr,0,getPageSize());
   }
-  
+
   uintb pageoffset = addr & ((uintb)(getPageSize()-1));
   deconstructValue(pageptr + pageoffset,val,getWordSize(),getSpace()->isBigEndian());
 }

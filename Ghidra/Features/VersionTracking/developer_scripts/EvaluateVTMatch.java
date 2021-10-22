@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,7 +74,7 @@ public class EvaluateVTMatch extends GhidraScript {
 		private double falsepositive;
 		private List<String> mismatchList;
 		private int mismatchCountDown;
-		
+
 		public VTScorer(Program src,Program dest) {
 			sourceProg = src;
 			destProg = dest;
@@ -156,9 +156,9 @@ public class EvaluateVTMatch extends GhidraScript {
 
 		public void tag() {
 			tagFunctionNames(sourceFuncMgr, sourceProg.getListing(), nameset, true);
-			tagFunctionNames(destFuncMgr, destProg.getListing(), nameset, false);			
+			tagFunctionNames(destFuncMgr, destProg.getListing(), nameset, false);
 		}
-		
+
 		public void registerMatch(Address srcAddr,Address destAddr) {
 			Function sourceFunc = sourceFuncMgr.getFunctionAt(srcAddr);
 			if (sourceFunc == null) {
@@ -186,9 +186,9 @@ public class EvaluateVTMatch extends GhidraScript {
 					mismatchCountDown -= 1;
 				}
 			}
-			
+
 		}
-		
+
 		public void calcStats() {
 			Iterator<MyFunction> iterator2 = nameset.values().iterator();
 			while (iterator2.hasNext()) {
@@ -217,9 +217,9 @@ public class EvaluateVTMatch extends GhidraScript {
 			}
 			falsepositive = (double) mismatch / (double) possiblematches;		// Functions in source that were mismatched with dest
 			falsenegative =
-				(double) (possiblematches - matchdiscovered) / (double) possiblematches;			
+				(double) (possiblematches - matchdiscovered) / (double) possiblematches;
 		}
-		
+
 		public void reportResults(GhidraScript script,String msg) {
 			script.println(msg);
 			script.println("  False positive = " + Double.toString(falsepositive));
@@ -231,9 +231,9 @@ public class EvaluateVTMatch extends GhidraScript {
 			script.println("  Mismatches = " + Integer.toString(mismatch));
 			script.println("  Conflicting valid matches = " + Integer.toString(conflicts));
 			script.println("  Source unmatchable functions = " + Integer.toString(othersrcfuncs));
-			script.println("  Destination unmatchable functions = " + Integer.toString(otherdestfuncs));			
+			script.println("  Destination unmatchable functions = " + Integer.toString(otherdestfuncs));
 		}
-		
+
 		public void reportFalseNegatives(GhidraScript script,boolean sourceSide,int max) {
 			Iterator<MyFunction> iterator2 = nameset.values().iterator();
 			int count = 0;
@@ -252,7 +252,7 @@ public class EvaluateVTMatch extends GhidraScript {
 					}
 					if (count >= max) return;
 				}
-			}			
+			}
 		}
 
 		public void reportUnmatchable(GhidraScript script,boolean sourceSide,int max) {
@@ -282,7 +282,7 @@ public class EvaluateVTMatch extends GhidraScript {
 			}
 		}
 	}
-	
+
 	@Override
 	protected void run() throws Exception {
 		DomainFile vtFile = askDomainFile("Select VT Session");

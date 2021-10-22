@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,15 +38,15 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Class for merging equate changes. This class can merge equate changes 
+ * Class for merging equate changes. This class can merge equate changes
  * that were made to the checked out version. It can determine
  * where there are conflicts between the latest checked in version and my
  * checked out version. It can then manually merge the conflicting equates.
  * <br>The EquateMerger takes into account anywhere that code units have been merged.
  * If code units were merged, then this will not try to merge at those addresses.
- * The code unit merger should have already merged the equates where it 
+ * The code unit merger should have already merged the equates where it
  * merged code units.
- * <br>Important: This class is intended to be used only for a single program 
+ * <br>Important: This class is intended to be used only for a single program
  * version merge. It should be constructed, followed by an autoMerge(), and lastly
  * each address with a conflict should have mergeConflicts() called on it.
  */
@@ -102,7 +102,7 @@ class EquateMerger extends AbstractListingMerger {
 	public boolean apply() {
 		conflictOption = conflictPanel.getSelectedOptions();
 
-		// If the "Use For All" check box is selected 
+		// If the "Use For All" check box is selected
 		// then save the option chosen for this conflict type.
 		if (conflictPanel.getUseForAll()) {
 			equateChoice = conflictOption;
@@ -486,7 +486,7 @@ class EquateMerger extends AbstractListingMerger {
 	}
 
 	/**
-	 * <code>EquateConflict</code> provides the information needed to retain 
+	 * <code>EquateConflict</code> provides the information needed to retain
 	 * and display an equate conflict to the user. It contains the address,
 	 * operand index, and scalar value.
 	 */

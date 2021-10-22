@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,8 @@ public class ARM_ElfProgramHeaderConstants {
 
 	////////////////////////////////////////////////////////////////////////////////
 
-	// Table 5-3, Architecture compatibility data formats lists the architecture 
-	// compatibility data formats defined by this ABI. All other format 
+	// Table 5-3, Architecture compatibility data formats lists the architecture
+	// compatibility data formats defined by this ABI. All other format
 	// identifiers are reserved to future revisions of this specification.
 
 	/** There are no additional words of data. However, if EF_OSABI is non-zero, the relevant platform ABI may define additional data that follows the initial word. */
@@ -55,9 +55,9 @@ public class ARM_ElfProgramHeaderConstants {
 
 	////////////////////////////////////////////////////////////////////////////////
 
-	//Table 5-5, Architecture version compatibility data defines the values that 
-	//specify the minimum architecture version needed by this executable file. 
-	//These values are identical to those of the Tag_CPU_arch attribute used 
+	//Table 5-5, Architecture version compatibility data defines the values that
+	//specify the minimum architecture version needed by this executable file.
+	//These values are identical to those of the Tag_CPU_arch attribute used
 	//in the attributes section of a relocatable file.
 
 	/** The needed architecture is unknown or specified in some other way */
@@ -89,7 +89,7 @@ public class ARM_ElfProgramHeaderConstants {
 	/** Architecture v7E-M */
 	public static final int PT_ARM_ARCHEXT_ARCHv7EM      = 0x0D;
 
-	// FLAGS 
+	// FLAGS
 
 	/** This masks an 8-bit version number, the version of the ABI to which this ELF file conforms. This ABI is version 5. A value of 0 denotes unknown conformance. */
 	public static final int EF_ARM_EABIMASK = 0xFF000000;

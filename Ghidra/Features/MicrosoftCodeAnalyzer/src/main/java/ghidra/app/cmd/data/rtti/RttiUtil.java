@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,11 +54,11 @@ public class RttiUtil {
 	}
 
 	/**
-	 * Function that will create a symbol based on the <code>rttiSuffix</code>, which is in the 
+	 * Function that will create a symbol based on the <code>rttiSuffix</code>, which is in the
 	 * class or namespace that is indicated by the <code>demangledType</code> string.
-	 * 
+	 *
 	 * @param program the program where the symbol is being created
-	 * @param rttiAddress Address of the RTTI datatype 
+	 * @param rttiAddress Address of the RTTI datatype
 	 * @param typeDescriptorModel the model for the type descriptor structure
 	 * @param rttiSuffix suffix name indicating which type of RTTI structure
 	 * @return true if a symbol was created, false otherwise
@@ -71,12 +71,12 @@ public class RttiUtil {
 		// Get or create the namespace for this RTTI's type descriptor.
 		Namespace classNamespace = typeDescriptorModel.getDescriptorAsNamespace();
 
-		// If the RTTI's type descriptor is for a class or struct then promote its 
+		// If the RTTI's type descriptor is for a class or struct then promote its
 		// namespace to a class.
 		// <br>Note: For now this assumes all classes and structs with RTTI data must
 		// actually be classes. In the future this might need additional checking before
 		// promoting some "struct" ref types to being a class, if we can better determine
-		// whether or not they are actually classes. 
+		// whether or not they are actually classes.
 		String refType = typeDescriptorModel.getRefType(); // Can be null.
 		boolean makeClass = "class".equals(refType) || "struct".equals(refType);
 		SymbolTable symbolTable = program.getSymbolTable();
@@ -124,7 +124,7 @@ public class RttiUtil {
 	}
 
 	/**
-	 * Determines the number of vf addresses in the vf table that begins at the specified base 
+	 * Determines the number of vf addresses in the vf table that begins at the specified base
 	 * address.
 	 * @param program the program whose memory is providing their addresses
 	 * @param vfTableBaseAddress the base address in the program for the vf table
@@ -141,7 +141,7 @@ public class RttiUtil {
 		PseudoDisassembler pseudoDisassembler = new PseudoDisassembler(program);
 
 		// Create pointers starting at the address until reaching a 0 pointer.
-		// Terminate the possible table at any entry containing a cross reference that 
+		// Terminate the possible table at any entry containing a cross reference that
 		// is beyond the first table entry and don't include it.
 		int tableSize = 0;
 		Address currentVfPointerAddress = vfTableBaseAddress;
@@ -190,7 +190,7 @@ public class RttiUtil {
 	}
 
 	/**
-	 * Gets the namespace referred to by the type descriptor model if it can determine the 
+	 * Gets the namespace referred to by the type descriptor model if it can determine the
 	 * namespace. Otherwise it returns the empty string.
 	 * @param rtti0Model the model for the type descriptor whose namespace is to be returned.
 	 * @return the namespace or the empty string.

@@ -8,7 +8,7 @@
     <label>Ghidra Table of Contents</label>
     <type>javax.help.TOCView</type>
        <data>Ghidra_toc.xml</data>
-    
+
   </view>
-  
+
 </helpset>

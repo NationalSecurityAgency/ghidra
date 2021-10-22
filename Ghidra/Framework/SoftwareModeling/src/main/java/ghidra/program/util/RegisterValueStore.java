@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,11 +30,11 @@ import java.util.*;
  * values already exist at an address, the values are combined according to the masks.  Any new value
  * bits that have their associated mask bits on will overwrite any existing bits and the new mask will
  * be anded to the existing mask.  Other bits will not be affected.
- * 
+ *
  * This class takes a RangeMapAdapter that will adapt to some lower level storage.  There are current
  * two implementations - one that uses an ObjectRangeMap for storing register values in memory and
  * the other that uses RangeMapDB for storing register values in the database.
- * 
+ *
  */
 
 public class RegisterValueStore {
@@ -51,7 +51,7 @@ public class RegisterValueStore {
 	// was supported, use of multiple DisassemblerContexts concurrently for the same context
 	// storage (i.e., Program) will cause the cache to flush much more frequently and will
 	// greatly reduce efficiency.  The cache must be flushed externally prior to closing the
-	// current database transaction. 
+	// current database transaction.
 	//
 	private boolean rangeWriteCacheEnabled = false;
 	private RegisterValue rangeWriteCacheValue;
@@ -59,7 +59,7 @@ public class RegisterValueStore {
 	private Address rangeWriteCacheMax;
 
 	/**
-	 * Constructs a new RegisterValueStore. 
+	 * Constructs a new RegisterValueStore.
 	 * @param rangeMap the rangeMapAdapter that handles the low level storage of byte arrays
 	 */
 	public RegisterValueStore(Register register, RangeMapAdapter rangeMap,
@@ -97,9 +97,9 @@ public class RegisterValueStore {
 
 	/**
 	 * Sets the given register value (contains value and mask) across the given address range.  Any
-	 * existing values in the range that have values that are not part of the input mask are 
-	 * not changed. 
-	 * @param start the start of the range to set the register value. 
+	 * existing values in the range that have values that are not part of the input mask are
+	 * not changed.
+	 * @param start the start of the range to set the register value.
 	 * @param end the end of the range(inclusive) to set the register value.
 	 * @param newValue the new register value to set.
 	 */
@@ -184,9 +184,9 @@ public class RegisterValueStore {
 
 	/**
 	 * Clears the address range of any set bits using the mask from the given register value.
-	 * existing values in the range that have values that are not part of the input mask are 
+	 * existing values in the range that have values that are not part of the input mask are
 	 * not changed. If register is null, just clear all the values in range
-	 * @param start the start of the range to clear the register value bits. 
+	 * @param start the start of the range to clear the register value bits.
 	 * @param end the end of the range(inclusive) to clear the register value bits.
 	 * @param register the register whos mask to use.  If null, clear all values in the given range.
 	 */
@@ -229,9 +229,9 @@ public class RegisterValueStore {
 	}
 
 	/**
-	 * Returns the RegisterValue (value and mask) associated with the given address. 
+	 * Returns the RegisterValue (value and mask) associated with the given address.
 	 * @param address the address at which to get the RegisterValue.
-	 * @return the RegisterValue 
+	 * @return the RegisterValue
 	 */
 	public RegisterValue getValue(Register register, Address address) {
 
@@ -289,7 +289,7 @@ public class RegisterValueStore {
 	 * Preserve register values and handle register name/size change.
 	 * @param translator
 	 * @param monitor
-	 * @return true if translated successfully, false if register not mapped 
+	 * @return true if translated successfully, false if register not mapped
 	 * value storage should be discarded.
 	 * @throws CancelledException
 	 */

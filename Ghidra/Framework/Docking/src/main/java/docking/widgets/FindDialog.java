@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -149,7 +149,7 @@ public class FindDialog extends DialogComponentProvider {
 		SearchLocation searchLocation =
 			searcher.search(searchText, cursorPosition, forward, useRegex);
 
-		// 
+		//
 		// First, just search in the current direction.
 		//
 		if (searchLocation != null) {
@@ -157,7 +157,7 @@ public class FindDialog extends DialogComponentProvider {
 			return;
 		}
 
-		// 
+		//
 		// Did not find the text in the current direction.  Wrap and try one more time.
 		//
 		String wrapMessage;
@@ -177,9 +177,9 @@ public class FindDialog extends DialogComponentProvider {
 			return;
 		}
 
-		// 
-		// At this point, we wrapped our search and did *not* find a match.  This can only 
-		// happen if there is no matching text anywhere in the document, as after wrapping 
+		//
+		// At this point, we wrapped our search and did *not* find a match.  This can only
+		// happen if there is no matching text anywhere in the document, as after wrapping
 		// will will again find the previous match, if it exists.
 		//
 		notifyUser("Not found");

@@ -1,35 +1,35 @@
 <?xml version='1.0' encoding='ISO-8859-1' ?>
-<!-- 
+<!--
 
-	This is an XML file intended to be parsed by the Ghidra help system.  It is loosely based 
-	upon the JavaHelp table of contents document format.  The Ghidra help system uses a 
-	TOC_Source.xml file to allow a module with help to define how its contents appear in the 
-	Ghidra help viewer's table of contents.  The main document (in the Base module) 
-	defines a basic structure for the 
+	This is an XML file intended to be parsed by the Ghidra help system.  It is loosely based
+	upon the JavaHelp table of contents document format.  The Ghidra help system uses a
+	TOC_Source.xml file to allow a module with help to define how its contents appear in the
+	Ghidra help viewer's table of contents.  The main document (in the Base module)
+	defines a basic structure for the
 	Ghidra table of contents system.  Other TOC_Source.xml files may use this structure to insert
 	their files directly into this structure (and optionally define a substructure).
-	
-	
+
+
 	In this document, a tag can be either a <tocdef> or a <tocref>.  The former is a definition
-	of an XML item that may have a link and may contain other <tocdef> and <tocref> children.  
-	<tocdef> items may be referred to in other documents by using a <tocref> tag with the 
-	appropriate id attribute value.  Using these two tags allows any module to define a place 
-	in the table of contents system (<tocdef>), which also provides a place for 
-	other TOC_Source.xml files to insert content (<tocref>).  
-	
+	of an XML item that may have a link and may contain other <tocdef> and <tocref> children.
+	<tocdef> items may be referred to in other documents by using a <tocref> tag with the
+	appropriate id attribute value.  Using these two tags allows any module to define a place
+	in the table of contents system (<tocdef>), which also provides a place for
+	other TOC_Source.xml files to insert content (<tocref>).
+
 	During the help build time, all TOC_Source.xml files will be parsed and	validated to ensure
 	that all <tocref> tags point to valid <tocdef> tags.  From these files will be generated
-	<module name>_TOC.xml files, which are table of contents files written in the format 
+	<module name>_TOC.xml files, which are table of contents files written in the format
 	desired by the JavaHelp system.   Additionally, the genated files will be merged together
 	as they are loaded by the JavaHelp system.  In the end, when displaying help in the Ghidra
-	help GUI, there will be on table of contents that has been created from the definitions in 
+	help GUI, there will be on table of contents that has been created from the definitions in
 	all of the modules' TOC_Source.xml files.
 
-	
+
 	Tags and Attributes
-	
+
 	<tocdef>
-	-id          - the name of the definition (this must be unique across all TOC_Source.xml files)	
+	-id          - the name of the definition (this must be unique across all TOC_Source.xml files)
 	-text        - the display text of the node, as seen in the help GUI
 	-target**    - the file to display when the node is clicked in the GUI
 	-sortgroup   - this is a string that defines where a given node should appear under a given
@@ -38,41 +38,41 @@
 	               the text of attribute will be used.
 
 	<tocref>
-	-id			 - The id of the <tocdef> that this reference points to 
-	
-	**The URL for the target is relative and should start with 'help/topics'.  This text is 
+	-id			 - The id of the <tocdef> that this reference points to
+
+	**The URL for the target is relative and should start with 'help/topics'.  This text is
 	used by the Ghidra help system to provide a universal starting point for all links so that
 	they can be resolved at runtime, across modules.
-	
-	
+
+
 -->
 
 <tocroot>
 
 <tocdef id="Root"
 		  sortgroup="a"
-	      text="Welcome to Ghidra Help" 
+	      text="Welcome to Ghidra Help"
 	      target="help/topics/Misc/Welcome_to_Ghidra_Help.htm">
 
     <tocdef id="Intro" sortgroup="1a" text="Introduction"  target="help/topics/Intro/Intro.htm" />
-    
-    <tocdef id="Getting Started" 
+
+    <tocdef id="Getting Started"
 			sortgroup="a"
 	        text="Getting Started"
 	        target="help/topics/Intro/Intro.htm#GettingStarted">
         <tocdef id="Starting Ghidra" sortgroup="c" text="Starting Ghidra"  target="help/topics/Intro/Intro.htm#StartingGhidra" />
         <tocdef id="Error Dialogs" sortgroup="d" text="Error Dialogs" target="help/topics/Intro/Intro.htm#ErrorDialogs" />
         <tocdef id="Overview" sortgroup="e" text="Overview"  target="help/topics/Intro/Intro.htm#OverView" />
-        <tocdef id="Docking Windows" sortgroup="f" text="Docking Windows"  target="help/topics/DockingWindows/Docking_Windows.htm" />            
-        <tocdef id="Ghidra Project Window" sortgroup="g" text="Ghidra Project Window"  target="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#Project_Window" /> 
+        <tocdef id="Docking Windows" sortgroup="f" text="Docking Windows"  target="help/topics/DockingWindows/Docking_Windows.htm" />
+        <tocdef id="Ghidra Project Window" sortgroup="g" text="Ghidra Project Window"  target="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#Project_Window" />
         <tocdef id="Ghidra Server" sortgroup="h" text="Ghidra Server" target="help/topics/GhidraServer/GhidraServer.htm" />
         <tocdef id="About Ghidra" sortgroup="i" text="About Ghidra" target="help/topics/About/About_Ghidra.htm" />
     </tocdef>
 
 
-    <tocdef id="Ghidra Projects" 
+    <tocdef id="Ghidra Projects"
 			sortgroup="b"
-	        text="Ghidra Projects" 
+	        text="Ghidra Projects"
 	        target="help/topics/Project/Ghidra_Projects.htm">
         <tocdef id="New Project" sortgroup="a" text="New Project"  target="help/topics/FrontEndPlugin/Creating_a_Project.htm" />
         <tocdef id="Open Project" sortgroup="b" text="Open Project"  target="help/topics/FrontEndPlugin/Opening_a_Ghidra_Project.htm" />
@@ -85,14 +85,14 @@
         <tocdef id="Project Access List" sortgroup="i" text="Project Access List" target="help/topics/FrontEndPlugin/Ghidra_Front_end.htm#Edit_Project_Access_List"/>
     </tocdef>
 
-    
-    <tocdef id="Programs" 	  	    
+
+    <tocdef id="Programs"
 			sortgroup="c"
 			text="Programs"
 	        target="help/topics/Program/Ghidra_Programs.htm">
         <tocdef id="Import Program" sortgroup="a" text="Import Program"  target="help/topics/ImporterPlugin/importer.htm" />
  	    <tocdef id="BatchImport" sortgroup = "aa" text="Batch Import" target="help/topics/ImporterPlugin/importer.htm#Batch_Import" />
- 
+
         <tocdef id="Export Program" sortgroup="b" text="Export Program"  target="help/topics/ExporterPlugin/exporter.htm" />
         <tocdef id="Open Program" sortgroup="c" text="Open Program"  target="help/topics/ProgramManagerPlugin/Opening_Program_Files.htm" />
         <tocdef id="Close Program" sortgroup="d" text="Close Program"  target="help/topics/ProgramManagerPlugin/Closing_Program_Files.htm" />
@@ -104,10 +104,10 @@
         <tocdef id="Merge Programs" sortgroup="j" text="Merge Programs"  target="help/topics/Repository/Merge_Program_Files.htm" />
     </tocdef>
 
-    
-    <tocdef id="Tools" 
+
+    <tocdef id="Tools"
 	  		sortgroup="d"
-	  		text="Tools" 			
+	  		text="Tools"
 	        target="help/topics/Tool/Ghidra_Tool_Administration.htm">
         <tocdef id="Configure Tool" sortgroup="a" text="Configure Tool"  target="help/topics/Tool/Configure_Tool.htm" />
         <tocdef id="Default Tools" sortgroup="b" text="Default Tools"  target="help/topics/Tool/Ghidra_Tool_Administration.htm#DefaultTools" />
@@ -124,7 +124,7 @@
     </tocdef>
 
 
-    <tocdef id="Ghidra Functionality" 
+    <tocdef id="Ghidra Functionality"
 			sortgroup="e"
 	        text="Ghidra Functionality"
 	        target = "help/topics/Intro/GhidraFunctionality.htm">
@@ -133,10 +133,10 @@
             <tocdef id="Markers" sortgroup="b" text="Markers"  target="help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMarkers" />
             <tocdef id="Cursor Text Highlight" sortgroup="c" text="Cursor Text Highlight"  target="help/topics/CodeBrowserPlugin/CodeBrowser.htm#cursorTextHighlight" />
             <tocdef id="Code Browser Configuration Options" sortgroup="d" text="Configuration Options"  target="help/topics/CodeBrowserPlugin/CodeBrowserOptions.htm" />
-            
+
 
         </tocdef>
-        
+
         <tocdef id="Assembler" text="Assembler" target="help/topics/AssemblerPlugin/Assembler.htm"></tocdef>
 
         <tocdef id="Entropy Overview" text="Entropy Overview"  target="help/topics/OverviewPlugin/Overview.htm#EntropyOverviewBar" >
@@ -147,13 +147,13 @@
         </tocdef>
 
         <tocdef id="Eclipse Integration" text="Eclipse Integration"  target="help/topics/EclipseIntegration/EclipseIntegration.htm" />
-        
+
         <tocdef id="FileSystem Browser"	text="FileSystem Browser" target="help/topics/FileSystemBrowserPlugin/FileSystemBrowserPlugin.html" />
-                   
+
         <tocdef id="Graphing" text="Graphing" target="help/topics/Graph/GraphIntro.html">
-        	<tocdef id="Graph Services" text="Graph Services" target="help/topics/Graph/GraphServicesIntro.html"/> 
+        	<tocdef id="Graph Services" text="Graph Services" target="help/topics/Graph/GraphServicesIntro.html"/>
         </tocdef>
-                    
+
         <tocdef id="Program Tree" text="Program Tree"  target="help/topics/ProgramTreePlugin/program_tree.htm" >
             <tocdef id="Folders and Fragments" sortgroup="a" text="Folders and Fragments" target="help/topics/ProgramTreePlugin/program_tree.htm#FoldersAndFragments" />
             <tocdef id="Control the View" sortgroup="b" text="Control the View" target="help/topics/ProgramTreePlugin/program_tree.htm#ViewControl" />
@@ -164,12 +164,12 @@
             <tocdef id="Rename view" sortgroup="c" text="Rename view" target="help/topics/ProgramTreePlugin/view_manager.htm#Rename_Tree_View" />
             <tocdef id="Close view" sortgroup="d" text="Close view" target="help/topics/ProgramTreePlugin/view_manager.htm#Close_Tree_View" />
         </tocdef>
-        
+
         <tocdef id="Symbol Table" text="Symbol Table"  target="help/topics/SymbolTablePlugin/symbol_table.htm">
             <tocdef id="Symbol References" sortgroup="a" text="Symbol References"  target="help/topics/SymbolTablePlugin/symbol_references.htm" />
             <tocdef id="Symbol Tree" sortgroup="b" text="Symbol Tree" target="help/topics/SymbolTreePlugin/SymbolTree.htm" />
         </tocdef>
-        
+
         <tocdef id="Relocation Table" text="Relocation Table"  target="help/topics/RelocationTablePlugin/relocation_table.htm" />
         <tocdef id="Memory Map" sortgroup="h" text="Memory Map"  target="help/topics/MemoryMapPlugin/Memory_Map.htm" >
             <tocdef id="Editing a Memory Block" sortgroup="a" text="Editing a Memory Block"  target="help/topics/MemoryMapPlugin/Memory_Map.htm#MemoryBlockEdits" />
@@ -182,17 +182,17 @@
                 <tocdef id="Merge" sortgroup="f" text="Merge"  target="help/topics/MemoryMapPlugin/Memory_Map.htm#Merge_Blocks" />
                 <tocdef id="Delete" sortgroup="g" text="Delete"  target="help/topics/MemoryMapPlugin/Memory_Map.htm#Delete_Block" />
                 <tocdef id="Set Image Base" sortgroup="g" text="Set Image Base"  target="help/topics/MemoryMapPlugin/Memory_Map.htm#Set_Image_Base" />
-            </tocdef> 
+            </tocdef>
         </tocdef>
- 
+
         <!-- Formerly The Byte Viewer -->
- 
+
         <tocdef id="Program Annotation" text="Program Annotation"  target="help/topics/ProgramManagerPlugin/Program_Annotation.htm">
             <tocdef id="Auto Analysis" sortgroup="a" text="Auto Analysis" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm" >
                 <tocdef id="Forcing Analysis" sortgroup="a" text="Forcing Analysis" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Auto_Analyze" />
                 <tocdef id="Auto Analysis Options Panel" sortgroup="b" text="Auto Analysis Options Panel" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Auto_Analysis_Option" />
                 <tocdef id="Implemented Auto Analyzers" sortgroup="c" text="Implemented Auto Analyzers" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Auto_Analyzers" >
-                                    
+
                     <tocdef id="Entry Point Analyzer" sortgroup="a" text="Entry Point Analyzer" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Auto_Analysis_Option_Byte" />
                     <tocdef id="Subroutine Analyzer" sortgroup="b" text="Subroutine Analyzer" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#FunctionAnalyzer" />
                     <tocdef id="Scalar Operand Analyzer" sortgroup="c" text="Scalar Operand Analyzer" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Scalar_Operand_Analyzer" />
@@ -205,25 +205,25 @@
                     <tocdef id="Decompiler Parameter ID Analyzer" sortgroup="k" text="Decompiler Parameter ID Analyzer" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Decompiler_Parameter_ID_Analyzer" />
                     <tocdef id="Windows x86 Analyzer" sortgroup="l" text="Windows x86 Analyzer" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Windows_X86_PE_Analyzer" />
                     <tocdef id="Address Table Analyzer" sortgroup="m" text="Address Table Analyzer" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Auto_Analysis_Option_Address_Table" />
-                    
+
                     <!--  Prototype -->
                     <tocdef id="Aggressive Instruction Finder" sortgroup="n" text="Aggressive Instruction Finder" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Aggressive_Instruction_Finder" />
                     <tocdef id="Condense Filler Bytes" sortgroup="o" text="Condense Filler Bytes" target="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Condense_Filler_Bytes_Analyzer" />
                 </tocdef>
             </tocdef>
-            
+
             <tocdef id="Disassembly" sortgroup="b" text="Disassembly"  target="help/topics/DisassemblerPlugin/Disassembly.htm" >
                 <tocdef id="Dynamic Disassembly" sortgroup="a" text="Dynamic Disassembly"  target="help/topics/DisassemblerPlugin/Disassembly.htm#Disassemble" />
                 <tocdef id="Static Disassembly" sortgroup="b" text="Static Disassembly"  target="help/topics/DisassemblerPlugin/Disassembly.htm#Disassemble_Static" />
                 <tocdef id="Restricted Disassembly" sortgroup="c" text="Restricted Disassembly"  target="help/topics/DisassemblerPlugin/Disassembly.htm#Disassemble_Restricted" />
                 <tocdef id="Processor Options" sortgroup="d" text="Processor Options"  target="help/topics/DisassemblerPlugin/Disassembly.htm#ProcessorOptions" />
             </tocdef>
-        
+
             <tocdef id="Data" sortgroup="c" text="Data"  target="help/topics/DataPlugin/Data.htm" >
                 <tocdef id="Create Data" sortgroup="a" text="Create Data"  target="help/topics/DataPlugin/Data.htm" />
                 <tocdef id="Data Types" sortgroup="b" text="Data Types"  target="help/topics/DataPlugin/Data.htm#DataTypes" />
                 <tocdef id="Data Type Manager" sortgroup="c" text="Data Type Manager"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm">
-                		<tocdef id="DTM Concepts" sortgroup="a" text="Basic Concepts"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Basic_Concepts" />		
+                		<tocdef id="DTM Concepts" sortgroup="a" text="Basic Concepts"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Basic_Concepts" />
                 		<tocdef id="DTM Window" sortgroup="b" text="Data Type Window"  target="help/topics/DataTypeManagerPlugin/data_type_manager_window.html" />
                 		<tocdef id="DTM Working With Archives" sortgroup="c" text="Archives"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Archives" />
                 		<tocdef id="DTM Working With Categories" sortgroup="d" text="Categories"  target="help/topics/DataTypeManagerPlugin/data_type_manager_description.htm#Category" />
@@ -235,10 +235,10 @@
                 <tocdef id="Translate Strings" sortgroup="e" text="Translate Strings"  target="help/topics/TranslateStringsPlugin/TranslateStringsPlugin.htm" />
                 <tocdef id="Save Image" sortgroup="e" text="Save Image"  target="help/topics/ResourceActionsPlugin/ResourceActions.html" />
             </tocdef>
-        
+
             <tocdef id="Labels" sortgroup="d" text="Labels"  target="help/topics/LabelMgrPlugin/Labels.htm" >
                 <tocdef id="Label Source" sortgroup="a" text="Label Source"  target="help/topics/LabelMgrPlugin/Labels.htm#LabelSource" />
-                <tocdef id="Default Label" sortgroup="b" text="Default Label"  target="help/topics/LabelMgrPlugin/Labels.htm#DefaultLabel" />                
+                <tocdef id="Default Label" sortgroup="b" text="Default Label"  target="help/topics/LabelMgrPlugin/Labels.htm#DefaultLabel" />
                 <tocdef id="Label Properties" sortgroup="c" text="Label Properties"  target="help/topics/LabelMgrPlugin/Labels.htm#LabelProperties" />
                 <tocdef id="Add/Edit Labels" sortgroup="d" text="Add/Edit Labels"  target="help/topics/LabelMgrPlugin/Labels.htm#AddEditDialog" />
                 <tocdef id="Set Label" sortgroup="e" text="Set Label"  target="help/topics/LabelMgrPlugin/Labels.htm#OperandLabelDialog" />
@@ -251,16 +251,16 @@
                     <tocdef id="Making a Label Primary" sortgroup="f" text="Making a Label Primary"  target="help/topics/LabelMgrPlugin/Labels.htm#Making_Label_Primary" />
                     <tocdef id="Setting a Label in an Operand" sortgroup="g" text="Setting a Label in an Operand"  target="help/topics/LabelMgrPlugin/Labels.htm#Set_Operand_Label" />
                     <tocdef id="Show Label History" sortgroup="h" text="Show Label History"  target="help/topics/LabelMgrPlugin/Labels.htm#Show_Label_History" />
-                </tocdef> 
+                </tocdef>
             </tocdef>
-        
+
             <tocdef id="Comments" sortgroup="e" text="Comments"  target="help/topics/CommentsPlugin/Comments.htm" >
                 <tocdef id="Add or Edit Comments" sortgroup="a" text="Add or Edit Comments"  target="help/topics/CommentsPlugin/Comments.htm#Edit_Comments"  />
                 <tocdef id="Delete Comments" sortgroup="b" text="Delete Comments"  target="help/topics/CommentsPlugin/Comments.htm#Delete_Comments"  />
                 <tocdef id="Navigating in Codebrowser through Comments" sortgroup="c" text="Navigating in Codebrowser through Comments"  target="help/topics/CommentsPlugin/Comments.htm#Navigating_through_Comments"  />
                 <tocdef id="Displaying Comment History" sortgroup="d" text="Displaying Comment History"  target="help/topics/CommentsPlugin/Comments.htm#Show_Comment_History"  />
             </tocdef>
-        
+
             <tocdef id="References" sortgroup="f" text="References"  target="help/topics/ReferencesPlugin/References.htm" >
                 <tocdef id="Forward References" sortgroup="a" text="Forward References"  target="help/topics/ReferencesPlugin/References_from.htm" >
                     <tocdef id="Memory References" sortgroup="a" text="Memory References"  target="help/topics/ReferencesPlugin/References_from.htm#memRefs">
@@ -273,7 +273,7 @@
                 </tocdef>
                 <tocdef id="Back References" sortgroup="b" text="Back References"  target="help/topics/LocationReferencesPlugin/Location_References.html" />
             </tocdef>
-        
+
             <tocdef id="Equates" sortgroup="g" text="Equates"  target="help/topics/EquatePlugin/Equates.htm" >
                 <tocdef id="Set Equate" sortgroup="a" text="Set Equate"  target="help/topics/EquatePlugin/Equates.htm#Set_Equate" />
                 <tocdef id="Remove Equate" sortgroup="b" text="Remove Equate"  target="help/topics/EquatePlugin/Equates.htm#Remove_Equate" />
@@ -286,10 +286,10 @@
                     <tocdef id="Signed Hex" sortgroup="d" text="Signed Hex"  target="help/topics/EquatePlugin/Equates.htm#Convert_To_Signed_Hex" />
                     <tocdef id="Unsigned Hex" sortgroup="e" text="Unsigned Hex"  target="help/topics/EquatePlugin/Equates.htm#Convert_To_Unsigned_Hex" />
                     <tocdef id="Char / Char Sequence" sortgroup="f" text="Char / Char Sequence"  target="help/topics/EquatePlugin/Equates.htm#Convert_To_Char" />
-                    <tocdef id="Binary" sortgroup="g" text="Binary"  target="help/topics/EquatePlugin/Equates.htm#Convert_To_Unsigned_Binary" />                    
+                    <tocdef id="Binary" sortgroup="g" text="Binary"  target="help/topics/EquatePlugin/Equates.htm#Convert_To_Unsigned_Binary" />
                 </tocdef>
             </tocdef>
-       
+
             <tocdef id="Functions" sortgroup="h" text="Functions"  target="help/topics/FunctionPlugin/Functions.htm" >
             	<tocdef id="Create Function" sortgroup="a" text="Create Function" target="help/topics/FunctionPlugin/Functions.htm#Create_Function" />
             	<tocdef id="Re-create Function" sortgroup="b" text="Re-create Function" target="help/topics/FunctionPlugin/Functions.htm#Re_create_Function" />
@@ -304,7 +304,7 @@
                 <tocdef id="Function Signature and Variables" sortgroup="k" text="Function Signature and Variables"  target="help/topics/FunctionPlugin/Variables.htm" />
                 <tocdef id="Function Tags" sortgroup="l" text="Function Tags" target="help/topics/FunctionTagPlugin/function_tag_window.htm" />
             </tocdef>
-           
+
             <tocdef id="Set Register Values" sortgroup="i" text="Set Register Values"  target="help/topics/RegisterPlugin/Registers.htm" />
             <tocdef id="Bookmarks" sortgroup="j" text="Bookmarks"  target="help/topics/BookmarkPlugin/Bookmarks.htm" />
             <tocdef id="Clear" sortgroup="k" text="Clear"  target="help/topics/ClearPlugin/Clear.htm" />
@@ -315,26 +315,26 @@
                 <tocdef id="Go to Next/Previous" sortgroup="b" text="Go to Next/Previous"  target="help/topics/Navigation/Navigation.htm#Navigation_History" />
                 <tocdef id="Margin and Navigation Markers" sortgroup="c" text="Margin and Navigation Markers"  target="help/topics/CodeBrowserPlugin/CodeBrowser.htm#CBNavigationMarkers" />
             </tocdef>
-            
-            
+
+
             <tocdef id="Selection" sortgroup="o" text="Selection"  target="help/topics/Selection/Selecting.htm" >
                 <tocdef id="Selection by Flow" sortgroup="a" text="Selection by Flow" target="help/topics/FlowSelection/Selection_By_Flow.html" />
                 <tocdef id="Selection Highlighting" sortgroup="b" text="Selection Highlighting"  target="help/topics/SetHighlightPlugin/Highlighting.htm" />
             </tocdef>
-        
+
             <tocdef id="Program Search" sortgroup="p" text="Program Search" target="help/topics/Search/Searching.htm" >
                 <tocdef id="Memory" sortgroup="a" text="Memory" target="help/topics/Search/Search_Memory.htm" />
                 <tocdef id="Text" sortgroup="b" text="Text" target="help/topics/Search/Search_Program_Text.htm" />
-                <tocdef id="Strings" sortgroup="c" text="Strings" target="help/topics/Search/Search_for_Strings.htm" />                                
+                <tocdef id="Strings" sortgroup="c" text="Strings" target="help/topics/Search/Search_for_Strings.htm" />
                 <tocdef id="Scalars" sortgroup="d" text="Scalars" target="help/topics/ScalarSearchPlugin/The_Scalar_Table.htm" />
                 <tocdef id="Instruction Patterns" sortgroup="e" text="Instruction Patterns" target="help/topics/Search/Search_Instruction_Patterns.htm" />
                 <tocdef id="Address Tables" sortgroup="f" text="Address Tables" target="help/topics/Search/Search_for_AddressTables.htm" />
                 <tocdef id="Direct References" sortgroup="g" text="Direct References" target="help/topics/Search/Search_for_DirectReferences.htm" />
                 <tocdef id="Search Results Window" sortgroup="h" text="Query Results Window" target="help/topics/Search/Query_Results_Dialog.htm" />
             </tocdef>
-            
+
         </tocdef> <!-- End Program Annotation -->
-        
+
         <tocdef id="Scripting" text="Scripting" target="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm" >
             <tocdef id="Listing Scripts by Category" sortgroup="a" text="Listing Scripts by Category" target="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm#Script_Category_Tree" />
             <tocdef id="Information in Script Table" sortgroup="b" text="Information in Script Table" target="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm#Script_Table" />
@@ -359,17 +359,17 @@
             <tocdef id="Ghidra Script Development" sortgroup="f" text="Ghidra Script Development" target="help/topics/GhidraScriptMgrPlugin/ScriptDevelopment.htm" />
             <tocdef id="Ghidra Bundles" sortgroup="g" text="Ghidra Bundles" target="help/topics/BundleManager/BundleManager.htm" />
         </tocdef>
-        
-        <tocdef id="Program Validator" 
-				text="Program Validator" 
-				target="help/topics/ValidateProgram/ValidateProgram.html" />
-    </tocdef> <!-- End Ghidra Functionality --> 
 
-    <tocdef id="Ghidra Support" 
+        <tocdef id="Program Validator"
+				text="Program Validator"
+				target="help/topics/ValidateProgram/ValidateProgram.html" />
+    </tocdef> <!-- End Ghidra Functionality -->
+
+    <tocdef id="Ghidra Support"
 			sortgroup="g"
 	        text="Support"
 	        target = "help/topics/Intro/GhidraSupport.htm">
-				
+
 		<tocdef id="Headless Analyzer"
 				text="Headless Analyzer"
 				target="help/topics/HeadlessAnalyzer/HeadlessAnalyzer.htm" />
@@ -384,7 +384,7 @@
         <tocdef id="Block Models" sortgroup="a" text="Block Models"  target="help/topics/BlockModel/Block_Model.htm" />
         <tocdef id="Languages" sortgroup="b" text="Languages"     target="help/topics/LanguageProviderPlugin/Languages.htm" />
     </tocdef>
-    
+
 </tocdef> <!-- End Welcome to Ghidra Help -->
 
 </tocroot>

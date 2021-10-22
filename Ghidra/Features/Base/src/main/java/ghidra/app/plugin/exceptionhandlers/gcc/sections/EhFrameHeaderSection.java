@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Parses the exception handling structures within an '.eh_frame_hdr' memory section; contains 
+ * Parses the exception handling structures within an '.eh_frame_hdr' memory section; contains
  * the frame header record and the FDE table.
  */
 public class EhFrameHeaderSection {
@@ -45,7 +45,7 @@ public class EhFrameHeaderSection {
 
 	/**
 	 * Constructor for an eh frame header section.
-	 * 
+	 *
 	 * @param program the program containing this eh frame header.
 	 */
 	public EhFrameHeaderSection(Program program) {
@@ -88,8 +88,8 @@ public class EhFrameHeaderSection {
 		curAddress = curAddress.add(eh_frame_hdr.getLength());
 
 		// NOTE: The process... method calls that follow are order dependent.
-		//       Each one is passed the address of the field it will process and 
-		//       returns the next address after that field, which will then be 
+		//       Each one is passed the address of the field it will process and
+		//       returns the next address after that field, which will then be
 		//       used by the next field's process method.
 
 		curAddress = processEncodedFramePointer(curAddress, eh_frame_hdr, curMemBlock);
@@ -107,9 +107,9 @@ public class EhFrameHeaderSection {
 	}
 
 	/**
-	 * Create the data field for the number of entries in the FDE table 
+	 * Create the data field for the number of entries in the FDE table
 	 * and add an identifying comment.
-	 * 
+	 *
 	 * @param curAddress address of the FDE count field
 	 * @param fdeDecoder decoder to use in determining data type for this field
 	 * @return the next address after the FDE count field
@@ -137,9 +137,9 @@ public class EhFrameHeaderSection {
 	}
 
 	/**
-	 * Create the data field for the exception handler frame pointer. Also create the associated 
+	 * Create the data field for the exception handler frame pointer. Also create the associated
 	 * reference, and add an identifying comment.
-	 * 
+	 *
 	 * @param curAddress address of the frame pointer field
 	 * @param eh_frame_hdr the frame header with encoding information
 	 * @param curMemBlock the memory block containing this header

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,12 +27,12 @@ public class OldLanguageMappingService {
 
 	/**
 	 * Check for a mapping of an old language-name magicString to a LanguageID/CompilerSpec pair.
-	 * If returnLanguageReplacement is false, the returned LanguageID/CompilerSpec pair may no 
+	 * If returnLanguageReplacement is false, the returned LanguageID/CompilerSpec pair may no
 	 * longer exist and may require use of an OldLanguage and translation process.
 	 * @param magicString old language name magic string
 	 * @param languageReplacementOK if true the LanguageID/CompilerSpec pair corresponding to the
 	 * latest language implementation will be returned if found, otherwise the a deprecated LanguageID/CompilerSpec pair
-	 * may be returned.  This parameter should be false if there is a sensitivity to the language implementation 
+	 * may be returned.  This parameter should be false if there is a sensitivity to the language implementation
 	 * (e.g., instruction prototypes, etc.)
 	 * @return LanguageID/CompilerSpec pair or null if entry not found.
 	 */

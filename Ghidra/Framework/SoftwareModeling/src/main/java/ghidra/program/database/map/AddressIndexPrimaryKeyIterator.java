@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -91,7 +91,7 @@ public class AddressIndexPrimaryKeyIterator implements DBFieldIterator {
 	 * @param table the database table containing indexed addresses.
 	 * @param indexCol the column that contains indexed addresses.
 	 * @param addrMap the address map
-	 * @param absolute if true, only absolute memory address encodings are considered, otherwise 
+	 * @param absolute if true, only absolute memory address encodings are considered, otherwise
 	 * only standard/relocatable address encodings are considered.
 	 * @param set the set of addresses to iterator over or null for all addresses.
 	 * @param atStart if true, iterates forward, otherwise iterates backwards.
@@ -142,7 +142,7 @@ public class AddressIndexPrimaryKeyIterator implements DBFieldIterator {
 	 * @param table the database table containing indexed addresses.
 	 * @param indexCol the column that contains indexed addresses.
 	 * @param addrMap the address map
-	 * @param absolute if true, only absolute memory address encodings are considered, otherwise 
+	 * @param absolute if true, only absolute memory address encodings are considered, otherwise
 	 * only standard/relocatable address encodings are considered.
 	 * @param start the starting address for the iterator.
 	 * @param before if true, positions the iterator before start, otherwise positions it after start.

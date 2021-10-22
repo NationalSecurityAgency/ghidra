@@ -63,7 +63,7 @@
 
 #---------------------------------------------------------------------
 # AND{cond4} - Conditional And
-# I. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al} 
+# I. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al}
 #    {d,x,y} -> {0, 1, ..., 15}
 #---------------------------------------------------------------------
 
@@ -277,7 +277,7 @@
 
 #---------------------------------------------------------------------
 # EOR{cond4} - Conditional Logical EOR
-# I. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al} 
+# I. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al}
 #    {d,x,y} -> {0, 1, ..., 15}
 #---------------------------------------------------------------------
 
@@ -409,7 +409,7 @@
 
 #---------------------------------------------------------------------
 # OR{cond4} - Conditional Logical OR
-# I. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al} 
+# I. cond4   -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al}
 #    {d,x,y} -> {0, 1, ..., 15}
 #---------------------------------------------------------------------
 

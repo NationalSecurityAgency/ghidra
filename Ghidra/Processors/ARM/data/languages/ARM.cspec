@@ -29,7 +29,7 @@
     <range space="ram"/>
   </global>
   <stackpointer register="sp" space="ram"/>
-  
+
   <funcptr align="2"/>     <!-- Function pointers are word aligned and leastsig bit may encode otherstuff -->
   <default_proto>
     <prototype name="__stdcall" extrapop="0" stackshift="0">
@@ -117,7 +117,7 @@
       </killedbycall>
     </prototype>
   </default_proto>
-  
+
   <callfixup name="switch8_r3">
     <target name="switch8_r3"/>
     <pcode>
@@ -127,21 +127,21 @@
             r12 = zext(tblsize);
 
             inbounds = r3 < r12;
-            
+
             if (!inbounds) goto <next1>;
             offset = *:1 (lr + r3);
             r3 = zext(offset);
             <next1>
-            
+
             if (inbounds) goto <next2>;
             offset = *:1 (lr + r12);
             r3 = zext(offset);
             <next2>
-            
+
             r3 = r3 * 2;
-            
+
             r12 = lr + r3;
-            
+
             ISAModeSwitch = (r12 & 1) != 1;
             TB = ISAModeSwitch;
             pc = r12 & 0xfffffffe;
@@ -149,7 +149,7 @@
       ]]></body>
     </pcode>
   </callfixup>
-  
+
   <callfixup name="switch8_r0">
     <target name="__gnu_thumb1_case_uqi"/>
     <target name="switch8_r0"/>
@@ -159,7 +159,7 @@
 
             offset = *:1 (tmpptr + r0);
             lr = lr + 2 * zext(offset);
- 
+
             ISAModeSwitch = (lr & 1) != 0;
             TB = ISAModeSwitch;
             pc = lr & 0xfffffffe;
@@ -167,7 +167,7 @@
       ]]></body>
     </pcode>
   </callfixup>
-  
+
   <callfixup name="switchS8_r0">
     <target name="__gnu_thumb1_case_sqi"/>
     <target name="switchS8_r0"/>
@@ -177,7 +177,7 @@
 
             offset = *:1 (tmpptr + r0);
             lr = lr + 2 * sext(offset);
- 
+
             ISAModeSwitch = (lr & 1) != 0;
             TB = ISAModeSwitch;
             pc = lr & 0xfffffffe;
@@ -185,18 +185,18 @@
       ]]></body>
     </pcode>
   </callfixup>
-  
+
   <callfixup name="switch16_shi_r0">
     <target name="__gnu_thumb1_case_shi"/>
     <target name="switch16_shi_r0"/>
     <pcode>
       <body><![CDATA[
             tmpptr = lr & 0xfffffffe;
-            
+
             index = r0 * 2;
             offset = *:2 (tmpptr + index);
             lr = lr + 2 * sext(offset);
- 
+
             ISAModeSwitch = (lr & 1) != 0;
             TB = ISAModeSwitch;
             pc = lr & 0xfffffffe;
@@ -204,18 +204,18 @@
       ]]></body>
     </pcode>
   </callfixup>
-  
+
   <callfixup name="switch16_uhi_r0">
     <target name="__gnu_thumb1_case_uhi"/>
     <target name="switch16_shi_r0"/>
     <pcode>
       <body><![CDATA[
             tmpptr = lr & 0xfffffffe;
-            
+
             index = r0 * 2;
             offset = *:2 (tmpptr + index);
             lr = lr + 2 * zext(offset);
- 
+
             ISAModeSwitch = (lr & 1) != 0;
             TB = ISAModeSwitch;
             pc = lr & 0xfffffffe;
@@ -223,19 +223,19 @@
       ]]></body>
     </pcode>
   </callfixup>
-  
+
   <callfixup name="switch32_si_r0">
     <target name="__gnu_thumb1_case_si"/>
     <target name="switch32_si_r0"/>
     <pcode>
       <body><![CDATA[
             tmpptr = (lr + 2) & 0xfffffffc;
-            
+
             index = r0 * 4;
             offset = *:4 (tmpptr + index);
             offset = offset * 4;
             lr = lr + offset;
- 
+
             ISAModeSwitch = (lr & 1) != 0;
             TB = ISAModeSwitch;
             pc = lr & 0xfffffffe;
@@ -243,5 +243,5 @@
       ]]></body>
     </pcode>
   </callfixup>
-  
+
 </compiler_spec>

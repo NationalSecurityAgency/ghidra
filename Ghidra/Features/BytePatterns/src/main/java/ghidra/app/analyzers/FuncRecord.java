@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,7 +113,7 @@ public class FuncRecord implements Comparable<FuncRecord> {
 					}
 
 					//Create the list of bytes to be hashed.
-					byte[] totalToHash = new byte[toHash.length + 8];					//It's made from toHash and a long...but in bytes!					
+					byte[] totalToHash = new byte[toHash.length + 8];					//It's made from toHash and a long...but in bytes!
 					//First put in the current hash (a long).
 					for (int bytt = 0; bytt < 8; bytt++) {
 						totalToHash[bytt] = (byte) ((this.hashValue >>> (8 * (7 - bytt))) % 256);

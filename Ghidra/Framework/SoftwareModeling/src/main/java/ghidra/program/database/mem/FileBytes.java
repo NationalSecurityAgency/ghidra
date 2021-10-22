@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import db.*;
 
 /**
  * FileBytes provides access to the all the byte values (both original and modified) from an
- * imported file. 
+ * imported file.
  */
 public class FileBytes {
 
@@ -90,7 +90,7 @@ public class FileBytes {
 	 * Returns the offset in the original file from where these bytes originated. Normally this will
 	 * be 0, but in the case where the program is actually a piece in some other file (e.g. tar,zip),
 	 * this will be the offset into the file corresponding to the first byte in this FileBytes object.
-	 * 
+	 *
 	 * @return  the offset in the original file from where these bytes originated.
 	 */
 	public long getFileOffset() {
@@ -130,7 +130,7 @@ public class FileBytes {
 	/**
 	 * Tries to get b.length (possibly modified) bytes from this FileBytes entry at the given offset into the file
 	 *  bytes.  May return fewer bytes if the requested length is beyond the end of the file bytes.
-	 *  
+	 *
 	 * @param offset the offset into the files bytes to start.
 	 * @param b the byte array to populate.
 	 * @return the number of bytes actually populated.
@@ -143,7 +143,7 @@ public class FileBytes {
 	/**
 	 * Tries to get b.length original bytes from this FileBytes entry at the given offset into the file
 	 *  bytes.  May return fewer bytes if the requested length is beyond the end of the file bytes.
-	 *  
+	 *
 	 * @param offset the offset into the files bytes to start.
 	 * @param b the byte array to populate.
 	 * @return the number of bytes actually populated.
@@ -154,10 +154,10 @@ public class FileBytes {
 	}
 
 	/**
-	 * Tries to get length (possibly modified) bytes from the files starting at the given offset and put them 
+	 * Tries to get length (possibly modified) bytes from the files starting at the given offset and put them
 	 * into the given byte array at the specified offset into the byte array.  May return
 	 * fewer bytes if the requested length is beyond the end of the file bytes.
-	 * 
+	 *
 	 * @param offset the offset into the files bytes to start.
 	 * @param b the byte array to populate.
 	 * @param off the offset into the byte array.
@@ -173,10 +173,10 @@ public class FileBytes {
 	}
 
 	/**
-	 * Tries to get length (original) bytes from the files starting at the given offset and put them 
+	 * Tries to get length (original) bytes from the files starting at the given offset and put them
 	 * into the given byte array at the specified offset into the byte array.  May return
 	 * fewer bytes if the requested length is beyond the end of the file bytes.
-	 * 
+	 *
 	 * @param offset the offset into the files bytes to start.
 	 * @param b the byte array to populate.
 	 * @param off the offset into the byte array.
@@ -202,10 +202,10 @@ public class FileBytes {
 	}
 
 	/**
-	 * Changes the byte at the given offset to the given value. Note, the 
+	 * Changes the byte at the given offset to the given value. Note, the
 	 * original byte can still be accessed via {@link #getOriginalByte(long)}
 	 * If the byte is changed more than once, only the original value is preserved.
-	 * 
+	 *
 	 * @param offset the offset into the file bytes.
 	 * @param b the new byte value;
 	 * @throws IOException if the write to the database fails.
@@ -229,10 +229,10 @@ public class FileBytes {
 	}
 
 	/**
-	 * Changes the bytes at the given offset to the given values. Note, the 
+	 * Changes the bytes at the given offset to the given values. Note, the
 	 * original bytes can still be accessed via {@link #getOriginalBytes(long, byte[])}
 	 * If the bytes are changed more than once, only the original values are preserved.
-	 * 
+	 *
 	 * @param offset the offset into the file bytes.
 	 * @param b a byte array with the new values to write.
 	 * @return the number of bytes written
@@ -243,10 +243,10 @@ public class FileBytes {
 	}
 
 	/**
-	 * Changes the bytes at the given offset to the given values. Note, the 
+	 * Changes the bytes at the given offset to the given values. Note, the
 	 * original bytes can still be accessed via {@link #getOriginalBytes(long, byte[], int, int)}
 	 * If the bytes are changed more than once, only the original values are preserved.
-	 * 
+	 *
 	 * @param offset the offset into the file bytes.
 	 * @param b a byte array with the new values to write.
 	 * @param off the offset into the byte array to get the bytes to write.

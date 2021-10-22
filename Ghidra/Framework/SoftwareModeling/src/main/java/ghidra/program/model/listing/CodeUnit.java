@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,7 +71,7 @@ public interface CodeUnit extends MemBuffer {
 	 * Any comment property.
 	 */
 	public static final String COMMENT_PROPERTY = "COMMENT__GHIDRA_";
-	/** 
+	/**
 	 * Property name for vertical space formatting
 	 */
 	public static final String SPACE_PROPERTY = "Space";
@@ -213,7 +213,7 @@ public interface CodeUnit extends MemBuffer {
 	/**
 	 * Get the comment for the given type
 	 *
-	 * @param commentType either EOL_COMMENT, PRE_COMMENT, 
+	 * @param commentType either EOL_COMMENT, PRE_COMMENT,
 	 * POST_COMMENT, or REPEATABLE_COMMENT
 	 * @return the comment string of the appropriate type or null if no comment of
 	 * that type exists for this codeunit
@@ -226,7 +226,7 @@ public interface CodeUnit extends MemBuffer {
 	 * Get the comment for the given type and parse it into an array of strings
 	 * such that each line is its own string.
 	 *
-	 * @param commentType either EOL_COMMENT, PRE_COMMENT, 
+	 * @param commentType either EOL_COMMENT, PRE_COMMENT,
 	 * POST_COMMENT, or REPEATABLE_COMMENT
 	 * @return an array of strings where each item in the array is a line of text
 	 * in the comment.  If there is no comment of the requested type, an empty array
@@ -239,10 +239,10 @@ public interface CodeUnit extends MemBuffer {
 	/**
 	 * Set the comment for the given comment type.  Passing <code>null</code> clears the comment
 	 *
-	 * @param commentType either EOL_COMMENT, PRE_COMMENT, 
+	 * @param commentType either EOL_COMMENT, PRE_COMMENT,
 	 * POST_COMMENT, or REPEATABLE_COMMENT
 	 * @param comment comment for code unit; null clears the comment
-	 * 
+	 *
 	 * @throws IllegalArgumentException if type is not one of the
 	 * three types of comments supported
 	 */
@@ -251,7 +251,7 @@ public interface CodeUnit extends MemBuffer {
 	/**
 	 * Set the comment (with each line in its own string) for the given comment type
 	 *
-	 * @param commentType either EOL_COMMENT, PRE_COMMENT, 
+	 * @param commentType either EOL_COMMENT, PRE_COMMENT,
 	 * POST_COMMENT, or REPEATABLE_COMMENT
 	 * @param comment an array of strings where each string is a single line of the comment.
 	 * @throws IllegalArgumentException if type is not one of the
@@ -319,7 +319,7 @@ public interface CodeUnit extends MemBuffer {
 
 	/**
 	* Get references for the mnemonic for this code unit.
-	* @return an array of memory references. A zero length array will be 
+	* @return an array of memory references. A zero length array will be
 	* returned if there are no references for the mnemonic.
 	*/
 	public Reference[] getMnemonicReferences();
@@ -436,7 +436,7 @@ public interface CodeUnit extends MemBuffer {
 	 * @param opIndex index of the operand.
 	 * @return An addres if the operand represents a fully qualified
 	 * address (given the context), or if the operand is a Scalar treated
-	 * as an address. Null is returned if no address or scalar exists on that 
+	 * as an address. Null is returned if no address or scalar exists on that
 	 * operand.
 	 */
 	public Address getAddress(int opIndex);

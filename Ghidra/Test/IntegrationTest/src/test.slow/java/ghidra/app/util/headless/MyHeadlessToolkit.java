@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,18 +29,18 @@ import java.util.Properties;
 import sun.awt.HeadlessToolkit;
 
 public class MyHeadlessToolkit extends Toolkit {
-	
+
 	static volatile boolean swingErrorRegistered = false;
 	private static String preferredToolkit;
-	
+
 	private Toolkit localToolKit;
-	
+
 	static void setup() {
 		//System.setProperty("java.awt.headless", "true");
 		preferredToolkit = System.getProperty("awt.toolkit", "sun.awt.X11.XToolkit");
 		System.setProperty("awt.toolkit", MyHeadlessToolkit.class.getName());
 	}
-	
+
 	public MyHeadlessToolkit() {
 		swingErrorRegistered = true;
 		try {
@@ -167,7 +167,7 @@ public class MyHeadlessToolkit extends Toolkit {
             // tends to touch lots of classes that aren't needed again
             // later and therefore JITing is counter-productiive.
             java.lang.Compiler.disable();
-            
+
 			Class<?> cls = null;
             try {
             	try {
@@ -186,7 +186,7 @@ public class MyHeadlessToolkit extends Toolkit {
             } catch (IllegalAccessException e) {
                 throw new AWTError("Could not access Toolkit: " + preferredToolkit);
             }
-            
+
         } finally {
             // Make sure to always re-enable the JIT.
             java.lang.Compiler.enable();

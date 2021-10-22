@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ public class FixedField10 extends FixedField {
 	public static final FixedField10 INSTANCE = ZERO_VALUE;
 
 	// This implementation uses both a data byte array and short+long variables
-	// for data storage.  While the short+long is always available, the data 
+	// for data storage.  While the short+long is always available, the data
 	// byte array is only set when needed or supplied during construction.
 	// The use of the short+long is done to speed-up comparison with other
 	// FixedField10 instances or directly from a DataBuffer.
@@ -65,7 +65,7 @@ public class FixedField10 extends FixedField {
 
 	/**
 	 * Construct a 10-byte fixed-length field with an initial value of data.
-	 * @param data initial 10-byte binary value.  A null corresponds to zero value 
+	 * @param data initial 10-byte binary value.  A null corresponds to zero value
 	 * and does not affect the null-state (see {@link #setNull()} and {@link #isNull()}).
 	 * @throws IllegalArgumentException thrown if data is not 10-bytes in length
 	 */
@@ -75,7 +75,7 @@ public class FixedField10 extends FixedField {
 
 	/**
 	 * Construct a 10-byte fixed-length binary field with an initial value of data.
-	 * @param data initial 10-byte binary value.  A null corresponds to zero value 
+	 * @param data initial 10-byte binary value.  A null corresponds to zero value
 	 * and does not affect the null-state (see {@link #setNull()} and {@link #isNull()}).
 	 * @param immutable true if field value is immutable
 	 * @throws IllegalArgumentException thrown if data is not 10-bytes in length

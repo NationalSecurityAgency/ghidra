@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,7 +81,7 @@ public class Table {
 
 	/**
 	 * Determine if this table uses long keys.
-	 * @return true if this table utilizes long keys. 
+	 * @return true if this table utilizes long keys.
 	 */
 	public boolean useLongKeys() {
 		return schema.useLongKeyNodes();
@@ -89,7 +89,7 @@ public class Table {
 
 	/**
 	 * Determine if this table uses FixedField keys.
-	 * @return true if this table utilizes FixedField keys. 
+	 * @return true if this table utilizes FixedField keys.
 	 */
 	public boolean useFixedKeys() {
 		return schema.useFixedKeyNodes();
@@ -124,7 +124,7 @@ public class Table {
 
 	/**
 	 * Get this tables master table number.
-	 * @return table number for this table.  Each table has a unique table 
+	 * @return table number for this table.  Each table has a unique table
 	 * number within the master table.
 	 */
 	long getTableNum() {
@@ -234,7 +234,7 @@ public class Table {
 
 	/**
 	 * Callback method for when a new record is added.
-	 * Used for maintaining indexes only.  May be called before 
+	 * Used for maintaining indexes only.  May be called before
 	 * the old record is actually inserted.
 	 * @param record new record which has been added
 	 * @throws IOException thrown if IO error occurs
@@ -249,7 +249,7 @@ public class Table {
 
 	/**
 	 * Callback method for when an existing record is modified.
-	 * Used for maintaining indexes only.  May be called before 
+	 * Used for maintaining indexes only.  May be called before
 	 * the old record is actually updated.
 	 * @param oldRecord old record
 	 * @param newRecord new record
@@ -270,7 +270,7 @@ public class Table {
 
 	/**
 	 * Callback method for when existing records are deleted.
-	 * Used for maintaining indexes only.  May be called before 
+	 * Used for maintaining indexes only.  May be called before
 	 * the old record is actually deleted.
 	 * @param oldRecord record which has been deleted
 	 * @throws IOException thrown if IO error occurs
@@ -364,7 +364,7 @@ public class Table {
 	 * Check the consistency of this table and its associated index tables.
 	 * @param monitor task monitor
 	 * @return true if consistency check passed, else false
-	 * @throws IOException thrown if IO error occurs 
+	 * @throws IOException thrown if IO error occurs
 	 * @throws CancelledException is task was cancelled
 	 */
 	public boolean isConsistent(TaskMonitor monitor) throws IOException, CancelledException {
@@ -533,7 +533,7 @@ public class Table {
 
 	/**
 	 * Remove the index associated with the specified column.
-	 * @param columnIndex column corresponding to the column index which 
+	 * @param columnIndex column corresponding to the column index which
 	 * should be deleted.
 	 * @throws IOException thrown if IO error occurs
 	 */
@@ -584,7 +584,7 @@ public class Table {
 	/**
 	 * Get the maximum record key which has ever been assigned within this table.
 	 * This method is only valid for those tables which employ a long key and may
-	 * not reflect records which have been removed (i.e., returned key may not 
+	 * not reflect records which have been removed (i.e., returned key may not
 	 * correspond to an existing record).
 	 * @return maximum record key.
 	 */
@@ -617,7 +617,7 @@ public class Table {
 //			rootBufferId = id;
 //		}
 //	}
-//	
+//
 //	/**
 //	 * Sets the current root node for this table.
 //	 * If the root changes the master table must be updated.
@@ -733,10 +733,10 @@ public class Table {
 	}
 
 	/**
-	 * Get the record with the maximum key value which is less than  
+	 * Get the record with the maximum key value which is less than
 	 * the specified key.
 	 * @param key unique key which may or may not exist within the table.
-	 * @return the first record which has a key value less than the 
+	 * @return the first record which has a key value less than the
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
@@ -756,10 +756,10 @@ public class Table {
 	}
 
 	/**
-	 * Get the record with the maximum key value which is less than  
+	 * Get the record with the maximum key value which is less than
 	 * the specified key.
 	 * @param key unique key which may or may not exist within the table.
-	 * @return the first record which has a key value less than the 
+	 * @return the first record which has a key value less than the
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
@@ -782,10 +782,10 @@ public class Table {
 	}
 
 	/**
-	 * Get the record with the minimum key value which is greater than 
+	 * Get the record with the minimum key value which is greater than
 	 * the specified key.
 	 * @param key unique key which may or may not exist within the table.
-	 * @return the first record which has a key value greater than the 
+	 * @return the first record which has a key value greater than the
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
@@ -805,10 +805,10 @@ public class Table {
 	}
 
 	/**
-	 * Get the record with the minimum key value which is greater than 
+	 * Get the record with the minimum key value which is greater than
 	 * the specified key.
 	 * @param key unique key which may or may not exist within the table.
-	 * @return the first record which has a key value greater than the 
+	 * @return the first record which has a key value greater than the
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
@@ -831,10 +831,10 @@ public class Table {
 	}
 
 	/**
-	 * Get the record with the maximum key value which is less than or equal 
+	 * Get the record with the maximum key value which is less than or equal
 	 * to the specified key.
 	 * @param key unique key which may or may not exist within the table.
-	 * @return the first record which has a key value less than or equal to the 
+	 * @return the first record which has a key value less than or equal to the
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
@@ -854,10 +854,10 @@ public class Table {
 	}
 
 	/**
-	 * Get the record with the maximum key value which is less than or equal 
+	 * Get the record with the maximum key value which is less than or equal
 	 * to the specified key.
 	 * @param key unique key which may or may not exist within the table.
-	 * @return the first record which has a key value less than or equal to the 
+	 * @return the first record which has a key value less than or equal to the
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
@@ -880,10 +880,10 @@ public class Table {
 	}
 
 	/**
-	 * Get the record with the minimum key value which is greater than or equal 
+	 * Get the record with the minimum key value which is greater than or equal
 	 * to the specified key.
 	 * @param key unique key which may or may not exist within the table.
-	 * @return the first record which has a key value greater than or equal to the 
+	 * @return the first record which has a key value greater than or equal to the
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
@@ -903,10 +903,10 @@ public class Table {
 	}
 
 	/**
-	 * Get the record with the minimum key value which is greater than or equal 
+	 * Get the record with the minimum key value which is greater than or equal
 	 * to the specified key.
 	 * @param key unique key which may or may not exist within the table.
-	 * @return the first record which has a key value greater than or equal to the 
+	 * @return the first record which has a key value greater than or equal to the
 	 * specified key, or null if no record was found.
 	 * @throws IOException throw if an IO Error occurs
 	 */
@@ -1398,7 +1398,7 @@ public class Table {
 	/**
 	 * Find the primary keys corresponding to those records which contain the
 	 * specified field value in the specified record column.  The table must
-	 * have been created with long keys and a secondary index on the specified 
+	 * have been created with long keys and a secondary index on the specified
 	 * column index.
 	 * @param field the field value
 	 * @param columnIndex the record schema column which should be searched.
@@ -1438,7 +1438,7 @@ public class Table {
 
 	/**
 	 * Determine if a record exists with the specified value within the specified
-	 * column.  The table must have been created with a secondary index on the 
+	 * column.  The table must have been created with a secondary index on the
 	 * specified column index.
 	 * @param field the field value
 	 * @param columnIndex the record schema column which should be searched.
@@ -1497,7 +1497,7 @@ public class Table {
 
 	/**
 	 * Iterate over all the unique index field values within the specified range identified
-	 * by minField and maxField.  Index values are returned in an ascending sorted order with the 
+	 * by minField and maxField.  Index values are returned in an ascending sorted order with the
 	 * initial iterator position corresponding to the startField.
 	 * @param minField minimum index column value, if null absolute minimum is used
 	 * @param maxField maximum index column value, if null absolute maximum is used
@@ -1546,9 +1546,9 @@ public class Table {
 	 * @param columnIndex schema column to sort on.
 	 * @param startValue the starting and minimum value of the secondary index field.
 	 * @param endValue the ending and maximum value of the secondary index field.
-	 * @param atStart if true, position the iterator before the start value. 
+	 * @param atStart if true, position the iterator before the start value.
 	 * Otherwise, position the iterator after the end value.
-	 * 
+	 *
 	 * @return record iterator.
 	 * @throws IOException if a secondary index does not exist for the specified
 	 * column, or the wrong field type was specified, or an I/O error occurs.
@@ -1567,7 +1567,7 @@ public class Table {
 
 	/**
 	 * Iterate over the records using a secondary index.  Sorting occurs on the
-	 * specified schema column.  The iterator's initial position immediately follows 
+	 * specified schema column.  The iterator's initial position immediately follows
 	 * the specified startValue. If this value does not exist, the initial position corresponds
 	 * to where it would exist.
 	 * This table must have been constructed with a secondary index on the specified column.
@@ -1589,7 +1589,7 @@ public class Table {
 
 	/**
 	 * Iterate over the records using a secondary index.  Sorting occurs on the
-	 * specified schema column.  The iterator's initial position immediately precedes 
+	 * specified schema column.  The iterator's initial position immediately precedes
 	 * the specified startValue. If this value does not exist, the initial position corresponds
 	 * to where it would exist.
 	 * This table must have been constructed with a secondary index on the specified column.
@@ -1612,12 +1612,12 @@ public class Table {
 
 	/**
 	 * Iterate over the records using a secondary index.  Sorting occurs on the
-	 * specified schema column.  The iterator's initial position immediately follows 
-	 * the specified startValue and primaryKey. If no such entry exists, the initial position 
+	 * specified schema column.  The iterator's initial position immediately follows
+	 * the specified startValue and primaryKey. If no such entry exists, the initial position
 	 * corresponds to where it would exist.
 	 * <p>
 	 * This table must have been constructed with a secondary index on the specified column.
-	 * 
+	 *
 	 * @param columnIndex schema column to sort on.
 	 * @param startValue the starting value of the secondary index field.
 	 * @param primaryKey the primary key associated with the startField.
@@ -1639,12 +1639,12 @@ public class Table {
 
 	/**
 	 * Iterate over the records using a secondary index.  Sorting occurs on the
-	 * specified schema column.  The iterator's initial position immediately precedes 
-	 * the specified startValue and primaryKey. If no such entry exists, the initial position 
+	 * specified schema column.  The iterator's initial position immediately precedes
+	 * the specified startValue and primaryKey. If no such entry exists, the initial position
 	 * corresponds to where it would exist.
 	 * <p>
 	 * This table must have been constructed with a secondary index on the specified column.
-	 * 
+	 *
 	 * @param columnIndex schema column to sort on.
 	 * @param startValue the starting value of the secondary index field.
 	 * @param primaryKey the primary key associated with the startField.
@@ -1682,7 +1682,7 @@ public class Table {
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
-	 * The iterator is initially positioned before the first index buffer whose index key 
+	 * The iterator is initially positioned before the first index buffer whose index key
 	 * is greater than or equal to the specified startField value.
 	 * @param columnIndex schema column to sort on
 	 * @param startField index column value which determines initial position of iterator
@@ -1702,8 +1702,8 @@ public class Table {
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
-	 * The iterator is initially positioned after the index buffer whose index key 
-	 * is equal to the specified startField value or immediately before the first 
+	 * The iterator is initially positioned after the index buffer whose index key
+	 * is equal to the specified startField value or immediately before the first
 	 * index buffer whose index key is greater than the specified startField value.
 	 * @param columnIndex schema column to sort on
 	 * @param startField index column value which determines initial position of iterator
@@ -1723,8 +1723,8 @@ public class Table {
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
-	 * The iterator is initially positioned before the primaryKey within the index buffer 
-	 * whose index key is equal to the specified startField value or immediately before the first 
+	 * The iterator is initially positioned before the primaryKey within the index buffer
+	 * whose index key is equal to the specified startField value or immediately before the first
 	 * index buffer whose index key is greater than the specified startField value.
 	 * @param columnIndex schema column to sort on
 	 * @param startField index column value which determines initial position of iterator
@@ -1745,8 +1745,8 @@ public class Table {
 
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
-	 * The iterator is initially positioned after the primaryKey within the index buffer 
-	 * whose index key is equal to the specified startField value or immediately before the first 
+	 * The iterator is initially positioned after the primaryKey within the index buffer
+	 * whose index key is equal to the specified startField value or immediately before the first
 	 * index buffer whose index key is greater than the specified startField value.
 	 * @param columnIndex schema column to sort on
 	 * @param startField index column value which determines initial position of iterator
@@ -1768,14 +1768,14 @@ public class Table {
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
 	 * The iterator is limited to range of index keys of minField through maxField, inclusive.
-	 * If atMin is true, the iterator is initially positioned before the first index 
-	 * buffer whose index key is greater than or equal to the specified minField value. 
-	 * If atMin is false, the iterator is initially positioned after the first index 
-	 * buffer whose index key is less than or equal to the specified maxField value. 
+	 * If atMin is true, the iterator is initially positioned before the first index
+	 * buffer whose index key is greater than or equal to the specified minField value.
+	 * If atMin is false, the iterator is initially positioned after the first index
+	 * buffer whose index key is less than or equal to the specified maxField value.
 	 * @param columnIndex schema column to sort on
 	 * @param minField minimum index column value
 	 * @param maxField maximum index column value
-	 * @param atMin if true, position iterator before minField value, 
+	 * @param atMin if true, position iterator before minField value,
 	 * Otherwise, position iterator after maxField value.
 	 * @return primary key iterator
 	 * @throws IOException thrown if IO error occurs
@@ -1794,7 +1794,7 @@ public class Table {
 	/**
 	 * Iterate over all primary keys sorted based upon the associated index key.
 	 * The iterator is limited to range of index keys of minField through maxField, inclusive.
-	 * The iterator is initially positioned before or after the specified startField index value. 
+	 * The iterator is initially positioned before or after the specified startField index value.
 	 * @param columnIndex schema column to sort on
 	 * @param minField minimum index column value
 	 * @param maxField maximum index column value
@@ -1852,7 +1852,7 @@ public class Table {
 	 * @param startKey the initial iterator position.
 	 * @return record iterator
 	 * @throws IOException if an I/O error occurs.
-	 * @throws IllegalArgumentException if long keys are not in use or startKey 
+	 * @throws IllegalArgumentException if long keys are not in use or startKey
 	 * is less than minKey or greater than maxKey.
 	 */
 	public RecordIterator iterator(long minKey, long maxKey, long startKey) throws IOException {
@@ -2044,7 +2044,7 @@ public class Table {
 		private int expectedModCount;
 
 		/**
-		 * Construct a record iterator over all records. 
+		 * Construct a record iterator over all records.
 		 * @throws IOException thrown if IO error occurs
 		 */
 		LongKeyRecordIterator() throws IOException {
@@ -2132,10 +2132,10 @@ public class Table {
 		}
 
 		/**
-		 * Get the current record leaf.  If the current record can not be found, attempt to 
+		 * Get the current record leaf.  If the current record can not be found, attempt to
 		 * recover the record position.
 		 * @param recoverPrev if true and the current record no longer exists,
-		 * the current position will be set to the previous record and isPrev set to true; 
+		 * the current position will be set to the previous record and isPrev set to true;
 		 * else if false and the current record no longer exists, the current position
 		 * will be set to the next record and isNext set to true.
 		 * @return LongKeyRecordNode the leaf node containing the current record position
@@ -2455,10 +2455,10 @@ public class Table {
 		}
 
 		/**
-		 * Get the current record leaf.  If the current record can not be found, attempt to 
+		 * Get the current record leaf.  If the current record can not be found, attempt to
 		 * recover the record position.
 		 * @param recoverPrev if true and the current record no longer exists,
-		 * the current position will be set to the previous record and isPrev set to true; 
+		 * the current position will be set to the previous record and isPrev set to true;
 		 * else if false and the current record no longer exists, the current position
 		 * will be set to the next record and isNext set to true.
 		 * @return FieldKeyRecordNode the leaf node containing the current record position
@@ -2652,7 +2652,7 @@ public class Table {
 
 	/**
 	 * A long key iterator class.  The initial iterator is optimized for
-	 * short iterations.  If it determined that the iterator is to be used 
+	 * short iterations.  If it determined that the iterator is to be used
 	 * for a large number of iterations, the underlying iterator is switched
 	 * to one optimized for longer iterations.
 	 */
@@ -2664,7 +2664,7 @@ public class Table {
 		private int iterCnt = 0;
 
 		/**
-		 * Construct a record iterator over all records. 
+		 * Construct a record iterator over all records.
 		 * @throws IOException thrown if IO error occurs
 		 */
 		LongKeyIterator() throws IOException {
@@ -2796,7 +2796,7 @@ public class Table {
 		 * An empty or null keys array will force a complete initialization.
 		 * Otherwise, following the deletethe keys array and keyIndex should reflect the state
 		 * following a delete.
-		 * @param targetKey the initial key.  For construction this is the startKey, 
+		 * @param targetKey the initial key.  For construction this is the startKey,
 		 * following a delete this is the deleted key.
 		 * @throws IOException thrown if IO error occurs
 		 */
@@ -3087,7 +3087,7 @@ public class Table {
 		private long maxKey;
 
 		/**
-		 * Construct a record iterator over all records. 
+		 * Construct a record iterator over all records.
 		 * @throws IOException thrown if IO error occurs
 		 */
 		LongKeyIterator2() throws IOException {
@@ -3119,7 +3119,7 @@ public class Table {
 		 * An empty or null keys array will force a complete initialization.
 		 * Otherwise, following the deletethe keys array and keyIndex should reflect the state
 		 * following a delete.
-		 * @param targetKey the initial key.  For construction this is the startKey, 
+		 * @param targetKey the initial key.  For construction this is the startKey,
 		 * following a delete this is the deleted key.
 		 * @throws IOException thrown if IO error occurs
 		 */
@@ -3333,7 +3333,7 @@ public class Table {
 
 	/**
 	 * A Field key iterator class.  The initial iterator is optimized for
-	 * short iterations.  If it determined that the iterator is to be used 
+	 * short iterations.  If it determined that the iterator is to be used
 	 * for a large number of iterations, the underlying iterator is switched
 	 * to one optimized for longer iterations.
 	 */
@@ -3473,7 +3473,7 @@ public class Table {
 		 * An empty or null keys array will force a complete initialization.
 		 * Otherwise, following the delete the keys array and keyIndex should reflect the state
 		 * following a delete.
-		 * @param targetKey the initial key.  For construction this is the startKey, 
+		 * @param targetKey the initial key.  For construction this is the startKey,
 		 * following a delete this is the deleted key.
 		 * @throws IOException thrown if IO error occurs
 		 */
@@ -3802,7 +3802,7 @@ public class Table {
 		 * An empty or null keys array will force a complete initialization.
 		 * Otherwise, following the delete the keys array and keyIndex should reflect the state
 		 * following a delete.
-		 * @param targetKey the initial key.  For construction this is the startKey, 
+		 * @param targetKey the initial key.  For construction this is the startKey,
 		 * following a delete this is the deleted key.
 		 * @throws IOException thrown if IO error occurs
 		 */

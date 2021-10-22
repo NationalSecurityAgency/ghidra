@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import docking.ComponentProvider;
 import docking.Tool;
 
 /**
- * Extends the {@link ComponentProvider} to fit into the Plugin architecture by taking in a 
+ * Extends the {@link ComponentProvider} to fit into the Plugin architecture by taking in a
  * {@link PluginTool} which extends {@link Tool}.  Most implementers will want to extend
  * this class instead of the ComponentProvider class because they will want to access the extra
  * methods provided by PluginTool over DockingTool without having to cast the dockingTool variable.

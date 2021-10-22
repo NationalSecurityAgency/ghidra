@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -194,7 +194,7 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 				return isDropSiteOk(targetNode, e);
 			}
 
-			// This is tree node transferable... 
+			// This is tree node transferable...
 			if (draggedNodes.equals(root)) {
 				return false;
 			}
@@ -230,8 +230,8 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 	}
 
 	/**
-	 * Called from the DropTgtAdapter when the drag operation is going over a drop site; indicate 
-	 * when the drop is OK by providing appropriate feedback. 
+	 * Called from the DropTgtAdapter when the drag operation is going over a drop site; indicate
+	 * when the drop is OK by providing appropriate feedback.
 	 * @param ok true means OK to drop
 	 */
 	@Override
@@ -330,7 +330,7 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 
 	/**
 	 * Return true if the node can accept the drop as indicated by the event.
-	 * @param e event that has current state of drag and drop operation 
+	 * @param e event that has current state of drag and drop operation
 	 * @return true if drop is OK
 	 */
 	protected abstract boolean isDropSiteOk(ProgramNode node, DropTargetDragEvent e);
@@ -395,7 +395,7 @@ public abstract class DragNDropTree extends JTree implements Draggable, Droppabl
 
 	/**
 	 * Determine where the mouse pointer is within the node.
-	 * @return -1 if the mouse pointer is in the upper quarter of the node, 1 if the mouse pointer 
+	 * @return -1 if the mouse pointer is in the upper quarter of the node, 1 if the mouse pointer
 	 *  is in the lower quarter of the node, or 0 if the mouse pointer is in the center of the node.
 	 */
 	int comparePointerLocation(Point p, ProgramNode node) {

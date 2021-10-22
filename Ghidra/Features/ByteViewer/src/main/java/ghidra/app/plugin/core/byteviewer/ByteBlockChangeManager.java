@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,9 +57,9 @@ public class ByteBlockChangeManager {
 
 	/**
 	 * Add a change to the change list.
-	 * 
+	 *
 	 * @param edit edit object that has the old value and new value
-	 * 
+	 *
 	 */
 	void add(ByteEditInfo edit) {
 		byte[] oldValue = edit.getOldValue();
@@ -120,11 +120,11 @@ public class ByteBlockChangeManager {
 	/**
 	 * Return true if any offset in the range offset to offset+unitByteSize-1 is in either of the
 	 * change lists.
-	 * 
+	 *
 	 * @param block block in question
 	 * @param offset offset into the block
 	 * @param unitByteSize number of bytes in the unit (dictated by the data format model)
-	 * 
+	 *
 	 * @return boolean true if an offset in the range was found
 	 */
 	boolean isChanged(ByteBlock block, BigInteger offset, int unitByteSize) {
@@ -141,7 +141,7 @@ public class ByteBlockChangeManager {
 	//////////////////////////////////////////////////////////////////////
 	/**
 	 * Return true if the block and offset are in the list.
-	 * 
+	 *
 	 * @param list either the local change list or the external change list
 	 * @param block block in question
 	 * @param offset offset into the block

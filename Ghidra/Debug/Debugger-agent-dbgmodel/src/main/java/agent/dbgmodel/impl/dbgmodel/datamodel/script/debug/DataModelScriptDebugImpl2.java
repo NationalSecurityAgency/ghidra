@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ public class DataModelScriptDebugImpl2 extends DataModelScriptDebugImpl {
 	public DebugMemoryBasicInformation queryVirtual(long offset) {
 		throw new UnsupportedOperationException("Not implemented in this interface");
 	}
-	
+
 	@Override
 	public int readVirtual(long offset, ByteBuffer into, int len) {
 		if (len > into.remaining()) {
@@ -52,7 +52,7 @@ public class DataModelScriptDebugImpl2 extends DataModelScriptDebugImpl {
 		into.position(read + into.position());
 		return read;
 	}
-	
+
 	@Override
 	public int readVirtualUncached(long offset, ByteBuffer into, int len) {
 		if (len > into.remaining()) {
@@ -66,7 +66,7 @@ public class DataModelScriptDebugImpl2 extends DataModelScriptDebugImpl {
 		into.position(read + into.position());
 		return read;
 	}
-	
+
 	@Override
 	public int writeVirtual(long offset, ByteBuffer from, int len) {
 		if (len > from.remaining()) {
@@ -80,7 +80,7 @@ public class DataModelScriptDebugImpl2 extends DataModelScriptDebugImpl {
 		from.position(written + from.position());
 		return written;
 	}
-	
+
 	@Override
 	public int writeVirtualUncached(long offset, ByteBuffer from, int len) {
 		if (len > from.remaining()) {

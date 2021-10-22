@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,30 +31,30 @@ public class ProgramMemoryComparator {
 
     /** The first program for the diff. */
     private Program program1;
-    
+
     /** The second program for the diff. */
     private Program program2;
-    
-    /** Addresses of initialized memory in both programs one and two. 
+
+    /** Addresses of initialized memory in both programs one and two.
      *  Addresses in this address set are derived from program1.
      */
     private AddressSet initInBoth;
-    
+
     /** Addresses with same memory type in both programs one and two.
      *  Addresses in this address set are derived from program1.
      */
     private AddressSet sameTypeInBoth;
-    
+
     /** Addresses in both programs one and two.
      *  Addresses in this address set are derived from program1.
      */
     private AddressSet inBoth;
-    
+
     /** Addresses only in program one.
      *  Addresses in this address set are derived from program1.
      */
     private AddressSet onlyInOne;
-    
+
     /** Addresses only in program two.
      *  Addresses in this address set are derived from program2.
      */
@@ -83,11 +83,11 @@ public class ProgramMemoryComparator {
         // Check each program to see if the memory blocks have the same address types.
 		if (!similarPrograms(program1, program2)) {
 			throw new ProgramConflictException("Address spaces conflict between "
-				+ program1.getName() 
+				+ program1.getName()
 				+ " and "
 				+ program2.getName() + ".\n");
 		}
-        
+
         determineAddressDiffs();
     }
 
@@ -107,14 +107,14 @@ public class ProgramMemoryComparator {
         AddressFactory af2 = program2.getAddressFactory();
         if (!af1.equals(af2)){
             throw new ProgramConflictException("Address types conflict between "
-                + program1.getName() 
+                + program1.getName()
                 + " and "
                 + program2.getName() + ".\n");
         }
     }
-    
+
     /**
-     * Return whether or not the two specified programs are alike 
+     * Return whether or not the two specified programs are alike
      * (their language name or address spaces are the same).
      * @param p1 the first program
      * @param p2 the second program
@@ -141,12 +141,12 @@ public class ProgramMemoryComparator {
 		}
 		return true;
 	}
-    
+
     private void determineAddressDiffs() {
     	// include live blocks as initialized
         AddressSetView initAddrSet1 = ProgramMemoryUtil.getAddressSet(program1, true);
         AddressSetView uninitAddrSet1 = ProgramMemoryUtil.getAddressSet(program1, false);
-		
+
         AddressSetView initAddrSet2 = ProgramMemoryUtil.getAddressSet(program2, true);
         AddressSetView uninitAddrSet2 = ProgramMemoryUtil.getAddressSet(program2, false);
         AddressSet initSet2CompatibleWith1 = DiffUtility.getCompatibleAddressSet(initAddrSet2, program1);
@@ -158,20 +158,20 @@ public class ProgramMemoryComparator {
 
         // Address Ranges for initialized memory in both one and two.
         initInBoth = initAddrSet1.intersect(initSet2CompatibleWith1);
-        
+
         // Address Ranges for initialized memory in both one and two.
         sameTypeInBoth = new AddressSet(initInBoth);
         sameTypeInBoth.add(uninitInBothCompatibleWith1);
-        
+
         AddressSetView addrSet1 = ProgramMemoryUtil.getAddressSet(program1);
         AddressSetView addrSet2 = ProgramMemoryUtil.getAddressSet(program2);
         // Address Ranges in both one and two.
         AddressSet addrSet2CompatibleWith1 = DiffUtility.getCompatibleAddressSet(addrSet2, program1);
         inBoth = addrSet1.intersect(addrSet2CompatibleWith1);
-        
+
         // Address Ranges only in one.
         onlyInOne = addrSet1.xor(inBoth);
-        
+
         // Address Ranges only in two.
         AddressSet inBothCompatibleWith2 = DiffUtility.getCompatibleAddressSet(inBoth, program2);
         onlyInTwo = addrSet2.xor(inBothCompatibleWith2);
@@ -223,7 +223,7 @@ public class ProgramMemoryComparator {
         return new AddressSet(inBoth);
     }
 
-    /** Returns the addresses of initialized memory in common between 
+    /** Returns the addresses of initialized memory in common between
      * program1 and program2. This includes bit memory and live memory.
      * The returned address set is derived using program1.
      * @return the addresses in common between program1 and program2.
@@ -232,7 +232,7 @@ public class ProgramMemoryComparator {
         return new AddressSet(initInBoth);
     }
 
-    /** Returns the addresses with the same memory types in common between 
+    /** Returns the addresses with the same memory types in common between
      * program1 and program2.
      * The returned address set is derived using program1.
      * @return the addresses in common between program1 and program2.
@@ -256,7 +256,7 @@ public class ProgramMemoryComparator {
     public AddressSet getAddressesOnlyInTwo() {
         return new AddressSet(onlyInTwo);
     }
-    
+
 	/** Returns the set of addresses that are in program2, but not in program1
 	 * and that are compatible with program1.
 	 *  The returned address set is derived using program1.
@@ -272,7 +272,7 @@ public class ProgramMemoryComparator {
     public boolean hasMemoryDifferences() {
         return !(onlyInOne.isEmpty() && onlyInTwo.isEmpty());
     }
-    
+
 	/**
 	 * Returns true if the register names are the same in both programs.
      * @param program1 the first program
@@ -286,5 +286,5 @@ public class ProgramMemoryComparator {
 		List<String> names2 = pc2.getRegisterNames();
 		return names1.equals(names2);
 	}
-	
+
 }

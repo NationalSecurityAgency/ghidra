@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 class GetPutStaticTest{
-   
+
     public static boolean testBoolean = true;
     public static byte testByte = 1;
     public static short testShort = 2;
@@ -66,7 +66,7 @@ class GetPutStaticTest{
     public static void setFloat(float newVal){
         GetPutStaticTest.testFloat = newVal;
     }
-    
+
     public static int getInt(){
         return testInt;
     }
@@ -86,7 +86,7 @@ class GetPutStaticTest{
     public static long getLong(){
         return testLong;
     }
-    
+
     public static void setLong(long newVal){
         GetPutStaticTest.testLong = newVal;
     }

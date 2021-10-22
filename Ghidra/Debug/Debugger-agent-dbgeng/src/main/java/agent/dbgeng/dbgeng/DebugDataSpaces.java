@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -226,11 +226,11 @@ public interface DebugDataSpaces {
 
 	/**
 	 * A shortcut for iterating over virtual memory regions.
-	 * 
+	 *
 	 * This operates by calling {@link #queryVirtual(long)} to get each next entry, starting at an
 	 * offset of -start-, adding the size of the returned region to determine the offset for the
 	 * next call.
-	 * 
+	 *
 	 * @param start the starting offset
 	 * @return an iterator over virtual memory regions after the given start
 	 */

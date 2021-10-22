@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class InstructionSearchMainPanel extends JPanel {
 	 * restore the last position the user set. This is static so it won't be
 	 * recreated when a new search panel is created (which will happen every
 	 * time a selection is initiated).
-	 * 
+	 *
 	 * -1 ensures that the initial position will use the preferred pos of the
 	 * splitter (50%).
 	 */
@@ -50,7 +50,7 @@ public class InstructionSearchMainPanel extends JPanel {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param plugin the instruction search plugin
 	 * @param dialog the parent dialog
 	 * @throws InvalidInputException if the search data is invalid
@@ -62,7 +62,7 @@ public class InstructionSearchMainPanel extends JPanel {
 
 		this.searchData = dialog.getSearchData();
 
-		// Get the number of operands we need to show (across all instructions); this 
+		// Get the number of operands we need to show (across all instructions); this
 		// will define the number of columns to create.
 		if (searchData == null) {
 			throw new InvalidInputException("Search data object cannot be null");
@@ -100,7 +100,7 @@ public class InstructionSearchMainPanel extends JPanel {
 	 * Displays the current search strings based on all user settings. What is
 	 * displayed in the {@link PreviewTablePanel} is what will be used for any
 	 * subsequent searches.
-	 * 
+	 *
 	 * @throws InvalidInputException
 	 */
 	public void buildPreview() throws InvalidInputException {
@@ -114,7 +114,7 @@ public class InstructionSearchMainPanel extends JPanel {
 	/**
 	 * Provides a link between the two given panels such that when one is
 	 * scrolled (vertically) the other is scrolled accordingly.
-	 * 
+	 *
 	 * @param panel1 left panel
 	 * @param panel2 right panel
 	 */
@@ -125,14 +125,14 @@ public class InstructionSearchMainPanel extends JPanel {
 
 	/**
 	 * Creates a splitter between the two given panels.
-	 * 
+	 *
 	 * @param panel1 left panel
 	 * @param panel2 right panel
 	 * @return
 	 */
 	private JSplitPane splitPanels(JPanel panel1, JPanel panel2) {
 
-		// Set up a split pane to divide the two tables and set the current splitter 
+		// Set up a split pane to divide the two tables and set the current splitter
 		// position to whatever is in splitterVal; this ensures that if the user sets
 		// a splitter position, the next time the table is loaded it will use that
 		// position.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public class DBAnnotatedObject extends DatabaseObject {
 
 	/**
 	 * Get an opaque unique id for this object, whose hash is immutable
-	 * 
+	 *
 	 * @return the opaque object id
 	 */
 	public ObjectKey getObjectKey() {
@@ -119,17 +119,17 @@ public class DBAnnotatedObject extends DatabaseObject {
 
 	/**
 	 * Called when the object's fields are populated.
-	 * 
+	 *
 	 * This provides an opportunity for the object to initialize any remaining (usually
 	 * non-database-backed) fields.
-	 * 
+	 *
 	 * For a new object, the database-backed fields remain at their initial values. They will be
 	 * saved after this method returns, so they may be further initialized with custom logic.
-	 * 
+	 *
 	 * For an object loaded from the database, the database-backed fields were already populated
 	 * from the record. They are <em>not</em> automatically saved after this method returns. This
 	 * method should not further initialize database-backed fields in this case.
-	 * 
+	 *
 	 * @param created {@code true} to indicate the object is being created, or {@code false} to
 	 *            indicate it is being restored.
 	 * @throws IOException if further initialization fails.

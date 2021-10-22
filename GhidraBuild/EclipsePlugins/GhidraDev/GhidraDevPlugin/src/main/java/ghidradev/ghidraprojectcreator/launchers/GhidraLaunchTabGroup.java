@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class GhidraLaunchTabGroup extends AbstractLaunchConfigurationTabGroup {
 
 	/**
 	 * Gets the {@link JavaMainTab} to use, with Ghidra's main method pre-configured in.
-	 * 
+	 *
 	 * @return The {@link JavaMainTab} to use, with Ghidra's main method pre-configured in.
 	 */
 	private JavaMainTab getJavaMainTab() {
@@ -79,7 +79,7 @@ public class GhidraLaunchTabGroup extends AbstractLaunchConfigurationTabGroup {
 	/**
 	 * Gets the user-defined arguments to use.  These will be appended to Ghidra's required
 	 * launch arguments, which are hidden from the tab group.
-	 * 
+	 *
 	 * @return The user-defined arguments to use.
 	 */
 	private AbstractLaunchConfigurationTab getUserDefinedArgumentsTab() {
@@ -171,8 +171,8 @@ public class GhidraLaunchTabGroup extends AbstractLaunchConfigurationTabGroup {
 
 	/**
 	 * Gets the {@link CommonTab} to use, with the new launch configuration added to the favorites.
-	 * 
-	 * @return The {@link CommonTab} to use, with the new launch configuration added to the 
+	 *
+	 * @return The {@link CommonTab} to use, with the new launch configuration added to the
 	 *   favorites.
 	 */
 	private CommonTab getCommonTab() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Adapter to access the data type archive identifier table.
- * This table holds an ID entry for each archive that has provided a data type to the 
+ * This table holds an ID entry for each archive that has provided a data type to the
  * data type manager for the program.
  */
 abstract class SourceArchiveAdapter {
@@ -45,10 +45,10 @@ abstract class SourceArchiveAdapter {
 		SourceArchiveAdapterV0.V0_ARCHIVE_ID_DIRTY_FLAG_COL;
 
 	/**
-	 * Gets an adapter for working with the Data Type Archive ID database table. This table is 
-	 * intended to associate a unique ID with a particular project data type archive. When a data 
-	 * type is added to a program it can indicate save the ID of the archive where it originated. 
-	 * This can then be used to synchronize the program with that archive. The adapter is based 
+	 * Gets an adapter for working with the Data Type Archive ID database table. This table is
+	 * intended to associate a unique ID with a particular project data type archive. When a data
+	 * type is added to a program it can indicate save the ID of the archive where it originated.
+	 * This can then be used to synchronize the program with that archive. The adapter is based
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).

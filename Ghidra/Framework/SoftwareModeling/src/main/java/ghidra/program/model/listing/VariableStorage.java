@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,9 +27,9 @@ import ghidra.program.util.LanguageTranslator;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * <code></code> encapsulates the ordered list of storage varnodes which correspond to a 
- * function parameter or local variable.  For big-endian the first element corresponds 
- * to the most-significant varnode, while for little-endian the first element 
+ * <code></code> encapsulates the ordered list of storage varnodes which correspond to a
+ * function parameter or local variable.  For big-endian the first element corresponds
+ * to the most-significant varnode, while for little-endian the first element
  * corresponds to the least-significant varnode.
  */
 public class VariableStorage implements Comparable<VariableStorage> {
@@ -230,7 +230,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 			else {
 				long stackOffset = storageAddr.getOffset();
 				if (stackOffset < 0 && -stackOffset < varnode.getSize()) {
-					// do not allow stack varnode to span the 0-offset 
+					// do not allow stack varnode to span the 0-offset
 					// i.e., maintain separation of locals and params
 					throw new InvalidInputException(
 						"Stack varnode violates stack frame constraints (stack offset=" +
@@ -257,7 +257,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	 * Dynamic storage characteristics will not be preserved.
 	 * @param newProgram target program
 	 * @return cloned storage
-	 * @throws InvalidInputException 
+	 * @throws InvalidInputException
 	 */
 	public VariableStorage clone(Program newProgram) throws InvalidInputException {
 		if (program == null || newProgram == program) {
@@ -356,7 +356,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	 * Associated with auto-parameters.  Parameters whose existence is dictated
 	 * by a calling-convention may automatically inject additional hidden
 	 * parameters.  If this storage is associated with a auto-parameter, this
-	 * method will return true.   
+	 * method will return true.
 	 * @return true if this storage is associated with an auto-parameter, else false
 	 */
 	public boolean isAutoStorage() {
@@ -373,7 +373,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	}
 
 	/**
-	 * If this storage corresponds to parameter which was forced by the associated calling 
+	 * If this storage corresponds to parameter which was forced by the associated calling
 	 * convention to be passed as a pointer instead of its raw type.
 	 * @return true if this parameter was forced to be passed as a pointer instead of its raw type
 	 */
@@ -450,8 +450,8 @@ public class VariableStorage implements Comparable<VariableStorage> {
 
 	/**
 	 * @return true if this is a simple variable consisting of a single register varnode
-	 * which will be returned by either the {@link Variable#getFirstStorageVarnode()} or 
-	 * {@link Variable#getLastStorageVarnode()} methods.  The register can be obtained using the 
+	 * which will be returned by either the {@link Variable#getFirstStorageVarnode()} or
+	 * {@link Variable#getLastStorageVarnode()} methods.  The register can be obtained using the
 	 * {@link #getRegister()} method.  Keep in mind that registers
 	 * may exist in a memory space or the register space.
 	 */
@@ -479,8 +479,8 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	}
 
 	/**
-	 * @return the stack offset associated with simple stack storage or compound 
-	 * storage where the last varnode is stack, see {@link #hasStackStorage()}. 
+	 * @return the stack offset associated with simple stack storage or compound
+	 * storage where the last varnode is stack, see {@link #hasStackStorage()}.
 	 * @throws UnsupportedOperationException if storage does not have a stack varnode
 	 */
 	public int getStackOffset() {
@@ -544,7 +544,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	/**
 	 * @return true if storage consists of a single unique-space varnode which is used during
 	 * function analysis.  This type of storage is not suitable for database-stored function
-	 * variables.  This type of storage must be properly converted to Hash storage when 
+	 * variables.  This type of storage must be properly converted to Hash storage when
 	 * storing unique function variables.
 	 */
 	public boolean isUniqueStorage() {
@@ -564,8 +564,8 @@ public class VariableStorage implements Comparable<VariableStorage> {
 
 	public long getLongHash() {
 		if (hashcode == 0) {
-			// WARNING! This can not be changed since this hash is used to 
-			// locate existing storage records which have previously 
+			// WARNING! This can not be changed since this hash is used to
+			// locate existing storage records which have previously
 			// stored this hash
 			CRC64 crc = new CRC64();
 			byte[] bytes = getSerializationString().getBytes();
@@ -696,7 +696,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 	}
 
 	/**
-	 * Compare this variable storage with another.  A value of 0 indicates 
+	 * Compare this variable storage with another.  A value of 0 indicates
 	 * that the two objects are equal
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
@@ -908,7 +908,7 @@ public class VariableStorage implements Comparable<VariableStorage> {
 		// Handle register movement within register space only
 		// Assumes all translators will map register space properly
 		// If old or new register not found no adjustment is made
-		// The original addrStr may refer to an offcut location within a register 
+		// The original addrStr may refer to an offcut location within a register
 		long offset = oldRegAddr.getOffset();
 		Register oldReg = translator.getOldRegister(oldRegAddr, varnodeSize);
 		if (oldReg == null) {

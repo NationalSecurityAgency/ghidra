@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,11 @@ import ghidra.util.exception.DuplicateNameException;
 import java.io.IOException;
 
 /**
- * A class to represent the 
+ * A class to represent the
  * <b><code>IMAGE_THUNK_DATA32 struct</code></b>
- * as defined in 
+ * as defined in
  * <b><code>winnt.h</code></b>.
- * 
+ *
  * <pre>
  * typedef struct _IMAGE_THUNK_DATA32 {
  *     union {
@@ -43,7 +43,7 @@ import java.io.IOException;
  * } IMAGE_THUNK_DATA32;
  * typedef IMAGE_THUNK_DATA32 * PIMAGE_THUNK_DATA32;
  * </pre>
- * 
+ *
  * <pre>
  * typedef struct _IMAGE_THUNK_DATA64 {
  *     union {
@@ -56,7 +56,7 @@ import java.io.IOException;
  * typedef IMAGE_THUNK_DATA64 * PIMAGE_THUNK_DATA64;
  * </pre>
  *
- * 
+ *
  */
 public class ThunkData implements StructConverter, ByteArrayConverter {
 	private boolean is64bit;

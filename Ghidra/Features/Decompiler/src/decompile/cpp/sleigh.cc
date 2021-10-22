@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,7 @@ VarnodeData *PcodeCacher::expandPool(uint4 size)
     VarnodeData *ref = (*iter).dataptr;
     (*iter).dataptr = newpool + (ref - poolstart);
   }
-  
+
   delete [] poolstart;		// Free up old pool
   poolstart = newpool;
   curpool = newpool + (cursize + size);
@@ -258,7 +258,7 @@ void SleighBuilder::buildEmpty(Constructor *ct,int4 secnum)
 
 {
   int4 numops = ct->getNumOperands();
-  
+
   for(int4 i=0;i<numops;++i) {
     SubtableSymbol *sym = (SubtableSymbol *)ct->getOperand(i)->getDefiningSymbol();
     if (sym == (SubtableSymbol *)0) continue;
@@ -312,7 +312,7 @@ void SleighBuilder::appendBuild(OpTpl *bld,int4 secnum)
 				// Check if operand is a subtable
   SubtableSymbol *sym = (SubtableSymbol *)walker->getConstructor()->getOperand(index)->getDefiningSymbol();
   if ((sym==(SubtableSymbol *)0)||(sym->getType() != SleighSymbol::subtable_symbol)) return;
-  
+
   walker->pushOperand(index);
   Constructor *ct = walker->getConstructor();
   if (secnum >=0) {
@@ -387,7 +387,7 @@ void SleighBuilder::appendCrossBuild(OpTpl *bld,int4 secnum)
   const ParserContext *pos = discache->getParserContext( newaddr );
   if (pos->getParserState() != ParserContext::pcode)
     throw LowlevelError("Could not obtain cached crossbuild instruction");
-  
+
   ParserWalker newwalker( pos, tmp->getParserContext() );
   walker = &newwalker;
 
@@ -683,7 +683,7 @@ int4 Sleigh::printAssembly(AssemblyEmit &emit,const Address &baseaddr) const
   ParserContext *pos = obtainContext(baseaddr,ParserContext::disassembly);
   ParserWalker walker(pos);
   walker.baseState();
-  
+
   Constructor *ct = walker.getConstructor();
   ostringstream mons;
   ct->printMnemonic(mons,walker);
@@ -705,11 +705,11 @@ int4 Sleigh::oneInstruction(PcodeEmit &emit,const Address &baseaddr) const
       throw UnimplError(s.str(),0);
     }
   }
-  
+
   ParserContext *pos = obtainContext(baseaddr,ParserContext::pcode);
   pos->applyCommits();
   fallOffset = pos->getLength();
-  
+
   if (pos->getDelaySlot()>0) {
     int4 bytecount = 0;
     do {

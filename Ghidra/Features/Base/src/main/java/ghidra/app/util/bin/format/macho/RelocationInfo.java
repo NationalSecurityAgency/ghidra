@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,13 +24,13 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Represents a relocation_info and scattered_relocation_info structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/reloc.h.auto.html">mach-o/reloc.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/reloc.h.auto.html">mach-o/reloc.h</a>
  */
 public class RelocationInfo implements StructConverter {
 
 	/**
-	 * Mask to be applied to the r_address field of a relocation_info structure to tell that it is 
+	 * Mask to be applied to the r_address field of a relocation_info structure to tell that it is
 	 * really a scattered_relocation_info structure
 	 */
 	private static int R_SCATTERED = 0x80000000;
@@ -41,7 +41,7 @@ public class RelocationInfo implements StructConverter {
 	private int r_scattered;
 
 	/**
-	 * Offset in the section to what is being relocated.  The r_address is not really the address 
+	 * Offset in the section to what is being relocated.  The r_address is not really the address
 	 * as its name indicates but an offset.
 	 */
 	private int r_address;
@@ -192,7 +192,7 @@ public class RelocationInfo implements StructConverter {
 				struct.insertBitFieldAt(0, DWORD.getLength(), 30, DWORD, 1, "r_pcrel", "");
 				struct.insertBitFieldAt(0, DWORD.getLength(), 31, DWORD, 1, "r_scattered", "");
 			}
-			catch (InvalidDataTypeException e) {				
+			catch (InvalidDataTypeException e) {
 				struct.add(DWORD, "r_mask", "{r_address,r_type,r_length,r_pcrel,r_scattered}");
 			}
 			struct.add(DWORD, "r_value", null);

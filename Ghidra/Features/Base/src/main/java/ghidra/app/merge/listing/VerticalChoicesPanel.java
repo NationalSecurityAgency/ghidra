@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,14 +51,14 @@ import ghidra.util.layout.MaximizeSpecificColumnGridLayout;
 
 /**
  * <CODE>VerticalChoicesPanel</CODE> is a conflict panel for the Listing Merge.
- * It lays out rows of information vertically in a table format. 
- * Each row can be a header row, an information row, a single choice row, 
+ * It lays out rows of information vertically in a table format.
+ * Each row can be a header row, an information row, a single choice row,
  * or a multiple choice row.
- * <BR>Single choice rows provide a radio button and are used when a single 
+ * <BR>Single choice rows provide a radio button and are used when a single
  * choice must be made from multiple rows of choices.
- * <BR>Multiple choice rows provide a check box and are used when more than one 
+ * <BR>Multiple choice rows provide a check box and are used when more than one
  * choice can be made from multiple rows of choices.
- * <BR>Note: Single choice and multiple choice rows are not intended to be 
+ * <BR>Note: Single choice and multiple choice rows are not intended to be
  * intermixed on the same panel.
  * <BR>A header label can be set. This appears above the row table. The text
  * for the header label should be HTML.
@@ -336,9 +336,9 @@ public class VerticalChoicesPanel extends ConflictPanel {
 	}
 
 	/**
-	 * Adds a row to the table that doesn't provide any choices. 
+	 * Adds a row to the table that doesn't provide any choices.
 	 * Instead this row just provides information.
-	 * 
+	 *
 	 * @param items the text for each column.
 	 */
 	void addInfoRow(String[] items) {
@@ -463,7 +463,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 	}
 
 	/**
-	 * Returns true if the user made a selection for every conflict in the table and 
+	 * Returns true if the user made a selection for every conflict in the table and
 	 * made the same choice for every row.
 	 */
 	@Override

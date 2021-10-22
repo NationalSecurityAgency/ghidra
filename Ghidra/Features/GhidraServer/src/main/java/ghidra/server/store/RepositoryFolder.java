@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidra.util.exception.FileInUseException;
 
 /**
  * <code>RepositoryFolder</code> provides a persistent wrapper for a folder path
- * which may contain other sub-folders or FolderItem's stored within a Repository.  
+ * which may contain other sub-folders or FolderItem's stored within a Repository.
  * This folder is associated with a parent RepositoryFolder
  * and facilitates caching of the underlying FolderItem.
  * The root folder within the file-system will have a null parent.
@@ -153,7 +153,7 @@ public class RepositoryFolder {
 	}
 
 	/**
-	 * Returns sub-folders with the specified name or null 
+	 * Returns sub-folders with the specified name or null
 	 * if sub-folder not found within this folder.
 	 * @param folderName sub-folder name
 	 */
@@ -192,7 +192,7 @@ public class RepositoryFolder {
 	}
 
 	/**
-	 * Returns files/items with the specified name or null 
+	 * Returns files/items with the specified name or null
 	 * if file/item not found within this folder.
 	 * @param fileName sub-folder name
 	 */

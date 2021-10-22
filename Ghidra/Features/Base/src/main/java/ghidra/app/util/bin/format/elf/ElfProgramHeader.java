@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,16 +26,16 @@ import ghidra.program.model.data.*;
 import ghidra.util.*;
 
 /**
- * An executable or shared object file's program header table is an 
+ * An executable or shared object file's program header table is an
  * array of structures, each describing a segment
- * or other information the system needs to prepare the program for execution. 
- * An object file segment contains one or more sections. 
- * Program headers are meaningful only for executable 
- * and shared object files. A file specifies its 
+ * or other information the system needs to prepare the program for execution.
+ * An object file segment contains one or more sections.
+ * Program headers are meaningful only for executable
+ * and shared object files. A file specifies its
  * own program header size with the ELF
  * header's e_phentsize and e_phnum members.
  * Some entries describe process segments; others give supplementary information and do not contribute to
- * the process image. Segment entries may appear in any order. Except for PT_LOAD segment 
+ * the process image. Segment entries may appear in any order. Except for PT_LOAD segment
  * entries which must appear in ascending order, sorted on the p_vaddr member.
  * <br>
  * <pre>
@@ -49,7 +49,7 @@ import ghidra.util.*;
  *     Elf32_Word   p_flags;
  *     Elf32_Word   p_align;
  * } Elf32_Phdr;
- * 
+ *
  * typedef struct {
  *     Elf64_Word   p_type;         //Segment type
  *     Elf64_Word   p_flags;        //Segment flags
@@ -122,7 +122,7 @@ public class ElfProgramHeader
 			//This case occurs when the data segment has both
 			//initialized and uninitialized sections.
 			//For example, the data program header may be comprised
-			//of ".data", ".dynamic", ".ctors", ".dtors", ".jcr", 
+			//of ".data", ".dynamic", ".ctors", ".dtors", ".jcr",
 			//and ".bss".
 			//TODO Err.warn(this, "Program Header: extra bytes");
 		}
@@ -299,9 +299,9 @@ public class ElfProgramHeader
 	}
 
 	/**
-	 * Get the adjusted file load size (i.e., filtered load size) to be loaded into memory block which relates to 
-	 * this program header; it may be zero if no block should be created.  The returned value reflects any adjustment 
-	 * the ElfExtension may require based upon the specific processor/language implementation which may 
+	 * Get the adjusted file load size (i.e., filtered load size) to be loaded into memory block which relates to
+	 * this program header; it may be zero if no block should be created.  The returned value reflects any adjustment
+	 * the ElfExtension may require based upon the specific processor/language implementation which may
 	 * require filtering of file bytes as loaded into memory.
 	 * @return the number of bytes to be loaded into the resulting memory block
 	 */
@@ -318,7 +318,7 @@ public class ElfProgramHeader
 	}
 
 	/**
-	 * This member gives the offset from the beginning of the file at which 
+	 * This member gives the offset from the beginning of the file at which
 	 * the first byte of the segment resides.
 	 * @return the offset from the beginning of the file
 	 */
@@ -327,7 +327,7 @@ public class ElfProgramHeader
 	}
 
 	/**
-	 * Compute the file offset associated with the specified loaded virtual address 
+	 * Compute the file offset associated with the specified loaded virtual address
 	 * defined by this PT_LOAD program header.  This can be useful when attempting to locate
 	 * addresses defined by the PT_DYNAMIC section.
 	 * @param virtualAddress a memory address which has already had the PRElink adjustment applied
@@ -340,7 +340,7 @@ public class ElfProgramHeader
 			throw new UnsupportedOperationException("virtualAddress not loaded by this segment");
 		}
 		if (getMemorySize() != getAdjustedMemorySize()) {
-			// TODO: unsure if we will encounter this situation 
+			// TODO: unsure if we will encounter this situation
 			throw new UnsupportedOperationException("unsupported use of filtered load segment");
 		}
 		// TODO: additional validation of this approach is needed
@@ -392,7 +392,7 @@ public class ElfProgramHeader
 	}
 
 	/**
-	 * This member gives the virtual address at which the first 
+	 * This member gives the virtual address at which the first
 	 * byte of the segment resides in memory.
 	 * @return the virtual address
 	 */

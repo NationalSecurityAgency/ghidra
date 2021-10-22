@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,12 +33,12 @@ public class CParserUtils {
 	/**
 	 * Parse the given function signature text.  Any exceptions will be handled herein
 	 * by showing an error dialog (null is returned in that case).
-	 * 
+	 *
 	 * @param serviceProvider the service provider used to access DataTypeManagers
 	 * @param program the program against which data types will be resolved
 	 * @param signatureText the signature to parse
 	 * @return the data type that is created as a result of parsing; null if there was a problem
-	 * 
+	 *
 	 * @see #parseSignature(DataTypeManagerService, Program, String)
 	 * @see #parseSignature(DataTypeManagerService, Program, String, boolean)
 	 */
@@ -51,13 +51,13 @@ public class CParserUtils {
 	/**
 	 * Parse the given function signature text.  Any exceptions will be handled herein
 	 * by showing an error dialog (null is returned in that case).
-	 * 
+	 *
 	 * @param service the service used to access DataTypeManagers or null to use only the program's
 	 * data type manager.
 	 * @param program the program against which data types will be resolved
 	 * @param signatureText the signature to parse
 	 * @return the data type that is created as a result of parsing; null if there was a problem
-	 * 
+	 *
 	 * @see #parseSignature(DataTypeManagerService, Program, String, boolean)
 	 */
 	public static FunctionDefinitionDataType parseSignature(DataTypeManagerService service,
@@ -66,7 +66,7 @@ public class CParserUtils {
 			return parseSignature(service, program, signatureText, true);
 		}
 		catch (ParseException e) {
-			// Can't happen, as we are passing 'true' above.  Just in case this changes, 
+			// Can't happen, as we are passing 'true' above.  Just in case this changes,
 			// log the exception
 			Msg.debug(CParserUtils.class,
 				"Logging an exception that cannot happen (the code must have changed)", e);
@@ -139,12 +139,12 @@ public class CParserUtils {
 	/**
 	 * Parse the given function signature text.  Any exceptions will be handled herein
 	 * by showing an error dialog (null is returned in that case).
-	 * 
+	 *
 	 * @param service the service used to access DataTypeManagers or null to use only the program's
 	 * data type manager.
 	 * @param program the program against which data types will be resolved
 	 * @param signatureText the signature to parse
-	 * @param handleExceptions true signals that this method should deal with exceptions, 
+	 * @param handleExceptions true signals that this method should deal with exceptions,
 	 *        showing error messages as necessary; false signals to throw any encountered
 	 *        parsing exceptions.  This allows clients to perform exception handling that
 	 *        better matches their workflow.
@@ -183,9 +183,9 @@ public class CParserUtils {
 			return (FunctionDefinitionDataType) dt;
 		}
 		catch (InvalidNameException | DuplicateNameException e) {
-			// can't happen since we are calling setName() with the value that was 
-			// previously set (this can change in the future if we ever modify the 
-			// name before we restore it) 
+			// can't happen since we are calling setName() with the value that was
+			// previously set (this can change in the future if we ever modify the
+			// name before we restore it)
 			Msg.debug(CParserUtils.class,
 				"Logging an exception that cannot happen (the code must have changed)", e);
 		}
@@ -218,12 +218,12 @@ public class CParserUtils {
 	}
 
 	/**
-	 * Given a throwable, attempt pull out the significant error parts to generate a 
+	 * Given a throwable, attempt pull out the significant error parts to generate a
 	 * user-friendly error message.
-	 * 
+	 *
 	 * @param t the throwable to examine, originating from the {@link CParser}.
 	 * @param functionString the full function signature text that was parsed by the parser.
-	 * @return a user-friendly error message, or null if this class did not know how to 
+	 * @return a user-friendly error message, or null if this class did not know how to
 	 *         handle the given exception.
 	 */
 	public static String handleParseProblem(Throwable t, String functionString) {
@@ -238,8 +238,8 @@ public class CParserUtils {
 
 	private static String generateTokenErrorMessage(TokenMgrError e, String functionString) {
 
-		// HACKY SMACKY: we have to parse the error message to get out the bits we 
-		//               desire.  If we could control the TokeyMgrError.java file 
+		// HACKY SMACKY: we have to parse the error message to get out the bits we
+		//               desire.  If we could control the TokeyMgrError.java file
 		//               generation, then we could put the fields in it that we need.
 
 		String message = e.getMessage();
@@ -290,7 +290,7 @@ public class CParserUtils {
 	}
 
 	private static String generateParseExceptionMessage(ParseException pe, String functionString) {
-		// HACKY SMACKY!....this code is done in lieu of actually putting good data in the 
+		// HACKY SMACKY!....this code is done in lieu of actually putting good data in the
 		// exception itself...we should do that!
 		if (pe.currentToken == null) {
 			return null;

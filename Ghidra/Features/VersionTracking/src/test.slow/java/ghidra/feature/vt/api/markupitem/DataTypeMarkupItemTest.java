@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,15 +113,15 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 	@Test
 	public void testReplaceWithLargerWhenBlockedByDataDoNothing() throws Exception {
 
-		Address sourceAddress = addr("0x010074e6", sourceProgram); // LoadCursorW 
+		Address sourceAddress = addr("0x010074e6", sourceProgram); // LoadCursorW
 		TerminatedStringDataType sourceDataType = new TerminatedStringDataType();
-		Data sourceData = setDataType(sourceProgram, sourceAddress, sourceDataType, -1); // Get "LoadCursorW". 
+		Data sourceData = setDataType(sourceProgram, sourceAddress, sourceDataType, -1); // Get "LoadCursorW".
 
-		Address destinationAddress = addr("0x010074e6", destinationProgram); // LoadCursorW 
+		Address destinationAddress = addr("0x010074e6", destinationProgram); // LoadCursorW
 		StringDataType destinationDataType = new StringDataType();
 		Data destinationData =
-			setDataType(destinationProgram, destinationAddress, destinationDataType, 4); // Get "Load". 
-		setDataType(destinationProgram, destinationAddress.add(4), destinationDataType, 6); // Get "Cursor". 
+			setDataType(destinationProgram, destinationAddress, destinationDataType, 4); // Get "Load".
+		setDataType(destinationProgram, destinationAddress.add(4), destinationDataType, 6); // Get "Cursor".
 
 		DataTypeValidator validator = new DataTypeValidator(sourceData, destinationData,
 			ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
@@ -167,15 +167,15 @@ public class DataTypeMarkupItemTest extends AbstractVTMarkupItemTest {
 	@Test
 	public void testReplaceFirstWithLargerWhenBlockedByDataAtEndDoNothing() throws Exception {
 
-		Address sourceAddress = addr("0x010074e6", sourceProgram); // LoadCursorW 
+		Address sourceAddress = addr("0x010074e6", sourceProgram); // LoadCursorW
 		TerminatedStringDataType sourceDataType = new TerminatedStringDataType();
-		Data sourceData = setDataType(sourceProgram, sourceAddress, sourceDataType, -1); // Get "LoadCursorW". 
+		Data sourceData = setDataType(sourceProgram, sourceAddress, sourceDataType, -1); // Get "LoadCursorW".
 
-		Address destinationAddress = addr("0x010074e6", destinationProgram); // LoadCursorW 
+		Address destinationAddress = addr("0x010074e6", destinationProgram); // LoadCursorW
 		StringDataType destinationDataType = new StringDataType();
 		Data destinationData =
-			setDataType(destinationProgram, destinationAddress, destinationDataType, 4); // Get "Load". 
-		setDataType(destinationProgram, destinationAddress.add(11), new ByteDataType(), -1); // Get "Cursor". 
+			setDataType(destinationProgram, destinationAddress, destinationDataType, 4); // Get "Load".
+		setDataType(destinationProgram, destinationAddress.add(11), new ByteDataType(), -1); // Get "Cursor".
 
 		DataTypeValidator validator = new DataTypeValidator(sourceData, destinationData,
 			ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);

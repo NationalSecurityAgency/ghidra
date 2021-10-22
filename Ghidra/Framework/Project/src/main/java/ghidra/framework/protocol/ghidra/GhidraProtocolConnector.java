@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,17 +25,17 @@ import ghidra.framework.client.*;
 import ghidra.framework.store.FileSystem;
 
 /**
- * <code>GhidraProtocolConnector</code> provides an abtract implementation to access Ghidra 
- * repositories using various underlying communication protocols.  The common requirement 
+ * <code>GhidraProtocolConnector</code> provides an abtract implementation to access Ghidra
+ * repositories using various underlying communication protocols.  The common requirement
  * for all implementations is the ability to derive a repository URL from any folder or file
- * URL. 
+ * URL.
  */
 public abstract class GhidraProtocolConnector {
 
 	protected final URL url;
 
 	protected final String repositoryName;
-	protected final String itemPath; // trailing "/" signifies explicit folder path 
+	protected final String itemPath; // trailing "/" signifies explicit folder path
 
 	protected String folderPath;
 	protected String folderItemName = null;
@@ -67,7 +67,7 @@ public abstract class GhidraProtocolConnector {
 	protected abstract URL getRepositoryRootGhidraURL();
 
 	/**
-	 * Perform URL verification checks to ensure that it satisfies this 
+	 * Perform URL verification checks to ensure that it satisfies this
 	 * connector implementation requirements
 	 * @throws MalformedURLException if URL is invalid
 	 */
@@ -78,8 +78,8 @@ public abstract class GhidraProtocolConnector {
 	}
 
 	/**
-	 * If connector supports user information within URL it will be verified 
-	 * @throws MalformedURLException if URL contains user information 
+	 * If connector supports user information within URL it will be verified
+	 * @throws MalformedURLException if URL contains user information
 	 * and it is either invalid or unsupported
 	 */
 	protected void checkUserInfo() throws MalformedURLException {
@@ -89,7 +89,7 @@ public abstract class GhidraProtocolConnector {
 	}
 
 	/**
-	 * Presence of a host specification within URL will be verified 
+	 * Presence of a host specification within URL will be verified
 	 * @throws MalformedURLException if URL is missing proper host specification
 	 */
 	protected void checkHostInfo() throws MalformedURLException {
@@ -216,7 +216,7 @@ public abstract class GhidraProtocolConnector {
 	/**
 	 * Gets the repository folder path associated with the URL.
 	 * If an ambiguous path has been specified, the folder path may change
-	 * after a connection is established (e.g., folder item name will be appended 
+	 * after a connection is established (e.g., folder item name will be appended
 	 * to folder path and item name will become null if item turns out to
 	 * be a folder).
 	 * @return repository folder path or null
@@ -228,7 +228,7 @@ public abstract class GhidraProtocolConnector {
 	/**
 	 * Gets the repository folder item name associated with the URL.
 	 * If an ambiguous path has been specified, the folder item name may become null
-	 * after a connection is established (e.g., folder item name will be appended 
+	 * after a connection is established (e.g., folder item name will be appended
 	 * to folder path and item name will become null if item turns out to
 	 * be a folder).
 	 * @return folder item name or null
@@ -246,7 +246,7 @@ public abstract class GhidraProtocolConnector {
 
 	/**
 	 * Fully resolve folder/item reference once connected to the associated
-	 * repository due to possible ambiguity  
+	 * repository due to possible ambiguity
 	 * @throws IOException
 	 */
 	protected void resolveItemPath() throws IOException {
@@ -288,11 +288,11 @@ public abstract class GhidraProtocolConnector {
 	/**
 	 * Utilized a cached connection via the specified repository adapter.
 	 * This method may only be invoked if not yet connected and the associated
-	 * URL corresponds to a repository (getRepositoryName() != null).  The connection 
-	 * response code should be established based upon the availability of the 
+	 * URL corresponds to a repository (getRepositoryName() != null).  The connection
+	 * response code should be established based upon the availability of the
 	 * URL referenced repository resource (i.e., folder or file).
 	 * @param repository existing connected repository adapter
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	protected void connect(RepositoryAdapter repository) throws IOException {
 		if (responseCode != -1) {

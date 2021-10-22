@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,8 +30,8 @@ import java.awt.dnd.DropTargetDragEvent;
  *  Handles datatype drops in the codebrowser.  Installed by the dataTypeManagerPlugin
  *
  */
-public class DataDropOnBrowserHandler implements ProgramDropProvider { 
-	
+public class DataDropOnBrowserHandler implements ProgramDropProvider {
+
 	private static final DataFlavor[] ACCEPTABLE_FLAVORS = new DataFlavor[] {
 	    DataTypeTransferable.localDataTypeFlavor,
 	    DataTypeTransferable.localBuiltinDataTypeFlavor
@@ -42,11 +42,11 @@ public class DataDropOnBrowserHandler implements ProgramDropProvider {
 	public DataDropOnBrowserHandler(DataTypeManagerPlugin plugin) {
 		this.plugin = plugin;
 	}
-	
+
 	public int getPriority() {
 		return 20;
 	}
-	
+
 	public DataFlavor[] getDataFlavors() {
 		return ACCEPTABLE_FLAVORS;
 	}
@@ -63,7 +63,7 @@ public class DataDropOnBrowserHandler implements ProgramDropProvider {
 
 		if (contextObj != null  &&  contextObj instanceof ListingActionContext) {
 			ListingActionContext pl = (ListingActionContext)contextObj;
-			DataService[] services = plugin.getTool().getServices(DataService.class); 
+			DataService[] services = plugin.getTool().getServices(DataService.class);
 			for (int i=0; i<services.length; i++) {
 				if (services[i].isCreateDataAllowed(pl)) {
 					curService = services[i];
@@ -71,7 +71,7 @@ public class DataDropOnBrowserHandler implements ProgramDropProvider {
 				}
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -81,5 +81,5 @@ public class DataDropOnBrowserHandler implements ProgramDropProvider {
 			curService.createData(dt, (ListingActionContext)contextObj, true);
 		}
 	}
-	
+
 }

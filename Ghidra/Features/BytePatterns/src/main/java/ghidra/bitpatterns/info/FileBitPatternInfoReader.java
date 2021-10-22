@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,8 @@ import ghidra.util.task.*;
 
 /**
  * An object of this class stores information about function starts (and returns) to analyze.
- * 
- * <p> There are two possible sources for this information.  The first is a directory containing 
+ *
+ * <p> There are two possible sources for this information.  The first is a directory containing
  * XML files produced by JAXB from FunctionBitPatternInfo objects.  The second is a single program.
  */
 
@@ -44,7 +44,7 @@ public class FileBitPatternInfoReader {
 
 	/**
 	 * Gathers function start information from a program.
-	 * 
+	 *
 	 * @param program The program to mine.
 	 * @param params The parameters controlling how much information to gather.
 	 * @param parent parent component
@@ -212,7 +212,7 @@ public class FileBitPatternInfoReader {
 	}
 
 	/**
-	 * Task for mining a single program 
+	 * Task for mining a single program
 	 */
 	class MineProgramTask extends Task {
 
@@ -271,7 +271,7 @@ public class FileBitPatternInfoReader {
 		/**
 		 * Creates a Task for restoring an array of XML-serialized FileBitPatternInfo objects
 		 * @param dataFiles array file files
-		 * @param unmarshaller Unmarshaller for serialized xml 
+		 * @param unmarshaller Unmarshaller for serialized xml
 		 */
 		public ReadDirectoryTask(File[] dataFiles) {
 			super("Reading XML", true, true, true);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,9 +32,9 @@ import ghidra.util.Msg;
 
 /**
  * Defines a set of actions that can be performed on a selection to initiate a memory search.  All
- * actions will ultimately open the {@code MemSearchDialog} with the search string field 
+ * actions will ultimately open the {@code MemSearchDialog} with the search string field
  * pre-populated.
- * 
+ *
  */
 //@formatter:off
 @PluginInfo(
@@ -66,7 +66,7 @@ public class MnemonicSearchPlugin extends Plugin {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param tool the tool
 	 */
 	public MnemonicSearchPlugin(PluginTool tool) {
@@ -88,10 +88,10 @@ public class MnemonicSearchPlugin extends Plugin {
 		Program program = newContext.getProgram();
 		ProgramSelection selection = newContext.getSelection();
 
-		// If there are multiple regions selected, let the user know via popup and 
-		// exit.  This is not allowed.  
-		// Note: We could disable the menu items and not allow this operation to 
-		//       be initiated at all, but the decision was made to do it this way 
+		// If there are multiple regions selected, let the user know via popup and
+		// exit.  This is not allowed.
+		// Note: We could disable the menu items and not allow this operation to
+		//       be initiated at all, but the decision was made to do it this way
 		//       so it's more obvious to the user why the operation is invalid.
 		if (selection.getNumAddressRanges() > 1) {
 			Msg.showInfo(this, context.getComponentProvider().getComponent(),
@@ -132,7 +132,7 @@ public class MnemonicSearchPlugin extends Plugin {
 		HelpLocation helpLocation = new HelpLocation(HelpTopics.SEARCH, "Mnemonic_Search");
 
 		//
-		// ACTION 1: Search for instructions, excluding constants. 
+		// ACTION 1: Search for instructions, excluding constants.
 		//
 		setSearchMnemonicOpsNoConstAction =
 			new NavigatableContextAction("Include Operands (except constants)", getName()) {
@@ -157,7 +157,7 @@ public class MnemonicSearchPlugin extends Plugin {
 				.addToWindowWhen(NavigatableActionContext.class);
 
 		//
-		// ACTION 2: Search for instructions, including operands. 
+		// ACTION 2: Search for instructions, including operands.
 		//
 		setSearchMnemonicOpsConstAction =
 			new NavigatableContextAction("Include Operands", getName()) {
@@ -180,7 +180,7 @@ public class MnemonicSearchPlugin extends Plugin {
 				.addToWindowWhen(NavigatableActionContext.class);
 
 		//
-		// ACTION 3: Search for instructions, excluding constants. 
+		// ACTION 3: Search for instructions, excluding constants.
 		//
 		setSearchMnemonicNoOpsNoConstAction =
 			new NavigatableContextAction("Exclude Operands", getName()) {

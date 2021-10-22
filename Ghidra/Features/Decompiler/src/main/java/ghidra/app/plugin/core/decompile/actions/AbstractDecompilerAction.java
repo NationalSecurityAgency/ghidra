@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import ghidra.util.data.DataTypeParser.AllowedDataTypes;
  * decompiler is busy.   Each action is responsible for deciding its enablement via
  * {@link #isEnabledForDecompilerContext(DecompilerActionContext)}.  Each action must implement
  * {@link #decompilerActionPerformed(DecompilerActionContext)} to complete its work.
- * 
+ *
  * <p>This parent class uses the {@link DecompilerActionContext} to check for the decompiler's
  * busy status.  If the decompiler is busy, then the action will report that it is enabled.  We
  * do this so that any keybindings registered for this action will get consumed and not passed up
@@ -246,7 +246,7 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 
 	/**
 	 * Subclasses return true if they are enabled for the given context
-	 * 
+	 *
 	 * @param context the context
 	 * @return true if enabled
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,9 +44,9 @@ import ghidra.util.task.TaskMonitor;
  * and manually merge the conflicting references.
  * <br>The ReferenceMerger takes into account anywhere that code units have been merged.
  * If code units were merged, then this will not try to merge at those addresses.
- * The code unit merger should have already merged the references where it 
+ * The code unit merger should have already merged the references where it
  * merged code units.
- * <br>Important: This class is intended to be used only for a single program 
+ * <br>Important: This class is intended to be used only for a single program
  * version merge. It should be constructed, followed by an autoMerge(), and lastly
  * each address with a conflict should have mergeConflicts() called on it.
  */
@@ -161,7 +161,7 @@ class ReferenceMerger extends AbstractListingMerger {
 	public boolean apply() {
 		conflictOption = conflictPanel.getSelectedOptions();
 
-		// If the "Use For All" check box is selected 
+		// If the "Use For All" check box is selected
 		// then save the option chosen for this conflict type.
 		if (conflictPanel.getUseForAll()) {
 			setChoiceForConflictType(currentConflictType, conflictOption);
@@ -426,7 +426,7 @@ class ReferenceMerger extends AbstractListingMerger {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param program
 	 * @param fromAddress
 	 * @param operandIndex
@@ -658,7 +658,7 @@ class ReferenceMerger extends AbstractListingMerger {
 	}
 
 	/**
-	 * Replace the references where possible. 
+	 * Replace the references where possible.
 	 * @param addressSet the address set where references should be replaced
 	 * @param chosenConflictOption indicator of where to get references from (KEEP_ORIGINAL, KEEP_LATEST, KEEP_MY).
 	 * @param monitor task monitor
@@ -678,7 +678,7 @@ class ReferenceMerger extends AbstractListingMerger {
 	}
 
 	/**
-	 * Replace the fallthroughs where possible. 
+	 * Replace the fallthroughs where possible.
 	 * @param addressSet the address set where fallthroughs should be replaced
 	 * @param chosenConflictOption indicator of where to get references from (KEEP_ORIGINAL, KEEP_LATEST, KEEP_MY).
 	 * @param monitor task monitor
@@ -698,7 +698,7 @@ class ReferenceMerger extends AbstractListingMerger {
 	}
 
 	/* (non-Javadoc)
-	 * @see ghidra.app.merge.listing.ListingMerger#mergeConflicts(ghidra.app.merge.tool.ListingMergePanel, 
+	 * @see ghidra.app.merge.listing.ListingMerger#mergeConflicts(ghidra.app.merge.tool.ListingMergePanel,
 	 * ghidra.program.model.address.Address, int, ghidra.util.task.TaskMonitor)
 	 */
 	@Override

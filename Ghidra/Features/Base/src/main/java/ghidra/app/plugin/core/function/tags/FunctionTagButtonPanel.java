@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import resources.ResourceManager;
 /**
  * Provides buttons to be used with the {@link FunctionTagProvider}.
  * These buttons allow users to add or remove tags from functions, or delete
- * tags altogether. 
+ * tags altogether.
  * <p>
  * This panel has knowledge of the two tag lists it manages, called "source" and
  * "target". The former contains all tags in the database, minus those already
@@ -46,7 +46,7 @@ public class FunctionTagButtonPanel extends JPanel {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param sourcePanel the panel displaying tags not yet assigned to the current function
 	 * @param targetPanel the panel displaying tags assigned to the current function
 	 */
@@ -62,7 +62,7 @@ public class FunctionTagButtonPanel extends JPanel {
 
 	/**
 	 * Invoked when the user has selected an item in the source panel.
-	 * 
+	 *
 	 * @param validFunction true if a function is selected in the listing
 	 */
 	public void sourcePanelSelectionChanged(boolean validFunction) {
@@ -83,7 +83,7 @@ public class FunctionTagButtonPanel extends JPanel {
 
 	/**
 	 * Invoked when the user has selected an item in the target panel.
-	 * 
+	 *
 	 * @param validFunction true if a function is selected in the listing
 	 */
 	public void targetPanelSelectionChanged(boolean validFunction) {
@@ -136,7 +136,7 @@ public class FunctionTagButtonPanel extends JPanel {
 
 	/**
 	 * Helper function for creating a button with a given action.
-	 * 
+	 *
 	 * @param name the name of the button
 	 * @param icon the icon
 	 * @param tooltip the tooltip to display on hover

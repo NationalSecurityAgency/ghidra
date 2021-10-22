@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -634,7 +634,7 @@ public class FcgProvider
 
 	/*
 	 * 									Notes
-	 * 
+	 *
 	 * To expand a node we need to know or calculate:
 	 * 		-the clicked node (the source)
 	 * 		-all other nodes on the same level as the clicked node (the siblings)
@@ -776,7 +776,7 @@ public class FcgProvider
 
 			FcgLevel inLevel = start.getLevel();
 			if (!inLevel.equals(parentLevel)) {
-				continue; // not our level; don't care 
+				continue; // not our level; don't care
 			}
 
 			// The 'start' vertex is at the same level as 'parent'.  If it is expanded, then
@@ -944,7 +944,7 @@ public class FcgProvider
 		}
 
 		Iterable<FcgEdge> newEdges = collection.getNewEdges();
-		for (FcgEdge e : newEdges) { // add all edges, even those where both nodes are in the graph			
+		for (FcgEdge e : newEdges) { // add all edges, even those where both nodes are in the graph
 			graph.addEdge(e);
 		}
 
@@ -986,7 +986,7 @@ public class FcgProvider
 	 * is needed because we don't add all known edges for a single vertex when it is added, as
 	 * its associated vertex may not yet be in the graph.   Calling this method ensures that as
 	 * vertices appear, the edges are added.
-	 * 
+	 *
 	 * @param newVertices the vertices being added to the graph
 	 * @param newEdges the set to which should be added any new edges being added to the graph
 	 */
@@ -1031,11 +1031,11 @@ public class FcgProvider
 		//@formatter:off
 		return CollectionUtils.asStream(callees)
 		    .map(f -> {
-			  
+
 			    if (newVertexCache.containsKey(f)) {
 			    	return newVertexCache.get(f);
 			    }
-			  
+
 			    FcgVertex v = getOrCreateVertex(f, level);
 			    newVertexCache.put(f, v);
 			    return v;
@@ -1106,7 +1106,7 @@ public class FcgProvider
 			FcgVertex v = vContext.getVertex();
 			boolean expanded = direction == IN ? v.isIncomingExpanded() : v.isOutgoingExpanded();
 			if (!expanded) {
-				return false; // already collapsed			
+				return false; // already collapsed
 			}
 
 			if (!isMyDirection(v.getLevel())) {
@@ -1190,7 +1190,7 @@ public class FcgProvider
 			FcgVertex v = vContext.getVertex();
 			boolean isExpandable = isExpandable(v);
 			if (!isExpandable) {
-				return false; // already expanded			
+				return false; // already expanded
 			}
 
 			if (!isMyDirection(v.getLevel())) {

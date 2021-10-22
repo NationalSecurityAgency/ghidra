@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,13 +24,13 @@ import ghidra.util.Swing;
 import ghidra.util.SystemUtilities;
 import ghidra.util.task.*;
 
-/** 
+/**
  * Manages the updating of ThreadTableModels.  As requests to load, sort, filter, add/remove item
  * in a ThreadedTableModel occur, this class schedules a TableUpdateJob to do the work.  It uses
  * a SwingUpdateManager to coalesce add/remove so that the table does not constantly update when
  * are large number of table changing events are incoming.
- * 
- * @param <T> the row type 
+ *
+ * @param <T> the row type
  */
 class ThreadedTableModelUpdateMgr<T> {
 
@@ -98,7 +98,7 @@ class ThreadedTableModelUpdateMgr<T> {
 
 	/**
 	 * Ensures that the result of this call is a cancellable monitor.
-	 * 
+	 *
 	 * <P>If the monitor used by the jobs of this class is not cancellable, then the jobs cannot
 	 * properly move from state to state, since they are reused for new requests.
 	 */
@@ -169,7 +169,7 @@ class ThreadedTableModelUpdateMgr<T> {
 	 * <p>
 	 * If no jobs exists, a new job will be created to do the sort and runJob will be called to
 	 * start a thread to do the work.
-	 * 
+	 *
 	 * @param sortingContext the context used to sort the data
 	 * @param forceSort True signals to re-sort the data (useful when the data changes and needs
 	 *                  to be re-sorted.
@@ -194,7 +194,7 @@ class ThreadedTableModelUpdateMgr<T> {
 	 * is running, it will attempt to add the filter work directly to the running job.  If the running
 	 * job has not gotten to the filter phase yet, nothing needs to be done since the data will be
 	 * re-filtered anyway
-	 * If the current job is currently filtering or has already filtered, it will be 
+	 * If the current job is currently filtering or has already filtered, it will be
 	 * interrupted and return to the filter state.
 	 * <p>
 	 * If a pending job is already waiting, the filter job will be added to the pending job.
@@ -220,7 +220,7 @@ class ThreadedTableModelUpdateMgr<T> {
 	 * Tells this update manager that a new row item has been added or removed.  Add/removes never
 	 * affect any currently running job.  If a pending job exists, the add/remove will be added
 	 * to the pending job.
-	 * 
+	 *
 	 * if no pending jobs exists, the add/remove item will be added to a list to be processed later
 	 * when the swing update manager's timer expires.
 	 * @param item the add/remove item to process.
@@ -268,7 +268,7 @@ class ThreadedTableModelUpdateMgr<T> {
 
 	/**
 	 * Returns true if there is any scheduled work that has not been completed, including any
-	 * deferred add/removes. 
+	 * deferred add/removes.
 	 * @return true if there is work to be done.
 	 */
 	boolean isBusy() {
@@ -379,9 +379,9 @@ class ThreadedTableModelUpdateMgr<T> {
 	 */
 	private void jobDone() {
 
-		// This synchronized is not needed, as this method is only called from within a 
-		// synchronized block.  But, it feels better to be explicit here to signal that 
-		// synchronization is needed.  
+		// This synchronized is not needed, as this method is only called from within a
+		// synchronized block.  But, it feels better to be explicit here to signal that
+		// synchronization is needed.
 		synchronized (addRemoveUpdater) {
 
 			boolean isCancelled = monitor.isCancelled();
@@ -401,7 +401,7 @@ class ThreadedTableModelUpdateMgr<T> {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Runnable used be new threads to run scheduled jobs.
@@ -414,14 +414,14 @@ class ThreadedTableModelUpdateMgr<T> {
 				monitor.clearCanceled();
 				job.run();
 
-				// useful for debug				
+				// useful for debug
 				// Msg.debug(this, "ran job: " + job);
 				job = getNextJob();
 			}
 		}
 	}
 
-	/** 
+	/**
 	 * A monitor that allows us to make sure that this update manager does not clear the cancel
 	 * done in {@link ThreadedTableModelUpdateMgr#dispose()}.  This is useful if we want to never
 	 * again perform any work, such as when we are disposed.

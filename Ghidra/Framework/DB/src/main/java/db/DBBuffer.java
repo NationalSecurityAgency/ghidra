@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ public class DBBuffer {
 
 	/**
 	 * Split this DBBuffer object into two separate DBBuffers.  This DBBuffer remains
-	 * valid but its new size is equal offset.  The newly created DBBuffer is 
+	 * valid but its new size is equal offset.  The newly created DBBuffer is
 	 * returned.
 	 * @param offset the split point.  The byte at this offset becomes the first
 	 * byte within the new buffer.
@@ -79,7 +79,7 @@ public class DBBuffer {
 
 	/**
 	 * Get the first buffer ID associated with this chained buffer.  This DBBuffer
-	 * may be reinstatiated using the returned buffer ID provided subsequent changes 
+	 * may be reinstatiated using the returned buffer ID provided subsequent changes
 	 * are not made.
 	 * @return buffer ID
 	 */
@@ -104,7 +104,7 @@ public class DBBuffer {
 
 	/**
 	 * Append the contents of the specified dbBuf onto the end of this buffer.
-	 * The size of this buffer increases by the size of dbBuf.  When the operation 
+	 * The size of this buffer increases by the size of dbBuf.  When the operation
 	 * is complete, dbBuf object is no longer valid and must not be used.
 	 * @param buffer the buffer to be appended to this buffer.
 	 * @throws IOException thrown if an IO error occurs
@@ -150,7 +150,7 @@ public class DBBuffer {
 	}
 
 	/**
-	 * Fill buffer with data provided by InputStream.  If 
+	 * Fill buffer with data provided by InputStream.  If
 	 * stream is exhausted, the remainder of the buffer will be filled
 	 * with 0's.
 	 * @param in data source
@@ -203,7 +203,7 @@ public class DBBuffer {
 	}
 
 	/**
-	 * Put the 8-bit byte value into the buffer at the specified offset. 
+	 * Put the 8-bit byte value into the buffer at the specified offset.
 	 * @param offset byte offset from start of buffer.
 	 * @param b the byte value to be stored.
 	 * @throws ArrayIndexOutOfBoundsException if an invalid offset is provided.
@@ -234,7 +234,7 @@ public class DBBuffer {
 	}
 
 	/**
-	 * Delete and release all underlying DataBuffers. 
+	 * Delete and release all underlying DataBuffers.
 	 */
 	public void delete() throws IOException {
 		synchronized (dbh) {

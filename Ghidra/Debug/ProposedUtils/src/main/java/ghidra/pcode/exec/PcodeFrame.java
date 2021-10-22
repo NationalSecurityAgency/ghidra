@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,13 +32,13 @@ public class PcodeFrame {
 
 	/**
 	 * Construct a frame of p-code execution
-	 * 
+	 *
 	 * <p>
 	 * The passed in code should be an immutable list. It is returned directly by
 	 * {@link #getCode()}, which would otherwise allow mutation. The frame does not create its own
 	 * immutable copy as a matter of efficiency. Instead, the provider of the code should create an
 	 * immutable copy, probably once, e.g., when compiling a {@link PcodeProgram}.
-	 * 
+	 *
 	 * @param language the language to which the program applies
 	 * @param code the program's p-code
 	 * @param useropNames a map of additional sleigh/p-code userops linked to the program
@@ -132,12 +132,12 @@ public class PcodeFrame {
 
 	/**
 	 * Get the index of the last (branch) op executed
-	 * 
+	 *
 	 * <p>
 	 * The behavior here is a bit strange for compatibility with the established concrete emulator.
 	 * If the program (instruction) completed with fall-through, then this will return -1. If it
 	 * completed on a branch, then this will return the index of that branch.
-	 * 
+	 *
 	 * @return
 	 */
 	public int getBranched() {

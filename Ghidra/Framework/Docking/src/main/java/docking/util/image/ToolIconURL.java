@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param location filename for the icon (relative or absolute)
 	 */
 	public ToolIconURL(String location) {
@@ -165,7 +165,7 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 			return image;
 		}
 
-		// O.K., we will scale the icon.  However, if it is the default icon, we know we have 
+		// O.K., we will scale the icon.  However, if it is the default icon, we know we have
 		// a 'large' version of that.
 		if (unscaledIcon == ResourceManager.getDefaultIcon()) {
 			return ResourceManager.loadImage(Images.BIG_BOMB);
@@ -357,29 +357,29 @@ public class ToolIconURL implements Comparable<ToolIconURL> {
 
 		@Override
 		public void setDimensions(int width, int height) {
-			// don't care				
+			// don't care
 		}
 
 		@Override
 		public void setPixels(int x, int y, int w, int h, ColorModel model, byte[] pixels, int off,
 				int scansize) {
-			// don't care				
+			// don't care
 		}
 
 		@Override
 		public void setPixels(int x, int y, int w, int h, ColorModel model, int[] pixels, int off,
 				int scansize) {
-			// don't care				
+			// don't care
 		}
 
 		@Override
 		public void setColorModel(ColorModel model) {
-			// don't care				
+			// don't care
 		}
 
 		@Override
 		public void setProperties(Hashtable<?, ?> props) {
-			// don't care				
+			// don't care
 		}
 	}
 }

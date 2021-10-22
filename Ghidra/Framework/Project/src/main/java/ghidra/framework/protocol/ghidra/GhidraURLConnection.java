@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,7 +113,7 @@ public class GhidraURLConnection extends URLConnection {
 	 * Set the read-only state of the content.
 	 * Extreme care must be taken when setting the state to false for local projects
 	 * without the use of a ProjectLock.  This setting is currently ignored
-	 * for server repositories which are always read-only in Headed mode and 
+	 * for server repositories which are always read-only in Headed mode and
 	 * read-write in Headless mode.
 	 * @param state read-only if true, otherwise read-write
 	 */
@@ -125,7 +125,7 @@ public class GhidraURLConnection extends URLConnection {
 
 	/**
 	 * Gets the repository name associated with this <code>GhidraURLConnection</code>.
-	 * 
+	 *
 	 * @return the repository name or null if URL does not identify a specific repository
 	 */
 	public String getRepositoryName() {
@@ -135,10 +135,10 @@ public class GhidraURLConnection extends URLConnection {
 	/**
 	 * Gets the repository folder path associated with this connection.
 	 * If an ambiguous path has been specified, the folder path may change
-	 * after a connection is established (e.g., folder item name will be appended 
+	 * after a connection is established (e.g., folder item name will be appended
 	 * to folder path and item name will become null if item turns out to
 	 * be a folder).
-	 * 
+	 *
 	 * @return repository folder path or null
 	 */
 	public String getFolderPath() {
@@ -148,10 +148,10 @@ public class GhidraURLConnection extends URLConnection {
 	/**
 	 * Gets the repository folder item name associated with this connection.
 	 * If an ambiguous path has been specified, the folder item name may become null
-	 * after a connection is established (e.g., folder item name will be appended 
+	 * after a connection is established (e.g., folder item name will be appended
 	 * to folder path and item name will become null if item turns out to
 	 * be a folder).
-	 * 
+	 *
 	 * @return folder item name or null
 	 */
 	public String getFolderItemName() {
@@ -280,8 +280,8 @@ public class GhidraURLConnection extends URLConnection {
 		}
 
 		// Assume repository URL which will supply RepositoryAdapter content
-		// If an existing transient project can be found it will be re-used and the 
-		// connector notified via the connect(RepositoryAdapter), otherwise the 
+		// If an existing transient project can be found it will be re-used and the
+		// connector notified via the connect(RepositoryAdapter), otherwise the
 		// connect(boolean readOnly) method will be invoked and a new transient project
 		// will be established with a RepositoryAdapter supplied by the connector.
 

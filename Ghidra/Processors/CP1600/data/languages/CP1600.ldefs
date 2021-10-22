@@ -11,5 +11,5 @@
             id="CP1600:BE:16:default">
     <description>General Instruments CP1600</description>
     <compiler name="default" spec="CP1600.cspec" id="default"/>
-  </language> 
+  </language>
 </language_definitions>

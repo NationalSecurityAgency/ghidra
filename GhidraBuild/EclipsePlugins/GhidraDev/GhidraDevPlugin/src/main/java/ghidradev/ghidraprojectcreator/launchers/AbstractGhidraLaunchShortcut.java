@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidradev.ghidraprojectcreator.utils.GhidraLaunchUtils;
 import ghidradev.ghidraprojectcreator.utils.GhidraProjectUtils;
 
 /**
- * Ghidra launch shortcut actions.  These shortcuts appear when you right click on a 
+ * Ghidra launch shortcut actions.  These shortcuts appear when you right click on a
  * Ghidra project or file and select "Run As" or "Debug As".
  * <p>
  * The {@link GhidraProjectPropertyTester} is used to determine whether or not the shortcuts appear.
@@ -45,7 +45,7 @@ public abstract class AbstractGhidraLaunchShortcut implements ILaunchShortcut {
 
 	/**
 	 * Creates a new Ghidra launch shortcut associated with the given launch configuration type ID.
-	 * 
+	 *
 	 * @param launchConfigTypeId The launch configuration type ID of this Ghidra launch shortcut.
 	 * @param launchConfigNameSuffix A string to append to the name of the launch configuration.
 	 */
@@ -74,7 +74,7 @@ public abstract class AbstractGhidraLaunchShortcut implements ILaunchShortcut {
 
 	/**
 	 * Launches the given Java project in the given mode with a Ghidra launcher.
-	 * 
+	 *
 	 * @param javaProject The Java project to launch.
 	 * @param mode The mode to launch in (run/debug).
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import docking.action.MenuData;
 import ghidra.program.util.ProgramMergeFilter;
 
 public class DiffIgnoreAllAction extends DockingAction {
-	
+
 	private final static String ACTION_NAME = "Set Ignore for All Apply Settings";
 	private final static String GROUP_NAME = "DIFF_APPLY_ACTION";
 	private final static String DESCRIPTION = "Change all the difference type apply settings to Ignore.";
@@ -37,7 +37,7 @@ public class DiffIgnoreAllAction extends DockingAction {
 		this.provider = provider;
 		setMenuBarData( new MenuData( menuPath, GROUP_NAME ) );
         setPopupMenuData( new MenuData( popupPath, GROUP_NAME ) );
-		
+
 		setDescription(DESCRIPTION);
 	}
 

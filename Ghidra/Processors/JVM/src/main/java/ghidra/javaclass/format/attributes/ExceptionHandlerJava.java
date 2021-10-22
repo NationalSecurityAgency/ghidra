@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,9 +42,9 @@ public class ExceptionHandlerJava implements StructConverter {
 
 	/**
 	 * The values of the two items start_pc and end_pc indicate the ranges in the
-	 * code array at which the exception handler is active. 
+	 * code array at which the exception handler is active.
 	 * <p>
-	 * The value of start_pc must be a valid index into the code array 
+	 * The value of start_pc must be a valid index into the code array
 	 * of the opcode of an instruction.
 	 * <p>
 	 * The value of start_pc must be less than the value of end_pc.
@@ -65,12 +65,12 @@ public class ExceptionHandlerJava implements StructConverter {
 	 * The value of end_pc either must be a valid index into the code array of the
 	 * opcode of an instruction or must be equal to code_length, the length of the
 	 * code array.
-	 * <p> 
+	 * <p>
 	 * The value of start_pc must be less than the value of end_pc.
 	 * <p>
 	 * The start_pc is inclusive and end_pc is exclusive; that is, the exception
 	 * handler must be active while the program counter is within the interval
-	 * [start_pc, end_pc].  
+	 * [start_pc, end_pc].
 	 * @return a valid index into the code array
 	 */
 	public int getEndPC() {

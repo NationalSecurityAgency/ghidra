@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 
 	/**
 	 * Predicate that returns true if the location string is a LocalSymbolStore path
-	 * 
+	 *
 	 * @param locationString symbol server location string
 	 * @return boolean true if a LocalSymbolStore path
 	 */
@@ -53,7 +53,7 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 	/**
 	 * Creates a (hopefully) MS-compatible symbol server directory location.
 	 * <p>
-	 * 
+	 *
 	 * @param rootDir    Directory location of the new symbol store
 	 * @param indexLevel the 'level' of the storage directory. Typical directories
 	 *                   are either level 1, with pdb files stored directly under
@@ -97,7 +97,7 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 
 	/**
 	 * Creates an instance of LocalSymbolStore.
-	 * 
+	 *
 	 * @param rootDir the root directory of the symbol storage
 	 */
 	public LocalSymbolStore(File rootDir) {
@@ -106,7 +106,7 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 
 	/**
 	 * Returns the root directory of this symbol store.
-	 * 
+	 *
 	 * @return root directory of this symbol store
 	 */
 	public File getRootDir() {
@@ -130,7 +130,7 @@ public class LocalSymbolStore extends AbstractSymbolServer implements SymbolStor
 
 	/**
 	 * Non-task monitor variant of {@link #isValid(TaskMonitor)}.
-	 * 
+	 *
 	 * @return boolean true if this is a valid symbol store
 	 */
 	public boolean isValid() {

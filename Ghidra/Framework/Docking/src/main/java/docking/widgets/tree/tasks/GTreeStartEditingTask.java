@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -91,7 +91,7 @@ public class GTreeStartEditingTask extends GTreeTask {
 
 			/**
 			 * Unusual Code Alert!:  This method handles the case where editing of a node triggers
-			 *                       a new node to be created.  In this case, reselecting the 
+			 *                       a new node to be created.  In this case, reselecting the
 			 *                       node that was edited can leave the tree with a selection that
 			 *                       points to a removed node, which has bad consequences to clients.
 			 *                       We work around this issue by retrieving the node after the edit
@@ -109,12 +109,12 @@ public class GTreeStartEditingTask extends GTreeTask {
 
 			/**
 			 * Unusual Code Alert!:  This method handles the case where editing of a node triggers
-			 *                       a new node to be created.  In this case, reselecting the 
+			 *                       a new node to be created.  In this case, reselecting the
 			 *                       node that was edited can leave the tree with a selection that
 			 *                       points to a removed node, which has bad consequences to clients.
 			 *                       We work around this issue by retrieving the node after the edit
 			 *                       has finished and been applied.
-			 *                       
+			 *
 			 *                       This method takes into account the fact that we are not given
 			 *                       the new name of the node in our editingStopped() callback.
 			 *                       As such, we have to deduce the newly added node, based upon

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class AddressTable {
 
 	/**
 	 * Define an address table
-	 * 
+	 *
 	 * @param topAddress start address of the table
 	 * @param tableElements pointer values from the table
 	 * @param addrByteSize pointer data size
@@ -76,7 +76,7 @@ public class AddressTable {
 
 	/**
 	 * Create an address table with a secondary index into the table entries
-	 * 
+	 *
 	 * @param topAddress start address of the table
 	 * @param tableElements pointer values from the table
 	 * @param topIndexAddress first address of the index into the address table
@@ -145,7 +145,7 @@ public class AddressTable {
 
 	/**
 	 * Index table Addresses .... Index offsets into the address table ....
-	 * 
+	 *
 	 * @return top address of the index table following the address table
 	 */
 	public Address getTopIndexAddress() {
@@ -161,7 +161,7 @@ public class AddressTable {
 
 	/**
 	 * Get a generic name for the table
-	 * 
+	 *
 	 * @param offset from the top of the table, normally 0
 	 * @return a general name for the table based on the start and an optional
 	 *         offset
@@ -172,7 +172,7 @@ public class AddressTable {
 
 	/**
 	 * Get a generic name for the index to the table
-	 * 
+	 *
 	 * @param offsetLen offset from the top of the table
 	 * @return a general name for the table based on the start and an optional
 	 *         offset
@@ -187,7 +187,7 @@ public class AddressTable {
 	 * the address that is indicated as an offset from the beginning of the
 	 * table followed by "Element". The element number can then be appended to
 	 * this to create the label.
-	 * 
+	 *
 	 * @param offsetLen the number of addresses the embedded prefix address
 	 *            should be from the start of this address table.
 	 * @return the prefix string for an address table element.
@@ -1407,7 +1407,7 @@ public class AddressTable {
 	/**
 	 * Check if the address is in the Relocation table. This only counts for
 	 * relocatable programs. Every address should be in the relocation table.
-	 * 
+	 *
 	 * @param target location to check
 	 * @return
 	 */

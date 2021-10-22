@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,9 +22,9 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * 
+ *
  * try_item format
- * 
+ *
  */
 public class TryItem implements StructConverter {
 
@@ -40,7 +40,7 @@ public class TryItem implements StructConverter {
 
 	/**
 	 * <pre>
-	 * Start address of the block of code covered by this entry. 
+	 * Start address of the block of code covered by this entry.
 	 * The address is a count of 16-bit code units to the start of the first covered instruction.
 	 * </pre>
 	 */
@@ -50,7 +50,7 @@ public class TryItem implements StructConverter {
 
 	/**
 	 * <pre>
-	 * Number of 16-bit code units covered by this entry. 
+	 * Number of 16-bit code units covered by this entry.
 	 * The last code unit covered (inclusive) is start_addr + insn_count - 1.
 	 * </pre>
 	 */
@@ -60,8 +60,8 @@ public class TryItem implements StructConverter {
 
 	/**
 	 * <pre>
-	 * Offset in bytes from the start of the associated encoded_catch_hander_list to 
-	 * the encoded_catch_handler for this entry. 
+	 * Offset in bytes from the start of the associated encoded_catch_hander_list to
+	 * the encoded_catch_handler for this entry.
 	 * This must be an offset to the start of an encoded_catch_handler.
 	 * </pre>
 	 */

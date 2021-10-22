@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -107,7 +107,7 @@ public class FunctionReachabilityProvider extends ComponentProvider {
 	private JComponent buildComponent() {
 		// TODO Auto-generated method stub
 		/*
-		 
+
 		 Text Field | browse button       |     Results table
 		 Function Name Label              |
 		 		Swap Button               |     ___________________
@@ -116,7 +116,7 @@ public class FunctionReachabilityProvider extends ComponentProvider {
 		 Function Name Label              |
 		                                  |
 		 Go Button                        |
-		 
+
 		 */
 
 		//
@@ -124,7 +124,7 @@ public class FunctionReachabilityProvider extends ComponentProvider {
 		//
 		JPanel inputPanel = new JPanel();
 
-// TODO use GridBagLayout		
+// TODO use GridBagLayout
 		inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.PAGE_AXIS));
 
 		fromAddressField = new JTextField(15);
@@ -159,7 +159,7 @@ public class FunctionReachabilityProvider extends ComponentProvider {
 		//
 		JPanel outputPanel = new JPanel(new GridLayout(1, 2));
 
-// TODO rename to 'FR'		
+// TODO rename to 'FR'
 		resultsModel = new FunctionReachabilityTableModel(plugin.getTool(), program);
 
 		GhidraThreadedTablePanel<FunctionReachabilityResult> tablePanel =
@@ -285,7 +285,7 @@ public class FunctionReachabilityProvider extends ComponentProvider {
 		resultsModel.setProgram(p);
 		pathsModel.setProgram(p);
 
-// TODO do we care about changes to the program?...like to remove invalid paths?		
+// TODO do we care about changes to the program?...like to remove invalid paths?
 //		currentProgram.addListener(this);
 		doSetLocation(location);
 	}
@@ -299,7 +299,7 @@ public class FunctionReachabilityProvider extends ComponentProvider {
 		Address address = location.getAddress();
 		Function function = functionManager.getFunctionContaining(address);
 
-// TODO see CallTreesPlugin for resolving our 'fake' functions at the beginning of programs		
+// TODO see CallTreesPlugin for resolving our 'fake' functions at the beginning of programs
 //		function = resolveFunction(function, address);
 		setFromFunction(function);
 	}

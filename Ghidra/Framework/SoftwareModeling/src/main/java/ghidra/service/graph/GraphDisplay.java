@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.util.task.TaskMonitor;
  * Interface for objects that display (or consume) graphs.  Normally, a graph display represents
  * a visual component for displaying and interacting with a graph.  Some implementation may not
  * be a visual component, but instead consumes/processes the graph (i.e. graph exporter). In this
- * case, there is no interactive element and once the graph has been set on the display, it is 
+ * case, there is no interactive element and once the graph has been set on the display, it is
  * closed.
  */
 public interface GraphDisplay {
@@ -83,14 +83,14 @@ public interface GraphDisplay {
 	/**
 	 * Sets a {@link GraphDisplayListener} to be notified when the user changes the vertex focus
 	 * or selects one or more nodes in a graph window
-	 * 
+	 *
 	 * @param listener the listener to be notified
 	 */
 	public void setGraphDisplayListener(GraphDisplayListener listener);
 
 	/**
 	 * Tells the graph display window to focus the vertex with the given id
-	 * 
+	 *
 	 * @param vertex the vertex to focus
 	 * @param eventTrigger Provides a hint to the GraphDisplay as to why we are updating the
 	 * graph location so that the GraphDisplay can decide if it should send out a notification via
@@ -109,19 +109,19 @@ public interface GraphDisplay {
 
 	/**
 	 * Returns the currently focused vertex or null if no vertex is focused
-	 * 
+	 *
 	 * @return  the currently focused vertex or null if no vertex is focused
 	 */
 	public AttributedVertex getFocusedVertex();
 
 	/**
 	 * Tells the graph display window to select the vertices with the given ids
-	 * 
+	 *
 	 * @param vertexSet the set of vertices to select
 	 * @param eventTrigger Provides a hint to the GraphDisplay as to why we are updating the
 	 * graph location so that the GraphDisplay can decide if it should send out a notification via
 	 * the {@link GraphDisplayListener#selectionChanged(Set)}. For example, if we are updating
-	 * the the location due to an event from the main application, we don't want to notify the 
+	 * the the location due to an event from the main application, we don't want to notify the
 	 * application the graph changed to avoid event cycles. See {@link EventTrigger} for more
 	 * information.
 	 */
@@ -129,7 +129,7 @@ public interface GraphDisplay {
 
 	/**
 	 * Returns a set of vertex ids for all the currently selected vertices
-	 * 
+	 *
 	 * @return  a set of vertex ids for all the currently selected vertices
 	 */
 	public Set<AttributedVertex> getSelectedVertices();
@@ -141,7 +141,7 @@ public interface GraphDisplay {
 
 	/**
 	 * Sets the graph to be displayed or consumed by this graph display
-	 * 
+	 *
 	 * @param graph the graph to display or consume
 	 * @param title a title for the graph
 	 * @param monitor a {@link TaskMonitor} which can be used to cancel the graphing operation
@@ -155,7 +155,7 @@ public interface GraphDisplay {
 	}
 	/**
 	 * Sets the graph to be displayed or consumed by this graph display
-	 * 
+	 *
 	 * @param graph the graph to display or consume
 	 * @param options {@link GraphDisplayOptions} for configuring how the display will
 	 * render vertices and edges based on there vertex type and edge type respectively.
@@ -174,7 +174,7 @@ public interface GraphDisplay {
 
 	/**
 	 * Updates a vertex to a new name
-	 * 
+	 *
 	 * @param vertex the vertex to rename
 	 * @param newName the new name for the vertex
 	 */
@@ -182,7 +182,7 @@ public interface GraphDisplay {
 
 	/**
 	 * Returns the title of the current graph
-	 * 
+	 *
 	 * @return the title of the current graph
 	 */
 	public String getGraphTitle();
@@ -190,7 +190,7 @@ public interface GraphDisplay {
 	/**
 	 * Adds the action to the graph display. Not all GraphDisplays support adding custom
 	 * actions, so this may have no effect.
-	 * 
+	 *
 	 * @param action the action to add
 	 */
 	public void addAction(DockingActionIf action);

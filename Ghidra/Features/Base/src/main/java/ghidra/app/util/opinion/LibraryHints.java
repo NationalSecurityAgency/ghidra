@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,7 +84,7 @@ class LibraryHints {
 	/**
 	 * Get all attribute hints based on ordinal and/or label name. Use of the
 	 * ordinal takes precedence for any given attribute hint.
-	 * 
+	 *
 	 * @param ordinal
 	 * @param name
 	 * @return collection of attribute hints
@@ -99,7 +99,7 @@ class LibraryHints {
 	/**
 	 * Get the named attribute hint based on either an ordinal or label name.
 	 * Use of the ordinal takes precedence.
-	 * 
+	 *
 	 * @param ordinal
 	 * @param name
 	 * @param attrName

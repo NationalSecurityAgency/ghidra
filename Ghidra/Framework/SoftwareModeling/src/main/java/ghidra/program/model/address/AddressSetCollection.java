@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,9 +16,9 @@
 package ghidra.program.model.address;
 
 /**
- *  This interface represents a collection of AddressSets (actually AddressSetViews). 
+ *  This interface represents a collection of AddressSets (actually AddressSetViews).
  *  It defines a set of methods that can efficiently be performed on a collection
- *  of one or more AddressSets.  
+ *  of one or more AddressSets.
  */
 public interface AddressSetCollection {
 
@@ -49,7 +49,7 @@ public interface AddressSetCollection {
 	/**
 	 * Tests whether this collection of addressSets has approximately fewer ranges than
 	 * the given threshold. This is probably estimated by adding up the number of ranges
-	 * in each AddressSet in this collections. Returns true if the total is less than the 
+	 * in each AddressSet in this collections. Returns true if the total is less than the
 	 * given threshold.
 	 * @param rangeThreshold the number of ranges to test against.
 	 * @return true if the max possible ranges is less than the given threshold.
@@ -57,7 +57,7 @@ public interface AddressSetCollection {
 	public boolean hasFewerRangesThan(int rangeThreshold);
 
 	/**
-	 * Returns a single AddressSet containing the union of all the addressSetViews in the collection.  
+	 * Returns a single AddressSet containing the union of all the addressSetViews in the collection.
 	 */
 	public AddressSet getCombinedAddressSet();
 

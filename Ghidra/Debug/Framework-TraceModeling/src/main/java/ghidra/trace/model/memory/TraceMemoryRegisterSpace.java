@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,13 +56,13 @@ public interface TraceMemoryRegisterSpace extends TraceMemorySpace {
 
 	/**
 	 * Set the value of a register at the given snap
-	 * 
+	 *
 	 * <p>
 	 * <b>IMPORTANT:</b> The trace database cannot track the state ({@link TraceMemoryState#KNOWN},
 	 * etc.) with per-bit accuracy. It only has byte precision. If the given value specifies, e.g.,
 	 * only a single bit, then the entire byte will become marked {@link TraceMemoryState#KNOWN},
 	 * even though the remaining 7 bits could technically be unknown.
-	 * 
+	 *
 	 * @param snap the snap
 	 * @param value the register value
 	 * @return the number of bytes written
@@ -84,13 +84,13 @@ public interface TraceMemoryRegisterSpace extends TraceMemorySpace {
 
 	/**
 	 * Write bytes at the given snap and register address
-	 * 
+	 *
 	 * <p>
 	 * Note that bit-masked registers are not properly heeded. If the caller wishes to preserve
 	 * non-masked bits, it must first retrieve the current value and combine it with the desired
 	 * value. The caller must also account for any bit shift in the passed buffer. Alternatively,
 	 * consider {@link #setValue(long, RegisterValue)}.
-	 * 
+	 *
 	 * @param snap the snap
 	 * @param register the register to modify
 	 * @param buf the buffer of bytes to write
@@ -126,14 +126,14 @@ public interface TraceMemoryRegisterSpace extends TraceMemorySpace {
 
 	/**
 	 * Remove a value from the given time and register
-	 * 
+	 *
 	 * <p>
 	 * <b>IMPORANT:</b> The trace database cannot track the state ({@link TraceMemoryState#KNOWN},
 	 * etc.) with per-bit accuracy. It only has byte precision. If the given register specifies,
 	 * e.g., only a single bit, then the entire byte will become marked
 	 * {@link TraceMemoryState#UNKNOWN}, even though the remaining 7 bits could technically be
 	 * known.
-	 * 
+	 *
 	 * @param snap the snap
 	 * @param register the register
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,13 +35,13 @@ import ghidra.util.exception.ClosedException;
 
 /**
  * Computes and tracks the "viewport" resulting from forking patterns encoded in snapshot schedules
- * 
+ *
  * <p>
  * This is used primarily by the {@link TraceProgramView} implementation to resolve most-recent
  * objects according to a layering or forking structure given in snapshot schedules. This listens on
  * the given trace for changes in snapshot schedules and keeps an up-to-date set of visible (or
  * potentially-visible) ranges from the given snap.
- * 
+ *
  * <p>
  * TODO: Because complicated forking structures are not anticipated, some minimal effort is given to
  * cull meaningless changes, but in general, changes cause a complete re-computation of the
@@ -234,13 +234,13 @@ public class DefaultTraceTimeViewport implements TraceTimeViewport {
 
 	/**
 	 * Construct the ranges (set and ordered)
-	 * 
+	 *
 	 * <p>
 	 * NOTE: I cannot hold the lock during this, because I also require the DB's read lock. There
 	 * are other operations, e.g., addRegion, that will hold the DB's write lock, and then also
 	 * require the viewport's lock to check if it is visible. That would cause the classic tango of
 	 * death.
-	 * 
+	 *
 	 * @param curSnap the seed snap
 	 */
 	protected static void collectForkRanges(TraceTimeManager timeManager, long curSnap,

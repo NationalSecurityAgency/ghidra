@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.pcode.Varnode;
 
 /**
- * 
+ *
  *
  * To change this generated comment edit the template variable "typecomment":
  * {@literal Window>Preferences>Java>Templates.}
@@ -34,13 +34,13 @@ public class VarnodeTemplate implements Serializable {
 	private boolean loadomit;
 	private Operand replace;
 	private AddressFactory addressFactory;
-	
+
 	private int hashCode;
 
 	private ConstantTemplate space;
 	private ConstantTemplate offset;
 	private ConstantTemplate size;
-//	private OpTemplate def; // Defining op (if there is one)	
+//	private OpTemplate def; // Defining op (if there is one)
 	private boolean oneuse = false;
 
 	public VarnodeTemplate(
@@ -110,7 +110,7 @@ public class VarnodeTemplate implements Serializable {
 		AddressSpace mySpace = addressFactory.getAddressSpace(spaceID);
 		return mySpace.getTruncatedAddress(off, false);
 	}
-	
+
 	public boolean oneuse() { return oneuse; }
 
 	public ConstantTemplate space() { return space; }
@@ -121,9 +121,9 @@ public class VarnodeTemplate implements Serializable {
 		replace = op;
 		if (load) loadomit = true;
 	}
-	
+
 	public boolean loadomit() {	return loadomit; }
-	
+
 	@Override
     public int hashCode() {return hashCode; }
 	@Override

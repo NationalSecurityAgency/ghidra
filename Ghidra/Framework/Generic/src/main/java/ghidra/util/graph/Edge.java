@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.util.graph;
 
 import ghidra.util.Msg;
 
-/** An Edge joins a pair of vertices. 
+/** An Edge joins a pair of vertices.
  * The from and to vertex of an edge can not be changed.
  */
 public final class Edge implements KeyedObject, Comparable<Edge>
@@ -41,13 +41,13 @@ public final class Edge implements KeyedObject, Comparable<Edge>
       this.from = from;
       this.to = to;
   }
-  
+
   /** Returns next key **/
   private static synchronized long getNextKey() {
   	return kof.getNextAvailableKey();
   }
 
-  /** Returns from vertex. */  
+  /** Returns from vertex. */
   public Vertex from()
   {
       return this.from;
@@ -90,7 +90,7 @@ public boolean equals( Object obj )
       }
       return false;
   }
-  
+
   @Override
 	public int hashCode() {
 	  return (int) key;

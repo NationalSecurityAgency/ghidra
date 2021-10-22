@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,7 +77,7 @@ public class VersionControlUndoCheckOutAction extends VersionControlAction {
 	}
 
 	/**
-	 * Gets the domain files from the provider and then undoes the checkout on any that are 
+	 * Gets the domain files from the provider and then undoes the checkout on any that are
 	 * checked out.
 	 */
 	private void undoCheckOut(List<DomainFile> domainFiles) {
@@ -100,8 +100,8 @@ public class VersionControlUndoCheckOutAction extends VersionControlAction {
 	}
 
 	/**
-	 * Displays the undo checkout confirmation dialog for each checked out file and then 
-	 * undoes the checkout while keeping a copy of the working version of the file if the 
+	 * Displays the undo checkout confirmation dialog for each checked out file and then
+	 * undoes the checkout while keeping a copy of the working version of the file if the
 	 * user chooses to do so.<br>
 	 * All unmodified checkouts will be undone. Only modified checkouts the user chooses
 	 * will be undone.
@@ -147,7 +147,7 @@ public class VersionControlUndoCheckOutAction extends VersionControlAction {
 		 * Creates a task for undoing checkouts of domain files.
 		 * @param unmodifiedCheckOutsList the list of unmodified checked out files
 		 * @param modifiedCheckedOutFiles the list of checked out files that have been modified
-		 * @param saveCopy true indicates that copies of the modified files should be made 
+		 * @param saveCopy true indicates that copies of the modified files should be made
 		 * before undo of the checkout
 		 */
 		UndoCheckOutTask(List<DomainFile> unmodifiedCheckOutsList,

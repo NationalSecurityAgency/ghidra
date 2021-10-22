@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -129,7 +129,7 @@ public class ClassFileJava implements StructConverter {
 	/**
 	 * Returns the minor version number of this class.
 	 * <p>
-	 * If a class file has major version number M and minor 
+	 * If a class file has major version number M and minor
 	 * version number m, we denote the version of its
 	 * class file format as M.m. Thus, class file format versions may be ordered
 	 * lexicographically, for example, 1.5 < 2.0 < 2.1.
@@ -146,7 +146,7 @@ public class ClassFileJava implements StructConverter {
 	/**
 	 * Returns the major version number of this class.
 	 * <p>
-	 * If a class file has major version number M and minor 
+	 * If a class file has major version number M and minor
 	 * version number m, we denote the version of its
 	 * class file format as M.m. Thus, class file format versions may be ordered
 	 * lexicographically, for example, 1.5 < 2.0 < 2.1.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public class DyldCacheUtils {
 
 	/**
 	 * Determines if the given {@link Program} is a DYLD cache.
-	 * 
+	 *
 	 * @param program The {@link Program}
 	 * @return True if the given {@link Program} is a DYLD cache; otherwise, false
 	 */
@@ -54,7 +54,7 @@ public class DyldCacheUtils {
 
 	/**
 	 * Determines if the given {@link ByteProvider} is a DYLD cache.
-	 * 
+	 *
 	 * @param provider The {@link ByteProvider}
 	 * @return True if the given {@link ByteProvider} is a DYLD cache; otherwise, false
 	 */
@@ -75,7 +75,7 @@ public class DyldCacheUtils {
 	/**
 	 * Determines if the given signature represents a DYLD cache signature with an architecture we
 	 * support.
-	 * 
+	 *
 	 * @param signature The DYLD cache signature
 	 * @return True if the given signature represents a DYLD cache signature with an architecture we
 	 * support; otherwise, false

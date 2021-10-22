@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.NotYetImplementedException;
 
 /**
- * 
+ *
  *
  * The InstructionPrototype for sleigh languages.
  * The prototype is unique up to the tree of Constructors.
@@ -60,7 +60,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	static public class FlowRecord {
 		public ConstructState addressnode;		// Constructor state containing destination address of flow
 		public OpTpl op;						// The pcode template producing the flow
-		public int flowFlags;					// flags associated with this flow		
+		public int flowFlags;					// flags associated with this flow
 	}
 
 	static public class FlowSummary {
@@ -1573,7 +1573,7 @@ public class SleighInstructionPrototype implements InstructionPrototype {
 	/**
 	 * Used for testing and diagnostics: list the constructor line numbers used to resolve this
 	 * encoding
-	 * 
+	 *
 	 * This includes braces to describe the tree structure
 	 * @see AssemblyResolvedConstructor#dumpConstructorTree()
 	 * @return the constructor tree

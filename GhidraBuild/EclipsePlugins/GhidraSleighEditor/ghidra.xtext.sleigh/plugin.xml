@@ -6,7 +6,7 @@
             id="GhidraCategory"
             name="Ghidra">
         </category>
-		<package 
+		<package
 			uri = "http://www.xtext.ghidra/sleigh/Sleigh"
 			class = "ghidra.xtext.sleigh.sleigh.SleighPackage"
 			genModel = "model/generated/Sleigh.genmodel" />

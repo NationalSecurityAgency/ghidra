@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ import ghidra.util.task.TaskMonitor;
 public class DataTypeTreeCopyMoveTask extends Task {
 
 	// If the total number of nodes is small, we won't need to collapse the tree before deleting
-	// the nodes to avoid excess tree events.  This number is very arbitrary.  This number is 
+	// the nodes to avoid excess tree events.  This number is very arbitrary.  This number is
 	// used to compare the number of dragged nodes, which may include categories whose child
 	// count is not reflected in this number.  This could mean that thousands of nodes will be
 	// processed, but the actual drag count could be much less.
@@ -100,10 +100,10 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		}
 
 		//
-		// Note: we collapse the node before performing this work because there is a 
+		// Note: we collapse the node before performing this work because there is a
 		//       potential for a large number of events to be generated.  Further, if the
 		//       given archive node has many children (like 10s of thousands), then the
-		//       copious events generated herein could lock the UI.  By closing the node, 
+		//       copious events generated herein could lock the UI.  By closing the node,
 		//       the tree is not invalidating/validating its cache as a result of these
 		//       events.
 		//
@@ -504,9 +504,9 @@ public class DataTypeTreeCopyMoveTask extends Task {
 
 	/**
 	 * Returns true if the given data type's source archive is the same as it's current data
-	 * type manager.  This is false if copying a new type from the program to an 
-	 * external archive.  
-	 * 
+	 * type manager.  This is false if copying a new type from the program to an
+	 * external archive.
+	 *
 	 * @param dt the type
 	 * @return true if the given type already lives in its source archive
 	 */
@@ -547,7 +547,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 			}
 			// destination data-type is local to an archive
 			else if (confirmCommit()) {
-				// if the destination dataType is local to its dataTypeManager 
+				// if the destination dataType is local to its dataTypeManager
 				// then we are committing.
 				DataTypeSynchronizer.commit(destinationDt.getDataTypeManager(), replacementDt);
 			}
@@ -605,7 +605,7 @@ public class DataTypeTreeCopyMoveTask extends Task {
 		}
 	}
 
-	// filters out nodes with categories in their path 
+	// filters out nodes with categories in their path
 	private void filterRedundantNodes() {
 
 		Set<GTreeNode> nodeSet = new HashSet<>(droppedNodes);

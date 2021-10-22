@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -100,7 +100,7 @@ public class GenericHeader extends JPanel {
 
 	/**
 	 * Signals whether or not to break the toolbar actions into multiple rows.  The default is
-	 * to wrap as necessary.  
+	 * to wrap as necessary.
 	 * @param noWrap true signals not to break the actions into multiple rows
 	 */
 	public void setNoWrapToolbar(boolean noWrap) {
@@ -286,7 +286,7 @@ public class GenericHeader extends JPanel {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	public class TitleFlasher {
 

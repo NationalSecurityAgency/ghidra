@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,11 +30,11 @@ import pdb.PdbUtils;
 
 /**
  * A (lowercase-'S') service that searches for and fetches symbol files
- * from a set of local and remote {@link SymbolServer symbolservers}. (not to be 
+ * from a set of local and remote {@link SymbolServer symbolservers}. (not to be
  * confused with a Plugin service)
  * <p>
  * Instances of this class are meant to be easily created when needed
- * and just as easily thrown away when not used or when the search 
+ * and just as easily thrown away when not used or when the search
  * path configuration changes.
  * <p>
  * A SymbolServerService instance requires a {@link SymbolStore} and
@@ -63,7 +63,7 @@ public class SymbolServerService {
 	/**
 	 * Returns true if this SymbolServerService is fully valid.
 	 * Will be false if the symbol storage location isn't a {@link LocalSymbolStore}.
-	 * 
+	 *
 	 * @return boolean true if this instance is valid, false if not valid
 	 */
 	public boolean isValid() {
@@ -72,8 +72,8 @@ public class SymbolServerService {
 
 	/**
 	 * Returns the {@link SymbolStore}, which is the primary / first location queried and
-	 * used to store any symbol files retrieved from a remote symbol server. 
-	 * 
+	 * used to store any symbol files retrieved from a remote symbol server.
+	 *
 	 * @return the {@link SymbolStore}
 	 */
 	public SymbolStore getSymbolStore() {
@@ -82,7 +82,7 @@ public class SymbolServerService {
 
 	/**
 	 * Returns the list of {@link SymbolServer}s.
-	 * 
+	 *
 	 * @return the list of {@link SymbolServer}s
 	 */
 	public List<SymbolServer> getSymbolServers() {
@@ -104,7 +104,7 @@ public class SymbolServerService {
 
 	/**
 	 * Searches all {@link SymbolServer symbol servers} for a matching pdb symbol file.
-	 * 
+	 *
 	 * @param symbolFileInfo {@link SymbolFileInfo} bag of information
 	 *   about the file to search for
 	 * @param monitor {@link TaskMonitor} to update with search progress and to
@@ -125,10 +125,10 @@ public class SymbolServerService {
 	 * Use {@link SymbolFileLocation#isExactMatch(SymbolFileInfo)} to test elements in the
 	 * result list for exactness.
 	 * <p>
-	 * 
+	 *
 	 * @param symbolFileInfo Pdb file info to search for
 	 * @param findOptions set of {@link FindOption} to control the search.
-	 *  See {@link FindOption#NO_OPTIONS} or 
+	 *  See {@link FindOption#NO_OPTIONS} or
 	 *  {@link FindOption#of(FindOption...) FindOptions.of(option1, option2...)}
 	 * @param monitor {@link TaskMonitor}
 	 * @return list of {@link SymbolFileLocation}s
@@ -184,9 +184,9 @@ public class SymbolServerService {
 
 	/**
 	 * Returns the local file path of the symbol file specified by symbolFileLocation.
-	 *  
-	 * @param symbolFileLocation {@link SymbolFileLocation}, returned 
-	 *  by {@link #find(SymbolFileInfo, Set, TaskMonitor) find()} 
+	 *
+	 * @param symbolFileLocation {@link SymbolFileLocation}, returned
+	 *  by {@link #find(SymbolFileInfo, Set, TaskMonitor) find()}
 	 * @param monitor {@link TaskMonitor}
 	 * @return {@link File} path to the local pdb file, never null
 	 * @throws CancelledException if user cancels operation
@@ -211,7 +211,7 @@ public class SymbolServerService {
 	/**
 	 * Converts a possibly remote {@link SymbolFileLocation} to a location that is local and
 	 * uncompressed.
-	 * 
+	 *
 	 * @param symbolFileLocation possibly remote {@link SymbolFileLocation}
 	 * @param monitor {@link TaskMonitor} to display progress and allow canceling
 	 * @return {@link SymbolFileLocation} that is local (possibly the same  instance if already

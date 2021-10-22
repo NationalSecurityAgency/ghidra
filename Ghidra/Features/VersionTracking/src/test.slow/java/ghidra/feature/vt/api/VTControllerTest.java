@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ public class VTControllerTest extends AbstractGhidraHeadedIntegrationTest {
 
     @After
     public void tearDown() throws Exception {
-		
+
 		env.dispose();
 	}
 
@@ -71,7 +71,7 @@ public class VTControllerTest extends AbstractGhidraHeadedIntegrationTest {
 		options.setString(testOptionKey, firstNewOptionValue);
 		assertEquals(firstNewOptionValue, options.getString(testOptionKey, null));
 		correlator.setOptions(LastResortAddressCorrelator.class, options);
-		// save the options 
+		// save the options
 		SaveState saveState = new SaveState();
 		controller.writeConfigState(saveState);
 
@@ -81,7 +81,7 @@ public class VTControllerTest extends AbstractGhidraHeadedIntegrationTest {
 		correlator.setOptions(LastResortAddressCorrelator.class, options);
 
 		// pull the values again and make sure they are still correct (that writing the config
-		// state did not change the cached controller and options) 
+		// state did not change the cached controller and options)
 		correlator = controller.getCorrelator();
 		options = correlator.getOptions(LastResortAddressCorrelator.class);
 		assertEquals(secondNewValue, options.getString(testOptionKey, null));
@@ -90,7 +90,7 @@ public class VTControllerTest extends AbstractGhidraHeadedIntegrationTest {
 		controller.readConfigState(saveState);
 
 		// verify the settings
-		// (we have to pull the correlator and options again, as changing the config state may 
+		// (we have to pull the correlator and options again, as changing the config state may
 		// change the cached values in the controller)
 		correlator = controller.getCorrelator();
 		options = correlator.getOptions(LastResortAddressCorrelator.class);

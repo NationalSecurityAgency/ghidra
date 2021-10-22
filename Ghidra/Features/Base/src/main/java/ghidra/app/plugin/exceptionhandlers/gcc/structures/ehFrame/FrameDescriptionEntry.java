@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,37 +37,37 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A Frame Description Entry (FDE) describes the 
+ * A Frame Description Entry (FDE) describes the
  * stack call frame, in particular, how to restore
  * registers.
  * <p>
  * Taken from binutils-2.14.90.0.4/bfd/elf-bfd.h
  * <pre>
- * struct eh_cie_fde { 
- * 		unsigned int offset; 
- * 		unsigned int size; 
+ * struct eh_cie_fde {
+ * 		unsigned int offset;
+ * 		unsigned int size;
  * 		asection *sec;
- * 		unsigned int new_offset; 
- * 		unsigned char fde_encoding; 
- * 		unsigned char *lsda_encoding; 
- * 		unsigned char lsda_offset; 
- * 		unsigned char cie : 1; 
- * 		unsigned char removed : 1; 
- * 		unsigned char make_relative : 1; 
- * 		unsigned char make_lsda_relative : 1; 
- * 		unsigned char per_encoding_relative : 1; 
+ * 		unsigned int new_offset;
+ * 		unsigned char fde_encoding;
+ * 		unsigned char *lsda_encoding;
+ * 		unsigned char lsda_offset;
+ * 		unsigned char cie : 1;
+ * 		unsigned char removed : 1;
+ * 		unsigned char make_relative : 1;
+ * 		unsigned char make_lsda_relative : 1;
+ * 		unsigned char per_encoding_relative : 1;
  * };
  * </pre>
  * <pre>
- * ACTUAL: struct eh_cie_fde { 
- * 		dword fde.length 
- * 		dword fde.ciePointer (Offset to this FDEs CIE) 
- * 		dword fde.pcBegin 
- * 		dword fde.pcRange 
- * 		dword fde.augmentationLength 
- * 		dword fde.augmentationData 
- * 		dword Call Frame Instructions dword 
- * 		!!! NO IDEA !!! 
+ * ACTUAL: struct eh_cie_fde {
+ * 		dword fde.length
+ * 		dword fde.ciePointer (Offset to this FDEs CIE)
+ * 		dword fde.pcBegin
+ * 		dword fde.pcRange
+ * 		dword fde.augmentationLength
+ * 		dword fde.augmentationData
+ * 		dword Call Frame Instructions dword
+ * 		!!! NO IDEA !!!
  * }
  * </pre>
  */
@@ -108,10 +108,10 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 	/**
 	 * Constructor for a frame descriptor entry.
-	 * <br>Note: The <code>create(Address)</code> method must be called after constructing a 
-	 * <code>FrameDescriptionEntry</code> to associate it with an address before any of its 
+	 * <br>Note: The <code>create(Address)</code> method must be called after constructing a
+	 * <code>FrameDescriptionEntry</code> to associate it with an address before any of its
 	 * "get..." methods are called.
-	 * 
+	 *
 	 * @param monitor a status monitor for tracking progress and allowing cancelling when creating
 	 * an FDE.
 	 * @param program the program where this will create an FDE.
@@ -166,15 +166,15 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 	/**
 	 * Creates the FDE Length field at the specified address.
-	 * 
+	 *
 	 * @param addr Address at which the FDE length field should be created.
 	 * @return Address immediately following the FDE Length field.
 	 * @throws MemoryAccessException if the required memory can't be read
 	 */
 	private Address createFdeLength(Address addr) throws MemoryAccessException {
 
-		/* 
-		 * Create a new FDE Length field at the specified address 
+		/*
+		 * Create a new FDE Length field at the specified address
 		 * and sets an appropriate comment for the new structure.
 		 */
 		String comment = "(FDE) Length";
@@ -244,7 +244,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 	/**
 	 * Creates the PcBegin field at the specified Address.
-	 * 
+	 *
 	 * @param addr Address at which the PcBegin field should be created.
 	 * @param region the region descriptor for this FDE
 	 * @return Address immediately following the PcBegin field.
@@ -253,8 +253,8 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 	private Address createPcBegin(Address addr, RegionDescriptor region)
 			throws MemoryAccessException, ExceptionHandlerFrameException {
 
-		/* 
-		 * If the bytes at the current address are undefined, 
+		/*
+		 * If the bytes at the current address are undefined,
 		 * then create the address pointer
 		 */
 		String comment = "(FDE) PcBegin";
@@ -279,7 +279,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 	/**
 	 * Creates the PcRange field at the specified Address.
-	 * 
+	 *
 	 * @param addr Address at which the PcRange field should be created.
 	 * @return Address immediately following the PcRange field
 	 * or null if next address would be out of bounds.
@@ -289,8 +289,8 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 	private Address createPcRange(Address addr)
 			throws ExceptionHandlerFrameException, MemoryAccessException {
 
-		/* 
-		 * Create a new pcRange field at the specified address 
+		/*
+		 * Create a new pcRange field at the specified address
 		 * and sets an appropriate comment for the new structure.
 		 */
 		String comment = "(FDE) PcRange";
@@ -307,8 +307,8 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 		DataType dataType = getAddressSizeDataType();
 		if (dataType.getLength() == 8) {
-			// While this is 64-bit system, this length may be encoded as a 32-bit value, 
-			// arguing a length needn't use all 8 bytes. If it *is* encoded in 8 bytes, the 
+			// While this is 64-bit system, this length may be encoded as a 32-bit value,
+			// arguing a length needn't use all 8 bytes. If it *is* encoded in 8 bytes, the
 			// top 32-bits will be zero; if it is *not* encoded in 8 and instead 4, the top 32-bits
 			// will be non-zero as they're part of the call frame instructions that follow.
 
@@ -337,15 +337,15 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 	/**
 	 * Creates the Augmentation Data Length field at the specified Address.
-	 * 
+	 *
 	 * @param addr Address at which the Augmentation Data length should be created.
 	 * @return Address immediately following the Augmentation Data length field.
 	 * @throws MemoryAccessException if the required memory can't be read
 	 */
 	private Address createAugmentationDataLength(Address addr) throws MemoryAccessException {
 
-		/* 
-		 * Create a new Augmentation Data Length field at the specified address 
+		/*
+		 * Create a new Augmentation Data Length field at the specified address
 		 * and sets an appropriate comment for the new structure.
 		 */
 		String comment = "(FDE) Augmentation Data Length";
@@ -366,14 +366,14 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 	/**
 	 * Creates the Augmentation Data at the specified Address.
-	 * 
+	 *
 	 * @param addr Address at which the Augmentation Data should be created.
 	 * @return Address immediately following the Augmentation Data field.
 	 * @throws MemoryAccessException if the required memory can't be read
 	 */
 	private Address createAugmentationData(Address addr) throws MemoryAccessException {
-		/* 
-		 * Create a new Augmentation Data field at the specified address 
+		/*
+		 * Create a new Augmentation Data field at the specified address
 		 * and sets an appropriate comment for the new structure.
 		 */
 		SetCommentCmd.createComment(program, addr, "(FDE) Augmentation Data", CodeUnit.EOL_COMMENT);
@@ -387,7 +387,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 	/**
 	 * Creates the Call Frame Instructions at the specified Address.
-	 * 
+	 *
 	 * @param addr Address at which the Call Frame Instructions should be created.
 	 * @return Address immediately following the Call Frame Instructions.
 	 * @throws MemoryAccessException if the required memory can't be read
@@ -433,7 +433,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 	 * Creates a Frame Description Entry (FDE) at the address
 	 * specified.
 	 * <br>Note: This method must get called before any of the "get..." methods.
-	 * 
+	 *
 	 * @param fdeBaseAddress Address where the FDE should be created.
 	 * @return a region descriptor which holds information about this FDE. Otherwise, null.
 	 * @throws MemoryAccessException if memory for the FDE or its associated data can't be accessed
@@ -669,7 +669,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 	/**
 	 * Gets the next address in memory after this FDE record.
-	 * 
+	 *
 	 * @return the next address after this FDE or null if at the end of the section
 	 */
 	public Address getNextAddress() {
@@ -677,9 +677,9 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 	}
 
 	/**
-	 * Determines if this FDE encountered a zero length record, which indicates the end of 
+	 * Determines if this FDE encountered a zero length record, which indicates the end of
 	 * the frame.
-	 * 
+	 *
 	 * @return true if we are at end of frame due to encountering a zero length record.
 	 */
 	public boolean isEndOfFrame() {
@@ -688,7 +688,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 	/**
 	 * Get the address range that contains the program instructions.
-	 * 
+	 *
 	 * @return the address range
 	 */
 	public AddressRange getProtectionRange() {
@@ -697,7 +697,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 	/**
 	 * Get the address of the augmentation data in this FDE record.
-	 * 
+	 *
 	 * @return the augmentation data field's address
 	 */
 	public Address getAugmentationDataAddress() {
@@ -706,7 +706,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 	/**
 	 * Gets the bytes which specify the FDE field that refers to the augmentation data.
-	 * 
+	 *
 	 * @return the FDE record's augmentation data.
 	 */
 	public byte[] getAugmentationData() {
@@ -715,7 +715,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 	/**
 	 * Gets the start address for the call frame augmentation data.
-	 * 
+	 *
 	 * @return the address of the call frame augmentation data
 	 */
 	public Address getAugmentationExDataAddress() {
@@ -723,9 +723,9 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 	}
 
 	/**
-	 * Sets the value this region descriptor maintains to indicate the length of the 
+	 * Sets the value this region descriptor maintains to indicate the length of the
 	 * augmentation data.
-	 * 
+	 *
 	 * @param len number of bytes that compose the augmentation data
 	 * @return the length of the augmentation data or -1 if it has already been set.
 	 */
@@ -753,7 +753,7 @@ public class FrameDescriptionEntry extends GccAnalysisClass {
 
 	/**
 	 * Gets the call frame augmentation data that indicates how registers are saved and restored.
-	 * 
+	 *
 	 * @return the augmentation data
 	 */
 	public byte[] getAugmentationExData() {

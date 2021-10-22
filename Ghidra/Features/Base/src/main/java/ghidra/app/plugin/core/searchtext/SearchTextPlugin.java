@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,7 +112,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 	/**
 	 * The constructor for the SearchTextPlugin.
-	 * 
+	 *
 	 * @param plugintool The tool required by this plugin.
 	 */
 	public SearchTextPlugin(PluginTool plugintool) {
@@ -497,7 +497,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 
 	/**
 	 * Get the address set for the selection.
-	 * 
+	 *
 	 * @return null if there is no selection
 	 */
 	private AddressSetView getAddressSet(Navigatable searchNavigatable, SearchOptions options) {
@@ -762,7 +762,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 		}
 
 		private boolean checkRemoveHighlights() {
-			if (provider != null) { // search all - remove highlights when                 
+			if (provider != null) { // search all - remove highlights when
 				if (!tool.isVisible(provider)) { // results are no longer showing
 					highlightNavigatable.removeHighlightProvider(this, highlightProgram);
 					return true;

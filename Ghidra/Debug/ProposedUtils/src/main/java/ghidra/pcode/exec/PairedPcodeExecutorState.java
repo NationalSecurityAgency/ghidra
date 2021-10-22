@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.program.model.mem.MemBuffer;
 
 /**
  * A paired executor state
- * 
+ *
  * <p>
  * Where a response cannot be composed of both states, the paired state defers to the left. In this
  * way, the left state controls the machine, while the right is computed in tandem. The right never
@@ -32,7 +32,7 @@ import ghidra.program.model.mem.MemBuffer;
  * {@link #getVar(AddressSpace, Object, int, boolean)} and/or
  * {@link #setVar(AddressSpace, Object, int, boolean, Object)}, the right can affect the left and
  * indirectly control the machine.
- * 
+ *
  * @param <L> the type of values for the "left" state
  * @param <R> the type of values for the "right" state
  */

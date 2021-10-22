@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,37 +57,37 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
 	/*
 	 * Note: all paths of finishing should end up calling this runnable.
-	 * 
+	 *
 	 * Workflow:
-	 * 
+	 *
 	 * Dialog Close Button Pressed:
 	 * 	-calls cancelCallback()
 	 *  -calls verifyCancel runnable
 	 *  -calls iternalCancel()
 	 *  -triggers taskProcessed()
 	 *  -calls closeDialog runnable
-	 *  
+	 *
 	 * Cancel Button Pressed:
 	 * 	-(same as Dialog Close Button Pressed)
-	 * 
+	 *
 	 * Task Monitor Stop Button Pressed:
 	 *  -triggers taskProcessed()
 	 *  -calls closeDialog runnable
-	 *  
+	 *
 	 * Public API dispose() is Called:
 	 *  -calls iternalCancel()
 	 *  -triggers taskProcessed()
 	 *  -calls closeDialog runnable
-	 *  
+	 *
 	 * Task Monitor Cancelled by API:
 	 *  -triggers taskProcessed()
 	 *  -calls closeDialog runnable
-	 *  
+	 *
 	 * Task Finishes Normally:
 	 *  -triggers taskProcessed()
 	 *  -calls closeDialog runnable
-	 * 
-	 * 
+	 *
+	 *
 	 */
 	private Runnable closeDialog = () -> {
 		close();
@@ -409,7 +409,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 			setIndeterminate(false);
 		}
 
-		// Note: it is not clear why we only wish to show progress if the monitor is not 
+		// Note: it is not clear why we only wish to show progress if the monitor is not
 		// visible.  This seems wrong.   If someone knows, please update this code.
 		//if (!monitorComponent.isShowing()) {
 		installProgressMonitor();
@@ -431,7 +431,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		supportsProgress = !indeterminate;
 		monitorComponent.setIndeterminate(indeterminate);
 
-		// Assumption: if the client calls this method to show progress, then we should honor 
+		// Assumption: if the client calls this method to show progress, then we should honor
 		// that request.  If we find that nested monitor usage causes dialogs to incorrectly
 		// toggle monitors, then we need to update those clients to use a wrapping style
 		// monitor that prevents the behavior.

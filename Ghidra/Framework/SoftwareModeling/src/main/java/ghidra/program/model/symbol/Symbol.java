@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,7 +80,7 @@ public interface Symbol {
 	public boolean isDescendant(Namespace namespace);
 
 	/**
-	 * Determines if the given parent is valid for this Symbol.  Specified namespace 
+	 * Determines if the given parent is valid for this Symbol.  Specified namespace
 	 * must belong to the same symbol table as this symbol.
 	 * @param parent prospective parent namespace for this symbol
 	 * @return true if parent is valid
@@ -231,7 +231,7 @@ public interface Symbol {
 	public boolean isPrimary();
 
 	/**
-	 * Sets this symbol to be primary. All other symbols at the same address will be set to 
+	 * Sets this symbol to be primary. All other symbols at the same address will be set to
 	 * !primary.  Only applies to non-function symbols.
 	 * @return returns true if the symbol was not primary and now it is, otherwise false
 	 */
@@ -274,7 +274,7 @@ public interface Symbol {
 
 	/**
 	 * Determine if this symbol object has been deleted.  NOTE: the symbol could be
-	 * deleted at anytime due to asynchronous activity.  
+	 * deleted at anytime due to asynchronous activity.
 	 * @return true if symbol has been deleted, false if not.
 	 */
 	public boolean isDeleted();

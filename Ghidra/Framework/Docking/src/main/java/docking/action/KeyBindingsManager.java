@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,8 +29,8 @@ import ghidra.util.exception.AssertException;
 
 /**
  * A class that organizes system key bindings by mapping them to assigned {@link DockingActionIf}s.
- * 
- * <p>This class understands reserved system key bindings.  For non-reserved key bindings, this 
+ *
+ * <p>This class understands reserved system key bindings.  For non-reserved key bindings, this
  * class knows how to map a single key binding to multiple actions.
  */
 public class KeyBindingsManager implements PropertyChangeListener {
@@ -83,7 +83,7 @@ public class KeyBindingsManager implements PropertyChangeListener {
 				"Action: " + action.getName() + " - Keystroke: " + keyStroke);
 		}
 
-		// map standard keybinding to action 
+		// map standard keybinding to action
 		doAddKeyBinding(provider, action, keyStroke);
 
 		fixupAltGraphKeyStrokeMapping(provider, action, keyStroke);
@@ -92,12 +92,12 @@ public class KeyBindingsManager implements PropertyChangeListener {
 	private void fixupAltGraphKeyStrokeMapping(ComponentProvider provider, DockingActionIf action,
 			KeyStroke keyStroke) {
 
-		// special case 
+		// special case
 		int modifiers = keyStroke.getModifiers();
 		if ((modifiers & InputEvent.ALT_DOWN_MASK) == InputEvent.ALT_DOWN_MASK) {
 			//
 			// Also register the 'Alt' binding with the 'Alt Graph' mask.  This fixes the but
-			// on Windows (https://bugs.openjdk.java.net/browse/JDK-8194873) 
+			// on Windows (https://bugs.openjdk.java.net/browse/JDK-8194873)
 			// that have different key codes for the left and right Alt keys.
 			//
 			modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;

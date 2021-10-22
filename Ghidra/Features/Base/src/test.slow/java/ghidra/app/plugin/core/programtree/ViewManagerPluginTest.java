@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -178,7 +178,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(tabbedPane.getSelectedComponent(), vps.getViewComponent());
 
 		redo(program);
-		// tree 2 should be back    
+		// tree 2 should be back
 		vps = provider.getCurrentViewProvider();
 		treeNames = program.getListing().getTreeNames();
 
@@ -206,7 +206,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(tabbedPane.getSelectedComponent(), vps.getViewComponent());
 
 		redo(program);
-		// tree 2 should be back    
+		// tree 2 should be back
 		vps = provider.getCurrentViewProvider();
 		treeNames = program.getListing().getTreeNames();
 
@@ -344,7 +344,7 @@ public class ViewManagerPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	// NOTE: this test has been commented out because it fails consitently due to timing errors.
 	// However, this test will almost always run successfully after the first time it is run.  So,
-	// this test can be uncommented and run to test the functionality of view renaming when 
+	// this test can be uncommented and run to test the functionality of view renaming when
 	// changes are made.
 	public void dontTestRenameView() throws Exception {
 		env.showTool();

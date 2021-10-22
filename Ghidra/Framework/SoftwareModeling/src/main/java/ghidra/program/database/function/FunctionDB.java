@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1294,7 +1294,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 	}
 
 	/**
-	 * Increment updateInProgressCount indicating that an update operation is in progress and 
+	 * Increment updateInProgressCount indicating that an update operation is in progress and
 	 * that any attempted refresh should be deferred.  The updateRefreshReqd flag will be set
 	 * if a refresh was attempted while an update operation was in progress.
 	 */
@@ -1303,7 +1303,7 @@ public class FunctionDB extends DatabaseObject implements Function {
 	}
 
 	/**
-	 * Decrement updateInProgressCount indicating that an update operation has completed and 
+	 * Decrement updateInProgressCount indicating that an update operation has completed and
 	 * check the updateRefreshReqd flag and perform refresh if needed.
 	 */
 	synchronized void endUpdate() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,7 +86,7 @@ public abstract class MsSymbolApplier {
 	/**
 	 * Manages block nesting for symbols/appliers that represent the beginning or end of blocks.
 	 * The default is to do nothing.  Otherwise the appliers should implement the appropriate
-	 * logic.  
+	 * logic.
 	 * @param applierParam the applier which is managing blocks, which is typically
 	 * {@link FunctionSymbolApplier}.
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@
 // ____work/
 // ____done/
 //
-// This scripts polls the "new" directory, grabs a single file and tries to move it 
+// This scripts polls the "new" directory, grabs a single file and tries to move it
 // (using filesystem level atomic move/rename) to the "work" directory.  If that succeeds,
 // the information in the queue file is used to perform an import operation.
 // When the import operation is finished, the queue file is moved from the "work" directory
@@ -40,7 +40,7 @@
 //
 // If a script instance dies while importing a file, the troublesome binary's queue
 // control file will be left in the "work" directory.  The user can move it back to
-// the "new" directory (it will probably need renaming to remove some script metadata 
+// the "new" directory (it will probably need renaming to remove some script metadata
 // from the filename) to re-submit the binary for processing.
 //
 // Example usage with analyzeHeadless:
@@ -102,7 +102,7 @@ public class MSLibBatchImportWorker extends GhidraScript {
 
 	@Override
 	protected void run() throws Exception {
-		// If running this via 'HeadlessAnalyzer', a MSLibBatchImportWorker.properties 
+		// If running this via 'HeadlessAnalyzer', a MSLibBatchImportWorker.properties
 		// file needs to be created with a single line specifying the queue directory:
 		// "Choose queue directory Choose=/path/to/queue/dir"
 		// (without any quotes)
@@ -249,7 +249,7 @@ public class MSLibBatchImportWorker extends GhidraScript {
 
 	private static Pair<DomainFolder, String> getFolderAndUniqueFile(DomainFolder current,
 			String preferredName) throws InvalidNameException, IOException {
-		
+
 		int pathSepIndex;
 		for(pathSepIndex = preferredName.length() - 1; pathSepIndex >= 0; pathSepIndex--) {
 			if ( "/\\".indexOf(preferredName.charAt(pathSepIndex)) != -1 ) {

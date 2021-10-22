@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,9 @@ import docking.widgets.fieldpanel.*;
 
 /**
  * A LayoutLockedFieldPanelCoordinator is an extension of a LineLockedFieldPanelCoordinator that
- * handles the fact that field panel layouts vary in size. It coordinates the scrolling of a set 
- * of field panels by sharing bound scroll models that are locked together by a set of index 
- * numbers for the FieldPanel Layouts. All the field panels are locked together at the index 
+ * handles the fact that field panel layouts vary in size. It coordinates the scrolling of a set
+ * of field panels by sharing bound scroll models that are locked together by a set of index
+ * numbers for the FieldPanel Layouts. All the field panels are locked together at the index
  * numbers specified in the locked line array.
  * In other words this coordinator tries to keep the layout indicated by the line (or index)
  * for each field panel side by side with the indicated layout for each other field panel.
@@ -48,14 +48,14 @@ public class LayoutLockedFieldPanelCoordinator extends LineLockedFieldPanelCoord
 			return;
 		try {
 			valuesChanging = true;
-			// "lockedLineIndex" is the IndexMap index indicating where this field panel 
+			// "lockedLineIndex" is the IndexMap index indicating where this field panel
 			// is locked to the other when scrolling.
 			BigInteger lockedLineIndex1 = getLockedLineForPanel(fp);
 			if (lockedLineIndex1 == null) { // This shouldn't happen.
 				throw new AssertException("Couldn't find line number for indicated field panel."
 					+ " FieldPanel is not one of those being managed by this coordinator.");
 			}
-			
+
 			// "topIndex" is the IndexMap index of the top of the listing in view.
 			BigInteger topIndex1 = index;
 			LayoutModel layoutModel1 = fp.getLayoutModel();
@@ -63,19 +63,19 @@ public class LayoutLockedFieldPanelCoordinator extends LineLockedFieldPanelCoord
 			if (lockedLineLayout1 == null) {
 				return; // transitioning from one function to another.
 			}
-			
-			// "lockedLineHeight" is the height of the layout in this field panel 
+
+			// "lockedLineHeight" is the height of the layout in this field panel
 			// where it is locked to the other panel when scrolling.
 			int lockedLineHeight1 = lockedLineLayout1.getHeight();
 
 			// numIndexes is the total number of indexes in this field panels indexMap.
 			BigInteger numIndexes1 = layoutModel1.getNumIndexes();
 			Layout firstLayout1 = layoutModel1.getLayout(topIndex1);
-			
-			// "yPos" is a negative number indicating the number of pixels the start of the current 
+
+			// "yPos" is a negative number indicating the number of pixels the start of the current
 			// layout is above the top of the field panel view.
-			
-			// "remainingHeight" is the number of pixels vertically from the first visible pixel 
+
+			// "remainingHeight" is the number of pixels vertically from the first visible pixel
 			// in the layout at the top of the listing view to the end of that layout.
 			int remainingHeight = firstLayout1.getHeight() + yPos;
 
@@ -135,7 +135,7 @@ public class LayoutLockedFieldPanelCoordinator extends LineLockedFieldPanelCoord
 						return;
 					}
 
-					// Start with the layout of the line locked index and position the top of the 
+					// Start with the layout of the line locked index and position the top of the
 					// view at the same distance from it as the other view is from the layout for
 					// its locked line.
 					int offsetFromLockedIndex2 =
@@ -148,8 +148,8 @@ public class LayoutLockedFieldPanelCoordinator extends LineLockedFieldPanelCoord
 					while (currentIndex2 != null && currentIndex2.compareTo(BigInteger.ZERO) >= 0 &&
 						currentIndex2.compareTo(numIndexes2) < 0) {
 						Layout currentLayout2 = layoutModel2.getLayout(currentIndex2);
-						// Gaps in the code will cause the currentIndex to be the last byte's 
-						// index before the gap. This results in a null layout for that index, 
+						// Gaps in the code will cause the currentIndex to be the last byte's
+						// index before the gap. This results in a null layout for that index,
 						// so we need to go again to get past it.
 						if (currentLayout2 == null) {
 							if (remainingOffset2 < 0) {

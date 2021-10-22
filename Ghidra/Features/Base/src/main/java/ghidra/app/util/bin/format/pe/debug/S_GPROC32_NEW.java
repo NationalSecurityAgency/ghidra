@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,9 +21,9 @@ import ghidra.app.util.bin.format.*;
 
 import java.io.*;
 
-/** 
+/**
  * A class to represent the S_GPROC32_NEW data structure.
- * 
+ *
  */
 public class S_GPROC32_NEW extends DebugSymbol{
     private int    pParent;
@@ -34,7 +34,7 @@ public class S_GPROC32_NEW extends DebugSymbol{
 	private int    debugEnd;
 	private int    procOffset; //offset to start of procedure...
 	private short  procType;
-	
+
     static S_GPROC32_NEW createS_GPROC32_NEW(short length, short type,
             FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
         S_GPROC32_NEW s_gproc32_new = (S_GPROC32_NEW) reader.getFactory().create(S_GPROC32_NEW.class);

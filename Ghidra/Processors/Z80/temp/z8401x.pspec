@@ -2,13 +2,13 @@
 
 <processor_spec>
   <programcounter register="PC"/>
-  
+
   <context_data>
     <tracked_set space="ram">
       <set name="DECOMPILE_MODE" val="1"/>
     </tracked_set>
   </context_data>
-  
+
   <register_data>
     <register name="AF_" group="Alt"/>
     <register name="BC_" group="Alt"/>
@@ -46,4 +46,4 @@
     <symbol name="INTPR" address="io:f4" entry="false"/>
   </default_symbols>
 </processor_spec>
-    
+

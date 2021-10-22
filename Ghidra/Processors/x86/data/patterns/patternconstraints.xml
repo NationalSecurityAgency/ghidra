@@ -13,7 +13,7 @@
           <patternfile>x86gcc_patterns.xml</patternfile>
         </compiler>
   </language>
-  
+
   <language id="x86:LE:64:default">
     <compiler id="windows">
       <patternfile>x86-64win_patterns.xml</patternfile>
@@ -22,13 +22,13 @@
       <patternfile>x86-64gcc_patterns.xml</patternfile>
     </compiler>
   </language>
-  
+
   <language id="x86:LE:16:Real Mode">
   	<compiler id="default">
   		<patternfile>x86-16_default_patterns.xml</patternfile>
   	</compiler>
   </language>
-  
+
   <language id="x86:LE:16:Protected Mode">
   	<compiler id="default">
   		<patternfile>x86-16_default_patterns.xml</patternfile>

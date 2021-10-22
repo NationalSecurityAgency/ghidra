@@ -94,7 +94,7 @@ LDMR30:		is LDMR29 { build LDMR29; loadReg(r30); }
 LDMR31:		is LDMR30 { build LDMR30; loadReg(r31); }
 
 :lmw	D,dPlusRaOrZeroAddress	is $(NOTVLE) & OP=46 & D & BITS_21_25 & dPlusRaOrZeroAddress & LDMR31 [ lsmul = BITS_21_25; ]
-{	
+{
 	tea = dPlusRaOrZeroAddress;
 	build LDMR31;
 }

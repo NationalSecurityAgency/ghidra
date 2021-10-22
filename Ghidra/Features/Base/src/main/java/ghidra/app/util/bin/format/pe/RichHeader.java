@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class RichHeader implements StructConverter, Writeable {
 	/**
 	 * Create and returns the Rich header found from the given reader.  The reader should be
 	 * positioned directly after the DOS header.
-	 * 
+	 *
 	 * @param reader The reader to read the PE with.
 	 * @return The Rich header associated with the given reader.
 	 */
@@ -53,7 +53,7 @@ public class RichHeader implements StructConverter, Writeable {
 
 	/**
 	 * Do not directly call this constructor.
-	 * <p>  
+	 * <p>
 	 * Use {@link #createRichHeader(FactoryBundledWithBinaryReader)}
 	 */
 	public RichHeader() {
@@ -81,7 +81,7 @@ public class RichHeader implements StructConverter, Writeable {
 
 	/**
 	 * Gets the offset of the Rich header.
-	 * 
+	 *
 	 * @return the offset of the Rich header, or -1 if a Rich header was not found.
 	 */
 	public int getOffset() {
@@ -90,7 +90,7 @@ public class RichHeader implements StructConverter, Writeable {
 
 	/**
 	 * Gets the size of the Rich header.
-	 * 
+	 *
 	 * @return the size of the Rich header.  Will be 0 if a Rich header was not found.
 	 */
 	public int getSize() {
@@ -99,7 +99,7 @@ public class RichHeader implements StructConverter, Writeable {
 
 	/**
 	 * Gets the Rich header mask.
-	 * 
+	 *
 	 * @return the Rich header mask, or -1 if a Rich header was not found.
 	 */
 	public int getMask() {
@@ -108,7 +108,7 @@ public class RichHeader implements StructConverter, Writeable {
 
 	/**
 	 * Gets the Rich header records.
-	 * 
+	 *
 	 * @return the Rich header records.  Could be empty if a Rich header was not found.
 	 */
 	public RichHeaderRecord[] getRecords() {

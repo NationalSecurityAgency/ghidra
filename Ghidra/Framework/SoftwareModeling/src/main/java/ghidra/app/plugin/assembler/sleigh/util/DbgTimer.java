@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.util.Stack;
 
 /**
  * A debugging, timing, and diagnostic tool
- * 
+ *
  * TODO: I should probably remove this and rely on the Msg.trace() method, or at the very least,
  * refactor this to use that.
  */
@@ -86,7 +86,7 @@ public class DbgTimer extends PrintStream {
 
 		/**
 		 * {@inheritDoc}
-		 * 
+		 *
 		 * Parses each line and prepends the indentation as they are printed
 		 */
 		@Override
@@ -174,7 +174,7 @@ public class DbgTimer extends PrintStream {
 	 * Start a new, possibly long-running, task
 	 * @param message the message to print when the task begins
 	 * @return a context to close when the task ends
-	 * 
+	 *
 	 * This is meant to be used idiomatically, as in a try-with-resources block:
 	 * <pre>
 	 * {@code
@@ -183,7 +183,7 @@ public class DbgTimer extends PrintStream {
 	 * } // this will automatically print done and the time elapsed within the try block
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * This idiom is preferred because the task will be stopped even if an error occurs, if the
 	 * method returns from within the block, etc.
 	 */
@@ -196,7 +196,7 @@ public class DbgTimer extends PrintStream {
 
 	/**
 	 * Stop the current task
-	 * 
+	 *
 	 * This will print done and the elapsed time since the start of the task. The "current task" is
 	 * determined from the stack.
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -195,7 +195,7 @@ public class PrintingPlugin extends ProgramPlugin {
 
 						// if a terminating index was specified (ie. we are printing a subset
 						// of the view), and we've reached it, end the loop.
-						// The termIndex is inclusive, ie. the contents of the item pointed 
+						// The termIndex is inclusive, ie. the contents of the item pointed
 						// to by the termIndex are used.
 						if (termIndex != null && termIndex.compareTo(it.getIndex()) < 0) {
 							break;
@@ -205,9 +205,9 @@ public class PrintingPlugin extends ProgramPlugin {
 							int layoutHt = layout.getHeight();
 							if (currentPageHt + layoutHt > pageHeight) {
 								// Start a new page.
-								// Either kick the offending element's height to the next page, 
+								// Either kick the offending element's height to the next page,
 								// or if this element is the first item on the page and its
-								// bigger than the entire page, just start a fresh page 
+								// bigger than the entire page, just start a fresh page
 								currentPageHt = (currentPageHt == 0) ? 0 : layoutHt;
 								pageCount++;
 								monitor.setMessage("Counting pages: " + pageCount);
@@ -237,7 +237,7 @@ public class PrintingPlugin extends ProgramPlugin {
 
 					// loop over Layout elements, measuring their height until we get enough
 					// for each page.
-					// Create a printable page using the pageStartIndex of the element at the top of 
+					// Create a printable page using the pageStartIndex of the element at the top of
 					// the page.
 					for (LayoutModelIterator it = lm.iterator(startIndex); it.hasNext() &&
 						!monitor.isCancelled(); /* blank */) {
@@ -245,7 +245,7 @@ public class PrintingPlugin extends ProgramPlugin {
 
 						// if a terminating index was specified (ie. we are printing a subset
 						// of the view), and we've reached it, end the loop.
-						// The termIndex is inclusive, ie. the contents of the item pointed 
+						// The termIndex is inclusive, ie. the contents of the item pointed
 						// to by the termIndex are used.
 						if (termIndex != null && termIndex.compareTo(it.getIndex()) < 0) {
 							break;
@@ -297,7 +297,7 @@ public class PrintingPlugin extends ProgramPlugin {
 						lastIndex.compareTo(pageStartIndex) >= 0) {
 						monitor.setProgress(indexCount);
 
-						//Put whatever remains on the last page						
+						//Put whatever remains on the last page
 						book.append(new CodeUnitPrintable(lm, pageStartIndex.intValue(),
 							lastIndex.intValue(), scaleAmount, monitor, pod, book, job, startDate),
 							format);
@@ -336,19 +336,19 @@ public class PrintingPlugin extends ProgramPlugin {
 						while (curAddress.compareTo(curRange.getMaxAddress()) <= 0) {
 							//Add the layout for the present address
 							BigInteger curIndex = indexMap.getIndex(curAddress);
-							
-							// curIndex may be null when processing resource images; just 
+
+							// curIndex may be null when processing resource images; just
 							// move to the next address and try again.
 							if (curIndex == null) {
 								curAddress = curAddress.next();
-								
+
 								if (curAddress == null) {
 									break;
 								}
-								
+
 								continue;
 							}
-							
+
 							if (!curIndex.equals(lastIndex)) {
 								Layout layout = lm.getLayout(curIndex);
 								if (layout != null) {

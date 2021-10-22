@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param plugin the parent plugin
 	 */
 	public FunctionComparisonProviderManager(Plugin plugin) {
@@ -61,7 +61,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 
 	/**
 	 * Creates a new comparison between the given set of functions
-	 * 
+	 *
 	 * @param functions the functions to compare
 	 * @return the new comparison provider
 	 */
@@ -79,7 +79,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 
 	/**
 	 * Creates a new comparison comparison between two functions
-	 * 
+	 *
 	 * @param source the source function
 	 * @param target the target function
 	 * @return the new comparison provider
@@ -96,7 +96,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 
 	/**
 	 * Adds a set of functions to an existing comparison provider
-	 * 
+	 *
 	 * @param functions the functions to compare
 	 * @param provider the provider to add the functions to
 	 */
@@ -112,7 +112,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 
 	/**
 	 * Adds the given functions to an existing comparison provider
-	 * 
+	 *
 	 * @param source the source function
 	 * @param target the target function
 	 * @param provider the provider to add the functions to
@@ -130,7 +130,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 
 	/**
 	 * Removes a given function from all comparisons across all providers
-	 * 
+	 *
 	 * @param function the function to remove
 	 */
 	public void removeFunction(Function function) {
@@ -139,7 +139,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 
 	/**
 	 * Removes a given function from a specified provider
-	 * 
+	 *
 	 * @param function the function to remove
 	 * @param provider the provider to remove the function from
 	 */
@@ -152,7 +152,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 
 	/**
 	 * Registers subscribers who wish to know of provider activation status
-	 * 
+	 *
 	 * @param listener the subscriber to register
 	 */
 	public void addProviderListener(ComponentProviderActivationListener listener) {
@@ -162,7 +162,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	/**
 	 * Removes a subscriber who no longer wishes to receive provider activation
 	 * events
-	 * 
+	 *
 	 * @param listener the subscriber to remove
 	 */
 	public void removeProviderListener(ComponentProviderActivationListener listener) {
@@ -170,9 +170,9 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	}
 
 	/**
-	 * Closes all the comparison providers that contain a function from 
+	 * Closes all the comparison providers that contain a function from
 	 * the given program
-	 * 
+	 *
 	 * @param program the program whose function providers need to close
 	 */
 	public void closeProviders(Program program) {
@@ -181,7 +181,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 
 	/**
 	 * Removes any comparisons that contain a function from the given program
-	 * 
+	 *
 	 * @param program the program whose functions require removal
 	 */
 	public void removeFunctions(Program program) {
@@ -189,7 +189,7 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	}
 
 	/**
-	 * Cleans up all providers, setting them invisible and removing any 
+	 * Cleans up all providers, setting them invisible and removing any
 	 * associated ui components (eg: tabs)
 	 */
 	public void dispose() {
@@ -202,10 +202,10 @@ public class FunctionComparisonProviderManager implements FunctionComparisonProv
 	}
 
 	/**
-	 * Called when there is an Undo/Redo. If a program is being restored, this 
-	 * will notify all the function comparison providers. This allows them to 
+	 * Called when there is an Undo/Redo. If a program is being restored, this
+	 * will notify all the function comparison providers. This allows them to
 	 * refresh if they are showing a function from the program
-	 * 
+	 *
 	 * @param ev the object changed event
 	 */
 	public void domainObjectRestored(DomainObjectChangedEvent ev) {

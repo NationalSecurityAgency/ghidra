@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,11 +38,11 @@ import ghidra.util.Swing;
 
 /**
  * Allows users to create function comparisons that are displayed
- * side-by-side in a provider. Comparisons can be initiated via the listing 
+ * side-by-side in a provider. Comparisons can be initiated via the listing
  * or function table and are displayed in a {@link FunctionComparisonProvider}.
  * <p>
  * The underlying data backing the comparison provider is managed by the
- * {@link FunctionComparisonService}. 
+ * {@link FunctionComparisonService}.
  */
 //@formatter:off
 @PluginInfo(
@@ -66,7 +66,7 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param tool the tool that owns this plugin
 	 */
 	public FunctionComparisonPlugin(PluginTool tool) {
@@ -143,7 +143,7 @@ public class FunctionComparisonPlugin extends ProgramPlugin
 
 //==================================================================================================
 // Service Methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public void addFunctionComparisonProviderListener(

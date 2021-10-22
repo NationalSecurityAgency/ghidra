@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,9 +37,9 @@ import utilities.util.FileUtilities;
 
 /**
  * <code>PackedDatabase</code> provides a packed form of Database
- * which compresses a single version into a file.  
+ * which compresses a single version into a file.
  * <br>
- * When opening a packed database, a PackedDBHandle is returned 
+ * When opening a packed database, a PackedDBHandle is returned
  * after first expanding the file into a temporary Database.
  */
 public class PackedDatabase extends Database {
@@ -145,12 +145,12 @@ public class PackedDatabase extends Database {
 	}
 
 	/**
-	 * Constructor for a new packed database which will be created from an 
+	 * Constructor for a new packed database which will be created from an
 	 * open PackedDBHandle.
 	 * @param dbHandle
 	 * @param packedDbFile
 	 * @param itemName
-	 * @param newDatabaseId database ID to be forced for new database or null to generate 
+	 * @param newDatabaseId database ID to be forced for new database or null to generate
 	 * new database ID
 	 * @param monitor
 	 * @throws CancelledException
@@ -357,7 +357,7 @@ public class PackedDatabase extends Database {
 	}
 
 	/**
-	 * Creates a temporary directory which will be used for storing 
+	 * Creates a temporary directory which will be used for storing
 	 * the unpacked database files.
 	 * @return temporary database directory
 	 * @throws IOException
@@ -754,7 +754,7 @@ public class PackedDatabase extends Database {
 	}
 
 	/**
-	 * <code>PDBBufferFileManager</code> removes the update lock when 
+	 * <code>PDBBufferFileManager</code> removes the update lock when
 	 * the update has completed.
 	 */
 	private class PDBBufferFileManager extends DBBufferFileManager {
@@ -833,7 +833,7 @@ public class PackedDatabase extends Database {
 
 	/**
 	 * Attempt to remove all old temporary databases.
-	 * Those still open by an existing process should 
+	 * Those still open by an existing process should
 	 * not be removed by the operating system.
 	 */
 	public static void cleanupOldTempDatabases() {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <language_definitions>
-  
+
   <language processor="RISCV"
             endian="little"
             size="64"
@@ -134,5 +134,5 @@
     <compiler name="gcc" spec="riscv32-fp.cspec" id="gcc"/>
     <external_name tool="DWARF.register.mapping.file" name="riscv32.dwarf"/>
   </language>
-  
+
 </language_definitions>

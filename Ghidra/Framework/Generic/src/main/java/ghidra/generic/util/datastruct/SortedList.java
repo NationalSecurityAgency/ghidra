@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public interface SortedList<E> extends List<E> {
 	/**
 	 * Returns the greatest index in this list whose element is strictly less than the specified
 	 * element
-	 * 
+	 *
 	 * @param element the element to search for
 	 * @return the index of the found element, or -1
 	 */
@@ -41,10 +41,10 @@ public interface SortedList<E> extends List<E> {
 	/**
 	 * Returns the greatest index in this list whose element is less than or equal to the specified
 	 * element
-	 * 
+	 *
 	 * <p>
 	 * If multiples of the specified element exist, this returns the least index of that element.
-	 * 
+	 *
 	 * @param element the element to search for
 	 * @return the index of the found element, or -1
 	 */
@@ -53,10 +53,10 @@ public interface SortedList<E> extends List<E> {
 	/**
 	 * Returns the least index in this list whose element is greater than or equal to the specified
 	 * element
-	 * 
+	 *
 	 * <p>
 	 * If multiples of the specified element exist, this returns the greatest index of that element.
-	 * 
+	 *
 	 * @param element the element to search for
 	 * @return the index of the found element, or -1
 	 */
@@ -64,7 +64,7 @@ public interface SortedList<E> extends List<E> {
 
 	/**
 	 * Returns the least index in this list whose element is strictly greater the specified element
-	 * 
+	 *
 	 * @param element the element to search for
 	 * @return the index of the found element, or -1
 	 */

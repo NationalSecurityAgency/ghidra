@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,7 +80,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Insert the specified number of records using random keys.
-	 * 
+	 *
 	 * @param table table instance, if null one will be created
 	 * @param recordCnt number of records to insert.
 	 * @param varDataSize size of variable length data fields.
@@ -105,7 +105,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Insert the specified number of records using random keys.
-	 * 
+	 *
 	 * @param recordCnt number of records to insert.
 	 * @param varDataSize size of variable length data fields.
 	 * @return Record[] records which were inserted.
@@ -398,7 +398,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Test record iterator.
-	 * 
+	 *
 	 * @param testStoredDB test against a stored database if true, else test against cached database
 	 *            only.
 	 * @param recordCnt number of records to test
@@ -851,7 +851,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Test record iterator.
-	 * 
+	 *
 	 * @param testStoredDB test against a stored database if true, else test against cached database
 	 *            only.
 	 * @param recordCnt number of records to test
@@ -919,7 +919,7 @@ public class DBFixedKeyIndexedTableTest extends AbstractGenericTest {
 
 	/**
 	 * Test record iterator.
-	 * 
+	 *
 	 * @param testStoredDB test against a stored database if true, else test against cached database
 	 *            only.
 	 * @param recordCnt number of records to test

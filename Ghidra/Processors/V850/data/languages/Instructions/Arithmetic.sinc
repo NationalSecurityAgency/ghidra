@@ -21,8 +21,8 @@
 }
 
 # MUL imm9, reg2, reg3 - rrrrr111111iiiii|wwwww01001IIII00
-:mul imm9, R1115, R2731 is op0510=0x3F & op0004 & R1115; op2226=0x9 & op1617=0x0 & s1821 & R2731 
-[ imm9 = (s1821 << 5) | op0004; ] 
+:mul imm9, R1115, R2731 is op0510=0x3F & op0004 & R1115; op2226=0x9 & op1617=0x0 & s1821 & R2731
+[ imm9 = (s1821 << 5) | op0004; ]
 {
 	local res:8 = sext(R1115) * imm9;
 	R1115 = res:4;
@@ -56,7 +56,7 @@
 }
 
 # MULU imm9, reg2, reg3 - rrrrr111111iiiii|wwwww01001IIII10
-:mulu imm9, R1115, R2731 is op0510=0x3F & op0004 & R1115; op2226=0x9 & op1617=0x2 & op1821 & R2731 
+:mulu imm9, R1115, R2731 is op0510=0x3F & op0004 & R1115; op2226=0x9 & op1617=0x2 & op1821 & R2731
 [ imm9 = (op1821 << 5) | op0004; ]
 {
 	local res:8 = zext(R1115) * imm9;
@@ -72,7 +72,7 @@
 
 
 # MAC reg1, reg2, reg3, reg4 - rrrrr111111RRRRR wwww0011110mmmm0
-:mac R0004, R1115, R2731x2, R1620x2 is op0510=0x3F & R0004 & R1115; op2126=0x1E & op1616=0 & R1620x2 & R2731x2 
+:mac R0004, R1115, R2731x2, R1620x2 is op0510=0x3F & R0004 & R1115; op2126=0x1E & op1616=0 & R1620x2 & R2731x2
 {
 	R1620x2 = sext(R1115) * sext(R0004) + R2731x2;
 }
@@ -91,14 +91,14 @@
 
 
 # ADD reg1, reg2 - rrrrr001110RRRRR
-:add R0004, R1115 is op0510=0x0E & R0004 & R1115 
+:add R0004, R1115 is op0510=0x0E & R0004 & R1115
 {
 	set_general_flags_pos(R0004, R1115);
 	R1115 = R1115 + R0004;
 }
 
 # ADD imm5, reg2 - rrrrr010010iiiii
-:add s0004, R1115 is op0510=0x12 & s0004 & R1115 
+:add s0004, R1115 is op0510=0x12 & s0004 & R1115
 {
 	set_general_flags_pos(s0004, R1115);
 	R1115 = R1115 + s0004;
@@ -137,7 +137,7 @@
 
 # MOV imm32, reg1 - 00000110001RRRRR|iiiiiiiiiiiiiiii|IIIIIIIIIIIIIIII
 :mov imm32, R0004 is op0515=0x031 & R0004; op1631; op3247
-[ imm32 = (op3247 << 16) | op1631; ] 
+[ imm32 = (op3247 << 16) | op1631; ]
 {
 	R0004 = imm32;
 }
@@ -155,7 +155,7 @@
 }
 
 # SUB reg1, reg2 - rrrrr001101RRRRR
-:sub R0004, R1115 is op0510=0x0D & R0004 & R1115 
+:sub R0004, R1115 is op0510=0x0D & R0004 & R1115
 {
 	set_general_flags_neg(R1115, R0004);
 	R1115 = R1115 - R0004;
@@ -205,7 +205,7 @@ define pcodeop __saturate;
 }
 
 # SATSUB reg1, reg2 - rrrrr000101RRRRR
-:satsub R0004, R1115 is op0510=0x05 & R0004 & R1115 & op1115!=0 
+:satsub R0004, R1115 is op0510=0x05 & R0004 & R1115 & op1115!=0
 {
 	set_general_flags_neg(R1115, R0004);
 	$(SAT) = $(SAT) || $(OV);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,7 +56,7 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 
 	/**
 	 * Setup DTM service such that the same instance if used across all test methods.
-	 * This assumes that a tool is not used and that the DefaultDataTypeManagerService 
+	 * This assumes that a tool is not used and that the DefaultDataTypeManagerService
 	 * is used.
 	 */
 	protected void setupDTMService(Program program) {
@@ -195,16 +195,16 @@ public class AbstractCreateDataTypeModelTest extends AbstractGenericTest {
 		setupDummy64TypeInfo(builder);
 		return builder;
 	}
-	
-	
+
+
 	protected void setupDummy32TypeInfo(ProgramBuilder builder) throws Exception {
 		builder.setBytes("0x01005000", getHexAddress32AsByteString("0x01004000", false));
 		builder.setBytes("0x01005004", getHexAddress32AsByteString("0x00000000", false));
 		builder.setBytes("0x01005008", RttiUtil.TYPE_INFO_STRING.getBytes());
-		
+
 		builder.setBytes("0x01004000", getHexAddress32AsByteString("0x01008000", false));
 	}
-	
+
 	protected void setupDummy64TypeInfo(ProgramBuilder builder) throws Exception {
 		builder.setBytes("0x101005000", getHexAddress64AsByteString("0x101006000", false));
 		builder.setBytes("0x101005008", getHexAddress64AsByteString("0x00000000", false));

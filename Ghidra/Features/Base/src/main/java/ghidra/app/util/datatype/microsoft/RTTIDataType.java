@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,9 +38,9 @@ public abstract class RTTIDataType extends DynamicDataType {
 	 * Determines if the data type is valid for placing at the indicated address in the program.
 	 * @param program the program
 	 * @param startAddress the start address
-	 * @param overwriteInstructions true indicates that existing instructions can be overwritten 
+	 * @param overwriteInstructions true indicates that existing instructions can be overwritten
 	 * by this data type.
-	 * @param overwriteDefinedData true indicates that existing defined data can be overwritten 
+	 * @param overwriteDefinedData true indicates that existing defined data can be overwritten
 	 * by this data type.
 	 * @return true if this data type can be laid down at the specified address.
 	 * @see #isValid(Program program, Address address, DataValidationOptions validationOptions)
@@ -54,7 +54,7 @@ public abstract class RTTIDataType extends DynamicDataType {
 	}
 
 	/**
-	 * Creates a DataValidationOptions object with the indicated settings for instructions 
+	 * Creates a DataValidationOptions object with the indicated settings for instructions
 	 * and defined data. Other validation options will be set to the default values.
 	 * @param overwriteInstructions true indicates it is valid to overwrite instructions
 	 * @param overwriteDefinedData true indicates it is valid to overwrite defined data

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,7 @@ allprojects {
 /*********************************************************************************
  *  Use flat directory-style repository if flatRepo directory is present.
  *********************************************************************************/
-def flatRepo = file("${DEPS_DIR}/flatRepo") 
+def flatRepo = file("${DEPS_DIR}/flatRepo")
 if (flatRepo.isDirectory()) {
 	allprojects {
 		repositories {
@@ -78,22 +78,22 @@ if (flatRepo.isDirectory()) {
 		}
 	}
 }
-else {	
+else {
 	File f = file("ghidra.repos.config")
 	if (!f.exists()) {
-		throw new GradleException("\n\n\n\tUnable to find the local maven repo." +  
+		throw new GradleException("\n\n\n\tUnable to find the local maven repo." +
 			"  Ensure you have created the ${flatRepo.getName()} directory or ${f.getName()} file.\n\n\n");
 	}
 }
 
 /*********************************************************************************
  * Imports
- *  For these tasks to be available on all subprojects, this MUST be placed 
+ *  For these tasks to be available on all subprojects, this MUST be placed
  *	after the "setupJava" configuration.
  *
  * Note: Distribution.gradle and distributionNew.gradle must not be applied at the
  * 		same time; they have tasks with the same name. The former is the 'old' way
- * 		of building (produces several zips) while the former produces only one. 
+ * 		of building (produces several zips) while the former produces only one.
  * 		Eventually distribution.gradle will be removed entirely, but it is included
  *		here for the time being for those who need it.
  *********************************************************************************/
@@ -116,7 +116,7 @@ clean {
  *
  * Utility methods used by multiple build.gradle files
  *
- *****************************************************************************************/	
+ *****************************************************************************************/
 
 /*********************************************************************************
  * Returns a relative path from the root (ghidra) to the project's directory.
@@ -128,8 +128,8 @@ clean {
  *	 		root project = /Users/<blah>/git/ghidra.master/ghidra/Ghidra
  *
  *	 	Then the returned value will be:
- *	 		Ghidra/Features/Base 
- * 
+ *	 		Ghidra/Features/Base
+ *
  *  There are two special cases - Projects that live outside ghidra and projects
  *  that are extension projects.  Projects that live outside ghidra will
  *  have zip paths that make the project appear as if it did live in ghidra.
@@ -137,18 +137,18 @@ clean {
  *  that they extend.  See the note at the top of the distribution.gradle file for more details.
  *********************************************************************************/
 def getZipPath(Project p) {
-	
+
 	String path = getGhidraRelativePath(p)
-		
+
 	// if the project has been defined as an "extension" to another project, change its
 	// zip path to the path of its "base" project.  A project is an extension if it has
 	// defined an "extendsFromProject" property.
-	
+
 	if (p.hasProperty('extendsFromProject')) {
 		Project baseProject = p.extendsFromProject
 		path = getGhidraRelativePath(baseProject);
 	}
-	
+
 	if (p.hasProperty("pathExtension")) {
 		path = path + "/" + p.pathExtension
 	}
@@ -161,7 +161,7 @@ def getBaseProjectName(Project p) {
 		Project baseProject = p.extendsFromProject
 		return baseProject.name
 	}
-	
+
 	return p.name
 }
 
@@ -196,8 +196,8 @@ def getCurrentDateTimeLong() {
 }
 
 /*********************************************************************************
- * Returns a list of all the external library paths declared as dependencies for the 
- *         given project  
+ * Returns a list of all the external library paths declared as dependencies for the
+ *         given project
  *
  *********************************************************************************/
 List<String> getExternalRuntimeDependencies(Project project) {
@@ -221,11 +221,11 @@ List<String> getExternalRuntimeDependencies(Project project, Configuration confi
 	configuration.dependencies.each { dep ->
 
 		// if the dependency is an external jar
-		if (dep instanceof ExternalDependency) { 	
+		if (dep instanceof ExternalDependency) {
 			String name = dep.getName()
 			Set<String> classifiers = dep.artifacts.classifier
 			String group = dep.getGroup()
-			String version = dep.getVersion()	
+			String version = dep.getVersion()
 			String searchString = name
 
 			if (version != null) {
@@ -250,7 +250,7 @@ List<String> getExternalRuntimeDependencies(Project project, Configuration confi
 			if (depPath) {
 				list.add(depPath)
 			}
-		}	
+		}
 	}
 	return list;
 }
@@ -258,20 +258,20 @@ List<String> getExternalRuntimeDependencies(Project project, Configuration confi
 
 
 /******************************************************************************************
- * 
+ *
  * Creates a file that lists the libraries used by each module.
  *
  ******************************************************************************************/
 String generateLibraryDependencyMapping() {
 	File libsFile = file("$buildDir/libraryDependencies.txt")
-	
+
 	// Check to make sure the build folder exists - if it doesn't, the 'libsFile.withWriter'
 	// call (below) will fail miserably.
 	def buildFolder = file ("$buildDir")
 	if (!buildFolder.exists()) {
 		buildFolder.mkdirs()
 	}
-	
+
 	libsFile.withWriter { out ->
 		subprojects { p ->
 			p.plugins.withType(JavaPlugin) {

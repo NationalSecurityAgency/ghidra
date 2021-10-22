@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -156,7 +156,7 @@ public class ContextState {
 	}
 
 	/**
-	 * Set a varnode to be debugged.  This will be passed to any states 
+	 * Set a varnode to be debugged.  This will be passed to any states
 	 * derived from this state.
 	 * @param varnode varnode to be debugged
 	 */
@@ -229,7 +229,7 @@ public class ContextState {
 	}
 
 	/**
-	 * When done processing a particular instruction, this method should be invoked to 
+	 * When done processing a particular instruction, this method should be invoked to
 	 * clear any unique Varnode state.
 	 * @return previous unique state
 	 */
@@ -243,7 +243,7 @@ public class ContextState {
 
 	/**
 	 * When no longer updating this state, this method should be invoked to
-	 * cleanup resources no longer needed (e.g., uniqueState no longer 
+	 * cleanup resources no longer needed (e.g., uniqueState no longer
 	 * maintained).
 	 */
 	public void lock() {
@@ -838,7 +838,7 @@ public class ContextState {
 			return null;  // can't combine
 		}
 
-		// Combine adjacent address/register nodes 
+		// Combine adjacent address/register nodes
 		Address addr;
 		if (leftValue.getSpace() != rightValue.getSpace()) {
 			return null;  // can't combine
@@ -1006,7 +1006,7 @@ public class ContextState {
 //		}
 //		return stackPointerIsValid;
 //	}
-//	
+//
 //	public void invalidateStackPointer() {
 //		stackPointerIsValid = false;
 //	}

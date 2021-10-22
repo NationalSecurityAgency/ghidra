@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,7 +64,7 @@ public class SleighHighlightingCalculator extends DefaultSemanticHighlightingCal
 			return;
 
 		super.provideHighlightingFor(resource, acceptor, cancelIndicator);
-		
+
 		INode root = resource.getParseResult().getRootNode();
 		BidiTreeIterator<INode> it = root.getAsTreeIterable().iterator();
 		while (it.hasNext()) {
@@ -72,7 +72,7 @@ public class SleighHighlightingCalculator extends DefaultSemanticHighlightingCal
 			EObject grammarElement = node.getGrammarElement();
 			EObject semanticElement = node.getSemanticElement();
 			printNodeInfo(node, grammarElement, semanticElement);
-			
+
 //			if (node instanceof CompositeNodeWithSemanticElement
 //					&& semanticElement instanceof contextfielddef) {
 //				setStyles(acceptor, it, CONTEXTFIELD, "GROUP", CONTEXTFIELD);
@@ -104,7 +104,7 @@ public class SleighHighlightingCalculator extends DefaultSemanticHighlightingCal
 					exprSym sym = (exprSym) semElem;
 					EObject vnode = sym.getVnode();
 					if (vnode != null) {
-						setStyle(acceptor, node, vnode);	
+						setStyle(acceptor, node, vnode);
 					} else {
 						// System.out.println("  exprSym--" + semElem);
 					}
@@ -115,7 +115,7 @@ public class SleighHighlightingCalculator extends DefaultSemanticHighlightingCal
 					assignSym sym = (assignSym) semElem;
 					EObject vnode = sym.getSymref();
 					if (vnode != null) {
-						setStyle(acceptor, node, vnode);	
+						setStyle(acceptor, node, vnode);
 					} else {
 						// System.out.println("  exprSym--" + semElem);
 					}
@@ -124,7 +124,7 @@ public class SleighHighlightingCalculator extends DefaultSemanticHighlightingCal
 					constraint sym = (constraint) semElem;
 					EObject vnode = sym.getSym();
 					if (vnode != null) {
-						setStyle(acceptor, node, vnode);	
+						setStyle(acceptor, node, vnode);
 					} else {
 						// System.out.println("  exprSym--" + semElem);
 					}
@@ -133,7 +133,7 @@ public class SleighHighlightingCalculator extends DefaultSemanticHighlightingCal
 					pexprSym sym = (pexprSym) semElem;
 					EObject vnode = sym.getSym();
 					if (vnode != null) {
-						setStyle(acceptor, node, vnode);	
+						setStyle(acceptor, node, vnode);
 					} else {
 						// System.out.println("  exprSym--" + semElem);
 					}
@@ -154,7 +154,7 @@ public class SleighHighlightingCalculator extends DefaultSemanticHighlightingCal
 					&& grammarElement instanceof TerminalRuleImpl) {
 				processHiddenNode(acceptor, (HiddenLeafNode) node);
 			}
-			
+
 
 		}
 	}
@@ -181,7 +181,7 @@ public class SleighHighlightingCalculator extends DefaultSemanticHighlightingCal
 			EObject semanticElement) {
 		String grammar = "<no-grammar>";
 		String semantic = "<no-semantic>";
-		
+
 		if (grammarElement != null) {
 			grammar = grammarElement.getClass().getSimpleName();
 		}

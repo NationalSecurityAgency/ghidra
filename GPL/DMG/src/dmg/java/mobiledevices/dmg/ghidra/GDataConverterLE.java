@@ -4,7 +4,7 @@
 package mobiledevices.dmg.ghidra;
 
 /**
- * 
+ *
  * Helper class to convert a byte array to a Java primitive in Little endian
  * order, and to convert a primitive to a byte array.
  */
@@ -12,7 +12,7 @@ package mobiledevices.dmg.ghidra;
 public class GDataConverterLE implements GDataConverter {
 	public static GDataConverterLE INSTANCE = new GDataConverterLE();
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
 

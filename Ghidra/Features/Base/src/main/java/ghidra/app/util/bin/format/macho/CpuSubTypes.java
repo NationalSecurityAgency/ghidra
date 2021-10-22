@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -93,7 +93,7 @@ public final class CpuSubTypes {
 
 	/*
 	 *	HPPA subtypes for Hewlett-Packard HP-PA family of
-	 *	risc processors. Port by NeXT to 700 series. 
+	 *	risc processors. Port by NeXT to 700 series.
 	 */
 	public final static int	CPU_SUBTYPE_HPPA_ALL        = 0;
 	public final static int CPU_SUBTYPE_HPPA_7100       = 0; /* compat */
@@ -120,7 +120,7 @@ public final class CpuSubTypes {
 	/*
 	 *	VAX subtypes
 	 */
-	public final static int	CPU_SUBTYPE_VAX_ALL	 = 0; 
+	public final static int	CPU_SUBTYPE_VAX_ALL	 = 0;
 	public final static int CPU_SUBTYPE_VAX780	 = 1;
 	public final static int CPU_SUBTYPE_VAX785	 = 2;
 	public final static int CPU_SUBTYPE_VAX750	 = 3;
@@ -139,7 +139,7 @@ public final class CpuSubTypes {
 	 */
 	public final static int	CPU_SUBTYPE_MC680x0_ALL   = 1;
 	public final static int CPU_SUBTYPE_MC68030       = 1;
-	public final static int CPU_SUBTYPE_MC68040       = 2; 
+	public final static int CPU_SUBTYPE_MC68040       = 2;
 	public final static int	CPU_SUBTYPE_MC68030_ONLY  = 3;
 
 	/*

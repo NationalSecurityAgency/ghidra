@@ -28,7 +28,7 @@
 
     <P>If loading a PDB, this should be done prior to other analysis, except in special cases,
     such as when only loading data types.</P>
-    
+
     <P>Restricted loading of data types or public symbols is
     supported by PDB Universal.</P>
 
@@ -38,7 +38,7 @@
       <P>PDB files can be loaded in two ways:</P>
       <UL>
         <LI><B>File &rarr; <a href="LoadPDB.html#Load_PDB_File">Load PDB File</a></B></LI>
-        <LI>PDB Analyzer via <B>Analysis &rarr; 
+        <LI>PDB Analyzer via <B>Analysis &rarr;
         <A HREF="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Auto_Analyze">Auto Analyze</A></B> or
         <B>Analysis &rarr; <A HREF="help/topics/AutoAnalysisPlugin/AutoAnalysis.htm#Analyze_One_Shot">One Shot</A></B>.
       </UL>
@@ -67,16 +67,16 @@
     </BLOCKQUOTE>
 
     <H2>The DIA SDK-Based Capability</H2>
-	 
+
 	<P>*.PDB.XML files can be created in three different ways:
-	
+
 	<BLOCKQUOTE><UL>
 	  <LI>From the Ghidra GUI in Windows, use the
 	  <A href="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm">Ghidra Script Manager</A>
 	  to run the <I>CreatePdbXmlFilesScript.java</I> script. Follow the prompts to choose
-	  the .PDB file (or directory containing .PDB file(s)) to be converted to .PDB.XML form. 
+	  the .PDB file (or directory containing .PDB file(s)) to be converted to .PDB.XML form.
 	  When given a directory, the script recursively traverses all subfolders to find .PDB
-	  files. A created .PDB.XML file is placed in the same location as the corresponding original 
+	  files. A created .PDB.XML file is placed in the same location as the corresponding original
 	  .PDB file.</LI>
 	  <br>
 	  <LI>From a Windows command line, navigate to the following directory:
@@ -103,7 +103,7 @@
 	</P>
 	<P><B>NOTE:</B> Execution of <i>pdb.exe</i> has runtime dependencies which must be satisfied.
 	Please refer to the <a href="docs/README_PDB.html">README_PDB</a> document for details.</P>
-	
+
 	<H2><A name="dia"></A>Debug Interface Access SDK</H2>
 
     <BLOCKQUOTE>
@@ -114,12 +114,12 @@
       develop applications that search for and browse debug information stored in a .PDB file. Such
       applications could, for example, report stack trace-back information and analyze performance
       data.</P>
-      
-      <P><IMG src="../../shared/note.png" border="0">If you are attempting to load a PDB on a 
+
+      <P><IMG src="../../shared/note.png" border="0">If you are attempting to load a PDB on a
       Windows machine and see an error message such as &quot;Unable to locate the DIA SDK,&quot;
-      you will need to add and register one or more files on your computer. Refer to the 
-      <a href="docs/README_PDB.html">README_PDB</a> document for detailed instructions. 
-      </P> 
+      you will need to add and register one or more files on your computer. Refer to the
+      <a href="docs/README_PDB.html">README_PDB</a> document for detailed instructions.
+      </P>
     </BLOCKQUOTE>
     <P class="relatedtopic">Related Topics:</P>
 

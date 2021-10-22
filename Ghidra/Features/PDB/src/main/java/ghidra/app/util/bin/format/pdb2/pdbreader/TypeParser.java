@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -90,7 +90,7 @@ public class TypeParser {
 	 *  {@link AbstractMsType} or {@link MsTypeField} or something else in common with
 	 *  {@link BadMsType}, otherwise a Bad Cast Exception might occur.
 	 * @param reader {@link PdbByteReader} from which to deserialize the data.
-	 * @param requiredClass the required type to be returned. 
+	 * @param requiredClass the required type to be returned.
 	 * @return an instance of type T or type T version of BadMsType. IMPORTANT: See restriction
 	 *  on T.
 	 * @throws PdbException upon error parsing dataTypeId.
@@ -418,7 +418,7 @@ public class TypeParser {
 				type = new ManagedStMsType(pdb, reader);
 				break;
 
-			// 0x1500 block 
+			// 0x1500 block
 			case TypeServerMsType.PDB_ID:
 				type = new TypeServerMsType(pdb, reader);
 				break;
@@ -507,7 +507,7 @@ public class TypeParser {
 				type = new VirtualFunctionTableMsType(pdb, reader);
 				break;
 
-			// 0x1600 block 
+			// 0x1600 block
 			case FunctionIdMsType.PDB_ID:
 				type = new FunctionIdMsType(pdb, reader);
 				break;

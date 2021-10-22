@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -94,7 +94,7 @@ class RenameEquateCmd implements Command {
 	public boolean applyTo(DomainObject obj) {
 		Program program = ((Program) obj);
 		EquateTable etable = program.getEquateTable();
-		
+
 		// First make sure there's an entry in the equates table for the equate
 		// to be changed (there should always be one).
 		Equate fromEquate = etable.getEquate(oldEquateName);
@@ -102,10 +102,10 @@ class RenameEquateCmd implements Command {
 			msg = "Equate not found: " + oldEquateName;
 			return false;
 		}
-		
+
 		// Get the value behind the equate...for later use.
 		long value = fromEquate.getValue();
-		
+
 		// See if there are 0 references to this equate.  If so, remove
 		// it from the table.
 		if (fromEquate.getReferenceCount() <= 1) {
@@ -116,7 +116,7 @@ class RenameEquateCmd implements Command {
 			fromEquate.removeReference(addr, opIndex);
 		}
 
-		// If the new name is null, then this is an enum equate and we need to add the enum to the 
+		// If the new name is null, then this is an enum equate and we need to add the enum to the
 		// data type manager to generate the correct new formatted equate name.
 		if (newEquateName == null && enoom != null) {
 			this.enoom = (Enum) program.getDataTypeManager().addDataType(enoom, null);

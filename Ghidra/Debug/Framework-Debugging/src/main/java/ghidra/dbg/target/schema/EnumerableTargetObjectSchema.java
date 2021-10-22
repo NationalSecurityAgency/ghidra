@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.program.model.address.AddressRange;
 public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	/**
 	 * The top-most type descriptor
-	 * 
+	 *
 	 * <p>
 	 * The described value can be any primitive or a {@link TargetObject}.
 	 */
@@ -49,7 +49,7 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	},
 	/**
 	 * The least restrictive, but least informative object schema.
-	 * 
+	 *
 	 * <p>
 	 * This requires nothing more than the described value to be a {@link TargetObject}.
 	 */
@@ -66,7 +66,7 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 	},
 	/**
 	 * A type so restrictive nothing can satisfy it.
-	 * 
+	 *
 	 * <p>
 	 * This is how a schema specifies that a particular key is not allowed. It is commonly used as
 	 * the default attribute when only certain enumerated attributes are allowed. It is also used as
@@ -95,10 +95,10 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 
 	/**
 	 * Get a suitable schema for a given Java primitive class
-	 * 
+	 *
 	 * <p>
 	 * The term "primitive" here is used in terms of object schemas, not in terms of Java types.
-	 * 
+	 *
 	 * @param cls the class, which may or may not be the boxed form
 	 * @return the schema or null if no schema is suitable
 	 */
@@ -113,7 +113,7 @@ public enum EnumerableTargetObjectSchema implements TargetObjectSchema {
 
 	/**
 	 * Get the name of a suitable enumerable schema for a given Java class
-	 * 
+	 *
 	 * @see #schemaForPrimitive(Class)
 	 * @param cls the class, which may or may no be the boxed form
 	 * @return the name or null if no schema is suitable

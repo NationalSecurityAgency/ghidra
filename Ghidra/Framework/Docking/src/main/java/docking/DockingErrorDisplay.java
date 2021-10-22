@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ public class DockingErrorDisplay implements ErrorDisplay {
 
 		// Wrap any poorly formatted text that gets displayed in the label; 80-100 chars is
 		// a reasonable line length based on historical print margins.
-		// Update: increased the limit to handle long messages containing stack trace elements, 
+		// Update: increased the limit to handle long messages containing stack trace elements,
 		//         which look odd when wrapped
 		int limit = 120;
 		List<String> lines = HtmlLineSplitter.split(text, limit, true);
@@ -81,7 +81,7 @@ public class DockingErrorDisplay implements ErrorDisplay {
 			}
 
 			if (StringUtils.isBlank(line)) {
-				// this will trim all leading blank lines, but preserve internal blank lines, 
+				// this will trim all leading blank lines, but preserve internal blank lines,
 				// which clients may be providing for visual line separation
 				continue;
 			}

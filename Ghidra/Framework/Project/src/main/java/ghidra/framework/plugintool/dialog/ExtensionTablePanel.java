@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class ExtensionTablePanel extends JPanel {
 
 	/**
 	 * Constructor; builds the panel and sets table attributes.
-	 * 
+	 *
 	 * @param tool the tool showing the extension dialog
 	 */
 	public ExtensionTablePanel(PluginTool tool) {
@@ -101,7 +101,7 @@ public class ExtensionTablePanel extends JPanel {
 
 	/**
 	 * Returns the filter panel.
-	 * 
+	 *
 	 * @return the filter panel
 	 */
 	public GTableFilterPanel<ExtensionDetails> getFilterPanel() {
@@ -110,7 +110,7 @@ public class ExtensionTablePanel extends JPanel {
 
 	/**
 	 * Replaces the contents of the table with the given list of extensions.
-	 * 
+	 *
 	 * @param extensions the new model data
 	 */
 	public void setExtensions(Set<ExtensionDetails> extensions) {

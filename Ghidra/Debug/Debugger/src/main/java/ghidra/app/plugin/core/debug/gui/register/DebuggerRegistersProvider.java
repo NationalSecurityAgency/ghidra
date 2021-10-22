@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -895,11 +895,11 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	/**
 	 * Gather general registers, the program counter, and the stack pointer
-	 * 
+	 *
 	 * This excludes the context register
-	 * 
+	 *
 	 * TODO: Several pspec files need adjustment to clean up "common registers"
-	 * 
+	 *
 	 * @param cSpec the compiler spec
 	 * @return the set of "common" registers
 	 */
@@ -938,7 +938,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		 * NOTE: It is rare that this includes registers outside of those common to the view and
 		 * target, but in case the user has manually populated such registers, this will ensure they
 		 * are visible in the UI.
-		 * 
+		 *
 		 * Also, in case the current thread is not live, we want the DB values to appear.
 		 */
 		viewKnown.addAll(collectBaseRegistersWithKnownValues(thread));

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public class ParallelDecompiler {
 
 	/**
 	 * Decompile the given functions using multiple decompilers
-	 * 
+	 *
 	 * @param callback the callback to be called for each that is processed
 	 * @param program the program
 	 * @param addresses the addresses restricting which functions to decompile
@@ -53,7 +53,7 @@ public class ParallelDecompiler {
 
 	/**
 	 * Decompile the given functions using multiple decompilers
-	 * 
+	 *
 	 * @param callback the callback to be called for each that is processed
 	 * @param functions the functions to decompile
 	 * @param monitor the task monitor
@@ -74,14 +74,14 @@ public class ParallelDecompiler {
 
 	/**
 	 * Decompile the given functions using multiple decompilers.
-	 * 
+	 *
 	 * <p>Results will be passed to the given consumer as they are produced.  Calling this
-	 * method allows you to handle results as they are discovered.  
-	 * 
+	 * method allows you to handle results as they are discovered.
+	 *
 	 * <p><strong>This method will wait for all processing before returning.</strong>
-	 * 
+	 *
 	 * @param callback the callback to be called for each that is processed
-	 * @param program the program 
+	 * @param program the program
 	 * @param functions the functions to decompile
 	 * @param resultsConsumer the consumer to which results will be passed
 	 * @param monitor the task monitor
@@ -130,14 +130,14 @@ public class ParallelDecompiler {
 	}
 
 	/**
-	 * Creates an object that can be used to perform decompilation of a limited number of 
+	 * Creates an object that can be used to perform decompilation of a limited number of
 	 * functions at a time, as opposed to working over an entire range of functions at once.
 	 * {@link #decompileFunctions(QCallback, Program, AddressSetView, TaskMonitor)} will create
 	 * and tear down concurrent data structures on each use, making repeated calls less efficient.
-	 * You would use this method when you wish to perform periodic work as results are returned 
+	 * You would use this method when you wish to perform periodic work as results are returned
 	 * <b>and when using the callback mechanism is not sufficient</b> such as when ordering of
-	 * results is required. 
-	 * 
+	 * results is required.
+	 *
 	 * @param callback the callback required to perform work.
 	 * @param monitor the monitor used to report progress and to cancel
 	 * @return the parallel decompiler used for decompiling.

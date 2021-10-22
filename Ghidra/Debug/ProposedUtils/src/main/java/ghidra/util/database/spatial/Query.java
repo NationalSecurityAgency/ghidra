@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ public interface Query<DS, NS> {
 
 	/**
 	 * Test if internal data entry iteration can terminate early
-	 * 
+	 *
 	 * @param shape the shape of the current data entry
 	 * @return true if no entry to follow could possibly be included in the query
 	 */
@@ -46,7 +46,7 @@ public interface Query<DS, NS> {
 
 	/**
 	 * Test if the given data shape is included in the query
-	 * 
+	 *
 	 * @param shape the shape of the data entry
 	 * @return true if it is included
 	 */
@@ -54,7 +54,7 @@ public interface Query<DS, NS> {
 
 	/**
 	 * Test if internal node entry iteration can terminate early
-	 * 
+	 *
 	 * @param shape the shape of the current node entry
 	 * @return true if no entry to follow could possibly contain data entries included in the query
 	 */
@@ -62,7 +62,7 @@ public interface Query<DS, NS> {
 
 	/**
 	 * Test if the given node shape has data entries included in the query
-	 * 
+	 *
 	 * @param shape the shape (bounds) of the node entry
 	 * @return a result as described in {@link QueryInclusion}
 	 */
@@ -70,7 +70,7 @@ public interface Query<DS, NS> {
 
 	/**
 	 * If the query orders elements, get the (or an equivalent) comparator.
-	 * 
+	 *
 	 * @return an comparator
 	 */
 	Comparator<NS> getBoundsComparator();

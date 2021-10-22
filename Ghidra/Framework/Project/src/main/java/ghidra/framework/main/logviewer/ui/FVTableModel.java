@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,12 +37,12 @@ public class FVTableModel extends AbstractTableModel {
 	public static final int LEVEL_COL = 2;
 	public static final int MESSAGE_COL = 3;
 
-	// Regex matching a date pattern of the form XXXX-XX-XX. All dates in our logs follow this format. 
+	// Regex matching a date pattern of the form XXXX-XX-XX. All dates in our logs follow this format.
 	// Note:	We could get more complicated and restrict digits based on actual month/day
 	//        	values, but that's really not necessary.
 	private static final Pattern dateRegex =
 		Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
-	
+
 	private static final String spaceRegex = "\\s+";
 
 	// Regex matching a time pattern of the form HH:MM:SS. The hour component will match
@@ -51,15 +51,15 @@ public class FVTableModel extends AbstractTableModel {
 	private static final Pattern timeRegex =
 		Pattern.compile("(?:[01]\\d|2[0123]):(?:[012345]\\d):(?:[012345]\\d(,\\d\\d\\d)?)");
 
-	// Regex matching any of the log levels defined by log4j. 
+	// Regex matching any of the log levels defined by log4j.
 	//@formatter:off
 	private static final Pattern levelRegex = Pattern.compile(
-			spaceRegex + Level.OFF + spaceRegex + "|" + 
+			spaceRegex + Level.OFF + spaceRegex + "|" +
 			spaceRegex + Level.DEBUG.toString() + spaceRegex + "|" +
 			spaceRegex + Level.TRACE.toString() + spaceRegex + "|" +
-			spaceRegex + Level.WARN.toString() + spaceRegex + "|" + 
+			spaceRegex + Level.WARN.toString() + spaceRegex + "|" +
 			spaceRegex + Level.INFO.toString() + spaceRegex + "|" +
-			spaceRegex + Level.ERROR.toString() + spaceRegex + "|" + 
+			spaceRegex + Level.ERROR.toString() + spaceRegex + "|" +
 			spaceRegex + Level.FATAL.toString() + spaceRegex);
 	//@formatter:on
 
@@ -124,7 +124,7 @@ public class FVTableModel extends AbstractTableModel {
 
 	/**
 	 * Adds a row to the model.
-	 * 
+	 *
 	 * @param row the data to add
 	 * @param notify if true, a notification will be sent to subscribers
 	 */
@@ -134,7 +134,7 @@ public class FVTableModel extends AbstractTableModel {
 
 	/**
 	 * Adds a row to the model
-	 * 
+	 *
 	 * @param row the data to add
 	 * @param index the position within the model to add this to
 	 * @param notify if true, a notification will be sent to subscribers
@@ -162,7 +162,7 @@ public class FVTableModel extends AbstractTableModel {
 
 	/**
 	 * Adds a list of rows to the model and fires off a notification.
-	 * 
+	 *
 	 * @param rows
 	 */
 	public void addRowsToTop(List<String> rows) {
@@ -175,7 +175,7 @@ public class FVTableModel extends AbstractTableModel {
 
 	/**
 	 * Adds a list of rows to the model and fires off a notification.
-	 * 
+	 *
 	 * @param rows
 	 */
 	public void addRowsToBottom(List<String> rows) {
@@ -187,7 +187,7 @@ public class FVTableModel extends AbstractTableModel {
 
 	/**
 	 * Removes a set of rows from the bottom of the view.
-	 * 
+	 *
 	 * @param count the number of rows to remove
 	 */
 	public void removeRowsFromBottom(int count) {
@@ -202,7 +202,7 @@ public class FVTableModel extends AbstractTableModel {
 
 	/**
 	 * Removes a set of rows from the top of the view.
-	 * 
+	 *
 	 * @param count the number of rows to remove
 	 */
 	public void removeRowsFromTop(int count) {
@@ -230,7 +230,7 @@ public class FVTableModel extends AbstractTableModel {
 
 	/**
 	 * Returns the date portion of the given string.
-	 * 
+	 *
 	 * @param row the row data
 	 * @return the date, or empty string if not present
 	 */
@@ -241,7 +241,7 @@ public class FVTableModel extends AbstractTableModel {
 
 	/**
 	 * Returns the log level portion of the given string.
-	 * 
+	 *
 	 * @param row the row data
 	 * @return the log level, or empty string if not present
 	 */
@@ -252,7 +252,7 @@ public class FVTableModel extends AbstractTableModel {
 
 	/**
 	 * Returns the time portion of the given string.
-	 * 
+	 *
 	 * @param row the row data
 	 * @return the time, or empty string if not present
 	 */

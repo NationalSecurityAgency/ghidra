@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,10 +26,10 @@ import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * FollowFlow follows the program's code flow either forward or backward from an initial
- * address set. It adds the flow addresses to the initial address set by flowing "from" the 
+ * address set. It adds the flow addresses to the initial address set by flowing "from" the
  * initial addresses in the forward direction or by flowing "to" the initial addresses when
  * used in the backward direction.
- * The flow can be limited by indicating the flow types (i.e. unconditional call, 
+ * The flow can be limited by indicating the flow types (i.e. unconditional call,
  * computed jump, etc.) that we do NOT want to follow.
  */
 public class FollowFlow {
@@ -72,7 +72,7 @@ public class FollowFlow {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param program the program whose flow we are following.
 	 * @param addressSet the initial addresses that should be flowed from or flowed to.
 	 * @param doNotFollow array of flow types that are not to be followed.
@@ -136,7 +136,7 @@ public class FollowFlow {
 	 * in the backward direction.
 	 * @param monitor a cancellable task monitor, may be null
 	 * @param startAddresses the initial addresses that should be flowed from or flowed to.
-	 * @param forward true to determine the flows "from" the startAddresses. false (backward) to 
+	 * @param forward true to determine the flows "from" the startAddresses. false (backward) to
 	 * determine flows "to" the startAddresses.
 	 */
 	private AddressSet getAddressFlow(TaskMonitor monitor, AddressSet startAddresses,
@@ -189,10 +189,10 @@ public class FollowFlow {
 	} // flowAddresses
 
 	/**
-	 * Add into the flowAddressSet those addresses we flow to from the specified codeUnit when 
-	 * flowing forward or the addresses that flow to the code unit when determining flows in the 
+	 * Add into the flowAddressSet those addresses we flow to from the specified codeUnit when
+	 * flowing forward or the addresses that flow to the code unit when determining flows in the
 	 * backward direction.
-	 * For data, ensure that those primitive data elements followed are contained within the 
+	 * For data, ensure that those primitive data elements followed are contained within the
 	 * startAddresses.
 	 * @param monitor a cancellable task monitor
 	 * @param startAddresses the addresses from which flow may start.
@@ -301,9 +301,9 @@ public class FollowFlow {
 				continue;
 			}
 
-			// If code unit is a delay-slot instruction, backup to delayed instruction     	
+			// If code unit is a delay-slot instruction, backup to delayed instruction
 			Instruction instr = currentInstr;
-//        	while (instr.isInDelaySlot()) {      		
+//        	while (instr.isInDelaySlot()) {
 //        		Address fallFrom = instr.getFallFrom();
 //        		if (fallFrom == null) {
 //        			// assumes delay slot instructions have no flow
@@ -311,7 +311,7 @@ public class FollowFlow {
 //                                    currentInstr.getMaxAddress());
 //  					break;
 //        		}
-//        		instr = program.getListing().getInstructionContaining(fallFrom);	
+//        		instr = program.getListing().getInstructionContaining(fallFrom);
 //        	}
 //        	if (instr.isInDelaySlot())
 //        		continue;  // unable to find non-delay-slot instruction
@@ -366,7 +366,7 @@ public class FollowFlow {
 		while (!monitor.isCancelled() && !codeUnitStack.isEmpty()) {
 			codeUnit = codeUnitStack.pop();
 			if (codeUnit instanceof Instruction) {
-				// getAdjustedInstruction() will add the instruction and any delay slots to the 
+				// getAdjustedInstruction() will add the instruction and any delay slots to the
 				// flowAddressSet and then return the instruction to flow backwards from.
 				Instruction currentInstr =
 					getAdjustedInstruction((Instruction) codeUnit, flowAddressSet);
@@ -381,10 +381,10 @@ public class FollowFlow {
 	} // followCodeBack
 
 	/**
-	 * Gets the instruction to be processed, which has been adjusted to the first instruction when 
-	 * the one passed in is part of a delay slot. If this isn't part of a delay slot then the 
+	 * Gets the instruction to be processed, which has been adjusted to the first instruction when
+	 * the one passed in is part of a delay slot. If this isn't part of a delay slot then the
 	 * original instruction is returned.<BR>
-	 * For a delay slot, all the instructions for the delay slot will be added to the flowAddressSet. 
+	 * For a delay slot, all the instructions for the delay slot will be added to the flowAddressSet.
 	 * Otherwise the original instruction is added to the flowAddressSet.
 	 * @param currentInstr the instruction to possibly adjust
 	 * @param flowAddressSet the address set to hold the entire flow.
@@ -398,7 +398,7 @@ public class FollowFlow {
 			return null;
 		}
 
-		// If code unit is a delay-slot instruction, backup to delayed instruction     	
+		// If code unit is a delay-slot instruction, backup to delayed instruction
 		Instruction instr = currentInstr;
 		while (instr.isInDelaySlot()) {
 			Address fallFrom = instr.getFallFrom();
@@ -642,9 +642,9 @@ public class FollowFlow {
 	}
 
 	/**
-	 * Determines whether the indicated flow type is one that is currently 
+	 * Determines whether the indicated flow type is one that is currently
 	 * supposed to be followed.
-	 * 
+	 *
 	 * @param currentFlowType the flow type to check
 	 * @return boolean true if this flow type should be followed.
 	 */
@@ -670,7 +670,7 @@ public class FollowFlow {
 	 * Gets the addresses of where this instruction flows. Only flow types
 	 * matching the ones that should be followed will have the address it flows
 	 * to returned.
-	 * 
+	 *
 	 * @param the instruction being flowed from.
 	 * @return array of the addresses being flowed to in the manner we are
 	 * interested in.
@@ -702,7 +702,7 @@ public class FollowFlow {
 	 * Gets the addresses that flow to this instruction. Only flow types
 	 * matching the ones that should be followed will have the address it flows
 	 * from returned.
-	 * 
+	 *
 	 * @param the instruction being flowed to.
 	 * @return array of the addresses that flow to the instruction in the manner we are
 	 * interested in.
@@ -747,9 +747,9 @@ public class FollowFlow {
 	}
 
 	/**
-	 * followData follows the program's code flow and adds addresses to the address set for the 
-	 * flow from the current data item if it has a pointer at the specified address with a 
-	 * reference to an instruction. If the flow at the address isn't from a pointer to 
+	 * followData follows the program's code flow and adds addresses to the address set for the
+	 * flow from the current data item if it has a pointer at the specified address with a
+	 * reference to an instruction. If the flow at the address isn't from a pointer to
 	 * an instruction then just the address passed to this method is added to the flow set.
 	 *
 	 * @param flowAddressSet the address set to add our addresses to.
@@ -785,7 +785,7 @@ public class FollowFlow {
 					}
 				}
 				if (!foundRef) {
-					// Didn't have a data ref to an instruction so flow to the address indicated 
+					// Didn't have a data ref to an instruction so flow to the address indicated
 					// by the pointer's value if there is an instruction there.
 					pushInstruction(instructionStack, (Address) primitive.getValue());
 				}
@@ -815,7 +815,7 @@ public class FollowFlow {
 		addPointerToFlow(flowAddressSet, data, addr);
 
 		// If the Data code unit is flowed to by INDIRECTION from any instructions then put
-		// those instructions on the stack for further processing as part of the flow to the 
+		// those instructions on the stack for further processing as part of the flow to the
 		// Data address.
 		ReferenceManager referenceManager = program.getReferenceManager();
 		ReferenceIterator referenceIteratorTo = referenceManager.getReferencesTo(addr);
@@ -824,7 +824,7 @@ public class FollowFlow {
 			Address fromAddress = reference.getFromAddress();
 			CodeUnit fromCodeUnit = program.getListing().getCodeUnitContaining(fromAddress);
 			if (refType.equals(RefType.INDIRECTION) && (fromCodeUnit instanceof Instruction)) {
-				// Put the instruction that flows to this data on the stack so we can 
+				// Put the instruction that flows to this data on the stack so we can
 				// continue flow back from it.
 				instructionStack.add(fromCodeUnit);
 			}
@@ -864,9 +864,9 @@ public class FollowFlow {
 		return false;
 	}
 
-	/** 
+	/**
 	 * Determines the address set that flows from the addresses in this FollowFlow object's
-	 * initialAddresses set. The address set is determined by what addresses were provided 
+	 * initialAddresses set. The address set is determined by what addresses were provided
 	 * when the FollowFlow was constructed and the type of flow requested.
 	 * This method follows flows in the forward direction.
 	 * @param monitor a cancellable task monitor, may be null
@@ -876,9 +876,9 @@ public class FollowFlow {
 		return getAddressFlow(monitor, initialAddresses, true);
 	}
 
-	/** 
+	/**
 	 * Determines the address set that flows to the addresses in this FollowFlow object's
-	 * initialAddresses set. The address set is determined by what addresses were provided 
+	 * initialAddresses set. The address set is determined by what addresses were provided
 	 * when the FollowFlow was constructed and the type of flow requested. The constructor
 	 * indicated the flow types not to be followed. All others will be traversed in the
 	 * backwards direction to determine the addresses that are flowing to those in the initial

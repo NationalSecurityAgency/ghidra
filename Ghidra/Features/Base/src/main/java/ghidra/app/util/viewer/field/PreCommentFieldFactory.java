@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -251,22 +251,22 @@ public class PreCommentFieldFactory extends FieldFactory {
 	}
 
 	/**
-	 * A composite which immediately preceeds the current address may contain trailing zero-length 
+	 * A composite which immediately preceeds the current address may contain trailing zero-length
 	 * components which implicitly refer to this address and are not rendered by the opened composite.
 	 * This comment is intended to convey the existence of such hidden components which correspond
 	 * to addr.
 	 * <br>
 	 * NOTE: Implementation only provides comment for one trailing zero-length component.  This could
-	 * be improved to return a comment for all applicable trailing zero-length components. 
+	 * be improved to return a comment for all applicable trailing zero-length components.
 	 * @param data data location whose pre-comment is currently be generated
 	 * @return auto-comment or null
 	 */
 	private String[] getPreceedingComponentAutoComment(Data data) {
 
 		// NOTE: A zero-length composite has a length of 1 which may cause it to improperly consume
-		// the address location which actually corresponds to a trailing zero-length 
+		// the address location which actually corresponds to a trailing zero-length
 		// component.
-		
+
 		int levelsToIgnore = 0;
 		String label = null;
 		Address prevDataAddr = data.getMinAddress().previous();
@@ -314,11 +314,11 @@ public class PreCommentFieldFactory extends FieldFactory {
 					lastDtc = ddt.getComponent(lastDtcOrdinal, data);
 				}
 			}
-			
+
 			if (lastDtc == null || lastDtc.getLength() == 0) {
 				break;
 			}
-			
+
 			Data component = data.getComponent(lastDtc.getOrdinal());
 			if (component == null) {
 				return null;
@@ -329,7 +329,7 @@ public class PreCommentFieldFactory extends FieldFactory {
 		if (lastDtc == null || lastDtc.isBitFieldComponent()) {
 			return null;
 		}
-		
+
 		return buildZeroLengthComponentAutoComment(lastDtc, data, levelsToIgnore, label);
 	}
 

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,12 +23,12 @@ import ghidra.util.*;
 import java.io.*;
 
 /**
- * 
+ *
  */
 class S_UDT32 extends DebugSymbol {
     private int checksum;
 	private byte typeLen;
-	
+
     static S_UDT32 createS_UDT32(short length, short type,
             FactoryBundledWithBinaryReader reader, int ptr) throws IOException {
         S_UDT32 s_udt32 = (S_UDT32) reader.getFactory().create(S_UDT32.class);

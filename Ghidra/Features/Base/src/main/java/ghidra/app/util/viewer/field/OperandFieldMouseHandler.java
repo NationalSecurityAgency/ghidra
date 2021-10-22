@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -165,7 +165,7 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 		}
 
 		if (thunked.getBody().contains(codeUnit.getAddress())) {
-			// this handles the unlikely case where the user double-clicks a reference to a 
+			// this handles the unlikely case where the user double-clicks a reference to a
 			// local thunk label--don't navigate externally
 			return false;
 		}
@@ -249,7 +249,7 @@ public class OperandFieldMouseHandler implements FieldMouseHandlerExtension {
 
 	/**
 	 * Navigate to the variable, when directly supplied by the field location
-	 * 
+	 *
 	 * @param navigatable the navigatable to which we should navigate
 	 * @param loc the source location
 	 * @param goToService the GoTo service

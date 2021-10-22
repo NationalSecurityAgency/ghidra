@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -145,7 +145,7 @@ public class DataTypeUtilities {
 	 * Note: pointers to the second data type are references and therefore are not considered to be
 	 * part of the first and won't cause true to be returned. If you pass a pointer to this method
 	 * for the first or second parameter, it will return false.
-	 * 
+	 *
 	 * @param firstDataType the data type whose components or base type should be checked to see if
 	 *            the second data type is part of it.
 	 * @param secondDataType the data type to be checked for in the first data type.
@@ -180,7 +180,7 @@ public class DataTypeUtilities {
 
 	/**
 	 * Returns true if the two dataTypes have the same sourceArchive and the same UniversalID
-	 * 
+	 *
 	 * @param dataType1 first data type
 	 * @param dataType2 second data type
 	 * @return true if types correspond to the same type from a source archive
@@ -206,7 +206,7 @@ public class DataTypeUtilities {
 	/**
 	 * Returns true if the two dataTypes have the same sourceArchive and the same UniversalID OR are
 	 * equivalent
-	 * 
+	 *
 	 * @param dataType1 first data type (if invoked by DB object or manager, this argument must
 	 *            correspond to the DataTypeDB).
 	 * @param dataType2 second data type
@@ -224,7 +224,7 @@ public class DataTypeUtilities {
 
 	/**
 	 * Get the name of a data type with all conflict naming patterns removed.
-	 * 
+	 *
 	 * @param dataType data type
 	 * @param includeCategoryPath if true the category path will be included with its
 	 * @return name with without conflict patterns
@@ -237,7 +237,7 @@ public class DataTypeUtilities {
 	/**
 	 * Compares two data type name strings to determine if they are equivalent names, ignoring
 	 * conflict patterns present.
-	 * 
+	 *
 	 * @param name1 the first name
 	 * @param name2 the second name
 	 * @return true if the names are equivalent when conflict suffixes are ignored.
@@ -334,7 +334,7 @@ public class DataTypeUtilities {
 	/**
 	 * Create a data type category path derived from the specified namespace and rooted from the
 	 * specified baseCategory
-	 * 
+	 *
 	 * @param baseCategory category path from which to root the namespace-base path
 	 * @param namespace the namespace
 	 * @return namespace derived category path
@@ -365,7 +365,7 @@ public class DataTypeUtilities {
 	 * within the specified dataTypeManager. The best match will be returned. The namespace will be
 	 * used in checking data type parent categories, however if no type corresponds to the namespace
 	 * another type whose name matches may be returned.
-	 * 
+	 *
 	 * @param dataTypeManager data type manager
 	 * @param namespace namespace associated with dtName (null indicates no namespace constraint)
 	 * @param dtName name of data type
@@ -384,7 +384,7 @@ public class DataTypeUtilities {
 	 * checking data type parent categories, however if no type corresponds to the namespace another
 	 * type whose name matches may be returned. NOTE: name parsing assumes :: delimiter and can be
 	 * thrown off if name include template information which could contain namespaces.
-	 * 
+	 *
 	 * @param dataTypeManager data type manager
 	 * @param dtNameWithNamespace name of data type qualified with namespace (e.g.,
 	 *            ns1::ns2::dtname)
@@ -403,7 +403,7 @@ public class DataTypeUtilities {
 
 	/**
 	 * Return the appropriate datatype for a given C primitive datatype name.
-	 * 
+	 *
 	 * @param dataTypeName the datatype name (e.g. "unsigned int", "long long")
 	 * @return the appropriate datatype for a given C primitive datatype name.
 	 */

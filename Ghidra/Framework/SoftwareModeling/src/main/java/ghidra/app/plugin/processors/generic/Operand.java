@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 
 /**
- * 
+ *
  */
 public class Operand implements Serializable {
 	private boolean dynamic;
@@ -31,9 +31,9 @@ public class Operand implements Serializable {
 	private OperandValue op;
 	private Offset offset;
 	private Handle handle;
-	
+
 //	private int hashCode;
-	
+
 	public Operand(String n, OperandValue o, Offset off) {
 		name = n;
 		op = o;
@@ -49,7 +49,7 @@ public class Operand implements Serializable {
 		int o = offset.getOffset(buf,off);
 		return op.length(buf,o) + o - off;
 	}
-	
+
 	public ConstructorInfo getInfo(MemBuffer buf, int off)  throws Exception {
 		int o = offset.getOffset(buf,off);
 		ConstructorInfo opinfo = op.getInfo(buf,o);
@@ -88,7 +88,7 @@ public class Operand implements Serializable {
 	 * @return Handle
 	 */
 	public Handle getHandle() { return handle; }
-	
+
 	/**
 	 * Returns a handle for this operand *without* generating any pcode
 	 * @param position
@@ -103,7 +103,7 @@ public class Operand implements Serializable {
 	public void getAllHandles(ArrayList<Handle> handles,Position position,int off) throws Exception {
 		op.getAllHandles(handles,position,offset.getOffset(position.buffer(),off));
 	}
-	
+
 	/**
 	 * Method getPcode
 	 * @param position
@@ -112,7 +112,7 @@ public class Operand implements Serializable {
 	 */
 
 	public PcodeOp[] getPcode(Position position) throws Exception {
-		
+
 		ArrayList<PcodeOp> pcode = new ArrayList<PcodeOp>();
 		getHandle(pcode,position,0);
 		PcodeOp[] pcodeops = new PcodeOp[pcode.size()];
@@ -141,8 +141,8 @@ public class Operand implements Serializable {
 	public int getSize() {
 		return op.getSize();
 	}
-	
-/* 
+
+/*
 	public int hashCode() {return hashCode;	}
 
 	public boolean equals(Object o) {

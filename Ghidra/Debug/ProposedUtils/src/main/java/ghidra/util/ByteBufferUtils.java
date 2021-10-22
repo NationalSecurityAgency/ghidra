@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,10 +23,10 @@ import java.nio.ByteBuffer;
 public interface ByteBufferUtils {
 	/**
 	 * Resize a write-mode buffer
-	 * 
+	 *
 	 * <p>
 	 * This preserves the buffer contents
-	 * 
+	 *
 	 * @param buf the buffer
 	 * @param capacity the new capacity, greater or equal to the buffer's limit
 	 * @return the new buffer
@@ -43,10 +43,10 @@ public interface ByteBufferUtils {
 
 	/**
 	 * Resize a write-mode buffer to twice its current capacity
-	 * 
+	 *
 	 * <p>
 	 * This preserves the buffer contents
-	 * 
+	 *
 	 * @param buf the buffer
 	 * @return the new buffer
 	 */
@@ -56,12 +56,12 @@ public interface ByteBufferUtils {
 
 	/**
 	 * Checks for equality, with a mask applied
-	 * 
+	 *
 	 * <p>
 	 * This considers the entire contents of both buffers without regard for position or limit. Both
 	 * buffers must have equal capacities to be considered equal. The mask, if given, must have
 	 * capacity equal to that of the first buffer {@code a} or an exception is thrown.
-	 * 
+	 *
 	 * @param mask a buffer containing the mask, or null to match all bytes exactly
 	 * @param a the first buffer
 	 * @param b the second buffer

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import generic.test.AbstractGTest;
 import generic.test.AbstractGenericTest;
 
 /**
- * This class mainly serves as a conduit through which testing code can access some of the 
+ * This class mainly serves as a conduit through which testing code can access some of the
  * non-public internals of {@link DockingWindowManager}, without opening up its interface to the
  * public <b>and</b> without using reflective magic.
  */
@@ -36,8 +36,8 @@ public class DockingWindowManagerTestUtils {
 	}
 
 	/**
-	 * Moves the given provider to its own window, at its current location. 
-	 * 
+	 * Moves the given provider to its own window, at its current location.
+	 *
 	 * @param provider the provider to move
 	 * @return the provider's window
 	 */

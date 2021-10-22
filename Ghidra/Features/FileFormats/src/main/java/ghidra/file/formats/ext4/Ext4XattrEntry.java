@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 public class Ext4XattrEntry implements StructConverter {
-	
+
 	private byte e_name_len;
 	private byte e_name_index;
 	private short e_value_offs;
@@ -37,7 +37,7 @@ public class Ext4XattrEntry implements StructConverter {
 	public Ext4XattrEntry(ByteProvider provider) throws IOException {
 		this( new BinaryReader( provider, true ) );
 	}
-	
+
 	public Ext4XattrEntry(BinaryReader reader) throws IOException {
 		e_name_len = reader.readNextByte();
 		e_name_index = reader.readNextByte();
@@ -47,7 +47,7 @@ public class Ext4XattrEntry implements StructConverter {
 		e_hash = reader.readNextInt();
 		e_name = reader.readNextByteArray(e_name_len);
 	}
-	
+
 	public byte getE_name_len() {
 		return e_name_len;
 	}
@@ -92,7 +92,7 @@ public class Ext4XattrEntry implements StructConverter {
 
 	/**
 	 * Returns the value of this external attribute entry
-	 * 
+	 *
 	 * @return value of this external attribute entry
 	 */
 	public byte[] getValue() {
@@ -101,7 +101,7 @@ public class Ext4XattrEntry implements StructConverter {
 
 	/**
 	 * Sets the value of this external attribute entry
-	 * 
+	 *
 	 * @param value byte[] array
 	 */
 	public void setValue(byte[] value) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,7 +59,7 @@ public interface CompilerSpec {
 	 * Get the Language this compiler spec is based on.  Note that
 	 * compiler specs may be reused across multiple languages in the
 	 * cspec files on disk, but once loaded in memory are actually
-	 * separate objects.  (M:N on disk, 1:N in memory) 
+	 * separate objects.  (M:N on disk, 1:N in memory)
 	 * @return the language this compiler spec is based on
 	 */
 	public Language getLanguage();
@@ -76,13 +76,13 @@ public interface CompilerSpec {
 
 	/**
 	 * Get the default Stack Pointer register for this language if there is one.
-	 * 
+	 *
 	 * @return default stack pointer register.
 	 */
 	public Register getStackPointer();
 
 	/**
-	 * Indicates whether variables are right-justified within the 
+	 * Indicates whether variables are right-justified within the
 	 * stack alignment.
 	 * @return true if right stack justification applies.
 	 */

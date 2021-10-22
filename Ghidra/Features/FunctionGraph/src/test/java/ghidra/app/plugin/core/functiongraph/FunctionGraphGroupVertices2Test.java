@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,8 +48,8 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 		Graph<FGVertex, FGEdge> graph = functionGraph;
 
 		// @formatter:off
-		Set<FGVertex> ungroupedVertices = selectVertices(functionGraph, 
-														 "01002d2b" /* Another Local*/, 
+		Set<FGVertex> ungroupedVertices = selectVertices(functionGraph,
+														 "01002d2b" /* Another Local*/,
 														 "01002d1f" /* MyLocal */);
 		// @formatter:on
 		Set<FGEdge> ungroupedEdges = getEdges(graph, ungroupedVertices);
@@ -212,7 +212,7 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 	@Test
 	public void testUncollapsedGroupRemovalWithUncollapsedNestedGroupWithMixedSelection() {
 		//
-		// This odd beast is meant to test the condition where we 
+		// This odd beast is meant to test the condition where we
 		// -Create a group A
 		// -Create a group B from A and other vertices
 		// -Uncollapse all groups
@@ -263,7 +263,7 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 	@Test
 	public void testRedoUncollapsedGroupWithInnerUncollapsedGroup() {
 		//
-		// Special case:  
+		// Special case:
 		// 1) Create a group "Inner Group"
 		// 2) Create a second Group "Outer Group", which contains Group A
 		// 3) Ungroup B
@@ -272,20 +272,20 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 		//
 
 		//
-		// This test has two main objectives: 
+		// This test has two main objectives:
 		// 1) Make sure you can uncollapse an internal group and then regroup,
 		//
-		// 2) Make sure the state of the outer group's internal vertices remain however they 
+		// 2) Make sure the state of the outer group's internal vertices remain however they
 		//    were the last time they were regrouped.  To do this:
 		//
 		// 		A) Make sure that, after step 1), you can then uncollapse the outer group and the
 		//    		inner vertices will be in the same previously uncollapsed state,
-		// 		B) Regroup the inner group, regroup the outer group, uncollapse the outer group and 
+		// 		B) Regroup the inner group, regroup the outer group, uncollapse the outer group and
 		//    		the inner vertices should still be grouped.
 		//
 
 		//
-		// 1) 
+		// 1)
 		//
 
 		create12345GraphWithTransaction();
@@ -308,13 +308,13 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 		regroup(v4);
 		assertVerticesRemoved(v1, v2, v3, v4);
 
-		// 
+		//
 		// 2) A)
 		//
 		uncollapse(outerGroup);
 		assertUncollapsed(v1, v2, v3, v4);// this was the previous state
 
-		// 
+		//
 		// 2) B)
 		//
 		regroup(v1);
@@ -331,7 +331,7 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 	@Test
 	public void testRedoUncollapsedGroupWithInnerUncollapsedGroupAfterMovingNestedVertexToNewGroup() {
 		//
-		// Tests the scenario where uncollapsed, nested groups have their structure altered and 
+		// Tests the scenario where uncollapsed, nested groups have their structure altered and
 		// how the parent group is regrouped afterwards.
 		//
 		// Nested, uncollapsed groups that have children put into new groups are disbanded.  We
@@ -343,7 +343,7 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 		// -Uncollapse the inner group
 		// -Regroup a member of inner group
 		// -Regroup the outer group
-		// 
+		//
 
 		create12345GraphWithTransaction();
 
@@ -361,10 +361,10 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 
 		uncollapse(innerGroup);
 
-		group("New Group", v1);// v1 was inside of 
+		group("New Group", v1);// v1 was inside of
 		assertNotUncollapsed(v2);// no longer in group with v1
 
-		// these two vertices were in the "Outer Group", but that was disbanded, due to the 
+		// these two vertices were in the "Outer Group", but that was disbanded, due to the
 		// regrouping of v2
 		assertNotUncollapsed(v3, v4);
 	}
@@ -412,8 +412,8 @@ public class FunctionGraphGroupVertices2Test extends AbstractFunctionGraphTest {
 	public void testFindForwardScopedFlowWhenGroupRemovesSourceNode() {
 
 		//
-		// Test the case that grouping the entry node will create a group that has incoming 
-		// edges.  In this case, there is no source node in the graph.  This will cause an 
+		// Test the case that grouping the entry node will create a group that has incoming
+		// edges.  In this case, there is no source node in the graph.  This will cause an
 		// exception if the code does not create a fake source node before passing the graph
 		// the the algorithm for calculating dominance.
 		//

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,9 +48,9 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This is a helper to setup an environment that has a Front End, a project, and optionally a 
- * server running.   This class provides some convenience methods for creating and 
- * manipulating versioned files. 
+ * This is a helper to setup an environment that has a Front End, a project, and optionally a
+ * server running.   This class provides some convenience methods for creating and
+ * manipulating versioned files.
  */
 public class FrontEndTestEnv {
 
@@ -137,7 +137,7 @@ public class FrontEndTestEnv {
 		return tree.getModelRoot();
 	}
 
-	/** 
+	/**
 	 * Returns the default program node named {@link #PROGRAM_A}
 	 * @return the default program node named {@link #PROGRAM_A}
 	 */

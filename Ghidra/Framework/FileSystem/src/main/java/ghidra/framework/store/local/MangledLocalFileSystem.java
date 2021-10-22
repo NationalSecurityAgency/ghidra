@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,8 @@ import ghidra.util.exception.DuplicateFileException;
 import utilities.util.FileUtilities;
 
 /**
- * <code>MangledLocalFileSystem</code> implements the legacy project data storage 
- * scheme which utilizes a simplified name mangling which provides case-sensitive 
+ * <code>MangledLocalFileSystem</code> implements the legacy project data storage
+ * scheme which utilizes a simplified name mangling which provides case-sensitive
  * file-naming with support for spaces.  Project folder hierarchy maps directly to
  * the actual storage hierarchy.
  */
@@ -70,9 +70,9 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 	 * Find an existing storage location
 	 * @param folderPath
 	 * @param itemName
-	 * @return storage location.  A non-null value does not guarantee that the associated 
+	 * @return storage location.  A non-null value does not guarantee that the associated
 	 * item actually exists.
-	 * @throws FileNotFoundException 
+	 * @throws FileNotFoundException
 	 */
 	@Override
 	protected ItemStorage findItemStorage(String folderPath, String itemName)
@@ -429,7 +429,7 @@ public class MangledLocalFileSystem extends LocalFileSystem {
 	/**
 	 * Convert this mangled filesystem to an indexed filesystem.  This instance should be discarded
 	 * and not used once the conversion has completed.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	public synchronized void convertToIndexedLocalFileSystem() throws IOException {

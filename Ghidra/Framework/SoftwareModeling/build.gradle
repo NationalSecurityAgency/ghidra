@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ apply plugin: 'antlr'
 rootProject.createJavadocs.exclude '**/pcodeCPort/**'
 rootProject.createJsondocs.exclude '**/pcodeCPort/**'
 
-// make sure antlr code gets built during prepdev so that the directories are created and 
+// make sure antlr code gets built during prepdev so that the directories are created and
 // eclipse doesn't complain about missing src directories.
 rootProject.prepDev.dependsOn compileJava
 
@@ -36,35 +36,35 @@ dependencies {
 	api project(':FileSystem')
 	api project(':Project')
 	api project(':Graph')
-	
+
 	api "msv:msv:20050913"
 	api "msv:xsdlib:20050913"
 	api "org.antlr:antlr-runtime:3.5.2"
-	
+
 	runtimeOnly "msv:relaxngDatatype:20050913"
-	api "msv:isorelax:20050913"	
-	
-	testImplementation "org.jmockit:jmockit:1.44"	
-	
+	api "msv:isorelax:20050913"
+
+	testImplementation "org.jmockit:jmockit:1.44"
+
 	// Must specify the specific antlr implementation to use or it will default to trying to find
 	// version 2.7.7 (which we don't have)
 	antlr "org.antlr:antlr:3.5.2"
 	// need to add in the antlr dependencies for when we build from flat jar dirs
 	antlr "org.antlr:antlr-runtime:3.5.2"
 	antlr "org.antlr:ST4:4.0.8"
-}	
+}
 
 def genSrcDir = 'generated-src/antlr/main'
 generateGrammarSource {
 
 	// This one stands alone, it looks like
 	include "ghidra/sleigh/grammar/BooleanExpression.g"
-	
+
 	include "ghidra/sleigh/grammar/SleighLexer.g" // Dummy, and must compile first
 	include "ghidra/sleigh/grammar/BaseLexer.g"
 	include "ghidra/sleigh/grammar/DisplayLexer.g"
 	include "ghidra/sleigh/grammar/SemanticLexer.g"
-	
+
 	// This is the root parser, it will import its children without building them individually.
 	include "ghidra/sleigh/grammar/SleighParser.g"
 
@@ -74,11 +74,11 @@ generateGrammarSource {
 	include "ghidra/sleigh/grammar/SleighCompiler.g"
 
 	// README: See src/main/antlr/ghidra/sleigh/grammar/README.txt for an explanation of this.
-	
+
 	doFirst {
 		// Ensure that SleighLexar.tokens is rebuilt by removing it if any of the
 		// contributing grammar files have changed.  Antlr plugin does not know
-		// about the SleighLexar.tokens dependency on changes to BaseLexer.g, 
+		// about the SleighLexar.tokens dependency on changes to BaseLexer.g,
 		// DisplayLexer.g or SemanticLexer.g
 		delete file("$buildDir/${genSrcDir}/ghidra/sleigh/grammar/SleighLexer.tokens")
 	}

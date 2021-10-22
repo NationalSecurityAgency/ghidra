@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,13 +25,13 @@ public:
     openparen = 0x28,
     closeparen = 0x29,
     star = 0x2a,
-    comma = 0x2c, 
+    comma = 0x2c,
     semicolon = 0x3b,
     openbracket = 0x5b,
     closebracket = 0x5d,
     openbrace = 0x7b,
     closebrace = 0x7d,
-    
+
     badtoken = 0x100,
     endoffile = 0x101,
     dotdotdot = 0x102,

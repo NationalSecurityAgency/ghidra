@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -245,7 +245,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 		Rectangle bounds = unitShape.getBounds();
 
 		// this variable attempts to keep the shape's height from being too out of proportion
-		// from the width. 
+		// from the width.
 		int maxWidthToHeightRatio = vertexShape.getMaxWidthToHeightRatio();
 		double sizeFactor = vertexShape.getShapeToLabelRatio();
 
@@ -314,7 +314,7 @@ public class DefaultGraphRenderer implements GraphRenderer {
 	}
 
 	private void prepareLabel(String vertexName, Color vertexColor) {
-		// The label is just used as a renderer and never parented, so no need to be 
+		// The label is just used as a renderer and never parented, so no need to be
 		// on the swing thread
 		Font font = options.getFont();
 		label.setFont(font);

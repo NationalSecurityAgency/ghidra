@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,11 +69,11 @@ public class FormatManager implements OptionsChangeListener {
 	private boolean groupArrayElements = true;
 
 	// NOTE:  Unused custom format code was removed.  The custom format code last existed in
-	// commit #204e7892bf2f110ebb05ca4beee3fe5b397f88c9.  
+	// commit #204e7892bf2f110ebb05ca4beee3fe5b397f88c9.
 
 	/**
 	 * Constructs a new FormatManager.
-	 * 
+	 *
 	 * @param displayOptions the Options containing display options (color, fonts, etc)
 	 * @param fieldOptions the Options contains specific field options.
 	 */
@@ -123,7 +123,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Sets the service provider used by the field factory objects.
-	 * 
+	 *
 	 * @param provider the service provider
 	 */
 	public void setServiceProvider(ServiceProvider provider) {
@@ -154,7 +154,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Adds a listener to be notified when a format changes.
-	 * 
+	 *
 	 * @param listener the listener to be added.
 	 */
 	public void addFormatModelListener(FormatModelListener listener) {
@@ -164,7 +164,7 @@ public class FormatManager implements OptionsChangeListener {
 	/**
 	 * Removes the given listener from the list of listeners to be notified of a
 	 * format change.
-	 * 
+	 *
 	 * @param listener the listener to be removed.
 	 */
 	public void removeFormatModleListener(FormatModelListener listener) {
@@ -180,7 +180,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the format model for the given index.
-	 * 
+	 *
 	 * @param index the index of the format model to return.
 	 */
 	public FieldFormatModel getModel(int index) {
@@ -224,7 +224,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Returns the format model to use for the internals of open structures.
-	 * 
+	 *
 	 * @param data
 	 *            the data code unit to get the format model for.
 	 */
@@ -277,7 +277,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Notifies listeners that the given model has changed.
-	 * 
+	 *
 	 * @param model the format model that changed.
 	 */
 	public void modelChanged(FieldFormatModel model) {
@@ -782,7 +782,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Resets the model with the given id to its default format.
-	 * 
+	 *
 	 * @param modelID the id of the model to reset.
 	 */
 	public void setDefaultFormat(int modelID) {
@@ -803,7 +803,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Adds a HighlightProvider
-	 * 
+	 *
 	 * @param provider
 	 *            the provider to use.
 	 * @see #removeHighlightProvider(HighlightProvider)
@@ -819,7 +819,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Removes the provider
-	 * 
+	 *
 	 * @param provider
 	 *            the provider to remove.
 	 * @see #addHighlightProvider(HighlightProvider)
@@ -829,9 +829,9 @@ public class FormatManager implements OptionsChangeListener {
 	}
 
 	/**
-	 * Gets all {@link HighlightProvider}s installed on this FormatManager via the 
+	 * Gets all {@link HighlightProvider}s installed on this FormatManager via the
 	 * {@link #addHighlightProvider(HighlightProvider)}.
-	 * 
+	 *
 	 * @return all {@link HighlightProvider}s installed on this FormatManager.
 	 */
 	public List<HighlightProvider> getHighlightProviders() {
@@ -858,7 +858,7 @@ public class FormatManager implements OptionsChangeListener {
 
 	/**
 	 * Saves the state of this LayoutManager to the SaveState object.
-	 * 
+	 *
 	 * @param saveState the SaveState object to write to.
 	 */
 	public void saveState(SaveState saveState) {
@@ -870,7 +870,7 @@ public class FormatManager implements OptionsChangeListener {
 	/**
 	 * Restores the state of this LayoutController from the given SaveState
 	 * object.
-	 * 
+	 *
 	 * @param saveState the SaveState to read from.
 	 */
 	public void readState(SaveState saveState) {
@@ -904,11 +904,11 @@ public class FormatManager implements OptionsChangeListener {
 				Class<? extends FieldFactory> fieldFactoryClass, int cursorTextOffset) {
 
 			//
-			// Gather and use all other registered providers.  
-			// 
+			// Gather and use all other registered providers.
+			//
 			// Note: we loop backwards here as a hacky method to make sure that the middle-mouse
-			//       highlighter runs last and is thus painted above other highlights.  This 
-			//       works because the middle-mouse highlighter is installed before any other 
+			//       highlighter runs last and is thus painted above other highlights.  This
+			//       works because the middle-mouse highlighter is installed before any other
 			//       highlighters.
 			List<Highlight> list = new ArrayList<>();
 			int size = highlightProviders.size();

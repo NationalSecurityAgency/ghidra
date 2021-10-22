@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ public interface GraphDisplayListener {
 
 	/**
 	 * Notification that the set of selected vertices has changed
-	 * 
+	 *
 	 * @param vertices the set of currently selected vertices
 	 */
 	public void selectionChanged(Set<AttributedVertex> vertices);
@@ -42,7 +42,7 @@ public interface GraphDisplayListener {
 	/**
 	 * Makes a new GraphDisplayListener of the same type as the specific
 	 * instance of this GraphDisplayListener
-	 * 
+	 *
 	 * @param graphDisplay the new {@link GraphDisplay} the new listener will support
 	 * @return A new instance of a GraphDisplayListener that is the same type as as the instance
 	 * on which it is called

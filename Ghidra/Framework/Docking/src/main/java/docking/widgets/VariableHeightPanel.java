@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class VariableHeightPanel extends JPanel implements Scrollable {
 	/**
 	 * Finds the highest-level Component parent for the given Component. This
 	 * method will stop searching when it finds a Window parent.
-	 * 
+	 *
 	 * @param component
 	 *            The child for which to locate the highest-level parent.
 	 * @return The highest-level parent of component.
@@ -52,10 +52,10 @@ public class VariableHeightPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * 
+	 *
 	 * Construct a new VariableHeigthPanel.
-	 * @param pack true means to fit as many components on a row, not worrying about lining up 
-	 *        columns; false means to fit as many components on a row, and line up the columns 
+	 * @param pack true means to fit as many components on a row, not worrying about lining up
+	 *        columns; false means to fit as many components on a row, and line up the columns
 	 *        as if in a grid
 	 * @param hgap horizontal gap between components
 	 * @param vgap vertical gap between components
@@ -90,11 +90,11 @@ public class VariableHeightPanel extends JPanel implements Scrollable {
 	}
 
 	/**
-	 * This method is in place because the clients of this panel are not the ones that 
+	 * This method is in place because the clients of this panel are not the ones that
 	 * construct this panel and thus cannot create the desired type of layout at construction time.
 	 * <b>This method has no effect if this panel was constructed with <code>pack</code> set to
 	 * false, which makes this panel use a grid style layout.</b>
-	 *  
+	 *
 	 * @param singleLineLayout True signals to put all children on a single row; false will use
 	 *        as many rows as are needed to layout all of the children.
 	 */
@@ -195,7 +195,7 @@ class VariableHeightLayoutManager implements LayoutManager {
 		return getPreferredSize(parent, 0);
 	}
 
-	// this preferred size returns a height which is that of the tallest component and a 
+	// this preferred size returns a height which is that of the tallest component and a
 	// width that is the width of all the components plus insets
 	Dimension getPreferredSize(Container parent) {
 		Insets insets = parent.getInsets();
@@ -220,8 +220,8 @@ class VariableHeightLayoutManager implements LayoutManager {
 
 	// This preferred size returns Dimension based upon the rows and columns of components that
 	// are derived from placing as many components on a row that will fit within the given
-	// max width.  So, the final height is the height of the tallest component contained in 
-	// 'parent' plus insets, multiplied by the number of rows. 
+	// max width.  So, the final height is the height of the tallest component contained in
+	// 'parent' plus insets, multiplied by the number of rows.
 	private Dimension getPreferredSize(Container parent, int maxWidth) {
 
 		if (maxWidth == 0) {

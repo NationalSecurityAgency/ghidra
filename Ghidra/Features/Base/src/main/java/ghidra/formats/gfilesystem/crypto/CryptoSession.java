@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ public interface CryptoSession extends Closeable {
 	/**
 	 * Returns a sequence of passwords (sorted by quality) that may apply to
 	 * the specified file.
-	 * 
+	 *
 	 * @param fsrl {@link FSRL} path to the password protected file
 	 * @param prompt optional prompt that may be displayed to a user
 	 * @return {@link Iterator} of possible passwords
@@ -46,7 +46,7 @@ public interface CryptoSession extends Closeable {
 
 	/**
 	 * Pushes a known good password into a cache for later re-retrieval.
-	 * 
+	 *
 	 * @param fsrl {@link FSRL} path to the file that was unlocked by the password
 	 * @param password the good password
 	 */
@@ -54,7 +54,7 @@ public interface CryptoSession extends Closeable {
 
 	/**
 	 * Returns true if this session has been closed.
-	 * 
+	 *
 	 * @return boolean true if closed
 	 */
 	boolean isClosed();

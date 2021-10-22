@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,7 +59,7 @@ public class UDIFHeader {
 
 	/**
 	 * Reads a UDIFHeader from the end of the specified ByteProvider
-	 * 
+	 *
 	 * @param bp {@link ByteProvider}
 	 * @return new UDIFHeader, never null
 	 * @throws IOException if io error
@@ -70,7 +70,7 @@ public class UDIFHeader {
 
 	/**
 	 * Reads a UDIFHeader from the specified offset of the ByteProvider.
-	 * 
+	 *
 	 * @param bp {@link ByteProvider}
 	 * @param offset offset (typically 512 bytes from end)
 	 * @return new UDIFHeader, never null
@@ -113,7 +113,7 @@ public class UDIFHeader {
 
 	/**
 	 * Returns true if the fixed fields have valid values
-	 * 
+	 *
 	 * @return boolean true if fixed magic / size fields are correct
 	 */
 	public boolean isValid() {
@@ -123,7 +123,7 @@ public class UDIFHeader {
 	/**
 	 * Returns true if the file offset values in the header are within bounds of the
 	 * specified ByteProvider.
-	 * 
+	 *
 	 * @param bp {@link ByteProvider}
 	 * @return boolean true if file offsets are within range
 	 * @throws IOException if io error

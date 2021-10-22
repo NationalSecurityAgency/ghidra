@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ import static extension org.eclipse.xtext.EcoreUtil2.*
 
 /**
  * This class contains custom scoping description.
- * 
+ *
  * See https://www.eclipse.org/Xtext/documentation/303_runtime_concepts.html#scoping
  * on how and when to use it.
  */
@@ -106,14 +106,14 @@ public class SleighScopeProvider extends AbstractDeclarativeScopeProvider {
 		var localScope = printPieceScope(cont,IScope.NULLSCOPE);
 		localScope
 	}
-	
+
 	def IScope scope_contextentry_lhs(contextentry context, EReference eReference) {
 		var cont = context.getContainerOfType(typeof(constructor));
 		var localScope = printPieceScope(cont,IScope.NULLSCOPE);
 		var superscope = super.getDelegate().getScope(cont, eReference)
 		createFilteredLocalScope(superscope, localScope, eReference)
 	}
-	
+
 	def IScope scope_globalLoc_tsym(globalLoc context, EReference eReference) {
 		var cont = context.getContainerOfType(typeof(constructor));
 		var localScope = printPieceScope(cont,IScope.NULLSCOPE);
@@ -155,7 +155,7 @@ public class SleighScopeProvider extends AbstractDeclarativeScopeProvider {
 		var scope = Scopes::scopeFor(s.eContents)
 		printPieceScope(s,scope);
 	}
-	
+
 	def dispatch IScope symbolsDefinedBefore(contextblock s, EObject o) {
 		var scope = Scopes::scopeFor(s.eContents, s.eContainer.symbolsDefinedBefore(o.eContainer))
 		var cont = s.getContainerOfType(typeof(constructor))
@@ -169,7 +169,7 @@ public class SleighScopeProvider extends AbstractDeclarativeScopeProvider {
 		var cont = b.getContainerOfType(typeof(constructor));
 		printPieceScope(cont,scope);
 	}
-	
+
 	def dispatch IScope symbolsDefinedBefore(rtlmid b, EObject o) {
 		return symbolsDefinedBefore(b.eContainer, o);
 	}
@@ -183,13 +183,13 @@ public class SleighScopeProvider extends AbstractDeclarativeScopeProvider {
 		var cont = b.getContainerOfType(typeof(constructor));
 		printPieceScope(cont,scope);
 	}
-	
+
 	// Create a scope for all ID symbols in printpiece
 	def printPieceScope(constructor cont, IScope outerScope) {
 		if (cont == null) return outerScope
 		var vars = cont.variablesDeclaredIn()
 		var q = QualifiedName.wrapper(new Function<aliasSym, String>() {
-			
+
 			override apply(aliasSym input) {
 				if (input == null) return null;
 				input.sym

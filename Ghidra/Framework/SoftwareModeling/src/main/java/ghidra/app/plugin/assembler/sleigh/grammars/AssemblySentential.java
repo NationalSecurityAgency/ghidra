@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,11 +24,11 @@ import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseToken;
 
 /**
  * A "string" of symbols
- * 
+ *
  * To avoid overloading the word "String", we call this a "sentential". Technically, to be a
  * "sentential" in the classic sense, it must be a possible element in the derivation of a sentence
  * in the grammar starting with the start symbol. We ignore that if only for the sake of naming.
- * 
+ *
  * @param <NT> the type of non-terminals
  */
 public class AssemblySentential<NT extends AssemblyNonTerminal> extends
@@ -52,7 +52,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 
 	/**
 	 * Construct a blank string
-	 * 
+	 *
 	 * This is suitable as a blank start, to add new symbols, or to use directly as the RHS,
 	 * effectively creating an "epsilon" production.
 	 */
@@ -116,7 +116,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 
 	/**
 	 * A "whitespace" terminal
-	 * 
+	 *
 	 * This terminal represents "optional" whitespace. "Optional" because in certain circumstances,
 	 * whitespace is not actually required, i.e., before or after a special character.
 	 */
@@ -174,7 +174,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 
 	/**
 	 * The token consumed by a whitespace terminal when it anticipates the end of input
-	 * 
+	 *
 	 * "Expected" tokens given by a parse machine when this is the last token it has consumed are
 	 * not valid suggestions. The machine should instead suggest a whitespace character.
 	 */

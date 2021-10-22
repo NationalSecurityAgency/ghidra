@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,11 +29,11 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * {@link GraphDisplay} implementation for exporting graphs.  In this case, there is no
- * associated visual display, instead the graph output gets sent to a file.  The 
+ * associated visual display, instead the graph output gets sent to a file.  The
  * {@link GraphDisplay} is mostly just a placeholder for executing the export function.  By
  * hijacking the {@link GraphDisplayProvider} and {@link GraphDisplay} interfaces for exporting,
  * all graph generating operations can be exported instead of being displayed without changing
- * the graph generation code.    
+ * the graph generation code.
  */
 class ExportAttributedGraphDisplay implements GraphDisplay {
 

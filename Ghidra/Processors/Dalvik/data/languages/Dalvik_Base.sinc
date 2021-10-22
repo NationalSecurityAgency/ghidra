@@ -57,62 +57,62 @@ define register offset=0x100 size=8             # Wide input registers EVEN
 
 define register offset=0x1000 size=4
 [
-	  v0   v1   v2   v3   v4   v5   v6   v7   v8   v9  v10  v11  v12  v13  v14  v15 
-	 v16  v17  v18  v19  v20  v21  v22  v23  v24  v25  v26  v27  v28  v29  v30  v31 
-	 v32  v33  v34  v35  v36  v37  v38  v39  v40  v41  v42  v43  v44  v45  v46  v47 
-	 v48  v49  v50  v51  v52  v53  v54  v55  v56  v57  v58  v59  v60  v61  v62  v63 
-	 v64  v65  v66  v67  v68  v69  v70  v71  v72  v73  v74  v75  v76  v77  v78  v79 
-	 v80  v81  v82  v83  v84  v85  v86  v87  v88  v89  v90  v91  v92  v93  v94  v95 
-	 v96  v97  v98  v99 v100 v101 v102 v103 v104 v105 v106 v107 v108 v109 v110 v111 
-	v112 v113 v114 v115 v116 v117 v118 v119 v120 v121 v122 v123 v124 v125 v126 v127 
-	v128 v129 v130 v131 v132 v133 v134 v135 v136 v137 v138 v139 v140 v141 v142 v143 
-	v144 v145 v146 v147 v148 v149 v150 v151 v152 v153 v154 v155 v156 v157 v158 v159 
-	v160 v161 v162 v163 v164 v165 v166 v167 v168 v169 v170 v171 v172 v173 v174 v175 
-	v176 v177 v178 v179 v180 v181 v182 v183 v184 v185 v186 v187 v188 v189 v190 v191 
-	v192 v193 v194 v195 v196 v197 v198 v199 v200 v201 v202 v203 v204 v205 v206 v207 
-	v208 v209 v210 v211 v212 v213 v214 v215 v216 v217 v218 v219 v220 v221 v222 v223 
-	v224 v225 v226 v227 v228 v229 v230 v231 v232 v233 v234 v235 v236 v237 v238 v239 
-	v240 v241 v242 v243 v244 v245 v246 v247 v248 v249 v250 v251 v252 v253 v254 v255 
+	  v0   v1   v2   v3   v4   v5   v6   v7   v8   v9  v10  v11  v12  v13  v14  v15
+	 v16  v17  v18  v19  v20  v21  v22  v23  v24  v25  v26  v27  v28  v29  v30  v31
+	 v32  v33  v34  v35  v36  v37  v38  v39  v40  v41  v42  v43  v44  v45  v46  v47
+	 v48  v49  v50  v51  v52  v53  v54  v55  v56  v57  v58  v59  v60  v61  v62  v63
+	 v64  v65  v66  v67  v68  v69  v70  v71  v72  v73  v74  v75  v76  v77  v78  v79
+	 v80  v81  v82  v83  v84  v85  v86  v87  v88  v89  v90  v91  v92  v93  v94  v95
+	 v96  v97  v98  v99 v100 v101 v102 v103 v104 v105 v106 v107 v108 v109 v110 v111
+	v112 v113 v114 v115 v116 v117 v118 v119 v120 v121 v122 v123 v124 v125 v126 v127
+	v128 v129 v130 v131 v132 v133 v134 v135 v136 v137 v138 v139 v140 v141 v142 v143
+	v144 v145 v146 v147 v148 v149 v150 v151 v152 v153 v154 v155 v156 v157 v158 v159
+	v160 v161 v162 v163 v164 v165 v166 v167 v168 v169 v170 v171 v172 v173 v174 v175
+	v176 v177 v178 v179 v180 v181 v182 v183 v184 v185 v186 v187 v188 v189 v190 v191
+	v192 v193 v194 v195 v196 v197 v198 v199 v200 v201 v202 v203 v204 v205 v206 v207
+	v208 v209 v210 v211 v212 v213 v214 v215 v216 v217 v218 v219 v220 v221 v222 v223
+	v224 v225 v226 v227 v228 v229 v230 v231 v232 v233 v234 v235 v236 v237 v238 v239
+	v240 v241 v242 v243 v244 v245 v246 v247 v248 v249 v250 v251 v252 v253 v254 v255
 ];
 
 define register offset=0x1004 size=8  # ODD NUMBER WIDE REGISTERS
 [
-	   vw1    vw3    vw5    vw7    vw9   vw11   vw13   vw15 
-	  vw17   vw19   vw21   vw23   vw25   vw27   vw29   vw31 
-	  vw33   vw35   vw37   vw39   vw41   vw43   vw45   vw47 
-	  vw49   vw51   vw53   vw55   vw57   vw59   vw61   vw63 
-	  vw65   vw67   vw69   vw71   vw73   vw75   vw77   vw79 
-	  vw81   vw83   vw85   vw87   vw89   vw91   vw93   vw95 
-	  vw97   vw99  vw101  vw103  vw105  vw107  vw109  vw111 
-	 vw113  vw115  vw117  vw119  vw121  vw123  vw125  vw127 
-	 vw129  vw131  vw133  vw135  vw137  vw139  vw141  vw143 
-	 vw145  vw147  vw149  vw151  vw153  vw155  vw157  vw159 
-	 vw161  vw163  vw165  vw167  vw169  vw171  vw173  vw175 
-	 vw177  vw179  vw181  vw183  vw185  vw187  vw189  vw191 
-	 vw193  vw195  vw197  vw199  vw201  vw203  vw205  vw207 
-	 vw209  vw211  vw213  vw215  vw217  vw219  vw221  vw223 
-	 vw225  vw227  vw229  vw231  vw233  vw235  vw237  vw239 
+	   vw1    vw3    vw5    vw7    vw9   vw11   vw13   vw15
+	  vw17   vw19   vw21   vw23   vw25   vw27   vw29   vw31
+	  vw33   vw35   vw37   vw39   vw41   vw43   vw45   vw47
+	  vw49   vw51   vw53   vw55   vw57   vw59   vw61   vw63
+	  vw65   vw67   vw69   vw71   vw73   vw75   vw77   vw79
+	  vw81   vw83   vw85   vw87   vw89   vw91   vw93   vw95
+	  vw97   vw99  vw101  vw103  vw105  vw107  vw109  vw111
+	 vw113  vw115  vw117  vw119  vw121  vw123  vw125  vw127
+	 vw129  vw131  vw133  vw135  vw137  vw139  vw141  vw143
+	 vw145  vw147  vw149  vw151  vw153  vw155  vw157  vw159
+	 vw161  vw163  vw165  vw167  vw169  vw171  vw173  vw175
+	 vw177  vw179  vw181  vw183  vw185  vw187  vw189  vw191
+	 vw193  vw195  vw197  vw199  vw201  vw203  vw205  vw207
+	 vw209  vw211  vw213  vw215  vw217  vw219  vw221  vw223
+	 vw225  vw227  vw229  vw231  vw233  vw235  vw237  vw239
 	 vw241  vw243  vw245  vw247  vw249  vw251  vw253
 ];
 
 define register offset=0x1000 size=8  # EVEN NUMBER WIDE REGISTERS
 [
-	  vw0   vw2   vw4   vw6   vw8  vw10  vw12  vw14 
-	 vw16  vw18  vw20  vw22  vw24  vw26  vw28  vw30 
-	 vw32  vw34  vw36  vw38  vw40  vw42  vw44  vw46 
-	 vw48  vw50  vw52  vw54  vw56  vw58  vw60  vw62 
-	 vw64  vw66  vw68  vw70  vw72  vw74  vw76  vw78 
-	 vw80  vw82  vw84  vw86  vw88  vw90  vw92  vw94 
-	 vw96  vw98 vw100 vw102 vw104 vw106 vw108 vw110 
-	vw112 vw114 vw116 vw118 vw120 vw122 vw124 vw126 
-	vw128 vw130 vw132 vw134 vw136 vw138 vw140 vw142 
-	vw144 vw146 vw148 vw150 vw152 vw154 vw156 vw158 
-	vw160 vw162 vw164 vw166 vw168 vw170 vw172 vw174 
-	vw176 vw178 vw180 vw182 vw184 vw186 vw188 vw190 
-	vw192 vw194 vw196 vw198 vw200 vw202 vw204 vw206 
-	vw208 vw210 vw212 vw214 vw216 vw218 vw220 vw222 
-	vw224 vw226 vw228 vw230 vw232 vw234 vw236 vw238 
-	vw240 vw242 vw244 vw246 vw248 vw250 vw252 vw254 
+	  vw0   vw2   vw4   vw6   vw8  vw10  vw12  vw14
+	 vw16  vw18  vw20  vw22  vw24  vw26  vw28  vw30
+	 vw32  vw34  vw36  vw38  vw40  vw42  vw44  vw46
+	 vw48  vw50  vw52  vw54  vw56  vw58  vw60  vw62
+	 vw64  vw66  vw68  vw70  vw72  vw74  vw76  vw78
+	 vw80  vw82  vw84  vw86  vw88  vw90  vw92  vw94
+	 vw96  vw98 vw100 vw102 vw104 vw106 vw108 vw110
+	vw112 vw114 vw116 vw118 vw120 vw122 vw124 vw126
+	vw128 vw130 vw132 vw134 vw136 vw138 vw140 vw142
+	vw144 vw146 vw148 vw150 vw152 vw154 vw156 vw158
+	vw160 vw162 vw164 vw166 vw168 vw170 vw172 vw174
+	vw176 vw178 vw180 vw182 vw184 vw186 vw188 vw190
+	vw192 vw194 vw196 vw198 vw200 vw202 vw204 vw206
+	vw208 vw210 vw212 vw214 vw216 vw218 vw220 vw222
+	vw224 vw226 vw228 vw230 vw232 vw234 vw236 vw238
+	vw240 vw242 vw244 vw246 vw248 vw250 vw252 vw254
 ];
 
 # TODO:
@@ -135,7 +135,7 @@ define token instruction_operands_4_4 ( 8 )
 	B_BITS_0_3		= (0,3)
 	A_BITS_4_7		= (4,7)
 	B_BITS_4_7		= (4,7)
-	B_BITS_4_7_S	= (4,7) signed  
+	B_BITS_4_7_S	= (4,7) signed
 ;
 
 define token instruction_operands_8 ( 8 )
@@ -288,7 +288,7 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Waste cycles. 
+# Waste cycles.
 
 :nop is inst0=0x00
 {
@@ -299,7 +299,7 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 
 # Move the contents of one non-object register to another.
-# 
+#
 # A: destination register (4 bits)
 # B: source register (4 bits)
 
@@ -309,7 +309,7 @@ define pcodeop breakpoint;
 }
 
 # Move the contents of one non-object register to another.
-# 
+#
 # A: destination register (8 bits)
 # B: source register (16 bits)
 
@@ -319,7 +319,7 @@ define pcodeop breakpoint;
 }
 
 # Move the contents of one non-object register to another.
-# 
+#
 # A: destination register (16 bits)
 # B: source register (16 bits)
 
@@ -328,8 +328,8 @@ define pcodeop breakpoint;
 	registerA16 = registerB16;
 }
 
-# Move the contents of one register-pair to another. 
-# 
+# Move the contents of one register-pair to another.
+#
 # A: destination register pair (4 bits)
 # B: source register pair (4 bits)
 
@@ -338,8 +338,8 @@ define pcodeop breakpoint;
 	registerA4w = registerB4w;
 }
 
-# Move the contents of one register-pair to another. 
-# 
+# Move the contents of one register-pair to another.
+#
 # A: destination register pair (8 bits)
 # B: source register pair (16 bits)
 
@@ -348,8 +348,8 @@ define pcodeop breakpoint;
 	registerA8w = registerB16w;
 }
 
-# Move the contents of one register-pair to another. 
-# 
+# Move the contents of one register-pair to another.
+#
 # A: destination register pair (16 bits)
 # B: source register pair (16 bits)
 
@@ -359,9 +359,9 @@ define pcodeop breakpoint;
 }
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-# 
+#
 # Move the contents of one object-bearing register to another.
-# 
+#
 # A: destination register (4 bits)
 # B: source register (4 bits)
 
@@ -371,7 +371,7 @@ define pcodeop breakpoint;
 }
 
 # Move the contents of one object-bearing register to another.
-# 
+#
 # A: destination register (8 bits)
 # B: source register (16 bits)
 
@@ -381,7 +381,7 @@ define pcodeop breakpoint;
 }
 
 # Move the contents of one object-bearing register to another.
-# 
+#
 # A: destination register (16 bits)
 # B: source register (16 bits)
 
@@ -390,9 +390,9 @@ define pcodeop breakpoint;
 	registerA16 = registerB16;
 }
 
-# Move the single-word non-object result of the most recent invoke-kind 
-# into the indicated register. This must be done as the instruction 
-# immediately after an invoke-kind whose (single-word, non-object) 
+# Move the single-word non-object result of the most recent invoke-kind
+# into the indicated register. This must be done as the instruction
+# immediately after an invoke-kind whose (single-word, non-object)
 # result is not to be ignored; anywhere else is invalid.
 #
 # A: destination register (8 bits)
@@ -402,9 +402,9 @@ define pcodeop breakpoint;
 	registerA8 = resultreg;
 }
 
-# Move the double-word result of the most recent invoke-kind into 
-# the indicated register pair. This must be done as the instruction 
-# immediately after an invoke-kind whose (double-word) result is 
+# Move the double-word result of the most recent invoke-kind into
+# the indicated register pair. This must be done as the instruction
+# immediately after an invoke-kind whose (double-word) result is
 # not to be ignored; anywhere else is invalid.
 #
 # A: destination register pair (8 bits)
@@ -414,11 +414,11 @@ define pcodeop breakpoint;
 	registerA8w = resultregw;
 }
 
-# Move the object result of the most recent invoke-kind into 
-# the indicated register. This must be done as the instruction 
-# immediately after an invoke-kind or filled-new-array whose 
+# Move the object result of the most recent invoke-kind into
+# the indicated register. This must be done as the instruction
+# immediately after an invoke-kind or filled-new-array whose
 # (object) result is not to be ignored; anywhere else is invalid.
-# 
+#
 # A: destination register (8 bits)
 
 :move_result_object registerA8 		is inst0=0x0c ; registerA8
@@ -426,12 +426,12 @@ define pcodeop breakpoint;
 	registerA8 = resultreg;
 }
 
-# Save a just-caught exception into the given register. This must 
-# be the first instruction of any exception handler whose caught 
-# exception is not to be ignored, and this instruction must only 
-# ever occur as the first instruction of an exception handler; 
+# Save a just-caught exception into the given register. This must
+# be the first instruction of any exception handler whose caught
+# exception is not to be ignored, and this instruction must only
+# ever occur as the first instruction of an exception handler;
 # anywhere else is invalid.
-# 
+#
 # A: destination register (8 bits)
 
 :move_exception registerA8			is inst0=0x0d ; registerA8
@@ -450,7 +450,7 @@ define pcodeop breakpoint;
 	return [sp];
 }
 
-# Return from a single-width (32-bit) non-object value-returning method. 
+# Return from a single-width (32-bit) non-object value-returning method.
 #
 # A: return value register (8 bits)
 
@@ -471,7 +471,7 @@ define pcodeop breakpoint;
 }
 
 # Return from an object-returning method.
-# 
+#
 # A: return value register (8 bits)
 
 :return_object registerA8		is inst0=0x11 ; registerA8
@@ -484,7 +484,7 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 
 # Move the given literal value (sign-extended to 32 bits) into the specified register.
-# 
+#
 # A: destination register (4 bits)
 # B: signed int (4 bits)
 
@@ -494,7 +494,7 @@ define pcodeop breakpoint;
 }
 
 # Move the given literal value (sign-extended to 32 bits) into the specified register.
-# 
+#
 # A: destination register (8 bits)
 # B: signed int (16 bits)
 
@@ -514,7 +514,7 @@ define pcodeop breakpoint;
 }
 
 # Move the given literal value (right-zero-extended to 32 bits) into the specified register.
-# 
+#
 # A: destination register (8 bits)
 # B: signed int (16 bits)
 
@@ -524,7 +524,7 @@ define pcodeop breakpoint;
 }
 
 # Move the given literal value (sign-extended to 64 bits) into the specified register-pair.
-# 
+#
 # A: destination register (8 bits)
 # B: signed int (16 bits)
 
@@ -534,7 +534,7 @@ define pcodeop breakpoint;
 }
 
 # Move the given literal value (sign-extended to 64 bits) into the specified register-pair.
-# 
+#
 # A: destination register (8 bits)
 # B: signed int (32 bits)
 
@@ -544,7 +544,7 @@ define pcodeop breakpoint;
 }
 
 # Move the given literal value into the specified register-pair.
-# 
+#
 # A: destination register (8 bits)
 # B: arbitrary double-width (64-bit) constant
 
@@ -554,7 +554,7 @@ define pcodeop breakpoint;
 }
 
 # Move the given literal value (right-zero-extended to 64 bits) into the specified register-pair.
-# 
+#
 # A: destination register (8 bits)
 # B: signed int (16 bits)
 
@@ -564,7 +564,7 @@ define pcodeop breakpoint;
 }
 
 # Move a reference to the string specified by the given index into the specified register.
-# 
+#
 # A: destination register (8 bits)
 # B: string index
 
@@ -574,7 +574,7 @@ define pcodeop breakpoint;
 }
 
 # Move a reference to the string specified by the given index into the specified register.
-# 
+#
 # A: destination register (8 bits)
 # B: string index
 
@@ -583,10 +583,10 @@ define pcodeop breakpoint;
 	registerA8 = cpool(0:4, B_BITS_0_31:4, $(CPOOL_STRING));
 }
 
-# Move a reference to the class specified by the given index into the 
-# specified register. In the case where the indicated type is primitive, 
+# Move a reference to the class specified by the given index into the
+# specified register. In the case where the indicated type is primitive,
 # this will store a reference to the primitive type's degenerate class.
-# 
+#
 # A: destination register (8 bits)
 # B: type index
 
@@ -599,7 +599,7 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 
 # Acquire the monitor for the indicated object.
-# 
+#
 # A: reference-bearing register (8 bits)
 
 :monitor_enter	registerA8 is inst0=0x1d ; registerA8
@@ -607,8 +607,8 @@ define pcodeop breakpoint;
 	monitorEnter( registerA8 );
 }
 
-# Release the monitor for the indicated object. 
-# 
+# Release the monitor for the indicated object.
+#
 # A: reference-bearing register (8 bits)
 
 :monitor_exit	registerA8 is inst0=0x1e ; registerA8
@@ -619,13 +619,13 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Throw a ClassCastException if the reference in the given register 
-# cannot be cast to the indicated type. 
-# 
+# Throw a ClassCastException if the reference in the given register
+# cannot be cast to the indicated type.
+#
 # A: reference-bearing register (8 bits)
 # B: type index (16 bits)
 
-:check_cast registerA8,B_BITS_0_15 is inst0=0x1f ; registerA8 ; B_BITS_0_15 
+:check_cast registerA8,B_BITS_0_15 is inst0=0x1f ; registerA8 ; B_BITS_0_15
 {
 	checkCast( registerA8, cpool( 0:4, B_BITS_0_15:4, $(CPOOL_CLASSREF)) );
 }
@@ -633,14 +633,14 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Store in the given destination register 1 if the indicated reference 
-# is an instance of the given type, or 0 if not. 
+# Store in the given destination register 1 if the indicated reference
+# is an instance of the given type, or 0 if not.
 #
 # A: destination register (4 bits)
 # B: reference-bearing register (4 bits)
 # C: type index (16 bits)
 
-:instance_of registerA4,registerB4,C_BITS_0_15 is inst0=0x20 ; registerA4 & registerB4 ; C_BITS_0_15 
+:instance_of registerA4,registerB4,C_BITS_0_15 is inst0=0x20 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	res:1 = cpool( registerB4, C_BITS_0_15:4, $(CPOOL_INSTANCEOF) );
 	registerA4 = zext( res );
@@ -650,16 +650,16 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 
 # Store in the given destination register the length of the indicated array, in entries
-# 
+#
 # A: destination register (4 bits)
 # B: array reference-bearing register (4 bits)
 
-:array_length registerA4,registerB4 is inst0=0x21 ; registerA4 & registerB4 
+:array_length registerA4,registerB4 is inst0=0x21 ; registerA4 & registerB4
 {
 	registerA4 = cpool( registerB4, 0:4, $(CPOOL_ARRAYLENGTH) );
 }
 
-# Construct a new instance of the indicated type, storing a reference 
+# Construct a new instance of the indicated type, storing a reference
 # to it in the destination. The type must refer to a non-array class.
 #
 # A: destination register (8 bits)
@@ -671,7 +671,7 @@ define pcodeop breakpoint;
 }
 
 # Construct a new array of the indicated type and size. The type must be an array type.
-# 
+#
 # A: destination register (8 bits)
 # B: size register
 # C: type index
@@ -681,14 +681,14 @@ define pcodeop breakpoint;
 	registerA4 = newobject( cpool( 0:4, C_BITS_0_15:4, $(CPOOL_CLASSREF)), registerB4 );
 }
 
-# Construct an array of the given type and size, filling it with the supplied 
-# contents. The type must be an array type. The array's contents must be 
-# single-word (that is, no arrays of long or double, but reference types are 
-# acceptable). The constructed instance is stored as a "result" in the same 
-# way that the method invocation instructions store their results, so the 
-# constructed instance must be moved to a register with an immediately 
+# Construct an array of the given type and size, filling it with the supplied
+# contents. The type must be an array type. The array's contents must be
+# single-word (that is, no arrays of long or double, but reference types are
+# acceptable). The constructed instance is stored as a "result" in the same
+# way that the method invocation instructions store their results, so the
+# constructed instance must be moved to a register with an immediately
 # subsequent move-result-object instruction (if it is to be used).
-# 
+#
 # A: array size and argument word count (4 bits)
 # B: type index (16 bits)
 # C..G: argument registers (4 bits each)
@@ -724,10 +724,10 @@ define pcodeop breakpoint;
 	filledNewArray( TYPE_INDEX:4, regElemC, regElemD, regElemE, regElemF, regElemG );
 }
 
-# Construct an array of the given type and size, filling it with 
-# the supplied contents. Clarifications and restrictions are the 
+# Construct an array of the given type and size, filling it with
+# the supplied contents. Clarifications and restrictions are the
 # same as filled-new-array, described above.
-# 
+#
 # A: array size and argument word count (8 bits)
 # B: type index (16 bits)
 # C: first argument register (16 bits)
@@ -739,14 +739,14 @@ define pcodeop breakpoint;
 	filledNewArrayRange( A_BITS_0_7:4, B_BITS_0_15:4, registerC16 );
 }
 
-# Fill the given array with the indicated data. The reference must 
-# be to an array of primitives, and the data table must match it in type 
-# and must contain no more elements than will fit in the array. That is, 
-# the array may be larger than the table, and if so, only the initial 
-# elements of the array are set, leaving the remainder alone. 
-# 
+# Fill the given array with the indicated data. The reference must
+# be to an array of primitives, and the data table must match it in type
+# and must contain no more elements than will fit in the array. That is,
+# the array may be larger than the table, and if so, only the initial
+# elements of the array are set, leaving the remainder alone.
+#
 # A: array reference (8 bits)
-# B: signed "branch" offset to table data pseudo-instruction (32 bits) 
+# B: signed "branch" offset to table data pseudo-instruction (32 bits)
 
 :fill_array_data registerA8,B_BITS_0_31_S is inst0=0x26 ; registerA8 ; B_BITS_0_31_S
 {
@@ -770,8 +770,8 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Unconditionally jump to the indicated instruction. 
-# 
+# Unconditionally jump to the indicated instruction.
+#
 # A: signed branch offset (8 bits)
 
 :goto		goto8	is inst0=0x28 ; goto8
@@ -779,7 +779,7 @@ define pcodeop breakpoint;
 	goto goto8;
 }
 
-# Unconditionally jump to the indicated instruction. 
+# Unconditionally jump to the indicated instruction.
 #
 # A: signed branch offset (16 bits)
 
@@ -789,7 +789,7 @@ define pcodeop breakpoint;
 }
 
 # Unconditionally jump to the indicated instruction.
-# 
+#
 # A: signed branch offset (32 bits)
 
 :goto_32	goto32	is inst1=0x2a & inst1_padding ; goto32
@@ -800,12 +800,12 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Jump to a new instruction based on the value in the given register, 
-# using a table of offsets corresponding to each value in a particular 
-# integral range, or fall through to the next instruction if there is no match. 
+# Jump to a new instruction based on the value in the given register,
+# using a table of offsets corresponding to each value in a particular
+# integral range, or fall through to the next instruction if there is no match.
 #
 # A: register to test
-# B: signed "branch" offset to table data pseudo-instruction (32 bits) 
+# B: signed "branch" offset to table data pseudo-instruction (32 bits)
 #
 # NOTE: Offset (B) and destinations must be multiplied by 2.
 
@@ -830,12 +830,12 @@ define pcodeop breakpoint;
 	goto [ address ];
 }
 
-# Jump to a new instruction based on the value in the given register, 
-# using an ordered table of value-offset pairs, or fall through to the 
-# next instruction if there is no match. 
-# 
+# Jump to a new instruction based on the value in the given register,
+# using an ordered table of value-offset pairs, or fall through to the
+# next instruction if there is no match.
+#
 # A: register to test
-# B: signed "branch" offset to table data pseudo-instruction (32 bits) 
+# B: signed "branch" offset to table data pseudo-instruction (32 bits)
 #
 # NOTE: Offset (B) and destinations must be multiplied by 2.
 
@@ -855,15 +855,15 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Perform the indicated floating point or long comparison, 
-# setting a to 0 if b == c, 1 if b > c, or -1 if b < c. 
-# The "bias" listed for the floating point operations indicates 
-# how NaN comparisons are treated: "gt bias" instructions return 1 for 
+# Perform the indicated floating point or long comparison,
+# setting a to 0 if b == c, 1 if b > c, or -1 if b < c.
+# The "bias" listed for the floating point operations indicates
+# how NaN comparisons are treated: "gt bias" instructions return 1 for
 # NaN comparisons, and "lt bias" instructions return -1.
 #
-# For example, to check to see if floating point x < y it is advisable 
-# to use cmpg-float; a result of -1 indicates that the test was true, 
-# and the other values indicate it was false either due to a valid 
+# For example, to check to see if floating point x < y it is advisable
+# to use cmpg-float; a result of -1 indicates that the test was true,
+# and the other values indicate it was false either due to a valid
 # comparison or because one of the values was NaN.
 #
 # A: destination register (8 bits)
@@ -898,8 +898,8 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Branch to the given destination if the given two registers' values compare as specified. 
-# 
+# Branch to the given destination if the given two registers' values compare as specified.
+#
 # A: first register to test (4 bits)
 # B: second register to test (4 bits)
 # C: signed branch offset (16 bits)
@@ -937,8 +937,8 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Branch to the given destination if the given register's value compares with 0 as specified. 
-# 
+# Branch to the given destination if the given register's value compares with 0 as specified.
+#
 # A: register to test (8 bits)
 # B: signed branch offset (16 bits)
 
@@ -975,7 +975,7 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Perform the identified array operation at the identified index 
+# Perform the identified array operation at the identified index
 # of the given array, loading or storing into the value register.
 #
 # A: value register or pair; may be source or dest (8 bits)
@@ -1055,9 +1055,9 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Perform the identified object instance field operation with the 
-# identified field, loading or storing into the value register. 
-# 
+# Perform the identified object instance field operation with the
+# identified field, loading or storing into the value register.
+#
 # A: value register or pair; may be source or dest (4 bits)
 # B: object register (4 bits)
 # C: instance field reference index (16 bits)
@@ -1074,73 +1074,73 @@ define pcodeop breakpoint;
 	registerA4w = *ptr;
 }
 
-:iget_object registerA4,[registerB4:C_BITS_0_15]  is inst0=0x54 ; registerA4 & registerB4 ; C_BITS_0_15 
+:iget_object registerA4,[registerB4:C_BITS_0_15]  is inst0=0x54 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool( registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
 	registerA4 = *ptr;
 }
 
-:iget_boolean registerA4,[registerB4:C_BITS_0_15]  is inst0=0x55 ; registerA4 & registerB4 ; C_BITS_0_15 
+:iget_boolean registerA4,[registerB4:C_BITS_0_15]  is inst0=0x55 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool( registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
 	registerA4 = zext( *:1 ptr );
 }
 
-:iget_byte registerA4,[registerB4:C_BITS_0_15]  is inst0=0x56 ; registerA4 & registerB4 ; C_BITS_0_15 
+:iget_byte registerA4,[registerB4:C_BITS_0_15]  is inst0=0x56 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool( registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
 	registerA4 = sext( *:1 ptr );
 }
 
-:iget_char registerA4,[registerB4:C_BITS_0_15]  is inst0=0x57 ; registerA4 & registerB4 ; C_BITS_0_15 
+:iget_char registerA4,[registerB4:C_BITS_0_15]  is inst0=0x57 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool( registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
 	registerA4 = zext( *:2 ptr );
 }
 
-:iget_short registerA4,[registerB4:C_BITS_0_15]  is inst0=0x58 ; registerA4 & registerB4 ; C_BITS_0_15 
+:iget_short registerA4,[registerB4:C_BITS_0_15]  is inst0=0x58 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool( registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
-	registerA4 = sext( *:2 ptr );	
+	registerA4 = sext( *:2 ptr );
 }
 
-:iput registerA4,[registerB4:C_BITS_0_15]  is inst0=0x59 ; registerA4 & registerB4 ; C_BITS_0_15 
+:iput registerA4,[registerB4:C_BITS_0_15]  is inst0=0x59 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool(registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
 	*ptr = registerA4;
 }
 
-:iput_wide registerA4w,[registerB4:C_BITS_0_15]  is inst0=0x5a ; registerA4w & registerB4 ; C_BITS_0_15 
+:iput_wide registerA4w,[registerB4:C_BITS_0_15]  is inst0=0x5a ; registerA4w & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool(registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
 	*ptr = registerA4w;
 }
 
-:iput_object registerA4,[registerB4:C_BITS_0_15]  is inst0=0x5b ; registerA4 & registerB4 ; C_BITS_0_15 
+:iput_object registerA4,[registerB4:C_BITS_0_15]  is inst0=0x5b ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool(registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
 	*ptr = registerA4;
 }
 
-:iput_boolean registerA4,[registerB4:C_BITS_0_15]  is inst0=0x5c ; registerA4 & registerB4 ; C_BITS_0_15 
+:iput_boolean registerA4,[registerB4:C_BITS_0_15]  is inst0=0x5c ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool(registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
 	*ptr = registerA4 : 1;
 }
 
-:iput_byte registerA4,[registerB4:C_BITS_0_15]  is inst0=0x5d ; registerA4 & registerB4 ; C_BITS_0_15 
+:iput_byte registerA4,[registerB4:C_BITS_0_15]  is inst0=0x5d ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool(registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
 	*ptr = registerA4 : 1;
 }
 
-:iput_char registerA4,[registerB4:C_BITS_0_15]  is inst0=0x5e ; registerA4 & registerB4 ; C_BITS_0_15 
+:iput_char registerA4,[registerB4:C_BITS_0_15]  is inst0=0x5e ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool(registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
-	*ptr = registerA4 : 2;	
+	*ptr = registerA4 : 2;
 }
 
-:iput_short registerA4,[registerB4:C_BITS_0_15]  is inst0=0x5f ; registerA4 & registerB4 ; C_BITS_0_15 
+:iput_short registerA4,[registerB4:C_BITS_0_15]  is inst0=0x5f ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	ptr:4 = cpool(registerB4, C_BITS_0_15:4, $(CPOOL_FIELD));
 	*ptr = registerA4 : 2;
@@ -1149,12 +1149,12 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Perform the identified object static field operation with the identified 
+# Perform the identified object static field operation with the identified
 # static field, loading or storing into the value register.
 #
 # A: value register or pair; may be source or dest (8 bits)
 # B: static field reference index (16 bits)
- 
+
 :sget registerA8,B_BITS_0_15 is inst0=0x60 ; registerA8 ; B_BITS_0_15
 {
 	ptr:4 = cpool(0:4,B_BITS_0_15:4,$(CPOOL_STATIC_FIELD));
@@ -1230,15 +1230,15 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Call the indicated method. The result (if any) may be stored with 
-# an appropriate move-result* variant as the immediately subsequent 
+# Call the indicated method. The result (if any) may be stored with
+# an appropriate move-result* variant as the immediately subsequent
 # instruction.
 #
 # A: argument word count (4 bits)
 # B: method reference index (16 bits)
-# C..G: argument registers (4 bits each) 
+# C..G: argument registers (4 bits each)
 
-# invoke-virtual is used to invoke a normal virtual method 
+# invoke-virtual is used to invoke a normal virtual method
 # (a method that is not private, static, or final, and is also not a constructor).
 
 :invoke_virtual METHOD_INDEX is inst0=0x6e ; N_PARAMS=0 & METHOD_INDEX
@@ -1287,8 +1287,8 @@ define pcodeop breakpoint;
 	call [ destination ];
 }
 
-# invoke-super is used to invoke the closest superclass's virtual 
-# method (as opposed to the one with the same method_id in the 
+# invoke-super is used to invoke the closest superclass's virtual
+# method (as opposed to the one with the same method_id in the
 # calling class). The same method restrictions hold as for invoke-virtual.
 
 :invoke_super METHOD_INDEX is inst0=0x6f ; N_PARAMS=0 & METHOD_INDEX
@@ -1337,9 +1337,9 @@ define pcodeop breakpoint;
 	call [ destination ];
 }
 
-# invoke-direct is used to invoke a non-static direct 
-# method (that is, an instance method that is by its 
-# nature non-overridable, namely either a private instance 
+# invoke-direct is used to invoke a non-static direct
+# method (that is, an instance method that is by its
+# nature non-overridable, namely either a private instance
 # method or a constructor).
 
 :invoke_direct METHOD_INDEX is inst0=0x70 ; N_PARAMS=0 & METHOD_INDEX
@@ -1388,7 +1388,7 @@ define pcodeop breakpoint;
 	call [ destination ];
 }
 
-# invoke-static is used to invoke a static method 
+# invoke-static is used to invoke a static method
 # (which is always considered a direct method).
 
 :invoke_static METHOD_INDEX is inst0=0x71 ; N_PARAMS=0 & METHOD_INDEX
@@ -1400,7 +1400,7 @@ define pcodeop breakpoint;
 {
 	iv0 = regParamC;
 	destination:4 = cpool( 0:4, METHOD_INDEX, $(CPOOL_STATIC_METHOD));
-	call [ destination ];	
+	call [ destination ];
 }
 :invoke_static METHOD_INDEX,regParamC,regParamD is inst0=0x71 ; N_PARAMS=2 & METHOD_INDEX & regParamC & regParamD
 {
@@ -1437,9 +1437,9 @@ define pcodeop breakpoint;
 	call [ destination ];
 }
 
-# invoke-interface is used to invoke an interface 
-# method, that is, on an object whose concrete 
-# class isn't known, using a method_id that refers 
+# invoke-interface is used to invoke an interface
+# method, that is, on an object whose concrete
+# class isn't known, using a method_id that refers
 # to an interface.
 
 :invoke_interface METHOD_INDEX is inst0=0x72 ; N_PARAMS=0 & METHOD_INDEX
@@ -1483,7 +1483,7 @@ define pcodeop breakpoint;
 	iv1 = regParamD;
 	iv2 = regParamE;
 	iv3 = regParamF;
-	iv4 = regParamG;	
+	iv4 = regParamG;
 	destination:4 = cpool(regParamC,METHOD_INDEX,$(CPOOL_METHOD));
 	call [ destination ];
 }
@@ -1491,9 +1491,9 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Call the indicated method. 
-# See first invoke-kind description above for details, caveats, and suggestions. 
-# 
+# Call the indicated method.
+# See first invoke-kind description above for details, caveats, and suggestions.
+#
 # A: argument word count (8 bits)
 # B: method reference index (16 bits)
 # C: first argument register (16 bits)
@@ -1528,12 +1528,12 @@ define pcodeop breakpoint;
 	moveRangeToIV( A_BITS_0_7:4, registerC16 );
 	destination:4 = cpool(registerC16, B_BITS_0_15:4, $(CPOOL_METHOD));
 	call [ destination ];
-} 
+}
 
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Perform the identified unary operation on the source register, 
+# Perform the identified unary operation on the source register,
 # storing the result in the destination register.
 #
 # A: destination register or pair (4 bits)
@@ -1646,9 +1646,9 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Perform the identified binary operation on the two source registers, 
+# Perform the identified binary operation on the two source registers,
 # storing the result in the destination register.
-# 
+#
 # A: destination register or pair (8 bits)
 # B: first source register or pair (8 bits)
 # C: second source register or pair (8 bits)
@@ -1780,14 +1780,14 @@ define pcodeop breakpoint;
 :rem_double		registerA8w,registerB8w,registerC8w is inst0=0xaf ; registerA8w ; registerB8w ; registerC8w
 {
 	registerA8w = registerB8w s% registerC8w;#TODO how to tell floating point??
-} 
+}
 
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Perform the identified binary operation on the two source registers, 
+# Perform the identified binary operation on the two source registers,
 # storing the result in the first source register.
-# 
+#
 # A: destination and first source register or pair (4 bits)
 # B: second source register or pair (4 bits)
 
@@ -1923,10 +1923,10 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Perform the indicated binary op on the indicated register (first argument) 
-# and literal value (second argument), storing the result in the destination 
+# Perform the indicated binary op on the indicated register (first argument)
+# and literal value (second argument), storing the result in the destination
 # register.
-# 
+#
 # A: destination register (4 bits)
 # B: source register (4 bits)
 # C: signed int constant (16 bits)
@@ -1967,10 +1967,10 @@ define pcodeop breakpoint;
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-# Perform the indicated binary op on the indicated register (first argument) 
-# and literal value (second argument), storing the result in the destination 
-# register. 
-# 
+# Perform the indicated binary op on the indicated register (first argument)
+# and literal value (second argument), storing the result in the destination
+# register.
+#
 # A: destination register (8 bits)
 # B: source register (8 bits)
 # C: signed int constant (8 bits)

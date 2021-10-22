@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,9 +21,9 @@ import ghidra.program.model.listing.Program;
 
 /**
  * This is the interface for a correlator that associates addresses from one program with
- * addresses from another program or it can associate addresses from one part of a program 
+ * addresses from another program or it can associate addresses from one part of a program
  * with addresses from another part of the same program. Given an address from the address set
- * in the first program it determines the matching address from the address set for the second 
+ * in the first program it determines the matching address from the address set for the second
  * program if possible.
  */
 public interface ListingAddressCorrelation {

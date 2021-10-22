@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -227,7 +227,7 @@ public class WEVTResourceDataType extends DynamicDataType {
 		tempOffset += 4;
 		struct.add(UnsignedIntegerDataType.dataType, 4, "Number of Unknown 32-bit values", "");
 
-		//Get the number of unknown dwords - know how many but not what they are for 
+		//Get the number of unknown dwords - know how many but not what they are for
 		int numUnknownValues = memBuffer.getInt(tempOffset);
 
 		numUnknownValues *= 4;
@@ -568,7 +568,7 @@ public class WEVTResourceDataType extends DynamicDataType {
 		struct.add(DWordDataType.dataType, 4, "Identifier", "");
 		tempOffset += 4;
 
-		//compute address of channel data 
+		//compute address of channel data
 		int offset = memBuffer.getInt(tempOffset);
 		Address channelDataAddr = memBuffer.getAddress().add(offset);
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,7 +50,7 @@ class OldLanguage implements Language {
 	 * Construct an old language. The resulting instance does not initialize the
 	 * address factory or register definitions until after the validate method
 	 * is invoked.
-	 * 
+	 *
 	 * @param oldLangFile
 	 * @throws IOException
 	 * @see {@link #validate()}
@@ -62,7 +62,7 @@ class OldLanguage implements Language {
 
 	/**
 	 * Construct an old language from XML. Intended for test use only.
-	 * 
+	 *
 	 * @param oldLanguageElement
 	 * @throws JDOMException
 	 * @throws SAXException
@@ -81,7 +81,7 @@ class OldLanguage implements Language {
 	 * If instantiated from a file, this method must be invoked prior to the
 	 * factory handing out this instance. This will complete the parsing of the
 	 * old language file and the initialization of this instance.
-	 * 
+	 *
 	 * @throws JDOMException
 	 * @throws SAXException
 	 * @throws IOException
@@ -583,7 +583,7 @@ class OldLanguage implements Language {
 	/**
 	 * If this old language corresponds to a legacy language which was tied to a
 	 * specific compiler specification, a suitable ID will be returned.
-	 * 
+	 *
 	 * @return associated compiler specification ID or null if unknown
 	 */
 	public CompilerSpecID getOldCompilerSpecID() {

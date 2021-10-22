@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import ghidra.util.xml.SpecXmlUtils;
 import ghidra.xml.*;
 
 /**
- * 
+ *
  *
  * High-level abstraction associated with a low level function made up of assembly instructions.
  * Based on information the decompiler has produced after working on a function.
@@ -217,13 +217,13 @@ public class HighParamID extends PcodeSyntaxTree {
 
 	/**
 	 * Create and XML SAX parse tree from an input XML string
-	 * 
+	 *
 	 * TODO: this probably doesn't belong here.
-	 * 
+	 *
 	 * @param xml string to parse
 	 * @param handler is the error handler
 	 * @return an XML tree element
-	 * 
+	 *
 	 * @throws PcodeXMLException for improper XML
 	 */
 	static public XmlPullParser stringTree(String xml, ErrorHandler handler)
@@ -240,9 +240,9 @@ public class HighParamID extends PcodeSyntaxTree {
 
 	/**
 	 * Update any parameters for this Function from parameters defined in this map.
-	 * 
+	 *
 	 * @param storeDataTypes is true if data-types are getting stored
-	 * @param srctype function signature source 
+	 * @param srctype function signature source
 	 */
 	public void storeReturnToDatabase(boolean storeDataTypes, SourceType srctype) {
 		PcodeDataTypeManager dtManage = getDataTypeManager();
@@ -281,9 +281,9 @@ public class HighParamID extends PcodeSyntaxTree {
 	/**
 	 * Update any parameters for this Function from parameters defined in this map.
 	 *   Originally from LocalSymbolMap, but being modified.
-	 * 
+	 *
 	 * @param storeDataTypes is true if data-types are being stored
-	 * @param srctype function signature source 
+	 * @param srctype function signature source
 	 */
 	public void storeParametersToDatabase(boolean storeDataTypes, SourceType srctype) {
 		PcodeDataTypeManager dtManage = getDataTypeManager();

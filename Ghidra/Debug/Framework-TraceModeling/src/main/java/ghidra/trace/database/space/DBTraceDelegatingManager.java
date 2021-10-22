@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -180,7 +180,7 @@ public interface DBTraceDelegatingManager<M> {
 
 	/**
 	 * Compose a collection, lazily, from collections returned by delegates
-	 * 
+	 *
 	 * @param spaces the delegates
 	 * @param func a collection getter for each delegate
 	 * @return the lazy catenated collection
@@ -219,7 +219,7 @@ public interface DBTraceDelegatingManager<M> {
 
 	/**
 	 * Compose a set, immediately, from collections returned by delegates
-	 * 
+	 *
 	 * @param spaces the delegates
 	 * @param func a collection (usually a set) getter for each delegate
 	 * @return the unioned results
@@ -236,7 +236,7 @@ public interface DBTraceDelegatingManager<M> {
 
 	/**
 	 * Compose an address set, immediately, from address sets returned by delegates
-	 * 
+	 *
 	 * @param spaces the delegates
 	 * @param func an address set getter for each delegate
 	 * @return the unioned results

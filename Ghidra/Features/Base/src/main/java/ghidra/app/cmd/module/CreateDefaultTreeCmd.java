@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,27 +22,27 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * 
+ *
  * Command to create a root in the program; the root module has
  * fragments named the same as the memory blocks.
- * 
- * 
+ *
+ *
  */
 public class CreateDefaultTreeCmd implements Command {
 
 	private String treeName;
 	private String statusMsg;
-	
+
 	/**
-	 * Constructor for CreateDefaultTreeCmd. 
+	 * Constructor for CreateDefaultTreeCmd.
 	 * @param treeName name of the tree to create
 	 */
 	public CreateDefaultTreeCmd(String treeName) {
 		this.treeName = treeName;
 	}
- 
+
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
 	public boolean applyTo(DomainObject obj) {
@@ -57,7 +57,7 @@ public class CreateDefaultTreeCmd implements Command {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Create a tree in the program with the given tree name.
 	 * @param program program
@@ -65,9 +65,9 @@ public class CreateDefaultTreeCmd implements Command {
 	 * @return Module root module for the new tree
 	 * @throws DuplicateNameException if treeName already exists
 	 */
-	static ProgramModule createRootModule(Program program, String treeName) 
+	static ProgramModule createRootModule(Program program, String treeName)
 		throws DuplicateNameException {
-			
+
 		Listing listing = program.getListing();
 		ProgramModule root = listing.createRootModule(treeName);
 		renameFragments(program, treeName);
@@ -87,7 +87,7 @@ public class CreateDefaultTreeCmd implements Command {
 				fragment.setName(blocks[i].getName());
 			} catch (DuplicateNameException e) {
 			}
-		}			
+		}
 	}
 
 	/**

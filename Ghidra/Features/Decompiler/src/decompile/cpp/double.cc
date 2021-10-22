@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -335,7 +335,7 @@ PcodeOp *SplitVarnode::findEarliestSplitPoint(void)
     return (PcodeOp *)0;
   return (loop->getSeqNum().getOrder() < hiop->getSeqNum().getOrder()) ? loop : hiop;
 }
- 
+
 bool SplitVarnode::findWholeBuiltFromPieces(void)
 
 {
@@ -453,7 +453,7 @@ void SplitVarnode::findCreateWhole(Funcdata &data)
     topblock = (BlockBasic *)data.getBasicBlocks().getStartBlock();
     addr = topblock->getStart();
   }
-  
+
   concatop = data.newOp(2,addr);
   // Do we need to pick something other than a unique????
   whole = data.newUniqueOut(wholesize,concatop);
@@ -499,7 +499,7 @@ void SplitVarnode::createJoinedWhole(Funcdata &data)
 
 void SplitVarnode::buildLoFromWhole(Funcdata &data)
 
-{ // Assume -lo- was defined in some other way and now needs to be defined as a split from 
+{ // Assume -lo- was defined in some other way and now needs to be defined as a split from
   // a new -whole- varnode
   PcodeOp *loop = lo->getDef();
   if (loop == (PcodeOp *)0)
@@ -535,7 +535,7 @@ void SplitVarnode::buildLoFromWhole(Funcdata &data)
 
 void SplitVarnode::buildHiFromWhole(Funcdata &data)
 
-{ // Assume -hi- was defined in some other way and now needs to be defined as a split from 
+{ // Assume -hi- was defined in some other way and now needs to be defined as a split from
   // a new -whole- varnode
    PcodeOp *hiop = hi->getDef();
   if (hiop == (PcodeOp *)0)
@@ -1132,7 +1132,7 @@ bool AddForm::checkForCarry(PcodeOp *op)
   //    and return true
   if (op->code() != CPUI_INT_ZEXT) return false;
   if (!op->getIn(0)->isWritten()) return false;
-  
+
   PcodeOp *carryop = op->getIn(0)->getDef();
   if (carryop->code() == CPUI_INT_CARRY) { // Normal CARRY form
     if (carryop->getIn(0) == lo1)
@@ -1400,7 +1400,7 @@ int4 LogicalForm::findHiMatch(void)
   // Return 0 if we found an op, return -1, if we can't find an op, return -2 if no op exists
   Varnode *lo1Tmp = in.getLo();
   Varnode *vn2 = loop->getIn( 1-loop->getSlot( lo1Tmp ) );
-  
+
   SplitVarnode out;
   if (out.inHandLoOut(lo1Tmp)) {	// If we already know what the double precision output looks like
     Varnode *hi = out.getHi();
@@ -1565,14 +1565,14 @@ bool Equal1Form::applyRule(SplitVarnode &i,PcodeOp *hop,bool workishi,Funcdata &
 	++iter3;
 
 	in2.initPartial(lo2,hi2);
-	
+
 	if ((hibool->code() == CPUI_CBRANCH)&&(lobool->code()==CPUI_CBRANCH)) {
 	  // Branching form of the equal operation
 	  BlockBasic *hibooltrue,*hiboolfalse;
 	  BlockBasic *lobooltrue,*loboolfalse;
 	  SplitVarnode::getTrueFalse(hibool,notequalformhi,hibooltrue,hiboolfalse);
 	  SplitVarnode::getTrueFalse(lobool,notequalformlo,lobooltrue,loboolfalse);
-	  
+
 	  if ((hibooltrue == lobool->getParent())&&	// hi is checked first then lo
 	      (hiboolfalse == loboolfalse)&&
 	      SplitVarnode::otherwiseEmpty(lobool)) {
@@ -1994,7 +1994,7 @@ bool LessThreeWay::normalizeMid(void)
     }
   }
   if (midlessform) {		// Normalize to EQUAL
-    
+
     if (!midlessequal) {
       equalflip = !equalflip;
     }
@@ -2246,7 +2246,7 @@ bool LessThreeWay::applyRule(SplitVarnode &i,PcodeOp *loop,bool workishi,Funcdat
 // The canonical example being determining whether val > 0, where we only have to
 // calculate (hi > 0).  This rule takes
 //    hi COMPARE #const
-// and transforms it to 
+// and transforms it to
 //    whole COMPARE #constextend
 // where #constextend is built from #const by postpending either all 0 bits or 1 bits
 bool LessConstForm::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata &data)
@@ -2288,7 +2288,7 @@ bool LessConstForm::applyRule(SplitVarnode &i,PcodeOp *op,bool workishi,Funcdata
       return true;
     }
   }
-  
+
   return false;
 }
 
@@ -2382,7 +2382,7 @@ bool ShiftForm::verifyLeft(Varnode *h,Varnode *l,PcodeOp *loop)
 
   loshift = loop;
   reslo = loshift->getOut();
-  
+
   list<PcodeOp *>::const_iterator iter,enditer;
   iter = hi->beginDescend();
   enditer = hi->endDescend();
@@ -2415,7 +2415,7 @@ bool ShiftForm::verifyRight(Varnode *h,Varnode *l,PcodeOp *hiop)
   lo = l;
   hishift = hiop;
   reshi = hiop->getOut();
-  
+
   list<PcodeOp *>::const_iterator iter,enditer;
   iter = lo->beginDescend();
   enditer = lo->endDescend();
@@ -2506,7 +2506,7 @@ bool MultForm::mapResHiSmallConst(Varnode *rhi)
   lo2zext = multlo->getIn(1);
   return true;
 }
-  
+
 bool MultForm::mapResHi(Varnode *rhi)
 
 { // Find reshi=hi1*lo2 + hi2*lo1 + (tmp>>32)
@@ -2682,7 +2682,7 @@ bool MultForm::findResLo(void)
 	  (!vn2->isConstant() || (vn2->getOffset() != lo2->getOffset())))
 	continue;
     }
-    else 
+    else
       if ((op->getIn(0)!=lo2)&&(op->getIn(1)!=lo2)) continue;
     reslo = op->getOut();
     return true;

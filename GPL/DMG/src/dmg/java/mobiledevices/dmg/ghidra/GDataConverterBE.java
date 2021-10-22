@@ -6,15 +6,15 @@ package mobiledevices.dmg.ghidra;
 /**
  * Helper class to convert a byte array to Java primitives and primitives to a
  * byte array in Big endian.
- * 
- * 
- * 
+ *
+ *
+ *
  */
 public class GDataConverterBE implements GDataConverter {
 	public static final GDataConverterBE INSTANCE = new GDataConverterBE();
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
 

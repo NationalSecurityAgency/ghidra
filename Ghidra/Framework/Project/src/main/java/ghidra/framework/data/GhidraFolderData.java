@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -381,8 +381,8 @@ class GhidraFolderData {
 	/**
 	 * Notification that the specified subfolder has changed due to and add or remove of the
 	 * underlying local or version folder.  If the subfolder previously existed, still exists,
-	 * and had been visited a refresh on the subfolder will be forced, otherwise, if this folder has been 
-	 * visited an appropriate add/remove/change notification will be provided to the listener.  
+	 * and had been visited a refresh on the subfolder will be forced, otherwise, if this folder has been
+	 * visited an appropriate add/remove/change notification will be provided to the listener.
 	 * NOTE: Care should be taken using this method as all sub-folder cache data may be disposed!
 	 * NOTE: Move and Rename situations are not handled
 	 * @param folderName
@@ -451,7 +451,7 @@ class GhidraFolderData {
 			fileData.dispose();
 		}
 		fileDataCache.clear();
-// NOTE: clearing the following can cause issues since there may be some residual 
+// NOTE: clearing the following can cause issues since there may be some residual
 // activity/use which will get a NPE
 //		parent = null;
 //		fileManager = null;
@@ -641,12 +641,12 @@ class GhidraFolderData {
 	/**
 	 * Full refresh of names of children is performed.  This method
 	 * should only be invoked when a full list of folders or
-	 * children is requested - which may be in response to 
+	 * children is requested - which may be in response to
 	 * a "folder changed" notification.
 	 * @param recursive if true a recursive refresh will be done (force must also be true).
 	 * Sub-folders will only be refreshed if they have been visited.
 	 * @param force if true will refresh will be forced regardless
-	 * of visited state, if false refresh is lazy and will not be 
+	 * of visited state, if false refresh is lazy and will not be
 	 * performed if a previous refresh set the visited state.
 	 * @param monitor recursion task monitor - break from recursion if cancelled
 	 * @throws IOException

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,25 +37,25 @@ import ghidra.util.Msg;
  * with the currently- selected bytes in the listing. The YARA search string
  * matching the instructions selected is displayed in a text window and may be
  * modified in two ways:
- * 
+ *
  * 1. By directly editing the text 2. By toggling the cells in the instruction
  * table, which masks the appropriate mnemonic/instruction
- * 
+ *
  * The generated string will appear similar to the following:
- * 
+ *
  * rule <rule name> { strings: $STR1 = { 4? 56 4? 55 4? 54 ?? 50 4? 8b ?? c7 4d
  * 00 00 4?8d 1d 08 4e 00 00 }
  *
  * condition: $STR1 }
- * 
+ *
  * Note that this script uses only a portion of the existing search dialog
  * mentioned above; that entire dialog is far too bulky for what is needed here,
  * so we just launch the part that allows users to toggle the mnemonics and
  * operands on/off (masking).
- * 
+ *
  * In addition to this existing dialog, some custom components are added to it
  * in order to display the resulting Yara string. {@link #YaraDialog}.
- * 
+ *
  */
 public class YaraGhidraGUIScript extends GhidraScript {
 
@@ -111,12 +111,12 @@ public class YaraGhidraGUIScript extends GhidraScript {
 	/**
 	 * Creates a correctly-formatted Yara string with masking where appropriate.
 	 * Yara strings have the following general format:
-	 * 
+	 *
 	 * rule <rule name> { strings: $STR1 = { 4? 56 4? 55 4? 54 ?? 50 4? 8b ?? c7
 	 * 4d 00 00 4?8d 1d 08 4e 00 00 }
 	 *
 	 * condition: $STR1 }
-	 * 
+	 *
 	 * @param ruleName
 	 * @return
 	 */
@@ -127,7 +127,7 @@ public class YaraGhidraGUIScript extends GhidraScript {
 
 		String fullStr = "";
 
-		// Get the "combined string" from the search data object; this is the ENTIRE set of 
+		// Get the "combined string" from the search data object; this is the ENTIRE set of
 		// instructions in one string, with all masking applied.
 		if (dialog == null || dialog.getSearchData() == null) {
 			return null;
@@ -167,7 +167,7 @@ public class YaraGhidraGUIScript extends GhidraScript {
 			fullStr += " ";
 		}
 
-		// Add the formatted string to our final output, and add some boilerplate Yara 
+		// Add the formatted string to our final output, and add some boilerplate Yara
 		// stuff.
 		yaraString.append("\t\t$STR" + 1 + " = { " + fullStr + " }\n");
 		yaraString.append("\n\tcondition:\n");
@@ -187,9 +187,9 @@ public class YaraGhidraGUIScript extends GhidraScript {
 	 * {@link InstructionTablePanel}, which allows users to mask
 	 * mnemonics/operands in an instruction set, and some custom pieces for
 	 * displaying the Yara string.
-	 * 
+	 *
 	 * The layout:
-	 * 
+	 *
 	 * --------------------------- | | | Instruction Table Panel | | |
 	 * |-------------------------| | | | YARA Text | | |
 	 * ---------------------------
@@ -204,7 +204,7 @@ public class YaraGhidraGUIScript extends GhidraScript {
 		private JSplitPane verticalSplitter;
 
 		// Keep track of the splitter location so it can be restored when the dialog is
-		// refreshed.  
+		// refreshed.
 		private int splitterSave = 200;
 
 		/**
@@ -221,24 +221,24 @@ public class YaraGhidraGUIScript extends GhidraScript {
 		 * {@link InstructionSearchDialog}; this one contains only the
 		 * {@link InstructionTablePanel} portion, which provides the operand
 		 * masking capability.
-		 * 
+		 *
 		 * To accomplish this we override the method that constructs the UI
 		 * components and add just the components we need.
-		 * 
+		 *
 		 * @return
 		 */
 		@Override
 		protected JPanel createWorkPanel() {
 
-			// Create the main text area and give it a scroll bar. 
+			// Create the main text area and give it a scroll bar.
 			yaraTA = new JTextArea(12, 0);
 			scrollPane = new JScrollPane(yaraTA);
 			yaraTA.setWrapStyleWord(true);
 			yaraTA.setLineWrap(true);
 
-			// Create the instruction table and set it as a listener of the table model, so 
+			// Create the instruction table and set it as a listener of the table model, so
 			// this gui will be notified when changes have been made (when the user has adjusted
-			// the mask settings).  This allows us to dynamically update the yara string as 
+			// the mask settings).  This allows us to dynamically update the yara string as
 			// the user is changing things.
 			InstructionTablePanel instructionTablePanel =
 				new InstructionTablePanel(searchData.getMaxNumOperands(), plugin, this);
@@ -255,7 +255,7 @@ public class YaraGhidraGUIScript extends GhidraScript {
 			mainPanel.add(verticalSplitter);
 
 			// Tell the data model to listen for changes the table; when the GUI is updated, the
-			// model needs to be told to update itself to reflect the new mask settings. 
+			// model needs to be told to update itself to reflect the new mask settings.
 			searchData.registerForGuiUpdates(instructionTablePanel.getTable());
 
 			// Now restore the splitter location to whatever it was before.
@@ -283,7 +283,7 @@ public class YaraGhidraGUIScript extends GhidraScript {
 		 * user has selected a new set of instructions, or changed mask
 		 * settings. When this happens we need to save off the splitter location
 		 * and reload the dialog if necessary.
-		 * 
+		 *
 		 * @param o
 		 * @param arg
 		 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,9 @@ import java.awt.Component;
 /**
  * Class with static methods to report errors as either a short message or a
  * more detailed message (e.g., stacktrace).
- * 
- * <P>The 'message' parameter for these calls is typically a String.  However, it can also 
- * be a log4j <code>Message</code> object as well.   (See log4j2 for details.) 
+ *
+ * <P>The 'message' parameter for these calls is typically a String.  However, it can also
+ * be a log4j <code>Message</code> object as well.   (See log4j2 for details.)
  */
 public class Msg {
 	private static ErrorLogger errorLogger = new DefaultErrorLogger();
@@ -34,7 +34,7 @@ public class Msg {
 
 	/**
 	 * Sets the error logger (by default it's a DefaultErrorLogger).
-	 * 
+	 *
 	 * @param errLogger
 	 *            the error logger
 	 */
@@ -44,7 +44,7 @@ public class Msg {
 
 	/**
 	 * Sets the error display (by default it's console)
-	 * 
+	 *
 	 * @param errDisplay
 	 *            the error display
 	 */
@@ -54,9 +54,9 @@ public class Msg {
 
 	/**
 	 * Useful for printing temporary messages without any logging markup.  This is meant to be
-	 * a replacement for System.out. 
-	 * 
-	 * @param message 
+	 * a replacement for System.out.
+	 *
+	 * @param message
 	 * 			the message to print
 	 */
 	public static void out(Object message) {
@@ -67,7 +67,7 @@ public class Msg {
 	 * Used to record a trace message to the log file. All calls to this method
 	 * outside of main methods and JUnit tests will be removed before a
 	 * production release.
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param message
@@ -82,7 +82,7 @@ public class Msg {
 	 * outside of main methods and JUnit tests will be removed before a
 	 * production release. This may be used to document an exception
 	 * without elevating that exception to error or warning status.
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param message
@@ -96,7 +96,7 @@ public class Msg {
 
 	/**
 	 * Used to record a debug message to the log file.
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param message
@@ -109,7 +109,7 @@ public class Msg {
 	/**
 	 * Used to record a debug message to the log file.  This may be used to document an exception
 	 * without elevating that exception to error or warning status
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param message
@@ -124,7 +124,7 @@ public class Msg {
 	/**
 	 * Used to display an informational message to the user via the console (no
 	 * GUI). Also records the message to the logging system.
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param message
@@ -136,9 +136,9 @@ public class Msg {
 
 	/**
 	 * Used to display an informational message to the user via the console (no
-	 * GUI). Also records the message to the logging system.  This may be used to 
+	 * GUI). Also records the message to the logging system.  This may be used to
 	 * document an exception without elevating that exception to error or warning status.
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param message
@@ -153,7 +153,7 @@ public class Msg {
 	/**
 	 * Used to display an informational message to the user
 	 * with a pop-up GUI dialog. Also records the message to the logging system.
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param parent
@@ -176,7 +176,7 @@ public class Msg {
 	/**
 	 * Used to display a warning message to the user via the console (no GUI).
 	 * Also records the message to the logging system.
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param message
@@ -189,7 +189,7 @@ public class Msg {
 	/**
 	 * Used to display a warning message to the user via the console (no GUI).
 	 * Also records the message to the logging system.
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param message
@@ -204,7 +204,7 @@ public class Msg {
 	/**
 	 * Used to display a warning message to the user with a pop-up GUI dialog.
 	 * Also records the message to the logging system.
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param parent
@@ -229,7 +229,7 @@ public class Msg {
 	 * Used to display an error message with no available Throwable to the user
 	 * via the console (no GUI). Also records the message to the logging system.
 	 * If you have a Throwable, please use the other error(...) method.
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param message
@@ -243,7 +243,7 @@ public class Msg {
 	 * Used to display an error message with a Throwable (for stack trace) to
 	 * the user via the console (no GUI). Also records the message to the
 	 * logging system.
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param message
@@ -259,7 +259,7 @@ public class Msg {
 	 * Used to display an error message with no available Throwable to the user
 	 * with a pop-up GUI dialog. Also records the message to the logging system.
 	 * If you have a Throwable, please use the other error(...) method.
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param parent
@@ -284,7 +284,7 @@ public class Msg {
 	 * Used to display an error message with a Throwable (for stack trace) to
 	 * the user with a pop-up GUI dialog. Also records the message to the
 	 * logging system.
-	 * 
+	 *
 	 * @param originator
 	 *            a Logger instance, "this", or YourClass.class
 	 * @param parent

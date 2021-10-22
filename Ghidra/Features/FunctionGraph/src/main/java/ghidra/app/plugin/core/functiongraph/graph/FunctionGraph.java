@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,7 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 
 	/**
 	 * Construct a function graph with the given (optional) vertices and edges
-	 * 
+	 *
 	 * @param function the function upon which this graph is based
 	 * @param settings the settings that will be used for vertices added in the future
 	 * @param vertices the vertices
@@ -89,7 +89,7 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 
 	/**
 	 * Construct an empty graph with data from this graph
-	 * 
+	 *
 	 * @param function the function upon which this graph is based
 	 * @param settings the settings that will be used for vertices added in the future
 	 */
@@ -258,13 +258,13 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 	}
 
 	/**
-	 * This method returns all edges known by this class.  This differs from the edges 
+	 * This method returns all edges known by this class.  This differs from the edges
 	 * returned from {@link Graph} in that those may be a smaller subset of the collection returned
-	 * here.  Due to graph manipulation after creation time (e.g., vertex grouping), the 
+	 * here.  Due to graph manipulation after creation time (e.g., vertex grouping), the
 	 * edges known by the {@link Graph} may not include all edges created at the same time
-	 * as the graph and any others created by graph mutating operations <b>that are not the 
+	 * as the graph and any others created by graph mutating operations <b>that are not the
 	 * result of a grouping operation</b>.
-	 * 
+	 *
 	 * @return all edges known by this class, visible or not.
 	 */
 	public Set<FGEdge> getUngroupedEdges() {
@@ -587,7 +587,7 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 		FGLayout originalLayout = getLayout();
 		FGLayout newLayout = originalLayout.cloneLayout(newGraph);
 
-		// setSize() must be called after setGraphLayout() due to callbacks performed when 
+		// setSize() must be called after setGraphLayout() due to callbacks performed when
 		// setSize() is called
 		newGraph.setGraphLayout(newLayout);
 		newLayout.setSize(originalLayout.getSize());
@@ -597,11 +597,11 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 	}
 
 	/**
-	 * A method to create dummy edges (with dummy vertices).  This is used to add entry and 
+	 * A method to create dummy edges (with dummy vertices).  This is used to add entry and
 	 * exit vertices as needed when a user grouping operation has consumed the entries or exits.
-	 * The returned edge will connect the current vertex containing the entry to a new dummy 
+	 * The returned edge will connect the current vertex containing the entry to a new dummy
 	 * vertex that is a source for the graph.   Calling this method does not mutate this graph.
-	 * 
+	 *
 	 * @return the edge
 	 */
 	public Set<FGEdge> createDummySources() {
@@ -624,11 +624,11 @@ public class FunctionGraph extends GroupingVisualGraph<FGVertex, FGEdge> {
 	}
 
 	/**
-	 * A method to create dummy edges (with dummy vertices).  This is used to add entry and 
+	 * A method to create dummy edges (with dummy vertices).  This is used to add entry and
 	 * exit vertices as needed when a user grouping operation has consumed the entries or exits.
-	 * The returned edge will connect the current vertex containing the exit to a new dummy 
+	 * The returned edge will connect the current vertex containing the exit to a new dummy
 	 * vertex that is a sink for the graph.   Calling this method does not mutate this graph.
-	 * 
+	 *
 	 * @return the edge
 	 */
 	public Set<FGEdge> createDummySinks() {

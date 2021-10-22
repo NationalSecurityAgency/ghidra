@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,22 +30,22 @@ import ghidra.program.model.symbol.*;
 
 /**
  * PseudoDisassembler.java
- * 
+ *
  * Useful for disassembling and getting an Instruction or creating Data
  * at a location in memory when you don't want the program to be changed.
- * 
+ *
  * The Instructions or Data that area created are PseudoInstruction's and
  * PseudoData's.  They act like regular instructions in most respects, but
  * they don't exist in the program.  No references, symbols, are created or
  * will be saved when the program is saved.
- * 
+ *
  * You do not need to have an open transaction on the program to use the
  * PseudoDisassembler.
- * 
+ *
  * The PseudoDisassembler can also be used to check if something is a valid
  * subroutine.  The algorithm it uses could definitely use some tuning, but
  * it generally works well.
- * 
+ *
  */
 public class PseudoDisassembler {
 	// name of register that is used in processors that use the lower bit of addresses
@@ -87,7 +87,7 @@ public class PseudoDisassembler {
 
 	/**
 	 * Set the maximum number of instructions to check
-	 * 
+	 *
 	 * @param maxNumInstructions - maximum number of instructions to check before returning
 	 */
 	public void setMaxInstructions(int maxNumInstructions) {
@@ -96,7 +96,7 @@ public class PseudoDisassembler {
 
 	/**
 	 * Set flag to respect Execute bit on memory if present on any memory
-	 * 
+	 *
 	 * @param respect - true, respect execute bit on memory blocks
 	 */
 	public void setRespectExecuteFlag(boolean respect) {
@@ -105,10 +105,10 @@ public class PseudoDisassembler {
 
 	/**
 	 * Disassemble a single instruction.  The program is not affected.
-	 * 
+	 *
 	 * @param addr location to disassemble
 	 * @return a PseudoInstruction
-	 * 
+	 *
 	 * @throws InsufficientBytesException
 	 * @throws UnknownInstructionException
 	 * @throws UnknownContextException
@@ -178,11 +178,11 @@ public class PseudoDisassembler {
 	 * Disassemble a location in memory with the given set of bytes.
 	 * Useful when the address has no actual bytes defined, or you want to use
 	 * your own bytes instead of what is in the program at the address.
-	 * 
+	 *
 	 * @param addr address to disassemble
 	 * @param bytes bytes to use instead of those currently defined in program
 	 * @return PseudoInstruction.
-	 * 
+	 *
 	 * @throws InsufficientBytesException
 	 * @throws UnknownInstructionException
 	 * @throws UnknownContextException
@@ -199,12 +199,12 @@ public class PseudoDisassembler {
 	 * Disassemble a location in memory with the given set of bytes.
 	 * Useful when the address has no actual bytes defined, or you want to use
 	 * your own bytes instead of what is in the program at the address.
-	 * 
+	 *
 	 * @param addr address to disassemble
 	 * @param bytes bytes to use instead of those currently defined in program
 	 * @param disassemblerContext the disassembler context to use.
 	 * @return PseudoInstruction.
-	 * 
+	 *
 	 * @throws InsufficientBytesException
 	 * @throws UnknownInstructionException
 	 * @throws UnknownContextException
@@ -248,7 +248,7 @@ public class PseudoDisassembler {
 	 * not affected.  A PseudoData item that acts like a Data item retrieved from
 	 * a program is returned.  This is useful if you have a datatype and you
 	 * want to use it to get values from the program at a given address.
-	 * 
+	 *
 	 * @param addr location to get a PseudoData item for
 	 * @param dt the data type to be applied
 	 * @return PsuedoData that acts like Data
@@ -275,9 +275,9 @@ public class PseudoDisassembler {
 	 * and return the address.  This routine assumes that the bytes
 	 * needed to create the address are the same size as the bytes
 	 * needed to represent the toAddr.  So this is somewhat generic.
-	 * 
+	 *
 	 * @param toAddr location of the bytes in memory
-	 * 
+	 *
 	 * @return the address value
 	 */
 	public Address getIndirectAddr(Address toAddr) {
@@ -339,7 +339,7 @@ public class PseudoDisassembler {
 	 * @param entryPoint         entry point to check
 	 * @param allowExistingCode  true allows this subroutine to flow into existing instructions.
 	 * @param mustTerminate      true if the subroutine must terminate
-	 * 
+	 *
 	 * @return true if entry point leads to a well behaved subroutine
 	 */
 	public boolean isValidSubroutine(Address entryPoint, boolean allowExistingCode,
@@ -371,10 +371,10 @@ public class PseudoDisassembler {
 	 * <li>Hit no bad instructions.
 	 * <li>It should return.
 	 * </ul>
-	 * 
+	 *
 	 * @param entryPoint location to test for valid code
 	 * @param context disassembly context for program
-	 * 
+	 *
 	 * @return true if the entry point leads to valid code
 	 */
 	public boolean isValidCode(Address entryPoint, PseudoDisassemblerContext context) {
@@ -385,7 +385,7 @@ public class PseudoDisassembler {
 	/**
 	 * Process a subroutine using the processor function.
 	 * The process function can control what flows are followed and when to stop.
-	 * 
+	 *
 	 * @param entryPoint start address
 	 * @param processor processor to use
 	 * @return the address set of instructions that were followed
@@ -400,7 +400,7 @@ public class PseudoDisassembler {
 	/**
 	 * Process a subroutine using the processor function.
 	 * The process function can control what flows are followed and when to stop.
-	 * 
+	 *
 	 * @param entryPoint start address
 	 * @param processor processor to use
 	 * @return the address set of instructions that were followed
@@ -560,9 +560,9 @@ public class PseudoDisassembler {
 	 * It does this by following the flow until a terminator is reached.
 	 * If a bad instruction is hit or it does not flow well, then return
 	 * false.
-	 * 
+	 *
 	 * @param target - taraget address to disassemble
-	 * 
+	 *
 	 * @return true if this is a probable subroutine.
 	 */
 	private boolean checkValidSubroutine(Address entryPoint, boolean allowExistingInstructions) {
@@ -847,7 +847,7 @@ public class PseudoDisassembler {
 
 	/**
 	 * Make sure the instruction really has a return in it.
-	 * 
+	 *
 	 * @param instr instruction to check
 	 */
 	private boolean isReallyReturn(Instruction instr) {
@@ -926,16 +926,16 @@ public class PseudoDisassembler {
 	 * TODO: These routines below are gathered here so that the common concern can
 	 * be found and dealt with in one place.  Eventually the DisassemblerCmd()
 	 * will handle some of these concerns.  They are here until a larger refactoring
-	 * 
+	 *
 	 */
 
 	/**
 	 * Get an address that can be used for disassembly.  Useful for some processors where
 	 * pointers to code have 1 added to them for different modes such as Thumb mode for ARM.
-	 * 
+	 *
 	 * @param program to get address from
 	 * @param addr to be normallized/aligned for disassembly
-	 * 
+	 *
 	 * @return the normalized/aligned address for disassembly
 	 */
 	public static Address getNormalizedDisassemblyAddress(Program program, Address addr) {
@@ -953,7 +953,7 @@ public class PseudoDisassembler {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return RegisterValue setting for the context register to disassemble correctly at the given address
 	 *         or null, if no setting is needed.
 	 */
@@ -981,7 +981,7 @@ public class PseudoDisassembler {
 	/**
 	 * If this processor uses the low bit of an address to change to a new Instruction Set mode
 	 *   Check the low bit and change the instruction state at the address.
-	 *   
+	 *
 	 * @param program
 	 * @param addr the raw address
 	 * @return the correct address to disassemble at if it needs to be aligned
@@ -1008,7 +1008,7 @@ public class PseudoDisassembler {
 	 * In order to check a location to see if it disassembles from an address reference, the
 	 * address is checked for low-bit code switch behavior.  If it does switch, the context
 	 * is changed.
-	 * 
+	 *
 	 * @param procContext context to change
 	 * @param addr destination address that will be disassembled (possible pseudo disassembled)
 	 * @return the correct disassembly location if the address needed to be adjusted.

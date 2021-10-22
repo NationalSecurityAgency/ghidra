@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -138,7 +138,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 
 		ProgramSelection ps = makeMultiVertexSelectionInCodeBrowser();
 
-		// this address is in a different vertex than the start address                
+		// this address is in a different vertex than the start address
 		ProgramLocation location = getLocationForAddressString("0x01004192");
 		assertTrue(graphData.containsLocation(location));
 		FunctionGraph functionGraph = graphData.getFunctionGraph();
@@ -195,10 +195,10 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		assertTrue("Unexpectedly received an empty FunctionGraphData", graphData.hasResults());
 	}
 
-// note: unreliable--garbage collection works differently across platforms (sad face)	
+// note: unreliable--garbage collection works differently across platforms (sad face)
 //	public void testClearCacheAndMemoryLeak() {
 //		//
-//		// Test that when we clear the cache of a graph the vertices of that graph will be 
+//		// Test that when we clear the cache of a graph the vertices of that graph will be
 //		// garbage collected
 //		//
 //		WeakSet<FunctionGraphVertex> weakSet =
@@ -215,7 +215,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 //		weakSet.add(rootVertex);
 //		assertTrue(weakSet.iterator().hasNext());
 //
-//		// move to a new function so that we the FG will not be holding a reference to the 
+//		// move to a new function so that we the FG will not be holding a reference to the
 //		// originally graphed function
 //		String address = "01002239";
 //		goToAddress(address);
@@ -256,7 +256,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 	@Test
 	public void testSaveVertexPositions() {
 		//
-		// Test that we can move a node, load a new graph, reload the original graph and have 
+		// Test that we can move a node, load a new graph, reload the original graph and have
 		// the moved node return to the moved position
 		//
 
@@ -364,7 +364,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 
 		addBytesFormatFieldFactory();
 
-		// 
+		//
 		// Verify the vertex size has change (due to the format getting larger)
 		//
 		FGPrimaryViewer viewer = getPrimaryGraphViewer();
@@ -387,11 +387,11 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 	@Test
 	public void testCopyKeyBinding() throws Exception {
 		//
-		// Make a program selection and test that executing the copy keybinding will copy the 
+		// Make a program selection and test that executing the copy keybinding will copy the
 		// selection (across vertices).
 		//
 
-		// 
+		//
 		// Initialize the clipboard with known data
 		//
 		Clipboard systemClipboard = GClipboard.getSystemClipboard();
@@ -412,7 +412,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		assertNotNull("We did not start with a focused vertex", focusedVertex);
 
 		//
-		// Create a selection that we will copy from the executing the action 
+		// Create a selection that we will copy from the executing the action
 		//
 		AddressSetView addresses = focusedVertex.getAddresses();
 		Address address = addresses.getMinAddress();
@@ -444,7 +444,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		// is enabled.
 		//
 
-		// 
+		//
 		// Initialize the clipboard with known data
 		//
 		Clipboard systemClipboard = GClipboard.getSystemClipboard();
@@ -476,7 +476,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 
 		//
 		// Validate and execute the action
-		//		
+		//
 		FGController controller = getFunctionGraphController();
 		ComponentProvider provider = controller.getProvider();
 		ActionContext actionContext = provider.getActionContext(null);
@@ -504,7 +504,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		VisualizationViewer<FGVertex, FGEdge> satelliteViewer = view.getSatelliteViewer();
 		Double originalGraphScale = getGraphScale(satelliteViewer);
 
-		// 
+		//
 		// window size change test
 		//
 		final Window window = windowForComponent(graphProvider.getComponent());
@@ -525,7 +525,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		newGraphScale = getGraphScale(satelliteViewer);
 		assertEquals(originalGraphScale, newGraphScale);
 
-		// 
+		//
 		// graph size change test
 		//
 		FGData functionGraphData = getFunctionGraphData();
@@ -560,11 +560,11 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 	}
 
 	public void TODO_testPersistence() {
-		// 	
+		//
 		// This wants to test that graph perspective info is saved between Ghidra sessions.  In
-		// other words, is my graph location and zoom level the same between Ghidra runs.  We 
+		// other words, is my graph location and zoom level the same between Ghidra runs.  We
 		// also want to test that colors and vertex locations are persisted between sessions.
-		// 
+		//
 		//
 
 		// Note: This is probably too hard to worry about.  To test this, we have to setup a
@@ -689,8 +689,8 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 
 	@Test
 	public void testFullyZoomedOutOption() throws Exception {
-		// 
-		// Test the default option that fits the entire graph into the window.  Then toggle the 
+		//
+		// Test the default option that fits the entire graph into the window.  Then toggle the
 		// option and test that a new graph starts fully zoomed-in.
 		//
 
@@ -762,7 +762,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void assertNotInHistory(FGVertex... vertices) {
 
@@ -881,7 +881,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		setProviderAlwaysFocused();
 
 		//
-		// Test that we can move a node, call relayout and that the moved node will not be 
+		// Test that we can move a node, call relayout and that the moved node will not be
 		// at the moved position.
 		//
 
@@ -896,7 +896,7 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		//               we want to record the initial values after performing a relayout.  Then,
 		//               we change a node's position, relayout again, and check the final values
 		//               with that after the first relayout.
-		//		
+		//
 		if (fullReload) {
 			performReload();
 		}
@@ -962,8 +962,8 @@ public class FunctionGraphPlugin1Test extends AbstractFunctionGraphTest {
 		// get broadcast to the CodeBrowser)
 		//
 
-		// Note: there is a timing failure that happens for this check; the event broadcast 
-		//       only happens if the FG provider has focus; in parallel batch mode focus is 
+		// Note: there is a timing failure that happens for this check; the event broadcast
+		//       only happens if the FG provider has focus; in parallel batch mode focus is
 		//       unreliable
 		if (!BATCH_MODE) {
 			assertTrue(graphAddressMatchesCodeBrowser(newGraph));

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,7 +80,7 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 		private final Color BG = Color.white;
 		private final PluginPackage pluginPackage;
 		private final GCheckBox checkBox;
-		
+
 		PluginPackageComponent(PluginPackage pluginPackage) {
 			super(new BorderLayout());
 			setBackground(BG);
@@ -99,28 +99,28 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 		private void initizalizeCheckBoxSection() {
 			final JPanel checkboxPanel = new JPanel(new HorizontalLayout(0));
 			checkboxPanel.setBackground(BG);
-			
+
 			checkBox.addActionListener(e -> checkBoxClicked());
 			if (!pluginPackage.isfullyAddable()) {
 				checkBox.setEnabled(false);
 			}
 			checkBox.setBackground(BG);
-			
+
 			checkboxPanel.add(Box.createHorizontalStrut(10));
 			checkboxPanel.add(checkBox);
 			checkboxPanel.add(Box.createHorizontalStrut(10));
-			
+
 			final JLabel iconLabel =
 				new GIconLabel(ResourceManager.getScaledIcon(pluginPackage.getIcon(), 32, 32, 32));
 			iconLabel.setBackground(BG);
-			
+
 			checkboxPanel.add(iconLabel);
 			checkboxPanel.add(Box.createHorizontalStrut(10));
 			checkboxPanel.setPreferredSize(new Dimension(84, 70));
-			
+
 			add(checkboxPanel, BorderLayout.WEST);
 		}
-		
+
 		private void initializeLabelSection() {
 			final JPanel centerPanel = new JPanel(new GridBagLayout());
 			GridBagConstraints gbc = new GridBagConstraints();
@@ -128,23 +128,23 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 			gbc.weightx = 1.0;
 
 			centerPanel.setBackground(BG);
-			
+
 			final JPanel labelPanel = new JPanel(new VerticalLayout(3));
 			labelPanel.setBackground(BG);
-			
+
 			final GLabel nameLabel = new GLabel(pluginPackage.getName());
 			nameLabel.setFont(nameLabel.getFont().deriveFont(18f));
 			nameLabel.setForeground(Color.BLACK);
 			labelPanel.add(nameLabel);
-			
+
 			final HyperlinkComponent configureHyperlink = createConfigureHyperlink();
 			labelPanel.add(configureHyperlink);
-			
+
 			labelPanel.setBorder(BorderFactory.createEmptyBorder(0, 25, 0, 40));
 			centerPanel.add(labelPanel, gbc);
 			add(centerPanel);
 		}
-		
+
 		private HyperlinkComponent createConfigureHyperlink() {
 			final HyperlinkComponent configureHyperlink =
 					new HyperlinkComponent("<html> <a href=\"Configure\">Configure</a>");
@@ -156,21 +156,21 @@ public class PluginManagerComponent extends JPanel implements ChangeListener, Sc
 				configureHyperlink.setBackground(BG);
 				return configureHyperlink;
 		}
-		
+
 		private String enchanceDescription(final String text) {
 			return String.format("<html><body style='width: 300px'>%s</body></html>", text);
 		}
-		
+
 		private void initializeDescriptionSection() {
 			final String htmlDescription = enchanceDescription(pluginPackage.getDescription());
-			
+
 			final JLabel descriptionlabel = new GHtmlLabel(htmlDescription);
 			descriptionlabel.setForeground(Color.GRAY);
 			descriptionlabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 			descriptionlabel.setVerticalAlignment(SwingConstants.TOP);
 			descriptionlabel.setToolTipText(
 				HTMLUtilities.toWrappedHTML(pluginPackage.getDescription(), 80));
-			
+
 			add(descriptionlabel, BorderLayout.EAST);
 		}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ public class CodeBlockVertex implements Comparable<CodeBlockVertex> {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param codeBlock the code block for this vertex
 	 */
 	public CodeBlockVertex(CodeBlock codeBlock) {
@@ -35,9 +35,9 @@ public class CodeBlockVertex implements Comparable<CodeBlockVertex> {
 	}
 
 	/**
-	 * A constructor that allows for the creation of dummy nodes.  This is useful in graphs 
+	 * A constructor that allows for the creation of dummy nodes.  This is useful in graphs
 	 * where multiple entry or exit points need to be parented by a single vertex.
-	 * 
+	 *
 	 * @param name the name of this vertex
 	 */
 	public CodeBlockVertex(String name) {

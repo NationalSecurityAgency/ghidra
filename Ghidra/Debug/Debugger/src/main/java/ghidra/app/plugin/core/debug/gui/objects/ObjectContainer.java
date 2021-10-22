@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -145,7 +145,7 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 		return provider.getParent(this);
 	}
 
-	/* 
+	/*
 	 * For all of what follow, you want to preserve the following pattern:
 	 * 		rebuildContainers
 	 * 		propagateProvider(p)
@@ -375,7 +375,7 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 
 	/**
 	 * Converts this object into XML
-	 * 
+	 *
 	 * @return new jdom {@link Element}
 	 */
 	public Element toXml() {
@@ -412,7 +412,7 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 	public void toXmlSchema(Element root) {
 		Element element = this.toXmlSchema();
 		root.addContent(element);
-	
+
 		for (ObjectContainer child : getCurrentChildren()) {
 			String key = child.getShortName();
 			if (attributeMap.containsKey(key)) {
@@ -428,7 +428,7 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 			}
 		}
 	}
-	
+
 	public Element toXmlSchema() {
 		String name = getPrefixedName();
 		if (name == null) {
@@ -489,7 +489,7 @@ public class ObjectContainer implements Comparable<ObjectContainer> {
 		result.addContent(n);
 		return result;
 	}
-	
+
 	private String sanitize(String name) {
 		name = name.replaceAll(" ", "_");
 		name = name.replaceAll("/", "_");

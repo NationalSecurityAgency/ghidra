@@ -18,7 +18,7 @@ define pcodeop getsec_unknown;
 	    if ( EBX != 0x0 ) goto <done>;
 		EAX = getsec_capabilities( EBX );
 		goto <done>;
-		
+
 	<leaf_1>
 	if ( EAX != 0x2 ) goto <leaf_2>;
 		getsec_enteraccs( EBX, ECX );
@@ -63,5 +63,5 @@ define pcodeop getsec_unknown;
 	<unknown>
 		getsec_unknown();
 
-	<done>		
+	<done>
 }

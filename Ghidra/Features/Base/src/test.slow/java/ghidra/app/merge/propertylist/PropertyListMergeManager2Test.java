@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -910,7 +910,7 @@ public class PropertyListMergeManager2Test extends AbstractMergeTest {
 			waitForCompletion();
 		}
 		else {
-			// wait until the panel has been reset			
+			// wait until the panel has been reset
 			waitForCondition(() -> !applyButton.isEnabled() || !rb.isVisible());
 		}
 
@@ -924,9 +924,9 @@ public class PropertyListMergeManager2Test extends AbstractMergeTest {
 
 		// note: there may be some timing issue with accessing swing components from the test
 		//       thread.   This waitForSwing() will cause registers to get flushed, making swing
-		//       changes visible to this thread.  
+		//       changes visible to this thread.
 		//
-		//       The correct change would probably be to put this code and the similar code from 
+		//       The correct change would probably be to put this code and the similar code from
 		//       the test framework onto the swing thread when attempting to find swing widgets.
 		waitForSwing();
 		Component[] comp = container.getComponents();

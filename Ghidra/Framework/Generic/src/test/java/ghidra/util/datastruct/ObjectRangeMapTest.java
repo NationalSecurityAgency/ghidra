@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 	public ObjectRangeMapTest() {
 		super();
 	}
-	
+
 @Test
     public void testGetSet() {
 		ObjectRangeMap<Object> map = new ObjectRangeMap<Object>();
@@ -38,7 +38,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 		assertEquals(obj, map.getObject(10));
 		assertEquals(obj, map.getObject(20));
 		assertEquals(null, map.getObject(21));
-		
+
 	}
 @Test
     public void testGetSet2() {
@@ -54,7 +54,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 		assertEquals(obj1, map.getObject(16));
 		assertEquals(obj1, map.getObject(60));
 		assertEquals(null, map.getObject(61));
-		
+
 	}
 @Test
     public void testGetSet3() {
@@ -70,7 +70,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 		assertEquals(obj2, map.getObject(60));
 		assertEquals(obj2, map.getObject(65));
 		assertEquals(null, map.getObject(66));
-		
+
 	}
 @Test
     public void testGetSet4() {
@@ -86,7 +86,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 		assertEquals(obj2, map.getObject(60));
 		assertEquals(obj2, map.getObject(65));
 		assertEquals(null, map.getObject(66));
-		
+
 	}
 @Test
     public void testGetSet5() {
@@ -101,7 +101,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 		assertEquals(obj2, map.getObject(55));
 		assertEquals(obj2, map.getObject(60));
 		assertEquals(null, map.getObject(61));
-		
+
 	}
 @Test
     public void testGetSet6() {
@@ -279,7 +279,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 		assertEquals(obj1, map.getObject(90));
 		assertEquals(null, map.getObject(91));
 	}
-	
+
 @Test
     public void testContains() {
 		ObjectRangeMap<Object> map = new ObjectRangeMap<Object>();
@@ -303,7 +303,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 		assertTrue( map.contains(90));
 		assertTrue(!map.contains(91));
 		assertTrue(!map.contains(1000));
-		
+
 	}
 @Test
     public void testIterator() {
@@ -316,7 +316,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 
 		IndexRangeIterator it = map.getIndexRangeIterator();
 		assertTrue(it.hasNext());
-		
+
 		IndexRange range = it.next();
 		assertEquals(20, range.getStart());
 		assertEquals(30, range.getEnd());
@@ -328,11 +328,11 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 		range = it.next();
 		assertEquals(60, range.getStart());
 		assertEquals(70, range.getEnd());
-	
+
 		range = it.next();
 		assertEquals(80, range.getStart());
 		assertEquals(90, range.getEnd());
-		
+
 		assertTrue(!it.hasNext());
 	}
 @Test
@@ -346,7 +346,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 
 		IndexRangeIterator it = map.getIndexRangeIterator(25, 85);
 		assertTrue(it.hasNext());
-		
+
 		IndexRange range = it.next();
 		assertEquals(25, range.getStart());
 		assertEquals(30, range.getEnd());
@@ -358,11 +358,11 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 		range = it.next();
 		assertEquals(60, range.getStart());
 		assertEquals(70, range.getEnd());
-	
+
 		range = it.next();
 		assertEquals(80, range.getStart());
 		assertEquals(85, range.getEnd());
-		
+
 		assertTrue(!it.hasNext());
 	}
 
@@ -377,7 +377,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 
 		IndexRangeIterator it = map.getIndexRangeIterator(0,10);
 		assertTrue(!it.hasNext());
-		
+
 	}
 @Test
     public void testIterator4() {
@@ -390,7 +390,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 
 		IndexRangeIterator it = map.getIndexRangeIterator(100, 200);
 		assertTrue(!it.hasNext());
-		
+
 	}
 @Test
     public void testIterator5() {
@@ -403,7 +403,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 
 		IndexRangeIterator it = map.getIndexRangeIterator(40, 50);
 		assertTrue(it.hasNext());
-		
+
 		IndexRange range = it.next();
 		assertEquals(40, range.getStart());
 		assertEquals(50, range.getEnd());
@@ -421,7 +421,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 
 		IndexRangeIterator it = map.getIndexRangeIterator(0,25);
 		assertTrue(it.hasNext());
-		
+
 		IndexRange range = it.next();
 		assertEquals(20, range.getStart());
 		assertEquals(25, range.getEnd());
@@ -439,7 +439,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 
 		IndexRangeIterator it = map.getIndexRangeIterator(65,100);
 		assertTrue(it.hasNext());
-		
+
 		IndexRange range = it.next();
 		assertEquals(65, range.getStart());
 		assertEquals(70, range.getEnd());
@@ -461,7 +461,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 
 		IndexRangeIterator it = map.getIndexRangeIterator(42,48);
 		assertTrue(it.hasNext());
-		
+
 		IndexRange range = it.next();
 		assertEquals(42, range.getStart());
 		assertEquals(48, range.getEnd());
@@ -479,7 +479,7 @@ public class ObjectRangeMapTest extends AbstractGenericTest {
 
 		IndexRangeIterator it = map.getIndexRangeIterator(35, 55);
 		assertTrue(it.hasNext());
-		
+
 		IndexRange range = it.next();
 		assertEquals(40, range.getStart());
 		assertEquals(50, range.getEnd());

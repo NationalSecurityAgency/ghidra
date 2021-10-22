@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,11 +97,11 @@ public abstract class AbstractModelForLldbProcessActivationTest
 		String expId = getProcessPattern().matchIndices(expected.getPath()).get(1);
 		assertEquals(Long.parseLong(expId, 16), Long.parseLong(procId));
 	}
-	
+
 	protected TargetInterpreter findInterpreter(TargetObject obj) throws Throwable {
 		return (TargetInterpreter) obj.getParent().getParent();
 	}
-	
+
 	@Override
 	@Test
 	public void testDefaultFocusIsAsExpected() throws Throwable {
@@ -138,7 +138,7 @@ public abstract class AbstractModelForLldbProcessActivationTest
 		}
 
 	}
-	
+
 	@Override
 	@Test
 	public void testActivateEachTwice() throws Throwable {

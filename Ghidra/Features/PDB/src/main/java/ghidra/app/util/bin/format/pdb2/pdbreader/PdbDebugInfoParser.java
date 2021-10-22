@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public class PdbDebugInfoParser {
 	 * Parses information to determine the version of Database Interface to create.
 	 * @param pdb {@link AbstractPdb} that owns this Database Interface.
 	 * @return {@link PdbDebugInfo} of the appropriate Database Interface or null if
-	 *  the stream does not have enough information to be parsed.  
+	 *  the stream does not have enough information to be parsed.
 	 * @throws IOException On file seek or read, invalid parameters, bad file configuration, or
 	 *  inability to read required bytes.
 	 * @throws PdbException Upon error in processing components.

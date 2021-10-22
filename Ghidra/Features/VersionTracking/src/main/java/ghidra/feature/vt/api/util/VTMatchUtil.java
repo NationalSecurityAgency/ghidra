@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ public class VTMatchUtil {
 	/**
 	 * Get the set of addresses associated with either the source or destination of a version tracking match.
 	 * @param vtMatch the version tracking match
-	 * @param forSource true means get the addresses for the source part of the match; 
+	 * @param forSource true means get the addresses for the source part of the match;
 	 * false means get the destination part.
 	 * @return the source or destination addresses for the match.
 	 */

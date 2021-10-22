@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	/**
 	 * Build a trace with a program ready for emulation
-	 * 
+	 *
 	 * <p>
 	 * This creates a relatively bare-bones trace with initial state for testing trace
 	 * emulation/interpolation. It adds ".text" and "stack" regions, creates a thread, assembles
@@ -56,7 +56,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	 * thread) to finish initializing the trace. Note, though given first, the SLEIGH is executed
 	 * after assembly. Thus, it can be used to modify the resulting machine code by modifying the
 	 * memory where it was assembled.
-	 * 
+	 *
 	 * @param tb the trace builder
 	 * @param stateInit SLEIGH source lines to execute to initialize the trace state before
 	 *            emulation. Each line must end with ";"
@@ -96,7 +96,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	/**
 	 * Test a single instruction
-	 * 
+	 *
 	 * <p>
 	 * This tests that the internal p-code execution is working, that intermediate writes do not
 	 * affect the trace, and that the write-down method works. That written state is also verified
@@ -143,7 +143,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	/**
 	 * Test two consecutive instructions
-	 * 
+	 *
 	 * <p>
 	 * This tests both the fall-through case, and that the emulator is using the cached intermediate
 	 * register state, rather than reading through to the trace, again.
@@ -180,7 +180,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	/**
 	 * Test the branch case
-	 * 
+	 *
 	 * <p>
 	 * This tests that branch instructions function. Both the emulator's counter and the PC of the
 	 * machine state are verified after the JMP.
@@ -228,7 +228,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	/**
 	 * Test branch with flow
-	 * 
+	 *
 	 * <p>
 	 * This will test both context flow and some language-specific state modifiers, since ARM needs
 	 * to truncate the last bit when jumping into THUMB mode.
@@ -360,7 +360,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	/**
 	 * Test the instruction decoder considers the cached state
-	 * 
+	 *
 	 * <p>
 	 * This may not reflect the semantics of an actual processor in these situations, since they may
 	 * have instruction caching. Emulating such semantics is TODO, if at all. NB. This also tests
@@ -405,7 +405,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	/**
 	 * Test a two-instruction sample with p-code stepping
-	 * 
+	 *
 	 * <p>
 	 * Two instructions are used here to ensure that stepping will proceed to the next instruction.
 	 * This will also serve as an evaluation of the API.
@@ -461,7 +461,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	/**
 	 * Test the inject method
-	 * 
+	 *
 	 * <p>
 	 * This tests that injects work, and that they can invoke a userop from a client-provided
 	 * library
@@ -504,7 +504,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	/**
 	 * Test that injects and interrupts work
-	 * 
+	 *
 	 * <p>
 	 * We'll put the interrupt within a more involved inject, so we can single-step the remainder of
 	 * the inject, too. This will check the semantics of stepping over the interrupt.
@@ -601,7 +601,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	/**
 	 * Test ARM's CLZ instruction
-	 * 
+	 *
 	 * <p>
 	 * This tests that the state modifiers are properly invoked on CALLOTHER.
 	 */
@@ -632,7 +632,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	/**
 	 * Test x86's MOVAPS instruction
-	 * 
+	 *
 	 * <p>
 	 * This test hits a SUBPIECE instruction where the two input operands have differing sizes.
 	 */
@@ -670,7 +670,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 
 	/**
 	 * Test x86's SAR instruction
-	 * 
+	 *
 	 * <p>
 	 * This test hits an INT_SRIGHT p-code op where the two input operands have differing sizes.
 	 */

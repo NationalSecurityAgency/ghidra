@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,10 +29,10 @@ public interface ConsoleService {
 
 	/**
 	 * Appends message to the console text area.
-	 * 
+	 *
 	 * For example:
 	 *    "originator&gt; message"
-	 * 
+	 *
 	 * @param originator  a descriptive name of the message creator
 	 * @param message     the message to appear in the console
 	 */
@@ -50,7 +50,7 @@ public interface ConsoleService {
 	/**
 	 * Appends an exception to the console text area.
 	 * @param originator  a descriptive name of the message creator
-	 * @param exc         the exception 
+	 * @param exc         the exception
 	 */
 	public void addException(String originator, Exception exc);
 
@@ -98,37 +98,37 @@ public interface ConsoleService {
 	public PrintWriter getStdErr();
 
 	/**
-	 * Returns number of characters of currently 
+	 * Returns number of characters of currently
 	 * in the console.
 	 * If the console is cleared, this number is reset.
-	 * 
+	 *
 	 * Please note:
 	 * Support for this method is optional
 	 * based on the underlying console
 	 * implementation. If this method cannot be supported,
 	 * please throw {@link UnsupportedOperationException}.
-	 * 
+	 *
 	 * @return number of characters &gt;= 0
-	 * 
+	 *
 	 * @throws UnsupportedOperationException
 	 */
 	public int getTextLength();
 
 	/**
-	 * Fetches the text contained within the given portion 
+	 * Fetches the text contained within the given portion
 	 * of the console.
-	 * 
+	 *
 	 * Please note:
 	 * Support for this method is optional
 	 * based on the underlying console
 	 * implementation. If this method cannot be supported,
 	 * please throw {@link UnsupportedOperationException}.
-	 * 
+	 *
 	 * @param offset  the offset into the console representing the desired start of the text &gt;= 0
 	 * @param length  the length of the desired string &gt;= 0
-	 * 
+	 *
 	 * @return the text, in a String of length &gt;= 0
-	 * 
+	 *
 	 * @throws UnsupportedOperationException
 	 */
 	public String getText(int offset, int length);

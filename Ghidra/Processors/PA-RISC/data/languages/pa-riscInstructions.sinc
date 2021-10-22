@@ -12,9 +12,9 @@ with : phase=1 {
 :LDW OFF_BASE_14,R1dst		is opfam=0x12 & OFF_BASE_14 & R1dst {
 	addr:$(ADDRSIZE) = OFF_BASE_14;
     R1dst =  zext(*[ram]:4 addr) ;
- } 
+ }
 
-:LDH OFF_BASE_14,R1dst		is opfam=0x11 & OFF_BASE_14 & R1dst { 
+:LDH OFF_BASE_14,R1dst		is opfam=0x11 & OFF_BASE_14 & R1dst {
 	addr:$(ADDRSIZE) = OFF_BASE_14;
     R1dst = zext(*[ram]:2 addr) ;
 }
@@ -22,70 +22,70 @@ with : phase=1 {
 :LDB OFF_BASE_14,R1dst		is opfam=0x10 & OFF_BASE_14 & R1dst {
 	addr:$(ADDRSIZE) = OFF_BASE_14;
     R1dst = zext(*[ram]:1 addr) ;
-} 
+}
 
 :STW R1,OFF_BASE_14		is opfam=0x1A & OFF_BASE_14 & R1 {
 	addr:$(ADDRSIZE) = OFF_BASE_14;
-	*[ram]:4 addr = R1:4; 
- } 
+	*[ram]:4 addr = R1:4;
+ }
 
-:STH R1,OFF_BASE_14 		is opfam=0x19 & R1 & OFF_BASE_14 { 
+:STH R1,OFF_BASE_14 		is opfam=0x19 & R1 & OFF_BASE_14 {
 	addr:$(ADDRSIZE) = OFF_BASE_14;
-	*[ram]:2 addr = R1:2; 
+	*[ram]:2 addr = R1:2;
 }
 :STB R1,OFF_BASE_14		is opfam=0x18 & OFF_BASE_14 & R1 {
 	addr:$(ADDRSIZE) = OFF_BASE_14;
-	*[ram]:1 addr = R1:1; 
-} 
+	*[ram]:1 addr = R1:1;
+}
 
 :LDW^",M" OFF_BASE_14,R1dst		is opfam=0x13 & OFF_BASE_14 & R1dst & RB & SPCBASE & lse14 {
 	off:$(ADDRSIZE) = 0;
 	if (lse14 s>=  0x0) goto <IGNOREIMM>;
 	off = sext(lse14);
-	<IGNOREIMM> 
+	<IGNOREIMM>
 	addr:$(ADDRSIZE) = SPCBASE + off;
 	RB = RB + lse14;
     R1dst = zext( *[ram]:4 addr );
-} 
+}
 
 :STW^",M" R1,OFF_BASE_14		is opfam=0x1B & OFF_BASE_14 & R1 & RB & SPCBASE & lse14 {
 	addr:$(ADDRSIZE) = SPCBASE;
     local imm = sext(lse14);
 	if (imm s>=  0x0) goto <IGNOREIMM>;
 	addr = addr + imm;
-	<IGNOREIMM> 
-	*[ram]:4 addr = R1; 
+	<IGNOREIMM>
+	*[ram]:4 addr = R1;
 	RB = RB + imm;
-} 
+}
 
 # LDWX
 :LDW^indexedWordAccessCmplt^loadCC RX^SRRB,RT is opfam=0x03 & subop=2 & zero=0 & indexedWordAccessCmplt & loadCC & RX & RT & SRRB {
-	address:$(ADDRSIZE) = indexedWordAccessCmplt;  
+	address:$(ADDRSIZE) = indexedWordAccessCmplt;
     RT =  zext(*[ram]:4 address) ;
  }
- 
+
  #LDHX
 :LDH^indexedHalfwordAccessCmplt^loadCC RX^SRRB,RT is opfam=0x03 & subop=1 & zero=0 & indexedHalfwordAccessCmplt & loadCC & RX & SRRB & RT {
-	address:$(ADDRSIZE) = indexedHalfwordAccessCmplt;  
+	address:$(ADDRSIZE) = indexedHalfwordAccessCmplt;
     RT =  zext(*[ram]:2 address) ;
 }
 
 #LDBX
 :LDB^indexedByteAccessCmplt^loadCC RX^SRRB,RT is opfam=0x03 & subop=0 & zero=0 & indexedByteAccessCmplt & loadCC & RX & SRRB & RT {
-	address:$(ADDRSIZE) = indexedByteAccessCmplt;  
+	address:$(ADDRSIZE) = indexedByteAccessCmplt;
     RT =  zext(*[ram]:1 address) ;
 }
 
 # same as LDWX, except that it checks privilege levels
 :LDWAX^indexedWordAccessCmplt^loadCC RX(RB),RT 				is opfam=0x03 & subop=6 & zero=0 & s=0 & indexedWordAccessCmplt & loadCC & RX & SRRB & RB & RT {
-	address:$(ADDRSIZE) = indexedWordAccessCmplt;  
+	address:$(ADDRSIZE) = indexedWordAccessCmplt;
     RT =  zext(*[ram]:4 address) ;
 }
 
 :LDCWX^indexedDoublewordAccessCmplt^loadClearCC RX^SRRB,RT 		is opfam=0x03 & subop=7 & zero=0 & indexedDoublewordAccessCmplt & loadClearCC & RX & SRRB & RT {
-	address:$(ADDRSIZE) = indexedDoublewordAccessCmplt;  
+	address:$(ADDRSIZE) = indexedDoublewordAccessCmplt;
     RT =  zext(*[ram]:4 address);
-    *[ram]:4 address = 0:4; 
+    *[ram]:4 address = 0:4;
  }
 
 # LDWS
@@ -109,19 +109,19 @@ with : phase=1 {
 #STWS
 :STW^storeShortDispCmplt^storeCC RR,lse5^SRRB				is opfam=0x03 & subop=0xA & one=1 & storeShortDispCmplt & storeCC & lse5 & SRRB & RR {
 	addr:$(ADDRSIZE) = storeShortDispCmplt;
-	*[ram]:4 addr = RR:4; 
+	*[ram]:4 addr = RR:4;
 }
 
 #STHS
 :STH^storeShortDispCmplt^storeCC RR,lse5^SRRB				is opfam=0x03 & subop=0x9 & one=1 & storeShortDispCmplt & storeCC & lse5 & SRRB & RR {
 	addr:$(ADDRSIZE) = storeShortDispCmplt;
-	*[ram]:2 addr = RR:2; 
+	*[ram]:2 addr = RR:2;
 }
 
 #STBS
 :STB^storeShortDispCmplt^storeCC RR,lse5^SRRB				is opfam=0x03 & subop=0x8 & one=1 & storeShortDispCmplt & storeCC & lse5 & SRRB & RR {
 	addr:$(ADDRSIZE) = storeShortDispCmplt;
-	*[ram]:1 addr = RR:1; 
+	*[ram]:1 addr = RR:1;
 }
 
 :LDWAS^shortDispCmplt^loadCC highlse5(RB),RT			is opfam=0x03 & subop=6 & one=1 & shortDispCmplt & loadCC & highlse5 & RB & RT {
@@ -130,14 +130,14 @@ with : phase=1 {
 }
 
 :LDCWS^shortDispCmplt^loadClearCC highlse5^SRRB,RT		is opfam=0x03 & subop=7 & one=1 & shortDispCmplt & loadClearCC & highlse5 & SRRB & RT {
-	address:$(ADDRSIZE) = shortDispCmplt;  
+	address:$(ADDRSIZE) = shortDispCmplt;
     RT =  zext(*:4 address);
-    *[ram]:4 address = 0:4; 
+    *[ram]:4 address = 0:4;
 }
 
 :STWAS^shortDispCmplt^storeCC RR,lse5(RB)				is opfam=0x03 & subop=0xE & one=1 & shortDispCmplt & storeCC & lse5 & RB & RR {
 	addr:$(ADDRSIZE) = shortDispCmplt;
-	*[ram] :4 addr = RR:4; 
+	*[ram] :4 addr = RR:4;
 }
 
 # This is the "begin" version for big endian. I am not doing the little endian version.
@@ -193,7 +193,7 @@ with : phase=1 {
 :COPY RB,R1dst										is opfam=0x0D & im14=0 & RB & R1dst {
 	R1dst = RB;
  }
- 
+
 :LDI lse14,R1dst									is opfam=0x0D & b=0 & lse14 & R1dst {
 	R1dst = lse14;
 }
@@ -216,7 +216,7 @@ with : phase=1 {
 # unconditional immediate calls
 ################################################################################
 # non-nullifying unconditional immediate call
-:B^",L"^nullifyForBranch branchTarget3W,R2dst						is opfam=0x3A & c=0x0 & R2dst & nullifyForBranch & n=0 & branchTarget3W & $(COMMON) 
+:B^",L"^nullifyForBranch branchTarget3W,R2dst						is opfam=0x3A & c=0x0 & R2dst & nullifyForBranch & n=0 & branchTarget3W & $(COMMON)
 	[
 	  branchEnable = 1;
 	  globalset(inst_next, branchEnable);
@@ -231,8 +231,8 @@ with : phase=1 {
 }
 
 # nullifying unconditional immediate call
-# special case that doesn't need the deferral mechanism 
-:B^",L"^nullifySymForBranch branchTarget3W,R2dst						is opfam=0x3A & c=0x0 & R2dst & nullifySymForBranch & n=1 & branchTarget3W & $(COMMON) 
+# special case that doesn't need the deferral mechanism
+:B^",L"^nullifySymForBranch branchTarget3W,R2dst						is opfam=0x3A & c=0x0 & R2dst & nullifySymForBranch & n=1 & branchTarget3W & $(COMMON)
 {
 	R2dst = inst_start+8;
 	call branchTarget3W;
@@ -244,7 +244,7 @@ with : phase=1 {
 # By having a second op for it, we can use a goto and prevent analysis tools from thinking this is a legitimate subroutine call
 ################################################################################
 # non-nullifying unconditional immediate branch (no link)
-:B^nullifyForBranch branchTarget3W							is opfam=0x3A & c=0x0 & reg2=0 & nullifyForBranch & n=0 & branchTarget3W & $(COMMON) 
+:B^nullifyForBranch branchTarget3W							is opfam=0x3A & c=0x0 & reg2=0 & nullifyForBranch & n=0 & branchTarget3W & $(COMMON)
 	[
 	  branchEnable = 1;
 	  globalset(inst_next, branchEnable);
@@ -252,7 +252,7 @@ with : phase=1 {
 	  globalset(inst_next, branchType);
 	  branchCouldBeNullified = nullifyEnable;
 	  globalset(inst_next, branchCouldBeNullified);
-	  
+
 	]
 {
 	branchExecuted = 1;
@@ -261,7 +261,7 @@ with : phase=1 {
 # nullifying unconditional immediate branch (no link)
 # This is a special case, as we just do the branch and don't use
 # our defered branching mechanism
-:B^nullifySymForBranch branchTarget3W							is opfam=0x3A & c=0x0 & reg2=0 & nullifySymForBranch & n=1 & branchTarget3W & $(COMMON) 
+:B^nullifySymForBranch branchTarget3W							is opfam=0x3A & c=0x0 & reg2=0 & nullifySymForBranch & n=1 & branchTarget3W & $(COMMON)
 {
 	goto branchTarget3W;
 }
@@ -524,7 +524,7 @@ with : phase=1 {
 }
 
 ###########################
-:ADDBT^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x28 & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & RegAddCond & RegAddCondSym & n=0 & $(COMMON) 
+:ADDBT^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x28 & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & RegAddCond & RegAddCondSym & n=0 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -539,7 +539,7 @@ with : phase=1 {
 	R2dst = R1 + R2;
 }
 
-:ADDBT^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x28 & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegAddCond & RegAddCondSym & n=1 & $(COMMON) 
+:ADDBT^RegAddCondSym^nullifyForBranch R1,R2dst,branchTarget2W		is opfam=0x28 & R1 & R2dst & R2 & nullifyForBranch & branchTarget2W & displacement2W & RegAddCond & RegAddCondSym & n=1 & $(COMMON)
  	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -650,7 +650,7 @@ with : phase=1 {
 	nullifyNextCond = ( ! branchCond && (displacement2W s< 0)) || ( branchCond && (displacement2W s>= 0) );
 	R2dst = R2 + sext(highlse5);
 }
-	
+
 #######################################
 :BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & branchTarget2W & nullifyForBranch & R1 & BVBCond & SEDCondSym & SAR & n=0 & $(COMMON)
 	[ branchEnable = 1;
@@ -663,9 +663,9 @@ with : phase=1 {
 {
 	branchCond = BVBCond;
 	branchExecuted = 1;
-}						
+}
 
-:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & branchTarget2W & nullifyForBranch & displacement2W & R1 & BVBCond & SEDCondSym & SAR & n=1 & $(COMMON) 
+:BB^SEDCondSym^nullifyForBranch R1,SAR,branchTarget2W				is opfam=0x30 & branchTarget2W & nullifyForBranch & displacement2W & R1 & BVBCond & SEDCondSym & SAR & n=1 & $(COMMON)
 	[ branchEnable = 1;
 	  globalset(inst_next, branchEnable);
 	  branchType = 2; # conditional imm branch
@@ -691,7 +691,7 @@ with : phase=1 {
 {
 	branchCond = BBCond;
 	branchExecuted = 1;
-}						
+}
 
 :BB^SEDCondSym^nullifyForBranch R1,bboffset,branchTarget2W			is opfam=0x31 & branchTarget2W & displacement2W & nullifyForBranch & R1 & BBCond & SEDCondSym & n=1 & bboffset & $(COMMON)
 	[ branchEnable = 1;
@@ -745,7 +745,7 @@ define pcodeop getCurrentSpace;
 	]
 {
 	r31 = inst_next+4;  # store the link/return address
-	sr0 = iasq_front; # store the link/return space ID 
+	sr0 = iasq_front; # store the link/return space ID
 	iasq_front = SR3bit; # set the space ID to the new space ID
 	# with the current deferral system, this will mean the sr is wrong during the delay slot
 	branchExecuted = 1;
@@ -754,12 +754,12 @@ define pcodeop getCurrentSpace;
 :BE^",L"^nullifyForBranch externalTarget,SR0,R31	is opfam=0x39 & nullifyForBranch & SR0 & R31 & SR3bit & externalTarget & n=1 & $(COMMON)
 {
 	r31 = inst_next+4; # store the link/return address
-	sr0 = iasq_front; # store the link/return space ID 
+	sr0 = iasq_front; # store the link/return space ID
 	iasq_front = SR3bit; # set the space ID to the new space ID
 	call [externalTarget];
 }
 
-:B^",GATE"^nullifyForBranch branchTarget3W,R2dst					is opfam=0x3A & c=0x1 & R2dst & nullifyForBranch & branchTarget3W & n=0 & $(COMMON) 
+:B^",GATE"^nullifyForBranch branchTarget3W,R2dst					is opfam=0x3A & c=0x1 & R2dst & nullifyForBranch & branchTarget3W & n=0 & $(COMMON)
 	[
 	  branchEnable = 1;
 	  globalset(inst_next, branchEnable);
@@ -822,7 +822,7 @@ define pcodeop trap;
 	local partialSum = R2 + zext(pswCB);
 	partialCarry:1 = carry(R2, zext(pswCB));
 	partialOverflow:1 = scarry(R2, zext(pswCB));
-	takeTrap:1 = partialOverflow == 0x1:1; 
+	takeTrap:1 = partialOverflow == 0x1:1;
 	if (takeTrap) goto <TRAP>;
 	RT = partialSum + R1;
 	finalCarry:1 = carry(partialSum, R1);
@@ -982,7 +982,7 @@ define pcodeop trap;
 		goto <CONTINUE>;
 	<MINUS>
 		right = ~R2 + 1;
-	<CONTINUE>	
+	<CONTINUE>
 
 	RT = left + right;
 
@@ -992,7 +992,7 @@ define pcodeop trap;
 # this could be the error.
 	shiftBit:1 = ((origR2 >> 31) & 0x1) == 1;
 	pswV = pswCB ^ shiftBit;
-		
+
 # handle nullification -- TODO This condition is special and the stock CSCondNullify won't work -- broken -- see page 5-103
 	build CSCondNullify;
 }
@@ -1007,7 +1007,7 @@ define pcodeop trap;
 :COPY R1,RT				is opfam=0x02 & op=0x09 & m=0 & R1 & reg2=0 & RT & c=0 & fv=0 {
 	RT = R1;
  }
- 
+
 # nop is a pseudo-op for OR R0,R0, which is one way to make a nop
 :NOP					is opfam=0x02 & op=0x09 & m=0 & reg1=0 & reg2=0 & t=0 & c=0 & fv=0 { } # intentionally left blank
 
@@ -1039,7 +1039,7 @@ define pcodeop trap;
 :UADDCM^UnitCondSym R1,R2,RT	is opfam=0x02 & op=0x26 & m=0 & R1 & R2 & RT & UnitCondSym & UnitCondNullify {
 	RT = R1 + ~R2;
 	build UnitCondNullify;
-	
+
 }
 
 :UADDCMT^UnitCondSym R1,R2,RT	is opfam=0x02 & op=0x27 & m=0 & R1 & R2 & RT & UnitCond & UnitCondSym {
@@ -1128,8 +1128,8 @@ define pcodeop trap;
 	concat = concat >> SAR;
 	nullifyCondResult=concat:$(REGSIZE);
 	RT = concat:4;
-	
-	build ShiftCondNullify; 
+
+	build ShiftCondNullify;
 }
 
 # previously this was shd, now is shrpw form 14
@@ -1139,8 +1139,8 @@ define pcodeop trap;
 	concat = concat >> shiftC;
 	nullifyCondResult=concat:$(REGSIZE);
 	RT = concat:4;
-	
-	build ShiftCondNullify; 
+
+	build ShiftCondNullify;
 }
 
 # extract unsigned using SAR
@@ -1149,8 +1149,8 @@ define pcodeop trap;
 	mask:4 = 0xffffffff >> (32 - shiftCLen);
 	nullifyCondResult = value & mask;
 	R1dst = nullifyCondResult;
-	
-	build ExtrCondNullify; 
+
+	build ExtrCondNullify;
 }
 
 # extract signed using SAR
@@ -1190,10 +1190,10 @@ define pcodeop trap;
         value = value << (31-SAR);
         mask = mask << (31-SAR);
         local result = R2 & ~mask;
-        result = result | value; 
+        result = result | value;
         R2dst = result;
         nullifyCondResult = result;
-        
+
         build DepCondNullify;
 }
 
@@ -1214,7 +1214,7 @@ define pcodeop trap;
 :DEPWI^SEDCondSym highlse5,SAR,shiftCLen,R2dst is opfam=0x35 & bits59=0 & subop1012=5 & shiftCLen & highlse5 & R2 & R2dst & DepCondNullify & SEDCondSym & SAR {
         mask:4 = 0xffffffff >> (32 - shiftCLen);
         depbits:4 = sext(highlse5);
-        depbits = sext(depbits); 
+        depbits = sext(depbits);
         local value = depbits & mask;
         value = value << (31-SAR);
         mask = mask << (31-SAR);
@@ -1297,7 +1297,7 @@ define pcodeop break;
 	iaoq_back = cr18;
 	iaoq_front = cr18;
 	iasq_back = cr17;
-	iasq_front = cr17; 
+	iasq_front = cr17;
 	upperBits:8 = zext(iasq_front);
 	lowerBits:8 = zext(iaoq_front);
 	local returnAddr = (upperBits << 32) | lowerBits;
@@ -1319,7 +1319,7 @@ define pcodeop break;
 	iasq_back = cr17;
 	iasq_front = cr17;
 	upperBits:8 = zext(iasq_front);
-	lowerBits:8 = zext(iaoq_front); 
+	lowerBits:8 = zext(iaoq_front);
 	returnAddr:8 = (upperBits << 32) | lowerBits;
 	goto [returnAddr];
 }
@@ -1335,9 +1335,9 @@ define pcodeop break;
 	pswG = pswG || (highIm10 & 0x40);
 	pswF = pswF || (highIm10 & 0x20);
 	pswR = pswR || (highIm10 & 0x10);
-	pswP = pswP || (highIm10 & 0x4); 
-	pswD = pswD || (highIm10 & 0x2); 
-	pswI = pswI || (highIm10 & 0x1); 
+	pswP = pswP || (highIm10 & 0x4);
+	pswD = pswD || (highIm10 & 0x2);
+	pswI = pswI || (highIm10 & 0x1);
 }
 
 :RSM highIm10,RT							is opfam=0x0 & sysop=0x73 & c=0x0 & highIm10 & RT {
@@ -1351,9 +1351,9 @@ define pcodeop break;
 	pswG = pswG && ((highIm10 & 0x40:1) == 0);
 	pswF = pswF && ((highIm10 & 0x20:1) == 0);
 	pswR = pswR && ((highIm10 & 0x10:1) == 0);
-	pswP = pswP && ((highIm10 & 0x4:1) == 0); 
-	pswD = pswD && ((highIm10 & 0x2:1) == 0); 
-	pswI = pswI && ((highIm10 & 0x1:1) == 0); 
+	pswP = pswP && ((highIm10 & 0x4:1) == 0);
+	pswD = pswD && ((highIm10 & 0x2:1) == 0);
+	pswI = pswI && ((highIm10 & 0x1:1) == 0);
  }
 
 :MTSM R1								is opfam=0x0 & sysop=0xC3 & c=0x0 & im5=0 & R1 {
@@ -1455,17 +1455,17 @@ define pcodeop diag;
 :SPOP3,SFU^nullifyForSpecial sop R1,R2				is opfam=0x04 & specop=3 & SFU & nullifyForSpecial & R1 & R2 & im5 & sopim5 [ sop=(sopim5 << 5) | im5; ] unimpl
 :COPR,SFU,sop^nullifyForSpecial						is opfam=0x0C & SFU & nullifyForSpecial & im5 & sopim17 [ sop=(sopim17 << 5) | im5; ] unimpl
 
-:CLDW,SFU^indexedWordAccessCmplt^loadCC RX^SRRB,RT		is opfam=0x09 & bit9=0 & zero=0 & RX & SRRB & RT & SFU & indexedWordAccessCmplt & loadCC unimpl 
+:CLDW,SFU^indexedWordAccessCmplt^loadCC RX^SRRB,RT		is opfam=0x09 & bit9=0 & zero=0 & RX & SRRB & RT & SFU & indexedWordAccessCmplt & loadCC unimpl
 :CLDD,SFU^indexedDoublewordAccessCmplt^loadCC RX^SRRB,RT		is opfam=0x0B & bit9=0 & zero=0 & RX & SRRB & RT & SFU & indexedDoublewordAccessCmplt & loadCC unimpl
 :CSTW,SFU^indexedWordAccessCmplt^storeCC RT,RX^SRRB	is opfam=0x09 & bit9=1 & zero=0 & RX & SRRB & RT & SFU & indexedWordAccessCmplt & storeCC unimpl
 :CSTD,SFU^indexedDoublewordAccessCmplt^storeCC RT,RX^SRRB	is opfam=0x0B & bit9=1 & zero=0 & RX & SRRB & RT & SFU & indexedDoublewordAccessCmplt & storeCC unimpl
 
-:CLDW,SFU^shortDispCmplt^loadCC highlse5^SRRB,RT	is opfam=0x09 & bit9=0 & one=1 & SRRB & RT & SFU & highlse5 & shortDispCmplt & loadCC unimpl 
-:CLDD,SFU^shortDispCmplt^loadCC highlse5^SRRB,RT	is opfam=0x0B & bit9=0 & one=1 & SRRB & RT & SFU & highlse5 & shortDispCmplt & loadCC unimpl 
-:CSTW,SFU^shortDispCmplt^storeCC RT,highlse5^SRRB	is opfam=0x09 & bit9=1 & one=1 & SRRB & RT & SFU & highlse5 & shortDispCmplt & storeCC unimpl 
+:CLDW,SFU^shortDispCmplt^loadCC highlse5^SRRB,RT	is opfam=0x09 & bit9=0 & one=1 & SRRB & RT & SFU & highlse5 & shortDispCmplt & loadCC unimpl
+:CLDD,SFU^shortDispCmplt^loadCC highlse5^SRRB,RT	is opfam=0x0B & bit9=0 & one=1 & SRRB & RT & SFU & highlse5 & shortDispCmplt & loadCC unimpl
+:CSTW,SFU^shortDispCmplt^storeCC RT,highlse5^SRRB	is opfam=0x09 & bit9=1 & one=1 & SRRB & RT & SFU & highlse5 & shortDispCmplt & storeCC unimpl
 :CSTD,SFU^shortDispCmplt^storeCC RT,highlse5^SRRB	is opfam=0x0B & bit9=1 & one=1 & SRRB & RT & SFU & highlse5 & shortDispCmplt & storeCC unimpl
- 
- 
+
+
 #################################################
 # Floating Point Instructions
 #################################################
@@ -1475,91 +1475,91 @@ define pcodeop diag;
 :FLDW^indexedWordAccessCmplt^loadCC RX^SRRB,FPRT32		is opfam=0x09 & zero=0 & bit9=0 & bits78=0 & indexedWordAccessCmplt & loadCC & SRRB & RX & FPRT32 & SPCBASE & u=0 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(RX);
     FPRT32 = zext(*:4 addr);
-} 
+}
 
 :FLDW^indexedWordAccessCmplt^loadCC RX^SRRB,FPRT32		is opfam=0x09 & zero=0 & bit9=0 & bits78=0 & indexedWordAccessCmplt & loadCC & SRRB & RX & FPRT32 & SPCBASE & u=1 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + (sext(RX) << 2);
     FPRT32 = zext(*:4 addr);
-} 
+}
 
 :FLDW^indexedWordAccessCmplt^loadCC RX^SRRB,FPRT32		is opfam=0x09 & zero=0 & bit9=0 & bits78=0 & indexedWordAccessCmplt & loadCC & SRRB & RX & RB & FPRT32 & SPCBASE & u=0 & m=1 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(RX);
     FPRT32 = zext(*:4 addr);
     RB = RB + RX;
-} 
+}
 
 :FLDW^indexedWordAccessCmplt^loadCC RX^SRRB,FPRT32		is opfam=0x09 & zero=0 & bit9=0 & bits78=0 & indexedWordAccessCmplt & loadCC & SRRB & RB & RX & FPRT32 & SPCBASE & u=1 & m=1 {
 	addr:$(ADDRSIZE) = SPCBASE + (sext(RX) << 2);
     FPRT32 = zext(*:4 addr);
     RB = RB + RX;
-} 
+}
 
 # Floating Point Loads, 64 bit, indirect/indexed
 :FLDD^indexedDoublewordAccessCmplt^loadCC RX^SRRB,FPRT64		is opfam=0x0B & zero=0 & bit9=0 & sfu=0 & indexedDoublewordAccessCmplt & loadCC & SRRB & RX & FPRT64 & SPCBASE & u=0 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(RX);
     FPRT64 = zext(*:8 addr);
-} 
+}
 
 :FLDD^indexedDoublewordAccessCmplt^loadCC RX^SRRB,FPRT64		is opfam=0x0B & zero=0 & bit9=0 & sfu=0 & indexedDoublewordAccessCmplt & loadCC & SRRB & RX & FPRT64 & SPCBASE & u=1 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + (sext(RX) << 2);
     FPRT64 = zext(*:8 addr);
-} 
+}
 
 :FLDD^indexedDoublewordAccessCmplt^loadCC RX^SRRB,FPRT64		is opfam=0x0B & zero=0 & bit9=0 & sfu=0 & indexedDoublewordAccessCmplt & loadCC & SRRB & RX & RB & FPRT64 & SPCBASE & u=0 & m=1 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(RX);
     FPRT64 = zext(*:8 addr);
     RB = RB + RX;
-} 
+}
 
 :FLDD^indexedDoublewordAccessCmplt^loadCC RX^SRRB,FPRT64		is opfam=0x0B & zero=0 & bit9=0 & sfu=0 & indexedDoublewordAccessCmplt & loadCC & SRRB & RB & RX & FPRT64 & SPCBASE & u=1 & m=1 {
 	addr:$(ADDRSIZE) = SPCBASE + (sext(RX) << 3);
     FPRT64 = zext(*:8 addr);
     RB = RB + RX;
-} 
+}
 
 
 # Floating Point Stores -- 32 and 64 bits
 :FSTW^indexedWordAccessCmplt^storeCC FPRT32,RX^SRRB		is opfam=0x09 & zero=0 & bit9=1 & bits78=0 & indexedWordAccessCmplt & storeCC & SRRB & RX & FPRT32 & SPCBASE & u=0 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(RX);
-	*addr = FPRT32:4; 
+	*addr = FPRT32:4;
 }
 
 :FSTW^indexedWordAccessCmplt^storeCC FPRT32,RX^SRRB		is opfam=0x09 & zero=0 & bit9=1 & bits78=0 & indexedWordAccessCmplt & storeCC & SRRB & RX & FPRT32 & SPCBASE & u=1 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + (sext(RX) << 2);
-	*addr = FPRT32:4; 
+	*addr = FPRT32:4;
 }
 
 :FSTW^indexedWordAccessCmplt^storeCC FPRT32,RX^SRRB		is opfam=0x09 & zero=0 & bit9=1 & bits78=0 & indexedWordAccessCmplt & storeCC & SRRB & RX & RB & FPRT32 & SPCBASE & u=0 & m=1 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(RX);
-	*addr = FPRT32:4; 
+	*addr = FPRT32:4;
     RB = RB + RX;
 }
 
 :FSTW^indexedWordAccessCmplt^storeCC FPRT32,RX^SRRB		is opfam=0x09 & zero=0 & bit9=1 & bits78=0 & indexedWordAccessCmplt & storeCC & SRRB & RX & RB & FPRT32 & SPCBASE & u=1 & m=1 {
 	addr:$(ADDRSIZE) = SPCBASE + (sext(RX) << 2);
-	*addr = FPRT32:4; 
+	*addr = FPRT32:4;
     RB = RB + RX;
 }
 
 :FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & bits78=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & FPRT64 & SPCBASE & u=0 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(RX);
-	*addr = FPRT64:8; 
+	*addr = FPRT64:8;
 }
 
 :FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & bits78=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & FPRT64 & SPCBASE & u=1 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + (sext(RX) << 3);
-	*addr = FPRT64:8; 
+	*addr = FPRT64:8;
 }
 
 :FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & bits78=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & RB & FPRT64 & SPCBASE & u=0 & m=1 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(RX);
-	*addr = FPRT64:8; 
+	*addr = FPRT64:8;
     RB = RB + RX;
 }
 
 :FSTD^indexedDoublewordAccessCmplt^storeCC FPRT64,RX^SRRB		is opfam=0x0B & zero=0 & bit9=1 & bits78=0 & indexedDoublewordAccessCmplt & storeCC & SRRB & RX & RB & FPRT64 & SPCBASE & u=1 & m=1 {
 	addr:$(ADDRSIZE) = SPCBASE + (sext(RX) << 2);
-	*addr = FPRT64:8; 
+	*addr = FPRT64:8;
     RB = RB + RX;
 }
 
@@ -1603,7 +1603,7 @@ define pcodeop diag;
 
 :FSTW^shortDispCmplt^storeCC FPRT32,highlse5^SRRB	is opfam=0x09 & one=1 & bits78=0 & bit9=1 & shortDispCmplt & storeCC & SRRB & SPCBASE & FPRT32 & highlse5 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(highlse5);
-	*addr = FPRT32:4; 
+	*addr = FPRT32:4;
 }
 
 :FSTW^shortDispCmplt^storeCC FPRT32,highlse5^SRRB	is opfam=0x09 & one=1 & bits78=0 & bit9=1 & shortDispCmplt & storeCC & SRRB & SPCBASE & RB & FPRT32 & highlse5 & m=1 & u=0 {
@@ -1620,7 +1620,7 @@ define pcodeop diag;
 
 :FSTD^shortDispCmplt^storeCC FPRT64,highlse5^SRRB	is opfam=0x0B & one=1 & bit6=0 & bits78=0 & bit9=1 & shortDispCmplt & storeCC & SRRB & SPCBASE & FPRT64 & highlse5 & m=0 {
 	addr:$(ADDRSIZE) = SPCBASE + sext(highlse5);
-	*addr = FPRT64:8; 
+	*addr = FPRT64:8;
 }
 
 :FSTD^shortDispCmplt^storeCC FPRT64,highlse5^SRRB	is opfam=0x0B & one=1 & bit6=0 & bits78=0 & bit9=1 & shortDispCmplt & storeCC & SRRB & RB & SPCBASE & FPRT64 & highlse5 & u=0 & m=1 {
@@ -1639,12 +1639,12 @@ define pcodeop diag;
 :FCNV^fpsf^fpdf FPR232,FPRT32						is opfam=0x0E & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fpdf {
 	FPRT32 = float2float(FPR232);
 }
- 
+
 :FCNV^fpsf^fpdf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=0 & fpc1sub2=0 & sfu=0 & bit5=0 & FPR264 & FPRT64 & fpsf & fpdf & freg2sgl & fptsgl {
 # if src format is sgl, this is sgl to dbl
 # if src format is dbl, this is dbl to sgl
 # sgl to sgl or dbl to dbl don't make sense
-# and we don't support quad right now	
+# and we don't support quad right now
 	if (fpsf == 0:1) goto <SGL2DBL>;
 	fptsgl = float2float(FPR264);
 	goto <DONE>;
@@ -1652,10 +1652,10 @@ define pcodeop diag;
 	FPRT64 = float2float(freg2sgl);
 	<DONE>
 }
- 
+
 :FCNVXF^fpsf^fpdf FPR232,FPRT32							is opfam=0x0E & fpclass=1 & fpc1sub=1 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fpdf {
 	FPRT32 = int2float(FPR232);
-} 
+}
 
 # int2float -- support single/double size ints and single/double floats
 # so handle 4 different cases
@@ -1687,7 +1687,7 @@ define pcodeop diag;
 :FCNVFX^fpsf^fixeddf FPR232,FPRT32							is opfam=0x0E & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fixeddf {
 	temp:4 = round(FPR232);
 	FPRT32 = trunc(temp);
-} 
+}
 :FCNVFX^fpsf^fixeddf FPR264,FPRT64							is opfam=0x0C & fpclass=1 & fpc1sub=2 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fixeddf & fptsgl & freg2sgl {
 # figure out if the value in the fp register is single or double precision
 # the register is always specified as a 64 bit register, so that doesn't tell us the size, we must use the fpsf format
@@ -1696,16 +1696,16 @@ define pcodeop diag;
 	temp = float2float(freg2sgl); # convert single precision to double
 	goto <CONVERT>;
 	<DOUBLE>
-	temp = FPR264; 
+	temp = FPR264;
 
 	<CONVERT>
 	temp = round(temp);
 	FPRT64 = trunc(temp);
-} 
- 
+}
+
 :FCNVFXT^fpsf^fixeddf FPR232,FPRT32						is opfam=0x0E & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & FPR232 & FPRT32 & fpsf & fixeddf {
 	FPRT32 = trunc(FPR232);
-} 
+}
 
 :FCNVFXT^fpsf^fixeddf FPR264,FPRT64						is opfam=0x0C & fpclass=1 & fpc1sub=3 & fpc1sub2=0 & sfu=0 & FPR264 & FPRT64 & fpsf & fixeddf & fpsfraw & fptsgl & freg2sgl {
 # figure out if the value in the fp register is single or double precision
@@ -1720,12 +1720,12 @@ define pcodeop diag;
 	value = float2float(FPR264); # convert double precision to single
 	<FLOAT2INT>
 	fptsgl = trunc(value);
-} 
+}
 
  # Floating Point Functions
 :FCPY^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=2 & freg1=0 & FPR232 & FPRT32 & fpfmt {
 	FPRT32 = FPR232;
-} 
+}
 
 :FCPY^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=2 & freg1=0 & FPR264 & FPRT64 & fpfmt & fptsgl & freg2sgl {
 	if (fpfmt==0:1) goto <SGL>;
@@ -1738,7 +1738,7 @@ define pcodeop diag;
 
 :FABS^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=3 & freg1=0 & bit5=0 & bit8=0 & FPR232 & FPRT32 & fpfmt {
 	FPRT32 = abs(FPR232);
-} 
+}
 
 :FABS^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=3 & freg1=0 & bits59=0 & bit10=0 & FPR264 & FPRT64 & fpfmt {
 	FPRT64 = abs(FPR264);
@@ -1746,14 +1746,14 @@ define pcodeop diag;
 
 :FSQRT^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=4 & freg1=0 & FPR232 & FPRT32 & fpfmt {
 	FPRT32 = sqrt(FPR232);
-} 
+}
 :FSQRT^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=4 & freg1=0 & FPR264 & FPRT64 & fpfmt {
 	FPRT64 = sqrt(FPR264);
 }
 
 :FRND^fpfmt FPR232,FPRT32								is opfam=0x0E & fpclass=0 & fpsub=5 & FPR232 & FPRT32 & fpfmt {
 	FPRT32 = round(FPR232);
- } 
+ }
 
 :FRND^fpfmt FPR264,FPRT64								is opfam=0x0C & fpclass=0 & fpsub=5 & FPR264 & FPRT64 & fpfmt {
 	FPRT64 = round(FPR264);
@@ -1761,7 +1761,7 @@ define pcodeop diag;
 
 :FADD^fpfmt FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=0 & FPR232 & FPR132 & FPRT32 & fpfmt {
 	FPRT32 = FPR132 f+ FPR232;
-} 
+}
 
 :FADD^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=0 & FPR264 & FPRT64 & FPR164 & fpfmt & freg1sgl & freg2sgl & fptsgl {
 	if (fpfmt==0:1) goto <SGL>;
@@ -1774,7 +1774,7 @@ define pcodeop diag;
 
 :FSUB^fpfmt FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=1 & FPR232 & FPR132 & FPRT32 & fpfmt {
 	FPRT32 = FPR232 f- FPR132;
-} 
+}
 
 :FSUB^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=1 & FPR264 & FPRT64 & FPR164 & fpfmt & fptsgl & freg1sgl & freg2sgl {
 	if (fpfmt==0:1) goto <SGL>;
@@ -1787,7 +1787,7 @@ define pcodeop diag;
 
 :FMPY^fpfmt FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=2 & bit8=0 & FPR232 & FPR132 & FPRT32 & fpfmt {
 	FPRT32 = FPR132 f* FPR232;
-} 
+}
 
 :FMPY^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=2 & bit8=0 & FPR264 & FPRT64 & FPR164 & fpfmt & fptsgl & freg1sgl & freg2sgl {
 	if (fpfmt==0:1) goto <SGL>;
@@ -1800,7 +1800,7 @@ define pcodeop diag;
 
 :FDIV^fpfmt FPR232,FPR132,FPRT32							is opfam=0x0E & fpclass=3 & fpsub=3 & FPR232 & FPR132 & FPRT32 & fpfmt {
 	FPRT32 = FPR232 f/ FPR132;
-} 
+}
 
 :FDIV^fpfmt FPR264,FPR164,FPRT64							is opfam=0x0C & fpclass=3 & fpsub=3 & FPR264 & FPRT64 & FPR164 & fpfmt & fptsgl & freg1sgl & freg2sgl {
 	if (fpfmt==0:1) goto <SGL>;
@@ -1840,7 +1840,7 @@ define pcodeop diag;
 	arg2:8 = zext(FPR132);
 	prod:8 = arg1 * arg2;
 	FPRT64 = prod;
- } 
+ }
 
 # Floating Point Compare
 # 32 bit register comparison
@@ -1861,7 +1861,7 @@ define pcodeop diag;
 	compareBit = result;
 }
 
-# 64 bit register comparison 
+# 64 bit register comparison
 :FCMP^fpfmt^fpcmp64 FPR264,FPR164						is opfam=0x0C & fpclass=2 & fpsub=0 & FPR264 & FPR164 & fpfmt & fpcmp & fpcmp64 {
 	result:1 = 0:1;
 	# shift the previous compareBit onto the compareQueue
@@ -1883,7 +1883,7 @@ define pcodeop diag;
 	[
 	  nullifyEnable = 1;
 	  globalset(inst_next, nullifyEnable);
-	] 
+	]
 {
 	nullifyNextCond = compareBit;
 }

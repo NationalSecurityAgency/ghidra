@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,8 @@ import ghidra.launch.JavaFinder.Platform;
 /**
  * Parses and provides convenient access to the properties defined in a launch properties file.
  * <p>
- * Our launch properties file is a bit different than a file represented by a {@link Properties} 
- * object because we allow for duplicate keys.  The Apache commons config library can do this, but 
+ * Our launch properties file is a bit different than a file represented by a {@link Properties}
+ * object because we allow for duplicate keys.  The Apache commons config library can do this, but
  * this project cannot have any external dependencies.
  */
 public class LaunchProperties {
@@ -49,7 +49,7 @@ public class LaunchProperties {
 
 	/**
 	 * Creates a new launch properties object from the given launch properties file.
-	 * 
+	 *
 	 * @param launchPropertiesFile The launch properties file.
 	 * @throws FileNotFoundException if the given launch properties file does not exist.
 	 * @throws IOException if there was a problem reading the given launch properties file.
@@ -62,8 +62,8 @@ public class LaunchProperties {
 
 	/**
 	 * Gets the Java home override directory to use for the launch.
-	 * 
-	 * @return The Java home override directory to use for the launch.  Could be null if the 
+	 *
+	 * @return The Java home override directory to use for the launch.  Could be null if the
 	 *   property was not defined.  The caller should ensure that the directory exists.
 	 */
 	public File getJavaHomeOverride() {
@@ -75,9 +75,9 @@ public class LaunchProperties {
 	}
 
 	/**
-	 * Gets the command line string of VM arguments to use for the launch for the current 
+	 * Gets the command line string of VM arguments to use for the launch for the current
 	 * {@link Platform platform}.
-	 * 
+	 *
 	 * @return The command line string of VM arguments to use for the launch for the current
 	 *   {@link Platform}
 	 */
@@ -102,7 +102,7 @@ public class LaunchProperties {
 
 	/**
 	 * Parses and gets the launch properties from the given launch properties file.
-	 * 
+	 *
 	 * @param launchPropertiesFile The file to get the launch properties from.
 	 * @return The launch properties from the given launch properties file.
 	 * @throws FileNotFoundException if the given launch properties file does not exist.

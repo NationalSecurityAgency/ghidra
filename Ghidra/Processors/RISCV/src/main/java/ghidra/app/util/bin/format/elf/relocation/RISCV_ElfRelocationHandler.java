@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -119,7 +119,7 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 		case RISCV_ElfRelocationConstants.R_RISCV_COPY:
 			// Runtime relocation must be in executable. not allowed in shared library
 			markAsWarning(program, relocationAddress, "R_RISCV_COPY", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());         
+					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_JUMP_SLOT:
@@ -137,37 +137,37 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 		case RISCV_ElfRelocationConstants.R_RISCV_TLS_DTPMOD32:
 			// TLS relocation word32 = S->TLSINDEX
 			markAsWarning(program, relocationAddress, "R_RISCV_TLS_DTPMOD32", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());     
+					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_TLS_DTPMOD64:
 			// TLS relocation word64 = S->TLSINDEX
 			markAsWarning(program, relocationAddress, "R_RISCV_TLS_DTPMOD32", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());       
+					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_TLS_DTPREL32:
 			// TLS relocation word32 = TLS + S + A - TLS_TP_OFFSET
 			markAsWarning(program, relocationAddress, "R_RISCV_TLS_DTPREL32", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());       
+					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_TLS_DTPREL64:
 			// TLS relocation word64 = TLS + S + A - TLS_TP_OFFSET
 			markAsWarning(program, relocationAddress, "R_RISCV_TLS_DTPREL64", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());     
+					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_TLS_TPREL32:
 			// TLS relocation word32 = TLS + S + A + S_TLS_OFFSET - TLS_DTV_OFFSET
 			markAsWarning(program, relocationAddress, "R_RISCV_TLS_DTREL32", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());          
+					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_TLS_TPREL64:
 			// TLS relocation word64 = TLS + S + A + S_TLS_OFFSET - TLS_DTV_OFFSET
 			markAsWarning(program, relocationAddress, "R_RISCV_TLS_TPREL64", symbolName, symbolIndex,
-					"TODO, needs support ", elfRelocationContext.getLog());                  
+					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_BRANCH:
@@ -353,19 +353,19 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_GNU_VTINHERIT:
-			// GNU C++ vtable hierarchy 
+			// GNU C++ vtable hierarchy
 			markAsWarning(program, relocationAddress, "R_RISCV_GNU_VTINHERIT", symbolName, symbolIndex,
 					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_GNU_VTENTRY:
-			// GNU C++ vtable member usage 
+			// GNU C++ vtable member usage
 			markAsWarning(program, relocationAddress, "R_RISCV_GNU_VTENTRY", symbolName, symbolIndex,
 					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_ALIGN:
-			// Alignment statement 
+			// Alignment statement
 			markAsWarning(program, relocationAddress, "R_RISCV_ALIGN", symbolName, symbolIndex,
 					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
@@ -413,37 +413,37 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_RELAX:
-			// Instruction pair can be relaxed 
+			// Instruction pair can be relaxed
 			markAsWarning(program, relocationAddress, "R_RISCV_RELAX", symbolName, symbolIndex,
 					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_SUB6:
-			// Local label subtraction 
+			// Local label subtraction
 			markAsWarning(program, relocationAddress, "R_RISCV_SUB6", symbolName, symbolIndex,
 					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_SET6:
-			// Local label subtraction 
+			// Local label subtraction
 			markAsWarning(program, relocationAddress, "R_RISCV_SET6", symbolName, symbolIndex,
 					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_SET8:
-			// Local label subtraction 
+			// Local label subtraction
 			markAsWarning(program, relocationAddress, "R_RISCV_SET8", symbolName, symbolIndex,
 					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_SET16:
-			// Local label subtraction 
+			// Local label subtraction
 			markAsWarning(program, relocationAddress, "R_RISCV_SET16", symbolName, symbolIndex,
 					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
 
 		case RISCV_ElfRelocationConstants.R_RISCV_SET32:
-			// Local label subtraction 
+			// Local label subtraction
 			markAsWarning(program, relocationAddress, "R_RISCV_SET32", symbolName, symbolIndex,
 					"TODO, needs support ", elfRelocationContext.getLog());
 			break;
@@ -460,6 +460,6 @@ public class RISCV_ElfRelocationHandler extends ElfRelocationHandler {
 			markAsUnhandled(program, relocationAddress, type, symbolIndex, symbolName, elfRelocationContext.getLog());
 			break;
 
-		}	
+		}
 	}
 }

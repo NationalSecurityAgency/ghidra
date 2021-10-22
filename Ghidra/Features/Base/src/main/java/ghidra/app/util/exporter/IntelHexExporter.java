@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,12 +36,12 @@ import ghidra.util.HelpLocation;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Exports the current program (or program selection) as bytes in Intel Hex format. 
+ * Exports the current program (or program selection) as bytes in Intel Hex format.
  * <p>
  * The output defaults to lines of 16-bytes but this is configurable using the
  * {@link #recordSizeOption} attribute. This allows users to select any record size
  * up to the max of 0xFF. Users may also choose to <code>Drop Extra Bytes</code>, which will
- * cause only lines that match the max record size to be printed; any other 
+ * cause only lines that match the max record size to be printed; any other
  * bytes will be dropped. If this option is not set, every byte will be represented in the output.
  */
 public class IntelHexExporter extends Exporter {
@@ -64,10 +64,10 @@ public class IntelHexExporter extends Exporter {
 	}
 
 	/**
-	 * Constructs a new Intel Hex exporter with a custom record size. 
-	 * 
+	 * Constructs a new Intel Hex exporter with a custom record size.
+	 *
 	 * @param recordSize the record size to use when writing to the output file
-	 * @param dropBytes if true, bytes at the end of the file that don't match the specified 
+	 * @param dropBytes if true, bytes at the end of the file that don't match the specified
 	 * record size will be dropped
 	 */
 	public IntelHexExporter(int recordSize, boolean dropBytes) {
@@ -79,7 +79,7 @@ public class IntelHexExporter extends Exporter {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param name the name of the exporter
 	 * @param extension the extension to use for the output file
 	 * @param help location of Ghidra help
@@ -229,9 +229,9 @@ public class IntelHexExporter extends Exporter {
 
 	/**
 	 * Option for exporting Intel Hex records that allows users to specify a record size for the
-	 * output. Users may also optionally select the <code>Drop Extra Bytes</code> option that 
+	 * output. Users may also optionally select the <code>Drop Extra Bytes</code> option that
 	 * will cause only those records that match the maximum size to be output to the file.
-	 * 
+	 *
 	 * @see RecordSizeComponent
 	 */
 	private class RecordSizeOption extends Option {
@@ -282,16 +282,16 @@ public class IntelHexExporter extends Exporter {
 	}
 
 	/**
-	 * Component that displays two widgets for setting export options: 
-	 * 
+	 * Component that displays two widgets for setting export options:
+	 *
 	 * <ul>
-	 * <li><code>input</code>: a {@link HintTextField} for entering numeric digits; these 
+	 * <li><code>input</code>: a {@link HintTextField} for entering numeric digits; these
 	 * represent the record size for each line of output</li>
-	 * <li>dropCb: a {@link JCheckBox} for specifying a setting that enforces that every line in 
+	 * <li>dropCb: a {@link JCheckBox} for specifying a setting that enforces that every line in
 	 * the output matches the specified record size</li>
 	 * </ul>
-	 * 
-	 * Note: If the <code>Drop Extra Bytes</code> option is set, any bytes that are left over 
+	 *
+	 * Note: If the <code>Drop Extra Bytes</code> option is set, any bytes that are left over
 	 * after outputting all lines that match the record size will be omitted from the output.
 	 */
 	private class RecordSizeComponent extends JPanel {
@@ -316,7 +316,7 @@ public class IntelHexExporter extends Exporter {
 			String val = input.getText();
 			if (!input.isFieldValid()) {
 
-				// If the user clears the input field, revert to the default 
+				// If the user clears the input field, revert to the default
 				// record size (16).
 				return DEFAULT_RECORD_SIZE;
 			}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,30 +40,30 @@ import ghidra.util.task.TaskMonitor;
 import util.CollectionUtils;
 
 /**
- *  This command runs all of the <b>exact</b> {@link VTProgramCorrelator}s that return 
+ *  This command runs all of the <b>exact</b> {@link VTProgramCorrelator}s that return
  *  unique matches (ie only one of each match is found in each program):
  *  <ol>
  *  <li> Exact Symbol Name correlator </li>
  *  <li> Exact Data correlator </li>
- *  <li> Exact Function Byte correlator </li> 
+ *  <li> Exact Function Byte correlator </li>
  *  <li> Exact Function Instruction correlator </li>
  *  <li> Exact Function Mnemonic correlator </li>
  *  </ol>
- *  
+ *
  *  <P> After running each correlator all matches are accepted since they are exact/unique matches
  *  and all markup from the source program functions is applied to the matching destination program
  *  functions.
- *   
- * 	<P> Next, this command runs the Duplicate Function Instruction correlator to find any non-unique 
- *  functions with exact instruction bytes then compares their operands to determine and accept 
- *  correct matches with markup. 
- *  
- *  <P> The command then gets a little more speculative by running the Combined Function and Data 
- *  Reference correlator, which uses match information from the previous correlators to find more 
- *  matches. 
- *  
+ *
+ * 	<P> Next, this command runs the Duplicate Function Instruction correlator to find any non-unique
+ *  functions with exact instruction bytes then compares their operands to determine and accept
+ *  correct matches with markup.
+ *
+ *  <P> The command then gets a little more speculative by running the Combined Function and Data
+ *  Reference correlator, which uses match information from the previous correlators to find more
+ *  matches.
+ *
  *  <P> As more techniques get developed, more automation will be added to this command.
- *   
+ *
  */
 public class AutoVersionTrackingCommand extends BackgroundCommand {
 
@@ -82,14 +82,14 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 
 	/**
 	 * Constructor for AutoVersionTrackingCommand
-	 * 
+	 *
 	 * @param controller The Version Tracking controller for this session containing option and
 	 * tool information needed for this command.
-	 * @param session The Version Tracking session containing the source, destination, correlator 
-	 * and match information needed for this command. 
+	 * @param session The Version Tracking session containing the source, destination, correlator
+	 * and match information needed for this command.
 	 * @param minCombinedReferenceCorrelatorScore The minimum score used to limit matches created by
 	 * the Combined Reference Correlator.
-	 * @param minCombinedReferenceCorrelatorConfidence The minimum confidence used to limit matches 
+	 * @param minCombinedReferenceCorrelatorConfidence The minimum confidence used to limit matches
 	 * created by the Combined Reference Correlator.
 	 */
 	public AutoVersionTrackingCommand(VTController controller, VTSession session,
@@ -117,11 +117,11 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 			monitor.initialize(NUM_CORRELATORS);
 
 			// Use default options for all of the "exact" correlators and passed in options for
-			// the others. 
+			// the others.
 			VTOptions options;
 
-			// Run the correlators in the following order: 
-			// Do this one first because we don't want it to find ones that get markup 
+			// Run the correlators in the following order:
+			// Do this one first because we don't want it to find ones that get markup
 			// applied by later correlators
 			VTProgramCorrelatorFactory factory = new SymbolNameProgramCorrelatorFactory();
 			options = factory.createDefaultOptions();
@@ -145,10 +145,10 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 
 			// This is the first of the "speculative" post-correlator match algorithm. The correlator
 			// returns all duplicate function instruction matches so there will always be more
-			// than one possible match for each function. The compare mechanism used by the 
-			// function compare window determines matches based on matching operand values. 
-			// Given that each function must contains the same instructions to even become a match, 
-			// and the compare function mechanism has been very well tested, the mechanism for 
+			// than one possible match for each function. The compare mechanism used by the
+			// function compare window determines matches based on matching operand values.
+			// Given that each function must contains the same instructions to even become a match,
+			// and the compare function mechanism has been very well tested, the mechanism for
 			// finding the correct match is very accurate.
 			factory = new DuplicateFunctionMatchProgramCorrelatorFactory();
 			options = factory.createDefaultOptions();
@@ -157,11 +157,11 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 
 			// The rest are mores speculative matching algorithms because they depend on our
 			// choosing the correct score/confidence pair to determine very probable matches. These
-			// values were chosen based on what has been seen so far but this needs to be tested 
+			// values were chosen based on what has been seen so far but this needs to be tested
 			// further on more programs and possibly add options for users to
-			// give their own thresholds. 
+			// give their own thresholds.
 
-			// Get the names of the confidence and similarity score thresholds that 
+			// Get the names of the confidence and similarity score thresholds that
 			// are used by all of the "reference" correlators
 			String confidenceOption =
 				VTAbstractReferenceProgramCorrelatorFactory.CONFIDENCE_THRESHOLD;
@@ -171,7 +171,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 			int numDataMatches = getNumberOfDataMatches(monitor);
 			int numFunctionMatches = getNumberOfFunctionMatches(monitor);
 
-			// Run the DataReferenceCorrelator if there are accepted data matches but no accepted 
+			// Run the DataReferenceCorrelator if there are accepted data matches but no accepted
 			// function matches
 			if (numDataMatches > 0 && numFunctionMatches == 0) {
 				factory = new DataReferenceProgramCorrelatorFactory();
@@ -269,7 +269,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 	}
 
 	/**
-	 * Runs the given version tracking (VT) correlator and applies the returned matches meeting the 
+	 * Runs the given version tracking (VT) correlator and applies the returned matches meeting the
 	 * given score and confidence thresholds and are not otherwise blocked.
 	 * @param factory The correlator factory used to create and run the desired VT correlator.
 	 * @param options The options to pass the correlator including score and confidence values.
@@ -299,11 +299,11 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 
 	/**
 	 * Runs the Duplicate Exact Function match version tracking (VT) correlator then determines
-	 * correct matches based on matching operand values. Those matches are accepted and other 
+	 * correct matches based on matching operand values. Those matches are accepted and other
 	 * possible matches for those functions are blocked. Markup from accepted source functions
-	 * is applied to matching destination functions. 
+	 * is applied to matching destination functions.
 	 *
-	 * @param factory The correlator factory used to create and run the desired VT correlator. In 
+	 * @param factory The correlator factory used to create and run the desired VT correlator. In
 	 * this case, the duplicate function instruction match correlator.
 	 * @param monitor Checks to see if user has cancelled.
 	 * @throws CancelledException
@@ -326,11 +326,11 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 	}
 
 	/**
-	 * Called for all correlators that are run by this command except the duplicate function 
-	 * instruction match correlator. 
-	 * @param matches The set of matches to try to accept as matches. 
-	 * @param correlatorName The name of the Version Tracking correlator whose matches are being 
-	 * applied here. 
+	 * Called for all correlators that are run by this command except the duplicate function
+	 * instruction match correlator.
+	 * @param matches The set of matches to try to accept as matches.
+	 * @param correlatorName The name of the Version Tracking correlator whose matches are being
+	 * applied here.
 	 * @param monitor Checks to see if user has cancelled.
 	 * @return true if some matches have markup errors and false if none have markup errors.
 	 * @throws CancelledException
@@ -341,7 +341,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 		// If this value gets set to true then there are some markup errors in the whole set of
 		// matches.
 		boolean someMatchesHaveMarkupErrors = false;
-		// Note: no need to check score/confidence because they are passed into the correlator 
+		// Note: no need to check score/confidence because they are passed into the correlator
 		// ahead of time so correlator only returns matches higher than given score/threshold
 		for (VTMatch match : matches) {
 			monitor.checkCanceled();
@@ -376,7 +376,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 
 	/**
 	 * This method tries to set a match association as accepted.
-	 * @param association The match association between two match items. 
+	 * @param association The match association between two match items.
 	 * @return true if match is accepted and false if an exception occurred and the match couldn't be
 	 * accepted.
 	 */
@@ -394,10 +394,10 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 	}
 
 	/**
-	 * Accept matches and apply markup for duplicate function instruction matches with matching operands 
+	 * Accept matches and apply markup for duplicate function instruction matches with matching operands
 	 * if they are a unique match within their associated set.
-	 * @param matches A collection of version tracking matches from the duplicate instruction 
-	 * matcher. 
+	 * @param matches A collection of version tracking matches from the duplicate instruction
+	 * matcher.
 	 * @param monitor Allows user to cancel
 	 * @return true if any markup errors, false if no markup errors.
 	 * @throws CancelledException
@@ -413,27 +413,27 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 		for (VTMatch match : matches) {
 			monitor.checkCanceled();
 
-			// if match has already been removed (ie it was in a set that was already processed) 
+			// if match has already been removed (ie it was in a set that was already processed)
 			// then skip it
 			if (!copyOfMatches.contains(match)) {
 				continue;
 			}
 
 			// get a set of related matches from the set of all matches
-			// ie these all have the same instructions as each other but not necessarily 
+			// ie these all have the same instructions as each other but not necessarily
 			// the same operands.
 			Set<VTMatch> relatedMatches = getRelatedMatches(match, matches, monitor);
 
 			// remove related matches from the set of matches to process next time
 			removeMatches(copyOfMatches, relatedMatches);
 
-			// remove any matches that have identical source functions - if more than one 
+			// remove any matches that have identical source functions - if more than one
 			// with exactly the same instructions and operands then cannot determine a unique match
 			Set<Address> sourceAddresses = getSourceAddressesFromMatches(relatedMatches, monitor);
 			Set<Address> uniqueSourceFunctionAddresses =
 				dedupeMatchingFunctions(sourceProgram, sourceAddresses, monitor);
 
-			// remove any matches that have identical destination functions - if more than one 
+			// remove any matches that have identical destination functions - if more than one
 			// with exactly the same instructions and operands then cannot determine a unique match
 			Set<Address> destAddresses =
 				getDestinationAddressesFromMatches(relatedMatches, monitor);
@@ -452,7 +452,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 				Set<VTMatch> matchesWithEquivalentOperands = getMatchesWithEquivalentOperands(
 					dedupedMatches, sourceAddress, uniqueDestFunctionAddresses, monitor);
 
-				// If there is just one equivalent match try to accept the match and apply markup 
+				// If there is just one equivalent match try to accept the match and apply markup
 				if (matchesWithEquivalentOperands.size() == 1) {
 					VTMatch theMatch = CollectionUtils.any(matchesWithEquivalentOperands);
 					someMatchesHaveMarkupErrors = tryToAcceptMatchAndApplyMarkup(theMatch, monitor);
@@ -526,8 +526,8 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 	}
 
 	/**
-	 * Determine which matches from a collection of matches are related to the given match, ie 
-	 * have the same source or destination address as the current match. 
+	 * Determine which matches from a collection of matches are related to the given match, ie
+	 * have the same source or destination address as the current match.
 	 * @param match Current version tracking match
 	 * @param matches Collection version tracking matches
 	 * @param monitor Allows user to cancel
@@ -562,7 +562,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 
 	/**
 	 * Remove given matches from a set of matches.
-	 * @param matchSet Set of matches. 
+	 * @param matchSet Set of matches.
 	 * @param matchesToRemove Set of matches to remove from matches set.
 	 */
 	private void removeMatches(Set<VTMatch> matchSet, Set<VTMatch> matchesToRemove) {
@@ -632,7 +632,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 	}
 
 	/**
-	 * From a set of matches get the subset that contains the given source and destination addresses.  
+	 * From a set of matches get the subset that contains the given source and destination addresses.
 	 * @param matches Set of matches
 	 * @param sourceAddresses Set of source addresses
 	 * @param destAddresses Set of destination addresses
@@ -656,9 +656,9 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 
 	/**
 	 *  * This method is only called to compare functions with identical instruction
-	 *  bytes, identical operand lengths, but possibly different operand values. It returns true 
-	 *  if the two functions in the match have potentially equivalent operands. It returns false if 
-	 *  any of the operands do not match. 
+	 *  bytes, identical operand lengths, but possibly different operand values. It returns true
+	 *  if the two functions in the match have potentially equivalent operands. It returns false if
+	 *  any of the operands do not match.
 	 *  Potentially equivalent means corresponding scalar operands match, corresponding other operands have
 	 *  the same type of operand (ie code, data,register)
 	 * @param program1 Program containing function1
@@ -703,7 +703,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 		}
 
 		// This should never happen but if it does then throw an error because that means something
-		// weird is happening like the action updating the source and destination match lengths 
+		// weird is happening like the action updating the source and destination match lengths
 		// didn't do it correctly.
 		if (func1InstIter.hasNext() || func2InstIter.hasNext()) {
 			throw new AssertException(
@@ -716,11 +716,11 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 
 	/**
 	 * Determine if the given instructions which have at least one differing operand, have equivalent
-	 * operand types. If operand type is a scalar, is it the same scalar. 
+	 * operand types. If operand type is a scalar, is it the same scalar.
 	 * @param inst1 Instruction 1
 	 * @param inst2 Instruction 2
 	 * @param operandsThatDiffer Array of indexes of operands that differ
-	 * @return true if all operands in the two instructions are equivalent types and scalars are equal, 
+	 * @return true if all operands in the two instructions are equivalent types and scalars are equal,
 	 * else return false
 	 */
 	private boolean haveEquivalentOperands(Instruction inst1, Instruction inst2,
@@ -761,10 +761,10 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 
 	/**
 	 * Method to determine if two functions with exactly the same instructions also have exactly the
-	 * same operands. 
+	 * same operands.
 	 * @param program1 Program that contains function1
 	 * @param function1 Function to compare with function2
-	 * @param program2 Program that contains function2 (can be same or different than program1) 
+	 * @param program2 Program that contains function2 (can be same or different than program1)
 	 * @param function2 Function to compare with function1
 	 * @param monitor
 	 * @return true if two functions have no operand differences, else returns false
@@ -795,7 +795,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 			}
 		}
 		// This should never happen but if it does then throw an error because that means something
-		// weird is happening like the action updating the source and destination match lengths 
+		// weird is happening like the action updating the source and destination match lengths
 		// didn't do it correctly.
 		if (sourceFuncCodeUnitIter.hasNext() || destFuncCodeUnitIter.hasNext()) {
 			throw new AssertException(
@@ -824,7 +824,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 
 		List<Address> list = new ArrayList<>(addresses);
 
-		// Compare 0 to 1, 0 to 2, ... 0 to j-1, 1 to 2, 1 to 3, ... 1- j-1, .... i-2 to j-1 
+		// Compare 0 to 1, 0 to 2, ... 0 to j-1, 1 to 2, 1 to 3, ... 1- j-1, .... i-2 to j-1
 		for (int i = 0; i < list.size(); i++) {
 
 			Address address1 = list.get(i);

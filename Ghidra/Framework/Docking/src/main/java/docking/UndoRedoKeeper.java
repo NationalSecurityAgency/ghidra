@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,17 +24,17 @@ import ghidra.util.datastruct.FixedSizeStack;
 /**
  * Handles tracking undo and redo events.   Clients may wish to hold on to this class in order
  * to clear the undo/redo queue.
- * 
+ *
  * <p><b><u>Style Edits</u></b><br>
  * {@link JTextPane}s allow for styles (color, bold, etc) to be applied to their text.  The
- * default undo/redo events may arrive singly, not in bulk.   Thus, when the user presses undo, 
- * each style change is undo, one at a time.   This is intuitive when the user controls the 
- * application of style.  However, when style is applied programmatically, it can be odd to 
+ * default undo/redo events may arrive singly, not in bulk.   Thus, when the user presses undo,
+ * each style change is undo, one at a time.   This is intuitive when the user controls the
+ * application of style.  However, when style is applied programmatically, it can be odd to
  * see that the user-type text does not change, but just the coloring applied to that text.
  * <p>
- * To address this issue, this class takes the approach of combining all style edits into a 
+ * To address this issue, this class takes the approach of combining all style edits into a
  * single bulk edit.  Then, as the user presses undo, all style edits can be removed together, as
- * well as any neighboring text edits.   <b>Put simply, this class tracks style edits such 
+ * well as any neighboring text edits.   <b>Put simply, this class tracks style edits such
  * that an undo operation will undo all style changes, as well as a single text edit.</b>
  */
 public class UndoRedoKeeper {

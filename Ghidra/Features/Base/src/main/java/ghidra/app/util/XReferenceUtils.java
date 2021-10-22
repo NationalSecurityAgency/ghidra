@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,10 +38,10 @@ public class XReferenceUtils {
 	/**
 	 * Returns an array containing the first <b><code>max</code></b>
 	 * direct xref references to the specified code unit.
-	 * 
+	 *
 	 * @param cu the code unit to generate the xrefs
 	 * @param max max number of xrefs to get, or -1 to get all references
-	 * 
+	 *
 	 * @return array first <b><code>max</code></b> xrefs to the code unit
 	 */
 	public final static List<Reference> getXReferences(CodeUnit cu, int max) {
@@ -78,7 +78,7 @@ public class XReferenceUtils {
 
 	/**
 	 * Returns an array containing all offcut xref references to the specified code unit
-	 * 
+	 *
 	 * @param cu the code unit to generate the offcut xrefs
 	 * @param max max number of offcut xrefs to get, or -1 to get all offcut references
 	 * @return array of all offcut xrefs to the code unit
@@ -115,7 +115,7 @@ public class XReferenceUtils {
 
 	/**
 	 * Populates the provided lists with the direct and offcut xrefs to the specified variable
-	 * 
+	 *
 	 * @param var     variable to get references
 	 * @param xrefs   list to put direct references in
 	 * @param offcuts list to put offcut references in
@@ -127,7 +127,7 @@ public class XReferenceUtils {
 
 	/**
 	 * Populates the provided lists with the direct and offcut xrefs to the specified variable
-	 * 
+	 *
 	 * @param var     variable to get references
 	 * @param xrefs   list to put direct references in
 	 * @param offcuts list to put offcut references in
@@ -163,7 +163,7 @@ public class XReferenceUtils {
 	 * Returns all xrefs to the given location.  If in data, then xrefs to the specific data
 	 * component will be returned.  Otherwise, the code unit containing the address of the
 	 * given location will be used as the source of the xrefs.
-	 * 
+	 *
 	 * @param location the location for which to get xrefs
 	 * @return the xrefs
 	 */
@@ -192,7 +192,7 @@ public class XReferenceUtils {
 
 	/**
 	 * Shows all xrefs to the given location in a new table.
-	 * 
+	 *
 	 * @param navigatable the navigatable used for navigation from the table
 	 * @param serviceProvider the service provider needed to wire navigation
 	 * @param service the service needed to show the table

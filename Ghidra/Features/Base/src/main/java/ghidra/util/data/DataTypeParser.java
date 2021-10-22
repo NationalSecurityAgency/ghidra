@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ public class DataTypeParser {
 		SIZABLE_DYNAMIC,
 		/**
 		 * All fixed-length data-types, sizable Dynamic data-types.
-		 * In addition a bitfield specification may be specified (e.g., int:2) 
+		 * In addition a bitfield specification may be specified (e.g., int:2)
 		 * for use when defining structure and union components only
 		 * (see {@link ProxyBitFieldDataType}).  Parser must be properly constructed
 		 * with the intended {@link DataTypeParser#destinationDataTypeManager}.
@@ -69,12 +69,12 @@ public class DataTypeParser {
 
 	/**
 	 * <code>ProxyBitFieldDataType</code> provides acts as a proxy bitfield
-	 * whose specification may be used when defining a structure or 
-	 * union bitfield.  This datatype may not be directly applied to a program. 
+	 * whose specification may be used when defining a structure or
+	 * union bitfield.  This datatype may not be directly applied to a program.
 	 */
 	private static class ProxyBitFieldDataType extends BitFieldDataType {
 		/**
-		 * Construct proxy bitfield datatype for use when defining 
+		 * Construct proxy bitfield datatype for use when defining
 		 * a structure or union bitfield.
 		 * @param baseDataType a supported primitive integer data type or TypeDef to such a type.
 		 * A deep clone of this type will be performed using the specified dataMgr.
@@ -98,7 +98,7 @@ public class DataTypeParser {
 	 * resolving data types.
 	 *
 	 * @param dataTypeManagerService data-type manager tool service, or null
-	 * @param allowedTypes constrains which data-types may be parsed 
+	 * @param allowedTypes constrains which data-types may be parsed
 	 */
 	public DataTypeParser(DataTypeQueryService dataTypeManagerService,
 			AllowedDataTypes allowedTypes) {
@@ -142,9 +142,9 @@ public class DataTypeParser {
 	 * @param dataTypeString a known data-type name followed by zero or more pointer/array decorations.
 	 * @param category known path of data-type or null if unknown
 	 * @return parsed data-type or null if not found
-	 * @throws InvalidDataTypeException if data type string is invalid or length exceeds specified 
+	 * @throws InvalidDataTypeException if data type string is invalid or length exceeds specified
 	 *         maxSize
-	 * @throws CancelledException parse cancelled through user interaction (only if parser 
+	 * @throws CancelledException parse cancelled through user interaction (only if parser
 	 *         constructed with service)
 	 */
 	public DataType parse(String dataTypeString, CategoryPath category)
@@ -160,16 +160,16 @@ public class DataTypeParser {
 
 	/**
 	 * Parse a data type string specification using the specified baseDatatype.
-	 * 
-	 * @param suggestedBaseDataType base data type (may be null), this will be used as the base 
+	 *
+	 * @param suggestedBaseDataType base data type (may be null), this will be used as the base
 	 *        data-type if its name matches the base name in the specified dataTypeString.
-	 * @param dataTypeString a base data-type followed by a sequence of zero or more pointer/array 
+	 * @param dataTypeString a base data-type followed by a sequence of zero or more pointer/array
 	 *        decorations to be applied.
 	 * The string may start with the baseDataType's name.
 	 * @return parsed data-type or null if not found
-	 * @throws InvalidDataTypeException if data-type string is invalid or length exceeds specified 
+	 * @throws InvalidDataTypeException if data-type string is invalid or length exceeds specified
 	 *         maxSize
-	 * @throws CancelledException parse cancelled through user interaction (only if parser 
+	 * @throws CancelledException parse cancelled through user interaction (only if parser
 	 *         constructed with service)
 	 */
 	public DataType parse(String dataTypeString, DataType suggestedBaseDataType)
@@ -199,7 +199,7 @@ public class DataTypeParser {
 
 	/**
 	 * Throws exception if the data type does not match the specified {@link AllowedDataTypes}.
-	 * 
+	 *
 	 * @param dt {@link DataType} to check
 	 * @param allowedTypes {@link AllowedDataTypes enum} specifying what category of data types are ok
 	 * @throws InvalidDataTypeException if dt violates the specified allowedTypes

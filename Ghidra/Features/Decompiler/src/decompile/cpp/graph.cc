@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ static void print_varnode_vertex(Varnode *vn,ostream &s)
   s << endl;
   vn->setMark();
 }
-  
+
 static void print_op_vertex(PcodeOp *op,ostream &s)
 
 {
@@ -111,10 +111,10 @@ static void dump_varnode_vertex(Funcdata &data,ostream &s)
       op->getIn(i)->clearMark();
   }
 }
- 
+
 static void dump_op_vertex(Funcdata &data,ostream &s)
 
-{   
+{
   list<PcodeOp *>::const_iterator oiter;
   PcodeOp *op;
 
@@ -170,7 +170,7 @@ static void print_edges(PcodeOp *op,ostream &s)
 
 static void dump_edges(Funcdata &data,ostream &s)
 
-{   
+{
   list<PcodeOp *>::const_iterator oiter;
   PcodeOp *op;
 
@@ -212,7 +212,7 @@ void dump_dataflow_graph(Funcdata &data,ostream &s)
   s << "  LargeSizeArrangement=ArrangeInCircle,\n";
   s << "  DontUpdateSmallWithUserArrangement=false,\n";
   s << "  ActionSizeGainIfOff=1.0;\n";
-  
+
   s << "\n// VertexColors\n";
   s << "  *CMD = AlterLocalPreferences, Name = VertexColors,\n";
   s << "  ~ReplaceAllParams = TRUE,\n";
@@ -426,7 +426,7 @@ static void dump_block_properties(ostream &s)
   s << "  LargeSizeArrangement=ArrangeInCircle,\n";
   s << "  DontUpdateSmallWithUserArrangement=false,\n";
   s << "  ActionSizeGainIfOff=1.0;\n";
-  
+
   s << "\n// VertexColors\n";
   s << "  *CMD = AlterLocalPreferences, Name = VertexColors,\n";
   s << "  ~ReplaceAllParams = TRUE,\n";

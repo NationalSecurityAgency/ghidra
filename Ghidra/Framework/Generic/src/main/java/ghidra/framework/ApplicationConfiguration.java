@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ public class ApplicationConfiguration {
 
 	/**
 	 * Returns whether or not the application is headless.
-	 * 
+	 *
 	 * @return true if the application is headless; otherwise, false.
 	 */
 	public boolean isHeadless() {
@@ -47,7 +47,7 @@ public class ApplicationConfiguration {
 
 	/**
 	 * Returns the currently set task monitor.
-	 * 
+	 *
 	 * @return The currently set task monitor, which is by default a dummy monitor.
 	 */
 	public TaskMonitor getTaskMonitor() {
@@ -56,8 +56,8 @@ public class ApplicationConfiguration {
 
 	/**
 	 * Returns whether or not logging is to be initialized.
-	 * 
-	 * @return True if logging is to be initialized; otherwise, false.  This is true by default, 
+	 *
+	 * @return True if logging is to be initialized; otherwise, false.  This is true by default,
 	 * but may be set to false by the user.
 	 * @see #setInitializeLogging
 	 */
@@ -67,7 +67,7 @@ public class ApplicationConfiguration {
 
 	/**
 	 * Returns the <b>user-defined</b> log file.
-	 * 
+	 *
 	 * @return The <b>user-defined</b> log file. This is null by default and will only return a
 	 * non-null value if it has been set by the user.
 	 */
@@ -78,7 +78,7 @@ public class ApplicationConfiguration {
 	/**
 	 * Sets a task monitor that will be called back with messages that report the status of the
 	 * initialization process.
-	 * 
+	 *
 	 * @param monitor The monitor to set.
 	 */
 	public void setTaskMonitor(TaskMonitor monitor) {
@@ -95,8 +95,8 @@ public class ApplicationConfiguration {
 
 	/**
 	 * Returns the <b>user-defined</b> script log file.
-	 * 
-	 * @return Returns the <b>user-defined</b> script log file.  This is null by default and will 
+	 *
+	 * @return Returns the <b>user-defined</b> script log file.  This is null by default and will
 	 * only return a non-null value if it has been set by the user.
 	 */
 	public File getScriptLogFile() {

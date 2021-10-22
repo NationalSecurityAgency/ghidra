@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -374,7 +374,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		tool.addLocalAction(this, filterDuplicates);
 
 		//
-		// recurse depth		
+		// recurse depth
 		//
 		recurseDepthAction = new DockingAction("Recurse Depth", plugin.getName()) {
 			@Override
@@ -402,7 +402,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 
 		//
 		// navigate outgoing nodes on selection
-		//	
+		//
 		navigationOutgoingAction =
 			new ToggleDockingAction("Navigate Outgoing Nodes", plugin.getName()) {
 
@@ -419,7 +419,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		tool.addLocalAction(this, navigationOutgoingAction);
 
 		//
-		// navigate incoming nodes on selection	
+		// navigate incoming nodes on selection
 		//
 		navigateIncomingToggleAction =
 			new ToggleDockingAction("Navigation Incoming Location Changes", plugin.getName()) {
@@ -438,8 +438,8 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 				}
 			};
 
-		// note: the default state is to follow navigation events for the primary provider; 
-		//       non-primary providers will function like snapshots of the function with 
+		// note: the default state is to follow navigation events for the primary provider;
+		//       non-primary providers will function like snapshots of the function with
 		//       which they were activated.
 		navigateIncomingToggleAction.setSelected(isPrimary);
 		navigateIncomingToggleAction.setToolBarData(new ToolBarData(
@@ -704,7 +704,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 			return;
 		}
 
-		// no goto service...navigate the old fashioned way (this doesn't have history)		
+		// no goto service...navigate the old fashioned way (this doesn't have history)
 		plugin.firePluginEvent(new ProgramLocationPluginEvent(getName(), location, currentProgram));
 		isFiringNavigationEvent = false;
 	}
@@ -1129,7 +1129,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 				return;
 			}
 
-			// first, if the given node represents the function we have, then we don't need to 
+			// first, if the given node represents the function we have, then we don't need to
 			// go any further
 			if (function.equals(node.getRemoteFunction())) {
 				GTreeNode parent = node.getParent();
@@ -1154,7 +1154,7 @@ public class CallTreeProvider extends ComponentProviderAdapter implements Domain
 		}
 	}
 
-// TODO if we ever want specific staleness detection	
+// TODO if we ever want specific staleness detection
 //	private CallNode findNode(CallNode node, Function newFunction) {
 //		Function function = node.getContainingFunction();
 //		if (function == null) {

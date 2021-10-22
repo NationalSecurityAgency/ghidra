@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,7 +83,7 @@ class ReorderManager {
                 }
                 // this is the root; make sure fragment does not
                 // already exist as a child of root...
-                if (mParent == null && 
+                if (mParent == null &&
                     destNode.getModule().contains(frag)) {
                     return false;
                 }
@@ -106,7 +106,7 @@ class ReorderManager {
             }
             // this is the root; make sure module does not
             // already exist as a child of root...
-            if (mParent == null && 
+            if (mParent == null &&
                 destNode.getModule().contains(m) ) {
                 return false;
             }
@@ -134,7 +134,7 @@ class ReorderManager {
      * @param destNode destination node for the data.
      * @param dropNode data to add
      */
-    void add(ProgramNode destNode, ProgramNode[] dropNodes, int dropAction, int relativeMousePos) 
+    void add(ProgramNode destNode, ProgramNode[] dropNodes, int dropAction, int relativeMousePos)
             throws NotFoundException, CircularDependencyException, DuplicateGroupException {
 
         ProgramModule targetModule = destNode.getModule();
@@ -156,22 +156,22 @@ class ReorderManager {
             }
 		} finally {
 			tree.endTransaction(transactionID, true);
-		}			
+		}
     }
 
     private void reorderNode( ProgramNode destNode, int dropAction,
             int relativeMousePos, ProgramNode parentNode, ProgramNode dropNode )
             throws NotFoundException, CircularDependencyException, DuplicateGroupException {
-                
+
         if (!reorderChildren(destNode, dropNode, relativeMousePos)) {
             int index;
-            
-        	// this is the case where destNode and dropNode have different parents...        
+
+        	// this is the case where destNode and dropNode have different parents...
         	if (relativeMousePos < 0) {
         		if (parentNode == null) {
         			return;
         		}
-        		index = parentNode.getIndex(destNode);	
+        		index = parentNode.getIndex(destNode);
         	}
         	else {
         		// if destNode is a module and if it is expanded,
@@ -185,8 +185,8 @@ class ReorderManager {
         			// destNode after it
         			index = parentNode.getIndex(destNode);
         			++index;
-        		} 
-        			
+        		}
+
         	}
         	addGroup(destNode, dropNode, index, dropAction);
         	ProgramNode child = (ProgramNode)parentNode.getChildAt(index);
@@ -199,16 +199,16 @@ class ReorderManager {
 	 * @return true if reordering was done; false if no changes
 	 * were made
 	 */
-	private boolean reorderChildren(ProgramNode destNode, ProgramNode dropNode,  
+	private boolean reorderChildren(ProgramNode destNode, ProgramNode dropNode,
 			int relativeMousePos)  {
 
 		boolean didReorder = false;
-		
+
 		int index = 0;
 		ProgramNode parentNode = (ProgramNode)destNode.getParent();
 		ProgramModule dropParentModule = dropNode.getParentModule();
 		ProgramModule targetModule = destNode.getModule();
-			
+
 		if (parentNode.equals(dropNode.getParent())) {
 			didReorder = true;
         	targetModule = parentNode.getModule();
@@ -230,7 +230,7 @@ class ReorderManager {
             	tree.reorder(group, dropParentModule, index);
 				ProgramNode child = (ProgramNode)parentNode.getChildAt(index);
 				addToSelection(child);
-			}	        	
+			}
 			else {
 				Msg.showError(this, tree, "Error Moving Child", cmd.getStatusMsg());
 			}
@@ -238,19 +238,19 @@ class ReorderManager {
 		return didReorder;
 	}
     ////////////////////////////////////////////////////////////////////
-    
+
     /**
      * Match the expansion state for the dropNode and the nodeToSelect
      * (which is the new node that just got added). Select the new
      * node.
      */
     private void selectNode(ProgramNode dropNode, ProgramNode nodeToSelect) {
-    	
+
         // apply expansion state of the dropped node to the new node.
         tree.matchExpansionState(dropNode, nodeToSelect);
 
         // add the target node to the selection later so
-        // that the selection shows as being selected; 
+        // that the selection shows as being selected;
         // without the invokeLater(), the path is not
         // rendered as being selected.
 		addToSelection(nodeToSelect);
@@ -269,7 +269,7 @@ class ReorderManager {
 		};
 		SwingUtilities.invokeLater(r);
 	}
-    
+
     /**
      * Add a new group to the destNode or re-parent the drop Node to
      * the destNode's parent (or to root if destNode's parent is null).
@@ -279,15 +279,15 @@ class ReorderManager {
      * @param dropAction DnDConstants.ACTION_COPY or ACTION_MOVE
      */
     private void addGroup(ProgramNode destNode, ProgramNode dropNode,
-                      int targetIndex, int dropAction) 
+                      int targetIndex, int dropAction)
         throws NotFoundException, CircularDependencyException,
                 DuplicateGroupException{
         Group group = null;
         ProgramNode targetParent = (ProgramNode)destNode.getParent();
-        
+
         // first add drop fragment or module
         //  to target's parent
-        ProgramModule targetParentModule = 
+        ProgramModule targetParentModule =
             (targetParent != null) ? targetParent.getModule() :
                                             destNode.getModule();
 

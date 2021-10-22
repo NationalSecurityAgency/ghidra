@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ abstract class AbstractDominanceAlgorithm<V, E extends GEdge<V>> {
 	/**
 	 * Converts multiple source/root nodes in a graph into a single source of which those become
 	 * children.
-	 * 
+	 *
 	 * @param graph the graph
 	 * @param graphNavigator the navigator to determine graph direction
 	 * @return the new single source
@@ -49,7 +49,7 @@ abstract class AbstractDominanceAlgorithm<V, E extends GEdge<V>> {
 		// This method engages in some chicanery.  We may need to update the graph, in the case
 		// where there are multiple roots.  In that case, we need to add vertices and edges to
 		// our graph.  The issue is that whatever we create will not be of the same type that
-		// is in the graph, since we don't know how to create a V or E.  So, just add an 
+		// is in the graph, since we don't know how to create a V or E.  So, just add an
 		// object of our choosing and feel confident that we are the only user of the newly
 		// 'forced-in' types.
 		//
@@ -82,7 +82,7 @@ abstract class AbstractDominanceAlgorithm<V, E extends GEdge<V>> {
 	/**
 	 * Converts multiple sink/exit nodes in a graph into a single sink of which those become
 	 * parents.
-	 * 
+	 *
 	 * @param graph the graph
 	 * @param graphNavigator the navigator to determine graph direction
 	 * @return the new single sink

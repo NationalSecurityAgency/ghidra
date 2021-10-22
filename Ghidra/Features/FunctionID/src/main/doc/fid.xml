@@ -124,7 +124,7 @@ that get linked into larger programs. A <emphasis role="bold">Library</emphasis>
       <para>
       Version information that cannot be encoded in the formal
       <emphasis>Version</emphasis> field
-      can be encoded in this field. This is used typically for 
+      can be encoded in this field. This is used typically for
       <emphasis>compiler settings</emphasis>, which affect Function ID
       hashes but don't make sense in a version string describing the
       source code.
@@ -435,7 +435,7 @@ to populate the database.
       <listitem>
       <para>
       The name of the library being ingested. This is the identifier that will be inserted
-      as part of the comment when a match is found for functions in this library. 
+      as part of the comment when a match is found for functions in this library.
       </para>
       </listitem>
     </varlistentry>
@@ -540,11 +540,11 @@ Ghidra's <code>analyzeHeadless</code> command to analyze across the whole set. H
 of the modifications to the default analysis that may be necessary to get good Function ID results.
 </para>
 <para>
-Every function to be included must have a <emphasis>non-default</emphasis> function name assigned. 
+Every function to be included must have a <emphasis>non-default</emphasis> function name assigned.
 Function ID uses a function's <emphasis>primary symbol</emphasis> for the name.
 Symbols are typically imported from debug information, but any method for assigning
 names, script based or manual, will work.  Any function that still has its default name,
-<code>FUN_00....</code>, currently will not be ingested. 
+<code>FUN_00....</code>, currently will not be ingested.
 </para>
 <para>
 When performing auto-analysis in preparation for ingest, its best to disable the
@@ -553,7 +553,7 @@ When performing auto-analysis in preparation for ingest, its best to disable the
 in order to avoid cross contamination from different databases. If the function symbols
 are <emphasis>mangled</emphasis>, be sure to turn off the <emphasis role="bold">Demangler</emphasis>
 analyzer. This lets the future database apply the raw mangled symbol to new programs during analysis, which
-lets their <emphasis role="bold">Demangler</emphasis> analyzer pass run with complete information. 
+lets their <emphasis role="bold">Demangler</emphasis> analyzer pass run with complete information.
 </para>
 <para>
 For an example of these sorts of modifications to the analysis process, see the file:
@@ -681,9 +681,9 @@ directly. These strategies include:
       <listitem>
       <para>
       This strategy is different from the others, in that it applies to function
-      entries whose scores are slightly too <emphasis>low</emphasis>.  
+      entries whose scores are slightly too <emphasis>low</emphasis>.
       If a low scoring function has an instruction sequence that is deemed unique enough,
-      this strategy causes any potential match to automatically pass the threshold. 
+      this strategy causes any potential match to automatically pass the threshold.
       This provides an alternative to lowering the instruction count threshold to include
       a particular function.
       </para>
@@ -736,7 +736,7 @@ The Function ID Debug Plug-in allows users to inspect the individual records in 
 This functionality is generally only useful to users building their own databases.  Users can look up
 individual records based on name or hash, but currently the
 plug-in is not capable of modifying records.  The only exceptions are the <xref linkend="specialmitigate"/>
-strategies, which can be modified using the <xref linkend="debugsearch"/>. 
+strategies, which can be modified using the <xref linkend="debugsearch"/>.
 </para>
 <section id="enabledebug">
   <title>Enabling the Plug-in</title>

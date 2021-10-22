@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -140,7 +140,7 @@ int4 Action::print(ostream &s,int4 num,int4 depth) const
   s << name;
   return num+1;
 }
-  
+
 /// This will the Action name and the next step to execute
 /// \param s is the output stream
 void Action::printState(ostream &s) const
@@ -363,7 +363,7 @@ ActionGroup::~ActionGroup(void)
 
 {
   vector<Action *>::iterator iter;
-  
+
   for(iter=list.begin();iter!=list.end();++iter)
     delete *iter;
 }
@@ -461,7 +461,7 @@ Action *ActionGroup::getSubAction(const string &specify)
   }
   else
     remain = specify;		// Still have to match entire specify
-  
+
   vector<Action *>::iterator iter;
   Action *lastaction = (Action *)0;
   int4 matchcount = 0;
@@ -857,13 +857,13 @@ int4 ActionPool::processOp(PcodeOp *op,Funcdata &data)
       if (op->isDead()) break;
       if (opc != op->code()) {	// Set of rules to apply to this op has changed
         opc = op->code();
-        rule_index = 0;		
+        rule_index = 0;
       }
     }
     else if (opc != op->code()) {
       data.getArch()->printMessage("ERROR: Rule " + rl->getName() + " changed op without returning result of 1!");
       opc = op->code();
-      rule_index = 0;	
+      rule_index = 0;
     }
   }
   op_state++;
@@ -1147,7 +1147,7 @@ Action *ActionDatabase::deriveAction(const string &baseaction, const string &grp
   iter = actionmap.find(grp);
   if (iter != actionmap.end())
     return (*iter).second;	// Already derived this action
-  
+
   const ActionGroupList &curgrp(getGroup(grp)); // Group should already exist
   Action *act = getAction(baseaction);
   Action *newact = act->clone( curgrp );

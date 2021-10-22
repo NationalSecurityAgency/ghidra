@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 class GetPutFieldTest{
-   
+
     public boolean testBoolean = true;
     public byte testByte = 1;
     public short testShort = 2;
@@ -76,7 +76,7 @@ class GetPutFieldTest{
     public void setFloat(float newVal){
         this.testFloat = newVal;
     }
-    
+
     public int getInt(){
         return testInt;
     }
@@ -96,7 +96,7 @@ class GetPutFieldTest{
     public long getLong(){
         return testLong;
     }
-    
+
     public void setLong(long newVal){
        this.testLong = newVal;
     }
@@ -137,7 +137,7 @@ class GetPutFieldTest{
     public double getDoubleFromRef(GetPutFieldTest x){
         return x.testDouble;
     }
-  
+
     public long getLongFromRef(GetPutFieldTest x){
         return x.testLong;
     }
@@ -146,7 +146,7 @@ class GetPutFieldTest{
         long a = x.testLong;
         return a;
     }
- 
+
     public int getIntFromRef(GetPutFieldTest x){
         return x.testInt;
     }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,14 +35,14 @@ public class PlateFieldLocation extends CommentFieldLocation {
 
 	/**
 	 * Construct a new PlateFieldLocation.
-	 * 
+	 *
 	 * @param program the program of the location
 	 * @param addr the address of the code unit.
 	 * @param componentPath the componentPath of the codeUnit
 	 * @param row the line of the location
 	 * @param charOffset the character position on the row of the location.
 	 * @param comment plate comment text
-	 * @param commentRow The row index into the comments of this location.  This is different 
+	 * @param commentRow The row index into the comments of this location.  This is different
 	 *        than the <code>row</code> due to the fact that the PlateField has fictitious borders
 	 *        that don't exist in the actual comment.
 	 */
@@ -76,15 +76,15 @@ public class PlateFieldLocation extends CommentFieldLocation {
 
 	/**
 	 * Returns the index into the String[] returned by {@link #getComment()} that represents
-	 * the comment row that was clicked.  <code>-1</code> will be returned if the border of the 
-	 * plate field was clicked. 
+	 * the comment row that was clicked.  <code>-1</code> will be returned if the border of the
+	 * plate field was clicked.
 	 * <p>
 	 * <b>Note: </b> This value is different than that returned by {@link #getRow()}, as that
 	 *         value represents the screen row clicked.  Further, the PlateField adds screen
 	 *         decoration to the comments, which causes the screen row to differ from the comment
 	 *         row.
 	 * @return the index into the String[] returned by {@link #getComment()} that represents
-	 * the comment row that was clicked.  <code>-1</code> will be returned if the border of the 
+	 * the comment row that was clicked.  <code>-1</code> will be returned if the border of the
 	 * plate field was clicked.
 	 */
 	public int getCommentRow() {

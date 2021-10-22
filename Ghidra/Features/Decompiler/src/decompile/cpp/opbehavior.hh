@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,13 +61,13 @@ public:
 
   /// \brief Emulate the unary op-code on an input value
   virtual uintb evaluateUnary(int4 sizeout,int4 sizein,uintb in1) const;
-  
+
   /// \brief Emulate the binary op-code on input values
   virtual uintb evaluateBinary(int4 sizeout,int4 sizein,uintb in1,uintb in2) const;
-  
+
   /// \brief Reverse the binary op-code operation, recovering an input value
   virtual uintb recoverInputBinary(int4 slot,int4 sizeout,uintb out,int4 sizein,uintb in) const;
-  
+
   /// \brief Reverse the unary op-code operation, recovering the input value
   virtual uintb recoverInputUnary(int4 sizeout,uintb out,int4 sizein) const;
 

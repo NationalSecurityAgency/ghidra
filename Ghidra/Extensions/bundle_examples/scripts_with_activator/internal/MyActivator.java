@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,10 +33,10 @@ public class MyActivator extends GhidraBundleActivator {
 
 	/**
 	 * add {@code action} to {@code tool} and store both to remove later.
-	 * 
+	 *
 	 * Note: this can be used exactly once per bundle lifecycle, i.e. between start & stop.
-	 * 
-	 * @param tool the tool to add {@code action} to 
+	 *
+	 * @param tool the tool to add {@code action} to
 	 * @param action the action to add to {@code tool}
 	 * @return false if this add operation has already been performed
 	 */
@@ -54,7 +54,7 @@ public class MyActivator extends GhidraBundleActivator {
 
 	/**
 	 * Called by Ghidra when bundle is activated.
-	 * 
+	 *
 	 * @param bundleContext the context for this bundle
 	 * @param api placeholder for future Ghidra API
 	 */
@@ -67,7 +67,7 @@ public class MyActivator extends GhidraBundleActivator {
 
 	/**
 	 * Called by Ghidra when bundle is deactivated.
-	 * 
+	 *
 	 * @param bundleContext the context for this bundle
 	 * @param api placeholder for future Ghidra API
 	 */

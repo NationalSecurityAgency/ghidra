@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,18 +28,18 @@ public final class ViewChangedPluginEvent extends PluginEvent {
 	 * Name of the event.
 	 */
 	public static final String NAME = "ViewChanged";
-	
+
 	private String treeName; // name of the tree for where the view is
 							// coming from
 	private AddressSet viewSet;
-	
+
 	/**
 	 * Constructor for ViewChangedPluginEvent.
 	 * @param source name of the plugin that created this event
 	 * @param treeName name of the tree in the program
 	 * @param viewSet set of addresses in the view
 	 */
-	public ViewChangedPluginEvent(String source, 
+	public ViewChangedPluginEvent(String source,
 								  String treeName, AddressSet viewSet) {
 		super(source, NAME);
 		this.treeName = treeName;
@@ -64,7 +64,7 @@ public final class ViewChangedPluginEvent extends PluginEvent {
 	 */
 	@Override
     public String toString() {
-		return "Tree Name = " + treeName + 
+		return "Tree Name = " + treeName +
 				", AddressSet = " + viewSet;
 	}
 }

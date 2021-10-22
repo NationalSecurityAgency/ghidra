@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,12 +32,12 @@ import ghidra.app.plugin.processors.sleigh.ContextOp;
 
 /**
  * A {@link AssemblyResolution} indicating successful application of a constructor
- * 
+ *
  * This is almost analogous to {@link ghidra.app.plugin.processors.sleigh.pattern.DisjointPattern
  * DisjointPattern}, in that is joins an instruction {@link AssemblyPatternBlock} with a corresponding
  * context {@link AssemblyPatternBlock}. However, this object is mutable, and it collects backfill records,
  * as well as forbidden patterns.
- * 
+ *
  * When the applied constructor is from the "instruction" subtable, this represents a fully-
  * constructed instruction with required context. All backfill records ought to be resolved and
  * applied before the final result is given to the user, i.e., passed into the
@@ -106,7 +106,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 
 	/**
 	 * Build a new successful SLEIGH constructor resolution from a string representation
-	 * 
+	 *
 	 * This was used primarily in testing, to specify expected results.
 	 * @param str the string representation: "{@code ins:[pattern],ctx:[pattern]}"
 	 * @see ghidra.util.NumericUtilities#convertHexStringToMaskedValue(AtomicLong, AtomicLong, String, int, int, String)
@@ -146,7 +146,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 
 	/**
 	 * Shift the resolved instruction pattern to the right
-	 * 
+	 *
 	 * This also shifts any backfill and forbidden pattern records.
 	 * @param amt the number of bytes to shift.
 	 * @return the result
@@ -173,7 +173,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 
 	/**
 	 * Truncate (unshift) the resolved instruction pattern from the left
-	 * 
+	 *
 	 * NOTE: This drops all backfill and forbidden pattern records, since this method is typically
 	 *       used to read token fields rather than passed around for resolution.
 	 * @param amt the number of bytes to remove from the left
@@ -191,7 +191,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 
 	/**
 	 * Check if the current encoding is forbidden by one of the attached patterns
-	 * 
+	 *
 	 * The pattern become forbidden if this encoding's known bits are an overset of any forbidden
 	 * pattern's known bits.
 	 * @return false if the pattern is forbidden (and thus in error), true if permitted
@@ -215,7 +215,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 
 	/**
 	 * Check if this and another resolution have equal encodings
-	 * 
+	 *
 	 * This is like {@link #equals(Object)}, but it ignores backfills records and forbidden
 	 * patterns.
 	 * @param that the other resolution
@@ -227,7 +227,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 
 	/**
 	 * Combine the encodings and backfills of the given resolution into this one
-	 * 
+	 *
 	 * This combines corresponding pattern blocks (assuming they agree), collects backfill
 	 * records, and collects forbidden patterns.
 	 * @param that the other resolution
@@ -243,7 +243,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * @param that the result from backfilling
 	 * @param bf the resolved backfilled record
 	 * @return the result if successful, or null
-	 * 
+	 *
 	 * When a backfill is successful, the result should be combined with the owning resolution. In
 	 * addition, for bookkeeping's sake, the resolved record should be removed from the list of
 	 * backfills.
@@ -307,7 +307,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * @param cop the context operation specifying the location of the value to encode
 	 * @param val the masked value to encode
 	 * @return the result
-	 * 
+	 *
 	 * This is the forward (as in disassembly) direction of applying context operations. The
 	 * pattern expression is evaluated, and the result is written as specified.
 	 */
@@ -319,7 +319,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 
 	/**
 	 * Decode the value from the context located where the given context operation would write
-	 * 
+	 *
 	 * This is used to read the value from the left-hand-side "variable" of a context operation.
 	 * It seems backward, because it is. When assembling, the right-hand-side expression of a
 	 * context operation must be solved. This means the "variable" is known from the context(s) of
@@ -358,7 +358,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 
 	/**
 	 * Apply as many backfill records as possible
-	 * 
+	 *
 	 * Each backfill record is resolved in turn, if the record cannot be resolved, it remains
 	 * listed. If the record can be resolved, but it conflicts, an error record is returned. Each
 	 * time a record is resolved and combined successfully, all remaining records are tried again.
@@ -415,7 +415,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 
 	/**
 	 * Solve and apply context changes in reverse to forbidden patterns
-	 * 
+	 *
 	 * To avoid circumstances where a context change during disassembly would invoke a more
 	 * specific subconstructor than was used to assembly the instruction, we must solve the
 	 * forbidden patterns in tandem with the overall resolution. If the context of any forbidden
@@ -447,10 +447,10 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 
 	/**
 	 * Get the length of the instruction encoding
-	 * 
+	 *
 	 * This is used to ensure each operand is encoded at the correct offset
 	 * @return the length of the instruction block
-	 * 
+	 *
 	 * NOTE: this DOES include the offset
 	 * NOTE: this DOES include pending backfills
 	 */
@@ -465,7 +465,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	/**
 	 * Get the length of the instruction encoding, excluding trailing undefined bytes
 	 * @return the length of the defined bytes in the instruction block
-	 * 
+	 *
 	 * NOTE: this DOES include the offset
 	 * NOTE: this DOES NOT include pending backfills
 	 */
@@ -555,7 +555,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	/**
 	 * Used for testing and diagnostics: list the constructor line numbers used to resolve this
 	 * encoding
-	 * 
+	 *
 	 * This includes braces to describe the tree structure
 	 * @see ConstructState#dumpConstructorTree()
 	 * @return the constructor tree
@@ -597,7 +597,7 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 
 	/**
 	 * Count the number of bits specified in the resolution patterns
-	 * 
+	 *
 	 * Totals the specificity of the instruction and context pattern blocks.
 	 * @return the number of bits in the resulting patterns
 	 * @see AssemblyPatternBlock#getSpecificity()
@@ -608,9 +608,9 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 
 	/**
 	 * Get an iterable over all the possible fillings of the instruction pattern given a context
-	 * 
+	 *
 	 * This is meant to be used idiomatically, as in an enhanced for loop:
-	 * 
+	 *
 	 * <pre>
 	 * {@code
 	 * for (byte[] ins : rcon.possibleInsVals(ctx)) {
@@ -618,18 +618,18 @@ public class AssemblyResolvedConstructor extends AssemblyResolution {
 	 * }
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * This is similar to calling
 	 * {@link #getInstruction()}.{@link AssemblyPatternBlock#possibleVals()}, <em>but</em> with
 	 * forbidden patterns removed. A context is required so that only those forbidden patterns
 	 * matching the given context are actually removed. This method should always be preferred to
 	 * the sequence mentioned above, since {@link AssemblyPatternBlock#possibleVals()} on its own
-	 * may yield bytes that do not produce the desired instruction. 
-	 * 
+	 * may yield bytes that do not produce the desired instruction.
+	 *
 	 * NOTE: The implementation is based on {@link AssemblyPatternBlock#possibleVals()}, so be
 	 * aware that a single array is reused for each iterate. You should not retain a pointer to the
 	 * array, but rather make a copy.
-	 * 
+	 *
 	 * @param forCtx the context at the assembly address
 	 * @return the iterable
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,7 @@ public class ShowCCallsScript extends GhidraScript {
         }
 
         DecompInterface decomplib = setUpDecompiler(currentProgram);
-        
+
         try {
         	if (!decomplib.openProgram(currentProgram)) {
         		println("Decompile Error: " + decomplib.getLastMessage());
@@ -67,23 +67,23 @@ public class ShowCCallsScript extends GhidraScript {
 
 	        // call decompiler for all refs to current function
 	        Symbol sym = this.getSymbolAt(func.getEntryPoint());
-	
+
 	        Reference refs[] = sym.getReferences(null);
-	
+
 	        for (int i = 0; i < refs.length; i++) {
 	            if (monitor.isCancelled()) {
 	                break;
 	            }
-	
+
 	            // get function containing.
 	            Address refAddr = refs[i].getFromAddress();
 	            Function refFunc = currentProgram.getFunctionManager()
 	                    .getFunctionContaining(refAddr);
-	
+
 	            if (refFunc == null) {
 	                continue;
 	            }
-	
+
 	            // decompile function
 	            // look for call to this function
 	            // display call
@@ -99,20 +99,20 @@ public class ShowCCallsScript extends GhidraScript {
 
 	private DecompInterface setUpDecompiler(Program program) {
 		DecompInterface decomplib = new DecompInterface();
-        
+
 		DecompileOptions options;
-		options = new DecompileOptions(); 
+		options = new DecompileOptions();
 		OptionsService service = state.getTool().getService(OptionsService.class);
 		if (service != null) {
 			ToolOptions opt = service.getOptions("Decompiler");
-			options.grabFromToolAndProgram(null,opt,program);    	
+			options.grabFromToolAndProgram(null,opt,program);
 		}
         decomplib.setOptions(options);
-        
+
 		decomplib.toggleCCode(true);
 		decomplib.toggleSyntaxTree(true);
 		decomplib.setSimplificationStyle("decompile");
-		
+
 		return decomplib;
 	}
 
@@ -184,7 +184,7 @@ public class ShowCCallsScript extends GhidraScript {
     	if (node == null) {
     		return false;
     	}
-    	
+
     	Address min = node.getMinAddress();
         Address max = node.getMaxAddress();
         if (min == null)
@@ -210,7 +210,7 @@ public class ShowCCallsScript extends GhidraScript {
 	        	    }
 	        		buff.append(" " + nodeAddr + "   : ");
 	        	}
-	        	
+
 	        	buff.append("   " + toString(stmt));
 	        	return true;
         	//}

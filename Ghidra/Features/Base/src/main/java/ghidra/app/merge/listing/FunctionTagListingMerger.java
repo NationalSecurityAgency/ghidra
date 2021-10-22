@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,37 +35,37 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Handles merging of function tags when they are added/removed from 
- * functions. 
- * 
+ * Handles merging of function tags when they are added/removed from
+ * functions.
+ *
  * Most merging can be done automatically; the exception being when a
  * tag has been added to a function by one user, but deleted from the
  * program by another.
- * 
- * Note that there are other tag related conflict cases, but they are 
+ *
+ * Note that there are other tag related conflict cases, but they are
  * handled by the {@link FunctionTagMerger}, which handles all aspects of
- * creation/deletion/editing of tags independent of functions. 
- * 
+ * creation/deletion/editing of tags independent of functions.
+ *
  * THIS CLASS ONLY DEALS WITH FUNCTION-RELATED ADDS/REMOVES.
- * 
+ *
  * The specific cases handled by the class are described below:
- * 
+ *
  *  - X and Y are tags
  *  - ** indicates a conflict
- *  
- * 		User A	|	Add X	Add Y	Delete X	Delete Y	
+ *
+ * 		User A	|	Add X	Add Y	Delete X	Delete Y
  * 				|
  * User B		|
  * -------------------------------------------------------
- * Add X		|	X		X,Y			**			X		
+ * Add X		|	X		X,Y			**			X
  * 				|
- * Add Y		|	X,Y		Y			Y			**		
+ * Add Y		|	X,Y		Y			Y			**
  * 				|
- * Delete X		|	**		Y			-			-				
+ * Delete X		|	**		Y			-			-
  * 				|
- * Delete Y		|	X		**			-			-		
- * 
- * 
+ * Delete Y		|	X		**			-			-
+ *
+ *
  */
 public class FunctionTagListingMerger extends AbstractListingMerger {
 
@@ -77,17 +77,17 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	// which tag IDs are in conflict at which address.
 	private Map<Address, List<Long>> conflictMap = new HashMap<>();
 
-	// Keeps track of the tag currently being addressed in the 
-	// conflict resolution panel. If there are multiple conflicts, even at 
+	// Keeps track of the tag currently being addressed in the
+	// conflict resolution panel. If there are multiple conflicts, even at
 	// the same address, they will still require separate conflict
 	// panels. This keeps track of which one we're currently resolving.
 	private Long currentlyMergingTagID = null;
-	
+
 	private int tagChoice = ASK_USER;
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param listingMergeMgr the listing merge manager that owns this merger.
 	 */
 	public FunctionTagListingMerger(ListingMergeManager listingMergeMgr) {
@@ -122,7 +122,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	public boolean apply() {
 		conflictOption = conflictPanel.getSelectedOptions();
 
-		// If the "Use For All" check box is selected 
+		// If the "Use For All" check box is selected
 		// then save the option chosen for this conflict type.
 		if (conflictPanel.getUseForAll()) {
 			tagChoice = conflictOption;
@@ -133,7 +133,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 
 	/**
 	 * Stores the users' selection for how to handle a conflict.
-	 * 
+	 *
 	 * @param option user option, from {@link ListingMergeConstants}
 	 */
 	public void setConflictResolution(int option) {
@@ -200,7 +200,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 				for (Long id : ids) {
 					currentlyMergingTagID = id;
 
-					// Make sure we're supposed to prompt the user; if not, just use the 
+					// Make sure we're supposed to prompt the user; if not, just use the
 					// previous choice and merge.
 					if (tagChoice != ASK_USER) {
 						int optionToUse =
@@ -234,7 +234,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	/**
 	 * Attempts to merge changes between the My and Latest versions of the program. Conflicts
 	 * will be stored in the {@link #conflictMap} for later resolution.
-	 * 
+	 *
 	 * @param diffType from {@link ProgramDiffFilter}
 	 * @param monitor task monitor
 	 * @throws ProgramConflictException
@@ -245,7 +245,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 			throws ProgramConflictException, CancelledException, IOException {
 
 		// Get the address of all changes in Latest and My. These changes are guaranteed to ONLY be
-		// additions/removals of tags from the address; tag creations/deletions/edits will not be 
+		// additions/removals of tags from the address; tag creations/deletions/edits will not be
 		// in these change sets.
 		AddressSetView myChangedAddresses =
 			listingMergeMgr.diffOriginalMy.getDifferences(new ProgramDiffFilter(diffType), monitor);
@@ -258,7 +258,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 		Collection<? extends FunctionTag> latestDeletedTags =
 			getDeletedTags(latestPgm, monitor);
 
-		// Loop over all changed addresses in My and see if any added tags are in the 
+		// Loop over all changed addresses in My and see if any added tags are in the
 		// Latest delete list. If so, conflict panel!
 		processChangedAddresses(myChangedAddresses, latestDeletedTags, myPgm);
 
@@ -270,10 +270,10 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	/**
 	 * Determines if any deleted tags from one program were added to a function in
 	 * the other. If so, updates the conflict list with the offending tag/address.
-	 * 
+	 *
 	 * If there is no conflict for a particular address, the changes are automatically
 	 * merged.
-	 * 
+	 *
 	 * @param changedAddresses list of addresses to inspect
 	 * @param deletedTags all tags deleted in the 'other' program
 	 * @param programAddedTo the program in which the adds reside
@@ -292,7 +292,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 			if (function == null) {
 				continue;
 			}
-			
+
 			// Get all the tags added to the function and compare against
 			// the delete list.
 			Collection<FunctionTag> tags = getTagsAddedToFunction(programAddedTo, addr);
@@ -311,7 +311,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 
 	/**
 	 * Adds the given tag/address combo to the global conflict list.
-	 * 
+	 *
 	 * @param addr the conflicting address
 	 * @param tag the conflicting tag
 	 */
@@ -326,7 +326,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 
 	/**
 	 * Returns all tags that were added to the function at the given address.
-	 * 
+	 *
 	 * @param program the program where the function resides
 	 * @param addr the function entry point
 	 * @return
@@ -359,11 +359,11 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	}
 
 	/**
-	 * Compares the given program against Original to determine if any tags differ 
-	 * between the two. Any tags in Original that are NOT in the given program 
+	 * Compares the given program against Original to determine if any tags differ
+	 * between the two. Any tags in Original that are NOT in the given program
 	 * indicate deletions.
-	 * 
-	 * @param program the program version 
+	 *
+	 * @param program the program version
 	 * @param monitor
 	 * @return database IDs from the FunctionTagAdapter table that were deleted
 	 */
@@ -387,12 +387,12 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	}
 
 	/**
-	 * Sets up the conflict panel for SINGLE conflict. This will be a standard listing merge 
-	 * panel showing all four programs (Latest, My, Original, Result). Choices for 
+	 * Sets up the conflict panel for SINGLE conflict. This will be a standard listing merge
+	 * panel showing all four programs (Latest, My, Original, Result). Choices for
 	 * resolving the conflict will appear at the bottom.
-	 * 
+	 *
 	 * @param listingPanel the main panel
-	 * @param addr 
+	 * @param addr
 	 * @param tagID
 	 * @param changeListener
 	 */
@@ -419,7 +419,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 
 			FunctionTag myTag = getTag(tagID, myPgm);
 			String my = myTag == null ? "<tag deleted>" : myTag.getName();
-			
+
 			conflictPanel.setRowHeader(new String[] { "Option", "Function Tags" });
 			String text = "Function Tag conflict @ address :" + ConflictUtility.getAddressString(addr);
 			conflictPanel.setHeader(text);
@@ -440,7 +440,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 	/**
 	 * Returns a string containing the tag and the program version it's associated
 	 * with. This is used when displaying the conflict panel.
-	 * 
+	 *
 	 * @param version
 	 * @param tags
 	 * @return
@@ -466,9 +466,9 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 
 	/**
 	 * Merges the tag currently being resolved in the conflict panel according to the
-	 * given conflict option. This is invoked when the user has made a merge 
-	 * selection (keep Original, My, or Latest) in the conflict resolution panel. 
-	 * 
+	 * given conflict option. This is invoked when the user has made a merge
+	 * selection (keep Original, My, or Latest) in the conflict resolution panel.
+	 *
 	 * @param addr the location of the conflict
 	 * @param chosenConflictOption KEEP_ORIGINAL, KEEP_LATEST, KEEP_MY
 	 * @param monitor
@@ -479,8 +479,8 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 
 		int resolutionType = ProgramMergeFilter.MERGE;
 
-		// Set up lists to hold the tags we want to keep and the ones that 
-		// are in conflict. The discard list holds the versions of a conflict we 
+		// Set up lists to hold the tags we want to keep and the ones that
+		// are in conflict. The discard list holds the versions of a conflict we
 		// want to throw away; the keep list is the one we want to keep.
 		//
 		// ie: 	Original 	= "Red"
@@ -493,8 +493,8 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 		Set<FunctionTag> keepTags = new HashSet<>();
 
 		try {
-			// Get the tag name we're doing resolution on in each of the 
-			// three programs. 
+			// Get the tag name we're doing resolution on in each of the
+			// three programs.
 			FunctionTag latestTag = getTag(currentlyMergingTagID, latestPgm);
 			FunctionTag origTag = getTag(currentlyMergingTagID, originalPgm);
 			FunctionTag myTag = getTag(currentlyMergingTagID, myPgm);
@@ -625,7 +625,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 
 	/**
 	 * Returns the {@link FunctionTag} for the tag ID given.
-	 * 
+	 *
 	 * @param id the tag ID
 	 * @param program the program version
 	 * @return null if tag not found for the given id

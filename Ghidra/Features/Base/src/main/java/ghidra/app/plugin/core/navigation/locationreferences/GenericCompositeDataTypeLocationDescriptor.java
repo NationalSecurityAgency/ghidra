@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -102,13 +102,13 @@ public class GenericCompositeDataTypeLocationDescriptor extends GenericDataTypeL
 			// the parent's name and not the field's name.
 		}
 		else if (LabelFieldFactory.class.isAssignableFrom(fieldFactoryClass)) {
-			// It would be nice to highlight the label that points into data structures.  
+			// It would be nice to highlight the label that points into data structures.
 			// However, the label is on the parent address, which is not in our list of matches
-			// when we are offcut.  Further, using the program to lookup each address that 
+			// when we are offcut.  Further, using the program to lookup each address that
 			// comes in to see if it is our paren't address seems too expensive, as highlighting
 			// code is called for every paint operation.
 			//
-			// We could add the parent match to the list of known addresses and then use that 
+			// We could add the parent match to the list of known addresses and then use that
 			// to lookup in real-time later.  To do this we would need the current list of
 			// reference addresses and a new list of parent data addresses.  That seems a bit
 			// involved just for highlighting a label.

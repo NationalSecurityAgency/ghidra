@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public class ResetFormatAction extends DockingAction {
     public ResetFormatAction(String owner, FieldHeader panel) {
         super("Reset Format", owner, false);
         this.panel = panel;
-        
+
         setPopupMenuData( new MenuData( new String[] {"Reset Format"}, null,"format" ) );
 		setEnabled(true);
 		setHelpLocation(new HelpLocation(HelpTopics.CODE_BROWSER, "Reset Format"));
@@ -54,14 +54,14 @@ public class ResetFormatAction extends DockingAction {
      */
     @Override
     public void actionPerformed(ActionContext context) {
-        int userChoice = OptionDialog.showOptionDialog( panel, "Reset Format?", 
+        int userChoice = OptionDialog.showOptionDialog( panel, "Reset Format?",
             "There is no undo for this action.\n" +
-            "Are you sure you want to reset the current format?", "Continue", 
+            "Are you sure you want to reset the current format?", "Continue",
             OptionDialog.WARNING_MESSAGE );
         if ( userChoice == OptionDialog.CANCEL_OPTION ) {
             return;
         }
-        
+
         panel.setTabLock( true );
         panel.resetFormat();
         panel.getHeaderTab().update();

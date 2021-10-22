@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,7 +50,7 @@ public class SymbolPathParser {
 	 * has each more deeply nested namespace contained in order in the list, followed
 	 * by the trailing name.
 	 * @param name The input String to be parsed.
-	 * @param ignoreLeaderParens true signals to ignore any string that starts with a '(' char.  
+	 * @param ignoreLeaderParens true signals to ignore any string that starts with a '(' char.
 	 *        This is useful to work around some problem characters.
 	 * @return {@literal List<String>} containing the sequence of namespaces and trailing name.
 	 */

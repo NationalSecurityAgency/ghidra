@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,7 +81,7 @@ public:
   void uniqueHash(const Varnode *root,Funcdata *fd);	///< Select a unique hash for the given Varnode
   Varnode *findVarnode(const Funcdata *fd,const Address &addr,uint8 h);
   uint8 getHash(void) const { return hash; }		///< Get the (current) hash
-  
+
   const Address &getAddress(void) const { return addrresult; }	///< Get the (current) address
   static void gatherFirstLevelVars(vector<Varnode *> &varlist,const Funcdata *fd,const Address &addr,uint8 h);
   static int4 getSlotFromHash(uint8 h);			///< Retrieve the encoded slot from a hash

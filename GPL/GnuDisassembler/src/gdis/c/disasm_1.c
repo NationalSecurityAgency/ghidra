@@ -25,7 +25,7 @@ void listSupportedArchMachTargets(void)
 	targetList = bfd_target_list();
 	if(targetList != NULL){
 		for(i=0, j=0; targetList[i] !=0; i++){
-			printf("Supported Target: %s\n", targetList[i]);			
+			printf("Supported Target: %s\n", targetList[i]);
 		}
 	}
 	printf("\ndone with targetList.\n");
@@ -33,7 +33,7 @@ void listSupportedArchMachTargets(void)
 	archList = bfd_arch_list();
 	if(archList != NULL){
 		for(i=0, j=0; archList[i] !=0; i++){
-			printf("Supported Arch: %s\n", archList[i]);			
+			printf("Supported Arch: %s\n", archList[i]);
 		}
 	}
 	printf("\ndone with archList.\n");
@@ -70,7 +70,7 @@ void configureDisassembleInfo(bfd* abfd,
 	INIT_DISASSEMBLE_INFO(*info, stdout, objdump_sprintf);
 	info->arch = (enum bfd_architecture) arch;
 	info->mach = mach;
-	info->flavour = bfd_get_flavour(abfd);	
+	info->flavour = bfd_get_flavour(abfd);
 	info->endian = end;
 	info->stream = (FILE*)&sfile; // set up our "buffer stream"
 	info->display_endian = BFD_ENDIAN_LITTLE;
@@ -78,21 +78,21 @@ void configureDisassembleInfo(bfd* abfd,
 	disassemble_init_for_target(info);
 }
 
-disassembler_ftype configureBfd(bfd* abfd, 
+disassembler_ftype configureBfd(bfd* abfd,
 		enum bfd_architecture arch,
 		unsigned long mach,
 		enum bfd_endian endian,
 		disassemble_info* DI,
 		disassembler_ftype* disassemble_fn)
-{	
+{
 	struct bfd_target *xvec;
 
 	abfd->flags |= EXEC_P;
 
 
-	// set up xvec byteorder. 
+	// set up xvec byteorder.
 	xvec = (struct bfd_target *) malloc (sizeof (struct bfd_target));
-	memset(xvec, 0x00, sizeof (struct bfd_target));	
+	memset(xvec, 0x00, sizeof (struct bfd_target));
 	memcpy (xvec, abfd->xvec, sizeof (struct bfd_target));
 	xvec->byteorder = endian;
 	abfd->xvec = xvec;
@@ -150,7 +150,7 @@ int disassemble_buffer( disassembler_ftype disassemble_fn,
 
 		/* save off corresponding hex bytes */
 		for ( j= 0,i = 0; i < 8; i++, j+=3) {
-			if ( i < size ){				
+			if ( i < size ){
 				sprintf(&(pDisInfo->bytesBufferAscii[j]), "%02X ", info->buffer[*offset + i]);
 				pDisInfo->bytesBufferBin[i] = info->buffer[*offset + i];
 			}
@@ -178,7 +178,7 @@ int disassemble_buffer( disassembler_ftype disassemble_fn,
 	return size;
 }
 
-void processBuffer(unsigned char* buff, 
+void processBuffer(unsigned char* buff,
 		int buff_len,
 		bfd_vma buff_vma,
 		disassembler_ftype disassemble_fn,
@@ -196,7 +196,7 @@ void processBuffer(unsigned char* buff,
 	memset(disassemblyInfoBuffer, 0x00, sizeof(DIS_INFO)*MAX_NUM_ENTRIES);
 
 	while((buff_len - offset) > 0 && bytesConsumed != 0 && numDisassemblies < MAX_NUM_ENTRIES){
-		bytesConsumed = disassemble_buffer( disassemble_fn, DI, &offset, &(disassemblyInfoBuffer[numDisassemblies++]));	
+		bytesConsumed = disassemble_buffer( disassemble_fn, DI, &offset, &(disassemblyInfoBuffer[numDisassemblies++]));
 	}
 	for (i = 0; i < numDisassemblies; i++) {
 		printf("%s\nInfo: %d,%d,%d,%d,%d\n", disassemblyInfoBuffer[i].disassemblyString,

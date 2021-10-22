@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,9 +29,9 @@ import ghidra.util.task.TaskMonitor;
 import pdb.PdbUtils;
 
 /**
- * Information about a pdb symbol file: its filename and its 
+ * Information about a pdb symbol file: its filename and its
  * {@link PdbIdentifiers pdb guid/id fingerprints}
- * 
+ *
  */
 public class SymbolFileInfo {
 	private static final int MIN_SIG_HEX_STR_LEN = 8;
@@ -39,7 +39,7 @@ public class SymbolFileInfo {
 
 	/**
 	 * Create a SymbolFileInfo instance from the metadata found in a program
-	 * @param program where the Pdb metadata is stored 
+	 * @param program where the Pdb metadata is stored
 	 * @return new SymbolFileInfo instance, or null if no Pdb info found
 	 */
 	public static SymbolFileInfo fromProgramInfo(Program program) {
@@ -59,7 +59,7 @@ public class SymbolFileInfo {
 			int age = pdbAttrs.getPdbAgeAsInt();
 			String path = pdbAttrs.getPdbFile();
 			path = !StringUtils.isBlank(path) ? path : "";
-			
+
 			if (sig == 0 && guid == null && path.isEmpty()) {
 				return null;
 			}
@@ -76,9 +76,9 @@ public class SymbolFileInfo {
 	/**
 	 * Create a new {@link SymbolFileInfo} instance using information scraped from a pdb symbol
 	 * server subdir path.
-	 * 
+	 *
 	 * @param path name of the pdb file
-	 * @param uniqueSubdir string that is a combo of 32_hexchar_GUID + age or 
+	 * @param uniqueSubdir string that is a combo of 32_hexchar_GUID + age or
 	 * 8_hexchar_signature + age
 	 * @return new {@link SymbolFileInfo} instance, or null if invalid info in path
 	 * or subdir names
@@ -110,7 +110,7 @@ public class SymbolFileInfo {
 
 	/**
 	 * Creates a new instance using the specified path and guid/id string and age.
-	 * 
+	 *
 	 * @param path String pdb path filename
 	 * @param uid String GUID or signature id
 	 * @param age int value
@@ -140,7 +140,7 @@ public class SymbolFileInfo {
 
 	/**
 	 * Create a new instance using the specified path and {@link PdbIdentifiers}.
-	 * 
+	 *
 	 * @param path String pdb path filename, can not be null
 	 * @param pdbIdent {@link PdbIdentifiers}
 	 * @return new {@link SymbolFileInfo} instance made of specified path and ident info
@@ -155,7 +155,7 @@ public class SymbolFileInfo {
 	 * Create a new instance using the information found inside the specified file.
 	 * <p>
 	 * The file will be opened and parsed to determine its GUID/ID and age.
-	 * 
+	 *
 	 * @param pdbFile pdb file to create a SymbolFileInfo for
 	 * @param monitor {@link TaskMonitor} for progress and cancel
 	 * @return new {@link SymbolFileInfo} instance or null if file is not a valid pdb or pdb.xml
@@ -177,7 +177,7 @@ public class SymbolFileInfo {
 
 	/**
 	 * Returns the {@link PdbIdentifiers} of this instance.
-	 * 
+	 *
 	 * @return {@link PdbIdentifiers} of this instance
 	 */
 	public PdbIdentifiers getIdentifiers() {
@@ -186,7 +186,7 @@ public class SymbolFileInfo {
 
 	/**
 	 * The name of the pdb file, derived from the {@link #getPath() path} value.
-	 * 
+	 *
 	 * @return String name of the pdb file, never null, maybe blank
 	 */
 	public String getName() {
@@ -194,10 +194,10 @@ public class SymbolFileInfo {
 	}
 
 	/**
-	 * The 'path' of the pdb file, which contains the full path and filename recovered from the 
+	 * The 'path' of the pdb file, which contains the full path and filename recovered from the
 	 * original binary's debug data.  Typically, this is just a plain name string without any
 	 * path info.
-	 * 
+	 *
 	 * @return original pdb path string recovered from binary's debug data, never null, maybe blank
 	 */
 	public String getPath() {
@@ -207,7 +207,7 @@ public class SymbolFileInfo {
 	/**
 	 * A string that represents the unique fingerprint of a Pdb file.  Does not
 	 * include the age.
-	 * 
+	 *
 	 * @return either GUID str or signature hexstring
 	 */
 	public String getUniqueName() {
@@ -220,7 +220,7 @@ public class SymbolFileInfo {
 	/**
 	 * A string that represents the unique fingerprint of a Pdb file, or empty "" if
 	 * invalid.  Does not include the age.
-	 * 
+	 *
 	 * @return either GUID str or signature hexstring or "" if neither
 	 */
 	public String getUniqifierString() {
@@ -236,7 +236,7 @@ public class SymbolFileInfo {
 	/**
 	 * Returns a string that is a combination of the GUID/ID and the age, in a format
 	 * used by symbol servers to create subdirectories in their directory structure.
-	 * 
+	 *
 	 * @return String combination of GUID/ID and age, e.g. "112233441"
 	 */
 	public String getUniqueDirName() {
@@ -246,7 +246,7 @@ public class SymbolFileInfo {
 	/**
 	 * Returns true if this SymbolFileInfo instance exactly matches the {@link PdbIdentifiers}
 	 * info of the other instance.
-	 *  
+	 *
 	 * @param other {@link SymbolFileInfo} to compare
 	 * @return boolean true if exact match of {@link PdbIdentifiers} info
 	 */
@@ -257,7 +257,7 @@ public class SymbolFileInfo {
 
 	/**
 	 * Returns a description of this instance.
-	 * 
+	 *
 	 * @return String description
 	 */
 	public String getDescription() {

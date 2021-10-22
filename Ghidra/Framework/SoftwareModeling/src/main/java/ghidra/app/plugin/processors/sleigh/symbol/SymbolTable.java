@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.xml.XmlPullParser;
 import java.util.ArrayList;
 
 /**
- * 
+ *
  *
  * Full symbol table for sleigh
  */
@@ -38,7 +38,7 @@ public class SymbolTable {
 	private UseropSymbol[] userOps;		// List all user ops, indexed by index
 	private SymbolScope[] table;		// All SymbolScopes, indexed by id
 	private SymbolScope curscope;		// Current scope
-	
+
 	private SymbolScope skipScope(int i) {
 		SymbolScope res = curscope;
 		while(i>0) {
@@ -49,7 +49,7 @@ public class SymbolTable {
 		}
 		return res;
 	}
-	
+
 	private Symbol findSymbolInternal(SymbolScope scope,String nm) {
 		while(scope != null) {
 			Symbol res = scope.findSymbol(nm);
@@ -59,15 +59,15 @@ public class SymbolTable {
 		}
 		return null;
 	}
-	
+
 	public SymbolTable() { curscope = null; }
-	
+
 	public SymbolScope getCurrentScope() { return curscope; }
-	
+
 	public SymbolScope getGlobalScope() { return table[0]; }
-	
+
 	public void setCurrentScope(SymbolScope scope) { curscope = scope; }
-	
+
 	public Symbol findSymbol(String nm) {
 		return findSymbolInternal(curscope,nm);
 	}
@@ -75,24 +75,24 @@ public class SymbolTable {
 	public Symbol findSymbol(String nm,int skip) {
 		return findSymbolInternal(skipScope(skip),nm);
 	}
-	
+
 	public Symbol findGlobalSymbol(String nm) {
 		return findSymbolInternal(table[0],nm);
 	}
 
 	public Symbol[] getSymbolList() { return symbollist; }
-	
+
 	public Symbol findSymbol(int id) {
 		return symbollist[id];
 	}
-	
+
 	public void restoreXml(XmlPullParser parser, SleighLanguage sleigh) throws UnknownInstructionException {
 	    XmlElement el = parser.start("symbol_table");
 		int scopesize = SpecXmlUtils.decodeInt(el.getAttribute("scopesize"));
 		table = new SymbolScope[scopesize];
 		int symsize = SpecXmlUtils.decodeInt(el.getAttribute("symbolsize"));
 		symbollist = new Symbol[symsize];
-		
+
 							// Restore the scopes
 		for(int i=0;i<scopesize;++i) {
 		    XmlElement subel = parser.start("scope");
@@ -107,7 +107,7 @@ public class SymbolTable {
 			parser.end(subel);
 		}
 		curscope = table[0];		// Initial scope is global scope
-		
+
 		for(int i=0;i<symsize;++i) {	// Restore the symbol shells
 			restoreSymbolHeader(parser);
 		}
@@ -126,7 +126,7 @@ public class SymbolTable {
 		userops.toArray(userOps);
 		parser.end(el);
 	}
-	
+
 	public void restoreSymbolHeader(XmlPullParser parser) {
 		Symbol sym;
 		XmlElement el = parser.peek();
@@ -164,7 +164,7 @@ public class SymbolTable {
 	public int getNumberOfUserDefinedOpNames() {
 		return userOps.length;
 	}
-	
+
 	public String getUserDefinedOpName(int index) {
 		if (index < userOps.length)
 			return userOps[index].getName();

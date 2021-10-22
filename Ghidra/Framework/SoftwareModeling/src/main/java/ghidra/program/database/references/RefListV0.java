@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.symbol.*;
 
 /**
- * 
+ *
  *
  * To change the template for this generated type comment go to
  * Window&gt;Preferences&gt;Java&gt;Code Generation&gt;Code and Comments
@@ -54,7 +54,7 @@ class RefListV0 extends RefList {
 	 * @param key address key corresponding to the address parameter
 	 * @param adapter entry record storage adapter (may be null to prevent database update)
 	 * @param addrMap address map for encoding/decoding addresses
-	 * @param program may be null for upgrade in which 
+	 * @param program may be null for upgrade in which
 	 * 		case resulting reference objects are not suitable for general use.
 	 * @param cache RefList object cache
 	 * @param isFrom true for from-adapter use, false for to-adapter use
@@ -75,7 +75,7 @@ class RefListV0 extends RefList {
 	 * @param address address associated with this list (a new key will be generated if required)
 	 * @param adapter entry record storage adapter (may be null to prevent database update)
 	 * @param addrMap address map for encoding/decoding addresses
-	 * @param program may be null for upgrade in which 
+	 * @param program may be null for upgrade in which
 	 * 		case resulting reference objects are not suitable for general use.
 	 * @param cache RefList object cache
 	 * @param isFrom true for from-adapter use, false for to-adapter use
@@ -96,7 +96,7 @@ class RefListV0 extends RefList {
 	 * @param rec existing refList record
 	 * @param adapter entry record storage adapter
 	 * @param addrMap address map for encoding/decoding addresses
-	 * @param program may be null for upgrade in which 
+	 * @param program may be null for upgrade in which
 	 * 		case resulting reference objects are not suitable for general use.
 	 * @param cache RefList object cache
 	 * @param isFrom true for from-adapter use, false for to-adapter use

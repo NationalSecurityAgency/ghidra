@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public final class ArtConstants {
 	//	"043",// oreo-release
 	//	"044",// taimen-op1
 	//	"046",// oreo-mr1-release
-	//	"051",// 
+	//	"051",//
 	//	"056",// pie-release
 	//	"059",// android-o-mr1-iot-release-1.0.0
 	//	"060",// android-o-mr1-iot-release-1.0.1
@@ -64,18 +64,18 @@ public final class ArtConstants {
 	public final static String[] SUPPORTED_VERSIONS = new String[] {
 		//@formatter:off
 		VERSION_KITKAT_RELEASE,
-		VERSION_LOLLIPOP_RELEASE, 
-		VERSION_LOLLIPOP_MR1_WFC_RELEASE, 
+		VERSION_LOLLIPOP_RELEASE,
+		VERSION_LOLLIPOP_MR1_WFC_RELEASE,
 		VERSION_MARSHMALLOW_RELEASE,
-		VERSION_NOUGAT_RELEASE, 
-		VERSION_NOUGAT_MR2_PIXEL_RELEASE, 
+		VERSION_NOUGAT_RELEASE,
+		VERSION_NOUGAT_MR2_PIXEL_RELEASE,
 		VERSION_OREO_RELEASE,
-		VERSION_OREO_DR1_RELEASE, 
-		VERSION_OREO_MR1_RELEASE, 
-		VERSION_PIE_RELEASE, 
+		VERSION_OREO_DR1_RELEASE,
+		VERSION_OREO_MR1_RELEASE,
+		VERSION_PIE_RELEASE,
 		VERSION_10_RELEASE,
 		VERSION_11_RELEASE,
-		//@formatter:on 
+		//@formatter:on
 	};
 
 	public final static boolean isSupportedVersion(String version) {

@@ -2,13 +2,13 @@
 <!-- This cspec describes the MIPS64 ABI called "n32"
      This is the default when using gcc to compile for 64-bit MIPS (i.e. with the -mips64 or -mips64r2 compiler flags)
      This ABI can be requested explicitly in gcc with the -mabi=n32 flag.
-      
+
      n32 specifies 64-bit registers but 32-bit pointers.
      The other major MIPS64 ABI with 32-bit pointers is call "o64"
      The primary parameter passing difference n32 and o64 is that
      n32 can use up to 8 general purpose registers for parameters before going to the stack, while
      o64 can use only up to 4.
-     
+
      See for example "MIPSpro ABI Handbook" SGI part number 007-2816-005
      -->
 <compiler_spec>
@@ -43,7 +43,7 @@
   </global>
   <aggressivetrim signext="true"/>  <!-- Aggressively try to eliminate sign extensions -->
   <!--
-  n32 specifies that ra does not have to be used as the return address register 
+  n32 specifies that ra does not have to be used as the return address register
   <returnaddress>
     <register name="ra"/>
   </returnaddress>

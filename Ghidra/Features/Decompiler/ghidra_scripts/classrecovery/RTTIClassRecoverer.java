@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS. 
+//DO NOT RUN. THIS IS NOT A SCRIPT! THIS IS A CLASS THAT IS USED BY SCRIPTS.
 package classrecovery;
 
 import java.util.*;
@@ -116,7 +116,7 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 
 
 	/**
-	 * Method to promote the namespace is a class namespace. 
+	 * Method to promote the namespace is a class namespace.
 	 * @param namespace the namespace for the vftable
 	 * @return true if namespace is (now) a class namespace or false if it could not be promoted.
 	 */
@@ -275,7 +275,7 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 					continue;
 				}
 
-				// skip if other classes contain this function as an inline inlined destructor or 
+				// skip if other classes contain this function as an inline inlined destructor or
 				// inlined indeterminate
 				if (isInlineDestructorOrIndeterminateInAnyClass(memberFunction)) {
 					continue;

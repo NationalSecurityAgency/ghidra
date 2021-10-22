@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -199,9 +199,9 @@ public class GhidraFileChooser extends DialogComponentProvider
 	private FileChooserActionManager actionManager;
 
 	/**
-	 * The last input component to take focus (the text field or file view). 
-	 * 
-	 * <p>This may annoy users that are using the keyboard to perform navigation operations via 
+	 * The last input component to take focus (the text field or file view).
+	 *
+	 * <p>This may annoy users that are using the keyboard to perform navigation operations via
 	 * the toolbar buttons, as we will keep putting focus back into the last input item.  We
 	 * may need a way to set this field to null when the user is working in this fashion.
 	 */
@@ -226,7 +226,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 
 	/**
 	 * Constructs a new ghidra file chooser
-	 * 
+	 *
 	 * @param model the file chooser model
 	 * @param parent the parent component
 	 */
@@ -700,9 +700,9 @@ public class GhidraFileChooser extends DialogComponentProvider
 	}
 
 	/**
-	 * Sets the text used in the <code>OK</code> button 
-	 * 
-	 * @param buttonText the text 
+	 * Sets the text used in the <code>OK</code> button
+	 *
+	 * @param buttonText the text
 	 */
 	public void setApproveButtonText(String buttonText) {
 		setOkButtonText(buttonText);
@@ -710,7 +710,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 
 	/**
 	 * Sets the tooltip text used in the <code>OK</code> button
-	 * 
+	 *
 	 * @param tooltipText the tooltip text
 	 */
 	public void setApproveButtonToolTipText(String tooltipText) {
@@ -828,10 +828,10 @@ public class GhidraFileChooser extends DialogComponentProvider
 		}
 
 		// we only get here if the new dir is the current dir and we are not forcing an update
-		// TODO this code causes unexpected behavior when in 'directories only' mode in that 
-		// this will cause the current directory to change.  The behavior can be seen by 
+		// TODO this code causes unexpected behavior when in 'directories only' mode in that
+		// this will cause the current directory to change.  The behavior can be seen by
 		// putting this code back in and then running the tests.   No tests are failing with this
-		// code removed.  We are leaving this code here for a couple releases in case we find 
+		// code removed.  We are leaving this code here for a couple releases in case we find
 		// a code path that requires it.
 		// setSelectedFileAndUpdateDisplay((isFilesOnly() ? null : directory));
 	}
@@ -871,10 +871,10 @@ public class GhidraFileChooser extends DialogComponentProvider
 	}
 
 	/**
-	 * Returns the selected file. This can be set either by the  programmer via 
-	 * {@link #setSelectedFile(File)} or by a user action, such as either typing the 
+	 * Returns the selected file. This can be set either by the  programmer via
+	 * {@link #setSelectedFile(File)} or by a user action, such as either typing the
 	 * filename into the UI or selecting the file from a list in the UI.
-	 * 
+	 *
 	 * @return the selected file; null if cancelled or no file was selected
 	 */
 	public File getSelectedFile() {
@@ -2138,7 +2138,7 @@ public class GhidraFileChooser extends DialogComponentProvider
 	 * size.  The list also allows us to clear and set a value in one method call.  We are
 	 * essentially using this list to hold selected files, where in certain modes, there will only
 	 * be a single file selection.
-	 * 
+	 *
 	 * <P>The methods on the class are synchronized to ensure thread visibility.
 	 */
 	private class FileList {

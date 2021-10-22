@@ -144,7 +144,7 @@
     </likelytrash>
   </prototype>-->
  <!--<resolveprototype name="__stdcall/__fastcall">
-    <model name="__stdcall"/>       
+    <model name="__stdcall"/>
     <model name="__fastcall"/>
   </resolveprototype>
   <eval_current_prototype name="__stdcall/__fastcall"/>-->

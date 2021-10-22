@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -645,7 +645,7 @@ JoinRecord *AddrSpaceManager::findAddJoin(const vector<VarnodeData> &pieces,uint
 
   JoinRecord *newjoin = new JoinRecord();
   newjoin->pieces = pieces;
-  
+
   uint4 roundsize = (totalsize + 15) & ~((uint4)0xf);	// Next biggest multiple of 16
 
   newjoin->unified.space = joinspace;
@@ -905,7 +905,7 @@ void PcodeEmit::restoreXmlOp(const Element *el,const AddrSpaceManager *manage)
   List::const_iterator iter = list.begin();
   Address pc = Address::restoreXml(*iter,manage);
   ++iter;
-  if ((*iter)->getName() == "void") 
+  if ((*iter)->getName() == "void")
     outptr = (VarnodeData *)0;
   else {
     outvar.restoreXml(*iter,manage);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public class AnimationUtils {
 	/**
 	 * Returns true if animation is enabled; false if animation has been disable, such as by
 	 * a user option
-	 * 
+	 *
 	 * @return true if enabled
 	 */
 	public static boolean isAnimationEnabled() {
@@ -62,7 +62,7 @@ public class AnimationUtils {
 	/**
 	 * Focuses the current component by graying out all other components but the given one and
 	 * bringing that component to the middle of the screen.
-	 * 
+	 *
 	 * @param component The component to focus
 	 * @return the new animator
 	 */
@@ -235,7 +235,7 @@ public class AnimationUtils {
 
 	public static Animator executeSwingAnimationCallback(SwingAnimationCallback callback) {
 		// note: instead of checking for 'animationEnabled' here, it will happen in the driver
-		//       so that the we can call SwingAnimationCallback.done(), which will let the client 
+		//       so that the we can call SwingAnimationCallback.done(), which will let the client
 		//       perform its final action.
 		int duration = callback.getDuration();
 		SwingAnimationCallbackDriver driver = new SwingAnimationCallbackDriver(callback, duration);
@@ -244,7 +244,7 @@ public class AnimationUtils {
 
 	/**
 	 * Returns the {@link GGlassPane} for the given component
-	 * 
+	 *
 	 * @param c the component
 	 * @return the glass pane
 	 */
@@ -290,7 +290,7 @@ public class AnimationUtils {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	public static class SwingAnimationCallbackDriver {
 		private Animator animator;
@@ -321,7 +321,7 @@ public class AnimationUtils {
 			animator.start();
 		}
 
-		// note: must be public--it is a callback from the animator (also, its name must 
+		// note: must be public--it is a callback from the animator (also, its name must
 		//       match the value passed to the animator)
 		public void setPercentComplete(double percent) {
 			callback.progress(percent);
@@ -357,7 +357,7 @@ public class AnimationUtils {
 			animator.start();
 		}
 
-		// note: must be public--it is a callback from the animator (also, its name must 
+		// note: must be public--it is a callback from the animator (also, its name must
 		//       match the value passed to the animator)
 		public void setPercentComplete(double percent) {
 			painter.setPercentComplete(percent);
@@ -394,7 +394,7 @@ public class AnimationUtils {
 		public void paint(GGlassPane glassPane, Graphics g) {
 			Color gray = Color.GRAY;
 //			double darknessFudge = .95;
-//			double progress = percentComplete * darknessFudge; // emphasis starts at 1			
+//			double progress = percentComplete * darknessFudge; // emphasis starts at 1
 //			int alpha = Math.min(255, (int) (255 * progress));
 //			gray = new Color(gray.getRed(), gray.getGreen(), gray.getBlue(), alpha);
 			gray = new Color(gray.getRed(), gray.getGreen(), gray.getBlue());
@@ -414,7 +414,7 @@ public class AnimationUtils {
 			Rectangle defaultBounds = component.getBounds();
 
 			double emphasis = 1 + (magnification * percentComplete);
-			// emphasis = (magnification * percentComplete); // thumbnail 
+			// emphasis = (magnification * percentComplete); // thumbnail
 			int width = (int) (defaultBounds.width * emphasis);
 			int height = (int) (defaultBounds.height * emphasis);
 
@@ -424,10 +424,10 @@ public class AnimationUtils {
 			emphasizedBounds =
 				SwingUtilities.convertRectangle(component.getParent(), emphasizedBounds, glassPane);
 
-			// 
+			//
 			// Calculate the position of the image.   At 100% we want to be in the center of
 			// the display; at 0% we want to be at our default location
-			// 
+			//
 
 			double asPercent = percentComplete * (1 / max);
 
@@ -509,7 +509,7 @@ public class AnimationUtils {
 				glassPane);
 		}
 
-		// note: must be public--it is a callback from the animator (also, its name must 
+		// note: must be public--it is a callback from the animator (also, its name must
 		//       match the value passed to the animator)
 		public void setPercentComplete(double percent) {
 			painter.setPercentComplete(percent);
@@ -548,9 +548,9 @@ public class AnimationUtils {
 			//
 			Graphics2D g2d = (Graphics2D) graphics;
 
-			// 
+			//
 			// Move the component to the update location, based upon the percent of completion
-			//	
+			//
 			Rectangle defaultBounds = component.getBounds();
 			defaultBounds =
 				SwingUtilities.convertRectangle(component.getParent(), defaultBounds, glassPane);
@@ -570,10 +570,10 @@ public class AnimationUtils {
 				AlphaComposite.SrcOver.getRule(), opacity);
 			g2d.setComposite(alphaComposite);
 
-			// 
+			//
 			// Calculate the position of the image.   At 100% we want to be in the center of
 			// the display; at 0% we want to be at our default location
-			// 
+			//
 			g2d.drawImage(image, (int) currentX, (int) currentY, scaledWidth, scaledHeight, null);
 
 			g2d.setComposite(originalComposite);
@@ -609,7 +609,7 @@ public class AnimationUtils {
 			animator.start();
 		}
 
-		// note: must be public--it is a callback from the animator (also, its name must 
+		// note: must be public--it is a callback from the animator (also, its name must
 		//       match the value passed to the animator)
 		public void setPercentComplete(double percent) {
 			painter.setPercentComplete(percent);
@@ -686,7 +686,7 @@ public class AnimationUtils {
 
 			//
 			// At 0%, paint the start component with 100% opacity; paint the end component with
-			// 0% opacity. 
+			// 0% opacity.
 			//
 			Composite originalComposite = g2d.getComposite();
 			AlphaComposite alphaComposite = AlphaComposite.getInstance(
@@ -739,9 +739,9 @@ public class AnimationUtils {
 				null);
 
 			//
-			// Change the transparency to that which will slowly become more visible as 
+			// Change the transparency to that which will slowly become more visible as
 			// we progress.
-			// 
+			//
 			alphaComposite = AlphaComposite.getInstance(AlphaComposite.SrcOver.getRule(),
 				(float) percentComplete);
 			g2d.setComposite(alphaComposite);
@@ -1061,7 +1061,7 @@ public class AnimationUtils {
 
 			//
 			// Shake code
-			// 
+			//
 			if (lastDirection > 0) {
 //				lastDirection = -.01; // small
 				lastDirection = -.031; // bigger
@@ -1108,7 +1108,7 @@ public class AnimationUtils {
 
 			//
 			// Shake code
-			// 
+			//
 			if (lastDirection > 0) {
 				lastDirection = -.01;
 				lastDirection = -.01 * emphasis;

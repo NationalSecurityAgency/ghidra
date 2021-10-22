@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -143,7 +143,7 @@ public class LoggingInitialization {
 	/**
 	 * Use this to override the default application log file, before you
 	 * initialize the logging system.
-	 * 
+	 *
 	 * @param file The file to use as the application log file
 	 */
 	synchronized static void setApplicationLogFile(File file) {
@@ -157,7 +157,7 @@ public class LoggingInitialization {
 		APPLICATION_LOG_FILE = file;
 
 		// Need to set the system property that the log4j2 configuration reads in
-		// order to determine the log file name. Once that's set, the log 
+		// order to determine the log file name. Once that's set, the log
 		// configuration must be 'kicked' to pick up the change.
 		System.setProperty("logFilename", file.getAbsolutePath());
 		if (INITIALIZED) {
@@ -179,7 +179,7 @@ public class LoggingInitialization {
 	/**
 	 * Use this to override the default application log file, before you
 	 * initialize the logging system.
-	 * 
+	 *
 	 * @param file The file to use as the application log file
 	 */
 	synchronized static void setScriptLogFile(File file) {
@@ -193,7 +193,7 @@ public class LoggingInitialization {
 		SCRIPT_LOG_FILE = file;
 
 		// Need to set the system property that the log4j2 configuration reads in
-		// order to determine the script log file name. Once that's set, the log 
+		// order to determine the script log file name. Once that's set, the log
 		// configuration must be 'kicked' to pick up the change.
 		System.setProperty("scriptLogFilename", file.getAbsolutePath());
 

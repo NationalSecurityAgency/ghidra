@@ -131,29 +131,29 @@ destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRA
 <h3><a name="JavaNotes"></a>Java Notes</h3>
 <ul>
   <li>
-    Ghidra requires a <a href="#Requirements">supported</a> version of a Java Runtime and 
-    Development Kit on the PATH to run.  However, if there is a version of Java on the PATH that 
-    Ghidra does not support, it will use that version of Java (if 1.7 or later) to assist in 
-    locating a supported version on your system.  If one cannot be automatically located, the user 
-    will be prompted to enter a path to the Java home directory to use (the Java home directory is 
-    the parent directory of Java's <i>bin</i> directory).  This minimizes the impact Ghidra has on 
+    Ghidra requires a <a href="#Requirements">supported</a> version of a Java Runtime and
+    Development Kit on the PATH to run.  However, if there is a version of Java on the PATH that
+    Ghidra does not support, it will use that version of Java (if 1.7 or later) to assist in
+    locating a supported version on your system.  If one cannot be automatically located, the user
+    will be prompted to enter a path to the Java home directory to use (the Java home directory is
+    the parent directory of Java's <i>bin</i> directory).  This minimizes the impact Ghidra has on
     pre-existing configurations of Java that other software may rely on.
   </li>
   <li>
-    Depending on your operating system, it may be possible to find and install a 
-    <a href="#Requirements">supported</a> version of a Java Runtime and Development Kit through 
-    your package manager, without the need to set the Path environment variables as described 
+    Depending on your operating system, it may be possible to find and install a
+    <a href="#Requirements">supported</a> version of a Java Runtime and Development Kit through
+    your package manager, without the need to set the Path environment variables as described
     below.
   </li>
   <li>
-    If Ghidra failed to run because <i>no versions</i> of Java were on the PATH, a 
-    <a href="#Requirements">supported</a> JDK should be installed via a Linux package manager 
-    (aptitude, yum, etc), Windows installer program (*.exe, *.msi), macOS Installer package 
-    (*.pkg), or manually extracted and added to the PATH.  The following steps outline how to 
+    If Ghidra failed to run because <i>no versions</i> of Java were on the PATH, a
+    <a href="#Requirements">supported</a> JDK should be installed via a Linux package manager
+    (aptitude, yum, etc), Windows installer program (*.exe, *.msi), macOS Installer package
+    (*.pkg), or manually extracted and added to the PATH.  The following steps outline how to
     manually extract and add a JDK distribution to the operating system's PATH.
     <ul>
       <li>
-        <p><b>Windows: </b>Extract the JDK distribution (.zip file) to your desired location 
+        <p><b>Windows: </b>Extract the JDK distribution (.zip file) to your desired location
         and add the JDK's bin directory to your PATH:</p>
         <ol>
           <li>
@@ -171,7 +171,7 @@ destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRA
                   <i>Windows 10:</i> Right-click on Windows start button, and click <b>System</b>
                 </p>
                 <p>
-                  <i>Windows 7:</i> Click Windows start button, right-click on Computer, and click 
+                  <i>Windows 7:</i> Click Windows start button, right-click on Computer, and click
                   <b>Properties</b>
                 </p>
               </li>
@@ -184,14 +184,14 @@ destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRA
             <ol>
               <li>Under <b>System variables</b>, highlight <i>Path</i> and click <b>Edit...</b></li>
               <li>
-                At the end of the the <i>Variable value</i> field, add a semicolon followed by 
+                At the end of the the <i>Variable value</i> field, add a semicolon followed by
                 <i>&lt;path of extracted JDK dir&gt;\bin</i>, or use the <b>New</b> button in the
                 <i>Edit environment variable</i> window to add a new entry to the <i>Path</i>.
               </li>
               <li>Click <b>OK</b></li>
               <li>Click <b>OK</b></li>
               <li>Click <b>OK</b></li>
-            </ol>          
+            </ol>
           </li>
           <li>
             Restart any open Command Prompt windows for changes to take effect
@@ -199,7 +199,7 @@ destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRA
         </ol>
       </li>
       <li>
-        <p><b>Linux and macOS (OS X): </b>Extract the JDK distribution (.tar.gz file) to your 
+        <p><b>Linux and macOS (OS X): </b>Extract the JDK distribution (.tar.gz file) to your
         desired location, and add the JDK's bin directory to your PATH:</p>
         <ol>
           <li>
@@ -227,11 +227,11 @@ destination using any unzip program (built-in OS utilities, 7-Zip, WinZip, WinRA
   <li>
     In some cases, you may want Ghidra to launch with a specific version of Java instead of the
     version that Ghidra automatically locates.  To force Ghidra to launch with a specific version of
-    Java, set the <b>JAVA_HOME_OVERRIDE</b> property in the <i>support/launch.properties</i> file.  
+    Java, set the <b>JAVA_HOME_OVERRIDE</b> property in the <i>support/launch.properties</i> file.
     If this property is set to an incompatible version of Java, Ghidra will revert to automatically
-    locating a compatible version.  Note that <i>some</i> Java must still be on the PATH in order 
-    for Ghidra to use the <b>JAVA_HOME_OVERRIDE</b> property.  This limitation will be addressed in 
-    a future version of Ghidra. 
+    locating a compatible version.  Note that <i>some</i> Java must still be on the PATH in order
+    for Ghidra to use the <b>JAVA_HOME_OVERRIDE</b> property.  This limitation will be addressed in
+    a future version of Ghidra.
   </li>
 </ul>
 <p>(<a href="#top">Back to Top</a>)</p>
@@ -329,7 +329,7 @@ system:</p>
 <pre><blockquote><i>&lt;GhidraInstallDir&gt;</i>/support/buildNatives(.bat)</i></blockquote></pre>
 <p>When this script successfully completes, Ghidra will contain newly built native binaries in
 the relevant modules' <i>build/os/&lt;platform&gt;/</i> subdirectories, which will override any
-existing pre-built native binaries in the <i>os/&lt;platform&gt;/</i> subdirectories.</p> 
+existing pre-built native binaries in the <i>os/&lt;platform&gt;/</i> subdirectories.</p>
 <p>(<a href="#top">Back to Top</a>)</p>
 
 <h2><a name="Run"></a>Running Ghidra</h2>
@@ -405,7 +405,7 @@ can be found in the <i>&lt;GhidraInstallDir&gt;</i>/Extensions directory.</p>
     </ol>
   </li>
   <li>
-    Extensions installed from the Ghidra front-end GUI get installed at 
+    Extensions installed from the Ghidra front-end GUI get installed at
     <i>&lt;UserDir&gt;</i>/.ghidra/.ghidra-[version]/Extensions.
   </li>
   <li>
@@ -442,7 +442,7 @@ directory. For more information on installing and using the GhidraDev Eclipse pl
 <i>&lt;GhidraInstallDir&gt;</i>/Extensions/Eclipse/GhidraDev/GhidraDev_README.html.</p>
 <p><b>NOTE: </b>Eclipse is not provided with Ghidra.  The GhidraDev Eclipse plugin is designed to
 be installed in a pre-existing Eclipse installation.</p>
-<p>Ghidra scripting API javadocs can be found at 
+<p>Ghidra scripting API javadocs can be found at
 <i>&lt;GhidraInstallDir&gt;</i>/docs/GhidraAPI_javadoc.zip.</p>
 <p>(<a href="#top">Back to Top</a>)</p>
 
@@ -514,16 +514,16 @@ be installed in a pre-existing Eclipse installation.</p>
     </ul>
   </li>
   <li>
-    <b><font color="red">Problem: </font></b><i>Exited with error.  Run in foreground (fg) mode for 
+    <b><font color="red">Problem: </font></b><i>Exited with error.  Run in foreground (fg) mode for
     more details.</i>
     <ul>
       <li>
         <p><b><font color="green">Solution: </font></b>Ghidra failed to launch in the background and
         the error message describing the cause of the failure is being suppressed.  Rerun Ghidra in
-        the foreground by setting the LAUNCH_MODE variable in the launch script you ran to 
-        <b>fg</b>. Alternatively, you can use the 
-        <i>&lt;GhidraInstallDir&gt;</i>/support/ghidraDebug script to run Ghidra in debug mode, 
-        which will also allow you to see the error message as well as additional debug output.  
+        the foreground by setting the LAUNCH_MODE variable in the launch script you ran to
+        <b>fg</b>. Alternatively, you can use the
+        <i>&lt;GhidraInstallDir&gt;</i>/support/ghidraDebug script to run Ghidra in debug mode,
+        which will also allow you to see the error message as well as additional debug output.
         <b>NOTE:</b> By default, running Ghidra in debug mode listens on 127.0.0.1:18001.</p>
       </li>
     </ul>
@@ -582,7 +582,7 @@ be installed in a pre-existing Eclipse installation.</p>
     the newest versions of Java.
   </li>
   <li>
-    Ghidra will not launch when its path contains a "!" character.  This is to avoid issues that 
+    Ghidra will not launch when its path contains a "!" character.  This is to avoid issues that
     Java's internal libraries have parsing these paths ("!" is used as a jar-separator by Java).
   </li>
 </ul>
@@ -599,12 +599,12 @@ be installed in a pre-existing Eclipse installation.</p>
 <h3><a name="LinuxIssues"></a>Linux</h3>
 <ul>
   <li>
-    Ghidra may not display correctly when run from a Linux remote desktop session that uses 32-bit 
-    color depth.  Setting the remote desktop application's color depth to 24-bit has been known to 
-    improve this issue. 
+    Ghidra may not display correctly when run from a Linux remote desktop session that uses 32-bit
+    color depth.  Setting the remote desktop application's color depth to 24-bit has been known to
+    improve this issue.
   <li>
-    Some users have reported Ghidra GUI rendering issues on multi-monitor thin client setups.  
-    These problems are attributed to reported bugs in Java, which will hopefully be fixed in the 
+    Some users have reported Ghidra GUI rendering issues on multi-monitor thin client setups.
+    These problems are attributed to reported bugs in Java, which will hopefully be fixed in the
     future.  Disabling the 2nd or 3rd monitor may be necessary to work around the issue.
   </li>
 </ul>

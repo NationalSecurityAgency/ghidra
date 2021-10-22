@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ public class GdbBreakpointHitReason implements GdbReason {
 
 	/**
 	 * Get the ID of the breakpoint that was hit
-	 * 
+	 *
 	 * @return the breakpoint number
 	 */
 	public long getBreakpointId() {
@@ -46,9 +46,9 @@ public class GdbBreakpointHitReason implements GdbReason {
 
 	/**
 	 * Get the stack frame where the breakpoint was hit
-	 * 
+	 *
 	 * TODO: Why would this ever be non-zero, again?
-	 * 
+	 *
 	 * @param thread the thread
 	 * @return the frame
 	 */
@@ -58,7 +58,7 @@ public class GdbBreakpointHitReason implements GdbReason {
 
 	/**
 	 * Get the ID of the thread that hit the breakpoint
-	 * 
+	 *
 	 * @return the thread ID
 	 */
 	public int getThreadId() {

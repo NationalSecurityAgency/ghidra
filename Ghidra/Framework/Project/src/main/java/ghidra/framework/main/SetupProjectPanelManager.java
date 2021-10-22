@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,8 +36,8 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.UserAccessException;
 
 /**
- * Manage the panels for the wizard that shows server info and repository panels.  
- * The panel order is 
+ * Manage the panels for the wizard that shows server info and repository panels.
+ * The panel order is
  * (1) Server Info
  * (2) Repository panel
  * (3) Project access panel (if user is creating a new repository)
@@ -286,7 +286,7 @@ class SetupProjectPanelManager implements PanelManager {
 
 	/**
 	 * Get the repository adapter associated with the new project.
-	 * After displaying this panel, this method should be invoked to obtain the 
+	 * After displaying this panel, this method should be invoked to obtain the
 	 * repository which will be opened for shared projects.  If the repository is
 	 * not used to create a new project, its disconnect method should be invoked.
 	 * @return null if project is not shared

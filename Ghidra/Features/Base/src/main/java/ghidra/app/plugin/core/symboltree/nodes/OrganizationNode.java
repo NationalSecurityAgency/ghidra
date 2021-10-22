@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,8 +29,8 @@ import ghidra.util.task.TaskMonitor;
 import resources.ResourceManager;
 
 /**
- * These nodes are used to organize large lists of nodes into a hierachical structure based on 
- * the node names. See {@link #organize(List, int, TaskMonitor)} for details on 
+ * These nodes are used to organize large lists of nodes into a hierachical structure based on
+ * the node names. See {@link #organize(List, int, TaskMonitor)} for details on
  * how this class works.
  */
 public class OrganizationNode extends SymbolTreeNode {
@@ -291,7 +291,7 @@ public class OrganizationNode extends SymbolTreeNode {
 		//       that has changed if it is an org node (this is because the org node searches
 		//       using the old name).  So, org nodes are different than normal nodes in that
 		//       the old name will find the right parent, but not the actual current node, as
-		//       it has a new name.  
+		//       it has a new name.
 		//
 		return super.findSymbolTreeNode(key, loadChildren, taskMonitor);
 	}
@@ -349,7 +349,7 @@ public class OrganizationNode extends SymbolTreeNode {
 
 	/**
 	 * This is the algorithm for partitioning a list of nodes into a hierarchical structure based
-	 * on common prefixes 
+	 * on common prefixes
 	 * @param nodeList the list of nodes to be partitioned
 	 * @param maxGroupSize the maximum number of nodes in a group before an organization is attempted
 	 * @param monitor {@link TaskMonitor} so the operation can be cancelled
@@ -430,7 +430,7 @@ public class OrganizationNode extends SymbolTreeNode {
 		@Override
 		public int compare(GTreeNode g1, GTreeNode g2) {
 			if (!(g1 instanceof OrganizationNode) && g2 instanceof OrganizationNode) {
-				// we want to use this org node's compareTo() method, so, flip the comparison 
+				// we want to use this org node's compareTo() method, so, flip the comparison
 				// and then negate the result so that the sorting is the same as if we had
 				// not flipped the comparison.
 				int result = -g2.compareTo(g1);

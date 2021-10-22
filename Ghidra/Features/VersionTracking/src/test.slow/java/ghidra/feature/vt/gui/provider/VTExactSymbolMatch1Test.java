@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,7 +68,7 @@ public class VTExactSymbolMatch1Test extends AbstractGhidraHeadedIntegrationTest
 	@Test
 	public void testExactSymbolCorrelator() {
 
-		//Make sure this is being found - example of unique symbol match - different address endings 
+		//Make sure this is being found - example of unique symbol match - different address endings
 		//(testing that the addr is stripped off correctly or they wouldn't match
 
 		//s_%s_%s_deployed_on_%s__004166a0	004166a0	s_%s_%s_deployed_on_%s__00416830	00416830
@@ -76,8 +76,8 @@ public class VTExactSymbolMatch1Test extends AbstractGhidraHeadedIntegrationTest
 
 		//Make sure these are being found by exact symbol correlator
 		//they were erroneously being found by duplicate symbol correlator because
-		//the old way of removing the address tail removed the _e from these so they 
-		//appeared to match each other and themselves both	
+		//the old way of removing the address tail removed the _e from these so they
+		//appeared to match each other and themselves both
 
 		//_initterm_e	EXTERNAL:00000009	_initterm_e	EXTERNAL:00000009
 		//add check for name is at right addr because external functions addresses can change if the program is re-analyzed
@@ -95,7 +95,7 @@ public class VTExactSymbolMatch1Test extends AbstractGhidraHeadedIntegrationTest
 			"_initterm"));
 		assertTrue(isMatch(addr(srcProg, "EXTERNAL:0000000a"), addr(destProg, "EXTERNAL:0000000a")));
 
-		//Make sure these are not in the unique symbol match list - they should be in duplicate one 
+		//Make sure these are not in the unique symbol match list - they should be in duplicate one
 
 		//s_Stack_area_around__alloca_memory_00417060	00417060	s_Stack_area_around__alloca_memory_00417060	00417060
 		assertFalse(isMatch(addr(srcProg, "00417060"), addr(destProg, "00417060")));

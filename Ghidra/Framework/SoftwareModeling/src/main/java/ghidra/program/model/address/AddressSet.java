@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -1378,9 +1378,9 @@ public class AddressSet implements AddressSetView {
 
 	/**
 	 * Delete all addresses from the minimum address in the set up to and including toAddr.
-	 * Addresses less-than-or-equal to specified 
+	 * Addresses less-than-or-equal to specified
 	 * address based upon {@link Address} comparison.
-	 * 
+	 *
 	 * @param toAddr only addresses greater than toAddr will be left in the set.
 	 */
 	public void deleteFromMin(Address toAddr) {
@@ -1396,9 +1396,9 @@ public class AddressSet implements AddressSetView {
 
 	/**
 	 * Delete all addresses starting at the fromAddr to the maximum address in the set.
-	 * Addresses greater-than-or-equal to specified 
+	 * Addresses greater-than-or-equal to specified
 	 * address based upon {@link Address} comparison.
-	 * 
+	 *
 	 * @param fromAddr only addresses less than fromAddr will be left in the set.
 	 */
 	public void deleteToMax(Address fromAddr) {

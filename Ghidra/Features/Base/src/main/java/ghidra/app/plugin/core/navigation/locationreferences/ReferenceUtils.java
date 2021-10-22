@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -690,7 +690,7 @@ public final class ReferenceUtils {
 	/*
 	 * Creates a location descriptor using the String display markup and type information
 	 * found inside of the VariableOffset object.
-	 * 
+	 *
 	 * This method differs from createDataMemberLocationDescriptor() in that this method
 	 * will create locations that represent DataTypes that are not applied in memory.
 	 */
@@ -942,7 +942,7 @@ public final class ReferenceUtils {
 
 	/**
 	 * Searches defined data for types that match, according to the given predicate.
-	 * 
+	 *
 	 * @param accumulator the results accumulator
 	 * @param program the program
 	 * @param dataMatcher the predicate that determines a successful match
@@ -1153,7 +1153,7 @@ public final class ReferenceUtils {
 
 	/**
 	 * Returns all references to the given variable
-	 * 
+	 *
 	 * @param accumulator the results accumulator
 	 * @param program the program
 	 * @param variable the variable

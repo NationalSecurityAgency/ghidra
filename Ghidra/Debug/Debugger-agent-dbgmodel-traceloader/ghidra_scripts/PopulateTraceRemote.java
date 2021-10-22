@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,27 +33,27 @@ import ghidra.util.database.UndoableTransaction;
 /**
  * This script populates a trace database for demonstrations purposes and opens it in the current
  * tool.
- * 
+ *
  * <p>
  * Your current tool had better be the "TraceBrowser"! The demonstration serves two purposes. 1) It
  * puts interesting data into the TraceBrowser and leaves some annotations as an exercise. 2) It
  * demonstrates how a decent portion the Trace API works.
- * 
+ *
  * <p>
  * A Trace is basically a collection of observations of memory and registers over the lifetime of an
  * application or computer system. In Ghidra, the Trace object also supports many of the same
  * annotations as does Program. In the same way that Program brings knowledge markup to an image of
  * bytes, Trace brings knowledge markup to bytes observed over time.
- * 
+ *
  * <p>
  * Effectively, if you take the cross-product of Program with time and add Threads, Breakpoints,
  * etc., you get Trace. It's a lot. In order to use all the UI components which take a Program,
  * Trace can present itself as a Program at a particular point in time.
- * 
+ *
  * <p>
  * Each particular component will be introduced as its used in the script below, but for now some
  * core concepts:
- * 
+ *
  * <ul>
  * <li>A point in time is called a "tick." These don't necessarily correspond to any real unit of
  * time, though they may. The only requirement is that they are numbered in chronological
@@ -75,7 +75,7 @@ import ghidra.util.database.UndoableTransaction;
  * space. Most the the API components require you to obtain a special "register space" for a given
  * thread before recording observations of or applying annotations to that thread.</li>
  * </ul>
- * 
+ *
  * <p>
  * After you've run this script, a trace should appear in the UI. Note that there is not yet a way
  * to save a trace in the UI. As an exercise, try adding data units to analyze the threads' stacks.
@@ -84,7 +84,7 @@ import ghidra.util.database.UndoableTransaction;
  * into the future they are effective. In general, it defaults to "from here on out." However, two
  * conditions may cause the trace to choose an ending tick: 1) The underlying bytes change sometime
  * in the future, and 2) There is an overlapping code unit sometime in the future.
- * 
+ *
  * <p>
  * The trace chooses the latest tick possible preceding any byte change or existing code unit, so
  * that the unit's underlying bytes remain constant for its lifespan, and the unit does not overlap
@@ -108,7 +108,7 @@ public class PopulateTraceRemote extends GhidraScript {
 
 	/**
 	 * Create an address in the processor's (x86_64) default space.
-	 * 
+	 *
 	 * @param offset the byte offset
 	 * @return the address
 	 */
@@ -118,7 +118,7 @@ public class PopulateTraceRemote extends GhidraScript {
 
 	/**
 	 * Create an address range in the processor's default space.
-	 * 
+	 *
 	 * @param min the minimum byte offset
 	 * @param max the maximum (inclusive) byte offset
 	 * @return the range
@@ -129,7 +129,7 @@ public class PopulateTraceRemote extends GhidraScript {
 
 	/**
 	 * Get a register by name
-	 * 
+	 *
 	 * @param name the name
 	 * @return the register
 	 */

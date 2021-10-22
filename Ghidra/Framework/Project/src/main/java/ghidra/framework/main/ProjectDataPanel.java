@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,7 +83,7 @@ class ProjectDataPanel extends JSplitPane {
 		// initialize the read-only project view tabbed pane
 		// create a container panel just to have a title border because of a bug in
 		// the JTabbedPane when you add custom tab renderers (which we will later)
-		// 
+		//
 		bugFixPanel = new JPanel(new BorderLayout());
 
 		readOnlyTab = new JTabbedPane(SwingConstants.BOTTOM);
@@ -214,7 +214,7 @@ class ProjectDataPanel extends JSplitPane {
 
 	/**
 	 * Get the project data for the given project view
-	 * 
+	 *
 	 * @param projectView the locator for the project to retrieve
 	 * @return null if project view was not found
 	 */

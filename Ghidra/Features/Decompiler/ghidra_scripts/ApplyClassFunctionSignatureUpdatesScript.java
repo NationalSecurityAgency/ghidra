@@ -4,25 +4,25 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Script to apply any changes the user has made to recovered class virtual function signatures 
+// Script to apply any changes the user has made to recovered class virtual function signatures
 // edited in the listing. To run the script, put the cursor on any member of the desired class in
 // the listing then run the script. For each function signature in the given class that differs from
-// the associated function definition in the data type manager, the script will update the listing 
+// the associated function definition in the data type manager, the script will update the listing
 // function signatures of any related virtual functions belonging to parents and children classes.
-// It will also update related data types including function definitions and vftable structures. 
-// Note: The script will not work if the vftable structures were not originally applied to 
+// It will also update related data types including function definitions and vftable structures.
+// Note: The script will not work if the vftable structures were not originally applied to
 // the vftables using the RecoverClassesFromRTTIScript.
-// At some point, the Ghidra API will be updated to do this automatically instead of needing the 
-// script to do so. 
+// At some point, the Ghidra API will be updated to do this automatically instead of needing the
+// script to do so.
 //@category C++
 
 import java.util.List;

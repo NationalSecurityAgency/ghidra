@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ public class ContextRegisterFilter {
 
 	/**
 	 * Add a pair (register,value) to the filter.
-	 * 
+	 *
 	 * @param contextRegister - the context register
 	 * @param value           - the value the filter allows
 	 * @throws IllegalStateException if you add a value for a register that already has a value in the filter
@@ -48,7 +48,7 @@ public class ContextRegisterFilter {
 
 	/**
 	 * Determines whether a list of {@link ContextRegisterInfo} objects passes the filter.
-	 * 
+	 *
 	 * @param contextRegisterInfos
 	 * @return {@code true} precisely when each {@link ContextRegisterInfo} in {@link ContextRegisterInfos} passes
 	 * the filter.

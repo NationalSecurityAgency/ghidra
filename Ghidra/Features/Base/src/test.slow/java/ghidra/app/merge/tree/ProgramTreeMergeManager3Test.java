@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ public class ProgramTreeMergeManager3Test extends AbstractProgramTreeMergeManage
 
 	@Test
 	public void testDestNameContentsChanged1() throws Exception {
-		// case 8: dest name & content changed, private content changed	
+		// case 8: dest name & content changed, private content changed
 		// conflict resolution = KEEP_OTHER_NAME
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -104,7 +104,7 @@ public class ProgramTreeMergeManager3Test extends AbstractProgramTreeMergeManage
 
 	@Test
 	public void testDestNameContentsChanged2() throws Exception {
-		// case 8: dest name & content changed, private content changed	
+		// case 8: dest name & content changed, private content changed
 		// conflict resolution = ADD_NEW_TREE
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -164,7 +164,7 @@ public class ProgramTreeMergeManager3Test extends AbstractProgramTreeMergeManage
 				}
 			}
 		});
-		// should keep other and add private tree 
+		// should keep other and add private tree
 		executeMerge(ProgramTreeMergeManager.ADD_NEW_TREE);
 		assertNotNull(resultProgram.getListing().getModule("My Tree", "my module"));
 		assertNotNull(resultProgram.getListing().getFragment("My Tree", "frag_one"));
@@ -176,7 +176,7 @@ public class ProgramTreeMergeManager3Test extends AbstractProgramTreeMergeManage
 
 	@Test
 	public void testDestNameContentsChanged3() throws Exception {
-		// case 8: dest name & content changed, private content changed	
+		// case 8: dest name & content changed, private content changed
 		// * name conflict *
 		// conflict resolution = ADD_NEW_TREE
 		mtf.initialize("notepad", new ProgramModifierListener() {
@@ -251,7 +251,7 @@ public class ProgramTreeMergeManager3Test extends AbstractProgramTreeMergeManage
 
 	@Test
 	public void testDestNameContentsChanged4() throws Exception {
-		// case 8: dest name & content changed, private content changed	
+		// case 8: dest name & content changed, private content changed
 		// conflict resolution = ORIGINAL_NAME
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -325,7 +325,7 @@ public class ProgramTreeMergeManager3Test extends AbstractProgramTreeMergeManage
 
 	@Test
 	public void testNameContentsChanged1() throws Exception {
-		// case 9: dest content changed, private name change and content changed	
+		// case 9: dest content changed, private name change and content changed
 		// conflict resolution = KEEP_OTHER_NAME
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -396,7 +396,7 @@ public class ProgramTreeMergeManager3Test extends AbstractProgramTreeMergeManage
 
 	@Test
 	public void testNameContentsChanged2() throws Exception {
-		// case 9: dest content changed, private name change and content changed	
+		// case 9: dest content changed, private name change and content changed
 		// * no name conflicts *
 		// conflict resolution = ADD_NEW_TREE
 		mtf.initialize("notepad", new ProgramModifierListener() {
@@ -470,7 +470,7 @@ public class ProgramTreeMergeManager3Test extends AbstractProgramTreeMergeManage
 
 	@Test
 	public void testNameContentsChanged3() throws Exception {
-		// case 9: dest content changed, private name change and content changed	
+		// case 9: dest content changed, private name change and content changed
 		// * no name conflicts *
 		// conflict resolution = ORIGINAL_NAME
 		mtf.initialize("notepad", new ProgramModifierListener() {
@@ -547,7 +547,7 @@ public class ProgramTreeMergeManager3Test extends AbstractProgramTreeMergeManage
 
 	@Test
 	public void testOtherTreeDeleted() throws Exception {
-		// test Case 10: other deleted tree, 
+		// test Case 10: other deleted tree,
 		//	source structure changed or name changed (doesn't matter)
 		// result should be to keep the tree
 		//
@@ -594,7 +594,7 @@ public class ProgramTreeMergeManager3Test extends AbstractProgramTreeMergeManage
 
 	@Test
 	public void testOtherTreeChangedDeleted() throws Exception {
-		// case 11: dest tree has changes (doesn't matter what kind), 
+		// case 11: dest tree has changes (doesn't matter what kind),
 		//          source tree was deleted;
 		// result should be to keep the tree
 		mtf.initialize("notepad", new ProgramModifierListener() {

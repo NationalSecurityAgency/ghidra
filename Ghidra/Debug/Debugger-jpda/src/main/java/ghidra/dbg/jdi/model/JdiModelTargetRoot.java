@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,7 @@ import ghidra.util.Msg;
 			fixed = true),
 		@TargetAttributeType(type = Void.class)
 	})
-public class JdiModelTargetRoot extends DefaultTargetModelRoot implements // 
+public class JdiModelTargetRoot extends DefaultTargetModelRoot implements //
 		JdiModelTargetAccessConditioned, //
 		//JdiModelTargetAttacher, //
 		JdiModelTargetFocusScope, //
@@ -158,7 +158,7 @@ public class JdiModelTargetRoot extends DefaultTargetModelRoot implements //
 			JdiModelTargetVM targetVM = vms.getTargetVM(vm);
 			setFocus(targetVM);
 		}
-		// Otherwise, we'll presumably get the =thread-selected event 
+		// Otherwise, we'll presumably get the =thread-selected event
 	}
 
 	@Override
@@ -204,7 +204,7 @@ public class JdiModelTargetRoot extends DefaultTargetModelRoot implements //
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * <p>
 	 * TODO: Technically, this should be done by setting
 	 * {@link TargetMethod#PARAMTERS_ATTRIBUTE_NAME} whenever the default connector changes.

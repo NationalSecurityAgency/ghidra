@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,13 +26,13 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A class that holds row and column data for each vertex and edge.  
- * 
- * <P> This class will take in a {@link GridLocationMap}, which is comprised of grid index 
- * values, not layout space points.  Then, the grid values will be used to calculate 
- * offsets and size for each row and column. Each row has a y location and a height; each 
- * column has an x location and a width. The height and width are uniform in size across 
- * all rows and columns, based upon the tallest and widest vertex in the graph. 
+ * A class that holds row and column data for each vertex and edge.
+ *
+ * <P> This class will take in a {@link GridLocationMap}, which is comprised of grid index
+ * values, not layout space points.  Then, the grid values will be used to calculate
+ * offsets and size for each row and column. Each row has a y location and a height; each
+ * column has an x location and a width. The height and width are uniform in size across
+ * all rows and columns, based upon the tallest and widest vertex in the graph.
  *
  * @param <V> the vertex type
  * @param <E> the edge type
@@ -121,8 +121,8 @@ public class LayoutLocationMap<V, E> {
 	}
 
 	/**
-	 * Returns the columns in this location map, sorted from lowest index to highest 
-	 * 
+	 * Returns the columns in this location map, sorted from lowest index to highest
+	 *
 	 * @return the columns in this location map, sorted from lowest index to highest
 	 */
 	public Collection<Column> columns() {
@@ -135,8 +135,8 @@ public class LayoutLocationMap<V, E> {
 	}
 
 	/**
-	 * Returns the rows in this location map, sorted from lowest index to highest 
-	 * 
+	 * Returns the rows in this location map, sorted from lowest index to highest
+	 *
 	 * @return the rows in this location map, sorted from lowest index to highest
 	 */
 	public Collection<Row<V>> rows() {
@@ -300,7 +300,7 @@ public class LayoutLocationMap<V, E> {
 		}
 
 		//
-		// Go through all the columns and rows looking for candidate vertices in order to 
+		// Go through all the columns and rows looking for candidate vertices in order to
 		// find the minimum row height and column width for each row and column (which is the
 		// largest values found).
 		//

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,14 +39,14 @@ public class GroupedFunctionGraphVertex extends AbstractFunctionGraphVertex {
 
 	/**
 	 * The edges that existed before this group node was created
-	 * 
+	 *
 	 * @see #convertGroupedEdge(FGEdge, Set)
 	 */
 	private Set<FGEdge> ungroupedEdges;
 
 	/**
 	 * We need this in the use case that we do NOT relayout the graph each time we group. These
-	 * values allow us to restore the vertices to the place from whence they came (even though 
+	 * values allow us to restore the vertices to the place from whence they came (even though
 	 * the locations may be irrelevant).
 	 */
 	private Map<FGVertex, Point2D> preGroupingVertexLocations = new HashMap<>();
@@ -105,11 +105,11 @@ public class GroupedFunctionGraphVertex extends AbstractFunctionGraphVertex {
 	}
 
 	/**
-	 * Seriously complicated algorithm (conceptually) to ensure that we never store in our 
-	 * collection of ungrouped edges (which we may sometime have to re-install) any group vertex, 
-	 * as when we go to restore the edges, we do not know how to do so if the group is no 
+	 * Seriously complicated algorithm (conceptually) to ensure that we never store in our
+	 * collection of ungrouped edges (which we may sometime have to re-install) any group vertex,
+	 * as when we go to restore the edges, we do not know how to do so if the group is no
 	 * longer there (like as a result of an ungroup operation).
-	 *   
+	 *
 	 * @param edge the edge to resolve/convert from using group vertices as endpoints to using
 	 *        real vertices as endpoints
 	 * @param updatedEdges all edges that we must record as a result of ungrouping the given edge
@@ -122,7 +122,7 @@ public class GroupedFunctionGraphVertex extends AbstractFunctionGraphVertex {
 			return;
 		}
 
-		// 
+		//
 		// When both endpoints are groups, we want to get all edges in common for later restoring,
 		// as we don't know which edges either group refers to if the group goes away
 		//
@@ -212,8 +212,8 @@ public class GroupedFunctionGraphVertex extends AbstractFunctionGraphVertex {
 
 	/**
 	 * Creates a new group based upon this one, but with the given vertices (and incident edges)
-	 * removed. 
-	 * 
+	 * removed.
+	 *
 	 * @param verticesToRemove the vertices to not include in the new group
 	 * @return the new group
 	 */

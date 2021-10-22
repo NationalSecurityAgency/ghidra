@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -624,7 +624,7 @@ public class PostCommentFieldFactoryTest extends AbstractGhidraHeadedIntegration
 		}
 		assertFalse(cb.goToField(addr("1005000"), PostCommentFieldFactory.FIELD_NAME, 0, 1));
 
-		//verify that JUMP_OVERRIDE_UNCONDITIONAL references and 
+		//verify that JUMP_OVERRIDE_UNCONDITIONAL references and
 		//CALLOTHER overriding references don't do anything
 		transactionID = program.startTransaction("add_overriding_jump_ref");
 		try {

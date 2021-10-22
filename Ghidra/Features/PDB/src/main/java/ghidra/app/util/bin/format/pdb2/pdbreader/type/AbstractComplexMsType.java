@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ public abstract class AbstractComplexMsType extends AbstractMsType {
 	 * Constructor for this type.
 	 * @param pdb {@link AbstractPdb} to which this type belongs.
 	 * @param count number of field elements
-	 * @param fieldDescriptorListRecordNumber {@link RecordNumber} of field list 
+	 * @param fieldDescriptorListRecordNumber {@link RecordNumber} of field list
 	 * @param property {@link MsProperty} of this type
 	 * @param name the name of this type
 	 */

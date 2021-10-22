@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ public class OmfComdefRecord extends OmfExternalSymbol {
 		symbol = new OmfSymbol[symbollist.size()];
 		symbollist.toArray(symbol);
 	}
-	
+
 	private static int readCommunalLength(BinaryReader reader) throws OmfException, IOException {
 		int val = reader.readNextByte() & 0xff;
 		if (val <= 128)
@@ -69,5 +69,5 @@ public class OmfComdefRecord extends OmfExternalSymbol {
 			throw new OmfException("Illegal communal length encoding");
 		return val;
 	}
-		
+
 }

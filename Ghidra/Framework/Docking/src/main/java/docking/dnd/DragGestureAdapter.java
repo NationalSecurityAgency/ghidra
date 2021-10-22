@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,32 +24,32 @@ import java.awt.event.InputEvent;
 /**
  * This class receives notification when the user intitiates a
  * drag and drop operation; it is responsible for getting the
- * <code>Transferable</code> and telling the <code>DragSource</code> to 
+ * <code>Transferable</code> and telling the <code>DragSource</code> to
  * start the drag.
  */
 public class DragGestureAdapter implements DragGestureListener {
-    
+
     private Draggable dragComponent;
 //    private Cursor cursor = DragSource.DefaultCopyNoDrop;
 //    private static Transferable transferable;
 
 	/**
 	 * Construct a new DragGestureAdapter
-	 * 
+	 *
 	 * @param dragComponent Component that can support drag operations
 	 */
     public DragGestureAdapter(Draggable dragComponent) {
         this.dragComponent = dragComponent;
     }
-    
+
 	/**
-	 * A <code>DragGestureRecognizer</code> has detected a 
+	 * A <code>DragGestureRecognizer</code> has detected a
 	 * platform-dependent Drag and Drop action initiating gesture
 	 * and is notifying this Listener in order for it to initiate
 	 * the action for the user.
 	 * <p>The <code>DragGestureRecognizer</code> hides the platform-specific
 	 * events that initate a drag and drop operation.
-	 * 
+	 *
 	 * @param e event describing the gesture that has just occurred
 	 */
     public void dragGestureRecognized(DragGestureEvent e) {
@@ -63,14 +63,14 @@ public class DragGestureAdapter implements DragGestureListener {
             return;
         }
         int dragAction = dragComponent.getDragAction();
-        
-        if ( ((e.getDragAction() & dragAction) == 0) || 
+
+        if ( ((e.getDragAction() & dragAction) == 0) ||
             !dragComponent.isStartDragOk(e)) {
             return;
         }
-        
+
         Transferable t = dragComponent.getTransferable(e.getDragOrigin());
-        
+
         DragSourceListener l = dragComponent.getDragSourceListener();
         if (t == null || l == null) {
             return;
@@ -85,7 +85,7 @@ public class DragGestureAdapter implements DragGestureListener {
             //            transferable = null;
         }
     }
-    
+
 //    /**
 //     * Get the transferable that is being dragged.
 //     */

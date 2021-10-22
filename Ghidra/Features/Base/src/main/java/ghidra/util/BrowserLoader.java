@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,15 +25,15 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.framework.plugintool.util.OptionsService;
 
-/** 
- *  BrowserLoader opens a web browser and displays the given url. 
- *  
+/**
+ *  BrowserLoader opens a web browser and displays the given url.
+ *
  *  @see ManualViewerCommandWrappedOption
  */
 public class BrowserLoader {
 
 	/**
-	 * Display the content specified by url in a web browser window.  This call will launch 
+	 * Display the content specified by url in a web browser window.  This call will launch
 	 * a new thread and then immediately return.
 	 * @param url The URL to show.
 	 */
@@ -42,9 +42,9 @@ public class BrowserLoader {
 	}
 
 	/**
-	 * Display the content specified by url in a web browser window.  This call will launch 
+	 * Display the content specified by url in a web browser window.  This call will launch
 	 * a new thread and then immediately return.
-	 * 
+	 *
 	 * @param url The web URL to show (e.g., http://localhost...).
 	 * @param fileURL The file URL to show (e.g., file:///path/to/file).
 	 * @param serviceProvider A service provider from which to get system resources.

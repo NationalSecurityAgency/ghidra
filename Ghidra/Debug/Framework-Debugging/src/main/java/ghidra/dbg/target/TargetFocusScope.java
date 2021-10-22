@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
  * An object having a designated "focus"
- * 
+ *
  * <p>
  * Focus is usually communicated via various UI hints, but also semantically implies that actions
  * taken within this scope apply to the focused object. The least confusing option is to implement
@@ -36,12 +36,12 @@ public interface TargetFocusScope extends TargetObject {
 
 	/**
 	 * Focus on the given object
-	 * 
+	 *
 	 * <p>
 	 * {@code obj} must be successor of this scope. The debugger may reject or ignore the request
 	 * for any reason. If the debugger cannot focus the given object, it should attempt to do so for
 	 * each ancestor until it succeeds or reaches this focus scope.
-	 * 
+	 *
 	 * @param obj the object to receive focus
 	 * @return a future which completes upon successfully changing focus.
 	 */
@@ -49,7 +49,7 @@ public interface TargetFocusScope extends TargetObject {
 
 	/**
 	 * Get the focused object in this scope
-	 * 
+	 *
 	 * <p>
 	 * Note that client UIs should be careful about event loops and user intuition when listening
 	 * for changes of this attribute. The client should avoid calling
@@ -64,7 +64,7 @@ public interface TargetFocusScope extends TargetObject {
 	 * successors receives focus, select that sibling. A similar rule applies to "cousin" elements,
 	 * so long as they have the same type. In most other cases, it's appropriate to select the
 	 * focused element. TODO: Implement this rule in {@link DebugModelConventions}
-	 * 
+	 *
 	 * @return a reference to the focused object or {@code null} if no object is focused.
 	 */
 	@TargetAttributeType(name = FOCUS_ATTRIBUTE_NAME, required = true, hidden = true)

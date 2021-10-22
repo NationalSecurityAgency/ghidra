@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,7 +77,7 @@ public class PPCEmulateInstructionStateModifier extends EmulateInstructionStateM
 			byte[] pin = memoryState.getBigInteger(in3, false).toByteArray();
 			byte[] permute = getUnsignedValueArray(pin, 16);
 
-			// Generate 16-byte output 
+			// Generate 16-byte output
 			byte[] outarray = new byte[16];
 			for (int i = 0; i < 16; i++) {
 				outarray[i] = srcin[(permute[i] & 0x1f)];
@@ -91,7 +91,7 @@ public class PPCEmulateInstructionStateModifier extends EmulateInstructionStateM
 	 * Generate an unsigned value array from variable length srcBytes extending or truncating
 	 * bytes as needed to ensure a returned length of byteLength.  The MSB is located
 	 * at byte index 0, therefore adjustments may be needed to ensure that the LSB retains
-	 * its position in the least-significant byte.  A short srcBytes array will result in 
+	 * its position in the least-significant byte.  A short srcBytes array will result in
 	 * zero-filled most-significant bytes within the result.
 	 * @param srcBytes unsigned source value array
 	 * @param byteLength desired result value length in bytes

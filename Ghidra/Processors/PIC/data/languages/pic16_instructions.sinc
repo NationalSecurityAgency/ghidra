@@ -159,43 +159,43 @@ macro pop(val) {	# TODO: Uncertain about this !!
 
 # File register index (f7!=0): bank selection determined by RP bits in STATUS reg
 @if PROCESSOR == "PIC_16"
-srcREG: f7		is f7									{ 
+srcREG: f7		is f7									{
 	 addr:2 = (zext(RP) << 7) + f7;
 	 export *[DATA]:1 addr;
 }
 @elif PROCESSOR == "PIC_16F"
-srcREG: f7		is f7									{ 
+srcREG: f7		is f7									{
 	 addr:2 = (zext(BSR) << 7) + f7;
 	 export *[DATA]:1 addr;
 }
 @endif
 
 # Top 16 bytes are shared RAM on PIC16 and PIC16F
-srcREG: fv		is uf7=0x7 & lf7  [fv = 0x70 + lf7; ]								{ 
+srcREG: fv		is uf7=0x7 & lf7  [fv = 0x70 + lf7; ]								{
 	 addr:2 = fv;
 	 export *[DATA]:1 addr;
 }
 
 # File register index (f7=0): INDF use implies indirect data access using FSR value and IRP bit in STATUS reg
 @if PROCESSOR == "PIC_16"
-srcREG: fregCore		is f7=0 & fregCore									{ 
+srcREG: fregCore		is f7=0 & fregCore									{
 	addr:2 = (zext(IRP) << 8) + zext(FSR);
-	export *[DATA]:1 addr; 
+	export *[DATA]:1 addr;
 }
-srcREG: fregCore		is f7=1	& fregCore								{ 
+srcREG: fregCore		is f7=1	& fregCore								{
      rpval:2 = zext(RP == 1) + zext(RP == 2);
 	 addr:2 = (zext(rpval) << 7) + 1;
 	 export *[DATA]:1 addr;
 }
 @elif PROCESSOR == "PIC_16F"
-srcREG: fregCore		is f7=0 & fregCore									{ 
+srcREG: fregCore		is f7=0 & fregCore									{
 	addr:2 = FSR0;
-	export *[DATA]:1 addr; 
+	export *[DATA]:1 addr;
 }
 
-srcREG: fregCore		is f7=1 & fregCore									{ 
+srcREG: fregCore		is f7=1 & fregCore									{
 	addr:2 = FSR1;
-	export *[DATA]:1 addr; 
+	export *[DATA]:1 addr;
 }
 @endif
 
@@ -237,7 +237,7 @@ D: "f"		is d=1										{ }
 # Absolute address generated from k11 and PCLATH<4:3>
 absAddr11: k11	is k11									{
 	addr:2 = ((zext(PCLATH) & 0x78) << 8) + k11;
-	export addr; 
+	export addr;
 }
 
 @if PROCESSOR == "PIC_16F"
@@ -295,19 +295,19 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 :ADDLW imm8				is op6=0x3e & imm8								{
 	#  --11 111x kkkk kkkk
 	#  0011 1110 0001 0010	->	ADDLW #0x12
-	setAddFlags(W, imm8); 
+	setAddFlags(W, imm8);
 	W = W + imm8;
 	setResultFlags(W);
 }
 
 :ADDWF srcREG, D	is op6=0x07 & srcREG & D & destREG					{
 	#  --00 0111 dfff ffff
-	#  0000 0111 0000 0000	->	ADDWF INDF, 0 
+	#  0000 0111 0000 0000	->	ADDWF INDF, 0
 	#  0000 0111 1000 0000	->	ADDWF INDF, 1
 	#  0000 0111 0010 0000	->	ADDWF 0x20, 0
 	#  0000 0111 1010 0000	->	ADDWF 0x20, 1
 	val:1 = srcREG;
-	setAddFlags(W, val); 
+	setAddFlags(W, val);
 	val = W + val;
 	setResultFlags(val);
 	destREG = val;
@@ -330,15 +330,15 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 :ADDWFC srcREG, D	is op6=0x3D & srcREG & D & destREG					{
 	val:1 = srcREG;
 	local tmpC = $(C);
-	
+
 	setAddFlags(W, val);
 	val = W + val;
 	local tc = $(C);
-	
+
 	setAddFlags(val,tmpC);
 	$(C) = $(C) | tc;
 	val = val + tmpC;
-	
+
 	setResultFlags(val);
 	destREG = val;
 }
@@ -349,7 +349,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	addr:2 = inst_start >> 1; # Compenstate for CODE wordsize
 	PCLATH = addr(1);
 	val:1 = addr:1;
-	
+
 	local tmpC = $(C);
 	setAddFlags(W, val);
 	local tc = $(C);
@@ -358,7 +358,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	setAddFlags(val,tmpC);
 	$(C) = $(C) | tc;
 	val = val + tmpC;
-	
+
 	addr = (zext(PCLATH) << 8) + zext(val);
 	PCL = val;
 	setResultFlags(val);
@@ -374,7 +374,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 
 :ANDWF srcREG, D	is op6=0x05 & srcREG & D & destREG					{
 	#  --00 0101 dfff ffff
-	#  0000 0101 0000 0000	->	ANDWF INDF, 0 
+	#  0000 0101 0000 0000	->	ANDWF INDF, 0
 	#  0000 0101 1000 0000	->	ANDWF INDF, 1
 	#  0000 0101 0010 0000	->	ANDWF 0x20, 0
 	#  0000 0101 1010 0000	->	ANDWF 0x20, 1
@@ -514,7 +514,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	#  0001 1010 0010 0000	->	BTFSC 0x20, #0x4
 	local bitmask = 1 << bit;
 	local tmp = srcREG & bitmask;
-	SkipNext = (tmp == 0); 
+	SkipNext = (tmp == 0);
 }
 
 :BC absAddr11	is doPseudo=1 & op4=0x6 & b3=0 & bit & f7=0x3 ; op3=0x5 & absAddr11 {
@@ -625,7 +625,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 	push(&:2 inst_next);
 	call [W];
 }
-	
+
 :CLRF srcREG				is op6=0x01 & d=1 & srcREG						{
 	#  --00 0001 1fff ffff
 	#  0000 0001 1000 0000	->	CLRF INDF
@@ -660,7 +660,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 
 :COMF srcREG, D		is op6=0x09 & srcREG & D & destREG					{
 	#  --00 1001 dfff ffff
-	#  0000 1001 0000 0000	->	COMF INDF, 0 
+	#  0000 1001 0000 0000	->	COMF INDF, 0
 	#  0000 1001 1000 0000	->	COMF INDF, 1
 	#  0000 1001 0010 0000	->	COMF 0x20, 0
 	#  0000 1001 1010 0000	->	COMF 0x20, 1
@@ -671,7 +671,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 
 :DECF srcREG, D		is op6=0x03 & srcREG & D & destREG					{
 	#  --00 0011 dfff ffff
-	#  0000 0011 0000 0000	->	DECF INDF, 0 
+	#  0000 0011 0000 0000	->	DECF INDF, 0
 	#  0000 0011 1000 0000	->	DECF INDF, 1
 	#  0000 0011 0010 0000	->	DECF 0x20, 0
 	#  0000 0011 1010 0000	->	DECF 0x20, 1
@@ -682,7 +682,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 
 :DECFSZ srcREG, D		is op6=0x0b & srcREG & D & destREG [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
 	#  --00 1011 dfff ffff
-	#  0000 1011 0000 0000	->	DECFSZ INDF, 0 
+	#  0000 1011 0000 0000	->	DECFSZ INDF, 0
 	#  0000 1011 1000 0000	->	DECFSZ INDF, 1
 	#  0000 1011 0010 0000	->	DECFSZ 0x20, 0
 	#  0000 1011 1010 0000	->	DECFSZ 0x20, 1
@@ -700,7 +700,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 
 :INCF srcREG, D		is op6=0x0a & srcREG & D & destREG					{
 	#  --00 1010 dfff ffff
-	#  0000 1010 0000 0000	->	INCF INDF, 0 
+	#  0000 1010 0000 0000	->	INCF INDF, 0
 	#  0000 1010 1000 0000	->	INCF INDF, 1
 	#  0000 1010 0010 0000	->	INCF 0x20, 0
 	#  0000 1010 1010 0000	->	INCF 0x20, 1
@@ -711,7 +711,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 
 :INCFSZ srcREG, D		is op6=0x0f & srcREG & D & destREG [ possibleSkip = 1; globalset(inst_next,possibleSkip); ] {
 	#  --00 1111 dfff ffff
-	#  0000 1111 0000 0000	->	INCFSZ INDF, 0 
+	#  0000 1111 0000 0000	->	INCFSZ INDF, 0
 	#  0000 1111 1000 0000	->	INCFSZ INDF, 1
 	#  0000 1111 0010 0000	->	INCFSZ 0x20, 0
 	#  0000 1111 1010 0000	->	INCFSZ 0x20, 1
@@ -729,7 +729,7 @@ trisREG: "7"	is l5=7												{ local trl:2 = 0x10E; export *[DATA]:1 trl; } #
 
 :IORWF srcREG, D		is op6=0x04 & srcREG & D & destREG					{
 	#  --00 0100 dfff ffff
-	#  0000 0100 0000 0000	->	IORWF INDF, 0 
+	#  0000 0100 0000 0000	->	IORWF INDF, 0
 	#  0000 0100 1000 0000	->	IORWF INDF, 1
 	#  0000 0100 0010 0000	->	IORWF 0x20, 0
 	#  0000 0100 1010 0000	->	IORWF 0x20, 1
@@ -800,7 +800,7 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 
 :MOVF srcREG, D		is op6=0x08 & srcREG & D & destREG					{
 	#  --00 1000 dfff ffff
-	#  0000 1000 0000 0000	->	MOVF INDF, 0 
+	#  0000 1000 0000 0000	->	MOVF INDF, 0
 	#  0000 1000 1000 0000	->	MOVF INDF, 1
 	#  0000 1000 0010 0000	->	MOVF 0x20, 0
 	#  0000 1000 1010 0000	->	MOVF 0x20, 1
@@ -864,7 +864,7 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 
 :RLF srcREG, D		is op6=0x0d & srcREG & D & destREG					{
 	#  --00 1101 dfff ffff
-	#  0000 1101 0000 0000	->	RLF INDF, 0 
+	#  0000 1101 0000 0000	->	RLF INDF, 0
 	#  0000 1101 1000 0000	->	RLF INDF, 1
 	#  0000 1101 0010 0000	->	RLF 0x20, 0
 	#  0000 1101 1010 0000	->	RLF 0x20, 1
@@ -878,7 +878,7 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 
 :RRF srcREG, D		is op6=0x0c & srcREG & D & destREG					{
 	#  --00 1100 dfff ffff
-	#  0000 1100 0000 0000	->	RRF INDF, 0 
+	#  0000 1100 0000 0000	->	RRF INDF, 0
 	#  0000 1100 1000 0000	->	RRF INDF, 1
 	#  0000 1100 0010 0000	->	RRF 0x20, 0
 	#  0000 1100 1010 0000	->	RRF 0x20, 1
@@ -890,7 +890,7 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 	setResultFlags(val);
 }
 
-:SLEEP					is op14=0x0063				{ 
+:SLEEP					is op14=0x0063				{
 	#  --00 0000 0110 0011
 	# Sleep - Not Implemented
 	sleep();
@@ -899,19 +899,19 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 :SUBLW imm8				is op6=0x3c & imm8								{
 	#  --11 110x kkkk kkkk
 	#  0011 1100 0001 0010	->	SUBLW #0x12
-	setSubtractFlags(imm8, W); 
+	setSubtractFlags(imm8, W);
 	W = imm8 - W;
 	setResultFlags(W);
 }
 
 :SUBWF srcREG, D		is op6=0x02 & srcREG & D & destREG					{
 	#  --00 0010 dfff ffff
-	#  0000 0010 0000 0000	->	SUBWF INDF, 0 
+	#  0000 0010 0000 0000	->	SUBWF INDF, 0
 	#  0000 0010 1000 0000	->	SUBWF INDF, 1
 	#  0000 0010 0010 0000	->	SUBWF 0x20, 0
 	#  0000 0010 1010 0000	->	SUBWF 0x20, 1
 	val:1 = srcREG;
-	setSubtractFlags(val, W); 
+	setSubtractFlags(val, W);
 	val = val - W;
 	setResultFlags(val);
 	destREG = val;
@@ -936,7 +936,7 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 
 :SWAPF srcREG, D		is op6=0x0e & srcREG & D & destREG					{
 	#  --00 1110 dfff ffff
-	#  0000 1110 0000 0000	->	SUBWF INDF, 0 
+	#  0000 1110 0000 0000	->	SUBWF INDF, 0
 	#  0000 1110 1000 0000	->	SUBWF INDF, 1
 	#  0000 1110 0010 0000	->	SUBWF 0x20, 0
 	#  0000 1110 1010 0000	->	SUBWF 0x20, 1
@@ -959,7 +959,7 @@ srcFSRk: sk6"["fsrk"]" is fsrk & sk6 {
 
 :XORWF srcREG, D		is op6=0x06 & srcREG & D & destREG					{
 	#  --00 0110 dfff ffff
-	#  0000 0110 0000 0000	->	XORWF INDF, 0 
+	#  0000 0110 0000 0000	->	XORWF INDF, 0
 	#  0000 0110 1000 0000	->	XORWF INDF, 1
 	#  0000 0110 0010 0000	->	XORWF 0x20, 0
 	#  0000 0110 1010 0000	->	XORWF 0x20, 1

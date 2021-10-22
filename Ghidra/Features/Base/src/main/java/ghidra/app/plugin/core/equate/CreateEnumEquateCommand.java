@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class CreateEnumEquateCommand extends BackgroundCommand {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param program The program to use
 	 * @param addresses The addresses to apply an enum to
 	 * @param enoom The enum to apply equates with
@@ -160,7 +160,7 @@ public class CreateEnumEquateCommand extends BackgroundCommand {
 		}
 		catch (DuplicateNameException | InvalidInputException e) {
 			// These should not happen:
-			// Duplicate will not happen since we checked for the existence first; Invalid 
+			// Duplicate will not happen since we checked for the existence first; Invalid
 			// can't happen since we built the name ourselves (we are assuming)
 			Msg.error(this, "Unexpected error creating equate", e);  // just in case
 		}

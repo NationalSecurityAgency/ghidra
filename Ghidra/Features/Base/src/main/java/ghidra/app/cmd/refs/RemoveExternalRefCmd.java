@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public class RemoveExternalRefCmd implements Command {
 
 	private Address fromAddr;
 	private int opIndex;
-	
+
     /**
      * Constructs a new command for removing an external reference.
 	 * @param fromAddr the address of the codeunit making the external reference.
@@ -42,12 +42,12 @@ public class RemoveExternalRefCmd implements Command {
     }
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
     public boolean applyTo(DomainObject obj) {
     	ReferenceManager refMgr = ((Program)obj).getReferenceManager();
-    	
+
     	Reference[] refs = refMgr.getReferencesFrom(fromAddr, opIndex);
 		for (int i = 0; i < refs.length; i++) {
 			Reference ref = refs[i];

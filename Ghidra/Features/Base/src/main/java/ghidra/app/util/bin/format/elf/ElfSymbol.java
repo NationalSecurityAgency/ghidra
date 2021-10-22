@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import ghidra.util.exception.NotFoundException;
  *     unsigned char   st_other;    //Symbol visibility
  *     Elf32_Section   st_shndx;    //Section index
  * } Elf32_Sym;
- * 
+ *
  * typedef struct {
  *     Elf64_Word       st_name;    //Symbol name (string tbl index)
  *     unsigned char    st_info;    //Symbol type and binding
@@ -44,7 +44,7 @@ import ghidra.util.exception.NotFoundException;
  *     Elf64_Addr       st_value;   //Symbol value
  *     Elf64_Xword      st_size;    //Symbol size
  * } Elf64_Sym;
- * 
+ *
  * </pre>
  */
 public class ElfSymbol implements ByteArrayConverter {
@@ -73,7 +73,7 @@ public class ElfSymbol implements ByteArrayConverter {
 	/**
 	 * In object files: st_value contains offset from the beginning of the section
 	 * In DSOs:         st_value contains offset in the TLS initialization image (inside of .tdata)
-	 * 
+	 *
 	 */
 	public static final byte STT_TLS = 6; // thread local storage symbols
 	/**Symbol is in support of complex relocation.*/
@@ -107,13 +107,13 @@ public class ElfSymbol implements ByteArrayConverter {
 	 * create an ElfSymbol()
 	 * Warning! the routine initSymbolName() must be called on the symbol later
 	 * to initialize the string name.  This is a performance enhancement.
-	 * 
+	 *
 	 * @param reader to read symbol from
 	 * @param symbolIndex index of the symbol to read
 	 * @param symbolTable symbol table to associate the symbol to
 	 * @param header else header
 	 * @return newly created ElfSymbol
-	 * 
+	 *
 	 * @throws IOException if an issue with reading occurs
 	 */
 	public static ElfSymbol createElfSymbol(FactoryBundledWithBinaryReader reader, int symbolIndex,
@@ -223,15 +223,15 @@ public class ElfSymbol implements ByteArrayConverter {
 
 	/**
 	 * Initialize the string name of the symbol.
-	 * 
+	 *
 	 * NOTE: This routine MUST be called for each
 	 * ELFSymbol after the elf symbols have been created.
-	 * 
+	 *
 	 * This is done separately from the initial symbol entry read because
 	 * the string names are in a separate location.  If they are read
 	 * at the same time the reading buffer will jump around and significantly
 	 * degrade reading performance.
-	 * 
+	 *
 	 * @param reader to read from
 	 * @param stringTable stringTable to initialize symbol name
 	 */
@@ -328,7 +328,7 @@ public class ElfSymbol implements ByteArrayConverter {
 
 	/**
 	 * Returns true if this symbol is global.
-	 * Global symbols are visible to all object files 
+	 * Global symbols are visible to all object files
 	 * being combined. One object file's definition
 	 * of a global symbol will satisfy another
 	 * file's undefined reference to the same
@@ -351,7 +351,7 @@ public class ElfSymbol implements ByteArrayConverter {
 
 	/**
 	 * Returns true if this is an external symbol.
-	 * A symbol is considered external if it's 
+	 * A symbol is considered external if it's
 	 * binding is global and it's size is zero.
 	 * @return true if this is an external symbol
 	 */
@@ -402,7 +402,7 @@ public class ElfSymbol implements ByteArrayConverter {
 	}
 
 	/**
-	 * Returns true if the symbol has an absolute 
+	 * Returns true if the symbol has an absolute
 	 * value that will not change because of relocation.
 	 * @return true if the symbol value will not change due to relocation
 	 */
@@ -454,8 +454,8 @@ public class ElfSymbol implements ByteArrayConverter {
 	}
 
 	/**
-	 * This member holds an index into the object file's symbol 
-	 * string table, which holds the character representations 
+	 * This member holds an index into the object file's symbol
+	 * string table, which holds the character representations
 	 * of the symbol names. If the value is non-zero, it represents a
 	 * string table index that gives the symbol name.
 	 * Otherwise, the symbol table entry has no name.
@@ -504,7 +504,7 @@ public class ElfSymbol implements ByteArrayConverter {
 
 	/**
 	 * This member gives the value of the associated symbol.
-	 * Depending on the context, this may be an absolute value, 
+	 * Depending on the context, this may be an absolute value,
 	 * an address, etc.
 	 * @return the symbol's value
 	 */

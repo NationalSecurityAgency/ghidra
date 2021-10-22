@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * Operations take a {@link TaskMonitor} if they need to be cancel-able.
  * <p>
- * Use a {@link FileSystemService FileSystemService instance} to discover and 
+ * Use a {@link FileSystemService FileSystemService instance} to discover and
  * open instances of filesystems in files or to open a known {@link FSRL} path or to
  * deal with creating {@link FileSystemService#createTempFile(long) temp files}.
  * <p>
@@ -121,8 +121,8 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	/**
 	 * Retrieves a {@link GFile} from this filesystem based on its full path and filename.
 	 * <p>
-	 * @param path string path and filename of a file located in this filesystem.  Use 
-	 * {@code null} or "/" to retrieve the root directory 
+	 * @param path string path and filename of a file located in this filesystem.  Use
+	 * {@code null} or "/" to retrieve the root directory
 	 * @return {@link GFile} instance of requested file, null if not found.
 	 * @throws IOException if IO error when looking up file.
 	 */
@@ -149,7 +149,7 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	 * Returns a {@link ByteProvider} that contains the contents of the specified {@link GFile}.
 	 * <p>
 	 * The caller is responsible for closing the provider.
-	 * 
+	 *
 	 * @param file {@link GFile} to get bytes for
 	 * @param monitor {@link TaskMonitor} to watch and update progress
 	 * @return new {@link ByteProvider} that contains the contents of the file, or NULL if file
@@ -175,7 +175,7 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	 * <p>
 	 * Implementors of this method are not required to add FSRL, NAME, or PATH values unless
 	 * the values are non-standard.
-	 * 
+	 *
 	 * @param file {@link GFile} to get the attributes for
 	 * @param monitor {@link TaskMonitor}
 	 * @return {@link FileAttributes} instance (possibly read-only), maybe empty but never null
@@ -188,7 +188,7 @@ public interface GFileSystem extends Closeable, ExtensionPoint {
 	 * Default implementation of getting an {@link InputStream} from a {@link GFile}'s
 	 * {@link ByteProvider}.
 	 * <p>
-	 * 
+	 *
 	 * @param file {@link GFile}
 	 * @param fs the {@link GFileSystem filesystem} containing the file
 	 * @param monitor {@link TaskMonitor} to allow canceling

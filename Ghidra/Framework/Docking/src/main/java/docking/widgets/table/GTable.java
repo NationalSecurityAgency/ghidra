@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -190,7 +190,7 @@ public class GTable extends JTable {
 
 	/**
 	 * Allows subclasses to change the type of {@link AutoLookup} created by this table
-	 * @return the auto lookup 
+	 * @return the auto lookup
 	 */
 	protected AutoLookup createAutoLookup() {
 		return new GTableAutoLookup(this);
@@ -259,7 +259,7 @@ public class GTable extends JTable {
 	/**
 	 * Returns the {@link SelectionManager} in use by this GTable.  <code>null</code> is returned
 	 * if the user has installed their own {@link ListSelectionModel}.
-	 * 
+	 *
 	 * @return the selection manager
 	 */
 	public SelectionManager getSelectionManager() {
@@ -321,11 +321,11 @@ public class GTable extends JTable {
 
 	/**
 	 * Sets the column in which auto-lookup will be enabled.
-	 * 
+	 *
 	 * <p>Note: calling this method with a valid column index will disable key binding support
 	 * of actions.  See {@link #setActionsEnabled(boolean)}.  Passing an invalid column index
 	 * will disable the auto-lookup feature.
-	 * 
+	 *
 	 * @param lookupColumn the column in which auto-lookup will be enabled
 	 */
 	public void setAutoLookupColumn(int lookupColumn) {
@@ -363,9 +363,9 @@ public class GTable extends JTable {
 	 * Ctrl-C</code>, will work at all times.   Finally, if true is passed to this
 	 * method, then the {@link #setAutoLookupColumn(int) auto lookup} feature is
 	 * disabled.
-	 * 
+	 *
 	 * <p>The default state is for actions to be disabled.
-	 * 
+	 *
 	 * @param b true allows keyboard actions to pass up the component hierarchy.
 	 */
 	public void setActionsEnabled(boolean b) {
@@ -373,12 +373,12 @@ public class GTable extends JTable {
 	}
 
 	/**
-	 * Returns true if key strokes are used to trigger actions. 
-	 * 
-	 * <p>This method has a relationship with {@link #setAutoLookupColumn(int)}.  If this method 
-	 * returns <code>true</code>, then the auto-lookup feature is disabled.  If this method 
+	 * Returns true if key strokes are used to trigger actions.
+	 *
+	 * <p>This method has a relationship with {@link #setAutoLookupColumn(int)}.  If this method
+	 * returns <code>true</code>, then the auto-lookup feature is disabled.  If this method
 	 * returns <code>false</code>, then the auto-lookup may or may not be enabled.
-	 *   
+	 *
 	 * @return true if key strokes are used to trigger actions
 	 * @see #setActionsEnabled(boolean)
 	 * @see #setAutoLookupColumn(int)
@@ -390,7 +390,7 @@ public class GTable extends JTable {
 	/**
 	 * Enables or disables auto-edit.  When enabled, the user can start typing to trigger an
 	 * edit of an editable table cell.
-	 * 
+	 *
 	 * @param allowAutoEdit true for auto-editing
 	 */
 	public void setAutoEditEnabled(boolean allowAutoEdit) {
@@ -455,10 +455,10 @@ public class GTable extends JTable {
 	}
 
 	private void removeActionKeyStrokes() {
-		// 
+		//
 		// We remove these keybindings as we have replaced Java's version with our own.  To be
 		// thorough, we should really clear all table keybindings, which would ensure that any
-		// user-provided key stroke would not get blocked by the table.  At the time of writing, 
+		// user-provided key stroke would not get blocked by the table.  At the time of writing,
 		// there are alternate key bindings for copy that do not use this table's copy action.
 		// Also, there are many other built-in keybindings for table navigation, which we do not
 		// wish to override.   For now, just clear these.  We can clear others if they become
@@ -596,12 +596,12 @@ public class GTable extends JTable {
 	@Override
 	public TableCellRenderer getDefaultRenderer(Class<?> columnClass) {
 		if (columnClass == null) {
-			// 
+			//
 			// 		Unusual Code Alert!
-			// Normally we would like to do as the JTable and just return null here.  However, 
+			// Normally we would like to do as the JTable and just return null here.  However,
 			// some client code (JTable.AccessibleJTable) does not check for null in this case.
 			// Prevent that code from exploding by returning a suitable non-null default.
-			// 
+			//
 			return super.getDefaultRenderer(String.class);
 		}
 
@@ -623,7 +623,7 @@ public class GTable extends JTable {
 			return renderer;
 		}
 		DefaultTableCellRendererWrapper wrapper = new DefaultTableCellRendererWrapper(renderer);
-		setDefaultRenderer(columnClass, wrapper); // cache for later use    	
+		setDefaultRenderer(columnClass, wrapper); // cache for later use
 		return wrapper;
 	}
 
@@ -877,7 +877,7 @@ public class GTable extends JTable {
 	 * allows clients to bypass the {@link #getCellRenderer(int, int)}, which is sometimes
 	 * overridden by subclasses to return a hard-coded renderer.  In that case, some clients
 	 * still want a way to perform normal cell renderer lookup.
-	 * 
+	 *
 	 * @param row the row
 	 * @param col the column
 	 * @return the cell renderer
@@ -1098,9 +1098,9 @@ public class GTable extends JTable {
 //==================================================================================================
 
 	/**
-	 * A method that subclasses can override to signal that they wish not to have this table's 
+	 * A method that subclasses can override to signal that they wish not to have this table's
 	 * built-in popup actions.   Subclasses will almost never need to override this method.
-	 * 
+	 *
 	 * @return true if popup actions are supported
 	 */
 	protected boolean supportsPopupActions() {
@@ -1390,7 +1390,7 @@ public class GTable extends JTable {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class MyTableColumnModelListener implements TableColumnModelListener {
 		@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,7 @@ public class ResourceFile implements Comparable<ResourceFile> {
 
 	/**
 	 * Constructs a Resource file from string path that can be either a file path or a jar url.
-	 * 
+	 *
 	 * @param absolutePath the path to the file.
 	 * @param filter The filter used to exclude files from being loaded
 	 */
@@ -111,7 +111,7 @@ public class ResourceFile implements Comparable<ResourceFile> {
 	}
 
 	/**
-	 * Returns the absolute file path for this file. 
+	 * Returns the absolute file path for this file.
 	 * @return the absolute file path for this file.
 	 */
 	public String getAbsolutePath() {
@@ -186,11 +186,11 @@ public class ResourceFile implements Comparable<ResourceFile> {
 	}
 
 	/**
-	 * If this file exists and is not a directory, it will return an InputStream for the file's 
-	 * contents. 
+	 * If this file exists and is not a directory, it will return an InputStream for the file's
+	 * contents.
 	 * @return an InputStream for the file's contents.
 	 * @throws FileNotFoundException if the file does not exist.
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public InputStream getInputStream() throws FileNotFoundException, IOException {
 		return resource.getInputStream();
@@ -223,13 +223,13 @@ public class ResourceFile implements Comparable<ResourceFile> {
 
 	/**
 	 * Returns a File object.  If this ResourceFile represents a standard filesystem, then no
-	 * copy is necessary to return a file.  If this ResourceFile represents a compressed 
+	 * copy is necessary to return a file.  If this ResourceFile represents a compressed
 	 * filesystem, then a copy from that filesystem to the real filesystem is needed to create
-	 * a File object.  <code>copyIfNeeded</code> allows you to dictate whether a copy should take 
+	 * a File object.  <code>copyIfNeeded</code> allows you to dictate whether a copy should take
 	 * place, if needed.
 	 * <p>
 	 * If you just want the contents of a file, then call {@link #getInputStream()}.
-	 * 
+	 *
 	 * @param  copyIfNeeded true to copy the file when embedded in a compressed filesystem; false
 	 *                      to return null in that case.
 	 * @return a File object or null if not a file and copyIfNeeded was false

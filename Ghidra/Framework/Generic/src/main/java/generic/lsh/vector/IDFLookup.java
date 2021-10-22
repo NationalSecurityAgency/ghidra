@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,35 +28,35 @@ public class IDFLookup {
 		public int hash;
 		public int count;
 	}
-	
+
 	private int size;			// Number of entries in table
 	private int mask;
 	private IDFEntry[] hashtable;
-	
+
 	private void initializeTable() {
 		mask = 1;
 		while(mask < size)		// Find first power of two greater than or equal to size
 			mask <<= 1;
-		
+
 		mask <<= 1;
 		hashtable = new IDFEntry[ mask ];
 		for(int i=0;i<mask;++i) {
 			hashtable[i] = new IDFEntry();
 			hashtable[i].count = 0xffffffff;	// Mark all the slots as empty
 		}
-		
+
 		mask -= 1;
 	}
-	
+
 	public IDFLookup() {
 		hashtable = null;
 		mask = 0;
 	}
-	
+
 	public boolean empty() {
 		return (hashtable==null);
 	}
-	
+
 	public int getCount(int hash) {
 		if (mask==0) return 0;
 		int val = hash & mask;
@@ -69,19 +69,19 @@ public class IDFLookup {
 		}
 		return 0;
 	}
-	
+
 	public int getCapacity() {
 		return mask;
 	}
-	
+
 	public int getRawHash(int pos) {
 		return hashtable[pos].hash;
 	}
-	
+
 	public int getRawCount(int pos) {
 		return hashtable[pos].count;
 	}
-	
+
 	private void insertHash(int hash,int count) {
 		IDFEntry entry;
 		int val = hash & mask;
@@ -94,13 +94,13 @@ public class IDFLookup {
 		entry.hash = hash;
 		entry.count = count;
 	}
-	
+
 	public void saveXml(Writer fwrite) throws IOException {
 		if (empty()) {
 			fwrite.append("<idflookup/>\n");
 			return;
 		}
-		
+
 		StringBuilder buf = new StringBuilder();
 		buf.append("<idflookup");
 		SpecXmlUtils.encodeSignedIntegerAttribute(buf, "size", size);
@@ -118,7 +118,7 @@ public class IDFLookup {
 		buf.append("</idflookup>\n");
 		fwrite.append(buf.toString());
 	}
-	
+
 	public void restoreXml(XmlPullParser parser) {
 		XmlElement el = parser.start("idflookup");
 		if (!el.hasAttribute("size"))
@@ -131,7 +131,7 @@ public class IDFLookup {
 			int hash = SpecXmlUtils.decodeInt(parser.end().getText());
 			insertHash(hash,count);
 		}
-		
+
 		parser.end(el);
 	}
 

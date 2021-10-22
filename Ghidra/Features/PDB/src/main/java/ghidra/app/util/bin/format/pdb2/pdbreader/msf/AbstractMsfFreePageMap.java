@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.util.task.TaskMonitor;
  *  Free Page Map is a bit-encoding of whether a page within the {@link AbstractMsf} is
  *  currently used--for purposes of reusing available pages.
  * <P>
- * This class was crafted to take the place of the formal Free Page Map in a complete 
+ * This class was crafted to take the place of the formal Free Page Map in a complete
  *  (read/write/modify) solution, but might not need to be used for a "reader" technology.
  * <P>
  * NOTE: This implementation is incomplete: we are not processing or accessing the bits yet.
@@ -91,7 +91,7 @@ abstract class AbstractMsfFreePageMap {
 	/**
 	 * Method indicating whether the Free Page Map is a "Big" Free Page Map.  Currently, we have
 	 * at least two types extending this class.  One is "Big" (the newer v7.00) and the other is
-	 * not.  The {@link #dump()} method makes use of this method. 
+	 * not.  The {@link #dump()} method makes use of this method.
 	 * @return true if it is a "Big" version of this class.
 	 */
 	abstract boolean isBig();

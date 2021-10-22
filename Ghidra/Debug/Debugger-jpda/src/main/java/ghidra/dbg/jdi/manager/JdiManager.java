@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public interface JdiManager extends AutoCloseable {
 
 	/**
 	 * Get a new manager instance, without starting JDI
-	 * 
+	 *
 	 * @return the manager
 	 */
 	public static JdiManager newInstance() {
@@ -62,7 +62,7 @@ public interface JdiManager extends AutoCloseable {
 
 	/**
 	 * Add a listener for JDI's state
-	 * 
+	 *
 	 * @see #getState()
 	 * @param vm the virtual machine
 	 * @param listener the listener to add
@@ -71,7 +71,7 @@ public interface JdiManager extends AutoCloseable {
 
 	/**
 	 * Remove a listener for JDI's state
-	 * 
+	 *
 	 * @see #getState()
 	 * @param vm the virtual machine
 	 * @param listener the listener to remove
@@ -80,7 +80,7 @@ public interface JdiManager extends AutoCloseable {
 
 	/**
 	 * Add a listener for events on inferiors
-	 * 
+	 *
 	 * @param vm the virtual machine
 	 * @param listener the listener to add
 	 */
@@ -88,7 +88,7 @@ public interface JdiManager extends AutoCloseable {
 
 	/**
 	 * Remove a listener for events on inferiors
-	 * 
+	 *
 	 * @param vm the virtual machine
 	 * @param listener the listener to remove
 	 */
@@ -96,14 +96,14 @@ public interface JdiManager extends AutoCloseable {
 
 	/**
 	 * Add a listener for target output
-	 * 
+	 *
 	 * @param listener the listener to add
 	 */
 	void addTargetOutputListener(JdiTargetOutputListener listener);
 
 	/**
 	 * Remove a listener for target output
-	 * 
+	 *
 	 * @see #addTargetOutputListener(JdiTargetOutputListener)
 	 * @param listener
 	 */
@@ -111,24 +111,24 @@ public interface JdiManager extends AutoCloseable {
 
 	/**
 	 * Add a listener for console output
-	 * 
+	 *
 	 * @param listener the listener to add
 	 */
 	void addConsoleOutputListener(JdiConsoleOutputListener listener);
 
 	/**
 	 * Remove a listener for console output
-	 * 
+	 *
 	 * @param listener
 	 */
 	void removeConsoleOutputListener(JdiConsoleOutputListener listener);
 
 	/**
 	 * Get an inferior by its JDI-assigned ID
-	 * 
+	 *
 	 * JDI numbers virtual machines incrementally. All vms and created and destroyed by the user.
 	 * See {@link #getVM()}.
-	 * 
+	 *
 	 * @param iid the inferior ID
 	 * @return a handle to the inferior, if it exists
 	 */
@@ -136,19 +136,19 @@ public interface JdiManager extends AutoCloseable {
 
 	/**
 	 * Get all inferiors known to the manager
-	 * 
+	 *
 	 * This does not ask JDI to list its inferiors. Rather it returns a read-only view of the
 	 * manager's understanding of the current inferiors based on its tracking of JDI events.
-	 * 
+	 *
 	 * @return a map of inferior IDs to corresponding inferior handles
 	 */
 	Map<String, VirtualMachine> getKnownVMs();
 
 	/**
 	 * Send an interrupt to JDI regardless of other queued commands
-	 * 
+	 *
 	 * This may be useful if the manager's command queue is stalled because an inferior is running.
-	 * 
+	 *
 	 * @throws IOException if an I/O error occurs
 	 * @throws InterruptedException
 	 */
@@ -156,10 +156,10 @@ public interface JdiManager extends AutoCloseable {
 
 	/**
 	 * Add a virtual machine
-	 * 
+	 *
 	 * @param cx Connector specifying how to access the vm
 	 * @param args start-up parameters
-	 * 
+	 *
 	 * @return a future which completes with the handle to the new vm
 	 */
 	CompletableFuture<VirtualMachine> addVM(Connector cx, List<String> args);
@@ -168,7 +168,7 @@ public interface JdiManager extends AutoCloseable {
 
 	/**
 	 * Remove a vm
-	 * 
+	 *
 	 * @param vm the vm to remove
 	 * @return a future which completes then JDI has executed the command
 	 */
@@ -176,10 +176,10 @@ public interface JdiManager extends AutoCloseable {
 
 	/**
 	 * Execute an arbitrary CLI command, printing output to the CLI console
-	 * 
+	 *
 	 * Note: to ensure a certain thread or inferior has focus for a console command, see
 	 * {@link JdiThread#console(String)} and {@link JdiVM#console(String)}.
-	 * 
+	 *
 	 * @param command the command to execute
 	 * @return a future that completes when JDI has executed the command
 	 */
@@ -187,11 +187,11 @@ public interface JdiManager extends AutoCloseable {
 
 	/**
 	 * Execute an arbitrary CLI command, capturing its console output
-	 * 
+	 *
 	 * The output will not be printed to the CLI console. To ensure a certain thread or inferior has
 	 * focus for a console command, see {@link JdiThread#consoleCapture(String)} and
 	 * {@link JdiVM#consoleCapture(String)}.
-	 * 
+	 *
 	 * @param command the command to execute
 	 * @return a future that completes with the captured output when JDI has executed the command
 	 */
@@ -199,14 +199,14 @@ public interface JdiManager extends AutoCloseable {
 
 	/**
 	 * List JDI's virtual machines
-	 * 
+	 *
 	 * @return a future that completes with a map of inferior IDs to inferior handles
 	 */
 	CompletableFuture<Map<String, VirtualMachine>> listVMs();
 
 	/**
 	 * List the available processes on target
-	 * 
+	 *
 	 * @return a future that completes with a list of PIDs
 	 */
 	@Deprecated(forRemoval = true)

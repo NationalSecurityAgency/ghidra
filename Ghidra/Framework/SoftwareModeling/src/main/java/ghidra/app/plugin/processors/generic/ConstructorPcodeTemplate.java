@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,19 +29,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
- * 
+ *
  */
 public class ConstructorPcodeTemplate implements Serializable {
 	private HandleTemplate result;
 	private ArrayList<Object> pcodeDirectives;
 	private int delaySlotDepth;
 	private int flowFlags;
-	
+
 	public ConstructorPcodeTemplate() {
 		pcodeDirectives = new ArrayList<Object>();
 	}
 
-	public void addPcodeOpTemplate(Object opT) throws SledException { 
+	public void addPcodeOpTemplate(Object opT) throws SledException {
 		if (opT.getClass() == HandleTemplate.class)
 			result = (HandleTemplate) opT;
 		else {
@@ -60,17 +60,17 @@ public class ConstructorPcodeTemplate implements Serializable {
 	 * The default pcode generated for a constructor is typically
 	 * not very efficient.  For example, for an add instruction,
 	 * we might generate something like
-	 * 
+	 *
 	 * tmp1 = LOAD register_space register1
 	 * tmp2 = LOAD register_space register2
 	 * tmp3 = ADD tmp1 tmp2
 	 *        STORE register_space register3 tmp3
-	 * 
+	 *
 	 * This routine marks opcodes and varnodes as potentially omitable,
 	 * which allows us to generate much simpler pcode whenever there
 	 * are no dynamic references involved.  In the case above we would
 	 * replace the 4 pcode ops above with a single pcode op:
-	 * 
+	 *
 	 * register3 = ADD register1 register2
 	 */
 	public void optimize() {
@@ -78,13 +78,13 @@ public class ConstructorPcodeTemplate implements Serializable {
 		OpTemplate op;
 		VarnodeTemplate vt;
 		Operand ref;
-		
+
 		flowFlags = 0; // default;
 		for (i = 0; i < pcodeDirectives.size(); i++) {
 			try {
 				op = (OpTemplate) pcodeDirectives.get(i);
 			} catch (ClassCastException e) {continue;}
-			
+
 			adjustFlowFlags(op);
 
 			if (op.opcode() == PcodeOp.LOAD) {
@@ -101,7 +101,7 @@ public class ConstructorPcodeTemplate implements Serializable {
 				if (vt.size().operand() != ref) continue;
 				op.output().setReplace(ref,true);
 				op.setOmit(ref);
-			}				
+			}
 			else if (op.opcode() == PcodeOp.STORE){
 				if (!op.input(2).oneuse()) continue; // Only optimize oneuse temp. uniques
 				if (op.input(2).loadomit()) continue; // Don't omit if storing an omitted load
@@ -174,10 +174,10 @@ public class ConstructorPcodeTemplate implements Serializable {
 
 		int i;
 		HashMap<Object, Handle> handles = new HashMap<Object, Handle>();
-		
+
 		for (i = 0; i < pcodeDirectives.size(); i++) {
 			Object o = pcodeDirectives.get(i);
-						
+
 			if (o.getClass() == OpTemplate.class) {
 				if (((OpTemplate) o).omit()) continue;
 				pcode.add(((OpTemplate) o).getPcode(handles,position,pcode.size(),off));

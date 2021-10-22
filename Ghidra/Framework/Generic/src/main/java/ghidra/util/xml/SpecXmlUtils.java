@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,12 +29,12 @@ import org.xml.sax.*;
  * 		.pspec files
  * 		.cspec files
  * 		.sla files
- *  
+ *
  *  Philosophy here is to use and enforce datatype encodings from XML schemas
  *  to try to be as standard as possible and facilitate use of relax grammars etc.  But in decoding
  *  possibly be a little more open to deal with resources generated outside of our control.
- *  
- * 
+ *
+ *
  *
  */
 public class SpecXmlUtils {
@@ -55,11 +55,11 @@ public class SpecXmlUtils {
 		}
 		return false;		// Should we throw an exception for bad encodings?
 	}
-	
+
 	static public String encodeBoolean(boolean val) {
 		return val ? "true" : "false";
 	}
-	
+
 	static public void encodeBooleanAttribute(StringBuilder buf,String nm,boolean val) {
 		buf.append(' ');
 		buf.append(nm);
@@ -67,7 +67,7 @@ public class SpecXmlUtils {
 		buf.append(val ? "true" : "false");
 		buf.append('\"');
 	}
-	
+
 	static public void encodeStringAttribute(StringBuilder buf,String nm,String val) {
 		buf.append(' ');
 		buf.append(nm);
@@ -75,15 +75,15 @@ public class SpecXmlUtils {
 		buf.append(val);
 		buf.append('\"');
 	}
-	
+
 	static public String encodeSignedInteger(long val) {
 		return Long.toString(val,10);
 	}
-	
+
 	static public String encodeUnsignedInteger(long val) {
 		return "0x" + Long.toHexString(val);
 	}
-	
+
 	static public void encodeSignedIntegerAttribute(StringBuilder buf,String nm,long val) {
 		buf.append(' ');
 		buf.append(nm);
@@ -91,7 +91,7 @@ public class SpecXmlUtils {
 		buf.append(encodeSignedInteger(val));
 		buf.append('\"');
 	}
-	
+
 	static public void encodeUnsignedIntegerAttribute(StringBuilder buf,String nm,long val) {
 		buf.append(' ');
 		buf.append(nm);
@@ -99,7 +99,7 @@ public class SpecXmlUtils {
 		buf.append(encodeUnsignedInteger(val));
 		buf.append('\"');
 	}
-	
+
 	static public void encodeDoubleAttribute(StringBuilder buf,String nm,double val) {
 		buf.append(' ');
 		buf.append(nm);
@@ -107,17 +107,17 @@ public class SpecXmlUtils {
 		buf.append(Double.toString(val));
 		buf.append('\"');
 	}
-	
+
 	static public int decodeInt( String intString ) {
 	    if (intString == null) {
             return 0;
         }
-	    
+
 	    // special case
 	    if ( "0".equals( intString ) ) {
 	    	return 0;
 	    }
-	    
+
 	    BigInteger bi = null;
 	    if ( intString.startsWith( "0x" ) ) {
 	        bi = new BigInteger( intString.substring( 2 ), 16 );
@@ -128,20 +128,20 @@ public class SpecXmlUtils {
 	    else {
 	        bi = new BigInteger( intString, 10 );
 	    }
-	    
+
 	    return bi.intValue();
 	}
-	
+
 	static public long decodeLong( String longString ) {
 		if (longString == null) {
             return 0;
         }
-	    
+
 	    // special case
 	    if ( "0".equals( longString ) ) {
 	    	return 0;
 	    }
-	    
+
 	    BigInteger bi = null;
 	    if ( longString.startsWith( "0x" ) ) {
 	        bi = new BigInteger( longString.substring( 2 ), 16 );
@@ -152,10 +152,10 @@ public class SpecXmlUtils {
 	    else {
 	        bi = new BigInteger( longString, 10 );
 	    }
-	    
+
 	    return bi.longValue();
 	}
-	
+
 	static public void xmlEscape(StringBuilder buf,String val) {
 		for(int i=0;i<val.length();++i) {
 			char c = val.charAt(i);
@@ -185,7 +185,7 @@ public class SpecXmlUtils {
 				buf.append(c);
 		}
 	}
-	
+
 	static public void xmlEscapeAttribute(StringBuilder buf,String nm,String val) {
 		buf.append(' ');
 		buf.append(nm);
@@ -193,7 +193,7 @@ public class SpecXmlUtils {
 		xmlEscape(buf,val);
 		buf.append('\"');
 	}
-		
+
 	static public void xmlEscapeWriter(Writer writer,String val) throws IOException {
 		for(int i=0;i<val.length();++i) {
 			char c = val.charAt(i);
@@ -210,9 +210,9 @@ public class SpecXmlUtils {
 			else
 				writer.append(c);
 		}
-		
+
 	}
-	
+
 	public static ErrorHandler getXmlHandler() {
 		return new ErrorHandler() {
 			public void error(SAXParseException exception) throws SAXException {

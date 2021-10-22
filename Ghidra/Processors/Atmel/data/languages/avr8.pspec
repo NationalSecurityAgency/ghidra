@@ -5,27 +5,27 @@
     <property key="assemblyRating:avr8:LE:16:extended" value="PLATINUM"/>
   </properties>
 
-  <programcounter register="PC"/> 
+  <programcounter register="PC"/>
 
   <data_space space="mem"/>
-  
-  <!-- 
-     - NOTE: The settings within this file may be specific to a particular 
-     - processor variant and will likely need to be changed to reflect 
+
+  <!--
+     - NOTE: The settings within this file may be specific to a particular
+     - processor variant and will likely need to be changed to reflect
      - the specific target processor.
      The RAMPx, EIND, SREG registers are not marked volatile, even though they could be changed
      indirectly with memory references.  If they are made volatile, then the addressing
      won't work in decompiler or reference recovery.
 	 Some registers only appear in newer avr8's, or with large memory spaces
-    --> 
-    
+    -->
+
   <volatile outputop="write_volatile" inputop="read_volatile">
     <range space="mem" first="0x20" last="0x57"/>
     <range space="mem" first="0x60" last="0xff"/>
   </volatile>
-  
+
   <default_symbols>
-  
+
     <symbol name="Reset" address="code:0x0" entry="true"/>
     <symbol name="INT0" address="code:0x1" entry="true"/>
     <symbol name="INT1" address="code:0x2" entry="true"/>
@@ -45,8 +45,8 @@
     <symbol name="ANA_COMP" address="code:0x10" entry="true"/>
     <symbol name="TWI" address="code:0x11" entry="true"/>
     <symbol name="SPM_RDY" address="code:0x12" entry="true"/>
- 
-    
+
+
     <!-- See /usr/lib/avr/include/avr/iom64.h -->
     <symbol name="PINF" address="mem:0x20"/>
     <symbol name="PINE" address="mem:0x21"/>

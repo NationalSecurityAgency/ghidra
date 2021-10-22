@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -416,7 +416,7 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 		addPreComment(0x1001960L, "PreComment: PUSH Hit");
 		addPostComment(0x1001960L, "Post: PUSH hit");
 
-		// Search for 
+		// Search for
 		SearchOptions options = new SearchOptions("PUSH", true, true, true, true, true, true, true,
 			true, true, true, false, false);
 		ProgramLocation startLoc = new ProgramLocation(program, getAddr(0x1001950));
@@ -465,7 +465,7 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 
 		int txId = program.startTransaction("Search Test");
 		try {
-			// add data 
+			// add data
 			program.getListing().createData(getAddr(0x1001955L), s, s.getLength());
 		}
 		finally {
@@ -505,7 +505,7 @@ public class ProgramDatabaseSearchIteratorTest extends AbstractGhidraHeadedInteg
 		//
 		// Test Search All
 		SearchOptions options =
-			new SearchOptions("imm", true, true, true, true, true, true, true, true, false, // not case sensitive 
+			new SearchOptions("imm", true, true, true, true, true, true, true, true, false, // not case sensitive
 				true, false, false);
 		ProgramLocation[] locs = searchAll(tool, program, null, null, options, -1, monitor);
 		assertNotNull(locs);

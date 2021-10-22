@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ public class FGView extends VisualGraphView<FGVertex, FGEdge, FunctionGraph> {
 		FGComponent newFgComponent = createGraphComponent();
 		setGraphComponent(newFgComponent);
 
-		// we must assign the variable here, as the call to setGraphComponent() will call 
+		// we must assign the variable here, as the call to setGraphComponent() will call
 		// dispose, which will null-out the 'fgComponent' variable
 		fgComponent = newFgComponent;
 
@@ -85,7 +85,7 @@ public class FGView extends VisualGraphView<FGVertex, FGEdge, FunctionGraph> {
 
 	private FGComponent createGraphComponent() {
 
-		// note: not sure we need the 'busy cursor' here, as the graph has already been 
+		// note: not sure we need the 'busy cursor' here, as the graph has already been
 		//       created at this point
 		return getWithBusyCursor(() -> {
 			FGComponent newViewer = new FGComponent(this, functionGraphData, layoutProvider);
@@ -138,7 +138,7 @@ public class FGView extends VisualGraphView<FGVertex, FGEdge, FunctionGraph> {
 		GraphViewer<FGVertex, FGEdge> primaryViewer = getPrimaryGraphViewer();
 		Rectangle cursorBounds = vertex.getCursorBounds();
 		if (cursorBounds == null) {
-			// no cursor yet			
+			// no cursor yet
 			if (GraphViewerUtils.isScaledPastVertexInteractionThreshold(primaryViewer)) {
 				maybeTwinkleVertex(vertex, twinkle);
 			}
@@ -238,11 +238,11 @@ public class FGView extends VisualGraphView<FGVertex, FGEdge, FunctionGraph> {
 		super.setLayoutProvider(newLayoutProvider);
 
 		if (graphComponent == null) {
-			return; // not yet created, no work to do 
+			return; // not yet created, no work to do
 		}
 
 		if (oldLayoutProvider != newLayoutProvider) {
-			// the saved positions no longer make sense in a different layout 
+			// the saved positions no longer make sense in a different layout
 			fgComponent.clearLayoutPositionCache();
 		}
 	}

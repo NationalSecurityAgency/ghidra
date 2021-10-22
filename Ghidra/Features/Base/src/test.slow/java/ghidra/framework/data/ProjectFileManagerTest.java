@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -115,10 +115,10 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 	private void flushTheseEvents(FileSystemEventManager eventManager) {
 		// Events get added synchronously, but processed asynchronously, so we can check to see
 		// if any have been added by an action we triggered without waiting.  Also, we know that
-		// no more events will get added, since we are the thread (the main thread) doing the 
-		// work, so no synchronization is needed for checking the list size.  
+		// no more events will get added, since we are the thread (the main thread) doing the
+		// work, so no synchronization is needed for checking the list size.
 		//
-		// If there are queued actions, then we have to kick the handling thread and 
+		// If there are queued actions, then we have to kick the handling thread and
 		// let it finish running.
 
 		try {
@@ -421,7 +421,7 @@ public class ProjectFileManagerTest extends AbstractGhidraHeadedIntegrationTest 
 
 		flushFileSystemEventsAndClearTestQueue();
 		sharedFS.renameFolder("/", "abc", "xyz");
-		flushFileSystemEvents(); // wait for FileSystemListener callback to update folder		
+		flushFileSystemEvents(); // wait for FileSystemListener callback to update folder
 		assertEquals(4, root.getFolders().length);
 
 		assertEventsSize(2);

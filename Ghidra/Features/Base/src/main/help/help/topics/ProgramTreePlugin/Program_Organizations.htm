@@ -30,7 +30,7 @@
 
         <LI>
           For each code block create a new folder; use the code block name as the name of the
-          folder. 
+          folder.
 
           <UL>
             <LI>If you selected a folder to modularize, new folders are created under the selected
@@ -62,27 +62,27 @@
 	  <P class="providedbyplugin">Provided by: <I>ModularizeAlgorithmPlugin</I></P>
     </BLOCKQUOTE>
 
-	
+
 	<H2><A name="Create_Dominance_Tree"></A>Dominance Tree Modularization</H2>
 
     <BLOCKQUOTE>
       <P>
 			This action modularizes the program tree by creating a call tree of the
-			code blocks and then arranges that tree by dominance such that all blocks only 
+			code blocks and then arranges that tree by dominance such that all blocks only
 			reachable from a parent <tt>'p'</tt> are children of <tt>'p'</tt> in the program tree.
       </P>
     </BLOCKQUOTE>
-    
-    
+
+
     <H2><A name="Complexity_Depth"></A>Complexity Depth Modularization</H2>
 
     <BLOCKQUOTE>
       <P>
 			This action modularizes the program tree by placing code blocks in a folder that marks the
-			longest possible call tree path that calls that block.  For example, blocks 
+			longest possible call tree path that calls that block.  For example, blocks
 			at <tt>Level 0</tt>
-			are not called by any other code; blocks at <tt>Level 30</tt> are blocks that have 
-			a call tree path to them that contains 30 nodes.  Note that the nodes at <tt>Level 
+			are not called by any other code; blocks at <tt>Level 30</tt> are blocks that have
+			a call tree path to them that contains 30 nodes.  Note that the nodes at <tt>Level
 			30</tt> may have shorter paths that reach them, but the longest of all the paths
 			is 30 nodes.
       </P>

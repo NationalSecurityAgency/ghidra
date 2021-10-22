@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,15 +27,15 @@ import org.junit.runners.Suite.SuiteClasses;
 	LocationReferencesPlugin1Test.class,
 	LocationReferencesPlugin2Test.class,
 	LocationReferencesPlugin3Test.class,
-	
+
 	// this class uses the ReferenceUtils code
 	// CallTreePluginTest.class,
 })
 /** A suite useful for running all related tests and determining code coverage */
 public class LocationReferencesTestSuite {
 	// in the annotation
-	
+
 	// Note: if you use a test suite, you have to exclude the suite in the gradle.build
-	//       or the tests will get run by both the Suite and by gradle for the individual 
+	//       or the tests will get run by both the Suite and by gradle for the individual
 	//       test file.
 }

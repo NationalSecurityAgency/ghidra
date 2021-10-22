@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,35 +27,35 @@ import ghidra.program.model.pcode.*;
 import ghidra.util.xml.*;
 import ghidra.xml.*;
 /**
- * 
+ *
  *
  * Token representing a C variable
  */
 public class ClangVariableToken extends ClangToken {
 	private Varnode varnode;
 	private PcodeOp op;
-	
+
 	public ClangVariableToken(ClangNode par) {
 		super(par);
 		varnode = null;
 		op = null;
 	}
-	
+
 	@Override
     public Varnode getVarnode() {
 		return varnode;
 	}
-	
+
 	@Override
 	public PcodeOp getPcodeOp() {
 		return op;
 	}
-	
+
 	@Override
     public boolean isVariableRef() {
 		return true;
 	}
-	
+
 	@Override
     public Address getMinAddress() {
 		if (op==null) return null;
@@ -80,7 +80,7 @@ public class ClangVariableToken extends ClangToken {
 		}
 		return super.getHighVariable();
 	}
-	
+
 	@Override
     public void restoreFromXML(XmlElement el,XmlElement end,PcodeFactory pfactory) {
 		super.restoreFromXML(el,end,pfactory);

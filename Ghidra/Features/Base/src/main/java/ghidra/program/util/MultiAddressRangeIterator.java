@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,21 +70,21 @@ public class MultiAddressRangeIterator {
 	}
 
 	/**
-	 * Returns the next address. The next address could be from any 
+	 * Returns the next address. The next address could be from any
 	 * one of the iterators.
 	 * @return the next address.
 	 */
 	public AddressRange next() {
 		return (forward ? forwardNext() : backwardNext());
 	}
-		
+
 	/**
-	 * Returns the next address for forward iterators. The next address could be from any 
+	 * Returns the next address for forward iterators. The next address could be from any
 	 * one of the iterators.
 	 * @return the next address.
 	 */
 	public AddressRange forwardNext() {
-		
+
 		// Get a next value from each iterator where we don't already have a range.
 		for (int i = 0; i < iters.length; i++) {
 			if (addrRanges[i] == null) {
@@ -93,7 +93,7 @@ public class MultiAddressRangeIterator {
 				}
 			}
 		}
-		
+
 		// We don't yet know the next minimum value so get the min of the address ranges.
 		if (min == null) {
 			for (int i = 0; i < addrRanges.length; i++) {
@@ -105,7 +105,7 @@ public class MultiAddressRangeIterator {
 				}
 			}
 		}
-		
+
 		// Determine the max value for the current range.
 		max = null;
 		for (int i = 0; i < addrRanges.length; i++) {
@@ -125,14 +125,14 @@ public class MultiAddressRangeIterator {
 				}
 			}
 		}
-		
+
 		// Save the range to return.
 		AddressRange nextRange = new AddressRangeImpl(min, max);
-		
+
 		// Determine the next minimum.
 		Address nextMin = (max != null) ? max.next() : null;
-		
-		// Adjust min to be the next minimum and 
+
+		// Adjust min to be the next minimum and
 		// null out ranges where we need the next range from its iterator.
 		min = null;
 		for (int i = 0; i < addrRanges.length; i++) {
@@ -148,17 +148,17 @@ public class MultiAddressRangeIterator {
 				}
 			}
 		}
-		
+
 		return nextRange;
 	}
-	
+
 	/**
-	 * Returns the next address for backward iterators. The next address could be from any 
+	 * Returns the next address for backward iterators. The next address could be from any
 	 * one of the iterators.
 	 * @return the next address.
 	 */
 	public AddressRange backwardNext() {
-		
+
 		// Get a next value from each iterator where we don't already have a range.
 		for (int i = 0; i < iters.length; i++) {
 			if (addrRanges[i] == null) {
@@ -167,7 +167,7 @@ public class MultiAddressRangeIterator {
 				}
 			}
 		}
-		
+
 		// We don't yet know the next maximum value so get the max of the address ranges.
 		if (max == null) {
 			for (int i = 0; i < addrRanges.length; i++) {
@@ -179,7 +179,7 @@ public class MultiAddressRangeIterator {
 				}
 			}
 		}
-		
+
 		// Determine the min value for the current range.
 		min = null;
 		for (int i = 0; i < addrRanges.length; i++) {
@@ -199,14 +199,14 @@ public class MultiAddressRangeIterator {
 				}
 			}
 		}
-		
+
 		// Save the range to return.
 		AddressRange nextRange = new AddressRangeImpl(min, max);
-		
+
 		// Determine the next minimum.
 		Address nextMax = (min != null) ? min.previous() : null;
-		
-		// Adjust min to be the next minimum and 
+
+		// Adjust min to be the next minimum and
 		// null out ranges where we need the next range from its iterator.
 		max = null;
 		for (int i = 0; i < addrRanges.length; i++) {
@@ -222,7 +222,7 @@ public class MultiAddressRangeIterator {
 				}
 			}
 		}
-		
+
 		return nextRange;
 	}
 

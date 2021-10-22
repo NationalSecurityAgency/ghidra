@@ -3,47 +3,47 @@
 <!--
   + Compile sleigh languages within this source language module via Eclipse or
   + a command shell.
-  + 
+  +
   +   * Eclipse: right-click on this file and choose menu item "Run As->Ant Build"
   +
   +   * From command line (requires ant install)
   +        - cd to data directory containing this file
   +        - run ant
   +
-  + Sleigh compiler options are read from build/data/sleighArgs.txt which is 
+  + Sleigh compiler options are read from build/data/sleighArgs.txt which is
   + updated by "gradle prepdev" based upon specification within module's build.gradle.
   -->
-                                     
+
 <project name="privateBuildDeveloper" default="sleigh-compile">
-	
+
 	<property name="sleigh.compile.class" value="ghidra.pcodeCPort.slgh_compile.SleighCompile"/>
 
 	<target name="sleigh-compile">
-	    
+
 	    <path id="sleigh.class.path">
 			<pathelement path="${gradleSleighDevClasspath}"/>
 		</path>
-			
+
 		<available classname="\${sleigh.compile.class}" classpathref="sleigh.class.path" property="sleigh.compile.exists"/>
-			
+
 		<fail unless="sleigh.compile.exists" />
-		
+
 		<!--
 			NOTE: sleighArgs.txt contains sleigh compile which are established by build.gradle
 			for the corresponding language module and output to this file with the execution of
-			the gradle prepDev or distribution build tasks.  The '-a' and '-i' options 
+			the gradle prepDev or distribution build tasks.  The '-a' and '-i' options
 			should not be specified by build.gradle.  Other sleigh compile options may be specified
 			within build.gradle by inclusion of the sleighCompile args following all
 			'apply' statements. Example:
-			
+
 				sleighCompile {
 					args '-l'
 				}
-				
+
 			Available options may be determined by executing the sleigh script.
 			(see Ghidra/RuntimeScripts/Linux/support, Ghidra/RuntimeScripts/Windows/support)
 		-->
-		
+
 		<java classname="\${sleigh.compile.class}"
 			classpathref="sleigh.class.path"
 			fork="true"
@@ -55,7 +55,7 @@
 			<arg value="-a"/>
 			<arg value="./languages"/>
 		</java>
-		
+
  	</target>
 
 </project>

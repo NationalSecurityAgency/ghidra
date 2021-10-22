@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,12 +80,12 @@ class HistoryManager {
 		int version = minVersion;
 		if (minVersion < this.minVersion) {
 			while (version < this.minVersion && version <= curVersion) {
-				// Add missing versions	
+				// Add missing versions
 				newVersions[newIx++] = new Version(version++, 0, "<Unknown>", "<Recovered>");
 			}
 		}
 		if (version >= this.minVersion && version <= this.curVersion) {
-			// keep as many existing version entries as possible	
+			// keep as many existing version entries as possible
 			while (versions[oldIx].getVersion() < version) {
 				++oldIx;
 			}
@@ -95,7 +95,7 @@ class HistoryManager {
 			}
 		}
 		while (version <= curVersion) {
-			// Add missing versions	
+			// Add missing versions
 			newVersions[newIx++] = new Version(version++, 0, "<Unknown>", "<Recovered>");
 		}
 
@@ -178,7 +178,7 @@ class HistoryManager {
 //		validate();
 //		return minVersion;
 //	}
-//	
+//
 //	int getCurrentVersion() {
 //		validate();
 //		return curVersion;
@@ -209,9 +209,9 @@ class HistoryManager {
 	}
 
 	/**
-	 * If validationRequired is true and the history data file has been 
+	 * If validationRequired is true and the history data file has been
 	 * updated, the history data will be re-initialized from the file.
-	 * This is undesirable and is only required when mulitple instances 
+	 * This is undesirable and is only required when mulitple instances
 	 * of a LocalFolderItem are used for a specific item path (e.g., unit testing).
 	 */
 	private void validate() throws IOException {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,14 +27,14 @@ import ghidra.util.Msg;
 
 /**
  * A map of listeners and a proxy for invoking each
- * 
+ *
  * <P>
  * This is effectively a multiplexing primitive for a collection of listeners. The listeners may be
  * indexed by some key other than the listeners themselves. This is often useful if a filter or
  * wrapper is applied. If no wrapper is applied, consider using {@link ListenerSet} instead.
  * Additionally, the map is weak keyed, so that listeners are automatically removed if nothing else
  * maintain a strong reference.
- * 
+ *
  * <P>
  * The proxy is accessed via the public {@link #fire} field. This implements the same interfaces as
  * each listener in the collection. Any method invoked on this proxy is invoked upon each listener
@@ -72,11 +72,11 @@ public class ListenerMap<K, P, V extends P> {
 
 	/**
 	 * Clear the recorded exception.
-	 * 
+	 *
 	 * <P>
 	 * This method is for testing. If listeners are involved in a test, then this should be called
 	 * before that test.
-	 * 
+	 *
 	 * @see #checkErr()
 	 */
 	public static void clearErr() {
@@ -85,11 +85,11 @@ public class ListenerMap<K, P, V extends P> {
 
 	/**
 	 * Check and clear the recorded exception.
-	 * 
+	 *
 	 * <P>
 	 * This method is for testing. If listeners are involved in a test, then this should be called
 	 * after that test.
-	 * 
+	 *
 	 * <P>
 	 * Listeners are often invoked in threads off the test thread. Thus, if they generate an
 	 * exception, they get logged, but are otherwise ignored. In particular, a JUnit test with a
@@ -183,15 +183,15 @@ public class ListenerMap<K, P, V extends P> {
 
 	/**
 	 * Construct a new map whose proxy implements the given interface
-	 * 
+	 *
 	 * <P>
 	 * The values in the map must implement the same interface.
-	 * 
+	 *
 	 * <P>
 	 * Callbacks will be serviced by the invoking thread. This may be risking if the invoking thread
 	 * is "precious" to the invoker. There is no guarantee callbacks into client code will complete
 	 * in a timely fashion.
-	 * 
+	 *
 	 * @param iface the interface to multiplex
 	 */
 	public ListenerMap(Class<P> iface) {
@@ -200,10 +200,10 @@ public class ListenerMap<K, P, V extends P> {
 
 	/**
 	 * Construct a new map whose proxy implements the given interface
-	 * 
+	 *
 	 * <P>
 	 * The values in the map must implement the same interface.
-	 * 
+	 *
 	 * @param iface the interface to multiplex
 	 */
 	public ListenerMap(Class<P> iface, Executor executor) {

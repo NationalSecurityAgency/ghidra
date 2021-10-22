@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ public class DbgPendingCommand<T> extends CompletableFuture<T> implements DbgCau
 
 	/**
 	 * Wrap a command for execution
-	 * 
+	 *
 	 * @param cmd the command
 	 */
 	public DbgPendingCommand(DbgCommand<? extends T> cmd) {
@@ -46,7 +46,7 @@ public class DbgPendingCommand<T> extends CompletableFuture<T> implements DbgCau
 
 	/**
 	 * Get the command being executed
-	 * 
+	 *
 	 * @return cmd
 	 */
 	public DbgCommand<? extends T> getCommand() {
@@ -69,9 +69,9 @@ public class DbgPendingCommand<T> extends CompletableFuture<T> implements DbgCau
 
 	/**
 	 * Handle an event
-	 * 
+	 *
 	 * This gives the command implementation the first chance to claim or steal an event
-	 * 
+	 *
 	 * @param evt the event
 	 * @return true if the command is ready to be completed
 	 */
@@ -81,9 +81,9 @@ public class DbgPendingCommand<T> extends CompletableFuture<T> implements DbgCau
 
 	/**
 	 * Claim an event
-	 * 
+	 *
 	 * This stores the event for later retrieval and processing.
-	 * 
+	 *
 	 * @param evt the event
 	 */
 	public void claim(DbgEvent<?> evt) {
@@ -93,9 +93,9 @@ public class DbgPendingCommand<T> extends CompletableFuture<T> implements DbgCau
 
 	/**
 	 * Steal an event
-	 * 
+	 *
 	 * This stores the event for later retrieval and processing.
-	 * 
+	 *
 	 * @param evt the event
 	 */
 	public void steal(DbgEvent<?> evt) {
@@ -105,7 +105,7 @@ public class DbgPendingCommand<T> extends CompletableFuture<T> implements DbgCau
 
 	/**
 	 * Assume a single event of particular type was claimed/stolen, and get that event
-	 * 
+	 *
 	 * @param cls the type of the event
 	 * @return the event cast to the type
 	 * @throws IllegalStateException if more than one event was claimed/stolen
@@ -120,7 +120,7 @@ public class DbgPendingCommand<T> extends CompletableFuture<T> implements DbgCau
 
 	/**
 	 * Find the first claimed/stolen event of a given type
-	 * 
+	 *
 	 * @param cls the type of the event
 	 * @return the event cast to the type
 	 * @throws IllegalStateException if no event of the given type was claimed/stolen
@@ -136,7 +136,7 @@ public class DbgPendingCommand<T> extends CompletableFuture<T> implements DbgCau
 
 	/**
 	 * Find all events claimed/stolen of a given type
-	 * 
+	 *
 	 * @param cls the type of the events
 	 * @return the list of events cast to the type
 	 */
@@ -152,7 +152,7 @@ public class DbgPendingCommand<T> extends CompletableFuture<T> implements DbgCau
 
 	/**
 	 * Assume exactly one event of the given type was claimed/stolen, and get that event
-	 * 
+	 *
 	 * @param cls the type of the event
 	 * @return the event cast to the type
 	 * @throws IllegalStateException if more than one event matches
@@ -168,10 +168,10 @@ public class DbgPendingCommand<T> extends CompletableFuture<T> implements DbgCau
 
 	/**
 	 * Check that the command completed with one of the given results
-	 * 
+	 *
 	 * {@link DbgCommandErrorEvent} need not be listed. This method will handle it as a special case
 	 * already. To avoid the special treatment, list it explicitly.
-	 * 
+	 *
 	 * @param classes the completion type to accept
 	 * @return the completion event, cast to the greatest common subclass
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,9 +27,9 @@ import ghidra.framework.main.logviewer.event.FVEvent.EventType;
 import ghidra.framework.main.logviewer.event.FVEventListener;
 
 /**
- * Simple warning dialog for letting the user know when the input file has been updated. This 
+ * Simple warning dialog for letting the user know when the input file has been updated. This
  * includes an option allowing the user to opt-out of seeing subsequent pop-ups.
- * 
+ *
  * Note: The Ghidra {@link docking.options.editor.OptionsPanel OptionsPanel}
  * is not sufficient for this as it doesn't allow for custom objects to be
  * displayed (the opt-out checkbox).
@@ -37,7 +37,7 @@ import ghidra.framework.main.logviewer.event.FVEventListener;
  */
 public class ReloadDialog extends JDialog {
 
-	// As long as this is true, this dialog will be displayed when setVisible is called. 
+	// As long as this is true, this dialog will be displayed when setVisible is called.
 	boolean showUpdateWarning = true;
 
 	private FVEventListener eventListener;
@@ -61,7 +61,7 @@ public class ReloadDialog extends JDialog {
 
 	/**
 	 * Creates the visual component of the dialog.
-	 * 
+	 *
 	 * @return
 	 */
 	private JPanel createContent() {

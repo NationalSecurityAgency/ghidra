@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,9 +71,9 @@ public class FileBitPatternInfo {
 	}
 
 	/**
-	 * Get the number of instructions gathered, starting with instruction at the 
+	 * Get the number of instructions gathered, starting with instruction at the
 	 * entry point of the function
-	 * @return number of instructions 
+	 * @return number of instructions
 	 */
 	public int getNumFirstInstructions() {
 		return numFirstInstructions;
@@ -81,7 +81,7 @@ public class FileBitPatternInfo {
 
 	/**
 	 * Set the number of initial instructions gathered.
-	 * @param numFirstInstructions number of instructions 
+	 * @param numFirstInstructions number of instructions
 	 */
 	public void setNumFirstInstructions(int numFirstInstructions) {
 		this.numFirstInstructions = numFirstInstructions;
@@ -115,7 +115,7 @@ public class FileBitPatternInfo {
 
 	/**
 	 * Set the number of instructions gathered immediately before (but not including) a function start
-	 * 
+	 *
 	 * @param numPreInstructions number of instructions
 	 */
 	public void setNumPreInstructions(int numPreInstructions) {
@@ -190,7 +190,7 @@ public class FileBitPatternInfo {
 	}
 
 	/**
-	 * Get the number of instructions immediately before (and including) a return instruction 
+	 * Get the number of instructions immediately before (and including) a return instruction
 	 * @return number of return instructions
 	 */
 	public int getNumReturnInstructions() {
@@ -207,7 +207,7 @@ public class FileBitPatternInfo {
 
 	/**
 	 * Converts this object into XML
-	 * 
+	 *
 	 * @return new jdom {@link Element}
 	 */
 	public Element toXml() {
@@ -233,7 +233,7 @@ public class FileBitPatternInfo {
 
 	/**
 	 * Creates a {@link FileBitPatternInfo} instance from XML.
-	 * 
+	 *
 	 * @param e XML element to convert
 	 * @return new {@link FileBitPatternInfo}, never null
 	 * @throws IOException if file IO error or xml data problem
@@ -279,7 +279,7 @@ public class FileBitPatternInfo {
 
 	/**
 	 * Converts this object to XML and writes it to the specified file.
-	 * 
+	 *
 	 * @param destFile name of xml file to create
 	 * @throws IOException if file io error
 	 */
@@ -292,10 +292,10 @@ public class FileBitPatternInfo {
 
 	/**
 	 * Creates a {@link FileBitPatternInfo} instance from a XML file.
-	 * 
+	 *
 	 * @param inputFile name of xml file to read
 	 * @return new {@link FileBitPatternInfo} instance, never null
-	 * @throws IOException if file io error or xml data format problem 
+	 * @throws IOException if file io error or xml data format problem
 	 */
 	public static FileBitPatternInfo fromXmlFile(File inputFile) throws IOException {
 		SAXBuilder sax = XmlUtilities.createSecureSAXBuilder(false, false);

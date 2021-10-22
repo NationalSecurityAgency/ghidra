@@ -6,9 +6,9 @@ package mobiledevices.dmg.ghidra;
 import java.io.*;
 
 /**
- * Instances of this class support both reading and writing to a 
- * random access file. A random access file behaves like a large 
- * array of bytes stored in the file system. There is a kind of cursor, 
+ * Instances of this class support both reading and writing to a
+ * random access file. A random access file behaves like a large
+ * array of bytes stored in the file system. There is a kind of cursor,
  * or index into the implied array, called the <em>file pointer</em>.
  * This implementation relies on java.net.RandomAccessFile,
  * but adds buffering to limit the amount.
@@ -42,7 +42,7 @@ public class GRandomAccessFile {
 	 * This implementation relies on java.net.RandomAccessFile,
 	 * but adds buffering to limit the amount.
 	 * <p>
-	 * 
+	 *
 	 * <a name="mode"><p> The <tt>mode</tt> argument specifies the access mode
 	 * in which the file is to be opened.  The permitted values and their
 	 * meanings are:
@@ -90,9 +90,9 @@ public class GRandomAccessFile {
 	}
 
 	/**
-	 * Closes this random access file stream and releases any system 
-	 * resources associated with the stream. A closed random access 
-	 * file cannot perform input or output operations and cannot be 
+	 * Closes this random access file stream and releases any system
+	 * resources associated with the stream. A closed random access
+	 * file cannot perform input or output operations and cannot be
 	 * reopened.
 	 * <p>
 	 * If this file has an associated channel then the channel is closed as well.
@@ -115,17 +115,17 @@ public class GRandomAccessFile {
 	}
 
 	/**
-	 * Sets the file-pointer offset, measured from the beginning of this 
-	 * file, at which the next read or write occurs.  The offset may be 
-	 * set beyond the end of the file. Setting the offset beyond the end 
-	 * of the file does not change the file length.  The file length will 
-	 * change only by writing after the offset has been set beyond the end 
-	 * of the file. 
-	 * @param      pos   the offset position, measured in bytes from the 
-	 *                   beginning of the file, at which to set the file 
+	 * Sets the file-pointer offset, measured from the beginning of this
+	 * file, at which the next read or write occurs.  The offset may be
+	 * set beyond the end of the file. Setting the offset beyond the end
+	 * of the file does not change the file length.  The file length will
+	 * change only by writing after the offset has been set beyond the end
+	 * of the file.
+	 * @param      pos   the offset position, measured in bytes from the
+	 *                   beginning of the file, at which to set the file
 	 *                   pointer.
-	 * @throws IOException 
-	 * @exception  IOException  if <code>pos</code> is less than 
+	 * @throws IOException
+	 * @exception  IOException  if <code>pos</code> is less than
 	 *                          <code>0</code> or if an I/O error occurs.
 	 */
 	public void seek(long pos) throws IOException {
@@ -149,10 +149,10 @@ public class GRandomAccessFile {
 	}
 
 	/**
-	 * This method reads a byte from the file, starting from the current file pointer. 
+	 * This method reads a byte from the file, starting from the current file pointer.
 	 * <p>
-	 * This method blocks until the byte is read, the end of the stream 
-	 * is detected, or an exception is thrown. 
+	 * This method blocks until the byte is read, the end of the stream
+	 * is detected, or an exception is thrown.
 	 *
 	 * @return     the next byte of this file as a signed eight-bit
 	 *             <code>byte</code>.
@@ -166,9 +166,9 @@ public class GRandomAccessFile {
 	}
 
 	/**
-	 * Reads up to <code>b.length</code> bytes of data from this file 
-	 * into an array of bytes. This method blocks until at least one byte 
-	 * of input is available. 
+	 * Reads up to <code>b.length</code> bytes of data from this file
+	 * into an array of bytes. This method blocks until at least one byte
+	 * of input is available.
 	 *
 	 * @param      b   the buffer into which the data is read.
 	 * @return     the total number of bytes read into the buffer, or
@@ -182,10 +182,10 @@ public class GRandomAccessFile {
 	}
 
 	/**
-	 * Reads up to <code>len</code> bytes of data from this file into an 
-	 * array of bytes. This method blocks until at least one byte of input 
+	 * Reads up to <code>len</code> bytes of data from this file into an
+	 * array of bytes. This method blocks until at least one byte of input
 	 * is available.
-	 * 
+	 *
 	 * @param      b     the buffer into which the data is read.
 	 * @param      off   the start offset of the data.
 	 * @param      len   the maximum number of bytes read.
@@ -218,7 +218,7 @@ public class GRandomAccessFile {
 	}
 
 	/**
-	 * Writes a byte to this file, starting at the current file pointer. 
+	 * Writes a byte to this file, starting at the current file pointer.
 	 * @param      b   the data.
 	 * @exception  IOException  if an I/O error occurs.
 	 */
@@ -228,8 +228,8 @@ public class GRandomAccessFile {
 	}
 
 	/**
-	 * Writes <code>b.length</code> bytes from the specified byte array 
-	 * to this file, starting at the current file pointer. 
+	 * Writes <code>b.length</code> bytes from the specified byte array
+	 * to this file, starting at the current file pointer.
 	 * @param      b   the data.
 	 * @exception  IOException  if an I/O error occurs.
 	 */
@@ -239,7 +239,7 @@ public class GRandomAccessFile {
 	}
 
 	/**
-	 * Writes a sub array as a sequence of bytes. 
+	 * Writes a sub array as a sequence of bytes.
 	 * @param b the data to be written
 	 * @param offset the start offset in the data
 	 * @param length the number of bytes that are written

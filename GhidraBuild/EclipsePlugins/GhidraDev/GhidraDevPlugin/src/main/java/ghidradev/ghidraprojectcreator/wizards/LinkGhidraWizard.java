@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,7 +82,7 @@ public class LinkGhidraWizard extends Wizard {
 
 	/**
 	 * Links a Java project's classpath and external links to a Ghidra installation directory.
-	 *  
+	 *
 	 * @param ghidraInstallDir The Ghidra installation directory to use.
 	 * @param javaProject The Java project to link.
 	 * @param jythonInterpreterName The name of the Jython interpreter to use for Python support.

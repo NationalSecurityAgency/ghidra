@@ -9,8 +9,8 @@ import mobiledevices.dmg.ghidra.GBinaryReader;
 
 /**
  * Represents a Map Record.
- * 
- * @see <a href="https://developer.apple.com/library/archive/technotes/tn/tn1150.html">Map Record</a> 
+ *
+ * @see <a href="https://developer.apple.com/library/archive/technotes/tn/tn1150.html">Map Record</a>
  */
 public class BTreeMapRecord /*implements StructConverter*/ {
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -82,7 +82,7 @@ public class AsyncSequenceWithTemp<R, T> {
 		/**
 		 * Implements the portion of {@link #next(Object, Throwable)} to execute when the result of
 		 * the subordinate task is not exceptional
-		 * 
+		 *
 		 * @param result the result of the subordinate task
 		 */
 		protected abstract void proceedWithoutException(T result);
@@ -161,7 +161,7 @@ public class AsyncSequenceWithTemp<R, T> {
 
 	/**
 	 * Append to this sequence an action that consumes the temporary value and produces another
-	 * 
+	 *
 	 * @param action the action
 	 * @param type the type of temporary value the action will produce
 	 * @return the new sequence with the appended action
@@ -183,7 +183,7 @@ public class AsyncSequenceWithTemp<R, T> {
 
 	/**
 	 * Append to this sequence an action that consumes the temporary value and produces another
-	 * 
+	 *
 	 * @param executor the thread pool for this action
 	 * @param action the action
 	 * @param type the type of temporary value the action will produce
@@ -206,7 +206,7 @@ public class AsyncSequenceWithTemp<R, T> {
 
 	/**
 	 * Append to this sequence an action that consumes the temporary value and stores another
-	 * 
+	 *
 	 * @param action the action
 	 * @param storage a reference to receive the result upon completion
 	 * @return the new sequence with the appended action
@@ -228,7 +228,7 @@ public class AsyncSequenceWithTemp<R, T> {
 
 	/**
 	 * Append to this sequence an action that consumes the temporary value and stores another
-	 * 
+	 *
 	 * @param executor the thread pool for this action
 	 * @param action the action
 	 * @param storage a reference to receive the result upon completion
@@ -251,7 +251,7 @@ public class AsyncSequenceWithTemp<R, T> {
 
 	/**
 	 * Append to this sequence an action that consumes the temporary value
-	 * 
+	 *
 	 * @param action the action
 	 * @return the new sequence with the appended action
 	 */
@@ -271,7 +271,7 @@ public class AsyncSequenceWithTemp<R, T> {
 
 	/**
 	 * Append to this sequence an action that consumes the temporary value
-	 * 
+	 *
 	 * @param executor the thread pool for this action
 	 * @param action the action
 	 * @return the new sequence with the appended action
@@ -293,7 +293,7 @@ public class AsyncSequenceWithTemp<R, T> {
 
 	/**
 	 * Register an action to execute on sequence completion
-	 * 
+	 *
 	 * @see AsyncSequenceWithoutTemp#onExit(BiConsumer)
 	 * @param action the action to execute
 	 */

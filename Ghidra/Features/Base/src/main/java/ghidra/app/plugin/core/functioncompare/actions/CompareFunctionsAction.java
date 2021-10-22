@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,12 +33,12 @@ import resources.icons.ScaledImageIconWrapper;
 import resources.icons.TranslateIcon;
 
 /**
- * Creates a new comparison between a set of functions, launching a new 
+ * Creates a new comparison between a set of functions, launching a new
  * comparison provider in the process
  * <p>
- * This class is abstract to force implementors to supply the source of the 
- * functions (may be the listing, a table, etc...) 
- * 
+ * This class is abstract to force implementors to supply the source of the
+ * functions (may be the listing, a table, etc...)
+ *
  * @see #getSelectedFunctions(ActionContext)
  */
 public abstract class CompareFunctionsAction extends DockingAction {
@@ -57,7 +57,7 @@ public abstract class CompareFunctionsAction extends DockingAction {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param tool the plugin tool
 	 * @param owner the action owner (usually the plugin name)
 	 */
@@ -81,7 +81,7 @@ public abstract class CompareFunctionsAction extends DockingAction {
 
 	/**
 	 * Returns the icon to use for the action
-	 * 
+	 *
 	 * @return the icon
 	 */
 	protected Icon getToolBarIcon() {
@@ -90,7 +90,7 @@ public abstract class CompareFunctionsAction extends DockingAction {
 
 	/**
 	 * Returns the set of functions that will be sent to the comparison service
-	 * 
+	 *
 	 * @param actionContext the current action context
 	 * @return set of functions to be compared
 	 */

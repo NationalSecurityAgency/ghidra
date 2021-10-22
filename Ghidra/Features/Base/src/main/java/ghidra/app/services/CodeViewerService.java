@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,10 +35,10 @@ import ghidra.program.util.ProgramSelection;
 
 /**
  * Service provided by a plugin that shows the listing from a Program, i.e., a
- * Code Viewer. The service allows other plugins to add components and 
+ * Code Viewer. The service allows other plugins to add components and
  * actions local to the Code Viewer.
- *  
- * 
+ *
+ *
  */
 @ServiceInfo(defaultProvider = CodeBrowserPlugin.class)
 public interface CodeViewerService {
@@ -56,14 +56,14 @@ public interface CodeViewerService {
 	public void removeOverviewProvider(OverviewProvider overviewProvider);
 
 	/**
-	 * Add a provider that shows markers in a program for the portion 
+	 * Add a provider that shows markers in a program for the portion
 	 * that is visible.
 	 * @param marginProvider provider to add
 	 */
 	public void addMarginProvider(MarginProvider marginProvider);
 
 	/**
-	 * Remove a provider that shows markers in a program for the portion 
+	 * Remove a provider that shows markers in a program for the portion
 	 * that is visible.
 	 * @param marginProvider provider to remove
 	 */
@@ -132,7 +132,7 @@ public interface CodeViewerService {
 	public void removeListingPanel(ListingPanel listingPanel);
 
 	/**
-	 * Get Current view that the CodeViewer is showing. 
+	 * Get Current view that the CodeViewer is showing.
 	 */
 	public AddressSetView getView();
 
@@ -187,12 +187,12 @@ public interface CodeViewerService {
 	public ListingPanel getListingPanel();
 
 	/**
-	 * Returns a String representing the current character-based selection of the currently 
-	 * selected field.  If there is no selection, or if there is a {@link ProgramSelection} 
-	 * (which spans multiple fields), then this method will return null.   
+	 * Returns a String representing the current character-based selection of the currently
+	 * selected field.  If there is no selection, or if there is a {@link ProgramSelection}
+	 * (which spans multiple fields), then this method will return null.
 	 * <p>
-	 * To know which field contains the selection, 
-	 * 
+	 * To know which field contains the selection,
+	 *
 	 * @return the currently selected text <b>within a given field</b>
 	 */
 	public String getCurrentFieldTextSelection();

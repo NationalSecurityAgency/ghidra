@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,10 +18,10 @@ package ghidra.closedpatternmining;
 import java.util.List;
 
 /**
- * 
+ *
  * An object in this class in represents a string of characters along
  * with a count.  The count represents the number of occurrences of the
- * sequence.  
+ * sequence.
  *
  */
 public class Sequence {
@@ -58,12 +58,12 @@ public class Sequence {
 	/**
 	 * If all items in {@code prefixSequence} occur in {@code sequence}, returns
 	 * the index of the item in {@code sequence} immediately after the last item
-	 * in {@code prefixSequence}.  If {@code prefixSequence} does not occur in 
+	 * in {@code prefixSequence}.  If {@code prefixSequence} does not occur in
 	 * {{@code sequence} as a subsequence, then this method returns -1.
-	 * 
+	 *
 	 * <p>Note: this method assumes that {@code prefixSequence} is sorted in
 	 * ascending order of Item.index.
-	 * 
+	 *
 	 * @param prefixSequence prefix
 	 * @return index
 	 */

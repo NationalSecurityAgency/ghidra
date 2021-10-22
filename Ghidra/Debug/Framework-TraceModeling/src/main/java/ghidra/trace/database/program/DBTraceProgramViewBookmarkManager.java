@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -283,10 +283,10 @@ public class DBTraceProgramViewBookmarkManager implements TraceProgramViewBookma
 	/**
 	 * A less restrictive casting of
 	 * {@link IteratorUtils#filteredIterator(Iterator, org.apache.commons.collections4.Predicate)}.
-	 * 
+	 *
 	 * This one understands that the predicate will be testing things of the (possibly
 	 * more-specific) type of elements in the original iterator, not thatof the returned iterator.
-	 * 
+	 *
 	 * @param it
 	 * @param predicate
 	 * @return

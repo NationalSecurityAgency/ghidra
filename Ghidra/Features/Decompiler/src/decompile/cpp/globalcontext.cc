@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ void TrackedContext::restoreXml(const Element *el,const AddrSpaceManager *manage
 {
   int4 size;
   Address addr = Address::restoreXml(el,manage,size);
-  
+
   istringstream s(el->getAttributeValue("val"));
   s.unsetf(ios::dec | ios::hex | ios::oct);
   s >> val;
@@ -491,7 +491,7 @@ void ContextInternal::saveXml(ostream &s) const
 
 {
   if (database.empty() && trackbase.empty()) return;
-  
+
   s << "<context_points>\n";
 
   partmap<Address,FreeArray>::const_iterator fiter,fenditer;
@@ -499,11 +499,11 @@ void ContextInternal::saveXml(ostream &s) const
   fenditer = database.end();
   for(;fiter!=fenditer;++fiter)	// Save context at each changepoint
     saveContext(s,(*fiter).first,(*fiter).second.array);
-  
+
   partmap<Address,TrackedSet>::const_iterator titer,tenditer;
   titer = trackbase.begin();
   tenditer = trackbase.end();
-  for(;titer!=tenditer;++titer) 
+  for(;titer!=tenditer;++titer)
     saveTracked(s,(*titer).first,(*titer).second);
 
   s << "</context_points>\n";
@@ -586,7 +586,7 @@ void ContextCache::getContext(const Address &addr,uintm *buf) const
     curspace = addr.getSpace();
     context = database->getContext(addr,first,last);
   }
-  for(int4 i=0;i<database->getContextSize();++i) 
+  for(int4 i=0;i<database->getContextSize();++i)
     buf[i] = context[i];
 }
 

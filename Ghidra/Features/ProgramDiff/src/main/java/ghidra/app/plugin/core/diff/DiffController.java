@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,14 +26,14 @@ import ghidra.util.task.TaskMonitor;
 import java.util.ArrayList;
 
 /**
- * DiffController controls a program Diff. It maintains address sets indicating 
+ * DiffController controls a program Diff. It maintains address sets indicating
  * the differences between two programs. It can limit the determined differences
- * to an address set. It allows differences to be applied or ignored. It has a 
- * diff filter that controls the differences being indicated. It has a merge 
+ * to an address set. It allows differences to be applied or ignored. It has a
+ * diff filter that controls the differences being indicated. It has a merge
  * filter that controls the types of differences being applied. It allows
  * differences at particular addresses to be ignored.
- * 
- * The Diff controller also maintains the current location. It provides a way 
+ *
+ * The Diff controller also maintains the current location. It provides a way
  * to navigate from one difference to the next or previous difference.
  */
 public class DiffController {
@@ -107,7 +107,7 @@ public class DiffController {
 
 	/**
 	 * Gets the address set being used to restrict the resulting difference set
-	 * that is reported by getting the differences. This address set is 
+	 * that is reported by getting the differences. This address set is
 	 * effectively a view port into the differences address set.
 	 * @return the address set used to restrict the differences.
 	 * The addresses in this set are derived from the p1 program.
@@ -116,31 +116,31 @@ public class DiffController {
 		return mergeEngine.getRestrictedAddressSet();
 	}
 
-	/** 
+	/**
 	 * Get a copy of the diff filter that the merge is using.
 	 */
 	public ProgramDiffFilter getDiffFilter() {
 		return mergeEngine.getDiffFilter();
 	}
 
-	/** 
-	 * Set the filter that indicates which parts of the Program should be 
+	/**
+	 * Set the filter that indicates which parts of the Program should be
 	 * diffed.
 	 */
 	public void setDiffFilter(ProgramDiffFilter filter) {
 		mergeEngine.setDiffFilter(filter);
 	}
 
-	/** 
-	 * Get a copy of the filter that indicates which parts of the Program 
+	/**
+	 * Get a copy of the filter that indicates which parts of the Program
 	 * should be merged.
 	 */
 	public ProgramMergeFilter getMergeFilter() {
 		return mergeEngine.getMergeFilter();
 	}
 
-	/** 
-	 * Set the filter that indicates which parts of the Program should be 
+	/**
+	 * Set the filter that indicates which parts of the Program should be
 	 * merged.
 	 */
 	public void setMergeFilter(ProgramMergeFilter filter) {
@@ -176,7 +176,7 @@ public class DiffController {
 	/** Restrict the resulting differences to the indicated address set.
 	 * @param p1AddressSet the address set to restrict the getFilteredDifferences() to.
 	 * The addresses in this set should be derived from the p1 program.
-	 * @param monitor the task monitor for canceling the fix up of the 
+	 * @param monitor the task monitor for canceling the fix up of the
 	 * differences due to the restriction.
 	 */
 	public void restrictResults(AddressSetView p1AddressSet, TaskMonitor monitor) {
@@ -185,7 +185,7 @@ public class DiffController {
 	}
 
 	/** Remove the restriction for the resulting differences to the indicated address set.
-	 * @param monitor the task monitor for canceling the fix up of the 
+	 * @param monitor the task monitor for canceling the fix up of the
 	 * differences due to the removal of the restriction.
 	 */
 	public void removeResultRestrictions(TaskMonitor monitor) {
@@ -199,7 +199,7 @@ public class DiffController {
 	 * @param p1AddressSet address set of differences
 	 * The addresses in this set should be derived from the p1 program.
 	 * @param filter merge filter
-	 * @param monitor the task monitor for canceling the fix up of the 
+	 * @param monitor the task monitor for canceling the fix up of the
 	 * differences due to the removal of the restriction.
 	 * @throws MemoryAccessException
 	 * @throws CancelledException if user cancels via the monitor.
@@ -344,8 +344,8 @@ public class DiffController {
 
 	/**
 	 * Refreshes the differences to show what is still different between the two
-	 * programs. After calling this method, any differences that were being 
-	 * ignored are still being ignored. The differences are restricted to the 
+	 * programs. After calling this method, any differences that were being
+	 * ignored are still being ignored. The differences are restricted to the
 	 * same address set as before the refresh.
 	 * @param monitor the task monitor for canceling the fix up of the
 	 * recompute of the differences.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,16 +29,16 @@ import ghidra.util.Msg;
 import util.CollectionUtils;
 
 /**
- * A factory to produce {@link JungLayoutProvider}s that can be used to layout 
+ * A factory to produce {@link JungLayoutProvider}s that can be used to layout
  * {@link VisualGraph}s
  */
 public class JungLayoutProviderFactory {
 
 	//@formatter:off
-	public static <V extends VisualVertex, 
-				   E extends VisualEdge<V>, 
-				   G extends JungDirectedVisualGraph<V, E>> 
-					
+	public static <V extends VisualVertex,
+				   E extends VisualEdge<V>,
+				   G extends JungDirectedVisualGraph<V, E>>
+
 		Set<JungLayoutProvider<V, E, G>> createLayouts() {
 	//@formatter:on
 
@@ -51,7 +51,7 @@ public class JungLayoutProviderFactory {
 				create("Circle Layout", CircleLayout.class),
 				create("Spring Layout", SpringLayout.class),
 				create("KK Layout", KKLayout.class),
-				create("ISOM Layout", ISOMLayout.class)		
+				create("ISOM Layout", ISOMLayout.class)
 		));
 		//@formatter:on
 
@@ -60,10 +60,10 @@ public class JungLayoutProviderFactory {
 
 	//@formatter:off
 	@SuppressWarnings("rawtypes") // Layout should be templated; we are using it generically
-	public static <V extends VisualVertex, 
-				   E extends VisualEdge<V>, 
-				   G extends JungDirectedVisualGraph<V, E>> 
-					
+	public static <V extends VisualVertex,
+				   E extends VisualEdge<V>,
+				   G extends JungDirectedVisualGraph<V, E>>
+
 		JungLayoutProvider<V, E, G> create(String name, Class<? extends Layout> layoutClass) {
 	//@formatter:on
 
@@ -80,8 +80,8 @@ public class JungLayoutProviderFactory {
 				try {
 					Constructor<?> c = layoutClass.getConstructor(Graph.class);
 
-					// we are using the interface to this factory to get compile-time 
-					// enforcement of types; at this point we cannot enforce types using a 
+					// we are using the interface to this factory to get compile-time
+					// enforcement of types; at this point we cannot enforce types using a
 					// class object to create a new layout
 					@SuppressWarnings("unchecked")
 					Layout<V, E> l = (Layout<V, E>) c.newInstance(g);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,14 +26,14 @@ import ghidra.util.exception.VersionException;
 
 /**
  * An R*-Tree implementation of {@link AbstractConstraintsTree}
- * 
+ *
  * <p>
  * The implementation follows
  * <a href="http://dbs.mathematik.uni-marburg.de/publications/myPapers/1990/BKSS90.pdf">The R*-tree:
  * An Efficient and Robust Access Method for Points and Rectangles</a>. Comments in code referring
  * to "the paper", specific sections, or steps of algorithms, are referring specifically to that
  * paper.
- * 
+ *
  * @param <DS> The shape of each data entry
  * @param <DR> The record type for each data entry
  * @param <NS> The shape of each node
@@ -132,7 +132,7 @@ public abstract class AbstractRStarConstraintsTree< //
 
 	/**
 	 * The ChooseSubtree algorithm as defined in Section 4.1 of the paper.
-	 * 
+	 *
 	 * @param dstLevel the level of the node to choose
 	 * @param bounds the bounds of the object being inserted
 	 * @return the leaf node into which the object should be inserted
@@ -159,7 +159,7 @@ public abstract class AbstractRStarConstraintsTree< //
 	/**
 	 * For ChooseSubTree, the part which chooses a leaf node using the minimum area enlargement
 	 * cost.
-	 * 
+	 *
 	 * @param n
 	 * @param bounds
 	 * @return
@@ -185,10 +185,10 @@ public abstract class AbstractRStarConstraintsTree< //
 	/**
 	 * For ChooseSubtree, the part which chooses a leaf node using the <em>nearly</em> minimum
 	 * overlap enlargement cost as defined in Section 4.1 of the paper, at the bottom of page 325.
-	 * 
+	 *
 	 * <p>
 	 * Ties are resolved using the minimum area enlargement cost.
-	 * 
+	 *
 	 * @param n the node whose children are leaf nodes
 	 * @param bounds the bounds of the object being inserted
 	 * @return the leaf node into which the object should be inserted
@@ -229,10 +229,10 @@ public abstract class AbstractRStarConstraintsTree< //
 
 	/**
 	 * Computes the overlap of a bounding shape (with respect to its siblings)
-	 * 
+	 *
 	 * <p>
 	 * This measure is defined in Section 4.1 of the paper.
-	 * 
+	 *
 	 * @param n the shape to measure
 	 * @param all the sibling nodes (may contain {@code n}, which is ignored)
 	 * @param ignore the node whose shape is being considered
@@ -261,7 +261,7 @@ public abstract class AbstractRStarConstraintsTree< //
 
 	/**
 	 * The Split algorithm as defined in Section 4.2 of the paper.
-	 * 
+	 *
 	 * @param n the node to split
 	 * @return the new node (containing the second group)
 	 */
@@ -484,7 +484,7 @@ public abstract class AbstractRStarConstraintsTree< //
 		int newChildCount = node.getChildCount() + 1;
 		node.setChildCount(newChildCount);
 
-		// I4 - I'm having integrity issues unless this comes before overflow treatments		
+		// I4 - I'm having integrity issues unless this comes before overflow treatments
 		if (newChildCount == 1) {
 			assert node == root;
 			node.setShape(entry.getBounds());

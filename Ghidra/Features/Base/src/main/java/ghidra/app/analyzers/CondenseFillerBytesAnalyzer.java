@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public class CondenseFillerBytesAnalyzer extends AbstractAnalyzer {
 	/**
 	 * This function tries to determine the fill value used by the current program.
 	 * The byte value occurring most is the winner.
-	 * 
+	 *
 	 * @return filler value
 	 * @throws Exception
 	 */
@@ -91,7 +91,7 @@ public class CondenseFillerBytesAnalyzer extends AbstractAnalyzer {
 			return null;
 		}
 
-		// Decide that filler value is the one with the greatest count				
+		// Decide that filler value is the one with the greatest count
 		String filler = getMostFrequentFillValue(patterns);
 
 		return filler;
@@ -103,7 +103,7 @@ public class CondenseFillerBytesAnalyzer extends AbstractAnalyzer {
 			throw new AssertException("Must have filler bytes!");
 		}
 
-		// Determine val with highest count		
+		// Determine val with highest count
 		Set<Entry<String, Integer>> entries = fillValuesHash.entrySet();
 		Entry<String, Integer> max = entries.iterator().next(); // start with a non-null
 		for (Entry<String, Integer> entry : entries) {
@@ -131,7 +131,7 @@ public class CondenseFillerBytesAnalyzer extends AbstractAnalyzer {
 			filler = "0x" + fillerBytes;
 		}
 
-		// Create array of minBytes length initialized to fillerByte    	    	    	
+		// Create array of minBytes length initialized to fillerByte
 		byte[] testBytes = new byte[minBytes];
 		byte fillerByte = Integer.decode(filler).byteValue();
 		Arrays.fill(testBytes, fillerByte);

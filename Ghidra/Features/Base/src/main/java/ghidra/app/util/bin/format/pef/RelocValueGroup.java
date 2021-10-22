@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,7 +78,7 @@ public class RelocValueGroup extends Relocation {
 	}
 
 	@Override
-	public void apply(ImportStateCache importState, RelocationState relocState, 
+	public void apply(ImportStateCache importState, RelocationState relocState,
 			ContainerHeader header, Program program, MessageLog log, TaskMonitor monitor) {
 		List<ImportedSymbol> importedSymbols = header.getLoader().getImportedSymbols();
 
@@ -88,7 +88,7 @@ public class RelocValueGroup extends Relocation {
 					if (monitor.isCancelled()) {
 						return;
 					}
-					relocState.relocateMemoryAt(relocState.getRelocationAddress(), 
+					relocState.relocateMemoryAt(relocState.getRelocationAddress(),
 												(int)relocState.getSectionC().getOffset(), log);
 					relocState.incrementRelocationAddress(4);
 				}
@@ -99,7 +99,7 @@ public class RelocValueGroup extends Relocation {
 					if (monitor.isCancelled()) {
 						return;
 					}
-					relocState.relocateMemoryAt(relocState.getRelocationAddress(), 
+					relocState.relocateMemoryAt(relocState.getRelocationAddress(),
 												(int)relocState.getSectionD().getOffset(), log);
 					relocState.incrementRelocationAddress(4);
 				}
@@ -110,11 +110,11 @@ public class RelocValueGroup extends Relocation {
 					if (monitor.isCancelled()) {
 						return;
 					}
-					relocState.relocateMemoryAt(relocState.getRelocationAddress(), 
+					relocState.relocateMemoryAt(relocState.getRelocationAddress(),
 												(int)relocState.getSectionC().getOffset(), log);
 					relocState.incrementRelocationAddress(4);
 
-					relocState.relocateMemoryAt(relocState.getRelocationAddress(), 
+					relocState.relocateMemoryAt(relocState.getRelocationAddress(),
 												(int)relocState.getSectionD().getOffset(), log);
 					relocState.incrementRelocationAddress(4);
 
@@ -127,11 +127,11 @@ public class RelocValueGroup extends Relocation {
 					if (monitor.isCancelled()) {
 						return;
 					}
-					relocState.relocateMemoryAt(relocState.getRelocationAddress(), 
+					relocState.relocateMemoryAt(relocState.getRelocationAddress(),
 												(int)relocState.getSectionC().getOffset(), log);
 					relocState.incrementRelocationAddress(4);
 
-					relocState.relocateMemoryAt(relocState.getRelocationAddress(), 
+					relocState.relocateMemoryAt(relocState.getRelocationAddress(),
 												(int)relocState.getSectionD().getOffset(), log);
 
 					if (importState.getTocAddress() == null) {
@@ -154,7 +154,7 @@ public class RelocValueGroup extends Relocation {
 					if (monitor.isCancelled()) {
 						return;
 					}
-					relocState.relocateMemoryAt(relocState.getRelocationAddress(), 
+					relocState.relocateMemoryAt(relocState.getRelocationAddress(),
 												(int)relocState.getSectionD().getOffset(), log);
 					relocState.incrementRelocationAddress(8);
 				}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,11 +24,11 @@ import ghidra.xml.XmlPullParser;
 /**
  * A pattern of bits/mask to match to a stream of bytes.  The bits/mask can be of any length.
  * The sequence can be initialized by:
- * 
+ *
  *    a string
  *    an array of bytes (no mask)
  *    an array of bytes and for mask
- *    
+ *
  *  The dits represent bits(binary) or nibbles(hex) that are don't care, for example:
  *     0x..d.4de2 ....0000 .1...... 00101101 11101001
  *  where 0x starts a hex number and '.' is a don't care nibble (hex) or bit (binary)
@@ -66,9 +66,9 @@ public class DittedBitSequence {
 
 	/**
 	 * Constructor from a ditted-bit-sequence string where white space is ignored (e.g., "10..11.0");
-	 * 
+	 *
 	 * @param dittedBitData ditted sequence specified as a string
-	 * 
+	 *
 	 * @throws IllegalArgumentException if invalid dittedBitData specified
 	 */
 	public DittedBitSequence(String dittedBitData) {
@@ -116,7 +116,7 @@ public class DittedBitSequence {
 
 	/**
 	 * Construct a sequence of bytes to search for. No bits are masked off.
-	 * 
+	 *
 	 * @param bytes byte values that must match
 	 */
 	public DittedBitSequence(byte[] bytes) {
@@ -183,9 +183,9 @@ public class DittedBitSequence {
 	/**
 	 * Concatenates a sequence to the end of another sequence and
 	 * returns a new sequence.
-	 * 
+	 *
 	 * @param toConat sequence to concatenate to this sequence
-	 * 
+	 *
 	 * @return a new sequence that is the concat of this and toConcat
 	 */
 	public DittedBitSequence concatenate(DittedBitSequence toConat) {
@@ -208,10 +208,10 @@ public class DittedBitSequence {
 	 * Check for a match of a value at a certain offset in the pattern.
 	 * An outside matcher will keep track of the match position within this
 	 * ditted bit sequence.  Then call this method to match.
-	 * 
+	 *
 	 * @param pos position in the pattern to match
 	 * @param val a byte to be match at the given byte offset in the pattern
-	 * 
+	 *
 	 * @return true if the byte matches the sequence mask/value
 	 */
 	public boolean isMatch(int pos, int val) {
@@ -223,7 +223,7 @@ public class DittedBitSequence {
 
 	/**
 	 * Set a an index in a larger sequence, or identifing id on this pattern
-	 * 
+	 *
 	 * @param index - index in match sequence, or unique id
 	 */
 	public void setIndex(int index) {
@@ -232,7 +232,7 @@ public class DittedBitSequence {
 
 	/**
 	 * Get the index or identifying id attached to this pattern
-	 * 
+	 *
 	 * @return index or unique id attached to this sequence
 	 */
 	public int getIndex() {
@@ -241,7 +241,7 @@ public class DittedBitSequence {
 
 	/**
 	 * get the size of this sequence in bytes
-	 * 
+	 *
 	 * @return size in bytes
 	 */
 	public int getSize() {
@@ -250,7 +250,7 @@ public class DittedBitSequence {
 
 	/**
 	 * Get number of bits that must be 0/1
-	 * 
+	 *
 	 * @return number of bits that are not don't care (ditted)
 	 */
 	public int getNumFixedBits() {
@@ -263,7 +263,7 @@ public class DittedBitSequence {
 
 	/**
 	 * Get number of bits that are ditted (don't care)
-	 * 
+	 *
 	 * @return number of ditted bits (don't care)
 	 */
 	public int getNumUncertainBits() {
@@ -299,7 +299,7 @@ public class DittedBitSequence {
 
 	/**
 	 * get a ditted hex string representing this sequence
-	 * 
+	 *
 	 * @return ditted hex string
 	 */
 	public String getHexString() {
@@ -331,11 +331,11 @@ public class DittedBitSequence {
 	 * restore ditted string from XML stream with hex/binary ditted sequences in the form:
 	 *    <data> 0x..d.4de2 ....0000 .1...... 00101101 11101001 </data>
 	 * where 0x starts a hex number and '.' is a don't care nibble (hex) or bit (binary)
-	 * 
+	 *
 	 * @param parser XML pull parser stream
-	 * 
+	 *
 	 * @return number of bytes read from XML <data> tag
-	 * 
+	 *
 	 * @throws IOException if XML read has an error
 	 */
 	protected int restoreXmlData(XmlPullParser parser) throws IOException {
@@ -353,11 +353,11 @@ public class DittedBitSequence {
 	/**
 	 * Initialize this sequence with a ditted sequence from a string in the form
 	 *    (e.g. - 011...1., 0x.F, 01110011 0xAB)
-	 *    
+	 *
 	 * @param text ditted sequence
-	 * 
+	 *
 	 * @return number of bytes in the ditted sequence
-	 * 
+	 *
 	 * @throws IllegalArgumentException if string is malformed
 	 */
 	private int initFromDittedStringData(String text) throws IllegalArgumentException {
@@ -378,7 +378,7 @@ public class DittedBitSequence {
 				i += 1;
 				continue;
 			}
-			if (c1 == '#') { // start comment - skip remainder of line 
+			if (c1 == '#') { // start comment - skip remainder of line
 				mode = -2;
 				i += 1;
 				continue;
@@ -462,9 +462,9 @@ public class DittedBitSequence {
 
 	/**
 	 * Get the number of bits that are fixed, not ditted (don't care)
-	 * 
+	 *
 	 * @param marked number of bytes in the pattern to check
-	 * 
+	 *
 	 * @return number of initial fixed bits
 	 */
 	public int getNumInitialFixedBits(int marked) {

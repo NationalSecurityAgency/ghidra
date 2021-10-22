@@ -38,8 +38,8 @@ define context contextreg
 
 define token opcode (8)
 	op8    = (0,7)
-    op71   = (1,7)	
-    op73   = (3,7)	
+    op71   = (1,7)
+    op73   = (3,7)
 	op74   = (4,7)
 	op20   = (0,2)
 	op10   = (0,1)
@@ -64,7 +64,7 @@ define token data16 (16)
 define token relinstr (16)
 	op4    = (12,15)
 	srel12 = (0,11) signed
-;	
+;
 
 ################################################################
 # Pseudo Instructions
@@ -136,15 +136,15 @@ macro zeroflag(result)
 ################################################################
 
 regAorX:   A         is op0=0 & A  { export A; }
-regAorX:   X         is op0=1 & X  { export X; }     
-Addr8:     addr8     is addr8      { export *[RAM]:1 addr8; }     
-SAddr8:    addr8     is addr8      { export *[RAM]:1 addr8; }     
+regAorX:   X         is op0=1 & X  { export X; }
+Addr8:     addr8     is addr8      { export *[RAM]:1 addr8; }
+SAddr8:    addr8     is addr8      { export *[RAM]:1 addr8; }
 XAddr8:    [X+simm8] is X & simm8 & sign=0  { ptr:1 = X + simm8; export *[RAM]:1 ptr; }
 XAddr8:    [X+simm8] is X & simm8 & sign=1  { ptr:1 = X - ~simm8; export *[RAM]:1 ptr; }
 Addr8Incr: [Addr8]"++" is Addr8      { export Addr8; }
 
-RAddr8:    addr8   is addr8 & regbank=0  { export *[BANK0]:1 addr8; }     
-RAddr8:    addr8   is addr8 & regbank=1  { export *[BANK1]:1 addr8; }     
+RAddr8:    addr8   is addr8 & regbank=0  { export *[BANK0]:1 addr8; }
+RAddr8:    addr8   is addr8 & regbank=1  { export *[BANK1]:1 addr8; }
 RXAddr8:   [X+simm8] is X & simm8 & regbank=0 { ptr:1 = X + simm8; export *[BANK0]:1 ptr; }
 RXAddr8:   [X+simm8] is X & simm8 & regbank=1 { ptr:1 = X + simm8; export *[BANK1]:1 ptr; }
 
@@ -153,161 +153,161 @@ Imm8:		    "#"imm8  is imm8       { export *[const]:1 imm8; }
 Addr16:         addr16    is addr16  { export *:2 addr16; }
 RelAddr:        reladdr   is srel12 [ reladdr = inst_start + 1 + srel12; ]  { export *:2 reladdr; }
 CallAddr:       calladdr  is srel12 [ calladdr = inst_start + 2 + srel12; ] { export *:2 calladdr; }
-IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { export *[CODE]:2 indexaddr; } 
+IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { export *[CODE]:2 indexaddr; }
 
 ################################################################
 # Constructors
 ################################################################
 
-:ADC A, Imm8	is op73=0x01 & op20=0x01 & A; Imm8 
+:ADC A, Imm8	is op73=0x01 & op20=0x01 & A; Imm8
 {
 	A = A + Imm8 + $(C);
 	resultflags(A);
 }
 
-:ADC A, Addr8	is op73=0x01 & op20=0x02 & A; Addr8 
+:ADC A, Addr8	is op73=0x01 & op20=0x02 & A; Addr8
 {
 	A = A + Addr8 + $(C);
 	resultflags(A);
 }
 
-:ADC A, XAddr8	is op73=0x01 & op20=0x03 & A; XAddr8 
+:ADC A, XAddr8	is op73=0x01 & op20=0x03 & A; XAddr8
 {
 	A = A + XAddr8 + $(C);
 	resultflags(A);
 }
 
-:ADC Addr8, A	is op73=0x01 & op20=0x04 & A; Addr8 
+:ADC Addr8, A	is op73=0x01 & op20=0x04 & A; Addr8
 {
 	tmp:1 = Addr8 + A + $(C);
 	Addr8 = tmp;
 	resultflags(tmp);
 }
 
-:ADC XAddr8, A	is op73=0x01 & op20=0x05 & A; XAddr8 
+:ADC XAddr8, A	is op73=0x01 & op20=0x05 & A; XAddr8
 {
 	tmp:1 = XAddr8 + A + $(C);
 	XAddr8 = tmp;
 	resultflags(tmp);
 }
 
-:ADC Addr8, Imm8 is op73=0x01 & op20=0x06; Addr8; Imm8 
+:ADC Addr8, Imm8 is op73=0x01 & op20=0x06; Addr8; Imm8
 {
 	tmp:1 = Addr8 + Imm8 + $(C);
 	Addr8 = tmp;
 	resultflags(tmp);
-	
+
 }
 
-:ADC XAddr8, Imm8	is op73=0x01 & op20=0x07; XAddr8; Imm8 
+:ADC XAddr8, Imm8	is op73=0x01 & op20=0x07; XAddr8; Imm8
 {
 	tmp:1 = XAddr8 + Imm8 + $(C);
 	XAddr8 = tmp;
 	resultflags(tmp);
-	
+
 }
 
-:ADD A, Imm8	is op73=0x00 & op20=0x01 & A; Imm8 
+:ADD A, Imm8	is op73=0x00 & op20=0x01 & A; Imm8
 {
 	addflags(A, Imm8);
 	A = A + Imm8;
 }
 
-:ADD A, Addr8	is op73=0x00 & op20=0x02 & A; Addr8 
+:ADD A, Addr8	is op73=0x00 & op20=0x02 & A; Addr8
 {
 	addflags(A, Addr8);
 	A = A + Addr8;
 }
 
-:ADD A, XAddr8	is op73=0x00 & op20=0x03 & A; XAddr8 
+:ADD A, XAddr8	is op73=0x00 & op20=0x03 & A; XAddr8
 {
 	addflags(A, XAddr8);
 	A = A + XAddr8;
 }
 
-:ADD Addr8, A	is op73=0x00 & op20=0x04 & A; Addr8 
+:ADD Addr8, A	is op73=0x00 & op20=0x04 & A; Addr8
 {
 	addflags(Addr8, A);
 	Addr8 = Addr8 + A;
 }
 
-:ADD XAddr8, A	is op73=0x00 & op20=0x05 & A; XAddr8 
+:ADD XAddr8, A	is op73=0x00 & op20=0x05 & A; XAddr8
 {
 	addflags(XAddr8, A);
 	XAddr8 = XAddr8 + A;
 }
 
-:ADD Addr8, Imm8 is op73=0x00 & op20=0x06; Addr8; Imm8 
+:ADD Addr8, Imm8 is op73=0x00 & op20=0x06; Addr8; Imm8
 {
 	addflags(Addr8, Imm8);
 	Addr8 = Addr8 + Imm8;
 }
 
-:ADD XAddr8, Imm8	is op73=0x00 & op20=0x07; XAddr8; Imm8 
+:ADD XAddr8, Imm8	is op73=0x00 & op20=0x07; XAddr8; Imm8
 {
 	addflags(XAddr8, Imm8);
 	XAddr8 = XAddr8 + Imm8;
 }
 
-:ADD SP, simm8	is op8=0x38 & SP; simm8 
+:ADD SP, simm8	is op8=0x38 & SP; simm8
 {
 	SP = SP + simm8;
 }
 
-:AND A, Imm8	is op73=0x04 & op20=0x01 & A; Imm8 
+:AND A, Imm8	is op73=0x04 & op20=0x01 & A; Imm8
 {
 	A = A & Imm8;
 	zeroflag(A);
 }
 
-:AND A, Addr8	is op73=0x04 & op20=0x02 & A; Addr8 
+:AND A, Addr8	is op73=0x04 & op20=0x02 & A; Addr8
 {
 	A = A & Addr8;
 	zeroflag(A);
 }
 
-:AND A, XAddr8	is op73=0x04 & op20=0x03 & A; XAddr8 
+:AND A, XAddr8	is op73=0x04 & op20=0x03 & A; XAddr8
 {
 	A = A & XAddr8;
 	zeroflag(A);
 }
 
-:AND Addr8, A	is op73=0x04 & op20=0x04 & A; Addr8 
+:AND Addr8, A	is op73=0x04 & op20=0x04 & A; Addr8
 {
 	tmp:1 = Addr8 & A;
 	Addr8 = tmp;
 	zeroflag(tmp);
 }
 
-:AND XAddr8, A	is op73=0x04 & op20=0x05 & A; XAddr8 
+:AND XAddr8, A	is op73=0x04 & op20=0x05 & A; XAddr8
 {
 	tmp:1 = XAddr8 & A;
 	XAddr8 = tmp;
 	zeroflag(tmp);
 }
 
-:AND Addr8, Imm8 is op73=0x04 & op20=0x06; Addr8; Imm8 
+:AND Addr8, Imm8 is op73=0x04 & op20=0x06; Addr8; Imm8
 {
 	tmp:1 = Addr8 & Imm8;
 	Addr8 = tmp;
 	zeroflag(tmp);
 }
 
-:AND XAddr8, Imm8	is op73=0x04 & op20=0x07; XAddr8; Imm8 
+:AND XAddr8, Imm8	is op73=0x04 & op20=0x07; XAddr8; Imm8
 {
 	tmp:1 = XAddr8 & Imm8;
 	XAddr8 = tmp;
 	zeroflag(tmp);
 }
 
-:AND RAddr8, Imm8 is op8=0x41; RAddr8; Imm8 
+:AND RAddr8, Imm8 is op8=0x41; RAddr8; Imm8
 {
 	tmp:1 = RAddr8 & Imm8;
 	RAddr8 = tmp;
 	zeroflag(tmp);
 }
 
-:AND RXAddr8, Imm8	is op8=0x42; RXAddr8; Imm8 
+:AND RXAddr8, Imm8	is op8=0x42; RXAddr8; Imm8
 {
 	tmp:1 = RXAddr8 & Imm8;
 	RXAddr8 = tmp;
@@ -364,11 +364,11 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 
 :CMP A, Addr8	is op8=0x3A & A; Addr8
 {
-	
+
 	compflags(A, Addr8);
 }
 
-:CMP A, XAddr8	is op8=0x3B & A; XAddr8 
+:CMP A, XAddr8	is op8=0x3B & A; XAddr8
 {
 	compflags(A, XAddr8);
 }
@@ -499,7 +499,7 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 
 :MOV A, XAddr8 	is op8=0x52 & A; XAddr8
 {
-	A = XAddr8;	
+	A = XAddr8;
 	zeroflag(A);
 }
 
@@ -535,7 +535,7 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 
 :MOV X, XAddr8 	is op8=0x59 & X; XAddr8
 {
-	X = XAddr8;	
+	X = XAddr8;
 }
 
 :MOV Addr8, X	is op8=0x5A & X; Addr8
@@ -562,7 +562,7 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 
 :MOV A, RXAddr8 	is op8=0x5E & A; RXAddr8
 {
-	A = RXAddr8;	
+	A = RXAddr8;
 	zeroflag(A);
 }
 
@@ -578,7 +578,7 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 
 :MOV RXAddr8, A is op8=0x61 & A; RXAddr8
 {
-	RXAddr8 = A;	
+	RXAddr8 = A;
 }
 
 :MOV RAddr8, Imm8	is op8=0x62; RAddr8; Imm8
@@ -588,7 +588,7 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 
 :MOV RXAddr8, Imm8 is op8=0x63; RXAddr8; Imm8
 {
-	RXAddr8 = Imm8;	
+	RXAddr8 = Imm8;
 }
 
 :MVI A, Addr8Incr 	is op8=0x3E & A; Addr8Incr
@@ -611,60 +611,60 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 	nop();
 }
 
-:OR A, Imm8	is op73=0x05 & op20=0x01 & A; Imm8 
+:OR A, Imm8	is op73=0x05 & op20=0x01 & A; Imm8
 {
 	A = A | Imm8;
 	zeroflag(A);
 }
 
-:OR A, Addr8	is op73=0x05 & op20=0x02 & A; Addr8 
+:OR A, Addr8	is op73=0x05 & op20=0x02 & A; Addr8
 {
 	A = A | Addr8;
 	zeroflag(A);
 }
 
-:OR A, XAddr8	is op73=0x05 & op20=0x03 & A; XAddr8 
+:OR A, XAddr8	is op73=0x05 & op20=0x03 & A; XAddr8
 {
 	A = A | XAddr8;
 	zeroflag(A);
 }
 
-:OR Addr8, A	is op73=0x05 & op20=0x04 & A; Addr8 
+:OR Addr8, A	is op73=0x05 & op20=0x04 & A; Addr8
 {
 	tmp:1 = Addr8 | A;
 	zeroflag(tmp);
 	Addr8 = tmp;
 }
 
-:OR XAddr8, A	is op73=0x05 & op20=0x05 & A; XAddr8 
+:OR XAddr8, A	is op73=0x05 & op20=0x05 & A; XAddr8
 {
 	tmp:1 = XAddr8 | A;
 	zeroflag(tmp);
 	XAddr8 = tmp;
 }
 
-:OR Addr8, Imm8 is op73=0x05 & op20=0x06; Addr8; Imm8 
+:OR Addr8, Imm8 is op73=0x05 & op20=0x06; Addr8; Imm8
 {
 	tmp:1 = Addr8 | Imm8;
 	zeroflag(tmp);
 	Addr8 = tmp;
 }
 
-:OR XAddr8, Imm8	is op73=0x05 & op20=0x07; XAddr8; Imm8 
+:OR XAddr8, Imm8	is op73=0x05 & op20=0x07; XAddr8; Imm8
 {
 	tmp:1 = XAddr8 | Imm8;
 	zeroflag(tmp);
 	XAddr8 = tmp;
 }
 
-:OR RAddr8, Imm8 is op8=0x43; RAddr8; Imm8 
+:OR RAddr8, Imm8 is op8=0x43; RAddr8; Imm8
 {
 	tmp:1 = RAddr8 | Imm8;
 	zeroflag(tmp);
 	RAddr8 = tmp;
 }
 
-:OR RXAddr8, Imm8	is op8=0x44; RXAddr8; Imm8 
+:OR RXAddr8, Imm8	is op8=0x44; RXAddr8; Imm8
 {
 	tmp:1 = RXAddr8 | Imm8;
 	zeroflag(tmp);
@@ -765,97 +765,97 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 	$(C) = c;
 }
 
-:SBB A, Imm8	is op73 = 0x03 & op20=0x01 & A; Imm8 
+:SBB A, Imm8	is op73 = 0x03 & op20=0x01 & A; Imm8
 {
 	A = A - (Imm8 + $(C));
 	resultflags(A);
 }
 
-:SBB A, Addr8	is op73 = 0x03 & op20=0x02 & A; Addr8 
+:SBB A, Addr8	is op73 = 0x03 & op20=0x02 & A; Addr8
 {
 	A = A - (Addr8 + $(C));
 	resultflags(A);
 }
 
-:SBB A, XAddr8	is op73 = 0x03 & op20=0x03 & A; XAddr8 
+:SBB A, XAddr8	is op73 = 0x03 & op20=0x03 & A; XAddr8
 {
 	A = A - (XAddr8 + $(C));
 	resultflags(A);
 }
 
-:SBB Addr8, A	is op73 = 0x03 & op20=0x04 & A; Addr8 
+:SBB Addr8, A	is op73 = 0x03 & op20=0x04 & A; Addr8
 {
 	tmp:1 = Addr8 - (A + $(C));
 	resultflags(tmp);
 	Addr8 = tmp;
 }
 
-:SBB XAddr8, A	is op73 = 0x03 & op20=0x05 & A; XAddr8 
+:SBB XAddr8, A	is op73 = 0x03 & op20=0x05 & A; XAddr8
 {
 	tmp:1 = XAddr8 - (A + $(C));
 	resultflags(tmp);
 	XAddr8 = tmp;
 }
 
-:SBB Addr8, Imm8 is op73 = 0x03 & op20=0x06; Addr8; Imm8 
+:SBB Addr8, Imm8 is op73 = 0x03 & op20=0x06; Addr8; Imm8
 {
 	tmp:1 = Addr8 - (Imm8 + $(C));
 	resultflags(tmp);
 	Addr8 = tmp;
 }
 
-:SBB XAddr8, Imm8	is op73 = 0x03 & op20=0x07; XAddr8; Imm8 
+:SBB XAddr8, Imm8	is op73 = 0x03 & op20=0x07; XAddr8; Imm8
 {
 	local tmp = XAddr8 - (Imm8 + $(C));
 	resultflags(tmp);
 	XAddr8 = tmp;
 }
 
-:SSC		is op8=0x00 
+:SSC		is op8=0x00
 {
 	syscall(A);
 }
 
-:SUB A, Imm8	is op73 = 0x02 & op20=0x01 & A; Imm8 
+:SUB A, Imm8	is op73 = 0x02 & op20=0x01 & A; Imm8
 {
 	A = A - Imm8;
 	resultflags(A);
 }
 
-:SUB A, Addr8	is op73 = 0x02 & op20=0x02 & A; Addr8 
+:SUB A, Addr8	is op73 = 0x02 & op20=0x02 & A; Addr8
 {
 	A = A - Addr8;
 	resultflags(A);
 }
 
-:SUB A, XAddr8	is op73 = 0x02 & op20=0x03 & A; XAddr8 
+:SUB A, XAddr8	is op73 = 0x02 & op20=0x03 & A; XAddr8
 {
 	A = A - XAddr8;
 	resultflags(A);
 }
 
-:SUB Addr8, A	is op73 = 0x02 & op20=0x04 & A; Addr8 
+:SUB Addr8, A	is op73 = 0x02 & op20=0x04 & A; Addr8
 {
 	tmp:1 = Addr8 - A;
 	resultflags(tmp);
 	Addr8 = tmp;
 }
 
-:SUB XAddr8, A	is op73 = 0x02 & op20=0x05 & A; XAddr8 
+:SUB XAddr8, A	is op73 = 0x02 & op20=0x05 & A; XAddr8
 {
 	tmp:1 = XAddr8 - A;
 	resultflags(tmp);
 	XAddr8 = tmp;
 }
 
-:SUB Addr8, Imm8 is op73 = 0x02 & op20=0x06; Addr8; Imm8 
+:SUB Addr8, Imm8 is op73 = 0x02 & op20=0x06; Addr8; Imm8
 {
 	tmp:1 = Addr8 - Imm8;
 	resultflags(tmp);
 	Addr8 = tmp;
 }
 
-:SUB XAddr8, Imm8	is op73 = 0x02 & op20=0x07; XAddr8; Imm8 
+:SUB XAddr8, Imm8	is op73 = 0x02 & op20=0x07; XAddr8; Imm8
 {
 	tmp:1 = XAddr8 - Imm8;
 	resultflags(tmp);
@@ -907,60 +907,60 @@ IndexAddr:      indexaddr is srel12 [ indexaddr = inst_start + 2 + srel12;] { ex
 	testflags(tmp, Imm8);
 }
 
-:XOR A, Imm8	is op73=0x06 & op20=0x01 & A; Imm8 
+:XOR A, Imm8	is op73=0x06 & op20=0x01 & A; Imm8
 {
 	A = A ^ Imm8;
 	zeroflag(A);
 }
 
-:XOR A, Addr8	is op73=0x06 & op20=0x02 & A; Addr8 
+:XOR A, Addr8	is op73=0x06 & op20=0x02 & A; Addr8
 {
 	A = A ^ Addr8;
 	zeroflag(A);
 }
 
-:XOR A, XAddr8	is op73=0x06 & op20=0x03 & A; XAddr8 
+:XOR A, XAddr8	is op73=0x06 & op20=0x03 & A; XAddr8
 {
 	A = A ^ XAddr8;
 	zeroflag(A);
 }
 
-:XOR Addr8, A	is op73=0x06 & op20=0x04 & A; Addr8 
+:XOR Addr8, A	is op73=0x06 & op20=0x04 & A; Addr8
 {
 	tmp:1 = Addr8 ^ A;
 	zeroflag(Addr8);
 	Addr8 = tmp;
 }
 
-:XOR XAddr8, A	is op73=0x06 & op20=0x05 & A; XAddr8 
+:XOR XAddr8, A	is op73=0x06 & op20=0x05 & A; XAddr8
 {
 	tmp:1 = XAddr8 ^ A;
 	zeroflag(tmp);
 	XAddr8 = tmp;
 }
 
-:XOR Addr8, Imm8 is op73=0x06 & op20=0x06; Addr8; Imm8 
+:XOR Addr8, Imm8 is op73=0x06 & op20=0x06; Addr8; Imm8
 {
 	tmp:1 = Addr8 ^ Imm8;
 	zeroflag(tmp);
 	Addr8 = tmp;
 }
 
-:XOR XAddr8, Imm8	is op73=0x06 & op20=0x07; XAddr8; Imm8 
+:XOR XAddr8, Imm8	is op73=0x06 & op20=0x07; XAddr8; Imm8
 {
 	tmp:1 = XAddr8 ^ Imm8;
 	zeroflag(tmp);
 	XAddr8 = tmp;
 }
 
-:XOR RAddr8, Imm8 is op8=0x45; RAddr8; Imm8 
+:XOR RAddr8, Imm8 is op8=0x45; RAddr8; Imm8
 {
 	tmp:1 = RAddr8 ^ Imm8;
 	zeroflag(tmp);
 	RAddr8 = tmp;
 }
 
-:XOR RXAddr8, Imm8	is op8=0x46; RXAddr8; Imm8 
+:XOR RXAddr8, Imm8	is op8=0x46; RXAddr8; Imm8
 {
 	tmp:1 = RXAddr8 ^ Imm8;
 	zeroflag(tmp);

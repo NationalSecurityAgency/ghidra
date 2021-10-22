@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,21 +29,21 @@ import ghidra.program.util.ProgramLocation;
  * for the reference or possible reference address pair
  * associated with a row in the table.
  */
-public class ReferenceFromLabelTableColumn 
+public class ReferenceFromLabelTableColumn
         extends ProgramLocationTableColumnExtensionPoint<ReferenceAddressPair, String> {
 
     @Override
     public String getColumnDisplayName(Settings settings) {
         return getColumnName();
     }
-	
+
 	@Override
     public String getColumnName() {
 		return "Label";
 	}
 
 	@Override
-    public String getValue(ReferenceAddressPair rowObject, Settings settings, 
+    public String getValue(ReferenceAddressPair rowObject, Settings settings,
 	        Program program, ServiceProvider serviceProvider) throws IllegalArgumentException {
 
 		Symbol s = getSymbol( rowObject, program );
@@ -59,7 +59,7 @@ public class ReferenceFromLabelTableColumn
         return symbolTable.getPrimarySymbol(fromAddress);
 	}
 
-	public ProgramLocation getProgramLocation(ReferenceAddressPair rowObject, 
+	public ProgramLocation getProgramLocation(ReferenceAddressPair rowObject,
 	        Settings settings, Program program, ServiceProvider serviceProvider) {
 	    Symbol symbol = getSymbol( rowObject, program );
 	    if ( symbol != null ) {

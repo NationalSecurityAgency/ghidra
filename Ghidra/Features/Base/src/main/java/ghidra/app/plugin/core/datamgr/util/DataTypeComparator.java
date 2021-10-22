@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,16 +26,16 @@ public class DataTypeComparator implements Comparator<DataType> {
         String name1 = dt1.getName();
         String name2 = dt2.getName();
 
-// TODO: should built-ins always come first in the list? (in case we have an 'a' named archive?)        
-        
-        // if the names are the same, then sort by the path            
+// TODO: should built-ins always come first in the list? (in case we have an 'a' named archive?)
+
+        // if the names are the same, then sort by the path
         if ( name1.equalsIgnoreCase( name2 ) ) {
 
             if ( !name1.equals( name2 ) ) {
                 // let equivalent names be sorted by case ('-' for lower-case first)
                 return -name1.compareTo( name2 );
             }
-            
+
             String dtmName1 = dt1.getDataTypeManager().getName();
             String dtmName2 = dt2.getDataTypeManager().getName();
 

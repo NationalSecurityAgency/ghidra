@@ -110,16 +110,16 @@ macro pop(val) {	# TODO: Uncertain about this !!
 # SUB-CONSTRUCTORS
 #
 
-# File register index (f5!=0): bank selection determined by FSR<5:6> bits 
-fREGLoc: f5	is f5												{ 
+# File register index (f5!=0): bank selection determined by FSR<5:6> bits
+fREGLoc: f5	is f5												{
 	 addr:1 = (FSR & $(FSR_BSEL_MASK)) + f5;
 	 export *[DATA]:1 addr;
 }
 
 # File register index (f5=0): INDF use implies indirect data access using FSR value
-fREGLoc: "INDF"	is f5=0												{ 
+fREGLoc: "INDF"	is f5=0												{
 	addr:1 = FSR;  # only low order 7-bits are used for indirect address
-	export *[DATA]:1 addr; 
+	export *[DATA]:1 addr;
 }
 
 # File register index : low 16-bytes of each bank always mapped to Bank-0
@@ -141,7 +141,7 @@ srcREG: "PCL"		is f5=0x02								{
 	PCL = addr:1;
 	addr = (addr >> 9) & 0x3;
 	PA = addr:1;
-	export PCL; 
+	export PCL;
 }
 
 # Destination register (either srcREG or W)
@@ -149,15 +149,15 @@ destREG: "0"	is d=0									{ export W; }
 destREG: "1"	is d=1 & srcREG							{ export srcREG; }
 #destREG: "1"	is d=1 & f5=0x03						{ export STATUS; }
 #destREG: "1"	is d=1 & f5=0x04						{ export FSR; }
-#destREG: "1"	is d=1 & f5=0x02						{ 
-#	# Storing to PCL causes a branch, 
+#destREG: "1"	is d=1 & f5=0x02						{
+#	# Storing to PCL causes a branch,
 #	# PC<8> is always cleared for CALL and modifying instructions.
 #	# The MOVWF, ADDWF, BSF and BCF definition below has a specific case to handle this write to PCL
-#	export PCL; 
+#	export PCL;
 #}
-#destREG: "1"	is d=1 & f5=0x00 & fREGLoc				{ 
+#destREG: "1"	is d=1 & f5=0x00 & fREGLoc				{
 #	# INDF use (indirect data access)
-#	export *[DATA]:1 fREGLoc; 
+#	export *[DATA]:1 fREGLoc;
 #}
 
 # Destination operand representation (w: W register is destination; f: specified srcREG is destination)
@@ -167,11 +167,11 @@ D: "f"		is d=1										{ }
 # Absolute addresses generated from k8 or k9 and STATUS.PA
 absAddr8: k8	is k8									{
 	addr:2 = (zext(PA) << 9) + k8;
-	export addr; 
+	export addr;
 }
 absAddr9: k9	is k9									{
 	addr:2 = (zext(PA) << 9) + k9;
-	export addr; 
+	export addr;
 }
 
 # Skip instruction address
@@ -195,12 +195,12 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :ADDWF srcREG, D	is op6=0x07 & srcREG & D & destREG					{
 	#  ---- 0001 11df ffff
-	#  0000 0001 1100 0000	->	ADDWF INDF, 0 
+	#  0000 0001 1100 0000	->	ADDWF INDF, 0
 	#  0000 0001 1110 0000	->	ADDWF INDF, 1
 	#  0000 0001 1101 0010	->	ADDWF 0x12, 0
 	#  0000 0001 1111 0010	->	ADDWF 0x12, 1
 	tmp:1 = srcREG;
-	setAddFlags(W, tmp); 
+	setAddFlags(W, tmp);
 	tmp = W + tmp;
 	destREG = tmp;
 	setResultFlags(tmp);
@@ -229,7 +229,7 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :ANDWF srcREG, D	is op6=0x05 & srcREG & D & destREG					{
 	#  ---- 0001 01df ffff
-	#  0000 0001 0100 0000	->	ANDWF INDF, 0 
+	#  0000 0001 0100 0000	->	ANDWF INDF, 0
 	#  0000 0001 0110 0000	->	ANDWF INDF, 1
 	#  0000 0001 0101 0010	->	ANDWF 0x12, 0
 	#  0000 0001 0111 0010	->	ANDWF 0x12, 1
@@ -419,7 +419,7 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :COMF srcREG, D		is op6=0x09 & srcREG & D & destREG					{
 	#  ---- 0010 01df ffff
-	#  0000 0010 0100 0000	->	COMF INDF, 0 
+	#  0000 0010 0100 0000	->	COMF INDF, 0
 	#  0000 0010 0110 0000	->	COMF INDF, 1
 	#  0000 0010 0101 0010	->	COMF 0x12, 0
 	#  0000 0010 0111 0010	->	COMF 0x12, 1
@@ -430,7 +430,7 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :DECF srcREG, D		is op6=0x03 & srcREG & D & destREG					{
 	#  ---- 0000 11df ffff
-	#  0000 0000 1100 0000	->	DECF INDF, 0 
+	#  0000 0000 1100 0000	->	DECF INDF, 0
 	#  0000 0000 1110 0000	->	DECF INDF, 1
 	#  0000 0000 1101 0010	->	DECF 0x12, 0
 	#  0000 0000 1111 0010	->	DECF 0x12, 1
@@ -441,7 +441,7 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :DECFSZ srcREG, D		is op6=0x0b & srcREG & D & destREG & skipInst		{
 	#  ---- 0010 11df ffff
-	#  0000 0010 1100 0000	->	DECFSZ INDF, 0 
+	#  0000 0010 1100 0000	->	DECFSZ INDF, 0
 	#  0000 0010 1110 0000	->	DECFSZ INDF, 1
 	#  0000 0010 1101 0010	->	DECFSZ 0x12, 0
 	#  0000 0010 1111 0010	->	DECFSZ 0x12, 1
@@ -459,7 +459,7 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :INCF srcREG, D		is op6=0x0a & srcREG & D & destREG					{
 	#  ---- 0010 10df ffff
-	#  0000 0010 1000 0000	->	INCF INDF, 0 
+	#  0000 0010 1000 0000	->	INCF INDF, 0
 	#  0000 0010 1010 0000	->	INCF INDF, 1
 	#  0000 0010 1001 0010	->	INCF 0x12, 0
 	#  0000 0010 1011 0010	->	INCF 0x12, 1
@@ -470,7 +470,7 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :INCFSZ srcREG, D		is op6=0x0f & srcREG & D & destREG & skipInst		{
 	#  ---- 0011 11df ffff
-	#  0000 0011 1100 0000	->	INCFSZ INDF, 0 
+	#  0000 0011 1100 0000	->	INCFSZ INDF, 0
 	#  0000 0011 1110 0000	->	INCFSZ INDF, 1
 	#  0000 0011 1101 0010	->	INCFSZ 0x12, 0
 	#  0000 0011 1111 0010	->	INCFSZ 0x12, 1
@@ -488,7 +488,7 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :IORWF srcREG, D		is op6=0x04 & srcREG & D & destREG					{
 	#  ---- 0001 00df ffff
-	#  0000 0001 0000 0000	->	IORWF INDF, 0 
+	#  0000 0001 0000 0000	->	IORWF INDF, 0
 	#  0000 0001 0010 0000	->	IORWF INDF, 1
 	#  0000 0001 0001 0010	->	IORWF 0x20, 0
 	#  0000 0001 0011 0010	->	IORWF 0x20, 1
@@ -505,7 +505,7 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :MOVF srcREG, D		is op6=0x08 & srcREG & D & destREG					{
 	#  ---- 0010 00df ffff
-	#  0000 0010 0000 0000	->	MOVF INDF, 0 
+	#  0000 0010 0000 0000	->	MOVF INDF, 0
 	#  0000 0010 0010 0000	->	MOVF INDF, 1
 	#  0000 0010 0001 0010	->	MOVF 0x12, 0
 	#  0000 0010 0011 0010	->	MOVF 0x12, 1
@@ -549,7 +549,7 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :RLF srcREG, D		is op6=0x0d & srcREG & D & destREG					{
 	#  ---- 0011 01df ffff
-	#  0000 0011 0100 0000	->	RLF INDF, 0 
+	#  0000 0011 0100 0000	->	RLF INDF, 0
 	#  0000 0011 0110 0000	->	RLF INDF, 1
 	#  0000 0011 0101 0010	->	RLF 0x12, 0
 	#  0000 0011 0111 0010	->	RLF 0x12, 1
@@ -563,7 +563,7 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :RRF srcREG, D		is op6=0x0c & srcREG & D & destREG					{
 	#  ---- 0011 00df ffff
-	#  0000 0011 0000 0000	->	RRF INDF, 0 
+	#  0000 0011 0000 0000	->	RRF INDF, 0
 	#  0000 0011 0010 0000	->	RRF INDF, 1
 	#  0000 0011 0001 0010	->	RRF 0x12, 0
 	#  0000 0011 0011 0010	->	RRF 0x12, 1
@@ -575,7 +575,7 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 	setResultFlags(tmp);
 }
 
-:SLEEP					is op12=0x0003				{ 
+:SLEEP					is op12=0x0003				{
 	#  ---- 0000 0000 0011
 	# Sleep - Not Implemented
 	sleep();
@@ -583,12 +583,12 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :SUBWF srcREG, D		is op6=0x02 & srcREG & D & destREG					{
 	#  ---- 0000 10df ffff
-	#  0000 0000 1000 0000	->	SUBWF INDF, 0 
+	#  0000 0000 1000 0000	->	SUBWF INDF, 0
 	#  0000 0000 1010 0000	->	SUBWF INDF, 1
 	#  0000 0000 1001 0010	->	SUBWF 0x12, 0
 	#  0000 0000 1011 0010	->	SUBWF 0x12, 1
 	tmp:1 = srcREG;
-	setSubtractFlags(tmp, W); 
+	setSubtractFlags(tmp, W);
 	tmp = tmp - W;
 	destREG = tmp;
 	setResultFlags(tmp);
@@ -596,7 +596,7 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :SWAPF srcREG, D		is op6=0x0e & srcREG & D & destREG					{
 	#  ---- 0011 10df ffff
-	#  0000 0011 1000 0000	->	SUBWF INDF, 0 
+	#  0000 0011 1000 0000	->	SUBWF INDF, 0
 	#  0000 0011 1010 0000	->	SUBWF INDF, 1
 	#  0000 0011 1001 0010	->	SUBWF 0x12, 0
 	#  0000 0011 1011 0010	->	SUBWF 0x12, 1
@@ -613,7 +613,7 @@ status: "STATUS" 	is f5=0x03				{ export STATUS; }
 
 :XORWF srcREG, D		is op6=0x06 & srcREG & D & destREG					{
 	#  ---- 0001 10df ffff
-	#  0000 0001 1000 0000	->	XORWF INDF, 0 
+	#  0000 0001 1000 0000	->	XORWF INDF, 0
 	#  0000 0001 1010 0000	->	XORWF INDF, 1
 	#  0000 0001 1001 0010	->	XORWF 0x12, 0
 	#  0000 0001 1011 0010	->	XORWF 0x12, 1

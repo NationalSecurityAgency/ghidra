@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public class VarnodeData {
 
 	public int size;
 	// for use before restoreXML
-	public VarnodeData() { 
+	public VarnodeData() {
 	}
 	public VarnodeData( AddrSpace base, long off, int size ) {
 		space = base;
@@ -54,7 +54,7 @@ public class VarnodeData {
 	public int hashCode() {
 	    return space.hashCode() + (int) offset + size;
 	}
-	
+
 	public int compareTo( VarnodeData other ) {
 		int result = space.compareTo( other.space );
 		if (result != 0) {
@@ -66,7 +66,7 @@ public class VarnodeData {
 		}
 		return other.size - size;// BIG sizes come first
 	}
-	
+
 	// Build this VarnodeData from an \b \<addr\> tag
 	// \param el is the parsed tag
 	// \param trans is the relevant processor translator
@@ -80,12 +80,12 @@ public class VarnodeData {
 			return;
 		}
 
-		
+
 		String attributeValue = el.getAttributeValue( "space" );
 		if ( attributeValue == null ) {
 		    return;
 		}
-		
+
         space = trans.getSpaceByName( attributeValue );
 		if (space == null) {
 			throw new LowlevelError( "Unknown space name: " + attributeValue );

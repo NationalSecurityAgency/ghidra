@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,14 +27,14 @@ import ghidra.util.task.TaskMonitor;
 /**
  * <code>VarKeyRecordNode</code> is an implementation of a BTree leaf node
  * which utilizes variable-length key values and stores variable-length records.
- * This type of node has the following layout within a single DataBuffer 
+ * This type of node has the following layout within a single DataBuffer
  * (field size in bytes):
  * <pre>
- *   |   NodeType(1) | KeyType(1) | KeyCount(4) | PrevLeafId(4) | NextLeafId(4) | KeyOffset0(4) | IndFlag0(1) |...      
- * 
+ *   |   NodeType(1) | KeyType(1) | KeyCount(4) | PrevLeafId(4) | NextLeafId(4) | KeyOffset0(4) | IndFlag0(1) |...
+ *
  *   | KeyOffsetN(4) | IndFlagN(1) |...&lt;FreeSpace&gt;... | KeyN | RecN |... | Key0 | Rec0 |
  * </pre>
- * IndFlag - if not zero the record has been stored within a chained DBBuffer 
+ * IndFlag - if not zero the record has been stored within a chained DBBuffer
  * whose 4-byte integer buffer ID has been stored within this leaf at the record offset.
  */
 class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
@@ -538,7 +538,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 	 * Move all records from index to the end by the specified offset.
 	 * @param index the smaller key index (0 &lt;= index1)
 	 * @param offset movement offset in bytes
-	 * @return insertion offset immediately following moved block. 
+	 * @return insertion offset immediately following moved block.
 	 */
 	private int moveRecords(int index, int offset) {
 
@@ -643,7 +643,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 		int start = getRecordKeyOffset(keyCount - 1);	// start of block to be moved
 		int end = getRecordKeyOffset(splitIndex - 1);  // end of block to be moved
 		int splitLen = end - start;				// length of block to be moved
-		int rightOffset = buffer.length() - splitLen;    // data offset within new leaf node 
+		int rightOffset = buffer.length() - splitLen;    // data offset within new leaf node
 
 		// Copy data to new leaf node
 		DataBuffer newBuf = rightNode.buffer;
@@ -663,7 +663,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 	}
 
 	/**
-	 * Updates the record at the given index. 
+	 * Updates the record at the given index.
 	 * @param index record index
 	 * @param record new record
 	 * @return root node which may have changed.
@@ -707,7 +707,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 		// See if updated record will fit in current buffer
 		if (useIndirect || len <= (getFreeSpace() + oldLen)) {
 
-			// Overwrite record data - move other data if needed			
+			// Overwrite record data - move other data if needed
 			int dataShift = oldLen - len;
 			if (dataShift != 0) {
 				offset = moveRecords(index + 1, dataShift);
@@ -727,7 +727,7 @@ class VarKeyRecordNode extends VarKeyNode implements FieldKeyRecordNode {
 
 	/**
 	 * Inserts the record at the given index if there is sufficient space in
-	 * the buffer. 
+	 * the buffer.
 	 * @param index insertion index
 	 * @param record record to be inserted
 	 * @return true if the record was successfully inserted.

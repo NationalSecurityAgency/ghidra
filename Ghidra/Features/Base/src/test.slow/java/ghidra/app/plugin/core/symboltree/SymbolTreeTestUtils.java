@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ class SymbolTreeTestUtils {
 	private Comparator<Symbol> symbolComparator = (s1, s2) -> {
 		int nameCompare = s1.getName().compareToIgnoreCase(s2.getName());
 
-		// sort alphabetically first		
+		// sort alphabetically first
 		if (nameCompare != 0) {
 			return nameCompare;
 		}
@@ -152,9 +152,9 @@ class SymbolTreeTestUtils {
 		builder.createLabel("0x1002d1f", "MyLocal", "ghidra");
 
 		//@formatter:off
-		Function function = builder.createEmptyFunction("sscanf", null, "0x100415a", 78, 
+		Function function = builder.createEmptyFunction("sscanf", null, "0x100415a", 78,
 			new Undefined1DataType(),
-			new ParameterImpl("destStr", new IntegerDataType(), program), 
+			new ParameterImpl("destStr", new IntegerDataType(), program),
 			new ParameterImpl("param_3", new IntegerDataType(), program),
 			new ParameterImpl("param_4", new IntegerDataType(), program));
 		//@formatter:on

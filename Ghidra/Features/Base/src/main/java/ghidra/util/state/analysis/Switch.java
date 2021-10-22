@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.util.state.VarnodeOperation;
 
 
 public abstract class Switch {
-	
+
 
 	/**
 	 * Returns address corresponding to the specified caseIndexValue.
@@ -35,12 +35,12 @@ public abstract class Switch {
 	 * @throws AddressOutOfBoundsException
 	 */
 	abstract Address getCaseAddress(int caseIndexValue) throws MemoryAccessException, AddressOutOfBoundsException;
-	
+
 	/**
 	 * Returns the Varnode or VarnodeOperation which corresponds to the case index value for a switch.
 	 */
 	abstract Varnode getIndexValue();
-	
+
 	/**
 	 * Qualify IndirectJumpSwitch
 	 * and return IndirectJumpSwitch object if qualified or null if not.
@@ -63,7 +63,7 @@ public abstract class Switch {
 			return null;
 		}
 		if (opcode == PcodeOp.INT_ADD) {
-			// Relative jump offset table 
+			// Relative jump offset table
 			RelativeJumpTableSwitch relJumpTableSwitch = RelativeJumpTableSwitch.getRelativeJumpTableSwitch(program, op);
 			if (relJumpTableSwitch != null) {
 				return relJumpTableSwitch;
@@ -74,6 +74,6 @@ public abstract class Switch {
 		return null;
 	}
 
-	
-	
+
+
 }

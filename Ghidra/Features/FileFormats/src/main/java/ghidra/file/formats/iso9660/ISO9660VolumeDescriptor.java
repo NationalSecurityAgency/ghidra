@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ public class ISO9660VolumeDescriptor extends ISO9660BaseVolume {
 	private byte[] volumeCreationDateTime;        // Length 0x11
 	private byte[] volumeModifyDateTime;        // Length 0x11
 	private byte[] volumeExpirationDateTime;    // Length 0x11
-	private byte[] volumeEffectiveDateTime;        // length 0x11 
+	private byte[] volumeEffectiveDateTime;        // length 0x11
 	private byte fileStructureVersion;            // -int8-
 	private byte unused4;                        // Always 0x00
 	private byte[] applicationUsed;                // Length 0x200

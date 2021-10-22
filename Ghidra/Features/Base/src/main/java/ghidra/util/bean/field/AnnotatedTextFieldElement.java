@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,9 +23,9 @@ import ghidra.framework.plugintool.ServiceProvider;
 import ghidra.program.util.ProgramLocation;
 
 /**
- * A subclass of {@link FieldElement} that allows for mouse handling callbacks via the 
+ * A subclass of {@link FieldElement} that allows for mouse handling callbacks via the
  * {@link #handleMouseClicked(Navigatable, ServiceProvider)} method.  This class
- * is based upon {@link Annotation} objects, which are elements that perform actions when the 
+ * is based upon {@link Annotation} objects, which are elements that perform actions when the
  * use clicks an instance of this class in the display.
  */
 final public class AnnotatedTextFieldElement extends AbstractTextFieldElement {
@@ -43,7 +43,7 @@ final public class AnnotatedTextFieldElement extends AbstractTextFieldElement {
 	 * Constructor that initializes this text field element with the given annotation and row
 	 * and column information.  The text of this element is the text returned from
 	 * {@link Annotation#getDisplayString()}.
-	 * 
+	 *
 	 * @param annotation The Annotation that this element is describing.
 	 * @param row The row that this element is on
 	 * @param column The column value of this element (the column index where this element starts)
@@ -62,9 +62,9 @@ final public class AnnotatedTextFieldElement extends AbstractTextFieldElement {
 	}
 
 	/**
-	 * This method is designed to be called when a mouse click has occurred for a given 
+	 * This method is designed to be called when a mouse click has occurred for a given
 	 * {@link ProgramLocation}.
-	 * 
+	 *
 	 * @param sourceNavigatable The source Navigatable
 	 * @param serviceProvider A service provider from which system resources can be retrieved
 	 * @return true if this string handles the mouse click.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -114,7 +114,7 @@ SubvariableFlow::ReplaceVarnode *SubvariableFlow::setReplacement(Varnode *vn,uin
 	  return (ReplaceVarnode *)0;
       }
     }
-    
+
     if (vn->isInput()) {		// Must be careful with inputs
       // Inputs must come in from the right register/memory
       if (bitsize < 8) return (ReplaceVarnode *)0; // Dont create input flag
@@ -406,7 +406,7 @@ bool SubvariableFlow::traceForward(ReplaceVarnode *rvn)
       hcount += 1;
       break;
     case CPUI_INT_ADD:
-      if ((rvn->mask & 1)==0) 
+      if ((rvn->mask & 1)==0)
 	return false;		// Cannot account for carry
       rop = createOpDown(CPUI_INT_ADD,2,op,rvn,slot);
       if (!createLink(rop,rvn->mask,-1,outvn)) return false;
@@ -777,7 +777,7 @@ bool SubvariableFlow::traceBackward(ReplaceVarnode *rvn)
   default:
     break;			// Everything else we abort
   }
-  
+
   return false;
 }
 
@@ -1948,7 +1948,7 @@ bool SubfloatFlow::traceBackward(TransformVar *rvn)
   default:
     break;			// Everything else we abort
   }
-  
+
   return false;
 }
 

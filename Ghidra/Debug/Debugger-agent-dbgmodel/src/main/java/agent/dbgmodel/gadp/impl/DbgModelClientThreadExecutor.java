@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import agent.dbgmodel.dbgmodel.bridge.HostDataModelAccess;
 
 /**
  * A single-threaded executor which creates and exclusively accesses the {@code dbgeng.dll} client.
- * 
+ *
  * The executor also has a priority mechanism, so that callbacks may register follow-on handlers
  * which take precedence over other tasks in the queue (which could trigger additional callbacks).
  * This is required since certain operation are not allowed during normal callback processing. For
@@ -38,7 +38,7 @@ public class DbgModelClientThreadExecutor extends AbstractClientThreadExecutor {
 
 	/**
 	 * Instantiate a new executor, providing a means of creating the client
-	 * 
+	 *
 	 * @param makeClient the callback to create the client
 	 */
 	public DbgModelClientThreadExecutor(Supplier<HostDataModelAccess> makeClient) {
@@ -49,7 +49,7 @@ public class DbgModelClientThreadExecutor extends AbstractClientThreadExecutor {
 
 	/**
 	 * Obtain a reference to the client, only if the calling thread is this executor's thread.
-	 * 
+	 *
 	 * @return the client
 	 */
 	public WrappedDbgModel getAccess() {

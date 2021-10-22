@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,11 @@ public class OmfFixupRecord extends OmfRecord {
 	private Subrecord[] subrecs;
 	private OmfEnumeratedData lastLEData = null;
 	private OmfIteratedData lastLIData = null;
-	
+
 	public OmfFixupRecord(BinaryReader reader) throws IOException {
 		ArrayList<Subrecord> subreclist = new ArrayList<Subrecord>();
 		boolean hasBigFields = ((getRecordType() & 1)!=0);
-		
+
 		readRecordHeader(reader);
 		long max = reader.getPointerIndex() + getRecordLength() - 1;
 		while(reader.getPointerIndex() < max) {
@@ -49,7 +49,7 @@ public class OmfFixupRecord extends OmfRecord {
 		subreclist.toArray(subrecs);
 		readCheckSumByte(reader);
 	}
-	
+
 	public void setDataBlock(Object last) {
 		if (last instanceof OmfEnumeratedData) {
 			lastLEData = (OmfEnumeratedData)last;
@@ -60,7 +60,7 @@ public class OmfFixupRecord extends OmfRecord {
 			lastLEData = null;
 		}
 	}
-	
+
 	public Subrecord[] getSubrecords() {
 		return subrecs;
 	}
@@ -78,7 +78,7 @@ public class OmfFixupRecord extends OmfRecord {
 		public Address locAddress;		// Location of data to be patched
 		public boolean M;				// true for segment-relative, false for self-relative
 		public int locationType;
-		
+
 		public FixupState(OmfFileHeader header,ArrayList<OmfSymbol> externsyms,Language lang) {
 			for(int i=0;i<4;++i) {
 				frameThreads[i] = null;
@@ -89,26 +89,26 @@ public class OmfFixupRecord extends OmfRecord {
 			externals = externsyms;
 			language = lang;
 		}
-		
+
 		public void clear() {
 			targetState = -1;
 			locAddress = null;
 			locationType = -1;
 		}
 	}
-	
+
 	public static class Subrecord {
 		private boolean isThread;
-		
+
 		public Subrecord(boolean isthread) {
 			isThread = isthread;
 		}
-		
+
 		public boolean isThread() {
 			return isThread;
 		}
 	}
-	
+
 	public static class ThreadSubrecord extends Subrecord {
 		private byte type;
 		private int index;
@@ -116,19 +116,19 @@ public class OmfFixupRecord extends OmfRecord {
 		public ThreadSubrecord() {
 			super(true);
 		}
-		
+
 		public int getMethod() {
 			return (type>>2) & 7;
 		}
-		
+
 		public int getIndex() {
 			return index;
 		}
-		
+
 		public boolean isFrameThread() {
 			return ((type>>6)&1)!=0;
 		}
-		
+
 		public int getThreadNum() {
 			return (type & 3);
 		}
@@ -139,7 +139,7 @@ public class OmfFixupRecord extends OmfRecord {
 			else
 				state.targetThreads[getThreadNum()] = this;
 		}
-		
+
 		public static ThreadSubrecord readThreadSubrecord(BinaryReader reader,boolean hasBigFields) throws IOException {
 			ThreadSubrecord thread = new ThreadSubrecord();
 			thread.type = reader.readNextByte();
@@ -151,7 +151,7 @@ public class OmfFixupRecord extends OmfRecord {
 			return thread;
 		}
 	}
-	
+
 	public static class FixupTarget {
 		private byte fixData;
 		private int frameDatum;
@@ -161,20 +161,20 @@ public class OmfFixupRecord extends OmfRecord {
 		public boolean isFrameThread() {
 			return ((fixData>>7)&1)!=0;
 		}
-		
+
 		public boolean isTargetThread() {
 			return ((fixData>>3)&1)!=0;
 		}
-		
+
 		public int getFrameMethod() {
 			return ((fixData>>4)&7);
 		}
-		
+
 		public int getP() {
 			int res = (fixData >>2)&1;
 			return res;
 		}
-		
+
 		public void resolveFrame(FixupState state) throws OmfException {
 			int method;
 			int index;
@@ -213,7 +213,7 @@ public class OmfFixupRecord extends OmfRecord {
 				state.frameState = -1;			// Indicate an error condition
 			}
 		}
-		
+
 		public void resolveTarget(FixupState state) throws OmfException {
 			int method;
 			int index;
@@ -257,7 +257,7 @@ public class OmfFixupRecord extends OmfRecord {
 				state.targetState = -1;			// This indicates an unresolved target
 			}
 		}
-		
+
 		public static FixupTarget readFixupTarget(BinaryReader reader,boolean hasBigFields) throws IOException {
 			FixupTarget fixupTarget = new FixupTarget();
 			fixupTarget.fixData = reader.readNextByte();
@@ -275,18 +275,18 @@ public class OmfFixupRecord extends OmfRecord {
 			return fixupTarget;
 		}
 	}
-	
+
 	public static class FixupSubrecord extends Subrecord {
 		private byte lobyte;			// lo-byte of location
 		private byte hibyte;			// hi-byte of location
 		private FixupTarget target;
-		
+
 		public FixupSubrecord() {
 			super(false);
 		}
-		
+
 		public void resolveFixup(FixupState state) throws OmfException {
-			
+
 			target.resolveTarget(state);		// Resolve target first as frame may need to reference results
 			target.resolveFrame(state);
 			state.M = ((lobyte>>6)&1)!=0;
@@ -305,15 +305,15 @@ public class OmfFixupRecord extends OmfRecord {
 				segIndex = state.currentFixupRecord.lastLIData.getSegmentIndex();
 			}
 			OmfSegmentHeader seg = state.header.resolveSegment(segIndex);
-			state.locAddress = seg.getAddress(state.language).add(blockDisplace + dataRecordOffset);			
+			state.locAddress = seg.getAddress(state.language).add(blockDisplace + dataRecordOffset);
 		}
-		
+
 		public static FixupSubrecord readFixupSubrecord(BinaryReader reader,boolean hasBigFields) throws IOException {
 			FixupSubrecord fixupSubrecord = new FixupSubrecord();
 			fixupSubrecord.lobyte = reader.readNextByte();
 			fixupSubrecord.hibyte = reader.readNextByte();
 			fixupSubrecord.target = FixupTarget.readFixupTarget(reader, hasBigFields);
 			return fixupSubrecord;
-		}		
+		}
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.util.xml.XmlUtilities;
  * source TOC file contains the table of context index name and its
  * corresponding url. However, JavaHelp expects the target value to be map ID in
  * the map file.
- * 
+ *
  */
 public class TOCConverter {
 
@@ -61,7 +61,7 @@ public class TOCConverter {
 
 	/**
 	 * Write the section of the map file for the table of contents.
-	 * 
+	 *
 	 * @param out output for the map file that maps a help ID to a url.
 	 * @throws IOException
 	 */
@@ -97,7 +97,7 @@ public class TOCConverter {
 
 	/**
 	 * Write the JavaHelp table of contents file.
-	 * 
+	 *
 	 * @throws IOException
 	 */
 	private void writeJavaHelpTOC() throws IOException {
@@ -169,7 +169,7 @@ public class TOCConverter {
 	 * Creates a temporary TOC file that does not have the <!DOCTYPE line in it
 	 * which causes the SAX parser to blow up; it does not like the bad url in
 	 * it.
-	 * 
+	 *
 	 * @return
 	 * @throws IOException
 	 */

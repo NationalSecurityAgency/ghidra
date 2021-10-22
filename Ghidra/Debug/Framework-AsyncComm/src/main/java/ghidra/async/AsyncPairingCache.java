@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,14 +24,14 @@ import com.google.common.cache.*;
 
 /**
  * A cache of futures which pairs each to its result by key
- * 
+ *
  * The cache accepts promises and results, storing unpaired entries for a timeout period. Each
  * promise is fulfilled when the cache accepts its corresponding result, determined by key.
  * Conversely, a cached result fulfills its corresponding promise, determined by key, when the cache
  * accepts that promise. Thus, the cache is two sided. When both the promise and the result for a
  * given key enter the cache, they are paired, the promise is fulfilled, and both are removed from
  * the cache.
- * 
+ *
  * If an entry is not paired within the timeout period, it is evicted. An evicted promise is likely
  * a recoverable error, e.g., a request timed out. An evicted result is likely a logic or
  * synchronization error. Requests, i.e., promises, are usually created before the result is
@@ -39,7 +39,7 @@ import com.google.common.cache.*;
  * usually enters soon after. If not, more than likely, the developer forgot to enter the request
  * into the cache, or if the result was reported out of band, it is gratuitous. Callbacks are
  * provided for eviction from either side of the cache.
- * 
+ *
  * @param <K> the type of keys
  * @param <V> the type of result values
  */
@@ -52,7 +52,7 @@ public abstract class AsyncPairingCache<K, V> {
 
 	/**
 	 * Construct a new matching cache
-	 * 
+	 *
 	 * @param concurrencyLevel the maximum number of thread expected to simultaneously access the
 	 *            cache
 	 * @param timeoutMillis the amount of time (in milliseconds) a promise or result may pend before
@@ -83,22 +83,22 @@ public abstract class AsyncPairingCache<K, V> {
 
 	/**
 	 * Called when a result is removed
-	 * 
+	 *
 	 * Eviction is likely due to a logic bug or a gratuitous result from an external source.
-	 * 
+	 *
 	 * @param rn the removal notification for the result entry
 	 */
 	protected abstract void resultRemoved(RemovalNotification<K, V> rn);
 
 	/**
 	 * Called when a promise is removed
-	 * 
+	 *
 	 * The most common implementation is to complete the future exceptionally. The default
 	 * implementation completes the future with a {@link RuntimeException}. Extensions should
 	 * override this method. Note that this method is called for removal as a result of normal
 	 * completion, too. In that case {@link RemovalNotification#getCause()} will return
 	 * {@link RemovalCause#EXPLICIT}.
-	 * 
+	 *
 	 * @param rn the removal notification for the promise entry
 	 */
 	protected void promiseRemoved(RemovalNotification<K, CompletableFuture<V>> rn) {
@@ -112,10 +112,10 @@ public abstract class AsyncPairingCache<K, V> {
 
 	/**
 	 * Enter a promise for the the given key into the cache
-	 * 
+	 *
 	 * If the result for the given key is already available, the promise does not enter the cache.
 	 * Instead, the result is removed and the promise is completed.
-	 * 
+	 *
 	 * @param key the key for the expected result
 	 * @param promise the promise to be completed when the result is available
 	 */
@@ -125,10 +125,10 @@ public abstract class AsyncPairingCache<K, V> {
 
 	/**
 	 * Enter a promise for the the given key into the cache
-	 * 
+	 *
 	 * If the result for the given key is already available, the promise does not enter the cache.
 	 * Instead, the result is removed and the promise is completed.
-	 * 
+	 *
 	 * @param key the key for the expected result
 	 * @param promise the promise to be completed when the result is available
 	 */
@@ -147,10 +147,10 @@ public abstract class AsyncPairingCache<K, V> {
 
 	/**
 	 * Enter a result for the given key into the cache
-	 * 
+	 *
 	 * If a promise for the key already exists, the result does not enter the cache. Instead, the
 	 * promise is removed and completed.
-	 * 
+	 *
 	 * @param key the key for the provided result
 	 * @param value the result
 	 */
@@ -168,13 +168,13 @@ public abstract class AsyncPairingCache<K, V> {
 
 	/**
 	 * Flush the cache, completing all pending requests exceptionally
-	 * 
+	 *
 	 * Both sides of the cache are cleared. Note that this will invoke the removal callback for each
 	 * entry giving {@link RemovalCause#EXPLICIT} as the cause. For requests, the callback ought not
 	 * to complete the request, exceptionally or otherwise, since the flush is about to complete it
 	 * with the given exception. The implementor may freely choose how to handle flushed pending
 	 * results.
-	 * 
+	 *
 	 * @param exc the exception for completing the requests
 	 */
 	public void flush(Throwable exc) {
@@ -191,7 +191,7 @@ public abstract class AsyncPairingCache<K, V> {
 
 	/**
 	 * Get the map view of unpaired promises
-	 * 
+	 *
 	 * @return the map
 	 */
 	public Map<K, CompletableFuture<V>> getUnpairedPromises() {
@@ -200,7 +200,7 @@ public abstract class AsyncPairingCache<K, V> {
 
 	/**
 	 * Get the map view of unpaired results
-	 * 
+	 *
 	 * @return the map
 	 */
 	public Map<K, V> getUnpairedResults() {

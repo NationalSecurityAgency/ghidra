@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -323,7 +323,7 @@ public class ProjectDataTableDnDHandler implements DragSourceListener, DragGestu
 				return false;
 			}
 
-			// don't let other listeners process the event if we are 'pressing' the mouse 
+			// don't let other listeners process the event if we are 'pressing' the mouse
 			// button on an already selected row (to prevent de-selecting a multi-selection for
 			// a drag operation)
 			int row = table.rowAtPoint(e.getPoint());

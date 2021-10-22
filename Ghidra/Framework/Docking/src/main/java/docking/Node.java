@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ abstract class Node {
 
 	/**
 	 * Gets all children of this node; an empty list if no children exist.
-	 * 
+	 *
 	 * @return all children of this node.
 	 */
 	abstract List<Node> getChildren();
@@ -65,14 +65,14 @@ abstract class Node {
 
 	/**
 	 * Determine if this node contains the specified component
-	 * 
+	 *
 	 * @param info component information
 	 * @return true if this node contains the specified component
 	 */
 	abstract boolean contains(ComponentPlaceholder info);
 
 	/**
-	 * Returns an JDOM element object that contains the configuration state of this node 
+	 * Returns an JDOM element object that contains the configuration state of this node
 	 * and its children
 	 * @return the element
 	 */
@@ -111,7 +111,7 @@ abstract class Node {
 
 	/**
 	 * Generates a node corresponding to the given XML element
-	 * 
+	 *
 	 * @param elem the XML element for which to generate a node
 	 * @param mgr the DockingWindowsManager for the new node
 	 * @param parentNode the parent node for the new node
@@ -138,7 +138,7 @@ abstract class Node {
 
 	/**
 	 * Prints the hierarchy of nodes represented by this node
-	 * 
+	 *
 	 * @return a string representation of the hierarchy of nodes represented by this node.
 	 */
 	String printTree() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -98,7 +98,7 @@ public class FindRunsOfPointersScript extends GhidraScript {
 					tableSize++;
 
 					Address ref = findRef(topAddress, dist);
-					//println(topAddress.toString() + " " + dist + " " + tableSize);	    			
+					//println(topAddress.toString() + " " + dist + " " + tableSize);
 					Table pointerTable = new Table(topAddress, dist, tableSize, ref);
 					tableArray.add(pointerTable);
 				}
@@ -157,13 +157,13 @@ public class FindRunsOfPointersScript extends GhidraScript {
 					monitor);
 			if (found != null) {
 				ref = found;
-				//	println("Found ref at " + found.toString());				
+				//	println("Found ref at " + found.toString());
 				noRefFound = false;
 			}
 			else {
 				longIndex++;
 				// check to see if we are at the top of the range of possible refs
-				if (longIndex > (dist - 4)) {// change the four to pointer size when I add 64bit 
+				if (longIndex > (dist - 4)) {// change the four to pointer size when I add 64bit
 					tryPrevAddr = false;
 				}
 
@@ -213,11 +213,11 @@ public class FindRunsOfPointersScript extends GhidraScript {
 		return bytes;
 	}
 
-	// find references to the possible table 
+	// find references to the possible table
 	// start looking at the top of the array and work back the distance between the pointers in
 	// the table
-//	Address [] findReferenceToTable(Address topAddress, long dist){	
-//						
+//	Address [] findReferenceToTable(Address topAddress, long dist){
+//
 //		ArrayList<Address> foundAddrs = new ArrayList<Address>();
 //		long counter = 0;
 //		while((foundAddrs.size() == 0) || (counter == (dist-1))){
@@ -228,7 +228,7 @@ public class FindRunsOfPointersScript extends GhidraScript {
 //			}
 //			counter++;
 //		}
-//		
+//
 //		return (Address[]) foundAddrs.toArray();
 //	}
 

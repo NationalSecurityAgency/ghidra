@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,7 @@ vector<OpTpl *> *ExprTree::appendParams(OpTpl *op,vector<ExprTree *> *param)
 {				// Create op expression with entire list of expression
 				// inputs
   vector<OpTpl *> *res = new vector<OpTpl *>;
-  
+
   for(int4 i=0;i<param->size();++i) {
     res->insert(res->end(),(*param)[i]->ops->begin(),(*param)[i]->ops->end());
     (*param)[i]->ops->clear();
@@ -599,7 +599,7 @@ VarnodeTpl *PcodeCompile::buildTruncatedVarnode(VarnodeTpl *basevn,uint4 bitoffs
     specialoff = ConstTpl(ConstTpl::handle,basevn->getOffset().getHandleIndex(),
 			  ConstTpl::v_offset_plus,byteoffset);
   }
-  else { 
+  else {
     if (basevn->getSize().getType() != ConstTpl::real)
       throw SleighError("Could not construct requested bit range");
     uintb plus;
@@ -665,7 +665,7 @@ vector<OpTpl *> *PcodeCompile::assignBitRange(VarnodeTpl *vn,uint4 bitoffset,uin
       createOp(CPUI_INT_ZEXT,rhs);
     if (shiftneeded)
       appendOp(CPUI_INT_LEFT,rhs,bitoffset,4);
-  
+
     finalout = new VarnodeTpl(*vn);
     res = createOpOut(finalout,CPUI_INT_OR,res,rhs);
   }
@@ -729,7 +729,7 @@ ExprTree *PcodeCompile::createBitRange(SpecificSymbol *sym,uint4 bitoffset,uint4
 
   uintb mask = (uintb)2;
   mask = ((mask<<(numbits-1))-1);
-  
+
   if (truncneeded && ((bitoffset % 8)==0)) {
     truncshift = bitoffset/8;
     bitoffset = 0;

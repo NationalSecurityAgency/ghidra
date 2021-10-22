@@ -67,7 +67,7 @@
 {Improving Disassembly and Decompilation}
 \subtitle[]
 {or \\  Moderately Advanced Ghidra Usage \\ \vspace{.2in}\includegraphics[scale=0.5]{GHIDRA_1.png}}
- 
+
 
 %\titlegraphic{\includegraphics[scale=0.4]{GHIDRA_1.png}}
 \date{}
@@ -86,7 +86,7 @@
 \frametitle{Table of Contents}
 \tableofcontents[sections={1-5},hideallsubsections]
 \end{frame}
- 
+
 \begin{frame}
 \frametitle{Table of Contents}
 \tableofcontents[sections={6-},hideallsubsections]
@@ -96,12 +96,12 @@
 
 \subsection{Introduction}
 \begin{frame}
-\begin{block}{Intro}   
+\begin{block}{Intro}
 \begin{itemize}
 \item Like any SRE tool, Ghidra makes assumptions which sometimes need to be adjusted by reverse engineers.
 \item These slides describe techniques for recognizing problematic situations and steps you can take to improve Ghidra's analysis.
 \item These slides assume basic familiarity with Ghidra.
-\item Note: the materials for the ``Beginner'' and ``Intermediate'' Ghidra classes are included with the Ghidra distribution. 
+\item Note: the materials for the ``Beginner'' and ``Intermediate'' Ghidra classes are included with the Ghidra distribution.
 \end{itemize}
 \end{block}
 \end{frame}
@@ -110,10 +110,10 @@
 \begin{frame}
 \begin{block}{Setup}
 \begin{itemize}
-\item First, create a new project for the example files used by these slides. 
+\item First, create a new project for the example files used by these slides.
 \item Next, import the files.  They are located in \small \textbf{$\langle$ghidra\_dir$\rangle$/docs/GhidraClass/ExerciseFiles/Advanced} \normalsize
-\item The easiest way to do this is to use the Batch Importer 
-\item[](\textbf{File} $\rightarrow$ \textbf{Batch Import...} from the Project Window). 
+\item The easiest way to do this is to use the Batch Importer
+\item[](\textbf{File} $\rightarrow$ \textbf{Batch Import...} from the Project Window).
 \end{itemize}
 \end{block}
 \end{frame}
@@ -123,9 +123,9 @@
 \subsection{Evaluating Analysis: The Entropy and Overview Windows}
 
 \begin{frame}
-\begin{block}{Evaluation} 
+\begin{block}{Evaluation}
 \begin{itemize}
-\item Use the entropy and overview sidebars to get a quick sense of how well a binary has been analyzed/disassembled. 
+\item Use the entropy and overview sidebars to get a quick sense of how well a binary has been analyzed/disassembled.
 \item For instance, the entropy sidebar can tell you whether your binary has regions which are likely encrypted or compressed.
 \item To activate these sidebars, use the dropdown menu in the Listing (immediately to the right of the camera icon).
 \end{itemize}
@@ -137,7 +137,7 @@
 \begin{block}{Non-returning Functions}
 \begin{itemize}
 \item Some functions, like \textbf{exit} or \textbf{abort}, are \textbf{non-returning functions}.  Such functions do not return to the caller after executing. Instead, they
-do drastic things like halting the execution of the program. 
+do drastic things like halting the execution of the program.
 \item Suppose \textbf{panic} is a function that does not return. The compiler is free to put whatever it wants (e.g., data) after calls to \textbf{panic}.
 \item If Ghidra does not know that \textbf{panic} is non-returning, it will assume that bytes after calls to \textbf{panic} are instructions and attempt to disassemble them.
 \end{itemize}
@@ -171,8 +171,8 @@ the decompiler, select \textbf{Edit Function Signature} and select the \textbf{N
 \begin{itemize}
 \item[] (advance for solutions)
 \pause
-\item The function \textbf{loopForever} is non-returning. 
-\item Note: You can configure how much evidence the \textbf{Non-Returning Functions - Discovered} analyzer requires before deciding that function is non-returning via 
+\item The function \textbf{loopForever} is non-returning.
+\item Note: You can configure how much evidence the \textbf{Non-Returning Functions - Discovered} analyzer requires before deciding that function is non-returning via
 \textbf{Analysis} $\rightarrow$ \textbf{Auto Analyze ...} from the Code Browser. If you lower the evidence threshold, this analyzer will mark \textbf{loopForever} as
 non-returning.
 \item Also, the script \textbf{FixupNoReturnFunctions.java} will analyze a program and present a list of potentially non-returning functions.
@@ -203,7 +203,7 @@ start of a function.
 \begin{block}{Finding Functions}
 \begin{itemize}
 \item Ghidra has an experimental plugin for exploring how functions already found in a program begin and using that information to find additional functions.
-\item To enable it from the Code Browser: \textbf{File} $\rightarrow$ \textbf{Configure...}, click on the (upper right) plug icon, and select the 
+\item To enable it from the Code Browser: \textbf{File} $\rightarrow$ \textbf{Configure...}, click on the (upper right) plug icon, and select the
 \textbf{Function Bit Patterns Explorer} plugin.
 \item Then select \textbf{Tools} $\rightarrow$ \textbf{Explore Function Bit Patterns} from the Code Browser.
 \item Hovering over something in the tool and pressing \textbf{F1} will bring up the Ghidra help (this works for most parts of Ghidra).
@@ -233,9 +233,9 @@ address would disassemble to without actually disassembling them.
 \begin{itemize}
 \item One of the best ways to clean up the decompiled code is to define data structures.
 \item You can do this manually through the \textbf{Data Type Manager}.
-\item You can also have Ghidra help you by right-clicking on a variable in the decompiler view and selecting 
+\item You can also have Ghidra help you by right-clicking on a variable in the decompiler view and selecting
 \begin{itemize}
-\item \textbf{Auto Create (Class) Structure}, or 
+\item \textbf{Auto Create (Class) Structure}, or
 \item \textbf{Auto Fill in (Class) Structure}.
 \end{itemize}
 \item Note: If you happen to have a C header file, you can parse data types from it by selecting \textbf{File} $\rightarrow$ \textbf{Parse C Source...} from the Code Browser
@@ -248,7 +248,7 @@ address would disassemble to without actually disassembling them.
 \begin{block}{Exercise: Auto-creating Structures}
 \begin{enumerate}
 \item Open and analyze the file \textbf{createStructure}.
-\item[] This file contains two functions of interest: \textbf{setFirstAndThird} and \textbf{setSecondAndFourth}. 
+\item[] This file contains two functions of interest: \textbf{setFirstAndThird} and \textbf{setSecondAndFourth}.
 \item[] The first parameter to each of these two function has type \textbf{exampleStruct *}, where \textbf{exampleStruct} is defined as follows:
 \item[] \begin{verbatim}
           typedef struct {
@@ -266,7 +266,7 @@ address would disassemble to without actually disassembling them.
 \begin{block}{Exercise: Auto-creating Structures}
 \begin{enumerate}
 \setcounter{enumi}{1}
-\item Navigate to \textbf{setFirstAndThird}. 
+\item Navigate to \textbf{setFirstAndThird}.
 \item In the decompiler view, change the type of the second parameter to \textbf{long} and the third parameter to \textbf{char *}
 \item In the decompiler view, right-click on \textbf{param1} and select \textbf{Auto Create Structure}.
 \item Right-click on the default structure name (\textbf{astruct}) in the decompiler and select \textbf{Edit Data Type...}
@@ -294,7 +294,7 @@ address would disassemble to without actually disassembling them.
 \begin{frame}
 \begin{block}{Defining Classes}
 \begin{itemize}
-\item If a variable is known to be a \textbf{this} parameter, right-clicking on it will yield a menu with the option \textbf{Auto Fill in Class Structure} instead 
+\item If a variable is known to be a \textbf{this} parameter, right-clicking on it will yield a menu with the option \textbf{Auto Fill in Class Structure} instead
 of \textbf{Auto Fill in Structure}.
 \end{itemize}
 \end{block}
@@ -304,9 +304,9 @@ of \textbf{Auto Fill in Structure}.
 \begin{block}{Exercise: Defining Classes}
 \begin{enumerate}
 \item Open and analyze the file \textbf{animals}.
-\item In the Listing, press \textbf{G} (goto).  In the resulting pop-up, enter \textbf{getAnimalAge}.  \item This will bring up the \textbf{Go To...} dialog, where you can 
+\item In the Listing, press \textbf{G} (goto).  In the resulting pop-up, enter \textbf{getAnimalAge}.  \item This will bring up the \textbf{Go To...} dialog, where you can
 select between the two functions with the name \textbf{getAnimalAge} (the functions are in different namespaces).
-\item[] Note: There are other windows, such as the \textbf{Functions} window, in which there is no default namespace column.  You can add a namespace column by right-clicking 
+\item[] Note: There are other windows, such as the \textbf{Functions} window, in which there is no default namespace column.  You can add a namespace column by right-clicking
 on any column name and selecting \textbf{Add/Remove Columns...}  You can also configure the display of certain columns by right-clicking on the column name.
 \item[] (continued)
 \end{enumerate}
@@ -319,7 +319,7 @@ on any column name and selecting \textbf{Add/Remove Columns...}  You can also co
 \setcounter{enumi}{3}
 \item Select \textbf{Dog::getAnimalAge} in the pop-up. This will cause the Code Browser to navigate to \textbf{Dog::getAnimalAge()}.
 \item[] Note: Alternatively, you can quickly navigate to the functions in a class using the \textbf{Classes} folder of the \textbf{Symbol Tree}.
-\item Verify that in the decompiler view, right-clicking on the token \textbf{Dog} yields a menu with \textbf{Auto Fill in Class Structure} as an option.  
+\item Verify that in the decompiler view, right-clicking on the token \textbf{Dog} yields a menu with \textbf{Auto Fill in Class Structure} as an option.
 Note that Ghidra has already created an empty structure named \textbf{Dog}.
 \end{enumerate}
 \end{block}
@@ -368,14 +368,14 @@ Note that Ghidra has already created an empty structure named \textbf{Dog}.
 \begin{block}{Exercise: Virtual Function Tables}
 \begin{enumerate}
 \setcounter{enumi}{2}
-\item First, create a function definition for each of the virtual functions 
+\item First, create a function definition for each of the virtual functions
 \begin{itemize}
 \item \textbf{void printSound(void)}
 \item \textbf{void printSpecificFact(void)}
 \item \textbf{int getAnimalAge(void)}
 \end{itemize}
-by right-clicking on \textbf{animals} in the \textbf{Data Type Manager} and selecting \textbf{New} $\rightarrow$ \textbf{Function Definition...} 
-\item[] For each function, enter the signature and select \textbf{\_thiscall} for the calling convention. 
+by right-clicking on \textbf{animals} in the \textbf{Data Type Manager} and selecting \textbf{New} $\rightarrow$ \textbf{Function Definition...}
+\item[] For each function, enter the signature and select \textbf{\_thiscall} for the calling convention.
 \end{enumerate}
 \end{block}
 \end{frame}
@@ -386,8 +386,8 @@ by right-clicking on \textbf{animals} in the \textbf{Data Type Manager} and sele
 \setcounter{enumi}{3}
 \item Now, right-click on \textbf{animals} in the \textbf{Data Type Manager} and select \textbf{New} $\rightarrow$ \textbf{Structure...}
 \item Give the new structure the name \textbf{Animal\_vftable}.
-\item Fill in the structure with the data types corresponding to the virtual functions of the class \textbf{Animal}.  You can do this by double-clicking in an entry in 
-the \textbf{DataType} column and entering a name of a virtual function.  
+\item Fill in the structure with the data types corresponding to the virtual functions of the class \textbf{Animal}.  You can do this by double-clicking in an entry in
+the \textbf{DataType} column and entering a name of a virtual function.
 \item[] Notes:
 \begin{itemize}
 \item The order of the functions in the vftable is the same as the order they are called in the source code snippet.
@@ -404,7 +404,7 @@ the \textbf{DataType} column and entering a name of a virtual function.
 \setcounter{enumi}{6}
 \item Alternatively:
 \begin{itemize}
-\item Find the vftable for \textbf{Animal} (from the Code Browser, \textbf{Search}~$\rightarrow$~\textbf{For Address Tables...}) and look for the table consisting of calls to 
+\item Find the vftable for \textbf{Animal} (from the Code Browser, \textbf{Search}~$\rightarrow$~\textbf{For Address Tables...}) and look for the table consisting of calls to
 \textbf{\_\_cxa\_pure\_virtual}.
 \item Apply the three function definition data types to the pointers in the table in the appropriate order.
 \item Select the table in the Listing, right-click, \textbf{Data}~$\rightarrow$~\textbf{Create Structure}
@@ -443,7 +443,7 @@ the \textbf{DataType} column and entering a name of a virtual function.
 \begin{itemize}
 \item Sometimes the signature of a function shown in the Listing (or in the \textbf{Functions} window) will not match the signature shown in the decompiler.
 \item This happens because the decompiler performs its own analysis to determine the function's signature.
-\item The decompiler re-analyzes the function each time it is decompiled.  
+\item The decompiler re-analyzes the function each time it is decompiled.
 \item The signature shown in the Listing is created when the function is (re-)created.  This is the signature that is stored in the Ghidra program database.
 \end{itemize}
 \end{block}
@@ -454,7 +454,7 @@ the \textbf{DataType} column and entering a name of a virtual function.
 \begin{itemize}
 \item To transfer the decompiler's signature to the Listing, right-click on the function in the decompiler and select \textbf{Commit Params/Return}. The transfered signature will be
 saved to the program database.
-\item The situation is the same for the local variables of a function: right-click on the function in the decompiler and select \textbf{Commit Locals}. 
+\item The situation is the same for the local variables of a function: right-click on the function in the decompiler and select \textbf{Commit Locals}.
 \item[] Note: Usually it's better not to commit locals and instead to let the decompiler assign types to them automatically.  Committing locals can
 interfere with type propagation.
 \item Editing a function's signature manually, from either the Listing or the decompiler, commits the new signature to the program database.
@@ -467,8 +467,8 @@ interfere with type propagation.
 \begin{block}{Decompiler Parameter ID}
 \begin{itemize}
 \item The \textbf{Decompiler Parameter ID Analyzer} (\textbf{Analysis} $\rightarrow$ \textbf{One Shot} $\rightarrow$ \textbf{Decompiler Parameter ID}) uses the decompiler and an
-exploration of the call tree to determine parameter, return type, and calling convention information about functions in a program.  This analyzer can be quite useful when 
-you have some rich type information, such as known types from library calls.  However, if you run this analyzer too early or before fixing problems, you can end up propagating 
+exploration of the call tree to determine parameter, return type, and calling convention information about functions in a program.  This analyzer can be quite useful when
+you have some rich type information, such as known types from library calls.  However, if you run this analyzer too early or before fixing problems, you can end up propagating
 bad information all over the program.
 \item Note: this analyzer will commit the signature of each function.
 \end{itemize}
@@ -494,7 +494,7 @@ In other cases you should edit the signature of the called function directly.
 \item For reference when doing the exercises, here is the calling convention used by Linux on x86\_64:
 \begin{itemize}
 \item First 6 integer/pointer args are passed in \textbf{RDI}, \textbf{RSI}, \textbf{RDX}, \textbf{RCX}, \textbf{R8}, \textbf{R9}.
-\item First 8 floating point args are passed in \textbf{XMM0}-\textbf{XMM7}. 
+\item First 8 floating point args are passed in \textbf{XMM0}-\textbf{XMM7}.
 \item Additional args are passed on the stack.
 \item For variadic functions, the number of floating point args passed in the \textbf{XMM} registers is passed in \textbf{AL}.
 \end{itemize}
@@ -505,9 +505,9 @@ In other cases you should edit the signature of the called function directly.
 \begin{frame}
 \begin{block}{Exercise: Overriding Signatures}
 \begin{enumerate}
-\item Open and analyze the file \textbf{override.so}, then navigate to the function \textbf{overrideSignature}.  Override the signature of the call to \textbf{printf}, 
+\item Open and analyze the file \textbf{override.so}, then navigate to the function \textbf{overrideSignature}.  Override the signature of the call to \textbf{printf},
 if necessary, using the format string to determine number and types of the parameters to the call. Some of the parameters to \textbf{printf} are global variables; determine
-and apply their types. 
+and apply their types.
 \end{enumerate}
 \end{block}
 \end{frame}
@@ -543,7 +543,7 @@ and apply their types.
 \begin{frame}
 \begin{block}{Exercise: Custom Calling Conventions}
 \begin{enumerate}
-\item Open and analyze the file \textbf{custom}, then navigate to the function \textbf{main}. 
+\item Open and analyze the file \textbf{custom}, then navigate to the function \textbf{main}.
 \item \textbf{main} calls the functions \textbf{sum} and \textbf{diff}, which have custom calling conventions.
 \item Examine the bodies and call sites of \textbf{sum} and \textbf{diff} to determine their signatures and custom calling conventions.
 \item Edit each of the two functions and select \textbf{Use Custom Storage}.
@@ -560,7 +560,7 @@ and apply their types.
 \item Click on the entries in the \textbf{Storage} column to set the storage for each parameter/return value.
 \item In the resulting \textbf{Storage Address Editor} window, click \textbf{Add} to add storage, then click on each
 table entry to modify.
-\item You might find it helpful to remove some of the variable references Ghidra adds in the Listing, particularly to stack variables.  To do this, \textbf{Edit} 
+\item You might find it helpful to remove some of the variable references Ghidra adds in the Listing, particularly to stack variables.  To do this, \textbf{Edit}
 $\rightarrow$ \textbf{Tool Options} $\rightarrow$ \textbf{Listing Fields} $\rightarrow$ \textbf{Operands Field} from the Code Browser.
 \end{enumerate}
 \end{block}
@@ -599,7 +599,7 @@ $\rightarrow$ \textbf{Tool Options} $\rightarrow$ \textbf{Listing Fields} $\righ
 \begin{frame}
 \begin{block}{Exercise: Multiple Storage Locations}
 \begin{itemize}
-\item The result of \textbf{ldiv} is returned in the register pair \textbf{RDX:RAX} (\textbf{RAX} contains the quotient, \textbf{RDX} contains the remainder). 
+\item The result of \textbf{ldiv} is returned in the register pair \textbf{RDX:RAX} (\textbf{RAX} contains the quotient, \textbf{RDX} contains the remainder).
 \end{itemize}
 \end{block}
 \end{frame}
@@ -610,7 +610,7 @@ $\rightarrow$ \textbf{Tool Options} $\rightarrow$ \textbf{Listing Fields} $\righ
 \begin{block}{Inlining Functions}
 \begin{itemize}
 \item Some special functions have side effects that the decompiler needs to know about for correct decompilation. You can handle this situation by marking them
-as \textbf{inline}. 
+as \textbf{inline}.
 \item If \textbf{foo} is marked as inline, calls to \textbf{foo} will be replaced by the body of \textbf{foo} during decompilation.
 \item To mark \textbf{foo} as inline, edit \textbf{foo}'s signature and check the \textbf{In~Line} function attribute.
 \end{itemize}
@@ -620,8 +620,8 @@ as \textbf{inline}.
 \begin{frame}
 \begin{block}{Inlining Functions}
 \begin{itemize}
-\item Inlining a function is related to the notion of a \textbf{call fixup}, where calls to certain functions are replaced with snippets of Pcode.  
-\item These functions are recognized by name and have the call fixup applied automatically. 
+\item Inlining a function is related to the notion of a \textbf{call fixup}, where calls to certain functions are replaced with snippets of Pcode.
+\item These functions are recognized by name and have the call fixup applied automatically.
 \item Examples include functions related to structured exception handling in Windows.
 \item You can also select from pre-defined call fixups when editing a function signature.
 \item Note: there are no fixups defined for x86\_64 binaries compiled with \textbf{gcc}, so the \textbf{Call Fixup} selector is greyed out for the exercise files.
@@ -637,7 +637,7 @@ as \textbf{inline}.
 The task is to get the decompiler to show this.
 \item First, ensure that \textbf{main} has the correct signature \\ (\textbf{int main(int argc, char **argv)}).
 \item Next, override the signature of the call to \textbf{printf} if necessary, so that it agrees with the format string.
-\item[] (continued) 
+\item[] (continued)
 \end{enumerate}
 \end{block}
 \end{frame}
@@ -679,9 +679,9 @@ calling convention, it assumes that the call to \textbf{adjustStack} does not ch
 \begin{itemize}
 \item Before going further, let's examine what we see.
 \begin{itemize}
-\item In the decompiler, you should see \textbf{syscall()}, which looks like a function call but isn't (try clicking on it). 
+\item In the decompiler, you should see \textbf{syscall()}, which looks like a function call but isn't (try clicking on it).
 \item This is an example of a \textbf{user-defined Pcode op}.
-\item Such operations are used when implementing the Pcode for a particular instruction is too hard (or impossible).  
+\item Such operations are used when implementing the Pcode for a particular instruction is too hard (or impossible).
 \item These operations show up as \textbf{CALLOTHER} Pcode ops in the Pcode field in the Listing.  They can have inputs and outputs, but otherwise are treated
 as black boxes by the decompiler.
 \end{itemize}
@@ -697,8 +697,8 @@ as black boxes by the decompiler.
 \end{enumerate}
 \pause
 \begin{itemize}
-\item The \textbf{SYSCALL} instruction is translated to a single \textbf{CALLOTHER} Pcode op (named \textbf{syscall}).  The decompiler does not consider this operation to have any 
-side effects, so when it tries to automatically determine the return type it sees a move to \textbf{RDX} and a move to \textbf{RAX} before the \textbf{RET} instruction.  
+\item The \textbf{SYSCALL} instruction is translated to a single \textbf{CALLOTHER} Pcode op (named \textbf{syscall}).  The decompiler does not consider this operation to have any
+side effects, so when it tries to automatically determine the return type it sees a move to \textbf{RDX} and a move to \textbf{RAX} before the \textbf{RET} instruction.
 These registers form a register pair for this architecture, so the decompiler thinks the return value is 16 bytes.
 \item So how do we improve the decompilation?
 \end{itemize}
@@ -708,7 +708,7 @@ These registers form a register pair for this architecture, so the decompiler th
 \begin{frame}
 \begin{block}{Exercise: System Calls}
 \begin{itemize}
-\item This system call is a call to \textbf{write} since \texttt{1} is written to the system call register (\textbf{RAX}) before the \textbf{syscall} 
+\item This system call is a call to \textbf{write} since \texttt{1} is written to the system call register (\textbf{RAX}) before the \textbf{syscall}
 instruction is executed (search online for ``x64 Linux syscall table").
 \item We'd like the call to \textbf{write} to appear with the correct name, signature, and calling convention.
 \item We'd also like cross references, so that we can easily see all calls to \textbf{write}.
@@ -725,7 +725,7 @@ instruction is executed (search online for ``x64 Linux syscall table").
 \item Prior to Ghidra 9.1, the \textbf{OTHER} space was used to store data from a binary that does not get loaded into memory, such as the \texttt{.comment} section of an ELF file.
 \item In 9.1, we've extended the ability to make references into the \textbf{OTHER} space.
 \item You can't use this space directly, but you can create \textbf{overlay blocks} on the \textbf{OTHER} space.
-\item Overlays are a (sort of old school) technique to allow different blocks to be swapped in and out at the same address.  
+\item Overlays are a (sort of old school) technique to allow different blocks to be swapped in and out at the same address.
 \item For our purposes, they allow us to put things in an artificial memory space without the possibility of conflicting with other uses of that space.
 \end{itemize}
 \end{block}
@@ -752,7 +752,7 @@ For Block Type, select \textbf{Overlay} from the drop-down menu.
 \setcounter{enumi}{3}
 \item Next, go to address \texttt{0x1} in \textbf{syscall\_block} and create a function (in the Listing, select both the address and the \texttt{??} and press \texttt{f}).
 \item Edit this new function to give it the name \textbf{write} and the \textbf{syscall} calling convention.
-\item If you happen to know the parameters and their types you can add them.  Altervatively, select the new function \textbf{write} in the Code Browser, right-click on 
+\item If you happen to know the parameters and their types you can add them.  Altervatively, select the new function \textbf{write} in the Code Browser, right-click on
 \textbf{generic\_clib\_64} in the \textbf{Data Type Manager}, and select \textbf{Apply Function Data Types}
 \item[] Note: the function we've created has no body. It's essentially an address to hang a function signature and to get cross-references.
 \end{enumerate}
@@ -763,7 +763,7 @@ For Block Type, select \textbf{Overlay} from the drop-down menu.
 \begin{block}{Exercise: System Calls}
 \begin{enumerate}
 \setcounter{enumi}{6}
-\item Now, navigate back to the \textbf{syscall} instruction in \textbf{main}. 
+\item Now, navigate back to the \textbf{syscall} instruction in \textbf{main}.
 \item Click on the instruction in the Listing, then press \texttt{r} to bring up the \textbf{Reference Manager}.
 \item Click the green plus to add a reference.  Enter \textbf{syscall\_block::1} for the ``To Address'' and \textbf{CALLOTHER\_CALL\_OVERRIDE} for the Ref-Type.
 This reference type essentially transforms the \textbf{CALLOTHER} Pcode op to a \textbf{CALL} op before sending the Pcode to the decompiler.  The call target is the ``To Address''
@@ -776,7 +776,7 @@ of the reference.
 \begin{frame}
 \begin{block}{System Call Notes}
 \begin{enumerate}
-\item The script \texttt{ResolveX86orX64LinuxSyscallScript.java} will do all of this for you. You can run it on this file, but a better demonstration is to run it on a 
+\item The script \texttt{ResolveX86orX64LinuxSyscallScript.java} will do all of this for you. You can run it on this file, but a better demonstration is to run it on a
 libc shared object file.
 \item The script uses the \textbf{Symbolic Propagator} to determine the value of a register at a particular location.
 \item The script requires a mapping from system call numbers to system call names.  The x86 and x64 ones come with Ghidra, you will need to supply others.
@@ -793,9 +793,9 @@ but you might have to supply your own data type archive.
 \begin{frame}
 \begin{block}{Fixing Switch Statements}
 \begin{itemize}
-\item Sometimes you will see warnings in the decompiler view stating that there are too many branches to recover a jumptable. 
+\item Sometimes you will see warnings in the decompiler view stating that there are too many branches to recover a jumptable.
 \item One reason for this is that there actually is a jump table, but the decompiler can't determine bounds on the switch variable.
-\item In such cases, you can add the jump targets manually and then run the script \textbf{SwitchOverride.java}. 
+\item In such cases, you can add the jump targets manually and then run the script \textbf{SwitchOverride.java}.
 \item Note: To find such locations in a program, run the script \textbf{FindUnrecoveredSwitchesScript.java}.
 \end{itemize}
 \end{block}
@@ -805,10 +805,10 @@ but you might have to supply your own data type archive.
 \begin{block}{Exercise: Fixing Switch Statements}
 \begin{enumerate}
 \item Open and analyze the file \textbf{switch}, then navigate to the function \textbf{main}. The decompiler view should contain a warning about an unrecovered jumptable.
-\item The global variable \textbf{array} is the jumptable. 
-\item Navigate to \textbf{array} in the Listing and press \textbf{p} to define the first element to be a pointer.  Note: this will clear any data type information that Ghidra assigned to 
+\item The global variable \textbf{array} is the jumptable.
+\item Navigate to \textbf{array} in the Listing and press \textbf{p} to define the first element to be a pointer.  Note: this will clear any data type information that Ghidra assigned to
 \textbf{array} automatically.
-\item Now press \textbf{[} to define an array.  Enter 10 for the number of elements. 
+\item Now press \textbf{[} to define an array.  Enter 10 for the number of elements.
 \item This will trigger disassembly at each of the addresses in the jumptable, but these addresses are not yet part of the function \textbf{main}.
 \item[] (continued...)
 \end{enumerate}
@@ -849,11 +849,11 @@ but you might have to supply your own data type archive.
 \begin{block}{Shared Returns}
 \begin{itemize}
 \item If a \textbf{callerOne} ends with call to \textbf{callee}, compilers will sometimes perform an optimization which replaces that final call with a jump.
-\item If \textbf{callerOne} and \textbf{callerTwo} both end with calls to \textbf{callee}, this optimization will result in \textbf{callerOne} and \textbf{callerTwo} 
+\item If \textbf{callerOne} and \textbf{callerTwo} both end with calls to \textbf{callee}, this optimization will result in \textbf{callerOne} and \textbf{callerTwo}
 ending with jumps to \textbf{callee}.
 \item The \textbf{Shared Return Analyzer} detects this situation and modifies the flow of the jump instruction to have type \textbf{CALL\_RETURN}. This will change how
 the functions are displayed in the decompiler.
-\item You can also do this manually, in case the analyzer missed something (for example, if only one of the functions sharing a final call/jump has been found and disassembled). 
+\item You can also do this manually, in case the analyzer missed something (for example, if only one of the functions sharing a final call/jump has been found and disassembled).
 \end{itemize}
 \end{block}
 \end{frame}
@@ -862,10 +862,10 @@ the functions are displayed in the decompiler.
 \begin{block}{Exercise: Shared Returns}
 \begin{enumerate}
 \item Uncheck the \textbf{Shared Return Calls} analyzer before analyzing \textbf{sharedReturn}.
-\item This file has been stripped of symbols.  To find \textbf{main}, navigate to \textbf{entry} and look for the call to \textbf{\_\_libc\_start\_main}. The first argument to this 
-call corresponds to the \textbf{main} method in the source code.   
-\item \textbf{main} contains two calls to non-library functions.  Each callee contains a \textbf{JMP} instruction corresponding to what was a function call in the source code. 
-\item Find these \textbf{JMP} instructions, right-click, select \textbf{Modify Instruction Flow...}, and change the flow to \textbf{CALL\_RETURN}. Verify that a new function call appears 
+\item This file has been stripped of symbols.  To find \textbf{main}, navigate to \textbf{entry} and look for the call to \textbf{\_\_libc\_start\_main}. The first argument to this
+call corresponds to the \textbf{main} method in the source code.
+\item \textbf{main} contains two calls to non-library functions.  Each callee contains a \textbf{JMP} instruction corresponding to what was a function call in the source code.
+\item Find these \textbf{JMP} instructions, right-click, select \textbf{Modify Instruction Flow...}, and change the flow to \textbf{CALL\_RETURN}. Verify that a new function call appears
 in the decompilation.
 \end{enumerate}
 \end{block}
@@ -875,10 +875,10 @@ in the decompilation.
 \begin{frame}
 \begin{block}{Opaque Predicates}
 \begin{itemize}
-\item One anti-disassembly technique is to create an if-else statement with a condition that always evalutes to the same value, but complicated enough for this to be difficult to 
-determine statically.  
+\item One anti-disassembly technique is to create an if-else statement with a condition that always evalutes to the same value, but complicated enough for this to be difficult to
+determine statically.
 \item  This is an example of an \textbf{opaque predicate}.
-\item  The branch that is never taken can contain bytes sequences intended to thwart static analysis, such as sequences which disassemble to jumps to invalid targets. 
+\item  The branch that is never taken can contain bytes sequences intended to thwart static analysis, such as sequences which disassemble to jumps to invalid targets.
 \end{itemize}
 \end{block}
 \end{frame}
@@ -890,7 +890,7 @@ determine statically.
 \item \textbf{main} contains an opaque predicate.  Find it and fix it by either:
 \begin{enumerate}[(i)]
 \item Changing a conditional jump to an unconditional jump using the instruction patcher.  To patch an instruction, right-click on it in the Listing and select \textbf{Patch Instruction}.
-\item Adding a (primary) reference with Ref-Type \textbf{JUMP\_OVERRIDE\_UNCONDITIONAL} on the appropriate conditional jump. The ``To Address'' of the reference should be the jump target. 
+\item Adding a (primary) reference with Ref-Type \textbf{JUMP\_OVERRIDE\_UNCONDITIONAL} on the appropriate conditional jump. The ``To Address'' of the reference should be the jump target.
  To the decompiler, this will change the conditional jump to an unconditional jump.
 \end{enumerate}
 \item[] (hint on next slide)
@@ -931,7 +931,7 @@ determine statically.
 \begin{itemize}
 \item[] (advance for solutions)
 \pause
-\item \textbf{eb ff} is \textbf{JMP~.+1}.  After this instruction executes, \textbf{ff~c0} are the bytes of the next instruction to execute.  Clear the 
+\item \textbf{eb ff} is \textbf{JMP~.+1}.  After this instruction executes, \textbf{ff~c0} are the bytes of the next instruction to execute.  Clear the
 instruction corresponding to \textbf{eb~ff} and then disassemble starting at \textbf{ff} to reveal the instructions that execute after \textbf{JMP~.+1}.
 \item Note: After clearing and disassembling, right-click on the \textbf{SUB} instruction and select \textbf{Fallthrough} $\rightarrow$ \textbf{Auto Override}, which
 will set the fallthrough address to be the address of the next instruction after \textbf{SUB} (skipping data).  You should verify that setting this override makes
@@ -956,7 +956,7 @@ the function graph look better.
 \end{enumerate}
 \item There are two ways to change data mutability:
 \begin{enumerate}
-\item Right-click on the (defined) data in the Listing and select \textbf{Settings...} 
+\item Right-click on the (defined) data in the Listing and select \textbf{Settings...}
 \item Set the mutability of an entire block of memory through the Memory Map (\textbf{Window} $\rightarrow$ \textbf{Memory Map} from the Code Browser).
 \end{enumerate}
 \end{itemize}
@@ -978,9 +978,9 @@ the function graph look better.
 \begin{block}{Exercise: Constant Data}
 \begin{enumerate}
 \item Open and analyze the file \textbf{dataMutability}, then navigate to the function \textbf{main}.
-\item Change the settings of the target of the pointer variable \textbf{writeable} to constant by right-clicking and selecting \textbf{Data} $\rightarrow$ \textbf{Settings...} 
+\item Change the settings of the target of the pointer variable \textbf{writeable} to constant by right-clicking and selecting \textbf{Data} $\rightarrow$ \textbf{Settings...}
 in the Listing.  Verify that the changes are reflected in the decompiler.
-\item Restore the data mutability and change it again by modifying the permissions of the appropriate block in the Memory Map. 
+\item Restore the data mutability and change it again by modifying the permissions of the appropriate block in the Memory Map.
 \end{enumerate}
 \end{block}
 \end{frame}
@@ -1011,8 +1011,8 @@ in the Listing.  Verify that the changes are reflected in the decompiler.
 \begin{block}{Exercise: Volatile Data}
 \begin{enumerate}
 \setcounter{enumi}{3}
-\item Mark the data element labelled \textbf{status} as volatile and verify that additional code appears in the decompilation 
-of the function \textbf{main} (make sure to re-enable unreachable code elimination in the decompiler if you've disabled it). 
+\item Mark the data element labelled \textbf{status} as volatile and verify that additional code appears in the decompilation
+of the function \textbf{main} (make sure to re-enable unreachable code elimination in the decompiler if you've disabled it).
 \item Note: You might have to override the signature on the call to \textbf{printf} to get all of its arguments to appear in the decompilation.
 \end{enumerate}
 \end{block}
@@ -1026,7 +1026,7 @@ of the function \textbf{main} (make sure to re-enable unreachable code eliminati
 \item Setting a context register (for example, to select ARM or Thumb mode) is a common reason to set register values in Ghidra.
 \item Additionally, if you set a register value at the beginning of a function, the value will be sent to the decompiler.
 \item To set a register value, right-click on an address in the Listing and select \textbf{Set Register Values...}
-\item This can be helpful if a register is used to store a global variable.  Additionally, it can sometimes be helpful to set register values when trying to 
+\item This can be helpful if a register is used to store a global variable.  Additionally, it can sometimes be helpful to set register values when trying to
 understand a function.  The decompiler will perform additional transformations, which may yield a simplified view of how the function behaves in restricted cases.
 \end{itemize}
 \end{block}
@@ -1035,10 +1035,10 @@ understand a function.  The decompiler will perform additional transformations, 
 \begin{frame}
 \begin{block}{Exercise: Global Variables}
 \begin{enumerate}
-\item Open and analyze the file \textbf{globalRegVars.so}, then navigate to the function \textbf{initRegisterPointerVar}.  
+\item Open and analyze the file \textbf{globalRegVars.so}, then navigate to the function \textbf{initRegisterPointerVar}.
 \item This function stores the address of a global variable into a register.  Determine the address and the register.
 \item Set the value of the register to be the address at the beginning of the functions \textbf{setRegisterPointerVar} and \textbf{getRegisterPointerVar}. If you do it correctly,
-\textbf{getRegisterPointerVar} should decompile to 
+\textbf{getRegisterPointerVar} should decompile to
 \item[]\textbf{\{}
 \item[]\textbf{~~~~return c;}
 \item[]\textbf{\}}
@@ -1065,7 +1065,7 @@ observe the effect on the decompiled code.
 \begin{itemize}
 \item Occasionally, you may see variables in the decompiler view whose names begin with \textbf{in\_}, \textbf{unaff\_}, or \textbf{extraout\_}.
 \item \textbf{in\_} or \textbf{unaff\_}: this typically indicates that a register is read before it is written (and it does not contain a parameter passed to the function).
-\item Variables that begin with \textbf{extraout\_} can occur when the decompiler thinks that a value is being used that should have been killed by a call. 
+\item Variables that begin with \textbf{extraout\_} can occur when the decompiler thinks that a value is being used that should have been killed by a call.
 \end{itemize}
 \end{block}
 \end{frame}
@@ -1073,9 +1073,9 @@ observe the effect on the decompiled code.
 \begin{frame}
 \begin{block}{Pcode in the Decompiler View}
 \begin{itemize}
-\item Occasionally, you might see Pcode operations in the decompiler code. 
+\item Occasionally, you might see Pcode operations in the decompiler code.
 \item Examples: \textbf{ZEXT, SEXT, SUB, CONCAT,...}
-\item See the ``Decompiler'' section in the Ghidra help. 
+\item See the ``Decompiler'' section in the Ghidra help.
 \end{itemize}
 \end{block}
 \end{frame}
@@ -1084,8 +1084,8 @@ observe the effect on the decompiled code.
 \begin{frame}
 \begin{block}{Potential Causes}
 \begin{enumerate}
-\item The decompiler has a function signature wrong (either the signature of the function being decompiled or one of its callees). 
-\item A common situation is some kind of size mismatch, for example, the decompiler thinks that a call returns a 32-bit value but sees all of \textbf{RAX} being used.  
+\item The decompiler has a function signature wrong (either the signature of the function being decompiled or one of its callees).
+\item A common situation is some kind of size mismatch, for example, the decompiler thinks that a call returns a 32-bit value but sees all of \textbf{RAX} being used.
 But then where did the high 32 bits come from?
 \item There's a register that actually contains a global parameter or is set as the side effect of a called function.
 \end{enumerate}
@@ -1127,7 +1127,7 @@ the return value.
 \begin{itemize}
 \item Sometimes compilers can prove certain facts about special cases and use these facts to emit optimized code.
 \item This can have consequences for the decompiled code.
-\item This isn't an error, just something to keep in mind. 
+\item This isn't an error, just something to keep in mind.
 \end{itemize}
 \end{block}
 \end{frame}
@@ -1149,12 +1149,12 @@ the two functions, right click and select \textbf{Compare Functions}.  Use the t
 \begin{block}{Solution}
 \begin{enumerate}
 \item[] (advance for solutions)
-\pause 
+\pause
 \item \textbf{calls\_memcmp\_fixed\_len} contains \textbf{in\_ZF} and \textbf{in\_CF} in the decompiled code, whereas \textbf{calls\_memcmp} does not.
 \item In \textbf{calls\_memcmp\_fixed\_len}, the compiler knows that the loop will be executed at least once (\textbf{RCX} is set to 8).
 \item However, in \textbf{calls\_memcmp}, the loop might be executed 0 times (\textbf{RCX} is set to \textbf{param3}).
 \item This means that the compiler must initialize the flags \textbf{ZF} and \textbf{CF} in \textbf{calls\_memcmp}, but does not have to in \textbf{calls\_memcmp\_fixed\_len}, since
-the loop is guaranteed to execute at least once and that comparison will set the flags. 
+the loop is guaranteed to execute at least once and that comparison will set the flags.
 \item[] (continued)
 \end{enumerate}
 \end{block}

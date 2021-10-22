@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,9 +47,9 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 
 	private Register rpStatusReg;
 	private Register irpStatusReg;
-	
+
 	private AddressSet disassemblyPoints;
-	
+
 	@Override
 	public boolean canAnalyze(Program p) {
 		Language lang = p.getLanguage();
@@ -58,10 +58,10 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 		pclReg = p.getRegister("PCL");
 		wReg = p.getRegister("W");
 		bsrReg = p.getRegister("BSR");
-		
+
 		rpStatusReg = p.getRegister("RP");
 		irpStatusReg = p.getRegister("IRP");
-		
+
 		return lang.getProcessor() == PicProcessor.PROCESSOR_PIC_16 && pclathReg != null;
 	}
 
@@ -69,18 +69,18 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 	public synchronized boolean added(Program p, AddressSetView set, TaskMonitor monitor,
 			MessageLog log) throws CancelledException {
 		disassemblyPoints = new AddressSet();
-		
+
 		return super.added(p, set, monitor, log);
 	}
-	
+
 	@Override
 	public AddressSet flowConstants(final Program program, Address flowStart, AddressSetView flowSet, final SymbolicPropogator symEval, final TaskMonitor monitor)
 			throws CancelledException {
-		
+
 		// follow all flows building up context
-		// use context to fill out addresses on certain instructions 
+		// use context to fill out addresses on certain instructions
 		ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption) {
-			
+
 			@Override
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop, Address address,
 					int size, RefType refType) {
@@ -95,21 +95,21 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 				}
 				return super.evaluateReference(context, instr, pcodeop, address, size, refType);
 			}
-			
+
 			@Override
 			public boolean evaluateDestination(VarnodeContext context, Instruction instruction) {
 				FlowType flowType = instruction.getFlowType();
 				if (!flowType.isFlow()) {
 					return false;
 				}
-				
+
 				Reference[] refs = instruction.getReferencesFrom();
 				if (refs.length == 1 && refs[0].getReferenceType().isFlow()) {
 					writeContext(refs[0].getToAddress(), context);
 					Address dest = refs[0].getToAddress();
 					disassemblyPoints.addRange(dest, dest);
 				}
-				
+
 				return false;
 			}
 
@@ -119,7 +119,7 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 				flowRegister(dest, context, pclathReg);
 				flowRegister(dest, context, pclReg);
 				flowRegister(dest, context, wReg);
-				
+
 				flowRegister(dest, context, rpStatusReg);
 				flowRegister(dest, context, irpStatusReg);
 				startNewBlock(program, dest);
@@ -141,29 +141,29 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 				}
 			}
 		};
-		
+
 		startNewBlock(program, flowStart);
-		
+
 		AddressSet result = symEval.flowConstants(flowStart, flowSet, eval, true, monitor);
 
 		if (!disassemblyPoints.isEmpty()) {
 			AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 			mgr.disassemble(disassemblyPoints);
 		}
-		
+
 		return result;
 	}
-	
+
 	private void startNewBlock(Program program, Address flowStart) {
 		long instrOffset = flowStart.getOffset();
-		
+
 		RegisterValue pclathValue = program.getProgramContext().getRegisterValue(pclathReg, flowStart);
 		if (pclathValue != null) {
 			return;
 		}
-		
+
 		long pclValue = (instrOffset / INSTRUCTION_LENGTH) >> 8;
-		
+
 		pclathValue = new RegisterValue(pclathReg, BigInteger.valueOf(pclValue));
 		try {
 			program.getProgramContext().setRegisterValue(flowStart, flowStart, pclathValue);
@@ -171,4 +171,4 @@ public class Pic16Analyzer extends ConstantPropagationAnalyzer {
 			e.printStackTrace();
 		}
 	}
-}		
+}

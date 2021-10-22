@@ -29,7 +29,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA. 
+   Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
 
 
    					CHANGE NOTICE:
@@ -311,11 +311,11 @@ struct d_print_info
   int pack_index;
   /* Number of d_print_flush calls so far.  */
   unsigned long int flush_count;
-  
+
 	// Changed Jan 22, 2020 - Added a method to wrap calls to d_print_comp() in
 	//                        order to track too much recursion
   int recursion_level;
-  
+
 };
 
 #ifdef CP_DEMANGLE_DEBUG
@@ -1487,7 +1487,7 @@ d_prefix (struct d_info *di)
 /* <unqualified-name> ::= <operator-name>
                       ::= <ctor-dtor-name>
                       ::= <source-name>
-		      ::= <local-source-name> 
+		      ::= <local-source-name>
 
     <local-source-name>	::= L <source-name> <discriminator>
 */
@@ -2384,7 +2384,7 @@ cplus_demangle_type (struct d_info *di)
 	    ret = NULL;
 	  can_subst = 1;
 	  break;
-	  
+
 	case 'p':
 	  /* Pack expansion.  */
 	  ret = d_make_comp (di, DEMANGLE_COMPONENT_PACK_EXPANSION,
@@ -2396,7 +2396,7 @@ cplus_demangle_type (struct d_info *di)
 	  /* auto */
 	  ret = d_make_name (di, "auto", 4);
 	  break;
-	  
+
 	case 'f':
 	  /* 32-bit decimal floating point */
 	  ret = d_make_builtin_type (di, &cplus_demangle_builtin_types[26]);
@@ -3692,7 +3692,7 @@ d_print_init (struct d_print_info *dpi, demangle_callbackref callback,
   dpi->opaque = opaque;
 
   dpi->demangle_failure = 0;
-  
+
 	// Changed Jan 22, 2020 - Added a method to wrap calls to d_print_comp() in
 	//                        order to track too much recursion
   dpi->recursion_level = 0;
@@ -3856,7 +3856,7 @@ d_lookup_template_argument (struct d_print_info *dpi,
       d_print_error (dpi);
       return NULL;
     }
-	
+
   return d_index_template_argument
     (d_right (dpi->templates->template_decl),
      dc->u.s_number.number);
@@ -3882,7 +3882,7 @@ d_find_pack (struct d_print_info *dpi,
 
     case DEMANGLE_COMPONENT_PACK_EXPANSION:
       return NULL;
-      
+
     case DEMANGLE_COMPONENT_LAMBDA:
     case DEMANGLE_COMPONENT_NAME:
     case DEMANGLE_COMPONENT_TAGGED_NAME:
@@ -3959,9 +3959,9 @@ d_print_comp (struct d_print_info *dpi, int options,
 	}
 
 	dpi->recursion_level++;
-	d_print_comp_delegate(dpi, options, dc);	
+	d_print_comp_delegate(dpi, options, dc);
 	dpi->recursion_level--;
-	
+
 }
 
 static void
@@ -5677,7 +5677,7 @@ cplus_demangle_v3_callback (const char *mangled, int options,
   return d_demangle_callback (mangled, options, callback, opaque);
 }
 
-/* Demangle a Java symbol.  Java uses a subset of the V3 ABI C++ mangling 
+/* Demangle a Java symbol.  Java uses a subset of the V3 ABI C++ mangling
    conventions, but the output formatting is a little different.
    This instructs the C++ demangler not to emit pointer characters ("*"), to
    use Java's namespace separator symbol ("." instead of "::"), and to output
@@ -5844,7 +5844,7 @@ print_usage (FILE* fp, int exit_value)
 }
 
 /* Option specification for getopt_long.  */
-static const struct option long_options[] = 
+static const struct option long_options[] =
 {
   { "help",	 no_argument, NULL, 'h' },
   { "no-params", no_argument, NULL, 'p' },
@@ -5868,7 +5868,7 @@ main (int argc, char *argv[])
   program_name = argv[0];
 
   /* Parse options.  */
-  do 
+  do
     {
       opt_char = getopt_long (argc, argv, "hpv", long_options, NULL);
       switch (opt_char)
@@ -5892,7 +5892,7 @@ main (int argc, char *argv[])
     }
   while (opt_char != -1);
 
-  if (optind == argc) 
+  if (optind == argc)
     /* No command line arguments were provided.  Filter stdin.  */
     {
       dyn_string_t mangled = dyn_string_new (3);

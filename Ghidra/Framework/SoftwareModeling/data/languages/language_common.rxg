@@ -190,7 +190,7 @@
       </zeroOrMore>
     </interleave>
   </define>
-  
+
   <define name="symbol_type">
 	<choice>
       <value type="string">code</value>
@@ -204,7 +204,7 @@
       <attribute name="size"/>
     </optional>
   </define>
-  
+
   <define name="pcode_type">
     <optional>
       <attribute name="paramshift"/>
@@ -245,7 +245,7 @@
       </optional>
     </element>
   </define>
-  
+
   <define name="jumpassist_type">
     <attribute name="name"/>
     <interleave>

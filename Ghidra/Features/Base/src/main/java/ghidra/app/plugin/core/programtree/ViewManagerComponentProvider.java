@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,7 +59,7 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 		// this provider to the correct name and owner over the course of 2 renames.
 		//
 
-		// This provider used to be name ViewManagerPlugin and owned by ViewManagerPlugin so 
+		// This provider used to be name ViewManagerPlugin and owned by ViewManagerPlugin so
 		// register owner/name change
 		String oldOwner = "ViewManagerPlugin";
 		String oldName = oldOwner;
@@ -166,7 +166,7 @@ public class ViewManagerComponentProvider extends ComponentProviderAdapter
 
 	/**
 	 * Get the object under the mouse location for the popup
-	 * 
+	 *
 	 * @param event the mouse event that triggered the popup
 	 */
 	private Object getActivePopupObject(MouseEvent event) {

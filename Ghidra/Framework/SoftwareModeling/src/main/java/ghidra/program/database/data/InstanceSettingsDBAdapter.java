@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,13 +137,13 @@ abstract class InstanceSettingsDBAdapter {
 			byte[] byteValue) throws IOException;
 
 	/**
-	 * Get keys for the instance settings applied at the given address. 
+	 * Get keys for the instance settings applied at the given address.
 	 * @throws IOException if there was a problem accessing the database
 	 */
 	abstract Field[] getInstanceKeys(long addr) throws IOException;
 
 	/**
-	 * Remove the instance record. 
+	 * Remove the instance record.
 	 * @param settingsID key
 	 * @return true if the record was deleted
 	 * @throws IOException if there was a problem accessing the database
@@ -165,7 +165,7 @@ abstract class InstanceSettingsDBAdapter {
 
 	/**
 	 * Get an iterator over those records that fall in the given range for
-	 * the address column in the table. 
+	 * the address column in the table.
 	 * @param start start address index
 	 * @param end end address index
 	 * @throws IOException if there was a problem accessing the database

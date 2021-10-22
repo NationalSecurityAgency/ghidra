@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,9 +35,9 @@ import docking.action.MenuData;
  * Applies the "module" algorithm to a Folder or Fragment. This algorithm first
  * applies the Multiple Entry Point Subroutine model, which generates fragments;
  * then the Partitioned Code Subroutine model is applied to the fragments.
- * 
- *    
- * 
+ *
+ *
+ *
  */
 //@formatter:off
 @PluginInfo(
@@ -54,7 +54,7 @@ import docking.action.MenuData;
 )
 //@formatter:on
 public class ModuleAlgorithmPlugin extends ProgramPlugin implements BlockModelServiceListener {
-	
+
 //	private SelectAlgorithmAction createTreeAction;
 	private DockingAction[] actions;
 	private BlockModelService blockModelService;
@@ -69,7 +69,7 @@ public class ModuleAlgorithmPlugin extends ProgramPlugin implements BlockModelSe
         blockModelService.addListener(this);
         updateSubroutineActions();
     }
-    
+
 	@Override
     public void dispose() {
 		super.dispose();
@@ -78,19 +78,19 @@ public class ModuleAlgorithmPlugin extends ProgramPlugin implements BlockModelSe
 			blockModelService = null;
 		}
 	}
-    
+
 	private void updateSubroutineActions() {
-    	
+
     	// Remove old actions
     	if (actions != null) {
     		for (int i = 0; i < actions.length; i++) {
-    			tool.removeAction(actions[i]);  
+    			tool.removeAction(actions[i]);
     			actions[i] = null;
     		}
     		actions = null;
     	}
     	HelpLocation loc = new HelpLocation("ProgramTreePlugin", "Modularize_By_Subroutine");
-    	
+
     	// Create subroutine actions for each subroutine provided by BlockModelService
         final String[] subModels = blockModelService.getAvailableModelNames(BlockModelService.SUBROUTINE_MODEL);
        	if (subModels.length > 1) {  // Not needed if only one subroutine model
@@ -111,12 +111,12 @@ public class ModuleAlgorithmPlugin extends ProgramPlugin implements BlockModelSe
 	            	}
 	            };
 // ACTIONS - auto generated
-	            actions[i].setPopupMenuData( new MenuData( 
-	            	new String[]{"Modularize By", "Subroutine", subModels[i]}, 
-	            	null, 
+	            actions[i].setPopupMenuData( new MenuData(
+	            	new String[]{"Modularize By", "Subroutine", subModels[i]},
+	            	null,
 	            	"select" ) );
 
-        		tool.addAction(actions[i]); 
+        		tool.addAction(actions[i]);
         		actions[i].setEnabled(currentProgram != null);
         		actions[i].setHelpLocation(loc);
 	        }
@@ -135,16 +135,16 @@ public class ModuleAlgorithmPlugin extends ProgramPlugin implements BlockModelSe
             		return false;
             	}
        		};
-       		
-       		actions[0].setPopupMenuData( new MenuData( 
+
+       		actions[0].setPopupMenuData( new MenuData(
        		    new String[] {"Modularize By", "Subroutine" }, "select" ) );
-       		
-            tool.addAction(actions[0]);	
-    		actions[0].setEnabled(currentProgram != null); 
+
+            tool.addAction(actions[0]);
+    		actions[0].setEnabled(currentProgram != null);
     		actions[0].setHelpLocation(loc);
        	}
     }
-    
+
 
 	/**
 	 * Method createTree.
@@ -152,13 +152,13 @@ public class ModuleAlgorithmPlugin extends ProgramPlugin implements BlockModelSe
 	private void applyModuleAlgorithm(String modelName, Object activeObject) {
 
 		ProgramNode node = (ProgramNode)activeObject;
-		
-		ModuleAlgorithmCmd cmd = new ModuleAlgorithmCmd(node.getGroupPath(), 
+
+		ModuleAlgorithmCmd cmd = new ModuleAlgorithmCmd(node.getGroupPath(),
 										node.getGroup().getTreeName(), blockModelService, modelName);
 		cmd.setPluginTool(tool);
 		tool.executeBackgroundCommand(cmd, currentProgram);
 	}
-	
+
 
 	/**
 	 * @see ghidra.app.plugin.ProgramPlugin#programDeactivated(Program)

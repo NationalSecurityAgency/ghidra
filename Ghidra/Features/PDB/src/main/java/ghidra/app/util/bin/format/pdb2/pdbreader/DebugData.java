@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,7 +137,7 @@ public class DebugData {
 	 *  each particular debug type (e.g., the first stream number read is for the stream containing
 	 *  Frame Pointer Omission debug data).  A stream number of 0XFFFF says that there is no data
 	 *  for that debug type; else the stream number represents the stream that should
-	 *  be deserialized to retrieve the debug data of that type.  The 
+	 *  be deserialized to retrieve the debug data of that type.  The
 	 *  {@link #deserialize(TaskMonitor)} method deserializes each of these streams
 	 *  that are valid to the corresponding debug data type.
 	 * @param reader {@link PdbByteReader} from which to parse the header.

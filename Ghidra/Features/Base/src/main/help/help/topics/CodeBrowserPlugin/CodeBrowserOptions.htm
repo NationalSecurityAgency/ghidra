@@ -484,12 +484,12 @@
         <P><B>Reverse Instruction Byte Ordering</B> - The bytes will be displayed in reverse order
         for Instruction Code Units. Note: this applies to instructions only. All other code units
         are unaffected.</P>
-        
+
         <P><B>Display Structure Alignment Bytes</B> - Internal structure alignment bytes will
-        be displayed with the bytes of the preceding component.  These bytes will be colored 
+        be displayed with the bytes of the preceding component.  These bytes will be colored
         differently than the bytes directly associated with the component.
         Note: this applies to structure data only. All other code units are unaffected.</P>
-        
+
       </BLOCKQUOTE>
 
       <H3><A name="Cursor_Text_Highlight"></A><B>Cursor Text Highlight</B></H3>
@@ -551,9 +551,9 @@
 
         <P><B>Show Semicolon at Start of Each Line -</B> Begins each line of an end-of-line comment
         with a semi-colon.</P>
-        
-        <P><B>Use Abbreviated Automatic Comments -</B> When possible, the auto comment will 
-        be made as small as possible.  For example, when showing an offcut string reference, 
+
+        <P><B>Use Abbreviated Automatic Comments -</B> When possible, the auto comment will
+        be made as small as possible.  For example, when showing an offcut string reference,
         only the portion of the string that is used will be displayed.</P>
       </BLOCKQUOTE>
 
@@ -584,7 +584,7 @@
               <TD valign="top" width="50%">Display an "EXTERNAL" plate comment at each label which
               is marked as an Entry Point.</TD>
             </TR>
-            
+
 
             <TR>
               <TD valign="top" width="24%"><B>Show Function Plates</B></TD>
@@ -619,7 +619,7 @@
               <TD align="center" valign="top" width="17%">Pre Comment</TD>
 
               <TD valign="top" width="50%">
-                Display the pre comment: 
+                Display the pre comment:
 <PRE>
 ||||||||| FUNCTION |||||||||
 </PRE>
@@ -633,14 +633,14 @@
               <TD align="center" valign="top" width="17%">Post Comment</TD>
 
               <TD valign="top" width="50%">
-                Display the post comment: 
+                Display the post comment:
 <PRE>
 ********** <I>MyFunction</I> Exit **********
 </PRE>
                 at the end of each Function, where <I>MyFunction</I> is the name of the Function.
               </TD>
             </TR>
-            
+
             <TR>
               <TD valign="top" width="24%"><B>Flag Jumps and Returns</B></TD>
 
@@ -649,14 +649,14 @@
               <TD valign="top" width="50%">Display a post comment "- - -" line separator following
               all unconditional jumps and returns.</TD>
             </TR>
-            
+
             <TR>
               <TD valign="top" width="24%"><B>Flag Subroutine Entry</B></TD>
 
               <TD align="center" valign="top" width="17%">Pre Comment</TD>
 
               <TD valign="top" width="50%">
-                Display the pre comment: 
+                Display the pre comment:
 <PRE>
 |||||||| SUBROUTINE ||||||||
 </PRE>
@@ -683,7 +683,7 @@
               <TD valign="top" width="50%">Display the specified number of blank lines following
               all Basic Blocks of instructions.</TD>
             </TR>
-            
+
             <TR>
               <TD valign="top" width="24%"><B>Lines Before Functions</B></TD>
 
@@ -701,7 +701,7 @@
               <TD valign="top" width="50%">Display the specified number of blank lines before each
               labeled code unit (instruction or data).</TD>
             </TR>
-            
+
             <TR>
               <TD valign="top" width="24%"><B>Lines Before Plates</B></TD>
 
@@ -726,22 +726,22 @@
       <H3><A name="Function_Pointers"></A>Function Pointers</H3>
 
       <BLOCKQUOTE>
-        <P><B>Display Function Header for External Function Pointers -</B> Select this option to show 
+        <P><B>Display Function Header for External Function Pointers -</B> Select this option to show
         the function prototype header within the listing for any pointer which has an
         External Function reference (enabled by default). </P>
-        <P><B>Display Function Header for Non-External Function Pointers -</B> Select this option to show 
+        <P><B>Display Function Header for Non-External Function Pointers -</B> Select this option to show
         the function prototype header within the listing for any pointer which has a
         memory reference to a Function (disabled by default). </P>
       </BLOCKQUOTE>
-      
+
       <H3>Function Signature Field</H3>
 
       <BLOCKQUOTE>
-        <P><B>Display Namespace -</B> Select this option to include 
-        the function namespace as a prefix to the name of the function 
+        <P><B>Display Namespace -</B> Select this option to include
+        the function namespace as a prefix to the name of the function
         within the displayed function prototype (disabled by default). </P>
       </BLOCKQUOTE>
-      
+
       <H3><A name="Labels_Field"></A>Labels Field</H3>
 
       <BLOCKQUOTE>
@@ -789,9 +789,9 @@
         identified the primary reference will be appended to the operand preceded by a "=&gt;"
         prefix.<BR>
         </P>
-        
-    	<P><B>Display Abbreviated Deafult Label Names -</B> Uses a shortened form of the 
-			label name for dynamic String data types in the display of 
+
+    	<P><B>Display Abbreviated Deafult Label Names -</B> Uses a shortened form of the
+			label name for dynamic String data types in the display of
 			operand references (e.g., STR_01234567).
     	</P>
 
@@ -814,10 +814,10 @@
         to fit in the operand field. Note that that word wrapping can only occur where spaces exist
         in the string.<BR>
         </P>
-        
-        <P><B>Follow Read or Indirect Pointer References -</B> Option to follow referenced pointers, 
-        for read or indirect reference types, to show pointer's referenced symbol instead of 
-        symbol at pointer.  When applied the resulting operand label will be preceded by a 
+
+        <P><B>Follow Read or Indirect Pointer References -</B> Option to follow referenced pointers,
+        for read or indirect reference types, to show pointer's referenced symbol instead of
+        symbol at pointer.  When applied the resulting operand label will be preceded by a
         "<IMG src="../../shared/arrow.gif">".<BR>
         </P>
 
@@ -843,7 +843,7 @@
         included if the <I>Markup Inferred Variable References</I> is also enabled.</P>
 
 		<P><B>Maximum Length of String in Default Labels -</B>
-				Sets the maximumn number of 
+				Sets the maximumn number of
 			characters from a String to include in dynamic String labels in operand references
 		</p>
 
@@ -856,9 +856,9 @@
         operand field. For example, the instruction "<FONT face="Courier">call printf</FONT>"
         becomes "<FONT face="Courier">call .text:printf</FONT>".</P>
 
-		<P><B>Show Offcut Information -</B> Shows additional information for 
-		<A HREF="help/topics/ReferencesPlugin/References_from.htm#Offcut_References">offcut references</A>, 
-		such as the original address, followed by the offset.  For example, the 
+		<P><B>Show Offcut Information -</B> Shows additional information for
+		<A HREF="help/topics/ReferencesPlugin/References_from.htm#Offcut_References">offcut references</A>,
+		such as the original address, followed by the offset.  For example, the
 		string "foo_bar", with an offcut reference to "bar" would look like:<br>
 			<BLOCKQUOTE>
 				<TT>
@@ -899,7 +899,7 @@
       <BLOCKQUOTE>
         <P><B>Display Raw <A href=
         "help/topics/LanguageProviderPlugin/Languages.htm#CodeBrowserPlugin_PCode">PCode</A></B> -
-        Option to display the raw PCode directly in the Code Browser (i.e., detailed varnode 
+        Option to display the raw PCode directly in the Code Browser (i.e., detailed varnode
         specifications are provided).</P>
 
         <P><B>Maximum Lines to Display -</B> The maximum number of lines used to display PCode. Any
@@ -934,10 +934,10 @@
 	        XREFs that are not from an instruction within the current Function's body.&nbsp; Currently,
 	        this would only affect XREFs that originate in some other function.<BR>
 	        </P>
-	
+
 			<P><B>Display Library in Namespace -</B> Include the library name in the namespace.<BR>
 			</P>
-	
+
 	        <P><B>Display Local Namespace -</B> Select this option to prepend the namespace to all
 	        XREFs that are from the current Function.<BR>
 	        </P>
@@ -948,22 +948,22 @@
 		        contains the prefix to use for local XREFs.</P>
 		        </BLOCKQUOTE>
 	        </BLOCKQUOTE>
-        
+
         <P><B>Display Reference Type -</B> Shows a single letter to represent the type of reference.
-        Some of the possible types are: 
-        <CODE>Read (R), Write (W), Data (*), Call (c), Jump (j) and Thunk (T)</CODE>.        
-        
-        <P><B>Group by Function -</B> Groups all references by the containing source function.  
-        With this option off, all references within a function are displayed on their on row.  
+        Some of the possible types are:
+        <CODE>Read (R), Write (W), Data (*), Call (c), Jump (j) and Thunk (T)</CODE>.
+
+        <P><B>Group by Function -</B> Groups all references by the containing source function.
+        With this option off, all references within a function are displayed on their on row.
         With this feature on, each function will get a single row, with all references displayed on
-        that row. 
-        
+        that row.
+
         <P><B>Maximum Number of XREFs To Display -</B> The maximum number of lines used to display
         XREFs. Additional XREFs will not be displayed.</P>
-        
+
         <P><B>Sort References by -</B> Allows the references to be sorted by Address or by type.
         This is most useful when <B>Group by Function</B> is off.
-        
+
       </BLOCKQUOTE>
     </BLOCKQUOTE>
 

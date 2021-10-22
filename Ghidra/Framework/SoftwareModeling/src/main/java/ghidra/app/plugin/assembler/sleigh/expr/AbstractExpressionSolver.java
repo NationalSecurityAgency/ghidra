@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.app.plugin.processors.sleigh.expression.PatternExpression;
 
 /**
  * The root type of an expression solver
- * 
+ *
  * @param <T> the type of expression solved (the operator)
  */
 public abstract class AbstractExpressionSolver<T extends PatternExpression> {
@@ -36,7 +36,7 @@ public abstract class AbstractExpressionSolver<T extends PatternExpression> {
 
 	/**
 	 * Construct a solver that can solve expression of the given type
-	 * 
+	 *
 	 * @param tcls the type of expressions it can solve
 	 */
 	public AbstractExpressionSolver(Class<T> tcls) {
@@ -45,7 +45,7 @@ public abstract class AbstractExpressionSolver<T extends PatternExpression> {
 
 	/**
 	 * Attempt to solve an expression for a given value
-	 * 
+	 *
 	 * @param exp the expression to solve
 	 * @param goal the desired value of the expression
 	 * @param vals values of defined symbols
@@ -61,7 +61,7 @@ public abstract class AbstractExpressionSolver<T extends PatternExpression> {
 
 	/**
 	 * Attempt to get a constant value for the expression
-	 * 
+	 *
 	 * @param exp the expression
 	 * @param vals values of defined symbols
 	 * @param res the results of subconstructor resolutions (used for lengths)
@@ -74,9 +74,9 @@ public abstract class AbstractExpressionSolver<T extends PatternExpression> {
 	/**
 	 * Determines the length of the subconstructor that would be returned had the expression not
 	 * depended on an undefined symbol.
-	 * 
+	 *
 	 * This is used by the backfilling process to ensure values are written to the correct offset
-	 * 
+	 *
 	 * @param exp the expression
 	 * @param res the results of subconstructor resolutions (used for lengths)
 	 * @return the length of filled in token field(s).
@@ -85,7 +85,7 @@ public abstract class AbstractExpressionSolver<T extends PatternExpression> {
 
 	/**
 	 * Compute the value of the expression given the (possibly-intermediate) resolution
-	 * 
+	 *
 	 * @param exp the expression to evaluate
 	 * @param rc the resolution on which to evaluate it
 	 * @return the result
@@ -94,7 +94,7 @@ public abstract class AbstractExpressionSolver<T extends PatternExpression> {
 
 	/**
 	 * Register this particular solver with the general expression solver
-	 * 
+	 *
 	 * @param general the general solver
 	 */
 	protected void register(RecursiveDescentSolver general) {

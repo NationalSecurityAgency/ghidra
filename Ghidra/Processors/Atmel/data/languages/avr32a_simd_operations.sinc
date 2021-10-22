@@ -61,31 +61,31 @@ PXPART: ":T" is ctx_usex & xpart=0x1 {
 	export *[const]:2 tmp;
 }
 
-PXPART: ":B" is ctx_usex & xpart=0x0 { 
+PXPART: ":B" is ctx_usex & xpart=0x0 {
 	tmp:4 = ctx_usex;
 	tmp = tmp & 0x0000FFFF;
 	export *[const]:2 tmp;
 }
 
-PYPART: ":T" is ctx_usey & ypart=0x1 { 
+PYPART: ":T" is ctx_usey & ypart=0x1 {
 	tmp:4 = ctx_usey;
 	tmp = tmp >> 16;
 	export *[const]:2 tmp;
 }
 
-PYPART: ":B" is ctx_usey & ypart=0x0 { 
+PYPART: ":B" is ctx_usey & ypart=0x0 {
 	tmp:4 = ctx_usey;
 	tmp = tmp & 0x0000FFFF;
 	export *[const]:2 tmp;
 }
 
-PUPART: ":T" is ctx_useu & upart=0x1 { 
+PUPART: ":T" is ctx_useu & upart=0x1 {
 	tmp:4 = ctx_useu;
 	tmp = tmp >> 16;
 	export *[const]:2 tmp;
 }
 
-PUPART: ":B" is ctx_useu & upart=0x0 { 
+PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmp:4 = ctx_useu;
 	tmp = tmp & 0x0000FFFF;
 	export *[const]:2 tmp;
@@ -95,21 +95,21 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 :PABS.SB erd0, rs0  is op4_12=0xe00 & rs0 ; eop4_12=0x23e & erd0 {
 	tmps:1 = rs0[24,8];
 	erd0[24,8] = abs(tmps);
-		
+
 	tmps = rs0[16,8];
 	erd0[16,8] = abs(tmps);
-		
+
 	tmps = rs0[8,8];
 	erd0[8,8] = abs(tmps);
-		
+
 	tmps = rs0[0,8];
-	erd0[0,8] = abs(tmps);	
+	erd0[0,8] = abs(tmps);
 }
 
 :PABS.SH erd0, rs0  is op4_12=0xe00 & rs0 ; eop4_12=0x23f & erd0 {
 	tmps:2 = rs0[16,16];
 	erd0[16,16] = abs(tmps);
-		
+
 	tmps = rs0[0,16];
 	erd0[0,16] = abs(tmps);
 }
@@ -173,7 +173,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpy = ry0[0,8];
 	tmpd = tmpx + tmpy;
 	erd0[0,8] = tmpd;
-	
+
 }
 
 :PADD.H erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x200 & erd0 {
@@ -234,7 +234,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpd:2 = 0;
 	sataddub(tmpx,tmpy,tmpd);
 	erd0[24,8] = tmpd:1;
-	
+
 	tmpx = rx9[16,8];
 	tmpy = ry0[16,8];
 	sataddub(tmpx,tmpy,tmpd);
@@ -244,7 +244,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpy = ry0[8,8];
 	sataddub(tmpx,tmpy,tmpd);
 	erd0[8,8] = tmpd:1;
-	
+
 	tmpx = rx9[0,8];
 	tmpy = ry0[0,8];
 	sataddub(tmpx,tmpy,tmpd);
@@ -268,12 +268,12 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpy = ry0[8,8];
 	sataddsb(tmpx,tmpy,tmpd);
 	erd0[8,8] = tmpd:1;
-	
+
 	tmpx = rx9[0,8];
 	tmpy = ry0[0,8];
 	sataddsb(tmpx,tmpy,tmpd);
 	erd0[0,8] = tmpd:1;
-	
+
 }
 
 :PADDS.UH erd0, rx9, ry0  is op13_3=0x7 & rx9 & op4_5=0x0 & ry0 ; eop4_12=0x208 & erd0 {
@@ -282,7 +282,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpd:4 = 0;
 	satadduh(tmpx,tmpy,tmpd);
 	erd0[16,16] = tmpd:2;
-	
+
 	tmpx = rx9[0,16];
 	tmpy = ry0[0,16];
 	satadduh(tmpx,tmpy,tmpd);
@@ -295,7 +295,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpd:4 = 0;
 	sataddsh(tmpx,tmpy,tmpd);
 	erd0[16,16] = tmpd:2;
-	
+
 	tmpx = rx9[0,16];
 	tmpy = ry0[0,16];
 	sataddsh(tmpx,tmpy,tmpd);
@@ -323,7 +323,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpy:2 = ry0[0,16];
 	tmpd:2 = tmpx + tmpy;
 	erd0[16,16] = tmpd;
-	
+
 	tmpx = rx9[0,16];
 	tmpy = ry0[16,16];
 	tmpd = tmpx + tmpy;
@@ -336,7 +336,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpd:4 = tmpx + tmpy;
 	tmpd = tmpd s>> 1;
 	erd0[16,16] = tmpd:2;
-	
+
 	tmpx = sext(rx9[0,16]);
 	tmpy = sext(ry0[16,16]);
 	tmpd = tmpx + tmpy;
@@ -536,7 +536,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpd:4 = 0;
 	satadduh(tmpx,tmpy,tmpd);
 	erd0[16,16] = tmpd:2;
-	
+
 	tmpx = rx9[0,16];
 	tmpy = ry0[16,16];
 	satadduh(tmpx,tmpy,tmpd);
@@ -549,7 +549,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpd:4 = 0;
 	sataddsh(tmpx,tmpy,tmpd);
 	erd0[16,16] = tmpd:2;
-	
+
 	tmpx = rx9[0,16];
 	tmpy = ry0[16,16];
 	sataddsh(tmpx,tmpy,tmpd);
@@ -694,7 +694,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpd:2 = 0;
 	satsubub(tmpx,tmpy,tmpd);
 	erd0[24,8] = tmpd:1;
-	
+
 	tmpx = rx9[16,8];
 	tmpy = ry0[16,8];
 	satsubub(tmpx,tmpy,tmpd);
@@ -704,7 +704,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpy = ry0[8,8];
 	satsubub(tmpx,tmpy,tmpd);
 	erd0[8,8] = tmpd:1;
-	
+
 	tmpx = rx9[0,8];
 	tmpy = ry0[0,8];
 	satsubub(tmpx,tmpy,tmpd);
@@ -727,7 +727,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpy = ry0[8,8];
 	satsubsb(tmpx,tmpy,tmpd);
 	erd0[8,8] = tmpd:1;
-	
+
 	tmpx = rx9[0,8];
 	tmpy = ry0[0,8];
 	satsubsb(tmpx,tmpy,tmpd);
@@ -740,7 +740,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpd:4 = 0;
 	satsubuh(tmpx,tmpy,tmpd);
 	erd0[16,16] = tmpd:2;
-	
+
 	tmpx = rx9[0,16];
 	tmpy = ry0[0,16];
 	satsubuh(tmpx,tmpy,tmpd);
@@ -753,7 +753,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpd:4 = 0;
 	satsubsh(tmpx,tmpy,tmpd);
 	erd0[16,16] = tmpd:2;
-	
+
 	tmpx = rx9[0,16];
 	tmpy = ry0[0,16];
 	satsubsh(tmpx,tmpy,tmpd);
@@ -765,7 +765,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpy:2 = ry0[0,16];
 	tmpd:2 = tmpx - tmpy;
 	erd0[16,16] = tmpd;
-	
+
 	tmpx = rx9[0,16];
 	tmpy = ry0[16,16];
 	tmpd = tmpx - tmpy;
@@ -778,7 +778,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpd:4 = tmpx - tmpy;
 	tmpd = tmpd s>> 1;
 	erd0[16,16] = tmpd:2;
-	
+
 	tmpx = sext(rx9[0,16]);
 	tmpy = sext(ry0[16,16]);
 	tmpd = tmpx - tmpy;
@@ -792,7 +792,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpd:4 = 0;
 	satsubuh(tmpx,tmpy,tmpd);
 	erd0[16,16] = tmpd:2;
-	
+
 	tmpx = rx9[0,16];
 	tmpy = ry0[16,16];
 	satsubuh(tmpx,tmpy,tmpd);
@@ -805,7 +805,7 @@ PUPART: ":B" is ctx_useu & upart=0x0 {
 	tmpd:4 = 0;
 	satsubsh(tmpx,tmpy,tmpd);
 	erd0[16,16] = tmpd:2;
-	
+
 	tmpx = rx9[0,16];
 	tmpy = ry0[16,16];
 	satsubsh(tmpx,tmpy,tmpd);

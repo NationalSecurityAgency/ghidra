@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ class ConsistencyChecker {
 	private int largetemp;			// number of constructors using a temporary varnode larger than SleighBase.MAX_UNIQUE_SIZE
 	private boolean printextwarning;
 	private boolean printdeadwarning;
-	private boolean printlargetempwarning;	// if true, warning about temporary varnodes larger than SleighBase.MAX_UNIQUE_SIZE 
+	private boolean printlargetempwarning;	// if true, warning about temporary varnodes larger than SleighBase.MAX_UNIQUE_SIZE
 	private SleighCompile compiler;
 	private SubtableSymbol root_symbol;
 	private VectorSTL<SubtableSymbol> postorder = new VectorSTL<>();
@@ -640,8 +640,8 @@ class ConsistencyChecker {
 	}
 
 	/**
-	 * Returns true precisely when {@code opTpl} uses a {@link VarnodeTpl} in 
-	 * the unique space whose size is larger than {@link SleighBase#MAX_UNIQUE_SIZE}.  
+	 * Returns true precisely when {@code opTpl} uses a {@link VarnodeTpl} in
+	 * the unique space whose size is larger than {@link SleighBase#MAX_UNIQUE_SIZE}.
 	 * Note that this method returns as soon as one large {@link VarnodeTpl} is found.
 	 * @param opTpl the op to check
 	 * @return true if {@code opTpl} uses a large temporary varnode

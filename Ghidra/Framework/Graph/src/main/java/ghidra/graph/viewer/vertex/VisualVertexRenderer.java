@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,14 +32,14 @@ import ghidra.graph.viewer.VisualVertex;
 
 /**
  * A renderer for the {@link VisualGraph} system.
- * 
+ *
  * <p>Rendering in the graph system is a bit different than other Java rendering systems.  For
- * example, when a JTable renders itself, it uses a single renderer to stamp the data.  The 
+ * example, when a JTable renders itself, it uses a single renderer to stamp the data.  The
  * table's renderer has no state and is updated for each cell's data that is to be rendered.
  * The graph renderer system is different due to the possibility of complex vertex UIs.  Some
  * vertices have sophisticated UI elements that have state.  For these vertices, it makes sense
  * for the vertex to build and maintain that state; having that state repeatedly built by the
- * renderer would be extremely inefficient and difficult to implement.  Considering that we 
+ * renderer would be extremely inefficient and difficult to implement.  Considering that we
  * expect the vertex to build and maintain its UI, this renderer is really just a tool to:
  * <ol>
  *  <li>Determine if the vertex needs to be painted (by clipping or filtering)
@@ -106,7 +106,7 @@ public class VisualVertexRenderer<V extends VisualVertex, E extends VisualEdge<V
 		Rectangle bounds = fullShape.getBounds();
 		paintVertex(rc, g, vertex, bounds, layout);
 
-// DEBUG		
+// DEBUG
 //		Paint oldPaint = g.getPaint();
 //		g.setPaint(Color.RED);
 //		g.draw(compactShape);

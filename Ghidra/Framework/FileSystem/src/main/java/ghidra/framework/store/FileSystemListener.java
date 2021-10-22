@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 package ghidra.framework.store;
 
 /**
- * <code>FileSystemListener</code> provides a listener the ability 
+ * <code>FileSystemListener</code> provides a listener the ability
  * to be notified of folder and file changes within a FileSystem.
  */
 public interface FileSystemListener {
@@ -81,14 +81,14 @@ public interface FileSystemListener {
 	 * @param newName the new name of the item.
 	 */
 	void itemMoved(String parentPath, String name, String newParentPath, String newName);
-	
+
 	/**
 	 * Notfication that an item's state has changed.
 	 * @param parentPath the path of the folder containing the item.
 	 * @param itemName the name of the item that has changed.
 	 */
 	void itemChanged(String parentPath, String itemName);
-	
+
 	/**
 	 * Perform a full refresh / synchronization
 	 */

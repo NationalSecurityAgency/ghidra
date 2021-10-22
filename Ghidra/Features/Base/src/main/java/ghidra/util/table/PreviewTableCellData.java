@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.util.exception.AssertException;
 
 /**
  * A generic data type used by table models in order to signal that the data should render
- * a preview for a given {@link ProgramLocation}, where the preview is what is displayed in 
+ * a preview for a given {@link ProgramLocation}, where the preview is what is displayed in
  * the Listing.
  */
 public class PreviewTableCellData implements Comparable<PreviewTableCellData> {
@@ -45,7 +45,7 @@ public class PreviewTableCellData implements Comparable<PreviewTableCellData> {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param location the location for the preview
 	 * @param codeUnitFormat the format needed to render preview data
 	 */
@@ -217,7 +217,7 @@ public class PreviewTableCellData implements Comparable<PreviewTableCellData> {
 
 	/**
 	 * Get the preview for the code unit at or containing the address associated with this cell's row.
-	 * 
+	 *
 	 * @return the preview string.
 	 */
 	public String getDisplayString() {
@@ -235,7 +235,7 @@ public class PreviewTableCellData implements Comparable<PreviewTableCellData> {
 
 	/**
 	 * Get the preview as HTML for the code unit at or containing the address associated with this cell's row.
-	 * 
+	 *
 	 * @return the preview string.
 	 */
 	public String getHTMLDisplayString() {

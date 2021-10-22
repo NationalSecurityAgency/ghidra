@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -382,8 +382,8 @@ public class FunctionPlugin extends Plugin implements DataService {
 	/**
 	 * Get an iterator over all functions overlapping the current selection.
 	 * If there is no selection any functions overlapping the current location.
-	 * 
-	 * @param context the context 
+	 *
+	 * @param context the context
 	 * @return Iterator over functions
 	 */
 	public Iterator<Function> getFunctions(ListingActionContext context) {
@@ -492,10 +492,10 @@ public class FunctionPlugin extends Plugin implements DataService {
 	}
 
 	/**
-	 * This method is the same as {@link #createData(DataType, ListingActionContext, boolean)}, 
-	 * except that this method will use the given value of <tt>convertPointers</tt> to determine 
+	 * This method is the same as {@link #createData(DataType, ListingActionContext, boolean)},
+	 * except that this method will use the given value of <tt>convertPointers</tt> to determine
 	 * if the new DataType should be made into a pointer if the existing DataType is a pointer.
-	 * 
+	 *
 	 * @param dataType the DataType to create
 	 * @param context the context containing the location at which to create the DataType
 	 * @param convertPointers True signals to convert the given DataType to a pointer if there is
@@ -620,9 +620,9 @@ public class FunctionPlugin extends Plugin implements DataService {
 	}
 
 	/**
-	 * Return the maximum data type length permitted for the specified local variable.  A -1 
+	 * Return the maximum data type length permitted for the specified local variable.  A -1
 	 * returned value indicates no limit imposed.
-	 * 
+	 *
 	 * @param fun the function
 	 * @param var the variable
 	 * @return maximum data type length permitted for var

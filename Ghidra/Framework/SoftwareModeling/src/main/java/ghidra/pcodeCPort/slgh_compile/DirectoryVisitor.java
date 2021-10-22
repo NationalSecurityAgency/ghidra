@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -120,7 +120,7 @@ public class DirectoryVisitor implements Iterable<File> {
         }
 
         private void populateDirectoryQueue(File startingDirectory) {
-            File[] subdirectories = startingDirectory.listFiles(directoryFilter);            
+            File[] subdirectories = startingDirectory.listFiles(directoryFilter);
             if (subdirectories != null) {
                 Arrays.sort(subdirectories, comparator);
                 for (File subdirectory : subdirectories) {
@@ -130,7 +130,7 @@ public class DirectoryVisitor implements Iterable<File> {
         }
 
         private void populateFileQueue(File directory) {
-            File[] files = directory.listFiles(filter);            
+            File[] files = directory.listFiles(filter);
             if (files != null) {
                 Arrays.sort(files, comparator);
                 for (File file : files) {

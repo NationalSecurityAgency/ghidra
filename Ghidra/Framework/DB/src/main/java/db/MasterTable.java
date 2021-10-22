@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
- * MasterTable manages data pertaining to all other tables within the database - 
+ * MasterTable manages data pertaining to all other tables within the database -
  * this includes index tables.
- * The first buffer associated with this table is managed by the DBParms 
+ * The first buffer associated with this table is managed by the DBParms
  * object associated with the database.
  */
 class MasterTable {
@@ -73,8 +73,8 @@ class MasterTable {
 	 * If this is an index table the name corresponds to the table which is
 	 * indexed.  This method should be invoked for index tables immediately
 	 * following the creation of the indexed table.
-	 * This method may only be invoked while a database transaction 
-	 * is in progress. 
+	 * This method may only be invoked while a database transaction
+	 * is in progress.
 	 * @param name name of table.
 	 * @param tableSchema table schema
 	 * @param indexedColumn primary table index key column, or -1 for primary table
@@ -103,8 +103,8 @@ class MasterTable {
 
 	/**
 	 * Remove the master table record associated with the specified table name.
-	 * This method may only be invoked while a database transaction 
-	 * is in progress. 
+	 * This method may only be invoked while a database transaction
+	 * is in progress.
 	 * @param tableNum table number (key within master table)
 	 * @throws IOException database IO error
 	 */
@@ -193,8 +193,8 @@ class MasterTable {
 
 	/**
 	 * Flush all unsaved table changes to the underlying buffer mgr.
-	 * This method may only be invoked while a database transaction 
-	 * is in progress. 
+	 * This method may only be invoked while a database transaction
+	 * is in progress.
 	 * @throws IOException database IO error
 	 */
 	void flush() throws IOException {

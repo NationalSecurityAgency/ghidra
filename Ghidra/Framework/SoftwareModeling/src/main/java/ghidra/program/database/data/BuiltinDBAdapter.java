@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public abstract class BuiltinDBAdapter {
 	static final int BUILT_IN_CAT_COL = BuiltinDBAdapterV0.V0_BUILT_IN_CAT_COL;
 
 	/**
-	 * Gets an adapter for working with the built-in data type database table. The adapter is based 
+	 * Gets an adapter for working with the built-in data type database table. The adapter is based
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
@@ -63,10 +63,10 @@ public abstract class BuiltinDBAdapter {
 	 */
 	abstract DBRecord getRecord(long dataTypeID) throws IOException;
 
-	/** 
+	/**
 	 * Returns an array containing the data type IDs for the given category ID
 	 * @param categoryID category ID
-	 * @return an array of the data type IDs as LongFields within Field array; 
+	 * @return an array of the data type IDs as LongFields within Field array;
 	 * empty array if no built-in data types found.
 	 * @throws IOException if there was a problem accessing the database
 	 */

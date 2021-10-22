@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,9 +21,9 @@ package ghidra.comm.util;
 public interface BitmaskUniverse {
 	/**
 	 * Get the bit associated with this constant
-	 * 
+	 *
 	 * It ought to have a populating of one, and be unique from the other constants.
-	 * 
+	 *
 	 * @return the mask bit
 	 */
 	long getMask();

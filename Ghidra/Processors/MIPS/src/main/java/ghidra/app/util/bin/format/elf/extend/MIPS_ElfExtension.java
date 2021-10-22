@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class MIPS_ElfExtension extends ElfExtension {
-	
+
 	private static final String MIPS_STUBS_SECTION_NAME = ".MIPS.stubs";
 
 	// GP value reflected by symbol address
@@ -340,7 +340,7 @@ public class MIPS_ElfExtension extends ElfExtension {
 		if (!ElfSectionHeaderConstants.isProcessorSpecificSymbolSectionIndex(sectionIndex)) {
 			return null;
 		}
-		
+
 		if (sectionIndex == SHN_MIPS_ACOMMON || sectionIndex == SHN_MIPS_TEXT || sectionIndex == SHN_MIPS_DATA) {
 			// NOTE: logic assumes no memory conflict occured during section loading
 			AddressSpace defaultSpace = elfLoadHelper.getProgram().getAddressFactory().getDefaultAddressSpace();

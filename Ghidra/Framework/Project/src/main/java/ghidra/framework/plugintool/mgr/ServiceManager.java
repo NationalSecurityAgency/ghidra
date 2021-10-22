@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.exception.AssertException;
  * it may depend on a service. The ServiceManager maintains a list of
  * service names and plugins that provide those services. A plugin may
  * dynamically add and remove services from the service registry. As services
- * are added and removed, all the plugins (ServiceListener) 
+ * are added and removed, all the plugins (ServiceListener)
  * in the tool are notified.
  */
 
@@ -93,13 +93,13 @@ public class ServiceManager {
 	/**
 	 * Add the service to the tool. Notify the service listeners if the
 	 * notification indicator is true; otherwise, add the service to a list
-	 * that will be used to notify listeners when notifications are 
+	 * that will be used to notify listeners when notifications are
 	 * turned on again.
 	 * @param interfaceClass class of the service interface being added
 	 * @param service implementation of the service; it may be a plugin or
 	 * may be some object created by the plugin
-	 * 
-	 * @see #setServiceAddedNotificationsOn(boolean) 
+	 *
+	 * @see #setServiceAddedNotificationsOn(boolean)
 	 */
 	public synchronized <T> void addService(Class<? extends T> interfaceClass, T service) {
 		List<Object> list =

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 
 /**
- * <code>MergeUtilities</code> provides generic static methods for use by the 
+ * <code>MergeUtilities</code> provides generic static methods for use by the
  * multi-user program merge managers.
  */
 public class MergeUtilities {
@@ -28,7 +28,7 @@ public class MergeUtilities {
 	/**
 	 * Adds addresses to autoChanges where there are changes in the myDiffs set,
 	 * but none in the latestDiffs set.
-	 * Adds addresses to conflictChanges where there are changes in the myDiffs 
+	 * Adds addresses to conflictChanges where there are changes in the myDiffs
 	 * set and also some changes in the latestDiffs set.
 	 * @param latestDiffs the address set of the changes in LATEST.
 	 * @param myDiffs the address set of the changes in MY.
@@ -78,7 +78,7 @@ public class MergeUtilities {
 //		}
 //		return addrs;
 //	}
-//    
+//
 //	/**
 //	 * Returns whether or not the two indicated objects are equal. It allows
 //	 * either or both of the specified objects to be null.
@@ -96,7 +96,7 @@ public class MergeUtilities {
 //	}
 //
 //    /**
-//     * Returns the signed hex string representing the int value. 
+//     * Returns the signed hex string representing the int value.
 //     * Positive values are represented beginning with 0x. (i.e. value of 12 would be 0xc)
 //     * Negative values are represented beginning with -0x. (i.e. value of -12 would be -0xc)
 //     * @param value the value
@@ -106,9 +106,9 @@ public class MergeUtilities {
 //		return (value >= 0 ? "0x"+Integer.toHexString(value) :
 //		                    "-0x"+Integer.toHexString(-value) );
 //	}
-//	
+//
 //    /**
-//     * Returns the signed hex string representing the long value. 
+//     * Returns the signed hex string representing the long value.
 //     * Positive values are represented beginning with 0x. (i.e. value of 12 would be 0xc)
 //     * Negative values are represented beginning with -0x. (i.e. value of -12 would be -0xc)
 //     * @param value the value

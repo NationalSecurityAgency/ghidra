@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -290,7 +290,7 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 
 	/**
 	 * A class which allows tests to attempt to gracefully handle changes in language modules.
-	 * 
+	 *
 	 * If the expected assembly string does not match what disassembly of the expected bytes yields,
 	 * this exception is thrown. This allows the test to provide an alternative expected assembly.
 	 */
@@ -398,7 +398,7 @@ public abstract class AbstractAssemblyTest extends AbstractGenericTest {
 	/**
 	 * Run a test where one result must match a given instruction pattern, and all others must
 	 * disassemble exactly to the input
-	 * 
+	 *
 	 * @param assembly the input assembly
 	 * @param instr the instruction pattern
 	 * @see AssemblyPatternBlock#fromString(String)

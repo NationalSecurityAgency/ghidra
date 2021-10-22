@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -206,7 +206,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	protected DebuggerObjectModel currentModel;
 	// NB: We're getting rid of this because the ObjectsProvider is beating the trace
 	//  to the punch and causing the pattern-matcher to fail
-	// private TraceRecorder recorder;  
+	// private TraceRecorder recorder;
 	protected Runnable repeatLastSet = () -> {
 	};
 
@@ -878,7 +878,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	//@formatter:off
 	private void createActions() {
 		int groupTargetIndex = 0;
-		
+
 		new ActionBuilder("Refresh Node", plugin.getName())
 			.keyBinding("SHIFT R")
 			.toolBarGroup(DebuggerResources.GROUP_MAINTENANCE, "M" + groupTargetIndex)
@@ -897,7 +897,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.helpLocation(new HelpLocation(plugin.getName(), "toggle_base"))
 			.onAction(ctx -> performToggleBase(ctx))
 			.buildAndInstallLocal(this);
-	
+
 		groupTargetIndex++;
 
 		actionToggleSubscribe = new ToggleActionBuilder("Toggle Subscription", plugin.getName())
@@ -907,7 +907,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.helpLocation(new HelpLocation(plugin.getName(), "toggle_subscription"))
 			.onAction(ctx -> performToggleSubscription(ctx))
 			.buildAndInstallLocal(this);
-	
+
 		groupTargetIndex++;
 
 		actionToggleAutoRecord = new ToggleActionBuilder("&Record Automatically", plugin.getName())
@@ -918,7 +918,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.selected(autoRecord)
 			.enabled(true)
 			.buildAndInstallLocal(this);
-	
+
 		groupTargetIndex++;
 
 		actionToggleHideIntrinsics = new ToggleActionBuilder("Hide Intrinsic Atributes", plugin.getName())
@@ -929,7 +929,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.selected(hideIntrinsics)
 			.enabled(true)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
 
 		actionToggleSelectionOnly = new ToggleActionBuilder("Enable By Selection Only", plugin.getName())
@@ -940,7 +940,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.selected(selectionOnly)
 			.enabled(true)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
 
 		actionToggleIgnoreState = new ToggleActionBuilder("Toggle ignore state on/off", plugin.getName())
@@ -951,7 +951,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.selected(selectionOnly)
 			.enabled(true)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex = 0;
 
 		new ActionBuilder("Quick Launch", plugin.getName())
@@ -963,7 +963,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.onAction(ctx -> performQuickLaunch(ctx))
 			.enabled(currentModel != null)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
 
 		actionLaunch = new ActionBuilder("Launch", plugin.getName())
@@ -979,7 +979,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.onAction(ctx -> performLaunch(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
 
 		new ActionBuilder("Attach", plugin.getName())
@@ -994,7 +994,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.onAction(ctx -> performAttach(ctx))
 			.enabled(true)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
 
 		new ActionBuilder("Re-attach", plugin.getName())
@@ -1007,7 +1007,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.onAction(ctx -> performReattach(ctx))
 			.enabled(true)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
 
 		/*
@@ -1023,10 +1023,10 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.onAction(ctx -> performAttach(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
 		*/
-		
+
 		new ActionBuilder("Detach", plugin.getName())
 			.keyBinding("D")
 			.menuPath("&Detach")
@@ -1041,9 +1041,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.onAction(ctx -> performDetach(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
-		
+
 		new ActionBuilder("Kill", plugin.getName())
 			.keyBinding("K")
 			.menuPath("&Kill")
@@ -1058,9 +1058,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.onAction(ctx -> performKill(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
-		
+
 		new ActionBuilder("Start Recording", plugin.getName())
 			.keyBinding("R")
 			.menuPath("&Record")
@@ -1075,9 +1075,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.onAction(ctx -> performStartRecording(ctx))
 			.enabled(true)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex = 0;
-	
+
 		new ActionBuilder("Resume", plugin.getName())
 			.keyBinding("F5")
 			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
@@ -1086,14 +1086,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
 			.popupMenuIcon(AbstractResumeAction.ICON)
 			.helpLocation(AbstractResumeAction.help(plugin))
-			.enabledWhen(ctx -> 
+			.enabledWhen(ctx ->
 				isInstance(ctx, TargetResumable.class) && isStopped(ctx))
-			.popupWhen(ctx -> 
+			.popupWhen(ctx ->
 				isInstance(ctx, TargetResumable.class) && isStopped(ctx))
 			.onAction(ctx -> performResume(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
 
 		new ActionBuilder("Interrupt", plugin.getName())
@@ -1104,14 +1104,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
 			.popupMenuIcon(AbstractInterruptAction.ICON)
 			.helpLocation(AbstractInterruptAction.help(plugin))
-			.enabledWhen(ctx -> 
+			.enabledWhen(ctx ->
 				isInstance(ctx, TargetInterruptible.class) && (!isStopped(ctx) || ignoreState))
-			.popupWhen(ctx -> 
+			.popupWhen(ctx ->
 				isInstance(ctx, TargetInterruptible.class) && (!isStopped(ctx) || ignoreState))
 			.onAction(ctx -> performInterrupt(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
 
 		new ActionBuilder("Step Into", plugin.getName())
@@ -1122,16 +1122,16 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.popupMenuGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
 			.popupMenuIcon(AbstractStepIntoAction.ICON)
 			.helpLocation(AbstractStepIntoAction.help(plugin))
-			.enabledWhen(ctx -> 
+			.enabledWhen(ctx ->
 				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
-			.popupWhen(ctx -> 
+			.popupWhen(ctx ->
 				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
 			.onAction(ctx -> performStepInto(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
-	
+
 		new ActionBuilder("Step Over", plugin.getName())
 			.keyBinding("F10")
 			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
@@ -1141,14 +1141,14 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.popupMenuIcon(AbstractStepOverAction.ICON)
 			.helpLocation(AbstractStepOverAction.help(plugin))
 			//.withContext(ObjectActionContext.class)
-			.enabledWhen(ctx -> 
+			.enabledWhen(ctx ->
 				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
-			.popupWhen(ctx -> 
+			.popupWhen(ctx ->
 				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
 			.onAction(ctx -> performStepOver(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
 
 		new ActionBuilder("Finish", plugin.getName())
@@ -1160,16 +1160,16 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.popupMenuIcon(AbstractStepFinishAction.ICON)
 			.helpLocation(AbstractStepFinishAction.help(plugin))
 			//.withContext(ObjectActionContext.class)
-			.enabledWhen(ctx -> 
+			.enabledWhen(ctx ->
 				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
-			.popupWhen(ctx -> 
+			.popupWhen(ctx ->
 				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
 			.onAction(ctx -> performStepFinish(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
-		
+
 		new ActionBuilder("Step Last", plugin.getName())
 			.keyBinding("ALT F8")
 			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
@@ -1179,16 +1179,16 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.popupMenuIcon(AbstractStepLastAction.ICON)
 			.helpLocation(AbstractStepLastAction.help(plugin))
 			//.withContext(ObjectActionContext.class)
-			.enabledWhen(ctx -> 
+			.enabledWhen(ctx ->
 				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
-			.popupWhen(ctx -> 
+			.popupWhen(ctx ->
 				isInstance(ctx, TargetSteppable.class) && isStopped(ctx))
 			.onAction(ctx -> performStepLast(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
-	
+
 		actionAddBreakpoint = new ActionBuilder("Add Breakpoint", plugin.getName())
 			.keyBinding("F3")
 			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "C" + groupTargetIndex)
@@ -1198,16 +1198,16 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.popupMenuIcon(AbstractSetBreakpointAction.ICON)
 			.helpLocation(AbstractSetBreakpointAction.help(plugin))
 			//.withContext(ObjectActionContext.class)
-			.enabledWhen(ctx -> 
+			.enabledWhen(ctx ->
 				isInstance(ctx, TargetBreakpointSpecContainer.class) && isStopped(ctx))
-			.popupWhen(ctx -> 
+			.popupWhen(ctx ->
 				isInstance(ctx, TargetBreakpointSpecContainer.class) && isStopped(ctx))
 			.onAction(ctx -> performSetBreakpoint(ctx))
-			.enabled(false) 
-			.buildAndInstallLocal(this); 
-		
+			.enabled(false)
+			.buildAndInstallLocal(this);
+
 		groupTargetIndex = 0;
-	
+
 		new ActionBuilder("Show Console", plugin.getName())
 			//.keyBinding("pause")
 			.toolBarGroup(DebuggerResources.GROUP_CONNECTION, "X" + groupTargetIndex)
@@ -1222,9 +1222,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.onAction(ctx -> initiateConsole(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
-	
+
 		new ActionBuilder("Toggle", plugin.getName())
 			.keyBinding("T")
 			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
@@ -1236,9 +1236,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.onAction(ctx -> performToggle(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
-	
+
 		new ActionBuilder("Configure", plugin.getName())
 			.keyBinding("C")
 			.toolBarGroup(DebuggerResources.GROUP_CONTROL, "X" + groupTargetIndex)
@@ -1250,9 +1250,9 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			.onAction(ctx -> performConfigure(ctx))
 			.enabled(false)
 			.buildAndInstallLocal(this);
-		
+
 		groupTargetIndex++;
-	
+
 		displayAsTreeAction = new DisplayAsTreeAction(tool, plugin.getName(), this);
 		displayAsTableAction = new DisplayAsTableAction(tool, plugin.getName(), this);
 		displayAsGraphAction = new DisplayAsGraphAction(tool, plugin.getName(), this);

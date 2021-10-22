@@ -18,14 +18,14 @@
     offset in the structure. The following illustrates the editor for a structure data type.
     </P>
     <BR>
-    
-     
+
+
     <DIV align="center" style="margin-top: 10px;">
       <IMG src="images/StructureEditor.png" alt=""><BR>
     </DIV>
-    
+
     <BR>
-    <P>As shown above, the Structure Editor also includes a bit-level view of the structure layout to improve 
+    <P>As shown above, the Structure Editor also includes a bit-level view of the structure layout to improve
     understanding of bitfield placement when they are present.  Note that the byte ordering is
     reversed for little-endian data organizations to ensure that a bitfield is always rendered
     as a contiguous bit range.  If inadequate space is available for a component label,
@@ -54,7 +54,7 @@
       <UL>
         <LI><I>Edit Actions</I>: The icon buttons at the top of the editor are used to modify this
         structure. Each button has a different <A href="#Structure_Editor_Edit_Actions">edit
-        action</A> associated with it. These allow the user to: apply changes, insert 
+        action</A> associated with it. These allow the user to: apply changes, insert
         Undefined components, reorganize the current components, duplicate components, clear components (changes
         them to <i>undefined</i> components), delete components, create array components, and unpackage a
         structure or array component changing it into its component parts.<BR>
@@ -125,7 +125,7 @@
     <BLOCKQUOTE>
       <P>To change the name of the structure or union being edited, edit the <I>Name</I> field in
       the bottom of the editor. If the name is valid, the structure's or union's name will change
-      when the edits are applied by pressing the editor's Apply Changes icon 
+      when the edits are applied by pressing the editor's Apply Changes icon
       <IMG src="images/disk.png" alt=""> in the toolbar.</P>
     </BLOCKQUOTE>
 
@@ -134,7 +134,7 @@
     <BLOCKQUOTE>
       <P>To change the description of the structure or union being edited, edit the
       <I>Description</I> field in the bottom of the editor. The structure's or union's description
-      will take effect when the edits are applied by pressing the editor's Apply Changes icon 
+      will take effect when the edits are applied by pressing the editor's Apply Changes icon
       <IMG src="images/disk.png" alt=""> in the toolbar.</P>
     </BLOCKQUOTE>
 
@@ -144,7 +144,7 @@
       <P>To change the size of the structure being edited, edit the <I>Size</I> field in the bottom
       of the editor and press the <SPAN style="font-weight: bold;">Enter</SPAN> key to apply the
       new size to the structure. If you are reducing the size of the structure, you will be
-      prompted to determine that you really want to truncate the structure.  The ability to specify the 
+      prompted to determine that you really want to truncate the structure.  The ability to specify the
       size is only permitted for non-packed structures.  For other situations the field is read-only.</P>
     </BLOCKQUOTE>
 
@@ -152,15 +152,15 @@
 
     <BLOCKQUOTE>
       <P>At the bottom of the editor is a read-only <SPAN style="font-style: italic;">Alignment</SPAN>
-      field which conveys the actual alignment of this data type. 
+      field which conveys the actual alignment of this data type.
       All non-packed structures and unions (i.e., pack disabled) will have a default alignment of 1 (byte aligned)
       unless a <A href="#Structure_Editor_Align">minimum alignment</A> value has been specified.  For packed structures and unions
-      the actual alignment value is calculated based on the <A href="#Structure_Editor_Pack">pack</A> setting, 
-      preferred alignments of the individual components, 
-      and the minimum alignment setting. The size of a packed structure or union will always be a multiple 
+      the actual alignment value is calculated based on the <A href="#Structure_Editor_Pack">pack</A> setting,
+      preferred alignments of the individual components,
+      and the minimum alignment setting. The size of a packed structure or union will always be a multiple
       of this alignment value.  This value is always expressed in terms of 8-bit bytes.</P>
       <P>
-      This alignment is considered when this data type, or derivative data type, is placed within another packed composite.  
+      This alignment is considered when this data type, or derivative data type, is placed within another packed composite.
       A compiler will also utilize this when placing components within memory although Ghidra does not
       enforce such placement.<BR>
       </P>
@@ -174,22 +174,22 @@
       structure or union, while the <B>default</B> or value-entry buttons enable packing.<BR>
       </P>
     </BLOCKQUOTE>
-    
+
     <BLOCKQUOTE>
 
     <H3>Non-Packed Structures</H3>
 
     <BLOCKQUOTE>
       <P>When packing is disabled for a structure all bytes are accounted for
-      by the displayed components.  Use of <i>undefined</i> filler components as padding and reservation of space. 
+      by the displayed components.  Use of <i>undefined</i> filler components as padding and reservation of space.
       This differs from a packed structure which does not reveal padding in the form of components and does not provide
       a means of reserving space.
       Non-packed structures may be used to position components with known data
       types at specific offsets within a structure whose size has been specified. When editing a non-packed structure
       the editor attempts to prevent defined components from moving
-      to a different offset when performing operations like drag and drop which may consume undefined bytes. 
-      The default alignment for non-packed structures is 1-byte but may be overriden by setting a specific 
-      non-default <A href="#Structure_Editor_Align">minimum alignment</A>. 
+      to a different offset when performing operations like drag and drop which may consume undefined bytes.
+      The default alignment for non-packed structures is 1-byte but may be overriden by setting a specific
+      non-default <A href="#Structure_Editor_Align">minimum alignment</A>.
       The alignment will not influence the size of a non-packed structure so it is advised
       that the size always be explicity set to a multiple of the alignment value.<BR>
       </P>
@@ -202,19 +202,19 @@
     <H3>Packed Structures</H3>
 
     <BLOCKQUOTE>
-      <P>A packed structure is defined similar to a structure in a C header file and is intended 
-      to automatically adjust component placement, size and alignment in a manner consistent 
+      <P>A packed structure is defined similar to a structure in a C header file and is intended
+      to automatically adjust component placement, size and alignment in a manner consistent
       with the associated compiler specification. Data types
       are specified for each of the components, but their offsets are automatically computed
       based upon the pack settings and preferred alignment of each component's data type. A default
-      datatype (i.e., <i>undefined</i>) cannot be added to a packed structure, although other sized datatypes 
-      (e.g., <i>undefined1</i>, <i>undefined4</i>, etc.) may be used as component place-holders and will 
+      datatype (i.e., <i>undefined</i>) cannot be added to a packed structure, although other sized datatypes
+      (e.g., <i>undefined1</i>, <i>undefined4</i>, etc.) may be used as component place-holders and will
       pack appropriately based upon their size.   The overall size of the structure is
-      determined by the components it contains, the pack setting (default or explicit value) and the minimum alignment setting. 
+      determined by the components it contains, the pack setting (default or explicit value) and the minimum alignment setting.
       The default alignment and pack behavior is controlled by the effective data organization.  This can
-      cause the same structure viewed within a program to be layed-out quite differently than within a datatype archive 
-      which uses a default data organization.</P>   
-      <P>The following image shows the editor state reflecting a default packed structure with 
+      cause the same structure viewed within a program to be layed-out quite differently than within a datatype archive
+      which uses a default data organization.</P>
+      <P>The following image shows the editor state reflecting a default packed structure with
       default alignment.<BR>
       </P>
 
@@ -226,22 +226,22 @@
     <H4><A name="Structure_Editor_Align"></A>align (minimum)</H4>
 
     <BLOCKQUOTE>
-      <P>This setting controls the minimum alignment to be used when computing this data type's 
+      <P>This setting controls the minimum alignment to be used when computing this data type's
       <A href="#Structure_Editor_ActualAlignment">actual alignment</A>.<BR>
       </P>
 
       <UL>
         <LI><SPAN style="font-weight: bold;">default</SPAN> - Sets this data type to compute its <SPAN style=
-        "font-weight: bold;">default</SPAN> alignment based only on the pack setting and the alignment of 
+        "font-weight: bold;">default</SPAN> alignment based only on the pack setting and the alignment of
         the individual components.  If packing is disabled (i.e., explicit component placement by offset)
         the default alignment will always be 1-byte and preferred component alignments are ignored.<BR>
         </LI>
 
         <LI>explicit value - The radio-button with a text field next to it allows you to specify an
-        explicit minimum alignment value. This sets the data types minimum alignment.  The 
+        explicit minimum alignment value. This sets the data types minimum alignment.  The
         computed alignment for the data type will be a multiple of this value.</LI>
-        
-        <LI><SPAN style="font-weight: bold;">machine</SPAN> - Sets the minimum alignment to conform 
+
+        <LI><SPAN style="font-weight: bold;">machine</SPAN> - Sets the minimum alignment to conform
         to the machine alignment specified by the associated data organization (i.e., compiler specification).
         This genrally corresponds to the largest alignment which is ever
         used for any data type on the program's intended machine.  If this is choosen and
@@ -260,16 +260,16 @@
     <H4><A name="Structure_Editor_Pack"></A>pack</H4>
 
     <BLOCKQUOTE>
-      <P>This setting controls the packing behavior of the structure or union.  In general, packing should 
-      be disabled when a complete definition is unknown and it is neccessary to reverse engineer the 
+      <P>This setting controls the packing behavior of the structure or union.  In general, packing should
+      be disabled when a complete definition is unknown and it is neccessary to reverse engineer the
       component specifications.  This is the initial state of a new structure with the <B>pack</B>
       checkbox left unchecked.  When a the specifications of a composite are known, such as from
-      a source header file, it may be preferred to enable packing to allow for automatic placement of 
+      a source header file, it may be preferred to enable packing to allow for automatic placement of
       components and calculation of alignment and size.  To enable packing the <B>pack</B> checkbox
       should be checked and either a <B>default</B> or explicit pack value specified.<BR>
       </P>
       <UL>
-        <LI><B>default</B> - The components within this structure should align besed upon the 
+        <LI><B>default</B> - The components within this structure should align besed upon the
         preferred alignment of each component.<BR>
         </LI>
 
@@ -281,11 +281,11 @@
       <P>
       When packing is enabled, the padding at the end of a structure will be adjusted to ensure
       an overall size which is a multiple of the computed alignment.  If an explicit pack
-      value is specified the, the aligned placement of components will not exceed this value. 
+      value is specified the, the aligned placement of components will not exceed this value.
       In addition, the computed alignment will not exceed this value if a <B>default</B> is selected for the
-      <B>align (minimum)</B> setting.  If a minimum alignment other than <B>default</B> is specified, 
+      <B>align (minimum)</B> setting.  If a minimum alignment other than <B>default</B> is specified,
       the computed alignment and overall size will be a multiple of the align value regardless
-      of the <B>pack</B> setting.  The <B>align</B> setting will not influence interior component placement 
+      of the <B>pack</B> setting.  The <B>align</B> setting will not influence interior component placement
       as does the <B>pack</B> setting.<BR>
       </P>
 	  <P><IMG alt="Note:" src="../../shared/note.png"> The placement of bitfields may be influenced
@@ -331,69 +331,69 @@
         <IMG alt="" src="images/UnionEditorPacked.png">
       </DIV>
     </BLOCKQUOTE>
-    
+
     </BLOCKQUOTE>
-    
+
     <H2><A name="Structure_Editor_Bitfields"></A>Bitfield Component</H2>
 
-    <P>A structure and union may define bitfield components which attempt to model 
-    bitfield definitions found within C/C++. Unlike other byte-oriented components, 
-    bitfield components have the following characteristics: 
+    <P>A structure and union may define bitfield components which attempt to model
+    bitfield definitions found within C/C++. Unlike other byte-oriented components,
+    bitfield components have the following characteristics:
     <BLOCKQUOTE>
       	<ul>
       		<li>A bitfield datatype may not exist anywhere other than within a structure or union.</li>
       		<li>A bitfield datatype may not be selected via the datatype chooser or tree since it
       		requires the specification of additional attributes (e.g., bit-size, bit-offset).  The
-      		bit-size is generally appended to the base datatype for datatype specification and 
+      		bit-size is generally appended to the base datatype for datatype specification and
       		presentation purposes (e.g., char:1).</li>
       		<li>A zero-length bitfield may be defined within a byte but its precise bit position
       		is controlled by endianess alone.  A zero-length bitfield has no affect within a non-packed
       		structure and is intended for use within packed structures where it may impart alignment
-      		affects based upon compiler conventions.</li> 
-      		<li>Inserting a bitfield within a non-packed structure may cause component shifts based 
+      		affects based upon compiler conventions.</li>
+      		<li>Inserting a bitfield within a non-packed structure may cause component shifts based
       		upon the specified offset and allocation unit byte size when a placement conflict occurs.</li>
       		<li>The start/end byte offsets may be shared with adjacent bitfield components.</li>
       		<li>Unoccupied bits within a partially occupied byte are not represented by any component
       		(similar to padding bytes within packed structures).</li>
-      		<li>A separate <a href="#Structure_Bitfield_Editor">Bitfield Editor</a>, for use with non-packed structures only, 
-      		must be used to precisely place a bitfield component.  Adding a bitfield component via the 
-      		structure table view via datatype text entry (e.g., char:1) provides only rough placement for non-packed 
-      		structures since additional bytes will be introduced. 
+      		<li>A separate <a href="#Structure_Bitfield_Editor">Bitfield Editor</a>, for use with non-packed structures only,
+      		must be used to precisely place a bitfield component.  Adding a bitfield component via the
+      		structure table view via datatype text entry (e.g., char:1) provides only rough placement for non-packed
+      		structures since additional bytes will be introduced.
       		The BitField Editor may be displayed using the the Add Bitfield and
       		Edit Bitfield popup menu actions on a selected structure component.  The datatype text entry approach
       		must be used for all unions and packed structures.</li>
       	</ul>
     </BLOCKQUOTE>
-    
-    <P><IMG alt="Note:" src="../../shared/note.png">While packing of bitfields within packed 
+
+    <P><IMG alt="Note:" src="../../shared/note.png">While packing of bitfields within packed
     structures is controlled by the compiler specification (e.g., data organization), bit-packing
     order is currently fixed based upon endianess.  Little-endian packs starting with bit-0 (lsb)
     while big-endian packs starting with bit-7 (msb).</P>
-    
-    <P><IMG alt="Note:" src="../../shared/note.png">The use of bitfield components is not 
+
+    <P><IMG alt="Note:" src="../../shared/note.png">The use of bitfield components is not
     currently reflected in decompiler results or assembly markup. </P>
 
 	<H2><A name="Structure_Editor_Flex_Array"></A>Zero-Element / Flexible Array Components</H2>
 
-    <P>A structure may be defined with zero-element array components, also referred to as a 
+    <P>A structure may be defined with zero-element array components, also referred to as a
     flexible array, which correspond to an unsized array (e.g., char[0]).  Such a component
     is created by simply specifying a zero-element array datatype as you would a sized-array component
     (see <A href="#Structure_Editor_Create_FlexArray">Create
     Zero-Element / Flexible Array Component</A>).
     The resulting component will not consume any space within the structure and will report a component
-    size of 0. As such, it may reside at the same offset as a subsequent component and/or may have an offset 
-    equal to the length of the structure. When packing is enabled such a component may influence the 
+    size of 0. As such, it may reside at the same offset as a subsequent component and/or may have an offset
+    equal to the length of the structure. When packing is enabled such a component may influence the
     overall alignment of the structure and its length.
-  
-    <P><IMG alt="Note:" src="../../shared/note.png">The use of flexible array components is not 
-    currently reflected in decompiler results or listing reference markup. Its primary purpose 
+
+    <P><IMG alt="Note:" src="../../shared/note.png">The use of flexible array components is not
+    currently reflected in decompiler results or listing reference markup. Its primary purpose
     if to reflect the C/C++ source definition of a structure with correct alignment and structure sizing.</P>
-    
+
       <DIV style="text-align: center;">
         <IMG alt="" src="images/StructureEditorWithFlexArray.png"><BR>
         <BR>
       </DIV>
-    
+
     <H2><A name="Structure_Editor_Edit_Actions"></A>Edit Actions</H2>
 
     <BLOCKQUOTE>
@@ -579,7 +579,7 @@
         the end of the selection will become <i>undefined</i> components.</LI>
       </OL>
     </BLOCKQUOTE>
-    
+
     <H3><A name="Structure_Editor_Create_FlexArray"></A> <IMG src="images/Array.png" alt="">Create
     Zero-Element / Flexible Array Component</H3>
 
@@ -590,7 +590,7 @@
       you wish to modify.  This may be an existing component or the empty row at the end of the table.
       See <A href="#Structure_Editor_Editing_DataType">Editing the DataType Field</A> for more details.
     </BLOCKQUOTE>
-    
+
     <H3><A name="Structure_Editor_Unpackage_Component"></A> <IMG src="images/Unpackage.gif" alt="">
     Unpackage Component</H3>
 
@@ -616,49 +616,49 @@
       prompted for the name of the new structure. Once a unique name is specified the new structure
       is created and a component containing it replaces the selected components.  The newly created
       structure will adopt the same pack setting as the current structure.</P>
-      
-      <P>It is important to note that when using this action with a packed structure the placement of components 
+
+      <P>It is important to note that when using this action with a packed structure the placement of components
       within the new stucture may change as can offsets of trailing components within the current structure.
       The size of the current structure may also be affected as a result of this change.</P>
-      
+
       <P>If you do not like the result of the change you can restore the previous state of the
-      current structure by using the <A HREF="#Structure_Editor_Unpackage_Component"></A> action on 
-      the new structure component, although the newly created structure will still exist within 
+      current structure by using the <A HREF="#Structure_Editor_Unpackage_Component"></A> action on
+      the new structure component, although the newly created structure will still exist within
       the Data Type Manager.</P>
 
     </BLOCKQUOTE><BR>
-     
-    </BLOCKQUOTE> 
+
+    </BLOCKQUOTE>
 <H2><A name="Structure_Editor_Bitfield_Actions"></A>Bitfield Actions (Non-Packed Structures)</H2>
-    
+
     <BLOCKQUOTE>
-    <P>The following bitfield actions are available when modifying non-packed structures only (i.e., pack disabled) and are available 
-    via the popup menu based upon a selected component or table row.  When working with unions and 
-    packed structures, bitfields may only be specified via datatype text entry specification within the 
+    <P>The following bitfield actions are available when modifying non-packed structures only (i.e., pack disabled) and are available
+    via the popup menu based upon a selected component or table row.  When working with unions and
+    packed structures, bitfields may only be specified via datatype text entry specification within the
     table view (e.g., char:1).</P>
-    
+
     <H3><A name="Structure_Editor_Add_Bitfield"></A>Add Bitfield</H3>
 
     <BLOCKQUOTE>
-      <P>With a structure row selected in the vicinity of the desire bitfield placement, the popup 
-      menu action (right mouse-click) <B>Add Bitfield</B> may be selected to launch the 
+      <P>With a structure row selected in the vicinity of the desire bitfield placement, the popup
+      menu action (right mouse-click) <B>Add Bitfield</B> may be selected to launch the
       <a href="#Structure_Bitfield_Editor">Bitfield Editor</a> for a new bitfield.</P>
-      
+
       <P><IMG alt="Note:" src="../../shared/note.png"> A direct text entry of a bitfield
-      datatype may be specified within the table datatype column (e.g., char:1), although it 
+      datatype may be specified within the table datatype column (e.g., char:1), although it
       will always be placed at a default offset.</P>
-      
+
     </BLOCKQUOTE>
-    
+
     <H3><A name="Structure_Editor_Edit_Bitfield"></A>Edit Bitfield</H3>
 
     <BLOCKQUOTE>
-      <P>With a defined bitfield component row selected, the popup 
-      menu action (right mouse-click) <B>Edit Bitfield</B> may be selected to launch the 
+      <P>With a defined bitfield component row selected, the popup
+      menu action (right mouse-click) <B>Edit Bitfield</B> may be selected to launch the
       <a href="#Structure_Bitfield_Editor">Bitfield Editor</a>.</P>
     </BLOCKQUOTE>
-     
-    </BLOCKQUOTE> 
+
+    </BLOCKQUOTE>
 
     <H2><A name="Structure_Editor_Component_Fields"></A>Component Fields</H2>
 
@@ -691,7 +691,7 @@
     fields position the cursor over the header for the table column. Left mouse click and drag the
     column left or right to its new position.</P>
     <BR>
-     
+
 
     <BLOCKQUOTE>
       <H3><A name="Structure_Editor_Edit_Component_Field"></A> Editing Component Fields</H3>
@@ -767,32 +767,32 @@
       "help/topics/DataTypeEditors/DataTypeSelectionDialog.htm">Data Type Selection Dialog</A>,
       which allows you to easily enter a data type or select/modify an existing one from one of the open
       datatype managers. It can also be Undefined, a pointer to a datatype, or an array.</P>
- 
-       <P><IMG alt="Note:" src="../../shared/note.png"> Certain restrictions may apply when specifying 
+
+       <P><IMG alt="Note:" src="../../shared/note.png"> Certain restrictions may apply when specifying
        or modifying a component's datatype which could cause a modification to fail.  Some common restrictions include
        but are not limited to:</P>
-       
+
        <BLOCKQUOTE>
        <ul>
-       <li>Fit (non-packed structure only) - when modifying a component 
+       <li>Fit (non-packed structure only) - when modifying a component
        there must be adequate space to place the component.  Any undefined components which immediately follow
-       the modified component may be consumed or added based upon the component size change.  It may be neccessary to 
+       the modified component may be consumed or added based upon the component size change.  It may be neccessary to
        insert undefined bytes or clear other components before the modification may be completed.</li>
        <li>Illegal Datatype - certain datatypes are not permitted (e.g., data driven Dynamic types, Factory types).</li>
        <li>Zero-Length Components (non-packed structure only) - modification of an existing zero-length component may
        not change its size.</li>
        </ul>
        </BLOCKQUOTE>
- 
+
       <P>Examples of datatypes which may be specified, include:</P>
 
       <BLOCKQUOTE>
         <P><A name="Structure_Editor_Basic_Data_Type"></A><B>Basic Data Type</B></P>
 
         <P>This can be any fixed-length built-in data type (e.g., byte, word, etc.), structure, union, typedef, or enum.
-        
+
         <P><B>Sizable Dynamic Data Type</B></P>
-        
+
         <P>A sizable built-in Dynamic data type such as <i>string</i> may be specified in which case the user
         will be prompted to specify the component size.</P>
 
@@ -820,16 +820,16 @@
 
         <P>For example, <i>float*[5]</i> is an array with five elements where each element is a pointer to
         a Float.</P>
-        
+
         <P><B>Bitfields</B></P>
-        
+
         <P>A bitfield may be specified by appending <b>:&lt;bitsize&gt;</b> to the end of a valid base datatype.  Valid base datatypes include
         all integer types (e.g., byte, char, int, etc.), a defined enum, or a typedef which corresponds to an integer-type or enum.
         It is important to note that specifying a bitfield in this manner works well for packed structures, however for non-packed
         structures it may be neccessary to use the <A href="#Structure_Editor_Bitfield_Actions">Bitfield Actions</A> to properly define a bitfield.</P>
-        
-        <P>For example, <i>int:4</i> defines a signed integer bitfield which is 4-bits in length.  
- 
+
+        <P>For example, <i>int:4</i> defines a signed integer bitfield which is 4-bits in length.
+
         <H4><A name="EffectOfChangingDataTypeSize"></A> <U>Effect of Changing a Component's
         Size</U></H4>
 
@@ -847,14 +847,14 @@
           be less than or equal to the original component's size plus any <i>undefined</i> components
           that immediately follow it in the structure. Decreasing the
           component size will create <i>undefined</i> components following it to maintain the
-          structure size and placement of other components. Increasing the component size replaces 
+          structure size and placement of other components. Increasing the component size replaces
           <i>undefined</i> components immediately
           following the component. The last component of a structure can always be changed which
           can cause the structure to grow larger.<BR>
           </P>
 
           <P><B>Packed</B> - If the structure is <I>packed</I>, a component can change size or alignment,
-          which can affect the placement of subsequent components within a structure and/or the 
+          which can affect the placement of subsequent components within a structure and/or the
           overall size and alignment of both structures and unions.</P>
         </BLOCKQUOTE>
       </BLOCKQUOTE>
@@ -962,7 +962,7 @@
 
       <BLOCKQUOTE>
         <P><B>Known Problem:</B> Holding the Ctrl key to perform an insert of a data type does not
-        currently work on a Mac. On a Mac try using the Alt key to insert rather than the Ctrl key. 
+        currently work on a Mac. On a Mac try using the Alt key to insert rather than the Ctrl key.
         The "+" should then appear at the drop site.</P>
 
         <P><IMG src="../../shared/note.png" alt="">When a data type is dropped on a pointer
@@ -1054,7 +1054,7 @@
 
           <LI style="list-style: none">
             <P><B>Known Problem:</B> Holding the Ctrl key to perform an insert of a data type does not
-        currently work on a Mac. On a Mac try using the Alt key to insert rather than the Ctrl key. 
+        currently work on a Mac. On a Mac try using the Alt key to insert rather than the Ctrl key.
         The "+" should then appear at the drop site.</P>
           </LI>
         </OL>
@@ -1080,17 +1080,17 @@
           <H4>Single Component Selected</H4>
 
           <P>Drag a data type to a single selected component in the editor or to a non-selected
-          component in the editor. 
+          component in the editor.
           If the mouse pointer is a 'circle with a slash' then the data type cannot be
           dropped to replace the component. This is probably because the data type being dropped
-          won't fit in the structure in place of the original component. If editing a union or 
+          won't fit in the structure in place of the original component. If editing a union or
           packed structure the data type will always fit and the drop is allowed (provided the datatype is allowed). If editing a
           non-packed structure, the component is replaced only if the new component will fit. (see
           <A href="#EffectOfChangingDataTypeSize">Effect of Changing a Component's Size</A>)</P>
 
           <H4>Contiguous Selection of Multiple Components</H4>
 
-          <P>Drag a data type to a block of selected components. 
+          <P>Drag a data type to a block of selected components.
           Whether the structure is packed or non-packed doesn't matter when dropping a data type on
           a block of selected components. This is because the new component (s) will occupy the
           same space as the currently selected components.<BR>
@@ -1243,7 +1243,7 @@
       <P>The <I>StructureEditor</I> and <I>Union Editor</I> tabs contains the following
       options:</P>
       <BR>
-       
+
 
       <DIV align="center">
         <CENTER>
@@ -1289,104 +1289,104 @@
       <P>To select an option simply click on the check box. <U><BR>
       </U></P>
     </BLOCKQUOTE>
-    
+
     <H2><A name="Structure_Bitfield_Editor"></A>Bitfield Editor (Non-Packed Structures only)</H2>
-    
+
     <BLOCKQUOTE>
     <P>The Bitfield Editor is used by the Structure Editor when adding or modifying bitfield components
     within non-packed structures to facilitate precise placement at the bit level.  The Bitfield Editor
     is not supported for unions and packed structures since automated packing is performed (i.e.,
-    bitfields are specified via datatype text entry within the structure/union table view).  
-    While editing a non-packed structure, the Structure Editor popup menu actions <B>Add Bitfield</B> 
+    bitfields are specified via datatype text entry within the structure/union table view).
+    While editing a non-packed structure, the Structure Editor popup menu actions <B>Add Bitfield</B>
     and <B>Edit Bitfield</B> are used to launch the Bitfield Editor.</P>
-    
+
     <P>The Bitfield Editor includes a visual depiction of the storage allocation bytes and associated
-    bits (8-bits per byte, with a left-to-right / msb-to-lsb sequence of 7..0 ).  The displayed byte 
+    bits (8-bits per byte, with a left-to-right / msb-to-lsb sequence of 7..0 ).  The displayed byte
     ordering as conveyed by the <B>Byte Offset</B> header
-    will differ for big-endian vs. little-endian.  This is done to ensure that bitfields which span 
+    will differ for big-endian vs. little-endian.  This is done to ensure that bitfields which span
     byte boundaries will always visually appear as a consecutive range of bits. The <B>Component Bits</B>
-    display provides both a popup menu and mouse assisted bitfield manipulations.  Component labels 
-    are included within each component when space permits.  The color legend indicates the bit 
+    display provides both a popup menu and mouse assisted bitfield manipulations.  Component labels
+    are included within each component when space permits.  The color legend indicates the bit
     color scheme reflecting Defined bitfields, Defined non-bitfields, Edit bitfield bits, Conflict bits
     and Undefined bits.  A dot in the center of an Undefined bit indicates a padding bit not included
-    within any defined component.  Conflict bits correspond to the current edited bitfield where 
+    within any defined component.  Conflict bits correspond to the current edited bitfield where
     bits have been specified in conflict with an existing component.</P>
-    
+
     <P>While the Bitfield Editor is displayed local popup menu actions
-    are provided which can facilitate additional component manipulations (e.g., <B>Add Bitfield</B>, 
+    are provided which can facilitate additional component manipulations (e.g., <B>Add Bitfield</B>,
     <B>Edit Bitfield</B>, <B>Delete</B>).  These actions relate to the component at the current
-    mouse cursor location.   An addition popup menu toggle action available over the bitfield 
-    viewer is <B>Show Byte Offsets in Hexadecimal</B>.  Invoking either the <B>Add Bitfield</B> or 
-    <B>Edit Bitfield</B> local popup menu actions will immediately cancel the current bitfield 
+    mouse cursor location.   An addition popup menu toggle action available over the bitfield
+    viewer is <B>Show Byte Offsets in Hexadecimal</B>.  Invoking either the <B>Add Bitfield</B> or
+    <B>Edit Bitfield</B> local popup menu actions will immediately cancel the current bitfield
     operation if one is active.</P>
-    
+
     <BR>
     <DIV align="center" style="margin-top: 10px;">
       <IMG src="images/StructureEditBitfield.png" alt=""><BR>
     </DIV>
 	<BR>
-	
-    <P><IMG alt="Tip:" src="../../shared/tip.png"> A component zoom feature is provided which can 
-    allow the user to increase the visual bit size allowing for component labels to be shown 
-    as size permits.  While with the mouse cursor is over a component, use mouse wheel while the 
+
+    <P><IMG alt="Tip:" src="../../shared/tip.png"> A component zoom feature is provided which can
+    allow the user to increase the visual bit size allowing for component labels to be shown
+    as size permits.  While with the mouse cursor is over a component, use mouse wheel while the
     Shift key is depressed.</P>
-    
+
     <H3>Bitfield Parameters</H3>
     <BLOCKQUOTE>
-    
+
     	<P><B>Structure Offset of Allocation Unit</B> - controls the minimum byte offset of the
-    	storage allocation unit represented by the bitfield edit view.  This offset is controlled 
-    	via the <IMG alt="-" src="images/Minus.png"> and 
+    	storage allocation unit represented by the bitfield edit view.  This offset is controlled
+    	via the <IMG alt="-" src="images/Minus.png"> and
     	<IMG alt="+" src="images/Plus.png"> buttons at the top of the bitfield editor.</P>
-    	
+
     	<P><B>Allocation Bytes</B> - controls the size of the storage allocation unit to be utilized
-    	in the event a bit conflict exists and the user chooses to <I>Move Conflicts</I>.  This numeric 
-    	entry can be directly entered within the range of 1 through 16 bytes.  The mouse wheel may 
+    	in the event a bit conflict exists and the user chooses to <I>Move Conflicts</I>.  This numeric
+    	entry can be directly entered within the range of 1 through 16 bytes.  The mouse wheel may
     	also be used while the cursor is over this entry.</P>
-    	
-    	<P><B>Bit Size</B> - specifies the size of the bitfield in bits.  This size may not exceed 
-    	the size of the specified Base Datatype.  This numeric 
+
+    	<P><B>Bit Size</B> - specifies the size of the bitfield in bits.  This size may not exceed
+    	the size of the specified Base Datatype.  This numeric
     	entry can be directly entered or via the mouse wheel while the cursor is over this entry field
-    	or the rendered bitfield.</P> 
-    	
+    	or the rendered bitfield.</P>
+
     	<P><B>Bit Offset</B> -  specifies the offset of the rightmost bit of the bitfield within
-    	the displayed allocation unit.  This numeric 
+    	the displayed allocation unit.  This numeric
     	entry can be directly entered or via the mouse wheel while the cursor is over this entry field.</P>
-    	
+
     	<P><B>Base Datatype</B> -  (required) specifies the numeric datatype associated with the bitfield.
-   		Valid datatypes include primitive integer types (e.g., char, bool, int, etc.), enum types, and 
+   		Valid datatypes include primitive integer types (e.g., char, bool, int, etc.), enum types, and
    		typedef types of integer or enum types.  This input allows direct text input with auto-complete
    		assistance or via full access to a datatype tree chooser by clicking the '...' button.</P>
-   		
+
    		<P><B>Field Name</B> - (optional) specifies the structure component name to be assigned to
     	the bitfield.  This entry utilizes a simple text entry field.</P>
-    	
+
     	<P><B>Comment</B> - (optional) specifies the structure component comment to be assigned to
     	the bitfield.  This entry utilizes a simple text entry field.</P>
-    
-    	<P><IMG alt="Tip:" src="../../shared/tip.png"> The bitfield offset and size may be fully 
-    	specified by using the mouse.  Clicking and dragging over the visual bit-range where the bitfield 
+
+    	<P><IMG alt="Tip:" src="../../shared/tip.png"> The bitfield offset and size may be fully
+    	specified by using the mouse.  Clicking and dragging over the visual bit-range where the bitfield
     	should reside will adjust these settings.</P>
-    
+
     	<P><IMG alt="Note:" src="../../shared/note.png"> Within the Bitfield Editor the bit
-    	size may not exceed the size of the Base Datatype based upon the structure's 
-    	associated compiler convention (i.e., 
-    	data organization).  Since archives use default 
-    	integer type sizes which may differ from a target program's datatype sizing, the use of fixed-size base 
-    	datatypes may be preferred.  Otherwise, structure edits should be performed within the 
-    	target program where datatype sizes may be larger. If an existing bitfield size exceeds 
+    	size may not exceed the size of the Base Datatype based upon the structure's
+    	associated compiler convention (i.e.,
+    	data organization).  Since archives use default
+    	integer type sizes which may differ from a target program's datatype sizing, the use of fixed-size base
+    	datatypes may be preferred.  Otherwise, structure edits should be performed within the
+    	target program where datatype sizes may be larger. If an existing bitfield size exceeds
     	the size of the base datatype within
-    	the associated data organization the "effective" bitfield size will be reduced.  As with other 
-    	components, structure component sizing may change when moving between a datatype archive and 
-    	a target program.</P>  
-    	
+    	the associated data organization the "effective" bitfield size will be reduced.  As with other
+    	components, structure component sizing may change when moving between a datatype archive and
+    	a target program.</P>
+
     	<P><IMG alt="Note:" src="../../shared/note.png"> It is important to note that the retained bitfield
-    	storage specification (byte offset, component byte size, bit offset) will utilize the smallest possible 
+    	storage specification (byte offset, component byte size, bit offset) will utilize the smallest possible
     	values while preserving bitfield positioning within the structure.  The allocation unit offset and size
-    	conveyed by the editor are for editor use only.</P> 
- 
+    	conveyed by the editor are for editor use only.</P>
+
     </BLOCKQUOTE>
-	
+
 	</BLOCKQUOTE>
 
     <P class="providedbyplugin">Provided by: <I>Data Type Manager</I> Plugin</P>

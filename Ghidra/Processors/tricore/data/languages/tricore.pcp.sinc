@@ -226,7 +226,7 @@ DAC: pcp_op0303 is PCPMode=1 & pcp_op0303 { local tmp:1 = pcp_op0303; export tmp
 {
 	#TODO  flags  N,Z,V,C
 	build offset6;
-	R0608 = R0608 + offset6; 
+	R0608 = R0608 + offset6;
 }
 
 
@@ -327,7 +327,7 @@ macro Flags(r0, r1) {
 # COMP.I Ra, #imm6
 :comp.i R0608, imm6 is PCPMode=1 & addrmode=4 & R0608 & pcp_op0912=0x2 & imm6
 {
-	Flags(R0608, imm6);	
+	Flags(R0608, imm6);
 }
 
 
@@ -354,7 +354,7 @@ define pcodeop pcpdebug;
 :debug DAC, RTA, EDA, SDB, CONDCB is PCPMode=1 & addrmode=7 & pcp_op1012=0x7 & DAC & RTA & EDA & SDB & CONDCB & pcp_op0405=0x0
 {
 	if (CONDCB == 0) goto inst_next;
-	pcpdebug();	
+	pcpdebug();
 }
 
 
@@ -512,7 +512,7 @@ imm16abs: pcp_op1631 is PCPMode=1 & pcp_op1631 { export *[ram]:4 pcp_op1631; }
 	#TODO  are flags correct
 	R0608[0,16] = imm16[0,16];
 	$(N) = R0608[0,16] s< 0;
-	$(Z) = R0608[0,16] == 0;	
+	$(Z) = R0608[0,16] == 0;
 }
 
 
@@ -523,7 +523,7 @@ imm16abs: pcp_op1631 is PCPMode=1 & pcp_op1631 { export *[ram]:4 pcp_op1631; }
 	#TODO  are flags correct
 	R0608[16,16] = imm16[0,16];
 	$(N) = R0608[16,16] s< 0;
-	$(Z) = R0608[16,16] == 0;	
+	$(Z) = R0608[16,16] == 0;
 }
 
 
@@ -535,7 +535,7 @@ imm16abs: pcp_op1631 is PCPMode=1 & pcp_op1631 { export *[ram]:4 pcp_op1631; }
 	local tmp:4 = zext($(DPTR) << 6) + pcp_op0005;
 	*[ram]:4 tmp = R0608;
 	$(N) = R0608 s< 0;
-	$(Z) = R0608 == 0;	
+	$(Z) = R0608 == 0;
 }
 
 
@@ -555,7 +555,7 @@ imm16abs: pcp_op1631 is PCPMode=1 & pcp_op1631 { export *[ram]:4 pcp_op1631; }
 	if (CONDCA == 0) goto inst_next;
 	R0608 = R0305;
 	$(N) = R0608 s< 0;
-	$(Z) = R0608 == 0;	
+	$(Z) = R0608 == 0;
 }
 
 
@@ -567,7 +567,7 @@ imm16abs: pcp_op1631 is PCPMode=1 & pcp_op1631 { export *[ram]:4 pcp_op1631; }
 	local tmp:4 = zext($(DPTR) << 6) + pcp_op0005;
 	*[ram]:4 tmp = R0608;
 	$(N) = R0608 s< 0;
-	$(Z) = R0608 == 0;	
+	$(Z) = R0608 == 0;
 }
 
 
@@ -759,7 +759,7 @@ imm16abs: pcp_op1631 is PCPMode=1 & pcp_op1631 { export *[ram]:4 pcp_op1631; }
 {
 	if (CONDCA == 0) goto inst_next;
 	local tmp:4 = zext($(DPTR) << 6) + zext(R0305[0,6]);
-	*[ram]:4 tmp = R0608;	
+	*[ram]:4 tmp = R0608;
 }
 
 
@@ -814,7 +814,7 @@ imm16abs: pcp_op1631 is PCPMode=1 & pcp_op1631 { export *[ram]:4 pcp_op1631; }
 # XCH.F Rb, [Ra], Size
 :xch.f SIZE1RW is PCPMode=1 & addrmode=0x1 & pcp_op0912=0xb & pcp_op0202=0x0 & R0608 & SIZE1RW
 {
-	build SIZE1RW;	
+	build SIZE1RW;
 	$(N) = R0608 s< 0;
 	$(Z) = R0608 == 0;
 }

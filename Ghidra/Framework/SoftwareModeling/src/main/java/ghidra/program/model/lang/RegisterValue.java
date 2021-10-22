@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,15 +22,15 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 /**
- * Class for representing register values that keep track of which bits are actually set.  
+ * Class for representing register values that keep track of which bits are actually set.
  * Values are stored as big-endian: MSB of mask is stored at bytes index 0,
  * MSB of value is stored at (bytes.length/2).
- * 
+ *
  * Bytes storage example for 4-byte register:
  *    Index:  0   1   2   3   4   5   6   7
  *          |MSB|   |   |LSB|MSB|   |   |LSB|
  *          | ----MASK----- | ----VALUE---- |
- * 
+ *
  */
 public class RegisterValue {
 	private static final int[] START_BYTE_MASK = new int[] { 0xFF, 0x7F, 0x3F, 0x1F, 0xF, 0x7, 0x3,
@@ -197,19 +197,19 @@ public class RegisterValue {
 	}
 
 	/**
-	 * Creates a new RegisterValue. 
+	 * Creates a new RegisterValue.
 	 * The resulting value is a combination of this RegisterValue and the given RegisterValue,
-	 * where the given RegisterValue's value bits take precedence over this RegisterValue's value. 
-	 * 
-	 * Each value bit is determined as follows: 
+	 * where the given RegisterValue's value bits take precedence over this RegisterValue's value.
+	 *
+	 * Each value bit is determined as follows:
 	 * If the mask bit in <code>otherValue</code> is "ON", then <code>otherValue</code>'s value bit is used. Otherwise,
 	 * <code>this</code> value bit used.
-	 * 
-	 * The mask bits are OR'd together to form the new mask bits. 
-	 * 
-	 * @param otherValue the currently stored mask and value bytes.  The base register must match the base register 
+	 *
+	 * The mask bits are OR'd together to form the new mask bits.
+	 *
+	 * @param otherValue the currently stored mask and value bytes.  The base register must match the base register
 	 * of this register value.
-	 * @return a new RegisterValue object containing the original value bits where the new array 
+	 * @return a new RegisterValue object containing the original value bits where the new array
 	 * mask bits are "OFF" and the new value bits where the new array mask bits are "ON".
 	 * If the registers differ the resulting register value will be relative to the base register.
 	 */
@@ -300,7 +300,7 @@ public class RegisterValue {
 	/**
 	 * Clears the value bits corresponding to the "ON" bits in the given mask.
 	 * @param mask the byte array containing the mask bits to clear.
-	 * @return a new MaskedBytes object containg the original value bits and mask bits cleared 
+	 * @return a new MaskedBytes object containg the original value bits and mask bits cleared
 	 * where the passed in mask bits were "on".
 	 */
 	public RegisterValue clearBitValues(byte[] mask) {
@@ -531,7 +531,7 @@ public class RegisterValue {
 	/**
 	 * Tests if the all the mask bits from startBit (least significant bit) to endBit (most significant bit)
 	 * are on.
-	 * @param startBit the least significant bit position 
+	 * @param startBit the least significant bit position
 	 * @param endBit the most significant bit position
 	 * @return true if all mask bits from startBit to endBit are on.
 	 */

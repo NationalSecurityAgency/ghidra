@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,12 +42,12 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	* Locates the field of the name <code>fieldName</code> on the given 
-	* class.  If the given class does not contain the field, then this 
-	* method will recursively call up <code>containingClass</code>'s 
-	* implementation tree looking for a parent implementation of the 
+	* Locates the field of the name <code>fieldName</code> on the given
+	* class.  If the given class does not contain the field, then this
+	* method will recursively call up <code>containingClass</code>'s
+	* implementation tree looking for a parent implementation of the
 	* requested field.
-	* 
+	*
 	* @param fieldName The name of the field to locate.
 	* @param containingClass The class that contains the desired field.
 	* @return The Field object that matches the given name, or null if not
@@ -73,12 +73,12 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Locates the field of the name <code>fieldName</code> on the given 
-	 * class.  If the given class does not contain the field, then this 
-	 * method will recursively call up <code>containingClass</code>'s 
-	 * implementation tree looking for a parent implementation of the 
+	 * Locates the field of the name <code>fieldName</code> on the given
+	 * class.  If the given class does not contain the field, then this
+	 * method will recursively call up <code>containingClass</code>'s
+	 * implementation tree looking for a parent implementation of the
 	 * requested field.
-	 * 
+	 *
 	 * @param fieldName The name of the field to locate.
 	 * @param containingClass The class that contains the desired field.
 	 * @return The Field object that matches the given name, or null if not
@@ -104,12 +104,12 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Locates the method of the name <code>methodName</code> on the given 
-	 * class.  If the given class does not contain the method, then this 
-	 * method will recursively call up <code>containingClass</code>'s 
-	 * implementation tree looking for a parent implementation of the 
+	 * Locates the method of the name <code>methodName</code> on the given
+	 * class.  If the given class does not contain the method, then this
+	 * method will recursively call up <code>containingClass</code>'s
+	 * implementation tree looking for a parent implementation of the
 	 * requested method.
-	 * 
+	 *
 	 * @param methodName The name of the method to locate.
 	 * @param containingClass The class that contains the desired method.
 	 * @param parameterTypes The parameters of the desired method (may be null).
@@ -158,7 +158,7 @@ public class ReflectionUtilities {
 
 	/**
 	 * Get the first field specification contained within containingClass which has the type classType.
-	 * This method is only really useful if it is known that only a single field of 
+	 * This method is only really useful if it is known that only a single field of
 	 * classType exists within the containingClass hierarchy.
 	 * @param classType the class
 	 * @param containingClass the class that contains a field of the given type
@@ -184,11 +184,11 @@ public class ReflectionUtilities {
 	/**
 	 * Returns the class name of the entry in the stack that comes before all references to the
 	 * given classes.  This is useful for figuring out at runtime who is calling a particular
-	 * method. 
+	 * method.
 	 * <p>
-	 * This method can take multiple classes, but you really only need to pass the oldest 
+	 * This method can take multiple classes, but you really only need to pass the oldest
 	 * class of disinterest.
-	 * 
+	 *
 	 * @param classes the classes to ignore
 	 * @return the desired class name
 	 */
@@ -200,12 +200,12 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Creates a throwable whose stack trace is based upon the current call stack, with any 
+	 * Creates a throwable whose stack trace is based upon the current call stack, with any
 	 * information coming before, and including, the given classes removed.
 	 * <p>
-	 * This method can take multiple classes, but you really only need to pass the oldest 
+	 * This method can take multiple classes, but you really only need to pass the oldest
 	 * class of disinterest.
-	 * 
+	 *
 	 * @param classes the classes to ignore
 	 * @return the new throwable
 	 */
@@ -256,11 +256,11 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Finds the first occurrence of the given pattern and then stops filtering when it finds 
+	 * Finds the first occurrence of the given pattern and then stops filtering when it finds
 	 * something that is not that pattern
-	 * 
+	 *
 	 * @param trace the trace to update
-	 * @param pattern the non-regex patterns used to perform a 
+	 * @param pattern the non-regex patterns used to perform a
 	 * 				  {@link String#contains(CharSequence)} on each {@link StackTraceElement} line
 	 * @return the updated trace
 	 */
@@ -294,12 +294,12 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Uses the given <code>patterns</code> to remove elements from the given stack trace.     
+	 * Uses the given <code>patterns</code> to remove elements from the given stack trace.
 	 * The current implementation will simply perform a <code>toString()</code> on each element and
 	 * then check to see if that string contains any of the <code>patterns</code>.
-	 * 
+	 *
 	 * @param trace the trace to filter
-	 * @param patterns the non-regex patterns used to perform a 
+	 * @param patterns the non-regex patterns used to perform a
 	 * 				   {@link String#contains(CharSequence)} on each {@link StackTraceElement}
 	 * 				   line.
 	 * @return the filtered trace
@@ -323,8 +323,8 @@ public class ReflectionUtilities {
 	/**
 	 * A convenience method to create a throwable, filtering any lines that contain the given
 	 * non-regex patterns.  This can be useful for emitting diagnostic stack traces.
-	 * 
-	 * @param patterns the non-regex patterns used to perform a 
+	 *
+	 * @param patterns the non-regex patterns used to perform a
 	 * 				   {@link String#contains(CharSequence)} on each {@link StackTraceElement}
 	 * 				   line.
 	 * @return the new throwable
@@ -339,10 +339,10 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * A convenience method to create a throwable, filtering boiler-plate Java-related 
-	 * lines (e.g., AWT, Swing, Security, etc).  
+	 * A convenience method to create a throwable, filtering boiler-plate Java-related
+	 * lines (e.g., AWT, Swing, Security, etc).
 	 * This can be useful for emitting diagnostic stack traces with reduced noise.
-	 * 
+	 *
 	 * @return the new throwable
 	 */
 	public static Throwable createJavaFilteredThrowable() {
@@ -352,14 +352,14 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * A convenience method to create a throwable, filtering boiler-plate Java-related 
-	 * lines (e.g., AWT, Swing, Security, etc).  
-	 * This can be useful for emitting diagnostic stack traces with reduced noise.  
-	 * 
+	 * A convenience method to create a throwable, filtering boiler-plate Java-related
+	 * lines (e.g., AWT, Swing, Security, etc).
+	 * This can be useful for emitting diagnostic stack traces with reduced noise.
+	 *
 	 * <p>This method differs from {@link #createJavaFilteredThrowable()} in that this method
 	 * returns a String, which is useful when printing log messages without having to directly
 	 * print the stack trace.
-	 * 
+	 *
 	 * @return the new throwable
 	 */
 	public static String createJavaFilteredThrowableString() {
@@ -369,10 +369,10 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * A convenience method to take a throwable, filter boiler-plate Java-related 
-	 * lines (e.g., AWT, Swing, Security, etc).  
+	 * A convenience method to take a throwable, filter boiler-plate Java-related
+	 * lines (e.g., AWT, Swing, Security, etc).
 	 * This can be useful for emitting diagnostic stack traces with reduced noise.
-	 * 
+	 *
 	 * @param t the throwable to filter
 	 * @return the throwable
 	 */
@@ -416,15 +416,15 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Returns an ordered set of interfaces and classes that are shared amongst the items in 
+	 * Returns an ordered set of interfaces and classes that are shared amongst the items in
 	 * the list.
 	 * <p>
-	 * The order of the items is as they are first encountered, favoring interfaces before 
+	 * The order of the items is as they are first encountered, favoring interfaces before
 	 * classes.  Further, interface hierarchies are examined before concrete parent extensions.
 	 * <p>
 	 * If the given items have no parents in common, then the result will be a list with
 	 * only <code>Object.class</code>.
-	 * 
+	 *
 	 * @param list the items to examine
 	 * @return the set of items
 	 */
@@ -459,15 +459,15 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Returns an ordered set of parent interfaces and classes that are shared 
+	 * Returns an ordered set of parent interfaces and classes that are shared
 	 * amongst the items in the list.
 	 * <p>
-	 * The order of the items is as they are first encountered, favoring interfaces before 
+	 * The order of the items is as they are first encountered, favoring interfaces before
 	 * classes.  Further, interface hierarchies are examined before concrete parent extensions.
 	 * <p>
 	 * If the given items have no parents in common, then the result will be a list with
 	 * only <code>Object.class</code>.
-	 * 
+	 *
 	 * @param list the items to examine
 	 * @return the set of items
 	 */
@@ -492,9 +492,9 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Turns the given {@link Throwable} into a String version of its 
+	 * Turns the given {@link Throwable} into a String version of its
 	 * {@link Throwable#printStackTrace()} method.
-	 * 
+	 *
 	 * @param t the throwable
 	 * @return the string
 	 */
@@ -503,9 +503,9 @@ public class ReflectionUtilities {
 	}
 
 	/**
-	 * Turns the given {@link Throwable} into a String version of its 
+	 * Turns the given {@link Throwable} into a String version of its
 	 * {@link Throwable#printStackTrace()} method.
-	 * 
+	 *
 	 * @param message the preferred message to use.  If null, the throwable message will be used
 	 * @param t the throwable
 	 * @return the string
@@ -541,11 +541,11 @@ public class ReflectionUtilities {
 
 	/**
 	 * Returns an order set of all interfaces implemented and classes extended for the entire
-	 * type structure of the given class. 
+	 * type structure of the given class.
 	 * <p>
-	 * If <code>Object.class</code> is passed to this method, then it will be returned in the 
+	 * If <code>Object.class</code> is passed to this method, then it will be returned in the
 	 * result of this method.
-	 * 
+	 *
 	 * @param c the class to introspect
 	 * @return the set of parents
 	 */
@@ -579,7 +579,7 @@ public class ReflectionUtilities {
 
 	/**
 	 * Returns the type arguments for the given base class and extension.
-	 * 
+	 *
 	 * <p>Caveat: this lookup will only work if the given child class is a concrete class that
 	 * has its type arguments specified.  For example, these cases will work:
 	 * <pre>
@@ -590,17 +590,17 @@ public class ReflectionUtilities {
 	 *
 	 *		// class definition
 	 *		public class MyList implements List&lt;String&gt; {
-	 * </pre> 
-	 * 
+	 * </pre>
+	 *
 	 * Whereas this case will not work:
 	 * <pre>
 	 * 		// local variable with the type specified
 	 * 		List&lt;String&gt; myList = new ArrayList&lt;String&gt;();
 	 * </pre>
-	 * 
+	 *
 	 * <p>Note: a null entry in the result list will exist for any type that was unrecoverable
-	 * 
-	 * 
+	 *
+	 *
 	 * @param <T> the type of the base and child class
 	 * @param baseClass the base class
 	 * @param childClass the child class
@@ -616,7 +616,7 @@ public class ReflectionUtilities {
 		Type baseClassAsType =
 			walkClassHierarchyAndResolveTypes(baseClass, resolvedTypesDictionary, childClass);
 
-		// try to resolve type arguments defined by 'baseClass' to the raw runtime class 
+		// try to resolve type arguments defined by 'baseClass' to the raw runtime class
 		Type[] baseClassDeclaredTypeArguments = getDeclaredTypeArguments(baseClassAsType);
 		return resolveBaseClassTypeArguments(resolvedTypesDictionary,
 			baseClassDeclaredTypeArguments);

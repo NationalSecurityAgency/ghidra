@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,9 +45,9 @@ public class DataTypeConflictException extends RuntimeException {
 	 * Construct a new DataTypeConflictException with the given datatypes.
 	 * The message will indicate there is a conflict between the two data types.
 	 *
-	 * @param dt1    the first of the two conflicting data types. 
+	 * @param dt1    the first of the two conflicting data types.
 	 * (The new data type.)
-	 * @param dt2    the second of the two conflicting data types. 
+	 * @param dt2    the second of the two conflicting data types.
 	 * (The existing data type.)
 	 */
 	public DataTypeConflictException(DataType dt1, DataType dt2) {
@@ -58,9 +58,9 @@ public class DataTypeConflictException extends RuntimeException {
 	}
 
 	/**
-	 * Returns the conflicting data types in a Data Type array of size 2. 
-	 * The first entry is the first data type in conflict. 
-	 * The second entry is the second data type in conflict. 
+	 * Returns the conflicting data types in a Data Type array of size 2.
+	 * The first entry is the first data type in conflict.
+	 * The second entry is the second data type in conflict.
 	 * <P>Note: These values can be null. They are only known if this
 	 * object was created using the constructor that has the conflicting
 	 * data types as parameters.

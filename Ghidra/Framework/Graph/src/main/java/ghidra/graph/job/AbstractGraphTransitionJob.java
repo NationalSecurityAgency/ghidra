@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ import ghidra.util.SystemUtilities;
 import ghidra.util.task.TaskLauncher;
 
 /**
- * A job to transition vertices in a graph for location and visibility.  The parent class 
- * handled the opacity callback.  The progress of the job is used by this class to move 
+ * A job to transition vertices in a graph for location and visibility.  The parent class
+ * handled the opacity callback.  The progress of the job is used by this class to move
  * vertices from the the start location to the final destination, where the progress is the
  * percentage of the total move to display.
  *
@@ -63,7 +63,7 @@ public abstract class AbstractGraphTransitionJob<V extends VisualVertex, E exten
 	}
 
 	/**
-	 * Create the vertex locations that will be transitioned over the life of this animator. 
+	 * Create the vertex locations that will be transitioned over the life of this animator.
 	 * The locations are in <code>layout space</code>.   This method is expected to update
 	 * {@link #vertexLocations} (and optionally {@link #edgeArticulationLocations}).
 	 */
@@ -134,7 +134,7 @@ public abstract class AbstractGraphTransitionJob<V extends VisualVertex, E exten
 
 	private void updateNewVertexPositions(double percentComplete) {
 		//
-		// The new position is some percentage of the distance between the start 
+		// The new position is some percentage of the distance between the start
 		// positions and the destination positions.  The grouped vertex does not change positions.
 		//
 		Set<Entry<V, TransitionPoints>> entrySet = vertexLocations.entrySet();
@@ -142,7 +142,7 @@ public abstract class AbstractGraphTransitionJob<V extends VisualVertex, E exten
 			Point2D newVertexLocation = new Point2D.Double();
 			updatePointFromPercentComplete(entry.getValue(), percentComplete, newVertexLocation);
 
-			// the new values won't be read if we don't clear the cache 
+			// the new values won't be read if we don't clear the cache
 			clearLocationCache();
 			V newVertex = entry.getKey();
 			graphLayout.setLocation(newVertex, newVertexLocation, ChangeType.TRANSIENT);
@@ -174,8 +174,8 @@ public abstract class AbstractGraphTransitionJob<V extends VisualVertex, E exten
 		return graphLayout.apply(v);
 	}
 
-	// note: due to the caching nature of some layouts, if we don't reset this, then 
-	// some of our GUI calculations will be incorrect (like when we try to fit the 
+	// note: due to the caching nature of some layouts, if we don't reset this, then
+	// some of our GUI calculations will be incorrect (like when we try to fit the
 	// satellite in it's window).  So, we always have to clear the cache when we set locations
 	protected void clearLocationCache() {
 		Layout<V, E> jungLayout = viewer.getGraphLayout();
@@ -187,8 +187,8 @@ public abstract class AbstractGraphTransitionJob<V extends VisualVertex, E exten
 //==================================================================================================
 
 	/**
-	 * Calculates default vertex locations for the current graph by using the current layout, 
-	 * excluding those vertices in the given <i>ignore</i> set.  The graph, 
+	 * Calculates default vertex locations for the current graph by using the current layout,
+	 * excluding those vertices in the given <i>ignore</i> set.  The graph,
 	 * layout and vertices will be unaltered.
 	 *
 	 * @param verticesToIgnore The set of vertices which should be excluded from the layout process

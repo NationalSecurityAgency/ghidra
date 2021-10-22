@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,11 +22,11 @@ import com.sun.jdi.request.*;
 
 /**
  * Information about a JDI breakpoint
- * 
+ *
  * The contains the semantic processing for JDI breakpoint information. Mostly, it just stores the
  * information, but it also enumerates the locations of a breakpoint and generates the "effective"
  * breakpoints.
- * 
+ *
  * Note this is not a handle to the breakpoint. Rather, this is the captured information from some
  * event or request. If other commands have been executed since this information was gathered, the
  * information may be stale.
@@ -81,7 +81,7 @@ public class JdiBreakpointInfo {
 
 	/**
 	 * Get the type of breakpoint
-	 * 
+	 *
 	 * @return the type
 	 */
 	public JdiBreakpointType getType() {
@@ -90,7 +90,7 @@ public class JdiBreakpointInfo {
 
 	/**
 	 * Get the original request
-	 * 
+	 *
 	 * @return the request
 	 */
 	public EventRequest getRequest() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
 
 /**
- * This command will create a virtual function table using an array data type. 
+ * This command will create a virtual function table using an array data type.
  * If there are any existing instructions in the area to be made into data, the command will fail.
  * Any data in the area will be replaced with the new dataType.
  */
@@ -43,10 +43,10 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 	/**
 	 * Constructs a command for applying a vf table at an address.
 	 * @param address the address where the vf table should be created.
-	 * @param validationOptions the options for controlling how validation is performed when 
+	 * @param validationOptions the options for controlling how validation is performed when
 	 * determining whether or not to create the data structure at the indicated address.
 	 * @param applyOptions the options for creating the new data structure and its associated
-	 * markup in the program as well as whether to follow other data references and create their 
+	 * markup in the program as well as whether to follow other data references and create their
 	 * data too.
 	 */
 	public CreateVfTableBackgroundCmd(Address address, DataValidationOptions validationOptions,
@@ -56,11 +56,11 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 	}
 
 	/**
-	 * Constructs a command for applying a vf table dataType at the address indicated by the 
+	 * Constructs a command for applying a vf table dataType at the address indicated by the
 	 * model.
 	 * @param vfTableModel the model for the data type
 	 * @param applyOptions the options for creating the new data structure and its associated
-	 * markup in the program as well as whether to follow other data references and create their 
+	 * markup in the program as well as whether to follow other data references and create their
 	 * data too.
 	 */
 	CreateVfTableBackgroundCmd(VfTableModel vfTableModel, DataApplyOptions applyOptions) {
@@ -172,7 +172,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 		if (rtti0Model == null) {
 			return true;
 		}
-		
+
 		// Label
 		boolean shouldCreateComment = true;
 		if (applyOptions.shouldCreateLabel()) {
@@ -215,7 +215,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 		if (rtti0Model == null) {
 			return true;
 		}
-		
+
 		monitor.checkCanceled();
 
 		// Label
@@ -241,7 +241,7 @@ public class CreateVfTableBackgroundCmd extends AbstractCreateDataBackgroundCmd<
 	 * Gets the address for the location of the meta data, which is a pointer to the RTTI4
 	 * structure for this virtual function table (vftable).
 	 * @param program the program containing the vftable being created by this command
-	 * @return the address that contains the pointer to the RTTI 4 structure associated with 
+	 * @return the address that contains the pointer to the RTTI 4 structure associated with
 	 * the vftable.
 	 */
 	private Address getMetaAddress(Program program) {

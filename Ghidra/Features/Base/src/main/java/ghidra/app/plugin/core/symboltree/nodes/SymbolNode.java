@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -223,7 +223,7 @@ public class SymbolNode extends SymbolTreeNode {
 
 		int transactionID = program.startTransaction("Rename Symbol");
 		try {
-			// The symbol node rename does not support moving symbols into the 
+			// The symbol node rename does not support moving symbols into the
 			// Global space since this implies a simple rename
 			Namespace namespace = createNewNamespace(symbolPath.getParent());
 			if (!namespace.isGlobal()) {
@@ -292,7 +292,7 @@ public class SymbolNode extends SymbolTreeNode {
 			return nameCompare;
 		}
 
-		// sort alphabetically first		
+		// sort alphabetically first
 		if (nameCompare != 0) {
 			return nameCompare;
 		}

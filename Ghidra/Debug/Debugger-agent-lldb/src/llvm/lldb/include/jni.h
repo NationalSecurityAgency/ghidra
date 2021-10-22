@@ -125,7 +125,7 @@ typedef enum _jobjectType {
      JNIInvalidRefType    = 0,
      JNILocalRefType      = 1,
      JNIGlobalRefType     = 2,
-     JNIWeakGlobalRefType = 3 
+     JNIWeakGlobalRefType = 3
 } jobjectRefType;
 
 
@@ -202,7 +202,7 @@ struct JNINativeInterface_ {
     void *reserved2;
 
     void *reserved3;
-    
+
 #if !TARGET_RT_MAC_CFM && defined(__ppc__)
     void* cfm_vectors[225];
 #endif /* !TARGET_RT_MAC_CFM && defined(__ppc__) */
@@ -755,7 +755,7 @@ struct JNINativeInterface_ {
 
     jobjectRefType (JNICALL *GetObjectRefType)
         (JNIEnv* env, jobject obj);
-		
+
 	#if TARGET_RT_MAC_CFM && defined(__ppc__)
 		void* real_functions[228];
 	#endif /* TARGET_RT_MAC_CFM && defined(__ppc__) */
@@ -1899,7 +1899,7 @@ struct JNIInvokeInterface_ {
     jint (JNICALL *GetEnv)(JavaVM *vm, void **penv, jint version);
 
     jint (JNICALL *AttachCurrentThreadAsDaemon)(JavaVM *vm, void **penv, void *args);
-    
+
 #if TARGET_RT_MAC_CFM && defined(__ppc__)
     void* real_functions[5];
 #endif /* TARGET_RT_MAC_CFM && defined(__ppc__) */

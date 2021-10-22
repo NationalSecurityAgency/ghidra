@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,8 +56,8 @@ public class RichTable {
 
 		try {
 
-			// Scan forward looking for the Rich signature (or the PE signature, 
-			// and we've gone too far) -- this sets the upper-bound (endOffset) of the table 
+			// Scan forward looking for the Rich signature (or the PE signature,
+			// and we've gone too far) -- this sets the upper-bound (endOffset) of the table
 			for (int i = 0; i < MAX_TABLE_SEARCH_COUNT; i++, offset += 4) {
 				int dw = readInt(src, offset);
 				if (dw == RichHeader.IMAGE_RICH_SIGNATURE) {
@@ -96,7 +96,7 @@ public class RichTable {
 				}
 
 				if (valid) {
-					// Now that we know the bounds of the table, verify the padding bytes 
+					// Now that we know the bounds of the table, verify the padding bytes
 					offset = startOffset + 4;
 					for (int i = 0; i < 3; i++, offset += 4) {
 						int v = readInt(src, offset);

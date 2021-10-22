@@ -15,14 +15,14 @@ R2731: _R2731 is _R2731			{		export _R2731;	}
 
 
 adr9: res is op0406 & s1115
-[ res = ((s1115 << 4) | (op0406 << 1)) + inst_start; ] 
-{ 
-	export *:4 res; 
+[ res = ((s1115 << 4) | (op0406 << 1)) + inst_start; ]
+{
+	export *:4 res;
 }
 
 adr22: res is s0005; op1631 & op1616=0
-[ res = ((s0005 << 16) | op1631) + inst_start; ] 
-{ 
+[ res = ((s0005 << 16) | op1631) + inst_start; ]
+{
 	export *:4 res;
 }
 

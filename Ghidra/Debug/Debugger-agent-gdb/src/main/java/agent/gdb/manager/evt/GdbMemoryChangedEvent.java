@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,10 +28,10 @@ public class GdbMemoryChangedEvent extends AbstractGdbEventWithFields {
 
 	/**
 	 * Construct a new event by parsing the tail for information
-	 * 
+	 *
 	 * <p>
 	 * The thread group, start address, and length must be specified by GDB.
-	 * 
+	 *
 	 * @param tail the text following the event type in the GDB/MI event record
 	 * @throws GdbParseError if the tail cannot be parsed
 	 */
@@ -44,7 +44,7 @@ public class GdbMemoryChangedEvent extends AbstractGdbEventWithFields {
 
 	/**
 	 * Get the inferior ID
-	 * 
+	 *
 	 * @return the inferior ID
 	 */
 	public int getInferiorId() {
@@ -53,7 +53,7 @@ public class GdbMemoryChangedEvent extends AbstractGdbEventWithFields {
 
 	/**
 	 * Get the starting address of the change
-	 * 
+	 *
 	 * @return the starting address
 	 */
 	public long getAddress() {
@@ -62,7 +62,7 @@ public class GdbMemoryChangedEvent extends AbstractGdbEventWithFields {
 
 	/**
 	 * Get the length of the change
-	 * 
+	 *
 	 * @return the length
 	 */
 	public int getLength() {

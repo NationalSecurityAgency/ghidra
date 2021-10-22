@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ import resources.ResourceManager;
 
 public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 	static final String EDITOR_COMPONENT_NAME="EDITOR";
-	
+
 	static final String CHANGE_DESTINATION_TITLE = "Where Would You Like to Store Your Changes?";
 	static final String FILE_ON_DISK_CHANGED_TITLE = "File Changed on Disk";
 	static final String FILE_ON_DISK_MISSING_TITLE = "File on Disk is Missing";
@@ -378,7 +378,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 			return;
 		}
 
-		// if not changed, then do nothing but print a message to let the user know that we 
+		// if not changed, then do nothing but print a message to let the user know that we
 		// tried
 		if (!hasFileOnDiskChanged()) {
 			plugin.getTool().setStatusInfo("Refresh Script - file has not changed");
@@ -418,7 +418,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		}
 	}
 
-	/** 
+	/**
 	 * Returns false if the user cancels--meaning they did not make a decision regarding the
 	 * file (or 'handle' it).
 	 */
@@ -487,7 +487,7 @@ public class GhidraScriptEditorComponentProvider extends ComponentProvider {
 		if (choice == OptionDialog.OPTION_ONE) {
 			// Save As...
 			if (saveAs()) {
-				// Save As completed successfully; open a new editor 
+				// Save As completed successfully; open a new editor
 				// with the original file
 				provider.editScriptInGhidra(previousFile);
 			}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,14 +21,14 @@ import java.util.*;
 /**
  * Use an instance of this class as the cause when you need to record several causes of an
  * exception.
- * 
+ *
  * This paradigm would be necessary when multiple attempts can be made to complete a task, e.g.,
  * traversing a list of plugins until one can handle a given condition. If all attempts fail, it is
  * desirable to report on each attempt.
- * 
+ *
  * This class acts as a wrapper allowing multiple causes to be recorded in place of one. The causes
  * recorded in this wrapper actually apply to the throwable ("parent") which has this
- * MultipleCauses exception as its cause. 
+ * MultipleCauses exception as its cause.
  */
 public class MultipleCauses extends Throwable {
 	// The collection of causes
@@ -65,7 +65,7 @@ public class MultipleCauses extends Throwable {
 	 * Returns the causes of the parent throwable (possibly an empty collection)
 	 * @return the collection of causes of the parent throwable
 	 * NOTE: it is rude to leave this empty. If the parent throwable has no cause, or the cause is
-	 * unknown, leave its cause null. 
+	 * unknown, leave its cause null.
 	 */
 	public synchronized Collection<Throwable> getCauses() {
 		return causes;
@@ -96,7 +96,7 @@ public class MultipleCauses extends Throwable {
 	/**
 	 * Assuming a throwable has multiple causes, add them all to this MultipleCauses
 	 * @param e the throwable having multiple causes
-	 * 
+	 *
 	 * This is useful for flattening causes into a common exception. For instance, if a method is
 	 * collecting multiple causes for a potential WidgetException, and it catches a
 	 * WidgetException, instead of collecting the caught WidgetException, it might instead copy

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -92,7 +92,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Use {@link SBThreadImpl#remove()} instead
-	 * 
+	 *
 	 * @param id the thread ID to remove
 	 */
 	public void removeThread(String processId, String id) {
@@ -138,7 +138,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Use {@link SBProcessImpl#remove(LldbCause)} instead
-	 * 
+	 *
 	 * @param id the process ID to remove
 	 * @param cause the cause of removal
 	 */
@@ -167,7 +167,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Update the selected process
-	 * 
+	 *
 	 * @param process the process that now has focus
 	 * @param cause the cause of the focus change
 	 * @param fire signal listeners
@@ -214,7 +214,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Use {@link SBTargetImpl#remove(LldbCause)} instead
-	 * 
+	 *
 	 * @param id the session ID to remove
 	 * @param cause the cause of removal
 	 */
@@ -261,7 +261,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Use {@link SBModule#remove()} instead
-	 * 
+	 *
 	 * @param id the module name to remove
 	 */
 	public void removeModule(SBTarget session, String id) {
@@ -511,7 +511,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Schedule a command for execution
-	 * 
+	 *
 	 * @param cmd the command to execute
 	 * @return the pending command, which acts as a future for later completion
 	 */
@@ -732,7 +732,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Default handler for events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -743,7 +743,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -761,7 +761,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -769,7 +769,7 @@ public class LldbManagerImpl implements LldbManager {
 	protected DebugStatus processException(LldbExceptionEvent evt, Void v) {
 		/*
 		Integer eventId = updateState(evt);
-		
+
 		DebugExceptionRecord64 info = evt.getInfo();
 		String key = Integer.toHexString(info.code);
 		if (statusByNameMap.containsKey(key)) {
@@ -781,7 +781,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -792,7 +792,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for thread created events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -806,7 +806,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for thread created events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -819,7 +819,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for thread exited events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -831,7 +831,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for thread selected events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -844,7 +844,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for frame selected events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -857,7 +857,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for process created events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -875,7 +875,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for process replaced events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -893,7 +893,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for process exited events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -909,7 +909,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for process selected events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -922,7 +922,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for session created events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -936,7 +936,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for session replaced events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -950,7 +950,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for session exited events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -967,7 +967,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for module loaded events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -984,7 +984,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for module unloaded events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -1001,7 +1001,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for state changed events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -1056,7 +1056,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for session selected events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -1069,7 +1069,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for systems events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 * @return retval handling/break status
@@ -1086,7 +1086,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-created event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1098,7 +1098,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1110,7 +1110,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-deleted event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1121,7 +1121,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-enable event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1132,7 +1132,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-deleted event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1143,7 +1143,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-invalidated event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1155,7 +1155,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1168,7 +1168,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-locations added event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1181,7 +1181,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-locations removed event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1194,7 +1194,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1207,7 +1207,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1219,7 +1219,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1232,7 +1232,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1244,7 +1244,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1256,7 +1256,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Handler for breakpoint-modified event
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1268,7 +1268,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Fire breakpoint created event
-	 * 
+	 *
 	 * @param newInfo the new information
 	 * @param cause the cause of the creation
 	 */
@@ -1280,7 +1280,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Fire breakpoint modified event
-	 * 
+	 *
 	 * @param newInfo the new information
 	 * @param cause the cause of the modification
 	 */
@@ -1292,7 +1292,7 @@ public class LldbManagerImpl implements LldbManager {
 
 	/**
 	 * Fire breakpoint deleted event
-	 * 
+	 *
 	 * @param number the deleted breakpoint number
 	 * @param cause the cause of the deletion
 	 */

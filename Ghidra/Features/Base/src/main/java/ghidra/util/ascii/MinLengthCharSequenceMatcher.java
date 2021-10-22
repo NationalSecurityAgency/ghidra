@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.util.ascii;
 
 import ghidra.program.model.data.StringDataType;
 
-/** 
+/**
  * Instances of this class will find sequences of characters that are in the given char set and
  * of a minimum length.  Characters a fed one at a time into this object. Adding a char may trigger
  * the discovery of a sequence if the char is a 0 or not in the char set and we already have seen
@@ -71,7 +71,7 @@ public class MinLengthCharSequenceMatcher {
 	/**
 	 * Indicates there are no more contiguous chars to add to this matcher.  If a minimum or more
 	 * number of included chars have been seen before this call, then a sequence is returned.
-	 * @return a Sequence if there was a sequence of chars &gt;= the min length just before this call. 
+	 * @return a Sequence if there was a sequence of chars &gt;= the min length just before this call.
 	 */
 	public boolean endSequence() {
 		lastSequence = null;

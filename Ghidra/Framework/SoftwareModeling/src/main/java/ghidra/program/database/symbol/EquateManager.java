@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -640,7 +640,7 @@ public class EquateManager implements EquateTable, ErrorHandler, ManagerDB {
 
 	/**
 	 *  Formats a string to the equate error format given the value. Used for rendering formatted
-	 *  equates that do not point back to a datatype. 
+	 *  equates that do not point back to a datatype.
 	 * @param equateValue The value of the equate
 	 * @return The error formatted equate name
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,7 +64,7 @@ public class HashUtilities {
 	}
 
 	/**
-	 * Generate salted hash for specified message.  Supplied salt is 
+	 * Generate salted hash for specified message.  Supplied salt is
 	 * returned as prefix to returned hash.
 	 * @param algorithm message digest algorithm
 	 * @param salt digest salt (use empty string for no salt)
@@ -99,7 +99,7 @@ public class HashUtilities {
 	}
 
 	/**
-	 * Generate salted hash for specified message using random salt.  
+	 * Generate salted hash for specified message using random salt.
 	 * First 4-characters of returned hash correspond to the salt data.
 	 * @param algorithm message digest algorithm
 	 * @param msg message text
@@ -152,7 +152,7 @@ public class HashUtilities {
 	}
 
 	/**
-	 * Generate combined message digest hash for all values in the 
+	 * Generate combined message digest hash for all values in the
 	 * specified values list.
 	 * @param algorithm message digest algorithm
 	 * @param values list of text strings
@@ -172,7 +172,7 @@ public class HashUtilities {
 
 	/**
 	 * Generate combined message digest hash for the bytes in the specified array.
-	 *  
+	 *
 	 * @param algorithm message digest algorithm
 	 * @param values array of bytes to hash
 	 * @return message digest hash

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public abstract class AddressBasedTableModel<ROW_TYPE> extends GhidraProgramTabl
 	public abstract Address getAddress(int row);
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	// We create an untyped column descriptor.  However, we are assigning it to a typed variable, 
+	// We create an untyped column descriptor.  However, we are assigning it to a typed variable,
 	// which guarantees that we only put homogeneous objects into the descriptor.
 	@Override
 	protected TableColumnDescriptor<ROW_TYPE> createTableColumnDescriptor() {
@@ -67,7 +67,7 @@ public abstract class AddressBasedTableModel<ROW_TYPE> extends GhidraProgramTabl
 		DynamicTableColumn<ROW_TYPE, ?, ?> tableColumn = getColumn(column);
 		if (tableColumn instanceof ProgramLocationTableColumn<?, ?>) {
 
-			@SuppressWarnings("unchecked") // we checked			
+			@SuppressWarnings("unchecked") // we checked
 			ProgramLocationTableColumn<ROW_TYPE, ?> programField =
 				(ProgramLocationTableColumn<ROW_TYPE, ?>) tableColumn;
 			ProgramLocation loc = programField.getProgramLocation(rowObject,

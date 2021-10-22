@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -153,9 +153,9 @@ public class ArtHeader_Nougat extends ArtHeader implements ArtCompression {
 	}
 
 	/**
-	 * Boolean (0 or 1) to denote if the image can be mapped at a random address, 
-	 * this only refers to the .art file. 
-	 * Currently, app oat files do not depend on their app image. 
+	 * Boolean (0 or 1) to denote if the image can be mapped at a random address,
+	 * this only refers to the .art file.
+	 * Currently, app oat files do not depend on their app image.
 	 * There are no pointers from the app oat code to the app image.
 	 * @return true of position independent code, or false if dependent.
 	 */

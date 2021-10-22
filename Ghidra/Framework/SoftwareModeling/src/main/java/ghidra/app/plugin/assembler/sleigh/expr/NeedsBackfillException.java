@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,14 +17,14 @@ package ghidra.app.plugin.assembler.sleigh.expr;
 
 /**
  * An exception to indicate that the solution of an expression is not yet known
- * 
+ *
  * Furthermore, it cannot be determined whether or not the expression is even solvable. When this
  * exception is thrown, a backfill record is placed on the encoded resolution indicating that
  * resolver must attempt to solve the expression again, once the encoding is otherwise complete.
  * This is needed, most notably, when an encoding depends on the address of the <em>next</em>
  * instruction, because the length of the current instruction is not known until resolution has
  * finished.
- * 
+ *
  * Backfill becomes a possibility when an expression depends on a symbol that is not (yet) defined.
  * Thus, as a matter of good record keeping, the exception takes the name of the missing symbol.
  */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	/**
 	 * Construct a new default target object whose schema is derived from the parent
-	 * 
+	 *
 	 * @see #DefaultTargetObject(DebuggerObjectModel, TargetObject, String, String,
 	 *      TargetObjectSchema)
 	 * @param model the model to which the object belongs
@@ -67,14 +67,14 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	/**
 	 * Construct a new default target object
-	 * 
+	 *
 	 * <p>
 	 * Note, this will automatically construct the appropriate path for this object. The implementor
 	 * should not create two objects with the same path. In that event, collisions will probably
 	 * favor the second, but in general, it produces undefined behavior. Also, this does not add the
 	 * new object to its parent. The implementor must do that. This affords an opportunity to
 	 * populate this object's elements and attributes before it is added to the model.
-	 * 
+	 *
 	 * <p>
 	 * The default update mode is set to {@link TargetUpdateMode#UNSOLICITED}, which implies the
 	 * implementation will keep the elements cache in sync with the debugger. It is preferable to
@@ -83,7 +83,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * updated, the implementor MUST set the update mode to {@link TargetUpdateMode#SOLICITED}.
 	 * Ideally, for objects whose elements will never change, the mode can be set to
 	 * {@link TargetUpdateMode#FIXED} immediately after populating the elements.
-	 * 
+	 *
 	 * @param model the model to which the object belongs
 	 * @param parent the parent of this object
 	 * @param key the key (attribute name or element index) of this object
@@ -97,7 +97,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	/**
 	 * Construct a new (delegate) default target object
-	 * 
+	 *
 	 * <p>
 	 * This behaves similarly to
 	 * {@link #DefaultTargetObject(AbstractDebuggerObjectModel, TargetObject, String, String, TargetObjectSchema)}
@@ -107,7 +107,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * factory. Using method overrides doesn't work, because the factory method gets called during
 	 * construction, before extensions have a chance to initialize fields, on which the proxy
 	 * inevitably depends.
-	 * 
+	 *
 	 * @param proxyFactory a factory to create the proxy, invoked in the super constructor
 	 * @param proxyInfo additional information passed to the proxy factory
 	 * @param model the model to which the object belongs
@@ -133,22 +133,22 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	/**
 	 * Check if this object is being observed
-	 * 
+	 *
 	 * <p>
 	 * TODO: It'd be nice if we could know what is being observed: attributes, elements, console
 	 * output, etc. In other words, the sub-types and overrides of the listeners.
-	 * 
+	 *
 	 * <p>
 	 * Note, if an implementation chooses to cull requests because no one is listening, it should
 	 * take care to re-synchronize when a listener is added. The implementor will need to override
 	 * {@link #addListener(TargetObjectListener)}.
-	 * 
+	 *
 	 * @implNote The recommended pattern on the client side for keeping a synchronized cache is to
 	 *           add a listener, and then retrieve the current elements. Thus, it is acceptable to
 	 *           neglect invoking the callback on the new listener during re-synchronization.
 	 *           However, more testing is needed to verify this doesn't cause problems when network
 	 *           messaging is involved.
-	 * 
+	 *
 	 * @return true if there is at least one listener on this object
 	 * @deprecated Since the addition of model listeners, everything is always observed
 	 */
@@ -165,7 +165,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	/**
 	 * The elements for this object need to be updated, optionally invalidating caches
-	 * 
+	 *
 	 * <p>
 	 * Note that cache invalidation need not imply flushing {@link #elements}. In fact, it's
 	 * preferable not to, as it becomes unclear how to invoke callbacks without some thrashing
@@ -174,12 +174,12 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	 * on any of its internal caches, in order to ensure the fetched elements are fresh. Once
 	 * refreshed, only the changes from the stale cache to the fresh entries need be included in the
 	 * callback.
-	 * 
+	 *
 	 * <p>
 	 * Note that this method completes with {@link Void}. The default implementation of
 	 * {@link #fetchElements(boolean)} will complete with the cached elements, so this method should
 	 * call {@link #changeElements(Collection, Collection, String)} before completion.
-	 * 
+	 *
 	 * @param refresh true to invalidate all caches involved in handling this request
 	 * @return a future which completes when the cache has been updated
 	 */
@@ -197,7 +197,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @implNote In general, an object should attempt to keep an up-to-date map of its elements,
 	 *           usually by capturing the elements and subscribing to changes. This is not possible
 	 *           in all circumstances. In those cases, implementations should override this method.
@@ -235,7 +235,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @implNote Overridden here for type
 	 */
 	@Override
@@ -255,11 +255,11 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	/**
 	 * Set the elements to the given collection, invoking listeners for the delta
-	 * 
+	 *
 	 * <p>
 	 * An existing element is left in place if it's identical to its replacement as in {@code ==}.
 	 * This method also invalidates the sub-trees of removed elements, if any.
-	 * 
+	 *
 	 * @param autoKeyed the desired set of elements where keys are given by the elements
 	 * @param mapKeyed the desired map of elements with specified keys (usually for links)
 	 * @param reason the reason for the change (used as the reason for invalidation)
@@ -311,11 +311,11 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	/**
 	 * Change the elements using the given "delta," invoking listeners
-	 * 
+	 *
 	 * <p>
 	 * An existing element is left in place if it's identical to its replacement as in {@code ==}.
 	 * This method also invalidates the sub-trees of removed elements, if any.
-	 * 
+	 *
 	 * @param remove the set of indices to remove
 	 * @param autoKeyed the set of elements to add with the elements' keys
 	 * @param mapKeyed the map of elements to add with given keys (usually for links)
@@ -359,15 +359,15 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	/**
 	 * The attributes for this object need to be updated, optionally invalidating caches
-	 * 
+	 *
 	 * <p>
 	 * This method being called with -refresh- set is almost always an indication of something gone
 	 * wrong. The client or user should not be attempting to refresh attributes except when there's
 	 * reason to believe the model is not keeping its attribute cache up to date.
-	 * 
+	 *
 	 * <p>
 	 * This method otherwise operates analogously to {@link #requestElements(boolean)}.
-	 * 
+	 *
 	 * @param refresh true to invalidate all caches involved in handling this request
 	 * @return a future which completes when the cache has been updated
 	 */
@@ -385,7 +385,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @implNote An object, except in very limited circumstances, must keep an up-to-date map of its
 	 *           attributes, usually by capturing them at construction and subscribing to changes.
 	 *           In those limited circumstances, it's usually the case that the object's parent has
@@ -448,12 +448,12 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	/**
 	 * Set the attributes to the given map, invoking listeners for the delta
-	 * 
+	 *
 	 * <p>
 	 * An existing attribute value is left in place if it's considered equal to its replacement as
 	 * defined by {@link Objects#equals(Object, Object)}. This method also invalidates the sub-trees
 	 * of removed non-reference object-valued attributes.
-	 * 
+	 *
 	 * @param autoKeyed the desired set of object-valued attributes using the objects' keys
 	 * @param mapKeyed the desired map of other attributes (usually links and primitive values)
 	 * @param reason the reason for the change (used as the reason for invalidation)
@@ -501,12 +501,12 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 
 	/**
 	 * Change the attributes using the given "delta," invoking listeners
-	 * 
+	 *
 	 * <p>
 	 * An existing attribute value is left in place if it's considered equal to its replacement as
 	 * defined by {@link Objects#equals(Object, Object)}. This method also invalidates the sub-trees
 	 * of removed non-reference object-valued attributes.
-	 * 
+	 *
 	 * @param remove the set of names to remove
 	 * @param autoKeyed the set of object-valued attributes to add using the objects' keys
 	 * @param mapKeyed the map of other attributes to add (usually links and primitives)
@@ -541,7 +541,7 @@ public class DefaultTargetObject<E extends TargetObject, P extends TargetObject>
 	/**
 	 * This method may soon be made private. Consider
 	 * {@link DefaultTargetObject#changeAttributes(List, Collection, Map, String)} instead.
-	 * 
+	 *
 	 * <p>
 	 * TODO: Consider allowing objects to move and/or occupy multiple paths. The schema could be
 	 * used to specify the "canonical" location.

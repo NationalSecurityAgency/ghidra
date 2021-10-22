@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -126,7 +126,7 @@ public class GraphViewerTest extends AbstractVisualGraphTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	protected void hoverVertex(AbstractTestVertex v) {
@@ -168,14 +168,14 @@ public class GraphViewerTest extends AbstractVisualGraphTest {
 
 	/**
 	 * Finds a point which intersects the given edge and does not intersect any vertex.
-	 * 
+	 *
 	 * @param e the edge
 	 * @return the point
 	 */
 	private Point2D findHoverPointInGraphSpace(TestEdge e) {
 
 		//
-		// Get the edge shape.  Then, walk from start to end, incrementally, looking for a 
+		// Get the edge shape.  Then, walk from start to end, incrementally, looking for a
 		// point that hovers the edge.
 		//
 		Shape edgeShape = GraphViewerUtils.getEdgeShapeInGraphSpace(viewer, e);
@@ -261,12 +261,12 @@ public class GraphViewerTest extends AbstractVisualGraphTest {
 	}
 
 	/*
-	
+
 	setVertexTooltipProvider(VertexTooltipProvider<V, E>)
 	useMouseRelativeZoom()
 	setPopupsVisible(boolean)
 	getToolTipText(MouseEvent)
 	createVertexMouseInfo(MouseEvent, V, Point2D)
-	 
+
 	 */
 }

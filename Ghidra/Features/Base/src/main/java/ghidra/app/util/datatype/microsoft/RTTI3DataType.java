@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ import ghidra.util.Msg;
  * <p>
  * RTTI_Class_Hierarchy_Descriptor is the label for the RTTI3 data structure.
  *
- * @deprecated Use of this dynamic data type class is no longer recommended. Instead a 
+ * @deprecated Use of this dynamic data type class is no longer recommended. Instead a
  * ClassHierarchyDescriptor structure data type can be obtained using the Rtti3Model.
  */
 @Deprecated
@@ -132,12 +132,12 @@ public class RTTI3DataType extends RTTIDataType {
 	}
 
 	/**
-	 * Gets the total length of the data created when this data type is placed at the indicated 
+	 * Gets the total length of the data created when this data type is placed at the indicated
 	 * address in memory.
 	 * @param memory the program memory for this data.
 	 * @param address the start address of the data.
 	 * @param bytes the bytes for this data.
-	 * @return the length of the data. zero is returned if valid data can't be created at the 
+	 * @return the length of the data. zero is returned if valid data can't be created at the
 	 * indicated address using this data type.
 	 */
 	public int getLength(Memory memory, Address address, byte[] bytes) {
@@ -187,7 +187,7 @@ public class RTTI3DataType extends RTTIDataType {
 	}
 
 	/**
-	 * Gets the address of the RTTI2 that is referred to from an RTTI3 structure that is placed at 
+	 * Gets the address of the RTTI2 that is referred to from an RTTI3 structure that is placed at
 	 * the indicated address.
 	 * @param memory the memory with the data for the RTTI structures.
 	 * @param rtti3Address address of an RTTI3 structure

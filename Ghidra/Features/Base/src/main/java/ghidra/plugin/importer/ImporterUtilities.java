@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,8 +50,8 @@ import util.CollectionUtils;
 
 /**
  * Utilities for importing files.
- * 
- * <p>Note: if a method takes a {@link TaskMonitor}, then that method should only be called 
+ *
+ * <p>Note: if a method takes a {@link TaskMonitor}, then that method should only be called
  * from a background task.
  */
 public class ImporterUtilities {
@@ -128,7 +128,7 @@ public class ImporterUtilities {
 	 * otherwise the normal single file import dialog will be shown.
 	 *
 	 * @param tool {@link PluginTool} will be used as the parent tool for dialogs
-	 * @param programManager optional {@link ProgramManager} instance to use to open imported 
+	 * @param programManager optional {@link ProgramManager} instance to use to open imported
 	 * 			binaries with, or null
 	 * @param fsrl {@link FSRL} of the file to import
 	 * @param destinationFolder {@link DomainFolder} destination folder where the imported file
@@ -150,11 +150,11 @@ public class ImporterUtilities {
 	 * If the file is a container of other files, a batch import dialog will be used,
 	 * otherwise the normal single file import dialog will be shown.]
 	 * <p>
-	 * If you are not in a monitored task, then call 
+	 * If you are not in a monitored task, then call
 	 * {@link #showImportDialog(PluginTool, ProgramManager, FSRL, DomainFolder, String)}.
 	 *
 	 * @param tool {@link PluginTool} will be used as the parent tool for dialogs
-	 * @param programManager optional {@link ProgramManager} instance to use to open imported 
+	 * @param programManager optional {@link ProgramManager} instance to use to open imported
 	 * 			binaries with, or null
 	 * @param fsrl {@link FSRL} of the file to import
 	 * @param destinationFolder {@link DomainFolder} destination folder where the imported file
@@ -233,17 +233,17 @@ public class ImporterUtilities {
 			//@formatter:off
 			choice = OptionDialog.showOptionDialog(parent, "Container File Detected",
 				"The file " + referencedFile.file.getName() +
-					" seems to have nested files in it.  Select an import mode:",							
-				"Single file",  // 1 
+					" seems to have nested files in it.  Select an import mode:",
+				"Single file",  // 1
 				"Batch", 		// 2
 				OptionDialog.QUESTION_MESSAGE);
 		}
 		else {
 			choice = OptionDialog.showOptionDialog(parent, "Container File Detected",
 				"The file " + referencedFile.file.getName() +
-					" seems to have nested files in it.  Select an import mode:",							
-				"Single file",  // 1 
-				"Batch", 		// 2						
+					" seems to have nested files in it.  Select an import mode:",
+				"Single file",  // 1
+				"Batch", 		// 2
 				"File System", 	// 3
 				OptionDialog.QUESTION_MESSAGE);
 			//@formatter:on
@@ -297,7 +297,7 @@ public class ImporterUtilities {
 
 	/**
 	 * Constructs a {@link ImporterDialog} and shows it in the swing thread.
-	 * 
+	 *
 	 *
 	 * @param fsrl the file system resource locater (can be a simple file or an element of
 	 * 			a more complex file such as a zip file)

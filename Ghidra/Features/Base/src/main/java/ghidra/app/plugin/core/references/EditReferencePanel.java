@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,12 +27,12 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 abstract class EditReferencePanel extends JPanel {
-	
+
 	EditReferencePanel(String name) {
 		super();
 		setName(name);
 	}
-	
+
 	/**
 	 * Initialize panel content with existing reference.
 	 * This initialization is used when editing an existing reference.
@@ -40,7 +40,7 @@ abstract class EditReferencePanel extends JPanel {
 	 * @param ref existing reference from te specified fromCodeUnit
 	 */
 	abstract void initialize(CodeUnit fromCodeUnit, Reference ref);
-	
+
 	/**
 	 * Initialize panel content based upon specified fromCodeUnit and opIndex.
 	 * This initialization is used when adding a new reference.
@@ -51,13 +51,13 @@ abstract class EditReferencePanel extends JPanel {
 	 * @return true if panel can support specified code unit and operand
 	 */
 	abstract boolean initialize(CodeUnit fromCodeUnit, int opIndex, int subOpIndex);
-	
+
 	/**
 	 * Add/Update reference callback
 	 * @return true if reference added
 	 */
 	abstract boolean applyReference();
-	
+
 	/**
 	 * Cleanup any program resource held.
 	 */
@@ -71,11 +71,11 @@ abstract class EditReferencePanel extends JPanel {
 	abstract boolean setOpIndex(int opIndex);
 
 	/**
-	 * Returns true if the current state is valid for the 
+	 * Returns true if the current state is valid for the
 	 * current fromCodeUnit, opIndex and/or reference data.
 	 */
 	abstract boolean isValidContext();
-	
+
 	/**
 	 * Display input error
 	 * @param error error message
@@ -83,7 +83,7 @@ abstract class EditReferencePanel extends JPanel {
 	protected void showInputErr(String error) {
 		Msg.showError(this, this, "Reference Input Error", error);
 	}
-	
+
 	/**
 	 * Places focus in the first focusable component within this panel.
 	 * @see java.awt.Component#requestFocus()
@@ -100,14 +100,14 @@ abstract class EditReferencePanel extends JPanel {
 
 	/**
 	 * Provides flexible parsing of a decimal or hexidecimal value
-	 * where hex values are prefixed by '0x'.  A sign prefix may be specified 
+	 * where hex values are prefixed by '0x'.  A sign prefix may be specified
 	 * first (+ or -).
 	 * @param str input string
 	 * @return parsed value
 	 * @throws NumberFormatException if unable to parse value
 	 */
 	protected long parseLongInput(String str) throws NumberFormatException {
-		
+
 		if (str == null) {
 			throw new NumberFormatException();
 		}
@@ -127,8 +127,8 @@ abstract class EditReferencePanel extends JPanel {
 		catch (IndexOutOfBoundsException e) {
 			throw new NumberFormatException();
 		}
-		
+
 		return Long.parseLong(str);
 	}
-	
+
 }

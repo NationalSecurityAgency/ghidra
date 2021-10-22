@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,11 +23,11 @@ import ghidra.util.HTMLUtilities;
 
 /**
  * Splits into lines a given String that is meant to be rendered as HTML.
- * 
- * <P>Really, this class exists simply to remove hundreds of lines of code from 
+ *
+ * <P>Really, this class exists simply to remove hundreds of lines of code from
  * {@link HTMLUtilities}, which is what this code supports.  The methods in here could easily
- * be in {@link StringUtils}, but to keep dependencies low on code that has such a specific use, 
- * it lives here, with a name that implies you shouldn't use it unless you are working with 
+ * be in {@link StringUtils}, but to keep dependencies low on code that has such a specific use,
+ * it lives here, with a name that implies you shouldn't use it unless you are working with
  * HTML.
  */
 public class HtmlLineSplitter {
@@ -38,11 +38,11 @@ public class HtmlLineSplitter {
 	/**
 	 * Splits the given line into multiple lines based upon the given max length.  This method
 	 * will first split on each newline and then wrap each of the lines returned from that split.
-	 * 
+	 *
 	 * <P>The wrapping routine will attempt to wrap at word boundaries.
-	 * 
+	 *
 	 * <P>This method does not retain leading whitespace.
-	 * 
+	 *
 	 * @param text the text to wrap
 	 * @param maxLineLength the max desired length of each output line; 0 or less signals not
 	 *        to wrap the line based upon length
@@ -57,13 +57,13 @@ public class HtmlLineSplitter {
 	/**
 	 * Splits the given line into multiple lines based upon the given max length.  This method
 	 * will first split on each newline and then wrap each of the lines returned from that split.
-	 * 
+	 *
 	 * <P>The wrapping routine will attempt to wrap at word boundaries.
-	 * 
+	 *
 	 * @param text the text to wrap
 	 * @param maxLineLength the max desired length of each output line; 0 or less signals not
 	 *        to wrap the line based upon length
-	 * @param retainSpacing true signals to keep whitespace on line breaks; false discards 
+	 * @param retainSpacing true signals to keep whitespace on line breaks; false discards
 	 *        leading whitespace
 	 * @return the new lines
 	 * @see #wrap(String, int, WhitespaceHandler)
@@ -98,17 +98,17 @@ public class HtmlLineSplitter {
 
 	/**
 	 * Splits the given line into multiple lines based upon the given max length.
-	 * 
+	 *
 	 * <P>Once the maximum provided length is passed, the algorithm attempts to split on a word
 	 * boundary by first looking backwards in the given line (since the last split value) to
 	 * find a space.  If no space is found in that direction, then the the algorithm will
 	 * keep walking forward until either a space is found or {@link #MAX_WORD_LENGTH} is
-	 * passed, at which point the line will be ended, splitting any word that surrounds 
+	 * passed, at which point the line will be ended, splitting any word that surrounds
 	 * that index.
-	 * 
+	 *
 	 * @param text the text to wrap
 	 * @param maxLineLength the max desired length of each output line
-	 * @param whitespacer the object that knows how to manipulate whitespace depending 
+	 * @param whitespacer the object that knows how to manipulate whitespace depending
 	 *        upon client preferences
 	 * @return the new lines
 	 */

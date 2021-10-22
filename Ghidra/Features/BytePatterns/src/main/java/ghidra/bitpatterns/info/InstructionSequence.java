@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,8 @@ import org.jdom.Element;
 import ghidra.util.xml.XmlUtilities;
 
 /**
- * An object in this class stores a sequence of instructions along with the sizes and operands of each. 
- * These sequences come from function starts, function returns, or immediately before function starts. 
+ * An object in this class stores a sequence of instructions along with the sizes and operands of each.
+ * These sequences come from function starts, function returns, or immediately before function starts.
  */
 
 public class InstructionSequence {
@@ -213,7 +213,7 @@ public class InstructionSequence {
 
 	/**
 	 * Get the list of all {@link InstructionSequence}s of a given type which pass a given {@link ContextRegisterFilter}
-	 * @param fsReader populated {@link FileBitPatternInfoReader} 
+	 * @param fsReader populated {@link FileBitPatternInfoReader}
 	 * @param type desired type of sequence
 	 * @param regFilter filter that returned {@link InstructionSequence}s must pass
 	 * @return sequences
@@ -266,7 +266,7 @@ public class InstructionSequence {
 
 	/**
 	 * Convert this object into a XML node, using {@link #XML_ELEMENT_NAME} as the name for the node.
-	 * 
+	 *
 	 * @return new XML element
 	 */
 	public Element toXml() {
@@ -275,7 +275,7 @@ public class InstructionSequence {
 
 	/**
 	 * Convert this object into a XML node, using the specified name for the node.
-	 * 
+	 *
 	 * @param elementName name for the new XML node
 	 * @return new XML element
 	 */
@@ -323,7 +323,7 @@ public class InstructionSequence {
 
 	/**
 	 * Creates an {@link InstructionSequence} instance from a XML node.
-	 * 
+	 *
 	 * @param element jdom Element to read, null ok
 	 * @return new {@link InstructionSequence} or null if element was null
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,13 +61,13 @@ public class ResourceManager {
 	 * resource with this name is found. The rules for searching resources
 	 * associated with a given class are implemented by the defining class
 	 * loader of the class.
-	 * 
+	 *
 	 * @param filename "partially" qualified resource filename to get, e.g.,
 	 *        "images/go-home.png" would look for the file named 'home.gif' in
 	 *        the 'images' subdirectory of the 'resources' package,
 	 *        following the search rules defined by your CLASSPATH and
 	 *        return an InputStream if found; null if it cannot load the resource.
-	 * @return the URL 
+	 * @return the URL
 	 */
 	public static URL getResource(String filename) {
 		URL url = classLoader.getResource(filename);
@@ -84,9 +84,9 @@ public class ResourceManager {
 	 * with this name is found. The rules for searching resources associated with a
 	 * given class are implemented by the defining class loader of the class.
 	 *
-	 * @param filename "partially" qualified resource filename to get, e.g., "images/home.gif" 
-	 *        would look for the file named 'home.gif' in the 'images' subdirectory of 
-	 *        the 'resources' package, following the search rules defined by your 
+	 * @param filename "partially" qualified resource filename to get, e.g., "images/home.gif"
+	 *        would look for the file named 'home.gif' in the 'images' subdirectory of
+	 *        the 'resources' package, following the search rules defined by your
 	 *        CLASSPATH and return an InputStream if found; null if it cannot load the resource.
 	 * @return the input stream
 	 */
@@ -112,7 +112,7 @@ public class ResourceManager {
 
 	/**
 	 * Locates a File resource by the given name
-	 * 
+	 *
 	 * @param filename the filename
 	 * @return the File for the given resource; null if there is no such file
 	 */
@@ -133,8 +133,8 @@ public class ResourceManager {
 
 	/**
 	 * Searches the given set of directory paths for the given filename
-	 * 
-	 * @param searchPaths the paths 
+	 *
+	 * @param searchPaths the paths
 	 * @param filename the filename
 	 * @return the URL of the first matching file
 	 */
@@ -158,12 +158,12 @@ public class ResourceManager {
 	}
 
 	/**
-	 * Search the classpath for files in the &lt;classpath entry&gt;/<code>dirName</code> 
-	 * location that have the given extension.  In <code>null</code> is passed for the 
-	 * extension, then all files found in the given dir names will be returned.  In this 
+	 * Search the classpath for files in the &lt;classpath entry&gt;/<code>dirName</code>
+	 * location that have the given extension.  In <code>null</code> is passed for the
+	 * extension, then all files found in the given dir names will be returned.  In this
 	 * way, <code>null</code> is a wildcard.
 	 *
-	 * <P>This method differs from {@link #getResource(String)} in that this method finds 
+	 * <P>This method differs from {@link #getResource(String)} in that this method finds
 	 * multiple matches.
 	 *
 	 * @param dirName the name of the sub-directory under which to search
@@ -181,15 +181,15 @@ public class ResourceManager {
 	}
 
 	/**
-	 * Search the classpath for files in the &lt;classpath entry&gt;/<code>dirName</code> 
-	 * location that have the given extension.  In <code>null</code> is passed for the 
-	 * extension, then all files found in the given dir names will be returned.  In this 
+	 * Search the classpath for files in the &lt;classpath entry&gt;/<code>dirName</code>
+	 * location that have the given extension.  In <code>null</code> is passed for the
+	 * extension, then all files found in the given dir names will be returned.  In this
 	 * way, <code>null</code> is a wildcard.
 	 *
-	 * <P>The names returned from this method are relative and are meant to be used in a 
+	 * <P>The names returned from this method are relative and are meant to be used in a
 	 * later callback to this class for methods such as {@link #loadImage(String)} or
 	 * {@link #getResource(String)}.
-	 * 
+	 *
 	 *
 	 * @param dirName the name of the directory under which to search
 	 * @param extension the extension that matching files must possess
@@ -216,7 +216,7 @@ public class ResourceManager {
 
 			if (!StringUtils.endsWithAny(path.toLowerCase(), ".jar", ".zip")) {
 
-				// maybe a directory	
+				// maybe a directory
 				String classpathDirectoryEntry = path + File.separator + resourceDirName;
 				File f = new File(classpathDirectoryEntry);
 				findResources(set, f, resourceDirName, extension);
@@ -238,9 +238,9 @@ public class ResourceManager {
 	}
 
 	/**
-	 * Search the directory for files ending in the given extension and add them to the list 
+	 * Search the directory for files ending in the given extension and add them to the list
 	 * that is returned
-	 * 
+	 *
 	 * @param set the set to which resource names will be added
 	 * @param file directory, e.g., "resources/defaultTools"
 	 * @param dirName name of sub-directory, e.g. "defaultTools"
@@ -266,7 +266,7 @@ public class ResourceManager {
 	}
 
 	/**
-	 * Search the given jar filename for files in 
+	 * Search the given jar filename for files in
 	 * resources with the given file extension.
 	 * @param set the set to which resource names will be added
 	 * @param file jar or zip filename
@@ -286,7 +286,7 @@ public class ResourceManager {
 
 				String name = entry.getName();
 
-				// the entry must match the pattern "resources/<resourceDirName>/xxx<extension> 
+				// the entry must match the pattern "resources/<resourceDirName>/xxx<extension>
 				// where extension may be null and 'xxx' is a filename and not another sub directory
 				if (extension != null && !name.endsWith(extension)) {
 					continue;
@@ -301,7 +301,7 @@ public class ResourceManager {
 				name = name.substring(startPath.length() + 1); // strip off valid path info
 				File entryAsFile = new File(name);
 				if (entryAsFile.getParent() != null) {
-					continue; // the name was a subdir and not simply a file 
+					continue; // the name was a subdir and not simply a file
 				}
 
 				// add the entry; chop off "resources/"
@@ -312,11 +312,11 @@ public class ResourceManager {
 
 //==================================================================================================
 // Icon Related Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Creates a scaled ImageIcon from the given icon.
-	 * 
+	 *
 	 * @param icon the icon to scale
 	 * @param width the width of the new icon
 	 * @param height the height of the new icon
@@ -328,9 +328,9 @@ public class ResourceManager {
 	}
 
 	/**
-	 * Creates a scaled ImageIcon from the given icon with scaling of 
+	 * Creates a scaled ImageIcon from the given icon with scaling of
 	 * {@link Image#SCALE_AREA_AVERAGING}
-	 *  
+	 *
 	 * @param icon the icon to scale
 	 * @param width the width of the new icon
 	 * @param height the height of the new icon
@@ -361,7 +361,7 @@ public class ResourceManager {
 	/**
 	 * Returns a disabled icon while allowing the caller to control the brightness of the icon
 	 * returned
-	 * 
+	 *
 	 * @param icon The icon to disable.
 	 * @param brightnessPercent The level of brightness (0-100, where 100 is the brightest).
 	 * @return a disabled version of the original icon.
@@ -372,10 +372,10 @@ public class ResourceManager {
 
 	/**
 	 * Creates an image icon from the given image.  This method will create an <code>ImageIcon</code>
-	 * the <a href="safe">"safe"</a> way by avoiding the constructor 
+	 * the <a href="safe">"safe"</a> way by avoiding the constructor
 	 * {@link ImageIcon#ImageIcon(Image)}, which can
 	 * trigger problems with Java's {@link MediaTracker}.
-	 * 
+	 *
 	 * @param imageName A textual description of the image; may be null
 	 * @param image The image to use for creating an ImageIcon.
 	 * @return the new icon
@@ -388,7 +388,7 @@ public class ResourceManager {
 	 * Returns an {@link ImageIcon} for the given icon.  If the value is already an ImageIcon, then
 	 * that object is returned; otherwise, an ImageIcon will be created the <a href="#safe">safe</a>
 	 * way.
-	  
+
 	 * @param icon The icon to convert
 	 * @return the new icon
 	 */
@@ -400,9 +400,9 @@ public class ResourceManager {
 	}
 
 	/**
-	 * Get the name of this icon.  The value is usually going to be the URL from which the icon 
+	 * Get the name of this icon.  The value is usually going to be the URL from which the icon
 	 * was loaded
-	 * 
+	 *
 	 * @param icon the icon for which the name is desired
 	 * @return the name
 	 */
@@ -417,13 +417,13 @@ public class ResourceManager {
 		}
 
 		/*
-		 	TODO - not sure why we wanted just the name and not the entire URL?  Delete this 
+		 	TODO - not sure why we wanted just the name and not the entire URL?  Delete this
 		 	       after a bit
-		 	
+
 		if (iconName == null) {
 			return null;
 		}
-		 	
+
 		int pos = iconName.lastIndexOf(File.separator);
 		if (pos >= 0) {
 			iconName = iconName.substring(pos + 1);
@@ -477,7 +477,7 @@ public class ResourceManager {
 	 * Load the image specified by filename; returns the default bomb icon
 	 * if problems occur trying to load the file.
 	 * <p>
-	 * 
+	 *
 	 * @param filename name of file to load, e.g., "images/home.gif"
 	 * @return the image icon stored in the bytes
 	 */
@@ -528,9 +528,9 @@ public class ResourceManager {
 	}
 
 	/**
-	 * A convenience method to force the image denoted by <code>filename</code> to be read 
-	 * from disk and to not use the cached version 
-	 * 
+	 * A convenience method to force the image denoted by <code>filename</code> to be read
+	 * from disk and to not use the cached version
+	 *
 	 * @param filename name of file to load, e.g., "images/home.gif"
 	 * @return the image icon stored in the bytes
 	 * @see #loadImage(String)
@@ -594,16 +594,16 @@ public class ResourceManager {
 	}
 
 	/**
-	 * Returns paths to search in test mode when finding resources. 
-	 * 
+	 * Returns paths to search in test mode when finding resources.
+	 *
 	 * <P>This allows us to have our Eclipse development environment match the gradle test
 	 * environment with respect to how resources are found.  Specifically, in Eclipse, resources
 	 * are found on the classpath.  Further, in Eclipse, the 'test' and 'test.slow' folders are
-	 * on the classpath.  Even more, Eclipse will include these test folders as transitive 
+	 * on the classpath.  Even more, Eclipse will include these test folders as transitive
 	 * dependencies for submodules.  Contrastingly, gradle will not include transitive <b>test</b>
 	 * dependencies.  So, we add this code here so that we do not have to update each gradle
 	 * build file that needs resources defined in a parent modules test resources.
-	 * 
+	 *
 	 * @return the paths
 	 */
 	private static List<String> getTestSearchPaths() {

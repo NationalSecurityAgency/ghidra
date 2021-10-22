@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,22 +31,22 @@ public interface ToolServices {
 
 	/**
 	 * Notify the framework that the tool is closing.
-	 * 
+	 *
 	 * @param tool tool that is closing
 	 */
 	public void closeTool(PluginTool tool);
 
 	/**
 	 * Saves the tool's configuration in the standard
-	 * tool location.  
-	 * 
+	 * tool location.
+	 *
 	 * @param tool tool to save.
 	 */
 	public void saveTool(PluginTool tool);
 
 	/**
 	 * Save the tool to the given location on the local file system.
-	 * 
+	 *
 	 * @param tool the tool template to write
 	 * @return the file to which the tool was saved
 	 * @throws FileNotFoundException thrown if the file's directory doesn't exist.
@@ -65,7 +65,7 @@ public interface ToolServices {
 	 * If it finds a matching tool, then it is brought to the front.
 	 * Otherwise, it creates one and runs it.
 	 * It then invokes the specified event on the running tool.
-	 * 
+	 *
 	 * @param tool find/create a tool like this one.
 	 * @param domainFile open this file in the found/created tool.
 	 * @param event invoke this event on the found/created tool
@@ -73,10 +73,10 @@ public interface ToolServices {
 	public void displaySimilarTool(PluginTool tool, DomainFile domainFile, PluginEvent event);
 
 	/**
-	 * Returns the default tool template used to open the tool.  Here <b>default</b> means the 
-	 * tool that should be used to open the given file, whether defined by the user or the 
+	 * Returns the default tool template used to open the tool.  Here <b>default</b> means the
+	 * tool that should be used to open the given file, whether defined by the user or the
 	 * system default.
-	 * 
+	 *
 	 * @param domainFile The file for which to find the preferred tool.
 	 * @return The preferred tool that should be used to open the given file.
 	 */
@@ -90,18 +90,18 @@ public interface ToolServices {
 	public Set<ToolTemplate> getCompatibleTools(Class<? extends DomainObject> domainClass);
 
 	/**
-	 * Returns the {@link ToolAssociationInfo associations}, which describe content 
+	 * Returns the {@link ToolAssociationInfo associations}, which describe content
 	 * types and the tools used to open them, for all content types known to the system.
-	 * 
+	 *
 	 * @return the associations
 	 * @see #setContentTypeToolAssociations(Set)
 	 */
 	public Set<ToolAssociationInfo> getContentTypeToolAssociations();
 
 	/**
-	 * Sets the  {@link ToolAssociationInfo associations}, which describe content 
-	 * types and the tools used to open them, for the system. 
-	 * 
+	 * Sets the  {@link ToolAssociationInfo associations}, which describe content
+	 * types and the tools used to open them, for the system.
+	 *
 	 * @param infos The associations to be applied
 	 * @see #getContentTypeToolAssociations()
 	 */
@@ -124,7 +124,7 @@ public interface ToolServices {
 	public PluginTool launchTool(String toolName, DomainFile domainFile);
 
 	/**
-	 * Add a listener that will be notified when the default tool specification changes 
+	 * Add a listener that will be notified when the default tool specification changes
 	 * @param listener the listener
 	 */
 	public void addDefaultToolChangeListener(DefaultToolChangeListener listener);

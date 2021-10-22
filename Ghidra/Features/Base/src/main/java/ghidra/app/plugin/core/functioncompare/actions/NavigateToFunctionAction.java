@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,14 +33,14 @@ import ghidra.util.HelpLocation;
 import resources.Icons;
 
 /**
- * Toggle Action designed to be used with a {@link MultiFunctionComparisonProvider}. 
+ * Toggle Action designed to be used with a {@link MultiFunctionComparisonProvider}.
  * When toggled on, a GoTo event will be issued for the function displayed in
  * the comparison panel after the following events:
  * <ul>
  *   <li>focus is gained on either the left or right panels</li>
  *   <li>the function displayed in a comparison panel changes</li>
  * </ul>
- * Note that the GoTo will only operate on the comparison panel that 
+ * Note that the GoTo will only operate on the comparison panel that
  * <b>has focus</b>. eg: If the left panel has focus but the user changes the
  * function being viewed in the right panel, no GoTo will be issued.
  */
@@ -52,7 +52,7 @@ public class NavigateToFunctionAction extends ToggleDockingAction {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param provider the function comparison provider containing this action
 	 */
 	public NavigateToFunctionAction(MultiFunctionComparisonProvider provider) {
@@ -76,10 +76,10 @@ public class NavigateToFunctionAction extends ToggleDockingAction {
 	}
 
 	/**
-	 * Adds a listener to each of the function selection widgets in the 
+	 * Adds a listener to each of the function selection widgets in the
 	 * comparison provider. When a new function is selected, a GoTo event
 	 * is generated for the entry point of the function.
-	 * 
+	 *
 	 * @param provider the function comparison provider
 	 */
 	private void addChangeListeners(MultiFunctionComparisonProvider provider) {
@@ -123,10 +123,10 @@ public class NavigateToFunctionAction extends ToggleDockingAction {
 	}
 
 	/**
-	 * Adds a listener to each panel in the function comparison provider, 
+	 * Adds a listener to each panel in the function comparison provider,
 	 * triggered when focus has been changed. If focused is gained in a panel,
 	 * a GoTo event is issued containing the function start address.
-	 * 
+	 *
 	 * @param provider the function comparison provider
 	 */
 	private void addFocusListeners(MultiFunctionComparisonProvider provider) {

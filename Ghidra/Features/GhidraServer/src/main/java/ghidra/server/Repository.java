@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ import ghidra.util.timer.GTimerMonitor;
 
 /**
  * <code>Repository</code> manages a versioned LocalFileSystem and a set of user's
- * and permissions.  
+ * and permissions.
  */
 public class Repository implements FileSystemListener, RepositoryLogger {
 	static final Logger log = LogManager.getLogger(Repository.class);
@@ -221,7 +221,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 
 	/**
 	 * Send all queued change events immediately.
-	 * If event dispatching had been suspended, it will 
+	 * If event dispatching had been suspended, it will
 	 * resume with this call.
 	 */
 	public void flushChangeEvents() {
@@ -290,7 +290,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 
 	/**
 	 * Returns the folder specified by folderPath.
-	 * @param currentUser user that is getting/creating the folder, only required if create is true 
+	 * @param currentUser user that is getting/creating the folder, only required if create is true
 	 * @param folderPath absolute folder path
 	 * @param create if true folder path will be created if necessary
 	 * @return folder or null if not found and create is false
@@ -335,7 +335,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	/**
 	 * Set the user access list.
 	 * @param currentUser user that is setting the access list on this
-	 * repository; the current user must 
+	 * repository; the current user must
 	 * @param users
 	 * @param allowAnonymousAccess
 	 * @throws UserAccessException
@@ -396,7 +396,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 
 	/**
 	 * Get the list of known users for this repository.
-	 * @param currentUser user that is requesting the user list. 
+	 * @param currentUser user that is requesting the user list.
 	 * @throws UserAccessException
 	 * @throws IOException
 	 */
@@ -588,7 +588,7 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	 * access is permitted
 	 * @param userAccessFile repository user access file
 	 * @param users list to be populated with user permissions defined by userAccessFile
-	 * @return true if anonymous read-only access is permitted, else false 
+	 * @return true if anonymous read-only access is permitted, else false
 	 * @throws IOException
 	 */
 	private static boolean readAccessFile(File userAccessFile, List<User> users)

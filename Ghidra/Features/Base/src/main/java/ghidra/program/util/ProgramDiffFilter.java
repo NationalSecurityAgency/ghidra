@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,9 +22,9 @@ package ghidra.program.util;
  * Each difference type can be set to true, indicating interest in
  * differences of that type between two programs. False indicates no interest
  * in this type of program difference.
- * <BR>Valid filter types are: 
- * BYTE_DIFFS, CODE_UNIT_DIFFS, 
- * PLATE_COMMENT_DIFFS, PRE_COMMENT_DIFFS, EOL_COMMENT_DIFFS, 
+ * <BR>Valid filter types are:
+ * BYTE_DIFFS, CODE_UNIT_DIFFS,
+ * PLATE_COMMENT_DIFFS, PRE_COMMENT_DIFFS, EOL_COMMENT_DIFFS,
  * REPEATABLE_COMMENT_DIFFS, POST_COMMENT_DIFFS,
  * REFERENCE_DIFFS,
  * USER_DEFINED_DIFFS, BOOKMARK_DIFFS,
@@ -70,7 +70,7 @@ public class ProgramDiffFilter {
 	public static final int USER_DEFINED_DIFFS = 1 << 13;
 	/** Indicates the filter for the function tag differences. */
 	public static final int FUNCTION_TAG_DIFFS = 1 << 14;
-    
+
     // NOTE: If you add a new primary type here, make sure to use the
     //       next available bit position and update the NUM_PRIMARY_TYPES.
     //       ** Also don't forget to add it to ALL_DIFFS below. **
@@ -81,7 +81,7 @@ public class ProgramDiffFilter {
     //* PREDEFINED DIFFERENCE COMBINATIONS
     //********************************************************
 	/** Indicates all comment filters. */
-	public static final int COMMENT_DIFFS = 
+	public static final int COMMENT_DIFFS =
 										EOL_COMMENT_DIFFS
 									  | PRE_COMMENT_DIFFS
 									  | POST_COMMENT_DIFFS
@@ -89,7 +89,7 @@ public class ProgramDiffFilter {
 									  | PLATE_COMMENT_DIFFS;
 	/** Indicates all filters for all defined types of differences. */
 	//@formatter:off
-	public static final int ALL_DIFFS = 
+	public static final int ALL_DIFFS =
 										BYTE_DIFFS
 									  | CODE_UNIT_DIFFS
 									  | COMMENT_DIFFS
@@ -99,7 +99,7 @@ public class ProgramDiffFilter {
 									  | EQUATE_DIFFS
 									  | FUNCTION_DIFFS
 									  | BOOKMARK_DIFFS
-									  | FUNCTION_TAG_DIFFS 
+									  | FUNCTION_TAG_DIFFS
 									  | PROGRAM_CONTEXT_DIFFS;
 	//@formatter:on
 
@@ -133,7 +133,7 @@ public class ProgramDiffFilter {
     /**
      * getFilter determines whether or not the specified type of filter is set.
      *
-     * @param type the set bits indicate the type of differences we want to 
+     * @param type the set bits indicate the type of differences we want to
      * check as being set in the filter.
      * <BR>For example, one or more of the diff types "OR"ed together.
      * <BR>i.e. CODE_UNIT_DIFFS | SYMBOL_DIFFS
@@ -158,7 +158,7 @@ public class ProgramDiffFilter {
 	/** setFilter specifies whether or not the indicated type of difference will be
 	 * included by the filter (true) or not included (false).
 	 *
-     * @param type the set bits indicate the type of differences we want to 
+     * @param type the set bits indicate the type of differences we want to
      * look for in the programs.
      * <BR>For example, one or more of the diff types "OR"ed together.
      * <BR>i.e. CODE_UNIT_DIFFS | SYMBOL_DIFFS
@@ -262,7 +262,7 @@ public class ProgramDiffFilter {
         }
         return false;
     }
-    
+
     /**
      * Returns a string representation of the current settings for this filter.
      */

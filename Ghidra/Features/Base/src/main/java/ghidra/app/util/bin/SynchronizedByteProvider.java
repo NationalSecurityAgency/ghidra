@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,14 +20,14 @@ import java.io.*;
 import ghidra.formats.gfilesystem.FSRL;
 
 /**
- * Creates a thread-safe pass-through {@link ByteProvider}. 
+ * Creates a thread-safe pass-through {@link ByteProvider}.
  */
 public class SynchronizedByteProvider implements ByteProvider {
 	private final ByteProvider provider;
 
 	/**
 	 * Constructs a {@link SynchronizedByteProvider} around the specified {@link ByteProvider}
-	 * 
+	 *
 	 * @param provider the {@link ByteProvider} to make thread-safe
 	 */
 	public SynchronizedByteProvider(ByteProvider provider) {
@@ -78,7 +78,7 @@ public class SynchronizedByteProvider implements ByteProvider {
 	public synchronized byte[] readBytes(long index, long length) throws IOException {
 		return provider.readBytes(index, length);
 	}
-	
+
 	@Override
 	public synchronized InputStream getInputStream(long index) throws IOException {
 		// Return a ByteProviderInputStream that reads its bytes via this wrapper so that it is completely

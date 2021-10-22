@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ class DnDMoveManager {
         this.tree = tree;
         reorderDDMgr = new ReorderManager(tree);
     }
-    
+
     /**
      * Return true if the destNode can accept the dropNodes.
      */
@@ -52,11 +52,11 @@ class DnDMoveManager {
         }
         return true;
     }
-    
+
     private boolean canDropNode( ProgramNode destinationNode, ProgramNode dropNode,
             int dropAction, int relativeMousePosition ) {
-        
-        Group dragGroup = dropNode.getGroup();        
+
+        Group dragGroup = dropNode.getGroup();
         if (dragGroup.equals(destinationNode.getGroup())) {
             return false; // can't drop a group onto itself
         }
@@ -64,12 +64,12 @@ class DnDMoveManager {
             return reorderDDMgr.isDropSiteOk(destinationNode, dropNode, dropAction,
                 relativeMousePosition);
         }
-        
+
         // this is for a normal drop on the node
         if (destinationNode.isFragment()) {
             return checkDestFragment(destinationNode, dropNode, dropAction);
         }
-        
+
         // check for destination module already containing drop Module or Fragment
         ProgramModule destModule = destinationNode.getModule();
         if (dropNode.isFragment() && destModule.contains(dropNode.getFragment())) {
@@ -86,7 +86,7 @@ class DnDMoveManager {
         }
         return true;
     }
-    
+
     /**
      * Add the given data to the destination node.
      * @param destNode destination node for the data.
@@ -97,9 +97,9 @@ class DnDMoveManager {
 	 *				 0 --> at the node
 	 *				 1 --> below the node
      */
-    void add(ProgramNode destNode, ProgramNode[] dropNodes, int dropAction, int relativeMousePos) 
+    void add(ProgramNode destNode, ProgramNode[] dropNodes, int dropAction, int relativeMousePos)
             throws NotFoundException, CircularDependencyException, DuplicateGroupException {
-	
+
 		if (relativeMousePos != 0) {
 			reorderDDMgr.add(destNode, dropNodes, dropAction, relativeMousePos);
 			return;
@@ -110,12 +110,12 @@ class DnDMoveManager {
 		if (transactionID < 0) {
 			return;
 		}
-		
+
 		try {
-		    
-            for ( int i = 0; i < dropNodes.length; i++ ) {            
+
+            for ( int i = 0; i < dropNodes.length; i++ ) {
                 boolean ok = true;
-                
+
                 // this is a normal drag/drop on the node
                 if (destNode.isFragment()) {
                     ok = addToFragment(destNode, dropNodes[i]);
@@ -133,7 +133,7 @@ class DnDMoveManager {
     }
 
 	//////////////////////////////////////////////////////////////////////////
-	
+
     /**
      * Check whether the drop is ok given that destNode is a fragment.
      * @param destNode fragment node
@@ -141,10 +141,10 @@ class DnDMoveManager {
      * @param dropAction move or copy action
      * @return true if the destNode is a valid drop target
      */
-	private boolean checkDestFragment(ProgramNode destNode, 
+	private boolean checkDestFragment(ProgramNode destNode,
 		ProgramNode dropNode, int dropAction) {
-			
-			
+
+
         if (dropAction != DnDConstants.ACTION_MOVE) {
             return false;
         }
@@ -159,7 +159,7 @@ class DnDMoveManager {
                      // move all code units from descendant fragments to
                     // destination fragment...
 	}
-	
+
 	private boolean addToFragment(ProgramNode destNode, ProgramNode dropNode) {
 		// dropNode can be either fragment or module
 		ProgramFragment destFrag = destNode.getFragment();

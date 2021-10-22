@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ public class DefaultAddressFactory implements AddressFactory {
 	 * Constructs a new DefaultAddressFactory.  The default space is assumed to be the first space
 	 * in the array.
 	 * @param addrSpaces array of address spaces for the Program
-	 * 
+	 *
 	 */
 	public DefaultAddressFactory(AddressSpace[] addrSpaces) {
 		this(addrSpaces, null);
@@ -56,7 +56,7 @@ public class DefaultAddressFactory implements AddressFactory {
 	 * Constructs a new DefaultAddressFactory with the given spaces and default space.
 	 * @param addrSpaces the set of addressSpaces to manage
 	 * @param defaultSpace the space to use as the default space. The default space should
-	 * be one of the spaces provided in the addrSpaces array. 
+	 * be one of the spaces provided in the addrSpaces array.
 	 */
 	public DefaultAddressFactory(AddressSpace[] addrSpaces, AddressSpace defaultSpace) {
 		memoryAddressSet = new AddressSet();
@@ -390,7 +390,7 @@ public class DefaultAddressFactory implements AddressFactory {
 
 	/**
 	 * Adds an AddressSpace to this factory
-	 * 
+	 *
 	 * @param space the address space being added.
 	 * @throws DuplicateNameException if an address space with the given name already exists
 	 */
@@ -414,7 +414,7 @@ public class DefaultAddressFactory implements AddressFactory {
 	/**
 	 * Rename overlay with newName.
 	 * @param oldOverlaySpaceName the existing overlay address space name
-	 * @param newName the new name of the overlay address space.  
+	 * @param newName the new name of the overlay address space.
 	 * @return new name applied to existing overlay space
 	 * @throws DuplicateNameException if space with newName already exists
 	 * @throws IllegalArgumentException if specified oldOverlaySpaceName was not found as
@@ -437,7 +437,7 @@ public class DefaultAddressFactory implements AddressFactory {
 
 	/**
 	 * Removes the AddressSpace from this factory
-	 * 
+	 *
 	 * @param spaceName the name of the space to remove.
 	 */
 	protected void removeAddressSpace(String spaceName) {

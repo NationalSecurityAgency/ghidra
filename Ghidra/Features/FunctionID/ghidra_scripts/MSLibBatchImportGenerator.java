@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -147,7 +147,7 @@ public class MSLibBatchImportGenerator extends GhidraScript {
 	 * of the filename.  If it ends in 'd', and a base library with the same name minus the
 	 * 'd' is in the directory, the library is determined to be a debug library.  All others
 	 * are standard libraries.
-	 * <p>   
+	 * <p>
 	 * @param standardLibs
 	 * @param debugLibs
 	 * @param directory
@@ -217,7 +217,7 @@ public class MSLibBatchImportGenerator extends GhidraScript {
 	/**
 	 * Returns the 'extension' of a 'filename.extension', or an empty string "" if not
 	 * present.
-	 * <p> 
+	 * <p>
 	 * <li>"file.ext" returns "ext"
 	 * <li>"file" returns ""
 	 * @param f
@@ -237,15 +237,15 @@ public class MSLibBatchImportGenerator extends GhidraScript {
 
 	/**
 	 * Returns a string that represents the relative path (normalized to forward slashes)
-	 * from the {@code base} path to the {@code sub} path.  
-	 * 
+	 * from the {@code base} path to the {@code sub} path.
+	 *
 	 * If {@code sub} is not really a subpath of {@code base}, the full path to {@code sub} will be returned.
 	 * <p>
 	 * <li>"/dir1", "/dir1/sub1/sub2" returns "sub1/sub2".
 	 * <li>"/", "/sub1/sub2" returns "sub1/sub2".
 	 * <li>"/dir1", "/dir2/sub1" returns "/dir2/sub1".
-	 * <li>"c:\\dir1", "c:\\dir1\\sub1\\sub2" returns "sub1/sub2". 
-	 * 
+	 * <li>"c:\\dir1", "c:\\dir1\\sub1\\sub2" returns "sub1/sub2".
+	 *
 	 * @param base
 	 * @param sub
 	 * @return

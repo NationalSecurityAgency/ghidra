@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,7 +62,7 @@ public class KitchenSinkPlugin extends ProgramPlugin {
 
     /**
       * Constructor
-      */ 
+      */
     public KitchenSinkPlugin(PluginTool tool) {
 
         super(tool, false, false);
@@ -71,7 +71,7 @@ public class KitchenSinkPlugin extends ProgramPlugin {
         setupServices();
 
         // set up list of actions.
-        setupActions(); 
+        setupActions();
     }
 
     private void setupServices() {
@@ -107,7 +107,7 @@ public class KitchenSinkPlugin extends ProgramPlugin {
             @Override
             public void actionPerformed( ActionContext context ) {
                 Msg.info(this, "Hello Program:: action");
-                sayHelloProgram();        
+                sayHelloProgram();
             }
         };
         action.setEnabled(false);
@@ -126,7 +126,7 @@ public class KitchenSinkPlugin extends ProgramPlugin {
 	@Override
     protected void programActivated(Program activatedProgram) {
 		helloProgramAction.setEnabled(true);
-        this.program = activatedProgram; 
+        this.program = activatedProgram;
 	}
 	@Override
     protected void programDeactivated(Program deactivatedProgram) {
@@ -148,7 +148,7 @@ public class KitchenSinkPlugin extends ProgramPlugin {
         JOptionPane.showMessageDialog(null,message,"Hello World",
                                       JOptionPane.INFORMATION_MESSAGE);
     }
-    
+
   	/**
 	 * If your plugin maintains configuration state, you must save that state information
      * to the SaveState object in this method.  For example, the Code Browser can be configured

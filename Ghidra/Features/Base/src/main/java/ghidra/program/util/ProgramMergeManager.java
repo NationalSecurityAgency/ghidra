@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * <CODE>ProgramMergeManager</CODE> is a class for merging the differences between two
- * programs as specified by a <CODE>ProgramMergeFilter</CODE> and the address 
+ * programs as specified by a <CODE>ProgramMergeFilter</CODE> and the address
  * ranges to be merged.
  * <P>Program1 is the program being modified by the merge. Program2 is source
  * for obtaining differences to apply to program1.
@@ -35,7 +35,7 @@ import ghidra.util.task.TaskMonitorAdapter;
  * <P>If name conflicts occur while merging, the item (for example, symbol) will
  * be merged with a new name that consists of the original name followed by "_conflict"
  * and a one up number.
- * 
+ *
  * @see ghidra.program.util.ProgramMergeFilter
  * @see ghidra.program.util.ProgramDiff
  */
@@ -76,7 +76,7 @@ public class ProgramMergeManager {
 	 * <CODE>ProgramMergeManager</CODE> allows the merging of differences from program1
 	 * or program2 into the merged program.
 	 *
-	 * @param program1 the first program for the merge. This program will get 
+	 * @param program1 the first program for the merge. This program will get
 	 * modified by merge.
 	 * @param program2 the second program (read only) for the merge.
 	 * @param p1LimitedAddressSet the limited address set. program differences
@@ -111,8 +111,8 @@ public class ProgramMergeManager {
 
 	/**
 	 * Determine whether memory between the two programs matches.
-	 * For example, if one program has more memory than the other then it 
-	 * doesn't match or if the address ranges for memory are different for 
+	 * For example, if one program has more memory than the other then it
+	 * doesn't match or if the address ranges for memory are different for
 	 * the two programs then they don't match.
 	 * @return whether the memory matches between the two programs.
 	 */
@@ -151,17 +151,17 @@ public class ProgramMergeManager {
 		return new AddressSet(programDiff.getDifferences(diffFilter, monitor));
 	}
 
-	/** 
+	/**
 	 * Get a copy of the diff filter that the merge is using.
 	 */
 	public ProgramDiffFilter getDiffFilter() {
 		return diffFilter;
 	}
 
-	/** 
-	 * Set the filter that indicates which parts of the Program should be 
+	/**
+	 * Set the filter that indicates which parts of the Program should be
 	 * diffed.
-	 * @param filter the filter indicating the types of differences to be 
+	 * @param filter the filter indicating the types of differences to be
 	 * determined by this ProgramMerge.
 	 */
 	public void setDiffFilter(ProgramDiffFilter filter) {
@@ -169,16 +169,16 @@ public class ProgramMergeManager {
 		diffFilter = programDiff.getFilter();
 	}
 
-	/** 
-	 * Get a copy of the filter that indicates which parts of the Program 
+	/**
+	 * Get a copy of the filter that indicates which parts of the Program
 	 * should be merged.
 	 */
 	public ProgramMergeFilter getMergeFilter() {
 		return new ProgramMergeFilter(mergeFilter);
 	}
 
-	/** 
-	 * Set the filter that indicates which parts of the Program should be 
+	/**
+	 * Set the filter that indicates which parts of the Program should be
 	 * applied from the second program to the first program.
 	 * @param filter the filter indicating the types of differences to apply.
 	 */
@@ -249,7 +249,7 @@ public class ProgramMergeManager {
 	}
 
 	/**
-	 * Get the address set that the process of determining differences is limited to. 
+	 * Get the address set that the process of determining differences is limited to.
 	 * In other words, only addresses in this set will be checked by the Diff.
 	 * @return the address set
 	 * The addresses in this address set are derived from program1.
@@ -259,7 +259,7 @@ public class ProgramMergeManager {
 	}
 
 	/**
-	 * Gets a string indicating warnings that occurred during the initial Diff 
+	 * Gets a string indicating warnings that occurred during the initial Diff
 	 * of the two programs.
 	 * @return the warnings
 	 */
@@ -269,11 +269,11 @@ public class ProgramMergeManager {
 
 	/** Merge the differences from the indicated program at the specified
 	 *  address with the indicated filtering.
-	 * @param p2Address the address to be merged. 
+	 * @param p2Address the address to be merged.
 	 * This address should be derived from program2.
 	 * @param filter the filter indicating what types of differences to merge.
 	 * @return true if merge succeeds
-	 * 
+	 *
 	 * @throws MemoryAccessException if bytes can't be copied.
 	 * @throws CancelledException if user cancels via the monitor.
 	 */
@@ -284,11 +284,11 @@ public class ProgramMergeManager {
 
 	/** Merge the differences from the indicated program at the specified
 	 *  address with the current filtering.
-	 * @param p2Address the address to be merged. 
+	 * @param p2Address the address to be merged.
 	 * This address should be derived from program2.
 	 * @param monitor monitor for reporting merge status to the user.
 	 * @return true if merge succeeds
-	 * 
+	 *
 	 * @throws MemoryAccessException if bytes can't be copied.
 	 * @throws CancelledException if user cancels via the monitor.
 	 */
@@ -299,12 +299,12 @@ public class ProgramMergeManager {
 
 	/** Merge the differences from the indicated program at the specified
 	 *  address with the indicated filtering.
-	 * @param p2Address the address to be merged. 
+	 * @param p2Address the address to be merged.
 	 * This address should be derived from program2.
 	 * @param filter the filter indicating what types of differences to merge.
 	 * @param monitor monitor for reporting merge status to the user.
 	 * @return true if merge succeeds
-	 * 
+	 *
 	 * @throws MemoryAccessException if bytes can't be copied.
 	 * @throws CancelledException if user cancels via the monitor.
 	 */
@@ -315,7 +315,7 @@ public class ProgramMergeManager {
 	}
 
 	/** Ignore the differences for the indicated address set.
-	 * @param p1AddressSet the address set to be merged. 
+	 * @param p1AddressSet the address set to be merged.
 	 * The addresses in this set should be derived from program1.
 	 */
 	public void ignore(AddressSetView p1AddressSet) {
@@ -380,11 +380,11 @@ public class ProgramMergeManager {
 
 	/** Merge the differences from the indicated program on the specified
 	 *  address set with the indicated filtering.
-	 * @param p1MergeSet the address set to be merged. 
+	 * @param p1MergeSet the address set to be merged.
 	 * The addresses in this set should be derived from program1.
 	 * @param filter the filter indicating what types of differences to merge.
 	 * @return true if merge succeeds
-	 * 
+	 *
 	 * @throws MemoryAccessException if bytes can't be copied.
 	 * @throws CancelledException if user cancels via the monitor.
 	 */
@@ -399,7 +399,7 @@ public class ProgramMergeManager {
 	 * The addresses in this set should be derived from program1.
 	 * @param monitor task monitor for reporting merge status to the user.
 	 * @return true if merge succeeds
-	 * 
+	 *
 	 * @throws MemoryAccessException if bytes can't be copied.
 	 * @throws CancelledException if user cancels via the monitor.
 	 */
@@ -415,7 +415,7 @@ public class ProgramMergeManager {
 	 * @param filter the filter indicating what types of differences to merge.
 	 * @param monitor task monitor for reporting merge status to the user.
 	 * @return true if merge succeeds
-	 * 
+	 *
 	 * @throws MemoryAccessException if bytes can't be copied.
 	 * @throws CancelledException if user cancels via the monitor.
 	 */
@@ -484,7 +484,7 @@ public class ProgramMergeManager {
 
 	/**
 	 * <CODE>mergeProgramContext</CODE> merges all program context register values
-	 * (as indicated) in the specified address set from the second program. 
+	 * (as indicated) in the specified address set from the second program.
 	 * It merges them into the merge program.
 	 *
 	 * @param p1MergeSet the addresses to be merged.
@@ -493,7 +493,7 @@ public class ProgramMergeManager {
 	 * of differences should be merged.
 	 * @param monitor the task monitor for notifying the user of this merge's
 	 * progress.
-	 * 
+	 *
 	 * @throws CancelledException if user cancels via the monitor.
 	 */
 	void mergeProgramContext(AddressSetView p1MergeSet, ProgramMergeFilter filter,
@@ -525,7 +525,7 @@ public class ProgramMergeManager {
 	 * of differences should be merged.
 	 * @param monitor the task monitor for notifying the user of this merge's
 	 * progress.
-	 * 
+	 *
 	 * @throws MemoryAccessException if bytes can't be merged.
 	 * @throws CancelledException if user cancels via the monitor.
 	 */
@@ -550,7 +550,7 @@ public class ProgramMergeManager {
 
 	/**
 	 * <CODE>mergeCodeUnits</CODE> merges all instructions and/or data
-	 * (as indicated) in the specified address set from the second program. 
+	 * (as indicated) in the specified address set from the second program.
 	 * It merges them into the merge program. When merging
 	 * instructions, the bytes are also moved if they differ.
 	 *
@@ -560,7 +560,7 @@ public class ProgramMergeManager {
 	 * of differences should be merged.
 	 * @param monitor the task monitor for notifying the user of this merge's
 	 * progress.
-	 * 
+	 *
 	 * @throws MemoryAccessException if bytes can't be copied.
 	 */
 	void mergeCodeUnits(AddressSetView p1MergeSet, ProgramMergeFilter filter, TaskMonitor monitor)
@@ -596,8 +596,8 @@ public class ProgramMergeManager {
 		// MergeCodeUnits won't clear any code units where instruction prototypes match.
 		merger.mergeCodeUnits(codeUnitDiffSet2, byteDiffs2, false, monitor);
 
-		// Merge the references anywhere we replaced code units. 
-		// Do a merge of references rather than replace so that we don't lose any non-default 
+		// Merge the references anywhere we replaced code units.
+		// Do a merge of references rather than replace so that we don't lose any non-default
 		// references where the instruction prototypes matched.
 		// Use only the source's default references if we are ignoring reference diffs.
 		boolean ignoreReferenceDiffs =
@@ -609,10 +609,10 @@ public class ProgramMergeManager {
 	}
 
 	/**
-	 * Determines which addresses in the given set contain function tag differences 
+	 * Determines which addresses in the given set contain function tag differences
 	 * between the two programs being compared. This address set is then passed
 	 * to the {@link ProgramMerge} to be processed.
-	 *  
+	 *
 	 * @param p1AddressSet the address set to be merged
 	 * @param filter the types of differences to merge
 	 * @param monitor task monitor
@@ -637,7 +637,7 @@ public class ProgramMergeManager {
 
 	/**
 	 * <CODE>mergeComments</CODE> merges all comments
-	 * in the specified address set from the second program 
+	 * in the specified address set from the second program
 	 * based on the current merge filter setting.
 	 * It merges them into the merge program.
 	 * This merges eol, pre, post, and plate comments.
@@ -770,7 +770,7 @@ public class ProgramMergeManager {
 
 	/**
 	 * <CODE>mergeLabels</CODE> merges all symbols and aliases
-	 * in the specified address set from the second program 
+	 * in the specified address set from the second program
 	 * based on the current merge filter setting.
 	 * It merges them into the merge program.
 	 *
@@ -800,7 +800,7 @@ public class ProgramMergeManager {
 		}
 	}
 
-	/** <CODE>mergeBookmarks</CODE> merges bookmark differences 
+	/** <CODE>mergeBookmarks</CODE> merges bookmark differences
 	 *  within the specified address set.
 	 *
 	 * @param p1MergeSet the addresses to be merged.
@@ -824,7 +824,7 @@ public class ProgramMergeManager {
 		merger.mergeBookmarks(diffAddrSet2, monitor);
 	}
 
-	/** <CODE>mergeProperties</CODE> merges user defined property differences 
+	/** <CODE>mergeProperties</CODE> merges user defined property differences
 	 *  within the specified address set based on the current merge filter setting.
 	 *
 	 * @param p1MergeSet the addresses to be merged.

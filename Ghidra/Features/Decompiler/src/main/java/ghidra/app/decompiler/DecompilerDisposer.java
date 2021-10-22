@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ public class DecompilerDisposer {
 	/**
 	 * Disposes the given Process and related streams from a background thread.  This is necessary
 	 * due to a low-probability deadlock that occurs in the JVM.
-	 * 
+	 *
 	 * @param process The process to destroy.
 	 * @param ouputStream The output stream to close
 	 * @param inputStream The input stream to close
@@ -54,12 +54,12 @@ public class DecompilerDisposer {
 	 * <p>
 	 * Note:<br>
 	 * A class to handle the rare case where the {@link DecompInterface}'s
-	 * synchronized methods are blocking 
+	 * synchronized methods are blocking
 	 * while a decompile operation has died and maintained the lock.  In that scenario, calling
-	 * dispose on this class will eventually try to enter a synchronized method that will 
+	 * dispose on this class will eventually try to enter a synchronized method that will
 	 * remain blocked forever.
 	 * <p>
-	 * I examined the uses of dispose() on the {@link DecompInterface} and 
+	 * I examined the uses of dispose() on the {@link DecompInterface} and
 	 * determined that calling dispose() is a
 	 * final operation, which means that you don't have to wait.  Further, after calling
 	 * dispose() on this class, you should no longer use it.

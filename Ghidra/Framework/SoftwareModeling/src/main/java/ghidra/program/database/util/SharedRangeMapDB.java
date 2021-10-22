@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ public class SharedRangeMapDB {
 	/**
 	 * Construct a shared range map.
 	 * @param dbHandle database handle.
-	 * @param name map name used in naming the underlying database table.  
+	 * @param name map name used in naming the underlying database table.
 	 * This name must be unqiue across all shared range maps.
 	 * @param errHandler database error handler.
 	 * @param create if true the underlying database tables will be created.
@@ -240,7 +240,7 @@ public class SharedRangeMapDB {
 
 	/**
 	 * Split a Range record and all related Map entries at a newEnd index.
-	 * A new Range record is created at newEnd+1 to the end of the original 
+	 * A new Range record is created at newEnd+1 to the end of the original
 	 * range.  New Map entries are created for this new range.
 	 * @param rangeRecord
 	 * @param newEnd
@@ -378,7 +378,7 @@ public class SharedRangeMapDB {
 	 * List is pre-calculated such that any changes made to the map
 	 * after invoking this method will not be reflected by the iterator
 	 * and invalid function keys may be returned.
-	 * The implementation assumes a small set of values exist over the 
+	 * The implementation assumes a small set of values exist over the
 	 * range.
 	 * @param start
 	 * @param end

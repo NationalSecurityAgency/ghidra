@@ -14,7 +14,7 @@
         <constraint primary="450"   processor="ARM"     endian="little" size="32" variant="v8T" />  <!-- THUMB -->
         <constraint primary="452"   processor="ARM"     endian="little" size="32" variant="v8T" />  <!-- THUMB -->
     </constraint>
-    
+
     <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
       <!--
         Elf e_flags are used for the secondary attribute, the following are pulled from binutils include/elf/arm.h
@@ -37,7 +37,7 @@
         <constraint primary="40"   processor="ARM"                      size="32" variant="v8LEInstruction"
             secondary= "0b .... .... 1... .... .... .... .... ...."/>  <!-- EF_ARM_BE8 -->
     </constraint>
-    
+
     <constraint loader="Mac OS X Mach-O" compilerSpecID="default">
         <constraint primary="12.0"     processor="ARM"     endian="little" size="32" variant="v8"  /><!-- ARM all -->
         <constraint primary="12.5"     processor="ARM"     endian="little" size="32" variant="v4t" /><!-- ARM v4T -->

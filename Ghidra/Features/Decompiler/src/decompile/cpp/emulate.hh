@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,7 +136,7 @@ inline void BreakCallBack::setEmulate(Emulate *emu)
 /// are implemented to search in these containers
 class BreakTableCallBack : public BreakTable {
   Emulate *emulate;		///< The emulator associated with this table
-  Translate *trans;		///< The translator 
+  Translate *trans;		///< The translator
   map<Address,BreakCallBack *> addresscallback;	///< a container of pcode based breakpoints
   map<uintb,BreakCallBack *> pcodecallback; ///< a container of addressed based breakpoints
 public:
@@ -368,9 +368,9 @@ inline Address EmulatePcodeCache::getExecuteAddress(void) const
 }
 
 /** \page sleighAPIemulate The SLEIGH Emulator
-    
+
   \section emu_overview Overview
-  
+
   \b SLEIGH provides a framework for emulating the processors which have a specification written
    for them.  The key classes in this framework are:
 
@@ -492,10 +492,10 @@ inline Address EmulatePcodeCache::getExecuteAddress(void) const
       uint4 returnaddr = mem->getValue(ram,esp,4);
       mem->setValue("ESP",esp+8);
       emulate->setExecuteAddress(Address(ram,returnaddr));
-  
+
       return true;			// This replaces the indicated instruction
     }
-      
+
   \endcode
 
   Notice that the callback retrieves the value of the stack pointer by name.  Using this
@@ -505,7 +505,7 @@ inline Address EmulatePcodeCache::getExecuteAddress(void) const
 
   \section emu_finalsetup Running the Emulator
   Here is an example of instantiating an EmulatePcodeCache object. A breakpoint is also instantiated
-  and registered with the BreakTable.  
+  and registered with the BreakTable.
 
   \code
     ...
@@ -519,7 +519,7 @@ inline Address EmulatePcodeCache::getExecuteAddress(void) const
     // Set up the initial stack pointer
     memstate.setValue("ESP",0xbffffffc);
     emulator.setExecuteAddress(Address(trans.getDefaultCodeSpace(),0x1D00114));  // Initial execution address
-    
+
     PutsCallBack putscallback;
     breaktable.registerAddressCallback(Address(trans.getDefaultCodeSpace(),0x1D00130),&putscallback);
 

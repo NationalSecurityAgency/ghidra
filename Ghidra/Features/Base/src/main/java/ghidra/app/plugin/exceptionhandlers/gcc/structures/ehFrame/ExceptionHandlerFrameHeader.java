@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ import ghidra.util.task.TaskMonitor;
  * </pre>
  */
 public class ExceptionHandlerFrameHeader {
-	
+
 	/* Class Members */
 	private TaskMonitor monitor;
 	private Program prog;
@@ -48,7 +48,7 @@ public class ExceptionHandlerFrameHeader {
 	private int eh_FramePtrEncoding;
 	private int eh_FrameDescEntryCntEncoding;
 	private int eh_FrameTableEncoding;
-	
+
 	/**
 	 * Constructor for an ExceptionHandlerFrameHeader.
 	 * @param monitor a status monitor for indicating progress or allowing a task to be cancelled.
@@ -75,35 +75,35 @@ public class ExceptionHandlerFrameHeader {
 	 */
 	public void addToDataTypeManager() {
 		DataTypeManager dtManager = prog.getDataTypeManager();
-		
+
 		/* Add the ehFrameHdr Structure to the dataTypeManager */
 		dtManager.addDataType(ehFrameHdrStruct, DataTypeConflictHandler.REPLACE_HANDLER );
 	}
-	
+
 	/**
 	 * Method that creates an Exception Handler Frame Header Structure
 	 * at the address specified by 'addr'. If addr is 'null', this method returns without creating
 	 * the structure.
-	 * 
+	 *
 	 * @param addr - Address at which the Exception Handler Frame Header Structure should be created.
 	 * @throws AddressOutOfBoundsException if the memory needed for this frame header isn't in the program.
 	 * @throws MemoryAccessException if the memory needed for this frame header isn't in the program.
 	 */
 	public void create(Address addr) throws MemoryAccessException, AddressOutOfBoundsException {
 		CreateStructureCmd dataCmd = null;
-		
+
 		if (addr == null || monitor.isCancelled()) {
 			return;
 		}
-		
+
 		/* Create a new structure at the start of the .eh_frame_hdr section */
 		dataCmd = new CreateStructureCmd( ehFrameHdrStruct, addr );
 		dataCmd.applyTo(prog);
-		
+
 		/* Set a comment on the newly created structure */
 		SetCommentCmd commentCmd = new SetCommentCmd(addr, CodeUnit.PLATE_COMMENT, "Exception Handler Frame Header");
 		commentCmd.applyTo(prog);
-		
+
 		// Set the class members accordingly
 		eh_version = prog.getMemory().getByte(addr) & 0xFF;
 		eh_FramePtrEncoding = prog.getMemory().getByte(addr.add(1)) & 0xFF;
@@ -113,7 +113,7 @@ public class ExceptionHandlerFrameHeader {
 
 	/**
 	 * Gets the length of the EH Frame Header.
-	 * 
+	 *
 	 * @return the length of this frame header.
 	 */
 	public int getLength() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,7 +59,7 @@ public class Schema {
 	 * @param fields array of column fields (representative instances)
 	 * @param fieldNames array of column field names
 	 * @param sparseColumns column indexes corresponding to those
-	 * columns which utilize sparse storage (null if no sparse columns).  
+	 * columns which utilize sparse storage (null if no sparse columns).
 	 * Valid sparse column indexes are in the range 0..127.
 	 * @throws IllegalArgumentException invalid parameters
 	 */
@@ -244,7 +244,7 @@ public class Schema {
 	/**
 	 * Initialize field types and related field extensions (e.g., sparse field list).
 	 * The presence of field extensions within the encodedFieldTypes is indicated by a
-	 * -1 (field extension indicator) following the encoded field types.  
+	 * -1 (field extension indicator) following the encoded field types.
 	 * The byte value following the field extension indicator
 	 * is the extension type which is followed by the extension data if applicable.
 	 * A -1 byte is used to separate each extension byte sequence.
@@ -385,7 +385,7 @@ public class Schema {
 	 * This method provides a work-around for legacy schemas which
 	 * employ primitive fixed-length keys other than LongField
 	 * and improperly employ a variable-length-key storage schema.
-	 * Although rare, this may be neccessary to ensure backward compatibility 
+	 * Although rare, this may be neccessary to ensure backward compatibility
 	 * with legacy DB storage (example ByteField key employed by old table).
 	 */
 	void forceUseOfVariableLengthKeyNodes() {
@@ -501,8 +501,8 @@ public class Schema {
 	}
 
 	/**
-	 * Returns true if records for this Schema can be of variable lengths. 
-	 * @return true if records with this Schema are variable length. 
+	 * Returns true if records for this Schema can be of variable lengths.
+	 * @return true if records with this Schema are variable length.
 	 */
 	public boolean isVariableLength() {
 		return isVariableLength;

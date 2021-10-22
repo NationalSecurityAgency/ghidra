@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,14 +20,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 
 /**
- * <code>BufferFileManager</code> provides an interface for a 
+ * <code>BufferFileManager</code> provides an interface for a
  * BufferFile manager who understands the storage for the various
  * versions of BufferFiles associated with a single database.
  */
 public interface BufferFileManager {
 
 	/**
-	 * Returns the current version.  A value of 0 indicates that the 
+	 * Returns the current version.  A value of 0 indicates that the
 	 * first buffer file has not yet been created.
 	 */
 	int getCurrentVersion();
@@ -51,7 +51,7 @@ public interface BufferFileManager {
 
 	/**
 	 * Get the change data buffer file corresponding to the specified version.
-	 * This file contains application specific changes which were made going from the 
+	 * This file contains application specific changes which were made going from the
 	 * specified version to the next version (version+1).
 	 * May return null if change data files are not used.
 	 * @param version version of the original buffer file which was changed

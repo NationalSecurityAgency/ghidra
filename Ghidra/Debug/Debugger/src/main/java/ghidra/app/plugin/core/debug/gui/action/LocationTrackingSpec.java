@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.classfinder.ExtensionPoint;
 
 /**
  * A "specification" for automatic navigation of the dynamic listing
- * 
+ *
  * <p>
  * TODO: Some of these should be configurable, and permit multiple instances, so that common
  * configurations can be saved. The most obvious use case would be a SLEIGH expression. A user may
@@ -108,7 +108,7 @@ public interface LocationTrackingSpec extends ExtensionPoint {
 
 	/**
 	 * Compute a title prefix to indicate this tracking specification
-	 * 
+	 *
 	 * @param thread the provider's current thread
 	 * @return a prefix, or {@code null} to use a default
 	 */
@@ -116,13 +116,13 @@ public interface LocationTrackingSpec extends ExtensionPoint {
 
 	/**
 	 * Compute the trace address to "goto"
-	 * 
+	 *
 	 * <p>
 	 * If the coordinates indicate emulation, i.e., the schedule is non-empty, the trace manager
 	 * will already have performed the emulation and stored the results in a "scratch" snap. In
 	 * general, the location should be computed using that snap (@code emuSnap) rather than the one
 	 * indicated in {@code coordinates}.
-	 * 
+	 *
 	 * @param tool the tool containing the provider
 	 * @param coordinates the trace, thread, snap, etc., of the tool
 	 * @param emuSnap the "scratch" snap storing emulated state
@@ -135,7 +135,7 @@ public interface LocationTrackingSpec extends ExtensionPoint {
 
 	/**
 	 * Check if the address should be recomputed given the indicated register value change
-	 * 
+	 *
 	 * @param space the space (address space, thread, frame) where the change occurred
 	 * @param range the range (time and space) where the change occurred
 	 * @param coordinates the provider's current coordinates
@@ -146,7 +146,7 @@ public interface LocationTrackingSpec extends ExtensionPoint {
 
 	/**
 	 * Check if the address should be recomputed given the indicated stack change
-	 * 
+	 *
 	 * @param stack the stack that changed (usually it's PC / return offset)
 	 * @param coordinates the provider's current coordinates
 	 * @return true if re-computation and "goto" is warranted

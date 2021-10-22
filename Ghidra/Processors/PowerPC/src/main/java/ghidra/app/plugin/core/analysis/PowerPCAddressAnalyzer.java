@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -93,8 +93,8 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 	private boolean getDefaultPropagateR30Option(Program program) {
 		boolean isELF = ElfLoader.ELF_NAME.equals(program.getExecutableFormat());
 		boolean is32bit = program.getLanguage().getLanguageDescription().getSize() == 32;
-		// The use of r30 as a GOT pointer during function calls can occurs with the V1.0 ABI 
-		// for relocatable PIC code.  The presence of the dynamic table entry DT_PPC_GOT 
+		// The use of r30 as a GOT pointer during function calls can occurs with the V1.0 ABI
+		// for relocatable PIC code.  The presence of the dynamic table entry DT_PPC_GOT
 		// can be used as an indicator and the associated symbol __DT_PPC_GOT created by
 		// the ELF Loader.
 		return isELF && is32bit && program.getSymbolTable().getSymbols("__DT_PPC_GOT").hasNext();

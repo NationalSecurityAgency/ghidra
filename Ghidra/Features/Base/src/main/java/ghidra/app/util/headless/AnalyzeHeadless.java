@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 	/**
 	 * The entry point of 'analyzeHeadless.bat'. Parses the command line arguments to the script
 	 * and takes the appropriate headless actions.
-	 * 
+	 *
 	 * @param args Detailed list of arguments is in 'analyzeHeadlessREADME.html'
 	 */
 	@Override
@@ -130,7 +130,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 
 	/**
 	 * Parses the command line arguments and uses them to set the headless options.
-	 * 
+	 *
 	 * @param options The headless options to set.
 	 * @param args The command line arguments to parse.
 	 * @param startIndex The index into the args array of where to start parsing.
@@ -398,7 +398,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 	/**
 	 * Prints out the usage details and exits the Java application with an exit code that
 	 * indicates error.
-	 * 
+	 *
 	 * @param execCmd the command used to run the headless analyzer from the calling method.
 	 */
 	public static void usage(String execCmd) {

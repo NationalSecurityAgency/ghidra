@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -108,14 +108,14 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 	}
 
 	/**
-	 * Overrides the default implementation to account for Universal Binary (UBI) files. 
+	 * Overrides the default implementation to account for Universal Binary (UBI) files.
 	 * These must be specially parsed to find the internal file matching the current architecture.
 	 * <p>
 	 * {@link FatHeader} is used to parse the file to determine if it is a
 	 * UBI. If so, each file within the archive is run through the import process until one is
 	 * found that is successful (meaning it matches the correct architecture). Only one file
-	 * in the UBI will ever be imported. If the provided file is NOT a UBI, default 
-	 * import method will be invoked. 
+	 * in the UBI will ever be imported. If the provided file is NOT a UBI, default
+	 * import method will be invoked.
 	 */
 	@Override
 	protected boolean importLibrary(String libName, DomainFolder libFolder, File libFile,
@@ -143,17 +143,17 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 				// Note: The creation of the byte provider that we pass to the importer deserves a
 				// bit of explanation:
 				//
-				// At this point in the process we have a FatArch, which provides access to the 
+				// At this point in the process we have a FatArch, which provides access to the
 				// underlying bytes for the Macho in the form of an input stream. From that we could
 				// create a byte provider. That doesn't work however. Here's why:
 				//
 				// The underlying input stream in the FatArch has already been parsed and the first
-				// 4 (magic) bytes read. If we create a provider from that stream and pass it to 
-				// the parent import method, we'll have a problem because that parent method will 
-				// try to read those first 4 magic bytes again, which violates the contract of the 
-				// input stream provider (you can't read the same bytes over again) and will throw 
-				// an exception. To avoid that, just create the provider from the original file 
-				// provider, and not from the FatArch input stream. 
+				// 4 (magic) bytes read. If we create a provider from that stream and pass it to
+				// the parent import method, we'll have a problem because that parent method will
+				// try to read those first 4 magic bytes again, which violates the contract of the
+				// input stream provider (you can't read the same bytes over again) and will throw
+				// an exception. To avoid that, just create the provider from the original file
+				// provider, and not from the FatArch input stream.
 				try (ByteProvider bp = new ByteProviderWrapper(provider, architecture.getOffset(),
 					architecture.getSize())) {
 					if (super.importLibrary(libName, libFolder, libFile, bp, loadSpec, options, log,
@@ -164,7 +164,7 @@ public class MachoLoader extends AbstractLibrarySupportLoader {
 			}
 		}
 		catch (UbiException | MachException ex) {
-			// Not a Universal Binary file; just continue and process as a normal file. This is 
+			// Not a Universal Binary file; just continue and process as a normal file. This is
 			// not an error condition so no need to log.
 		}
 

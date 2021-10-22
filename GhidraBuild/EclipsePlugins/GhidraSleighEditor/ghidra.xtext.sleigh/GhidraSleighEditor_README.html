@@ -119,7 +119,7 @@ Once installed, any .sinc or .slaspec file that is edited will be brought up in 
 	the sliegh specification more readable.  In the <b>Window &#8594; Preferences &#8594; Sleigh</b> preferences panel, the color and font style can be changed
 	for any sleigh file tokens.</p>
   </ul>
-  
+
   <li><a name="Validate"></a>Validation</li>
   <ul>
     <p>The structure of a sleigh file while fairly simple can lend itself to errors when using a straight text editor.  The editor understands
@@ -140,7 +140,7 @@ Once installed, any .sinc or .slaspec file that is edited will be brought up in 
     <p><b>:MOV ax, bx is t1=1 $(BadDefine) {}</b> is not allowed, and instead should be <b>:MOV ax, bx is t1=1 & $(GoodDefine) {}</b>.</p>
     </ul>
   </ul>
-  
+
   <li><a name="QuickFix"></a>QuickFix</li>
   <ul>
     <p>Some simple syntax errors can be fixed quickly with QuickFix suggestions. Pressing Crtl-1 on an error will bring up available quick-fixes.</p>
@@ -150,7 +150,7 @@ Once installed, any .sinc or .slaspec file that is edited will be brought up in 
     <li>Add token field definition - for an unknown token in the match pattern</li>
   </ul>
   <p>More quick-fixes may be added in the future.  Please note quickfixes can be slow on large files such as the AARCH64.</p>
-  
+
   <li><a name="Hover"></a>Hover</li>
   	<ul>
   		<p>There are many constructs in a sleigh file that, when hovered over, will display additional information.  This is especially useful for tokens to get their
@@ -159,26 +159,26 @@ Once installed, any .sinc or .slaspec file that is edited will be brought up in 
   		<li>Token field definitions will display their size, and if attached, the set of registers.</li>
   		<li>Registers display their size.</li>
   		<li>Numeric values will display in Hex, Binary, and Decimal.</li>
-  		<li>$(Defines) display all the possible defines for the name, since the actual define used can't be known.</li> 
+  		<li>$(Defines) display all the possible defines for the name, since the actual define used can't be known.</li>
   	</ul>
-  	
+
    <li><a name="Navigate"></a>Navigation</li>
    <p>If you have edited a sleigh processor specification in a regular text editor, you will appreciate the forward and backward navigation supported on
    various variable name use and their associated definition.  Navigation is supported on sub-constructor names, field token names, registers, macros names, local variables, define names, and user
    define pcodeop's.</p>
    <p>Navigate by pressing <b>&ltF3&gt</b> on a variable, using the forward/backward navigation arrows, or my favorite the &lt-* that will navigate
    back to the last edit location.<p>
-   
+
    <li><a name="References"></a>Find References</li>
    <p>Instead of keyword searching, the editor provides a find all uses of a variable.  Each found use is listed in a search window with the text of the line where it is used displayed.
    Each found location can also be navigated to by double clicking on the found reference.</p>
    <p>Use the editor popup menu <b>Find References</b> action.</p>
-   
+
    <li><a name="Rename"></a>Renaming</li>
    <p>The name of variables can be very important, and instead of doing a search and replace on a string, the editor can refactor a name and change all other uses of that name.  The name
    is even changed in other .sinc and .slaspec files.<p>
    <p>Use the editor popup menu <b>Rename Element</b> action.</p>
-   
+
    <li><a name="Format"></a>Code Formating</li>
    <p>Sleigh files can get large and messy during development.  Instead of paying much attention to format, or trying to format by hand you can use the Source Format action.
    Common constructs are lined up, for example the token definitions will find the longest token and line up all other tokens and their definition.  All sub-constructors of the

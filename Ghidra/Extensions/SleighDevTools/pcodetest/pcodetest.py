@@ -1,12 +1,12 @@
 ## ###
 #  IP: GHIDRA
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
-#  
+#
 #       http://www.apache.org/licenses/LICENSE-2.0
-#  
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ class PCodeTest(BuildUtil):
     @classmethod
     def print_all(cls):
         pct = sorted(cls.list.iteritems(), key=lambda x: x[0].lower())
-        
+
         for t,pcodetest in sorted(cls.list.iteritems(), key=lambda x: x[0].lower()):
             print str(pcodetest)
             if pcodetest.config.verbose: print pcodetest.config.dump()
@@ -105,7 +105,7 @@ class PCodeTestBuild(BuildUtil):
         available_files = sorted(glob.glob(self.config.format('%(pcodetest_src)s/*')))
         if self.config.proc_test:
             available_files.extend(sorted(glob.glob(self.config.format('%(pcodetest_src)s/%(proc_test)s/*'))))
-        
+
         available_files = [x for x in available_files if not os.path.isdir(x) ]
         # skip any?
         skip_files = self.config.skip_files
@@ -120,7 +120,7 @@ class PCodeTestBuild(BuildUtil):
         if not self.config.has_float: available_files = [x for x in available_files if not fnmatch.fnmatch(x, '*FLOAT*')]
         if not self.config.has_double: available_files = [x for x in available_files if not fnmatch.fnmatch(x, '*DOUBLE*')]
         if not self.config.has_longlong: available_files = [x for x in available_files if not fnmatch.fnmatch(x, '*LONGLONG*')]
-            
+
         # compile for each optimization
         for opt_name,opt_cflag in sorted(self.config.variants.iteritems()):
 
@@ -203,12 +203,12 @@ class PCodeTestBuild(BuildUtil):
                     input_files = ['pcode_test.c', 'pcode_main.c', 'builtin.c', companion_file, body_file]
                     self.compile(input_files, opt_cflag, small_name)
                     self.export_file(small_name+'.out', build_dir)
-                    
+
                 # export the directory
                 target_dir = self.config.export_root+'%s'%out_name
                 self.log_info("Exporting %s directory to %s" % (build_dir, target_dir) )
                 self.export_file(build_dir, target_dir)
-                
+
             else:
                 # compile all the c and h files here
                 input_files = sorted(glob.glob('*.[c]'))
@@ -219,7 +219,7 @@ class PCodeTestBuild(BuildUtil):
                 self.log_info("Exporting file to %s" % target_dir)
                 output_file = '%s.out' % (out_name)
                 self.export_file(output_file, target_dir)
-                
+
             self.chdir(self.config.cwd)
             self.log_close()
 
@@ -363,11 +363,11 @@ class PCodeBuildGCC(PCodeTestBuild):
         if err: self.log_warn(err)
 
         out, err = self.run([self.which('readelf_exe'),
-                             '--debug-dump=decodedline', bin], 
+                             '--debug-dump=decodedline', bin],
                             stdout=('%s.li' % base))
         if err: self.log_warn(err)
 
-        out, err = self.run([self.which('nm_exe'), '-a', bin], 
+        out, err = self.run([self.which('nm_exe'), '-a', bin],
                         stdout=('%s.nm' % base))
         if err: self.log_warn(err)
 

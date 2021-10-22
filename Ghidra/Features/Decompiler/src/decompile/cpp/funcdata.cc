@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -230,7 +230,7 @@ void Funcdata::spacebase(void)
 				// Find input varnode at this size and location
       Datatype *ct = glb->types->getTypeSpacebase(spc,getAddress());
       Datatype *ptr = glb->types->getTypePointer(point.size,ct,spc->getWordSize());
-    
+
       iter = vbank.beginLoc(point.size,Address(point.space,point.offset));
       enditer = vbank.endLoc(point.size,Address(point.space,point.offset));
       while(iter != enditer) {
@@ -489,7 +489,7 @@ int4 Funcdata::fillinExtrapop(void)
 
   list<PcodeOp *>::const_iterator iter = beginOp(CPUI_RETURN);
   if (iter == endOp(CPUI_RETURN)) return 0; // If no return statements, answer is irrelevant
-  
+
   PcodeOp *retop = *iter;
   uint1 buffer[4];
 
@@ -505,7 +505,7 @@ int4 Funcdata::fillinExtrapop(void)
   }
   funcp.setExtraPop( extrapop ); // Save what we have learned on the prototype
   return extrapop;
-  
+
 }
 
 /// A description of each Varnode currently involved in the data-flow of \b this
@@ -637,7 +637,7 @@ void Funcdata::saveXmlTree(ostream &s) const
     saveVarnodeXml(s,iter,enditer);
   }
   s << "</varnodes>\n";
-  
+
   list<PcodeOp *>::iterator oiter,endoiter;
   PcodeOp *op;
   BlockBasic *bs;

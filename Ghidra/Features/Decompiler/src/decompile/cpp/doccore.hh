@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@
   the high-level software programming domain.
 
   Understanding the classes within the source code that
-  implement these models provides the quickest inroad into 
+  implement these models provides the quickest inroad into
   obtaining an overall understanding of the code.
 
   We list all these fundamental classes here, loosely grouped
@@ -152,7 +152,7 @@
     iterator    beginOp();          // get iterator to first PcodeOp in block
     iterator    endOp();
   \endcode
-  
+
   \section classfuncdata Overview of Funcdata
 
   This is a container for the sytax tree associated with a
@@ -219,7 +219,7 @@
 
   Then these can be used to build compound types, with pointer,
   array, and structure qualifiers.
-  
+
   \code
     class TypePointer : public Datatype  {    // pointer to (some other type)
       Datatype *getBase();                    // get Datatype being pointed to
@@ -264,7 +264,7 @@
   \endcode
 
   \section classfuncproto FuncProto
-  
+
   \section classcallspecs FuncCallSpecs
 
   \section classsymbol Symbol

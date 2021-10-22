@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * 
+ *
  * A Common Information Entry (CIE) holds information that is shared among many
  * Frame Description Entries (FDEs). There is at least one CIE in every
  * non-empty .debug_frame section.
@@ -81,9 +81,9 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Creates a common information entry object that is not in the debug frame section.
-	 * <p>Note: The <code>create(Address)</code> method must be called after constructing a 
+	 * <p>Note: The <code>create(Address)</code> method must be called after constructing a
 	 * <code>Cie</code> to associate it with an address before any of its "process..." methods are called.
-	 * 
+	 *
 	 * @param monitor task monitor to see if the user has cancelled analysis.
 	 * @param program the program containing the CIE.
 	 */
@@ -93,9 +93,9 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Creates a common information entry object.
-	 * <p>Note: The <code>create(Address)</code> method must be called after constructing a 
+	 * <p>Note: The <code>create(Address)</code> method must be called after constructing a
 	 * <code>Cie</code> to associate it with an address before any of its "process..." methods are called.
-	 * 
+	 *
 	 * @param monitor task monitor to see if the user has cancelled analysis.
 	 * @param program the program containing the CIE.
 	 * @param isInDebugFrame true if this CIE is in the debug frame section
@@ -113,7 +113,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Determines if this CIE is in the debug frame section.
-	 * 
+	 *
 	 * @return true if in the debug frame section.
 	 */
 	public boolean isInDebugFrame() {
@@ -122,7 +122,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Creates the CIE Length field at the specified location.
-	 * 
+	 *
 	 * @param addr Address at which the CIE Length field should be created.
 	 * @return Address immediately following the CIE length field.
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read.
@@ -149,7 +149,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Creates the CIE ID field at the specified Address.
-	 * 
+	 *
 	 * @param addr Address at which the CIE ID field should be created.
 	 * @return Address immediately following the CIE ID field.
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read.
@@ -172,7 +172,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Creates the CIE Version field at the specified location.
-	 * 
+	 *
 	 * @param addr Address at which the CIE version field should be created.
 	 * @return Address immediately following the CIE version field.
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read.
@@ -196,7 +196,7 @@ public class Cie extends GccAnalysisClass {
 	 * case-sensitive, NUL terminated string that identifies the augmentation
 	 * to the CIE or to the FDEs associated with this CIE. A zero length string
 	 * indicates that no augmentation data is present.
-	 * 
+	 *
 	 * @param addr Address at which the Augmentation String should be created.
 	 * @return Address immediately following the Augmentation String.
 	 * @throws ExceptionHandlerFrameException if the augmentation string couldn't be created.
@@ -224,7 +224,7 @@ public class Cie extends GccAnalysisClass {
 	/**
 	 * Creates the CIE Pointer Size field at the specified location
 	 * (CIE version 4+).
-	 * 
+	 *
 	 * @param addr Address at which the CIE pointer size field should be created.
 	 * @return Address immediately following the CIE pointer size field.
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read.
@@ -246,7 +246,7 @@ public class Cie extends GccAnalysisClass {
 	/**
 	 * Creates the CIE Segment Size field at the specified location
 	 * (CIE version 4+).
-	 * 
+	 *
 	 * @param addr Address at which the CIE segment size field should be created.
 	 * @return Address immediately following the CIE segment size field.
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read.
@@ -267,7 +267,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Creates the CIE Code Alignment Factor Field.
-	 * 
+	 *
 	 * @param addr Address at which the Code Alignment Factor field should be created.
 	 * @return Address immediately following the Code Alignment Factor field.
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read.
@@ -296,7 +296,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Creates the CIE Data Alignment Factor field.
-	 * 
+	 *
 	 * @param addr Address at which the Data Alignment Factor field should be created.
 	 * @return Address immediately following the Data Alignment Factor field.
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read.
@@ -325,7 +325,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Creates the CIE Return Address Register field.
-	 * 
+	 *
 	 * @param addr Address at which the Return Address Register field should be created.
 	 * @return Address immediately following the Return Address field.
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read.
@@ -370,7 +370,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Creates the CIE augmentation data length.
-	 * 
+	 *
 	 * @param addr Address at which the augmentation data length field should be created.
 	 * @return Address immediately following the augmentation data length.
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read.
@@ -403,7 +403,7 @@ public class Cie extends GccAnalysisClass {
 	 * defined by the contents of the Augmentation String and is only present if
 	 * the Augmentation string contains the character 'z'. Length of this string
 	 * is given by the Augmentation length.
-	 * 
+	 *
 	 * @param addr Address at which the Augmentation Data array should be created.
 	 * @return Address immediately following the Augmentation Data
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read.
@@ -426,7 +426,7 @@ public class Cie extends GccAnalysisClass {
 	 * Creates the initial set of Call Frame instructions. The
 	 * number of instructions is determined by the remaining space in the CIE
 	 * record.
-	 * 
+	 *
 	 * @param addr Address at which the initial instructions array should be created.
 	 * @return Address immediately following the initial instructions array
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read.
@@ -460,9 +460,9 @@ public class Cie extends GccAnalysisClass {
 	}
 
 	/**
-	 * Creates a Common Information Entry (CIE) at <code>cieAddress</code>. 
+	 * Creates a Common Information Entry (CIE) at <code>cieAddress</code>.
 	 * <br>Note: This method must get called before any of the "get..." methods.
-	 * 
+	 *
 	 * @param cieAddress the address where the CIE should be created.
 	 * @throws MemoryAccessException if memory for the CIE couldn't be read.
 	 * @throws ExceptionHandlerFrameException if some of the CIE information couldn't be created.
@@ -487,8 +487,8 @@ public class Cie extends GccAnalysisClass {
 		}
 
 		// NOTE: The process... method calls that follow are order dependent.
-		//       Each one is passed the address of the field it will process and 
-		//       returns the next address after that field, which will then be 
+		//       Each one is passed the address of the field it will process and
+		//       returns the next address after that field, which will then be
 		//       used by the next field's process method.
 
 		// Create the CIE length field
@@ -678,7 +678,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Method that returns the address immediately following the Common Information Entry
-	 * 
+	 *
 	 * @return Address immediately following the CIE
 	 */
 	public Address getNextAddress() {
@@ -687,7 +687,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Gets the augmentation string which indicates optional fields and how to interpret them.
-	 * 
+	 *
 	 * @return the augmentation string.
 	 */
 	public String getAugmentationString() {
@@ -696,7 +696,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Gets the indicator for the FDE address pointer encoding.
-	 * 
+	 *
 	 * @return the FDE address pointer encoding.
 	 */
 	public int getFDEEncoding() {
@@ -705,7 +705,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Gets the decoder for the FDE that is associated with this CIE.
-	 * 
+	 *
 	 * @return the decoder for the FDE
 	 */
 	public DwarfEHDecoder getFDEDecoder() {
@@ -714,7 +714,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Gets the indicator for the LSDA pointer encoding.
-	 * 
+	 *
 	 * @return the LSDA pointer encoding.
 	 */
 	public int getLSDAEncoding() {
@@ -723,7 +723,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Gets the decoder for the LSDA that is associated with this CIE.
-	 * 
+	 *
 	 * @return the decoder for the LSDA
 	 */
 	public DwarfEHDecoder getLSDADecoder() {
@@ -732,7 +732,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Gets the address where this CIE is located in the program.
-	 * 
+	 *
 	 * @return the address of this CIE.
 	 */
 	public Address getAddress() {
@@ -741,7 +741,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Gets the value of the data alignment factor for this CIE record.
-	 * 
+	 *
 	 * @return the data alignment factor
 	 */
 	public int getDataAlignment() {
@@ -750,7 +750,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Gets the value of the code alignment factor for this CIE record.
-	 * 
+	 *
 	 * @return the code alignment factor
 	 */
 	public int getCodeAlignment() {
@@ -758,9 +758,9 @@ public class Cie extends GccAnalysisClass {
 	}
 
 	/**
-	 * Determines if this CIE encountered a zero length record, which indicates the end of 
+	 * Determines if this CIE encountered a zero length record, which indicates the end of
 	 * the frame.
-	 * 
+	 *
 	 * @return true if we are at end of frame due to encountering a zero length record.
 	 */
 	public boolean isEndOfFrame() {
@@ -769,7 +769,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Gets the segment size for this CIE record.
-	 * 
+	 *
 	 * @return the segment size
 	 */
 	public int getSegmentSize() {
@@ -778,7 +778,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Gets the return address register column for this CIE record.
-	 * 
+	 *
 	 * @return the return address register column
 	 */
 	public int getReturnAddressRegisterColumn() {
@@ -787,7 +787,7 @@ public class Cie extends GccAnalysisClass {
 
 	/**
 	 * Gets the ID for this CIE record.
-	 * 
+	 *
 	 * @return the CIE identifier
 	 */
 	public int getCieId() {

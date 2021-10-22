@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,8 +48,8 @@ import ghidra.util.ManualEntry;
 
 /**
  * Tests the {@link ShowInstructionInfoPlugin} class.
- * 
- * 
+ *
+ *
  */
 public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private static final String startAddressString = "1000000";
@@ -103,7 +103,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		Instruction currentInstruction = plugin.getInstructionForContext(context);
 		assertNull("The current Instruction is not null as expected", currentInstruction);
 
-		// now try the calling the method with an invalid Instruction - 
+		// now try the calling the method with an invalid Instruction -
 		Language language = program.getLanguage();
 		manualEntry = plugin.locateManualEntry(context, language);
 		assertNotNull(manualEntry);
@@ -125,7 +125,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 	public void testShowProcessorManual_ErrorDialog() throws Exception {
 
 		// FIXME: This test is bogus and needs to be corrected by refering to
-		// an instruction whose manual is missing.  Test apepars to work with 
+		// an instruction whose manual is missing.  Test apepars to work with
 		// CI test environment because none of the manuals are found
 
 		changeLocationToAddress(beyondAddressString);
@@ -140,7 +140,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 
 	@Test
 	public void testInstructionInfo() throws Exception {
-		// test the models to make sure no errors are encountered on valid 
+		// test the models to make sure no errors are encountered on valid
 		// and invalid instructions by exercising the Java model's public
 		// API
 
@@ -163,7 +163,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 				"though there is not Instruction selected in the proram.",
 			!componentProviderTablesHaveData());
 
-		// change to a valid instruction        
+		// change to a valid instruction
 		currentInstruction = changeLocationToAddress("01000000");
 		assertNotNull("Found a null Instruction at a point in the program " +
 			"where we expected a valid Instruction.", currentInstruction);
@@ -196,7 +196,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 			"than it was after changing instructions.", differentData);
 
 		// verify the Instruction data is that of the Instruction
-		// selected in the plugin            
+		// selected in the plugin
 		verifyAddressWithTableModels(currentInstruction.getMinAddress(), true, true);
 
 		// turn off dynamic update
@@ -219,7 +219,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		verifyAddressWithTableModels(currentInstruction.getMinAddress(), false, false);
 
 		// Now test moving from a valid, non-decompiled address will cause
-		// the update of the display when the decompilation process takes 
+		// the update of the display when the decompilation process takes
 		// place
 
 		// turn dynamic update back on
@@ -293,8 +293,8 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 
 	@Test
 	public void testUpdates() throws Exception {
-		// display a provider, clear the instruction, 
-		// make sure the the provider is cleared, etc. 
+		// display a provider, clear the instruction,
+		// make sure the the provider is cleared, etc.
 
 		changeLocationToAddress("01000000");
 
@@ -352,7 +352,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 
 	private void callGetUrl(ListingActionContext context, Language language) {
 		runSwing(() -> {
-	
+
 			try {
 				plugin.getValidUrl(context, language);
 			}
@@ -363,9 +363,9 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 	}
 
 	/**
-	 * Moves the program location to the given address and returns the 
+	 * Moves the program location to the given address and returns the
 	 * instruction at that location.
-	 * 
+	 *
 	 * @param addressString The address location to move to.
 	 * @return The instruction at the new location or null if there is no
 	 *         instruction.
@@ -396,16 +396,16 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 
 	/**
 	 * Tests the addresses of the table models of the "Instruction Info" dialog.
-	 * The method will fail the current test if the result is not as 
-	 * expected by the caller of this method.  For example, if 
+	 * The method will fail the current test if the result is not as
+	 * expected by the caller of this method.  For example, if
 	 * <tt>expectedSame</tt> is true, then the method expects the values to
-	 * be the same when compared with the given address and will fail if 
+	 * be the same when compared with the given address and will fail if
 	 * they are not.  If <tt>expectedSame</tt> is false, then the method will
 	 * fail if the test values are the same.
-	 * 
+	 *
 	 * @param instructionAddress The address to compare against the address
 	 *        stored in the table model of the dialog.
-	 * @param expectedSame True means a match is expected; false means a 
+	 * @param expectedSame True means a match is expected; false means a
 	 *        match is not expected.
 	 */
 	private void verifyAddressWithTableModels(Address instructionAddress, boolean fromConnected,
@@ -426,7 +426,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 		Matcher matcher = pattern.matcher(text);
 		boolean comparisonResult = matcher.find();
 
-		// if the caller of this method expects the results to be NOT equal, 
+		// if the caller of this method expects the results to be NOT equal,
 		// then toggle the comparison result
 		if (!expectedSame) {
 			comparisonResult = !comparisonResult;
@@ -449,7 +449,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 	/**
 	 * A simple method to test that the tables of the "Instruction Info"
 	 * dialog contain data.
-	 * 
+	 *
 	 * @return True if either of the tables have data.
 	 */
 	private boolean componentProviderTablesHaveData() {
@@ -459,9 +459,9 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 	}
 
 	/**
-	 * Gets data from the two tables of the "Instruction Info" dialog. 
-	 * 
-	 * @return data from the two tables of the "Instruction Info" dialog. 
+	 * Gets data from the two tables of the "Instruction Info" dialog.
+	 *
+	 * @return data from the two tables of the "Instruction Info" dialog.
 	 */
 	private Object[] getComponentProviderTableData(boolean fromConnected) {
 		ComponentProvider provider = fromConnected ? getCurrentComponentProviderFromPlugin()
@@ -472,7 +472,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 
 		Object[] data = new Object[2];
 
-		// the following two values are based upon the objString() method of 
+		// the following two values are based upon the objString() method of
 		// each table model
 		data[0] = instructionText.getText();
 		data[1] = opTable.getColumnCount() != 0 ? opTable.getValueAt(6, 0) : null;
@@ -487,7 +487,7 @@ public class ShowInstructionInfoPluginTest extends AbstractGhidraHeadedIntegrati
 
 	/**
 	 * Returns the current ComponentProvider in use by the plugin.
-	 * 
+	 *
 	 * @return the current ComponentProvider in use by the plugin.
 	 */
 	private ComponentProvider getCurrentComponentProviderFromPlugin() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,7 +83,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * Shows a modal dialog to the user, allowing them to pick or search for a Pdb
 	 * file.<p>
 	 * The selected file and parser options are returned in a LoadPdbResults instance.
-	 * 
+	 *
 	 * @param program the Ghidra {@link Program} that has Pdb info
 	 * @return LoadPdbResults instance with the selected file and options, or null if canceled
 	 */
@@ -147,7 +147,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 	/**
 	 * Creates a new instance of the LoadPdbDialog class.
-	 * 
+	 *
 	 * @param program the ghidra {@link Program} that is loading the Pdb
 	 */
 	public LoadPdbDialog(Program program) {
@@ -185,7 +185,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 	/**
 	 * For screenshot use only
-	 * 
+	 *
 	 * @param options set of {@link FindOption} enum
 	 */
 	public void setSearchOptions(Set<FindOption> options) {
@@ -201,7 +201,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * Sets the contents of the search results table.
 	 * <p>
 	 * Public only for screenshot usage, treat as private otherwise.
-	 * 
+	 *
 	 * @param results list of {@link SymbolFileLocation}s to add to results
 	 * @param findOptions the options used to search
 	 */
@@ -214,7 +214,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * Selects a row in the results table.
 	 * <p>
 	 * Public only for screenshot usage.  Treat as private.
-	 * 
+	 *
 	 * @param symbolFileLocation {@link SymbolFileLocation} to select in results table
 	 */
 	public void selectRowByLocation(SymbolFileLocation symbolFileLocation) {
@@ -334,7 +334,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 
 		updateStatusText();
 		updateButtonEnablement();
-		// later dialogShow() will be called 
+		// later dialogShow() will be called
 	}
 
 	private void buildSymbolFilePanel() {
@@ -757,7 +757,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * Use this status text scheme instead of {@link #setStatusText(String)} if
 	 * there are multiple locations that need to provide a status message at the
 	 * bottom of the dialog.
-	 * 
+	 *
 	 * @param supplier StatusText supplier
 	 */
 	private void addStatusTextSupplier(Supplier<StatusText> supplier) {
@@ -769,7 +769,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * Polls all {@link #addStatusTextSupplier(Supplier) registered} StatusText suppliers and
 	 * sets the status message at the bottom of the dialog to the resulting message.
 	 * <p>
-	 * Not compatible with {@link #setStatusText(String)}.  Either use it, or this. 
+	 * Not compatible with {@link #setStatusText(String)}.  Either use it, or this.
 	 */
 	private void updateStatusText() {
 		StringBuilder sb = new StringBuilder();
@@ -815,7 +815,7 @@ public class LoadPdbDialog extends DialogComponentProvider {
 	 * Execute a non-modal task that has progress and can be cancelled.
 	 * <p>
 	 * See {@link #executeProgressTask(Task, int)}.
-	 * 
+	 *
 	 * @param taskTitle String title of task
 	 * @param canCancel boolean flag, if true task can be canceled by the user
 	 * @param hasProgress boolean flag, if true the task has a progress meter

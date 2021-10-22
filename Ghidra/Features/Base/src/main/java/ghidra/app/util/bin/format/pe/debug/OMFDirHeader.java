@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,15 +23,15 @@ import java.io.*;
 /**
  * <pre>
  * typedef struct OMFDirHeader {
- *     unsigned short cbDirHeader; // length of this structure unsigned           
- *              short cbDirEntry;  // number of bytes in each directory entry 
- *     unsigned long  cDir;        // number of directorie entries 
- *              long lfoNextDir;   // offset from base of next directory 
+ *     unsigned short cbDirHeader; // length of this structure unsigned
+ *              short cbDirEntry;  // number of bytes in each directory entry
+ *     unsigned long  cDir;        // number of directorie entries
+ *              long lfoNextDir;   // offset from base of next directory
  *     unsigned long flags;        // status flags
  * } OMFDirHeader;
  * </pre>
- * 
- * 
+ *
+ *
  */
 class OMFDirHeader {
     final static int IMAGE_SIZEOF_OMF_DIR_HEADER = 16;

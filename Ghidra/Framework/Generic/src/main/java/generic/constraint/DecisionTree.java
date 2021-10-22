@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,11 +27,11 @@ import ghidra.xml.*;
  * A decisionTree is used to find property values that are determined by traversing a tree
  * of constraints. Each node in the tree has an associated constraint.  If the constraint is
  * satisfied for a given test object, then its child nodes are tested to find more and more
- * specific results.  When either there are no children in a node or none of the children's 
+ * specific results.  When either there are no children in a node or none of the children's
  * constraints are satisfied or by traversing those that are satisfied did not result in find
  * a property match, the current node is check to see if it has a value for the property being
  * search.  If so, that result is added as a Decision.
- * 
+ *
  * <P> There can be multiple paths where all constraints a matched resulting in multiple possible
  * decisions.</P>
  * <P> A non-leaf node can have properties as well, that serve as a default if it's constraint
@@ -76,7 +76,7 @@ public class DecisionTree<T> {
 
 	/**
 	 * Registers a property name.  Every tag in an xml constraint file (except the root tag which
-	 * is unused) must be either a constraint name or a property name. 
+	 * is unused) must be either a constraint name or a property name.
 	 * @param propertyName the name of a valid property to be expected in an xml constraints file.
 	 */
 	public void registerPropertyName(String propertyName) {
@@ -86,7 +86,7 @@ public class DecisionTree<T> {
 	/**
 	 * Loads the tree from an xml data contained within an input stream. Note: this method can be
 	 * called multiple times, with each call appending to the existing tree.
-	 * @param name the name of the input source so that decisions can be traced back to 
+	 * @param name the name of the input source so that decisions can be traced back to
 	 * the appropriate xml constraints source.
 	 * @param stream the InputStream from which to read an xml constraints specification.
 	 * @throws IOException if an I/O problem occurs reading from the stream.
@@ -110,7 +110,7 @@ public class DecisionTree<T> {
 
 	/**
 	 * Loads the tree from an xml constraint file. Note: this method can be called multiple times,
-	 * with each call appending to the existing tree. 
+	 * with each call appending to the existing tree.
 	 * @param file the file that contains the xml for the constraint.
 	 * @throws IOException if an I/O problem occurs reading from the stream.
 	 * @throws XmlParseException if the XML is not property formatted or a tag that is not

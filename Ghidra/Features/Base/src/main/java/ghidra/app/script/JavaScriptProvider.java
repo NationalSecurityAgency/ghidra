@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 
 	/**
 	 * Get the {@link GhidraSourceBundle} containing the given source file, assuming it already exists.
-	 * 
+	 *
 	 * @param sourceFile the source file
 	 * @return the bundle
 	 */
@@ -107,9 +107,9 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	}
 
 	/**
-	 * Activate and build the {@link GhidraSourceBundle} containing {@code sourceFile} 
-	 * then load the script's class from its class loader. 
-	 * 
+	 * Activate and build the {@link GhidraSourceBundle} containing {@code sourceFile}
+	 * then load the script's class from its class loader.
+	 *
 	 * @param sourceFile the source file
 	 * @param writer the target for build messages
 	 * @return the loaded {@link Class} object
@@ -207,10 +207,10 @@ public class JavaScriptProvider extends GhidraScriptProvider {
 	 *
 	 * Fix script name for search in script directories, such as Java package parts in the name and inner class names.
 	 *
-	 * <p>This method can handle names with '$' (inner classes) and names with '.' 
+	 * <p>This method can handle names with '$' (inner classes) and names with '.'
 	 * characters for package separators
 	 *
-	 * <p>It is part of a poorly specified behavior that is due for future amendment, 
+	 * <p>It is part of a poorly specified behavior that is due for future amendment,
 	 * see {@link GhidraScriptUtil#fixupName(String)}.
 	 *
 	 * @param scriptName the name of the script

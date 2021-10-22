@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -294,7 +294,7 @@ public class ProgramDnDTree extends DragNDropTree {
 	 * a drag operation is in progress, and the drag did not
 	 * initiate on this tree.
 	 * @param node drop site
-	 * @param e event that has current state of drag and drop operation 
+	 * @param e event that has current state of drag and drop operation
 	 * @see DragNDropTree#isDropOk
 	 */
 	@Override
@@ -425,7 +425,7 @@ public class ProgramDnDTree extends DragNDropTree {
 
 	/**
 	 * Get the view list.
-	 * 
+	 *
 	 * @return ArrayList list of tree paths in the view
 	 */
 	ArrayList<TreePath> getViewList() {
@@ -1167,7 +1167,7 @@ public class ProgramDnDTree extends DragNDropTree {
 
 	/**
 	 * Call this when the given nodes children have changed.
-	 * 
+	 *
 	 * @param node node to reload.
 	 */
 	void reloadNode(ProgramNode node) {
@@ -1257,7 +1257,7 @@ public class ProgramDnDTree extends DragNDropTree {
 	void visitNode(ProgramNode node) {
 		node.visit();
 
-		// see if any children were added (would happen due to a drag and drop operation if 
+		// see if any children were added (would happen due to a drag and drop operation if
 		// node had not been visited before the operation);
 		// if child count > 0 then we have to make sure we aren't adding duplicates
 		int nChildNodes = node.getChildCount();
@@ -1798,10 +1798,10 @@ public class ProgramDnDTree extends DragNDropTree {
 
 	/**
 	 * Generate a fragment name; if there is a symbol at the start
-	 * of the fragment, and if it is user defined, then use the label 
+	 * of the fragment, and if it is user defined, then use the label
 	 * as the fragment name; otherwise, just use the address as the name.
 	 * @param addr first address of fragment
-	 * 
+	 *
 	 * @return String name of fragment
 	 */
 	private String generateFragmentName(Address addr) {

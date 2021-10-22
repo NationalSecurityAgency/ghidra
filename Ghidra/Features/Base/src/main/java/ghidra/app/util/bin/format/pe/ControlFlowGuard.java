@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ import ghidra.util.exception.InvalidInputException;
  * corruption vulnerabilities.
  * <p>
  * ReturnFlowGuard was introduced as an addition to ControlFlowGuard in the Windows 10
- * Creator's update. 
+ * Creator's update.
  */
 public class ControlFlowGuard {
 	public static String GuardCFFunctionTableName = "GuardCFFunctionTable";
@@ -46,9 +46,9 @@ public class ControlFlowGuard {
 	public static String GuardCfgTableEntryName = "GuardCfgTableEntry";
 
 	/**
-	 * Perform markup on the supported ControlFlowGuard and ReturnFlowGuard functions and 
+	 * Perform markup on the supported ControlFlowGuard and ReturnFlowGuard functions and
 	 * tables, if they exist.
-	 * 
+	 *
 	 * @param lcd The PE LoadConfigDirectory.
 	 * @param program The program.
 	 * @param log The log.
@@ -76,7 +76,7 @@ public class ControlFlowGuard {
 
 	/**
 	 * Performs markup on the ControlFlowGuard check function, if it exists.
-	 * 
+	 *
 	 * @param lcd The PE LoadConfigDirectory.
 	 * @param program The program.
 	 * @param is64bit True if the PE is 64-bit; false if it's 32-bit.
@@ -106,7 +106,7 @@ public class ControlFlowGuard {
 
 	/**
 	 * Performs markup on the ControlFlowGuard dispatch function, if it exists.
-	 * 
+	 *
 	 * @param lcd The PE LoadConfigDirectory.
 	 * @param program The program.
 	 * @param is64bit True if the PE is 64-bit; false if it's 32-bit.
@@ -137,7 +137,7 @@ public class ControlFlowGuard {
 
 	/**
 	 * Performs markup on the ControlFlowGuard function table, if it exists.
-	 * 
+	 *
 	 * @param lcd The PE LoadConfigDirectory.
 	 * @param program The program.
 	 * @param log The log.
@@ -232,7 +232,7 @@ public class ControlFlowGuard {
 
 	/**
 	 * Performs markup on the ControlFlowGuard address taken IAT table, if it exists.
-	 * 
+	 *
 	 * @param lcd The PE LoadConfigDirectory.
 	 * @param program The program.
 	 * @param log The log.
@@ -272,7 +272,7 @@ public class ControlFlowGuard {
 
 	/**
 	 * Performs markup on the ReturnFlowGuard failure routine, if it exists.
-	 * 
+	 *
 	 * @param lcd The PE LoadConfigDirectory.
 	 * @param program The program
 	 * @param space The program's address space.
@@ -298,7 +298,7 @@ public class ControlFlowGuard {
 
 	/**
 	 * Performs markup on the ReturnFlowGuard "default" failure routine function, if it exists.
-	 * 
+	 *
 	 * @param lcd The PE LoadConfigDirectory.
 	 * @param program The program
 	 * @param is64bit True if the PE is 64-bit; false if it's 32-bit.
@@ -332,7 +332,7 @@ public class ControlFlowGuard {
 
 	/**
 	 * Performs markup on the ReturnFlowGuard verify stack pointer function, if it exists.
-	 * 
+	 *
 	 * @param lcd The PE LoadConfigDirectory.
 	 * @param program The program
 	 * @param is64bit True if the PE is 64-bit; false if it's 32-bit.

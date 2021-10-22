@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidra.util.*;
  * typedef  int32_t  Elf32_Sword;
  * typedef uint32_t  Elf32_Word;
  * typedef uint32_t  Elf32_Addr;
- * 
+ *
  * typedef struct {
  *     Elf32_Word    sh_name;       //Section name (string tbl index)
  *     Elf32_Word    sh_type;       //Section type
@@ -46,12 +46,12 @@ import ghidra.util.*;
  *     Elf32_Word    sh_addralign;  //Section alignment
  *     Elf32_Word    sh_entsize;    //Entry size if section holds table *
  * } Elf32_Shdr;
- * 
+ *
  * typedef  uint32_t  Elf64_Word;
  * typedef  uint64_t  Elf64_Xword;
  * typedef  uint64_t  Elf64_Addr;
  * typedef  uint64_t  Elf64_Off;
- * 
+ *
  * typedef struct {
  *     Elf64_Word    sh_name;       //Section name (string tbl index)
  *     Elf64_Word    sh_type;       //Section type
@@ -230,8 +230,8 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	/**
-	 * If the section will appear in the memory image of a process, this 
-	 * member gives the address at which the section's first byte 
+	 * If the section will appear in the memory image of a process, this
+	 * member gives the address at which the section's first byte
 	 * should reside. Otherwise, the member contains 0.
 	 * @return the address of the section in memory
 	 */
@@ -295,17 +295,17 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	/**
-	 * This member holds extra information, whose interpretation 
+	 * This member holds extra information, whose interpretation
 	 * depends on the section type.
-	 *  
-	 * If sh_type is SHT_REL or SHT_RELA, then sh_info holds 
+	 *
+	 * If sh_type is SHT_REL or SHT_RELA, then sh_info holds
 	 * the section header index of the
 	 * section to which the relocation applies.
-	 * 
+	 *
 	 * If sh_type is SHT_SYMTAB or SHT_DYNSYM, then sh_info
 	 * holds one greater than the symbol table index of the last
 	 * local symbol (binding STB_LOCAL).
-	 * 
+	 *
 	 * @return the section header info
 	 */
 	public int getInfo() {
@@ -313,17 +313,17 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	/**
-	 * This member holds extra information, whose interpretation 
+	 * This member holds extra information, whose interpretation
 	 * depends on the section type.
-	 * 
-	 * If sh_type is SHT_SYMTAB, SHT_DYNSYM, or SHT_DYNAMIC, 
+	 *
+	 * If sh_type is SHT_SYMTAB, SHT_DYNSYM, or SHT_DYNAMIC,
 	 * then sh_link holds the section header table index of
 	 * its associated string table.
-	 * 
+	 *
 	 * If sh_type is SHT_REL, SHT_RELA, or SHT_HASH
-	 * sh_link holds the section header index of the 
+	 * sh_link holds the section header index of the
 	 * associated symbol table.
-	 * 
+	 *
 	 * @return the section header link
 	 */
 	public int getLink() {
@@ -331,7 +331,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	}
 
 	/**
-	 * An index into the section header string table section, 
+	 * An index into the section header string table section,
 	 * giving the location of a null-terminated string which is the name of this section.
 	 * @return the index of the section name
 	 */
@@ -481,7 +481,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 	 * Returns an input stream starting at offset into
 	 * the byte provider.
 	 * NOTE: Do not use this method if you have called setData().
-	 * @return the input stream 
+	 * @return the input stream
 	 * @throws IOException if an I/O error occurs
 	 */
 	public InputStream getDataStream() throws IOException {
@@ -501,7 +501,7 @@ public class ElfSectionHeader implements StructConverter, Writeable, MemoryLoada
 
 	/**
 	 * Sets the actual data bytes for this section.
-	 * If the data is larger than the previous data, then 
+	 * If the data is larger than the previous data, then
 	 * the offset is set to -1 and the section will
 	 * need to be relocated.
 	 * @param data the new data byte for this section

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,13 +27,13 @@ import ghidra.program.model.listing.Program;
 
 /**
  * The primary class for obtaining an {@link Assembler} for a Ghidra-supported language.
- * 
+ *
  * <p>
  * The general flow is: First, obtain an assembler for a language or program. Second, call its
  * {@link Assembler#assemble(Address, String...)} and related methods to perform assembly. More
  * advanced uses pass a {@link AssemblySelector} to control certain aspects of assembly instruction
  * selection, and to obtain advanced diagnostics, like detailed errors and code completion.
- * 
+ *
  * <pre>
  * Assembler asm = Assemblers.getAssembler(currentProgram);
  * asm.assemble(currentAddress, "ADD ...");
@@ -44,7 +44,7 @@ public final class Assemblers {
 
 	/**
 	 * Get a builder for the given language, possibly using a cached one.
-	 * 
+	 *
 	 * @param lang the language
 	 * @return the builder for that language, if successful
 	 */
@@ -63,13 +63,13 @@ public final class Assemblers {
 
 	/**
 	 * Get an assembler for the given program.
-	 * 
+	 *
 	 * <p>
 	 * Provides an assembler suitable for the program's language, and bound to the program. Calls to
 	 * its Assembler#assemble() function will cause modifications to the bound program. If this is
 	 * the first time an assembler for the program's language has been requested, this function may
 	 * take some time to build the assembler.
-	 * 
+	 *
 	 * @param selector a method to select a single result from many
 	 * @param program the program for which an assembler is requested
 	 * @return the assembler bound to the given program
@@ -81,13 +81,13 @@ public final class Assemblers {
 
 	/**
 	 * Get an assembler for the given language.
-	 * 
+	 *
 	 * <p>
 	 * Provides a suitable assembler for the given language. Only calls to its
 	 * Assembler#assembleLine() method are valid. If this is the first time a language has been
 	 * requested, this function may take some time to build the assembler. Otherwise, it returns a
 	 * cached assembler.
-	 * 
+	 *
 	 * @param selector a method to select a single result from many
 	 * @param lang the language for which an assembler is requested
 	 * @return the assembler for the given language
@@ -99,9 +99,9 @@ public final class Assemblers {
 
 	/**
 	 * Get an assembler for the given program.
-	 * 
+	 *
 	 * @see #getAssembler(Program, AssemblySelector)
-	 * 
+	 *
 	 * @param program the program
 	 * @return a suitable assembler
 	 */
@@ -111,9 +111,9 @@ public final class Assemblers {
 
 	/**
 	 * Get an assembler for the given language.
-	 * 
+	 *
 	 * @see #getAssembler(Language, AssemblySelector)
-	 * 
+	 *
 	 * @param lang the language
 	 * @return a suitable assembler
 	 */

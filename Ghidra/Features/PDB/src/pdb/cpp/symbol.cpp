@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,28 +26,28 @@
 const static std::wstring SYMBOL_TAG_STRINGS [] = {
 		L"",
 		L"Executable",
-		L"Compiland", 
-		L"CompilandDetails", 
+		L"Compiland",
+		L"CompilandDetails",
 		L"CompilandEnv",
-		L"Function", 
+		L"Function",
 		L"Block",
 		L"Data",
-		L"Annotation", 
-		L"Label", 
-		L"PublicSymbol", 
-		L"UserDefinedType", 
-		L"Enum", 
-		L"FunctionType", 
-		L"PointerType", 
-		L"ArrayType", 
-		L"BaseType", 
-		L"Typedef", 
+		L"Annotation",
+		L"Label",
+		L"PublicSymbol",
+		L"UserDefinedType",
+		L"Enum",
+		L"FunctionType",
+		L"PointerType",
+		L"ArrayType",
+		L"BaseType",
+		L"Typedef",
 		L"BaseClass",
 		L"Friend",
-		L"FunctionArgType", 
-		L"FuncDebugStart", 
+		L"FunctionArgType",
+		L"FuncDebugStart",
 		L"FuncDebugEnd",
-		L"UsingNamespace", 
+		L"UsingNamespace",
 		L"VTableShape",
 		L"VTable",
 		L"Custom",
@@ -73,47 +73,47 @@ const static std::wstring SYMBOL_TAG_STRINGS [] = {
 static bool fTagScopes [] = {
 		false,
 		true,
-		true, 
-		false, 
-		false,
-		true, 
 		true,
 		false,
-		false, 
-		false, 
-		false, 
-		false, 
-		false, 
-		false, 
-		false, 
-		false, 
-		false, 
-		false, 
 		false,
-		false,
-		false, 
-		false, 
-		false,
-		false, 
+		true,
+		true,
 		false,
 		false,
 		false,
 		false,
 		false,
 		false,
-		false, 
-		false, 
-		false, 
-		false, 
-		false, 
-		false, 
-		false, 
-		false, 
-		false, 
-		false, 
 		false,
 		false,
-		false, 
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
+		false,
 		false
 };
 
@@ -200,8 +200,8 @@ std::wstring getName(IDiaSymbol& symbol) {
 			locType == LocIsBitField &&
 			symbol.get_length(&len) == S_OK &&
 			symbol.get_bitPosition(&bitPos) == S_OK) {
-			// allocate length of: name + ":0x" + len + ":0x" + bitPos + "\0" 
-			const size_t length = wstrName.length() + 70;	
+			// allocate length of: name + ":0x" + len + ":0x" + bitPos + "\0"
+			const size_t length = wstrName.length() + 70;
 			std::vector<wchar_t> str(length);
 			swprintf_s(str.data(), length, L"%ws:0x%I64x:0x%x", wstrName.c_str(), len, bitPos);
 			return escapeXmlEntities(str.data());

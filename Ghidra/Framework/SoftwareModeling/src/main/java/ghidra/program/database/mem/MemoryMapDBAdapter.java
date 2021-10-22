@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -168,7 +168,7 @@ abstract class MemoryMapDBAdapter {
 	abstract void deleteTable(DBHandle handle) throws IOException;
 
 	/**
-	 * 
+	 *
 	 * @throws IOException if a database IO error occurs.
 	 */
 	abstract void refreshMemory() throws IOException;
@@ -180,8 +180,8 @@ abstract class MemoryMapDBAdapter {
 	abstract List<MemoryBlockDB> getMemoryBlocks();
 
 	/**
-	 * Creates a new initialized block object using data provided from an 
-	 * input stream.  Once the input stream has been exhausted, the remaining 
+	 * Creates a new initialized block object using data provided from an
+	 * input stream.  Once the input stream has been exhausted, the remaining
 	 * block data will be initialized to zero (0x00).
 	 * @param name the name of the block
 	 * @param startAddr the start address of the block.
@@ -214,9 +214,9 @@ abstract class MemoryMapDBAdapter {
 	 * @param name the name of the block.
 	 * @param startAddr the start address of the block
 	 * @param length the size of the block
-	 * @param mappedAddress the starting byte source address at which to map 
+	 * @param mappedAddress the starting byte source address at which to map
 	 * the block. (used for bit/byte-mapped blocks only)
-	 * @param initializeBytes if true, creates a database buffer for storing the 
+	 * @param initializeBytes if true, creates a database buffer for storing the
 	 * bytes in the block (applies to initialized default blocks only)
 	 * @param permissions the new block permissions
 	 * @param encodedMappingScheme byte mapping scheme (used by byte-mapped blocks only)
@@ -278,8 +278,8 @@ abstract class MemoryMapDBAdapter {
 	 * sub block starts
 	 * @param length the length of this sub block
 	 * @param subType the type of the subBlock
-	 * @param data1 subblock implementation specific integer data 
-	 * @param data2 subblock implementation specific long data 
+	 * @param data1 subblock implementation specific integer data
+	 * @param data2 subblock implementation specific long data
 	 * @return the newly created record.
 	 * @throws IOException if a database error occurs
 	 */

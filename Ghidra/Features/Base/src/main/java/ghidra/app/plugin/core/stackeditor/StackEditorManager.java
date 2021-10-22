@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -73,7 +73,7 @@ public class StackEditorManager implements EditorListener {
 	}
 
 	/**
-	 * Get the stack editor provider that is currently editing the stack frame 
+	 * Get the stack editor provider that is currently editing the stack frame
 	 * of the named function.
 	 * @param functionName the name of the function
 	 * @return the stack frame editor provider or null if it isn't being edited.
@@ -115,7 +115,7 @@ public class StackEditorManager implements EditorListener {
 	 * Check for any data types being edited for the given data
 	 * type manager that is being closed.
 	 * if pgm is null then all editors will be checked.
-	 * @param program the program whose stack editors are to be checked for changes. 
+	 * @param program the program whose stack editors are to be checked for changes.
 	 * If null, then check all editors for save.
 	 * @return true if all stack editors were resolved and can close now; return
 	 * false if the user canceled the save action
@@ -171,7 +171,7 @@ public class StackEditorManager implements EditorListener {
 	 * Gets the current editor for the specified function
 	 * @param function the function
 	 * @return the stack editor if the function's stack is being edited.
-	 * Otherwise, returns null if not being edited. 
+	 * Otherwise, returns null if not being edited.
 	 */
 	public StackEditorProvider getProvider(Function function) {
 		return editorMap.get(function.getStackFrame());

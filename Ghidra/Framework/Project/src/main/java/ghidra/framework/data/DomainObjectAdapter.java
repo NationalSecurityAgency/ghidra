@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,7 +72,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	private long modificationNumber = 1;
 
 	/**
-	 * Construct a new DomainObjectAdapter. 
+	 * Construct a new DomainObjectAdapter.
 	 * If construction of this object fails, be sure to release with consumer.
 	 * @param name name of the object
 	 * @param timeInterval the time (in milliseconds) to wait before the
@@ -125,7 +125,7 @@ public abstract class DomainObjectAdapter implements DomainObject {
 	}
 
 	/**
-	 * Returns the hidden user-filesystem associated with 
+	 * Returns the hidden user-filesystem associated with
 	 * this objects domain file, or null if unknown.
 	 * @return user data file system
 	 */

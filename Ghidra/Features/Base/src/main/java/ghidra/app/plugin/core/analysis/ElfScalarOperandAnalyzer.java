@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,10 +51,10 @@ public class ElfScalarOperandAnalyzer extends ScalarOperandAnalyzer {
 	}
 
 	/**
-	 * 1) If the instruction's min address plus the scalar equals 
-	 *    an address inside the ".got" section, then the scalar 
+	 * 1) If the instruction's min address plus the scalar equals
+	 *    an address inside the ".got" section, then the scalar
 	 *    is NOT an address and a reference should not be created.
-	 * 
+	 *
 	 * 2) If the instruction is a push and it's min address is inside the ".plt"
 	 *    section, then the scalar is not a memory reference.
 	 */

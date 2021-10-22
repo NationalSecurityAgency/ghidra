@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 
 	/**
 	 * Return the property description.
-	 * 
+	 *
 	 * @return the property description
 	 */
 	public String getDescription() {
@@ -270,7 +270,7 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.util.PropertyMap#applyValue(ghidra.util.prop.PropertyVisitor, ghidra.program.model.address.Address)
 	 */
 	@Override
@@ -279,7 +279,7 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.util.PropertyMap#moveRange(ghidra.program.model.address.Address, ghidra.program.model.address.Address, ghidra.program.model.address.Address)
 	 */
 	@Override
@@ -291,7 +291,7 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 	 * Save the properties in the given range to output stream.
 	 * @param oos output stream to write to
 	 * @param start start address in the range
-	 * @param end end address in the range 
+	 * @param end end address in the range
 	 * @throws IOException if there a problem doing the write
 	 */
 	public void saveProperties(ObjectOutputStream oos, Address start, Address end)
@@ -480,7 +480,7 @@ public abstract class DefaultPropertyMap implements PropertyMap {
 //				}
 //				curRange = range;
 //				iter = new AddressPropertyIterator(range.getMinAddress(),
-//												   range.getMaxAddress(), 
+//												   range.getMaxAddress(),
 //												   atStart);
 //				if (iter.hasPrevious()) {
 //					return iter.previous();

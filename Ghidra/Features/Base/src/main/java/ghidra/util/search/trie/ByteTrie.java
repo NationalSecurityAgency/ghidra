@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -309,7 +309,7 @@ public class ByteTrie<T> implements ByteTrieIfc<T> {
 	}
 
 	/**
-	 * BFS fixup of suffix (failure) pointers, but only if we need to (the 
+	 * BFS fixup of suffix (failure) pointers, but only if we need to (the
 	 * version id is more advanced than our last suffix fixup id).
 	 * @param monitor a task monitor
 	 * @throws CancelledException if the user cancels

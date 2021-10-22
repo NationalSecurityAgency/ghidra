@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ import ghidra.util.task.TaskMonitor;
  * TODO: A place to store and track dynamic symbols. It looks like dynamic symbols are always
  * labels, and they exist at addresses where there exist references to, but there is no
  * user-defined label or function.
- * 
+ *
  * TODO: See if CALL-type references produce dynamic labels or functions.
  */
 public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager {
@@ -870,7 +870,7 @@ public class DBTraceSymbolManager implements TraceSymbolManager, DBTraceManager 
 	/**
 	 * Checks for duplicate names, allowing {@link SymbolType#LABEL} and
 	 * {@link SymbolType#FUNCTION}.
-	 * 
+	 *
 	 * @param name the proposed name
 	 * @param parent the parent namespace
 	 * @throws DuplicateNameException if the name is a duplicate

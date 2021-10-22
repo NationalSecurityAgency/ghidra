@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,7 +112,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 		/**
 		 * Set drag feedback according to the ok parameter.
-		 * 
+		 *
 		 * @param ok true means the drop action is OK
 		 * @param e event that has current state of drag and drop operation
 		 */
@@ -124,7 +124,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 		/**
 		 * Return true if is OK to drop the transferable at the location
 		 * specified the event.
-		 * 
+		 *
 		 * @param e event that has current state of drag and drop operation
 		 */
 		@Override
@@ -160,7 +160,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 		/**
 		 * Add the object to the droppable component. The DropTargetAdapter
 		 * calls this method from its drop() method.
-		 * 
+		 *
 		 * @param obj Transferable object that is to be dropped; in this case,
 		 *            it is an AddressSetView
 		 * @param e has current state of drop operation
@@ -523,7 +523,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 	/**
 	 * Find the Data at the currentCuAddress
-	 * 
+	 *
 	 * @param data place to begin searching
 	 * @return Data starting at currentCuAddress
 	 */
@@ -848,7 +848,7 @@ public class EditReferencesProvider extends ComponentProviderAdapter
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	/** Fun little storage object */
 	private class ReferenceInfo {

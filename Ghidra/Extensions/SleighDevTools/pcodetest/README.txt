@@ -11,7 +11,7 @@ Each entry in this file indicates the required toolchain, and additional
 options needed to build the pcode test.
 
 The defaults.py script should be modified to suit your environment
-reflecting the installation location of your toolchains, build artifacts, etc. 
+reflecting the installation location of your toolchains, build artifacts, etc.
 
 USAGE
 -----

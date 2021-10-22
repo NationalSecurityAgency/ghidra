@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.app.plugin.processors.sleigh.symbol.SubtableSymbol;
 
 /**
  * Describes a SLEIGH constructor semantic
- * 
+ *
  * These are collected and associated with productions in the grammar based on the given
  * constructor's print pieces.
  */
@@ -109,7 +109,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 
 	/**
 	 * Get an iterator over the operand indices
-	 * 
+	 *
 	 * If this iterator is advanced for each non-terminal, while simultaneously iterating over the
 	 * RHS of the associated production, then this will identify the corresponding operand index
 	 * for each non-terminal
@@ -137,22 +137,22 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 
 	/**
 	 * Add the list of forbidden patterns to one of the constructor's patterns
-	 * 
+	 *
 	 * SLEIGH disambiguates multiple matching pattern by two rules. First, if one is more specific
 	 * than ("specializes") another, i.e., it matches on more bits than another pattern, the more
 	 * specific pattern is chosen. Second, if the two are equally special, then the one that occurs
 	 * first in the SLEIGH specification is taken. So, during resolution, if a less-special or
 	 * later-occurring constructor is chosen, we must prevent continued resolution from matching
 	 * the more-special  or earlier-occurring pattern(s).
-	 * 
+	 *
 	 * Essentially, this states, "you may choose any value matching my pattern, except those that
 	 * match these forbidden patterns."
-	 * 
+	 *
 	 * This takes a given pattern, and searches the rest of the language for any patterns that
 	 * would take precedence, and combines them as forbidden patterns with the given pattern.
-	 * 
+	 *
 	 * @param pat the given pattern
-	 * @return the same pattern with forbidden records added 
+	 * @return the same pattern with forbidden records added
 	 */
 	protected AssemblyResolvedConstructor withComputedForbids(AssemblyResolvedConstructor pat) {
 		// Forbid anything more specific (or otherwise takes precedence) over me.
@@ -172,13 +172,13 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 				 * 1. If one pattern defines a subset of the other pattern, then the more-specific
 				 *    one is preferred.
 				 * 2. Otherwise, preference is by line number
-				 * 
+				 *
 				 * Thus, I need to check if there is any overlap at all. If not, then I don't
 				 * need to worry about forbidding anything.
 				 * Then, I'll check if it defines a strict subset, and forbid it if so.
 				 * Then, I'll check if it defines a strict overset, and skip the line check if so.
 				 * Then, I'll check if its line number *precedes* mine, and forbid it if so.
-				 * 
+				 *
 				 * (I originally though the pattern with the most bits won, no matter whether or
 				 * not those bits overlapped.)
 				 */
@@ -209,7 +209,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 					return CONTINUE;
 				}
 
-				// I guess, I have the more-specific pattern, or I appear higher... 
+				// I guess, I have the more-specific pattern, or I appear higher...
 				return CONTINUE;
 			}
 		});
@@ -223,10 +223,10 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * @param vals any defined symbols (usually {@code inst_start}, and {@code inst_next})
 	 * @param opvals a map from operand index to operand value
 	 * @return the resolution with context changes applied in reverse, or an error
-	 * 
+	 *
 	 * Each value in {@code opvals} must either be a numeric value, e.g., an index from a varnode
 	 * list, or another {@link AssemblyResolvedConstructor} for a subconstructor operand.
-	 * 
+	 *
 	 * It's helpful to think of the SLEIGH disassembly process here. Normally, once the appropriate
 	 * constructor has been identified (by matching patterns), its context changes are applied, and
 	 * then its operands parsed (possibly parsing subconstructor operands). Thus, {@code res} can
@@ -235,7 +235,7 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 	 * context changes were applied, i.e., immediately after selecting the constructor. Thus, in
 	 * reverse, the context is solved immediately before applying the selected constructor
 	 * patterns.
-	 * 
+	 *
 	 * @see AssemblyTreeResolver#resolveSelectedChildren(AssemblyProduction, List, List, Collection)
 	 */
 	public AssemblyResolution solveContextChanges(AssemblyResolvedConstructor res,
@@ -296,10 +296,10 @@ public class AssemblyConstructorSemantic implements Comparable<AssemblyConstruct
 
 	/**
 	 * Apply just context transformations in the forward (disassembly) direction
-	 * 
+	 *
 	 * @param outer the state before context changes
 	 * @return the state after context changes
-	 * 
+	 *
 	 * Unlike the usual disassembly process, this method does not take into account any information
 	 * from the instruction encoding. Any context bits that depend on it are set to unknown
 	 * ({@code x}) in the output. This method is used to pre-compute a context transition graph in

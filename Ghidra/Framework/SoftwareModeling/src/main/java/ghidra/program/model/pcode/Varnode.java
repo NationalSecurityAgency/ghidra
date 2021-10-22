@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 /**
- * 
+ *
  *
  * Rawest possible Varnode.
  * Just a variable location and size, not part of a syntax tree.
@@ -104,11 +104,11 @@ public class Varnode {
 
 	/**
 	 * Returns the word offset into the address space this is defined within
-	 * 
+	 *
 	 * The word size is defined in the Language's .slaspec file with the
 	 * "WORDSIZE" argument when DEFINEing a memory SPACE (capitalization is
 	 * for emphasis; the directives are actually lowercase).
-	 * 
+	 *
 	 * @return the word offset into the address space this is defined within
 	 */
 	public long getWordOffset() {
@@ -144,7 +144,7 @@ public class Varnode {
 	}
 
 	/**
-	 * Determine if this varnode intersects another varnode.  
+	 * Determine if this varnode intersects another varnode.
 	 * @param varnode other varnode
 	 * @return true if this varnode intersects the specified varnode
 	 */
@@ -204,9 +204,9 @@ public class Varnode {
 
 	/**
 	 * @return true if this varnode exists in a Memory space (vs. register etc...).
-	 * Keep in mind this varnode may also correspond to a defined register 
-	 * if true is returned and {@link #isRegister()} return false.  
-	 * Memory-based registers may be indirectly addressed which leads to the 
+	 * Keep in mind this varnode may also correspond to a defined register
+	 * if true is returned and {@link #isRegister()} return false.
+	 * Memory-based registers may be indirectly addressed which leads to the
 	 * distinction with registers within the register space.
 	 */
 	public boolean isAddress() {
@@ -216,8 +216,8 @@ public class Varnode {
 
 	/**
 	 * @return true if this varnode exists in a Register type space.
-	 * If false is returned, keep in mind this varnode may still correspond to a 
-	 * defined register within a memory space.  Memory-based registers may be indirectly 
+	 * If false is returned, keep in mind this varnode may still correspond to a
+	 * defined register within a memory space.  Memory-based registers may be indirectly
 	 * addressed which leads to the distinction with registers within the register space.
 	 */
 	public boolean isRegister() {
@@ -308,7 +308,7 @@ public class Varnode {
 	}
 
 	/**
-	 * @return the index of the group, within the high containing this, that are forced merged with this  
+	 * @return the index of the group, within the high containing this, that are forced merged with this
 	 */
 	public short getMergeGroup() {
 		return 0;
@@ -323,7 +323,7 @@ public class Varnode {
 
 	/**
 	 * Build a Varnode from an XML stream
-	 * 
+	 *
 	 * @param parser the parser
 	 * @param factory pcode factory used to create valid pcode
 	 * @return new varnode element based on info in the XML.
@@ -403,7 +403,7 @@ public class Varnode {
 
 	/**
 	 * Trim a varnode in a constant space to the correct starting offset.
-	 * 
+	 *
 	 * Constant handles may contain constants of indeterminate size.
 	 * This is where the size gets fixed, i.e. we mask off the constant
 	 * to its proper size.  A varnode that is ends up in pcode should
@@ -451,7 +451,7 @@ public class Varnode {
 	@Override
 	public boolean equals(Object o) {
 		//
-		// Note: it is not clear if the equals/hashCode currently work correctly when used in 
+		// Note: it is not clear if the equals/hashCode currently work correctly when used in
 		//       OverlayAddressSpaces.  There is a ticket to examine this issue.
 		//
 

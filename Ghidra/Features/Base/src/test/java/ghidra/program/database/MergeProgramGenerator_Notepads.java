@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +35,8 @@ class MergeProgramGenerator_Notepads implements MergeProgramGenerator {
 	/**
 	 * We keep track of this to know if there are any changes in static initialization.  We want
 	 * to make sure that all program building runs result in the same ID sequences.  The first
-	 * program built triggers static loading, which will cause the IDs for that run to be 
-	 * larger than the subsequent runs.  So, we call all known static initializers before we 
+	 * program built triggers static loading, which will cause the IDs for that run to be
+	 * larger than the subsequent runs.  So, we call all known static initializers before we
 	 * run.  This variable lets us know if a new initializer was added, as the ID value between
 	 * the first run and the second run will be different.
 	 */
@@ -218,7 +218,7 @@ class MergeProgramGenerator_Notepads implements MergeProgramGenerator {
 		builder.addDataType(enumm);
 
 		//
-		// From notepad2		
+		// From notepad2
 		//
 		// functions
 		FunctionDefinitionDataType def = new FunctionDefinitionDataType("MyFunctionDef");

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -141,7 +141,7 @@ class FlowArrowPanel extends JPanel {
 		}
 
 // TODO to do this, we should probably have another concept of 'navigated'/'current' as to not
-// confuse the concept of selecting arrows				
+// confuse the concept of selecting arrows
 		// select any arrow we double-click
 		arrow.selected = true;
 		plugin.setArrowSelected(arrow, true);
@@ -336,7 +336,7 @@ class FlowArrowPanel extends JPanel {
 		@Override
 		public void done() {
 			// set the final position
-// TODO This happens after the animation is finished, which is jarring.  If we want this centered, 
+// TODO This happens after the animation is finished, which is jarring.  If we want this centered,
 //		then we need an entirely different way of animating the transition so that the centering
 //	    is part of the animation.
 //			plugin.scrollToCenter(end);

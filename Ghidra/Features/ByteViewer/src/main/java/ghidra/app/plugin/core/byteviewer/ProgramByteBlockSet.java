@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 
 	/**
 	 * Get the appropriate plugin event for the given block selection.
-	 * 
+	 *
 	 * @param source source to use in the event
 	 * @param selection selection to use to generate the event
 	 */
@@ -87,7 +87,7 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 
 	/**
 	 * Get a plugin event for the given block and offset.
-	 * 
+	 *
 	 * @param source source to use in the event
 	 * @param block block to use to generate the event
 	 * @param offset offset into the block
@@ -152,7 +152,7 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 
 	/**
 	 * Return true if the block has been changed at the given index.
-	 * 
+	 *
 	 * @param block byte block
 	 * @param index offset into the block
 	 * @param length number of bytes in question
@@ -168,7 +168,7 @@ public class ProgramByteBlockSet implements ByteBlockSet {
 
 	/**
 	 * Send a notification that a byte block edit occurred.
-	 * 
+	 *
 	 * @param block block being edited
 	 * @param index offset into the block
 	 * @param oldValue old byte values

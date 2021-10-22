@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,27 +39,27 @@ public class OSGiUtils {
 	 * Match group 1 contains the file name from a resource string, e.g.  from
 	 *     file:/path/to/some.jar!/Some.class
 	 * we get "/path/to/some.jar", everything between ':' and '!'
-	 * 
+	 *
 	 */
 	private static Pattern JAR_FILENAME_EXTRACTOR = Pattern.compile("^.*:(.*)!.*$");
 
 	/*
 	 * Match group 1 contains the name of the Java package from an OSGi resolution
 	 * error message.  If present, match group 2 will be the version constraint.
-	 * 
+	 *
 	 * e.g. for the requirement
 	 *   (&(osgi.wiring.package=x.y.z)(version>=1.2.3))
-	 * 
-	 * PACKAGE_NAME_EXTRACTOR will match with group 1 "x.y.z" and group 2 "(version>=1.2.3)". 
-	 * 
+	 *
+	 * PACKAGE_NAME_EXTRACTOR will match with group 1 "x.y.z" and group 2 "(version>=1.2.3)".
+	 *
 	 */
 	private static Pattern PACKAGE_NAME_EXTRACTOR =
 		Pattern.compile("\\(osgi\\.wiring\\.package=([^)]*)\\)(\\(version[^)]*\\))?");
 
 	/**
 	 * The syntax of the error generated when OSGi requirements cannot be resolved is
-	 * difficult to parse, so we try to extract package name and versions. 
-	 * 
+	 * difficult to parse, so we try to extract package name and versions.
+	 *
 	 * @param osgiExceptionMessage the exception message
 	 * @return a list of package names, possibly including versions
 	 */
@@ -122,7 +122,7 @@ public class OSGiUtils {
 
 	/**
 	 * parse Import-Package string from a bundle manifest
-	 * 
+	 *
 	 * @param importPackageString Import-Package value
 	 * @return deduced requirements or null if there was an error
 	 * @throws BundleException on parse failure
@@ -141,7 +141,7 @@ public class OSGiUtils {
 
 	/**
 	 * parse Export-Package string from a bundle manifest
-	 * 
+	 *
 	 * @param exportPackageString Import-Package value
 	 * @return deduced capabilities or null if there was an error
 	 * @throws BundleException on parse failure
@@ -149,7 +149,7 @@ public class OSGiUtils {
 	static List<BundleCapability> parseExportPackage(String exportPackageString)
 			throws BundleException {
 		Map<String, Object> headerMap = new HashMap<>();
-		// assume version 2 for a more robust parse 
+		// assume version 2 for a more robust parse
 		headerMap.put(Constants.BUNDLE_MANIFESTVERSION, "2");
 		// symbolic name is required for version 2 bundle manifest
 		headerMap.put(Constants.BUNDLE_SYMBOLICNAME, Constants.SYSTEM_BUNDLE_SYMBOLICNAME);
@@ -231,13 +231,13 @@ public class OSGiUtils {
 					String saved = null;
 					/*
 					 *	split on commas not contained in quotes.
-					 * 
+					 *
 					 *	e.g.
 					 *		org.foo,org.bar;uses="org.baz,org.qux"
 					 *		       ^- should split here  ^- not here
 					 *
-					 *	We first split on all commas. The first entry, 
-					 *		org.foo    
+					 *	We first split on all commas. The first entry,
+					 *		org.foo
 					 *	has an even number of quotes, so it's added as is to packages.
 					 *	The second entry,
 					 *		        org.bar;uses="org.baz

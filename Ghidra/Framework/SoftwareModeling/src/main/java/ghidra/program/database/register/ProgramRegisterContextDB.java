@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -272,7 +272,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 		lock.acquire();
 		boolean restore = false;
 		try {
-			// FIXME: We do not properly handle painting context across the full 
+			// FIXME: We do not properly handle painting context across the full
 			// address space which should be avoided.  A non-zero image
 			// base offset can result in a improperly coalesced long key-range.
 			checkContextWrite(value.getRegister(), start, end);
@@ -319,7 +319,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 		Language newLanguage = translator.getNewLanguage();
 
 		// Sort the registers by size so that largest come first.
-		// This prevents the remove call below from incorrectly clearing 
+		// This prevents the remove call below from incorrectly clearing
 		// smaller registers that are part of a larger register.
 		List<Register> registers = new ArrayList<Register>(language.getRegisters());
 		Collections.sort(registers, (r1, r2) -> r2.getBitLength() - r1.getBitLength());
@@ -355,7 +355,7 @@ public class ProgramRegisterContextDB extends AbstractStoredProgramContext imple
 		registerValueMap.clear();
 		initializedCurrentValues();
 
-		// May need to fill-in blank context areas with a new specified context value 
+		// May need to fill-in blank context areas with a new specified context value
 		Register ctxReg = newLanguage.getContextBaseRegister();
 		if (ctxReg != Register.NO_CONTEXT && translator.isValueTranslationRequired(ctxReg)) {
 			RegisterValue gapValue = new RegisterValue(ctxReg);

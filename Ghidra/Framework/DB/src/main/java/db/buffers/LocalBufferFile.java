@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,21 +48,21 @@ public class LocalBufferFile implements BufferFile {
 
 	/**
 	 * Current file header format version number.
-	 * The third field of the file header indicates a 
+	 * The third field of the file header indicates a
 	 * format version which indicates how the header
 	 * is formatted.
 	 */
 	private static final int HEADER_FORMAT_VERSION = 1;
 
-	// 
+	//
 	// The first block is reserved for use by the BlockFile header.
-	// The format of this header is determined by the Field #3.  
+	// The format of this header is determined by the Field #3.
 	//
 	// FILE FORMAT - VERSION 1
-	// 
+	//
 	// A file header is contained within the first buffer at offset 0 within the file.
 	// This header contains the following fields:
-	// 
+	//
 	// 1. Magic number (8,long)
 	// 2. File ID (8,long)
 	// 3. Block file header format version (4,int) = 1
@@ -74,8 +74,8 @@ public class LocalBufferFile implements BufferFile {
 	//       * Parm name (?,char[])
 	//       * Parm value (4,int)
 	//    Parameter space is limited by buffer size.
-	// 
-	// In Version 1 - the first available user buffer immediately follows the file 
+	//
+	// In Version 1 - the first available user buffer immediately follows the file
 	// header block (i.e., buffer index 0 corresponds to block index 1).
 	//
 	// Each user block has the following prefix data:
@@ -101,8 +101,8 @@ public class LocalBufferFile implements BufferFile {
 
 	/**
 	 * <code>userParms</code> contains application parameters which correspond to
-	 * this buffer file.  This list is established for 
-	 * an existing buffer file when the readHeader is invoked.  For a non-temporary 
+	 * this buffer file.  This list is established for
+	 * an existing buffer file when the readHeader is invoked.  For a non-temporary
 	 * writable buffer file, this list is flushed to the file when either close or
 	 * setReadOnly is invoked.
 	 */
@@ -110,8 +110,8 @@ public class LocalBufferFile implements BufferFile {
 
 	/**
 	 * <code>freeIndexes</code> contains those buffer indexes which are free/empty
-	 * and may be re-used in an update of this file.  This list is established for 
-	 * an existing buffer file when the readHeader is invoked.  For a non-temporary 
+	 * and may be re-used in an update of this file.  This list is established for
+	 * an existing buffer file when the readHeader is invoked.  For a non-temporary
 	 * writable buffer file, this list is flushed to the file when either close or
 	 * setReadOnly is invoked.
 	 */
@@ -128,9 +128,9 @@ public class LocalBufferFile implements BufferFile {
 	private RandomAccessFile raf;
 
 	/**
-	 * <code>activeBlockStream</code> provides a handle to the active 
+	 * <code>activeBlockStream</code> provides a handle to the active
 	 * OutputBlockStream used to update file via raf.  This should be
-	 * checked during {@link #close()} to guard against partially 
+	 * checked during {@link #close()} to guard against partially
 	 * written file.  A LocalOutputBlockStream should only be used
 	 * for files open for writing (i.e., !readOnly).
 	 */
@@ -150,8 +150,8 @@ public class LocalBufferFile implements BufferFile {
 	private long fileId;
 
 	/**
-	 * If <code>readOnly</code> is true, this file may not be modified 
-	 * via the buffer put method.  
+	 * If <code>readOnly</code> is true, this file may not be modified
+	 * via the buffer put method.
 	 * A read-only file may be considered "updateable" if the canSave
 	 * method returns true.  The term "updateable" means that a Save file
 	 * can be obtained via the getSaveFile method.
@@ -172,7 +172,7 @@ public class LocalBufferFile implements BufferFile {
 	private int bufferSize;
 
 	/**
-	 * <code>bufferCount</code> indicates the number of buffer which have been 
+	 * <code>bufferCount</code> indicates the number of buffer which have been
 	 * allocated within this file and directly reflects the size of the file.
 	 * The value corresponds to the next buffer index which can be allocated once all
 	 * free indexes have been utilized.  When an existing file is opened, this value
@@ -410,9 +410,9 @@ public class LocalBufferFile implements BufferFile {
 	}
 
 	/**
-	 * Set random access file (raf) position to the file block containing the specified buffer 
-	 * identified by its bufferIndex.  It is important to understand the distinction between 
-	 * blocks and buffers, where buffers are stored within file blocks which are slightly larger.  
+	 * Set random access file (raf) position to the file block containing the specified buffer
+	 * identified by its bufferIndex.  It is important to understand the distinction between
+	 * blocks and buffers, where buffers are stored within file blocks which are slightly larger.
 	 * In addition, the first file block stores the file header and is not used to store a buffer.
 	 * @param bufferIndex buffer index
 	 * @return file block index (=bufferIndex+1)
@@ -420,7 +420,7 @@ public class LocalBufferFile implements BufferFile {
 	 */
 	private int seekBufferBlock(int bufferIndex) throws IOException {
 		// Perform long multiplication to support file sizes greater than 2-GBytes
-		// Add 1 to buffer index to obtain block index (first useable buffer, buffer#0, is 
+		// Add 1 to buffer index to obtain block index (first useable buffer, buffer#0, is
 		// contained within block#1 since block#0 contains file header)
 		int blockIndex = bufferIndex + 1;
 		long offset = (long) blockIndex * (long) blockSize;
@@ -458,7 +458,7 @@ public class LocalBufferFile implements BufferFile {
 		// Read file ID
 		fileId = raf.readLong();
 
-		// Check file format version	
+		// Check file format version
 		int headerFormatVersion = raf.readInt();
 		if (headerFormatVersion != HEADER_FORMAT_VERSION) {
 			throw new IOException("Unrecognized file format");
@@ -487,7 +487,7 @@ public class LocalBufferFile implements BufferFile {
 	}
 
 	/**
-	 * Store the user parameter and free buffer index lists and write the 
+	 * Store the user parameter and free buffer index lists and write the
 	 * file header.
 	 * @throws IOException if an I/O error occurs while writing file
 	 */
@@ -619,8 +619,8 @@ public class LocalBufferFile implements BufferFile {
 	/**
 	 * Generate a BufferFileBlock instance which corresponds to the specified DataBuffer
 	 * based upon LocalBufferFile block usage.  This should generally not be used for writing
-	 * empty blocks since they will not be properly linked which is normally handled during 
-	 * header flush which is performed by BufferFile close on files being written. 
+	 * empty blocks since they will not be properly linked which is normally handled during
+	 * header flush which is performed by BufferFile close on files being written.
 	 * @param buf the data buffer to be converted
 	 * @param bufferSize data buffer size used for integrity check and generating empty buffer
 	 * @return BufferFileBlock instance.
@@ -679,7 +679,7 @@ public class LocalBufferFile implements BufferFile {
 			else if (data.length != bufferSize) {
 				throw new IllegalArgumentException("Bad buffer size");
 			}
-			// Non-empty Buffer - read data	
+			// Non-empty Buffer - read data
 			raf.readFully(data);
 		}
 		buf.setDirty(false);
@@ -929,9 +929,9 @@ public class LocalBufferFile implements BufferFile {
 	}
 
 	/**
-	 * Clone this buffer file to the specified file.  The file must not 
+	 * Clone this buffer file to the specified file.  The file must not
 	 * already exist.  If the operation is cancelled or an error occurs
-	 * the file is not created. 
+	 * the file is not created.
 	 * @param destinationFile destination file
 	 * @param monitor progress monitor
 	 * @throws IOException if IO error occurs.
@@ -960,7 +960,7 @@ public class LocalBufferFile implements BufferFile {
 	}
 
 	/**
-	 * <code>LocalBufferInputBlockStream</code> provides an input BlockStream for 
+	 * <code>LocalBufferInputBlockStream</code> provides an input BlockStream for
 	 * transferring the entire file content associated with a read-only buffer
 	 * file use a buffer-based transfer.
 	 */
@@ -1031,10 +1031,10 @@ public class LocalBufferFile implements BufferFile {
 	}
 
 	/**
-	 * <code>LocalFileInputBlockStream</code> provides an input BlockStream for 
+	 * <code>LocalFileInputBlockStream</code> provides an input BlockStream for
 	 * transferring the entire file content associated with a read-only file.
 	 * This implementation reads the data directly from a single local file
-	 * and must not be used when performing version reconstruction or 
+	 * and must not be used when performing version reconstruction or
 	 * change-map driven streams.
 	 */
 	private class LocalFileInputBlockStream implements InputBlockStream {
@@ -1107,7 +1107,7 @@ public class LocalBufferFile implements BufferFile {
 
 		/**
 		 * The <code>bufferIndexList</code> contains the DataBuffer indexes
-		 * which are to be transferred.  Buffer index values plus 1 equal the 
+		 * which are to be transferred.  Buffer index values plus 1 equal the
 		 * file block index.
 		 */
 		private List<Integer> bufferIndexList;
@@ -1121,9 +1121,9 @@ public class LocalBufferFile implements BufferFile {
 
 		/**
 		 * Construct input block stream for specific block indexes
-		 * within the file based upon a changeMap.  The head buffer 
+		 * within the file based upon a changeMap.  The head buffer
 		 * will never be included in the transfer.
-		 * @param changeMapData ChangeMap data which is used in determining which 
+		 * @param changeMapData ChangeMap data which is used in determining which
 		 * buffers should be streamed
 		 * @throws IOException
 		 */
@@ -1195,7 +1195,7 @@ public class LocalBufferFile implements BufferFile {
 	}
 
 	/**
-	 * <code>LocalOutputBlockStream</code> provides an OutputBlockStream for 
+	 * <code>LocalOutputBlockStream</code> provides an OutputBlockStream for
 	 * updating specific buffers of a non-read-only file.
 	 */
 	class LocalOutputBlockStream implements OutputBlockStream {
@@ -1270,7 +1270,7 @@ public class LocalBufferFile implements BufferFile {
 					// we must assume that any buffers starting with bufferCount upto blockIndex will
 					// be accounted for in the ultimate free-list maintained outside the buffer file.
 					// NOTE: bufferCount reflects DataBuffers which excludes the first block at blockIndex=0
-					bufferCount = blockIndex; // 
+					bufferCount = blockIndex; //
 				}
 			}
 		}
@@ -1288,7 +1288,7 @@ public class LocalBufferFile implements BufferFile {
 	}
 
 	/**
-	 * Obtain a direct stream to read all blocks of this buffer file 
+	 * Obtain a direct stream to read all blocks of this buffer file
 	 * @return input block stream
 	 * @throws IOException
 	 */
@@ -1311,7 +1311,7 @@ public class LocalBufferFile implements BufferFile {
 
 	/**
 	 * Factory method for generating the appropriate type of {@link InputBlockStream}
-	 * for the specified read-only bufferFile.  Input stream may not supply header block in which case 
+	 * for the specified read-only bufferFile.  Input stream may not supply header block in which case
 	 * free list and file parameters may need to be set separately.
 	 * @param bufferFile buffer file opened read-only
 	 * @return input block stream object
@@ -1333,7 +1333,7 @@ public class LocalBufferFile implements BufferFile {
 	/**
 	 * Factory method for generating the appropriate type of {@link InputBlockStream}
 	 * for the specified read-only bufferFile with an optional changeMap used
-	 * to select which buffer should be transferred.  Input stream may not supply header block 
+	 * to select which buffer should be transferred.  Input stream may not supply header block
 	 * in which case free list and file parameters may need to be set separately.
 	 * @param bufferFile buffer file opened read-only
 	 * @return input block stream object
@@ -1358,8 +1358,8 @@ public class LocalBufferFile implements BufferFile {
 
 	/**
 	 * Factory method for generating the appropriate type of {@link OutputBlockStream}
-	 * for the specified write-able bufferFile.  
-	 * @param bufferFile write-able buffer file 
+	 * for the specified write-able bufferFile.
+	 * @param bufferFile write-able buffer file
 	 * @param blockCount number of blocks to be written.  This should be available from
 	 * the corresponding {@link InputBlockStream}.
 	 * @return output block stream object
@@ -1522,7 +1522,7 @@ public class LocalBufferFile implements BufferFile {
 
 	/**
 	 * Attempt to remove all pre-save files.
-	 * Those still open by an existing process should 
+	 * Those still open by an existing process should
 	 * not be removed by the operating system.
 	 * @param dir data directory containing presave files
 	 * @param beforeNow if not 0, file mod time must be less than the specified time
@@ -1554,12 +1554,12 @@ public class LocalBufferFile implements BufferFile {
 	}
 
 //	private void checkSameContent(BufferFile expectedBf, BufferFile inspectedBf) throws IOException {
-//		
+//
 //		//assertEquals(inspectedBf.getIndexCount(), expectedBf.getIndexCount());
 //		if(inspectedBf.getIndexCount() != expectedBf.getIndexCount()) {
 //			System.err.println("Buffer count mismatch following update");
 //		}
-//		
+//
 //		int[] vFreeList = inspectedBf.getFreeIndexes();
 //		int[] pFreeList = inspectedBf.getFreeIndexes();
 //		Arrays.sort(vFreeList);
@@ -1571,13 +1571,13 @@ public class LocalBufferFile implements BufferFile {
 //		if (!Arrays.equals(expectedBf.getParameterNames(), inspectedBf.getParameterNames())) {
 //			System.err.println("Parameter list mismatch following update");
 //		}
-//		
+//
 //		for (String name : expectedBf.getParameterNames()) {
 //			if (expectedBf.getParameter(name) != inspectedBf.getParameter(name)) {
 //				System.err.println("Parameter " + name + " mismatch following update");
 //			}
 //		}
-//		
+//
 //		DataBuffer pbuf = new DataBuffer();
 //		DataBuffer vbuf = new DataBuffer();
 //		int cnt = inspectedBf.getIndexCount();
@@ -1585,7 +1585,7 @@ public class LocalBufferFile implements BufferFile {
 //			checkSameContent(i, expectedBf.get(vbuf, i), inspectedBf.get(pbuf, i));
 //		}
 //	}
-//	
+//
 //	private void checkSameContent(int index, DataBuffer expectedBuf, DataBuffer inspectedBuf) {
 //		if (expectedBuf.isEmpty() != inspectedBuf.isEmpty()) {
 //			System.err.println("Buffer " + index + " empty flag mismatch following update");

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -127,9 +127,9 @@ public interface DomainObject {
 
 	/**
 	 * Notify the domain object that the specified consumer is no longer using it.
-	 * When the last consumer invokes this method, the domain object will be closed 
+	 * When the last consumer invokes this method, the domain object will be closed
 	 * and will become invalid.
-	 * @param consumer the consumer (e.g., tool, plugin, etc) of the domain object 
+	 * @param consumer the consumer (e.g., tool, plugin, etc) of the domain object
 	 * previously established with the addConsumer method.
 	 */
 	public void release(Object consumer);
@@ -149,14 +149,14 @@ public interface DomainObject {
 	/**
 	 * Adds a listener that will be notified when this DomainObject is closed.  This is meant
 	 * for clients to have a chance to cleanup, such as reference removal.
-	 * 
+	 *
 	 * @param listener the reference to add
 	 */
 	public void addCloseListener(DomainObjectClosedListener listener);
 
 	/**
 	 * Removes the given close listener.
-	 * 
+	 *
 	 * @param listener the listener to remove.
 	 */
 	public void removeCloseListener(DomainObjectClosedListener listener);
@@ -195,7 +195,7 @@ public interface DomainObject {
 
 	/**
 	 * Get the domain file for this domain object.
-	 * @return the associated domain file 
+	 * @return the associated domain file
 	 */
 	public DomainFile getDomainFile();
 
@@ -207,13 +207,13 @@ public interface DomainObject {
 	 */
 	public boolean addConsumer(Object consumer);
 
-	/** 
+	/**
 	 * Returns the list of consumers on this domainObject
 	 * @return the list of consumers.
 	 */
 	public ArrayList<Object> getConsumerList();
 
-	/** 
+	/**
 	 * Returns true if the given consumer is using (has open) this domain object.
 	 * @param consumer the object to test to see if it is a consumer of this domain object.
 	 * @return true if the given consumer is using (has open) this domain object;
@@ -229,8 +229,8 @@ public interface DomainObject {
 	 * <p>
 	 * NOTE: when re-enabling events, an event will be sent to the system to signal that
 	 *       every listener should update.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param enabled true means to enable events
 	 */
 	public void setEventsEnabled(boolean enabled);
@@ -238,7 +238,7 @@ public interface DomainObject {
 	/**
 	 * Returns true if this object is sending out events as it is changed.  The default is
 	 * true.  You can change this value by calling {@link #setEventsEnabled(boolean)}.
-	 * 
+	 *
 	 * @see #setEventsEnabled(boolean)
 	 */
 	public boolean isSendingEvents();
@@ -290,7 +290,7 @@ public interface DomainObject {
 
 	/**
 	 * Returns all properties lists contained by this domain object.
-	 * 
+	 *
 	 * @return all property lists contained by this domain object.
 	 */
 	public List<String> getOptionsNames();

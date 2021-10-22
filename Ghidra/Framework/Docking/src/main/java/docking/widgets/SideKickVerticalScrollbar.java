@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,13 +71,13 @@ public class SideKickVerticalScrollbar extends JScrollBar {
 		delegate.addAdjustmentListener(l);
 	}
 
-	/*	 
+	/*
 	 	Note: Using this method causes some screen reader hardware to fail.   We believe that this
 	 	      method was overridden to follow the pattern of all the other methods of this class.
 	 	      Apparently, the delegate's accessible context does not correctly return a parent,
 	 	      presumably because this class's parent is not the parent of the delegate.
 	 	      Not overriding this method seems to produce the correct result.
-	 
+
 		@Override
 		public AccessibleContext getAccessibleContext() {
 			return delegate.getAccessibleContext();

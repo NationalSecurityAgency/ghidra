@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public class X86_32_CoffRelocationHandler extends CoffRelocationHandler {
 			// We are implementing these types:
 			case IMAGE_REL_I386_DIR32: {
 				program.getMemory().setInt(address,
-					(int) symbol.getAddress().add(addend).getOffset());				
+					(int) symbol.getAddress().add(addend).getOffset());
 				break;
 			}
 			case IMAGE_REL_I386_DIR32NB: {
@@ -104,13 +104,13 @@ public class X86_32_CoffRelocationHandler extends CoffRelocationHandler {
 	public final static short IMAGE_REL_I386_SEG12 = 0x0009;
 
 	/**
-	 * The 16-bit section index of the section that contains the target. 
+	 * The 16-bit section index of the section that contains the target.
 	 * This is used to support debugging information.
 	 */
 	public final static short IMAGE_REL_I386_SECTION = 0x000a;
 
 	/**
-	 * The 32-bit offset of the target from the beginning of its section. 
+	 * The 32-bit offset of the target from the beginning of its section.
 	 * This is used to support debugging information and static thread local storage.
 	 */
 	public final static short IMAGE_REL_I386_SECREL = 0x000b;
@@ -126,7 +126,7 @@ public class X86_32_CoffRelocationHandler extends CoffRelocationHandler {
 	public final static short IMAGE_REL_I386_SECREL7 = 0x000d;
 
 	/**
-	 * The 32-bit relative displacement to the target. 
+	 * The 32-bit relative displacement to the target.
 	 * This supports the x86 relative branch and call instructions.
 	 */
 	public final static short IMAGE_REL_I386_REL32 = 0x0014;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,7 +62,7 @@ public class GhidraURL {
 	 * Determine if the specified URL is a local project URL.
 	 * No checking is performed as to the existence of the project.
 	 * @param url
-	 * @return true if specified URL refers to a local 
+	 * @return true if specified URL refers to a local
 	 * project (ghidra:/path/projectName...)
 	 */
 	public static boolean isLocalProjectURL(URL url) {
@@ -70,7 +70,7 @@ public class GhidraURL {
 	}
 
 	/**
-	 * Get the project name which corresponds to the specified 
+	 * Get the project name which corresponds to the specified
 	 * local project URL.
 	 * @param localProjectURL local Ghidra project URL
 	 * @return project name
@@ -86,7 +86,7 @@ public class GhidraURL {
 	}
 
 	/**
-	 * Get the project location path which corresponds to the specified 
+	 * Get the project location path which corresponds to the specified
 	 * local project URL.
 	 * @param localProjectURL local Ghidra project URL
 	 * @return project location path
@@ -107,7 +107,7 @@ public class GhidraURL {
 	}
 
 	/**
-	 * Get the project locator which corresponds to the specified 
+	 * Get the project locator which corresponds to the specified
 	 * local project URL.
 	 * @param localProjectURL local Ghidra project URL
 	 * @return project locator
@@ -135,7 +135,7 @@ public class GhidraURL {
 	 * Determine if the specified URL is any type of server "repository" URL.
 	 * No checking is performed as to the existence of the server or repository.
 	 * @param url
-	 * @return true if specified URL refers to a Ghidra server 
+	 * @return true if specified URL refers to a Ghidra server
 	 * repository (ghidra://host/repositoryNAME/path...)
 	 */
 	public static boolean isServerRepositoryURL(URL url) {
@@ -147,7 +147,7 @@ public class GhidraURL {
 	 * Determine if the specified URL is any type of server URL.
 	 * No checking is performed as to the existence of the server or repository.
 	 * @param url
-	 * @return true if specified URL refers to a Ghidra server 
+	 * @return true if specified URL refers to a Ghidra server
 	 * repository (ghidra://host/repositoryNAME/path...)
 	 */
 	public static boolean isServerURL(URL url) {
@@ -268,7 +268,7 @@ public class GhidraURL {
 
 	/**
 	 * Create a URL which refers to a local Ghidra project
-	 * @param dirPath absolute path of project location directory 
+	 * @param dirPath absolute path of project location directory
 	 * @param projectName name of project
 	 * @return local Ghidra project URL
 	 */
@@ -286,12 +286,12 @@ public class GhidraURL {
 	}
 
 	/**
-	 * Create a URL which refers to Ghidra Server repository content.  Path may correspond 
-	 * to either a file or folder.  
+	 * Create a URL which refers to Ghidra Server repository content.  Path may correspond
+	 * to either a file or folder.
 	 * @param host server host name/address
 	 * @param port optional server port (a value &lt;= 0 refers to the default port)
 	 * @param repositoryName repository name
-	 * @param repositoryPath absolute folder or file path within repository.  
+	 * @param repositoryPath absolute folder or file path within repository.
 	 * Folder paths should end with a '/' character.
 	 * @return Ghidra Server repository content URL
 	 */
@@ -300,12 +300,12 @@ public class GhidraURL {
 	}
 
 	/**
-	 * Create a URL which refers to Ghidra Server repository content.  Path may correspond 
-	 * to either a file or folder.  
+	 * Create a URL which refers to Ghidra Server repository content.  Path may correspond
+	 * to either a file or folder.
 	 * @param host server host name/address
 	 * @param port optional server port (a value &lt;= 0 refers to the default port)
 	 * @param repositoryName repository name
-	 * @param repositoryPath absolute folder path within repository. 
+	 * @param repositoryPath absolute folder path within repository.
 	 * @param fileName name of a file contained within the specified repository/path
 	 * @param ref optional URL ref or null
 	 * Folder paths should end with a '/' character.

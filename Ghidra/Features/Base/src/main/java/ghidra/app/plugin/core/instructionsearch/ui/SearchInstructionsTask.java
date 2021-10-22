@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,14 +32,14 @@ import ghidra.util.task.Task;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Task to perform a search from the {@link InstructionSearchDialog}, returning the NEXT or 
+ * Task to perform a search from the {@link InstructionSearchDialog}, returning the NEXT or
  * PREVIOUS result found, depending on the search direction.
  * <p>
  * This class searches for a single result within the appropriate search ranges (or the entire
- * program if that option is selected). It's optimized to ignore ranges that are "out of scope"; 
+ * program if that option is selected). It's optimized to ignore ranges that are "out of scope";
  * ie: if searching in the forward direction from a certain address, any ranges prior to that
  * address will be ignored.
- * 
+ *
  */
 class SearchInstructionsTask extends Task {
 
@@ -47,8 +47,8 @@ class SearchInstructionsTask extends Task {
 	private InstructionSearchPlugin searchPlugin;
 
 	/**
-	 * Constructor. 
-	 * 
+	 * Constructor.
+	 *
 	 * @param dialog the parent dialog
 	 * @param plugin the parent plugin
 	 */
@@ -64,11 +64,11 @@ class SearchInstructionsTask extends Task {
 			return;
 		}
 
-		// First get all the search ranges we have to search.  
+		// First get all the search ranges we have to search.
 		List<AddressRange> searchRanges =
 			searchDialog.getControlPanel().getRangeWidget().getSearchRange();
 
-		// Get the current cursor location - we'll always start searching from here. 
+		// Get the current cursor location - we'll always start searching from here.
 		Address currentAddr = searchPlugin.getProgramLocation().getByteAddress();
 
 		// See if we're searching forward or backwards.
@@ -91,7 +91,7 @@ class SearchInstructionsTask extends Task {
 			rangeNum++;
 
 			// Now, depending on our current cursor location, we may not have to search all of the
-			// ranges. ie: if our cursor is beyond the bounds of a range and we're searching in 
+			// ranges. ie: if our cursor is beyond the bounds of a range and we're searching in
 			// the forward direction.
 			if (forward) {
 				if (currentAddr.compareTo(range.getMaxAddress()) >= 0) {
@@ -132,7 +132,7 @@ class SearchInstructionsTask extends Task {
 			continue;
 		}
 
-		// If we've gone through all the ranges and there are still no results, show an 
+		// If we've gone through all the ranges and there are still no results, show an
 		// error message.
 		searchDialog.getMessagePanel().setMessageText("No results found", Color.BLUE);
 		return;
@@ -140,9 +140,9 @@ class SearchInstructionsTask extends Task {
 	}
 
 	/**
-	 * Moves the cursor in the listing to the next search result past, or before (depending on 
+	 * Moves the cursor in the listing to the next search result past, or before (depending on
 	 * the given direction) the current address.
-	 * 
+	 *
 	 * @param direction the direction to search (forward/backward)
 	 * @param searchResults the list of instructions to search
 	 * @return the address of the next result found
@@ -152,10 +152,10 @@ class SearchInstructionsTask extends Task {
 		Address currentAddress = searchPlugin.getProgramLocation().getByteAddress();
 
 		// If forward-searching, just find the first address in the given result set that is
-		// greater than the current address.  
+		// greater than the current address.
 		//
-		// The reason for the getting the CodeUnit is that the instruction might be an off-cut, 
-		// and if that's the case, then we can't navigate directly to it.  What we have to do 
+		// The reason for the getting the CodeUnit is that the instruction might be an off-cut,
+		// and if that's the case, then we can't navigate directly to it.  What we have to do
 		// is find the CodeUnit containing the instruction and navigate to that.
 		if (direction == Direction.FORWARD) {
 			for (InstructionMetadata instr : searchResults) {
@@ -169,7 +169,7 @@ class SearchInstructionsTask extends Task {
 		}
 
 		// If backwards, iterate over the list in reverse order and find the first address in
-		// the result set that is one less than the current address. 
+		// the result set that is one less than the current address.
 		//
 		// See above for an explanation for why we need to get the CodeUnit in this block.
 		if (direction == Direction.BACKWARD) {

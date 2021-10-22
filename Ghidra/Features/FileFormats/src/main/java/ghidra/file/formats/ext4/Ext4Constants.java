@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,10 +16,10 @@
 package ghidra.file.formats.ext4;
 
 public final class Ext4Constants {
-	
+
 	public final static int SUPER_BLOCK_START = 0x400;
 	public final static int SUPER_BLOCK_MAGIC = 0xEF53;	// LE
-	
+
 	//Super Block Compatible Feature Flags
 	public final static int COMPAT_DIR_PREALLOC = 0x1;
 	public final static int COMPAT_IMAGIC_INODES = 0x2;
@@ -31,7 +31,7 @@ public final class Ext4Constants {
 	public final static int COMPAT_EXCLUDE_INODE = 0x80;
 	public final static int COMPAT_EXCLUDE_BITMAP = 0x100;
 	public final static int COMPAT_SPARSE_SUPER2 = 0x200;
-	
+
 	//Super Block Incompatible Feature Flags
 	public final static int INCOMPAT_COMPRESSION = 0x1;
 	public final static int INCOMPAT_FILETYPE = 0x2;
@@ -48,7 +48,7 @@ public final class Ext4Constants {
 	public final static int INCOMPAT_LARGEDIR = 0x4000;
 	public final static int INCOMPAT_INLINE_DATA = 0x8000;
 	public final static int INCOMPAT_ENCRYPT = 0x10000;
-	
+
 	//Super Block Read-only Compatible Feature Flags
 	public final static int RO_COMPAT_SPARSE_SUPER = 0x1;
 	public final static int RO_COMPAT_LARGE_FILE = 0x2;
@@ -64,7 +64,7 @@ public final class Ext4Constants {
 	public final static int RO_COMPAT_REPLICA = 0x800;
 	public final static int RO_COMPAT_READONLY = 0x1000;
 	public final static int RO_COMPAT_PROJECT = 0x2000;
-	
+
 	//Inode File Mode
 	public final static int S_IXOTH = 0x1;
 	public final static int S_IWOTH = 0x2;
@@ -86,9 +86,9 @@ public final class Ext4Constants {
 	public final static int S_IFREG = 0x8000;
 	public final static int S_IFLNK = 0xA000;
 	public final static int S_IFSOCK = 0xC000;
-	
+
 	public final static int I_MODE_MASK = 0xF000;
-	
+
 	//Inode Flags
 	public final static int EXT4_SECRM_FL = 0x1;
 	public final static int EXT4_UNRM_FL = 0x2;
@@ -123,7 +123,7 @@ public final class Ext4Constants {
 
 	// ------------------------------------------------------
 	// ext4_dir_entry_2 File Types
-	
+
 	public final static byte FILE_TYPE_UNKNOWN = 0x0;
 	public final static byte FILE_TYPE_REGULAR_FILE = 0x1;
 	public final static byte FILE_TYPE_DIRECTORY = 0x2;
@@ -137,7 +137,7 @@ public final class Ext4Constants {
 
 	/**
 	 * @see https://github.com/torvalds/linux/blob/master/fs/ext4/ext4.h
-	 * 
+	 *
 	 * Ext4 directory file types.  Only the low 3 bits are used.  The
 	 * other bits are reserved for now.
 	 */

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public interface DataTypeArchive extends DataTypeManagerDomainObject {
 	 * @return default pointer size.
 	 */
 	public int getDefaultPointerSize();
-	
+
     /**
      * Returns the creation date of this data type archive.
      * existed, then Jan 1, 1970 is returned.
@@ -75,9 +75,9 @@ public interface DataTypeArchive extends DataTypeManagerDomainObject {
      * @param newValue new value or an Object that is related to the
      * the event
      */
-    public void setObjChanged(int type, Object affectedObj, Object oldValue, 
+    public void setObjChanged(int type, Object affectedObj, Object oldValue,
     						Object newValue);
-    
+
 	/**
 	 * Invalidates any caching in a data type archive.
 	 * NOTE: Over-using this method can adversely affect system performance.
@@ -85,5 +85,5 @@ public interface DataTypeArchive extends DataTypeManagerDomainObject {
 	public void invalidate();
 
 	public void updateID();
-	
+
 }

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,14 +21,14 @@ import ghidra.framework.store.DataFileHandle;
 import java.io.*;
 
 /**
- * <code>LocalDataFileHandle</code> provides random access to 
+ * <code>LocalDataFileHandle</code> provides random access to
  * a local File.
  */
 public class LocalDataFileHandle implements DataFileHandle {
 
 	private RandomAccessFile raf;
 	private boolean readOnly;
-	
+
 	/**
 	 * Construct and open a local DataFileHandle.
 	 * @param file file to be opened
@@ -40,7 +40,7 @@ public class LocalDataFileHandle implements DataFileHandle {
 		this.readOnly = readOnly;
 		raf = new RandomAccessFile(file, readOnly ? "r" : "rw");
 	}
-	
+
 	/*
 	 * @see ghidra.framework.store.DataFileHandle#read(byte[])
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,21 +41,21 @@ public abstract class AbstractLoaderExporter extends Exporter {
 
 	/**
 	 * Creates a new {@link AbstractLoaderExporter}
-	 * 
+	 *
 	 * @param name The display name of this exporter
 	 * @param help The {@link HelpLocation} for this exporter
 	 */
 	protected AbstractLoaderExporter(String name, HelpLocation help) {
 		super(name, "", help);
 	}
-	
+
 	/**
 	 * Checks to see if the given file format is supported by this exporter
-	 * 
+	 *
 	 * @param fileFormat The file format (loader name) of the program to export
 	 * @return True if the given file format is supported by this exporter; otherwise, false
 	 */
-	protected abstract boolean supportsFileFormat(String fileFormat); 
+	protected abstract boolean supportsFileFormat(String fileFormat);
 
 	@Override
 	public boolean export(File file, DomainObject domainObj, AddressSetView addrSet,
@@ -65,10 +65,10 @@ public abstract class AbstractLoaderExporter extends Exporter {
 			log.appendMsg("Unsupported type: " + domainObj.getClass().getSimpleName());
 			return false;
 		}
-		
+
 		Program program = (Program) domainObj;
 		Memory memory = program.getMemory();
-		
+
 		String fileFormat = program.getExecutableFormat();
 		if (!supportsFileFormat(fileFormat)) {
 			log.appendMsg("Unsupported file format: " + fileFormat);
@@ -86,7 +86,7 @@ public abstract class AbstractLoaderExporter extends Exporter {
 				FileUtilities.copyStreamToStream(new FileBytesInputStream(bytes), out, monitor);
 			}
 		}
-		
+
 		// Undo relocations in the temp file
 		// NOTE: not all relocations are file-backed
 		String error = null;
@@ -109,7 +109,7 @@ public abstract class AbstractLoaderExporter extends Exporter {
 				}
 			}
 		}
-		
+
 		// If errors occurred, log them and delete the malformed temp file
 		if (error != null) {
 			log.appendMsg(error);
@@ -118,7 +118,7 @@ public abstract class AbstractLoaderExporter extends Exporter {
 			}
 			return false;
 		}
-		
+
 		// Move temp file to desired output file
 		Path from = Paths.get(tempFile.toURI());
 		Path to = Paths.get(file.toURI());
@@ -148,7 +148,7 @@ public abstract class AbstractLoaderExporter extends Exporter {
 		/**
 		 * Creates a new {@link InputStream} that can read over the modified bytes of the given
 		 * {@link FileBytes} object
-		 * 
+		 *
 		 * @param fileBytes The {@link FileBytes} to use for the {@link InputStream}
 		 */
 		FileBytesInputStream(FileBytes fileBytes) {

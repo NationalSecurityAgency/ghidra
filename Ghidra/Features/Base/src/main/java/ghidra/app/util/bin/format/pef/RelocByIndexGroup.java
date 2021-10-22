@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,30 +30,30 @@ import java.util.List;
  */
 public class RelocByIndexGroup extends Relocation {
 	/**
-	 * This "RelocSmByImport" (SYMB) instruction adds the address of the imported symbol 
-	 * whose index is held in <code>index</code> to the word pointed to by 
-	 * <code>relocAddress</code>. After the addition, <code>relocAddress</code> 
-	 * points to just past the modified word, and <code>importindex</code> 
+	 * This "RelocSmByImport" (SYMB) instruction adds the address of the imported symbol
+	 * whose index is held in <code>index</code> to the word pointed to by
+	 * <code>relocAddress</code>. After the addition, <code>relocAddress</code>
+	 * points to just past the modified word, and <code>importindex</code>
 	 * is set to <code>index+1</code>.
 	 */
 	public final static int kPEFRelocSmByImport = 0;
 	/**
-	 * This "RelocSmSetSectC" (CDIS) instruction sets the variable <code>sectionC</code> 
-	 * to the memory address of the instantiated section 
+	 * This "RelocSmSetSectC" (CDIS) instruction sets the variable <code>sectionC</code>
+	 * to the memory address of the instantiated section
 	 * specified by <code>index</code>.
 	 */
 	public final static int kPEFRelocSmSetSectC = 1;
 	/**
 	 * This "RelocSmSetSectD" (DTIS) instruction sets the variable <code>sectionD</code>
-	 * to the memory adddress of the instantiated section 
+	 * to the memory adddress of the instantiated section
 	 * specified by <code>index</code>.
 	 */
 	public final static int kPEFRelocSmSetSectD = 2;
 	/**
-	 * This "RelocSmBySection" (SECN) instruction adds the address of the instantiated 
-	 * section specified by <code>index</code> to the word 
+	 * This "RelocSmBySection" (SECN) instruction adds the address of the instantiated
+	 * section specified by <code>index</code> to the word
 	 * pointed to by <code>relocAddress</code>. After
-	 * execution, <code>relocAddress</code> points to just 
+	 * execution, <code>relocAddress</code> points to just
 	 * past the modified word.
 	 */
 	public final static int kPEFRelocSmBySection = 3;
@@ -94,7 +94,7 @@ public class RelocByIndexGroup extends Relocation {
 	}
 
 	@Override
-	public void apply(ImportStateCache importState, RelocationState relocState, 
+	public void apply(ImportStateCache importState, RelocationState relocState,
 			ContainerHeader header, Program program, MessageLog log, TaskMonitor monitor) {
 
 		List<ImportedSymbol> importedSymbols = header.getLoader().getImportedSymbols();
@@ -105,7 +105,7 @@ public class RelocByIndexGroup extends Relocation {
 				ImportedLibrary library = header.getLoader().findLibrary(index);
 				String importedSymbolName = SymbolUtilities.replaceInvalidChars(importedSymbol.getName(), true);
 				Symbol symbol = importState.getSymbol(importedSymbolName, library);
-				relocState.relocateMemoryAt(relocState.getRelocationAddress(), 
+				relocState.relocateMemoryAt(relocState.getRelocationAddress(),
 											(int)symbol.getAddress().getOffset(), log);
 				relocState.incrementRelocationAddress(4);
 				relocState.setImportIndex(index + 1);
@@ -126,7 +126,7 @@ public class RelocByIndexGroup extends Relocation {
 			case RelocByIndexGroup.kPEFRelocSmBySection: {
 				SectionHeader sect = header.getSections().get(index);
 				MemoryBlock block = importState.getMemoryBlockForSection(sect);
-				relocState.relocateMemoryAt(relocState.getRelocationAddress(), 
+				relocState.relocateMemoryAt(relocState.getRelocationAddress(),
 											(int)block.getStart().getOffset(), log);
 				break;
 			}

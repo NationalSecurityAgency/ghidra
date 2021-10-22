@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -242,7 +242,7 @@ public class TestFGLayoutProvider extends FGLayoutProvider {
 
 			Map<FGEdge, List<Point2D>> newEdgeArticulations = new HashMap<>();
 
-			// 
+			//
 			// Route our edges!
 			//
 			for (FGEdge e : edges) {
@@ -251,7 +251,7 @@ public class TestFGLayoutProvider extends FGLayoutProvider {
 				FGVertex startVertex = e.getStart();
 				FGVertex endVertex = e.getEnd();
 
-				// 
+				//
 				// TODO For now I will use the layout positions to determine edge type (nested v.
 				// fallthrough). It would be nicer if I had this information defined somewhere
 				// -->Maybe positioning is simple enough?
@@ -265,7 +265,7 @@ public class TestFGLayoutProvider extends FGLayoutProvider {
 
 				int direction = 20;
 				if (startCol.index < endCol.index) { // going forward on the x-axis
-					//  TODO make constant					
+					//  TODO make constant
 //						direction = 10;
 				}
 				else if (startCol.index > endCol.index) { // going backwards on the x-axis
@@ -278,7 +278,7 @@ public class TestFGLayoutProvider extends FGLayoutProvider {
 
 				if (startCol.index < endCol.index) { // going left or right
 					//
-					// Basic routing: 
+					// Basic routing:
 					// -leave the bottom of the start vertex
 					// -first bend at some constant offset
 					// -move to right or left, to above the end vertex
@@ -286,7 +286,7 @@ public class TestFGLayoutProvider extends FGLayoutProvider {
 					//
 					// Advanced considerations:
 					// -Remove angles from vertex points:
-					// -->Edges start/end on the vertex center.  If we offset them to avoid 
+					// -->Edges start/end on the vertex center.  If we offset them to avoid
 					//    overlapping, then they produce angles when only using two articulations.
 					//    Thus, we will create articulations that are behind the vertices to remove
 					//    the angles.  This points will not be seen.
@@ -369,7 +369,7 @@ public class TestFGLayoutProvider extends FGLayoutProvider {
 			return "{\n" +
 				"\tv: " + v + ",\n" +
 				"\tleft: " + left + ",\n" +
-				"\tright: " + right + "\n" + 
+				"\tright: " + right + "\n" +
 			"}";
 			//@formatter:on
 		}

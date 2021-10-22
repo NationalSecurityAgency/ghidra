@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,13 +23,13 @@ import ghidra.util.exception.CancelledException;
 
 /**
  * A task monitor that tracks all monitor state, but is not attached to any UI component
- * 
+ *
  * <p><b>Synchronization Policy</b>:<br>
  * We wish for this class to be performant.    Thus, we do not synchronize the methods of this
- * class, nor do we make the values thread visible via <code>volatile</code> or by any of 
+ * class, nor do we make the values thread visible via <code>volatile</code> or by any of
  * the Java concurrent structures (e.g., {@link AtomicBoolean}).   In order to keep the values of
  * this class's fields update-to-date, we have chosen to synchronize the package-level client of
- * this class.  <b>If this class is ever made public, then most of the methods herein need to 
+ * this class.  <b>If this class is ever made public, then most of the methods herein need to
  * be synchronized to prevent race conditions and to provide visibility.
  */
 class BasicTaskMonitor implements TaskMonitor {

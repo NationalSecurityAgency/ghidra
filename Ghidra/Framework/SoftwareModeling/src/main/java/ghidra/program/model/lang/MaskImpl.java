@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class MaskImpl implements Mask, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
@@ -55,7 +55,7 @@ public class MaskImpl implements Mask, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.lang.Mask#equals(byte[])
 	 */
 	public boolean equals(byte[] otherMask) {
@@ -72,7 +72,7 @@ public class MaskImpl implements Mask, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.lang.Mask#applyMask(byte[], byte[])
 	 */
 	public byte[] applyMask(byte[] cde, byte[] result) throws IncompatibleMaskException {
@@ -112,7 +112,7 @@ public class MaskImpl implements Mask, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.lang.Mask#equalMaskedValue(byte[], byte[])
 	 */
 	public boolean equalMaskedValue(byte[] cde, byte[] target) throws IncompatibleMaskException {
@@ -127,7 +127,7 @@ public class MaskImpl implements Mask, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.lang.Mask#subMask(byte[])
 	 */
 	public boolean subMask(byte[] msk) throws IncompatibleMaskException {
@@ -146,7 +146,7 @@ public class MaskImpl implements Mask, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.lang.Mask#complementMask(byte[], byte[])
 	 */
 	public byte[] complementMask(byte[] msk, byte[] results) throws IncompatibleMaskException {
@@ -173,7 +173,7 @@ public class MaskImpl implements Mask, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
@@ -191,7 +191,7 @@ public class MaskImpl implements Mask, Serializable {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.lang.Mask#getBytes()
 	 */
 	public byte[] getBytes() {

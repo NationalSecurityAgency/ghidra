@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,29 +42,29 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
-	
+
 	private static final String NAME = "PPC64 ELF Call Stubs";
 	private static final String DESCRIPTION = "Detect ELF Call Stubs and create thunk function";
 	private static final String PROCESSOR_NAME = "PowerPC";
-	
+
 	private static final String CALL_STUB_PATTERN_FILE = "ppc64-r2CallStubs.xml";
-	
+
 	private static final String UNKNOWN_FUNCTION_NAME = "___UNKNOWN_CALL_STUB___";
 
 	private static boolean patternLoadFailed;
 	private static ArrayList<Pattern> beCallStubPatterns;
 	private static ArrayList<Pattern> leCallStubPatterns;
 	private static int maxPatternLength;
-	
+
 	private Register r2Reg;
 	private Register ctrReg;
-	
+
 	public PPC64CallStubAnalyzer() {
 		super(NAME, DESCRIPTION, AnalyzerType.FUNCTION_ANALYZER);
 		setDefaultEnablement(true);
 		setPriority(AnalysisPriority.FUNCTION_ANALYSIS.before());
 	}
-	
+
 	@Override
 	public boolean canAnalyze(Program program) {
 		Language language = program.getLanguage();
@@ -83,7 +83,7 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 		if (patternLoadFailed) {
 			return false;
 		}
-		
+
 		if (!bigEndian) {
 			if (leCallStubPatterns != null) {
 				return true;
@@ -94,13 +94,13 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 			leCallStubPatterns = flipPatterns(beCallStubPatterns);
 			return true;
 		}
-		
+
 		try {
 			ResourceFile patternFile = Application.getModuleDataFile(CALL_STUB_PATTERN_FILE);
-			
+
 			beCallStubPatterns = new ArrayList<>();
 			Pattern.readPatterns(patternFile, beCallStubPatterns, null);
-			
+
 			maxPatternLength = 0;
 			for (Pattern pattern : beCallStubPatterns) {
 				int len = pattern.getSize();
@@ -111,7 +111,7 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 					maxPatternLength = len;
 				}
 			}
-			
+
 		} catch (FileNotFoundException e) {
 			Msg.error(PPC64CallStubAnalyzer.class, "PowerPC resource file not found: " + CALL_STUB_PATTERN_FILE);
 			patternLoadFailed = true;
@@ -121,23 +121,23 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 			patternLoadFailed = true;
 			return false;
 		}
-		
+
 		return true;
 	}
 
 	private static ArrayList<Pattern> flipPatterns(ArrayList<Pattern> patternlist) {
-		
+
 		ArrayList<Pattern> list = new ArrayList<>();
 		for (Pattern pat : patternlist) {
 			byte[] bytes = flipPatternBytes(pat.getValueBytes());
 			byte[] mask = flipPatternBytes(pat.getMaskBytes());
-			Pattern newPattern = new Pattern(new DittedBitSequence(bytes, mask), pat.getMarkOffset(), 
+			Pattern newPattern = new Pattern(new DittedBitSequence(bytes, mask), pat.getMarkOffset(),
 					pat.getPostRules(), pat.getMatchActions());
 			list.add(newPattern);
 		}
 		return list;
 	}
-	
+
 	private static byte[] flipPatternBytes(byte[] bytes) {
 		for (int i = 0; i < bytes.length; i += 4) {
 			byte b = bytes[i];
@@ -153,28 +153,28 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
-		
+
 		Memory memory = program.getMemory();
 		Listing listing = program.getListing();
 		ProgramContext programContext = program.getProgramContext();
-		
+
 		SequenceSearchState sequenceSearchState = SequenceSearchState.buildStateMachine(
 				program.getMemory().isBigEndian() ? beCallStubPatterns : leCallStubPatterns);
-		
+
 		monitor.setIndeterminate(false);
 		monitor.setMaximum(set.getNumAddresses());
 		monitor.setProgress(0);
 		int functionCount = 0;
-		
+
 		// each address should correspond to a function
 		for (Function function : listing.getFunctions(set, true)) {
-			
+
 			monitor.checkCanceled();
 			monitor.setProgress(functionCount++);
-			
+
 			Address entryAddr = function.getEntryPoint();
 			boolean isThunk = function.isThunk();
-			
+
 			Match stubMatch = null;
 			if (!isThunk) {
 				stubMatch = matchKnownCallStubs(entryAddr, memory, sequenceSearchState);
@@ -185,7 +185,7 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 			else if (!thunksUnknownFunction(function)) {
 				continue; // previously resolved thunk
 			}
-			
+
 			RegisterValue r2Value = programContext.getRegisterValue(r2Reg, entryAddr);
 			if (r2Value == null || !r2Value.hasValue()) {
 				if (!isThunk) { // stubMatch is known
@@ -195,13 +195,13 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 				}
 				continue;
 			}
-			
+
 			int stubLength = stubMatch != null ? stubMatch.getSequenceSize()
 					: (int) function.getBody().getNumAddresses();
-			
+
 			analyzeCallStub(program, function, stubLength, monitor);
 		}
-		
+
 		return true;
 	}
 
@@ -246,39 +246,39 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 
 	private void analyzeCallStub(Program program, Function stubFunction, int stubLength,
 			TaskMonitor monitor) throws CancelledException {
-		
+
 		SymbolicPropogator symEval = new SymbolicPropogator(program);
 		symEval.setParamRefCheck(false);
 		symEval.setReturnRefCheck(false);
 		symEval.setStoredRefCheck(false);
-		
+
 		Address entryAddr = stubFunction.getEntryPoint();
 		AddressSet stubBody = new AddressSet(entryAddr, entryAddr.add(stubLength - 1));
-		
+
 		ContextEvaluator eval = new ContextEvaluatorAdapter() {
 
 			@Override
 			public boolean followFalseConditionalBranches() {
 				return false; // should never happen - just in case
 			}
-			
+
 			@Override
 			public boolean evaluateReference(VarnodeContext context, Instruction instr, int pcodeop, Address address,
 					int size, RefType refType) {
 				return true;
 			}
-			
+
 			@Override
 			public boolean evaluateDestination(VarnodeContext context, Instruction instruction) {
-				
+
 				// We only handle indirect branch through CTR register
 				if (!"bctr".equals(instruction.getMnemonicString())) {
 					return true;
 				}
-				
+
 				// Change bctr flow to call-return
 				instruction.setFlowOverride(FlowOverride.CALL_RETURN);
-				
+
 				RegisterValue ctrValue = context.getRegisterValue(ctrReg);
 				if (ctrValue != null  && ctrValue.hasValue()) {
 					Address destAddr = entryAddr.getNewAddress(
@@ -295,16 +295,16 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 						}
 					}
 				}
-				
+
 				return true;
 			}
-			
+
 			@Override
 			public boolean allowAccess(VarnodeContext context, Address address) {
 				return true;
 			}
 		};
-		
+
 		symEval.flowConstants(entryAddr, stubBody, eval, false, monitor);
 	}
 
@@ -332,14 +332,14 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 
 		Listing listing = program.getListing();
 		BookmarkManager bookmarkMgr = program.getBookmarkManager();
-		
+
 		if (!program.getMemory().contains(addr)) {
 			bookmarkMgr.setBookmark(flowFromAddr, BookmarkType.ERROR, "Bad Reference", "No memory for call stub destination at " + addr);
 			return null;
 		}
-		
+
 		Function function = listing.getFunctionAt(addr);
-		
+
 		if (regValue != null && regValue.hasValue()) {
 			ProgramContext programContext = program.getProgramContext();
 			RegisterValue oldValue = programContext.getRegisterValue(regValue.getRegister(), addr);
@@ -357,7 +357,7 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 		if (function != null) {
 			return function;
 		}
-		
+
 		CodeUnit cu = listing.getCodeUnitContaining(addr);
 		if (cu == null) {
 			throw new AssertException("expected code unit in memory");
@@ -377,7 +377,7 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 				return null;
 			}
 		}
-		
+
 		CreateFunctionCmd cmd = new CreateFunctionCmd(addr);
 		if (cmd.applyTo(program, monitor)) {
 			return cmd.getFunction();

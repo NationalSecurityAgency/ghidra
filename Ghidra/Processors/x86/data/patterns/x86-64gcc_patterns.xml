@@ -9,7 +9,7 @@
       <data>0xe9........90</data>            <!-- JMP xxx, NOP - after a shared jump target -->
       <data>0xeb..</data>                  <!-- JMP small -->
       <data>0xeb..90</data>                <!-- JMP small , NOP -->
-      <data>0x5d 0xc3</data>               <!-- POP RBP, RET --> 
+      <data>0x5d 0xc3</data>               <!-- POP RBP, RET -->
       <data>0x5b 0xc3</data>               <!-- POP RBX, RET -->
       <data>0x415f 0xc3</data>             <!-- POP R15, RET -->
       <data>0x415c 0xc3</data>             <!-- POP R12, RET -->
@@ -22,7 +22,7 @@
       <data>0x0f1f4000</data>              <!-- four-byte NOP -->
       <data>0x0f1f440000</data>            <!-- five-byte NOP -->
       <data>0x660f1f440000</data>          <!-- six-byte NOP -->
-      <data>0x0f1f8000000000</data>        <!-- seven-byte NOP --> 
+      <data>0x0f1f8000000000</data>        <!-- seven-byte NOP -->
       <data>0x0f1f840000000000</data>      <!-- eight-byte NOP -->
       <data>0x660f1f840000000000</data>    <!-- nine-byte NOP -->
     </prepatterns>
@@ -33,11 +33,11 @@
       <data>0x48 0x89 0x6c 0x24  11...000 0x4c 0x89 0x64 0x24  111..000</data>  <!-- MOV [RSP + C], RBP; MOV [RSP + C], R12 -->
       <data>0x5589e5</data>                                                     <!-- PUSH RBP; MOV(EBP, ESP) (shared objects) -->
       <data>0x554889e5</data>                                                   <!-- PUSH RBP; MOV(RBP, RSP) (shared objects) -->
-      <data>0x534889fb</data>                                                   <!-- PUSH RBX; MOV(RBX,RDI) (shared objects) --> 
+      <data>0x534889fb</data>                                                   <!-- PUSH RBX; MOV(RBX,RDI) (shared objects) -->
       <data>0x554889fd</data>                                                   <!-- PUSH (RBP); MOV(RBP, RDI) (kernel objects) -->
       <data>0x534889fb</data>                                                   <!-- PUSH RBX; MOV(RBX,RDI)-->
       <!-- three-instruction sequences -->
-      <data>0x55 0x48 0x89 0xe5 0x48 0x83 0xec  0...0000</data>                 <!-- PUSH RBP; MOV RBP, RSP; SUB RSP, C --> 
+      <data>0x55 0x48 0x89 0xe5 0x48 0x83 0xec  0...0000</data>                 <!-- PUSH RBP; MOV RBP, RSP; SUB RSP, C -->
       <data>0x554889e553</data>                                                 <!-- PUSH RBP; MOV RBP, RSP; PUSH RBX -->
       <data>0x554889fd53</data>                                                 <!-- PUSH RBP; MOV RBP, RDI; PUSH RBX -->
       <data>0x554889e548897df8</data>                                           <!-- PUSH RBP; MOV RBP, RSP; MOV [RBP -0x8], RDI -->
@@ -47,12 +47,12 @@
       <funcstart/>
     </postpatterns>
   </patternpairs>
-  
+
 <pattern>
      <data>0x5589e5</data>                                                     <!-- PUSH RBP; MOV(EBP, ESP) (shared objects) -->
      <funcstart after="data" /> <!-- must be something defined right before this, or no memory -->
 </pattern>
-  
+
 <pattern>
      <data>0x554889e5</data>                                                   <!-- PUSH RBP; MOV(RBP, RSP) (shared objects) -->
      <funcstart after="data" /> <!-- must be something defined right before this, or no memory -->
@@ -68,5 +68,5 @@
      <funcstart after="data" /> <!-- must be something defined right before this, or no memory -->
 </pattern>
 
-  
+
 </patternlist>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,17 +30,17 @@ import ghidra.app.plugin.assembler.sleigh.util.TableEntry;
 
 /**
  * A class to encapsulate LALR(1) parsing for a given grammar
- * 
+ *
  * This class constructs the Action/Goto table (and all the other trappings) of a LALR(1) parser
  * and provides a {@link #parse(String)} method to parse actual sentences.
- * 
+ *
  * This implementation is somewhat unconventional in that it permits ambiguous grammars. Instead of
  * complaining, it produces the set of all possible parse trees. Of course, this comes at the cost
  * of some efficiency.
- * 
+ *
  * See Alfred V. Aho, Monica S. Lam, Ravi Sethi, Jeffrey D. Ullman, <i>Compilers: Principles,
  * Techniques, &amp; Tools</i>. Bostom, MA: Pearson, 2007.
- * 
+ *
  * See Jackson, Stephen. <a href="http://web.cs.dal.ca/~sjackson/lalr1.html">LALR(1) Parsing</a>.
  * Halifax, Nova Scotia, Canada: Dalhousie University.
  * &lt;http://web.cs.dal.ca/~sjackson/lalr1.html&gt;
@@ -160,7 +160,7 @@ public class AssemblyParser {
 	 * Add a newly-constructed LR0 state, and return it's assigned number
 	 * @param state the newly-constructed state
 	 * @return the assigned number
-	 * 
+	 *
 	 * If the state already exists, this just returns its previously assigned number
 	 */
 	protected int addLR0State(AssemblyParseState state) {
@@ -352,7 +352,7 @@ public class AssemblyParser {
 	 * @param input the sentence to parser
 	 * @param labels a map of label to number substitutions
 	 * @return all possible parse results (trees and errors)
-	 * 
+	 *
 	 * The tokenizer for numeric terminals also accepts any key in {@code labels.} In such cases,
 	 * the resulting token is assigned the value of the label.
 	 */

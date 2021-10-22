@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 
 /**
- * Presents the user with a {@link ComponentProvider} showing all function tags available, 
- * along with all those currently assigned to the selected function.  
+ * Presents the user with a {@link ComponentProvider} showing all function tags available,
+ * along with all those currently assigned to the selected function.
  * Users may select, deselect, edit or delete tags.
  */
 public class EditFunctionTagsAction extends ListingContextAction {
@@ -40,7 +40,7 @@ public class EditFunctionTagsAction extends ListingContextAction {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param name the name for this action.
 	 * @param plugin the plugin this action is associated with.
 	 */
@@ -81,7 +81,7 @@ public class EditFunctionTagsAction extends ListingContextAction {
 	/**
 	 * Overridden to only allow this menu option when clicking in a function.
 	 * Note that we do not allow external functions to have tags.
-	 * 
+	 *
 	 * @param context the listing context
 	 * @return
 	 */
@@ -109,7 +109,7 @@ public class EditFunctionTagsAction extends ListingContextAction {
 	 ******************************************************************************/
 	/**
 	 * Retrieves the address of the function associated with the given program location.
-	 * 
+	 *
 	 * @param loc the program location
 	 * @return the entry point of the function, or null if not valid
 	 */
@@ -126,7 +126,7 @@ public class EditFunctionTagsAction extends ListingContextAction {
 
 	/**
 	 * Displays the provider.
-	 * 
+	 *
 	 * @param context the listing context
 	 */
 	private void showProvider(ListingActionContext context) {

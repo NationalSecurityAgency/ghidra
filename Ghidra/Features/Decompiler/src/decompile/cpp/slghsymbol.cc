@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ SleighSymbol *SymbolScope::addSymbol(SleighSymbol *a)
 
 {
   pair<SymbolTree::iterator,bool> res;
-  
+
   res = tree.insert( a );
   if (!res.second)
     return *res.first;		// Symbol already exists in this table
@@ -104,7 +104,7 @@ SleighSymbol *SymbolTable::findSymbolInternal(SymbolScope *scope,const string &n
 
 {
   SleighSymbol *res;
-  
+
   while(scope != (SymbolScope *)0) {
     res = scope->findSymbol(nm);
     if (res != (SleighSymbol *)0)
@@ -120,7 +120,7 @@ void SymbolTable::replaceSymbol(SleighSymbol *a,SleighSymbol *b)
 				// assuming a and b have the same name
   SleighSymbol *sym;
   int4 i = table.size()-1;
-  
+
   while(i>=0) {			// Find the particular symbol
     sym = table[i]->findSymbol( a->getName() );
     if (sym == a) {
@@ -816,12 +816,12 @@ void ContextSymbol::restoreXml(const Element *el,SleighBase *trans)
     s >> id;
     vn = (VarnodeSymbol *)trans->findSymbol(id);
   }
-  {  
+  {
     istringstream s(el->getAttributeValue("low"));
     s.unsetf(ios::dec | ios::hex | ios::oct);
     s >> low;
   }
-  {  
+  {
     istringstream s(el->getAttributeValue("high"));
     s.unsetf(ios::dec | ios::hex | ios::oct);
     s >> high;
@@ -1606,7 +1606,7 @@ void Constructor::saveXml(ostream &s) const
     }
     else {
       s << "<print piece=\"";
-      xml_escape(s, printpiece[i].c_str()); 
+      xml_escape(s, printpiece[i].c_str());
       s << "\"/>\n";
     }
   }
@@ -2128,7 +2128,7 @@ void DecisionNode::chooseOptimalField(void)
 
 {
   double score = 0.0;
-  
+
   int4 sbit,size;		// The current field
   bool context;
   double sc;
@@ -2303,7 +2303,7 @@ void DecisionNode::orderPatterns(DecisionProperties &props)
       list[k+1] = list[k];
     list[j] = newlist[i];
   }
-  
+
   // Check if intersection patterns are present, which resolve conflicts
   for(i=0;i<conflictlist.size();i+=2) {
     DisjointPattern *pat1,*pat2;

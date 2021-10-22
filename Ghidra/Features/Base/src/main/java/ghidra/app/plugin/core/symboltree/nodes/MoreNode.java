@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,8 +29,8 @@ import resources.Icons;
 /**
  * Node to represent nodes that are not shown. After showing a handful of symbol nodes
  * with the same name, this node will be used in place of the rest of the nodes and
- * will display "xx more..." where xx is the number of nodes that are not being shown. 
- * 
+ * will display "xx more..." where xx is the number of nodes that are not being shown.
+ *
  */
 public class MoreNode extends SymbolTreeNode {
 	private static Icon ICON = Icons.MAKE_SELECTION_ICON;

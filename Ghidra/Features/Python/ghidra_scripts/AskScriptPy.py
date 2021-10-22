@@ -1,12 +1,12 @@
 ## ###
 #  IP: GHIDRA
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
-#  
+#
 #       http://www.apache.org/licenses/LICENSE-2.0
-#  
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,9 +32,9 @@ from ghidra.util import Msg
 
 from java.lang import IllegalArgumentException
 
-# The presence of the AskScript.properties file in the same location (as AskScript.java) 
+# The presence of the AskScript.properties file in the same location (as AskScript.java)
 # allows for the following behavior:
-#		- GUI: if applicable, auto-populates the input field with the value in the 
+#		- GUI: if applicable, auto-populates the input field with the value in the
 #			.properties file (the first	time that input	field appears)
 #   	- Headless: uses the value in the .properties file for the variable assigned to the
 #			corresponding askXxx() method in the GhidraScript.
@@ -64,9 +64,9 @@ try:
     print "address1 + address2 = " + address1.add(address2.getOffset()).toString()
 
     #bytes = askBytes("bytes", "enter byte pattern")
-    #for b in bytes: 
+    #for b in bytes:
     #   print "b = " + str(b & 0xff)
-			
+
     prog = askProgram("Please choose a program to open.")
     print "Program picked: " + prog.getName()
 
@@ -86,15 +86,15 @@ try:
 
     choices1 = askChoices("Choices 1", "Please choose one or more numbers.", [ 1, 2, 3, 4, 5, 6 ])
     print "Choices 1: "
-    for intChoice in choices1: 
+    for intChoice in choices1:
         print str(intChoice) + " "
     print ""
 
-    choices2 = askChoices("Choices 2", "Please choose one or more of the following.", 
+    choices2 = askChoices("Choices 2", "Please choose one or more of the following.",
         [ 1.1, 2.2, 3.3, 4.4, 5.5, 6.6 ], ["Part 1", "Part 2", "Part 3", "Part 4", "Part 5", "Part 6" ])
     print "Choices 2: "
     for intChoice in choices2:
-        print str(intChoice) + " "	
+        print str(intChoice) + " "
     print ""
 
     yesOrNo = askYesNo("yes or no", "is this a yes/no question?")
@@ -102,4 +102,4 @@ try:
 
 except IllegalArgumentException as error:
     Msg.warn(self, "Error during headless processing: " + error.toString())
-	
+

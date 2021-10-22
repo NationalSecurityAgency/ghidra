@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -123,11 +123,11 @@ public class LldbModelTargetBreakpointLocationImpl extends LldbModelTargetObject
 		TargetObject modelObject = getModel().getModelObject(getManager().getCurrentProcess());
 		if (modelObject instanceof LldbModelTargetProcess) {
 			LldbModelTargetProcess targetProcess = (LldbModelTargetProcess) modelObject;
-			LldbModelTargetBreakpointLocationContainer locs = (LldbModelTargetBreakpointLocationContainer) targetProcess.getCachedAttribute("Breakpoints");			
+			LldbModelTargetBreakpointLocationContainer locs = (LldbModelTargetBreakpointLocationContainer) targetProcess.getCachedAttribute("Breakpoints");
 			locs.removeBreakpointLocation(this);
 		}
 	}
-	
+
 	@Override
 	public Integer getLength() {
 		return length;
@@ -137,7 +137,7 @@ public class LldbModelTargetBreakpointLocationImpl extends LldbModelTargetObject
 	public Address getAddress() {
 		return address;
 	}
-	
+
 	@Override
 	public int getLocationId() {
 		return loc.GetID();

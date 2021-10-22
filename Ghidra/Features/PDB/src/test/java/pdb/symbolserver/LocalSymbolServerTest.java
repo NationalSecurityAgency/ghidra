@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ import utilities.util.FileUtilities;
  * Testing level 0 searching is a TODO item because creating test
  * files that can be parsed isn't possible right now. (level 1, 2
  * directories can skip parsing the file since the guid/age is
- * in the path) 
+ * in the path)
  */
 public class LocalSymbolServerTest extends AbstractGenericTest {
 
@@ -105,7 +105,7 @@ public class LocalSymbolServerTest extends AbstractGenericTest {
 
 	@Test
 	public void findAnyAges_Level1() throws IOException {
-		// find pdbs with the same UID, but any AGE 
+		// find pdbs with the same UID, but any AGE
 		File root = new File(temporaryDir, "symbols");
 		LocalSymbolStore.create(root, 1);
 		LocalSymbolStore localSymbolStore = new LocalSymbolStore(root);

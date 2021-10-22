@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ public interface MessageDigest {
 	 * Updates the digest using the specified array of bytes.
 	 * @param input the array of bytes
 	 * @param monitor the monitor to check during loops
-	 * @throws CancelledException 
+	 * @throws CancelledException
 	 */
 	public void update(byte[] input, TaskMonitor monitor) throws CancelledException;
 
@@ -86,7 +86,7 @@ public interface MessageDigest {
 	 * @param offset the offset to start from in the array of bytes
 	 * @param len the number of bytes to use, starting at offset
 	 * @param monitor the monitor to check during loops
-	 * @throws CancelledException 
+	 * @throws CancelledException
 	 */
 	public void update(byte[] input, int offset, int len, TaskMonitor monitor)
 			throws CancelledException;

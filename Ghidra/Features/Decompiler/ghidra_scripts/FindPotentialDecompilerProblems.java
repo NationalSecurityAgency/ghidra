@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -123,7 +123,7 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 				Address funcAddr =
 					getFirstFuncWithVar(func, sym.getHighVariable().getRepresentative());
 
-				//if we didn't find a good location for the cause of the problem, 
+				//if we didn't find a good location for the cause of the problem,
 				//just use the entry point of the function with the problem
 				if (funcAddr == null || funcAddr.equals(Address.NO_ADDRESS)) {
 					funcAddr = func.getEntryPoint();
@@ -210,7 +210,7 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 					}
 				}
 			}
-			// The references are sorted by their "from" addresses, so if this condition is true, 
+			// The references are sorted by their "from" addresses, so if this condition is true,
 			// we've searched all the references from the body of func and haven't found anything.
 			// So, stop looking.
 			if (ref.getFromAddress().compareTo(maxAddr) > 0) {
@@ -223,7 +223,7 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 
 	/**
 	 * Returns the address of first function called by {@code func}.  That is, the returned {@link Address}
-	 * is the target of the call instruction with the least address within the body of {@code func}. 
+	 * is the target of the call instruction with the least address within the body of {@code func}.
 	 * @param func the {@link Function} to search for calls
 	 * @return the {@link Address} of the first called function, or {@code Address.NO_ADDRESS} if
 	 * no calls are found.
@@ -249,7 +249,7 @@ public class FindPotentialDecompilerProblems extends GhidraScript {
 			if (isValidCallReference(ref)) {
 				return ref.getToAddress();
 			}
-			// The references are sorted by their "from" addresses, so if this condition is true, 
+			// The references are sorted by their "from" addresses, so if this condition is true,
 			// we've searched all the references from the body of func and haven't found anything.
 			// So, stop looking.
 			if (ref.getFromAddress().compareTo(maxAddr) > 0) {

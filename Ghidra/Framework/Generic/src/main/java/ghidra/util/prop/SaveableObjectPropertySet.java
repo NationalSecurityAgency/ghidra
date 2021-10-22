@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,7 +79,7 @@ public class SaveableObjectPropertySet extends PropertySet {
 		}
 		return null;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see ghidra.util.prop.PropertySet#moveIndex(long, long)
 	 */
@@ -107,17 +107,17 @@ public class SaveableObjectPropertySet extends PropertySet {
 	 	throws IOException, ClassNotFoundException {
         try {
             String className = (String)ois.readObject();
-            Class<?> c = Class.forName(className);	
+            Class<?> c = Class.forName(className);
             Saveable obj = (Saveable)c.newInstance();
-            obj.restore(new ObjectStorageStreamAdapter(ois));	
+            obj.restore(new ObjectStorageStreamAdapter(ois));
             putObject(index, obj);
         } catch (Exception e) {
         	Msg.showError(this, null, null, null, e);
-        } 
+        }
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.util.prop.PropertySet#applyValue(PropertyVisitor, long)
 	 */
 	@Override

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 ## ###
 #  IP: GHIDRA
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
-#  
+#
 #       http://www.apache.org/licenses/LICENSE-2.0
-#  
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -126,7 +126,7 @@ JAVA_HOME="$(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -jdk_home -sa
 if [ ! $? -eq 0 ]; then
 	# No JDK has been setup yet.  Let the user choose one.
 	java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -jdk_home -ask
-	
+
 	# Now that the user chose one, try again to get the JDK that will be used to launch Ghidra
 	JAVA_HOME="$(java -cp "${LS_CPATH}" LaunchSupport "${INSTALL_DIR}" -jdk_home -save)"
 	if [ ! $? -eq 0 ]; then
@@ -153,9 +153,9 @@ fi
 BACKGROUND=false
 
 if [ "${MODE}" = "debug" ] || [ "${MODE}" = "debug-suspend" ]; then
-	
+
 	SUSPEND=n
-	
+
 	if [ "${DEBUG_ADDRESS}" = "" ]; then
 		DEBUG_ADDRESS=127.0.0.1:18001
 	fi
@@ -163,10 +163,10 @@ if [ "${MODE}" = "debug" ] || [ "${MODE}" = "debug-suspend" ]; then
 	if [ "${MODE}" = "debug-suspend" ]; then
 		SUSPEND=y
 	fi
-	 
-	VMARG_LIST+=" -Dlog4j.configuration=\"${DEBUG_LOG4J}\""  
+
+	VMARG_LIST+=" -Dlog4j.configuration=\"${DEBUG_LOG4J}\""
 	VMARG_LIST+=" -agentlib:jdwp=transport=dt_socket,server=y,suspend=${SUSPEND},address=${DEBUG_ADDRESS}"
-	
+
 
 elif [ "${MODE}" = "fg" ]; then
 	:
@@ -181,7 +181,7 @@ fi
 
 if [ "${BACKGROUND}" = true ]; then
 	eval "\"${JAVA_CMD}\" ${VMARG_LIST} -showversion -cp \"${CPATH}\" ghidra.Ghidra ${CLASSNAME} ${ARGS[@]}" &>/dev/null &
-	
+
 	# If our process dies immediately, output something so the user knows to run in debug mode.
 	# Otherwise they'll never see any error output from background mode.
 	# Doing a kill -0 sends a no-op signal, which can be used to see if the process is still alive.

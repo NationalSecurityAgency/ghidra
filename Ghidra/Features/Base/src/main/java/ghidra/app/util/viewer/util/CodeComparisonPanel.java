@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,18 +35,18 @@ import ghidra.util.classfinder.ClassSearcher;
 import ghidra.util.classfinder.ExtensionPoint;
 
 /**
- * The CodeComparisonPanel class should be extended by any class that is to be 
- * discovered by the {@link FunctionComparisonPanel} class and included as a 
+ * The CodeComparisonPanel class should be extended by any class that is to be
+ * discovered by the {@link FunctionComparisonPanel} class and included as a
  * form of comparing two sections of code within the same or different programs
  * <p>
  * NOTE: ALL CodeComparisonPanel CLASSES MUST END IN
- * <code>CodeComparisonPanel</code> so they are discoverable by the 
- * {@link ClassSearcher} 
+ * <code>CodeComparisonPanel</code> so they are discoverable by the
+ * {@link ClassSearcher}
  */
 public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> extends JPanel
 		implements ExtensionPoint, FocusListener {
 
-	// MINIMUM_PANEL_WIDTH is used to establish a minimum panel width for the left or right panel. 
+	// MINIMUM_PANEL_WIDTH is used to establish a minimum panel width for the left or right panel.
 	// Without it a long title in either panel can cause the split pane's divider to become locked.
 	protected static final int MINIMUM_PANEL_WIDTH = 50;
 
@@ -79,8 +79,8 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 
 	/**
 	 * Constructor
-	 * 
-	 * @param owner the name of the owner of this component 
+	 *
+	 * @param owner the name of the owner of this component
 	 * @param tool the tool that contains the component
 	 */
 	protected CodeComparisonPanel(String owner, PluginTool tool) {
@@ -90,21 +90,21 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 
 	/**
 	 * The GUI component for this CodeComparisonPanel
-	 * 
+	 *
 	 * @return the component
 	 */
 	public abstract JComponent getComponent();
 
 	/**
 	 * The title for this code comparison panel
-	 * 
+	 *
 	 * @return the title
 	 */
 	public abstract String getTitle();
 
 	/**
 	 * Specifies the two programs to be compared by this panel
-	 * 
+	 *
 	 * @param leftProgram the program for the left side
 	 * @param rightProgram the program for the right side
 	 */
@@ -112,7 +112,7 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 
 	/**
 	 * Displays a comparison of two program's functions
-	 * 
+	 *
 	 * @param leftFunction the function to show in the left side of the code comparison view
 	 * @param rightFunction the function to show in the right side of the code comparison view
 	 */
@@ -120,16 +120,16 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 
 	/**
 	 * Displays a comparison of two program's data items
-	 * 
+	 *
 	 * @param leftData the data item to show in the left side of the code comparison view
 	 * @param rightData the data item to show in the right side of the code comparison view
 	 */
 	public abstract void loadData(Data leftData, Data rightData);
 
 	/**
-	 * Displays program information for a particular set of addresses in the two programs 
+	 * Displays program information for a particular set of addresses in the two programs
 	 * being compared
-	 * 
+	 *
 	 * @param leftProgram the program in the left side of the code comparison view
 	 * @param rightProgram the program in the right side of the code comparison view
 	 * @param leftAddresses the addresses of the program info to show in the left side
@@ -145,19 +145,19 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 
 	/**
 	 * Enable/disable navigation in this panel using the mouse
-	 * 
+	 *
 	 * @param enabled false disables mouse navigation
 	 */
 	public abstract void setMouseNavigationEnabled(boolean enabled);
 
 	/**
 	 * Returns the actions for this panel
-	 * 
+	 *
 	 * @return an array of docking actions
 	 */
 	public DockingAction[] getActions() {
 		// No actions currently that appear for each CodeComparisonPanel.
-		// Classes that extend this class will override this method to get all actions 
+		// Classes that extend this class will override this method to get all actions
 		// specific to that CodeComparisonPanel.
 		DockingAction[] actions = new DockingAction[] {};
 		return actions;
@@ -172,15 +172,15 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 	}
 
 	/**
-	 * Determines if this panel is intended to take the place of another and if so it returns 
+	 * Determines if this panel is intended to take the place of another and if so it returns
 	 * the class of the panel to be superseded.
-	 * @return the class for the CodeComparisonPanel that this one supersedes 
+	 * @return the class for the CodeComparisonPanel that this one supersedes
 	 * or null if it doesn't supersede another panel.
 	 */
 	public abstract Class<? extends CodeComparisonPanel<T>> getPanelThisSupersedes();
 
 	/**
-	 * Returns the context object which corresponds to the area of focus within this provider's 
+	 * Returns the context object which corresponds to the area of focus within this provider's
 	 * component. Null is returned when there is no context.
 	 * @param componentProvider the provider that includes this code comparison component.
 	 * @param event mouse event which corresponds to this request.
@@ -306,9 +306,9 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 	}
 
 	/**
-	 * Gets the current field panel coordinator used to synchronize scrolling between the 
+	 * Gets the current field panel coordinator used to synchronize scrolling between the
 	 * left and right view for this CodeComparisonPanel.
-	 * @return the current FieldPanelCoordinator. Otherwise, null if scrolling is not 
+	 * @return the current FieldPanelCoordinator. Otherwise, null if scrolling is not
 	 * currently synchronized.
 	 */
 	protected T getFieldPanelCoordinator() {
@@ -316,7 +316,7 @@ public abstract class CodeComparisonPanel<T extends FieldPanelCoordinator> exten
 	}
 
 	/**
-	 * Creates a new FieldPanelCoordinator used to synchronize scrolling between the 
+	 * Creates a new FieldPanelCoordinator used to synchronize scrolling between the
 	 * left and right view for this CodeComparisonPanel.
 	 * @return a new FieldPanelCoordinator
 	 */

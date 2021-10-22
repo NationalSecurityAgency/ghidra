@@ -70,8 +70,8 @@ public class AttributesFileParser {
 		}
 	}
 
-	private File writeVolumeHeaderFile( ImplHFSXFileSystemView hfsxFileSystemView, 
-										HFSPlusForkData volumeHeaderFile, 
+	private File writeVolumeHeaderFile( ImplHFSXFileSystemView hfsxFileSystemView,
+										HFSPlusForkData volumeHeaderFile,
 										String volumeHeaderFileName ) throws IOException {
 
 		if (volumeHeaderFile == null) {
@@ -90,7 +90,7 @@ public class AttributesFileParser {
 		}
 		return file;
 	}
-	
+
 	public DecmpfsHeader getDecmpfsHeader(FSFile file) throws IOException {
 
 		if ( root == null ) {
@@ -121,5 +121,5 @@ public class AttributesFileParser {
         return null;
 	}
 
-	
+
 }

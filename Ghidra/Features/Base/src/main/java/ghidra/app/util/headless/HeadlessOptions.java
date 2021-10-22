@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -149,17 +149,17 @@ public class HeadlessOptions {
 	 * Set to run scripts (and optionally, analysis) without importing a
 	 * program.  Scripts will run on specified folder or program that already
 	 * exists in the project.
-	 * 
+	 *
 	 * @param runScriptsOnly if true, no imports will occur and scripts
 	 * 						 (and analysis, if enabled) will run on the specified existing program
 	 * 					     or directory of programs.
 	 * @param filename name of specific project file or folder to be processed (the location
 	 * 					 is passed in elsewhere by the user).  If null, user has not specified
 	 * 					 a file to process -- therefore, the entire directory will be processed.
-	 * 					 The filename should not include folder path elements which should be 
+	 * 					 The filename should not include folder path elements which should be
 	 *                   specified separately via project or URL specification.
 	 * @throws IllegalArgumentException if the specified filename is invalid and contains the
-	 * path separator character '/'. 
+	 * path separator character '/'.
 	 */
 	public void setRunScriptsNoImport(boolean runScriptsOnly, String filename) {
 		if (filename != null) {
@@ -176,7 +176,7 @@ public class HeadlessOptions {
 	 * Set the ordered list of scripts to execute immediately following import and
 	 * prior to analyzing an imported program.  If import not performed,
 	 * these scripts will execute once prior to any post-scripts.
-	 * 
+	 *
 	 * @param preScripts list of script names
 	 */
 	public void setPreScripts(List<String> preScripts) {
@@ -188,10 +188,10 @@ public class HeadlessOptions {
 	}
 
 	/**
-	 * Set the ordered list of scripts and their arguments to execute immediately following import 
+	 * Set the ordered list of scripts and their arguments to execute immediately following import
 	 * and prior to analyzing an imported program.  If import not performed,
 	 * these scripts will execute once prior to any post-scripts.
-	 * 
+	 *
 	 * @param preScripts list of script names/script argument pairs
 	 */
 	public void setPreScriptsWithArgs(List<Pair<String, String[]>> preScripts) {
@@ -203,7 +203,7 @@ public class HeadlessOptions {
 	 * Set the ordered list of scripts to execute immediately following import and
 	 * and analysis of a program.  If import not performed,
 	 * these scripts will execute once following any pre-scripts.
-	 * 
+	 *
 	 * @param postScripts list of script names
 	 */
 	public void setPostScripts(List<String> postScripts) {
@@ -218,7 +218,7 @@ public class HeadlessOptions {
 	 * Set the ordered list of scripts to execute immediately following import and
 	 * and analysis of a program.  If import not performed,
 	 * these scripts will execute once following any pre-scripts.
-	 * 
+	 *
 	 * @param postScripts list of script names/script argument pairs
 	 */
 	public void setPostScriptsWithArgs(List<Pair<String, String[]>> postScripts) {
@@ -228,7 +228,7 @@ public class HeadlessOptions {
 
 	/**
 	 * Set the script source directories to be searched for secondary scripts.
-	 * The default set of enabled script directories within the Ghidra installation 
+	 * The default set of enabled script directories within the Ghidra installation
 	 * will be appended to the specified list of newPaths.
 	 * Individual Paths may be constructed relative to Ghidra installation directory,
 	 * User home directory, or absolute system paths.  Examples:
@@ -237,7 +237,7 @@ public class HeadlessOptions {
 	 *     Path.USER_HOME + "/Ghidra/Features/Base/ghidra_scripts"
 	 *     "/shared/ghidra_scripts"
 	 * </pre>
-	 * 
+	 *
 	 * @param newPaths list of directories to be searched.
 	 */
 	public void setScriptDirectories(List<String> newPaths) {
@@ -246,7 +246,7 @@ public class HeadlessOptions {
 
 	/**
 	 * List of valid script directory paths separated by a ';'.
-	 * The default set of enabled script directories within the Ghidra installation 
+	 * The default set of enabled script directories within the Ghidra installation
 	 * will be appended to the specified list of newPaths.
 	 * Individual Paths may be constructed relative to Ghidra installation directory,
 	 * User home directory, or absolute system paths.  Examples:
@@ -264,11 +264,11 @@ public class HeadlessOptions {
 
 	/**
 	 * Sets a single location for .properties files associated with GhidraScripts.
-	 * 
-	 * Typically, .properties files should be located in the same directory as their corresponding 
+	 *
+	 * Typically, .properties files should be located in the same directory as their corresponding
 	 * scripts. However, this method may need to be used when circumstances make it impossible to
 	 * have both files in the same directory (i.e., if the scripts are included in ghidra.jar).
-	 * 
+	 *
 	 * @param path  location of .properties file(s)
 	 */
 	public void setPropertiesFileDirectory(String path) {
@@ -278,11 +278,11 @@ public class HeadlessOptions {
 
 	/**
 	 * Sets one or more locations to find .properties files associated with GhidraScripts.
-	 * 
-	 * Typically, .properties files should be located in the same directory as their corresponding 
+	 *
+	 * Typically, .properties files should be located in the same directory as their corresponding
 	 * scripts. However, this method may need to be used when circumstances make it impossible to
 	 * have both files in the same directory (i.e., if the scripts are included in ghidra.jar).
-	 * 
+	 *
 	 * @param newPaths  potential locations of .properties file(s)
 	 */
 	public void setPropertiesFileDirectories(List<String> newPaths) {
@@ -291,11 +291,11 @@ public class HeadlessOptions {
 
 	/**
 	 * List of valid .properties file directory paths, separated by a ';'.
-	 * 
-	 * Typically, .properties files should be located in the same directory as their corresponding 
+	 *
+	 * Typically, .properties files should be located in the same directory as their corresponding
 	 * scripts. However, this method may need to be used when circumstances make it impossible to
 	 * have both files in the same directory (i.e., if the scripts are included in ghidra.jar).
-	 * 
+	 *
 	 * @param paths  String representation of directories (each separated by ';')
 	 */
 	public void setPropertiesFileDirectories(String paths) {
@@ -304,13 +304,13 @@ public class HeadlessOptions {
 	}
 
 	/**
-	 * During import, the default behavior is to skip the import if a conflict occurs 
-	 * within the destination folder.  This method can be used to force the original 
+	 * During import, the default behavior is to skip the import if a conflict occurs
+	 * within the destination folder.  This method can be used to force the original
 	 * conflicting file to be removed prior to import.
 	 * If the pre-existing file is versioned, the commit option must also be
 	 * enabled to have the overwrite remove the versioned file.
-	 * 
-	 * @param enabled if true conflicting domain files will be removed from the 
+	 *
+	 * @param enabled if true conflicting domain files will be removed from the
 	 * project prior to importing the new file.
 	 */
 	public void enableOverwriteOnConflict(boolean enabled) {
@@ -322,7 +322,7 @@ public class HeadlessOptions {
 	 * <code>-import</code> or <code>-process</code> modes.  In order for recursive processing of files to
 	 * occur, the user must have specified a directory (and not a specific file)
 	 * for the Headless Analyzer to import or process.
-	 * 
+	 *
 	 * @param enabled  if true, enables recursive processing
 	 */
 	public void enableRecursiveProcessing(boolean enabled) {
@@ -333,7 +333,7 @@ public class HeadlessOptions {
 	 * When readOnly processing is enabled, any changes made by script or analyzers
 	 * are discarded when the Headless Analyzer exits.  When used with import mode,
 	 * the imported program file will not be saved to the project or repository.
-	 * 
+	 *
 	 * @param enabled  if true, enables readOnly processing or import
 	 */
 	public void enableReadOnlyProcessing(boolean enabled) {
@@ -342,11 +342,11 @@ public class HeadlessOptions {
 
 	/**
 	 * Set project delete flag which allows temporary projects created
-	 * to be deleted upon completion.  This option has no effect if a 
+	 * to be deleted upon completion.  This option has no effect if a
 	 * Ghidra URL or an existing project was specified.  This option
 	 * will be assumed when importing with the readOnly option enabled.
-	 * 
-	 * @param enabled if true a created project will be deleted when 
+	 *
+	 * @param enabled if true a created project will be deleted when
 	 * processing is complete.
 	 */
 	public void setDeleteCreatedProjectOnClose(boolean enabled) {
@@ -356,7 +356,7 @@ public class HeadlessOptions {
 	/**
 	 * Auto-analysis is enabled by default following import.  This method can be
 	 * used to change the enablement of auto-analysis.
-	 * 
+	 *
 	 * @param enabled True if auto-analysis should be enabled; otherwise, false.
 	 */
 	public void enableAnalysis(boolean enabled) {
@@ -366,7 +366,7 @@ public class HeadlessOptions {
 	/**
 	 * Sets the language and compiler spec from the provided input. Any null value will attempt
 	 * a "best-guess" if possible.
-	 * 
+	 *
 	 * @param languageId The language to set.
 	 * @param compilerSpecId The compiler spec to set.
 	 * @throws InvalidInputException if the language and compiler spec combination is not valid.
@@ -404,7 +404,7 @@ public class HeadlessOptions {
 
 	/**
 	 * Set analyzer timeout on a per-file basis.
-	 * 
+	 *
 	 * @param stringInSecs  timeout value in seconds (as a String)
 	 * @throws InvalidInputException if the timeout value was not a valid value
 	 */
@@ -424,13 +424,13 @@ public class HeadlessOptions {
 
 	/**
 	 * Set Ghidra Server client credentials to be used with "shared" projects.
-	 * 
+	 *
 	 * @param userID optional userId to use if server permits the user to use
 	 * a userId which differs from the process owner name.
 	 * @param keystorePath file path to keystore file containing users private key
 	 * to be used with PKI or SSH based authentication.
 	 * @param allowPasswordPrompt if true the user may be prompted for passwords
-	 * via the console (stdin).  Please note that the Java console will echo 
+	 * via the console (stdin).  Please note that the Java console will echo
 	 * the password entry to the terminal which may be undesirable.
 	 * @throws IOException if an error occurs while opening the specified keystorePath.
 	 */
@@ -446,7 +446,7 @@ public class HeadlessOptions {
 	/**
 	 * Enable committing of processed files to the repository which backs the specified
 	 * project.
-	 * 
+	 *
 	 * @param commit if true imported files will be committed
 	 * @param comment optional comment to use when committing
 	 */
@@ -460,8 +460,8 @@ public class HeadlessOptions {
 	}
 
 	/**
-	 * Sets the maximum number of cpu cores to use during headless processing. 
-	 * 
+	 * Sets the maximum number of cpu cores to use during headless processing.
+	 *
 	 * @param cpu The maximum number of cpu cores to use during headless processing.
 	 *     Setting it to 0 or a negative integer is equivalent to setting it to 1.
 	 */
@@ -472,10 +472,10 @@ public class HeadlessOptions {
 	}
 
 	/**
-	 * Sets the loader to use for imports, as well as any loader-specific arguments.  A null loader 
+	 * Sets the loader to use for imports, as well as any loader-specific arguments.  A null loader
 	 * will attempt "best-guess" if possible.  Loader arguments are not supported if a "best-guess"
 	 * is made.
-	 * 
+	 *
 	 * @param loaderName The name (simple class name) of the loader to use.
 	 * @param loaderArgs A list of loader-specific arguments.  Could be null if there are none.
 	 * @throws InvalidInputException if an invalid loader name was specified, or if loader arguments

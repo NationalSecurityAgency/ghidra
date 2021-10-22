@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ inline bool VarnodeCompareLocDef::operator()(const Varnode *a,const Varnode *b) 
   else if (f1 == 0)		// both are free
     //    return (a < b);		// compare pointers
     return (a->getCreateIndex() < b->getCreateIndex());
-  
+
   return false;
 }
 
@@ -80,7 +80,7 @@ inline bool VarnodeCompareDefLoc::operator()(const Varnode *a,const Varnode *b) 
 HighVariable *Varnode::getHigh(void) const
 
 {
-  if (high==(HighVariable *)0) 
+  if (high==(HighVariable *)0)
     throw LowlevelError("Requesting non-existent high-level");
   return high;
 }
@@ -169,7 +169,7 @@ int4 Varnode::characterizeOverlap(const Varnode &op) const
 /// \return the relative overlap point or -1
 int4 Varnode::overlap(const Varnode &op) const
 
-{  
+{
   if (!loc.isBigEndian())	// Little endian
     return loc.overlap(0,op.loc,op.size);
   else {			// Big endian
@@ -510,7 +510,7 @@ bool Varnode::operator==(const Varnode &op2) const
   if (f1!=f2) return false;
   if (f1==Varnode::written)
     if (def->getSeqNum() != op2.def->getSeqNum()) return false;
-  
+
   return true;
 }
 
@@ -681,7 +681,7 @@ void Varnode::printRawHeritage(ostream &s,int4 depth) const
     for(int4 i=0;i<def->numInput();++i)
       def->getIn(i)->printRawHeritage(s,depth+5);
   }
-  else 
+  else
     s << endl;
 }
 
@@ -799,7 +799,7 @@ int4 Varnode::termOrder(const Varnode *op) const
     if (op->isWritten()&&(op->getDef()->code() == CPUI_INT_MULT))
       if (op->getDef()->getIn(1)->isConstant())
 	op = op->getDef()->getIn(0);
-    
+
     if (vn->getAddr() < op->getAddr()) return -1;
     if (op->getAddr() < vn->getAddr()) return 1;
   }
@@ -885,7 +885,7 @@ Varnode *VarnodeBank::create(int4 s,const Address &m,Datatype *ct)
 
 {
   Varnode *vn = new Varnode(s,m,ct);
-  
+
   vn->create_index = create_index++;
   vn->lociter = loc_tree.insert(vn).first; // Frees can always be inserted without duplication
   vn->defiter = def_tree.insert(vn).first;
@@ -1306,7 +1306,7 @@ VarnodeLocSet::const_iterator VarnodeBank::endLoc(int4 s,const Address &addr,
 {
   VarnodeLocSet::const_iterator iter;
   searchvn.loc = addr;
-  
+
   if (fl == Varnode::written) {
     searchvn.size = s;
     searchvn.flags = Varnode::written;
@@ -1597,7 +1597,7 @@ bool contiguous_test(Varnode *vn1,Varnode *vn2)
     if (op2->code() != CPUI_SUBPIECE) return false;
     vnwhole = op1->getIn(0);
     if (op2->getIn(0) != vnwhole) return false;
-    if (op2->getIn(1)->getOffset() != 0) 
+    if (op2->getIn(1)->getOffset() != 0)
       return false;		// Must be least sig
     if (op1->getIn(1)->getOffset() != vn2->getSize())
       return false;		// Must be contiguous

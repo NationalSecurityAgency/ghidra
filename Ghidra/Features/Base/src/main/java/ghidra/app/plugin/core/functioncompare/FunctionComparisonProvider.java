@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,8 +38,8 @@ import ghidra.util.HelpLocation;
 
 /**
  * Dockable provider that displays function comparisons  Clients create/modify
- * these comparisons using the {@link FunctionComparisonService}, which in turn 
- * creates instances of this provider as-needed. 
+ * these comparisons using the {@link FunctionComparisonService}, which in turn
+ * creates instances of this provider as-needed.
  */
 public class FunctionComparisonProvider extends ComponentProviderAdapter
 		implements PopupActionProvider, FunctionComparisonModelListener {
@@ -53,7 +53,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param plugin the active plugin
 	 * @param name the providers name; used to group similar providers into a tab within
 	 *        the same window
@@ -65,7 +65,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param plugin the active plugin
 	 * @param name the providers name; used to group similar providers into a tab within
 	 *        the same window
@@ -144,7 +144,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 
 	/**
 	 * Returns the comparison model
-	 * 
+	 *
 	 * @return the comparison model
 	 */
 	public FunctionComparisonModel getModel() {
@@ -153,7 +153,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 
 	/**
 	 * Replaces the comparison model with the one provided
-	 * 
+	 *
 	 * @param model the comparison model
 	 */
 	public void setModel(FunctionComparisonModel model) {
@@ -164,7 +164,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	 * Removes any functions being displayed by this provider that are from
 	 * the given program. If there are no functions left to display, the
 	 * provider is closed.
-	 * 
+	 *
 	 * @param program the program being closed
 	 */
 	public void programClosed(Program program) {
@@ -175,7 +175,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	/**
 	 * Removes all functions for the specified program from the comparison
 	 * model
-	 * 
+	 *
 	 * @param program the program whose functions require removal
 	 */
 	public void removeFunctions(Program program) {
@@ -185,7 +185,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 
 	/**
 	 * Removes the set of functions from the comparison model
-	 * 
+	 *
 	 * @param functions the functions to remove
 	 */
 	public void removeFunctions(Set<Function> functions) {
@@ -194,9 +194,9 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Indicates that the specified program has been restored, so the 
+	 * Indicates that the specified program has been restored, so the
 	 * comparison panel should be refreshed
-	 * 
+	 *
 	 * @param program the program that was restored (undo/redo)
 	 */
 	public void programRestored(Program program) {
@@ -206,9 +206,9 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Restores the function comparison providers components to the indicated 
+	 * Restores the function comparison providers components to the indicated
 	 * saved configuration state
-	 * 
+	 *
 	 * @param saveState the configuration state to restore
 	 */
 	public void readConfigState(SaveState saveState) {
@@ -216,9 +216,9 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Saves the current configuration state of the components that compose 
+	 * Saves the current configuration state of the components that compose
 	 * the function comparison provider
-	 * 
+	 *
 	 * @param saveState the new configuration state
 	 */
 	public void writeConfigState(SaveState saveState) {
@@ -238,7 +238,7 @@ public class FunctionComparisonProvider extends ComponentProviderAdapter
 
 	/**
 	 * Returns true if the comparison panel is empty
-	 * 
+	 *
 	 * @return true if the panel is empty
 	 */
 	boolean isEmpty() {

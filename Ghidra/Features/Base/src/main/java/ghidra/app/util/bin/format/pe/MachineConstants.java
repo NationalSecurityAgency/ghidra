@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.pe;
 
 /**
  * PE machine ID constants defined by standard header file 'ntimage.h'
- * 
+ *
  * @see <a href="https://msdn.microsoft.com/en-us/library/windows/desktop/mt804345%28v=vs.85%29.aspx">Image File Machine Constants</a>
  */
 public class MachineConstants {
@@ -39,7 +39,7 @@ public class MachineConstants {
 	public final static short IMAGE_FILE_MACHINE_ARMNT             =         0x01c4;// ARM Thumb-2 Little-Endian
 	public final static short IMAGE_FILE_MACHINE_AM33              =         0x01d3;
 	public final static short IMAGE_FILE_MACHINE_POWERPC           =         0x01F0;// PowerPC Little-Endian
-	public final static short IMAGE_FILE_MACHINE_POWERPCFP         =         0x01f1;// PowerPC w/ Floating Point Support 
+	public final static short IMAGE_FILE_MACHINE_POWERPCFP         =         0x01f1;// PowerPC w/ Floating Point Support
 	public final static short IMAGE_FILE_MACHINE_IA64              =         0x0200;// Intel 64
 	public final static short IMAGE_FILE_MACHINE_MIPS16            =         0x0266;// MIPS
 	public final static short IMAGE_FILE_MACHINE_ALPHA64           =         0x0284;// ALPHA64

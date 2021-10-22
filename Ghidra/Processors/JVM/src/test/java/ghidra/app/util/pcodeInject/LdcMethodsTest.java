@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.program.model.lang.LanguageID;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 
 /**
- * 
+ *
  * size of constant pool structures in bytes:
  * Class: 3
  * MethodRef: 5
@@ -39,7 +39,7 @@ import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
  * Float: 5
  * Long: 9
  * Double: 9
- * Utf8: 
+ * Utf8:
  *
  * Constant pool begins at offset 0xa of the class file
  */
@@ -199,7 +199,7 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendCount(classFile, (short) 3);
 		TestClassFileCreator.appendString(classFile, (short) 2);
 		TestClassFileCreator.appendUtf8(classFile, "input1");
-		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);	
+		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
 		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 1, constantPool);
@@ -209,7 +209,7 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		expectedPcode.emitPushCat1Value(LdcMethods.VALUE);
 		assertEquals(pCode, expectedPcode);
 
-		//append additional string, utf8 element to the end of the constant pool and generate a reference 
+		//append additional string, utf8 element to the end of the constant pool and generate a reference
 		//character string
 		classFile.set(COUNT_LOW_BYTE, (byte) 5);
 		TestClassFileCreator.appendString(classFile, (short) 4);
@@ -233,7 +233,7 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendCount(classFile,(short) 3);
 		TestClassFileCreator.appendClass(classFile, (short) 2);
 		TestClassFileCreator.appendUtf8(classFile, "Ljava/lang/Integer;");
-		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);	
+		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
 		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 1, constantPool);
@@ -244,7 +244,7 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		expectedPcode.emitPushCat1Value(LdcMethods.VALUE);
 		assertEquals(pCode, expectedPcode);
 
-		//append additional class, utf8 element to the end of the constant pool and generate a reference 
+		//append additional class, utf8 element to the end of the constant pool and generate a reference
 		//character string
 		classFile.set(COUNT_LOW_BYTE, (byte) 5);
 		TestClassFileCreator.appendClass(classFile, (short) 4);
@@ -268,7 +268,7 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		TestClassFileCreator.appendCount(classFile, (short) 3);
 		TestClassFileCreator.appendMethodType(classFile, (short) 2);
 		TestClassFileCreator.appendUtf8(classFile, "(I)Ljava/lang/Integer;");
-		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);	
+		byte[] classFileBytes = TestClassFileCreator.getByteArray(classFile);
 		AbstractConstantPoolInfoJava[] constantPool = TestClassFileCreator.getConstantPoolFromBytes(classFileBytes);
 		PcodeOpEmitter pCode = new PcodeOpEmitter(language, opAddress, uniqueBase);
 		LdcMethods.getPcodeForLdc(pCode, 1, constantPool);
@@ -282,7 +282,7 @@ public class LdcMethodsTest extends AbstractGhidraHeadlessIntegrationTest {
 		expectedPcode.emitPushCat1Value(LdcMethods.VALUE);
 		assertEquals(pCode, expectedPcode);
 
-		//append additional MethodType, utf8 element to the end of the constant pool and generate a reference 
+		//append additional MethodType, utf8 element to the end of the constant pool and generate a reference
 		//character string
 		classFile.set(COUNT_LOW_BYTE, (byte) 5);
 		TestClassFileCreator.appendMethodType(classFile, (short) 4);

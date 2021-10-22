@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Shows how to find data types by name in data type managers other than the current program's, 
+// Shows how to find data types by name in data type managers other than the current program's,
 // which is how the <tt>GhidraScript.getDataTypes(String)</tt> works.
 //@category Examples
 
@@ -53,7 +53,7 @@ public class FindDataTypeScript extends GhidraScript {
 		println("Done searching");
 
 		//
-		// In the built-in DTM		
+		// In the built-in DTM
 		//
 		manager = getDataTypeManagerByName("BuiltInTypes");
 		println("Now searching for any matching type in BuiltInTypes:");

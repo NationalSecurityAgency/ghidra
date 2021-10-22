@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,9 +59,9 @@ public interface DataTypeComponent {
 
 	/**
 	 * Get the byte offset of where this component begins relative to the start of the parent
-	 * data type.  
+	 * data type.
 	 * @return offset of start of component relative to the start of the parent
-	 * data type. 
+	 * data type.
 	 */
 	public int getOffset();
 
@@ -75,8 +75,8 @@ public interface DataTypeComponent {
 
 	/**
 	 * Get the length of this component.  Zero-length components will report a length of 0
-	 * and may overlap other components at the same offset.  Similarly, multiple adjacent 
-	 * bit-field components may appear to overlap at the byte-level. 
+	 * and may overlap other components at the same offset.  Similarly, multiple adjacent
+	 * bit-field components may appear to overlap at the byte-level.
 	 * @return the length of this component
 	 */
 	public int getLength();
@@ -154,10 +154,10 @@ public interface DataTypeComponent {
 	 * Determine if the specified dataType will be treated as a zero-length component
 	 * allowing it to possibly overlap the next component.  If the specified dataType
 	 * returns true for {@link DataType#isZeroLength()} and true for {@link DataType#isNotYetDefined()}
-	 * this method will return false causing the associated component to use the reported dataType length 
+	 * this method will return false causing the associated component to use the reported dataType length
 	 * of 1.
 	 * @param dataType datatype to be evaluated
-	 * @return true if zero-length component 
+	 * @return true if zero-length component
 	 */
 	public static boolean usesZeroLengthComponent(DataType dataType) {
 		if (dataType.isZeroLength()) {

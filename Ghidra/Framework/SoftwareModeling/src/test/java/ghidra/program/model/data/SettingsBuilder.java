@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,9 +38,9 @@ public class SettingsBuilder implements Settings {
 
 	/**
 	 * Sets the {@link CharsetSettingsDefinition}.
-	 * 
+	 *
 	 * @param cs Charset to set
-	 * @return chainable SettingsBuilder 
+	 * @return chainable SettingsBuilder
 	 */
 	public SettingsBuilder set(Charset cs) {
 		CharsetSettingsDefinition.CHARSET.setCharset(settings, cs.name());
@@ -49,7 +49,7 @@ public class SettingsBuilder implements Settings {
 
 	/**
 	 * Sets the {@link RenderUnicodeSettingsDefinition} setting.
-	 * 
+	 *
 	 * @param ruenum {@link RENDER_ENUM} value to set.
 	 * @return chainable SettingsBuilder
 	 */
@@ -60,7 +60,7 @@ public class SettingsBuilder implements Settings {
 
 	/**
 	 * Sets the {@link TranslationSettingsDefinition} setting.
-	 * 
+	 *
 	 * @param tenum {@link TRANSLATION_ENUM} value to set.
 	 * @return chainable SettingsBuilder
 	 */

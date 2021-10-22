@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ public class VTFunctionReferenceCorrelator_x86_Test extends AbstractVTCorrelator
 	}
 
 	/*
-	 * Run the Exact Function Instructions Match correlator and accept all matches, 
+	 * Run the Exact Function Instructions Match correlator and accept all matches,
 	 * then run the Function Reference correlator and make sure only the expected matches match
 	 */
 	@Test
@@ -112,7 +112,7 @@ public class VTFunctionReferenceCorrelator_x86_Test extends AbstractVTCorrelator
 		}
 
 		/* Make the set of expected matches
-		 * 
+		 *
 		 * NOTE 1: The commented out matches score lower than the threshold for the new scoring mechanism
 		 * NOTE 2: The print function is not matched here because it scores identically to other possible matches when only considering function references:
 		 * 		Gadget::print -- Gadget::print similarity:    0.7022663247717663
@@ -127,13 +127,13 @@ public class VTFunctionReferenceCorrelator_x86_Test extends AbstractVTCorrelator
 
 		expectedMatchPairs.add(associate(addr(srcProg, "00411b80"), addr(destProg, "00411b60")));  // src:__RTC_CheckEsp dst: __RTC_CheckEsp
 		expectedMatchPairs.add(associate(addr(srcProg, "00411bb0"), addr(destProg, "00411b90")));  // src:@_RTC_CheckStackVars@8 dst: @_RTC_CheckStackVars@8
-		expectedMatchPairs.add(associate(addr(srcProg, "00411c70"), addr(destProg, "00411c50")));  // src:@_RTC_CheckStackVars2@12 dst: @_RTC_CheckStackVars2@12 
-		expectedMatchPairs.add(associate(addr(srcProg, "00411dc0"), addr(destProg, "00411da0")));  // src:FUN_00411dc0 dst: FUN_00411da0		
+		expectedMatchPairs.add(associate(addr(srcProg, "00411c70"), addr(destProg, "00411c50")));  // src:@_RTC_CheckStackVars2@12 dst: @_RTC_CheckStackVars2@12
+		expectedMatchPairs.add(associate(addr(srcProg, "00411dc0"), addr(destProg, "00411da0")));  // src:FUN_00411dc0 dst: FUN_00411da0
 		expectedMatchPairs.add(associate(addr(srcProg, "00411e70"), addr(destProg, "00411e50")));  // src:FUN_00411e70 dst: FUN_00411e50
-		expectedMatchPairs.add(associate(addr(srcProg, "00411ee0"), addr(destProg, "00411ec0")));  // src:_mainCRTStartup dst: _mainCRTStartup		
+		expectedMatchPairs.add(associate(addr(srcProg, "00411ee0"), addr(destProg, "00411ec0")));  // src:_mainCRTStartup dst: _mainCRTStartup
 
 		expectedMatchPairs.add(associate(addr(srcProg, "00411f00"), addr(destProg, "00411ee0")));  // src:___tmainCRTStartup dst: ___tmainCRTStartup
-		expectedMatchPairs.add(associate(addr(srcProg, "00412380"), addr(destProg, "00412360")));  // src:_RTC_Failure dst: _RTC_Failure		
+		expectedMatchPairs.add(associate(addr(srcProg, "00412380"), addr(destProg, "00412360")));  // src:_RTC_Failure dst: _RTC_Failure
 		expectedMatchPairs.add(associate(addr(srcProg, "004123f0"), addr(destProg, "004123d0")));  // src:failwithmessage dst: failwithmessage
 		expectedMatchPairs.add(associate(addr(srcProg, "00412950"), addr(destProg, "00412930")));  // src:_RTC_AllocaFailure dst: _RTC_AllocaFailure
 
@@ -150,7 +150,7 @@ public class VTFunctionReferenceCorrelator_x86_Test extends AbstractVTCorrelator
 	}
 
 	/*
-	 * Run the Exact Function Instructions Match correlator and accept all matches, 
+	 * Run the Exact Function Instructions Match correlator and accept all matches,
 	 * then run the Function Reference correlator and make sure only the expected matches match
 	 */
 	@Test
@@ -188,8 +188,8 @@ public class VTFunctionReferenceCorrelator_x86_Test extends AbstractVTCorrelator
 		}
 
 		/* Make the set of expected matches
-		 * 
-		 * NOTE: By removing the refine step we see functions that otherwise have conflicting scores.  
+		 *
+		 * NOTE: By removing the refine step we see functions that otherwise have conflicting scores.
 		 */
 
 		Set<VTAssociationPair> expectedMatchPairs = new HashSet<>();
@@ -200,13 +200,13 @@ public class VTFunctionReferenceCorrelator_x86_Test extends AbstractVTCorrelator
 
 		expectedMatchPairs.add(associate(addr(srcProg, "00411b80"), addr(destProg, "00411b60")));  // src:__RTC_CheckEsp dst: __RTC_CheckEsp
 		expectedMatchPairs.add(associate(addr(srcProg, "00411bb0"), addr(destProg, "00411b90")));  // src:@_RTC_CheckStackVars@8 dst: @_RTC_CheckStackVars@8
-		expectedMatchPairs.add(associate(addr(srcProg, "00411c70"), addr(destProg, "00411c50")));  // src:@_RTC_CheckStackVars2@12 dst: @_RTC_CheckStackVars2@12 
-		expectedMatchPairs.add(associate(addr(srcProg, "00411dc0"), addr(destProg, "00411da0")));  // src:FUN_00411dc0 dst: FUN_00411da0		
+		expectedMatchPairs.add(associate(addr(srcProg, "00411c70"), addr(destProg, "00411c50")));  // src:@_RTC_CheckStackVars2@12 dst: @_RTC_CheckStackVars2@12
+		expectedMatchPairs.add(associate(addr(srcProg, "00411dc0"), addr(destProg, "00411da0")));  // src:FUN_00411dc0 dst: FUN_00411da0
 		expectedMatchPairs.add(associate(addr(srcProg, "00411e70"), addr(destProg, "00411e50")));  // src:FUN_00411e70 dst: FUN_00411e50
-		expectedMatchPairs.add(associate(addr(srcProg, "00411ee0"), addr(destProg, "00411ec0")));  // src:_mainCRTStartup dst: _mainCRTStartup		
+		expectedMatchPairs.add(associate(addr(srcProg, "00411ee0"), addr(destProg, "00411ec0")));  // src:_mainCRTStartup dst: _mainCRTStartup
 
 		expectedMatchPairs.add(associate(addr(srcProg, "00411f00"), addr(destProg, "00411ee0")));  // src:___tmainCRTStartup dst: ___tmainCRTStartup
-		expectedMatchPairs.add(associate(addr(srcProg, "00412380"), addr(destProg, "00412360")));  // src:_RTC_Failure dst: _RTC_Failure		
+		expectedMatchPairs.add(associate(addr(srcProg, "00412380"), addr(destProg, "00412360")));  // src:_RTC_Failure dst: _RTC_Failure
 		expectedMatchPairs.add(associate(addr(srcProg, "004123f0"), addr(destProg, "004123d0")));  // src:failwithmessage dst: failwithmessage
 		expectedMatchPairs.add(associate(addr(srcProg, "00412950"), addr(destProg, "00412930")));  // src:_RTC_AllocaFailure dst: _RTC_AllocaFailure
 

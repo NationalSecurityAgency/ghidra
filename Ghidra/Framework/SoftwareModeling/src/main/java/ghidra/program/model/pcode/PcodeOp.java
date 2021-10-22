@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,18 +24,18 @@ import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 /**
- * 
+ *
  *
  * Pcode Op describes a generic machine operation.  You can think of
  * it as the microcode for a specific processor's instruction set.  There
  * are a finite number of PcodeOp's that theoretically can define the
  * operations for any given processor.
- * 
+ *
  * Pcode have
  *    An operation code
  *    Some number of input parameter varnodes
  *    possible output varnode
- * 
+ *
  */
 public class PcodeOp {
 
@@ -43,12 +43,12 @@ public class PcodeOp {
 
 	// Each Pcode Op is given a unique identifying index here
 	public static final int UNIMPLEMENTED = 0;		// Place holder for unimplemented instruction
-	public static final int COPY = 1;		        // Copy one operand to another 
+	public static final int COPY = 1;		        // Copy one operand to another
 	public static final int LOAD = 2;		        // Dereference a pointer into specified space
 	public static final int STORE = 3;		        // Store at a pointer into specified space
 
-	public static final int BRANCH = 4;		// Always branch 
-	public static final int CBRANCH = 5;		// Conditional branch 
+	public static final int BRANCH = 4;		// Always branch
+	public static final int CBRANCH = 5;		// Conditional branch
 	public static final int BRANCHIND = 6;		// An indirect branch (jumptable)
 
 	public static final int CALL = 7;		        // A call with absolute address
@@ -56,29 +56,29 @@ public class PcodeOp {
 	public static final int CALLOTHER = 9;     // Other unusual subroutine calling conventions
 	public static final int RETURN = 10;		// A return from subroutine
 
-	public static final int INT_EQUAL = 11;	        // Return TRUE if operand1 == operand2 
+	public static final int INT_EQUAL = 11;	        // Return TRUE if operand1 == operand2
 	public static final int INT_NOTEQUAL = 12;	        // Return TRUE if operand1 != operand2
 	public static final int INT_SLESS = 13;         	// Return TRUE if signed op1 < signed op2
 	public static final int INT_SLESSEQUAL = 14;	// Return TRUE if signed op1 <= signed op2
 	public static final int INT_LESS = 15;		// Return TRUE if unsigned op1 < unsigned op2
 	// Also indicates borrow on unsigned substraction
 	public static final int INT_LESSEQUAL = 16;	// Return TRUE if unsigned op1 <= unsigned op2
-	public static final int INT_ZEXT = 17;		// Zero extend operand 
-	public static final int INT_SEXT = 18;		// Sign extend operand 
-	public static final int INT_ADD = 19;		// Unsigned addition of operands of same size 
-	public static final int INT_SUB = 20;		// Unsigned subtraction of operands of same size 
-	public static final int INT_CARRY = 21;        	// TRUE if adding two operands has overflow (carry) 
-	public static final int INT_SCARRY = 22;   	// TRUE if carry in signed addition of 2 ops 
-	public static final int INT_SBORROW = 23;  	// TRUE if borrow in signed subtraction of 2 ops 
-	public static final int INT_2COMP = 24;    	// Twos complement (for subtracting) of operand 
+	public static final int INT_ZEXT = 17;		// Zero extend operand
+	public static final int INT_SEXT = 18;		// Sign extend operand
+	public static final int INT_ADD = 19;		// Unsigned addition of operands of same size
+	public static final int INT_SUB = 20;		// Unsigned subtraction of operands of same size
+	public static final int INT_CARRY = 21;        	// TRUE if adding two operands has overflow (carry)
+	public static final int INT_SCARRY = 22;   	// TRUE if carry in signed addition of 2 ops
+	public static final int INT_SBORROW = 23;  	// TRUE if borrow in signed subtraction of 2 ops
+	public static final int INT_2COMP = 24;    	// Twos complement (for subtracting) of operand
 	public static final int INT_NEGATE = 25;
-	public static final int INT_XOR = 26;		// Exclusive OR of two operands of same size 
+	public static final int INT_XOR = 26;		// Exclusive OR of two operands of same size
 	public static final int INT_AND = 27;
 	public static final int INT_OR = 28;
-	public static final int INT_LEFT = 29;		// Left shift 
-	public static final int INT_RIGHT = 30;	        // Right shift zero fill 
-	public static final int INT_SRIGHT = 31;        	// Signed right shift 
-	public static final int INT_MULT = 32;		// Integer multiplication 
+	public static final int INT_LEFT = 29;		// Left shift
+	public static final int INT_RIGHT = 30;	        // Right shift zero fill
+	public static final int INT_SRIGHT = 31;        	// Signed right shift
+	public static final int INT_MULT = 32;		// Integer multiplication
 	public static final int INT_DIV = 33;		// Unsigned integer division
 	public static final int INT_SDIV = 34;		// Signed integer division
 	public static final int INT_REM = 35;		// Unsigned mod (remainder)
@@ -93,12 +93,12 @@ public class PcodeOp {
 	// although the exact operation of these instructions obviously depends on the
 	// format.  For simulation, a "mode" variable specifying the floating point format
 	// will be necessary.
-	public static final int FLOAT_EQUAL = 41;          // Return TRUE if operand1 == operand2    
-	public static final int FLOAT_NOTEQUAL = 42;	// Return TRUE if operand1 != operand2    
-	public static final int FLOAT_LESS = 43;   	// Return TRUE if op1 < op2 
+	public static final int FLOAT_EQUAL = 41;          // Return TRUE if operand1 == operand2
+	public static final int FLOAT_NOTEQUAL = 42;	// Return TRUE if operand1 != operand2
+	public static final int FLOAT_LESS = 43;   	// Return TRUE if op1 < op2
 	public static final int FLOAT_LESSEQUAL = 44;	// Return TRUE if op1 <= op2
 	// Slot 45 is unused
-	public static final int FLOAT_NAN = 46;	// Return TRUE if neither op1 is NaN 
+	public static final int FLOAT_NAN = 46;	// Return TRUE if neither op1 is NaN
 
 	public static final int FLOAT_ADD = 47;            // float addition
 	public static final int FLOAT_DIV = 48;            // float division
@@ -143,7 +143,7 @@ public class PcodeOp {
 
 	/**
 	 * Constructor - pcode part of sequence of pcodes, some number of inputs, output
-	 * 
+	 *
 	 * @param sq place in sequence of pcode
 	 * @param op pcode operation
 	 * @param numinputs number of inputs to operation, actual inputs not defined yet.
@@ -158,7 +158,7 @@ public class PcodeOp {
 
 	/**
 	 * Constructor - pcode part of sequence of pcodes, inputs, outputs
-	 * 
+	 *
 	 * @param sq place in sequence of pcode
 	 * @param op pcode operation
 	 * @param in inputs to operation
@@ -173,7 +173,7 @@ public class PcodeOp {
 
 	/**
 	 * Constructor - inputs and outputs
-	 * 
+	 *
 	 * @param a address pcode is attached to
 	 * @param sequencenumber unique sequence number for the specified address.
 	 * @param op pcode operation
@@ -189,7 +189,7 @@ public class PcodeOp {
 
 	/**
 	 * Constructor - no output
-	 * 
+	 *
 	 * @param a address pcode is attached to
 	 * @param sequencenumber id within a single address
 	 * @param op operation pcode performs
@@ -201,7 +201,7 @@ public class PcodeOp {
 
 	/**
 	 * Constructor - no inputs, output
-	 * 
+	 *
 	 * @param a address pcode is attached to
 	 * @param sequencenumber id within a single address
 	 * @param op pcode operation
@@ -277,7 +277,7 @@ public class PcodeOp {
 
 	/**
 	 * Check if the pcode has been determined to be a dead operation.
-	 * 
+	 *
 	 * @return true if the pcode has been determined to have no effect in the context it is used
 	 */
 	public boolean isDead() {
@@ -315,7 +315,7 @@ public class PcodeOp {
 
 	/**
 	 * Set the pcode operation code
-	 * 
+	 *
 	 * @param o pcode operation code
 	 */
 	public final void setOpcode(int o) {
@@ -324,7 +324,7 @@ public class PcodeOp {
 
 	/**
 	 * Set/Replace an input varnode at the given slot.
-	 * 
+	 *
 	 * @param vn varnode to replace
 	 * @param slot index of input varnode to be replaced
 	 */
@@ -350,7 +350,7 @@ public class PcodeOp {
 
 	/**
 	 * Remove a varnode at the given slot from the list of input varnodes
-	 * 
+	 *
 	 * @param slot index of input varnode to remove
 	 */
 	public final void removeInput(int slot) {
@@ -370,7 +370,7 @@ public class PcodeOp {
 
 	/**
 	 * Insert an input varnode at the given index of input varnodes
-	 * 
+	 *
 	 * @param vn varnode to insert
 	 * @param slot insert index in input varnode list
 	 */
@@ -392,7 +392,7 @@ public class PcodeOp {
 
 	/**
 	 * Set a unique number for pcode ops that are attached to the same address
-	 * 
+	 *
 	 * @param t unique id
 	 */
 	public final void setTime(int t) {
@@ -402,7 +402,7 @@ public class PcodeOp {
 	/**
 	 * Set relative position information of PcodeOps within
 	 * a basic block, may change as basic block is edited.
-	 * 
+	 *
 	 * @param ord relative position of pcode op in basic block
 	 */
 	public final void setOrder(int ord) {
@@ -411,7 +411,7 @@ public class PcodeOp {
 
 	/**
 	 * Set the output varnode for the pcode operation.
-	 * 
+	 *
 	 * @param vn new output varnode
 	 */
 	public final void setOutput(Varnode vn) {
@@ -447,10 +447,10 @@ public class PcodeOp {
 
 	/**
 	 * Read p-code from XML stream
-	 * 
+	 *
 	 * @param parser is the XML stream
 	 * @param pfact factory used to create p-code correctly
-	 * 
+	 *
 	 * @return new PcodeOp
 	 * @throws PcodeXMLException if XML layout is incorrect
 	 */
@@ -535,7 +535,7 @@ public class PcodeOp {
 
 	/**
 	 * Get string representation for p-code operation
-	 * 
+	 *
 	 * @param op operation code
 	 * @return String representation of p-code operation
 	 */
@@ -700,7 +700,7 @@ public class PcodeOp {
 	 * Get the p-code op code for the given mnemonic string.
 	 * @param s is the mnemonic string
 	 * @return the op code
-	 * 
+	 *
 	 * @throws UnknownInstructionException if there is no matching mnemonic
 	 */
 	public static int getOpcode(String s) throws UnknownInstructionException {

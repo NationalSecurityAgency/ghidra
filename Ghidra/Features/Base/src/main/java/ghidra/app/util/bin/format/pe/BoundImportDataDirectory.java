@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -118,7 +118,7 @@ public class BoundImportDataDirectory extends DataDirectory {
     @Override
 	public boolean parse() throws IOException {
     	nameHash = new LinkedHashMap<String,Short>();
-    	
+
         int rva = getVirtualAddress();
         int ptr = getVirtualAddress();
         if (rva <= 0) {
@@ -130,7 +130,7 @@ public class BoundImportDataDirectory extends DataDirectory {
 
         List<BoundImportDescriptor> descriptorsList = new ArrayList<BoundImportDescriptor>();
         while (true) {
-        	if (ptr < 0) { 
+        	if (ptr < 0) {
             	Msg.error(this, "Invalid file index "+ptr);
             	break;
         	}
@@ -244,7 +244,7 @@ public class BoundImportDataDirectory extends DataDirectory {
 					pos += (descriptor.getModuleName().length() + 1);
 				}
 			}
-			
+
 			for (int j = 0 ; j < descriptor.getNumberOfModuleForwarderRefs() ; ++j) {
 				BoundImportForwarderRef forwarder = descriptor.getBoundImportForwarderRef(j);
 				if (forwarder == null) {

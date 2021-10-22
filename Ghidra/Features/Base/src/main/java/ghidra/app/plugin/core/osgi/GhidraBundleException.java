@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ public class GhidraBundleException extends OSGiException {
 
 	/**
 	 * Construct a new exception originating with {@code bundle}.
-	 * 
+	 *
 	 * @param bundle the bundle (if available)
 	 * @param msg a contextual message
 	 * @param cause the original exception
@@ -42,7 +42,7 @@ public class GhidraBundleException extends OSGiException {
 
 	/**
 	 * Construct a new exception originating with the bundle having location identifier {@code bundleLocation}.
-	 * 
+	 *
 	 * @param bundleLocation the bundle location identifier (since no bundle is available)
 	 * @param msg a contextual message
 	 * @param cause the original exception
@@ -55,7 +55,7 @@ public class GhidraBundleException extends OSGiException {
 
 	/**
 	 * Construct a new exception originating with the bundle having location identifier {@code bundleLocation}.
-	 * 
+	 *
 	 * @param bundleLocation the bundle location identifier (since no bundle is available)
 	 * @param msg a contextual message
 	 */
@@ -73,8 +73,8 @@ public class GhidraBundleException extends OSGiException {
 	}
 
 	/**
-	 * When no {@link Bundle} is available, {@link #getBundle()} will return {@code null}. 
-	 * 
+	 * When no {@link Bundle} is available, {@link #getBundle()} will return {@code null}.
+	 *
 	 * @return the bundle location identifier of the offending bundle.
 	 */
 	public String getBundleLocation() {
@@ -140,13 +140,13 @@ public class GhidraBundleException extends OSGiException {
 				 * bundle has the same symbolic name and version. This exception type will
 				 * only occur if the framework is configured to only allow a single bundle
 				 * to be installed for a given symbolic name and version.
-				 * 
+				 *
 				 * @see Constants#FRAMEWORK_BSNVERSION
 				 */
 				case BundleException.DUPLICATE_BUNDLE_ERROR:
 					return "DUPLICATE_BUNDLE_ERROR";
 
-				// The start transient operation failed because the start level of the bundle 
+				// The start transient operation failed because the start level of the bundle
 				// is greater than the current framework start level
 				case BundleException.START_TRANSIENT_ERROR:
 					return "START_TRANSIENT_ERROR";

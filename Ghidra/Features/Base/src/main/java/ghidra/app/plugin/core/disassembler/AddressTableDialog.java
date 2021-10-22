@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -148,7 +148,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		myButtonPanel.add(makeTablePanel);
 		myButtonPanel.add(disassemblePanel);
 
-		// search options panel   
+		// search options panel
 		JPanel searchOptionsPanel = new JPanel(new BorderLayout());
 		searchOptionsPanel.setBorder(BorderFactory.createTitledBorder("Search Options"));
 
@@ -286,7 +286,7 @@ public class AddressTableDialog extends DialogComponentProvider {
 		optionsPanel.add(searchOptionsPanel);
 		optionsPanel.add(makeOptionsPanel);
 
-		// put sub-panels onto main panel    
+		// put sub-panels onto main panel
 		mainPanel.add(resultsPanel, BorderLayout.CENTER);
 		mainPanel.add(optionsPanel, BorderLayout.SOUTH);
 

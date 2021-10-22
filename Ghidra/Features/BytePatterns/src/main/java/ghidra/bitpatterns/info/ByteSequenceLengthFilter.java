@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,23 +16,23 @@
 package ghidra.bitpatterns.info;
 
 /**
- * 
- * Objects of this class are used to access prefixes or suffixes of {@code String}s, as well as filter 
+ *
+ * Objects of this class are used to access prefixes or suffixes of {@code String}s, as well as filter
  * {@code String}s by length.
- *  
+ *
  */
 public class ByteSequenceLengthFilter {
 
 	private int internalIndex;//if positive, the filter will return the first internalIndex characters
 	//if negative, it will return the last internalIndex characters (think python string slicing)
 
-	private int minLength;//the minimum length a string needs to be 
+	private int minLength;//the minimum length a string needs to be
 
 	/**
-	 * @param internalIndex if positive, filter will return the first {@code internalIndex} 
+	 * @param internalIndex if positive, filter will return the first {@code internalIndex}
 	 * characters in the string.  Otherwise it will return the last {@code internalIndex} characters.
 	 * @param minLength the minimum length of a string
-	 * @throws IllegalArgumentException if {@code minLength} is negative or {@code minLength} < {@code internalIndex} 
+	 * @throws IllegalArgumentException if {@code minLength} is negative or {@code minLength} < {@code internalIndex}
 	 */
 	public ByteSequenceLengthFilter(int internalIndex, int minLength) {
 		if (minLength < 0) {

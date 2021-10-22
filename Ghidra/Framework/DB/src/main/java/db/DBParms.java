@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,12 +26,12 @@ import java.io.IOException;
 import db.buffers.*;
 
 /**
- * <code>DBParms</code> manages 4-byte integer parameters associated with a database 
- * and stored as the first buffer (ID 0) in the buffer file.  The maximum number of 
+ * <code>DBParms</code> manages 4-byte integer parameters associated with a database
+ * and stored as the first buffer (ID 0) in the buffer file.  The maximum number of
  * parameters is determined by the .
  */
 class DBParms {
-	
+
 	/**
 	 * Parameter number for the Master Table Root Buffer ID
 	 */
@@ -43,19 +43,19 @@ class DBParms {
 	// and we need the ability to patch DBParms (poke) which can be very complicated with a chained buffer
 	private static final int NODE_TYPE_SIZE = 1;
 	private static final int DATA_LENGTH_SIZE = 4;
-	private static final int VERSION_SIZE = 1; 
+	private static final int VERSION_SIZE = 1;
 	private static final int NODE_TYPE_OFFSET = 0;
 	private static final int DATA_LENGTH_OFFSET = NODE_TYPE_SIZE;
 	private static final int VERSION_OFFSET = DATA_LENGTH_OFFSET + DATA_LENGTH_SIZE;
 	private static final int PARM_BASE_OFFSET = VERSION_OFFSET + VERSION_SIZE;
 
 	private static final byte VERSION = 1;
-	
+
 	private BufferMgr bufferMgr;
 	private int size;
 
 	private IntIntHashtable cache = new IntIntHashtable();
-	
+
 	/**
 	 * Construct a new or existing parameter buffer.
 	 * @param bufferMgr buffer manager
@@ -86,7 +86,7 @@ class DBParms {
 		}
 		refresh();
 	}
-	
+
 	/**
 	 * Get the buffer offset for a specified parameter
 	 * @param parm parameter number
@@ -95,7 +95,7 @@ class DBParms {
 	private static int getOffset(int parm) {
 		return PARM_BASE_OFFSET + (parm * 4);
 	}
-	
+
 	/**
 	 * Poke a modified DBParam into a database buffer file.
 	 * WARNING! Use with extreme caution since this immediately modifies
@@ -114,12 +114,12 @@ class DBParms {
 		if (buffer.getByte(VERSION_OFFSET) != VERSION) {
 			throw new AssertException("Unsupported DBParms format");
 		}
-		
+
 		storeParm(parm, value, buffer);
-		
+
 		LocalBufferFile.poke(file, 0, buffer);
 	}
-	
+
 	private static void storeParm(int parm, int value, DataBuffer buffer) {
 		int maxParmCnt = (buffer.length() - PARM_BASE_OFFSET) / 4;
 		if (parm < 0 || parm >= maxParmCnt) {
@@ -133,9 +133,9 @@ class DBParms {
 		}
 		buffer.putInt(getOffset(parm), value);
 	}
-	
+
 	/**
-	 * Set a parameter value.  If parameter space is expanded to accommodate this 
+	 * Set a parameter value.  If parameter space is expanded to accommodate this
 	 * parameter, all allocated parameters will be initialized to -1
 	 * @param parm parameter number
 	 * @param value parameter value
@@ -175,7 +175,7 @@ class DBParms {
 			throw new ArrayIndexOutOfBoundsException();
 		}
 	}
-	
+
 	/**
 	 * Refresh parameters from an existing parameter buffer.
 	 * @throws IOException thrown if an IO error occurs.

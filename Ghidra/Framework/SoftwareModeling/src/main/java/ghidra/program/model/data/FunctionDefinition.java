@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public interface FunctionDefinition extends DataType, FunctionSignature {
 
 	/**
 	 * Set whether parameters can be passed as a VarArg (variable argument list).
-	 * 
+	 *
 	 * @param hasVarArgs true if this function has a variable argument list (ie printf(fmt, ...)).
 	 */
 	public void setVarArgs(boolean hasVarArgs);
@@ -57,12 +57,12 @@ public interface FunctionDefinition extends DataType, FunctionSignature {
 
 	/**
 	 * Replace the given argument with another data type
-	 * 
+	 *
 	 * @param ordinal the index of the argument to be replaced, starting from '0'
 	 * @param name name of the new argument
 	 * @param dt data type of the new argument
 	 * @param comment comment for the argument
-	 * @param source the source of this function definition argument: 
+	 * @param source the source of this function definition argument:
 	 * Symbol.DEFAULT, Symbol.ANALYSIS, Symbol.IMPORTED, or Symbol.USER_DEFINED
 	 */
 	public void replaceArgument(int ordinal, String name, DataType dt, String comment,

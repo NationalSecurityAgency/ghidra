@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -73,7 +73,7 @@ public class ReflectionUtilitiesTest {
 	public void testMovePastStackTracePattern() {
 
 		//@formatter:off
-		StackTraceElement[] trace = { 
+		StackTraceElement[] trace = {
 			element("Class1", "method"),
 			element("Class2", "method"),
 			element("Class3", "method"),
@@ -183,7 +183,7 @@ public class ReflectionUtilitiesTest {
 	public void testRuntimeTypeDiscovery_MixedHierarchy_AbstractClassAndInterfaceBothDefineValues() {
 
 		//
-		// Test to make sure that we get not only a directly hierarchy, but the lateral one 
+		// Test to make sure that we get not only a directly hierarchy, but the lateral one
 		// as well, where we pursue interfaces that may have defined some types.
 		//
 
@@ -198,7 +198,7 @@ public class ReflectionUtilitiesTest {
 	public void testRuntimeTypeDiscovery_SubInterfaceDefinesValues() {
 
 		//
-		// Test to make sure that we get not only a directly hierarchy, but the lateral one 
+		// Test to make sure that we get not only a directly hierarchy, but the lateral one
 		// as well, where we pursue interfaces that may have defined some types.
 		//
 
@@ -213,7 +213,7 @@ public class ReflectionUtilitiesTest {
 	public void testRuntimeTypeDiscovery_MixedHierarchy_UnrelatedParents() {
 
 		//
-		// Test to make sure that we get not only a directly hierarchy, but the lateral one 
+		// Test to make sure that we get not only a directly hierarchy, but the lateral one
 		// as well, where we pursue interfaces that may have defined some types.
 		//
 		// This test also verifies that in a mixed type hierarchy, we can correctly locate types
@@ -234,7 +234,7 @@ public class ReflectionUtilitiesTest {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private StackTraceElement element(String className, String methodName) {
 		return new StackTraceElement(className + ".class", methodName, className + ".java", 1);

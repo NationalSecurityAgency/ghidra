@@ -101,7 +101,7 @@
 	#1 = Equal to
 	#2 = Less than
 	#3 = Exeption
-	#bits = ex le eq un 
+	#bits = ex le eq un
 
 	local bit:4 = 0;
 	compare_float(bit, fcond2730:1, R0004x2, R1115x2);

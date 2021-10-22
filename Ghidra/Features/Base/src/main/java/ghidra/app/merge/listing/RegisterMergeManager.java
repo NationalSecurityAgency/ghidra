@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -96,7 +96,7 @@ class RegisterMergeManager implements ListingMergeConstants {
 	 * @param originalPgm the program that was checked out.
 	 * @param latestPgm the latest checked-in version of the program.
 	 * @param myPgm the program requesting to be checked in.
-	 * @param latestChanges the address set of changes between original and latest versioned program.  
+	 * @param latestChanges the address set of changes between original and latest versioned program.
 	 * @param myChanges the address set of changes between original and my modified program.
 	 */
 	RegisterMergeManager(String registerName, ProgramMultiUserMergeManager mergeManager,
@@ -130,7 +130,7 @@ class RegisterMergeManager implements ListingMergeConstants {
 	public void apply() {
 		conflictOption = conflictPanel.getSelectedOptions();
 
-		// If the "Use For All" check box is selected 
+		// If the "Use For All" check box is selected
 		// then save the option chosen for this conflict type.
 		if (conflictPanel.getUseForAll()) {
 			contextChoice = conflictOption;
@@ -161,7 +161,7 @@ class RegisterMergeManager implements ListingMergeConstants {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param monitor
 	 */
 	private void determineConflicts(TaskMonitor monitor) throws CancelledException {
@@ -287,7 +287,7 @@ class RegisterMergeManager implements ListingMergeConstants {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param minAddress
 	 * @param maxAddress
 	 * @param resultRegister
@@ -444,7 +444,7 @@ class RegisterMergeManager implements ListingMergeConstants {
 			conflictResultReg = resultContext.getRegister(registerName);
 		}
 
-		/** Gets the addresses where the named register differs 
+		/** Gets the addresses where the named register differs
 		 * between two programs.
 		 *
 		 * @param regName

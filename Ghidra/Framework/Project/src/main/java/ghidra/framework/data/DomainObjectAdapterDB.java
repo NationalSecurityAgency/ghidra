@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,12 +38,12 @@ import ghidra.util.task.TaskMonitorAdapter;
  * concept of starting a transaction before a change is made to the
  * domain object and ending the transaction. The transaction allows for
  * undo/redo changes.
- *  
+ *
  * The implementation class must also satisfy the following requirements:
  * <pre>
- * 
+ *
  * 1. The following constructor signature must be implemented:
- * 
+ *
  * 		 **
  *		 * Constructs new Domain Object
  *		 * @param dbh a handle to an open domain object database.
@@ -53,16 +53,16 @@ import ghidra.util.task.TaskMonitorAdapter;
  *		 * 		UPGRADE: the database is upgraded to the latest schema as it is opened.
  *		 * @param monitor TaskMonitor that allows the open to be cancelled.
  *	     * @param consumer the object that keeping the program open.
- *		 *     
+ *		 *
  *		 * @throws IOException if an error accessing the database occurs.
  *		 * @throws VersionException if database version does not match implementation. UPGRADE may be possible.
  *		 **
- *		 public DomainObjectAdapterDB(DBHandle dbh, int openMode, TaskMonitor monitor, Object consumer) throws IOException, VersionException 
+ *		 public DomainObjectAdapterDB(DBHandle dbh, int openMode, TaskMonitor monitor, Object consumer) throws IOException, VersionException
  *
  * 2. The following static field must be provided:
- * 
+ *
  * 		 public static final String CONTENT_TYPE
- * 
+ *
  * </pre>
  */
 public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
@@ -111,7 +111,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 
 	/**
 	 * Flush any pending database changes.
-	 * This method will be invoked by the transaction manager 
+	 * This method will be invoked by the transaction manager
 	 * prior to closing a transaction.
 	 */
 	public void flushWriteCache() {
@@ -119,14 +119,14 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 
 	/**
 	 * Invalidate (i.e., clear) any pending database changes not yet written.
-	 * This method will be invoked by the transaction manager 
+	 * This method will be invoked by the transaction manager
 	 * prior to aborting a transaction.
 	 */
 	public void invalidateWriteCache() {
 	}
 
 	/**
-	 * Return array of all domain objects synchronized with a 
+	 * Return array of all domain objects synchronized with a
 	 * shared transaction manager.
 	 * @return returns array of synchronized domain objects or
 	 * null if this domain object is not synchronized with others.
@@ -141,9 +141,9 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 
 	/**
 	 * Synchronize the specified domain object with this domain object
-	 * using a shared transaction manager.  If either or both is already shared, 
-	 * a transition to a single shared transaction manager will be 
-	 * performed.  
+	 * using a shared transaction manager.  If either or both is already shared,
+	 * a transition to a single shared transaction manager will be
+	 * performed.
 	 * @param domainObj
 	 * @throws LockException if lock or open transaction is active on either
 	 * this or the specified domain object
@@ -227,7 +227,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 
 	/**
 	 * Returns all properties lists contained by this domain object.
-	 * 
+	 *
 	 * @return all property lists contained by this domain object.
 	 */
 	@Override
@@ -249,7 +249,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 	}
 
 	/**
-	 * This method can be used to perform property list alterations resulting from renamed or obsolete 
+	 * This method can be used to perform property list alterations resulting from renamed or obsolete
 	 * property paths.  This should only be invoked during an upgrade.
 	 * WARNING! Should only be called during construction of domain object
 	 * @see OptionsDB#performAlterations(Map)
@@ -575,7 +575,7 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 
 			// TODO :( output method will cause Redo-able transactions to be cleared
 			// and may cause older Undo-able transactions to be cleared.
-			// Should implement transaction listener to properly maintain domain object 
+			// Should implement transaction listener to properly maintain domain object
 			// transaction sychronization
 
 		}
@@ -585,9 +585,9 @@ public abstract class DomainObjectAdapterDB extends DomainObjectAdapter
 	}
 
 	/**
-	 * This method is called before a save, saveAs, or saveToPackedFile 
+	 * This method is called before a save, saveAs, or saveToPackedFile
 	 * to update common meta data
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	protected void updateMetadata() throws IOException {
 		saveMetadata();

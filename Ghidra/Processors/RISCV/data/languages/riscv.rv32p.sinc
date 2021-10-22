@@ -47,7 +47,7 @@
 }
 
 
-# ave rt, ra, rb 	
+# ave rt, ra, rb
 :ave rd,rs1,rs2 is op0006=0x3f & rd & rs1 & rs2 & funct3=0x0 & funct7=0x70
 {
 	local tmp:$(XLEN) = rs1 + rs2;
@@ -71,7 +71,7 @@
 :bpick rd,rs1,rs2,rs3 is op0006=0x3f & rd & rs1 & rs2 & rs3 & funct3=0x3 & funct7=0x04  unimpl
 
 
-# clo16 rt, ra 	
+# clo16 rt, ra
 :clo16 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x0a  unimpl
 
 
@@ -79,11 +79,11 @@
 :clo32 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x12  unimpl
 
 
-# clo8 rt, ra 	
+# clo8 rt, ra
 :clo8 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x02  unimpl
 
 
-# clrs16 rt, ra 	
+# clrs16 rt, ra
 :clrs16 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x08  unimpl
 
 
@@ -91,11 +91,11 @@
 :clrs32 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x10  unimpl
 
 
-# clrs8 rt, ra 	
+# clrs8 rt, ra
 :clrs8 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x00  unimpl
 
 
-# clz16 rt, ra 	
+# clz16 rt, ra
 :clz16 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x09  unimpl
 
 
@@ -103,7 +103,7 @@
 :clz32 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x11  unimpl
 
 
-# clz8 rt, ra 	
+# clz8 rt, ra
 :clz8 rd,rs1 is op0006=0x3f & rd & rs1 & funct3=0x0 & funct7=0x57 & subf5=0x01  unimpl
 
 

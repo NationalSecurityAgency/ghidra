@@ -8,7 +8,7 @@ macro do_asr(VAL, SA, DEST) {
     DEST = VAL s>> SA;
     C = (tmp & 0x0000000080000000) != 0;
     NZSTATUS(DEST);
-       
+
 }
 
 #---------------------------------------------------------------------
@@ -163,7 +163,7 @@ macro do_lsr(VAL, SA, DEST) {
 	C = tmp:1;
 	CZNVTOSR();
 }
- 
+
 :ROR rd0 		is op4_12=0x5d0 & rd0 {
 	tmp:4 = rd0 & 0x1;
 	tmpa:4 = zext(C);

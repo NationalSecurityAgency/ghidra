@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,9 +20,9 @@ import java.awt.dnd.*;
 
 /**
  * Combines two drop targets and sends events to them in priority order.  If the first drop target
- * accepts the event, then the second drop target is not accessed. 
+ * accepts the event, then the second drop target is not accessed.
  * <p>
- * Either of the given drop targets can be an instance of CascadedDropTarget, effectively creating 
+ * Either of the given drop targets can be an instance of CascadedDropTarget, effectively creating
  * a tree structure of drop targets.
  */
 public class CascadedDropTarget extends DropTarget {
@@ -33,11 +33,11 @@ public class CascadedDropTarget extends DropTarget {
 
 	public CascadedDropTarget(Component comp, DropTarget firstDropTarget, DropTarget secondDropTarget) {
 		super(comp, null);
-		
+
 		if ( firstDropTarget == null || secondDropTarget == null) {
 			throw new NullPointerException( "Drop targets may not be null" );
 		}
-		
+
 		this.primaryDropTarget = firstDropTarget;
 		this.secondaryDropTarget = secondDropTarget;
 	}
@@ -55,7 +55,7 @@ public class CascadedDropTarget extends DropTarget {
 
 	@Override
 	public synchronized void dragEnter(DropTargetDragEvent dtde) {
-		
+
 		initializeAutoscrolling(dtde.getLocation());
 		DropTargetDragEventWrapper eventWrapper = new DropTargetDragEventWrapper(dtde);
 		primaryDropTarget.dragEnter(eventWrapper);
@@ -94,9 +94,9 @@ public class CascadedDropTarget extends DropTarget {
 	@Override
 	public synchronized void dropActionChanged(DropTargetDragEvent dtde) {
 		updateAutoscroll(dtde.getLocation());
-		
+
 		if (activeDropTarget != null) {
-			activeDropTarget.dropActionChanged(dtde);		
+			activeDropTarget.dropActionChanged(dtde);
 		}
 	}
 
@@ -115,14 +115,14 @@ public class CascadedDropTarget extends DropTarget {
 	}
 
 	/**
-	 * Removes the given drop target from anywhere within the tree of CascadedDropTargets.  
-	 * 
-	 * If the given <code>dropTarget</code> is an immediate child of this CascadedDropTarget (CDT), then 
-	 * the other child is returned.  Otherwise, a reference to this CDT will be returned with the 
-	 * given <code>dropTarget</code> having been removed from one of this CDT's children.  This method 
-	 * effectively removes the given <code>dropTarget</code> from the hierarchy and collapses the tree 
+	 * Removes the given drop target from anywhere within the tree of CascadedDropTargets.
+	 *
+	 * If the given <code>dropTarget</code> is an immediate child of this CascadedDropTarget (CDT), then
+	 * the other child is returned.  Otherwise, a reference to this CDT will be returned with the
+	 * given <code>dropTarget</code> having been removed from one of this CDT's children.  This method
+	 * effectively removes the given <code>dropTarget</code> from the hierarchy and collapses the tree
 	 * structure as needed.
-	 *   
+	 *
 	 * @param dropTarget The target to remove
 	 * @return the new drop target reference
 	 */
@@ -134,17 +134,17 @@ public class CascadedDropTarget extends DropTarget {
 		else if ( secondaryDropTarget == dropTarget ) {
 			return primaryDropTarget;
 		}
-		
+
 		if ( primaryDropTarget instanceof CascadedDropTarget ) {
 			CascadedDropTarget cascadedDropTarget = (CascadedDropTarget) primaryDropTarget;
 			primaryDropTarget = cascadedDropTarget.removeDropTarget( dropTarget );
 		}
-		
+
 		if ( secondaryDropTarget instanceof CascadedDropTarget ) {
 			CascadedDropTarget cascadedDropTarget = (CascadedDropTarget) secondaryDropTarget;
 			secondaryDropTarget = cascadedDropTarget.removeDropTarget( dropTarget );
 		}
-		
+
 		return this;
 	}
 }
@@ -153,12 +153,12 @@ class DropTargetDragEventWrapper extends DropTargetDragEvent {
 	private int dragOperation;
 	private DropTargetDragEvent originalEvent;
 	private boolean isRejected;
-	
+
 	public DropTargetDragEventWrapper(DropTargetDragEvent ev) {
 		super(ev.getDropTargetContext(), ev.getLocation(), ev.getDropAction(), ev.getSourceActions());
 		this.originalEvent = ev;
 	}
-	
+
 	@Override
 	public void acceptDrag(int dragOp) {
 		isAccepted = true;

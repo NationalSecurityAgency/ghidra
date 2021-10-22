@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
  * Provides information about a given target object
- * 
+ *
  * <p>
  * This is mostly a marker interface so that the client knows where to look for information about a
  * target. This may be attached to the entire session, or it may be attached to individual targets
@@ -29,7 +29,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  * should generally just take verbatim whatever string the host debugger would use to describe the
  * platform. It is up to the client to interpret the information into an equivalent specification in
  * the UI/database.
- * 
+ *
  * @implNote to simplify the automatic choice of mapper when recording a trace, it is required to
  *           update a target's environment attributes before reporting that it has started. Relaxing
  *           this requirement is TODO. Note that targets which do not support
@@ -45,14 +45,14 @@ public interface TargetEnvironment extends TargetObject {
 
 	/**
 	 * Get a description of the target architecture
-	 * 
+	 *
 	 * <p>
 	 * This should be as specific a description of the processor as possible. Ideally, the processor
 	 * family is apparent in the description. The client will interpret this to determine the
 	 * appropriate Instruction Set Architecture and any nuances in the processor's behavior. For
 	 * example {@code family:version:variant}. If the debugger has its own format for these
 	 * descriptors, please use it.
-	 * 
+	 *
 	 * @return the target architecture
 	 */
 	@TargetAttributeType(name = ARCH_ATTRIBUTE_NAME, hidden = true)
@@ -62,7 +62,7 @@ public interface TargetEnvironment extends TargetObject {
 
 	/**
 	 * Get a description of the debugger
-	 * 
+	 *
 	 * <p>
 	 * This should be as specific a description of the debugger as possible. Ideally, the debugger's
 	 * name is apparent in the description. The client may use this to properly interpret the other
@@ -70,7 +70,7 @@ public interface TargetEnvironment extends TargetObject {
 	 * platform information may be presented, clients should avoid relying on it, esp., to account
 	 * for nuances in debugger behavior. The model implementation (i.e., the "agent") is responsible
 	 * for presenting a model consistent with the debugger's behavior.
-	 * 
+	 *
 	 * @return the host debugger
 	 */
 	@TargetAttributeType(name = DEBUGGER_ATTRIBUTE_NAME, hidden = true)
@@ -80,14 +80,14 @@ public interface TargetEnvironment extends TargetObject {
 
 	/**
 	 * Get a description of the target operating system
-	 * 
+	 *
 	 * <p>
 	 * This should be as specific a description of the operating system as possible. Ideally, the OS
 	 * name is apparent in the description. The client will interpret this to determine the
 	 * appropriate Application Binary Interface. For example {@code GNU/Linux}. The client may also
 	 * use this to decide how to interpret other information present in the model, e.g., file system
 	 * paths.
-	 * 
+	 *
 	 * @return the target operating system
 	 */
 	@TargetAttributeType(name = OS_ATTRIBUTE_NAME, hidden = true)
@@ -97,12 +97,12 @@ public interface TargetEnvironment extends TargetObject {
 
 	/**
 	 * Get the endianness of the target
-	 * 
+	 *
 	 * <p>
 	 * In most cases, a simple "little" or "big" should do, but there may exist cases where code is
 	 * in one form and data is in another. For those, choose something recognizable to someone
 	 * writing an opinion for tracing the target. TODO: Formalize those conventions?
-	 * 
+	 *
 	 * @return the target endianness
 	 */
 	@TargetAttributeType(name = ENDIAN_ATTRIBUTE_NAME, hidden = true)

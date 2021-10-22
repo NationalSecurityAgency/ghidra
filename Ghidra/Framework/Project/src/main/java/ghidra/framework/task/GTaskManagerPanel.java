@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,8 +33,8 @@ import javax.swing.border.Border;
  * button control panel.
  * <P>
  * <U>The TaskViewer:</U><BR>
- * The TaskViewer shows the state of the scheduled and currently running tasks.  It consists of 
- * group objects and task objects arranged in a linear list.  
+ * The TaskViewer shows the state of the scheduled and currently running tasks.  It consists of
+ * group objects and task objects arranged in a linear list.
  * <P>
  * The currently running group has a
  * progress bar that indicates the percentage of completed tasks within that group and has a cancel
@@ -51,9 +51,9 @@ import javax.swing.border.Border;
  * successfully, or was cancelled or had an exception.
  * <P>
  * <U>The Button Panel</U><BR>
- * There are buttons to pause and resume the TaskManager, step (run one task when paused), and 
+ * There are buttons to pause and resume the TaskManager, step (run one task when paused), and
  * cancel all scheduled tasks.
- * 
+ *
  */
 public class GTaskManagerPanel extends JPanel {
 

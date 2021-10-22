@@ -30,13 +30,13 @@ define space CODE type=ram_space wordsize=2 size=2 default;
 #  0x18 - 0x19 : Unbanked registers
 #  0x1a - 0x1f : Unbanked GPRs
 #  0x20 - 0xff : Banked GPRs (4 banks controlled by upper nibble of BSR)
-define space DATA type=ram_space size=2; 
+define space DATA type=ram_space size=2;
 
 # The HWSTACK consists of a 16_word by 16_bit RAM and a corresponding 4_bit STKPTR register (which is not readable or writable).
 # There is no means of directly accessing the stack space other than via a CALL, RETURN, RETLW or RETFIE
 define space HWSTACK type=ram_space size=1;  # implemented as independently addressable bytes (each location is 2-bytes wide)
- 
-define space register type=register_space size=2; 
+
+define space register type=register_space size=2;
 
 # Program Counter
 define register offset=0x0000 size=2 [ PC ];

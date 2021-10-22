@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import agent.dbgeng.manager.cmd.DbgPendingCommand;
  * This generally immediately follows the command result, i.e., the "^..." result line in Dbg/MI.
  * The command implementation is responsible for handling the command result. Implementors ought to
  * use {@link AbstractDbgCommand} to ensure consistent processing.
- * 
+ *
  * To begin executing the command, the manager invokes the command, using {@link #invoke()}. Any
  * event that occurs during command execution is given to
  * {@link #handle(DbgEvent, DbgPendingCommand)}. The implementor then has the option to "claim" or
@@ -46,7 +46,7 @@ public interface DbgCommand<T> {
 
 	/**
 	 * Check if this command can be executed given Dbg's current state
-	 * 
+	 *
 	 * @param state Dbg's state
 	 * @return true if it can be executed, false otherwise
 	 */
@@ -59,7 +59,7 @@ public interface DbgCommand<T> {
 
 	/**
 	 * Handle an event that ocurred during the execution of this command
-	 * 
+	 *
 	 * @param evt the event
 	 * @param pending a copy of the executing command instance
 	 * @return true if the command is now ready to be completed
@@ -68,9 +68,9 @@ public interface DbgCommand<T> {
 
 	/**
 	 * Called when the manager believes this command is finished executing
-	 * 
+	 *
 	 * This is presumed when the manager receives the prompt after issuing the encoded command
-	 * 
+	 *
 	 * @param pending a copy of the now-finished-executing command instance
 	 * @return the object "returned" by the command
 	 */

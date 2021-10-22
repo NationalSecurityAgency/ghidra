@@ -171,7 +171,7 @@ net/ppp-comp.h
 net/route.h
 netinet/ether.h
 netinet/if_fddi.h
-netinet/in.h	
+netinet/in.h
 netinet/ip6.h
 netinet/udp.h
 netinet/icmp6.h

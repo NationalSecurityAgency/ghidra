@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -156,7 +156,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Notification that an option changed.
-	 * 
+	 *
 	 * @param options options object containing the property that changed
 	 * @param group
 	 * @param optionName name of option that changed
@@ -458,7 +458,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Set the status info on the tool.
-	 * 
+	 *
 	 * @param message non-html text to display
 	 */
 	void setStatusMessage(String message) {
@@ -503,7 +503,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Add the {@link AddressSetDisplayListener} to the byte viewer panel
-	 * 
+	 *
 	 * @param listener the listener to add
 	 */
 	public void addDisplayListener(AddressSetDisplayListener listener) {
@@ -512,7 +512,7 @@ public abstract class ByteViewerComponentProvider extends ComponentProviderAdapt
 
 	/**
 	 * Remove the {@link AddressSetDisplayListener} from the byte viewer panel
-	 * 
+	 *
 	 * @param listener the listener to remove
 	 */
 	public void removeDisplayListener(AddressSetDisplayListener listener) {

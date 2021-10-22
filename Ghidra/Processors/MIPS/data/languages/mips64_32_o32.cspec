@@ -3,18 +3,18 @@
      This ABI is actually the full 32-bit ABI forced onto what is otherwise 64-bit code, presumably to
      allow binary compatibility with 32-bit code. This ABI is distinct from n32 and o64,
      which are true 64-bit ABIs with 32-bit addresses.
-     This ABI can be requested explicitly in gcc with the -mabi=32 or -mabi=eabi option. 
-     
+     This ABI can be requested explicitly in gcc with the -mabi=32 or -mabi=eabi option.
+
      This cspec does not attempt to handle the various floating point variations which may exist (FP32, FPXX, FP64, FP64A)
      due to the fact that we have 64-bit float registers.  This spec assumes FP64.  The maxsize attribute
      of the integer parameter passing registers (a0-a3) must currently be set to 8, in order to achieve
      reasonable analysis, even though the maximum sized value that can be passed in a single register
      is really 4 bytes long. It may be better to import as MIPS32 if only 32-bit ISA is used.
-      
-     o32 specifies the original 32-bit MIPS ABI which treats the general purpose registers as 32-bit registers 
+
+     o32 specifies the original 32-bit MIPS ABI which treats the general purpose registers as 32-bit registers
      and pointers as 32-bits
-     
-     See for example "MIPSpro ABI Handbook" SGI part number 007-2816-005     
+
+     See for example "MIPSpro ABI Handbook" SGI part number 007-2816-005
 -->
 <compiler_spec>
   <data_organization>
@@ -56,9 +56,9 @@
         <!-- FIXME: unsure how to handle the float param passing for fp32 ? -->
         <!--        currently limited to 4-byte float passing               -->
         <!--
-        		If the first and second arguments floating-point arguments to a function are 
-        		32-bit values, they are passed in f12 and f14. If the first is a 32-bit value 
-        		and the second is a 64-bit value, they are passed in f12 and f13.  If they are 
+        		If the first and second arguments floating-point arguments to a function are
+        		32-bit values, they are passed in f12 and f14. If the first is a 32-bit value
+        		and the second is a 64-bit value, they are passed in f12 and f13.  If they are
         		both 64-bit values, they are passed in f12 and f13.
         -->
         <pentry minsize="1" maxsize="8" metatype="float">

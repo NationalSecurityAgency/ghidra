@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,14 @@
  */
 // VxWorksSymTab_5_4 is a copy of VxWorksSymTab_6_1 with a different value for SYM_ENTRY_SIZE
 // It was replaced at the request of a customer who tested that it worked with the slight modification
-// VxWorksSymTab_6_1 is an adaptation of the vxWorksSymTab script.  It was modified by a customer 
+// VxWorksSymTab_6_1 is an adaptation of the vxWorksSymTab script.  It was modified by a customer
 // to use a single loop, instead of two.  It also added demangling of C++ symbol names - at least
 // those that Ghidra knows how to demangle.
 //
 // Extracts all symbols in a VxWorks symbol table and disassembles
 // the global functions.  Any existing symbols in the Ghidra symbol table
 // that collide with symbols defined in the VxWorks symbol table are deleted.
-// 
+//
 // The VxWorks symbol table is an array of symbol table entries [0..n-1]
 // followed by a 32-bit value that is equal to n (number of sym tbl entries).
 //  Each entry in the array has the following structure:
@@ -178,7 +178,7 @@ public class VxWorksSymTab_5_4 extends GhidraScript {
 					case 0: // Undefined Symbol
 						println("NULL symType!");
 						break;
-					case 2: // Local Absolute 
+					case 2: // Local Absolute
 					case 3: // Global Absolute
 					case 6: // Local Data
 					case 7: // Global Data
@@ -194,7 +194,7 @@ public class VxWorksSymTab_5_4 extends GhidraScript {
 						}
 						break;
 					case 4: // Local .text
-					case 5: // Global .text  
+					case 5: // Global .text
 						// Code: log the symbol, disassemble, & create/name function
 						output.println(symLocAddr.toString() + "\t" + symName);
 						goTo(symLocAddr);

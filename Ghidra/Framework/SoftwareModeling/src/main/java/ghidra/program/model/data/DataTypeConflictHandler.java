@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -157,17 +157,17 @@ public abstract class DataTypeConflictHandler {
 	};
 
 	/**
-	 * This {@link DataTypeConflictHandler conflict handler} behaves similar to 
-	 * the {@link #DEFAULT_HANDLER} with the difference being that a 
-	 * empty composite (see {@link Composite#isNotYetDefined()}) will be 
+	 * This {@link DataTypeConflictHandler conflict handler} behaves similar to
+	 * the {@link #DEFAULT_HANDLER} with the difference being that a
+	 * empty composite (see {@link Composite#isNotYetDefined()}) will be
 	 * replaced by a similar non-empty composite type.  Alignment (e.g., packing)
 	 * is not considered when determining conflict resolution.
 	 * <br>
-	 * For datatypes originating from a source archive with matching ID, the 
-	 * replacment strategy will utilize the implementation with the 
+	 * For datatypes originating from a source archive with matching ID, the
+	 * replacment strategy will utilize the implementation with the
 	 * latest timestamp.
 	 * <br>
-	 * Unlike the {@link #DEFAULT_HANDLER}, follow-on dependency datatype 
+	 * Unlike the {@link #DEFAULT_HANDLER}, follow-on dependency datatype
 	 * resolutions will retain the same conflict resolution strategy.
 	 */
 	public final static DataTypeConflictHandler REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER =

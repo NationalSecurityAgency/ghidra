@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,7 +64,7 @@ import ghidra.util.task.TaskMonitor;
 
 // TODO: Need some subscription model to ensure record lifespans stay within lifespan of threads
 // Applies to creation, and to setting end snap
-// Also to deleting a thread altogether. 
+// Also to deleting a thread altogether.
 public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, TraceChangeManager {
 	protected static final String TRACE_INFO = "Trace Information";
 	protected static final String NAME = "Name";

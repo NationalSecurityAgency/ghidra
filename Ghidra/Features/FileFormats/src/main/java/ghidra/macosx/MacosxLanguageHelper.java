@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,14 +58,14 @@ public final class MacosxLanguageHelper {
                 variant = "v7";
             }
         }
-        else if ( cpuType == CpuTypes.CPU_TYPE_X86 || 
+        else if ( cpuType == CpuTypes.CPU_TYPE_X86 ||
         		  cpuType == CpuTypes.CPU_TYPE_X86_64 ) {
             processor = x86;
             endian = Endian.LITTLE;
             size = cpuType == CpuTypes.CPU_TYPE_X86_64 ? 64 : 32;
             compilerSpecID = new CompilerSpecID( "gcc" );
         }
-        else if ( cpuType == CpuTypes.CPU_TYPE_POWERPC || 
+        else if ( cpuType == CpuTypes.CPU_TYPE_POWERPC ||
         		  cpuType == CpuTypes.CPU_TYPE_POWERPC64 ) {
             processor = PowerPC;
             endian = Endian.BIG;

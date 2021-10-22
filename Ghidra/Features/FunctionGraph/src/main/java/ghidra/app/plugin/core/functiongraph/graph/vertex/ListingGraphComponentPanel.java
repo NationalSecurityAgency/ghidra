@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * 
+ *
  */
 package ghidra.app.plugin.core.functiongraph.graph.vertex;
 
@@ -166,7 +166,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
 		createActions();
 
-		// Sets the initial view of the graph to NOT be full-screen, and show 
+		// Sets the initial view of the graph to NOT be full-screen, and show
 		// the full function graph.
 		setFormat(false);
 
@@ -233,7 +233,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 	}
 
 	/**
-	 * Signals to rebuild this component's data model.  This call should not do any real work 
+	 * Signals to rebuild this component's data model.  This call should not do any real work
 	 * if the model is not 'dirty'.
 	 */
 	@Override
@@ -672,7 +672,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 	void dispose() {
 
 		//
-		// Let's go a bit overboard and help the garbage collector cleanup by nulling out 
+		// Let's go a bit overboard and help the garbage collector cleanup by nulling out
 		// references and removing the data from Jung's graph
 		//
 
@@ -708,7 +708,7 @@ public class ListingGraphComponentPanel extends AbstractGraphComponentPanel {
 
 //==================================================================================================
 // Inner-inner classes
-//==================================================================================================        
+//==================================================================================================
 
 	private class ListingHoverAdapter extends ListingHoverProvider {
 		public ListingHoverAdapter() {

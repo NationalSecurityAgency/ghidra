@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -139,7 +139,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	 * Get number of units in a group. A group may represent
 	 * multiple units shown as one entity. This format does not
 	 * support groups.
-	 * @throws UnsupportedOperationException 
+	 * @throws UnsupportedOperationException
 	 */
 	public int getGroupSize() {
 		return 0;
@@ -148,7 +148,7 @@ public class AsciiFormatModel implements UniversalDataFormatModel {
 	/**
 	 * Set the number of units in a group. This format does not
 	 * support groups.
-	 * @throws UnsupportedOperationException 
+	 * @throws UnsupportedOperationException
 	 */
 	public void setGroupSize(int groupSize) {
 		throw new UnsupportedOperationException("groups are not supported");

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -338,7 +338,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};  
+};
 class RuleFloatRange : public Rule {
 public:
   RuleFloatRange(const string &g) : Rule(g, 0, "floatrange") {}	///< Constructor
@@ -348,7 +348,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};  
+};
 class RuleAndCommute : public Rule {
 public:
   RuleAndCommute(const string &g) : Rule(g, 0, "andcommute") {}	///< Constructor
@@ -358,7 +358,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};  
+};
 class RuleAndPiece : public Rule {
 public:
   RuleAndPiece(const string &g) : Rule(g, 0, "andpiece") {}	///< Constructor
@@ -368,7 +368,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};  
+};
 class RuleAndCompare : public Rule {
 public:
   RuleAndCompare(const string &g) : Rule(g, 0, "andcompare") {}	///< Constructor
@@ -388,7 +388,7 @@ public:
   }
   virtual void getOpList(vector<uint4> &oplist) const;
   virtual int4 applyOp(PcodeOp *op,Funcdata &data);
-};  
+};
 class RuleDoubleShift : public Rule {
 public:
   RuleDoubleShift(const string &g) : Rule(g, 0, "doubleshift") {}	///< Constructor

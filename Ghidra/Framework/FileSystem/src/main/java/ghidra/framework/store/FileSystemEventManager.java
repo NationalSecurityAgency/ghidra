@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.util.concurrent.*;
 /**
  * <code>FileSystemListenerList</code> maintains a list of FileSystemListener's.
  * This class, acting as a FileSystemListener, simply relays each callback to
- * all FileSystemListener's within its list.  Employs either a synchronous 
+ * all FileSystemListener's within its list.  Employs either a synchronous
  * and asynchronous notification mechanism.
  */
 public class FileSystemEventManager implements FileSystemListener {
@@ -150,8 +150,8 @@ public class FileSystemEventManager implements FileSystemListener {
 	 * Note: clients should only use this method when {@link #isAsynchronous()} returns true, since
 	 * this class cannot track when non-threaded events have finished broadcasting to listeners.
 	 * In a synchronous use case, any test that needs to know when client events have been processed
-	 * must use some other mechanism to know when event processing is finished.  
-	 * 
+	 * must use some other mechanism to know when event processing is finished.
+	 *
 	 * @param timeout the maximum time to wait
 	 * @param unit the time unit of the {@code time} argument
 	 * @return true if the events were processed in the given timeout
@@ -169,7 +169,7 @@ public class FileSystemEventManager implements FileSystemListener {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class FileSystemEventProcessingThread extends Thread {
 
@@ -189,7 +189,7 @@ public class FileSystemEventManager implements FileSystemListener {
 				}
 				catch (InterruptedException e) {
 					// interrupt has been cleared; if other threads rely on this interrupted state,
-					// then mark the thread as interrupted again by calling: 
+					// then mark the thread as interrupted again by calling:
 					// Thread.currentThread().interrupt();
 					// For now, this code relies on the 'alive' flag to know when to terminate
 				}

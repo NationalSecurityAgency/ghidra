@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -202,13 +202,13 @@ public class BookmarkProvider extends ComponentProviderAdapter {
 		 	This means that filtered 'types' that belong to other open, but not active programs
 		 	will not get saved.  Thusly, as the filter state changes between program activations,
 		 	the filter state for non-active programs will be lost when the tool closes.  This is
-		 	a known issue.  
-		 	
+		 	a known issue.
+
 		 	Doing it this way prevents the tool's xml from getting bloated with
 		 	bookmark types as the years drag on.  To correctly implement the feature, we would have
-		 	to write filtered types with enough data to age them off.  We decided at the time 
+		 	to write filtered types with enough data to age them off.  We decided at the time
 		 	of writing this note that the more robust persistence mechanism is simply not worth
-		 	the functionality it provides.  This is mostly due to the fact that users typically 
+		 	the functionality it provides.  This is mostly due to the fact that users typically
 		 	are not adding custom bookmark types, which can only be done programmatically.
 		 */
 

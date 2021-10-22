@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,8 @@ import java.awt.*;
 import javax.swing.JTextArea;
 
 /**
- * Simple text area that shows a text hint when the field is empty. 
- * 
+ * Simple text area that shows a text hint when the field is empty.
+ *
  * Hint text will be shown in light grey, italicized, and in angle brackets.  Normal text will
  * be plain black.
  */
@@ -31,7 +31,7 @@ public class HintTextArea extends JTextArea {
 
 	/**
 	 * Constructs the class with the hint text to be shown.
-	 * 
+	 *
 	 * @param hint
 	 */
 	public HintTextArea(final String hint) {
@@ -40,7 +40,7 @@ public class HintTextArea extends JTextArea {
 
 	/**
 	 * Need to override the setText method so we can set font attributes.
-	 * 
+	 *
 	 * @param text
 	 */
 	@Override

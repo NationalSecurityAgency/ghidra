@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.Msg;
 
 /**
  * A bank of registers on the debug target
- * 
+ *
  * <p>
  * The bank allows access to registers' <em>values</em>; whereas, a {@link TargetRegisterContainer}
  * allows reflection of the registers' names and structures.
@@ -42,7 +42,7 @@ public interface TargetRegisterBank extends TargetObject {
 
 	/**
 	 * Get the object describing the registers in this bank
-	 * 
+	 *
 	 * <p>
 	 * TODO: {@link TargetRegisterContainer} ought to be removed. However, some models present a
 	 * complex structure for their register banks and containers, splitting the set into, e.g.,
@@ -50,7 +50,7 @@ public interface TargetRegisterBank extends TargetObject {
 	 * {@link TargetObjectSchema#searchFor(Class, boolean)}, passing {@link TargetRegister}. The
 	 * "canonical container" concept doesn't really work here, as that will yield each set, rather
 	 * than the full descriptions container.
-	 * 
+	 *
 	 * @return a future which completes with object
 	 */
 	@TargetAttributeType(name = DESCRIPTIONS_ATTRIBUTE_NAME)
@@ -61,16 +61,16 @@ public interface TargetRegisterBank extends TargetObject {
 
 	/**
 	 * Read the given registers
-	 * 
+	 *
 	 * <p>
 	 * The value of each register is given as a byte array in big-endian order, <em>no matter the
 	 * byte order of the target platform</em>.
-	 * 
+	 *
 	 * <p>
 	 * <b>WARNING:</b> the implementation is not required to have any understanding of the register
 	 * structure. In particular, caches are not aware of child registers. To avoid the issue, it is
 	 * highly recommended to only read and write base registers.
-	 * 
+	 *
 	 * @param registers the registers to read
 	 * @return a future which completes with a name-value map of the values read
 	 */
@@ -82,16 +82,16 @@ public interface TargetRegisterBank extends TargetObject {
 
 	/**
 	 * Write the given registers
-	 * 
+	 *
 	 * <p>
 	 * The value of each register is given as a byte array in big-endian order, <em>no matter the
 	 * byte order of the target platform</em>.
-	 * 
+	 *
 	 * <p>
 	 * <b>WARNING:</b> the implementation is not required to have any understanding of the register
 	 * structure. In particular, caches are not aware of child registers. To avoid the issue, it is
 	 * highly recommended to only read and write base registers.
-	 * 
+	 *
 	 * @param values the register-value map to write
 	 * @return a future which completes upon successfully writing all given registers
 	 */
@@ -105,7 +105,7 @@ public interface TargetRegisterBank extends TargetObject {
 
 	/**
 	 * Read the named registers
-	 * 
+	 *
 	 * @see #readRegisters(Collection)
 	 * @param names the names of registers to read
 	 * @return a future which completes with a name-value map of the values read
@@ -116,7 +116,7 @@ public interface TargetRegisterBank extends TargetObject {
 
 	/**
 	 * Write the named registers
-	 * 
+	 *
 	 * @see #writeRegistersNamed(Map)
 	 * @param values the name-value map to write
 	 * @return a future which completes upon successfully writing all given registers
@@ -126,7 +126,7 @@ public interface TargetRegisterBank extends TargetObject {
 
 	/**
 	 * Read the named registers
-	 * 
+	 *
 	 * @see #readRegistersNamed(Collection)
 	 */
 	public default CompletableFuture<? extends Map<String, byte[]>> readRegistersNamed(
@@ -136,7 +136,7 @@ public interface TargetRegisterBank extends TargetObject {
 
 	/**
 	 * Read the given register
-	 * 
+	 *
 	 * @see #readRegisters(Collection)
 	 * @param register the register to read
 	 * @return a future which completes with the value read
@@ -147,7 +147,7 @@ public interface TargetRegisterBank extends TargetObject {
 
 	/**
 	 * Write the given register
-	 * 
+	 *
 	 * @see #writeRegistersNamed(Map)
 	 * @param register the register to write
 	 * @param value the value to write
@@ -159,7 +159,7 @@ public interface TargetRegisterBank extends TargetObject {
 
 	/**
 	 * Read the named register
-	 * 
+	 *
 	 * @see #readRegisters(Collection)
 	 * @param name the name of the register to read
 	 * @return a future which completes with the value read
@@ -170,7 +170,7 @@ public interface TargetRegisterBank extends TargetObject {
 
 	/**
 	 * Write the named register
-	 * 
+	 *
 	 * @see #writeRegistersNamed(Map)
 	 * @param name the name of the register to write
 	 * @param value the value to write
@@ -182,10 +182,10 @@ public interface TargetRegisterBank extends TargetObject {
 
 	/**
 	 * Get a view of the locally-cached register values, if available
-	 * 
+	 *
 	 * <p>
 	 * If caching is not done locally, this returns the empty map.
-	 * 
+	 *
 	 * @return the cached register values
 	 */
 	public default Map<String, byte[]> getCachedRegisters() {
@@ -194,12 +194,12 @@ public interface TargetRegisterBank extends TargetObject {
 
 	/**
 	 * Clear the register cache
-	 * 
+	 *
 	 * <p>
 	 * To avoid duplicate requests for the same registers, proxies are encouraged to implement a
 	 * write-through register cache. If the proxy does so, then calling this method must flush that
 	 * cache. If no cache is used, then no action is necessary.
-	 * 
+	 *
 	 * @deprecated Override {@link #invalidateCaches()} instead
 	 */
 	@Deprecated

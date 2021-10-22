@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -504,21 +504,21 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 
 //	private boolean computeExistingMasks(TaskMonitor monitor) {
 //		long funcCount = curProgram.getFunctionManager().getFunctionCount();
-//		
+//
 //		if (funcStartMap == null || lastProgramHash != curProgram.hashCode() ||
 //				funcStartMap.isEmpty() || funcCount > (lastFuncCount * 1.10)) {
 //				lastProgramHash = curProgram.hashCode();
 //				lastFuncCount = funcCount;
-//				
+//
 //				funcStartMap = new HashMap<BigInteger, Integer>();
 //		}
-//		
+//
 //		if (funcCount < 20 || curProgram.getListing().getNumInstructions() <= 0) {
 //			return false;
 //		}
-//		
+//
 //		monitor.setMessage("AIF - hashing functions");
-//		
+//
 //		FunctionManager functionManager = curProgram.getFunctionManager();
 //		FunctionIterator funcs = functionManager.getFunctions(true);
 //		int functionCount = functionManager.getFunctionCount();
@@ -532,7 +532,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 //
 //			// get the current value from the program context
 //			BigInteger tmodeVal = curProgram.getProgramContext().getValue( tmodeReg, entry, false);
-//			
+//
 //			Instruction instr = curProgram.getListing().getInstructionAt(entry);
 //			if (instr == null) {
 //				continue;
@@ -585,14 +585,14 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 //			}
 //		}
 ////			Err.info(this, "" + funcList.size() + " number of starts");
-////			
+////
 ////			Iterator iter = funcStartMap.keySet().iterator();
 ////			while (iter.hasNext()) {
 ////				BigInteger key = (BigInteger) iter.next();
 ////				Integer val = funcStartMap.get(key);
 ////				Err.info(this, "   " + key + " = " + val + "\t\t\t\t");
 ////			}
-//		
+//
 //		return true;
 //	}
 

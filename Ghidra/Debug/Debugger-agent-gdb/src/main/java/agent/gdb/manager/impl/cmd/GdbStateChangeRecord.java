@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ public class GdbStateChangeRecord {
 
 	/**
 	 * Construct a new record
-	 * 
+	 *
 	 * @param inferior the inferior affected by this changed
 	 * @param affectedThreads the threads affected by this change (includes only those from this
 	 *            inferior)
@@ -54,7 +54,7 @@ public class GdbStateChangeRecord {
 
 	/**
 	 * Get the inferior affected by this change
-	 * 
+	 *
 	 * @return the inferior
 	 */
 	public GdbInferior getInferior() {
@@ -63,7 +63,7 @@ public class GdbStateChangeRecord {
 
 	/**
 	 * Get the thread causing this change
-	 * 
+	 *
 	 * @return the event thread
 	 */
 	public GdbThread getEventThread() {
@@ -72,7 +72,7 @@ public class GdbStateChangeRecord {
 
 	/**
 	 * Get the threads affected by this change
-	 * 
+	 *
 	 * @return the threads
 	 */
 	public Collection<GdbThread> getAffectedThreads() {
@@ -81,7 +81,7 @@ public class GdbStateChangeRecord {
 
 	/**
 	 * Get the new state of the affected items
-	 * 
+	 *
 	 * @return the new state
 	 */
 	public GdbState getState() {
@@ -90,7 +90,7 @@ public class GdbStateChangeRecord {
 
 	/**
 	 * Get the user-driven cause of the change
-	 * 
+	 *
 	 * @return the cause
 	 */
 	public GdbCause getCause() {
@@ -99,7 +99,7 @@ public class GdbStateChangeRecord {
 
 	/**
 	 * Get the target-driven reason for this change
-	 * 
+	 *
 	 * @return the reason
 	 */
 	public GdbReason getReason() {

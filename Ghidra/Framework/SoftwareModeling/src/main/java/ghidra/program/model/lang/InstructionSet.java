@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,8 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.util.exception.AssertException;
 
-/** 
- * A set of instructions organized as a graph of basic blocks. 
+/**
+ * A set of instructions organized as a graph of basic blocks.
  */
 public class InstructionSet implements Iterable<InstructionBlock> {
 	private Map<Address, InstructionBlock> blockMap = new HashMap<Address, InstructionBlock>();
@@ -39,7 +39,7 @@ public class InstructionSet implements Iterable<InstructionBlock> {
 	}
 
 	/**
-	 * Add an Instruction block to this Instruction Set. 
+	 * Add an Instruction block to this Instruction Set.
 	 * If the block is empty it will only be added to the empty-list and will not
 	 * be added to the maps or block iterator
 	 * @param block the block to add.
@@ -82,7 +82,7 @@ public class InstructionSet implements Iterable<InstructionBlock> {
 	 * @param min the minimum intersection address
 	 * @param max the maximum intersection address
 	 * @return block within this InstructionSet which intersects the specified range or null
-	 * if not found 
+	 * if not found
 	 */
 	public InstructionBlock findFirstIntersectingBlock(Address min, Address max) {
 		InstructionBlock intersectBlock = null;
@@ -161,7 +161,7 @@ public class InstructionSet implements Iterable<InstructionBlock> {
 	 * through flows.  This iterator will not follow any flows from a block that has a conflict.
 	 * If the last block returned from the iterator is marked as a conflict before the next() or
 	 * hasNext() methods are called, then this iterator will respect the conflict.  In other words,
-	 * this iterator follows block flows on the fly and doesn't pre-compute the blocks to return.  
+	 * this iterator follows block flows on the fly and doesn't pre-compute the blocks to return.
 	 * Also, if any blocks in this set don't have a flow to path from the start block, it will
 	 * not be included in this iterator.
 	 */

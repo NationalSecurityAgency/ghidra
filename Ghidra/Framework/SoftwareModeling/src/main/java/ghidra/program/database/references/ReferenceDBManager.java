@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -274,7 +274,7 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	 * @param ref existing reference
 	 * @param isOffset true if new reference is an offset reference
 	 * @param isShifted true if new reference is a shifted reference
-	 * @param offsetOrShift the offset or shift amount 
+	 * @param offsetOrShift the offset or shift amount
 	 * @return true if incompatible
 	 */
 	private boolean isIncompatible(Reference ref, boolean isOffset, boolean isShifted,
@@ -1327,8 +1327,8 @@ public class ReferenceDBManager implements ReferenceManager, ManagerDB, ErrorHan
 	 * @param newToAddr new reference to address
 	 * @param monitor the monitor
 	 * @return number of references updated
-	 * @throws CancelledException if the task is cancelled 
-	 * @throws IOException if a database exception occurs 
+	 * @throws CancelledException if the task is cancelled
+	 * @throws IOException if a database exception occurs
 	 */
 	public int moveReferencesTo(Address oldToAddr, Address newToAddr, TaskMonitor monitor)
 			throws CancelledException, IOException {

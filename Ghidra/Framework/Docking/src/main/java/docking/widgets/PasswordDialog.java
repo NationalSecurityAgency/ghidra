@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,8 @@ import ghidra.util.MessageType;
 import ghidra.util.layout.PairLayout;
 
 /**
- * <code>PasswordDialog</code> is a modal dialog which 
- * prompts a user for a password. 
+ * <code>PasswordDialog</code> is a modal dialog which
+ * prompts a user for a password.
  */
 public class PasswordDialog extends DialogComponentProvider {
 
@@ -111,7 +111,7 @@ public class PasswordDialog extends DialogComponentProvider {
 	 * "Password:" is displayed next to the password field
 	 * @param namePrompt name prompt to show in the dialog, if null a name will not be prompted for.
 	 * @param defaultUserID default name when prompting for a name
-	 * @param hasMessages true if the client will set messages on this dialog.  If true, the 
+	 * @param hasMessages true if the client will set messages on this dialog.  If true, the
 	 *        dialog's minimum size will be increased
 	 */
 	public PasswordDialog(String title, String serverType, String serverName, String passPrompt,

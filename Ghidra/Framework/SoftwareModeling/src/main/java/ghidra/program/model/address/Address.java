@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.program.model.data.DataOrganization;
  * one "real" address space, but some have several spaces. Also, there are
  * "artificial" address spaces used for analysis and representing other non-memory locations
  * such as a register or an offset on the stack relative to a functions frame pointer.
- * 
+ *
  */
 
 public interface Address extends Comparable<Address> {
@@ -45,7 +45,7 @@ public interface Address extends Comparable<Address> {
 	/**
 	 * Creates a new Address by parsing a String representation of an address. The
 	 * string may be either a simple number (just the offset part of an address) or take
-	 * the form "addressSpaceName:offset".  If the latter form is used, the 
+	 * the form "addressSpaceName:offset".  If the latter form is used, the
 	 * "addressSpaceName" must match the name of the space for this address.
 	 *
 	 * @param addrString the String to parse.
@@ -61,15 +61,15 @@ public interface Address extends Comparable<Address> {
 	 *
 	 * @param byteOffset the byte offset for the new address.
 	 * @return the new Address.
-	 * @throws AddressOutOfBoundsException if the offset is less than the minimum offset or 
+	 * @throws AddressOutOfBoundsException if the offset is less than the minimum offset or
 	 * greater than the max offset allowed for this space.
 	 */
 	public Address getNewAddress(long byteOffset);
 
 	/**
-	 * Returns a new address in this address's space with the given offset.  
+	 * Returns a new address in this address's space with the given offset.
 	 * NOTE: for those spaces with an addressable unit size other than 1, the address
-	 * returned may not correspond to an addressable unit/word boundary if a byte-offset 
+	 * returned may not correspond to an addressable unit/word boundary if a byte-offset
 	 * is specified.
 	 * @param offset the offset for the new address.
 	 * @param isAddressableWordOffset if true the specified offset is an addressable unit/word offset,
@@ -84,10 +84,10 @@ public interface Address extends Comparable<Address> {
 			throws AddressOutOfBoundsException;
 
 	/**
-	 * Returns a new address in this address's space with the given offset.  The specified 
+	 * Returns a new address in this address's space with the given offset.  The specified
 	 * offset will be truncated within the space and will not throw an exception.
 	 * NOTE: for those spaces with an addressable unit size other than 1, the address
-	 * returned may not correspond to a word boundary (addressable unit) if a byte-offset 
+	 * returned may not correspond to a word boundary (addressable unit) if a byte-offset
 	 * is specified.
 	 * @param offset the offset for the new address.
 	 * @param isAddressableWordOffset if true the specified offset is an addressable unit/word offset,
@@ -176,10 +176,10 @@ public interface Address extends Comparable<Address> {
 	public long subtract(Address addr);
 
 	/**
-	 * Creates a new address by subtracting the displacement from the current 
-	 * address. The new address will wrap in a manner that depends on the 
-	 * address space. For a generic address space this will wrap at the 
-	 * extents of the address space. For a segmented address space it will 
+	 * Creates a new address by subtracting the displacement from the current
+	 * address. The new address will wrap in a manner that depends on the
+	 * address space. For a generic address space this will wrap at the
+	 * extents of the address space. For a segmented address space it will
 	 * wrap at the extents of the segment.
 	 *
 	 * @param displacement  the displacement to subtract.
@@ -188,7 +188,7 @@ public interface Address extends Comparable<Address> {
 	public Address subtractWrap(long displacement);
 
 	/**
-	 * Creates a new address by subtracting the displacement from the current 
+	 * Creates a new address by subtracting the displacement from the current
 	 * address. If the offset is greater than the max offset of the address space, the high
 	 * order bits are masked off, making the address wrap.  For non-segmented addresses this
 	 * will be the same as subtractWrap().  For segmented addresses, the address will wrap when
@@ -212,7 +212,7 @@ public interface Address extends Comparable<Address> {
 	public Address subtractNoWrap(long displacement) throws AddressOverflowException;
 
 	/**
-	 * Creates a new address (possibly in a new space) by subtracting the displacement to 
+	 * Creates a new address (possibly in a new space) by subtracting the displacement to
 	 * this address.
 	 * @param displacement the amount to subtract from this offset.
 	 * @return The address using the subtracted offset.
@@ -220,10 +220,10 @@ public interface Address extends Comparable<Address> {
 	public Address subtract(long displacement);
 
 	/**
-	 * Creates a new address by adding the displacement to the current 
-	 * address. The new address will wrap in a manner that depends on the 
-	 * address space. For a generic address space this will wrap at the 
-	 * extents of the address space. For a segmented address space it will 
+	 * Creates a new address by adding the displacement to the current
+	 * address. The new address will wrap in a manner that depends on the
+	 * address space. For a generic address space this will wrap at the
+	 * extents of the address space. For a segmented address space it will
 	 * wrap at the extents of the segment.
 	 *
 	 * @param displacement  the displacement to add.
@@ -232,7 +232,7 @@ public interface Address extends Comparable<Address> {
 	public Address addWrap(long displacement);
 
 	/**
-	 * Creates a new address by adding the displacement to the current 
+	 * Creates a new address by adding the displacement to the current
 	 * address. If the offset is greater than the max offset of the address space, the high
 	 * order bits are masked off, making the address wrap.  For non-segmented addresses this
 	 * will be the same as addWrap().  For segmented addresses, the address will wrap when
@@ -257,11 +257,11 @@ public interface Address extends Comparable<Address> {
 	public Address addNoWrap(BigInteger displacement) throws AddressOverflowException;
 
 	/**
-	 * Creates a new address (possibly in a new space) by adding the displacement to 
+	 * Creates a new address (possibly in a new space) by adding the displacement to
 	 * this address.
 	 * @param displacement the amount to add to this offset.
 	 * @return The new address.
-	 * @throws AddressOutOfBoundsException if wrapping is not supported by the 
+	 * @throws AddressOutOfBoundsException if wrapping is not supported by the
 	 * corresponding address space and the addition causes an out-of-bounds
 	 * error
 	 */
@@ -281,16 +281,16 @@ public interface Address extends Comparable<Address> {
 	@Override
 	public String toString();
 
-	/** 
+	/**
 	 * Returns a String representation of the address using the
 	 * given string as a prefix.  Equivalent of prefix + ":" + toString(false)
-	 * @param prefix the string to prepend to the address string.  
+	 * @param prefix the string to prepend to the address string.
 	 */
 	public String toString(String prefix);
 
 	/**
 	 * Returns a String representation that may include the address space name
-	 * @param showAddressSpace true if the address space should be included in 
+	 * @param showAddressSpace true if the address space should be included in
 	 * resulting string.
 	 * @return String the string representation of the address
 	 */
@@ -321,9 +321,9 @@ public interface Address extends Comparable<Address> {
 
 	/**
 	 * Compares this Address to the specified object.
-	 * The result is <code>true</code> if and only if the argument is not 
-	 * <code>null</code> and is a <code>Address</code> object that represents 
-	 * the same address as this object. 
+	 * The result is <code>true</code> if and only if the argument is not
+	 * <code>null</code> and is a <code>Address</code> object that represents
+	 * the same address as this object.
 	 *
 	 * @param   o   the object to compare this <code>String</code>
 	 *              against.
@@ -334,19 +334,19 @@ public interface Address extends Comparable<Address> {
 	public boolean equals(Object o);
 
 	/**
-	 * Returns a hashcode for this Address. The hashcode for an 
+	 * Returns a hashcode for this Address. The hashcode for an
 	 * <code>Address</code> should be a value such that two Address
 	 * objects which are equal will return the same hashcode.
 	 * This method should generally return the same value as getLong().
 	 *
-	 * @return  a hash code value for this object. 
+	 * @return  a hash code value for this object.
 	 */
 	@Override
 	public int hashCode();
 
 	/**
 	 * Returns the physical Address that corresponds to this Address.
-	 * 
+	 *
 	 * @return address in a physical space corresponding to this
 	 * address.
 	 */

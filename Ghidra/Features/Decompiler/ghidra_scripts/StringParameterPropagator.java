@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@
 //   WARNING: This script does not attempt to discover var-arg situations.  It should be changed to do so.
 //
 //   The engine for the script is the decompiler.
-//   
+//
 //   The guts of this script past the main could be used to analyze
 //   constants passed to any function on any processor.
 //   It is not restricted to windows.
@@ -520,7 +520,7 @@ public class StringParameterPropagator extends GhidraScript {
 
 	/**
 	 * Analyze a functions references
-	 * @param constUse 
+	 * @param constUse
 	 */
 	public void analyzeFunction(HashMap<Address, FuncInfo> constUse,
 			DecompInterface decompInterface, Program prog, Function f,

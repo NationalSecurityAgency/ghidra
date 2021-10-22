@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,9 +58,9 @@ public class Highlight {
 
 	/**
 	 * Sets the offset of this highlights start and end values.  The effect of the offset is that
-	 * calls to {@link #getStart()} and {@link #getEnd()} will return their values with the 
+	 * calls to {@link #getStart()} and {@link #getEnd()} will return their values with the
 	 * offset added.
-	 * 
+	 *
 	 * @param newOffset The new offset into this highlight.
 	 */
 	public void setOffset(int newOffset) {

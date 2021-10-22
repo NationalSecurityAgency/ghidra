@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -160,7 +160,7 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 	/**
 	 * Tests that when multiple regions are selected, the user is notified via
 	 * pop-up that this is not acceptable.
-	 * 
+	 *
 	 */
 	@Test
 	public void testMultipleSelection() {
@@ -178,7 +178,7 @@ public class MnemonicSearchPluginTest extends AbstractGhidraHeadedIntegrationTes
 		// Now invoke the menu option we want to test.
 		performAction(searchMnemonicOperandsConstAction, cb.getProvider(), false);
 
-		// Here's the main assert: If the code recognizes that we have multiple selection, the 
+		// Here's the main assert: If the code recognizes that we have multiple selection, the
 		// MemSearchDialog will NOT be displayed (an error message pops up instead).  So verify that
 		// the dialog is null and we're ok.
 		Window errorDialog = waitForWindow("Mnemonic Search Error", 2000);

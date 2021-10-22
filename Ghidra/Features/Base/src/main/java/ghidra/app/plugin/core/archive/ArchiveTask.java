@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,7 +80,7 @@ class ArchiveTask extends Task {
 		JarWriter writer = new JarWriter(jarOut, new String[] { ArchivePlugin.DB_LOCK_EXT });
 		String archiveComment = "Ghidra archive file for " + projectName + " project.";
 		jarOut.setComment(archiveComment);
-		// write the .gpr file 
+		// write the .gpr file
 		File projectFile = project.getProjectLocator().getMarkerFile();
 		ok = writer.outputFile(projectFile, "", monitor);
 		if (ok) {

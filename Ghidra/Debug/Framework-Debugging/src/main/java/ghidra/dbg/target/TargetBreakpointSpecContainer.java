@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,11 +28,11 @@ import ghidra.program.model.address.*;
 
 /**
  * A container for breakpoint specifications and/or locations
- * 
+ *
  * <p>
  * This interface provides for the placement (creation) of breakpoints and as a listening point for
  * breakpoint events. Typically, it is implemented by an object whose elements are breakpoints.
- * 
+ *
  * <p>
  * TODO: Rename this to {@code TargetBreakpointOperations}. Conventionally, it is a container of
  * breakpoints, but it doesn't technically have to be. A client searching for the breakpoint
@@ -82,11 +82,11 @@ public interface TargetBreakpointSpecContainer extends TargetObject {
 
 	/**
 	 * Get the kinds of supported breakpoints
-	 * 
+	 *
 	 * <p>
 	 * Different debuggers have differing vocabularies of breakpoints, and may only support a subset
 	 * of those recognized by Ghidra. This attribute describes those supported.
-	 * 
+	 *
 	 * @return the set of supported kinds
 	 */
 	@TargetAttributeType(
@@ -100,11 +100,11 @@ public interface TargetBreakpointSpecContainer extends TargetObject {
 
 	/**
 	 * Specify a breakpoint having the given expression and kinds
-	 * 
+	 *
 	 * <p>
 	 * Certain combinations of kinds and expression may not be reasonable. In those cases, the
 	 * debugger may choose to reject, split, and/or adjust the request.
-	 * 
+	 *
 	 * @param expression the expression, in the native debugger's syntax
 	 * @param kinds the desired set of kinds
 	 * @return a future which completes when the request is processed
@@ -114,11 +114,11 @@ public interface TargetBreakpointSpecContainer extends TargetObject {
 
 	/**
 	 * Specify a breakpoint having the given range and kinds
-	 * 
+	 *
 	 * <p>
 	 * Certain combinations of kinds and range may not be reasonable. In those cases, the debugger
 	 * may choose to reject, split, and/or adjust the request.
-	 * 
+	 *
 	 * @param range the range of addresses for the breakpoint
 	 * @param kinds the desired set of kinds
 	 * @return a future which completes when the request is processed
@@ -128,11 +128,11 @@ public interface TargetBreakpointSpecContainer extends TargetObject {
 
 	/**
 	 * Specify a breakpoint having the given address and kinds
-	 * 
+	 *
 	 * <p>
 	 * Certain combinations of kinds may not be reasonable. In those cases, the debugger may choose
 	 * to reject, split, and/or adjust the request.
-	 * 
+	 *
 	 * @param expression the expression, in the native debugger's syntax
 	 * @param kinds the desired set of kinds
 	 * @return a future which completes when the request is processed

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -121,9 +121,9 @@ public class GhidraProject {
 
 	/**
 	 * Creates a new non-shared Ghidra project to be used for storing programs.
-	 * 
-	 * <P><B>Note:  Calling this method will delete any existing project files on disk that 
-	 * match the given project name. 
+	 *
+	 * <P><B>Note:  Calling this method will delete any existing project files on disk that
+	 * match the given project name.
 	 * </B>
 	 *
 	 * @param projectDirPath the directory path to contain the new Ghidra project.
@@ -143,7 +143,7 @@ public class GhidraProject {
 
 	/**
 	 * Get/Create shared repository.
-	 * 
+	 *
 	 * @param host Ghidra Server host
 	 * @param port Ghidra Server port (0 = use default port)
 	 * @param repositoryName

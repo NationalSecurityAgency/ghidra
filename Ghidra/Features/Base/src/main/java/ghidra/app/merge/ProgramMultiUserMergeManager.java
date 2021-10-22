@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.program.util.ProgramSelection;
 import ghidra.util.HelpLocation;
 
-/** 
+/**
  * Top level object that manages each step of the merge/resolve conflicts
  * process.
  */
@@ -155,7 +155,7 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 		mergePanel.addButtonPressedListener(new FieldNavigator(mergeTool, navigatable));
 
 		// Currently this sets the merge panel height and width to be centered and
-		// about 100 pixels in from the screen edge. 
+		// about 100 pixels in from the screen edge.
 		Dimension screenDim = Toolkit.getDefaultToolkit().getScreenSize();
 		mergePanel.setPreferredSize(new Dimension(screenDim.width - 200, screenDim.height - 200));
 		Dimension d = mergePanel.getPreferredSize();
@@ -187,11 +187,11 @@ public class ProgramMultiUserMergeManager extends MergeManager {
 	/**
 	 * Show the component that is used to resolve conflicts. This method
 	 * is called by the MergeResolvers when user input is required. If the
-	 * component is not null, this method blocks until the user either 
+	 * component is not null, this method blocks until the user either
 	 * cancels the merge process or resolves a conflict. If comp is null,
 	 * then the default component is displayed, and the method does not
 	 * wait for user input.
-	 * @param comp component to show; if component is null, show the 
+	 * @param comp component to show; if component is null, show the
 	 * default component and do not block
 	 * @param componentID id or name for the component
 	 */

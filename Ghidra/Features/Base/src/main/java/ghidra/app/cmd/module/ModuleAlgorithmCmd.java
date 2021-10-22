@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,13 +32,13 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Command that applies the "module" algorithm to a specified Module or
- * Fragment. 
+ * Fragment.
  * Gets an iterator over the code blocks containing the selected folder or fragment.
  * Creates a folder for each code block in the iterator.
  * For each code block, gets an iterator over code blocks containing the code block.
- * For each of these code blocks, create a fragment and move the code units to the fragment.  
- * 
- *   
+ * For each of these code blocks, create a fragment and move the code units to the fragment.
+ *
+ *
  *
  */
 public class ModuleAlgorithmCmd extends BackgroundCommand {
@@ -72,7 +72,7 @@ public class ModuleAlgorithmCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.BackgroundCommand#applyTo(ghidra.framework.model.DomainObject, ghidra.util.task.TaskMonitor)
 	 */
 	@Override
@@ -104,7 +104,7 @@ public class ModuleAlgorithmCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param monitor
 	 * @throws NotFoundException
 	 * @throws NotEmptyException
@@ -205,7 +205,7 @@ public class ModuleAlgorithmCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Create a fragment with the name as the name of the given block; 
+	 * Create a fragment with the name as the name of the given block;
 	 * append a one-up number if we get a DuplicateNameException.
 	 * @param root parent module
 	 * @param block code block
@@ -230,7 +230,7 @@ public class ModuleAlgorithmCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Create a fragment with the name as the name of the given block; 
+	 * Create a fragment with the name as the name of the given block;
 	 * append a one-up number if we get a DuplicateNameException.
 	 * @param root parent module
 	 * @param block code block
@@ -274,7 +274,7 @@ public class ModuleAlgorithmCmd extends BackgroundCommand {
 	/**
 	 * Method cleanTree.
 	 * Removes all empty fragments and empty modules
-	 * 
+	 *
 	 * @param module the root branch to be cleaned.  Can be branch or entire tree.
 	 * @throws NotEmptyException if attempting to remove a module or fragment that is not empty
 	 */
@@ -320,7 +320,7 @@ public class ModuleAlgorithmCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * Create a Module with the name as the name specified; 
+	 * Create a Module with the name as the name specified;
 	 * append a one-up number if we get a DuplicateNameException.
 	 * @param module parent module
 	 * @param newName new name

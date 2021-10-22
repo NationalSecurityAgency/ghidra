@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ import ghidra.util.task.TaskMonitor;
  * for quick lookup by the main matching algorithm (HashedFunctionAddressCorrelation).  Hash diversity is
  * important to minimize collisions, even though the number of hashes calculated for a single function pair
  * match is small.
- * 
+ *
  * Hashes are built and sorted respectively using the calcHashes() and insertHashes() methods. The main sort
  * is on the number of collisions for a hash (indicating that there are duplicate or near duplicate instruction
  * sequences), the hashes with fewer (or no) duplicates come first. The secondary sort is on
@@ -51,15 +51,15 @@ import ghidra.util.task.TaskMonitor;
  * functions, and then in a loop calls
  *    hash = getFirstEntry()    on one side to get the most significant possible match
  *    getEntry(has)             to see if there is a matching n-gram on the other side
- *    
+ *
  * If there is a match it is declared to the sort with the matchHash() call, allowing overlapping n-grams to be
  * removed and deconflicting information to be updated.  If there is no match, hashes can be removed with the
  * removeHash() method to allow new hashes to move to the top of the sort.
- * 
+ *
  * The store uses a couple of methods to help deconflict very similar sequences of instructions within the same function.
  * Primarily, the sort is basic-block aware.  All n-grams are contained within a single basic block, and when an initial
  * match is found, hashes for other n-grams within that block (and its matching block on the other side) are modified
- * so that n-grams within that block pair can only match each other. 
+ * so that n-grams within that block pair can only match each other.
  *
  */
 public class HashStore {
@@ -78,7 +78,7 @@ public class HashStore {
 			if (o1.hash.size != o2.hash.size)
 				return (o1.hash.size > o2.hash.size) ? -1 : 1;		// Prefer BIGGER n-gram
 			return Long.compare(o1.hash.value, o2.hash.value);
-		}		
+		}
 	}
 
 	/**
@@ -118,7 +118,7 @@ public class HashStore {
 	 * @return total number of Instructions in the whole function
 	 */
 	public int getTotalInstructions() { return totalInstructions; }
-	
+
 	/**
 	 * @return number of instructions that have been matched so far
 	 */
@@ -136,7 +136,7 @@ public class HashStore {
 			createBlock(block);
 		}
 	}
-	
+
 	/**
 	 * Create the basic Block structure, walk the Instructions creating InstructHash structures
 	 * @param codeBlock	is the set of instruction addresses corresponding to the basic block
@@ -186,7 +186,7 @@ public class HashStore {
 		instHash.hashEntries.put(curHash, entry);		// cross-reference this entry via the n-gram
 		matchSort.add(entry);							// (Re)insert the hash into the sort
 	}
-	
+
 
 	/**
 	 * Insert all n-gram hashes for a particular instruction
@@ -199,9 +199,9 @@ public class HashStore {
 			insertNGram(curHash,instHash);
 		}
 	}
-	
+
 	/**
-	 * Low level removal of a particular n-gram from the sort 
+	 * Low level removal of a particular n-gram from the sort
 	 * @param instHash is (starting instruction) of the n-gram
 	 * @param curHash is hash (and size) of the n-gram
 	 */
@@ -233,7 +233,7 @@ public class HashStore {
 				matchSort.add(hashEntry);		// reinsert after update
 		}
 	}
-	
+
 	/**
 	 * Remove a particular HashEntry.  This may affect multiple instructions.
 	 * @param hashEntry is the entry
@@ -247,7 +247,7 @@ public class HashStore {
 			instruct.hashEntries.remove(hashEntry.hash);
 		}
 	}
-	
+
 	/**
 	 * Calculate hashes for all blocks
 	 * @param minLength is the minimum length of an n-gram for these passes
@@ -261,9 +261,9 @@ public class HashStore {
 		for(Block block : blockList.values())
 			block.calcHashes(minLength,maxLength,wholeBlock,matchOnly,hashCalc);
 	}
-	
+
 	/**
-	 * Insert all hashes associated with unknown (i.e not matched) blocks and instructions 
+	 * Insert all hashes associated with unknown (i.e not matched) blocks and instructions
 	 */
 	public void insertHashes() {
 		for(Block block : blockList.values()) {
@@ -274,7 +274,7 @@ public class HashStore {
 			}
 		}
 	}
-	
+
 	/**
 	 * Mark a particular n-gram hash and instruction as having a match.
 	 * Set of instructions covered by n-gram are removed, and data structures are updated
@@ -404,7 +404,7 @@ public class HashStore {
 	public HashEntry getFirstEntry() {
 		return matchSort.first();
 	}
-	
+
 	/**
 	 * Get the HashEntry corresponding to a given hash
 	 * @param hash is the Hash to match
@@ -413,7 +413,7 @@ public class HashStore {
 	public HashEntry getEntry(Hash hash) {
 		return hashSort.get(hash);
 	}
-	
+
 	/**
 	 * Get the basic-block with the corresponding start Address
 	 * @param addr is the starting address
@@ -422,7 +422,7 @@ public class HashStore {
 	public Block getBlock(Address addr) {
 		return blockList.get(addr);
 	}
-	
+
 	/**
 	 * @return the TaskMonitor for this store
 	 */

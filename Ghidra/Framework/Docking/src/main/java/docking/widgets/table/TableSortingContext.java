@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ public class TableSortingContext<T> {
 
 	/**
 	 * Returns true if there are no columns marked as sorted, which represents a 'no sort' state
-	 * 
+	 *
 	 * @return true if there are no columns sorted
 	 */
 	public boolean isUnsorted() {
@@ -89,7 +89,7 @@ public class TableSortingContext<T> {
 		}
 
 		return true;
-// comparators do not override equals, so we can't rely on this call		
+// comparators do not override equals, so we can't rely on this call
 //		return comparator.equals(other.comparator);
 	}
 
@@ -97,7 +97,7 @@ public class TableSortingContext<T> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-// see the equals methods		
+// see the equals methods
 //		result = prime * result + ((comparator == null) ? 0 : comparator.hashCode());
 		result = prime * result + ((sortState == null) ? 0 : sortState.hashCode());
 		return result;

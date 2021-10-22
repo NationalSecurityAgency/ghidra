@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,8 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Interface for Algorithms that correlate items (primarily functions) from one program to another, 
- * typically for purposes of version tracking. 
+ * Interface for Algorithms that correlate items (primarily functions) from one program to another,
+ * typically for purposes of version tracking.
  *
  */
 public abstract class VTAbstractProgramCorrelator implements VTProgramCorrelator {
@@ -46,9 +46,9 @@ public abstract class VTAbstractProgramCorrelator implements VTProgramCorrelator
 	 * to the destination program.
 	 * @param sourceAddressSet The set of addresses to use in the correlation.
 	 * @param destinationProgram The program to search, looking for functions that match functions
-	 * in the source program.  Typically, this is the program that markup is to be applied. 
+	 * in the source program.  Typically, this is the program that markup is to be applied.
 	 * @param destinationAddressSet The set of addresses to search within the destination program.
-	 * @param options An Options object that contains the set of options to be used by the 
+	 * @param options An Options object that contains the set of options to be used by the
 	 * correlating algorithm.
 	 */
 	protected VTAbstractProgramCorrelator(ServiceProvider serviceProvider, Program sourceProgram,
@@ -65,7 +65,7 @@ public abstract class VTAbstractProgramCorrelator implements VTProgramCorrelator
 	/**
 	 * Performs the correlation between two programs looking for how well functions in one program
 	 * correlate to functions in another program.
-	 * @param session An existing manager that may contain previous results that may 
+	 * @param session An existing manager that may contain previous results that may
 	 *        influence this correlation.
 	 * @param monitor a task monitor for reporting progress during the correlation.
 	 * @throws CancelledException if the user cancels the correlation via the task monitor.

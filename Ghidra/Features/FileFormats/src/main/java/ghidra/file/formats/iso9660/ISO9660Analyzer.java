@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class ISO9660Analyzer extends AbstractAnalyzer {
 	private enum Offset {
 		Offset1, //0x8001
 		Offset2, //0x8801
-		Offset3, //0x9001 
+		Offset3, //0x9001
 		NotFound
 	}
 

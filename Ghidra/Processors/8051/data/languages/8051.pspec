@@ -3,13 +3,13 @@
 <processor_spec>
 
   <programcounter register="PC"/>
-  
+
   <volatile outputop="write_volatile" inputop="read_volatile">
     <range space="SFR" first="0x0" last="0xFF"/>
   </volatile>
-  
+
   <default_symbols>
-  
+
     <symbol name="BANK0_R0" address="INTMEM:00"/>
     <symbol name="BANK0_R1" address="INTMEM:01"/>
     <symbol name="BANK0_R2" address="INTMEM:02"/>
@@ -18,7 +18,7 @@
     <symbol name="BANK0_R5" address="INTMEM:05"/>
     <symbol name="BANK0_R6" address="INTMEM:06"/>
     <symbol name="BANK0_R7" address="INTMEM:07"/>
-    
+
     <symbol name="BANK1_R0" address="INTMEM:08"/>
     <symbol name="BANK1_R1" address="INTMEM:09"/>
     <symbol name="BANK1_R2" address="INTMEM:0a"/>
@@ -27,7 +27,7 @@
     <symbol name="BANK1_R5" address="INTMEM:0d"/>
     <symbol name="BANK1_R6" address="INTMEM:0e"/>
     <symbol name="BANK1_R7" address="INTMEM:0f"/>
-    
+
     <symbol name="BANK2_R0" address="INTMEM:10"/>
     <symbol name="BANK2_R1" address="INTMEM:11"/>
     <symbol name="BANK2_R2" address="INTMEM:12"/>
@@ -36,7 +36,7 @@
     <symbol name="BANK2_R5" address="INTMEM:15"/>
     <symbol name="BANK2_R6" address="INTMEM:16"/>
     <symbol name="BANK2_R7" address="INTMEM:17"/>
-    
+
     <symbol name="BANK3_R0" address="INTMEM:18"/>
     <symbol name="BANK3_R1" address="INTMEM:19"/>
     <symbol name="BANK3_R2" address="INTMEM:1a"/>
@@ -45,7 +45,7 @@
     <symbol name="BANK3_R5" address="INTMEM:1d"/>
     <symbol name="BANK3_R6" address="INTMEM:1e"/>
     <symbol name="BANK3_R7" address="INTMEM:1f"/>
-  
+
     <symbol name="P0" address="SFR:80"/>
     		<symbol name="SP" address="SFR:81"/>
 		    <symbol name="DPL" address="SFR:82"/>
@@ -134,7 +134,7 @@
     <symbol name="CCAP2H" address="SFR:fc"/>
     <symbol name="CCAP3H" address="SFR:fd"/>
     <symbol name="CCAP4H" address="SFR:fe"/>
-    
+
     <symbol name="20.0" address="BITS:00"/>
     <symbol name="20.1" address="BITS:01"/>
     <symbol name="20.2" address="BITS:02"/>
@@ -263,7 +263,7 @@
     <symbol name="2f.5" address="BITS:7d"/>
     <symbol name="2f.6" address="BITS:7e"/>
     <symbol name="2f.7" address="BITS:7f"/>
-    
+
     <symbol name="P0.0" address="BITS:80"/>
     <symbol name="P0.1" address="BITS:81"/>
     <symbol name="P0.2" address="BITS:82"/>
@@ -392,9 +392,9 @@
     <symbol name="F8.5" address="BITS:fd"/>
     <symbol name="F8.6" address="BITS:fe"/>
     <symbol name="F8.7" address="BITS:ff"/>
-    
+
   </default_symbols>
-  
+
   <default_memory_blocks>
     <memory_block name="REG_BANK_1" start_address="INTMEM:0" length="0x8" initialized="false"/>
     <memory_block name="REG_BANK_2" start_address="INTMEM:8" length="0x8" initialized="false"/>
@@ -403,10 +403,10 @@
     <memory_block name="INTMEM" start_address="INTMEM:20" length="0xe0" initialized="false"/>
     <memory_block name="BITS" start_address="BITS:00" bit_mapped_address="INTMEM:20" length="0x80"/>
     <memory_block name="SFR" start_address="SFR:80" length="0x80" initialized="false"/>
-    
+
     <!--  BUG: SFR-BITS do not map properly since only every 8th SFR register is mapped (e.g., 0x80, 0x88, 0x90 ... 0xF0, 0xF8) -->
     <memory_block name="SFR-BITS" start_address="BITS:80" bit_mapped_address="SFR:80" length="0x80"/>
-    
+
   </default_memory_blocks>
-  
+
 </processor_spec>

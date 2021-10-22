@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,8 +71,8 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 
 	/**
 	 * Creates a new file system instance that is a sub-view limited to the specified directory.
-	 * 
-	 * @param fsrl {@link FSRL} that must be a directory in this local filesystem 
+	 *
+	 * @param fsrl {@link FSRL} that must be a directory in this local filesystem
 	 * @return new {@link LocalFileSystemSub} instance
 	 * @throws IOException if bad FSRL
 	 */
@@ -100,7 +100,7 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 
 	/**
 	 * Convert a FSRL that points to this file system into a java {@link File}.
-	 * 
+	 *
 	 * @param fsrl {@link FSRL}
 	 * @return {@link File}
 	 * @throws IOException if FSRL does not point to this file system
@@ -115,7 +115,7 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 
 	/**
 	 * Converts a {@link File} into a {@link FSRL}.
-	 * 
+	 *
 	 * @param f {@link File}
 	 * @return {@link FSRL}
 	 */
@@ -179,7 +179,7 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 
 	/**
 	 * Create a {@link FileAttributes} container with info about the specified local file.
-	 * 
+	 *
 	 * @param f {@link File} to query
 	 * @return {@link FileAttributes} instance
 	 */
@@ -275,14 +275,14 @@ public class LocalFileSystem implements GFileSystem, GFileHashProvider {
 		if ( !f.isFile() ) {
 			return null;
 		}
-		
+
 		FileFingerprintRec fileFingerprintRec = new FileFingerprintRec(f.getPath(), f.lastModified(), f.length());
 		String md5 = fileFingerprintToMD5Map.get(fileFingerprintRec);
 		if (md5 == null && required) {
 			md5 = FSUtilities.getFileMD5(f, monitor);
 			fileFingerprintToMD5Map.put(fileFingerprintRec, md5);
 		}
-		
+
 		return md5;
 	}
 

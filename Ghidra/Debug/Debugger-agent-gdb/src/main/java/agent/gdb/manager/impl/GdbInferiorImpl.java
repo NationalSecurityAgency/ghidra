@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -76,7 +76,7 @@ public class GdbInferiorImpl implements GdbInferior {
 
 	/**
 	 * Construct a new inferior
-	 * 
+	 *
 	 * @param manager the manager creating the inferior
 	 * @param id the GDB-assigned inferior ID
 	 */
@@ -90,7 +90,7 @@ public class GdbInferiorImpl implements GdbInferior {
 		this.pid = g.getPid();
 		this.exitCode = g.getExitCode();
 		this.executable = g.getExecutable();
-		
+
 		// Because we're only called to resync, we should synth started, if needed
 		if (oldPid == null && pid != null) {
 			manager.fireInferiorStarted(this, Causes.UNCLAIMED, "resyncInferiorStarted");
@@ -110,11 +110,11 @@ public class GdbInferiorImpl implements GdbInferior {
 
 	/**
 	 * Set the process ID of this inferior
-	 * 
+	 *
 	 * An inferior is associated to exactly one process at a time, but since it may be restarted, it
 	 * may be associated with different processes at different times. This method allows the manager
 	 * to set the PID when it changes.
-	 * 
+	 *
 	 * @param pid the PID
 	 */
 	public void setPid(long pid) {
@@ -128,10 +128,10 @@ public class GdbInferiorImpl implements GdbInferior {
 
 	/**
 	 * Set the inferior exit code
-	 * 
+	 *
 	 * When the inferior exits (or rather its associated process exits), this allows the manager to
 	 * set the exit code.
-	 * 
+	 *
 	 * @param exitCode the exit code (status or signal)
 	 */
 	public void setExitCode(Long exitCode) {
@@ -150,7 +150,7 @@ public class GdbInferiorImpl implements GdbInferior {
 
 	/**
 	 * Add this inferior to the manager's list of inferiors, because of a given cause
-	 * 
+	 *
 	 * @param cause the cause of the new inferior
 	 */
 	public void add(GdbCause cause) {
@@ -159,7 +159,7 @@ public class GdbInferiorImpl implements GdbInferior {
 
 	/**
 	 * Remove this inferior from the manager's list of inferiors, because of a given cause
-	 * 
+	 *
 	 * @param cause the cause of removal
 	 */
 	public void remove(GdbCause cause) {
@@ -168,7 +168,7 @@ public class GdbInferiorImpl implements GdbInferior {
 
 	/**
 	 * Use {@link GdbThreadImpl#add()} instead
-	 * 
+	 *
 	 * @param thread the thread to add
 	 */
 	public void addThread(GdbThreadImpl thread) {
@@ -191,7 +191,7 @@ public class GdbInferiorImpl implements GdbInferior {
 
 	/**
 	 * Use {@link GdbThreadImpl#remove()} instead
-	 * 
+	 *
 	 * @param tid the ID of the thread to remove
 	 */
 	public void removeThread(int tid) {

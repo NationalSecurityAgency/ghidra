@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,20 +38,20 @@ public abstract class AbstractDebuggerModelScenarioStackTest extends AbstractDeb
 
 	/**
 	 * This specimen must create a stack easily recognizable by examination of 4 frames' PCs
-	 * 
+	 *
 	 * <p>
 	 * This is accomplished by writing 4 functions where each calls the next, the innermost
 	 * function's symbol providing an easily-placed breakpoint. When the breakpoint is hit, frame 0
 	 * should be at the entry of the innermost function, and the pc for each frame after that should
 	 * be within the body of its respective following function.
-	 * 
+	 *
 	 * @return the specimen
 	 */
 	protected abstract DebuggerTestSpecimen getSpecimen();
 
 	/**
 	 * Perform any work needed after the specimen has been launched
-	 * 
+	 *
 	 * @param process the process running the specimen
 	 * @throws Throwable if anything goes wrong
 	 */
@@ -60,22 +60,22 @@ public abstract class AbstractDebuggerModelScenarioStackTest extends AbstractDeb
 
 	/**
 	 * Get the expression to break at the innermost recognizable function
-	 * 
+	 *
 	 * <p>
 	 * More than likely, this should just be the symbol for that function.
-	 * 
+	 *
 	 * @return the expression
 	 */
 	protected abstract String getBreakpointExpression();
 
 	/**
 	 * Examine the address of the given frame and verify it is where expected
-	 * 
+	 *
 	 * <p>
 	 * Note if this validation needs access to the process, it should at least record where that
 	 * process is by overriding {@link #postLaunch(TargetProcess)}. Ideally, it can perform all of
 	 * the necessary lookups, e.g., to record symbol values, there instead of here.
-	 * 
+	 *
 	 * @param index the index
 	 * @param pc the program counter
 	 */
@@ -83,7 +83,7 @@ public abstract class AbstractDebuggerModelScenarioStackTest extends AbstractDeb
 
 	/**
 	 * Test the following scenario:
-	 * 
+	 *
 	 * <ol>
 	 * <li>Obtain a launcher and use it to start the specimen</li>
 	 * <li>Place the breakpoint on the new process</li>

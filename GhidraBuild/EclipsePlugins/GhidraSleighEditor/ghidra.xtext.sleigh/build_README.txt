@@ -16,8 +16,8 @@ Importing GhidraSleighEditor Eclipse projects (they are deactivated by default):
   2) Run "gradle eclipse -PeclipseDSL" to generate the GhidraSleighEditor Eclipse projects.
   3) From Eclipse, File --> Import --> General --> Existing Projects into Workspace
   4) From the ghidra repo, import all "Eclipse GhidraSleighEditor *" projects.
- 
-  
+
+
 Generating all Sleigh XTEXT generated files:
   1) open "Eclipse SleighEditor" project
   2) navigate to the file src --> ghidra.xtext.sleigh --> GenerateSleigh.mwe2
@@ -46,7 +46,7 @@ Try out the Sleigh Editor
   2b) -OR-
        - drop a .slaspec or .sinc file from the file browser on eclipse
        - this is good for quick viewing, however navigation across files may not work.
-  
+
 
 Optional: Changing version number (GhidraSleighEditor is versioned independently of Ghidra):
   1) Open feature.xml in the GhidraSleighEditor Feature project.
@@ -66,7 +66,7 @@ to have Eclipse with the DSL in the Eclipse into which the Eclipse Sleigh Editor
   3) Go to the Included Features tab
   4) Add...
   5) Filter by 'redist' and add org.eclipse.xtext.redist
-      
+
 
 Creating an installation zip file to install in Eclipse:
   1) Do a Gradle prepDev to ensure GhidraDev's dependencies are up-to-date.

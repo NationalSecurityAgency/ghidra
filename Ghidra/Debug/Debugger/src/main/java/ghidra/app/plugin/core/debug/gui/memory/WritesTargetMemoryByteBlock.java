@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class WritesTargetMemoryByteBlock extends MemoryByteBlock {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param blockSet the containing block set
 	 * @param program the trace program view for the block
 	 * @param memory the view's memory
@@ -49,11 +49,11 @@ public class WritesTargetMemoryByteBlock extends MemoryByteBlock {
 
 	/**
 	 * Check writes should be redirected, based on the provider's coordinates.
-	 * 
+	 *
 	 * <p>
 	 * Note that redirecting the write prevents the edit from being written (dirtectly) into the
 	 * trace. If the edit is successful, the trace recorder will record it to the trace.
-	 * 
+	 *
 	 * @return true to redirect
 	 */
 	protected boolean shouldWriteTarget() {
@@ -62,10 +62,10 @@ public class WritesTargetMemoryByteBlock extends MemoryByteBlock {
 
 	/**
 	 * Get the recorder.
-	 * 
+	 *
 	 * <p>
 	 * This should only be used for redirected writes. If we're not live, this will return null.
-	 * 
+	 *
 	 * @return the recorder
 	 */
 	protected TraceRecorder getTraceRecorder() {
@@ -107,7 +107,7 @@ public class WritesTargetMemoryByteBlock extends MemoryByteBlock {
 
 	/**
 	 * Write an array of bytes to the target's memory.
-	 * 
+	 *
 	 * @param addr the starting address
 	 * @param data the data to write, prepared in correct endianness
 	 */
@@ -118,7 +118,7 @@ public class WritesTargetMemoryByteBlock extends MemoryByteBlock {
 
 	/**
 	 * Allocate a buffer for encoding values into bytes.
-	 * 
+	 *
 	 * @param size the number of bytes to allocate
 	 * @param bigEndian true to order the buffer in {@link ByteOrder#BIG_ENDIAN}.
 	 * @return the buffer, allocated and configured.
@@ -131,10 +131,10 @@ public class WritesTargetMemoryByteBlock extends MemoryByteBlock {
 
 	/**
 	 * Write a single byte to the target.
-	 * 
+	 *
 	 * <p>
 	 * Endianness is meaningless
-	 * 
+	 *
 	 * @param addr the address
 	 * @param value the byte
 	 */
@@ -144,7 +144,7 @@ public class WritesTargetMemoryByteBlock extends MemoryByteBlock {
 
 	/**
 	 * Write a single int to the target
-	 * 
+	 *
 	 * @param addr the minimum address to modify
 	 * @param value the integer
 	 * @param bigEndian true for big endian, false for little
@@ -157,7 +157,7 @@ public class WritesTargetMemoryByteBlock extends MemoryByteBlock {
 
 	/**
 	 * Write a single long to the target
-	 * 
+	 *
 	 * @param addr the minimum address to modify
 	 * @param value the long
 	 * @param bigEndian true for big endian, false for little

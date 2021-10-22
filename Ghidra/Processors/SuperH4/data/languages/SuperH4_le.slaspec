@@ -1,4 +1,4 @@
-# This module defines SuperH version 4, but should work against versions 1,2, and 3. 
+# This module defines SuperH version 4, but should work against versions 1,2, and 3.
 # There is a SuperH version 4A (which has 4 byte instruction length) which has instructions incompatable
 # with this.
 

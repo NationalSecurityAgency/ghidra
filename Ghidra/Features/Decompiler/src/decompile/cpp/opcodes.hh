@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -89,7 +89,7 @@ enum OpCode {
   CPUI_FLOAT_LESSEQUAL = 44,	///< Floating-point comparison, less-than-or-equal (<=)
   // Slot 45 is currently unused
   CPUI_FLOAT_NAN = 46,	        ///< Not-a-number test (NaN)
- 
+
   CPUI_FLOAT_ADD = 47,          ///< Floating-point addition (+)
   CPUI_FLOAT_DIV = 48,          ///< Floating-point division (/)
   CPUI_FLOAT_MULT = 49,         ///< Floating-point multiplication (*)

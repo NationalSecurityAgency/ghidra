@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -467,14 +467,14 @@ public interface Options {
 
 	/**
 	 * Restores <b>all</b> options contained herein to their default values.
-	 * 
+	 *
 	 * @see #restoreDefaultValue(String)
 	 */
 	public abstract void restoreDefaultValues();
 
 	/**
 	 * Restores the option denoted by the given name to its default value.
-	 * 
+	 *
 	 * @param optionName The name of the option to restore
 	 * @see #restoreDefaultValues()
 	 */
@@ -482,11 +482,11 @@ public interface Options {
 
 	/**
 	 * Returns a Options object that is a sub-options of this options.
-	 * 
+	 *
 	 * <p>Note: the option path can have {@link Options#DELIMITER} characters which will be
 	 * used to create a hierarchy with each element in the path resulting in sub-option of the
 	 * previous path element.
-	 * 
+	 *
 	 * @param path the path for the sub-options object
 	 * @return an Options object that is a sub-options of this options
 	 */

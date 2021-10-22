@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -99,7 +99,7 @@ public class VTTestUtils {
 
 	/**
 	 * Create a random match.
-	 * @param session the match set manager to use when creating a random tag or 
+	 * @param session the match set manager to use when creating a random tag or
 	 * null if you don't want to create a random tag.
 	 * @return the match
 	 */
@@ -110,7 +110,7 @@ public class VTTestUtils {
 	/**
 	 * Create a random match
 	 * @param association the association to use for the source and destination address.
-	 * @param session the match set manager to use when creating a random tag or 
+	 * @param session the match set manager to use when creating a random tag or
 	 * null if you don't want to create a random tag.
 	 * @return the match
 	 */

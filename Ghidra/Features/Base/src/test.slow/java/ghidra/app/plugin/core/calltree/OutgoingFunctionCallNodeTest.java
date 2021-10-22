@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import ghidra.test.ToyProgramBuilder;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This test class is covering the various types of 'calls' a function can make, such as a 
+ * This test class is covering the various types of 'calls' a function can make, such as a
  * direct call instruction, or through a user-defined reference.   External calls are also a bit
  * tricky.   This test was created by following the code paths in {@link OutgoingFunctionCallNode}
  * and making sure that each path was followed.
@@ -115,7 +115,7 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 	public void testGenerateChildren_CallReference_ToPointer_ToExternalFunction() throws Exception {
 
 		//
-		// Function A 
+		// Function A
 		//  -> has memory reference to a pointer
 		//     -> this pointer has an external reference to a function
 		//
@@ -142,7 +142,7 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 			throws Exception {
 
 		//
-		// Function A 
+		// Function A
 		//  -> has memory reference to a pointer
 		//     -> this pointer has an non-external reference to a function
 		//
@@ -182,7 +182,7 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 	@Test
 	public void testGenerateChildren_WriteReference() throws Exception {
 
-		// 
+		//
 		// Have a reference in the function to a place that is not another function, and the
 		// reference is a write reference.  No call node is created.
 		//
@@ -196,10 +196,10 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 	@Test
 	public void testGenerateChildren_ReadReference_NullInstruction() throws Exception {
 
-		// 
+		//
 		// Have a reference in the function to a place that is not another function, and the
-		// reference is a read reference.  
-		// Note: since we did not have the builder put an instruction at the 'to' address, 
+		// reference is a read reference.
+		// Note: since we did not have the builder put an instruction at the 'to' address,
 		//       the instruction there is null.
 		//
 
@@ -229,7 +229,7 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 			throws Exception {
 
 		//
-		// Read reference from an instruction with a flow type of call to a place that is an 
+		// Read reference from an instruction with a flow type of call to a place that is an
 		// instruction (and thus is not a pointer to a function)
 		//
 
@@ -302,7 +302,7 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 			throws Exception {
 
 		//
-		// Read reference from an instruction with a flow type that is a call, to an external 
+		// Read reference from an instruction with a flow type that is a call, to an external
 		// function symbol
 		//
 
@@ -325,7 +325,7 @@ public class OutgoingFunctionCallNodeTest extends AbstractGenericTest {
 		builder.disassemble(nodeAddress, 2);
 
 		//
-		// Note: the tests that use this are creating their references to control the code's 
+		// Note: the tests that use this are creating their references to control the code's
 		//       execution path, so get rid of the default reference created for this instruction
 		//
 		int txID = program.startTransaction("Remove References");

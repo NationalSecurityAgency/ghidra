@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -88,7 +88,7 @@ public class FunctionTagTableModel extends ThreadedTableModel<FunctionTagRowObje
 
 	/**
 	 * Returns true if a function tag with a given name is in the model
-	 * 
+	 *
 	 * @param name the tag name
 	 * @return true if the tag exists in the model
 	 */
@@ -117,7 +117,7 @@ public class FunctionTagTableModel extends ThreadedTableModel<FunctionTagRowObje
 
 		@Override
 		public String getColumnDisplayName(Settings settings) {
-			// don't display any name, but need it to be at least one space wide so the correct 
+			// don't display any name, but need it to be at least one space wide so the correct
 			// space is allocated to the header
 			return " ";
 		}

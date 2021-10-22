@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,7 +59,7 @@ public class MemoryMapPluginScreenShots extends GhidraScreenShotGenerator {
 @Test
     public void testBitOverlayAddresses() {
 
-		//Draw empty white rectangle		
+		//Draw empty white rectangle
 		image = new BufferedImage(450, 175, BufferedImage.TYPE_INT_ARGB);
 		Graphics g = image.getGraphics();
 		g.setColor(Color.WHITE);
@@ -95,7 +95,7 @@ public class MemoryMapPluginScreenShots extends GhidraScreenShotGenerator {
 		drawText("0009", Color.BLACK, new Point(330, 130), 10);
 		drawText("0008", Color.BLACK, new Point(370, 130), 10);
 
-		//Draw boxes		
+		//Draw boxes
 		Point p1 = new Point(80, 65);
 		Point p2 = new Point(400, 65);
 		Point p3 = new Point(400, 90);

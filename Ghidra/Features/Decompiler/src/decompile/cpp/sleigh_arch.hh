@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,7 +112,7 @@ public:
   virtual void printMessage(const string &message) const { *errorstream << message << endl; }
   virtual ~SleighArchitecture(void);
   virtual string getDescription(void) const;
-  
+
   static string normalizeProcessor(const string &nm);		///< Try to recover a \e language \e id processor field
   static string normalizeEndian(const string &nm);		///< Try to recover a \e language \e id endianess field
   static string normalizeSize(const string &nm);		///< Try to recover a \e language \e id size field

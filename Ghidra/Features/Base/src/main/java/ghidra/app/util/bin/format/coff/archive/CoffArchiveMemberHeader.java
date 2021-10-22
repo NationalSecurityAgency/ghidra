@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public class CoffArchiveMemberHeader implements StructConverter {
 	 * object.
 	 * <p>
 	 * @param reader stream from which to read the COFF archive member header from
-	 * @param longNames optional, string table with long file names (only present in some 
+	 * @param longNames optional, string table with long file names (only present in some
 	 * COFF ar formats)
 	 * @return a new {@link CoffArchiveMemberHeader}
 	 * @throws IOException
@@ -73,22 +73,22 @@ public class CoffArchiveMemberHeader implements StructConverter {
 
 		/*
 		 * Decoding the name field:
-		 * 
+		 *
 		 * "/nnn" - a slash followed by a ascii integer string indicates that the actual name
 		 * is located at offset "nnn" in the "longnames" string table.
-		 * 
+		 *
 		 * "#1/nnn" - a "#1/", followed by an ascii integer string indicates that the
 		 * actual name is located at the beginning of the payload of this member, and its
 		 * length is 'nnn' bytes.  The actual payload starts after the end of the name and
-		 * its effective size needs to be reduced by the filename length. 
-		 * 
+		 * its effective size needs to be reduced by the filename length.
+		 *
 		 * "name/"
 		 * The field gives the name of the archive member directly.
-		 * 
+		 *
 		 * "/"
 		 * The archive member is one of the two linker members.
 		 * Both of the linker members have this name.
-		 * 
+		 *
 		 * "//"
 		 * The archive member is the longname member, which
 		 * consists of a series of terminated ASCII strings.
@@ -96,31 +96,31 @@ public class CoffArchiveMemberHeader implements StructConverter {
 		 */
 		String name =
 			reader.readFixedLenAsciiString(headerOffset + CAMH_NAME_OFF, CAMH_NAME_LEN).trim();
-		
+
 		/*
-		 * The number of seconds since 1/1/1970 UCT 
+		 * The number of seconds since 1/1/1970 UCT
 		 */
 		String dateStr =
 			reader.readFixedLenAsciiString(headerOffset + CAMH_DATE_OFF, CAMH_DATE_LEN).trim();
-		
+
 		/*
 		 * Ascii integer string or blank
 		 */
 		String userId =
 			reader.readFixedLenAsciiString(headerOffset + CAMH_USERID_OFF, CAMH_USERID_LEN).trim();
-		
+
 		/*
 		 * Ascii integer string or blank
 		 */
 		String groupId = reader.readFixedLenAsciiString(headerOffset + CAMH_GROUPID_OFF,
 			CAMH_GROUPID_LEN).trim();
-		
+
 		/*
 		 * Ascii integer string of ST_MODE value from the C run-time function _wstat
 		 */
 		String mode =
 			reader.readFixedLenAsciiString(headerOffset + CAMH_MODE_OFF, CAMH_MODE_LEN).trim();
-		
+
 		/*
 		 * Ascii integer string representing the total size of the archive member,
 		 * not including the header.  If the name is stored at the beginning of the
@@ -128,25 +128,25 @@ public class CoffArchiveMemberHeader implements StructConverter {
 		 */
 		String sizeStr =
 			reader.readFixedLenAsciiString(headerOffset + CAMH_SIZE_OFF, CAMH_SIZE_LEN).trim();
-		
+
 		/*
 		 * Two byte Ascii string 0x60 0x0a ("'\n")
 		 */
 		String endOfHeader = reader.readFixedLenAsciiString(headerOffset + CAMH_EOH_OFF, CAMH_EOH_LEN);
-		
+
 		if (!endOfHeader.equals(CAMH_EOH_MAGIC)) {
 			throw new IOException("Bad EOH magic string: " + endOfHeader);
 		}
 
 		long payloadOffset = headerOffset + CAMH_PAYLOAD_OFF;
-		
+
 		long size;
 		try {
 			size = Long.parseLong(sizeStr);
 		} catch ( NumberFormatException nfe ) {
 			throw new IOException("Bad size value: " + sizeStr);
 		}
-		
+
 		if (name.startsWith("#1/")) {
 			try {
 				int nameLen = Integer.parseInt(name.substring(3));

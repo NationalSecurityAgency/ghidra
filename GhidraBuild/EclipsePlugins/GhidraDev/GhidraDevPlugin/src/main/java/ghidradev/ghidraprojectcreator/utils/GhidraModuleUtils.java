@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,7 +64,7 @@ public class GhidraModuleUtils {
 
 	/**
 	 * Creates a new Ghidra module project with the given name.
-	 * 
+	 *
 	 * @param projectName The name of the project to create.
 	 * @param projectDir The directory the project will be created in.
 	 * @param createRunConfig Whether or not to create a new run configuration for the project.
@@ -110,16 +110,16 @@ public class GhidraModuleUtils {
 	}
 
 	/**
-	 * Manually add in the source from the Skeleton (which should exist in the Ghidra installation 
-	 * directory), and then look at what's in the templates set to know what to keep and what to 
+	 * Manually add in the source from the Skeleton (which should exist in the Ghidra installation
+	 * directory), and then look at what's in the templates set to know what to keep and what to
 	 * discard.
-	 * 
+	 *
 	 * @param javaProject The project whose source is to be configured.
 	 * @param projectDir The project's directory.
 	 * @param ghidraLayout The Ghidra layout the project is linked to.
 	 * @param moduleTemplateTypes The templates to include in the source.
 	 * @param monitor The progress monitor to use during source configuration.
-	 * @return The primary module source file (which could be opened in an editor by default). 
+	 * @return The primary module source file (which could be opened in an editor by default).
 	 * @throws IOException If there was a file-related problem with configuring the source.
 	 * @throws CoreException If there was an Eclipse-related problem with configuring the source.
 	 */
@@ -205,10 +205,10 @@ public class GhidraModuleUtils {
 
 	/**
 	 * Writes project-specific ant properties, which get imported by the module project's language
-	 * build.xml file to allow building against a Ghidra that lives in an external location. If the 
-	 * given project is not a Ghidra module project, or if the Ghidra module project does not have a 
+	 * build.xml file to allow building against a Ghidra that lives in an external location. If the
+	 * given project is not a Ghidra module project, or if the Ghidra module project does not have a
 	 * language buildLanguage.xml ant file, this method has no effect.
-	 * 
+	 *
 	 * @param project The project to receive the ant properties.
 	 * @param ghidraLayout The layout that contains the Ghidra installation directory that the project
 	 *   is currently linked against.
@@ -244,9 +244,9 @@ public class GhidraModuleUtils {
 	}
 
 	/**
-	 * Renames the given Java element to the given new name.  Currently only supports renaming 
+	 * Renames the given Java element to the given new name.  Currently only supports renaming
 	 * packages and compilation units.
-	 * 
+	 *
 	 * @param element The Java element to rename.
 	 * @param newName The desired new name of the element.
 	 * @param monitor The progress monitor.

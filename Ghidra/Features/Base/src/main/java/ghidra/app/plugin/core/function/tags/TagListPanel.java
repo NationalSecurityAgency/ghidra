@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ import ghidra.util.table.GhidraTableFilterPanel;
 import ghidra.util.table.GhidraThreadedTablePanel;
 
 /**
- * Base panel for displaying tags in the function tag window. 
+ * Base panel for displaying tags in the function tag window.
  */
 public abstract class TagListPanel extends JPanel {
 
@@ -56,8 +56,8 @@ public abstract class TagListPanel extends JPanel {
 	private JLabel titleLabel;
 
 	/**
-	 * Constructor 
-	 * 
+	 * Constructor
+	 *
 	 * @param provider the display provider
 	 * @param tool the plugin tool
 	 * @param title the title of the panel
@@ -117,7 +117,7 @@ public abstract class TagListPanel extends JPanel {
 	/**
 	 * Clears the list and re-populates it with a new data set. Clients should override this
 	 * to retrieve data for the given function.
-	 * 
+	 *
 	 * @param newFunction the currently selected function in the listing
 	 */
 	public abstract void refresh(Function newFunction);
@@ -208,7 +208,7 @@ public abstract class TagListPanel extends JPanel {
 
 	/**
 	 * Returns true if the tag already exists in the model.
-	 * 
+	 *
 	 * @param name the name of the tag
 	 * @return true if the tag exists
 	 */
@@ -222,7 +222,7 @@ public abstract class TagListPanel extends JPanel {
 
 	/**
 	 * Returns true if the list in this panel has any list items selected.
-	 * 
+	 *
 	 * @return true if the list has an item selected
 	 */
 	protected boolean hasSelection() {
@@ -232,7 +232,7 @@ public abstract class TagListPanel extends JPanel {
 	/**
 	 * Returns true if at least one of the selected items in the list
 	 * is immutable (a temporary non-user-defined tag that can't be edited/deleted).
-	 *  
+	 *
 	 * @return true if list contains an immutable tag
 	 */
 	protected boolean isSelectionImmutable() {
@@ -241,7 +241,7 @@ public abstract class TagListPanel extends JPanel {
 	}
 
 	/**
-	 * Deletes any selected tags from the system. 
+	 * Deletes any selected tags from the system.
 	 */
 	protected void deleteSelectedTags() {
 
@@ -266,7 +266,7 @@ public abstract class TagListPanel extends JPanel {
 
 	/**
 	 * Retrieves all tags that have been assigned to the given function
-	 * 
+	 *
 	 * @param func the function to get tags for
 	 * @return list of all tags assigned to this function
 	 */
@@ -280,7 +280,7 @@ public abstract class TagListPanel extends JPanel {
 
 	/**
 	 * Returns a list of all tags selected in the list
-	 * 
+	 *
 	 * @return the list of function tags
 	 */
 	protected Set<FunctionTag> getSelectedTags() {

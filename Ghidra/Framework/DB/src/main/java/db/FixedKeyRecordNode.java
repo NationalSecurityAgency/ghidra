@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.util.task.TaskMonitor;
  * <code>FixedKeyRecordNode</code> is an abstract implementation of a BTree leaf node
  * which utilizes fixed-length binary key values and stores records.
  * <p>
- * This type of node has the following partial layout within a single DataBuffer 
+ * This type of node has the following partial layout within a single DataBuffer
  * (field size in bytes):
  * <pre>
  *   | NodeType(1) | KeyCount(4) | PrevLeafId(4) | NextLeafId(4) ...
@@ -412,7 +412,7 @@ abstract class FixedKeyRecordNode extends FixedKeyNode implements FieldKeyRecord
 
 	/**
 	 * Inserts the record at the given index if there is sufficient space in
-	 * the buffer. 
+	 * the buffer.
 	 * @param index insertion index
 	 * @param record record to be inserted
 	 * @return true if the record was successfully inserted.
@@ -421,7 +421,7 @@ abstract class FixedKeyRecordNode extends FixedKeyNode implements FieldKeyRecord
 	abstract boolean insertRecord(int index, DBRecord record) throws IOException;
 
 	/**
-	 * Updates the record at the given index. 
+	 * Updates the record at the given index.
 	 * @param index record index
 	 * @param record new record
 	 * @return root node which may have changed.

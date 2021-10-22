@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -388,7 +388,7 @@ public class MenuManager implements ManagedMenuItem {
 // Inner Classes
 //==================================================================================================
 
-	/** 
+	/**
 	 * This comparator puts null grouped items at the bottom of menus for menu bar menus so that
 	 * the ungrouped items will cluster at the end.
 	 */
@@ -409,7 +409,7 @@ public class MenuManager implements ManagedMenuItem {
 		}
 	}
 
-	/** 
+	/**
 	 * This comparator puts null grouped items at the top of the menu so that universal popup
 	 * actions are always at the bottom (e.g., Copy for tables).
 	 */
@@ -462,7 +462,7 @@ public class MenuManager implements ManagedMenuItem {
 			if (result == 0) {
 				// When the names are the same, we have to compare even further, or the items
 				// will not all appear in the set, as the set will consider them equal. Just use
-				// something unique that is guaranteed not to change in this VM session.  This 
+				// something unique that is guaranteed not to change in this VM session.  This
 				// will only be equal if the objects are the same reference.
 				return System.identityHashCode(m1) - System.identityHashCode(m2);
 			}

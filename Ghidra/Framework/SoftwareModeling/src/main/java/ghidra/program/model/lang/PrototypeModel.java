@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ import ghidra.xml.*;
  * A function calling convention model.
  * Formal specification of how a compiler passes
  * arguments between functions.
- * 
- * 
+ *
+ *
  *
  */
 public class PrototypeModel {
@@ -241,7 +241,7 @@ public class PrototypeModel {
 
 		if (dataType != null) {
 			dataType = dataType.clone(program.getDataTypeManager());
-			// Identify next arg index based upon number of storage varnodes 
+			// Identify next arg index based upon number of storage varnodes
 			// already assigned to parameters - this may not work well if
 			// customized storage has been used
 		}
@@ -263,15 +263,15 @@ public class PrototypeModel {
 	}
 
 	/**
-	 * Compute the variable storage for a given function and set of return/parameter datatypes 
+	 * Compute the variable storage for a given function and set of return/parameter datatypes
 	 * defined by an array of data types.
 	 * @param program is the Program
-	 * @param dataTypes return/parameter datatypes (first element is always the return datatype, 
+	 * @param dataTypes return/parameter datatypes (first element is always the return datatype,
 	 * i.e., minimum array length is 1)
 	 * @param addAutoParams TODO
 	 * @return dynamic storage locations orders by ordinal where first element corresponds to
-	 * return storage. The returned array may also include additional auto-parameter storage 
-	 * locations. 
+	 * return storage. The returned array may also include additional auto-parameter storage
+	 * locations.
 	 */
 	public VariableStorage[] getStorageLocations(Program program, DataType[] dataTypes,
 			boolean addAutoParams) {
@@ -305,7 +305,7 @@ public class PrototypeModel {
 				if (finalres[1].isAutoStorage()) {
 					if (inputParams.isThisBeforeRetPointer()) {
 						// pointer has been bumped by auto-return-storage
-						// must swap storage and position for slots 1 and 2 
+						// must swap storage and position for slots 1 and 2
 						finalres[2] = new DynamicVariableStorage(program,
 							finalres[1].getAutoParameterType(), finalres[2].getVarnodes());
 					}

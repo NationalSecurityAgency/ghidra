@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import java.util.NoSuchElementException;
 import db.ChainedBuffer;
 
 /**
- * <code>ChangeMapFile</code> tracks which buffers within a LocalBufferFile 
+ * <code>ChangeMapFile</code> tracks which buffers within a LocalBufferFile
  * have been modified between an older and newer version.  The older
  * file is also referred to as the target file.
  */
@@ -61,12 +61,12 @@ public class ChangeMapFile {
 
 		this.file = file;
 		readOnly = false;
-		
+
 		LocalBufferFile mapFile = null;
 		boolean success = false;
 		try {
 			if (!file.exists()) {
-	
+
 				indexCnt = oldFile.getIndexCount();
 
 				bufMgr = new BufferMgr(BufferMgr.DEFAULT_BUFFER_SIZE, CACHE_SIZE, 1);
@@ -74,15 +74,15 @@ public class ChangeMapFile {
 				int ver = oldFile.getVersion();
 				bufMgr.setParameter(INITIAL_VERSION_PARM, ver);
 				bufMgr.setParameter(INDEX_CNT_PARM, indexCnt);
-				
+
 				// Create chained buffer
 				int size = ((indexCnt - 1) / 8) + 1;
 				buffer = new ChainedBuffer(size, bufMgr);
 				bufMgr.setParameter(BUFFER_ID_PARM, buffer.getId());
-				
+
 				// Mark all spare bits as changed
-				
-				
+
+
 				int lastByteOffset = (indexCnt-1) / 8;
 				byte lastByte = 0;
 				int index = indexCnt;
@@ -93,7 +93,7 @@ public class ChangeMapFile {
 					++index;
 				}
 				buffer.putByte(lastByteOffset, lastByte);
-								
+
 			}
 			else {
 
@@ -101,15 +101,15 @@ public class ChangeMapFile {
 				if (mapFile.getParameter(MAGIC_NUMBER_PARM) != MAGIC_NUMBER) {
 					throw new IOException("Bad modification map file: " + file);
 				}
-				
+
 				long oldTargetFileId = ((long)mapFile.getParameter(TARGET_FILE_ID_HI_PARM) << 32) |
 					(mapFile.getParameter(TARGET_FILE_ID_LOW_PARM) & 0xffffffffL);
 				if (oldTargetFileId != oldFile.getFileId()) {
 					throw new IOException("Modification map file does not correspond to target: " + file);
 				}
-				
+
 				bufMgr = new BufferMgr(mapFile, CACHE_SIZE, 1);
-				
+
 				indexCnt = bufMgr.getParameter(INDEX_CNT_PARM);
 				if (newFile.getIndexCount() < indexCnt) {
 					throw new AssertException();
@@ -118,11 +118,11 @@ public class ChangeMapFile {
 				int id = bufMgr.getParameter(BUFFER_ID_PARM);
 				buffer = new ChainedBuffer(bufMgr, id);
 			}
-			
+
 			long targetFileId = newFile.getFileId();
 			bufMgr.setParameter(TARGET_FILE_ID_HI_PARM, (int)(targetFileId >> 32));
 			bufMgr.setParameter(TARGET_FILE_ID_LOW_PARM, (int)(targetFileId & 0xffffffffL));
-			
+
 			success = true;
 		}
 		catch (NoSuchElementException e) {
@@ -139,9 +139,9 @@ public class ChangeMapFile {
 			}
 		}
 	}
-	
+
 	/**
-	 * Construct map file for reading.  
+	 * Construct map file for reading.
 	 * @param file existing map file
 	 * @throws IOException if an IO error occurs
 	 */
@@ -149,7 +149,7 @@ public class ChangeMapFile {
 
 		this.file = file;
 		readOnly = true;
-		
+
 		LocalBufferFile mapFile = null;
 		boolean success = false;
 		try {
@@ -157,20 +157,20 @@ public class ChangeMapFile {
 			if (mapFile.getParameter(MAGIC_NUMBER_PARM) != MAGIC_NUMBER) {
 				throw new IOException("Bad modification map file: " + file);
 			}
-			
+
 			long oldTargetFileId = ((long)mapFile.getParameter(TARGET_FILE_ID_HI_PARM) << 32) |
 				(mapFile.getParameter(TARGET_FILE_ID_LOW_PARM) & 0xffffffffL);
 			if (oldTargetFileId != targetFile.getFileId()) {
 				throw new IOException("Modification map file does not correspond to target: " + file);
 			}
-		
+
 			bufMgr = new BufferMgr(mapFile, CACHE_SIZE, 1);
-			
+
 			indexCnt = bufMgr.getParameter(INDEX_CNT_PARM);
 			if (targetFile.getIndexCount() < indexCnt) {
 				throw new AssertException();
 			}
-			
+
 			int id = bufMgr.getParameter(BUFFER_ID_PARM);
 			buffer = new ChainedBuffer(bufMgr, id);
 			success = true;
@@ -212,11 +212,11 @@ public class ChangeMapFile {
 			bufMgr = null;
 		}
 	}
-	
+
 	/**
 	 * Close the file.
 	 */
-	void close() throws IOException {		
+	void close() throws IOException {
 		LocalBufferFile mapFile = null;
 		boolean success = false;
 		try {
@@ -282,5 +282,5 @@ public class ChangeMapFile {
 	byte[] getModData() throws IOException {
 		return buffer.get(0, buffer.length());
 	}
-	
+
 }

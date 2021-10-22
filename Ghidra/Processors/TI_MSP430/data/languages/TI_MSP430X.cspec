@@ -29,11 +29,11 @@
               <register name="R12"/>
             </pentry>
 	</output>
-	
+
 	<!-- FIXME: language should be changed to use 3-byte registers and memory space -->
 	<!--
 	<output>
-        <pentry minsize="1" maxsize="3"> 
+        <pentry minsize="1" maxsize="3">
           <register name="R12"/>
         </pentry>
         <pentry minsize="4" maxsize="4">
@@ -47,7 +47,7 @@
         </pentry>
 	</output>
 	-->
-	
+
 	<unaffected>
           <register name="SP"/>
           <register name="SR"/>

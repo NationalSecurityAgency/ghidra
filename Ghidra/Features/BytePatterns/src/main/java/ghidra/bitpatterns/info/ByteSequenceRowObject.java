@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import ghidra.util.bytesearch.DittedBitSequence;
 
 /**
  * Objects in this class represent rows in tables for analyzing sequences of bytes.
- * Each sequence of bytes is associated with a {@link String} containing the instructions 
+ * Each sequence of bytes is associated with a {@link String} containing the instructions
  * disassembled from the bytes, the number of times this particular sequence occurs,
  * and the percentage of all byte sequences collected which are equal to this byte
  * sequence.
@@ -52,7 +52,7 @@ public class ByteSequenceRowObject {
 	/**
 	 * Returns the {@link ByteSequenceRowObjects} of {@link PatternType} in {@code unfilteredInfo} which
 	 * pass the context register filter and the length filter
-	 *  
+	 *
 	 * @param unfilteredInfo information about function starts/pre-starts/returns
 	 * @param type desired {@code PatternType}
 	 * @param registerFilter {@ContextRegisterFilter} to apply
@@ -123,7 +123,7 @@ public class ByteSequenceRowObject {
 			String currentByteString = byteStrings.get(i);
 			if (lengthFilter != null) {
 				String filteredString = lengthFilter.filter(currentByteString);
-				//if it is null, the string does not meet the 
+				//if it is null, the string does not meet the
 				//minimum length requirements of the filter
 				if (filteredString != null) {
 					filteredByteStrings.add(filteredString);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.graph.viewer.renderer.VisualGraphRenderer;
 import ghidra.graph.viewer.renderer.VisualVertexSatelliteRenderer;
 
 /**
- * A graph viewer that shows a scaled, complete rendering of the graph with which it is 
+ * A graph viewer that shows a scaled, complete rendering of the graph with which it is
  * associated.
  *
  * @param <V> the vertex type
@@ -48,9 +48,9 @@ public class SatelliteGraphViewer<V extends VisualVertex, E extends VisualEdge<V
 	}
 
 	/**
-	 * Sets the docked state of this viewer.  An undocked satellite viewer will be in its 
+	 * Sets the docked state of this viewer.  An undocked satellite viewer will be in its
 	 * own window.
-	 * 
+	 *
 	 * @param docked true if this viewer is docked; false if it is undocked
 	 */
 	public void setDocked(boolean docked) {
@@ -59,7 +59,7 @@ public class SatelliteGraphViewer<V extends VisualVertex, E extends VisualEdge<V
 
 	/**
 	 * Returns true if this satellite viewer is docked
-	 * 
+	 *
 	 * @return true if this satellite viewer is docked
 	 */
 	public boolean isDocked() {
@@ -68,7 +68,7 @@ public class SatelliteGraphViewer<V extends VisualVertex, E extends VisualEdge<V
 
 	/**
 	 * Gets the renderer to use with this satellite viewer.
-	 * 
+	 *
 	 * @return the renderer
 	 */
 	public Renderer.Vertex<V, E> getPreferredVertexRenderer() {

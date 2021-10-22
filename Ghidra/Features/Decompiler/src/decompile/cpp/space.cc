@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,7 +58,7 @@ AddrSpace::AddrSpace(AddrSpaceManager *m,const Translate *t,spacetype tp,const s
   if (t->isBigEndian())
     flags |= big_endian;
   flags |= (heritaged | does_deadcode);		// Always on unless explicitly turned off in derived constructor
-  
+
   calcScaleMask();
 }
 
@@ -244,7 +244,7 @@ uintb AddrSpace::read(const string &s,int4 &size) const
   string::size_type append;
   string frontpart;
   uintb offset;
-  
+
   append = s.find_first_of(":+");
   try {
     if (append == string::npos) {
@@ -303,7 +303,7 @@ void AddrSpace::restoreXml(const Element *el)
   for (int4 i=0; i < numAttribs; i++) {
     string attrName = el->getAttributeName(i);
     string attrValue = el->getAttributeValue(i);
-    
+
     if (attrName == "name") {
       name = attrValue;
     }
@@ -338,12 +338,12 @@ void AddrSpace::restoreXml(const Element *el)
       istringstream s1(attrValue);
       s1.unsetf(ios::dec | ios::hex | ios::oct);
       s1 >> deadcodedelay;
-    }      
+    }
     if (attrName == "physical") {
       if (xml_readbool(attrValue))
 	flags |= hasphysical;
     }
-    
+
   }
   if (deadcodedelay == -1)
     deadcodedelay = delay;	// If deadcodedelay attribute not present, set it to delay
@@ -677,7 +677,7 @@ void OverlaySpace::restoreXml(const Element *el)
   istringstream s1(el->getAttributeValue("index"));
   s1.unsetf(ios::dec | ios::hex | ios::oct);
   s1 >> index;
-  
+
   string basename = el->getAttributeValue("base");
   baseSpace = getManager()->getSpaceByName(basename);
   if (baseSpace == (AddrSpace *)0)

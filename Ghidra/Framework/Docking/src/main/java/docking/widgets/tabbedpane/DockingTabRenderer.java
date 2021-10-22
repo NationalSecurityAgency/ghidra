@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import docking.widgets.label.GDLabel;
 import resources.ResourceManager;
 
 /**
- * A widget that can be used to render an icon, title and close button for JTabbedPane.  You would 
+ * A widget that can be used to render an icon, title and close button for JTabbedPane.  You would
  * use this class with the tabbed pane by calling {@link JTabbedPane#setTabComponentAt(int, Component)}
  */
 public class DockingTabRenderer extends JPanel {
@@ -180,7 +180,7 @@ public class DockingTabRenderer extends JPanel {
 			titleLabel.setToolTipText(fullTitle);
 		}
 		else {
-			// both are different, include both			
+			// both are different, include both
 			titleLabel.setToolTipText("<html><b>" + tabTitle + "</b> - [" + fullTitle + "]");
 		}
 	}
@@ -322,7 +322,7 @@ public class DockingTabRenderer extends JPanel {
 
 	/**
 	 * A class to handle mouse events specifically for BasicTabbedPaneUI$TabContainer, which does
-	 * not forward mouse events on to the tabbed pane.  When using custom tab renderers, which 
+	 * not forward mouse events on to the tabbed pane.  When using custom tab renderers, which
 	 * we are, tabbed panes that are larger than the the renderer will not get mouse events that
 	 * are over the tab, but not the renderer.
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -99,7 +99,7 @@ public class GnuDemanglerParser {
 	 *
 	 * Pattern: <space>[optional const with optional '[',']', number, '*', '&' <space>]
 	 * 			(*|&)[optional spaces]brackets with optional characters inside
-	 * 
+	 *
 	 * Parts:
 	 * 				-optional const text (e.g., const[8])   (non-capture group)
 	 * 				-followed by '()' that contain a '&' or a '*' (capture group 1)
@@ -245,9 +245,9 @@ public class GnuDemanglerParser {
 	 * 			-'for' or 'to' (capture group 3)  |  (capture group 1)
 	 * 			-a space                         -+
 	 * 			-optional text (capture group 4)
-	 * 
+	 *
 	 * Note:    capture group 1 is the combination of groups 2 and 3 with trailing space
-	 * 
+	 *
 	 * Examples:
 	 *		construction vtable for
 	 *		vtable for
@@ -313,7 +313,7 @@ public class GnuDemanglerParser {
 
 	/**
 	 * Pattern to catch literal strings of the form:
-	 * 
+	 *
 	 * 		-1l
 	 * 		2l
 	 * 		0u
@@ -1052,9 +1052,9 @@ public class GnuDemanglerParser {
 		/*
 			Note: really, this should just be checking a list of known disallowed characters,
 				  which is something like:
-		
+
 				  <,>,(,),&,*,[,]
-		
+
 		 		  It seems like the current code below is unnecessarily restrictive
 		 */
 
@@ -1369,9 +1369,9 @@ public class GnuDemanglerParser {
 
 		/*
 		 	Examples:
-		
+
 		 		NS1::Function<>()::StructureName::StructureConstructor()
-		
+
 		 */
 
 		String nameString = removeBadSpaces(demangled).trim();
@@ -1553,13 +1553,13 @@ public class GnuDemanglerParser {
 			 Samples:
 			 	 prefix: construction vtable for
 			 	 name:   construction-vtable
-			
+
 			 	 prefix: vtable for
 			 	 name:   vtable
-			
+
 			 	 prefix: typeinfo name for
 			 	 name:   typeinfo-name
-			
+
 			 	 prefix: covariant return thunk
 			 	 name:   covariant-return
 			*/

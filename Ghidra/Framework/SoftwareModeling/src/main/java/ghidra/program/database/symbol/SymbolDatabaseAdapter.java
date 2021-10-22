@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ abstract class SymbolDatabaseAdapter {
 	static final int SYMBOL_STRING_DATA_COL = 4;
 	static final int SYMBOL_FLAGS_COL = 5;
 
-	// sparse fields - the following fields are not always applicable so they are optional and 
+	// sparse fields - the following fields are not always applicable so they are optional and
 	// don't consume space in the database if they aren't used.
 	static final int SYMBOL_HASH_COL = 6;
 	static final int SYMBOL_PRIMARY_COL = 7;
@@ -155,7 +155,7 @@ abstract class SymbolDatabaseAdapter {
 
 		AddressMap oldAddrMap = addrMap.getOldAddressMap();
 
-		long nextKey = 1; // only used for V0 upgrade if a record with key 0 is encountered	
+		long nextKey = 1; // only used for V0 upgrade if a record with key 0 is encountered
 		if (oldAdapter instanceof SymbolDatabaseAdapterV0) {
 			// V0 is so old that there is not enough info in the current record to create new
 			// records. So store the current info in a temp database table and complete the upgrade
@@ -311,7 +311,7 @@ abstract class SymbolDatabaseAdapter {
 	abstract RecordIterator getSymbols(AddressSetView set, boolean forward)
 			throws IOException;
 
-	/** 
+	/**
 	 * Returns an iterator over the primary symbols in the given range
 	 * @param set the address set to iterator over when getting primary symbol records
 	 * @param forward true if iterating from start to end, otherwise iterate from end to start
@@ -418,7 +418,7 @@ abstract class SymbolDatabaseAdapter {
 			return null;
 		}
 
-		// store the name/namespace hash in upper 32 bits of the resulting hash and the 
+		// store the name/namespace hash in upper 32 bits of the resulting hash and the
 		// addressKey's lower 32 bits in the lower 32 bits of the resulting hash
 		long nameNamespaceHash = Objects.hash(name, namespaceID);
 		long combinedHash = (nameNamespaceHash << 32) | (addressKey & 0xFFFFFFFFL);

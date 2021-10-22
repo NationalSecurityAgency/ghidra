@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -215,18 +215,18 @@ public class EHDataTypeUtilities {
 
 	/**
 	 * Creates a comment if it doesn't already exist at the specified address in the program
-	 * and if it doesn't contain the <code>dataTypeName</code> string. 
-	 * The comment will contain the prefix, the <code>dataTypeName</code>, and the suffix. 
-	 * If a comment already exists without containing the dataTypeName, 
+	 * and if it doesn't contain the <code>dataTypeName</code> string.
+	 * The comment will contain the prefix, the <code>dataTypeName</code>, and the suffix.
+	 * If a comment already exists without containing the dataTypeName,
 	 * then this comment will be appended to the existing one.
-	 * 
+	 *
 	 * @param program the program.
 	 * @param prefix the prefix string that precedes the dataTypeName
 	 * @param dataTypeName the name for the data type at the indicated address.
 	 * @param suffix the suffix that follows the dataTypeName
 	 * @param address the address where the plate comment should be created in the program.
 	 * @param applyOptions options indicating whether or not to apply comments.
-	 * 
+	 *
 	 * @return the comment or null.
 	 */
 	public static String createPlateCommentIfNeeded(Program program, String prefix,
@@ -252,18 +252,18 @@ public class EHDataTypeUtilities {
 	}
 
 	/**
-	 * Creates a symbol if one containing the <code>dataTypeName</code> doesn't already exist at 
+	 * Creates a symbol if one containing the <code>dataTypeName</code> doesn't already exist at
 	 * the specified address in the program.
-	 * 
+	 *
 	 * @param program the program.
 	 * @param prefix the symbol prefix to be used in the symbol name.
 	 * @param dataTypeName the dataTypeName to be used in the symbol name.
 	 * @param suffix the symbol suffix to be used in the symbol name.
 	 * @param address the address where the symbol should be created in the program.
 	 * @param applyOptions options indicating whether or not to apply comments.
-	 * 
+	 *
 	 * @return the symbol or null.
-	 * 
+	 *
 	 * @throws InvalidInputException thrown if symbol can't be created as specified.
 	 */
 	public static Symbol createSymbolIfNeeded(Program program, String prefix, String dataTypeName,

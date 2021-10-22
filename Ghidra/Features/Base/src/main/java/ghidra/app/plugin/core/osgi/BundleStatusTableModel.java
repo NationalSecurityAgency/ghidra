@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.*;
 import ghidra.util.table.column.*;
 
 /**
- * Model for {@link BundleStatus} objects. 
+ * Model for {@link BundleStatus} objects.
  */
 public class BundleStatusTableModel
 		extends GDynamicColumnTableModel<BundleStatus, List<BundleStatus>> {
@@ -188,9 +188,9 @@ public class BundleStatusTableModel
 
 	/**
 	 * Add a change request listener.
-	 * 
+	 *
 	 * <p>When the user requests a change to the status of a bundle, each listener is called.
-	 * 
+	 *
 	 * @param listener the listener to add
 	 */
 	public void addListener(BundleStatusChangeRequestListener listener) {
@@ -201,7 +201,7 @@ public class BundleStatusTableModel
 
 	/**
 	 * Remove change request listener.
-	 * 
+	 *
 	 * @param listener the listener to remove
 	 */
 	public void removeListener(BundleStatusChangeRequestListener listener) {
@@ -221,8 +221,8 @@ public class BundleStatusTableModel
 	}
 
 	/**
-	 * return the row objects corresponding an array of model row indices.  
-	 * 
+	 * return the row objects corresponding an array of model row indices.
+	 *
 	 * @param modelRowIndices row indices
 	 * @return status objects
 	 */
@@ -235,7 +235,7 @@ public class BundleStatusTableModel
 	}
 
 	/**
-	 * overridden to avoid generating events when nothing changed 
+	 * overridden to avoid generating events when nothing changed
 	 */
 	@Override
 	protected void sort(List<BundleStatus> data, TableSortingContext<BundleStatus> sortingContext) {
@@ -273,9 +273,9 @@ public class BundleStatusTableModel
 		}
 	}
 
-	/** 
+	/**
 	 * (re)compute cached mapping from bundleloc to bundlepath
-	 * 
+	 *
 	 * <p>only used in testing
 	 */
 	private void computeCache() {

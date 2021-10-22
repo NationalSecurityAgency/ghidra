@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ package ghidra.app.util;
  * Miscellanious address space defines for language providers.
  * Provides recommended default address space names and IDs.
  */
-public interface ProcessorInfo { 
+public interface ProcessorInfo {
 	/**
 	 * The default address space in a program.
 	 */
@@ -45,7 +45,7 @@ public interface ProcessorInfo {
 	 * The Special function registers space in a program
 	 */
 	public static final String SFR_SPACE = "SFR";
-	
+
 	/**
 	 * ID for the CODE_SPACE.
 	 */

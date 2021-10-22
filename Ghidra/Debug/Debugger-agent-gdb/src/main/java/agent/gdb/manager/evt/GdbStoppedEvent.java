@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,9 +29,9 @@ public class GdbStoppedEvent extends AbstractGdbEventWithStateChange {
 
 	/**
 	 * Construct a new event, parsing the tail for information
-	 * 
+	 *
 	 * A thread ID must be specified by GDB.
-	 * 
+	 *
 	 * @param tail the text following the event type in the GDB/MI event record
 	 * @throws GdbParseError if the tail cannot be parsed
 	 */
@@ -43,7 +43,7 @@ public class GdbStoppedEvent extends AbstractGdbEventWithStateChange {
 
 	/**
 	 * Get the ID of the thread causing the event
-	 * 
+	 *
 	 * @return the thread ID
 	 */
 	public Integer getThreadId() {
@@ -52,7 +52,7 @@ public class GdbStoppedEvent extends AbstractGdbEventWithStateChange {
 
 	/**
 	 * Get the current frame, if applicable
-	 * 
+	 *
 	 * @param thread the current thread
 	 * @return the frame
 	 */
@@ -63,7 +63,7 @@ public class GdbStoppedEvent extends AbstractGdbEventWithStateChange {
 
 	/**
 	 * Get the list of threads stopped by this event
-	 * 
+	 *
 	 * @return the list as a string, possibly "all"
 	 */
 	public String assumeStoppedThreads() {

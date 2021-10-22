@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ public class ByteProviderWrapper implements ByteProvider {
 	 * Creates a wrapper around a {@link ByteProvider} that contains the same bytes as the specified
 	 * provider, but with a new {@link FSRL} identity.
 	 * <p>
-	 * 
+	 *
 	 * @param provider {@link ByteProvider} to wrap
 	 * @param fsrl {@link FSRL} identity for the instance
 	 * @throws IOException if error
@@ -45,11 +45,11 @@ public class ByteProviderWrapper implements ByteProvider {
 	/**
 	 * Constructs a {@link ByteProviderWrapper} around the specified {@link ByteProvider},
 	 * constrained to a subsection of the provider.
-	 * 
+	 *
 	 * @param provider the {@link ByteProvider} to wrap
 	 * @param subOffset the offset in the {@link ByteProvider} of where to start the new
-	 *   {@link ByteProviderWrapper} 
-	 * @param subLength the length of the new {@link ByteProviderWrapper} 
+	 *   {@link ByteProviderWrapper}
+	 * @param subLength the length of the new {@link ByteProviderWrapper}
 	 */
 	public ByteProviderWrapper(ByteProvider provider, long subOffset, long subLength) {
 		this(provider, subOffset, subLength, null);
@@ -58,11 +58,11 @@ public class ByteProviderWrapper implements ByteProvider {
 	/**
 	 * Constructs a {@link ByteProviderWrapper} around the specified {@link ByteProvider},
 	 * constrained to a subsection of the provider.
-	 * 
+	 *
 	 * @param provider the {@link ByteProvider} to wrap
 	 * @param subOffset the offset in the {@link ByteProvider} of where to start the new
-	 *   {@link ByteProviderWrapper} 
-	 * @param subLength the length of the new {@link ByteProviderWrapper} 
+	 *   {@link ByteProviderWrapper}
+	 * @param subLength the length of the new {@link ByteProviderWrapper}
 	 * @param fsrl {@link FSRL} identity of the file this ByteProvider represents
 	 */
 	public ByteProviderWrapper(ByteProvider provider, long subOffset, long subLength, FSRL fsrl) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -173,12 +173,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		// 01002239
 
 		/*
-		
+
 		 A
 		 |->B
 		 C
-		
-		
+
+
 		 */
 
 		// A
@@ -213,7 +213,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	private void build_ghidra(ToyProgramBuilder builder) throws MemoryAccessException {
 		/*
 		 Originally from notepad 'ghidra'
-		
+
 		 	A
 		 	|->	B
 		 	|-> C
@@ -225,7 +225,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		 	|->	G
 		 	|
 		 	H
-		
+
 		 */
 
 		// A -
@@ -312,7 +312,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 	private void build_sscanf(ToyProgramBuilder builder) throws MemoryAccessException {
 		/*
 		 Originally from notepad 'sscanf'
-		
+
 		 	A
 		 	|->	B
 		 	|
@@ -323,7 +323,7 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		 	F
 		 	|
 		 	G
-		
+
 		 */
 
 		// A - 9 code units
@@ -1451,14 +1451,14 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		//
 
 		/*
-		
+
 		 0) Initial Graph
-		
+
 		 1 -> 2 -> 3 -> 4
 		           |
 		           *
 		           5
-		
+
 		*/
 
 		create12345Graph();
@@ -1482,12 +1482,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		/*
 		 1) Create two separate group vertices (A and B), such that A has an edge to B.
-		
+
 		 A (v:{1,2} e:{1->2, 2->3}) -> B (v:{3,4} e:{2->3,3->4,3->5})
 		                               |
 		                               *
 		                               5
-		
+
 		 */
 
 		GroupedFunctionGraphVertex groupA = group("A", v1, v2);
@@ -1500,12 +1500,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		/*
 		 2) Create a third group vertex (Z) that contains a non-grouped vertex *and* one
 		    of the other groups (B).
-		
+
 		 A (v:{1,2} e:{1->2, 2->3}) -> Z (
 		 									v:{B (v:{3,4} e:{2->3,3->4,3->5}), 5}
 		 									e:{2->3, 3->5}
 		 								  )
-		
+
 		*/
 
 		GroupedFunctionGraphVertex groupZ = group("Z", groupB, v5);
@@ -1515,12 +1515,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		/*
 		 3) Now, ungroup the 1 remaining originally grouped vertex (A).
-		
+
 		 1 -> 2 -> Z (
 						v:{B (v:{3,4} e:{2->3,3->4,3->5}), 5}
 						e:{2->3, 3->5}
 					  )
-		
+
 		 */
 
 		ungroup(groupA);
@@ -1530,14 +1530,14 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 		verifyEdgeCount(2);
 
 		/*
-		
+
 		 4) Now, ungroup Z and go back to having one remaining group vertex (B)
-		
+
 		 1 -> 2 -> -> B (v:{3,4} e:{2->3,3->4,3->5})
 		              |
 		              *
 		              5
-		
+
 		*/
 
 		ungroup(groupZ);
@@ -1549,12 +1549,12 @@ public abstract class AbstractFunctionGraphTest extends AbstractGhidraHeadedInte
 
 		/*
 		 5) Finally, ungroup the last group and make sure the graph is restored
-		
+
 		 1 -> 2 -> 3 -> 4
 		           |
 		           *
 		           5
-		
+
 		 */
 
 		ungroup(groupB);

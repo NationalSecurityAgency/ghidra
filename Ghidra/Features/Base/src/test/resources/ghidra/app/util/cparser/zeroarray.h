@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,9 +16,9 @@
 // TEMPORARY / TESTING - Zero-length Array Components
 //  - how should trailing zero-length arrays be handled/defined within structure since they may have an
 //    offset equal to the length of the structure (current flex array only allows for 1).  The last component
-//    may not remain the last components as components are added.  In addition, multiple trailing flex-arrays 
+//    may not remain the last components as components are added.  In addition, multiple trailing flex-arrays
 //    may exist.
- 
+
 struct zeroArrayStruct1 {
 		int  a;
 		char a1[2];

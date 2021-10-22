@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -343,7 +343,7 @@ class ProgramListener implements DomainObjectListener {
 
 	private boolean willReloadProgram(DomainObjectChangedEvent event) {
 		if (updateManager.isBusy()) {
-			// TODO does it really make sense to blindly rebuild just because we are rebuilding??  
+			// TODO does it really make sense to blindly rebuild just because we are rebuilding??
 			// Shouldn't we still use the code below to know updating is needed?
 			updateManager.updateLater();
 			return true;
@@ -362,7 +362,7 @@ class ProgramListener implements DomainObjectListener {
 			int eventType = rec.getEventType();
 			if (eventType == DomainObject.DO_OBJECT_RESTORED ||
 				eventType == ChangeManager.DOCR_MEMORY_BLOCK_REMOVED) {
-				// for object restored, check the root node to see if it is invalid; 
+				// for object restored, check the root node to see if it is invalid;
 				// otherwise for memory block removed, rebuild the tree
 				plugin.reloadProgram(eventType == DomainObject.DO_OBJECT_RESTORED);
 				return true;

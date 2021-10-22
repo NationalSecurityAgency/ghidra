@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ public interface LoadSpecChooser {
 
 	/**
 	 * Chooses a {@link LoadSpec} for a {@link Loader} to use based on some criteria
-	 * 
+	 *
 	 * @param loaderMap A {@link LoaderMap}
 	 * @return The chosen {@link LoadSpec}, or null if one could not be found
 	 */
@@ -33,7 +33,7 @@ public interface LoadSpecChooser {
 
 	/**
 	 * Chooses the first "preferred" {@link LoadSpec}
-	 * 
+	 *
 	 * @see LoadSpec#isPreferred()
 	 */
 	public static final LoadSpecChooser CHOOSE_THE_FIRST_PREFERRED = loaderMap -> {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,11 +24,11 @@ import ghidra.graph.viewer.*;
 import ghidra.graph.viewer.options.VisualGraphOptions;
 
 //@formatter:off
-public class VisualGraphScrollWheelPanningPlugin<V extends VisualVertex, 
+public class VisualGraphScrollWheelPanningPlugin<V extends VisualVertex,
 												   E extends VisualEdge<V>>
-		extends AbstractGraphMousePlugin 
+		extends AbstractGraphMousePlugin
 		implements MouseWheelListener, VisualGraphMousePlugin<V, E> {
-//@formatter:on	
+//@formatter:on
 
 	public VisualGraphScrollWheelPanningPlugin() {
 		super(0);
@@ -61,7 +61,7 @@ public class VisualGraphScrollWheelPanningPlugin<V extends VisualVertex,
 		}
 
 		//
-		// The amount the mouse wheel has been rotated.  By default this is usually 1, but 
+		// The amount the mouse wheel has been rotated.  By default this is usually 1, but
 		// users can change how the OS accelerates mouse scrolling.
 		//
 		int wheelRotation = -e.getWheelRotation();
@@ -74,7 +74,7 @@ public class VisualGraphScrollWheelPanningPlugin<V extends VisualVertex,
 		//
 		// The scale of the current graph.  We need to change the scroll amount when scaled out
 		// so that we don't end up with tiny scrolling when zoomed out.
-		//		
+		//
 		Double scale = GraphViewerUtils.getGraphScale(viewer);
 		int unscaledOffset = wheelRotation * scrollAmount * arbitraryAcceleration;
 		int offset = (int) (unscaledOffset * (1 / scale));

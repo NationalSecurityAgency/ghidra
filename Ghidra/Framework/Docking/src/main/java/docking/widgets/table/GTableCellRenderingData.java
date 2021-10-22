@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,16 +23,16 @@ import ghidra.docking.settings.Settings;
 import ghidra.docking.settings.SettingsImpl;
 
 /**
- * A state object to provide a table cell renderer with data beyond the standard Java 
+ * A state object to provide a table cell renderer with data beyond the standard Java
  * {@link javax.swing.table.TableCellRenderer} interface.
  * <p>
- * Additional data about the context of a rendering operation -- like the columns' Settings 
+ * Additional data about the context of a rendering operation -- like the columns' Settings
  * or the row-object -- are easily passed to the renderer without refactor of each client.
  *
  */
 public class GTableCellRenderingData {
 
-	/* 
+	/*
 	 *  Fields inherited from the TableCellRenderer.getTableCellRendererComponent() method
 	 */
 	private final WeakReference<JTable> jTableRef;
@@ -67,10 +67,10 @@ public class GTableCellRenderingData {
 
 	/**
 	 * Create a new data object from this data, changing only the cells' value object.
-	 * 
-	 * <p>This method is a convenience for use by renderers that wish to change the value 
+	 *
+	 * <p>This method is a convenience for use by renderers that wish to change the value
 	 * passed to them.
-	 * 
+	 *
 	 * @param newValue New cell value object
 	 * @return A new data object with the same state as this object
 	 */
@@ -99,7 +99,7 @@ public class GTableCellRenderingData {
 	 * Set data specific to a cell, as used during the rendering phase
 	 * @param value The models' value at row-column
 	 * @param column the view column index
-	 * @param isSelected True if the cell is to be rendered with the 
+	 * @param isSelected True if the cell is to be rendered with the
 	 * selection highlighted; otherwise false
 	 * @param hasFocus This cell has the users' focus
 	 */

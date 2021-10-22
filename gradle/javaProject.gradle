@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,7 @@
 /*****************************************************************************************
 	This file is a "mix-in" gradle script that individual gradle projects should include if they
 	have java code.
-	
+
 	A gradle project can add java support by including the following to its build.gradle file:
 
 		apply from: "$rootProject.projectDir/gradle/support/distributableGhidraModule.gradle"
@@ -27,7 +27,7 @@ import org.gradle.plugins.ide.eclipse.model.Library;
 
 
 /*********************************************************************************
- * Subproject configuration 
+ * Subproject configuration
  *  - all subs will have access to these properties.
  *********************************************************************************/
 
@@ -54,7 +54,7 @@ processResources {
 processTestResources {
 	duplicatesStrategy = 'exclude'
 }
-	
+
 plugins.withId('java') {
 	sourceCompatibility = "${rootProject.JAVA_COMPILER}"
 	targetCompatibility = "${rootProject.JAVA_COMPILER}"
@@ -102,7 +102,7 @@ sourceSets {
 	screenShots {
 		java {
 			srcDir 'src/screen/java'
-			
+
 			// Screenshots are essentially tests, and depend on classes in several other
 			// test directories so they must be included here
 			compileClasspath += main.output + test.output + integrationTest.output
@@ -126,7 +126,7 @@ sourceSets {
 		}
 	}
 }
-	
+
 configurations {
 	integrationTestImplementation.extendsFrom testImplementation
 	integrationTestRuntimeOnly.extendsFrom testRuntimeOnly, integrationTestImplementation
@@ -148,12 +148,12 @@ task integrationTestJar(type: Jar) {
 artifacts {
 	testArtifacts testJar
 	integrationTestArtifacts integrationTestJar
-	
+
 }
 
 /*
 	Provide test dependencies here so each build file does not have to.
-*/  
+*/
 dependencies {
 	integrationTestImplementation "org.hamcrest:hamcrest-all:1.3"
 	integrationTestImplementation "org.jmockit:jmockit:1.44"
@@ -190,19 +190,19 @@ apply plugin: 'eclipse'
 eclipse.classpath.file.whenMerged { classpath ->
 
 	// Gradle 5.6 has a bug that creates duplicate classpath entries, so we must dedupe them.
-	// https://github.com/gradle/gradle/issues/10393 
+	// https://github.com/gradle/gradle/issues/10393
 	classpath.entries.unique(true) {
 		(it instanceof org.gradle.plugins.ide.eclipse.model.ProjectDependency) ? it.path : it
 	}
-	
-	// Prevent Gradle 5.6 from setting the 'test' attribute on our test source folders and jars. 
-	// If we don't do this, things that we have outside of test directories that depend on test 
+
+	// Prevent Gradle 5.6 from setting the 'test' attribute on our test source folders and jars.
+	// If we don't do this, things that we have outside of test directories that depend on test
 	// libraries (like junit) will not compile in Eclipse.
 	// Also prevent Gradle 7.0 from adding jars to the modulepath instead of the classpath.
 	classpath.entries.findAll {
 		it.kind == 'src' || it.kind == 'lib'
-	}.each { 
-		it.entryAttributes['test'] = 'false' 
+	}.each {
+		it.entryAttributes['test'] = 'false'
 		it.entryAttributes['module'] = 'false'
 	}
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -288,7 +288,7 @@ public class VersionedDatabase extends Database {
 	 * Open a specific version of this database for non-update use.
 	 * @param version database version or LATEST_VERSION for current version
 	 * @param minChangeDataVer the minimum database version whoose change data
-	 * should be associated with the returned buffer file.  A value of -1 indicates that 
+	 * should be associated with the returned buffer file.  A value of -1 indicates that
 	 * change data is not required.
 	 * @return buffer file for non-update use.
 	 * @throws IOException
@@ -455,7 +455,7 @@ public class VersionedDatabase extends Database {
 	}
 
 	/**
-	 * <code>VerDBBufferFileManager</code> provides buffer file management 
+	 * <code>VerDBBufferFileManager</code> provides buffer file management
 	 * for this versioned database instead of the DBBufferFileManager.
 	 */
 	private class VerDBBufferFileManager implements BufferFileManager {
@@ -484,7 +484,7 @@ public class VersionedDatabase extends Database {
 			return new File(dbDir,
 				CHANGE_FILE_PREFIX + version + LocalBufferFile.BUFFER_FILE_EXTENSION);
 		}
-		
+
 		@Override
 		public File getChangeMapFile() {
 			return null;

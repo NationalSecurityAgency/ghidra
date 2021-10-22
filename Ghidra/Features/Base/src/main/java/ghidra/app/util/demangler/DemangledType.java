@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import ghidra.program.model.symbol.Namespace;
 
 /**
- * Represents a demangled string.  This class is really just a placeholder for demangled 
+ * Represents a demangled string.  This class is really just a placeholder for demangled
  * information.  See {@link DemangledObject} for a class that represents software concepts that
  * can be applied to a program.   The {@link DemangledObject} may use instances of this class
  * to compose its internal state for namespace information, return types and parameters.

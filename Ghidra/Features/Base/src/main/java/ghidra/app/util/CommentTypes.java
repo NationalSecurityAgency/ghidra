@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ public class CommentTypes {
 
     private static int[] COMMENT_TYPES;
     private static int NUMBER_OF_COMMENT_TYPES=5;
-    
+
     CommentTypes() {
     }
     static {
@@ -35,8 +35,8 @@ public class CommentTypes {
 		COMMENT_TYPES[0] = CodeUnit.PRE_COMMENT;
 		COMMENT_TYPES[1] = CodeUnit.POST_COMMENT;
 		COMMENT_TYPES[2] = CodeUnit.EOL_COMMENT;
-		COMMENT_TYPES[3] = CodeUnit.PLATE_COMMENT;		
-		COMMENT_TYPES[4] = CodeUnit.REPEATABLE_COMMENT;		
+		COMMENT_TYPES[3] = CodeUnit.PLATE_COMMENT;
+		COMMENT_TYPES[4] = CodeUnit.REPEATABLE_COMMENT;
     }
 	/**
 	 * Get an array containing the comment types on a code unit.
@@ -44,4 +44,4 @@ public class CommentTypes {
 	public static int[] getTypes() {
 		return COMMENT_TYPES;
 	}
-} 
+}

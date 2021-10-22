@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -91,10 +91,10 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * For non-leaf nodes, get the children.
-	 * 
+	 *
 	 * For leaf nodes, the behavior is undefined. Note that the query should not filter the
 	 * children, only order them. Filtering is performed by {@link TreeRecordVisitor}.
-	 * 
+	 *
 	 * @param parentKey the key of the parent whose children to get
 	 * @return an iterable of the children
 	 */
@@ -102,11 +102,11 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * For non-leaf nodes, get the children.
-	 * 
+	 *
 	 * For leaf nodes, the behavior is undefined. Note that the query should not filter the
 	 * children, only order them, or else the collection will return an incorrect
 	 * {@link Collection#size()}. Filtering is performed by {@link TreeRecordVisitor}.
-	 * 
+	 *
 	 * @param parent the parent node
 	 * @return a collection of the children
 	 */
@@ -117,11 +117,11 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * For leaf nodes, get the children.
-	 * 
+	 *
 	 * For non-leaf nodes, the behavior is undefined. Note that the query should not filter the
 	 * children, only order them, or else the collection will return an incorrect
 	 * {@link Collection#size()}. Filtering is performed by {@link TreeRecordVisitor}.
-	 * 
+	 *
 	 * @param parentKey the key of the parent whose children to get
 	 * @return an iterable of the children
 	 */
@@ -129,11 +129,11 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * For leaf nodes, get the children.
-	 * 
+	 *
 	 * For non-leaf nodes, the behavior is undefined. Note that the query should not filter the
 	 * children, only order them, or else the collection will return an incorrect
 	 * {@link Collection#size()}. Filtering is performed by {@link TreeRecordVisitor}.
-	 * 
+	 *
 	 * @param parent the parent node
 	 * @param query a query to control the ordering of the children
 	 * @return a collection of the children
@@ -145,13 +145,13 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * Get the children.
-	 * 
+	 *
 	 * Because the children may be either nodes or data, the exact type is not known. The only
 	 * guarantee is that it is a tree record, which permits access to its bounds and parent. Note
 	 * that the query should not filter the children, only order them, or else the collection will
 	 * return an incorrect {@link Collection#size()}. Filtering is performed by
 	 * {@link TreeRecordVisitor}.
-	 * 
+	 *
 	 * @param parent the parent node
 	 * @param query a query to control the ordering of the children
 	 * @return a collection of the children
@@ -208,15 +208,15 @@ public abstract class AbstractConstraintsTree< //
 
 		/**
 		 * Called when a node is finished being visited.
-		 * 
+		 *
 		 * This only applies to nodes into which the visitor descends. The visitor will finish a
 		 * node in one of three ways: 1) The node's children have all been visited. 2) The visitor
 		 * returned {@link VisitResult#TERMINATE} while visiting a descendant. 3) The visitor
 		 * returned {@link VisitResult#ASCEND} while visiting a child.
-		 * 
+		 *
 		 * This method may return any result except {@link VisitResult#DESCEND}. If the visitor is
 		 * terminating, the return value of this method is ignored.
-		 * 
+		 *
 		 * @param parent the parent of this node, or {@code null} when visiting the root
 		 * @param n the node currently being visited
 		 * @param inclusion the original inclusion of the query before descending
@@ -553,7 +553,7 @@ public abstract class AbstractConstraintsTree< //
 				nodeStore.delete(cur);
 				if (cur == root) {
 					root = null;
-					// Up to one orphan allowed. 
+					// Up to one orphan allowed.
 					assert dataStore.getRecordCount() == 0 || dataStore.getRecordCount() == 1;
 					assert nodeStore.getRecordCount() == 0;
 					init();
@@ -617,12 +617,12 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * Remove a data record from the tree, but keep the orphaned record in the table
-	 * 
+	 *
 	 * Note that at most one orphaned record should be in the table at any time, otherwise behavior
 	 * is undefined. It is up to the implementor to provide a means of inserting orphaned data
 	 * records back into the tree. This is useful for implementations which allow a data record's
 	 * shape to be mutated: Orphan the record, adjust its shape, re-insert the orphan.
-	 * 
+	 *
 	 * @param data the data record
 	 */
 	protected void doUnparentEntry(DR data) {
@@ -739,7 +739,7 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * Dump the tree to the console, for debugging and testing purposes
-	 * 
+	 *
 	 * @param query optionally include only those portions matching a query
 	 */
 	protected void dump(Q query) {
@@ -773,10 +773,10 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * Check the integrity of a single node entry.
-	 * 
+	 *
 	 * This method is for tree developers and testers. Override this method if you have additional
 	 * integrity checks.
-	 * 
+	 *
 	 * @param n the entry to check
 	 */
 	protected void checkNodeIntegrity(NR n) {
@@ -869,10 +869,10 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * Check the integrity of a single data entry.
-	 * 
+	 *
 	 * This method is for tree developers and testers. Override this method if you have additional
 	 * integrity checks.
-	 * 
+	 *
 	 * @param d the entry to check
 	 */
 	protected void checkDataIntegrity(DR d) {
@@ -881,7 +881,7 @@ public abstract class AbstractConstraintsTree< //
 
 	/**
 	 * An integrity checker for use by tree developers and testers.
-	 * 
+	 *
 	 * <p>
 	 * To incorporate additional checks, please prefer to override
 	 * {@link #checkNodeIntegrity(DBTreeNodeRecord)} and/or

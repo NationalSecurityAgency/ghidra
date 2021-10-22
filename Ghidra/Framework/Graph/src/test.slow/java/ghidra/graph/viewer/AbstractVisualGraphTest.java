@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ import util.CollectionUtils;
 
 /**
  * Creates a basic test environment that uses a JFrame to house a {@link GraphComponent}, which
- * itself has a primary and satellite viewer, all initialized with a graph of your setup, 
+ * itself has a primary and satellite viewer, all initialized with a graph of your setup,
  * with reasonable default settings.
  */
 public abstract class AbstractVisualGraphTest extends AbstractDockingTest {
@@ -209,9 +209,9 @@ public abstract class AbstractVisualGraphTest extends AbstractDockingTest {
 	}
 
 	/**
-	 * Makes the given vertex visible by, as needed, moving it away (out from under) other 
+	 * Makes the given vertex visible by, as needed, moving it away (out from under) other
 	 * vertices and moving the viewers visible area so that it is on screen.
-	 * 
+	 *
 	 * @param v the vertex
 	 */
 	protected void ensureVertexVisible(AbstractTestVertex v) {
@@ -224,7 +224,7 @@ public abstract class AbstractVisualGraphTest extends AbstractDockingTest {
 
 	/**
 	 * Moves the given vertex as necessary so that it is not touching any other vertex
-	 * 
+	 *
 	 * @param v the vertex
 	 */
 	protected void isolateVertex(AbstractTestVertex v) {
@@ -308,7 +308,7 @@ public abstract class AbstractVisualGraphTest extends AbstractDockingTest {
 
 	protected void moveMouse(AbstractTestVertex v) {
 		//
-		// Use the center of the vertex, which is easier than adding an arbitrary offset to 
+		// Use the center of the vertex, which is easier than adding an arbitrary offset to
 		// the mouse points when dealing with scaling
 		//
 
@@ -344,15 +344,15 @@ public abstract class AbstractVisualGraphTest extends AbstractDockingTest {
 		VisualGraphMouseTrackingGraphMousePlugin<AbstractTestVertex, TestEdge> plugin =
 			new VisualGraphMouseTrackingGraphMousePlugin<>(viewer);
 
-		// put in first so it will get all events (listeners later in the list will not get 
+		// put in first so it will get all events (listeners later in the list will not get
 		// consumed events)
 		graphMouse.prepend(plugin);
 	}
 
 	/**
-	 * Focuses the given vertex, which means to trigger it to be picked/selected in the UI, 
+	 * Focuses the given vertex, which means to trigger it to be picked/selected in the UI,
 	 * causing it to be the focused vertex of the graph.
-	 * 
+	 *
 	 * @param v the vertex
 	 */
 	protected void focusVertex(AbstractTestVertex v) {

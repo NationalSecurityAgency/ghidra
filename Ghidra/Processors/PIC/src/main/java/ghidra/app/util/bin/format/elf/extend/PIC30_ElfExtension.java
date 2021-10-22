@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,31 +58,31 @@ public class PIC30_ElfExtension extends ElfExtension {
 
 	/**
 		NOTES:
-		
+
 			EDS/PSV Sections - section data resides with ROM space but is accessable via the
 			the RAM data space at 0x8000 - 0xFFFF with the use of page register.  Page use
 			may vary by CPU (EDS, PSV low-word access, PSV high-word access). PSV high-word
 			access capability is only provided when EDS is supported. See page registers
-			DSRPAG and DSWPAG.  Page registers must be non-zero when used.  Page boundary 
-			handling must be explicitly handled in code.  EDS memory may be directly 
-			accessed provided the page register as been 
-			
+			DSRPAG and DSWPAG.  Page registers must be non-zero when used.  Page boundary
+			handling must be explicitly handled in code.  EDS memory may be directly
+			accessed provided the page register as been
+
 			Three ways to access page memory:
-			
+
 			1. Direct access using DSRPAG/DSWPAGpage registers (PIC24E, dsPIC33E and dsPIC33C).
 			   With read/write page register set to non-zero value, offset 0..0x7FFF within
 			   the page may be directly accessed by first setting bit-15 of offset before
 			   performing a load or store to the range 0x8000..0xFFFF.
-			   
-			2. Table read/write instruction may be used by setting TBLPAG register and 
+
+			2. Table read/write instruction may be used by setting TBLPAG register and
 			   performing operation with a table offset in the range 0..0x7FFF.
-			   
+
 			3. PSV direct access with PSVPAG register (PIC24F, PIC24H, dsPIC30F AND dsPIC33F).
 			   Set PSV bit of CORCONL register, set page in PSVPAG register (macro psvpage() used
 			   to obtain page from symbol). Access location with offset 0..0x7FFF (macro psvoffset() used
 			   to obtain offset from symbol).  Macro produces offset in the range 0x8000..0xFFFF.
-				
-	
+
+
 	**/
 
 	@Override
@@ -142,26 +142,26 @@ public class PIC30_ElfExtension extends ElfExtension {
 		}
 		return !section.isExecutable();
 	}
-	
+
 	private boolean isDataLoad(MemoryLoadable loadable) {
 		if (loadable instanceof ElfSectionHeader) {
 			return isDataLoad((ElfSectionHeader)loadable);
 		}
 		return isDataLoad((ElfProgramHeader)loadable);
 	}
-	
+
 	private boolean isDebugSection(ElfSectionHeader section) {
 		String name = section.getNameAsString();
 		return name.startsWith(".debug_") || ".comment".equals(name);
 	}
-	
+
 	private boolean isDebugSection(MemoryLoadable loadable) {
 		if (loadable instanceof ElfSectionHeader) {
 			return isDebugSection((ElfSectionHeader)loadable);
 		}
 		return false;
 	}
-	
+
 	@Override
 	public long getAdjustedLoadSize(ElfProgramHeader elfProgramHeader) {
 		long fileSize = elfProgramHeader.getFileSize();
@@ -200,7 +200,7 @@ public class PIC30_ElfExtension extends ElfExtension {
 			return new PIC30FilteredPSVDataInputStream(dataInput);
 		}
 
-		// Data space loading pads after every byte with Microchip toolchain 
+		// Data space loading pads after every byte with Microchip toolchain
 		// NOTE: this could vary and we may need to improve detection of this situation
 
 		return new PIC30FilteredDataInputStream(dataInput, !isDebugSection(loadable));
@@ -230,9 +230,9 @@ public class PIC30_ElfExtension extends ElfExtension {
 
 		protected boolean padByteToggle;
 		protected long pos;
-		
+
 		private final boolean checkPadding;
-		
+
 		protected PIC30FilteredDataInputStream(InputStream in, boolean checkPadding) {
 			super(in);
 			padByteToggle = false; // first byte is data not padding
@@ -291,7 +291,7 @@ public class PIC30_ElfExtension extends ElfExtension {
 
 		// BYTES:  <byte0> <byte1> <pad0> <pad1>
 
-		private boolean firstByteToggle; // firstByte of data or pad 
+		private boolean firstByteToggle; // firstByte of data or pad
 
 		protected PIC30FilteredPSVDataInputStream(InputStream in) {
 			super(in, true);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -186,7 +186,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 	 * @param selectionType
 	 * SELECT_ALL_FLOW indicates all flow types should be followed.
 	 * <BR>
-	 * SELECT_LIMITED_FLOW indicates the flow types that have their properties set to true 
+	 * SELECT_LIMITED_FLOW indicates the flow types that have their properties set to true
 	 * should be followed and selected.
 	 * <BR>
 	 * SELECT_SUBROUTINE indicates all code units that are in the subroutine
@@ -195,7 +195,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 	 * SELECT_ALL_FLOWS_TO indicates all flow types should be followed to the current location
 	 * or selection.
 	 * <BR>
-	 * SELECT_LIMITED_FLOWS_TO indicates the flow types that have their properties set to true 
+	 * SELECT_LIMITED_FLOWS_TO indicates the flow types that have their properties set to true
 	 * should be followed to the current location or selection.
 	 * <BR>
 	 */
@@ -223,7 +223,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 	 * @param selectionType
 	 * SELECT_ALL_FLOW indicates all flow types should be followed.
 	 * <BR>
-	 * SELECT_LIMITED_FLOW indicates the flow types that have their properties set to true 
+	 * SELECT_LIMITED_FLOW indicates the flow types that have their properties set to true
 	 * should be followed and selected.
 	 * <BR>
 	 * SELECT_SUBROUTINE indicates all code units that are in the subroutine
@@ -231,10 +231,10 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 	 * <BR>
 	 * SELECT_ALL_FLOWS_TO indicates all flow types should be followed to the addressSet.
 	 * <BR>
-	 * SELECT_LIMITED_FLOWS_TO indicates the flow types that have their properties set to true 
+	 * SELECT_LIMITED_FLOWS_TO indicates the flow types that have their properties set to true
 	 * should be followed to the addressSet and selected.
 	 * <BR>
-	 * @param addressSet the initial address set which identifies the starting 
+	 * @param addressSet the initial address set which identifies the starting
 	 * point(s) for computation of a selection.  This set may be modified in the
 	 * process of computing a selection.
 	 * @see FollowFlow
@@ -363,7 +363,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 	}
 
 	/**
-	 * Selects subroutines that are not directly referenced. 
+	 * Selects subroutines that are not directly referenced.
 	 * This is commonly referred to as DEAD code.
 	 * @param monitor a cancellable task monitor
 	 * @return address set containing the dead subroutines
@@ -434,7 +434,7 @@ public class SelectByFlowPlugin extends Plugin implements OptionsChangeListener 
 
 		monitor.initialize(startAddresses.getNumAddresses());
 
-		// Loop to remove function codeunits 
+		// Loop to remove function codeunits
 		// starting address set and add the entire function to the new address set.
 		FunctionManager functionManager = program.getFunctionManager();
 		Iterator<Function> iter = functionManager.getFunctionsOverlapping(startAddresses);

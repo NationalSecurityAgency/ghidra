@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -207,7 +207,7 @@ public class AVR32_ElfRelocationHandler extends ElfRelocationHandler {
 				    newValue = (((int)elf.getImageBase() + (int)addend) & 0xffffffff);
 				    memory.setInt(relocationAddress, newValue);
 				    System.out.println("  HANDLED AVR relocation: R_AVR32_RELATIVE at "+relocationAddress + ", New = " + newValue);
-				    break;  
+				    break;
 				    */
 				/*case AVR32_ElfRelocationConstants.R_AVR32_16:
 				    newValue = ((symbolValue + (int)addend) & 0x0000ffff);
@@ -299,7 +299,7 @@ public class AVR32_ElfRelocationHandler extends ElfRelocationHandler {
 				    memory.setInt(relocationAddress, newValue);
 				    System.out.println("  HANDLED AVR relocation: R_AVR32_9UW_PCREL at "+relocationAddress + ", New = " + newValue);
 				    break;
-				    
+
 				case AVR32_ElfRelocationConstants.R_AVR32_HI16:
 				    newValue = (((symbolValue + (int)addend) >> 16) & 0x0000ffff);
 				    memory.setInt(relocationAddress, newValue);
@@ -310,7 +310,7 @@ public class AVR32_ElfRelocationHandler extends ElfRelocationHandler {
 				    memory.setInt(relocationAddress, newValue);
 				    System.out.println("  HANDLED AVR relocation: R_AVR32_LO16 at "+relocationAddress + ", New = " + newValue);
 				    break;
-				    
+
 				case AVR32_ElfRelocationConstants.R_AVR32_GOTPC:
 				    ElfSectionHeader dotgot = elf.getGOT();
 				    MemoryBlock got = memory.getBlock(dotgot.getNameAsString());

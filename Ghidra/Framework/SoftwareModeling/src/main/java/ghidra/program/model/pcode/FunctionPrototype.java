@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 /**
- * 
+ *
  *
  * High-level prototype of a function based on Varnodes, describing the inputs and outputs
  * of this function.
@@ -55,7 +55,7 @@ public class FunctionPrototype {
 	 * Construct a FunctionPrototype backed by a local symbolmap.
 	 * This is only a partial initialization.  It is intended to be followed either by
 	 * grabFromFunction() or readPrototypeXML()
-	 * 
+	 *
 	 * @param ls is the LocalSymbolMap backing the prototype
 	 * @param func is the function using the symbolmap
 	 */
@@ -121,7 +121,7 @@ public class FunctionPrototype {
 
 	/**
 	 * Populate Function Prototype from information attached to a function in the Program DB.
-	 * 
+	 *
 	 * @param f is the function to grab prototype from
 	 * @param overrideExtrapop is the override value to use for extrapop
 	 * @param doOverride is true if the override value should be used
@@ -223,7 +223,7 @@ public class FunctionPrototype {
 
 	/**
 	 * @return parameter definitions if prototype was produced
-	 * from a FunctionSignature or null if backed by a 
+	 * from a FunctionSignature or null if backed by a
 	 * LocalSymbolMap
 	 */
 	public ParameterDefinition[] getParameterDefinitions() {
@@ -231,7 +231,7 @@ public class FunctionPrototype {
 	}
 
 	/**
-	 * @return true if this prototype is backed by a LocalSymbolMap, or 
+	 * @return true if this prototype is backed by a LocalSymbolMap, or
 	 * false if generated from a FunctionSignature.
 	 */
 	public boolean isBackedByLocalSymbolMap() {

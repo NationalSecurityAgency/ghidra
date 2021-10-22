@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>ElfLoadAdapter</code> provides the base ELF load adapter implementation 
+ * <code>ElfLoadAdapter</code> provides the base ELF load adapter implementation
  * which may be extended to facilitate target specific behavior.
  */
 public class ElfLoadAdapter {
@@ -127,7 +127,7 @@ public class ElfLoadAdapter {
 	/**
 	 * Get the preferred load address space for an allocated program segment.
 	 * The OTHER space is reserved and should not be returned by this method.
-	 * This method may only return a physical address space and not an overlay 
+	 * This method may only return a physical address space and not an overlay
 	 * address space.
 	 * @param elfLoadHelper load helper object
 	 * @param elfProgramHeader elf program segment header
@@ -146,7 +146,7 @@ public class ElfLoadAdapter {
 
 	/**
 	 * Get the preferred load address for a program segment.
-	 * This method may only return a physical address and not an overlay 
+	 * This method may only return a physical address and not an overlay
 	 * address.
 	 * @param elfLoadHelper load helper object
 	 * @param elfProgramHeader elf program segment header
@@ -186,7 +186,7 @@ public class ElfLoadAdapter {
 	/**
 	 * Get the preferred load address space for an allocated section.   The OTHER space
 	 * is reserved and should not be returned by this method.
-	 * This method may only return a physical address space and not an overlay 
+	 * This method may only return a physical address space and not an overlay
 	 * address space.
 	 * @param elfLoadHelper load helper object
 	 * @param elfSectionHeader elf section header
@@ -203,8 +203,8 @@ public class ElfLoadAdapter {
 	}
 
 	/**
-	 * Get the preferred load address for an allocated program section.  
-	 * This method may only return a physical address and not an overlay 
+	 * Get the preferred load address for an allocated program section.
+	 * This method may only return a physical address and not an overlay
 	 * address.
 	 * @param elfLoadHelper load helper object
 	 * @param elfSectionHeader elf program section header
@@ -226,7 +226,7 @@ public class ElfLoadAdapter {
 	}
 
 	/**
-	 * Check if this extension can handle the specified elf header.  If this method returns 
+	 * Check if this extension can handle the specified elf header.  If this method returns
 	 * true, this extension will be used to obtain extended types definitions and to perform
 	 * additional load processing.
 	 * @param elf elf header
@@ -243,7 +243,7 @@ public class ElfLoadAdapter {
 	 * may have stipulated a specific processor via the machine-id, a completely different
 	 * and incompatible language may have been used.
 	 * @param elfLoadHelper elf header
-	 * @return true if this extension can properly support the ELF header and the 
+	 * @return true if this extension can properly support the ELF header and the
 	 * current program/language.
 	 */
 	public boolean canHandle(ElfLoadHelper elfLoadHelper) {
@@ -251,7 +251,7 @@ public class ElfLoadAdapter {
 	}
 
 	/**
-	 * Return the data type naming suffix which should be used when creating types derived 
+	 * Return the data type naming suffix which should be used when creating types derived
 	 * from data supplied by this extension.
 	 * @return type naming suffix or null
 	 */
@@ -260,8 +260,8 @@ public class ElfLoadAdapter {
 	}
 
 	/**
-	 * Perform any required offset adjustment to account for differences between offset 
-	 * values contained within ELF headers and the language modeling of the 
+	 * Perform any required offset adjustment to account for differences between offset
+	 * values contained within ELF headers and the language modeling of the
 	 * associated address space.
 	 * <br>
 	 * WARNING: This is an experimental method and is not yet fully supported.
@@ -284,7 +284,7 @@ public class ElfLoadAdapter {
 	 * 3. Markup completed of Elf header, program headers, section headers, dynamic table,
 	 *    string tables, and symbol tables.
 	 * </pre>
-	 * Markup and application of relocation tables will NOT have been done yet. 
+	 * Markup and application of relocation tables will NOT have been done yet.
 	 * @param elfLoadHelper load helper object
 	 * @param monitor
 	 * @throws CancelledException
@@ -295,7 +295,7 @@ public class ElfLoadAdapter {
 	}
 
 	/**
-	 * Perform extension specific processing of Elf GOT/PLT tables and any other 
+	 * Perform extension specific processing of Elf GOT/PLT tables and any other
 	 * related function relocation mechanism (e.g., function descriptors, etc) after
 	 * normal REL/RELA relocation fix-ups have been applied.
 	 * @param elfLoadHelper load helper object
@@ -310,7 +310,7 @@ public class ElfLoadAdapter {
 	}
 
 	/**
-	 * Prior to the ELF loader creating a function this method will be invoked to permit an 
+	 * Prior to the ELF loader creating a function this method will be invoked to permit an
 	 * extension to adjust the address and/or apply context to the intended location.
 	 * @param elfLoadHelper load helper object
 	 * @param functionAddress function address
@@ -322,8 +322,8 @@ public class ElfLoadAdapter {
 
 	/**
 	 * This method allows an extension to override the default address calculation for loading
-	 * a symbol.  This is generally only neccessary when symbol requires handling of processor-specific 
-	 * flags or section index.  This method should return null when default symbol processing 
+	 * a symbol.  This is generally only neccessary when symbol requires handling of processor-specific
+	 * flags or section index.  This method should return null when default symbol processing
 	 * is sufficient. {@link Address#NO_ADDRESS} should be returned if the symbol is external
 	 * and is not handled by default processing.
 	 * @param elfLoadHelper load helper object
@@ -346,7 +346,7 @@ public class ElfLoadAdapter {
 	 * assigned a fake memory address in the EXTERNAL memory block.
 	 * @return adjusted symbol address or null if extension will handle applying the elfSymbol
 	 * to the program (must also invoke {@link ElfLoadHelper#setElfSymbolAddress(ElfSymbol, Address)},
-	 * or symbol should not be applied. 
+	 * or symbol should not be applied.
 	 */
 	public Address evaluateElfSymbol(ElfLoadHelper elfLoadHelper, ElfSymbol elfSymbol,
 			Address address, boolean isExternal) {
@@ -453,7 +453,7 @@ public class ElfLoadAdapter {
 
 	/**
 	 * Get reserve size of the EXTERNAL memory block as addressable units
-	 * within the default memory space.  This size represents the largest 
+	 * within the default memory space.  This size represents the largest
 	 * expansion size to the block which could occur during relocation
 	 * processing.
 	 * @return reserve size of the EXTERNAL memory block as addressable units
@@ -489,10 +489,10 @@ public class ElfLoadAdapter {
 	}
 
 	/**
-	 * Determine if the use of {@link #getFilteredLoadInputStream(ElfLoadHelper, MemoryLoadable, Address, long, InputStream)} 
-	 * is required when loading a memory block.  If a filtered input stream is required this will prevent the use of a direct 
+	 * Determine if the use of {@link #getFilteredLoadInputStream(ElfLoadHelper, MemoryLoadable, Address, long, InputStream)}
+	 * is required when loading a memory block.  If a filtered input stream is required this will prevent the use of a direct
 	 * mapping to file bytes.
-	 * @param elfLoadHelper 
+	 * @param elfLoadHelper
 	 * @param loadable Corresponding ElfSectionHeader or ElfProgramHeader for the memory block to be loaded.
 	 * @param start memory load address
 	 * @return true if the use of a filtered input stream is required

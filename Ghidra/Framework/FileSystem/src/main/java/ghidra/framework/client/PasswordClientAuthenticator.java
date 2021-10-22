@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,19 +26,19 @@ import ghidra.framework.remote.SSHSignatureCallback;
 import ghidra.net.ApplicationKeyManagerFactory;
 
 /**
- * <code>PasswordClientAuthenticator</code> provides a fixed username/password 
+ * <code>PasswordClientAuthenticator</code> provides a fixed username/password
  * authentication response when connecting to any Ghidra Server or accessing
  * a protected PKI keystore.  The use of this authenticator is intended for
  * headless applications in which the user is unable to respond to such
  * prompts.  SSH authentication is not currently supported.  Anonymous user
  * access is not supported.
  * <p>
- * If a PKI certificate has been installed, a password may be required 
+ * If a PKI certificate has been installed, a password may be required
  * to access the certificate keystore independent of any other password which may be required
  * for accessing SSH keys or server password authentication.  In such headless situations,
  * the PKI certificate path/password should be specified via a property since it is unlikely
  * that the same password will apply.
- * @see ApplicationKeyManagerFactory 
+ * @see ApplicationKeyManagerFactory
  */
 public class PasswordClientAuthenticator implements ClientAuthenticator {
 
@@ -98,7 +98,7 @@ public class PasswordClientAuthenticator implements ClientAuthenticator {
 
 	@Override
 	public boolean promptForReconnect(Component parent, String message) {
-		// assumes connection attempt was immediately done when this 
+		// assumes connection attempt was immediately done when this
 		// ClientAuthenticator was installed
 		return false;
 	}

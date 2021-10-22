@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,8 +42,8 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 	private String deleteUser;
 
 	/**
-	 * Constructor for a new or existing local database item which corresponds to the specified 
-	 * property file.  
+	 * Constructor for a new or existing local database item which corresponds to the specified
+	 * property file.
 	 * @param fileSystem file system
 	 * @param propertyFile database property file
 	 * @param create if true the data directory will be created
@@ -58,7 +58,7 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 	}
 
 	/**
-	 * Constructor for an existing local database item which corresponds to the specified 
+	 * Constructor for an existing local database item which corresponds to the specified
 	 * property file.
 	 * @param fileSystem file system
 	 * @param propertyFile database property file
@@ -79,7 +79,7 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 	}
 
 	/**
-	 * Create a new local Database item which corresponds to the specified 
+	 * Create a new local Database item which corresponds to the specified
 	 * property file.  The initial contents of the database are copied from the
 	 * specified srcFile.
 	 * @param fileSystem file system
@@ -142,7 +142,7 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 	}
 
 	/**
-	 * Create a new local Database item which corresponds to the specified 
+	 * Create a new local Database item which corresponds to the specified
 	 * property file.  The initial contents of the database are copied from the
 	 * specified packedFile.
 	 * @param fileSystem file system
@@ -175,7 +175,7 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 			propertyFile.setFileID(FileIDFactory.createFileID());
 			fileSystem.fileIdChanged(propertyFile, oldFileId);
 
-//			if (isVersioned) { 
+//			if (isVersioned) {
 // unsupported operation
 //				ItemCheckoutStatus coStatus = checkout(false, user, null);
 //				checkoutId = coStatus.getCheckoutId();
@@ -342,8 +342,8 @@ public class LocalDatabaseItem extends LocalFolderItem implements DatabaseItem {
 	}
 
 	/**
-	 * <code>LocalVersionedDbListener</code> provides a listener 
-	 * which maintains checkout and history data in response to 
+	 * <code>LocalVersionedDbListener</code> provides a listener
+	 * which maintains checkout and history data in response to
 	 * VersionedDatabase callbacks.
 	 */
 	private class LocalVersionedDbListener implements VersionedDBListener {

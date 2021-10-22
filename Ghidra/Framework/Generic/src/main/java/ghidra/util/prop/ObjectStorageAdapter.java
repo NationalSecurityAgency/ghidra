@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import ghidra.util.ObjectStorage;
 import ghidra.util.datastruct.DataTable;
 
 /**
- * Convenience adapter implementation for saving and restoring Strings and 
+ * Convenience adapter implementation for saving and restoring Strings and
  * Java primitives or arrays of Strings and primitives for a row of a data table.
  * The order in which the puts are done must the same order in which the gets are done.
  */
@@ -33,7 +33,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	 */
 	public ObjectStorageAdapter(DataTable table, int row) {
 		this.table = table;
-		this.row = row;	
+		this.row = row;
 		this.col = 0;
 	}
 
@@ -204,7 +204,7 @@ public class ObjectStorageAdapter implements ObjectStorage {
 	public byte[] getBytes() {
 		return table.getByteArray(row, col++);
 	}
-	
+
 	/**
 	 * @see ObjectStorage#getShorts()
 	 */

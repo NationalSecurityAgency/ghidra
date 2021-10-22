@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ public class LanguageID implements Comparable<LanguageID> {
 
 	/**
 	 * Creates a new language ID.
-	 * 
+	 *
 	 * @param id The language ID (x86:LE:32:default, 8051:BE:16:default, etc).
 	 * @throws IllegalArgumentException if the language ID is null or empty.
 	 */
@@ -40,7 +40,7 @@ public class LanguageID implements Comparable<LanguageID> {
 
 	/**
 	 * Gets the compiler spec ID as a string.
-	 * 
+	 *
 	 * @return The compilers spec ID as a string.
 	 * @throws IllegalArgumentException if the compiler spec ID is not null or empty.
 	 */

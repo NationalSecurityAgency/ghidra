@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.util.UserSearchUtils;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This class combines multiple field searchers to present a simple searcher interface for users of 
+ * This class combines multiple field searchers to present a simple searcher interface for users of
  * this class. First, based on the searchOptions, a field searcher is created for each field to be
  * search (comments, mnemonics, operands, etc.)  The searchers are ordered based on which field's matches
  * should be presented before another field's match at the same address.  Backwards searches would
@@ -44,9 +44,9 @@ import ghidra.util.task.TaskMonitor;
  * the current address (if the searcher's record is the current address, this is when it would fetch
  * its next record).
  * <P>
- * When a searcher's getMatch() method is called, the searcher should return it current match and 
- * advance its internal pointer to any additional matches at the same address or be prepared to 
- * report no match when the hasMatch() method is called again at the same address.  When the 
+ * When a searcher's getMatch() method is called, the searcher should return it current match and
+ * advance its internal pointer to any additional matches at the same address or be prepared to
+ * report no match when the hasMatch() method is called again at the same address.  When the
  * findNextSignificantAddress() method is called, the searcher should report its current record's
  * address if that address is not the current address.  Otherwise, the searcher should advance to
  * its next record and report that address.  When a search has no more records in the search
@@ -234,7 +234,7 @@ public class ProgramDatabaseSearcher implements Searcher {
 	}
 
 	/**
-	 * Adjust the address set depending on the start location and whether searching forward 
+	 * Adjust the address set depending on the start location and whether searching forward
 	 * or backward. The address set is adjusted by removing addresses that are before the start
 	 * locations address when searching forward or after the start address when searching backwards.
 	 * @param program the program for the address set
@@ -294,9 +294,9 @@ public class ProgramDatabaseSearcher implements Searcher {
 	}
 
 	/**
-	 * Trims the given address set to only include addresses from the given address to the end of 
+	 * Trims the given address set to only include addresses from the given address to the end of
 	 * the address set if going forward or from the beginning of the address set to the given address
-	 * if going backwards. 
+	 * if going backwards.
 	 * @param view the address set to trim
 	 * @param address the trim address
 	 * @param searchForward true if trimming from the beginning or false otherwise

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public interface Navigatable {
 	/**
 	 * Commands this navigatable to goto (display) the given program and location
 	 * @param program the program
-	 * 
+	 *
 	 * @param location the location in that program to display
 	 * @return true if the goto was successful
 	 */
@@ -60,9 +60,9 @@ public interface Navigatable {
 	 */
 	public LocationMemento getMemento();
 
-	/** 
+	/**
 	 * Sets the view state for this navigatable.  This is used later to restore the view state.
-	 * 
+	 *
 	 * @param memento the state of this navigatable
 	 */
 	public void setMemento(LocationMemento memento);
@@ -76,7 +76,7 @@ public interface Navigatable {
 	/**
 	 * Returns true if this Navigatable is "connected".  Navigatables are connected if they
 	 * produce and consume location and selection events.
-	 * 
+	 *
 	 * @return true if this Navigatable is "connected"
 	 */
 	public boolean isConnected();
@@ -106,7 +106,7 @@ public interface Navigatable {
 
 	/**
 	 * Tells this Navigatable to set its highlight to the given highlight
-	 * 
+	 *
 	 * @param highlight the highlight to set.
 	 */
 	public void setHighlight(ProgramSelection highlight);
@@ -137,7 +137,7 @@ public interface Navigatable {
 
 	/**
 	 * Removes a listener to be notified if this Navigatable is terminated.
-	 * @param listener the listener that no longer should be notified when this Navigatable is 
+	 * @param listener the listener that no longer should be notified when this Navigatable is
 	 *        closed.
 	 */
 	public void removeNavigatableListener(NavigatableRemovalListener listener);
@@ -156,7 +156,7 @@ public interface Navigatable {
 
 	/**
 	 * Set the highlight provider for the given program
-	 * 
+	 *
 	 * @param highlightProvider the provider
 	 * @param program the program
 	 */
@@ -164,7 +164,7 @@ public interface Navigatable {
 
 	/**
 	 * Removes the given highlight provider for the given program
-	 * 
+	 *
 	 * @param highlightProvider the provider
 	 * @param program the program
 	 */

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,22 +20,22 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.tree.TreePath;
 
 public class GTreeSelectionEvent {
-	
+
 	/**
-	 * An enum that contains the origin of the GTreeSelectionEvent (see each enum for more 
+	 * An enum that contains the origin of the GTreeSelectionEvent (see each enum for more
 	 * details).
 	 */
 	public enum EventOrigin {
 		/** This event was triggered by an API on the GTree interface */
 		API_GENERATED,
-		
+
 		/** This event was triggered by an internal GTree selection change (e.g., filter change) */
 		INTERNAL_GENERATED,
-		
-		/** This event was triggered by the <b>user</b> changing the selection via the GUI */ 		
+
+		/** This event was triggered by the <b>user</b> changing the selection via the GUI */
 		USER_GENERATED
 	}
-	
+
 	private final TreeSelectionEvent event;
 	private final EventOrigin origin;
 
@@ -47,11 +47,11 @@ public class GTreeSelectionEvent {
 	public EventOrigin getEventOrigin() {
 		return origin;
 	}
-	
+
 //==================================================================================================
-// Event Delegate Methods	
+// Event Delegate Methods
 //==================================================================================================
-	
+
 	public TreePath getNewLeadSelectionPath() {
 		return event.getNewLeadSelectionPath();
 	}

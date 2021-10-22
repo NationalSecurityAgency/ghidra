@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class AddStackVarCmd implements Command {
 	 * Constructs a new command to add a stack variable to a function.
 	 * @param addr initial declaration point of variable.
 	 * @param stackOffset offset into the stack for the new variable.
-	 * @param name name of the new variable. 
+	 * @param name name of the new variable.
 	 * @param dataType variable data-type or null for a default data type of minimal size
 	 * @param source the source of this stack variable
 	 */
@@ -55,7 +55,7 @@ public class AddStackVarCmd implements Command {
     }
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
     public boolean applyTo(DomainObject obj) {

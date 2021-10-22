@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,9 +35,9 @@ public class AskScript extends GhidraScript {
 	@Override
 	public void run() throws Exception {
 
-		// The presence of the AskScript.properties file in the same location (as AskScript.java) 
+		// The presence of the AskScript.properties file in the same location (as AskScript.java)
 		// allows for the following behavior:
-		//		- GUI: if applicable, auto-populates the input field with the value in the 
+		//		- GUI: if applicable, auto-populates the input field with the value in the
 		//			.properties file (the first	time that input	field appears)
 		//   	- Headless: uses the value in the .properties file for the variable assigned to the
 		//			corresponding askXxx() method in the GhidraScript.
@@ -104,7 +104,7 @@ public class AskScript extends GhidraScript {
 			//@formatter:off
 			List<Double> choices2 =
 				askChoices("Choices 2", "Please choose one or more of the following.",
-					Arrays.asList( 1.1, 2.2, 3.3, 4.4, 5.5, 6.6 ), 
+					Arrays.asList( 1.1, 2.2, 3.3, 4.4, 5.5, 6.6 ),
 					Arrays.asList("Part 1", "Part 2", "Part 3", "Part 4", "Part 5", "Part 6" ));
 			//@formatter:on
 

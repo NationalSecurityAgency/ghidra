@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemBuffer;
 
 /**
- * Model for exception handling information about the UnwindMapEntry data type and its 
+ * Model for exception handling information about the UnwindMapEntry data type and its
  * associated exception handling data types.
  * <br>
  * This is based on data type information from ehdata.h
@@ -62,7 +62,7 @@ public class EHUnwindModel extends AbstractCreateDataTypeModel {
 	/**
 	 * Whether or not the memory at the indicated address appears to be a valid location for the
 	 * indicated number of unwind map entry data types.
-	 * @throws InvalidDataTypeException if this model's location does not appear to be a valid 
+	 * @throws InvalidDataTypeException if this model's location does not appear to be a valid
 	 * group of unwind map entries. The exception has a message indicating
 	 * why it does not appear to be a valid location for the data type.
 	 */
@@ -83,7 +83,7 @@ public class EHUnwindModel extends AbstractCreateDataTypeModel {
 
 	/**
 	 * This gets the UnwindMapEntry structure for the indicated program.
-	 * @param program the program which will contain this data type. 
+	 * @param program the program which will contain this data type.
 	 * @return the UnwindMapEntry structure.
 	 */
 	public static DataType getDataType(Program program) {
@@ -141,11 +141,11 @@ public class EHUnwindModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the To State value of the unwind, if there is one, in the UnwindMapEntry indicated 
+	 * Gets the To State value of the unwind, if there is one, in the UnwindMapEntry indicated
 	 * by the ordinal.
 	 * @param unwindOrdinal 0-based ordinal indicating which UnwindMapEntry in the map.
 	 * @return the To State value of the unwind
-	 * @throws InvalidDataTypeException if valid UnwindMapEntry data can't be created for 
+	 * @throws InvalidDataTypeException if valid UnwindMapEntry data can't be created for
 	 * the indicated ordinal.
 	 */
 	public int getToState(int unwindOrdinal) throws InvalidDataTypeException {
@@ -157,11 +157,11 @@ public class EHUnwindModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the unwind action address, if there is one, in the UnwindMapEntry 
+	 * Gets the unwind action address, if there is one, in the UnwindMapEntry
 	 * indicated by the ordinal.
 	 * @param unwindOrdinal 0-based ordinal indicating which UnwindMapEntry in the map.
 	 * @return the unwind action address or null.
-	 * @throws InvalidDataTypeException if valid UnwindMapEntry data can't be created for 
+	 * @throws InvalidDataTypeException if valid UnwindMapEntry data can't be created for
 	 * the indicated ordinal.
 	 */
 	public Address getActionAddress(int unwindOrdinal) throws InvalidDataTypeException {
@@ -175,11 +175,11 @@ public class EHUnwindModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address of the component containing the unwind action address, if there is one. 
+	 * Gets the address of the component containing the unwind action address, if there is one.
 	 * Otherwise, this returns null.
 	 * @param unwindOrdinal 0-based ordinal indicating which UnwindMapEntry in the map.
 	 * @return the address of the component with the unwind action address or null.
-	 * @throws InvalidDataTypeException if valid UnwindMapEntry data can't be created for 
+	 * @throws InvalidDataTypeException if valid UnwindMapEntry data can't be created for
 	 * the indicated ordinal.
 	 */
 	public Address getComponentAddressOfActionAddress(int unwindOrdinal)

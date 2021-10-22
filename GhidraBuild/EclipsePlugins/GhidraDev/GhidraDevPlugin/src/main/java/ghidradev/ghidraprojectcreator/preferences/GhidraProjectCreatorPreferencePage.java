@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ implements IWorkbenchPreferencePage {
 	@Override
 	protected Control createContents(Composite parent) {
 		noDefaultButton();
-		
+
 		FontData fontData = parent.getFont().getFontData()[0];
 		Font bold =	new Font(parent.getDisplay(), fontData.getName(), fontData.getHeight(), SWT.BOLD);
 
@@ -199,7 +199,7 @@ implements IWorkbenchPreferencePage {
 
 	/**
 	 * Validates the given Ghidra installation directory.
-	 * 
+	 *
 	 * @param ghidraInstallDir The Ghidra installation directory to validate.
 	 * @throws IOException If the given Ghidra installation directory is not valid.  The exception's
 	 *   message has more detailed information on why it was not valid.
@@ -210,7 +210,7 @@ implements IWorkbenchPreferencePage {
 			layout = new GhidraApplicationLayout(ghidraInstallDir);
 		}
 		catch (IOException e) {
-			throw new IOException("Not a valid Ghidra installation.");			
+			throw new IOException("Not a valid Ghidra installation.");
 		}
 		ApplicationProperties applicationProperties = layout.getApplicationProperties();
 		ApplicationVersion version;
@@ -227,7 +227,7 @@ implements IWorkbenchPreferencePage {
 		String layoutVersion = applicationProperties.getProperty(
 			ApplicationProperties.APPLICATION_LAYOUT_VERSION_PROPERTY);
 		if (layoutVersion == null || !layoutVersion.equals("1")) {
-			// We can be smarter about this check and what we support later, once the layout version 
+			// We can be smarter about this check and what we support later, once the layout version
 			// actually changes.
 			throw new IOException(
 				"Ghidra application layout is not supported.  Please upgrade " +

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ public interface ParameterDefinition extends Comparable<ParameterDefinition> {
 
 	/**
 	 * Get the parameter ordinal
-	 * 
+	 *
 	 * @return the ordinal (index) of this parameter within the function signature.
 	 */
 	int getOrdinal();
@@ -79,9 +79,9 @@ public interface ParameterDefinition extends Comparable<ParameterDefinition> {
 	public void setComment(String comment);
 
 	/**
-	 * Determine if a variable corresponds to a parameter which is equivalent to 
+	 * Determine if a variable corresponds to a parameter which is equivalent to
 	 * this parameter definition by both ordinal and datatype.  Name is not considered
-	 * relevant. 
+	 * relevant.
 	 * @param variable variable to be compared with this parameter definition.
 	 * @return true if the specified variable represents the same parameter by ordinal
 	 * and dataType.  False will always be returned if specified variable is
@@ -90,10 +90,10 @@ public interface ParameterDefinition extends Comparable<ParameterDefinition> {
 	public boolean isEquivalent(Variable variable);
 
 	/**
-	 * Determine if parm is equivalent to this parameter definition by both ordinal 
-	 * and datatype.  Name is not considered relevant. 
+	 * Determine if parm is equivalent to this parameter definition by both ordinal
+	 * and datatype.  Name is not considered relevant.
 	 * @param parm parameter definition to be compared with this parameter definition.
-	 * @return true if the specified parameter definition represents the same parameter 
+	 * @return true if the specified parameter definition represents the same parameter
 	 * by ordinal and dataType.
 	 */
 	public boolean isEquivalent(ParameterDefinition parm);

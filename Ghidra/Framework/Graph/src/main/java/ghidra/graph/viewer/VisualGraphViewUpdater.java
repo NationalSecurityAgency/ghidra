@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,10 +37,10 @@ import utility.function.Callback;
 
 /**
  * This is the class through which operations travel that manipulate the view and graph <b>while
- * plugged-in to the UI</b>.   (Setup and tear down operations performed before the view 
- * or graph are visible need not pass through this class.)  This class is responsible for 
+ * plugged-in to the UI</b>.   (Setup and tear down operations performed before the view
+ * or graph are visible need not pass through this class.)  This class is responsible for
  * controlling how to display view and graph changes, including whether to animate.
- * 
+ *
  * <P>The animations are categorized into those that mutate the graph and those that are just
  * display animations (like hover animations).
  *
@@ -77,9 +77,9 @@ public class VisualGraphViewUpdater<V extends VisualVertex, E extends VisualEdge
 
 	/**
 	 * Add a listener to be notified when a job is started.  Jobs often, but not always, mutate
-	 * the underlying graph.  For this reason, other tasks that use the graph may want to not 
-	 * do their work while a job is running. 
-	 * 
+	 * the underlying graph.  For this reason, other tasks that use the graph may want to not
+	 * do their work while a job is running.
+	 *
 	 * @param c the listener
 	 */
 	public void addJobScheduledListener(Callback c) {
@@ -168,11 +168,11 @@ public class VisualGraphViewUpdater<V extends VisualVertex, E extends VisualEdge
 	}
 
 	/*
-	 
+
 	 	moveVertexToCenterLater(vertex);
-	 	
+
 	 	moveVertexToCenterAnimated(vertex);
-	 
+
 	 */
 
 	public void moveVertexToCenterWithAnimation(V vertex) {
@@ -308,10 +308,10 @@ public class VisualGraphViewUpdater<V extends VisualVertex, E extends VisualEdge
 			 from when the navigation takes place, which may be after the user has moved the
 			 graph (panned it by hand).  So, we really need to record the info at the point when
 			 the user first clicks or when the location is first set.
-		
+
 			-How to handle the case where the user moves vertices that are on the navigation stack?
 			--Use this algorithm and then ensure that the cursor is on the screen.
-		
+
 		*/
 
 		if (graphInfo == null) {
@@ -379,7 +379,7 @@ public class VisualGraphViewUpdater<V extends VisualVertex, E extends VisualEdge
 	/**
 	 * Returns true if this updater is performing any animations or running any jobs that can
 	 * mutate the graph or view
-	 * 
+	 *
 	 * @return true if busy
 	 */
 	public boolean isBusy() {
@@ -401,7 +401,7 @@ public class VisualGraphViewUpdater<V extends VisualVertex, E extends VisualEdge
 
 	/**
 	 * Returns true if this updater is running any jobs that can mutate the graph or view
-	 * 
+	 *
 	 * @return true if busy
 	 */
 	public boolean isMutatingGraph() {

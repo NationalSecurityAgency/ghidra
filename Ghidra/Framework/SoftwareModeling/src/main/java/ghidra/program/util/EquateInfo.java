@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,11 +33,11 @@ public class EquateInfo {
 
     /**
      * Constructor.
-     * 
+     *
      * @param name   Equate name
      * @param value  Equate value
      * @param refAddr Reference address (may be null for some event types)
-     * @param opIndex operand index for the reference; useful only if 
+     * @param opIndex operand index for the reference; useful only if
      * refAddr is not null. May be -1 if only dynamicHash applies.
      * @param dynamicHash dynamic hash. May be 0 if only opIndex applies.
      */
@@ -77,7 +77,7 @@ public class EquateInfo {
     public int getOperandIndex() {
         return opIndex;
     }
-    
+
     /**
      * Get the varnode dynamic hash of where the equate was placed;
      * This value is meaningful only if the reference address is not null, and

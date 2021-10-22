@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,8 @@ import ghidra.util.Msg;
 /**
  * Handles processing for .properties files associated with a GhidraScript (.properties file and
  * script should share the same basename).
- * 
- * <p>This should only be called/used by the GhidraScript class. 
+ *
+ * <p>This should only be called/used by the GhidraScript class.
  */
 public class GhidraScriptProperties {
 
@@ -37,10 +37,10 @@ public class GhidraScriptProperties {
 		propertiesMap = new HashMap<>();
 	}
 
-	/** 
+	/**
 	 * Load a .properties file given a directory (ResourceFile) and the basename (i.e., name of the
 	 * GhidraScript without the extension).
-	 * 
+	 *
 	 * @param scriptLocation  location of the GhidraScript
 	 * @param newBaseName  name of the GhidraScript (without the extension)
 	 * @throws IOException if there is an exception loading the properties file
@@ -82,7 +82,7 @@ public class GhidraScriptProperties {
 
 	/**
 	 * Look for a .properties file corresponding to the basename in the given locations.
-	 * 
+	 *
 	 * @param possibleLocations possible locations where the .properties file can be found
 	 * @param newBaseName name of the GhidraScript (without the extension)
 	 * @throws IOException if there is an exception loading the properties file
@@ -101,7 +101,7 @@ public class GhidraScriptProperties {
 
 	/**
 	 * Load a .properties file.
-	 * 
+	 *
 	 * @param file  the .properties file
 	 * @throws IOException if there is an exception loading the properties file
 	 */
@@ -167,7 +167,7 @@ public class GhidraScriptProperties {
 
 	/**
 	 * Remove the named property
-	 * 
+	 *
 	 * @param keyString the property name
 	 * @return the previous value or null
 	 */

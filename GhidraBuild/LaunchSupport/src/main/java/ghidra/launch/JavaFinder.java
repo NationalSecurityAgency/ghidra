@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public abstract class JavaFinder {
 
 	/**
 	 * Gets the current {@link Platform}.
-	 * 
+	 *
 	 * @return The current {@link Platform}
 	 */
 	public static Platform getCurrentPlatform() {
@@ -60,7 +60,7 @@ public abstract class JavaFinder {
 
 	/**
 	 * Creates a Java finder to use for the current {@link Platform platform}.
-	 * 
+	 *
 	 * @return The Java finder to use for the current {@link Platform platform}
 	 */
 	public static JavaFinder create() {
@@ -78,7 +78,7 @@ public abstract class JavaFinder {
 	/**
 	 * Returns a list of supported Java home directories from discovered Java installations.
 	 * The list is sorted from newest Java version to oldest.
-	 * 
+	 *
 	 * @param javaConfig The Java configuration that defines what we support.
 	 * @param javaFilter A filter used to restrict what kind of Java installations we search for.
 	 * @return A sorted list of supported Java home directories from discovered Java installations.
@@ -129,7 +129,7 @@ public abstract class JavaFinder {
 	/**
 	 * Returns the Java home directory corresponding to the current "java.home" system
 	 * property (if it supported).
-	 * 
+	 *
 	 * @param javaConfig The Java configuration that defines what we support.
 	 * @param javaFilter A filter used to restrict what kind of Java installations we search for.
 	 * @return The Java home directory corresponding to the current "java.home" system property.
@@ -164,7 +164,7 @@ public abstract class JavaFinder {
 
 	/**
 	 * Gets a list of possible Java root installation directories.
-	 * 
+	 *
 	 * @return A list of possible Java root installation directories.
 	 */
 	protected abstract List<File> getJavaRootInstallDirs();
@@ -173,7 +173,7 @@ public abstract class JavaFinder {
 	 * Gets the sub-directory path of a Java root installation directory where the Java
 	 * home lives.  For example, for OS X, this is "Contents/Home".  For other OS's, it may
 	 * just be the empty string.
-	 * 
+	 *
 	 * @return The sub-directory path of a Java root installation directory where the Java
 	 *   home lives.
 	 */
@@ -184,7 +184,7 @@ public abstract class JavaFinder {
 	 * <p>
 	 * If the Java home directory corresponds to a JDK, there is usually a corresponding
 	 * JRE somewhere either in the JDK directory, or adjacent to it.
-	 * 
+	 *
 	 * @param javaHomeDir The Java home directory.
 	 * @return The JRE home directory corresponding to the given Java home directory.  Could
 	 *   be the same directory if the given Java home is a JRE.
@@ -196,8 +196,8 @@ public abstract class JavaFinder {
 	 * <p>
 	 * Often, the java from the PATH will run from a JRE bin directory instead of a JDK
 	 * bin directory.  However, we can look in expected places to find the corresponding
-	 * JDK home directory. 
-	 * 
+	 * JDK home directory.
+	 *
 	 * @param javaHomeDir The Java home directory.
 	 * @return The JDK home directory corresponding to the given Java home directory.  Could
 	 *   be the same directory if the given Java home is a JDK.

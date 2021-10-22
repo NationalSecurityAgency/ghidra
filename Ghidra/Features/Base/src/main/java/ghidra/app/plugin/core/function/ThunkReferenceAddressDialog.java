@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -180,12 +180,12 @@ public class ThunkReferenceAddressDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Get the code/function symbol which corresponds to the specified 
+	 * Get the code/function symbol which corresponds to the specified
 	 * text entry which may optionally include a namespace
 	 * @param text symbol name
 	 * @return symbol or null if multiple symbols found
-	 * @throws NotFoundException if no matching symbols were found 
-	 * 
+	 * @throws NotFoundException if no matching symbols were found
+	 *
 	 */
 	private Symbol getSymbolForText(String text) throws NotFoundException {
 
@@ -267,7 +267,7 @@ public class ThunkReferenceAddressDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Find unique symbol from iterator ignoring related thunks.  
+	 * Find unique symbol from iterator ignoring related thunks.
 	 * @param symbolIterator symbol iterator
 	 * @return unique function or code symbol or null if multiple symbols found
 	 * @throws NotFoundException if no symbols were found
@@ -311,7 +311,7 @@ public class ThunkReferenceAddressDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Find unique original external symbol with the given name.  
+	 * Find unique original external symbol with the given name.
 	 * @param name original external symbol name
 	 * @return unique external symbol or null if multiple matching external symbols were found
 	 * @throws NotFoundException if no original external symbols were found

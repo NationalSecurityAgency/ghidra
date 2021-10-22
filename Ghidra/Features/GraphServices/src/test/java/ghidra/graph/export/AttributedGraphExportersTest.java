@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -181,47 +181,47 @@ public class AttributedGraphExportersTest extends AbstractGenericTest {
 		GraphMlGraphExporter exporter = new GraphMlGraphExporter();
 		List<String> lines = doExport(exporter, graph);
 		assertOutput(lines,
-			"<?xml version=\"1.0\" encoding=\"UTF-8\"?><graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">", 
+			"<?xml version=\"1.0\" encoding=\"UTF-8\"?><graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\" xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">",
 			"    <key id=\"key11\" for=\"node\" attr.name=\"Type\" attr.type=\"string\"/>",
-			"    <key id=\"key1\" for=\"node\" attr.name=\"Inverted\" attr.type=\"string\"/>", 
+			"    <key id=\"key1\" for=\"node\" attr.name=\"Inverted\" attr.type=\"string\"/>",
 			"    <key id=\"key12\" for=\"node\" attr.name=\"Name\" attr.type=\"string\"/>",
 			"    <key id=\"key17\" for=\"edge\" attr.name=\"EType\" attr.type=\"string\"/>",
-			"    <graph edgedefault=\"directed\">", 
-			"        <node id=\"A\">", 
+			"    <graph edgedefault=\"directed\">",
+			"        <node id=\"A\">",
 			"            <data key=\"key11\">X</data>",
-			"            <data key=\"key1\">true</data>", 
+			"            <data key=\"key1\">true</data>",
 			"            <data key=\"key12\">A</data>",
-			"        </node>", 
-			"        <node id=\"B\">", 
+			"        </node>",
+			"        <node id=\"B\">",
 			"            <data key=\"key11\">Y</data>", "            <data key=\"key12\">B</data>",
-			"        </node>", 
-			"        <node id=\"C\">", 
+			"        </node>",
+			"        <node id=\"C\">",
 			"            <data key=\"key11\">Y</data>", "            <data key=\"key12\">C</data>",
-			"        </node>", 
-			"        <node id=\"D\">", 
+			"        </node>",
+			"        <node id=\"D\">",
 			"            <data key=\"key11\">Y</data>", "            <data key=\"key12\">D</data>",
-			"        </node>", 
-			"        <node id=\"E\">", 
+			"        </node>",
+			"        <node id=\"E\">",
 			"            <data key=\"key11\">Z</data>", "            <data key=\"key12\">E</data>",
 			"        </node>", "        <node id=\"F\">",
 			"            <data key=\"key11\">T</data>", "            <data key=\"key12\">F</data>",
-			"        </node>", 
-			"        <edge id=\"1\" source=\"A\" target=\"B\">", 
+			"        </node>",
+			"        <edge id=\"1\" source=\"A\" target=\"B\">",
 			"            <data key=\"key17\">Fall</data>",
-			"        </edge>", 
-			"        <edge id=\"2\" source=\"B\" target=\"C\">", 
+			"        </edge>",
+			"        <edge id=\"2\" source=\"B\" target=\"C\">",
 			"            <data key=\"key17\">JMP</data>",
-			"        </edge>", 
-			"        <edge id=\"3\" source=\"B\" target=\"D\">", 
+			"        </edge>",
+			"        <edge id=\"3\" source=\"B\" target=\"D\">",
 			"            <data key=\"key17\">Fall</data>",
-			"        </edge>", 
-			"        <edge id=\"4\" source=\"C\" target=\"E\">", 
+			"        </edge>",
+			"        <edge id=\"4\" source=\"C\" target=\"E\">",
 			"            <data key=\"key17\">Fall</data>",
-			"        </edge>", 
-			"        <edge id=\"5\" source=\"D\" target=\"E\">", 
+			"        </edge>",
+			"        <edge id=\"5\" source=\"D\" target=\"E\">",
 			"            <data key=\"key17\">Call</data>",
-			"        </edge>", 
-			"    </graph>", 
+			"        </edge>",
+			"    </graph>",
 			"</graphml>");
 
 	}
@@ -285,7 +285,7 @@ public class AttributedGraphExportersTest extends AbstractGenericTest {
 		AttributedVertex vE = g.addVertex("E");
 		AttributedVertex vF = g.addVertex("F");
 
-		//		A			
+		//		A
 		//		|
 		//	    B
 		//     / \

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -555,7 +555,7 @@ void Merge::trimOpOutput(PcodeOp *op)
   PcodeOp *copyop;
   Varnode *uniq,*vn;
   PcodeOp *afterop;
-  
+
   if (op->code() == CPUI_INDIRECT)
     afterop = PcodeOp::getOpFromConst(op->getIn(1)->getAddr()); // Insert copyop AFTER source of indirect
   else
@@ -569,7 +569,7 @@ void Merge::trimOpOutput(PcodeOp *op)
   data.opSetInput(copyop,uniq,0);
   data.opInsertAfter(copyop,afterop);
 }
-  
+
 /// \brief Trim the input HighVariable of the given PcodeOp so that its Cover is tiny
 ///
 /// The given PcodeOp is assumed to force merging so that input and output Covers shouldn't
@@ -584,7 +584,7 @@ void Merge::trimOpInput(PcodeOp *op,int4 slot)
   PcodeOp *copyop;
   Varnode *vn;
   Address pc;
-  
+
   if (op->code() == CPUI_MULTIEQUAL) {
     BlockBasic *bb = (BlockBasic *)op->getParent()->getIn(slot);
     pc = bb->getStop();
@@ -972,7 +972,7 @@ bool Merge::hideShadows(HighVariable *high)
   Varnode *vn1,*vn2;
   int4 i,j;
   bool res = false;
-  
+
   findSingleCopy(high,singlelist); // Find all things copied into this high
   if (singlelist.size() <= 1) return false;
   for(i=0;i<singlelist.size()-1;++i) {
@@ -1388,7 +1388,7 @@ bool Merge::merge(HighVariable *high1,HighVariable *high2,bool isspeculative)
   map<HighEdge,bool>::iterator iter;
 
   for(iter=iterfirst;iter!=iterlast;++iter) {
-    HighVariable *b = (*iter).first.b; 
+    HighVariable *b = (*iter).first.b;
     if (b == high1) continue;
     if ((*iter).second)		// Save all high2's intersections
       yesinter.push_back(b);	// as they are still valid for the merge
@@ -1404,7 +1404,7 @@ bool Merge::merge(HighVariable *high1,HighVariable *high2,bool isspeculative)
       highedgemap.erase( HighEdge( (*iter).first.b, (*iter).first.a) );
     highedgemap.erase( HighEdge( (*iter).first.b, (*iter).first.a) );
     ++iterlast;			// Restore original range (with possibly new open endpoint)
-  
+
     highedgemap.erase(iterfirst,iterlast);
   }
 
@@ -1466,7 +1466,7 @@ void Merge::purgeHigh(HighVariable *high)
     highedgemap.erase( HighEdge( (*iter).first.b, (*iter).first.a) );
   highedgemap.erase( HighEdge( (*iter).first.b, (*iter).first.a) );
   ++iterlast;			// Restore original range (with possibly new open endpoint)
-  
+
   highedgemap.erase(iterfirst,iterlast);
 }
 
@@ -1479,7 +1479,7 @@ void Merge::purgeHigh(HighVariable *high)
 /// \param b is the second HighVariable
 /// \return \b true if the variables intersect
 bool Merge::intersection(HighVariable *a,HighVariable *b)
-  
+
 {
   if (a==b) return false;
   bool ares = updateHigh(a);

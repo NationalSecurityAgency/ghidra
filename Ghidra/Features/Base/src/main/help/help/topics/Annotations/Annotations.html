@@ -49,7 +49,7 @@
       <P>When the URL text (e.g., "http://www.google.com") in the above image is clicked from within
       Ghidra, a web browser is launched and attempts to load the corresponding web page.  If the URL text
       is of the form <i>ghidra://&lt;host&gt;[:&lt;port&gt;]/&lt;repository-name&gt;/&lt;program-path&gt;[#&lt;address-or-symbol-ref&gt;]</i>
-      an attempt will be made to open the corresponding program from the referenced Ghidra Server (e.g., 
+      an attempt will be made to open the corresponding program from the referenced Ghidra Server (e.g.,
       <i>ghidra://myserver/Repo/notepad.exe#entry</i>).</P>
     </BLOCKQUOTE>
 
@@ -89,7 +89,7 @@
             <BR>
             <BR>
              Notes:
-             
+
              <ul>
 	             <li>
 		              If you provide a symbol name and not an address, then you will need to
@@ -101,9 +101,9 @@
 		            will be changed to use the address of that symbol.
 	            </li>
             </ul>
-            
+
             </TD>
-            
+
 
             <TD valign="top" width="12%">
               <OL>
@@ -176,9 +176,9 @@
             than that of the URL.<BR><BR>
             References to <i>ghidra://</i>, which refer to a program within a Ghidra Server repository,
             will be opened within the Listing display, while all other URL protocols (e.g., <i>http://, https://,
-            file://,</i> etc.) will be launched via an external web browser (see 
-            <a href="help/topics/ShowInstructionInfoPlugin/ShowInstructionInfo.htm#Show_Processor_Manual">command configuration 
-            for Processor Manuals</a>). 
+            file://,</i> etc.) will be launched via an external web browser (see
+            <a href="help/topics/ShowInstructionInfoPlugin/ShowInstructionInfo.htm#Show_Processor_Manual">command configuration
+            for Processor Manuals</a>).
             </TD>
 
             <TD valign="top" width="12%">
@@ -210,11 +210,11 @@
                 <LI>{@url "http://www.google.com" "google"}</LI>
 
                 <LI>{@url "http://www.google.com" "click here for google"}</LI>
-                
+
                 <LI>{@url "ghidra://myserver/Repo/notepad.exe"}</LI>
-                
+
                 <LI>{@url "ghidra://myserver/Repo/notepad.exe#entry"}</LI>
-                
+
                 <LI>{@url "ghidra://myserver/Repo/notepad.exe" "see notepad.exe"}</LI>
               </UL>
             </TD>
@@ -273,10 +273,10 @@
             </TD>
 
             <TD valign="top" width="12%">
-              <OL>              	
+              <OL>
                 <LI>"executable path"</LI>
-			  </OL>                
-					
+			  </OL>
+
 				<b>OR</b>
 			  <OL>
 				<LI>"executable path"</LI>
@@ -297,11 +297,11 @@
 
                 <LI>{@execute "C:\Program Files\Mozilla Firefox\firefox.exe"
                 "http://my.website.com" "Opens a web browser to Website"}</LI>
-                
+
                 <LI>{@execute "C:\Program Files\Mozilla Firefox\firefox.exe" "" "My display text"}</LI>
-                
+
                 <LI>{@execute "C:\Path\To\Some\executable.exe" "arg1 arg2" ""}</LI>
-                
+
               </UL><FONT size="2">Note: quotes are required for this annotation</FONT>
             </TD>
           </TR>

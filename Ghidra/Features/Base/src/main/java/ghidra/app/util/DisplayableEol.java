@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -116,7 +116,7 @@ public class DisplayableEol {
 
 	/**
 	 * Return whether the associated code unit has an end of line comment
-	 * @return whether the associated code unit has an end of line comment 
+	 * @return whether the associated code unit has an end of line comment
 	 */
 	public boolean hasEOL() {
 		return (displayCommentArrays[MY_EOLS] != null) &&
@@ -144,10 +144,10 @@ public class DisplayableEol {
 	}
 
 	/**
-	 * Return whether this code unit has an automatic comment.  For example, a memory reference 
-	 * from this code unit has a function defined at the reference's to address, or if the to 
+	 * Return whether this code unit has an automatic comment.  For example, a memory reference
+	 * from this code unit has a function defined at the reference's to address, or if the to
 	 * address is a pointer.
-	 * @return whether this code unit has an automatic comment 
+	 * @return whether this code unit has an automatic comment
 	 */
 	public boolean hasAutomatic() {
 		return (displayCommentArrays[MY_AUTOMATIC] != null) &&

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,25 +26,25 @@ import ghidra.util.SystemUtilities;
 
 /**
  * This class exists to help prevent threading errors in {@link GTreeNode} and subclasses,
- * by privately maintaining synchronous access to the parent and children of a node. 
+ * by privately maintaining synchronous access to the parent and children of a node.
  * <P>
  * This implementation uses a {@link CopyOnWriteArrayList} to store its children. The theory is
  * that this will allow direct thread-safe access to the children without having to worry about
  * {@link ConcurrentModificationException}s while iterating the children.  Also, the assumption
- * is that accessing the children will occur much more frequently than modifying the children.  
+ * is that accessing the children will occur much more frequently than modifying the children.
  * This should only be a problem if a direct descendent of GTreeNode creates its children by calling
- * addNode many times. But in that case, the tree should be using Lazy or 
- * SlowLoading nodes which always load into another list first and all the children will be set 
+ * addNode many times. But in that case, the tree should be using Lazy or
+ * SlowLoading nodes which always load into another list first and all the children will be set
  * on a node in a single operation.
  * <P>
  * Subclasses that need access to the children can call the {@link #children()} method which will
  * ensure that the children are loaded (not null). Since this class uses a
  * {@link CopyOnWriteArrayList}, subclasses that call the {@link #children()} method can safely
- * iterate the list without having to worry about getting a {@link ConcurrentModificationException}.  
+ * iterate the list without having to worry about getting a {@link ConcurrentModificationException}.
  * <P>
  * This class uses synchronization to assure that the parent/children relationship is stable across
  * threads.  To avoid deadlocks, the sychronization strategy is that if you have the lock on
- * a parent node, you can safely acquire the lock on any of its descendants, but never its 
+ * a parent node, you can safely acquire the lock on any of its descendants, but never its
  * ancestors.  To facilitate this strategy, the {@link #getParent()} is not synchronized, but it
  * is made volatile to assure the current value is always used.
  * <P>
@@ -57,7 +57,7 @@ import ghidra.util.SystemUtilities;
  * additional changes are done.  This is why those operations are required to be done on the swing
  * thread, which combined with the fact that all mutate operations are synchronized, keeps the JTree
  * happy.
- * 
+ *
  */
 abstract class CoreGTreeNode implements Cloneable {
 	// the parent is volatile to facilitate the synchronization strategy (see comments above)
@@ -66,7 +66,7 @@ abstract class CoreGTreeNode implements Cloneable {
 
 	/**
 	 * Returns the parent of this node.
-	 * 
+	 *
 	 * Note: this method is deliberately not synchronized (See comments above)
 	 * @return the parent of this node.
 	 */
@@ -74,7 +74,7 @@ abstract class CoreGTreeNode implements Cloneable {
 		GTreeNode localParent = parent;
 
 		// Do not return the GTree's fake root node parent.  From the client's perspective,
-		// this node does not exist.		
+		// this node does not exist.
 		if (localParent instanceof GTreeRootParentNode) {
 			return null;
 		}
@@ -90,7 +90,7 @@ abstract class CoreGTreeNode implements Cloneable {
 		this.parent = parent;
 	}
 
-	// provides direct access to the children list 
+	// provides direct access to the children list
 	protected final List<GTreeNode> children() {
 		synchronized (this) {
 			if (isLoaded()) {
@@ -127,7 +127,7 @@ abstract class CoreGTreeNode implements Cloneable {
 
 	/**
 	 * Subclasses implement this method to initially load the children.
-	 * @return a list of the initial children for this node. 
+	 * @return a list of the initial children for this node.
 	 */
 	protected abstract List<GTreeNode> generateChildren();
 
@@ -282,7 +282,7 @@ abstract class CoreGTreeNode implements Cloneable {
 	}
 
 	/**
-	 * Returns true if the node is in the process of loading its children. 
+	 * Returns true if the node is in the process of loading its children.
 	 * See {@link GTreeSlowLoadingNode}
 	 * @return true if the node is in the process of loading its children.
 	 */
@@ -293,7 +293,7 @@ abstract class CoreGTreeNode implements Cloneable {
 	/**
 	 * True if the children for this node have been loaded yet.  Some GTree nodes are lazy in that they
 	 * don't load their children until needed. Nodes that have the IN_PROGRESS node as it child
-	 * is considered loaded if in the swing thread, otherwise they are considered not loaded. 
+	 * is considered loaded if in the swing thread, otherwise they are considered not loaded.
 	 * @return true if the children for this node have been loaded.
 	 */
 	public synchronized boolean isLoaded() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,9 +18,9 @@ package ghidra.framework.main.logviewer.model;
 import java.io.*;
 
 /**
- * 
- * Reads in a single line of text from a given input file, in reverse order. 
- * 
+ *
+ * Reads in a single line of text from a given input file, in reverse order.
+ *
  * CONOPS:
  * 	1. Start at a given position in the file and read BUFFER_SIZE bytes into a byte array
  *  2. From the end of the array, read a character
@@ -35,7 +35,7 @@ public class ReverseLineReader {
 	public RandomAccessFile raf;
 
 	/**
-	 * 
+	 *
 	 * @param encoding
 	 * @param raf
 	 * @throws IOException
@@ -47,7 +47,7 @@ public class ReverseLineReader {
 
 	/**
 	 * Moves the file pointer to the given byte location.
-	 * 
+	 *
 	 * @param position
 	 */
 	public void setFilePos(long position) {
@@ -60,16 +60,16 @@ public class ReverseLineReader {
 		}
 	}
 
-	
+
 	/**
 	 * Reads a single line from the current file pointer position, in reverse.  To do this we do
 	 * the following:
-	 * 
+	 *
 	 * 1. Read a 'large enough' number of bytes into a buffer (enough to guarantee a full line of
 	 *    text.
 	 * 2. Move backwards through the bytes just read until a newline or carriage return is found.
 	 * 3. Throw away the rest of the bytes and return the line found.
-	 * 
+	 *
 	 * @return
 	 * @throws IOException
 	 */
@@ -133,7 +133,7 @@ public class ReverseLineReader {
 
 	/**
 	 * Converts the contents of the output stream to a string.
-	 * 
+	 *
 	 * @return
 	 * @throws UnsupportedEncodingException
 	 */

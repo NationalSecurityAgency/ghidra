@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ import ghidra.util.StringUtilities;
  * The tool tip text shows relationships to key topological elements of the program relative to
  * the address -- offset from image base, offset from current memory block; if the address is
  * within the bounds of a function, the offset from function entry point; if the address is within
- * the bounds of defined data, the offset from the start of the data. 
+ * the bounds of defined data, the offset from the start of the data.
  */
 public class ProgramAddressRelationshipListingHover extends AbstractConfigurableHover
 		implements ListingHoverService {

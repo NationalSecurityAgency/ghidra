@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,9 +44,9 @@ public class CreateEquateCmd extends BackgroundCommand {
 	private Enum enoom;
 
 	/**
-	 * 
+	 *
 	 * @param scalar user defined scalar to search for in program
-	 * @param iter the range of code units for which to maybe create equates 
+	 * @param iter the range of code units for which to maybe create equates
 	 * @param equateName user defined name for the new equate to be set
 	 * @param overwriteExisting
 	 */
@@ -62,9 +62,9 @@ public class CreateEquateCmd extends BackgroundCommand {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param scalar user defined scalar to search for in program
-	 * @param iter the range of code units for which to maybe create equates 
+	 * @param iter the range of code units for which to maybe create equates
 	 * @param enoom the enum to use for formatting the equate name
 	 * @param overwriteExisting
 	 */
@@ -156,7 +156,7 @@ public class CreateEquateCmd extends BackgroundCommand {
 			cmd.applyTo(domain);
 		}
 	}
-	
+
 	private String generateFormattedEquateName() {
 		Program program = context.getProgram();
 		Enum enumWithId = (Enum) program.getDataTypeManager().addDataType(enoom, null);

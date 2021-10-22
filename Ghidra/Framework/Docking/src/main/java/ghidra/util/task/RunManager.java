@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,14 +32,14 @@ import ghidra.util.worker.Worker;
  * <p>
  * 1) Only allow one runnable at any given time.  In this model, a new runnable will cause any running
  * runnable to be cancelled and the new runnable will begin running. Because of this, there will
- * never be any runnables waiting in the queue. Use the {@link #runNow(MonitoredRunnable, String)} 
+ * never be any runnables waiting in the queue. Use the {@link #runNow(MonitoredRunnable, String)}
  * method to get this behavior.
  * <p>
  * 2) Allow one running runnable and one pending runnable.  In this mode, any running runnable will be
  * allowed to complete, but any currently pending runnable will be replaced by the new runnable. Use
  * the {@link #runNext(MonitoredRunnable, String)} method to get this behavior.
  * <p>
- * 3) Run all scheduled runnables in the order they are scheduled.  Use the 
+ * 3) Run all scheduled runnables in the order they are scheduled.  Use the
  * {@link #runLater(MonitoredRunnable, String, int)} for this behavior.
  * <p>
  * If the given runnable has Swing work to perform after the main Runnable.run() method completes
@@ -375,7 +375,7 @@ public class RunManager {
 			private boolean wasCancelled;
 
 			public SwingRunner(boolean cancelledWhileRunning) {
-				// cancelledWhileRunning is true if we were started and then cancelled; 
+				// cancelledWhileRunning is true if we were started and then cancelled;
 				// isCancelled() is true if we were never started, but cancelled
 				boolean cancelledBeforeStarted = isCancelled();
 				this.wasCancelled = cancelledWhileRunning || cancelledBeforeStarted;

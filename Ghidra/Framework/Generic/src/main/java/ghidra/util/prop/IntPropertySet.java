@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,11 +23,11 @@ import java.io.*;
 
 /**
  *  Handles  general storage and retrieval of int values indexed by long keys.
- * 
+ *
  */
 public class IntPropertySet extends PropertySet {
     private final static long serialVersionUID = 1;
-    
+
 	/**
 	 * Constructor for IntPropertySet.
 	 * @param name the name associated with this property set
@@ -104,7 +104,7 @@ public class IntPropertySet extends PropertySet {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.util.prop.PropertySet#applyValue(PropertyVisitor, long)
 	 */
 	@Override

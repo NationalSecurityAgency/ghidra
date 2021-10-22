@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ public class CreateGhidraProjectWizardPage extends WizardPage {
 
 	/**
 	 * Creates a Ghidra new project wizard page with the given suggested project name.
-	 * 
+	 *
 	 * @param suggestedProjectName The suggested project name.
 	 */
 	public CreateGhidraProjectWizardPage(String suggestedProjectName) {
@@ -57,7 +57,7 @@ public class CreateGhidraProjectWizardPage extends WizardPage {
 		setDescription("Create a new Ghidra project.");
 		this.suggestedProjectName = suggestedProjectName;
 	}
-	
+
 	/**
 	 * Creates a Ghidra new project wizard page.
 	 */
@@ -70,7 +70,7 @@ public class CreateGhidraProjectWizardPage extends WizardPage {
 
 		Composite container = new Composite(parent, SWT.NULL);
 		container.setLayout(new GridLayout(3, false));
-		
+
 		// Project name
 		Label projectNameLabel = new Label(container, SWT.NULL);
 		projectNameLabel.setText("Project name:");
@@ -142,7 +142,7 @@ public class CreateGhidraProjectWizardPage extends WizardPage {
 
 	/**
 	 * Gets the name of the project.
-	 * 
+	 *
 	 * @return The name of the project.
 	 */
 	public String getProjectName() {
@@ -151,9 +151,9 @@ public class CreateGhidraProjectWizardPage extends WizardPage {
 
 	/**
 	 * Gets the project directory. This is the directory where the .project file should live.
-	 * 
+	 *
 	 * @return The project directory. This is the directory where the .project file should live.
-	 *   Could be null if unspecified, however, the page will not be valid until the project 
+	 *   Could be null if unspecified, however, the page will not be valid until the project
 	 *   directory is valid, so it should never be null when called by other classes.
 	 */
 	public File getProjectDir() {
@@ -169,7 +169,7 @@ public class CreateGhidraProjectWizardPage extends WizardPage {
 	/**
 	 * Checks to see whether or not a run configuration for the new project should be automatically
 	 * created.
-	 * 
+	 *
 	 * @return True if a run configuration for the new project should be automatically created;
 	 *   otherwise, false.
 	 */
@@ -179,7 +179,7 @@ public class CreateGhidraProjectWizardPage extends WizardPage {
 
 	/**
 	 * Gets the run configuration's desired memory.
-	 * 
+	 *
 	 * @return The run configuration's desired memory.  Could be null if unspecified.
 	 */
 	public String getRunConfigMemory() {
@@ -198,7 +198,7 @@ public class CreateGhidraProjectWizardPage extends WizardPage {
 
 		final String BAD = GhidraProjectUtils.ILLEGAL_FILENAME_CHARS;
 		final String BAD_START = GhidraProjectUtils.ILLEGAL_FILENAME_START_CHARS;
-		
+
 		runConfigMemoryText.setEnabled(createRunConfigCheckboxButton.getSelection());
 		runConfigMemoryText.setMessage(runConfigMemoryText.isEnabled() ? "default" : "");
 

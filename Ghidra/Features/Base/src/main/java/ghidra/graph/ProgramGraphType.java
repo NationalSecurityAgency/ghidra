@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ public abstract class ProgramGraphType extends GraphType {
 	private static List<String> vertexTypes = new ArrayList<>();
 	private static List<String> edgeTypes = new ArrayList<>();
 	//@formatter:off
-	
+
 	// Vertex Types
 	public static final String BODY = vertex("Body");
 	public static final String ENTRY = vertex("Entry");
@@ -45,7 +45,7 @@ public abstract class ProgramGraphType extends GraphType {
 	public static final String DATA = vertex("Data");
 	public static final String ENTRY_NEXUS = vertex("Entry-Nexus");
 	public static final String STACK = vertex("Stack");
-	
+
 	// Edge Types - Flow
 	public static final String ENTRY_EDGE = edge("Entry");  // This edge if for adding an "Entry Nexus" Vertex
 	public static final String FALL_THROUGH = edge(map(RefType.FALL_THROUGH));
@@ -59,11 +59,11 @@ public abstract class ProgramGraphType extends GraphType {
 	public static final String CONDITIONAL_CALL = edge(map(RefType.CONDITIONAL_CALL));
 	public static final String CONDITIONAL_TERMINATOR = edge(map(RefType.CONDITIONAL_TERMINATOR));
 	public static final String CONDITIONAL_CALL_TERMINATOR =edge(map(RefType.CONDITIONAL_CALL_TERMINATOR));
-	
+
 	public static final String COMPUTED_JUMP = edge(map(RefType.COMPUTED_JUMP));
 	public static final String COMPUTED_CALL = edge(map(RefType.COMPUTED_CALL));
 	public static final String COMPUTED_CALL_TERMINATOR = edge(map(RefType.COMPUTED_CALL_TERMINATOR));
-	
+
 	public static final String CONDITIONAL_COMPUTED_CALL = edge(map(RefType.CONDITIONAL_COMPUTED_CALL));
 	public static final String CONDITIONAL_COMPUTED_JUMP =edge(map(RefType.CONDITIONAL_COMPUTED_JUMP));
 
@@ -78,7 +78,7 @@ public abstract class ProgramGraphType extends GraphType {
 	public static final String READ_WRITE = edge(map(RefType.READ_WRITE));
 	public static final String UNKNOWN_DATA = edge(map(RefType.DATA));
 	public static final String EXTERNAL_REF = edge(map(RefType.EXTERNAL_REF));
-	
+
 	public static final String READ_INDIRECT = edge(map(RefType.READ_IND));
 	public static final String WRITE_INDIRECT = edge(map(RefType.WRITE_IND));
 	public static final String READ_WRITE_INDIRECT = edge(map(RefType.READ_WRITE_IND));
@@ -86,7 +86,7 @@ public abstract class ProgramGraphType extends GraphType {
 
 	public static final String PARAM = edge(map(RefType.PARAM));
 	public static final String THUNK = edge(map(RefType.THUNK));
-	
+
 	//@formatter:on
 
 	protected ProgramGraphType(String name, String description) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import ghidra.program.util.DefaultLanguageService;
 
 /**
  * Represents an opinion's processor language and compiler.
- * 
+ *
  * @see LanguageID
  * @see CompilerSpecID
  */
@@ -30,7 +30,7 @@ public final class LanguageCompilerSpecPair implements Comparable<LanguageCompil
 
 	/**
 	 * Creates a new language and compiler pair.
-	 * 
+	 *
 	 * @param languageID The language ID string (x86:LE:32:default, 8051:BE:16:default, etc).
 	 * @param compilerSpecID The compiler spec ID string (gcc, borlandcpp, etc).
 	 * @throws IllegalArgumentException if the language or compiler ID strings are null or empty.
@@ -54,7 +54,7 @@ public final class LanguageCompilerSpecPair implements Comparable<LanguageCompil
 
 	/**
 	 * Creates a new language and compiler pair.
-	 * 
+	 *
 	 * @param languageID The language ID.
 	 * @param compilerSpecID The compiler spec ID.
 	 * @throws IllegalArgumentException if the language or compiler ID is null.
@@ -72,7 +72,7 @@ public final class LanguageCompilerSpecPair implements Comparable<LanguageCompil
 
 	/**
 	 * Gets the {@link Language} for this object's {@link LanguageID}.
-	 * 
+	 *
 	 * @return The {@link Language} for this object's {@link LanguageID}.
 	 * @throws LanguageNotFoundException if no {@link Language} could be found for this
 	 *   object's {@link LanguageID}.
@@ -83,7 +83,7 @@ public final class LanguageCompilerSpecPair implements Comparable<LanguageCompil
 
 	/**
 	 * Gets the {@link CompilerSpec} for this object's {@link CompilerSpecID}.
-	 * 
+	 *
 	 * @return The {@link CompilerSpec} for this object's {@link CompilerSpecID}.
 	 * @throws LanguageNotFoundException if no {@link Language} could be found for this
 	 *   object's {@link LanguageID}.
@@ -98,7 +98,7 @@ public final class LanguageCompilerSpecPair implements Comparable<LanguageCompil
 	/**
 	 * Gets the {@link Language} for this object's {@link LanguageID}, using the given language
 	 * service to do the lookup.
-	 * 
+	 *
 	 * @param languageService The language service to use for language lookup.
 	 * @return The {@link Language} for this object's {@link LanguageID}, using the given language
 	 *   service to do the lookup.
@@ -112,9 +112,9 @@ public final class LanguageCompilerSpecPair implements Comparable<LanguageCompil
 	/**
 	 * Gets the {@link CompilerSpec} for this object's {@link CompilerSpecID}, using the given
 	 * language service to do the lookup.
-	 * 
+	 *
 	 * @param languageService The language service to use for compiler lookup.
-	 * @return The {@link CompilerSpec} for this object's {@link CompilerSpecID}, using the given 
+	 * @return The {@link CompilerSpec} for this object's {@link CompilerSpecID}, using the given
 	 *   language service to do the lookup.
 	 * @throws LanguageNotFoundException if no {@link Language} could be found for this
 	 *   object's {@link LanguageID} using the given language service.
@@ -128,7 +128,7 @@ public final class LanguageCompilerSpecPair implements Comparable<LanguageCompil
 
 	/**
 	 * Gets the {@link LanguageDescription} for this object's {@link LanguageID}.
-	 * 
+	 *
 	 * @return The {@link LanguageDescription} for this object's {@link LanguageID}.
 	 * @throws LanguageNotFoundException if no {@link LanguageDescription} could be found for this
 	 *   object's {@link LanguageID}.
@@ -139,11 +139,11 @@ public final class LanguageCompilerSpecPair implements Comparable<LanguageCompil
 
 	/**
 	 * Gets the {@link CompilerSpecDescription} for this object's {@link CompilerSpecID}.
-	 * 
+	 *
 	 * @return The {@link CompilerSpecDescription} for this object's {@link CompilerSpecID}.
 	 * @throws LanguageNotFoundException if no {@link LanguageDescription} could be found for this
 	 *   object's {@link LanguageID}.
-	 * @throws CompilerSpecNotFoundException if no {@link CompilerSpecDescription} could be found 
+	 * @throws CompilerSpecNotFoundException if no {@link CompilerSpecDescription} could be found
 	 *   for this object's {@link CompilerSpecID}.
 	 */
 	public CompilerSpecDescription getCompilerSpecDescription()
@@ -153,7 +153,7 @@ public final class LanguageCompilerSpecPair implements Comparable<LanguageCompil
 
 	/**
 	 * Gets the {@link LanguageDescription} for this object's {@link LanguageID}.
-	 * 
+	 *
 	 * @param languageService The language service to use for description lookup.
 	 * @return The {@link LanguageDescription} for this object's {@link LanguageID}.
 	 * @throws LanguageNotFoundException if no {@link LanguageDescription} could be found for this
@@ -166,12 +166,12 @@ public final class LanguageCompilerSpecPair implements Comparable<LanguageCompil
 
 	/**
 	 * Gets the {@link CompilerSpecDescription} for this object's {@link CompilerSpecID}.
-	 * 
+	 *
 	 * @param languageService The language service to use for description lookup.
 	 * @return The {@link CompilerSpecDescription} for this object's {@link CompilerSpecID}.
 	 * @throws LanguageNotFoundException if no {@link LanguageDescription} could be found for this
 	 *   object's {@link LanguageID}.
-	 * @throws CompilerSpecNotFoundException if no {@link CompilerSpecDescription} could be found 
+	 * @throws CompilerSpecNotFoundException if no {@link CompilerSpecDescription} could be found
 	 *   for this object's {@link CompilerSpecID} using the given language service.
 	 */
 	public CompilerSpecDescription getCompilerSpecDescription(LanguageService languageService)

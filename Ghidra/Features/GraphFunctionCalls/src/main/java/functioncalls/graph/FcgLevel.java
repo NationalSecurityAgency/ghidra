@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,8 @@ import static functioncalls.graph.FcgDirection.IN_AND_OUT;
 import static functioncalls.graph.FcgDirection.OUT;
 
 /**
- * A container class that represents a {@link FunctionCallGraph} level, or row.   A level 
- * is both the row of the vertex (the number of hops from the source vertex) and the 
+ * A container class that represents a {@link FunctionCallGraph} level, or row.   A level
+ * is both the row of the vertex (the number of hops from the source vertex) and the
  * direction.
  */
 public class FcgLevel implements Comparable<FcgLevel> {
@@ -64,9 +64,9 @@ public class FcgLevel implements Comparable<FcgLevel> {
 	}
 
 	/**
-	 * Returns true if this level represents the source level from which all other levels 
+	 * Returns true if this level represents the source level from which all other levels
 	 * emanate, which is row 1.
-	 * 
+	 *
 	 * @return true if this level represents the source level
 	 */
 	public boolean isSource() {
@@ -74,9 +74,9 @@ public class FcgLevel implements Comparable<FcgLevel> {
 	}
 
 	/**
-	 * Returns the parent level of this level.  The parent of a level has the same direction 
+	 * Returns the parent level of this level.  The parent of a level has the same direction
 	 * as this level, with a distance of one less than this level.
-	 * 
+	 *
 	 * @return returns the parent level of this level
 	 * @throws IllegalArgumentException if this is the source level, which is row 1
 	 */
@@ -96,9 +96,9 @@ public class FcgLevel implements Comparable<FcgLevel> {
 	}
 
 	/**
-	 * Returns the child level of this level.  The child of a level has the same direction 
+	 * Returns the child level of this level.  The child of a level has the same direction
 	 * as this level, with a distance of one more than this level.
-	 * 
+	 *
 	 * @return returns the child level of this level
 	 * @throws IllegalArgumentException if this is the source level, which is row 1
 	 */
@@ -114,9 +114,9 @@ public class FcgLevel implements Comparable<FcgLevel> {
 
 	/**
 	 * Returns true if this level is the immediate predecessor of the given other level.
-	 * 
+	 *
 	 * <P>The <tt>source</tt> level is the parent of the first level in either direction.
-	 * 
+	 *
 	 * @param other the other level that is a potential child level
 	 * @return true if this level is the immediate predecessor of the given other level
 	 */
@@ -135,7 +135,7 @@ public class FcgLevel implements Comparable<FcgLevel> {
 
 	/**
 	 * Returns true if this level is the immediate successor of the given other level
-	 * 
+	 *
 	 * @param other the other level that is a potential child level
 	 * @return true if this level is the immediate successor of the given other level
 	 */
@@ -144,9 +144,9 @@ public class FcgLevel implements Comparable<FcgLevel> {
 	}
 
 	/**
-	 * Returns the child level of this level.  The child of a level has the same direction 
+	 * Returns the child level of this level.  The child of a level has the same direction
 	 * as this level, with a distance of one more than this level.
-	 * 
+	 *
 	 * @param the direction of the child
 	 * @return returns the child level of this level
 	 * @throws IllegalArgumentException if this is the source level, which is row 1
@@ -198,8 +198,8 @@ public class FcgLevel implements Comparable<FcgLevel> {
 	}
 
 	/**
-	 * Returns the row of this vertex 
-	 * @return the row of this vertex 
+	 * Returns the row of this vertex
+	 * @return the row of this vertex
 	 */
 	private int getRelativeRow() {
 		return direction == OUT ? -row : row;

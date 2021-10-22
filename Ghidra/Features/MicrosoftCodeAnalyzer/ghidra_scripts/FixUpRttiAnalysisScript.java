@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Script to fix up Windows RTTI vtables and structures 
+// Script to fix up Windows RTTI vtables and structures
 //@category C++
 
 import java.util.*;
@@ -113,7 +113,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 
 	/**
 	 * Method to iterate over all symbols with Base Class Descriptor symbol and if
-	 * the correct data type has not already been created, do so. 
+	 * the correct data type has not already been created, do so.
 	 * @return List of all symbols with valid (even previously) BaseClassDescriptor structure applied
 	 * @throws CancelledException when cancelled
 	 * @throws Exception when data cannot be created
@@ -181,7 +181,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 
 	/**
 	 * Method to iterate over all symbols with Base Class Descriptor symbol and if
-	 * the correct data type has not already been created, do so. 
+	 * the correct data type has not already been created, do so.
 	 * @return List of all symbols with valid (even previously) BaseClassDescriptor structure applied
 	 * @throws Exception when cancelled
 	 */
@@ -244,13 +244,13 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 	}
 
 	/**
-	 * Method to apply missing RTTI Base Class Descriptor structures and symbols  
+	 * Method to apply missing RTTI Base Class Descriptor structures and symbols
 	 * @param address address to apply the missing structure and symbol
 	 * @param numBaseClasses number of base classes in the array pointing to BaseClassDescriptors
 	 * @param classNamespace name of the class
 	 * @throws AddressOutOfBoundsException if try clear listing at address out of bounds
 	 * @throws MemoryAccessException  if cannot access memory
-	 * @throws CancelledException if cancelled 
+	 * @throws CancelledException if cancelled
 	 * @throws Exception if issue making data
 	 */
 	private void createBaseClassDescriptors(Address address, int numBaseClasses,
@@ -290,7 +290,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param baseClassDescriptors the given list of BaseClassDescriptor symbols
 	 * @param completeObjectLocators the given list of CompleteObjectLocator symbols
 	 * @return list of ClassHierarchyDescriptor addresses
@@ -337,7 +337,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param address the address where the ClassHierarchyDescriptor is to be created
 	 * @param classNamespace the namespace of the class
 	 * @return the given class's ClassHierarchyDescriptor address
@@ -379,7 +379,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 	}
 
 	/**
-	 * Method to create a ClassHierarchyDescriptor structure at the given address 
+	 * Method to create a ClassHierarchyDescriptor structure at the given address
 	 * @param classHierarchyDescriptorAddress the address where the structure will be created
 	 * @return the created ClassHierarchyDescriptor data or null if it couldn't be created
 	 * @throws CancelledException if cancelled
@@ -403,7 +403,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param classHierarchyDescriptors the given list of applied ClassHierarchyDescriptor structures
 	 * @return a list of base class array addresses
 	 * @throws CancelledException if cancelled
@@ -463,7 +463,7 @@ public class FixUpRttiAnalysisScript extends GhidraScript {
 	/**
 	 * Method to create a base class array at the given address with the given number of base class's in the array
 	 * @param baseClassArrayAddress the address where the array will be created
-	 * @param numBaseClasses the number of BaseClass's in the array 
+	 * @param numBaseClasses the number of BaseClass's in the array
 	 * @return the created BaseClassArray data or null if cannot retrieve it
 	 * @throws CancelledException if cancelled
 	 * @throws Exception if error creating data

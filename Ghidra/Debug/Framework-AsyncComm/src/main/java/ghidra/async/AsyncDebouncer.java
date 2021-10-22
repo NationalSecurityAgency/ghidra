@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 
 /**
  * A debouncer for asynchronous events
- * 
+ *
  * <P>
  * A debouncer has an input "contact" event and produces an output "settled" once sufficient time
  * has passed since the last contact event. The goal is to prevent the needless frequent firing of
@@ -45,7 +45,7 @@ public class AsyncDebouncer<T> {
 
 	/**
 	 * Construct a new debouncer
-	 * 
+	 *
 	 * @param timer the timer to use for delay
 	 * @param windowMillis the timing window of changes to elide
 	 */
@@ -56,7 +56,7 @@ public class AsyncDebouncer<T> {
 
 	/**
 	 * Add a listener for the settled event
-	 * 
+	 *
 	 * @param listener the listener
 	 */
 	public synchronized void addListener(Consumer<T> listener) {
@@ -65,7 +65,7 @@ public class AsyncDebouncer<T> {
 
 	/**
 	 * Remove a listener from the settled event
-	 * 
+	 *
 	 * @param listener the listener
 	 */
 	public synchronized void removeListener(Consumer<T> listener) {
@@ -94,11 +94,11 @@ public class AsyncDebouncer<T> {
 
 	/**
 	 * Send a contact event
-	 * 
+	 *
 	 * <P>
 	 * This sets or resets the timer for the event window. The settled event will fire with the
 	 * given value after this waiting period, unless another contact event occurs first.
-	 * 
+	 *
 	 * @param val
 	 */
 	public synchronized void contact(T val) {
@@ -111,7 +111,7 @@ public class AsyncDebouncer<T> {
 
 	/**
 	 * Receive the next settled event
-	 * 
+	 *
 	 * @return a future which completes with the value of the next settled event.
 	 */
 	public synchronized CompletableFuture<T> settled() {

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,13 +22,13 @@ import ghidra.program.model.listing.Program;
 
 /**
  *
- * Model to manage the values for expanding a block up. 
- * 
+ * Model to manage the values for expanding a block up.
+ *
  */
 class ExpandBlockUpModel extends ExpandBlockModel {
-	
+
 	/**
-	 * 
+	 *
 	 * Constructor
 	 * @param tool tool needed for the edits
 	 * @param program affected program
@@ -37,44 +37,44 @@ class ExpandBlockUpModel extends ExpandBlockModel {
 		super(tool, program);
 	}
 	/**
-	 * 
+	 *
 	 * @see ghidra.app.plugin.core.memory.ExpandBlockModel#setStartAddress(ghidra.program.model.address.Address)
 	 */
 	@Override
     void setStartAddress(Address addr) {
 		message = "";
 		startAddr = addr;
-		
+
 		if (startAddr == null) {
 			message = "Invalid Address";
 		}
 
 		else if (startAddr.compareTo(block.getStart()) >= 0) {
-			message = "Start must be less than " +  
+			message = "Start must be less than " +
 						  block.getStart();
 		}
 		else {
 			length = block.getEnd().subtract(startAddr) +1;
 		}
-		listener.stateChanged(null);		
+		listener.stateChanged(null);
 	}
 	/**
-	 * This method is not implemented; 
+	 * This method is not implemented;
 	 * can't set the end address for expanding up.
 	 */
 	@Override
     void setEndAddress(Address addr) {
 	}
 	/**
-	 * 
+	 *
 	 * @see ghidra.app.plugin.core.memory.ExpandBlockModel#setLength(int)
 	 */
 	@Override
     void setLength(long length) {
 		message = "";
-		
+
 		this.length = length;
-		if (isValidLength()) { 
+		if (isValidLength()) {
 			try {
 				startAddr = block.getEnd().subtractNoWrap(length-1);
 			} catch (Exception e) {

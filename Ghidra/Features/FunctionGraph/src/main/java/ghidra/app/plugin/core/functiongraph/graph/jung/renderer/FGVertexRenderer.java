@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,22 +97,22 @@ public class FGVertexRenderer extends VisualVertexRenderer<FGVertex, FGEdge> {
 
 		refreshVertexAsNeeded(vertex);
 
-		vertex.setShowing(true); // hack to make sure the component paints 
+		vertex.setShowing(true); // hack to make sure the component paints
 		super.paintVertex(rc, g, vertex, bounds, layout);
 		vertex.setShowing(false); // turn off painting (this fix keeps tooltips from painting)
 	}
 
 	/**
-	 * 	                     <center>Odd Code Alert!</center><br><p> 
+	 * 	                     <center>Odd Code Alert!</center><br><p>
 	 *	 We use a lazy model for rebuilding the Listings inside of each vertex as the model's
-	 *	 data changes.  We need a good place to tell the vertex to rebuild itself.  We 
-	 *	 decided that placing the call to rebuild here inside of the paint code is the best 
-	 *	 place because it will only happen when the vertex is actually being painted (i.e., 
+	 *	 data changes.  We need a good place to tell the vertex to rebuild itself.  We
+	 *	 decided that placing the call to rebuild here inside of the paint code is the best
+	 *	 place because it will only happen when the vertex is actually being painted (i.e.,
 	 *	 this paint call does not happen if the vertex is outside of the viewing area or
-	 *	 if it is scaled past the interaction threshold).  Finally, calling this method is 
-	 *	 not a performance problem, as the vertex's model will not rebuild itself if no 
+	 *	 if it is scaled past the interaction threshold).  Finally, calling this method is
+	 *	 not a performance problem, as the vertex's model will not rebuild itself if no
 	 *	 changes have been made
-	 *	
+	 *
 	 */
 	private void refreshVertexAsNeeded(FGVertex vertex) {
 		vertex.refreshModel();

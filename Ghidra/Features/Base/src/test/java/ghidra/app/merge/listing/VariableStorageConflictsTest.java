@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -117,37 +117,37 @@ public class VariableStorageConflictsTest extends AbstractGenericTest {
 	}
 
 	/**
-	
-	    
-	
+
+
+
 	Function@0x100415a
-	
-	             string *        Stack[0x8]:4        destStr                 XREF[2,0]:   0100416c(R),       
-	                                                                                      01004189(R)  
-	             undefined       Stack[0xc]:1        parm_3                  XREF[1,0]:   01004186(R)        
-	             undefined       Stack[0x10]:1       parm_4                  XREF[1,0]:   0100419c(R)        
-	             dword           Stack[-0x4]:4       i                       XREF[3,0]:   01004169(R),       
-	                                                                                      01004180(R), 
-	                                                                                      01004196(R)  
-	             float           Stack[-0x8]:4       count                   XREF[3,0]:   01004162(R),       
-	                                                                                      0100417c(R), 
-	                                                                                      010041a1(R)  
-	             byte            Stack[-0xc]:1       formatCount           
-	             
+
+	             string *        Stack[0x8]:4        destStr                 XREF[2,0]:   0100416c(R),
+	                                                                                      01004189(R)
+	             undefined       Stack[0xc]:1        parm_3                  XREF[1,0]:   01004186(R)
+	             undefined       Stack[0x10]:1       parm_4                  XREF[1,0]:   0100419c(R)
+	             dword           Stack[-0x4]:4       i                       XREF[3,0]:   01004169(R),
+	                                                                                      01004180(R),
+	                                                                                      01004196(R)
+	             float           Stack[-0x8]:4       count                   XREF[3,0]:   01004162(R),
+	                                                                                      0100417c(R),
+	                                                                                      010041a1(R)
+	             byte            Stack[-0xc]:1       formatCount
+
 	Function@0x1002cf5L
-	
-	             IntStruct * *   Stack[0x8]:4        param_1                 XREF[2,0]:   01002d3e(R),       
-	                                                                                      01002d5b(R)  
-	             byte[2][1][2]   Stack[0xc]:4        param_2                 XREF[2,0]:   01002d3a(R),       
-	                                                                                      01002d55(R)  
-	             undefined * *   Stack[0x10]:4       param_3                 XREF[3,0]:   01002d11(R),       
-	                                                                                      01002d2f(R), 
-	                                                                                      01002d58(R)  
-	             undefined * *   Stack[0x14]:4       param_4                 XREF[3,0]:   01002cf8(R),       
-	                                                                                      01002d06(R), 
-	                                                                                      01002d2c(R)  
-	             CoolUnion[3][2  Stack[0x18]:2880    param_5                 XREF[2,0]:   01002d37(R),   
-	
+
+	             IntStruct * *   Stack[0x8]:4        param_1                 XREF[2,0]:   01002d3e(R),
+	                                                                                      01002d5b(R)
+	             byte[2][1][2]   Stack[0xc]:4        param_2                 XREF[2,0]:   01002d3a(R),
+	                                                                                      01002d55(R)
+	             undefined * *   Stack[0x10]:4       param_3                 XREF[3,0]:   01002d11(R),
+	                                                                                      01002d2f(R),
+	                                                                                      01002d58(R)
+	             undefined * *   Stack[0x14]:4       param_4                 XREF[3,0]:   01002cf8(R),
+	                                                                                      01002d06(R),
+	                                                                                      01002d2c(R)
+	             CoolUnion[3][2  Stack[0x18]:2880    param_5                 XREF[2,0]:   01002d37(R),
+
 	**/
 
 	@Test

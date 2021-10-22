@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -89,7 +89,7 @@ public class MIPS_ElfRelocationConstants {
 	public static final int R_MIPS16_TLS_GOTTPREL = 110;
 	public static final int R_MIPS16_TLS_TPREL_HI16 = 111;
 	public static final int R_MIPS16_TLS_TPREL_LO16 = 112;
-	
+
 	public static final int R_MIPS16_LO = 100; // First MIPS16 reloc type
 	public static final int R_MIPS16_HI = 112; // Last MIPS16 reloc type
 
@@ -108,7 +108,7 @@ public class MIPS_ElfRelocationConstants {
 	public static final int R_MICROMIPS_PC10_S1 = 140;  // no shuffle required
 	public static final int R_MICROMIPS_PC16_S1 = 141;
 	public static final int R_MICROMIPS_CALL16 = 142;
-	
+
 	public static final int R_MICROMIPS_GOT_DISP = 145;
 	public static final int R_MICROMIPS_GOT_PAGE = 146;
 	public static final int R_MICROMIPS_GOT_OFST = 147;
@@ -129,14 +129,14 @@ public class MIPS_ElfRelocationConstants {
 	public static final int R_MICROMIPS_TLS_DTPREL_HI16 = 164;
 	public static final int R_MICROMIPS_TLS_DTPREL_LO16 = 165;
 	public static final int R_MICROMIPS_TLS_GOTTPREL = 166;
-	
+
 	public static final int R_MICROMIPS_TLS_TPREL_HI16 = 169;
-	
+
 	public static final int R_MICROMIPS_TLS_TPREL_LO16 = 170;
 
 	public static final int R_MICROMIPS_GPREL7_S2 = 172;
-	public static final int R_MICROMIPS_PC23_S2 = 173;	
-	
+	public static final int R_MICROMIPS_PC23_S2 = 173;
+
 	public static final int R_MICROMIPS_LO = 133; // First MicroMIPS reloc type
 	public static final int R_MICROMIPS_HI = 173; // Last MicroMIPS reloc type
 
@@ -144,7 +144,7 @@ public class MIPS_ElfRelocationConstants {
 
 	// Masks for manipulating MIPS relocation targets
 	public static final int MIPS_LOW26 = 0x03FFFFFF;
-	
+
 	private MIPS_ElfRelocationConstants() {
 		// no construct
 	}

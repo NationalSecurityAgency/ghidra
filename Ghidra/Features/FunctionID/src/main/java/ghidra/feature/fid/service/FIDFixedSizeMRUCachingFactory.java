@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.util.datastruct.LRUMap;
 /**
  * The caching factory for FID function hashes.  Greatly speeds up processing by memoizing hash
  * valuses for functions which are used repeatedly in different contexts.
- * 
+ *
  * NOTE: The function is passed to the factory to create and cache the hash, however the
  * function hashes are keyed by the entry point of the function.
  */

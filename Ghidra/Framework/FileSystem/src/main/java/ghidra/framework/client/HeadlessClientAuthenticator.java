@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.net.ApplicationKeyManagerFactory;
 import ghidra.util.Msg;
 
 /**
- * <code>HeadlessClientAuthenticator</code> provides the ability to install a Ghidra Server 
+ * <code>HeadlessClientAuthenticator</code> provides the ability to install a Ghidra Server
  * authenticator needed when operating in a headless mode.
  */
 public class HeadlessClientAuthenticator implements ClientAuthenticator {
@@ -68,9 +68,9 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 	 * @param keystorePath optional PKI or SSH keystore path.  May also be specified
 	 * as resource path for SSH key.
 	 * @param allowPasswordPrompt if true the user may be prompted for passwords
-	 * via the console (stdin).  Please note that the Java console will echo 
+	 * via the console (stdin).  Please note that the Java console will echo
 	 * the password entry to the terminal which may be undesirable.
-	 * @throws IOException if error occurs while opening specified keystorePath 
+	 * @throws IOException if error occurs while opening specified keystorePath
 	 */
 	public static void installHeadlessClientAuthenticator(String username, String keystorePath,
 			boolean allowPasswordPrompt) throws IOException {
@@ -161,7 +161,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 				prompt = "Password:";
 			}
 
-			// With the new GhidraClassLoader/GhidraLauncher it should be possible to get a Console 
+			// With the new GhidraClassLoader/GhidraLauncher it should be possible to get a Console
 			// object, which allow masking of passwords.
 			Console cons = System.console();
 
@@ -232,7 +232,7 @@ public class HeadlessClientAuthenticator implements ClientAuthenticator {
 
 	@Override
 	public boolean promptForReconnect(Component parent, String message) {
-		// assumes connection attempt was immediately done when this 
+		// assumes connection attempt was immediately done when this
 		// ClientAuthenticator was installed
 		return false;
 	}

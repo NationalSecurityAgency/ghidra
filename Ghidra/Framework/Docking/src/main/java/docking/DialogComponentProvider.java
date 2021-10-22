@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -367,7 +367,7 @@ public class DialogComponentProvider
 	 * </ul>
 	 * To change this behavior, call {@link #setDefaultButton(JButton)} with the desired
 	 * default button.
-	 * 
+	 *
 	 * @param button the button
 	 */
 	protected void addButton(JButton button) {
@@ -607,7 +607,7 @@ public class DialogComponentProvider
 
 	/**
 	 * Sets the text in the dialog's status line using the default color
-	 * 
+	 *
 	 * @param text the text to display in the status line
 	 */
 	@Override
@@ -813,7 +813,7 @@ public class DialogComponentProvider
 
 	/**
 	 * Returns the current status in the dialogs status line
-	 * 
+	 *
 	 * @return the status text
 	 */
 	public String getStatusText() {
@@ -1291,7 +1291,7 @@ public class DialogComponentProvider
 	 * size) no matter which window this dialog is launched from.  The default is not to use
 	 * shared location and size, which means that there is a remembered location and size for this
 	 * dialog for each window that has launched it (i.e. the window is the parent of the dialog).
-	 * 
+	 *
 	 * @param useSharedLocation true to share locations
 	 */
 	public void setUseSharedLocation(boolean useSharedLocation) {
@@ -1302,7 +1302,7 @@ public class DialogComponentProvider
 	 * Returns true if this dialog is intended to be shown and hidden relatively quickly.  This
 	 * is used to determine if this dialog should be allowed to parent other components.   The
 	 * default is false.
-	 * 
+	 *
 	 * @return true if this dialog is transient
 	 */
 	public boolean isTransient() {
@@ -1311,7 +1311,7 @@ public class DialogComponentProvider
 
 	/**
 	 * Sets this dialog to be transient (see {@link #isTransient()}
-	 * 
+	 *
 	 * @param isTransient true for transient; false is the default
 	 */
 	public void setTransient(boolean isTransient) {

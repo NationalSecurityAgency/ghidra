@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.util.Iterator;
 import ghidra.program.model.address.Address;
 
 /**
- * 
+ *
  *
  * Some extra things attached to PcodeOp for ease of walking the syntax tree
  */
@@ -38,9 +38,9 @@ public class PcodeOpAST extends PcodeOp {
 		parent = null;
 		basiciter = null;
 		insertiter = null;
-//		codeiter = null;	
+//		codeiter = null;
 	}
-	
+
 	public PcodeOpAST(Address a, int uq, int op, int numinputs)
 	{
 		this(new SequenceNumber(a,uq),op,numinputs);
@@ -61,7 +61,7 @@ public class PcodeOpAST extends PcodeOp {
     public PcodeBlockBasic getParent() {
 		return parent;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see ghidra.program.model.pcode.PcodeOp#getBasicIter()
 	 */
@@ -69,7 +69,7 @@ public class PcodeOpAST extends PcodeOp {
     public Iterator<PcodeOp> getBasicIter() {
 		return basiciter;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see ghidra.program.model.pcode.PcodeOp#getInsertIter()
 	 */
@@ -77,29 +77,29 @@ public class PcodeOpAST extends PcodeOp {
     public Iterator<Object> getInsertIter() {
 		return insertiter;
 	}
-	
+
 //	public Iterator getCodeIter() {
 //		return codeiter;
 //	}
 
 	/**
 	 * Set the parent basic block this pcode is contained within.
-	 * 
+	 *
 	 * @param par parent basic block.
 	 */
 	public void setParent(PcodeBlockBasic par) {
-		parent = par;	
+		parent = par;
 	}
-	
+
 	/**
 	 * Set the iterator being used to iterate the pcode within a basic block.
-	 * 
+	 *
 	 * @param iter
 	 */
 	public void setBasicIter(Iterator<PcodeOp> iter) {
 		basiciter = iter;
 	}
-	
+
 	/**
 	 * Set the iterator being used to iterate the pcode to insert within a block.
 	 * @param iter
@@ -107,7 +107,7 @@ public class PcodeOpAST extends PcodeOp {
 	public void setInsertIter(Iterator<Object> iter) {
 		insertiter = iter;
 	}
-	
+
 //	public void setCodeIter(Iterator iter) {
 //		codeiter = iter;
 //	}

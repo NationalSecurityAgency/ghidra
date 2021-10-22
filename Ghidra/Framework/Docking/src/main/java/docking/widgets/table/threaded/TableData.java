@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,8 @@ import docking.widgets.table.TableSortingContext;
 import ghidra.util.SystemUtilities;
 
 /**
- * A concept that represents the data used by the {@link ThreadedTableModel}.  This class 
- * encapsulates the actual data, along with any filter applied, any sort applied, along with 
+ * A concept that represents the data used by the {@link ThreadedTableModel}.  This class
+ * encapsulates the actual data, along with any filter applied, any sort applied, along with
  * some convenience methods for performing operations on this group of data.
  *
  * @param <ROW_OBJECT> the row type
@@ -33,9 +33,9 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 
 	private static int nextID = 0;
 
-	/** 
+	/**
 	 * This is null when 'data' is not derived from any other data set (like after a filter).
-	 * When data is derived, this will be non-null.  Further, this 'source' data may itself 
+	 * When data is derived, this will be non-null.  Further, this 'source' data may itself
 	 * have a 'source' data, and so on.
 	 */
 	private TableData<ROW_OBJECT> source = null;
@@ -133,7 +133,7 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	}
 
 	/**
-	 * Uses the current sort to perform a fast lookup of the given item in the given list when 
+	 * Uses the current sort to perform a fast lookup of the given item in the given list when
 	 * sorted; a brute-force lookup when not sorted
 	 * @param t the item
 	 * @return the index
@@ -181,9 +181,9 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	 * A generic method that allows clients to process the contents of this table data.  This
 	 * method is not synchronized and should only be called from a {@link TableUpdateJob} or
 	 * one of its callbacks.
-	 * 
+	 *
 	 * <P>Note: this method will do nothing if the data is not sorted.
-	 * 
+	 *
 	 * @param function the consumer of the data and the current sort context
 	 */
 	public void process(
@@ -198,7 +198,7 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 
 	/**
 	 * Adds the new <tt>value</tt> to the data at the appropriate location based on the sort
-	 * 
+	 *
 	 * @param value the row Object to insert
 	 */
 	public void insert(ROW_OBJECT value) {
@@ -227,7 +227,7 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 			return;
 		}
 
-		// The search thinks the item is in the list because a compareTo() result of 0 was 
+		// The search thinks the item is in the list because a compareTo() result of 0 was
 		// found.  If the two objects are not equal(), then add the new value.
 		ROW_OBJECT existingValue = data.get(index);
 		if (!Objects.equals(value, existingValue)) {
@@ -248,9 +248,9 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	 * this dataset can be used for the given filter as a source of data.  If this dataset
 	 * is not suitable as a filter starting point, then this dataset's parent will be checked.
 	 * This operation will walk up the parent chain this way until the root dataset is reached.
-	 * 
+	 *
 	 * @param filter the filter to check for compatibility with this dataset's filter
-	 * @return the correct dataset to use as a starting point for further filtering operations; 
+	 * @return the correct dataset to use as a starting point for further filtering operations;
 	 *         null if this dataset is not compatible with the given filter.
 	 */
 	TableData<ROW_OBJECT> getLowestLevelSourceDataForFilter(TableFilter<ROW_OBJECT> filter) {
@@ -271,9 +271,9 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	/**
 	 * Returns true if the this data object has a filter that is a suitable starting point
 	 * for the given filter.
-	 * 
+	 *
 	 * @param filter the filter to check for compatibility with this dataset's filter
-	 * @return the correct dataset to use as a starting point for further filtering operations; 
+	 * @return the correct dataset to use as a starting point for further filtering operations;
 	 *         null if this dataset is not compatible with the given filter.
 	 */
 	private boolean hasParentFilterOf(TableFilter<ROW_OBJECT> filter) {
@@ -291,24 +291,24 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	}
 
 	/**
-	 * True if the filter of this data matched the given filter <b>and</b> the given source 
+	 * True if the filter of this data matched the given filter <b>and</b> the given source
 	 * data is the same as the source data of this data.
-	 *  
+	 *
 	 * @param filter the table's current filter
 	 * @return true if the source data nor the filter are different that what is used by this object.
 	 */
 	boolean matchesFilter(TableFilter<ROW_OBJECT> filter) {
 		// O.K., we are derived from the same source data, if the filter is the same, then there
-		// is no need to refilter.  
-		// 
-		// Note: if a given filter does not override equals(), then this really means that they 
+		// is no need to refilter.
+		//
+		// Note: if a given filter does not override equals(), then this really means that they
 		//       must be the same filter for this method to return true
 		return SystemUtilities.isEqual(tableFilter, filter);
 	}
 
 	/**
-	 * Returns false if the given data is this object or if it an ancestor of this.  
-	 * 
+	 * Returns false if the given data is this object or if it an ancestor of this.
+	 *
 	 * @param other the other object to check
 	 * @return false if the given data is this object or if it an ancestor of this.
 	 */
@@ -332,7 +332,7 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	/**
 	 * Returns the ID of this table data.   It is possible that two data instances of this class
 	 * that have the same ID are considered to be the same data.
-	 * 
+	 *
 	 * @return the ID
 	 */
 	int getId() {
@@ -358,17 +358,17 @@ public class TableData<ROW_OBJECT> implements Iterable<ROW_OBJECT> {
 	@Override
 	public String toString() {
 		//@formatter:off
-		return "{\n" + 
+		return "{\n" +
 			"\tderived? " + (source != null) + ",\n" +
-			"\tdata:\t" + data + "\n," + 
-			"\tsort:\t" + (sortContext == null ? "" : sortContext.toString()) + ",\n" + 
+			"\tdata:\t" + data + "\n," +
+			"\tsort:\t" + (sortContext == null ? "" : sortContext.toString()) + ",\n" +
 		"}";
 		//@formatter:on
 	}
 
 	@Override
 	final public boolean equals(Object obj) {
-		// Made final to ensure that nobody attempts to subclass this to check the contents 
+		// Made final to ensure that nobody attempts to subclass this to check the contents
 		// of 'data', as that could be expensive.
 		return super.equals(obj);
 	}

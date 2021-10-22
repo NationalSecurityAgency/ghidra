@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,9 @@ import ghidra.util.Msg;
  * some number of repeated data types.  The first entry contains the number of
  * repeated data types to follow.  Immediately following the first element are
  * the repeated data types.
- * 
+ *
  * The dynamic structure looks like this:
- * 
+ *
  *    RepeatDataType
  *       number = N   - two bytes, little endian
  *       RepDT1

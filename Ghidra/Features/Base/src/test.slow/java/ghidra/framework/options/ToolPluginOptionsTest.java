@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -131,7 +131,7 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testOptionsWithoutRegisteredOwnerGoAway() {
 		//
-		// Test that an option value that is not set or read will disappear after saving the 
+		// Test that an option value that is not set or read will disappear after saving the
 		// owning tool.
 		//
 
@@ -140,9 +140,9 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		Pair<String, String> changedOption = changeStringTestOption(options);
 
 		//
-		// See if the options are there again after saving and reloading.  They should be there, 
+		// See if the options are there again after saving and reloading.  They should be there,
 		// since the previous operation set the value.  We are careful here to simply check
-		// for the options existence, but not to retrieve it, as doing so would trigger the 
+		// for the options existence, but not to retrieve it, as doing so would trigger the
 		// option to be stored again.
 		//
 		options = saveAndLoadOptions();
@@ -173,7 +173,7 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 	@Test
 	public void testAccessingOptionsPreventsRemoval() {
 		//
-		// Repeatedly save/load options, accessing them each time, and make sure that they 
+		// Repeatedly save/load options, accessing them each time, and make sure that they
 		// re-appear each load.
 		//
 
@@ -194,7 +194,7 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		//
 		// now save twice in a row without accessing and the untouched option should be gone
-		// 
+		//
 		options = saveAndLoadOptions();
 		options = saveAndLoadOptions();
 		verifyUnusedOptionNoLongerHasEntry(options, changedOption.first);
@@ -224,7 +224,7 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testSetFileOptionToNull() {
-		// 
+		//
 		// Make sure the user can set the file option to null, to allow the clearing of a value
 		//
 
@@ -281,7 +281,7 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void assertAllDefaultOptions(ToolOptions options) {
 		assertFalse(
@@ -309,8 +309,8 @@ public class ToolPluginOptionsTest extends AbstractGhidraHeadedIntegrationTest {
 		}
 
 		//
-		// Note: if we ask if the value of the option is default, it will return true when 
-		//       the options have been reloaded, but not accessed by anyone.  However, on the 
+		// Note: if we ask if the value of the option is default, it will return true when
+		//       the options have been reloaded, but not accessed by anyone.  However, on the
 		//       next load, before the untouched options have been removed, the option will exist
 		//       and we can check that via hasProperty().
 		//

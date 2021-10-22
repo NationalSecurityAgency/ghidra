@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import java.util.*;
 
 /**
  * Defines a selection for byte blocks.
- * 
+ *
  * The selection is a list of disjoint ranges.
  */
 public class ByteBlockSelection {
@@ -27,7 +27,7 @@ public class ByteBlockSelection {
 
 	/**
 	 * Construct a selection from a list of ranges
-	 * 
+	 *
 	 * @param ranges the ranges
 	 */
 	public ByteBlockSelection(List<ByteBlockRange> ranges) {
@@ -43,7 +43,7 @@ public class ByteBlockSelection {
 
 	/**
 	 * Construct a selection from an array of ranges
-	 * 
+	 *
 	 * @param ranges the ranges
 	 */
 	public ByteBlockSelection(ByteBlockRange[] ranges) {
@@ -52,7 +52,7 @@ public class ByteBlockSelection {
 
 	/**
 	 * Add a range to the selection.
-	 * 
+	 *
 	 * @param range the range to add
 	 */
 	public void add(ByteBlockRange range) {
@@ -61,7 +61,7 @@ public class ByteBlockSelection {
 
 	/**
 	 * Get the number of byte block ranges in this selection.
-	 * 
+	 *
 	 * @return the number of (disjoint) ranges
 	 */
 	public int getNumberOfRanges() {
@@ -70,7 +70,7 @@ public class ByteBlockSelection {
 
 	/**
 	 * Get the byte block range at the given index.
-	 * 
+	 *
 	 * @param index the index of the range to get
 	 * @return the requested range
 	 */

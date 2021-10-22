@@ -25,7 +25,7 @@
      	<use_MS_convention value="true"/>
     </bitfield_packing>
   </data_organization>
-  
+
   <global>
     <range space="ram"/>
   </global>
@@ -321,7 +321,7 @@
   </pcode>
 </callfixup>
 -->
- 
+
 <callfixup name="alloca_probe">
   <target name="__alloca_probe"/>
   <target name="__alloca_probe_8"/>
@@ -340,7 +340,7 @@
   <pcode>
    <body><![CDATA[
     newframetmp = ESP + 8;
-    localsizetmp:4 = * newframetmp; 
+    localsizetmp:4 = * newframetmp;
     ESP = ESP - localsizetmp;
     ESP = ESP - 20;
     * newframetmp = EBP;
@@ -361,7 +361,7 @@
   <pcode>
    <body><![CDATA[
     newframetmp = ESP + 8;
-    localsizetmp:4 = * newframetmp; 
+    localsizetmp:4 = * newframetmp;
     ESP = ESP - localsizetmp;
     ESP = ESP - 24;
     * newframetmp = EBP;

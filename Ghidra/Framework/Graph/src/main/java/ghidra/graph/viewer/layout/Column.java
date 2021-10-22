@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import ghidra.graph.viewer.GraphViewerUtils;
 /**
  * A row in a grid.   This class stores it's row index, its x offset and its width.  The
  * x value is the layout space x value of a {@link Point2D} object.   That is, unlike the
- * {@link GridLocationMap}, the x value of this object is in layout space and not indexes 
+ * {@link GridLocationMap}, the x value of this object is in layout space and not indexes
  * of a grid.
  */
 public class Column {

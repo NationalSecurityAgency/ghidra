@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -111,7 +111,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 
 	/**
 	 * An action bound to a context
-	 * 
+	 *
 	 * <p>
 	 * This class is public for access by test cases only.
 	 */
@@ -152,7 +152,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 
 	/**
 	 * A list of bound actions
-	 * 
+	 *
 	 * <p>
 	 * This class is public for access by test cases only.
 	 */
@@ -161,7 +161,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 
 	/**
 	 * An entry in the console's log
-	 * 
+	 *
 	 * <p>
 	 * This class is public for access by test cases only.
 	 */

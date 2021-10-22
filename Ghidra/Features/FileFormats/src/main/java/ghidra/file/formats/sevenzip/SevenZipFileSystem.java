@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,8 +64,8 @@ public class SevenZipFileSystem implements GFileSystem {
 	/**
 	 * Opens the specified sevenzip container file and initializes this file system with the
 	 * contents.
-	 * 
-	 * @param byteProvider container file 
+	 *
+	 * @param byteProvider container file
 	 * @param monitor {@link TaskMonitor} to allow the user to monitor and cancel
 	 * @throws CancelledException if user cancels
 	 * @throws IOException if error when reading data
@@ -146,7 +146,7 @@ public class SevenZipFileSystem implements GFileSystem {
 							new TestPasswordsCallback(password, encryptedItemIndexes[0], monitor);
 
 						// call the SZ extract method using "TEST" mode (ie. no bytes are extracted)
-						// on any files that don't have a password yet 
+						// on any files that don't have a password yet
 						archive.extract(encryptedItemIndexes, true /* test mode */, testCB);
 						List<Integer> successFileIndexes = testCB.getSuccessFileIndexes();
 						for (Integer unlockedFileIndex : successFileIndexes) {
@@ -190,16 +190,16 @@ public class SevenZipFileSystem implements GFileSystem {
 		// Background: contrary to normal expectations, zip container files can have a
 		// unique password per-embedded-file.
 		// Other archive formats may not have that feature, but the SevenZip jbinding
-		// API is designed to allow a per-embedded-file password. 
+		// API is designed to allow a per-embedded-file password.
 		// The following loop tests passwords against the file, first trying a
 		// common password against all the embedded files (this is the most likely
 		// scenario), and then when a password has been found that successfully unlocks
 		// the first subset of files, each remaining subsequent encrypted file's name is used to
 		// prompt for the next password.
 		// If the loop ends without finding a password for an encrypted file,
-		// that file will not be readable unless a password is found for it (see 
+		// that file will not be readable unless a password is found for it (see
 		// getPasswordForFile()).
-		
+
 		try (CryptoSession cryptoSession = fsService.newCryptoSession()) {
 			List<ISimpleInArchiveItem> encryptedItems = getEncryptedItemsWithoutPasswords();
 			ISimpleInArchiveItem encryptedItem = null;
@@ -353,7 +353,7 @@ public class SevenZipFileSystem implements GFileSystem {
 	/**
 	 * Implements SevenZip bulk extract callback.
 	 * <p>
-	 * For each file in the archive, SZ will call this class's 1) getStream(), 2) prepare(), 
+	 * For each file in the archive, SZ will call this class's 1) getStream(), 2) prepare(),
 	 * 3) lots of write()s, and then 4) setOperationResult().
 	 * <p>
 	 * This class writes the extracted bytes to the FileCache.
@@ -432,7 +432,7 @@ public class SevenZipFileSystem implements GFileSystem {
 		@Override
 		public String cryptoGetTextPassword() throws SevenZipException {
 			// STEP 2.5 or 0: SevenZip calls this method to get the password of the file (if encrypted).
-			// Sometimes after prepareOperation(), sometimes before getStream(). 
+			// Sometimes after prepareOperation(), sometimes before getStream().
 			String password = passwords.get(currentIndex);
 			if (password == null) {
 
@@ -498,7 +498,7 @@ public class SevenZipFileSystem implements GFileSystem {
 				currentCacheEntryBuilder = null;
 
 				// hack to advance the currentIndex for the next file so cryptoGetTextPassword
-				// will have a correct currentIndex value if it is called before getStream(), 
+				// will have a correct currentIndex value if it is called before getStream(),
 				// which does happen depending on the phase of the moon or the 7zip
 				// library's mood.
 				currentIndex++;
@@ -537,7 +537,7 @@ public class SevenZipFileSystem implements GFileSystem {
 
 	/**
 	 * This class is has the same layout and hacks re: setting currentIndex as {@link SZExtractCallback},
-	 * but is specialized to test passwords against the encrypted entries in the file. 
+	 * but is specialized to test passwords against the encrypted entries in the file.
 	 */
 	private class TestPasswordsCallback implements IArchiveExtractCallback, ICryptoGetTextPassword {
 

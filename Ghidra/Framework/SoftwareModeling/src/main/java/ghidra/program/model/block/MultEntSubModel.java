@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -160,7 +160,7 @@ public class MultEntSubModel implements SubroutineBlockModel {
 
 			// Get basic block at the specified address
 			if (addrSet.contains(a)) {
-				continue; // already processed this block  
+				continue; // already processed this block
 			}
 
 			CodeBlock bblock = bbModel.getFirstCodeBlockContaining(a, monitor);
@@ -427,7 +427,7 @@ public class MultEntSubModel implements SubroutineBlockModel {
 	 * Get number of destination references flowing out of this subroutine (block).
 	 * All Calls from this block, and all external FlowType block references
 	 * from this block are counted.
-	 * 
+	 *
 	 * @param block code block to get the number of destination references from.
 	 * @param monitor task monitor which allows user to cancel operation.
 	 * @throws CancelledException if the monitor cancels the operation.

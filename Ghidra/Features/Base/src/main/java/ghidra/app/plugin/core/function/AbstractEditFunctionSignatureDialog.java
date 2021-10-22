@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.program.model.listing.FunctionSignature;
 import ghidra.util.exception.CancelledException;
 
 /**
- * <code>EditFunctionSignatureDialog</code> provides an abstract implementation 
+ * <code>EditFunctionSignatureDialog</code> provides an abstract implementation
  * a function signature editor.  Use of this editor requires the presence of the tool-based
  * datatype manager service.
  */
@@ -58,7 +58,7 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 
 	protected PluginTool tool;
 
-	// Due to delayed initialization and tests not actually displaying dialog 
+	// Due to delayed initialization and tests not actually displaying dialog
 	// we will track function info initialization
 	boolean initialized = false;
 
@@ -144,7 +144,7 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 	protected abstract String[] getSupportedCallFixupNames();
 
 	/**
-	 * Method must be invoked following construction to fetch function info 
+	 * Method must be invoked following construction to fetch function info
 	 * and update components.
 	 */
 	private void setFunctionInfo() {
@@ -342,7 +342,7 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 
 	/**
 	 * This method gets called when the user clicks on the OK Button.  The base
-	 * class calls this method.  This method will invoke {@link #applyChanges()} 
+	 * class calls this method.  This method will invoke {@link #applyChanges()}
 	 * and close dialog if that method returns true.  If false is returned, the
 	 * {@link #applyChanges()} method should display a status message to indicate
 	 * the failure.
@@ -367,10 +367,10 @@ public abstract class AbstractEditFunctionSignatureDialog extends DialogComponen
 	}
 
 	/**
-	 * Called when the user initiates changes that need to be applied to the 
+	 * Called when the user initiates changes that need to be applied to the
 	 * underlying function or function definition
 	 *
-	 * @return true if applied successfully, otherwise false which will keep 
+	 * @return true if applied successfully, otherwise false which will keep
 	 * dialog displayed (a status message should bet set)
 	 * @throws CancelledException if operation cancelled by user
 	 */

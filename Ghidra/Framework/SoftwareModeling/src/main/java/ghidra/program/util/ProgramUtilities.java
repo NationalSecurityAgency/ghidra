@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import java.util.*;
 
 /**
  * General utility class that provides convenience methods
- * to deal with Program objects. 
+ * to deal with Program objects.
  */
 public class ProgramUtilities {
 
@@ -56,7 +56,7 @@ public class ProgramUtilities {
 
 	/**
 	 * Returns an iterator for all of the {@link Program} objects in the system, which is all
-	 * created programs in any state that have not been garbage collected.  
+	 * created programs in any state that have not been garbage collected.
 	 * <p>
 	 * <b>Note:</b>The Iterator is backed by an unmodifiable set, so any attempts to modify the
 	 * Iterator will throw an {@link UnsupportedOperationException}.
@@ -88,7 +88,7 @@ public class ProgramUtilities {
 	}
 
 	/**
-	 * Get the bytes associated with the specified code unit cu 
+	 * Get the bytes associated with the specified code unit cu
 	 * formatted as a string.  Bytes will be returned as 2-digit hex
 	 * separated with a space.  Any undefined bytes will be represented by "??".
 	 * @param cu code unit

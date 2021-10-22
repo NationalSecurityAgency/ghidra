@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -178,7 +178,7 @@ abstract class BookmarkDBAdapter {
 	 * @param index
 	 * @param comment
 	 * @return
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	DBRecord createBookmark(int typeId, String category, long index, String comment)
 			throws IOException {
@@ -240,7 +240,7 @@ abstract class BookmarkDBAdapter {
 	/**
 	 * Get list of all known categories for the specified bookmark type.
 	 * Categories are sorted in ascending order.
-	 * 
+	 *
 	 * @param typeId bookmark type ID
 	 * @return list of category strings
 	 */
@@ -249,7 +249,7 @@ abstract class BookmarkDBAdapter {
 	/**
 	 * Get set of addresses where bookmarks of the specified type and category
 	 * exist.
-	 * 
+	 *
 	 * @param typeId bookmark type ID (required)
 	 * @param addrMap address map
 	 * @return address set
@@ -262,16 +262,16 @@ abstract class BookmarkDBAdapter {
 
 //==================================================================================================
 // V3 and Newer Methods
-//	
+//
 //	These methods are only used by the V3 adapter.  Older adapters did not support separate type
 //	tables.  Further, the older versions are so old that we no longer support them and thus, these
 //	methods should not get called.  So, we stub them out here, to save us from having to put them
 //	in each of the older versions, which is the normal way of building the base, abstract adapter.
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Creates a new bookmark type.
-	 * 
+	 *
 	 * @param typeID The new ID of the bookmark type
 	 * @throws IOException if there is a problem creating the new table.
 	 */
@@ -281,7 +281,7 @@ abstract class BookmarkDBAdapter {
 
 	/**
 	 * Deletes the table associated with the given bookmark type.
-	 * 
+	 *
 	 * @param typeID The ID of the existing bookmark type
 	 * @throws IOException if there is a problem deleting the existing table.
 	 */
@@ -291,7 +291,7 @@ abstract class BookmarkDBAdapter {
 
 	/**
 	 * Returns true if a table exists for the given bookmark type ID.
-	 * 
+	 *
 	 * @param typeID The bookmark type ID of the table in question.
 	 * @return true if a table exists for the given bookmark type ID.
 	 */
@@ -301,7 +301,7 @@ abstract class BookmarkDBAdapter {
 
 	/**
 	 * Returns the table for the given bookmark type ID
-	 * 
+	 *
 	 * @param typeID the bookmark type ID for which to get a table
 	 * @return the table for the given bookmark type ID
 	 */

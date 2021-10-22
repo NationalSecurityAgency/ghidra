@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,7 +84,7 @@ public class DiscoverableTableUtils {
 	 * <code>Address</code> as the row type.  In this case, passing <code>Address.class</code> as the
 	 * parameter to this method will return all {@link AbstractDynamicTableColumn}s that can provide column
 	 * data by working with <code>Address</code> instances.
-	 * 
+	 *
 	 * <p><u>Usage Notes:</u>  This class will not only discover {@link AbstractDynamicTableColumn}s
 	 * that directly support the given class type, but will also use discovered
 	 * {@link TableRowMapper} objects to create adapters that allow the
@@ -100,8 +100,8 @@ public class DiscoverableTableUtils {
 	 * <code>Address</code> objects.  These mappers provide a way for tables that have non-standard
 	 * Ghidra data as their row type to take advantage of existing dynamic columns for standard
 	 * Ghidra data (like ProgramLocations and Addresses).
-	 * 
-	 * @param rowTypeClass table's row type 
+	 *
+	 * @param rowTypeClass table's row type
 	 * @return the discovered column
 	 */
 	public static <ROW_TYPE> Collection<DynamicTableColumn<ROW_TYPE, ?, ?>> getDynamicTableColumns(
@@ -235,7 +235,7 @@ public class DiscoverableTableUtils {
 	 * Returns a list of all the {@link ColumnConstraint} that are capable of filtering the
 	 * destination type of the given mapper.  The mapper will be used to create a mapped constraint
 	 * that will be called with an instance of the type <code>T</code>.
-	 * 
+	 *
 	 * @param mapper the mapper that will be used to convert
 	 * @return a list of all the {@link ColumnConstraint} that are capable of filtering the
 	 * 		   given column type

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +21,8 @@ import ghidra.util.Conv;
 /**
  * A class for performing unsigned comparisons
  * of java primitives.
- * 
- * 
+ *
+ *
  */
 public class UnsignedDataUtils {
 
@@ -74,7 +74,7 @@ public class UnsignedDataUtils {
 	                return (i > j);
 	            case GREATER_THAN_OR_EQUAL:
 	                return (i >= j);
-            } 
+            }
         }
         else if (isHiBitSetI) {
             switch (type) {
@@ -84,7 +84,7 @@ public class UnsignedDataUtils {
 	            case GREATER_THAN:
 	            case GREATER_THAN_OR_EQUAL:
 	                return true;
-	        } 
+	        }
         }
         else {
             switch (type) {
@@ -94,17 +94,17 @@ public class UnsignedDataUtils {
 	            case GREATER_THAN:
 	            case GREATER_THAN_OR_EQUAL:
 	                return false;
-	        } 
+	        }
         }
         throw new RuntimeException("BAD COMP TYPE!");
     }
 
     /**
      * Returns true if <code>i</code> is LESS THAN <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is less than <code>j</code>
      */
     public static boolean unsignedLessThan(byte i, byte j) {
@@ -112,10 +112,10 @@ public class UnsignedDataUtils {
     }
     /**
      * Returns true if <code>i</code> is LESS THAN or EQUAL TO <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is less than or equal to <code>j</code>
      */
     public static boolean unsignedLessThanOrEqual(byte i, byte j) {
@@ -123,10 +123,10 @@ public class UnsignedDataUtils {
     }
     /**
      * Returns true if <code>i</code> is GREATER THAN <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is greater than <code>j</code>
      */
     public static boolean unsignedGreaterThan(byte i, byte j) {
@@ -134,10 +134,10 @@ public class UnsignedDataUtils {
     }
     /**
      * Returns true if <code>i</code> is GREATER THAN or EQUAL TO <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is greater than or equal to <code>j</code>
      */
     public static boolean unsignedGreaterThanOrEqual(byte i, byte j) {
@@ -146,10 +146,10 @@ public class UnsignedDataUtils {
 
     /**
      * Returns true if <code>i</code> is LESS THAN <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is less than <code>j</code>
      */
     public static boolean unsignedLessThan(short i, short j) {
@@ -157,10 +157,10 @@ public class UnsignedDataUtils {
     }
     /**
      * Returns true if <code>i</code> is LESS THAN or EQUAL TO <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is less than or equal to <code>j</code>
      */
     public static boolean unsignedLessThanOrEqual(short i, short j) {
@@ -168,10 +168,10 @@ public class UnsignedDataUtils {
     }
     /**
      * Returns true if <code>i</code> is GREATER THAN <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is greater than <code>j</code>
      */
     public static boolean unsignedGreaterThan(short i, short j) {
@@ -179,10 +179,10 @@ public class UnsignedDataUtils {
     }
     /**
      * Returns true if <code>i</code> is GREATER THAN or EQUAL TO <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is greater than or equal to <code>j</code>
      */
     public static boolean unsignedGreaterThanOrEqual(short i, short j) {
@@ -191,10 +191,10 @@ public class UnsignedDataUtils {
 
     /**
      * Returns true if <code>i</code> is LESS THAN <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is less than <code>j</code>
      */
     public static boolean unsignedLessThan(int i, int j) {
@@ -202,10 +202,10 @@ public class UnsignedDataUtils {
     }
     /**
      * Returns true if <code>i</code> is LESS THAN or EQUAL TO <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is less than or equal to <code>j</code>
      */
     public static boolean unsignedLessThanOrEqual(int i, int j) {
@@ -213,10 +213,10 @@ public class UnsignedDataUtils {
     }
     /**
      * Returns true if <code>i</code> is GREATER THAN <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is greater than <code>j</code>
      */
     public static boolean unsignedGreaterThan(int i, int j) {
@@ -224,10 +224,10 @@ public class UnsignedDataUtils {
     }
     /**
      * Returns true if <code>i</code> is GREATER THAN or EQUAL TO <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is greater than or equal to <code>j</code>
      */
     public static boolean unsignedGreaterThanOrEqual(int i, int j) {
@@ -236,10 +236,10 @@ public class UnsignedDataUtils {
 
     /**
      * Returns true if <code>i</code> is LESS THAN <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is less than <code>j</code>
      */
     public static boolean unsignedLessThan(long i, long j) {
@@ -247,10 +247,10 @@ public class UnsignedDataUtils {
     }
     /**
      * Returns true if <code>i</code> is LESS THAN or EQUAL TO <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return true if <code>i</code> is less than or equal to <code>j</code>
      */
     public static boolean unsignedLessThanOrEqual(long i, long j) {
@@ -258,10 +258,10 @@ public class UnsignedDataUtils {
     }
     /**
      * Returns true if <code>i</code> is GREATER THAN <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return return true if <code>i</code> is greater than <code>j</code>
      */
     public static boolean unsignedGreaterThan(long i, long j) {
@@ -269,10 +269,10 @@ public class UnsignedDataUtils {
     }
     /**
      * Returns true if <code>i</code> is GREATER THAN or EQUAL TO <code>j</code>.
-     * 
+     *
      * @param i an argument
      * @param j another argument
-     * 
+     *
      * @return return true if <code>i</code> is greater than or equal to <code>j</code>
      */
     public static boolean unsignedGreaterThanOrEqual(long i, long j) {

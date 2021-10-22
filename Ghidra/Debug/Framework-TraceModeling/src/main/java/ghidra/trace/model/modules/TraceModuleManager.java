@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * A store for loaded modules over time
- * 
+ *
  * <p>
  * The manager is not bound to any particular address space and may be used to access information
  * about any memory address. For module and section management, only section information can be
@@ -33,10 +33,10 @@ import ghidra.util.exception.DuplicateNameException;
 public interface TraceModuleManager extends TraceModuleOperations {
 	/**
 	 * Add a module
-	 * 
+	 *
 	 * <p>
 	 * Note that modules may overlap.
-	 * 
+	 *
 	 * @param modulePath the "full name" of the module
 	 * @param moduleName the "short name" of the module, usually its path on the file system
 	 * @param range the address range of the module -- min should be the base address
@@ -48,7 +48,7 @@ public interface TraceModuleManager extends TraceModuleOperations {
 
 	/**
 	 * Add a module which is still loaded
-	 * 
+	 *
 	 * @param modulePath the "full name" of the module
 	 * @param range the address range of the module -- min should be the base address
 	 * @param snap the snap at which the module was loaded
@@ -61,18 +61,18 @@ public interface TraceModuleManager extends TraceModuleOperations {
 
 	/**
 	 * Get modules by path
-	 * 
+	 *
 	 * <p>
 	 * Note it is possible the same module was loaded and unloaded multiple times. In that case,
 	 * each load will have an separate record. It is also possible it was loaded at a different
 	 * address, or that it's an entirely different module which happens to have the same path.
-	 * 
+	 *
 	 * <p>
 	 * Note that the "module path" in this case is not necessarily path of the module's image on the
 	 * target file system, though this name often contains it. Rather, this is typically the full
 	 * path to the module in the target debugger's object model. Likely, the "short name" is the
 	 * file system path of the module's image.
-	 * 
+	 *
 	 * @param modulePath the "full name" of the module
 	 * @return the collection of modules having the given path
 	 */
@@ -80,7 +80,7 @@ public interface TraceModuleManager extends TraceModuleOperations {
 
 	/**
 	 * Get the module loaded at the given snap having the given path
-	 * 
+	 *
 	 * @param snap the snap which the module's lifespan must contain
 	 * @param modulePath the module's "full name"
 	 * @return the module, or {@code null} if no module matches
@@ -89,11 +89,11 @@ public interface TraceModuleManager extends TraceModuleOperations {
 
 	/**
 	 * Get sections by path
-	 * 
+	 *
 	 * <p>
 	 * Note because it's possible for a module path to be duplicated (but not within any overlapping
 	 * snap), it is also possible for a section path to be duplicated.
-	 * 
+	 *
 	 * @param sectionPath the "full name" of the section
 	 * @return the collection of sections having the given path
 	 */
@@ -101,7 +101,7 @@ public interface TraceModuleManager extends TraceModuleOperations {
 
 	/**
 	 * Get the section loaded at the given snap having the given path
-	 * 
+	 *
 	 * @param snap the snap which the section's (module's) lifespan must contain
 	 * @param sectionPath the section's "full name"
 	 * @return the section, or {@code null} if no section matches

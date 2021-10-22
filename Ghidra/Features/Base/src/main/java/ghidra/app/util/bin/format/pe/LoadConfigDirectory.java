@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -207,7 +207,7 @@ public class LoadConfigDirectory implements StructConverter {
 
 	/**
 	 * Gets the ControlFlowGuard {@link GuardFlags}.
-	 * 
+	 *
 	 * @return The ControlFlowGuard {@link GuardFlags}.
 	 */
 	public GuardFlags getCfgGuardFlags() {
@@ -216,8 +216,8 @@ public class LoadConfigDirectory implements StructConverter {
 
 	/**
 	 * Gets the ControlFlowGuard check function pointer address.
-	 * 
-	 * @return The ControlFlowGuard check function pointer address.  
+	 *
+	 * @return The ControlFlowGuard check function pointer address.
 	 *   Could be 0 if ControlFlowGuard is not being used.
 	 */
 	public long getCfgCheckFunctionPointer() {
@@ -226,8 +226,8 @@ public class LoadConfigDirectory implements StructConverter {
 
 	/**
 	 * Gets the ControlFlowGuard dispatch function pointer address.
-	 * 
-	 * @return The ControlFlowGuard dispatch function pointer address.  
+	 *
+	 * @return The ControlFlowGuard dispatch function pointer address.
 	 *   Could be 0 if ControlFlowGuard is not being used.
 	 */
 	public long getCfgDispatchFunctionPointer() {
@@ -236,8 +236,8 @@ public class LoadConfigDirectory implements StructConverter {
 
 	/**
 	 * Gets the ControlFlowGuard function table pointer address.
-	 * 
-	 * @return The ControlFlowGuard function table function pointer address.  
+	 *
+	 * @return The ControlFlowGuard function table function pointer address.
 	 *   Could be 0 if ControlFlowGuard is not being used.
 	 */
 	public long getCfgFunctionTablePointer() {
@@ -246,8 +246,8 @@ public class LoadConfigDirectory implements StructConverter {
 
 	/**
 	 * Gets the ControlFlowGuard function count.
-	 * 
-	 * @return The ControlFlowGuard function count.  Could be 0 if ControlFlowGuard is 
+	 *
+	 * @return The ControlFlowGuard function count.  Could be 0 if ControlFlowGuard is
 	 *   not being used.
 	 */
 	public long getCfgFunctionCount() {
@@ -256,7 +256,7 @@ public class LoadConfigDirectory implements StructConverter {
 
 	/**
 	 * Gets the ControlFlowGuard IAT table pointer address.
-	 * 
+	 *
 	 * @return The ControlFlowGuard IAT table function pointer address. Could be 0 if ControlFlowGuard is not being used
 	 */
 	public long getGuardAddressIatTableTablePointer() {
@@ -265,7 +265,7 @@ public class LoadConfigDirectory implements StructConverter {
 
 	/**
 	 * Gets the ControlFlowGuard IAT entries count.
-	 * 
+	 *
 	 * @return The ControlFlowGuard IAT entries count.  Could be 0 if ControlFlowGuard is not being used
 	 */
 	public long getGuardAddressIatTableCount() {
@@ -274,7 +274,7 @@ public class LoadConfigDirectory implements StructConverter {
 
 	/**
 	 * Gets the ReturnFlowGuard failure routine address.
-	 * 
+	 *
 	 * @return The ReturnFlowGuard failure routine address.
 	 *   Could be 0 if ReturnFlowGuard is not being used.
 	 */
@@ -284,7 +284,7 @@ public class LoadConfigDirectory implements StructConverter {
 
 	/**
 	 * Gets the ReturnFlowGuard failure routine function pointer address.
-	 * 
+	 *
 	 * @return The ReturnFlowGuard failure routine function pointer address.
 	 *   Could be 0 if ReturnFlowGuard is not being used.
 	 */
@@ -294,7 +294,7 @@ public class LoadConfigDirectory implements StructConverter {
 
 	/**
 	 * Gets the ReturnFlowGuard verify stack pointer function pointer address.
-	 * 
+	 *
 	 * @return The ReturnFlowGuard verify stack pointer function pointer address.
 	 *   Could be 0 if ReturnFlowGuard is not being used.
 	 */

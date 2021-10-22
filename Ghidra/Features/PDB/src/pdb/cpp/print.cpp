@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,38 +24,38 @@
 // Returns a mixture of static strings and allocated strings.
 // Abandon all hope of memory management, ye who enter here
 std::wstring printVariant( VARIANT & v ) {
-	
+
 	// handle results that don't need a format buffer
 	switch( v.vt ) {
-		case VT_BOOL://Indicates a Boolean value. 
+		case VT_BOOL://Indicates a Boolean value.
 			return v.boolVal == 0 ? L"false" : L"true";
-		case VT_BSTR://Indicates a BSTR string. 
+		case VT_BSTR://Indicates a BSTR string.
 			return v.bstrVal;
-		case VT_EMPTY://Indicates that a value was not specified. 
+		case VT_EMPTY://Indicates that a value was not specified.
 			return L"empty";
-		case VT_NULL://Indicates a a null reference (Nothing in Visual Basic) value, similar to a null value in SQL. 
+		case VT_NULL://Indicates a a null reference (Nothing in Visual Basic) value, similar to a null value in SQL.
 			return L"null";
 	}
 
 	const int blen = 100;
 	wchar_t variant[blen] = {};
 	switch( v.vt ) {
-		case VT_ARRAY://Indicates a SAFEARRAY pointer. 
+		case VT_ARRAY://Indicates a SAFEARRAY pointer.
 			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.parray);//TODO
 			return variant;
-		case VT_BYREF://Indicates that a value is a reference. 
+		case VT_BYREF://Indicates that a value is a reference.
 			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.cVal);//TODO
 			return variant;
-		case VT_CY://Indicates a currency value. 
+		case VT_CY://Indicates a currency value.
 			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.cyVal.int64);
 			return variant;
-		case VT_DATE://Indicates a DATE value. 
+		case VT_DATE://Indicates a DATE value.
 			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.date);
 			return variant;
-		case VT_DISPATCH://Indicates an IDispatch pointer. 
+		case VT_DISPATCH://Indicates an IDispatch pointer.
 			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.pdispVal);
 			return variant;
-		case VT_ERROR://Indicates an SCODE. 
+		case VT_ERROR://Indicates an SCODE.
 			swprintf_s(variant, blen, L"0x%x", v.scode);
 			return variant;
 		case VT_I1://CHAR
@@ -73,10 +73,10 @@ std::wstring printVariant( VARIANT & v ) {
 		case VT_INT://INT
 			swprintf_s(variant, blen, L"%d", v.intVal);
 			return variant;
-		case VT_R4://Indicates a float value. 
+		case VT_R4://Indicates a float value.
 			swprintf_s(variant, blen, L"%f", v.fltVal);
 			return variant;
-		case VT_R8://Indicates a double value. 
+		case VT_R8://Indicates a double value.
 			swprintf_s(variant, blen, L"%f", v.dblVal);
 			return variant;
 		case VT_UI1://BYTE
@@ -94,10 +94,10 @@ std::wstring printVariant( VARIANT & v ) {
 		case VT_UINT://UINT
 			swprintf_s(variant, blen, L"%d", v.uintVal);
 			return variant;
-		case VT_UNKNOWN://Indicates an IUnknown pointer. 
+		case VT_UNKNOWN://Indicates an IUnknown pointer.
 			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.punkVal);
 			return variant;
-		case VT_VARIANT://Indicates a VARIANT far pointer. 
+		case VT_VARIANT://Indicates a VARIANT far pointer.
 			swprintf_s(variant, blen, L"%I64d", (ULONGLONG) v.pvarVal);
 			return variant;
 
@@ -118,7 +118,7 @@ void printBound( IDiaSymbol& bound ) {
 		//CComVariant v;
 		//pBound->get_value( &v );
 		//printVariant( v );
-	} 
+	}
 	else if ( bound.get_name( name.GetAddress()) == S_OK ) {
 		printf( "%ws", name.GetBSTR() );
 	}
@@ -139,7 +139,7 @@ std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 		else {
 			return L"";
 		}
-	} 
+	}
 
 	if ( tag == SymTagBaseType ) {
 		return getBaseTypeAsString( *pType ) + suffix;
@@ -150,11 +150,11 @@ std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 		if ( pBaseType == NULL ) {
 			return L"";
 		}
-		const size_t strLen = suffix.length() + 64 + 3;	// length of suffix + wag_for_numeric_value + "[]\0" 
+		const size_t strLen = suffix.length() + 64 + 3;	// length of suffix + wag_for_numeric_value + "[]\0"
 		std::vector<wchar_t> str(strLen);
 		swprintf_s(str.data(), strLen, L"%s[%d]", suffix.c_str(), getCount( *pType ));
 		return printType(pBaseType, str.data());
-	} 
+	}
 
 	if ( tag == SymTagFunctionType ) {
 		return L"void *";  // was L"Function" but...
@@ -170,7 +170,7 @@ std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 			if (StringFromGUID2(guid, guidStr.data(), maxGUIDStrLen) > 0) {
 				return guidStr.data();
 			}
-		} 
+		}
 		else if ( pType->get_oemId( &id ) == S_OK && pType->get_oemSymbolId( &rec ) == S_OK ) {
 			const size_t strLen = 256;		// wag_for_2_hex_numbers "0xNNNNN:0xNNNNN"
 			wchar_t str[strLen] = {};
@@ -184,7 +184,7 @@ std::wstring printType( IDiaSymbol * pType, const std::wstring& suffix ) {
 
 	if ( !name.empty() ) {
 		return name + suffix;
-	} 
+	}
 
 	return L"Undefined";
 }

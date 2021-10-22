@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -271,7 +271,7 @@ class ComponentNode extends Node {
 
 			//
 			// TODO Hack Alert!  (When this is removed, also update ComponentPlaceholder)
-			// 
+			//
 			ComponentPlaceholder nextTop = activeComponents.get(0);
 			if (nextTop.isDisposed()) {
 				// This should not happen!  We have seen this bug recently
@@ -377,9 +377,9 @@ class ComponentNode extends Node {
 
 	/**
 	 * Replaces this node in its parent with a new split node that contains this node as one
-	 * child and a new componentNode containing the source placeholders as the other child. 
-	 * 
-	 * @param source the placeholder to share the current space with. 
+	 * child and a new componentNode containing the source placeholders as the other child.
+	 *
+	 * @param source the placeholder to share the current space with.
 	 * @param dropCode int value specifying the split order and orientation.
 	 */
 	void split(ComponentPlaceholder source, WindowPosition dropCode) {
@@ -526,7 +526,7 @@ class ComponentNode extends Node {
 
 		ComponentPlaceholder placeholder = getPlaceHolderForComponent(tabComponent);
 		if (placeholder != null) {
-			// this shouldn't be null, but there seems to be some timing issue where this can 
+			// this shouldn't be null, but there seems to be some timing issue where this can
 			// be null when rapidly closing tabs
 			placeholder.close();
 		}
@@ -600,7 +600,7 @@ class ComponentNode extends Node {
 				}
 
 				// If the user changes the name, then we want to replace all of the
-				// parts of the title with that name.  We skip the subtitle, as that 
+				// parts of the title with that name.  We skip the subtitle, as that
 				// doesn't make sense in that case.
 				provider.setTitle(newName);   // title on window
 				provider.setSubTitle("");     // part after the title

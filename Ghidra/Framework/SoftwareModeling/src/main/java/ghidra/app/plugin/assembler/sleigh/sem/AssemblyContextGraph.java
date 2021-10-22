@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,12 +32,12 @@ import ghidra.graph.algo.DijkstraShortestPathsAlgorithm;
 
 /**
  * A graph of possible context changes via the application of various constructors
- * 
+ *
  * This is used primarily to find optimal paths for the application of recursive rules, i.e., those
  * of the form I =&gt; I. These cannot be resolved without some form of semantic analysis. The most
  * notable disadvantage to all of this is that you no longer get all of the possible assemblies,
  * but only those with the fewest rule applications.
- * 
+ *
  * Conceivably, this may also be used to prune some possibilities during semantic resolution of a
  * parse tree. Even better, it may be possible to derive a grammar which accounts for the context
  * changes already; however, it's unclear how many rules this will generate, and consequently, how
@@ -57,10 +57,10 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 
 	/**
 	 * Build the context change graph for a given language and grammar
-	 * 
+	 *
 	 * The grammar must have been constructed from the given language. The language is used just to
 	 * obtain the most common default context.
-	 * 
+	 *
 	 * At the moment, this graph only expands the recursive rules at the root constructor table,
 	 * i.e., "instruction". Thus, the assembler will not be able to process any language that has
 	 * <i>purely</i>-recursive rules at subconstructors.
@@ -91,14 +91,14 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 	/**
 	 * Compute the optimal, i.e., fewest, sequences of applications to resolve a given context to
 	 * the language's default context.
-	 * 
+	 *
 	 * @param src presumably, the language's default context
 	 * @param srcTable the name of the SLEIGH constructor table, presumably "instruction"
 	 * @param dst the context block being resolved
 	 * @param dstTable the name of the SLEIGH constructor table being resolved
 	 * @return a collection of sequences of constructor applications from {@code src} to
 	 *         {@code dst}
-	 * 
+	 *
 	 * NOTE: For assembly, the sequences will need to be applied right-to-left.
 	 */
 	public Collection<Deque<AssemblyConstructorSemantic>> computeOptimalApplications(
@@ -139,7 +139,7 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 
 	/**
 	 * Gather all the semantics that can be used as state transitions
-	 * 
+	 *
 	 * Currently, only semantics from {@code :^instruction} constructors are taken.
 	 */
 	protected void gatherSemantics() {
@@ -155,7 +155,7 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 
 	/**
 	 * A vertex in a context transition graph
-	 * 
+	 *
 	 * Each vertex consists of a context block and a (sub)table name
 	 */
 	protected static class Vertex implements Comparable<Vertex> {
@@ -174,7 +174,7 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 
 		/**
 		 * Check if this and another vertex "agree"
-		 * 
+		 *
 		 * This doesn't mean they're equal, but that they share a subtable, and the defined bits of
 		 * their context blocks agree.
 		 * @param that the other vertex
@@ -232,7 +232,7 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 
 	/**
 	 * A transition in a context transition graph
-	 * 
+	 *
 	 * A transition consists of the constructor whose context changes were applied. The operand
 	 * index is included for reference and debugging. If we ever need to process rules with
 	 * multiple subconstructors, the operand index explains the subtable name of the destination
@@ -376,7 +376,7 @@ public class AssemblyContextGraph implements GImplicitDirectedGraph<Vertex, Edge
 
 	/**
 	 * This operation is not supported.
-	 * 
+	 *
 	 * I could implement this using the cached edges, but that may not be semantically, what a path
 	 * computation algorithm actually requires. Instead, I will assume the algorithm only explores
 	 * the graph in the same direction as its edges. If not, I will hear about it quickly.

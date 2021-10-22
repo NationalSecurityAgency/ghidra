@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ public class SymbolFileLocation {
 
 	/**
 	 * Creates a new instance.
-	 * 
+	 *
 	 * @param path raw path to file (relative to the {@link SymbolServer})
 	 * @param symbolServer {@link SymbolServer} the file resides on
 	 * @param fileInfo the {@link SymbolFileInfo pdb file} that this file is associated with
@@ -40,7 +40,7 @@ public class SymbolFileLocation {
 
 	/**
 	 * The raw path inside the SymbolServer to the file.
-	 * 
+	 *
 	 * @return raw path inside the SymbolServer to the file
 	 */
 	public String getPath() {
@@ -49,7 +49,7 @@ public class SymbolFileLocation {
 
 	/**
 	 * The {@link SymbolServer} that holds the file.
-	 * 
+	 *
 	 * @return the {@link SymbolServer} that holds the file
 	 */
 	public SymbolServer getSymbolServer() {
@@ -58,7 +58,7 @@ public class SymbolFileLocation {
 
 	/**
 	 * The {@link SymbolFileInfo pdb file} that this file is associated with.
-	 *  
+	 *
 	 * @return the {@link SymbolFileInfo pdb file} that this file is associated with
 	 */
 	public SymbolFileInfo getFileInfo() {
@@ -68,7 +68,7 @@ public class SymbolFileLocation {
 	/**
 	 * Returns true if this file is an 'exact match' for the
 	 * specified {@link SymbolFileInfo other pdb file}.
-	 * 
+	 *
 	 * @param otherSymbolFileInfo the other pdb file's info
 	 * @return boolean true if exact match (GUID & age match), false if not an exact match
 	 */
@@ -78,7 +78,7 @@ public class SymbolFileLocation {
 
 	/**
 	 * The 'absolute' location of this file, including the symbol server's location.
-	 * 
+	 *
 	 * @return a string representing the 'absolute' location of this file
 	 */
 	public String getLocationStr() {

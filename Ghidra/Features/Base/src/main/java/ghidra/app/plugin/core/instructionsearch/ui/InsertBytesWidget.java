@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,7 +77,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param program the current program
 	 * @param dialog the parent search dialog
 	 */
@@ -106,7 +106,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 	 * Load a set of bytes (in string form; hex or binary) into the search
 	 * dialog. The bytes are disassembled and displayed in the
 	 * {@link InstructionTable}.
-	 * 
+	 *
 	 * @param bytes the bytes to load
 	 */
 	public void loadBytes(String bytes) {
@@ -137,7 +137,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 
 	/**
 	 * Creates the visual components for this dialog.
-	 * 
+	 *
 	 * @return the new panel
 	 */
 	protected JPanel createWorkPanel() {
@@ -186,7 +186,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 		msgPanel.clear();
 
 		// When bringing up the dialog, always populate it with whatever is in the main dialog so
-		// the user can edit those instructions if desired.  And make sure to set the entire 
+		// the user can edit those instructions if desired.  And make sure to set the entire
 		// string to be selected so they can quickly delete them with a single keystroke.
 		//
 		// Note: To get the correct string for the instruction, we go to the search data
@@ -249,20 +249,20 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 		List<Byte> allBytes = InstructionSearchUtils.toByteArray(input);
 
 		// Now we have a valid byte string so we can start disassembling. To do this, we pass
-		// the entire string to the pseudo-disassembler and it will return the first 
+		// the entire string to the pseudo-disassembler and it will return the first
 		// instruction. We save that one off, then remove those bytes from the main string and
-		// pass the now-shorter string to the disassembler, where it will return the next 
+		// pass the now-shorter string to the disassembler, where it will return the next
 		// instruction, and so on, and so on...
 		//
-		// TODO: Possibly modify the PseudoDisassembler to disassemble the entire thing at 
+		// TODO: Possibly modify the PseudoDisassembler to disassemble the entire thing at
 		// once, not just one instruction at a time.
 		//
 		// NOTE: Some instructions have operands that cannot be accurately calculated
-		//       without having a specific instruction instance (ie: an operand that is an 
+		//       without having a specific instruction instance (ie: an operand that is an
 		//       offset from the instruction address). This is obviously problematic because we
-		//       aren't dealing with 'real' instructions that map to an address in a program; 
-		//       we're just loading bytes and trying to figure out what instructions they 
-		//       might represent. In these cases we just use the minimum address of the loaded 
+		//       aren't dealing with 'real' instructions that map to an address in a program;
+		//       we're just loading bytes and trying to figure out what instructions they
+		//       might represent. In these cases we just use the minimum address of the loaded
 		//       program as the base address.
 
 		List<InstructionMetadata> instructions = new ArrayList<>();
@@ -270,7 +270,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 		while (allBytes.size() > 0) {
 			try {
 
-				// First call the disassembler to get the first instruction.  
+				// First call the disassembler to get the first instruction.
 				Byte[] bytearray = new Byte[allBytes.size()];
 				bytearray = allBytes.toArray(bytearray);
 
@@ -314,7 +314,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 	/**
 	 * Creates {@link OperandMetadata} objects for each operand in the
 	 * instruction provided.
-	 * 
+	 *
 	 * @param instruction the instruction to parse
 	 * @return list of operand metadata
 	 * @throws MemoryAccessException
@@ -329,7 +329,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 			operandMD.setOpType(instruction.getOperandType(i));
 			operandMD.setTextRep(instruction.getDefaultOperandRepresentation(i));
 
-			// The mask container is a bit tricky.  The mask string we can get directly from the 
+			// The mask container is a bit tricky.  The mask string we can get directly from the
 			// prototype object in the pseudo instruction. For the value string we have to do
 			// a bit of calculating: we know the entire instruction byte string and we know
 			// this operand mask, so AND them together and we get the operand bytes.
@@ -347,7 +347,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 	/**
 	 * Creates a {@link InstructionMetadata} object for the instruction
 	 * provided.
-	 * 
+	 *
 	 * @param instruction the instruction to parse
 	 * @return the instruction metadata
 	 * @throws MemoryAccessException
@@ -355,7 +355,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 	private InstructionMetadata createInstructionMetadata(PseudoInstruction instruction)
 			throws MemoryAccessException {
 
-		// The mask array we can get directly from the prototype. For the value array we 
+		// The mask array we can get directly from the prototype. For the value array we
 		// have to figure out which bits pertain to operands and just zero them out, so we're
 		// just left with the instruction (mnemonic) bits.
 		byte[] mask = instruction.getPrototype().getInstructionMask().getBytes();
@@ -379,7 +379,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 	 * <li>value = 01101100 10001110</li>
 	 * <li>--------------------------</li>
 	 * <li>ret = 01101000 10000000</li>
-	 * 
+	 *
 	 * @param mask the mnemonic mask
 	 * @param value the full instruction value string
 	 * @return the cleared byte array
@@ -392,7 +392,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 	 * Verifies that the input entered by the user is valid. Meaning:
 	 * <li>The string represents a hex or binary number.</li>
 	 * <li>The string contains only full bytes.</li>
-	 * 
+	 *
 	 * @return true if input is valid
 	 */
 	public boolean validateInput() {
@@ -401,7 +401,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 
 	/**
 	 * Verifies that the given string is valid binary or hex input.
-	 * 
+	 *
 	 * @param input the string to validate
 	 * @return true if valid
 	 */
@@ -472,7 +472,7 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 
 	/**
 	 * Flags the given string as invalid input
-	 * 
+	 *
 	 */
 	public void setInputInvalid() {
 		inputBytesTA.setError();
@@ -497,11 +497,11 @@ public class InsertBytesWidget extends DialogComponentProvider implements KeyLis
 	/**
 	 * Need to capture keystrokes so we can validate input on the fly. Every
 	 * time a character is typed we check the entire input for correctness.
-	 * 
+	 *
 	 * Note that this MUST be done in the release handler; in the type or press
 	 * handler the input widget has not officially been updated with the new
 	 * character.
-	 * 
+	 *
 	 * @param e
 	 */
 	@Override

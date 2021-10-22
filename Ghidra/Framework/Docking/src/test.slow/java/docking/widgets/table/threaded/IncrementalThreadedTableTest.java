@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 
 //==================================================================================================
 // Setup Methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	@Before
@@ -95,7 +95,7 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 	protected TestDataKeyModel createTestModel() {
 		final TestDataKeyModel[] box = new TestDataKeyModel[1];
 		runSwing(() -> box[0] = new TestDataKeyModel(null /*monitor*/, true) {
-			// 
+			//
 			// Overridden to allow more fined-grained control of when loading finishes
 			//
 			@Override
@@ -126,7 +126,7 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 
 //==================================================================================================
 // Test Methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Test
 	public void testIncrementalLoadingShowsResultsBeforeFinished() throws Exception {
@@ -176,11 +176,11 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 	@Test
 	public void testNoShowPendingWhileLoading() throws Exception {
 		//
-		// Tests that the the pending panel is not shown while we are in the middle of an 
-		// incremental load.  In non-incremental models this is not an issue, as the model 
-		// itself will not send out pending events while a load is taking place (the data is 
+		// Tests that the the pending panel is not shown while we are in the middle of an
+		// incremental load.  In non-incremental models this is not an issue, as the model
+		// itself will not send out pending events while a load is taking place (the data is
 		// just added to the current load process).  However, in the incremental case, the model's
-		// update manager is not aware that an incremental load is taking place. So, we have 
+		// update manager is not aware that an incremental load is taking place. So, we have
 		// code to make sure that the pending update does not trigger the pending panel while
 		// we are loading, which is what we are testing.
 		//
@@ -324,7 +324,7 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void waitForRowCount(int n) {
 		waitForCondition(() -> model.getRowCount() == n, "Table model never had " + n + " rows");
@@ -465,13 +465,13 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 			if (model.isBusy()) {
 
 				//
-				// Hacky Smacky!: we sometimes lose notifications for the 
-				// IncrementalThreadedTableModelListener in the testing environment due to 
-				// timing issues (which I've given up chasing for now, as I think it is a 
+				// Hacky Smacky!: we sometimes lose notifications for the
+				// IncrementalThreadedTableModelListener in the testing environment due to
+				// timing issues (which I've given up chasing for now, as I think it is a
 				// testing artifact only).  So, if the model is
-				// still busy after all this time, then assume that it is in  a really long 
+				// still busy after all this time, then assume that it is in  a really long
 				// loading process and continue.
-				// 
+				//
 				return;
 			}
 			throw e;
@@ -608,7 +608,7 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	interface TestLoadingPolicy {
 		void load(TestDataKeyModel model, Accumulator<Long> accumulator, TaskMonitor monitor)
@@ -740,7 +740,7 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 
 	/**
 	 * A policy that will initially load half of its data, waiting for the signal to finish
-	 * loading the second half. 
+	 * loading the second half.
 	 */
 	private class HalfThenHalfSynchronizedLoadPolicy implements SynchronizedLoadPolicy {
 
@@ -788,7 +788,7 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 
 		@Override
 		public void waitForNextUpdate() throws Exception {
-			// note: this is bad design to have a method on the interface that is not 
+			// note: this is bad design to have a method on the interface that is not
 			//       supported by all implementations.  But, it was easy, so this will alert
 			//       test writers to incorrect usage of this class.
 			throw new UnsupportedOperationException();
@@ -801,7 +801,7 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 	}
 
 	/**
-	 * A policy that will initially load some of its data, then wait for the client to 
+	 * A policy that will initially load some of its data, then wait for the client to
 	 * signal to proceed.  Then, it will load another chunk of data, waiting again.
 	 */
 	private class CyclicSynchronizedLoadPolicy implements SynchronizedLoadPolicy {
@@ -860,7 +860,7 @@ public class IncrementalThreadedTableTest extends AbstractThreadedTableTest {
 
 		@Override
 		public void finishLoading() {
-			// note: this is bad design to have a method on the interface that is not 
+			// note: this is bad design to have a method on the interface that is not
 			//       supported by all implementations.  But, it was easy, so this will alert
 			//       test writers to incorrect usage of this class.
 			throw new UnsupportedOperationException();

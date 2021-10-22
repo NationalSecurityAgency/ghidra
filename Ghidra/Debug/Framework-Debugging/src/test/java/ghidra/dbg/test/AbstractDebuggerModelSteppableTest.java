@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ import ghidra.util.Msg;
 
 /**
  * Tests the functionality of a single-stepping a target
- * 
+ *
  * <p>
  * Note that multiple sub-cases of this test can be generated in order to test each steppable object
  * in the model. Take care when selecting which object (usually a thread) to put under test. If, for
@@ -56,7 +56,7 @@ public abstract class AbstractDebuggerModelSteppableTest extends AbstractDebugge
 
 	/**
 	 * Get the expected (absolute) path of the steppable under test
-	 * 
+	 *
 	 * @param threadPath the path of the target (usually a thread)
 	 * @return the expected path, or {@code null} for no assertion
 	 */
@@ -78,11 +78,11 @@ public abstract class AbstractDebuggerModelSteppableTest extends AbstractDebugge
 
 	/**
 	 * An arbitrary number
-	 * 
+	 *
 	 * <p>
 	 * Should be enough to prove that stepping works consistently, but not so high that the test
 	 * drags on. Definitely 2 or greater :)
-	 * 
+	 *
 	 * @return the number of steps in the test
 	 */
 	protected int getStepCount() {
@@ -91,7 +91,7 @@ public abstract class AbstractDebuggerModelSteppableTest extends AbstractDebugge
 
 	/**
 	 * This just steps the target some number of times and verifies the execution state between
-	 * 
+	 *
 	 * @throws Throwable if anything goes wrong
 	 */
 	@Test
@@ -116,7 +116,7 @@ public abstract class AbstractDebuggerModelSteppableTest extends AbstractDebugge
 
 	/**
 	 * The window of silence necessary to assume no more callbacks will occur
-	 * 
+	 *
 	 * @return the window in milliseconds
 	 */
 	protected long getDebounceWindowMs() {
@@ -133,7 +133,7 @@ public abstract class AbstractDebuggerModelSteppableTest extends AbstractDebugge
 
 	/**
 	 * Test event order for single stepping
-	 * 
+	 *
 	 * <p>
 	 * This tests that the {@link DebuggerModelListener#registersUpdated(TargetObject, Map)}
 	 * callback occurs "last" following a step. While other callbacks may intervene, the order ought
@@ -144,7 +144,7 @@ public abstract class AbstractDebuggerModelSteppableTest extends AbstractDebugge
 	 * {@code event()}s, but is easiest to test for single-stepping. We also check that the
 	 * registers (cached) are not invalidated after they are updated for the step. Note that
 	 * {@code STOPPED} can be substituted for any event which implies the target is stopped.
-	 * 
+	 *
 	 * @throws Throwable if anything goes wrong
 	 */
 	@Test
@@ -234,7 +234,7 @@ public abstract class AbstractDebuggerModelSteppableTest extends AbstractDebugge
 		}
 
 		Msg.info(this, "Observations: " + callbacks);
-		
+
 		boolean observedRunning = false;
 		boolean observedStopped = false;
 		boolean observedRegsUpdated = false;
@@ -274,7 +274,7 @@ public abstract class AbstractDebuggerModelSteppableTest extends AbstractDebugge
 						fail("Observed a spurious invalidateCacheRequested(Regs).");
 					}
 					else if (observedInvalidateRegs) {
-						Msg.warn(this, 
+						Msg.warn(this,
 							"Observed an extra invalidateCacheRequested(Regs) after event(STOPPED).");
 					}
 					else if (observedRegsUpdated) {
@@ -300,7 +300,7 @@ public abstract class AbstractDebuggerModelSteppableTest extends AbstractDebugge
 						fail("Observed a spurious invalidateCacheRequested(Mem).");
 					}
 					else if (observedInvalidateMem) {
-						Msg.warn(this, 
+						Msg.warn(this,
 							"Observed an extra invalidateCacheRequested(Mem) after event(STOPPED).");
 					}
 					else {

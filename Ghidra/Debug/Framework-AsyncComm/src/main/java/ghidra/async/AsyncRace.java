@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import java.util.function.Consumer;
 
 /**
  * A race which orders futures by completion time
- * 
+ *
  * This is roughly equivalent to Java's
  * {@link CompletableFuture#acceptEither(CompletionStage, Consumer)} or
  * {@link CompletableFuture#anyOf(CompletableFuture...)}; however, it is more general. Many futures
@@ -32,10 +32,10 @@ import java.util.function.Consumer;
  * participant completes. This subsumes and provides a shorthand for the standard methods. A second
  * call to {@link #next()} returns a future which completes when the second participant completes,
  * and so on.
- * 
+ *
  * This primitive does not provide a means to identify the winning participants. If identification
  * is desired, it must be done via the yielded object, or out of band.
- * 
+ *
  * @param <T> the type of object yielded by race participants
  */
 public class AsyncRace<T> {
@@ -44,7 +44,7 @@ public class AsyncRace<T> {
 
 	/**
 	 * Include a participant in this race
-	 * 
+	 *
 	 * @param future the participant to add
 	 */
 	public AsyncRace<T> include(CompletableFuture<? extends T> future) {
@@ -64,7 +64,7 @@ public class AsyncRace<T> {
 	/**
 	 * Obtain a future that completes with the result of the first (since last called) finishing
 	 * participant
-	 * 
+	 *
 	 * @return the next "any of" future
 	 */
 	public synchronized CompletableFuture<T> next() {

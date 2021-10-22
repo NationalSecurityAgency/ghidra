@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -105,7 +105,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		// timing issues.
 
 		// Note: this doesn't quite work as intended.  This should be run before each other
-		//       tearDown() method, but junit offers no way to do that.   If you can figure 
+		//       tearDown() method, but junit offers no way to do that.   If you can figure
 		//       out how to make that work, then update this code.
 		ConcurrentTestExceptionHandler.disable();
 	}
@@ -322,7 +322,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * Check for and display message component text associated with OptionDialog windows 
+	 * Check for and display message component text associated with OptionDialog windows
 	 * @param w any window
 	 * @return the message string if one can be found; <code>null</code> otherwise
 	 */
@@ -446,7 +446,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	/**
 	 * A convenience method to close all of the windows and frames that the current Java
 	 * windowing environment knows about
-	 * 
+	 *
 	 * @deprecated instead call the new {@link #closeAllWindows()}
 	 */
 	@Deprecated
@@ -1082,7 +1082,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * A helper method to find all actions by name, with the given owner's name (this will not 
+	 * A helper method to find all actions by name, with the given owner's name (this will not
 	 * include reserved system actions)
 	 *
 	 * @param tool the tool containing all system actions
@@ -1125,14 +1125,14 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * Finds the action by the given owner name and action name.  
-	 * If you do not know the owner name, then use  
+	 * Finds the action by the given owner name and action name.
+	 * If you do not know the owner name, then use
 	 * the call {@link #getActionsByName(Tool, String)} instead  (this will not include
 	 * reserved system actions).
-	 * 
-	 * <P>Note: more specific test case subclasses provide other methods for finding actions 
+	 *
+	 * <P>Note: more specific test case subclasses provide other methods for finding actions
 	 * when you have an owner name (which is usually the plugin name).
-	 * 
+	 *
 	 * @param tool the tool containing all system actions
 	 * @param owner the owner of the action
 	 * @param name the name to match
@@ -1155,7 +1155,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * Returns the action by the given name that belongs to the given provider
-	 * 
+	 *
 	 * @param provider the provider
 	 * @param actionName the action name
 	 * @return the action
@@ -1447,7 +1447,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	/**
 	 * Simulates a user initiated keystroke using the keybinding of the given action
-	 * 
+	 *
 	 * @param destination the component for the action being executed
 	 * @param action The action to simulate pressing
 	 */
@@ -1483,8 +1483,8 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 		triggerText(c, "\010");
 	}
 
-	/** 
-	 * Simulates the user pressing the 'Enter' key on the given text field 
+	/**
+	 * Simulates the user pressing the 'Enter' key on the given text field
 	 * @param c the component
 	 */
 	public static void triggerEnter(Component c) {
@@ -1676,10 +1676,10 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 	}
 
 	/**
-	 * Fires a {@link KeyListener#keyPressed(KeyEvent)}, 
+	 * Fires a {@link KeyListener#keyPressed(KeyEvent)},
 	 * {@link KeyListener#keyTyped(KeyEvent)}
 	 * and {@link KeyListener#keyReleased(KeyEvent)} for the given key stroke
-	 * 
+	 *
 	 * @param c the destination component
 	 * @param ks the key stroke
 	 */
@@ -1981,7 +1981,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 	private static <T> void doWaitForTableModel(ThreadedTableModel<T, ?> model) {
 
-		// Always wait for Swing at least once.  There seems to be a race condition for 
+		// Always wait for Swing at least once.  There seems to be a race condition for
 		// incremental threaded models where the table is not busy at the time this method
 		// is called, but there is an update pending via an invokeLater().
 		waitForSwing();
@@ -1994,7 +1994,7 @@ public abstract class AbstractDockingTest extends AbstractGenericTest {
 
 			// model loading may take longer than normal waits
 			if (waitTime >= PRIVATE_LONG_WAIT_TIMEOUT) {
-				Msg.error(AbstractDockingTest.class, createStackTraceForAllThreads()); // debug				
+				Msg.error(AbstractDockingTest.class, createStackTraceForAllThreads()); // debug
 				String busyState = getBusyState(model);
 				Msg.error(AbstractDockingTest.class, busyState);
 				throw new AssertException(

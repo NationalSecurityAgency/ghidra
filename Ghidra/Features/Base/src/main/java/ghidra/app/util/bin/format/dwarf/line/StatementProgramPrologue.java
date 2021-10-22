@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,7 +72,7 @@ public class StatementProgramPrologue {
 	}
 
 	/**
-	 * Returns the size in bytes of the statement information for this 
+	 * Returns the size in bytes of the statement information for this
 	 * compilation unit (not including the total_length field itself).
 	 * @return size in bytes of the statement information
 	 */
@@ -87,7 +87,7 @@ public class StatementProgramPrologue {
 		return version & 0xffff;
 	}
 	/**
-	 * Returns the number of bytes following the prologue_length field to the 
+	 * Returns the number of bytes following the prologue_length field to the
 	 * beginning of the first byte of the statement program itself.
 	 * @return the number of bytes following the prologue_length
 	 */
@@ -95,8 +95,8 @@ public class StatementProgramPrologue {
 		return prologueLength;
 	}
 	/**
-	 * Returns the size in bytes of the smallest target machine instruction. 
-	 * Statement program opcodes that alter the address register first 
+	 * Returns the size in bytes of the smallest target machine instruction.
+	 * Statement program opcodes that alter the address register first
 	 * multiply their operands by this value.
 	 * @return the size in bytes of the smallest target machine instruction
 	 */
@@ -161,7 +161,7 @@ public class StatementProgramPrologue {
 		return fileNames.get(fileIndex - 1);
 	}
 	/**
-	 * The directory index represents an entry in the 
+	 * The directory index represents an entry in the
 	 * include directories section. If the directoryIndex
 	 * is LEB128(0), then the file was found in the current
 	 * directory.

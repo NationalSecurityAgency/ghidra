@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -227,15 +227,15 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		ProgramLocation startLoc = new AddressFieldLocation(program, addr(0x01002000));
 		//@formatter:off
 		SearchOptions options =
-			new SearchOptions("unicode", 
-				false /*quick*/, 
-				false /*functions*/, 
-				false /*comments*/, 
-				false /*labels*/, 
-				true  /*instruction mnemonics*/, 
-				true  /*instruction operands*/, 
-				true  /*data mnemonics*/, 
-				true  /*data operands*/, 
+			new SearchOptions("unicode",
+				false /*quick*/,
+				false /*functions*/,
+				false /*comments*/,
+				false /*labels*/,
+				true  /*instruction mnemonics*/,
+				true  /*instruction operands*/,
+				true  /*data mnemonics*/,
+				true  /*data operands*/,
 				false /*case sensitive*/,
 				false /*is forward*/,
 				false /* includeNonLoadedBlocks */,
@@ -503,15 +503,15 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		String searchText = "Create";
 		//@formatter:off
 		SearchOptions options =
-			new SearchOptions(searchText, 
-				false /*quick*/, 
-				false /*functions*/, 
-				false /*comments*/, 
-				true  /*labels*/, 
-				false /*instruction mnemonics*/, 
-				false /*instruction operands*/, 
-				false /*data mnemonics*/, 
-				false /*data operands*/, 
+			new SearchOptions(searchText,
+				false /*quick*/,
+				false /*functions*/,
+				false /*comments*/,
+				true  /*labels*/,
+				false /*instruction mnemonics*/,
+				false /*instruction operands*/,
+				false /*data mnemonics*/,
+				false /*data operands*/,
 				false /*case sensitive*/,
 				true  /*is forward*/,
 				false /* includeNonLoadedBlocks */,
@@ -541,15 +541,15 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		String searchText = "Create";
 		//@formatter:off
 		SearchOptions options =
-			new SearchOptions(searchText, 
-				false /*quick*/, 
-				false /*functions*/, 
-				false /*comments*/, 
-				true  /*labels*/, 
-				false /*instruction mnemonics*/, 
-				false /*instruction operands*/, 
-				false /*data mnemonics*/, 
-				false /*data operands*/, 
+			new SearchOptions(searchText,
+				false /*quick*/,
+				false /*functions*/,
+				false /*comments*/,
+				true  /*labels*/,
+				false /*instruction mnemonics*/,
+				false /*instruction operands*/,
+				false /*data mnemonics*/,
+				false /*data operands*/,
 				false /*case sensitive*/,
 				true  /*is forward*/,
 				false /* includeNonLoadedBlocks */,
@@ -587,15 +587,15 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		String searchText = "ghidra";
 		//@formatter:off
 		SearchOptions options =
-			new SearchOptions(searchText, 
-				false /*quick*/, 
-				true  /*functions*/, 
-				false /*comments*/, 
-				false /*labels*/, 
-				false /*instruction mnemonics*/, 
-				false /*instruction operands*/, 
-				false /*data mnemonics*/, 
-				false /*data operands*/, 
+			new SearchOptions(searchText,
+				false /*quick*/,
+				true  /*functions*/,
+				false /*comments*/,
+				false /*labels*/,
+				false /*instruction mnemonics*/,
+				false /*instruction operands*/,
+				false /*data mnemonics*/,
+				false /*data operands*/,
 				false /*case sensitive*/,
 				true  /*is forward*/,
 				false /* includeNonLoadedBlocks */,
@@ -632,15 +632,15 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 		String searchText = "EOL comment";
 		//@formatter:off
 		SearchOptions options =
-			new SearchOptions(searchText, 
-				false /*quick*/, 
-				false /*functions*/, 
-				true  /*comments*/, 
-				false /*labels*/, 
-				false /*instruction mnemonics*/, 
-				false /*instruction operands*/, 
-				false /*data mnemonics*/, 
-				false /*data operands*/, 
+			new SearchOptions(searchText,
+				false /*quick*/,
+				false /*functions*/,
+				true  /*comments*/,
+				false /*labels*/,
+				false /*instruction mnemonics*/,
+				false /*instruction operands*/,
+				false /*data mnemonics*/,
+				false /*data operands*/,
 				false /*case sensitive*/,
 				true  /*is forward*/,
 				false /* includeNonLoadedBlocks */,
@@ -693,24 +693,24 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testRangeWithAddressInsideOfThatRange() {
 		//
-		// Set up a range that contains multiple matches.    Put the start address past one 
+		// Set up a range that contains multiple matches.    Put the start address past one
 		// of the addresses and make sure that match is not found.
-		// 
+		//
 		AddressSet as = new AddressSet();
 		as.add(addr(0x100415a), addr(0x10041a5));
 
 		ProgramLocation startLoc = new AddressFieldLocation(program, addr(0x1004178));
 		//@formatter:off
 		SearchOptions options =
-			new SearchOptions("LAB", 
-				false /*quick*/, 
-				false /*functions*/, 
-				false /*comments*/, 
-				true  /*labels*/, 
-				true  /*instruction mnemonics*/, 
-				true  /*instruction operands*/, 
-				false /*data mnemonics*/, 
-				false /*data operands*/, 
+			new SearchOptions("LAB",
+				false /*quick*/,
+				false /*functions*/,
+				false /*comments*/,
+				true  /*labels*/,
+				true  /*instruction mnemonics*/,
+				true  /*instruction operands*/,
+				false /*data mnemonics*/,
+				false /*data operands*/,
 				false /*case sensitive*/,
 				true  /*is forward*/,
 				false /* includeNonLoadedBlocks */,
@@ -737,9 +737,9 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 	@Test
 	public void testRangeWithAddressInsideOfThatRange_SearchAll() {
 		//
-		// Set up a range that contains multiple matches.    Put the start address past one 
+		// Set up a range that contains multiple matches.    Put the start address past one
 		// of the addresses and make sure that match is not found.
-		// 
+		//
 		AddressSet as = new AddressSet();
 		as.add(addr(0x100415a), addr(0x10041a5));
 
@@ -764,7 +764,7 @@ public class ListingDisplaySearcherTest extends AbstractGhidraHeadedIntegrationT
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void testForMatchingText(String text, ProgramLocation location) {
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,10 +34,10 @@ void LoadTable::saveXml(ostream &s) const
 void LoadTable::restoreXml(const Element *el,Architecture *glb)
 
 {
-  istringstream s1(el->getAttributeValue("size"));	
+  istringstream s1(el->getAttributeValue("size"));
   s1.unsetf(ios::dec | ios::hex | ios::oct);
   s1 >> size;
-  istringstream s2(el->getAttributeValue("num"));	
+  istringstream s2(el->getAttributeValue("num"));
   s2.unsetf(ios::dec | ios::hex | ios::oct);
   s2 >> num;
   const List &list( el->getChildren() );
@@ -1040,7 +1040,7 @@ void JumpBasic::analyzeGuards(BlockBasic *bl,int4 pathout)
     bl = prevbl;
     vn = cbranch->getIn(1);
     CircleRange rng(toswitchval);
-    
+
     // The boolean variable could conceivably be the switch variable
     int4 indpathstore = prevbl->getFlipPath() ? 1-indpath : indpath;
     selectguards.push_back(GuardRecord(cbranch,cbranch,indpathstore,rng,vn));
@@ -1403,7 +1403,7 @@ void JumpBasic::buildLabels(Funcdata *fd,vector<Address> &addresstable,vector<ui
     else if (needswarning==2)
       fd->warning("Calculation of case label failed",addresstable[label.size()]);
     label.push_back(switchval);
-      
+
   // Take into account the fact that the address table may have
   // been truncated (via the sanity check)
     if (label.size() >= addresstable.size()) break;
@@ -1455,7 +1455,7 @@ bool JumpBasic::sanityCheck(Funcdata *fd,PcodeOp *indop,vector<Address> &address
   if (addr.getOffset() != 0) {
     for(i=1;i<addresstable.size();++i) {
       if (addresstable[i].getOffset() == 0) break;
-      diff = (addr.getOffset() < addresstable[i].getOffset()) ? 
+      diff = (addr.getOffset() < addresstable[i].getOffset()) ?
 	(addresstable[i].getOffset()-addr.getOffset()) :
 	(addr.getOffset()-addresstable[i].getOffset());
       if (diff > 0xffff) {
@@ -1538,7 +1538,7 @@ bool JumpBasic2::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 
   // Along the other path, the intermediate value results in a straight line calculation from the switch var
   // The two-pathed intermediate value comes together in a MULTIEQUAL, and there is a straightline
   // calculation to the BRANCHIND
-  
+
   // We piggy back on the partial calculation from the basic model to see if we have the MULTIEQUAL
   Varnode *othervn = (Varnode *)0;
   PcodeOp *copyop = (PcodeOp *)0;
@@ -1546,7 +1546,7 @@ bool JumpBasic2::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize,uint4 
   Varnode *joinvn = extravn;	// extravn should be set to as far back as model 1 could trace
   if (joinvn == (Varnode *)0) return false;
   if (!joinvn->isWritten()) return false;
-  PcodeOp *multiop = joinvn->getDef(); 
+  PcodeOp *multiop = joinvn->getDef();
   if (multiop->code() != CPUI_MULTIEQUAL) return false;
   if (multiop->numInput() != 2) return false; // Must be exactly 2 paths
   // Search for a constant along one of the paths
@@ -1735,7 +1735,7 @@ int4 JumpBasicOverride::trialNorm(Funcdata *fd,Varnode *trialvn,uint4 tolerance)
     }
     val += 1;
   }
-  
+
   //  if ((loadpoint != (vector<LoadTable> *)0)&&(total == adset.size()))
   //    emul.collectLoadPoints(*loadpoints);
   if (total == adset.size())
@@ -1833,7 +1833,7 @@ bool JumpBasicOverride::recoverModel(Funcdata *fd,PcodeOp *indop,uint4 matchsize
     // If there was never a specified norm, or the specified norm was never recovered
     if ((trialvn == (Varnode *)0)&&(values.empty()||(hash==0)))
       trialvn = findLikelyNorm();
-    
+
     if (trialvn != (Varnode *)0) {
       int4 opi = trialNorm(fd,trialvn,10);
       if (opi >= 0) {
@@ -1938,12 +1938,12 @@ void JumpBasicOverride::restoreXml(const Element *el,Architecture *glb)
     else if (subel->getName() == "normaddr")
       normaddress = Address::restoreXml(subel,glb);
     else if (subel->getName() == "normhash") {
-      istringstream s1(subel->getContent());	
+      istringstream s1(subel->getContent());
       s1.unsetf(ios::dec | ios::hex | ios::oct);
       s1 >> hash;
     }
     else if (subel->getName() == "startval") {
-      istringstream s2(subel->getContent());	
+      istringstream s2(subel->getContent());
       s2.unsetf(ios::dec | ios::hex | ios::oct);
       s2 >> startingvalue;
     }
@@ -2135,7 +2135,7 @@ void JumpTable::sanityCheck(Funcdata *fd)
     bool isthunk = false;
     uintb diff;
     Address addr = addresstable[0];
-    if (addr.getOffset()==0) 
+    if (addr.getOffset()==0)
       isthunk = true;
     else {
       Address addr2 = indirect->getAddr();
@@ -2482,7 +2482,7 @@ void JumpTable::recoverMultistage(Funcdata *fd)
     delete origmodel;
   origmodel = jmodel;
   jmodel = (JumpModel *)0;
-  
+
   vector<Address> oldaddresstable = addresstable;
   addresstable.clear();
   loadpoints.clear();
@@ -2650,7 +2650,7 @@ void JumpTable::restoreXml(const Element *el)
       if (i<maxnum) {		// Found a label attribute
 	if (missedlabel)
 	  throw LowlevelError("Jumptable entries are missing labels");
-	istringstream s1(subel->getAttributeValue(i));	
+	istringstream s1(subel->getAttributeValue(i));
 	s1.unsetf(ios::dec | ios::hex | ios::oct);
 	uintb lab;
 	s1 >> lab;

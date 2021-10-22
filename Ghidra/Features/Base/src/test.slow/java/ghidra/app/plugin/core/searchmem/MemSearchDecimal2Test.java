@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -214,7 +214,7 @@ public class MemSearchDecimal2Test extends AbstractMemSearchTest {
 		setValueText("12 34 56 78");
 		selectRadioButton("Byte");
 		selectRadioButton("Big Endian");
-		// should be unaffected			
+		// should be unaffected
 		assertEquals("0c 22 38 4e ", hexLabel.getText());
 
 		selectRadioButton("Word");
@@ -635,7 +635,7 @@ public class MemSearchDecimal2Test extends AbstractMemSearchTest {
 	}
 
 //==================================================================================================
-// Private Methods	
+// Private Methods
 //==================================================================================================
 
 	@Override

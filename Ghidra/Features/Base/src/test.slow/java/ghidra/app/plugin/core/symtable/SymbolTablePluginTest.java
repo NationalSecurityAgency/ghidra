@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -98,7 +98,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		viewSymAction = getAction(plugin, "Symbol Table");
 
-		// this action is actually in the tool twice: once for the provider and once as a 
+		// this action is actually in the tool twice: once for the provider and once as a
 		// local action in the Symbol Table header, so we must pick one
 		Set<DockingActionIf> symbolReferencesActions =
 			getActionsByOwnerAndName(tool, plugin.getName(), "Symbol References");
@@ -1235,16 +1235,16 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 		// Change different filter types and values.  (This requires some guilty knowledge).
 		//
-		// Symbol type name and default state: 
-		// 
-		// Symbol Types: 
-		// 		Label filters:  instruction (active), data (active), function (active) 
+		// Symbol type name and default state:
+		//
+		// Symbol Types:
+		// 		Label filters:  instruction (active), data (active), function (active)
 		//      Non-label filters: namespaces, classes, params, etc (all inactive)
-		// 
+		//
 		// Advanced filters: externals, globals, entry points, locals, etc (all inactive)
 		//
-		// Symbol Source Types: user defined (active), imported (active), 
-		//  		default label (inactive), default function, analysis (active) 
+		// Symbol Source Types: user defined (active), imported (active),
+		//  		default label (inactive), default function, analysis (active)
 		//
 
 		boolean active = true;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -353,7 +353,7 @@ public class ProgramTreePluginShowInViewTest extends AbstractGhidraHeadedIntegra
 			module.add(frag); // ==>  L, ShowWindow
 
 			ProgramModule m2 = listing.getModule("Main Tree", "Fragments");
-			m2.add(module); // ==> Fragments, L, ShowWindow 
+			m2.add(module); // ==> Fragments, L, ShowWindow
 
 			ProgramModule m3 = listing.getModule("Main Tree", "Functions");
 			m3.add(module); // ==> Functions, L, ShowWindow

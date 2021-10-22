@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,8 @@ import java.util.ArrayList;
 
 /**
  * A class to represent a new-executable segment.
- * 
- * 
+ *
+ *
  */
 public class Segment {
 	/**data segment type.*/
@@ -63,7 +63,7 @@ public class Segment {
     Segment(FactoryBundledWithBinaryReader reader, short segmentAlignment, int segmentID) throws IOException {
         this.reader = reader;
         this.segmentID = segmentID;
-        
+
         offset       = reader.readNextShort();
         length       = reader.readNextShort();
         flagword     = reader.readNextShort();
@@ -88,7 +88,7 @@ public class Segment {
         relocations = new SegmentRelocation[list.size()];
         list.toArray(relocations);
     }
-    
+
     /**
      * Returns segment ID.
      * @return segment ID
@@ -203,7 +203,7 @@ public class Segment {
         return minAllocSize;
     }
     /**
-     * Returns the offset to the contents of this segment. 
+     * Returns the offset to the contents of this segment.
      * NOTE: This value needs to be shift aligned.
      * @return the offset to the contents of this segment
      */

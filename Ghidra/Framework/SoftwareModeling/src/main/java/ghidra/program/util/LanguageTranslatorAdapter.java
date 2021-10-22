@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * <code>LanguageTranslatorAdapter</code> provides a default language translator 
+ * <code>LanguageTranslatorAdapter</code> provides a default language translator
  * behavior which may be extended to provide customized language translations.
  */
 public abstract class LanguageTranslatorAdapter implements LanguageTranslator {
@@ -65,7 +65,7 @@ public abstract class LanguageTranslatorAdapter implements LanguageTranslator {
 	}
 
 	/**
-	 * Constructor for customized language translators which want to leverage 
+	 * Constructor for customized language translators which want to leverage
 	 * some of the default language mappings.  Successful construction does not
 	 * guarantee the two languages can utilize the default address space mapping.
 	 * This constructor
@@ -287,7 +287,7 @@ public abstract class LanguageTranslatorAdapter implements LanguageTranslator {
 		int value = oldRegisterRangeMap.getValue(oldAddr.getOffset());
 		Register oldReg = oldLanguage.getRegister(oldAddr.getNewAddress(value), 0);
 		if (value == 0 && oldReg != null) {
-			// NOTE: range map will return 0 if range not found - additional checking will be 
+			// NOTE: range map will return 0 if range not found - additional checking will be
 			// required to eliminate potential match
 			long oldOffset = oldAddr.getOffset();
 			if (oldOffset < 0 || oldOffset >= (oldReg.getOffset() + oldReg.getMinimumByteSize())) {

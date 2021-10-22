@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,9 +44,9 @@ import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Abstract class that other function mergers can extend to get basic constants and methods 
- * for merging function changes. 
- * <br>Important: This class is intended to be used only for a single program 
+ * Abstract class that other function mergers can extend to get basic constants and methods
+ * for merging function changes.
+ * <br>Important: This class is intended to be used only for a single program
  * version merge.
  */
 abstract class AbstractFunctionMerger implements ListingMergeConstants {
@@ -74,14 +74,14 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 	static protected final int FUNC_NO_RETURN = 0x080;
 	static protected final int FUNC_CALLING_CONVENTION = 0x100;
 //	static protected final int FUNC_CUSTOM_STORAGE = 0x200; // custom mode differs
-	static protected final int FUNC_VAR_STORAGE = 0x400; // overlapping variable storage 
+	static protected final int FUNC_VAR_STORAGE = 0x400; // overlapping variable storage
 	static protected final int FUNC_SIGNATURE = 0x800;
 	static protected final int FUNC_LOCAL_DETAILS = 0x1000; // one or more local details differ
 	static protected final int FUNC_PARAM_DETAILS = 0x2000; // one or more param details differ
 //	static protected final int FUNC_LOCAL_REMOVED = 0x4000; // deleted variable conflicts with changes
 	static protected final int FUNC_SIGNATURE_SOURCE = 0x8000;
 
-	// FUNC_DETAIL_MASK doesn't include the FUNC_SIGNATURE_SOURCE, since signature source conflicts 
+	// FUNC_DETAIL_MASK doesn't include the FUNC_SIGNATURE_SOURCE, since signature source conflicts
 	// will get merged by priority instead of a user prompt.
 	// NOTE: Custom storage attribute should be handled as a side-affect of achieving desired storage
 	// for return and parameters not as an independently managed attribute
@@ -125,7 +125,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 	protected Map<Long, DataType> myResolvedDts; // maps data type ID -> resolved Data type
 	protected Map<Long, DataType> origResolvedDts;
 
-	// mergePanel is a panel for listing merge conflicts. 
+	// mergePanel is a panel for listing merge conflicts.
 	// listings in CENTER, conflictInfoPanel in NORTH, mergeConflicts in SOUTH.
 	protected ListingMergePanel listingMergePanel;
 
@@ -148,7 +148,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 	protected int thunkChoice = ASK_USER;
 
 	// *******************************************************************************************
-	// *** Note: The removeSet & localsRemoveSet contains function entry points from the 
+	// *** Note: The removeSet & localsRemoveSet contains function entry points from the
 	// ***       ORIGINAL program.
 	// *******************************************************************************************
 	// removeSet is where one changed function and other removed.
@@ -224,7 +224,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 
 	/**
 	 * Saves information indicating there is a conflict that needs to be resolved for a
-	 * particular part of a function as indicated by the type. 
+	 * particular part of a function as indicated by the type.
 	 * @param functions the matching set of functions from Result, Latest, My, and Original
 	 * (Some may be null) which have the detailed type of conflict.
 	 * @param functionConflictFlags function conflict flags to be set
@@ -242,16 +242,16 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 	/**
 	 * Determines whether or not the part of the function, indicated by the type value, is in
 	 * conflict for the matching set of functions. If not, then the function change is auto merged.
-	 * @param functions the matching set of functions from Result, Latest, My, and Original 
+	 * @param functions the matching set of functions from Result, Latest, My, and Original
 	 * (Some may be null.)
 	 * @param type (FUNC_RETURN_TYPE, FUNC_RETURN_ADDRESS_OFFSET,
-	 * FUNC_PARAMETER_OFFSET, FUNC_LOCAL_SIZE, FUNC_STACK_PURGE_SIZE, FUNC_NAME, FUNC_INLINE, 
+	 * FUNC_PARAMETER_OFFSET, FUNC_LOCAL_SIZE, FUNC_STACK_PURGE_SIZE, FUNC_NAME, FUNC_INLINE,
 	 * FUNC_NO_RETURN, FUNC_CALLING_CONVENTION)
 	 * @param latestMyChanges bit mask indicating the types of differences between Latest and My function.
 	 * @param originalLatestChanges bit mask indicating the types of differences between Original and Latest function.
 	 * @param originalMyChanges bit mask indicating the types of differences between Original and My function.
 	 * @param monitor the merge status monitor for cancelling the merge and for reporting status.
-	 * @return 0 if there isn't a conflict. Otherwise, if that type of conflict exists then 
+	 * @return 0 if there isn't a conflict. Otherwise, if that type of conflict exists then
 	 * the type is returned.
 	 */
 	int determineFunctionConflict(Function[] functions, int type, int latestMyChanges,
@@ -314,7 +314,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 
 	/**
 	 * Process any dynamic name conflict and determine if there is any direct name conflict.
-	 * Note: This method eliminates any conflict between a defined function name and 
+	 * Note: This method eliminates any conflict between a defined function name and
 	 * a dynamic, FUN_..., function name.
 	 * @param functions the matching set of functions from Result, Latest, My, and Original.
 	 * @param monitor the merge status monitor
@@ -392,7 +392,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 
 	/**
 	 * Compares the functions (Latest, Original, My) to determine where conflicting changes
-	 * have been made to Latest and My. It then saves the conflict info within the merger for 
+	 * have been made to Latest and My. It then saves the conflict info within the merger for
 	 * later resolution and processing.
 	 * @param functions the matching set of functions from Result, Latest, My, and Original.
 	 * (Use MergeConstants.RESULT, LATEST, MY, ORIGINAL to reference these.)
@@ -491,13 +491,13 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 	}
 
 	/**
-	 * Compares the functions (Latest, Original, My) to determine if a parameter signature 
-	 * conflict exists and auto-merges any signature change if possible, otherwise 
+	 * Compares the functions (Latest, Original, My) to determine if a parameter signature
+	 * conflict exists and auto-merges any signature change if possible, otherwise
 	 * the {@link #FUNC_SIGNATURE} conflict flag may be set for the current function
 	 * signaling the merger for later resolution and processing.
 	 * @param functions the matching set of functions from Result, Latest, My, and Original.
 	 * @param monitor the merge status monitor
-	 * @return true if signatures match and a check should be performed for parameter detail 
+	 * @return true if signatures match and a check should be performed for parameter detail
 	 * conflicts, otherwise false is returned and the {@link #FUNC_SIGNATURE} conflict flag
 	 * may be set for the current function
 	 * @throws CancelledException if merge has been cancelled.
@@ -620,7 +620,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 						: functions[ORIGINAL].getEntryPoint());
 
 		// TODO: How should we deal with auto-params which are immutable ??
-		// assume we are only here is LATEST and MY have "same" sig/storage which for 
+		// assume we are only here is LATEST and MY have "same" sig/storage which for
 		// dynamic storage means same number of non-auto params
 
 		Parameter[] origParms =
@@ -654,20 +654,20 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 					latestMyChanges, originalLatestChanges, originalMyChanges, autoMerge, monitor);
 				paramConflicts |= determineVariableConflict(entry, VAR_DATATYPE, myParameter,
 					latestMyChanges, originalLatestChanges, originalMyChanges, autoMerge, monitor);
-//				paramConflicts |= determineVariableConflict(entry, VAR_LENGTH,    myP, latestMyChanges, 
+//				paramConflicts |= determineVariableConflict(entry, VAR_LENGTH,    myP, latestMyChanges,
 //															originalLatestChanges, originalMyChanges, monitor);
 				paramConflicts |= determineVariableConflict(entry, VAR_COMMENT, myParameter,
 					latestMyChanges, originalLatestChanges, originalMyChanges, autoMerge, monitor);
 //				paramConflicts |=
 //					determineVariableConflict(entry, VAR_STORAGE, myParameter, latestMyChanges,
 //						originalLatestChanges, originalMyChanges, autoMerge, monitor);
-//				paramConflicts |= determineVariableConflict(entry, VAR_FIRST_USE, myP, latestMyChanges, 
+//				paramConflicts |= determineVariableConflict(entry, VAR_FIRST_USE, myP, latestMyChanges,
 //															originalLatestChanges, originalMyChanges, monitor);
-//				paramConflicts |= determineVariableConflict(entry, VAR_OFFSET,    myP, latestMyChanges, 
+//				paramConflicts |= determineVariableConflict(entry, VAR_OFFSET,    myP, latestMyChanges,
 //															originalLatestChanges, originalMyChanges, monitor);
-//				paramConflicts |= determineVariableConflict(entry, VAR_ORDINAL,   myP, latestMyChanges, 
+//				paramConflicts |= determineVariableConflict(entry, VAR_ORDINAL,   myP, latestMyChanges,
 //															originalLatestChanges, originalMyChanges, monitor);
-//				paramConflicts |= determineVariableConflict(entry, VAR_REGISTER,  myP, latestMyChanges, 
+//				paramConflicts |= determineVariableConflict(entry, VAR_REGISTER,  myP, latestMyChanges,
 //															originalLatestChanges, originalMyChanges, monitor);
 			}
 			if (paramConflicts != 0) {
@@ -804,7 +804,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 		int varConflicts;
 
 		/**
-		 * 
+		 *
 		 * @param entry
 		 * @param vars an array of the 3 variables (Original, Latest, My) in conflict.
 		 * @param varConflicts
@@ -954,9 +954,9 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 	}
 
 	/**
-	 * Compares the two functions and determines where the function information 
-	 * differs (name, return type, return address offset, parameter offset, 
-	 * local size, stack purge size). Sets bits within the int value indicating 
+	 * Compares the two functions and determines where the function information
+	 * differs (name, return type, return address offset, parameter offset,
+	 * local size, stack purge size). Sets bits within the int value indicating
 	 * which info differs between the two functions.
 	 * @param func1 the first function
 	 * @param func2 the second function
@@ -1098,7 +1098,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 
 			int latestMyChanges = getVariableDiffs(latestVar, myVar);
 			if (latestMyChanges == 0) {
-				continue; // latest and my are same or both deleted 
+				continue; // latest and my are same or both deleted
 			}
 
 			boolean removedLatest = (origVar != null && latestVar == null);
@@ -1113,7 +1113,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 			}
 			else if (removedMy) {
 				if (autoMerge && !removedLatest) {
-					// Auto merge variable removal 
+					// Auto merge variable removal
 					getMergeMy().replaceFunctionVariable(entry, origVar, monitor);
 				}
 				continue;
@@ -1562,7 +1562,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 
 	protected String getReturnString(Function func, boolean includeStorage) {
 		// TODO: How should we format return with storage?
-		// TODO: Need to somewhat standardize with function signature display 
+		// TODO: Need to somewhat standardize with function signature display
 		//  and parameter display when name, data-type and storage all should be displayed
 		if (func == null) {
 			return "";
@@ -1789,7 +1789,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 	}
 
 	/**
-	 * This is a generic method for displaying the contents of the error 
+	 * This is a generic method for displaying the contents of the error
 	 * buffer to the user.
 	 */
 	void showResolveErrors(final String title) {
@@ -1822,7 +1822,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 	}
 
 	/**
-	 * This is a generic method for displaying the contents of the information 
+	 * This is a generic method for displaying the contents of the information
 	 * buffer to the user.
 	 */
 	void showResolveInfo(final String title) {
@@ -1890,7 +1890,7 @@ abstract class AbstractFunctionMerger implements ListingMergeConstants {
 //		if ((conflicts & VAR_LENGTH) != 0) {
 //			String latest = latestLocal.getLength();
 //			String my = myLocal.getLength();
-//			panel.addSingleChoice("Local Variable Length", new String[] {latest, my}, 
+//			panel.addSingleChoice("Local Variable Length", new String[] {latest, my},
 //					new LocalVarChangeListener(VAR_LENGTH, entryPt, vars, panel, monitor));
 //		}
 			if ((conflicts & VAR_COMMENT) != 0) {

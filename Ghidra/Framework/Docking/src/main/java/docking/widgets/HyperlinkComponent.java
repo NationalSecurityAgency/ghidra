@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,14 +29,14 @@ import javax.swing.text.DefaultCaret;
 import docking.DockingUtils;
 
 /**
- * A component that acts like a label, but adds the ability to render HTML anchors and the 
+ * A component that acts like a label, but adds the ability to render HTML anchors and the
  * ability for clients to add anchor handlers.
  * <p>
- * When given HTML content (a String that 
+ * When given HTML content (a String that
  * starts with &lt;HTML&gt;) and anchor tags (&lt;a href="callback_name"&gt;a hyper link&lt;a&gt;),
- * this component will display the hyperlinks properly and will notify any registered 
+ * this component will display the hyperlinks properly and will notify any registered
  * listeners ({@link #addHyperlinkListener(String, HyperlinkListener)} that the user has clicked the link
- * by the given name. 
+ * by the given name.
  */
 public class HyperlinkComponent extends JPanel {
 
@@ -75,9 +75,9 @@ public class HyperlinkComponent extends JPanel {
 
 		add(textPane, BorderLayout.NORTH);
 
-		// Hack alert! For some reason this text pane will sometimes be 
-		// initialized with a height of zero. This prevents anything from 
-		// being rendered. To avoid this, just set the preferred size to 
+		// Hack alert! For some reason this text pane will sometimes be
+		// initialized with a height of zero. This prevents anything from
+		// being rendered. To avoid this, just set the preferred size to
 		// the value of the parent.
 		// Note: This is related to the comment in setText() regarding the
 		// getPreferredSize() calls.
@@ -88,7 +88,7 @@ public class HyperlinkComponent extends JPanel {
 
 	/**
 	 * Add a listener that will be called whenever hyperlink updates happen (hover, activate, etc).
-	 * 
+	 *
 	 * @param anchorName The value in the <code>href</code> attribute of the anchor tag.
 	 * @param listener The listener to be called when the anchor(s) with a matching <code>href</code> is
 	 *        manipulated by the user.
@@ -116,8 +116,8 @@ public class HyperlinkComponent extends JPanel {
 		textPane.setText(text);
 
 		//
-		// Hack Alert!: I've run into scenarios where changing the text of this component 
-		//              causes the entire component to paint no text.  For some reason, the 
+		// Hack Alert!: I've run into scenarios where changing the text of this component
+		//              causes the entire component to paint no text.  For some reason, the
 		//              component will work correctly if it has a non-zero size border installed.
 		//              Also, if we call getPreferredSize(), then it will work.
 		//

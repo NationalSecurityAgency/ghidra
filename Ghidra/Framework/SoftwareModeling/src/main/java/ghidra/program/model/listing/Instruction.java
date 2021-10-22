@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	/**
 	 * Get the Input objects used by this instruction.
 	 * These could be Scalars, Registers, Addresses
-	 * 
+	 *
 	 * @return an array of objects that are used by this instruction
 	 */
 	public Object[] getInputObjects();
@@ -60,7 +60,7 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	/**
 	 * Get the Result objects produced/affected by this instruction
 	 * These would probably only be Register or Address
-	 * 
+	 *
 	 * @return an array of objects that are affected by this instruction
 	 */
 	public Object[] getResultObjects();
@@ -69,7 +69,7 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 * Get the operand representation for the given operand index without markup.
 	 *
 	 * @param opIndex operand index
-	 * 
+	 *
 	 * @return operand represented as a string.
 	 */
 	public String getDefaultOperandRepresentation(int opIndex);
@@ -79,17 +79,17 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 * A list of Register, Address, Scalar, Character and String objects is returned - without markup!
 	 *
 	 * @param opIndex operand index
-	 * 
+	 *
 	 * @return ArrayList of pieces of the operand representation.  Unsupported languages may return null.
 	 */
 	public List<Object> getDefaultOperandRepresentationList(int opIndex);
 
 	/**
 	 * Get the separator strings between an operand.
-	 * 
+	 *
 	 * The separator string for 0 are the characters before the first operand.
 	 * The separator string for numOperands+1 are the characters after the last operand.
-	 * 
+	 *
 	 * @param opIndex valid values are 0 thru numOperands+1
 	 * @return separator string, or null if there is no string
 	 */
@@ -146,7 +146,7 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 * a fall-through.  This will include any flow references which
 	 * have been added to the instruction.
 	 * @return flow addresses or null if there are no flows
-	 * 
+	 *
 	 */
 	public Address[] getFlows();
 
@@ -154,7 +154,7 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 * Get an array of Address objects for all default flows established
 	 * by the underlying instruction prototype.  References are ignored.
 	 * @return flow addresses or null if there are no flows
-	 * 
+	 *
 	 */
 	public Address[] getDefaultFlows();
 
@@ -188,7 +188,7 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	/**
 	 * Get an array of PCode operations (micro code) that this instruction
 	 * performs.  Flow overrides are not factored into pcode.
-	 * 
+	 *
 	 * @return an array of Pcode operations,
 	 *         a zero length array if the language does not support PCode
 	 */
@@ -198,13 +198,13 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 * Get an array of PCode operations (micro code) that this instruction
 	 * performs.  NOTE: If includeOverrides is true, unique temporary varnodes
 	 * may be produced which vary in size to those produced for other instructions.
-	 * If your analysis is sensitive to this you should consider using 
+	 * If your analysis is sensitive to this you should consider using
 	 * {@link InstructionPrototype#getPcode(InstructionContext, PcodeOverride, UniqueAddressFactory)}
-	 * instead with your own {@link UniqueAddressFactory} to prevent duplication within 
+	 * instead with your own {@link UniqueAddressFactory} to prevent duplication within
 	 * your scope of analysis.
 	 * by this method may not be suitable for use with certain analysis
 	 * @param includeOverrides if true any flow overrides will be factored
-	 * into generated pcode.  
+	 * into generated pcode.
 	 * @return an array of Pcode operations,
 	 *         a zero length array if the language does not support PCode
 	 */
@@ -215,7 +215,7 @@ public interface Instruction extends CodeUnit, ProcessorContext {
 	 * performs to compute its value.
 	 *
 	 * @param opIndex index of the operand to retrieve PCode
-	 * 
+	 *
 	 * @return an array of PCode operations,
 	 *         a zero length array if the language does not support PCode
 	 */

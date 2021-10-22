@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -274,7 +274,7 @@ ScopeLocal::ScopeLocal(uint8 id,AddrSpace *spc,Funcdata *fd,Architecture *g) : S
   rangeLocked = false;
   stackGrowsNegative = true;
   restrictScope(fd);
-} 
+}
 
 /// Turn any symbols that are \e name \e locked but not \e type \e locked into name recommendations
 /// removing the symbol in the process.  This allows the decompiler to decide on how the stack is layed
@@ -355,7 +355,7 @@ void ScopeLocal::restoreXml(const Element *el)
   if (xml_readbool(el->getAttributeValue("lock")))
     rangeLocked = true;
   space = glb->getSpaceByName(el->getAttributeValue("main"));
-  
+
   ScopeInternal::restoreXml( *(el->getChildren().begin()) );
   collectNameRecs();
 }
@@ -1005,7 +1005,7 @@ void ScopeLocal::restructureVarnode(bool aliasyes)
   clearUnlockedCategory(-1);	// Clear out any unlocked entries
   MapState state(space,getRangeTree(),fd->getFuncProto().getParamRange(),
 		  glb->types->getBase(1,TYPE_UNKNOWN)); // Organize list of ranges to insert
-    
+
 #ifdef OPACTION_DEBUG
   if (debugon)
     state.turnOnDebug(glb);
@@ -1036,7 +1036,7 @@ void ScopeLocal::restructureHigh(void)
   clearUnlockedCategory(-1);	// Clear out any unlocked entries
   MapState state(space,getRangeTree(),fd->getFuncProto().getParamRange(),
 		  glb->types->getBase(1,TYPE_UNKNOWN)); // Organize list of ranges to insert
-    
+
 #ifdef OPACTION_DEBUG
   if (debugon)
     state.turnOnDebug(glb);
@@ -1108,7 +1108,7 @@ void ScopeLocal::markUnaliased(const vector<uintb> &alias)
   bool aliason = false;
   uintb curalias=0;
   int4 i=0;
-  
+
   iter = rangemap->begin_list();
   enditer = rangemap->end_list();
 
@@ -1188,7 +1188,7 @@ void ScopeLocal::fakeInputSymbols(void)
       // 	usepoint = vn->getUsePoint(*fd);
       // Double check to make sure vn doesn't already have a
       // representative symbol.  If the input prototype is locked
-      // but one of the types is TYPE_UNKNOWN, then the 
+      // but one of the types is TYPE_UNKNOWN, then the
       // corresponding varnodes won't get typelocked
       if (lockedinputs != 0) {
 	uint4 vflags = 0;
@@ -1198,7 +1198,7 @@ void ScopeLocal::fakeInputSymbols(void)
 	    continue;		// Found a matching symbol
 	}
       }
-      
+
       int4 size = (endpoint - addr.getOffset()) + 1;
       Datatype *ct = fd->getArch()->types->getBase(size,TYPE_UNKNOWN);
       try {

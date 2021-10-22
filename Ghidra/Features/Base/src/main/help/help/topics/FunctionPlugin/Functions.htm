@@ -15,7 +15,7 @@
     <H1>Functions</H1>
 
     <P>Functions store information about locations within a program that may be referenced by a call
-    instruction, although no direct reference to a function is required. External Functions 
+    instruction, although no direct reference to a function is required. External Functions
     may also be defined and associated with a Library
     Namespace.  A function definition consists of:</P>
 
@@ -26,16 +26,16 @@
       <LI>A body of instructions (<i>does not apply to External Functions</i>)</LI>
 
       <LI>A function signature/prototype specification, consisting of:</LI>
-      
+
       <OL>
       	<LI>Function Name (<i>same as primary label at entry point</i>)</LI>
         <LI>Calling Convention (<i>available conventions defined by active compiler-spec</i>)</LI>
         <LI>Return data type (<i>with storage</i>)</LI>
         <LI>Parameter arguments (<i>with storage</i>)</LI>
       </OL>
-      
+
       <LI>Optional function attributes, including:</LI>
-      
+
       <OL>
       	<LI>Varargs enablement</LI>
         <LI>No-Return enablement (<i>if enabled, calls to function will not return and can prevent fallthrough from call</i>)</LI>
@@ -43,9 +43,9 @@
         <LI>Custom Storage enablement (<i>if enabled, return and parameter storage to be explicitly defined</i>)</LI>
         <LI>Call Fixup</LI>
       </OL>
-      
+
       <LI>Additional function listing markup (<i>does not apply to External Functions</i>):</LI>
-      
+
        <OL>
       	<LI>Local variables (<i>with storage</i>)</LI>
       	<LI>Parameter and local variable references from instructions</LI>
@@ -56,7 +56,7 @@
       </OL>
 
     </UL>
-    
+
     <P>When displayed in the browser, a function includes:</P>
 
     <UL>
@@ -68,20 +68,20 @@
       the function is defined. The body can be a contiguous range of addresses or may be multiple
       address ranges. Data may also be included within the body.</LI>
 
-      <LI>The complete function signature and optional attributes are displayed within the listing at 
+      <LI>The complete function signature and optional attributes are displayed within the listing at
       the function entry point.
       This information may also be displayed at pointers which reference a function
       provided the appropriate tool option for displaying function headers
-      is enabled (see <A href="../CodeBrowserPlugin/CodeBrowserOptions.htm/#Function_Pointers">Listing Fields options / Function Pointers</A>).</LI>  
+      is enabled (see <A href="../CodeBrowserPlugin/CodeBrowserOptions.htm/#Function_Pointers">Listing Fields options / Function Pointers</A>).</LI>
 
     </UL>
     </BLOCKQUOTE>
-    
+
     <H2>Function Signature, Attributes and Variables</H2>
-    
+
     <P>Please refer to <A href="Variables.htm">Function Signature and Variables</A> for details
-    on this subject and how to modify a function signature/prototype specification, including function 
-    attributes and variable storage.</A> 
+    on this subject and how to modify a function signature/prototype specification, including function
+    attributes and variable storage.</A>
 
     <H2><A name="Create_Function"></A>Create Function</H2>
 
@@ -177,7 +177,7 @@
       </OL>
 
       <P>To Re Create a Function, with a forced new body</P>
-            
+
       <OL start="1" type="1">
         <LI>Create a selection in the Code Browser that should be the body of the function.
          The cursor should be at the top of the already defined function.<BR>
@@ -186,7 +186,7 @@
         <LI>Right-mouse-click, select the <B>Function</B><IMG src=
         "../../shared/arrow.gif"><B>Re-create Function</B> popup menu item</LI>
       </OL>
-      
+
       <BLOCKQUOTE>
         <P><I><IMG src="../../shared/tip.png"> Recreating a function will kick off auto-analysis
         on the function if there are any changes to the function's body.  New parameters or
@@ -203,15 +203,15 @@
       facilitate access to external functions, functions located far from the caller, and other
       relocation scenarios. Ghidra has the ability to specify a function as being a <I>thunk</I>
       for another function. A <I>thunk</I> has the same function signature and parameter storage as
-      the real function (also referred to as the <I>thunked-function</I>), although its name may differ. 
+      the real function (also referred to as the <I>thunked-function</I>), although its name may differ.
       A <I>thunk</I> function
       within Ghidra acts as a proxy to the real/thunked-function where all parameter and attribute
-      changes to one are reflected onto the other. One exception to this is the name. If a <I>thunk</I> 
-      is created without a name, its name will reflect the name of the <I>thunked</I> function. 
+      changes to one are reflected onto the other. One exception to this is the name. If a <I>thunk</I>
+      is created without a name, its name will reflect the name of the <I>thunked</I> function.
       Renaming the <I>thunk</I> allows the thunk to have a name which
       differs from the thunked-function. Local variables are not supported for <I>thunk</I> functions.
-      
-      <p><IMG src="../../shared/note.png"> Within the Code Browser, double-clicking on a <I>thunk</I> 
+
+      <p><IMG src="../../shared/note.png"> Within the Code Browser, double-clicking on a <I>thunk</I>
       function name will navigate to the associated <I>thunked</i> function, while
        <I>thunked</I> functions will display back-references (i.e., XREFs) to
       the associated <I>thunk</I> functions with a Ref-Type of 'T'.</p>
@@ -230,7 +230,7 @@
         function.</LI>
       </OL>
 
-      <P>To Edit a Thunk Function (i.e., set the associated <I>thunked</I> function) or 
+      <P>To Edit a Thunk Function (i.e., set the associated <I>thunked</I> function) or
       Convert a normal Function to a Thunk Function:</P>
 
       <OL start="1" type="1">
@@ -244,7 +244,7 @@
         <LI>The user will be prompted to specify the <I>thunked</I> function by label or address. The
         specified location must correspond to an existing function.</LI>
       </OL>
-      
+
       <P>To Revert a Thunk Function (i.e., revert a Thunk Function to a normal Function):</P>
 
       <OL start="1" type="1">
@@ -259,33 +259,33 @@
       </OL>
 
     </BLOCKQUOTE>
-    
+
     <H2><A name="ExternalFunctions"></A>External Functions</H2>
-    
+
     <BLOCKQUOTE>
       <P>Defining an <I>External Function</I> allows a function to be defined which does not reside within
       the current program listing or whose actual memory address is unknown.  Similar to a simple <I>External Location</I>,
-      these external symbols are associated with named <i>Library</i> namespaces and are most easily 
-      managed via the <A href="../SymbolTablePlugin/symbol_table.htm">Symbol Table</A> or 
-      <A href="../SymbolTreePlugin/SymbolTree.htm">Symbol Tree</A> under the <i>Imports</i> category.  
+      these external symbols are associated with named <i>Library</i> namespaces and are most easily
+      managed via the <A href="../SymbolTablePlugin/symbol_table.htm">Symbol Table</A> or
+      <A href="../SymbolTreePlugin/SymbolTree.htm">Symbol Tree</A> under the <i>Imports</i> category.
       If the actual <i>Library</i>
-      name is unknown, the "&lt;EXTERNAL&gt;" <i>Library</i> (or any other named Library) may be used as a 
+      name is unknown, the "&lt;EXTERNAL&gt;" <i>Library</i> (or any other named Library) may be used as a
       parent namespace.  </p>
-      
-      <P>From either the <A href="../SymbolTablePlugin/symbol_table.htm">Symbol Table</A> or 
-      <A href="../SymbolTreePlugin/SymbolTree.htm">Symbol Tree</A>, an existing <I>External Location</I> 
-      may be converted to a function using the <I>Create External Function</I> popup action 
-      on the selected node.  The resulting <I>External Function</I> may be converted back to a 
-      simple <I>External Location</I> by deleting the function node.  To really remove the function 
+
+      <P>From either the <A href="../SymbolTablePlugin/symbol_table.htm">Symbol Table</A> or
+      <A href="../SymbolTreePlugin/SymbolTree.htm">Symbol Tree</A>, an existing <I>External Location</I>
+      may be converted to a function using the <I>Create External Function</I> popup action
+      on the selected node.  The resulting <I>External Function</I> may be converted back to a
+      simple <I>External Location</I> by deleting the function node.  To really remove the function
       and its location will require a second delete on the <I>External Location</I>.</P>
-      
-      <P>From either the <A href="../SymbolTablePlugin/symbol_table.htm">Symbol Table</A> or 
-      <A href="../SymbolTreePlugin/SymbolTree.htm">Symbol Tree</A>, an existing <I>External Function</I> 
+
+      <P>From either the <A href="../SymbolTablePlugin/symbol_table.htm">Symbol Table</A> or
+      <A href="../SymbolTreePlugin/SymbolTree.htm">Symbol Tree</A>, an existing <I>External Function</I>
       may be modified using the <B>Function</B><IMG src=
-            "../../shared/arrow.gif"><A href="Variables.htm#Edit_Function">Edit 
+            "../../shared/arrow.gif"><A href="Variables.htm#Edit_Function">Edit
             Function...</A> popup action on the selected function node.</P>
-      
-      <P>Creating an <A href="../ReferencesPlugin/References_from.htm#extRefPanel">External Reference</A> 
+
+      <P>Creating an <A href="../ReferencesPlugin/References_from.htm#extRefPanel">External Reference</A>
       is currently the only mechanism within the Ghidra GUI
       to establish an <I>External Location</I>.  Once an <I>External Location</I> has been established, it can be
       converted to a function (see above).  This limitation should hopefully be resolved in
@@ -342,7 +342,7 @@
       <P><I>Delete Function</I> removes a function. There is no confirmation for the Delete
       Function operation. However, the results can be undone using the <A href=
       "../Tool/Undo_Redo.htm">Undo operation</A>.</P>
-      
+
           <P>When a function is deleted all stack variable definitions are removed, along with all
 	    references to those variables from instructions within the function's body. If a stack
 	    reference refers to a stack variable that is deleted, any references will be replaced with
@@ -382,7 +382,7 @@
       The function purge in this situation can be positive indicating that more values are popped from the stack.
       For other unusual situations, a negative function purge can be set indicating that the function <I>pushes</I> additional
       values.</P>
-      
+
       <P>For architectures where the stack grows in the <I>positive</I> direction, the meaning of the function purge sign
       is reversed.  A positive function purge indicates additional bytes are <I>pushed</I> to the stack, and a negative
       function purge indicates bytes are <I>popped</I> from the stack.</P>

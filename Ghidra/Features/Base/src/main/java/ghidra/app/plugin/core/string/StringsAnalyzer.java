@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -98,7 +98,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 			"(W), or Execute (X) permissions set to true. Enabling this option ensures that strings " +
 			"are not created in areas such as overlays or debug sections.";
 
-	// Default Values	
+	// Default Values
 	private static final String MODEL_DEFAULT_NAME = "StringModel.sng";
 	private static final boolean FORCE_MODEL_RELOAD_DEFAULT_VALUE = false;
 	private static final boolean REQUIRE_NULL_TERMINATION_DEFAULT_VALUE = true;
@@ -242,7 +242,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 	/**
 	 * Set the model name that indicates which string n-grams model to use.
 	 * The ".sng" extension is assumed and may be left off.
-	 * 
+	 *
 	 * @param name the model name
 	 */
 	void setModelName(String name) {
@@ -252,7 +252,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Set the parameter to force model reload next time the Strings Analyzer is run.
-	 * 
+	 *
 	 * @param b true to force reload
 	 */
 	void setForceModelReload(boolean b) {
@@ -261,7 +261,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Set the parameter that determines the end-of-string alignment.
-	 * 
+	 *
 	 * @param alignment the alignment
 	 */
 	void setStringEndAlignment(int alignment) {
@@ -271,7 +271,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 	/**
 	 * Set the parameter that determines whether to search for strings in all memory blocks, or
 	 * in blocks where at least one of the R, W, or X permissions are set.
-	 *  
+	 *
 	 * @param b  true to only search accessible memory blocks, false to search all memory blocks
 	 */
 	void setSearchAccessibleMemoryBlocks(boolean b) {
@@ -365,12 +365,12 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 	 * 			- shares the same ending address as the potential string
 	 * 			- has the same datatype as the potential string
 	 * 		  Note: existing data will be cleared when the string is created
-	 * 
+	 *
 	 * @param foundString  A string identified by the StringSearcher
 	 * @param program  the current program
 	 * @param addressSet the addresses to check for conflicts
 	 * @param monitor the task monitor
-	 * @throws CancelledException 
+	 * @throws CancelledException
 	 */
 	private void createStringIfValid(FoundString foundString, Program program,
 			AddressSetView addressSet, TaskMonitor monitor) {
@@ -420,7 +420,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 			hasOffcutReferences = hasOffcut(start, end, program);
 		}
 
-		// Only make a string if no offcut references or there are offcut references, 
+		// Only make a string if no offcut references or there are offcut references,
 		// but user says so
 		if (hasOffcutReferences && !allowStringCreationWithOffcutReferences) {
 			return;
@@ -493,7 +493,7 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 	/**
 	 * Verify that adding padding bytes won't violate boundaries or allow defined data
 	 * or instructions to be overwritten.
-	 * 
+	 *
 	 * @param program		current program
 	 * @param stringEndAddress	strings' end address
 	 * @param padLength		number of pad bytes
@@ -590,9 +590,9 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 		setStringEndAlignment(
 			options.getInt(END_ALIGNMENT_OPTION_NAME, END_ALIGNMENT_DEFAULT_VALUE));
 
-		// Want to register "allCharWidths" property once we change this analyzer to be able to deal 
+		// Want to register "allCharWidths" property once we change this analyzer to be able to deal
 		// with UTF8, UTF16, UTF32 characters.
-		//allCharWidths = options.registerProperty(ALL_CHAR_WIDTHS_OPTION_NAME, ALL_CHAR_WIDTHS_DEFAULT_VALUE, 
+		//allCharWidths = options.registerProperty(ALL_CHAR_WIDTHS_OPTION_NAME, ALL_CHAR_WIDTHS_DEFAULT_VALUE,
 		//	ALL_CHAR_WIDTHS_OPTION_DESCRIPTION, null);
 
 		forceModelReload =
@@ -616,16 +616,16 @@ public class StringsAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Determines if found ASCII strings are valid strings, and creates them if so.
-	 * 
+	 *
 	 * @param program   program in which to search for strings
 	 * @param addressSet  the address set to search
 	 * @param minimumStringLength  the minimum length of strings to be returned
 	 * @param alignVal	specifies any alignment requirements for the start of the string (valid
 	 * 			values are 1, 2, or 4). An alignment of 1 means the string can start at any address.
 	 * 			An alignment of 2 means	the string must start on an even address. An alignment of 4
-	 * 			means the string must start on an address that is a multiple of 4. 
+	 * 			means the string must start on an address that is a multiple of 4.
 	 * @param requireNullTermination  if true, only strings that end in a null will be returned
-	 * @param includeAllCharWidths	if true, UTF16 and UTF32 size strings will be included in 
+	 * @param includeAllCharWidths	if true, UTF16 and UTF32 size strings will be included in
 	 * 			addition to UTF8
 	 * @param monitor  monitor for this process
 	 */

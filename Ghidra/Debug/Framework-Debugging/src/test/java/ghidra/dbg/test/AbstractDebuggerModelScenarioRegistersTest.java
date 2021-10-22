@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public abstract class AbstractDebuggerModelScenarioRegistersTest extends Abstrac
 
 	/**
 	 * This specimen must have an observable behavior which can be effected by writing a register
-	 * 
+	 *
 	 * <p>
 	 * The simplest is probably to exit with a code from a known register. This can probably be best
 	 * accomplished by having main call {@code exit(some_func(0));} where {@code some_func} has a
@@ -44,14 +44,14 @@ public abstract class AbstractDebuggerModelScenarioRegistersTest extends Abstrac
 	 * {@code some_func} and write to the register for that first parameter. On architectures where
 	 * the standard calling convention passes parameters via memory, you may be able to select an
 	 * alternative that uses registers, or you may have to use inline/pure assembly.
-	 * 
+	 *
 	 * @return the specimen
 	 */
 	protected abstract DebuggerTestSpecimen getSpecimen();
 
 	/**
 	 * Perform any work needed after the specimen has been launched
-	 * 
+	 *
 	 * @param process the process running the specimen
 	 * @throws Throwable if anything goes wrong
 	 */
@@ -60,31 +60,31 @@ public abstract class AbstractDebuggerModelScenarioRegistersTest extends Abstrac
 
 	/**
 	 * Get the expression to break when the register write should be made
-	 * 
+	 *
 	 * <p>
 	 * More than likely, this should just be the symbol for that function.
-	 * 
+	 *
 	 * @return the expression
 	 */
 	protected abstract String getBreakpointExpression();
 
 	/**
 	 * Get the registers and values to write to achieve the desired effect
-	 * 
+	 *
 	 * @return the name-value map of registers to write
 	 */
 	protected abstract Map<String, byte[]> getRegisterWrites();
 
 	/**
 	 * Perform the register writing portion of the test
-	 * 
+	 *
 	 * <p>
 	 * TODO: It is necessary to override this for LLDB, since it presents its registers in various
 	 * "sub" banks. For it, we need to search the banks for each register to write, and delegate to
 	 * the appropriate bank.
-	 * 
+	 *
 	 * @param toWrite
-	 * 
+	 *
 	 * @param the trapped thread
 	 */
 	protected void performRegisterWrites(TargetObject target, Map<String, byte[]> toWrite)
@@ -96,7 +96,7 @@ public abstract class AbstractDebuggerModelScenarioRegistersTest extends Abstrac
 
 	/**
 	 * Verify, using {@link Assert}, that the target exhibited the effect of the register write
-	 * 
+	 *
 	 * <p>
 	 * Note that the given process may be invalid, depending on the model's implementation. The
 	 * tester should know how the model under test behaves. If the object is invalid, it's possible
@@ -107,7 +107,7 @@ public abstract class AbstractDebuggerModelScenarioRegistersTest extends Abstrac
 	 * Do not place assertions in the event callback, since the failures they could produce will not
 	 * be recorded as test failures. If the effect can be observed in multiple ways, it is best to
 	 * verify all of them.
-	 * 
+	 *
 	 * @param process the target process, which may no longer be valid
 	 * @throws Throwable if anything goes wrong or an assertion fails
 	 */
@@ -115,7 +115,7 @@ public abstract class AbstractDebuggerModelScenarioRegistersTest extends Abstrac
 
 	/**
 	 * Test the following scenario
-	 * 
+	 *
 	 * <ol>
 	 * <li>Obtain a launcher and use it to start the specimen</li>
 	 * <li>Place a breakpoint</li>

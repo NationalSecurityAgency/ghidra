@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,10 +81,10 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	/**
-	 * Tests the plugins response to 
+	 * Tests the plugins response to
 	 * {@link ghidra.app.events.ProgramLocationPluginEvent}s.  This plugin is
 	 * driven off of these events.
-	 * 
+	 *
 	 * @throws Exception If there is a problem opening the program.
 	 */
 	@Test
@@ -109,7 +109,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		assertTrue("The component provider does not have data when it " + "should.",
 			(modelOne.getSize() != 0));
 
-		// make sure we process the event in order to show the user the 
+		// make sure we process the event in order to show the user the
 		// preview
 		CodeBrowserPlugin cbPlugin = getPlugin(tool, CodeBrowserPlugin.class);
 
@@ -132,12 +132,12 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		assertEquals("The component provider has data when it is not visible.", 0,
 			list.getModel().getSize());
 
-		// show the plugin so that it will get the program location change 
+		// show the plugin so that it will get the program location change
 		// data
 		tool.showComponentProvider(componentProvider, true);
 		waitForPostedSwingRunnables();
 
-		// test that sending a bad address will not return any results or 
+		// test that sending a bad address will not return any results or
 		// throw any exceptions
 		Memory memory = program.getMemory();
 		MemoryBlock textBlock = memory.getBlock(".text");
@@ -170,7 +170,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 
 	/**
 	 * Tests the plugins response to {@link ProgramSelectionPluginEvent}s.
-	 * 
+	 *
 	 * @throws Exception If there is a problem opening the program.
 	 */
 	@Test
@@ -184,13 +184,13 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 		JList list = (JList) getInstanceField("contentList", componentProvider);
 		ListModel listContents = list.getModel();
 
-		// make sure that nothing happens on a single-selection     
+		// make sure that nothing happens on a single-selection
 		plugin.processEvent(createProgramSelectionEvent(false));
 
 		assertTrue("The list is not the same after processing a " + "single-selection event.",
 			compareListData(listContents, list.getModel()));
 
-		// make sure that the component display is cleared when there is a 
+		// make sure that the component display is cleared when there is a
 		// multiple-selection
 		plugin.processEvent(createProgramSelectionEvent(true));
 
@@ -202,7 +202,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 	/**
 	 * Tests the plugin's response to changes in the user display preferences
 	 * as they are changed in the Options for the code browser.
-	 * 
+	 *
 	 * @throws Exception If there is a problem opening the program.
 	 */
 	@Test
@@ -265,7 +265,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 	/**
 	 * Creates a {@link ProgramSelectionPluginEvent} to simulate selecting a
 	 * single address or multiple addresses in the code browser plugin.
-	 * 
+	 *
 	 * @param  multiSelection True creates an event for multiple selections.
 	 * @return The created event.
 	 */
@@ -284,8 +284,8 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 
 	/**
 	 * Creates a new Color object that is different than the one provided.
-	 * 
-	 * @param  originalColor The color from which the new Color will be 
+	 *
+	 * @param  originalColor The color from which the new Color will be
 	 *         derived.
 	 * @return A new color that is different than the one given.
 	 */
@@ -304,7 +304,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 
 	/**
 	 * Simulates a user click in the code browser plugin.
-	 * 
+	 *
 	 * @param cbp The code browser plugin instance to click.
 	 */
 	private void simulateButtonPress(final CodeBrowserPlugin cbp) {
@@ -312,9 +312,9 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 	}
 
 	/**
-	 * Moves the code browser's display down a page, as if the user had 
+	 * Moves the code browser's display down a page, as if the user had
 	 * pressed the page down button.
-	 * 
+	 *
 	 * @param fieldPanel The field panel display of the code browser.
 	 */
 	private void pageDown(final FieldPanel fieldPanel) {
@@ -323,9 +323,9 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 
 	/**
 	 * Compares the two given lists based upon the contents being the same
-	 * in terms of order and by comparing via the 
+	 * in terms of order and by comparing via the
 	 * {@link Object#equals(Object)} method.
-	 * 
+	 *
 	 * @param  modelOne The first list contents to compare
 	 * @param  modelTwo The second list contents to compare
 	 * @return True if both lists hold the equal contents in the same order.
@@ -353,7 +353,7 @@ public class DisassembledViewPluginTest extends AbstractGhidraHeadedIntegrationT
 	/**
 	 * Opens the program of the given name and shows the tool with that
 	 * program.
-	 * 
+	 *
 	 * @param name
 	 * @throws Exception
 	 */

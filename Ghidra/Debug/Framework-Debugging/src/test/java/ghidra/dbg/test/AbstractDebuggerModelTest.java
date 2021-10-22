@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.Msg;
 
 /**
- * 
+ *
  * <ul>
  * <li>TODO: ensure order: created(Thread), event(THREAD_CREATED), created(RegisterBank) ?</li>
  * <li>TODO: ensure registersUpdated(RegisterBank) immediately upon created(RegisterBank) ?</li>
@@ -49,7 +49,7 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedInte
 
 	/**
 	 * The default seed path to use when searching for a type of object
-	 * 
+	 *
 	 * @return the seed path
 	 */
 	protected List<String> seedPath() {
@@ -78,10 +78,10 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedInte
 
 	/**
 	 * Get the launcher under test
-	 * 
+	 *
 	 * <p>
 	 * This can be overridden to force a different launcher under the test.
-	 * 
+	 *
 	 * @return the launcher
 	 * @throws Throwable if anything goes wrong
 	 */
@@ -91,7 +91,7 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedInte
 
 	/**
 	 * Get the breakpoint container of a target under test
-	 * 
+	 *
 	 * @param seedPath the path to the target
 	 * @return the breakpoint container
 	 * @throws Throwable if anything goes wrong
@@ -107,7 +107,7 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedInte
 
 	/**
 	 * Get the steppable object of a target under test
-	 * 
+	 *
 	 * @param seedPath the path to the target
 	 * @return the steppable object
 	 * @throws Throwable if anything goes wrong
@@ -118,7 +118,7 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedInte
 
 	/**
 	 * Get the memory of a target under test
-	 * 
+	 *
 	 * @param seedPath the path to the target
 	 * @return the memory
 	 * @throws Throwable if anything goes wrong
@@ -129,7 +129,7 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedInte
 
 	/**
 	 * Find any thread to put under test
-	 * 
+	 *
 	 * @param seedPath the path to the target process
 	 * @return the thread
 	 * @throws Throwable if anything goes wrong
@@ -184,11 +184,11 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedInte
 	public interface DebuggerTestSpecimen {
 		/**
 		 * Run the specimen outside the debugger
-		 * 
+		 *
 		 * <p>
 		 * This is really only applicable to processes which are going to run/wait indefinitely,
 		 * since this is likely used in tests involving attach.
-		 * 
+		 *
 		 * @return a handle to the process
 		 * @throws Throwable if anything goes wrong
 		 */
@@ -196,7 +196,7 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedInte
 
 		/**
 		 * Get the arguments to launch this specimen using the model's launcher
-		 * 
+		 *
 		 * @return the arguments
 		 */
 		Map<String, Object> getLauncherArgs();
@@ -208,7 +208,7 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedInte
 
 		/**
 		 * Check if this specimen is the image for the given process
-		 * 
+		 *
 		 * @param process the process to examine
 		 * @param test the test case
 		 * @return true if the specimen is the image, false otherwise
@@ -218,10 +218,10 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedInte
 
 		/**
 		 * Check if this specimen is the image for the given attachable process
-		 * 
+		 *
 		 * <p>
 		 * The actual check is usually done by the OS-assigned PID.
-		 * 
+		 *
 		 * @param dummy the dummy process whose image is known to be this specimen
 		 * @param attachable the attachable process presented by the model
 		 * @param test the test case
@@ -234,7 +234,7 @@ public abstract class AbstractDebuggerModelTest extends AbstractGhidraHeadedInte
 
 	/**
 	 * Set a software breakpoint and resume until it is hit
-	 * 
+	 *
 	 * @param bpExpression the expression for the breakpoint
 	 * @param target the target to resume
 	 * @return the object which is actually trapped, often a thread

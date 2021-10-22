@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,8 +34,8 @@ import utility.function.Callback;
 
 class CompositeViewerModel extends AbstractTableModel implements DataTypeManagerChangeListener {
 
-	/** Flag indicating that the model is updating the selection and 
-	 * should ignore any attempts to set the selection until it is no 
+	/** Flag indicating that the model is updating the selection and
+	 * should ignore any attempts to set the selection until it is no
 	 * longer updating. */
 	protected boolean updatingSelection = false;
 
@@ -204,7 +204,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * Unloads the currently loaded composite data type.
 	 * This should be called when the viewer is removed from view and
 	 * and category/dataType changes no longer need to be listened for.
-	 * It can also be called to unload the current composite before loading 
+	 * It can also be called to unload the current composite before loading
 	 * a new composite data type.
 	 */
 	void unload() {
@@ -230,7 +230,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 * Resolves the indicated data type against the working copy in the 
+	 * Resolves the indicated data type against the working copy in the
 	 * viewer's data type manager.
 	 * @param dataType the data type
 	 * @return the working copy of the data type.
@@ -337,7 +337,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 
 	/**
 	 * Return the path of the data category for the structure being viewed
-	 * @return the path 
+	 * @return the path
 	 */
 	public final CategoryPath getOriginalCategoryPath() {
 		if (originalDataTypePath != null) {
@@ -360,7 +360,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 
 	/**
 	 * Return the size of the structure being viewed in bytes
-	 * @return this size 
+	 * @return this size
 	 */
 	public int getLength() {
 		if (viewComposite != null && !viewComposite.isZeroLength()) {
@@ -535,8 +535,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 
 	/**
 	 * Return the nth component for the structure being viewed. Since the number of rows
-	 * can exceed the number of components defined within the composite 
-	 * ({@link Composite#getNumComponents()}) this method will return null for a blank 
+	 * can exceed the number of components defined within the composite
+	 * ({@link Composite#getNumComponents()}) this method will return null for a blank
 	 * row.
 	 * @param rowIndex the index of the component to return. First component is index of 0.
 	 * @return the component
@@ -763,7 +763,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 * Determines the full path name for the composite data type based on 
+	 * Determines the full path name for the composite data type based on
 	 * the original composite and original category.
 	 * @return the full path name
 	 */
@@ -1041,8 +1041,8 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * Helper methods for CategoryChangeListener methods.
 	 ********************************************************************/
 	/**
-	 * Determines whether the indicated composite data type has any 
-	 * sub-components that are within the indicated category or one 
+	 * Determines whether the indicated composite data type has any
+	 * sub-components that are within the indicated category or one
 	 * of its sub-categories.
 	 * @param parentDt the composite data type
 	 * @param catPath the category's path.
@@ -1067,7 +1067,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 * Determines whether the indicated composite data type has any 
+	 * Determines whether the indicated composite data type has any
 	 * sub-components that are the indicated data type.
 	 * @param parentDt the composite data type
 	 * @param dtPath the data type to be detected.
@@ -1118,7 +1118,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 
 	/**
 	 * Returns the number of rows currently selected.
-	 *  
+	 *
 	 * <p>Note: In unlocked mode this can include the additional blank line.
 	 * @return the selected row count
 	 */
@@ -1135,7 +1135,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 
 	/**
 	 * Returns the number of component rows currently selected.
-	 * 
+	 *
 	 * <p>Note: This only includes rows that are actually components.
 	 * @return the selected row count
 	 */
@@ -1238,7 +1238,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 * Returns the selection range containing the specified row index 
+	 * Returns the selection range containing the specified row index
 	 * if there is one that contains it. Otherwise, returns null.
 	 *
 	 * @param rowIndex the row index
@@ -1375,9 +1375,9 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	}
 
 	/**
-	 * A notify method to take the listens to notify, along with the method that should be 
+	 * A notify method to take the listens to notify, along with the method that should be
 	 * called on each listener
-	 * 
+	 *
 	 * @param <T> the type of the listener
 	 * @param listeners the listeners
 	 * @param method the method to call

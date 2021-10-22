@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,8 @@ import resources.Icons;
 
 /**
  * An action to make a program selection based on the given table's selection.  For the context to
- * work, the provider using this action must create an {@link ActionContext} that returns a 
- * context object that is the table passed to this action's constructor; otherwise, this action 
+ * work, the provider using this action must create an {@link ActionContext} that returns a
+ * context object that is the table passed to this action's constructor; otherwise, this action
  * will not be enabled correctly.
  */
 public class MakeProgramSelectionAction extends DockingAction {
@@ -43,9 +43,9 @@ public class MakeProgramSelectionAction extends DockingAction {
 	private GhidraTable table;
 
 	/**
-	 * Special constructor for clients that do not have a plugin.  Clients using this 
+	 * Special constructor for clients that do not have a plugin.  Clients using this
 	 * constructor must override {@link #makeSelection(ActionContext)}.
-	 * 
+	 *
 	 * @param owner the action's owner
 	 * @param table the table needed for this action
 	 */
@@ -58,7 +58,7 @@ public class MakeProgramSelectionAction extends DockingAction {
 	/**
 	 * This normal constructor for this action.  The given plugin will be used along with the
 	 * given table to fire program selection events as the action is executed.
-	 * 
+	 *
 	 * @param plugin the plugin
 	 * @param table the table
 	 */

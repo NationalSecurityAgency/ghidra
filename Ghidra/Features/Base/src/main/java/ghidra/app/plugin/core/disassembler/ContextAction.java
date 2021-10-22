@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,22 +27,22 @@ public class ContextAction extends ListingContextAction {
 
 	public ContextAction(DisassemblerPlugin plugin, String groupName) {
 		super("Processor Options", plugin.getName());
-		
+
 		this.plugin = plugin;
-		
-		setPopupMenuData( new MenuData( 
-			new String[]{"Processor Options..." }, 
-			null, 
+
+		setPopupMenuData( new MenuData(
+			new String[]{"Processor Options..." },
+			null,
 			groupName ) );
 
 		setHelpLocation(new HelpLocation("DisassemblerPlugin", "ProcessorOptions"));
 	}
-	
+
 	@Override
     public void actionPerformed(ListingActionContext context) {
 		plugin.setDefaultContext(context);
 	}
-	
+
 	@Override
     public boolean isEnabledForContext(ListingActionContext context) {
 		return plugin.hasContextRegisters(context.getProgram());

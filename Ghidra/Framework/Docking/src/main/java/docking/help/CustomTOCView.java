@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.Msg;
 import ghidra.util.SystemUtilities;
 
 /**
- * A custom Table of Contents view that we specify in our JavaHelp xml documents.  This view 
+ * A custom Table of Contents view that we specify in our JavaHelp xml documents.  This view
  * lets us install custom renderers and custom tree items for use by those renderers.  These
  * renderers let us display custom text defined by the TOC_Source.xml files.  We also add some
  * utility like: tooltips in development mode, node selection when pressing F1.
@@ -103,7 +103,7 @@ public class CustomTOCView extends TOCView {
 	}
 
 	/**
-	 * Our custom factory that knows how to look for extra XML attributes and how to 
+	 * Our custom factory that knows how to look for extra XML attributes and how to
 	 * create our custom tree items
 	 */
 	public static class CustomDefaultTOCFactory extends DefaultTOCFactory {

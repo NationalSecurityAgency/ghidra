@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,11 +17,11 @@ package ghidra.util.bytesearch;
 
 /**
  * Represents a match of a DittedBitSequence at a given offset in a byte sequence.
- * 
+ *
  * There is a hidden assumption that the sequence is actually a Pattern
  * that might have a ditted-bit-sequence, a set of match actions,
  * and post match rules/checks
- * 
+ *
  */
 public class Match {
 	private DittedBitSequence sequence;	// Pattern that matched
@@ -81,7 +81,7 @@ public class Match {
 		return offset + ((Pattern) sequence).getMarkOffset();
 	}
 
-	/** 
+	/**
 	 * @return offset of match in sequence of bytes
 	 */
 	public long getMatchStart() {
@@ -90,9 +90,9 @@ public class Match {
 
 	/**
 	 * Check that the possible post rules are satisfied
-	 * 
+	 *
 	 * @param streamoffset offset within from match location to check postrules.
-	 * 
+	 *
 	 * @return true if post rules are satisfied
 	 */
 	public boolean checkPostRules(long streamoffset) {

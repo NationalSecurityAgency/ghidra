@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public interface RepositoryServerHandle {
 	boolean isReadOnly() throws IOException;
 
 	/**
-	 * Create a new repository on the server.  The newly created RepositoryHandle will contain 
+	 * Create a new repository on the server.  The newly created RepositoryHandle will contain
 	 * a unique project ID for the client.
 	 * @param name repository name.
 	 * This ID will be used to identify and maintain checkout data.
@@ -92,7 +92,7 @@ public interface RepositoryServerHandle {
 	boolean canSetPassword() throws IOException;
 
 	/**
-	 * Returns the amount of time in milliseconds until the 
+	 * Returns the amount of time in milliseconds until the
 	 * user's password will expire.
 	 * @return time until expiration or -1 if it will not expire
 	 * @throws IOException if an IO error occurs

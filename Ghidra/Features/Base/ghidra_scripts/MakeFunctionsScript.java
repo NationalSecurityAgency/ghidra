@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 // Script to ask user for a byte sequence that is a common function start
 // make functions at those locations
-// if code has only one block it asks the user where the data block is and splits the program into 
+// if code has only one block it asks the user where the data block is and splits the program into
 // code and data blocks
 //@category Functions
 

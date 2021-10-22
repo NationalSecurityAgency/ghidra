@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ import resources.Icons;
 import utilities.util.FileUtilities;
 
 /**
- * Panel that allows the user to configure a SymbolServerService: a local 
+ * Panel that allows the user to configure a SymbolServerService: a local
  * symbol storage directory and a list of search locations.
  */
 class SymbolServerPanel extends JPanel {
@@ -140,7 +140,7 @@ class SymbolServerPanel extends JPanel {
 	/**
 	 * Returns a new {@link SymbolServerService} instance representing the currently
 	 * displayed configuration, or null if the displayed configuration is not valid.
-	 * 
+	 *
 	 * @return new {@link SymbolServerService} or null
 	 */
 	SymbolServerService getSymbolServerService() {
@@ -156,7 +156,7 @@ class SymbolServerPanel extends JPanel {
 	/**
 	 * The union of the changed status of the local storage path and the additional
 	 * search paths table model changed status.
-	 * 
+	 *
 	 * @return boolean true if the config has changed
 	 */
 	boolean isConfigChanged() {
@@ -562,7 +562,7 @@ class SymbolServerPanel extends JPanel {
 	/**
 	 * Returns true if the given file path is a directory that contains no files.
 	 * <p>
-	 * 
+	 *
 	 * @param directory path to a location on the file system
 	 * @return true if is a directory and it contains no files
 	 */
@@ -584,7 +584,7 @@ class SymbolServerPanel extends JPanel {
 
 		return button;
 	}
-	
+
 	static StatusText getSymbolServerWarnings(List<SymbolServer> symbolServers) {
 		Map<String, String> warningsByLocation = new HashMap<>();
 		for (WellKnownSymbolServerLocation ssloc : knownSymbolServers) {

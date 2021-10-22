@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,12 @@
 package ghidra.util;
 
 /**
- * 
+ *
  * Methods for saving and restoring Strings and Java primitives or arrays of
  * Strings and primitives. The order in which the puts are done must the
  * same order in which the gets are done.
- * 
- * 
+ *
+ *
  *
  */
 public interface ObjectStorage {
@@ -62,7 +62,7 @@ public interface ObjectStorage {
 	 * @param value The value in the name,value pair.
 	 */
 	public void putBoolean(boolean value);
-	
+
 	/**
 	 * Store a float value.
 	 * @param value The value in the name,value pair.
@@ -84,7 +84,7 @@ public interface ObjectStorage {
 	 * Gets the byte value.
 	 */
 	public byte getByte();
-	
+
 	/**
 	 * Gets the short value.
 	 */
@@ -127,18 +127,18 @@ public interface ObjectStorage {
 	 * Store a short array.
 	 */
 	public void putShorts(short[] value);
-	
+
 	/**
 	 * Store a long array.
 	 */
 	public void putLongs(long[] value);
-	
+
 
 	/**
 	 * Store a float array.
 	 */
 	public void putFloats(float[] value);
-	
+
 	/**
 	 * Store a double array value.
 	 */
@@ -168,7 +168,7 @@ public interface ObjectStorage {
 	 * Gets the long array.
 	 */
 	public long[] getLongs();
-	    
+
 	/**
 	 * Gets the float array.
 	 */
@@ -178,7 +178,7 @@ public interface ObjectStorage {
 	 * Gets the double array.
 	 */
 	public double[] getDoubles();
-	
+
 	/**
 	 * Gets the array of Strings
 	 */

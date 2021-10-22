@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,15 +29,15 @@ import ghidra.framework.main.logviewer.model.*;
 import ghidra.util.Msg;
 
 /**
- * Utility class for managing the viewport in the {@link FVTable}. This viewport must be 
- * adjusted manually whenever {@link Chunk} objects are added to or removed from to the view, 
+ * Utility class for managing the viewport in the {@link FVTable}. This viewport must be
+ * adjusted manually whenever {@link Chunk} objects are added to or removed from to the view,
  * or whenever the {@link FVSlider} is moved.
  *
  */
 public class ViewportUtility implements Observer {
 
 	// Stores the top-line position of the viewport in case it needs to be restored (eg: after
-	// a reload).  Note that this value is a not a line number; it's the pixel y-value of the 
+	// a reload).  Note that this value is a not a line number; it's the pixel y-value of the
 	// viewport within the parent container.
 	private int savePosition;
 
@@ -50,7 +50,7 @@ public class ViewportUtility implements Observer {
 	private FVEventListener eventListener;
 
 	/**
-	 * 
+	 *
 	 */
 	public ViewportUtility(FVEventListener eventListener) {
 		this.eventListener = eventListener;
@@ -58,7 +58,7 @@ public class ViewportUtility implements Observer {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param viewport
 	 */
 	public void setViewport(JViewport viewport) {
@@ -66,7 +66,7 @@ public class ViewportUtility implements Observer {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param table
 	 */
 	public void setTable(FVTable table) {
@@ -74,7 +74,7 @@ public class ViewportUtility implements Observer {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param reader
 	 */
 	public void setReader(ChunkReader reader) {
@@ -82,16 +82,16 @@ public class ViewportUtility implements Observer {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param model
 	 */
 	public void setModel(ChunkModel model) {
 		this.model = model;
 	}
-	
+
 	/**
 	 * Returns the height (in pixels) of the viewport.
-	 * 
+	 *
 	 * @return
 	 */
 	public int getHeight() {
@@ -100,7 +100,7 @@ public class ViewportUtility implements Observer {
 
 	/**
 	 * Returns the table row associated with the top of the viewport.
-	 * 
+	 *
 	 * @return
 	 */
 	public int getViewportPositionAsRow() {
@@ -109,9 +109,9 @@ public class ViewportUtility implements Observer {
 
 	/**
 	 * Returns true if the given row is in the viewport.
-	 * 
+	 *
 	 * @param row
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean isInViewport(int row) {
@@ -145,8 +145,8 @@ public class ViewportUtility implements Observer {
 	}
 
 	/**
-	 * Returns the number of rows that are visible in the viewport. 
-	 * 
+	 * Returns the number of rows that are visible in the viewport.
+	 *
 	 * @return
 	 */
 	public int getNumRowsInViewport() {
@@ -170,9 +170,9 @@ public class ViewportUtility implements Observer {
 	}
 
 	/**
-	 * Moves the viewport up the number of rows specified. If moving up puts he view above 
+	 * Moves the viewport up the number of rows specified. If moving up puts he view above
 	 * the bounds of the first-visible chunk, load a previous chunk.
-	 * 
+	 *
 	 * @param rows
 	 * @param selection
 	 */
@@ -183,12 +183,12 @@ public class ViewportUtility implements Observer {
 			return;
 		}
 
-		// Calculate the position of the viewport if we were to move it up the number of 
+		// Calculate the position of the viewport if we were to move it up the number of
 		// rows given.
 		Point newViewportPos =
 			new Point(0, (int) viewport.getViewPosition().getY() - (table.getRowHeight() * rows));
 
-		// Save off the new viewport pos; this will be our new location unless we need to 
+		// Save off the new viewport pos; this will be our new location unless we need to
 		// adjust it by adding/removing new chunks.
 		savePosition = newViewportPos.y;
 
@@ -204,11 +204,11 @@ public class ViewportUtility implements Observer {
 				List<String> readLines = reader.readPreviousChunk();
 				if (readLines.size() > 0) {
 
-					// We have valid rows, so add them to the table (at the top, because we're 
+					// We have valid rows, so add them to the table (at the top, because we're
 					// reading a previous chunk).
 					((FVTableModel) table.getModel()).addRowsToTop(readLines);
 
-					// If adding that chunk just put us over the chunk limit we want to show, we 
+					// If adding that chunk just put us over the chunk limit we want to show, we
 					// have to remove one from the bottom, and adjust our viewport accordingly.
 					//
 					// Otherwise, just move our viewport down the corresponding number of rows
@@ -240,7 +240,7 @@ public class ViewportUtility implements Observer {
 
 		// At this point we should have a valid new viewport position, so set it.
 		setPosition(new Point(0, savePosition));
-		
+
 		// And if necessary, set new selection to encompass the top row that's in the viewport.
 		if (selection) {
 			updateSelectionToViewportTop();
@@ -248,9 +248,9 @@ public class ViewportUtility implements Observer {
 	}
 
 	/**
-	 * Moves the viewport down the number of rows specified. If moving down puts he view below 
+	 * Moves the viewport down the number of rows specified. If moving down puts he view below
 	 * the bounds of the first-visible chunk, load the next chunk.
-	 * 
+	 *
 	 * @param rows
 	 * @param selection
 	 */
@@ -261,13 +261,13 @@ public class ViewportUtility implements Observer {
 			return;
 		}
 
-		// Calculate the position of the viewport if we were to move it down the number of 
+		// Calculate the position of the viewport if we were to move it down the number of
 		// rows given.
 		Point newViewportPos =
 			new Point(0, (int) viewport.getViewPosition().getY() + (table.getRowHeight() * rows));
 		int viewportBottom = newViewportPos.y + viewport.getHeight();
 
-		// Save off the new viewport pos; this will be our new location unless we need to 
+		// Save off the new viewport pos; this will be our new location unless we need to
 		// adjust it by adding/removing new chunks.
 		savePosition = newViewportPos.y;
 
@@ -278,16 +278,16 @@ public class ViewportUtility implements Observer {
 			try {
 
 				// Read in the next chunk and make sure we get some valid lines. If we don't get
-				// any valid lines, then we must be at the end of the file so just move the 
+				// any valid lines, then we must be at the end of the file so just move the
 				// viewport to the bottom.
 				List<String> readLines = reader.readNextChunk();
 				if (readLines.size() > 0) {
 
-					// We have valid rows, so add them to the table (at the bottom, because we're 
+					// We have valid rows, so add them to the table (at the bottom, because we're
 					// reading the next chunk).
 					((FVTableModel) table.getModel()).addRowsToBottom(readLines);
 
-					// If adding that chunk just put us over the chunk limit we want to show, we 
+					// If adding that chunk just put us over the chunk limit we want to show, we
 					// have to remove one from the top, and adjust our viewport accordingly.
 					if (model.getSize() > model.MAX_VISIBLE_CHUNKS) {
 						Chunk chunk = model.remove(0);
@@ -314,7 +314,7 @@ public class ViewportUtility implements Observer {
 
 		// At this point we should have a valid new viewport position, so set it.
 		setPosition(new Point(0, savePosition));
-		
+
 		// And if necessary, set new selection to encompass the bottom row that's in the viewport.
 		if (selection) {
 			updateSelectionToViewportBottom();
@@ -326,29 +326,29 @@ public class ViewportUtility implements Observer {
 	 *********************************************************************************/
 
 	/**
-	 * Sets the first row in the viewport to be the start of the current selection range.  The 
+	 * Sets the first row in the viewport to be the start of the current selection range.  The
 	 * end of the selection range remains untouched.
 	 */
 	private void updateSelectionToViewportTop() {
-		
+
 		Pair filePos = model.getFilePositionForRow(getViewportPositionAsRow());
 		if (filePos == null) {
 			return;
 		}
-		
+
 		long filePosForTopRow = filePos.getStart();
 		model.selectedByteStart = filePosForTopRow;
 		table.restoreSelection();
 	}
 
-	
+
 	/**
-	 * Sets the last row in the viewport to be the end of the current selection range.  The 
+	 * Sets the last row in the viewport to be the end of the current selection range.  The
 	 * start of the selection range remains untouched.
 	 */
 	private void updateSelectionToViewportBottom() {
 		int bottomRow = getViewportPositionAsRow() + getNumRowsInViewport();
-		
+
 		Pair filePos = model.getFilePositionForRow(bottomRow);
 		if (filePos == null) {
 			return;
@@ -357,11 +357,11 @@ public class ViewportUtility implements Observer {
 		model.selectedByteEnd = filePosForBottomRow;
 		table.restoreSelection();
 	}
-	
+
 	/**
 	 * Sets the viewport to the given position, and fires off an event to notify any
 	 * subscribers.
-	 * 
+	 *
 	 * @param position
 	 */
 	private void setPosition(Point position) {
@@ -381,10 +381,10 @@ public class ViewportUtility implements Observer {
 	}
 
 	/**
-	 * Returns how many rows the given row is above or below the current viewport. 
-	 * 
+	 * Returns how many rows the given row is above or below the current viewport.
+	 *
 	 * @param row
-	 * 
+	 *
 	 * @return negative value if above the top of the viewport, positive value if below the bottom
 	 *         of the viewport, 0 if the line is already in the viewport.
 	 */
@@ -430,8 +430,8 @@ public class ViewportUtility implements Observer {
 	}
 
 	/**
-	 * Processes events received via the {@link FVEvent} mechanism. 
-	 * 
+	 * Processes events received via the {@link FVEvent} mechanism.
+	 *
 	 * @param event the event type received
 	 */
 	private void handleFVEvent(FVEvent event) {
@@ -456,7 +456,7 @@ public class ViewportUtility implements Observer {
 
 	/**
 	 * Returns true if all necessary state objects have been set.
-	 * 
+	 *
 	 * @return
 	 */
 	private boolean isStateValid() {

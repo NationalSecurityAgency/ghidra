@@ -5,7 +5,7 @@
 #
 # NOTES	-
 #   1. If a specific PIC-18 has a different register set, this file and the pic18.pspec file may be copied/renamed and
-#      slightly modified to specify a the correct Register File Map.  The following register definitions must be preserved: 
+#      slightly modified to specify a the correct Register File Map.  The following register definitions must be preserved:
 #	   STATUS, STKPTR, PCLAT (PCL, PCLATH, PCLATU), TOS (TOSL, TOSH, TOSU), FSR0 (FSR0L, FSR0H), FSR1 (FSR1L, FSR1H), FSR2 (FSR2L, FSR2H),
 #      PROD (PRODL, PRODH)
 #
@@ -20,7 +20,7 @@ define DATA offset=0x0f60 size=1 [
 	ADCON2	ADCON1	ADCON0	ADRESL	ADRESH	SSPCON2	SSPCON1	SSPSTAT	SSPADD	SSPBUF	T2CON	PR2		TMR2	T1CON	TMR1L	TMR1H
 	RCON	WDTCON	LVDCON	OSCCON	sfrFD4	T0CON	TMR0L	TMR0H	STATUS	FSR2L	FSR2H	PLUSW2	PREINC2	POSTDEC2 POSTINC2 INDF2
 	BSR		FSR1L	FSR1H	PLUSW1	PREINC1	POSTDEC1 POSTINC1 INDF1	WREG	FSR0L	FSR0H	PLUSW0	PREINC0	POSTDEC0 POSTINC0 INDF0
-	INTCON3	INTCON2	INTCON	PRODL	PRODH	TABLAT	TBLPTRL	TBLPTRH	TBLPTRU	PCL		PCLATH	PCLATU	.STKPTR	TOSL	TOSH	TOSU 
+	INTCON3	INTCON2	INTCON	PRODL	PRODH	TABLAT	TBLPTRL	TBLPTRH	TBLPTRU	PCL		PCLATH	PCLATU	.STKPTR	TOSL	TOSH	TOSU
 ];
 
 define DATA offset=0x0fbb size=2 [ CCPR2 ];

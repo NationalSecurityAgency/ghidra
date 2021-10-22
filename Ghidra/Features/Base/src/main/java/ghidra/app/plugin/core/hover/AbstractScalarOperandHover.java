@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,19 +39,19 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 	private static final FormatSettingsDefinition FORMAT = FormatSettingsDefinition.DEF;
 
 	//@formatter:off
-	private static final Settings[] INTEGER_SETTINGS = new Settings[] { 
+	private static final Settings[] INTEGER_SETTINGS = new Settings[] {
 		getSettingsForRadix("hex"),
-		getSettingsForRadix("decimal") 
+		getSettingsForRadix("decimal")
 	};
 
 	private static final AbstractIntegerDataType[] INTEGER_DISPLAY_TYPES =
-		new AbstractIntegerDataType[] { 
+		new AbstractIntegerDataType[] {
 			new ByteDataType(),
-			new WordDataType(), 
+			new WordDataType(),
 			new SignedWordDataType(),
-			new DWordDataType(), 
+			new DWordDataType(),
 			new SignedDWordDataType(),
-			new QWordDataType(), 
+			new QWordDataType(),
 			new SignedQWordDataType()
 		};
 	//@formatter:on
@@ -150,11 +150,11 @@ public abstract class AbstractScalarOperandHover extends AbstractConfigurableHov
 
 			// if the string-ified char data is the same as the previous instance, or if it
 			// doesn't have a quote mark in it (ie. all bytes sequences), skip it
-			boolean shouldSkip = prevCharVal.equals(charVal)  // 
+			boolean shouldSkip = prevCharVal.equals(charVal)  //
 				|| !charRep.contains(isArray ? "\"" : "'") //
 				|| hasEncodingError(charVal);
 			if (!shouldSkip) {
-				htmlText.append("<tr><td>") // 
+				htmlText.append("<tr><td>") //
 						.append(charDt.getName()) //
 						.append(isArray ? "[]" : "");
 				htmlText.append("</td><td>") //

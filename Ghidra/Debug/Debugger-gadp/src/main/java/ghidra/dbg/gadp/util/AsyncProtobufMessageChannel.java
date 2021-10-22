@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -100,7 +100,7 @@ public class AsyncProtobufMessageChannel<S extends GeneratedMessageV3, R extends
 
 	/**
 	 * Write a message to the channel
-	 * 
+	 *
 	 * @param msg the message to write
 	 * @return the length of the encoded message as a future
 	 */
@@ -139,7 +139,7 @@ public class AsyncProtobufMessageChannel<S extends GeneratedMessageV3, R extends
 
 	/**
 	 * Read and decode a packet from the channel
-	 * 
+	 *
 	 * @param pktType the type of packet expected
 	 * @return the read packet as a future
 	 */

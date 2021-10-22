@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -193,12 +193,12 @@ class AnalyzeAllOpenProgramsTask extends Task {
 	}
 
 	/**
-	 * Returns a list of all programs that should be analyzed. 
+	 * Returns a list of all programs that should be analyzed.
 	 * <p>
-	 * This will always include the currently selected program, as well as any 
-	 * other programs that have a similar architecture. Those programs with 
+	 * This will always include the currently selected program, as well as any
+	 * other programs that have a similar architecture. Those programs with
 	 * different architectures will be filtered out.
-	 * 
+	 *
 	 * @return the list of programs to analyze
 	 */
 	private List<Program> getValidProgramsByArchitecture() {
@@ -219,11 +219,11 @@ class AnalyzeAllOpenProgramsTask extends Task {
 	/**
 	 * Verifies that all programs to be analyzed have similar architectures (if
 	 * not, they can't be analyzed in a single batch, as their analyzer options
-	 * do not match). 
+	 * do not match).
 	 * <p>
 	 * If any architectures do not match, the user will be notified via
 	 * a popup dialog.
-	 * 
+	 *
 	 * @return the list of programs that can be analyzed, or null if the operation
 	 * was cancelled by the user
 	 * @throws CancelledException if the user cancelled the operation

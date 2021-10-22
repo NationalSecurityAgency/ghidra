@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.format.*;
 
 /**
- * 
+ *
  */
 public class DebugSymbolSelector {
 
@@ -38,7 +38,7 @@ public class DebugSymbolSelector {
 			case DebugCodeViewConstants.S_LDATA32:
 			case DebugCodeViewConstants.S_GDATA32:
 			case DebugCodeViewConstants.S_PUB32:
-				return DataSym32.createDataSym32(length, type, reader, ptr);                   
+				return DataSym32.createDataSym32(length, type, reader, ptr);
 
 			case DebugCodeViewConstants.S_PUBSYM32_NEW:
 				return DataSym32_new.createDataSym32_new(length, type, reader, ptr);
@@ -83,10 +83,10 @@ public class DebugSymbolSelector {
 
 			case DebugCodeViewConstants.S_GDATA32_NEW:
 				return S_GDATA32_NEW.createS_GDATA32_NEW(length, type, reader, ptr);
-			
+
 			case DebugCodeViewConstants.S_LABEL32:
 				return S_LABEL32.createS_LABEL32(length, type, reader, ptr);
-			
+
 			default:
 				return UnknownSymbol.createUnknownSymbol(length, type, reader, ptr);
 		}

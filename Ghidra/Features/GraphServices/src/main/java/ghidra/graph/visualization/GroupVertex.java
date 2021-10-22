@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public class GroupVertex extends AttributedVertex {
 	/**
 	 * Returns a set of vertices such that all non-group nodes in the given vertices are included
 	 * and any group nodes in the given vertices are replaced with their contained vertices.
-	 * 
+	 *
 	 * @param vertices the collection of vertices to flatten into a set of non-group vertices.
 	 * @return a set of non-group vertices derived from the given collection where all the group
 	 * vertices have been replace with their contained vertices.
@@ -83,11 +83,11 @@ public class GroupVertex extends AttributedVertex {
 		return vertices.stream().map(AttributedVertex::getName).collect(Collectors.joining("\n"));
 	}
 
-	/** 
+	/**
 	 * Returns the set of flattened nodes contained in this node.  In other words, any group nodes
 	 * that were given to this group node would have been swapped for the nodes that the groupd node
 	 * contained.
-	 * 
+	 *
 	 * @return the set of flattened graph vertices represented by this group node.
 	 */
 	public Set<AttributedVertex> getContainedVertices() {
@@ -95,9 +95,9 @@ public class GroupVertex extends AttributedVertex {
 	}
 
 	/**
-	 * Returns the node that is first, with first being currently defined to be the one that is 
+	 * Returns the node that is first, with first being currently defined to be the one that is
 	 * first when sorted by id alphabetically.
-	 * 
+	 *
 	 * @return the node that is first.
 	 */
 	public AttributedVertex getFirst() {

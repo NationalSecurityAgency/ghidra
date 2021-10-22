@@ -6,8 +6,8 @@ import ghidra.program.model.data.*;
  *
  * A Test data type used to test the "Refresh" on built in types. This data type is
  * compiled by the JUnit test.
- *  
- * 
+ *
+ *
  */
 public class TestDataType extends StructureDataType implements BuiltInDataType {
 
@@ -24,7 +24,7 @@ public class TestDataType extends StructureDataType implements BuiltInDataType {
     public StructureDataType clone(DataTypeManager dataMgr) {
     	return new TestDataType(dataMgr);
     }
-   
+
 	public String getCTypeDeclaration(DataOrganization dataOrganization) {
 		return null;
 	}

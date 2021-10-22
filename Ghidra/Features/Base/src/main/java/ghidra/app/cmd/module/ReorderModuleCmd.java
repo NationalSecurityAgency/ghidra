@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,14 +22,14 @@ import ghidra.util.exception.NotFoundException;
 
 /**
  * Command to reorder children in a module.
- * 
- * 
+ *
+ *
  */
 public class ReorderModuleCmd implements Command {
 	private String moduleName;
 	private String childName;
 	private int index;
-	private String statusMsg; 
+	private String statusMsg;
 	private String treeName;
 	/**
 	 * Constructor for ReorderModuleCmd.
@@ -39,7 +39,7 @@ public class ReorderModuleCmd implements Command {
 	 * @param childName name of the child to move to the new index
 	 * @param index new index for the child
 	 */
-	public ReorderModuleCmd(String treeName, String parentModuleName, 
+	public ReorderModuleCmd(String treeName, String parentModuleName,
 							String childName, int index) {
 		this.treeName = treeName;
 		moduleName = parentModuleName;
@@ -48,7 +48,7 @@ public class ReorderModuleCmd implements Command {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
 	public boolean applyTo(DomainObject obj) {
@@ -59,7 +59,7 @@ public class ReorderModuleCmd implements Command {
 			m.moveChild(childName, index);
 			return true;
 		} catch (NotFoundException e) {
-			statusMsg = e.getMessage();	
+			statusMsg = e.getMessage();
 		}
 		return false;
 	}

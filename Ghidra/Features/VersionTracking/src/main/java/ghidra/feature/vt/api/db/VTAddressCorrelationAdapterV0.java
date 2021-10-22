@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class VTAddressCorrelationAdapterV0 extends VTAddressCorrelatorAdapter {
 			throw new VersionException("Missing Table: " + TABLE_NAME);
 		}
 		else if(table.getSchema().getVersion() != 0) {
-			throw new VersionException("Expected version 0 for table "+ TABLE_NAME + 
+			throw new VersionException("Expected version 0 for table "+ TABLE_NAME +
 					" but got "+table.getSchema().getVersion());
 		}
 	}
@@ -49,11 +49,11 @@ public class VTAddressCorrelationAdapterV0 extends VTAddressCorrelatorAdapter {
 	@Override
 	void createAddressRecord(long sourceEntryLong, long sourceLong,long destinationLong) throws IOException {
 		DBRecord record = TABLE_SCHEMA.createRecord(table.getKey());
-		
+
 		record.setLongValue(SOURCE_ENTRY_COL.column(), sourceLong);
 		record.setLongValue(SOURCE_ADDRESS_COL.column(), sourceLong);
 		record.setLongValue(DESTINATION_ADDRESS_COL.column(), destinationLong);
-		
+
 		table.putRecord(record);
 	}
 

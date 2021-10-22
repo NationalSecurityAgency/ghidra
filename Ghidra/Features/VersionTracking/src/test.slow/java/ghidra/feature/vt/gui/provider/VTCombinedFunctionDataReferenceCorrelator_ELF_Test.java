@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ public class VTCombinedFunctionDataReferenceCorrelator_ELF_Test extends Abstract
 	/************************************************************************************
 	 * Specify only function matches, then run the Combined Function/Data Reference Correlator
 	 * and make sure it does not match on function that has both data and function references
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -80,7 +80,7 @@ public class VTCombinedFunctionDataReferenceCorrelator_ELF_Test extends Abstract
 		runTestReferenceCorrelatorWithOptions(testCorrelator, 1.0,
 			VTAbstractReferenceProgramCorrelatorFactory.MEMORY_MODEL_DEFAULT, 0.6, true);
 
-		/* Check that the match set was created and that there are no matches 
+		/* Check that the match set was created and that there are no matches
 		 - nothing should match with just the above listed function matches
 		 */
 		VTMatchSet vtMatchSet = getVTMatchSet(testCorrelator);
@@ -93,7 +93,7 @@ public class VTCombinedFunctionDataReferenceCorrelator_ELF_Test extends Abstract
 	 * Specify only data matches, then run the Combined Function/Data Reference Correlator
 	 * and make sure it finds but scores lower than the same function found by the Data
 	 * Reference Correlator.
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -153,7 +153,7 @@ public class VTCombinedFunctionDataReferenceCorrelator_ELF_Test extends Abstract
 	 * Specify both function and data matches that are references in the bob function (no other
 	 * has all of the same references), then run the Combined Function/Data Reference Correlator
 	 * and make sure it only matches on the bob functions
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -211,12 +211,12 @@ public class VTCombinedFunctionDataReferenceCorrelator_ELF_Test extends Abstract
 	}
 
 	/************************************************************************************
-	 * Run the Exact Symbol Name correlator and accept all function matches, 
+	 * Run the Exact Symbol Name correlator and accept all function matches,
 	 * then run the Exact Data Match Correlator and accept all matches
 	 * then accept manually created matches
-	 * then run the Combined Data and Function reference correlator 
+	 * then run the Combined Data and Function reference correlator
 	 * and test that only the expected matches are found
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -228,7 +228,7 @@ public class VTCombinedFunctionDataReferenceCorrelator_ELF_Test extends Abstract
 		Assert.assertNotEquals("vtMatchSet does not exist", null,
 			getVTMatchSet(exactSymbolNameCorrelator));
 
-		//Run the Exact Data Correlator		
+		//Run the Exact Data Correlator
 		String exactDataCorrelator = "Exact Data Match";
 		runTestCorrelator(exactDataCorrelator);
 		Assert.assertNotEquals("vtMatchSet does not exist", null,
@@ -291,7 +291,7 @@ public class VTCombinedFunctionDataReferenceCorrelator_ELF_Test extends Abstract
 			acceptMatch(match);
 		}
 
-		//run the Combined Data and Function reference correlator		
+		//run the Combined Data and Function reference correlator
 		runTestCorrelatorWithDefaultOptions(testCorrelator);
 
 		VTMatchSet testMatchSet = getVTMatchSet(testCorrelator);

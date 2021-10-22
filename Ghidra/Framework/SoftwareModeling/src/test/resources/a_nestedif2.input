@@ -9,7 +9,7 @@ yes
 @else # ENDIAN == "big"
 no
 @endif # ENDIAN = "big"
-  
+
 @endif # VFPv2 || VFPv3
 
 @if defined(VFPv2)

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,11 +78,11 @@ public interface TargetAttacher extends TargetObject {
 
 	/**
 	 * Get the kinds of multi-stepping implemented by the debugger
-	 * 
+	 *
 	 * <p>
 	 * Different debuggers provide varying methods of attaching. This attribute describes which are
 	 * supported. NOTE: This should be replaced by generic method invocation.
-	 * 
+	 *
 	 * @return the set of supported attach operations
 	 */
 	@TargetAttributeType(
@@ -96,11 +96,11 @@ public interface TargetAttacher extends TargetObject {
 
 	/**
 	 * Attach to the given {@link TargetAttachable}
-	 * 
+	 *
 	 * <p>
 	 * This is mostly applicable to user-space contexts, in which case, this usually means to attach
 	 * to a process.
-	 * 
+	 *
 	 * @param attachable the object or reference to attach to
 	 * @return a future which completes when the command is confirmed
 	 */
@@ -108,11 +108,11 @@ public interface TargetAttacher extends TargetObject {
 
 	/**
 	 * Attach to the given id
-	 * 
+	 *
 	 * <p>
 	 * This is mostly applicable to user-space contexts, in which case, this usually means to attach
 	 * to a process using its OS-assigned process id.
-	 * 
+	 *
 	 * @param pid the identifier for and object to attach to
 	 * @return a future which completes when the command is confirmed
 	 */

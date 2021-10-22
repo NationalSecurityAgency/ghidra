@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,9 @@ import ghidra.program.util.ProgramLocation;
 
 /**
  * Plugin for managing function tags. This works with the associated
- * {@link FunctionTagProvider} to allow users to view and 
+ * {@link FunctionTagProvider} to allow users to view and
  * edit function tags both globally and for individual functions.
- * 
+ *
  */
 //@formatter:off
 @PluginInfo(
@@ -61,7 +61,7 @@ public class FunctionTagPlugin extends ProgramPlugin {
 
 	/**
 	 * Returns the component provider for this plugin
-	 * 
+	 *
 	 * @return the component provider
 	 */
 	public FunctionTagProvider getProvider() {

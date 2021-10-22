@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ class SelectBlockDialog extends DialogComponentProvider {
 		"Selection is larger than available " + "bytes, using the end of the address space";
 
 	private JTextField toAddressField;
-	private IntegerTextField numberInputField; // AddressInput allows decimal and hex input 
+	private IntegerTextField numberInputField; // AddressInput allows decimal and hex input
 	private JRadioButton forwardButton;
 	private JRadioButton backwardButton;
 	private JRadioButton allButton;
@@ -87,7 +87,7 @@ class SelectBlockDialog extends DialogComponentProvider {
 	private JPanel buildBlockPanel() {
 		JPanel main = new JPanel();
 		main.setBorder(BorderFactory.createTitledBorder("Byte Selection"));
-		
+
 		main.setLayout(new PairLayout());
 
 		main.add(new GLabel("Ending Address:"));

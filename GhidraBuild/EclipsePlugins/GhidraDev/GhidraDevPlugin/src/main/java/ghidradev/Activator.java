@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import org.osgi.framework.BundleContext;
 
 /**
  * The activator class controls the plug-in life cycle.
- * 
+ *
  * NOTE: Plugins declaring extensions or extension points must be implemented as a singleton.
  */
 public class Activator extends AbstractUIPlugin {
@@ -58,7 +58,7 @@ public class Activator extends AbstractUIPlugin {
 
 	/**
 	 * Registers an object to be closed when the plugin shuts down.
-	 * 
+	 *
 	 * @param c The object to register for close on shutdown.
 	 */
 	public synchronized void registerCloseable(Closeable c) {
@@ -67,7 +67,7 @@ public class Activator extends AbstractUIPlugin {
 
 	/**
 	 * Unregisters an object to be closed when the plugin shuts down.
-	 * 
+	 *
 	 * @param c The object to unregister for close on shutdown.
 	 */
 	public synchronized void unregisterCloseable(Closeable c) {
@@ -76,7 +76,7 @@ public class Activator extends AbstractUIPlugin {
 
 	/**
 	 * Gets the installation directory of the Ghidra that launched Eclipse.
-	 * 
+	 *
 	 * @return The installation directory of the Ghidra that launched Eclipse.  Could be null if
 	 *   Ghidra did not launch Eclipse, or Ghidra did not pass along it's installation directory to
 	 *   Eclipse properly.
@@ -91,7 +91,7 @@ public class Activator extends AbstractUIPlugin {
 
 	/**
 	 * Checks to see if Eclipse was launched by Ghidra.
-	 * 
+	 *
 	 * @return True if Eclipse was launched by Ghidra; otherwise, false.
 	 */
 	public boolean isLaunchedByGhidra() {
@@ -110,7 +110,7 @@ public class Activator extends AbstractUIPlugin {
 		plugin = null;
 		super.stop(context);
 		EclipseMessageUtils.info("Stopping " + PLUGIN_ID + " plugin");
-		
+
 		// Close registered items
 		synchronized (this) {
 			for (Closeable c : closeSet) {

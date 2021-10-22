@@ -19,7 +19,7 @@ ACALLdisp: disp is disp4_8 [ disp = ACBA + (disp4_8 << 2); ] { export *:4 disp; 
         LR = inst_next;
         call ACALLdisp;
 }
- 
+
 #---------------------------------------------------------------------
 # RET{cond4} - Conditional Return from Subroutine
 # I.	cond4 -> {eq, ne, cc/hs, cs/lo, ge, lt, mi, pl, ls, gt, le, hi, vs, vc, qs, al}
@@ -30,7 +30,7 @@ retCond4Sub: rs0 is rs0 & rs0=0xf { R12 = 0x1;}		#PC (0xf)
 retCond4Sub: rs0 is rs0 & rs0=0xe { R12 = -0x1;}	#LR (0xe)
 retCond4Sub: rs0 is rs0 & rs0=0xd { R12 = 0x0;}		#SP (0xd)
 retCond4Sub: rs0 is rs0 & rs0=0xc {} #Else R12 is R12
-retCond4Sub: rs0 is rs0 {R12 = rs0;} #Else		
+retCond4Sub: rs0 is rs0 {R12 = rs0;} #Else
 
 
 #RET{Cond4} Format I:
@@ -59,7 +59,7 @@ retCond4Sub: rs0 is rs0 {R12 = rs0;} #Else
 	build COND_4_4;
 	build retCond4Sub;
 	# Flags Set:
-	V = 0x0;  	
+	V = 0x0;
 	C = 0x0;
 	NZSTATUS(R12);
 	# End Operation:
@@ -104,7 +104,7 @@ sDisp21: sdisp21 is disp21part2_4_1 & disp21part3_9_4; disp21part1_0_16
 	tst:1 = COND_3;
 	if (tst) goto sDisp8;
 }
- 
+
 #BR{cond4} Format II:
 #Operation:
 #	Branch if condition satisfied:

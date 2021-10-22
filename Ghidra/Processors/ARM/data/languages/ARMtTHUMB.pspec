@@ -20,7 +20,7 @@
       <set name="spsr" val="0"/>
     </tracked_set>
   </context_data>
-  
+
   <default_symbols>
     <symbol name="Reset" address="ram:0x0" entry="true"/>
     <symbol name="UndefinedInstruction" address="ram:0x4" entry="true"/>
@@ -30,7 +30,7 @@
     <symbol name="NotUsed" address="ram:0x14" entry="true"/>
     <symbol name="IRQ" address="ram:0x18" entry="true"/>
     <symbol name="FIQ" address="ram:0x1c" entry="true"/>
-    
+
     <symbol name="H_Reset" address="ram:0xFFFF0000" entry="true"/>
     <symbol name="H_UndefinedInstruction" address="ram:0xFFFF0004" entry="true"/>
     <symbol name="H_SupervisorCall" address="ram:0xFFFF0008" entry="true"/>
@@ -40,25 +40,25 @@
     <symbol name="H_IRQ" address="ram:0xFFFF0018" entry="true"/>
     <symbol name="H_FIQ" address="ram:0xFFFF001c" entry="true"/>
   </default_symbols>
-  
+
   <register_data>
-    <register name="q0" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q1" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q2" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q3" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q4" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q5" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q6" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q7" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q8" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q9" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q10" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q11" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q12" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q13" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q14" group="NEON" vector_lane_sizes="1,2,4"/> 
-    <register name="q15" group="NEON" vector_lane_sizes="1,2,4"/> 
+    <register name="q0" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q1" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q2" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q3" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q4" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q5" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q6" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q7" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q8" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q9" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q10" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q11" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q12" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q13" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q14" group="NEON" vector_lane_sizes="1,2,4"/>
+    <register name="q15" group="NEON" vector_lane_sizes="1,2,4"/>
   </register_data>
 
-  
+
 </processor_spec>

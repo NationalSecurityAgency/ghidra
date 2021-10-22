@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -128,7 +128,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 	/**
 	 * Works like {@link #waitForValue(Supplier)}, except this caches {@link NoSuchElementException}
 	 * and tries again.
-	 * 
+	 *
 	 * @param <T> the type of object to wait for
 	 * @param supplier the supplier of the object
 	 * @return the object
@@ -158,7 +158,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	/**
 	 * This is so gross
-	 * 
+	 *
 	 * @param lockable
 	 */
 	protected void waitForLock(DomainObject lockable) {
@@ -170,7 +170,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	/**
 	 * Get an address in the trace's default space
-	 * 
+	 *
 	 * @param trace the trace
 	 * @param offset the byte offset in the default space
 	 * @return the address
@@ -181,7 +181,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	/**
 	 * Get an address in the program's default space
-	 * 
+	 *
 	 * @param program the program
 	 * @param offset the byte offset in the default space
 	 * @return the address
@@ -192,7 +192,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	/**
 	 * Get an address range in the trace's default space
-	 * 
+	 *
 	 * @param program the program
 	 * @param min the min byte offset in the default space
 	 * @param max the max byte offset in the default space
@@ -318,10 +318,10 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	/**
 	 * Find the sub menu item of the current selection by text
-	 * 
+	 *
 	 * Note that if the desired item is at the same level as the currently selected item, this
 	 * method will not find it. It searches the sub menu of the currently selected item.
-	 * 
+	 *
 	 * @param text the text
 	 * @return the found item
 	 * @throws NoSuchElementException if the desired item is not found
@@ -333,7 +333,7 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 
 	/**
 	 * Activate via mouse the sub menu item of the current selection by text
-	 * 
+	 *
 	 * @param text the text on the item to click
 	 * @throws AWTException
 	 * @throws NoSuchElementException if no item with the given text is found

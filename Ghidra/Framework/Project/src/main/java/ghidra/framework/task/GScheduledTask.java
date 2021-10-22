@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public class GScheduledTask implements Comparable<GScheduledTask> {
 	 * Create a new GScheduledTask when a task is scheduled with the GTaskManager.
 	 * @param group the group that this task belongs to.
 	 * @param task the task being scheduled.
-	 * @param priority the priority at which this task is to be executed relative to other 
+	 * @param priority the priority at which this task is to be executed relative to other
 	 * scheduled tasks.  Lower numbers are run before higher numbers.
 	 */
 	public GScheduledTask(GTaskGroup group, GTask task, int priority) {
@@ -99,7 +99,7 @@ public class GScheduledTask implements Comparable<GScheduledTask> {
 
 	/**
 	 * Return GTaskGroup for this task.
-	 * @return the GTaskGroup 
+	 * @return the GTaskGroup
 	 */
 	public GTaskGroup getGroup() {
 		return group;

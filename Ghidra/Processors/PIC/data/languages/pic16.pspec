@@ -44,24 +44,24 @@
     <symbol name="PIR2" address="DATA:0D" entry="false"/>
     <symbol name="TMR1L" address="DATA:0E" entry="false"/>
     <symbol name="TMR1H" address="DATA:0F" entry="false"/>
-        
+
     <symbol name="T1CON" address="DATA:10" entry="false"/>
-    <symbol name="TMR2" address="DATA:11" entry="false"/>   
-    <symbol name="T2CON" address="DATA:12" entry="false"/> 
-    <symbol name="SSPBUF" address="DATA:13" entry="false"/> 
-    <symbol name="SSPCON" address="DATA:14" entry="false"/> 
-    <symbol name="CCPR1L" address="DATA:15" entry="false"/> 
-    <symbol name="CCPR1H" address="DATA:16" entry="false"/> 
-    <symbol name="CCP1CON" address="DATA:17" entry="false"/> 
-    <symbol name="RCSTA" address="DATA:18" entry="false"/> 
-    <symbol name="TXREG" address="DATA:19" entry="false"/> 
-    <symbol name="RCREG" address="DATA:1A" entry="false"/> 
-    <symbol name="CCPR2L" address="DATA:1B" entry="false"/> 
-    <symbol name="CCPR2H" address="DATA:1C" entry="false"/> 
-    <symbol name="CCP2CON" address="DATA:1D" entry="false"/> 
-    <symbol name="ADRES" address="DATA:1E" entry="false"/> 
-    <symbol name="ADCON0" address="DATA:1F" entry="false"/> 
-    
+    <symbol name="TMR2" address="DATA:11" entry="false"/>
+    <symbol name="T2CON" address="DATA:12" entry="false"/>
+    <symbol name="SSPBUF" address="DATA:13" entry="false"/>
+    <symbol name="SSPCON" address="DATA:14" entry="false"/>
+    <symbol name="CCPR1L" address="DATA:15" entry="false"/>
+    <symbol name="CCPR1H" address="DATA:16" entry="false"/>
+    <symbol name="CCP1CON" address="DATA:17" entry="false"/>
+    <symbol name="RCSTA" address="DATA:18" entry="false"/>
+    <symbol name="TXREG" address="DATA:19" entry="false"/>
+    <symbol name="RCREG" address="DATA:1A" entry="false"/>
+    <symbol name="CCPR2L" address="DATA:1B" entry="false"/>
+    <symbol name="CCPR2H" address="DATA:1C" entry="false"/>
+    <symbol name="CCP2CON" address="DATA:1D" entry="false"/>
+    <symbol name="ADRES" address="DATA:1E" entry="false"/>
+    <symbol name="ADCON0" address="DATA:1F" entry="false"/>
+
     <symbol name="OPTION_REG" address="DATA:81" entry="false"/>
 
     <symbol name="TRISA" address="DATA:85" entry="false"/>
@@ -84,7 +84,7 @@
 	<symbol name="PORTB" address="DATA:106" entry="false"/>
 	<symbol name="PORTF" address="DATA:107" entry="false"/>
 	<symbol name="PORTG" address="DATA:108" entry="false"/>
-	
+
 	<symbol name="TRISB" address="DATA:186" entry="false"/>
 	<symbol name="TRISF" address="DATA:187" entry="false"/>
 	<symbol name="TRISG" address="DATA:188" entry="false"/>

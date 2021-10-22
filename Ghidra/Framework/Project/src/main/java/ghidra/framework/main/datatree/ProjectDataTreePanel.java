@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,7 +70,7 @@ public class ProjectDataTreePanel extends JPanel {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param projectName name of project
 	 * @param isActiveProject true if the project is active, and the
 	 * data tree may be modified
@@ -221,7 +221,7 @@ public class ProjectDataTreePanel extends JPanel {
 
 	/**
 	 * Get the number of selected items in the tree.  These could be either files or folders.
-	 * 
+	 *
 	 * @return the number of selected items in the tree.
 	 */
 	public int getSelectedItemCount() {
@@ -306,9 +306,9 @@ public class ProjectDataTreePanel extends JPanel {
 
 	/**
 	 * Get the data tree node that is selected
-	 * 
-	 * @param provider the provider with which to construct the new context 
-	 * @param e mouse event for the popup; may be null if this is being called as a result of 
+	 *
+	 * @param provider the provider with which to construct the new context
+	 * @param e mouse event for the popup; may be null if this is being called as a result of
 	 *        the key binding pressed
 	 * @return the new context; null if there is no selection
 	 */
@@ -355,7 +355,7 @@ public class ProjectDataTreePanel extends JPanel {
 
 	/**
 	 * Adds or removes the filter from the tree.
-	 * 
+	 *
 	 * @param enabled Tree adds the filter; false removes it
 	 */
 	public void setTreeFilterEnabled(boolean enabled) {

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,17 +19,17 @@ package ghidra.app.util.bin.format.elf;
 public class AVR32_ElfRelocationConstants {
 
 	/* Atmel AVR32 relocations. */
-	// NONE (possibly a placeholder for relocations that are moved) 
+	// NONE (possibly a placeholder for relocations that are moved)
 	// <align:0 bitpos:0 bitsize:0 complain:dont>
 	public static final int R_AVR32_NONE = 0;
 	/* Data Relocations */
-	// DATA: ((S + A) & 0xffffffff) (Normal Data) 
+	// DATA: ((S + A) & 0xffffffff) (Normal Data)
 	// <align:0 bitpos:0 bitsize:32 complain:dont>
 	public static final int R_AVR32_32 = 1;
-	// DATA: ((S + A) & 0x0000ffff) (Normal Data) 
+	// DATA: ((S + A) & 0x0000ffff) (Normal Data)
 	// <align:0 bitpos:0 bitsize:16 complain:bitfield>
 	public static final int R_AVR32_16 = 2;
-	// DATA: ((S + A) & 0x000000ff)(Normal Data) 
+	// DATA: ((S + A) & 0x000000ff)(Normal Data)
 	// <align:0 bitpos:0 bitsize:8 complain:bitfield>
 	public static final int R_AVR32_8 = 3;
 	// DATA: ((S + A - P) & 0xffffffff) (PC-relative)
@@ -71,13 +71,13 @@ public class AVR32_ElfRelocationConstants {
 	// is indicated by the suffixes. S means signed, U means unsigned.
 	// W means word-aligned, H means halfword-aligned, neither means
 	// byte-aligned (no alignment.)
-	// NORMAL CODE: ((S + A) & 0x1e10ffff) 
+	// NORMAL CODE: ((S + A) & 0x1e10ffff)
 	// <align:0 bitpos:0 bitsize:21 complain:signed>
 	public static final int R_AVR32_21S = 13;
 	// NORMAL CODE: ((S + A) & 0x0000ffff)
 	// <align:0 bitpos:0 bitsize:16 complain:unsigned>
 	public static final int R_AVR32_16U = 14;
-	// NORMAL CODE: ((S + A) & 0x0000ffff) 
+	// NORMAL CODE: ((S + A) & 0x0000ffff)
 	// <align:0 bitpos:0 bitsize:16 complain:signed>
 	public static final int R_AVR32_16S = 15;
 	// NORMAL CODE: (((S + A)) << 4) & 0x00000ff0)

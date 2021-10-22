@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.app.plugin.processors.sleigh.expression.UnaryExpression;
 
 /**
  * A solver that handles expressions of the form [OP]A
- * 
+ *
  * @param <T> the type of expression solved (the operator)
  */
 public abstract class AbstractUnaryExpressionSolver<T extends UnaryExpression>
@@ -71,7 +71,7 @@ public abstract class AbstractUnaryExpressionSolver<T extends UnaryExpression>
 
 	/**
 	 * Compute the input value given that the result is known
-	 * 
+	 *
 	 * NOTE: Assumes an involution by default
 	 * @param goal the result
 	 * @return the input value solution
@@ -82,7 +82,7 @@ public abstract class AbstractUnaryExpressionSolver<T extends UnaryExpression>
 
 	/**
 	 * Compute the result of applying the operator to the given value
-	 * 
+	 *
 	 * @param val the input value
 	 * @return the result
 	 */

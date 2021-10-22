@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,9 +50,9 @@ public abstract class AutoLookup {
 	public abstract int getRowCount();
 
 	/**
-	 * Returns a string representation of the item at the given row and column.  The text 
+	 * Returns a string representation of the item at the given row and column.  The text
 	 * should match what the user sees.
-	 * 
+	 *
 	 * @param row the row
 	 * @param col the column
 	 * @return the text
@@ -62,8 +62,8 @@ public abstract class AutoLookup {
 	/**
 	 * Returns true if the given column is sorted.  This class will use a binary search if the
 	 * given column is sorted.  Otherwise, a brute-force search will be used.
-	 * 
-	 * @param column the column 
+	 *
+	 * @param column the column
 	 * @return true if sorted
 	 */
 	public abstract boolean isSorted(int column);
@@ -79,18 +79,18 @@ public abstract class AutoLookup {
 	}
 
 	/**
-	 * Returns true if the currently sorted column is sorted ascending.  This is used in 
+	 * Returns true if the currently sorted column is sorted ascending.  This is used in
 	 * conjunction with {@link #isSorted(int)}.  If that method returns false, then this method
-	 * will not be called. 
-	 * 
+	 * will not be called.
+	 *
 	 * @return true if sorted ascending
 	 */
 	public abstract boolean isSortedAscending();
 
 	/**
-	 * This method will be called when a match for the call to {@link #keyTyped(KeyEvent)} is 
+	 * This method will be called when a match for the call to {@link #keyTyped(KeyEvent)} is
 	 * found
-	 * 
+	 *
 	 * @param row the matching row
 	 */
 	public abstract void matchFound(int row);
@@ -116,10 +116,10 @@ public abstract class AutoLookup {
 	/**
 	 * Sets the logic for deciding whether the elapsed time between keystrokes is enough to
 	 * trigger a new auto lookup or to continue with the previous match.
-	 * 
+	 *
 	 * <p>This method is intended for tests that need precise control over the timeout mechanism.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param p the predicate that takes the amount of elapsed time
 	 * @see #setTimeout(long)
 	 */
@@ -129,7 +129,7 @@ public abstract class AutoLookup {
 
 	/**
 	 * Clients call this method when the user types keys
-	 * 
+	 *
 	 * @param e the key event
 	 */
 	public void keyTyped(KeyEvent e) {
@@ -258,7 +258,7 @@ public abstract class AutoLookup {
 
 		int sortedOrder = 1;
 
-		// if sorted descending, then reverse the search direction and change the lookup text to 
+		// if sorted descending, then reverse the search direction and change the lookup text to
 		// so that a match will come after the range we seek, which is before the desired text
 		// when sorted in reverse
 		if (!isSortedAscending()) {
@@ -321,7 +321,7 @@ public abstract class AutoLookup {
 
 				if (!foundPreviousMatch) {
 					// The given character is being added to the previous search.  If that search
-					// was fruitless, then so too will be this one, since we use a 
+					// was fruitless, then so too will be this one, since we use a
 					// 'starts with' match.
 					skip = true;
 					when = lastTime;  // don't save time if no match found; trigger a timeout

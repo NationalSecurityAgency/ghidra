@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,16 +28,16 @@ import ghidra.async.*;
 public interface AsyncLoopHandlerForSecond<R> extends AsyncHandlerCanExit<R> {
 	/**
 	 * Re-execute the producer action or complete the loop exceptionally
-	 * 
+	 *
 	 * For single-action loops, this re-executes the single action
-	 * 
+	 *
 	 * This method is suitable for passing by reference to
 	 * {@link CompletableFuture#handle(BiFunction)}. While it can be invoked directly, consider the
 	 * convenience method {@link #repeat()}.
-	 * 
+	 *
 	 * If the subordinate completes without exception, the loop is repeated. If it completes
 	 * exceptionally, then the whole loop completes exceptionally and terminates.
-	 * 
+	 *
 	 * @param v null placeholder for {@link Void}
 	 * @param exc the exception if completed exceptionally
 	 * @return null
@@ -46,18 +46,18 @@ public interface AsyncLoopHandlerForSecond<R> extends AsyncHandlerCanExit<R> {
 
 	/**
 	 * Re-execute the producer action or exit conditionally, or complete exceptionally
-	 * 
+	 *
 	 * For single-action loops, this re-executes the single action
-	 * 
+	 *
 	 * This method is suitable for passing by reference to
 	 * {@link CompletableFuture#handle(BiFunction)}. While it can be invoked directly, consider the
 	 * convenience method {@link #repeatWhile(boolean)}.
-	 * 
+	 *
 	 * If the subordinate completes without exception, its result value {@code b} is examined. If
 	 * equal to {@link Boolean.TRUE}, the loop is repeated; otherwise the loop exits, i.e.,
 	 * completes normally. If the subordinate completes exceptionally, then the whole loop completes
 	 * exceptionally and terminates.
-	 * 
+	 *
 	 * @param b the value of the predicate
 	 * @param exc the exception if completed exceptionally
 	 * @return null
@@ -68,7 +68,7 @@ public interface AsyncLoopHandlerForSecond<R> extends AsyncHandlerCanExit<R> {
 
 	/**
 	 * Do like {@link #repeat(Void, Throwable)}, but ignore the result of a subordinate task
-	 * 
+	 *
 	 * This method is suitable for passing by reference to
 	 * {@link CompletableFuture#handle(BiFunction)} for any type. There is no need to invoke this
 	 * method directly. If the subordinate asynchronous task produces a result, and that result does
@@ -80,7 +80,7 @@ public interface AsyncLoopHandlerForSecond<R> extends AsyncHandlerCanExit<R> {
 	 * {@link AsyncUtils#each(TypeSpec, Iterator, AsyncLoopFirstActionConsumesAndProduces, TypeSpec, AsyncLoopSecondActionConsumes)}.
 	 * If this is already a two-action loop, then consider nesting
 	 * {@link AsyncUtils#sequence(TypeSpec)} in a single-action loop.
-	 * 
+	 *
 	 * @param v any value, because it is ignored
 	 * @param exc the exception if completed exceptionally
 	 * @return null
@@ -98,7 +98,7 @@ public interface AsyncLoopHandlerForSecond<R> extends AsyncHandlerCanExit<R> {
 
 	/**
 	 * Re-execute the loop conditionally
-	 * 
+	 *
 	 * @param b the value of the predicate
 	 */
 	public default void repeatWhile(boolean b) {

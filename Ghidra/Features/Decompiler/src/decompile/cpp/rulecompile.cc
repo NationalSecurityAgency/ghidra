@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ int4 RuleLexer::identlist[256] = {
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
-  
+
 int4 RuleLexer::scanIdentifier(void)
 
 {
@@ -87,9 +87,9 @@ int4 RuleLexer::scanIdentifier(void)
     return otherIdentifiers();
   }
 }
-  
+
 int4 RuleLexer::scanNumber(void)
-  
+
 {
   istringstream s(identifier);
   s.unsetf(ios::dec | ios::hex | ios::oct);
@@ -113,7 +113,7 @@ int4 RuleLexer::buildString(int4 tokentype)
     ruleparselval.str = new string(identifier+1);
     return tokentype;
   }
-    
+
   if (identifier[0] == '#')
     identifier[0] = 'c';
   ruleparselval.str = new string(identifier);
@@ -784,7 +784,7 @@ void RuleCompile::run(istream &s,bool debug)
     if (error_stream != (ostream *)0)
       *error_stream << "Parsing error" << endl;
   }
-    
+
   if (errors!=0) {
     if (error_stream != (ostream *)0)
       *error_stream << "Parsing incomplete" << endl;
@@ -876,7 +876,7 @@ RuleGeneric *RuleGeneric::build(const string &nm,const string &gp,const string &
   compiler.run(s,false);
   if (compiler.numErrors() != 0)
     throw LowlevelError("Unable to parse dynamic rule: "+nm);
-  
+
   vector<OpCode> opcodelist;
   int4 opinit = compiler.postProcessRule(opcodelist);
   RuleGeneric *res = new RuleGeneric(gp,nm,opcodelist,opinit,compiler.releaseRule());
@@ -885,7 +885,7 @@ RuleGeneric *RuleGeneric::build(const string &nm,const string &gp,const string &
 
 #endif
 
-/* 
+/*
 
 Here is the original flex parser
 
@@ -1002,7 +1002,7 @@ SUBPIECE      { return OP_SUBPIECE; }
 \/            { return OP_INT_DIV; }
 \%            { return OP_INT_REM; }
 \~            { return OP_INT_NEGATE; }
-\<            { return OP_INT_LESS; }                 
+\<            { return OP_INT_LESS; }
 o[a-zA-Z0-9_]+  { return find_op_identifier(); }
 v[a-zA-Z0-9_]+  { return find_var_identifier(); }
 #[a-zA-Z0-9_]+  { return find_const_identifier(); }

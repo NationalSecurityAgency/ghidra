@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -232,11 +232,11 @@ public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 //		dialog = (NumberInputDialog)env.waitForWindow(NumberInputDialog.class, 1000);
 //		assertNotNull(dialog);
 //		okInput(dialog, 2);
-//			
+//
 //		dialog = (NumberInputDialog)env.waitForWindow(NumberInputDialog.class, 1000);
 //		assertNotNull(dialog);
 //		okInput(dialog, 1);
-//			
+//
 //		dialog.dispose();
 //		dialog = null;
 
@@ -270,12 +270,12 @@ public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 //		NumberInputDialog dialog;
 //		init(complexStructure, pgmTestCat);
 //		int num = model.getNumComponents();
-//		
+//
 //		DataType origDt = getDataType(6);
 //		assertEquals("simpleStructure *", origDt.getDisplayName());
 //		final DataType dt = programDTM.findDataType("/pointer");
 //		assertNotNull(dt);
-//		
+//
 //		insertAtPoint(dt,6,3);
 //		dialog = (NumberInputDialog)env.waitForWindow(NumberInputDialog.class, 1000);
 //		assertNotNull(dialog);
@@ -296,7 +296,7 @@ public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 
 //	public void testDragNDropInsertToContiguous() throws Exception {
 //		init(complexStructure, pgmTestCat);
-//		
+//
 //		DataType dt = programDTM.findDataType("/word");
 //		int num = model.getNumComponents();
 //		DataType dt3 = getDataType(3);
@@ -339,7 +339,7 @@ public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 
 //	public void testDragNDropInsertToNonContiguous() throws Exception {
 //		init(complexStructure, pgmTestCat);
-//		
+//
 //		DataType dt = programDTM.findDataType("/dword");
 //		int num = model.getNumComponents();
 //		int len = model.getLength();
@@ -509,10 +509,10 @@ public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 //	public void testCancelDragNDropAddPointer() throws Exception {
 //		PointerSizeDialog dialog;
 //		init(simpleStructure, pgmBbCat);
-//		
+//
 //		DataType dt = plugin.getBuiltInDataTypesManager().findDataType("/Pointer");
 //		assertNotNull(dt);
-//			
+//
 //		int num = model.getNumComponents();
 //		int len = model.getLength();
 //		assertEquals("", model.getStatus());

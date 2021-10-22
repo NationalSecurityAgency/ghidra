@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.StringUtilities;
 
 /**
- * <code>StoredAnalyzerTimes</code> provides a custom option container for 
+ * <code>StoredAnalyzerTimes</code> provides a custom option container for
  * accumulated analysis times for named tasks.
  */
 public class StoredAnalyzerTimes implements CustomOption {
@@ -40,7 +40,7 @@ public class StoredAnalyzerTimes implements CustomOption {
 		taskTimes.clear();
 		for (String taskName : saveState.getNames()) {
 			if (CustomOption.CUSTOM_OPTION_CLASS_NAME_KEY.equals(taskName)) {
-				continue; // skip this reserved key 
+				continue; // skip this reserved key
 			}
 			taskTimes.put(taskName, saveState.getLong(taskName, 0));
 		}

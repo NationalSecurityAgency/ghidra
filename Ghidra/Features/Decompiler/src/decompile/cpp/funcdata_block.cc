@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,7 +64,7 @@ void Funcdata::removeJumpTable(JumpTable *jt)
 {
   vector<JumpTable *> remain;
   vector<JumpTable *>::iterator iter;
-  
+
   for(iter=jumpvec.begin();iter!=jumpvec.end();++iter)
     if ((*iter) != jt)
       remain.push_back(*iter);
@@ -194,7 +194,7 @@ void Funcdata::branchRemoveInternal(BlockBasic *bb,int4 num)
   list<PcodeOp *>::iterator iter;
   PcodeOp *op;
   int4 blocknum;
-  
+
   if (bb->sizeOut() == 2)	// If there is no decision left
     opDestroy(bb->lastOp());	// Remove the branch instruction
 
@@ -521,7 +521,7 @@ int4 Funcdata::stageJumpTable(JumpTable *jt,PcodeOp *op,FlowInfo *flow)
 #endif
     glb->allacts.setCurrent(oldactname); // Restore old action
     if (partop->isDead())	// Indirectop we were trying to recover was eliminated as dead code (unreachable)
-      return 0;			// Return jumptable as 
+      return 0;			// Return jumptable as
     jt->setLoadCollect(flow->doesJumpRecord());
     jt->setIndirectOp(partop);
     if (jt->getStage()>0)

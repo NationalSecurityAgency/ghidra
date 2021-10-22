@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,20 +30,20 @@ import ghidra.util.exception.*;
 /**
  *
  * Database implementation for Module.
- *  
- * 
+ *
+ *
  */
 class ModuleDB extends DatabaseObject implements ProgramModule {
 
 	private DBRecord record;
 	private ModuleManager moduleMgr;
 	private GroupDBAdapter adapter;
-	private int childCount; // cache the count so we don't have to access 
+	private int childCount; // cache the count so we don't have to access
 							// database records
 	private Lock lock;
 
 	/**
-	 * 
+	 *
 	 * Constructor
 	 * @param moduleMgr module manager
 	 * @param cache ModuleDB cache
@@ -651,7 +651,7 @@ class ModuleDB extends DatabaseObject implements ProgramModule {
 		}
 	}
 
-	////////////////////////////////////////////////////////////	
+	////////////////////////////////////////////////////////////
 
 	DBRecord getRecord() {
 		return record;

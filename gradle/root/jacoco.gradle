@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ dependencies {
 def String jacocoRootExecPath = "$buildDir/jacoco/jacocoMerge.exec"
 
 delete new File(jacocoRootExecPath) // If the merged exec file (output from jacocoMerge) exists,
-                				    // jacocoReport & jacocoBranchReport tasks are skipped and 
+                				    // jacocoReport & jacocoBranchReport tasks are skipped and
 				                    // the report is not generated.
 				                    // So always delete the merged file before the determination
 				                    // to skip a task is made.
@@ -34,10 +34,10 @@ delete new File(jacocoRootExecPath) // If the merged exec file (output from jaco
   * Generate the Jacoco excludes list from file (this will strip out comments and
   * whitespace).
   *
-  * This uses 'gradle/support/jacoco.excludes.src.txt' to generate list of 
+  * This uses 'gradle/support/jacoco.excludes.src.txt' to generate list of
   * class exclusions for the 'jacocoReport' task.
-  * 
-  * Task to generate an aggregate jacoco report from subprojects with 
+  *
+  * Task to generate an aggregate jacoco report from subprojects with
   * Java sourceSets
   *********************************************************************************/
 def String[] generateExcludesList() {
@@ -45,7 +45,7 @@ def String[] generateExcludesList() {
 	File inputFile = new File(rootProject.projectDir, "gradle/support/jacoco.excludes.src.txt")
 
 	def lines = inputFile.readLines()
-					 .findAll({ line -> 
+					 .findAll({ line ->
 					 	!shouldIgnoreLine(line)
 					 })
 					 .collect()
@@ -57,15 +57,15 @@ def shouldIgnoreLine(line) {
 	if (line.startsWith('#')){
 		return true
 	}
-	
+
 	if (line.startsWith("//")) {
 		return true
 	}
-	
+
 	if (line.trim().isEmpty()) {
 		return true
 	}
-	
+
 	return false
 }
 
@@ -85,23 +85,23 @@ task jacocoMerge(type: JacocoMerge) {
 }
 
 /*********************************************************************************
- * Task to generate an aggregate jacoco report from subprojects with 
+ * Task to generate an aggregate jacoco report from subprojects with
  * Java sourceSets
  *********************************************************************************/
 task jacocoReport(type: JacocoReport, group: 'Coverage reports') {
    description = 'Generates an aggregate Jacoco report from all subprojects'
    dependsOn 'jacocoMerge'
    executionData new File(jacocoRootExecPath)
-   
+
    // Setting these source/class dirs MUST be done in the configuration phase (we used
    // to do it in a doFirst block but that was deprecated in later gradle builds). However,
    // we have to delay evaluation of the subprojects (using the '{ }' notation) to wait for
    // some project attributes (eg: 'sourceSets') to be made available.
-   additionalSourceDirs files({ subprojects.findAll { p -> p.plugins.hasPlugin('jacoco') }.sourceSets.main.java.srcDirs })  
+   additionalSourceDirs files({ subprojects.findAll { p -> p.plugins.hasPlugin('jacoco') }.sourceSets.main.java.srcDirs })
    additionalClassDirs files({ subprojects.findAll { p -> p.plugins.hasPlugin('jacoco') }.sourceSets.main.output }).asFileTree.matching {
       exclude excludesList
    }
-  
+
    reports {
       html {
          enabled true

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -307,7 +307,7 @@ public class RefTypeFactory {
 		boolean simpleFlow =
 			(instr.getFlowType() != RefType.INVALID && instr.getDefaultFlows().length <= 1);
 		if (simpleFlow) {
-			// only use default if simple flow 
+			// only use default if simple flow
 			flowType = getDefaultJumpOrCallFlowType(instr);
 		}
 
@@ -321,7 +321,7 @@ public class RefTypeFactory {
 		}
 
 		// Assumption - it is assumed that any complex flow type is due to the presence of
-		// multiple conditional flows.  Does not handle use of constant offsets since 
+		// multiple conditional flows.  Does not handle use of constant offsets since
 		// language should be using Address locations for all flow pcode!
 
 		// TODO: Verify that above assumption is valid !!
@@ -348,7 +348,7 @@ public class RefTypeFactory {
 	}
 
 	/**
-	 * Determine default computed FlowType for a specified instruction.  It is assumed 
+	 * Determine default computed FlowType for a specified instruction.  It is assumed
 	 * that all computed flows utilize a register in its destination specification/computation.
 	 * @param instr instruction
 	 * @return FlowType or null if unable to determine
@@ -361,7 +361,7 @@ public class RefTypeFactory {
 		}
 
 		// Assumption - it is assumed that any complex flow type is due to the presence of
-		// multiple conditional flows.  
+		// multiple conditional flows.
 
 		// TODO: Verify that above assumption is valid !!
 
@@ -390,7 +390,7 @@ public class RefTypeFactory {
 	 * Get the default memory flow/data RefType for the specified code unit and opIndex.
 	 * @param cu
 	 * @param opIndex
-	 * @param toAddr reference destination 
+	 * @param toAddr reference destination
 	 * @param ignoreExistingReferences if true existing references will not influence default
 	 * reference type returned.
 	 * @return default RefType

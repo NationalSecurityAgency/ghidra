@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -338,11 +338,11 @@ public interface AutoConfigState {
 
 		/**
 		 * Put an object into a {@link SaveState} using a known codec
-		 * 
+		 *
 		 * <p>
 		 * This seems like something that should be in SaveState itself, but the object value must
 		 * be one of the supported types.
-		 * 
+		 *
 		 * @param <T> the type of the value
 		 * @param state the state to write into
 		 * @param type the type of the value
@@ -359,10 +359,10 @@ public interface AutoConfigState {
 
 		/**
 		 * Get an object from a {@link SaveState} using a known codec
-		 * 
+		 *
 		 * <p>
 		 * This seems like something that should be in SaveState itself.
-		 * 
+		 *
 		 * @param <T> the type of the value
 		 * @param state the state to read from
 		 * @param type the expected type of the value
@@ -471,12 +471,12 @@ public interface AutoConfigState {
 
 	/**
 	 * Wire up a handler for the given class, using the given lookup
-	 * 
+	 *
 	 * <p>
 	 * This does not consider super classes, since the writeConfigState of a class using this and
 	 * the applicable annotations should likely call super.writeConfigState to allow the super class
 	 * to handle its fields, whether or not it also uses the annotations.
-	 * 
+	 *
 	 * @param <T> the type of the class whose fields are annotated by {@link AutoConfigStateField}
 	 * @param cls the class whose fields are annotated
 	 * @param lookup a lookup from within the class, granting access to the annotated fields

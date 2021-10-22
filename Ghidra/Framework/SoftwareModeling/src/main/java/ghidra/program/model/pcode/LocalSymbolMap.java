@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -274,7 +274,7 @@ public class LocalSymbolMap {
 
 	/**
 	 * Parse a local symbol scope in XML from the &lt;localdb&gt; tag.
-	 * 
+	 *
 	 * @param parser is the XML parser
 	 * @throws PcodeXMLException for problems parsing individual tags
 	 */
@@ -359,7 +359,7 @@ public class LocalSymbolMap {
 	/**
 	 * Get all the symbols mapped for this program, Param, Locals.
 	 * The HighSymbol can either be a HighParam, or HighLocal
-	 * 
+	 *
 	 * @return an iterator over all mapped symbols.
 	 */
 	public Iterator<HighSymbol> getSymbols() {

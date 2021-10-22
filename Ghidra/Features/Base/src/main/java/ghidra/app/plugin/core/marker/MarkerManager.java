@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -423,7 +423,7 @@ public class MarkerManager implements MarkerService {
 	/**
 	 * Call to signal that the markers for a given program have changed in some way, such as being
 	 * removed, changing colors or the active state being changed
-	 * 
+	 *
 	 * @param p the program associated with the markers
 	 */
 	void markersChanged(Program p) {
@@ -666,7 +666,7 @@ public class MarkerManager implements MarkerService {
 			navigationPanel.repaint();
 		}
 
-		/** 
+		/**
 		 * Creates a list of elements that are in the same logical group and removes those
 		 * elements from the given list.
 		 */
@@ -872,7 +872,7 @@ public class MarkerManager implements MarkerService {
 	}
 
 	/**
-	 * A LRU map that maintains <i>insertion-order</i> iteration over the elements.  As new items 
+	 * A LRU map that maintains <i>insertion-order</i> iteration over the elements.  As new items
 	 * are added, the older items will be removed from this map the given plugin.
 	 */
 	static class AddressColorCache extends FixedSizeHashMap<Address, Color> {

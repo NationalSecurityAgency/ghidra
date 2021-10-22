@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -130,8 +130,8 @@ public interface RepositoryHandle {
 	 * @param fileID unique file ID
 	 * @param bufferSize buffer file buffer size
 	 * @param contentType application content type
-	 * @param projectPath path of user's project 
-	 * @return initial buffer file open for writing 
+	 * @param projectPath path of user's project
+	 * @return initial buffer file open for writing
 	 * @throws UserAccessException if user does not have adequate permission within the repository.
 	 * @throws DuplicateFileException item path already exists within repository
 	 * @throws IOException if an IO error occurs
@@ -219,8 +219,8 @@ public interface RepositoryHandle {
 	 * Perform a checkout on the specified item.
 	 * @param parentPath parent folder path
 	 * @param itemName name of item
-	 * @param checkoutType checkout type.  If exclusive or transient, checkout is only successful 
-	 * if no other checkouts exist.  No new checkouts of item will be permitted while an 
+	 * @param checkoutType checkout type.  If exclusive or transient, checkout is only successful
+	 * if no other checkouts exist.  No new checkouts of item will be permitted while an
 	 * exclusive/transient checkout is active.
 	 * @param projectPath path of user's project
 	 * @return checkout data
@@ -278,7 +278,7 @@ public interface RepositoryHandle {
 	/**
 	 * Returns the length of this domain file.  This size is the minimum disk space
 	 * used for storing this file, but does not account for additional storage space
-	 * used to tracks changes, etc. 
+	 * used to tracks changes, etc.
 	 * @param parentPath parent folder path
 	 * @param itemName name of item
 	 * @return file length

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 
 	/**
 	 * Construct a new event, parsing the tail for information
-	 * 
+	 *
 	 * @param tail the text following the event type in the GDB/MI event record
 	 * @throws GdbParseError if the tail cannot be parsed
 	 */
@@ -45,7 +45,7 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 
 	/**
 	 * Assume inferior groups are specified, and get those groups' IDs
-	 * 
+	 *
 	 * @return the list of inferior thread-group IDs
 	 */
 	public List<GdbInferiorThreadGroup> assumeInferiorGroups() {
@@ -69,7 +69,7 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 
 	/**
 	 * Assume process groups are specified, and get those processes' descriptions
-	 * 
+	 *
 	 * @return the list of (available) process thread-groups
 	 */
 	public List<GdbProcessThreadGroup> assumeProcessGroups() {
@@ -95,7 +95,7 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 
 	/**
 	 * Assume threads are specified, and get those threads' IDs
-	 * 
+	 *
 	 * @return the list of thread IDs
 	 */
 	public List<Integer> assumeThreadIds() {
@@ -115,7 +115,7 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 
 	/**
 	 * Assume a value is specified, and get it as a string
-	 * 
+	 *
 	 * @return the value
 	 */
 	public String assumeValue() {
@@ -124,7 +124,7 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 
 	/**
 	 * Check if a value is specified, and get it as a string
-	 * 
+	 *
 	 * @return the value, or null if not specified
 	 */
 	public String maybeValue() {
@@ -136,7 +136,7 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 
 	/**
 	 * Assume an "OSDataTable" is specified, and get that table
-	 * 
+	 *
 	 * @return the parsed, but not processed, table
 	 */
 	public GdbMiFieldList assumeOSDataTable() {
@@ -145,7 +145,7 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 
 	/**
 	 * Assume a register name list is specified, and get that list
-	 * 
+	 *
 	 * @return the parsed, but not processed, list
 	 */
 	public List<String> assumeRegisterNameList() {
@@ -154,7 +154,7 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 
 	/**
 	 * Assume a register value list is specified, and get that list
-	 * 
+	 *
 	 * @return the parsed, but not processed, list
 	 */
 	public List<GdbMiFieldList> assumeRegisterValueList() {
@@ -163,7 +163,7 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 
 	/**
 	 * Assume a memory contents list is specified, and get that list
-	 * 
+	 *
 	 * @return the parsed, but not processed, list
 	 */
 	public List<GdbMiFieldList> assumeMemoryContentsList() {
@@ -172,7 +172,7 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 
 	/**
 	 * Assume a thread info list is specified, and get that list
-	 * 
+	 *
 	 * @return the parsed, but not processed, list
 	 */
 	public List<GdbMiFieldList> assumeThreadInfoList() {
@@ -181,7 +181,7 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 
 	/**
 	 * Assume a breakpoint table is specified, and get that table
-	 * 
+	 *
 	 * @return the parsed, but not processed, table
 	 */
 	public GdbMiFieldList assumeBreakpointTable() {
@@ -190,7 +190,7 @@ public class GdbCommandDoneEvent extends AbstractGdbCompletedCommandEvent {
 
 	/**
 	 * Assume a stack is specified, and get that stack
-	 * 
+	 *
 	 * @return the parsed, but not processed, stack
 	 */
 	public GdbMiFieldList assumeStack() {

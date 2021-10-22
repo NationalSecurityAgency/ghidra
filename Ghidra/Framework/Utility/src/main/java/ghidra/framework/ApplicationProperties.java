@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,14 +39,14 @@ public class ApplicationProperties extends Properties {
 
 	/**
 	 * The application version.  For example, "7.4.2".
-	 * 
+	 *
 	 * @see ApplicationVersion
 	 */
 	public static final String APPLICATION_VERSION_PROPERTY = "application.version";
 
 	/**
 	 * The application's layout version.  The layout version should get incremented any time
-	 * something changes about the application that could affect external tools that need to 
+	 * something changes about the application that could affect external tools that need to
 	 * navigate the application in some way (such as the Eclipse GhidraDev plugin).
 	 * For example, "1".
 	 */
@@ -98,7 +98,7 @@ public class ApplicationProperties extends Properties {
 	public static final String RELEASE_MARKING_PROPERTY = "application.release.marking";
 
 	/**
-	 * Property prefix for dynamically generated version control revision number properties. 
+	 * Property prefix for dynamically generated version control revision number properties.
 	 */
 	public static final String REVISION_PROPERTY_PREFIX = "application.revision.";
 
@@ -106,9 +106,9 @@ public class ApplicationProperties extends Properties {
 	public static final String RELEASE_SOURCE_PROPERTY = "application.release.source";
 
 	/**
-	 * Attempts to create an instance of this class by looking for the a properties file 
-	 * with the give name in the current working directory.  
-	 * 
+	 * Attempts to create an instance of this class by looking for the a properties file
+	 * with the give name in the current working directory.
+	 *
 	 * @param filename the name of the properties file to load
 	 * @return the new instance of this class created from the properties file on disk
 	 * @throws IOException if there is no properties file found in the expected location
@@ -138,7 +138,7 @@ public class ApplicationProperties extends Properties {
 	/**
 	 * Creates a new application properties with the given name. Additional properties
 	 * may be set with {@link #setProperty}.
-	 * 
+	 *
 	 * @param name The application's name.
 	 */
 	public ApplicationProperties(String name) {
@@ -148,7 +148,7 @@ public class ApplicationProperties extends Properties {
 	/**
 	 * Creates a new application properties with the given name and version. Additional properties
 	 * may be set with {@link #setProperty}.
-	 * 
+	 *
 	 * @param name The application's name.
 	 * @param version The application's version.
 	 * @param releaseName The application's release name.
@@ -167,7 +167,7 @@ public class ApplicationProperties extends Properties {
 
 	/**
 	 * Creates a new application properties from the given application properties file.
-	 * 
+	 *
 	 * @param appPropertiesFile The application properties file.
 	 * @throws IOException If there was a problem loading/reading a discovered properties file.
 	 */
@@ -188,7 +188,7 @@ public class ApplicationProperties extends Properties {
 	 * in the given application root directories.  If multiple application properties files
 	 * are found, the properties from the files will be combined.  If duplicate keys exist,
 	 * the newest key encountered will overwrite the existing key.
-	 * 
+	 *
 	 * @param applicationRootDirs The application root directories to look for the properties files in.
 	 * @throws IOException If there was a problem loading/reading a discovered properties file.
 	 */
@@ -211,7 +211,7 @@ public class ApplicationProperties extends Properties {
 	/**
 	 * Gets the given application property.  Note that if the specified property is defined
 	 * as a system property, the system property will be given precedence and returned.
-	 * 
+	 *
 	 * @param propertyName The property name to get.
 	 * @return The property.
 	 */
@@ -226,7 +226,7 @@ public class ApplicationProperties extends Properties {
 
 	/**
 	 * Gets the application's name.
-	 * 
+	 *
 	 * @return The application's name (empty string if undefined).
 	 */
 	public String getApplicationName() {
@@ -239,7 +239,7 @@ public class ApplicationProperties extends Properties {
 
 	/**
 	 * Gets the application's version.
-	 * 
+	 *
 	 * @return The application's version (empty string if undefined).
 	 */
 	public String getApplicationVersion() {
@@ -252,7 +252,7 @@ public class ApplicationProperties extends Properties {
 
 	/**
 	 * Gets the application's release name.
-	 * 
+	 *
 	 * @return The application's release name (empty string if undefined).
 	 */
 	public String getApplicationReleaseName() {
@@ -265,7 +265,7 @@ public class ApplicationProperties extends Properties {
 
 	/**
 	 * Gets the application's build date.
-	 * 
+	 *
 	 * @return The application's build date.
 	 */
 	public String getApplicationBuildDate() {

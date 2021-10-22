@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 
 	/**
 	 * Wrap a command for execution
-	 * 
+	 *
 	 * @param cmd the command
 	 */
 	public GdbPendingCommand(GdbCommand<? extends T> cmd) {
@@ -47,7 +47,7 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 
 	/**
 	 * Get the command being executed
-	 * 
+	 *
 	 * @return
 	 */
 	public GdbCommand<? extends T> getCommand() {
@@ -78,10 +78,10 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 
 	/**
 	 * Handle an event
-	 * 
+	 *
 	 * <p>
 	 * This gives the command implementation the first chance to claim or steal an event
-	 * 
+	 *
 	 * @param evt the event
 	 * @return true if the command is ready to be completed
 	 */
@@ -91,9 +91,9 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 
 	/**
 	 * Claim an event
-	 * 
+	 *
 	 * This stores the event for later retrieval and processing.
-	 * 
+	 *
 	 * @param evt the event
 	 */
 	public void claim(GdbEvent<?> evt) {
@@ -103,9 +103,9 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 
 	/**
 	 * Steal an event
-	 * 
+	 *
 	 * This stores the event for later retrieval and processing.
-	 * 
+	 *
 	 * @param evt the event
 	 */
 	public void steal(GdbEvent<?> evt) {
@@ -115,7 +115,7 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 
 	/**
 	 * Assume a single event was claimed/stolen, and get that event as the given type
-	 * 
+	 *
 	 * @param cls the type of the event
 	 * @return the event cast to the type
 	 * @throws IllegalStateException if more than one event was claimed/stolen
@@ -130,7 +130,7 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 
 	/**
 	 * Get the first claimed/stolen event of a given type
-	 * 
+	 *
 	 * @param <E> the type of the event
 	 * @param cls the class of the event
 	 * @return the event cast to the type, or null
@@ -146,7 +146,7 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 
 	/**
 	 * Find the first claimed/stolen event of a given type
-	 * 
+	 *
 	 * @param <E> the type of the event
 	 * @param cls the class of the event
 	 * @return the event cast to the type
@@ -162,7 +162,7 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 
 	/**
 	 * Check if any event of a given type has been claimed
-	 * 
+	 *
 	 * @param cls the class of the event
 	 * @return true if at least one is claimed, false otherwise
 	 */
@@ -172,7 +172,7 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 
 	/**
 	 * Find all events claimed/stolen of a given type
-	 * 
+	 *
 	 * @param cls the type of the events
 	 * @return the list of events cast to the type
 	 */
@@ -188,7 +188,7 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 
 	/**
 	 * Assume exactly one event of the given type was claimed/stolen, and get that event
-	 * 
+	 *
 	 * @param cls the type of the event
 	 * @return the event cast to the type
 	 * @throws IllegalStateException if more than one event matches
@@ -204,10 +204,10 @@ public class GdbPendingCommand<T> extends CompletableFuture<T> implements GdbCau
 
 	/**
 	 * Check that the command completed with one of the given results
-	 * 
+	 *
 	 * {@link GdbCommandErrorEvent} need not be listed. This method will handle it as a special case
 	 * already. To avoid the special treatment, list it explicitly.
-	 * 
+	 *
 	 * @param classes the completion type to accept
 	 * @return the completion event, cast to the greatest common subclass
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 
 	// @formatter:off
 
-	// this xml is the same as what is loaded in Ghidra by default, 
+	// this xml is the same as what is loaded in Ghidra by default,
 	// located in Base/data/functionTags.xml
 	private String FUNCTION_TAGS_DEFAULT = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 									+	"<tags>\n"
@@ -45,7 +45,7 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 									+	"<tag> <name>UNPACKER</name> <comment/> </tag>\n"
 									+	"</tags>\n";
 
-	private String FUNCTION_TAGS_EMPTY_TAGS = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" 
+	private String FUNCTION_TAGS_EMPTY_TAGS = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 											+ "<tags>\n" + "</tags>";
 
 	private String FUNCTION_TAGS_HAS_BLANK_NAME_VALUE = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -54,7 +54,7 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 			+	"<tag> <name>CONSTRUCTOR</name> </tag>\n"
 			+	"<tag> <name>CRYPTO</name> </tag>\n"
 			// a name tag has a blank value
-			+	"<tag> <name>  </name> " 
+			+	"<tag> <name>  </name> "
 			+	"<comment>IM A COMMENT</comment> </tag>\n"
 
 			+	"<tag> <name>IO</name> <comment/> </tag>\n"
@@ -69,7 +69,7 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 											+	"<tag> <name>CONSTRUCTOR</name> </tag>\n"
 											+	"<tag> <name>CRYPTO</name> </tag>\n"
 											// a name tag has a comment value as well
-											+	"<tag> <name>DESTRUCTOR</name> " 
+											+	"<tag> <name>DESTRUCTOR</name> "
 											+	"<comment>IM A COMMENT</comment> </tag>\n"
 
 											+	"<tag> <name>IO</name> <comment/> </tag>\n"
@@ -77,7 +77,7 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 											+	"<tag> <name>NETWORK</name> <comment/> </tag>\n"
 											+	"<tag> <name>UNPACKER</name> <comment/> </tag>\n"
 											+	"</tags>\n";
-	
+
 	private String FUNCTION_TAGS_HAS_NO_NAME_VALUE = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 			+	"<tags>\n"
 			+	"<tag> <name>COMPRESSION</name> </tag>\n"
@@ -94,7 +94,7 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 	private String FUNCTION_TAGS_MALFORMED_XML = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 											+	"<tags>\n"
 											// end "tag" in start position
-											+	"</tag> <name>COMPRESSION</name> </tag>\n" 
+											+	"</tag> <name>COMPRESSION</name> </tag>\n"
 											+	"</tags>\n";
 
 	private String FUNCTION_TAGS_NO_COMMENT_TAG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -114,7 +114,7 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testLoadTags_EmptyFile() throws Exception {
-		// Create file without contents 
+		// Create file without contents
 		File xxeFile = createTempFileForTest();
 
 		try {
@@ -169,7 +169,7 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	/**
-	 * Test parsing xml that is the same as what is loaded in Ghidra by default, 
+	 * Test parsing xml that is the same as what is loaded in Ghidra by default,
 	 * located in Base/data/functionTags.xml
 	 * @throws IOException
 	 */
@@ -257,9 +257,9 @@ public class FunctionTagLoaderTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	/**
-	 * Test parsing xml with a comment tag but without a name tag. Skip creation of FunctionTag 
+	 * Test parsing xml with a comment tag but without a name tag. Skip creation of FunctionTag
 	 * (don't want one without a name).
-	 *   
+	 *
 	 * @throws IOException
 	 */
 	public void testLoadTags_XmlNoNameTag() throws Exception {

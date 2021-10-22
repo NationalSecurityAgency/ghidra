@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ public class GLabel extends JLabel implements GComponent {
 	}
 
 	/**
-	 * Creates a immutable label with the specified text and horizontal alignment, 
+	 * Creates a immutable label with the specified text and horizontal alignment,
 	 * with HTML rendering disabled.
 	 * <p>
 	 * See {@link JLabel#JLabel(String, int)}.
@@ -88,7 +88,7 @@ public class GLabel extends JLabel implements GComponent {
 	}
 
 	/**
-	 * Creates a immutable label with the specified text, image and horizontal alignment, 
+	 * Creates a immutable label with the specified text, image and horizontal alignment,
 	 * with HTML rendering disabled.
 	 * <p>
 	 * See {@link JLabel#JLabel(String, Icon, int)}.
@@ -101,7 +101,7 @@ public class GLabel extends JLabel implements GComponent {
 	 *           {@link SwingConstants#CENTER},
 	 *           {@link SwingConstants#RIGHT},
 	 *           {@link SwingConstants#LEADING},
-	 *           {@link SwingConstants#TRAILING} 
+	 *           {@link SwingConstants#TRAILING}
 	 */
 	public GLabel(String text, Icon icon, int horizontalAlignment) {
 		super(text, icon, horizontalAlignment);
@@ -109,14 +109,14 @@ public class GLabel extends JLabel implements GComponent {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param image icon to display
-	 * @param horizontalAlignment see 
+	 * @param horizontalAlignment see
 	 *           {@link SwingConstants#LEFT},
 	 *           {@link SwingConstants#CENTER},
 	 *           {@link SwingConstants#RIGHT},
 	 *           {@link SwingConstants#LEADING},
-	 *           {@link SwingConstants#TRAILING} 
+	 *           {@link SwingConstants#TRAILING}
 	 */
 	protected GLabel(Icon image, int horizontalAlignment) {
 		super(image, horizontalAlignment);
@@ -143,7 +143,7 @@ public class GLabel extends JLabel implements GComponent {
 	 * If there are calls to setText() after the initial value has been set by the ctor, a
 	 * warning will be printed in the log.
 	 * <p>
-	 * @param text string this label will display 
+	 * @param text string this label will display
 	 */
 	@Deprecated
 	@Override

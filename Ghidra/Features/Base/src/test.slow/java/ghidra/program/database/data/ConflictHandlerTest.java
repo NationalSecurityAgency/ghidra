@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,8 @@ import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 
 /**
  * Tests for the {@link DataTypeConflictHandler conflict handler} stuff.
- *  
- * 
+ *
+ *
  */
 public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	private ProgramDB program;
@@ -228,8 +228,8 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
-	 * conflict handler to ensure that adding a conflicting typedef to a conflicting stub structure 
-	 * (when there is already a typedef to a populated structure) correctly uses the 
+	 * conflict handler to ensure that adding a conflicting typedef to a conflicting stub structure
+	 * (when there is already a typedef to a populated structure) correctly uses the
 	 * existing populated structure and existing typedef to the populated structure.
 	 */
 	@Test
@@ -284,7 +284,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
-	 * conflict handler when adding a conflicting typedef impl that is referred to multiple 
+	 * conflict handler when adding a conflicting typedef impl that is referred to multiple
 	 * times during a single addDataType() call.
 	 * <p>
 	 * Success is if the fields of struct2 are all the same datatype, probably named typedef1.conflict.
@@ -329,7 +329,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
-	 * conflict handler  when adding a conflicting typedef impl (but equiv) that is referred to multiple 
+	 * conflict handler  when adding a conflicting typedef impl (but equiv) that is referred to multiple
 	 * times during a single addDataType() call.
 	 * <p>
 	 * Success is if the fields of struct2 are all the original typedef1 type.
@@ -370,7 +370,7 @@ public class ConflictHandlerTest extends AbstractGhidraHeadedIntegrationTest {
 	/**
 	 * Tests the {@link DataTypeConflictHandler#REPLACE_EMPTY_STRUCTS_OR_RENAME_AND_ADD_HANDLER RESORAAH}
 	 * conflict handler when adding a typedef to a populated when there is already a typedef
-	 * to a stub structure.  
+	 * to a stub structure.
 	 */
 	@Test
 	public void testAddTypedefToPopulatedStructReplaceTypedefToStubStructure() {

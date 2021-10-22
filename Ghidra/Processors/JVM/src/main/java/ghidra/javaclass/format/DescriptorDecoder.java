@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,8 @@ import ghidra.javaclass.format.constantpool.*;
 import ghidra.program.model.data.*;
 
 /**
- * 
- * This is a utility class containing methods to parse information of out of method 
+ *
+ * This is a utility class containing methods to parse information of out of method
  * and field descriptors.
  *
  */
@@ -122,7 +122,7 @@ public class DescriptorDecoder {
 			String descriptor) {
 		//all references to objects start with "L"
 		//all references to arrays start with "["
-		//all other descriptors are just one letter. 
+		//all other descriptors are just one letter.
 		switch (descriptor.charAt(0)) {
 			case BASE_TYPE_BYTE:  //signed byte
 			case BASE_TYPE_CHAR:  //char
@@ -283,7 +283,7 @@ public class DescriptorDecoder {
 	public static DataType getDataTypeOfDescriptor(String descriptor, DataTypeManager dtManager) {
 		//all references to objects start with "L"
 		//all references to arrays start with "["
-		//all other descriptors are just one letter. 
+		//all other descriptors are just one letter.
 		if (descriptor.startsWith("[")) {
 			return getPointerType(descriptor, dtManager);
 		}
@@ -300,7 +300,7 @@ public class DescriptorDecoder {
 				return BooleanDataType.dataType;
 			case BASE_TYPE_FLOAT:
 				return FloatDataType.dataType;
-			case BASE_TYPE_REFERENCE:  //object reference		
+			case BASE_TYPE_REFERENCE:  //object reference
 				return getReferenceTypeOfDescriptor(descriptor, dtManager, true);
 			case BASE_TYPE_DOUBLE:
 				return DoubleDataType.dataType;
@@ -359,7 +359,7 @@ public class DescriptorDecoder {
 	}
 
 	/**
-	 * Returns a list of JavaComputationalCategory objects corresponding to the 
+	 * Returns a list of JavaComputationalCategory objects corresponding to the
 	 * parameters of a method (read in left-to-right order).
 	 * @param methodDescriptor
 	 * @return
@@ -528,7 +528,7 @@ public class DescriptorDecoder {
 	 * {@code baseType} into dtm
 	 * @param fullyQualifiedName String representation of type
 	 * @param dtm data type manager
-	 * @param baseType base type 
+	 * @param baseType base type
 	 * @return data type represented by input string
 	 */
 	public static DataType resolveClassForString(String fullyQualifiedName, DataTypeManager dtm,

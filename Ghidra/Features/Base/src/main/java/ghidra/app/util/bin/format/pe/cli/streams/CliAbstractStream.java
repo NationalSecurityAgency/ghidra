@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,12 +34,12 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A abstract CLI stream type for convenience.  Streams that we support should subclass 
- * this class and override the {@link #parse}, {@link #markup}, and {@link #toDataType} 
- * methods appropriately.  
+ * A abstract CLI stream type for convenience.  Streams that we support should subclass
+ * this class and override the {@link #parse}, {@link #markup}, and {@link #toDataType}
+ * methods appropriately.
  * <p>
- * When streams are laid down in memory they are referred to as heaps, but we'll just stick 
- * with calling them streams because using both terms can get confusing. 
+ * When streams are laid down in memory they are referred to as heaps, but we'll just stick
+ * with calling them streams because using both terms can get confusing.
  */
 public abstract class CliAbstractStream implements StructConverter, PeMarkupable {
 
@@ -53,9 +53,9 @@ public abstract class CliAbstractStream implements StructConverter, PeMarkupable
 	/**
 	 * Creates a new generic CLI stream type.  This is intended to be called by a subclass
 	 * stream during its creation.
-	 *  
+	 *
 	 * @param header The stream header associated with this stream.
-	 * @param offset The reader offset where this stream starts. 
+	 * @param offset The reader offset where this stream starts.
 	 * @param rva The relative virtual address where this stream starts.
 	 * @param reader A reader that is used to read the stream.
 	 * @throws IOException if there is a problem reading the stream.
@@ -70,7 +70,7 @@ public abstract class CliAbstractStream implements StructConverter, PeMarkupable
 
 	/**
 	 * Parses this stream.
-	 * 
+	 *
 	 * @return True if parsing completed successfully; otherwise, false.
 	 * @throws IOException If there was an IO problem while parsing.
 	 */
@@ -85,7 +85,7 @@ public abstract class CliAbstractStream implements StructConverter, PeMarkupable
 	 *   <li>Add symbol</li>
 	 *   <li>Create data type</li>
 	 * </ul>
-	 * Subclass should first call this and then provide any custom markup they need. 
+	 * Subclass should first call this and then provide any custom markup they need.
 	 */
 	@Override
 	public void markup(Program program, boolean isBinary, TaskMonitor monitor, MessageLog log,
@@ -117,7 +117,7 @@ public abstract class CliAbstractStream implements StructConverter, PeMarkupable
 
 	/**
 	 * Gets this stream's header.
-	 * 
+	 *
 	 * @return This stream's header.
 	 */
 	public CliStreamHeader getStreamHeader() {
@@ -126,8 +126,8 @@ public abstract class CliAbstractStream implements StructConverter, PeMarkupable
 
 	/**
 	 * Gets the markup address of an offset in a given stream.
-	 * 
-	 * @param program 
+	 *
+	 * @param program
 	 * @param isBinary
 	 * @param monitor
 	 * @param log

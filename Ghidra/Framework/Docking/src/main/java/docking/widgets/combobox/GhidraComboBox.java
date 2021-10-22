@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,23 +30,23 @@ import docking.widgets.GComponent;
 
 /**
  * GhidraComboBox adds the following features:
- * 
+ *
  * 1) ActionListeners are only invoked when the &lt;Enter&gt; key
- * is pressed within the text-field of the combo-box. 
+ * is pressed within the text-field of the combo-box.
  * In normal JComboBox case, the ActionListeners are notified
  * when an item is selected from the list.
- * 
+ *
  * 2) Adds the auto-completion feature. As a user
  * types in the field, the combo box suggest the nearest matching
  * entry in the combo box model.
- * 
+ *
  * It also fixes the following bug:
- * 
- * A normal JComboBox has a problem (feature?) 
+ *
+ * A normal JComboBox has a problem (feature?)
  * that if you have a dialog with a button
- * and JComboBox and you edit the comboText field and 
+ * and JComboBox and you edit the comboText field and
  * then hit the button, the button sometimes does not work.
- * 
+ *
  * When the combobox loses focus,
  * and its text has changed, it generates an actionPerformed event as
  * though the user pressed &lt;Enter&gt; in the combo text field.  This
@@ -160,11 +160,11 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	 * The problem is that the forwarding does not happen always.  In the case that the &lt;Enter&gt;
 	 * key will trigger a selection in the combo box, the action is NOT forwarded.
 	 * <p>
-	 * By default Ghidra disables the forwarding altogether, since most users of 
+	 * By default Ghidra disables the forwarding altogether, since most users of
 	 * {@link GhidraComboBox} will add an action listener to handle &lt;Enter&gt; actions.
 	 * <p>
 	 * To re-enable the default behavior, set the <code>forwardEnter</code> value to true.
-	 *  
+	 *
 	 * @param forwardEnter true to enable default &lt;Enter&gt; key handling.
 	 */
 	public void setEnterKeyForwarding(boolean forwardEnter) {
@@ -198,7 +198,7 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	 * editor used</b>.  By default the editor for combo boxes is a text field.  This method is
 	 * a convenience for the user to set the number of columns on that text field, which updates
 	 * the preferred size of the combo box.
-	 * 
+	 *
 	 * @param columnCount The number of columns for the text field editor
 	 * @see JTextField#setColumns(int)
 	 */
@@ -214,11 +214,11 @@ public class GhidraComboBox<E> extends JComboBox<E> implements GComponent {
 	 * -The user selects an item
 	 * -The user deletes the text
 	 * -setSelectedItem(Object) method is called with the same item
-	 * 
+	 *
 	 * In that above series of steps, the text will still be empty, as the user deleted it *and*
 	 * the call to setSelectedItem(Object) had no effect because the base class assumed that the
-	 * item is already selected. 
-	 * 
+	 * item is already selected.
+	 *
 	 * This method exists to make sure, in that case, that the text of the field matches the
 	 * selected item.
 	 */

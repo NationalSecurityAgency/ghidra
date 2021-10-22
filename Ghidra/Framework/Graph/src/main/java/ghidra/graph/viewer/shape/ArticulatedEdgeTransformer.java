@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class ArticulatedEdgeTransformer<V extends VisualVertex, E extends Visual
 
 	/**
 	 * Get the shape for this edge
-	 * 
+	 *
 	 * @param e the edge
 	 * @return the edge shape
 	 */
@@ -100,10 +100,10 @@ public class ArticulatedEdgeTransformer<V extends VisualVertex, E extends Visual
 		//
 		// TODO
 		// The current design and use of this transformer is a bit odd.   We currently have code
-		// to create the edge shape here and in the ArticulatedEdgeRenderer.  Ideally, this 
+		// to create the edge shape here and in the ArticulatedEdgeRenderer.  Ideally, this
 		// class would be the only one that creates the edge shape.  Then, any clients of the
-		// edge transformer would have to take the shape and then transform it to the desired 
-		// space (the view or graph space).  The transformations could be done using the 
+		// edge transformer would have to take the shape and then transform it to the desired
+		// space (the view or graph space).  The transformations could be done using the
 		// GraphViewerUtils.
 		//
 
@@ -124,25 +124,25 @@ public class ArticulatedEdgeTransformer<V extends VisualVertex, E extends Visual
 	private void logMissingLocation(E e, V v) {
 
 		//
-		// This can happen when an edge has a vertex that is 'equal' to a vertex that is 
+		// This can happen when an edge has a vertex that is 'equal' to a vertex that is
 		// in the graph, but is not the same instance.  The can also happen when a new or
 		// copied layout does not initialize its vertices with locations.  This can happen
 		// when:
 		// 	-two nodes share the same name
 		//  -a node is added a second time to the graph
 		//
-		// An example of duplicate nodes being added is when a client creates a new 
+		// An example of duplicate nodes being added is when a client creates a new
 		// edge with a new start and end vertex, which are equal, but not the same, as vertices
 		// already in the graph.  **Instead of creating those vertices from scratch, they should
-		// be retrieved from the graph when creating the edge.  Further, if you are creating a 
-		// new vertex to be added to the graph, be sure to only create one representation of 
+		// be retrieved from the graph when creating the edge.  Further, if you are creating a
+		// new vertex to be added to the graph, be sure to only create one representation of
 		// that vertex that will be shared amongst any edges that are to be added to the graph.
-		// 
-		// The reason this happens is that the newly 'equals' vertices live in the edge, but 
-		// they have not had their 'setLocation' called--the graph contains a vertex that 
+		//
+		// The reason this happens is that the newly 'equals' vertices live in the edge, but
+		// they have not had their 'setLocation' called--the graph contains a vertex that
 		// is 'equals' that has had its 'setLocation' called.  When this transformer grabs the
 		// vertex from the edge, its location was never set.
-		// 
+		//
 		boolean isStart = e.getStart() == v;
 		String type = isStart ? "start" : "end";
 		Msg.debug(this,

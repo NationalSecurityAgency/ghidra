@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.nio.file.Path;
 import help.validator.LinkDatabase;
 
 /**
- * A representation of the {@literal <tocdef>} tag, which is a way to define a TOC item entry in 
+ * A representation of the {@literal <tocdef>} tag, which is a way to define a TOC item entry in
  * a TOC_Source.xml file.
  */
 public class TOCItemDefinition extends TOCItem {
@@ -49,9 +49,9 @@ public class TOCItemDefinition extends TOCItem {
 
 		return super.generateTOCItemTag(linkDatabase, isInlineTag, indentLevel);
 
-// This code allows us to comment out definitions with unresolved paths.  We are not using it 
-// now because the build will fail if there are unresolved links and *they are not excluded*        
-/*        
+// This code allows us to comment out definitions with unresolved paths.  We are not using it
+// now because the build will fail if there are unresolved links and *they are not excluded*
+/*
 if ( getTargetAttribute() == null ) {
     return super.generateTOCItemTag( linkDatabase, isInlineTag, indentLevel );
 }

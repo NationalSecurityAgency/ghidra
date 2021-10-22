@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -445,8 +445,8 @@ public class BookmarkPlugin extends ProgramPlugin
 
 	/**
 	 * Called when a new bookmark is to be added; called from the add bookmark dialog
-	 * 
-	 * @param addr bookmark address.  If null a Note bookmark will set at the 
+	 *
+	 * @param addr bookmark address.  If null a Note bookmark will set at the
 	 * 		  start address of each range in the current selection
 	 * @param category bookmark category
 	 * @param comment comment text
@@ -518,11 +518,11 @@ public class BookmarkPlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Returns a list of actions to delete bookmarks that are in the code unit surrounding the 
+	 * Returns a list of actions to delete bookmarks that are in the code unit surrounding the
 	 * given address.  The list of actions will not exceed <tt>maxActionsCount</tt>
 	 * @param  primaryAddress The address required to find the containing code unit.
 	 * @param  maxActionsCount The maximum number of actions to include in the returned list.
-	 * @return a list of actions to delete bookmarks that are in the code unit surrounding the 
+	 * @return a list of actions to delete bookmarks that are in the code unit surrounding the
 	 *         given address.
 	 */
 	private List<DockingActionIf> getActionsForCodeUnit(Address primaryAddress,
@@ -543,13 +543,13 @@ public class BookmarkPlugin extends ProgramPlugin
 	}
 
 	/**
-	 * Returns a list of actions to delete bookmarks that are in the code unit surrounding the 
+	 * Returns a list of actions to delete bookmarks that are in the code unit surrounding the
 	 * given address <b>for the given <i>type</i> of bookmark</b>.
 	 * @param primaryAddress The address required to find the containing code unit.
 	 * @param type The bookmark type to retrieve.
-	 * @param navigator The BookmarkNavigator used to determine whether there are bookmarks 
+	 * @param navigator The BookmarkNavigator used to determine whether there are bookmarks
 	 *        inside the code unit containing the given <tt>primaryAddress</tt>.
-	 * @return a list of actions to delete bookmarks that are in the code unit surrounding the 
+	 * @return a list of actions to delete bookmarks that are in the code unit surrounding the
 	 *         given address <b>for the given <i>type</i> of bookmark</b>.
 	 */
 	private List<DockingActionIf> getActionsForCodeUnitAndType(Address primaryAddress, String type,
@@ -570,7 +570,7 @@ public class BookmarkPlugin extends ProgramPlugin
 
 		for (int i = 1; i < cu.getLength(); i++) {
 			Address nextCodeUnitAddress = start.add(i);
-			if (!nextCodeUnitAddress.equals(primaryAddress)) { // skip the original location                    
+			if (!nextCodeUnitAddress.equals(primaryAddress)) { // skip the original location
 				Bookmark[] otherBookmarks = bookmarkMgr.getBookmarks(nextCodeUnitAddress, type);
 				if (otherBookmarks.length > 0) {
 					DockingAction action = new DeleteBookmarkAction(this, otherBookmarks[0], true);
@@ -587,7 +587,7 @@ public class BookmarkPlugin extends ProgramPlugin
 	 * <tt>actionList</tt> is less than the given {@link #MAX_DELETE_ACTIONS}.
 	 * @param actionList The list to add to
 	 * @param newActionList The list containing items to add
-	 * @param maxActionCount the maximum number of items that the actionList can contain 
+	 * @param maxActionCount the maximum number of items that the actionList can contain
 	 */
 	private void addActionsToList(List<DockingActionIf> actionList,
 			List<DockingActionIf> newActionList, int maxActionCount) {
@@ -665,10 +665,10 @@ public class BookmarkPlugin extends ProgramPlugin
 				}
 			}
 			catch (Throwable t) {
-				// This is squashed due to the nature of this primitive thread.  This thread 
-				// may still be running while the program it is working on is changed or 
+				// This is squashed due to the nature of this primitive thread.  This thread
+				// may still be running while the program it is working on is changed or
 				// closed.  Since this thread is transient and is just a helper thread to update
-				// bookmarks, the decision was made to just squash generated exceptions. 
+				// bookmarks, the decision was made to just squash generated exceptions.
 
 				// Try a bit to uncover real problems: a disposed updated manager or a different
 				// program would signal that this thread has been obsoleted.

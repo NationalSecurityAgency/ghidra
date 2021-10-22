@@ -22,11 +22,11 @@
    You should have received a copy of the GNU General Public License
    along with GCC; see the file COPYING.  If not, write to the Free
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
-   02110-1301, USA.  
+   02110-1301, USA.
 
 	   					CHANGE NOTICE:
 		This file was changed on July 22nd, 2020.
-   
+
 */
 
 #include <stdlib.h>
@@ -133,8 +133,8 @@ If no names are provided on the command line, stdin is read.\n");
 	/* Changed Jan 22, 2020
   if (REPORT_BUGS_TO[0] && status == 0)
     fprintf (stream, _("Report bugs to %s.\n"), REPORT_BUGS_TO);
-    */ 
-   
+    */
+
   exit (status);
 }
 
@@ -234,7 +234,7 @@ main (int argc, char **argv)
       /* Folks should explicitly indicate the appropriate alphabet for
 	 each demangling.  Providing a default would allow the
 	 question to go unconsidered.  */
-	    fprintf (stderr, "Internal error: no symbol alphabet for current style\n");	// Changed Jan 22, 2020	
+	    fprintf (stderr, "Internal error: no symbol alphabet for current style\n");	// Changed Jan 22, 2020
   		exit (1);                                       							// Changed Jan 22, 2020
   	  }
     }

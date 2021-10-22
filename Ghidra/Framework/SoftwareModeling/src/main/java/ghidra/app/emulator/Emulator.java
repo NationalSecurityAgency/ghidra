@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -430,8 +430,8 @@ public class Emulator {
 
 	/**
 	 * Returns the current context register value.  The context value returned reflects
-	 * its state when the previously executed instruction was 
-	 * parsed/executed.  The context value returned will feed into the next 
+	 * its state when the previously executed instruction was
+	 * parsed/executed.  The context value returned will feed into the next
 	 * instruction to be parsed with its non-flowing bits cleared and
 	 * any future context state merged in.
 	 * @return context as a RegisterValue object
@@ -447,7 +447,7 @@ public class Emulator {
 	 * will be cleared prior to parsing on instruction.  In addition,
 	 * any future context state set by the pcode emitter will
 	 * take precedence over context set using this method.  This method
-	 * is primarily intended to be used to establish the initial 
+	 * is primarily intended to be used to establish the initial
 	 * context state.
 	 * @param regValue is the value to set context to
 	 */

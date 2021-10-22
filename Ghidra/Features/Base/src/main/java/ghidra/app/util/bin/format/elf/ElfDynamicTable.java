@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,13 +25,13 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.NotFoundException;
 
 /**
- * If an object file participates in dynamic linking, its program header table 
- * will have an element of type PT_DYNAMIC. This "segment" contains the ".dynamic" section. 
- * A special symbol, _DYNAMIC, labels the section, which contains an array of the 
+ * If an object file participates in dynamic linking, its program header table
+ * will have an element of type PT_DYNAMIC. This "segment" contains the ".dynamic" section.
+ * A special symbol, _DYNAMIC, labels the section, which contains an array of the
  * Elf32_Dyn or Elf64_Dyn structures.
  * <p>
- * All address entries contained within this table should adjusted for pre-linking 
- * using {@link ElfHeader#adjustAddressForPrelink(long)}.  If a pre-link adjustment is not applicable, 
+ * All address entries contained within this table should adjusted for pre-linking
+ * using {@link ElfHeader#adjustAddressForPrelink(long)}.  If a pre-link adjustment is not applicable,
  * this adjustment will have no affect.
  */
 public class ElfDynamicTable implements ElfFileSection {

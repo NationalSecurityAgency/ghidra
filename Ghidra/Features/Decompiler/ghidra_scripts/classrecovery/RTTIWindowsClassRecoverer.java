@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -154,7 +154,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			assignClassInheritanceAndHierarchies(recoveredClasses);
 
 			// Since PDB has applied so much information, use it to figure out the class member data 4
-			// items (if it has them) and the constructors and destructors. 
+			// items (if it has them) and the constructors and destructors.
 			if (isPDBLoaded) {
 				monitor.setMessage(
 					"Attempting to use pdb to assign class hierarchies and extend known pdb data " +
@@ -183,7 +183,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			assignParentClassToVftables(recoveredClasses);
 
 			// using all the information found above, create the class structures, add the constructor,
-			// destructor, vfunctions to class which finds the appropriate class structure and assigns 
+			// destructor, vfunctions to class which finds the appropriate class structure and assigns
 			// to "this" param
 			//println("Creating class data types and applying class structures...");
 			monitor.setMessage("Creating class data types and applying class structures");
@@ -261,7 +261,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	/**
-	 * Method to find all the vftables in the program 
+	 * Method to find all the vftables in the program
 	 * @return list of all vftable symbols
 	 * @throws CancelledException when cancelled
 	 */
@@ -314,7 +314,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	/**
 	 * Method to iterate over all symbols with Base Class Descriptor symbol and if
-	 * the correct data type has not already been created, do so. 
+	 * the correct data type has not already been created, do so.
 	 * @return List of all symbols with valid (even previously) BaseClassDescriptor structure applied
 	 * @throws CancelledException when cancelled
 	 * @throws Exception when data cannot be created
@@ -382,7 +382,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	/**
 	 * Method to iterate over all symbols with Base Class Descriptor symbol and if
-	 * the correct data type has not already been created, do so. 
+	 * the correct data type has not already been created, do so.
 	 * @return List of all symbols with valid (even previously) BaseClassDescriptor structure applied
 	 * @throws Exception when cancelled
 	 */
@@ -446,13 +446,13 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	/**
-	 * Method to apply missing RTTI Base Class Descriptor structures and symbols  
+	 * Method to apply missing RTTI Base Class Descriptor structures and symbols
 	 * @param address address to apply the missing structure and symbol
 	 * @param numBaseClasses number of base classes in the array pointing to BaseClassDescriptors
 	 * @param classNamespace name of the class
 	 * @throws AddressOutOfBoundsException if try clear listing at address out of bounds
 	 * @throws MemoryAccessException  if cannot access memory
-	 * @throws CancelledException if cancelled 
+	 * @throws CancelledException if cancelled
 	 * @throws Exception if issue making data
 	 */
 	private void createBaseClassDescriptors(Address address, int numBaseClasses,
@@ -492,7 +492,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param baseClassDescriptors the given list of BaseClassDescriptor symbols
 	 * @param completeObjectLocators the given list of CompleteObjectLocator symbols
 	 * @return list of ClassHierarchyDescriptor addresses
@@ -539,7 +539,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param address the address where the ClassHierarchyDescriptor is to be created
 	 * @param classNamespace the namespace of the class
 	 * @return the given class's ClassHierarchyDescriptor address
@@ -582,7 +582,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	/**
-	 * Method to create a ClassHierarchyDescriptor structure at the given address 
+	 * Method to create a ClassHierarchyDescriptor structure at the given address
 	 * @param classHierarchyDescriptorAddress the address where the structure will be created
 	 * @return the created ClassHierarchyDescriptor data or null if it couldn't be created
 	 * @throws CancelledException if cancelled
@@ -607,7 +607,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param classHierarchyDescriptors the given list of applied ClassHierarchyDescriptor structures
 	 * @return a list of base class array addresses
 	 * @throws CancelledException if cancelled
@@ -668,7 +668,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	/**
 	 * Method to create a base class array at the given address with the given number of base class's in the array
 	 * @param baseClassArrayAddress the address where the array will be created
-	 * @param numBaseClasses the number of BaseClass's in the array 
+	 * @param numBaseClasses the number of BaseClass's in the array
 	 * @return the created BaseClassArray data or null if cannot retrieve it
 	 * @throws CancelledException if cancelled
 	 * @throws Exception if error creating data
@@ -861,7 +861,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	/**
 	 * Method to fix up the current program so that script will be more successful by finding
-	 * missing vftable referencing functions and missing RTTI data structures. 
+	 * missing vftable referencing functions and missing RTTI data structures.
 	 * manually create some of them
 	 * @throws CancelledException when cancelled
 	 * @throws Exception when data cannot be created
@@ -890,7 +890,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	 * 5. add mapping from vftableAddress to class
 	 * 6. add list of const/dest functions to RecoveredClass object
 	 * 7. update list of all const/dest functions in currenetProgram
-	 * 8. set RecoveredClass indeterminate list to const/dest list 
+	 * 8. set RecoveredClass indeterminate list to const/dest list
 	 * 9. update list of all indeterminate const/dest
 	 * @param vftableSymbols List of vftable symbols
 	 * @return List of RecoveredClass objects created corresponding to the vftable symbols
@@ -926,7 +926,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			List<Symbol> vftableSymbolsInNamespace =
 				getVftablesInNamespace(vftableSymbols, classNamespace);
 
-			//if there are no vftables in this class then create a new class object and make it 
+			//if there are no vftables in this class then create a new class object and make it
 			// non-vftable class
 			if (vftableSymbolsInNamespace.size() == 0) {
 				String className = classNamespace.getName();
@@ -950,7 +950,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				}
 			}
 			// if there are vftables in the class, call the method to make
-			// a new class object using the vftable info 
+			// a new class object using the vftable info
 			else {
 				List<RecoveredClass> classesWithVftablesInNamespace =
 					recoverClassesFromVftables(vftableSymbolsInNamespace, false, false);
@@ -1041,7 +1041,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	/**
-	 * Method to figure out the class hierarchies either with RTTI if it is present or with vftable 
+	 * Method to figure out the class hierarchies either with RTTI if it is present or with vftable
 	 * references
 	 * @param recoveredClasses List of classes to process
 	 * @throws CancelledException if cancelled
@@ -1051,7 +1051,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private void assignClassInheritanceAndHierarchies(List<RecoveredClass> recoveredClasses)
 			throws CancelledException, MemoryAccessException, AddressOutOfBoundsException {
 
-		// Use RTTI information to determine inheritance type and 
+		// Use RTTI information to determine inheritance type and
 		// class hierarchy
 		Iterator<RecoveredClass> recoveredClassesIterator = recoveredClasses.iterator();
 		while (recoveredClassesIterator.hasNext()) {
@@ -1115,7 +1115,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		}
 
-		// Now that all hierarchy lists are collected iterate again and process the multi-inherited 
+		// Now that all hierarchy lists are collected iterate again and process the multi-inherited
 		// ones using the single hierarchy lists to help determine direct parents
 		recoveredClassIterator = recoveredClasses.iterator();
 		while (recoveredClassIterator.hasNext()) {
@@ -1209,7 +1209,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					return classHierarchy;
 				}
 
-				// if the namespace isn't in the map then it is a class 
+				// if the namespace isn't in the map then it is a class
 				// without a vftable and a new RecoveredClass object needs to be created
 				if (getClass(pointedToNamespace) == null) {
 					createNewClass(pointedToNamespace, false);
@@ -1268,7 +1268,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	/**
 	 * Method to set the class inheritance type based on Class Hierarchy Descriptor inheritance
-	 * attribute flag: 
+	 * attribute flag:
 	 * bit 0: 0 = single inheritance/ 1 = multiple inheritance
 	 * bit 1: 0 = non-virtual inheritance / 1 = virtual inheritance
 	 * bit 2: 0 = non-ambiguous case / 1 = ambiguous (ie multiple inheritance with repeated base classes)
@@ -1277,7 +1277,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	 */
 	private void setClassInheritanceType(RecoveredClass recoveredClass, int inheritanceType) {
 
-		// TODO: add multi-repeated base inh flag? 
+		// TODO: add multi-repeated base inh flag?
 
 		if ((inheritanceType & CHD_MULTINH) == 0) {
 			recoveredClass.setHasSingleInheritance(true);
@@ -1331,7 +1331,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		separateInlinedConstructorDestructors(recoveredClasses);
 
 		// figure out which member functions are constructors and which are destructors
-		// using the order their parents are called		
+		// using the order their parents are called
 		processRegularConstructorsAndDestructorsUsingCallOrder(recoveredClasses);
 
 		// determine which of the inlines are constructors and which are destructors
@@ -1341,22 +1341,22 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		findInlineConstructorsAndDestructorsUsingRelatedClassFunctions(recoveredClasses);
 
-		// use the load/store information from decompiler to figure out as many of the 
+		// use the load/store information from decompiler to figure out as many of the
 		// ones that could not be determined in earlier stages
 		processRemainingIndeterminateConstructorsAndDestructors(recoveredClasses);
 
-		// use the known constructors and known vfunctions to figure out 
+		// use the known constructors and known vfunctions to figure out
 		// clone functions
 		findCloneFunctions(recoveredClasses);
 
 		// This has to be here. It needs all the info from the previously run methods to do this.
-		// Finds the constructors that have multiple basic blocks, reference the vftable not in the 
+		// Finds the constructors that have multiple basic blocks, reference the vftable not in the
 		// first block, and call non-parent constructors and non operator new before the vftable ref
 		findMoreInlinedConstructors(recoveredClasses);
 
 		findDestructorsWithNoParamsOrReturn(recoveredClasses);
 
-		// use vftables with references to all the same function (except possibly one deleting 
+		// use vftables with references to all the same function (except possibly one deleting
 		// destructor)to find the purecall function
 		identifyPureVirtualFunction(recoveredClasses);
 
@@ -1382,7 +1382,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			boolean hasVirtualAncestor = false;
 			int vbaseOffset = NONE;
 
-			// iterate over base class array and for each parent class of the given recovered class 
+			// iterate over base class array and for each parent class of the given recovered class
 			// get the mdisp, pdisp, vdisp info
 			List<Symbol> baseClassArray = extraUtils.getListOfSymbolsByNameInNamespace(
 				RTTI_BASE_CLASS_ARRAY_LABEL, recoveredClass.getClassNamespace(), false);
@@ -1431,7 +1431,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				}
 				RecoveredClass baseClass = getClass(namespace);
 
-				// update parent map based on pdisp (-1 means not virtual base, otherwise it is a 
+				// update parent map based on pdisp (-1 means not virtual base, otherwise it is a
 				// virtual base
 				// set the has vbtable if any of them are a virtual base
 				// update the vbstruct if any of them are a virtual base
@@ -1473,7 +1473,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					recoveredClass.addParentToBaseTypeMapping(baseClass, true);
 				}
 
-				// after the loop check if vbstruct/flag and if so figure out the vbaseTable address 
+				// after the loop check if vbstruct/flag and if so figure out the vbaseTable address
 				if (hasVirtualAncestor) {
 					if (vbaseOffset != UNKNOWN) {
 						Address vbtableAddress = getVbaseTableAddress(recoveredClass, vbaseOffset);
@@ -1491,7 +1491,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	/**
 	 * Method to retrieve the address of the vbtable given the vbtableOffset from the baseClassDescriptor
-	 * and the address referenced by the target address in the storedPcodeOp at the vbtableOffset 
+	 * and the address referenced by the target address in the storedPcodeOp at the vbtableOffset
 	 * @param recoveredClass the given class
 	 * @param vbtableOffset the offset of the vbtable in the given class
 	 * @return the address in the current program's memory of the given class's vbtable
@@ -1582,7 +1582,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		List<HighVariable> highVariables = new ArrayList<HighVariable>();
 
-		// if there are params add the first or the "this" param to the list to be checked first 
+		// if there are params add the first or the "this" param to the list to be checked first
 		// It is the most likely to store the vftablePtr
 
 		int numParams = highFunction.getFunctionPrototype().getNumParams();
@@ -1668,12 +1668,12 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			List<RecoveredClass> ancestorsWithoutVfunctions =
 				getAncestorsWithoutVfunctions(recoveredClass);
 
-			// case where more than one parent with virtual functions and class has multiple 
+			// case where more than one parent with virtual functions and class has multiple
 			// virtual inheritance, ie the diamond case, need to remove parents with common
 			// ancestors from parent list and replace with the common ancestor
 			if (recoveredClass.hasMultipleVirtualInheritance()) {
 				// need to find common ancestor inherited in the diamond shape and replace
-				// the parents that use it with the ancestor. The resulting list should 
+				// the parents that use it with the ancestor. The resulting list should
 				// equal the number of vftables
 				ancestorsAllowedToMap = replaceParentsWithCommonAncestor(recoveredClass);
 				ancestorsAllowedToMap.removeAll(ancestorsWithoutVfunctions);
@@ -1692,9 +1692,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				RecoveredClass singleParent = parents.get(0);
 				List<RecoveredClass> grandParents =
 					getParentsWithVirtualFunctions(singleParent);
-				// check that they both have vftables 
+				// check that they both have vftables
 				// get their order from the class hierarchy list
-				// first see if it has a parent order map and just make it the same one 
+				// first see if it has a parent order map and just make it the same one
 
 				if (grandParents.size() == recoveredClass.getVftableAddresses().size()) {
 					// get the sorted order of vftables
@@ -1729,7 +1729,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 				// case 1: class's direct parent is virtually inherited and has vtable
 				// first Vftable is mapped to null parent because it is used in class struct by current class
-				// second is mapped to first virtual ancestor with vftable  
+				// second is mapped to first virtual ancestor with vftable
 
 				// case 2: class's direct parent is non-virt with vtable, it has ancestor that is virtual with vftable
 				// use the mapping function to map correct parent to correct vftable
@@ -1759,7 +1759,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					// map the non-virtual parent to the first vftable
 					recoveredClass.addVftableToBaseClassMapping(
 						recoveredClass.getVftableAddresses().get(0), parentClass);
-					// map the first virtual ancestor to the second vftable 
+					// map the first virtual ancestor to the second vftable
 					recoveredClass.addVftableToBaseClassMapping(
 						recoveredClass.getVftableAddresses().get(1), virtualAncestorWithVfunctions);
 					continue;
@@ -1768,18 +1768,18 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			}
 
-			// the rest should work for both single and regular multiple inheritance 			
+			// the rest should work for both single and regular multiple inheritance
 			ancestorsAllowedToMap = parentsWithVirtualFunctions;
 
-			// when only one direct parent with virtual functions, map the vftable to that parent 
+			// when only one direct parent with virtual functions, map the vftable to that parent
 			if (ancestorsAllowedToMap.size() == 1 && vftableAddresses.size() == 1) {
 				recoveredClass.addVftableToBaseClassMapping(
 					recoveredClass.getVftableAddresses().get(0), ancestorsAllowedToMap.get(0));
 				continue;
 			}
 
-			// All other cases where the number of vftables should equal the number of 
-			// parents (virtual or otherwise) 
+			// All other cases where the number of vftables should equal the number of
+			// parents (virtual or otherwise)
 			mapVftablesToParents(recoveredClass, ancestorsAllowedToMap);
 
 		}
@@ -1854,7 +1854,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	/**
-	 * Using their address order in constructor/destructor functions, map the given class's vftables to their 
+	 * Using their address order in constructor/destructor functions, map the given class's vftables to their
 	 * respective parent (or in some cases, ancestor) classes
 	 * @param recoveredClass the given class
 	 * @param ancestorsAllowedToMap List of parent/ancestors allowed to map to vftables (ie, in multi-virt case, the parents won't get mapped but a common ancestor will)
@@ -2020,7 +2020,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			}
 
 			// the size of the resulting ref to parent map should equal the number of vftables in the class
-			// if not, continue to iterate over more functions 
+			// if not, continue to iterate over more functions
 			// if so, return the map
 			if (parentOrderMap.size() == numVftables) {
 				return parentOrderMap;
@@ -2053,7 +2053,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		List<RecoveredClass> updatedParentClasses = new ArrayList<RecoveredClass>(parentClasses);
 
-		// now iterate over the direct parents and map that parent to each ancestor on the ancestor with vfunction list 
+		// now iterate over the direct parents and map that parent to each ancestor on the ancestor with vfunction list
 		Iterator<RecoveredClass> parentIterator = parentClasses.iterator();
 		while (parentIterator.hasNext()) {
 			monitor.checkCanceled();
@@ -2256,7 +2256,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		// This is done after the class structure is created and added to the dtmanager
-		// because if done before the class structures are created 
+		// because if done before the class structures are created
 		// then empty classes will get auto-created in the wrong place
 		// when the vfunctions are put in the class
 
@@ -2359,7 +2359,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				continue;
 			}
 
-			// process the non-virtually inherited ones 
+			// process the non-virtually inherited ones
 			if (pdisp == -1) {
 
 				baseClassOffset = mdisp;
@@ -2369,9 +2369,9 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 					continue;
 				}
 
-				// if it is a direct parent and the structure exists add it to the structure in the mdisp offset					
+				// if it is a direct parent and the structure exists add it to the structure in the mdisp offset
 				// if class has virtual inheritance then copy individual members from the non-virtual parent struct
-				// into the struct 	
+				// into the struct
 				if (recoveredClass.hasSingleInheritance() &&
 					recoveredClass.getVftableAddresses().size() > 1 &&
 					recoveredClass.inheritsVirtualAncestor()) {
@@ -2409,8 +2409,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			}
 			else {
-				// else need to fill in the virtually inherited ones 
-				// get the offset of this base class in the class using the vbtable				
+				// else need to fill in the virtually inherited ones
+				// get the offset of this base class in the class using the vbtable
 				Address vbtableAddress = recoveredClass.getVbtableAddress();
 				if (vbtableAddress == null) {
 					continue;
@@ -2502,7 +2502,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	/**
 	 * Method to retrieve the given class's base class array data type from the RTTI data
 	 * @param recoveredClass the given class
-	 * @return the base class array data type or null 
+	 * @return the base class array data type or null
 	 * @throws CancelledException when cancelled
 	 */
 	private Data getBaseClassArray(RecoveredClass recoveredClass) throws CancelledException {

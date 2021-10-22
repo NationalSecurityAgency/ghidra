@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -347,7 +347,7 @@ void PrintLanguage::emitOp(const ReversePolish &entry)
     break;
   case OpToken::postsurround:
     if (entry.visited==0) return;
-    if (entry.visited==1) {	// Front surround token 
+    if (entry.visited==1) {	// Front surround token
       emit->spaces(entry.tok->spacing,entry.tok->bump);
       entry.id2 = emit->openParen(entry.tok->print[0]);
       emit->spaces(0,entry.tok->bump);
@@ -358,7 +358,7 @@ void PrintLanguage::emitOp(const ReversePolish &entry)
     break;
   case OpToken::presurround:
     if (entry.visited==2) return;
-    if (entry.visited==0) {	// Front surround token 
+    if (entry.visited==0) {	// Front surround token
       entry.id2 = emit->openParen(entry.tok->print[0]);
     }
     else {			// Back surround token
@@ -759,7 +759,7 @@ int4 PrintLanguage::mostNaturalBase(uintb val)
       tmp >>= 4;
     }
   }
-  
+
   return (countdec > counthex) ? 10 : 16;
 }
 

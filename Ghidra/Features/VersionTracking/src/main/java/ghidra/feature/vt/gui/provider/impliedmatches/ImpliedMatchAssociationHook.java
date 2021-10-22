@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,7 +84,7 @@ public class ImpliedMatchAssociationHook implements AssociationHook, VTControlle
 	/**
 	 * When a match is accepted either create associated implied matches or if a match already
 	 * exists, increase the vote count
-	 * @param impliedMatches The implied matches set to either create or increase vote count 
+	 * @param impliedMatches The implied matches set to either create or increase vote count
 	 */
 	private void processAssociationAccepted(Set<VTImpliedMatchInfo> impliedMatches) {
 		for (VTImpliedMatchInfo impliedMatch : impliedMatches) {
@@ -182,7 +182,7 @@ public class ImpliedMatchAssociationHook implements AssociationHook, VTControlle
 
 	@Override
 	public void sessionUpdated(DomainObjectChangedEvent ev) {
-		// don't care		
+		// don't care
 	}
 
 }

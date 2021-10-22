@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,15 +28,15 @@ import java.util.Random;
  * Provides for the creation and management of a named lock file. Keep in mind
  * that if a lock expires it may be removed without notice.  Care should be
  * taken to renew a lock file in a timely manner.
- * 
- * 
+ *
+ *
  */
 public class LockFile {
 
 	/**
-	 * The maximum lock lease period in seconds.  To retain a 
-	 * lock longer than this period of time, the renewLock() method must be 
-	 * invoked before the lock expires.  This is the amount of time a user will have to 
+	 * The maximum lock lease period in seconds.  To retain a
+	 * lock longer than this period of time, the renewLock() method must be
+	 * invoked before the lock expires.  This is the amount of time a user will have to
 	 * wait for a stuck lock to be removed.
 	 */
 	private static final int DEFAULT_MAX_LOCK_LEASE_PERIOD_MS = 15000; // 15 seconds
@@ -204,7 +204,7 @@ public class LockFile {
 
 	/**
 	 * Determine if lock is still in place.
-	 * Verifying the lock may be necessary when slow processes are holding 
+	 * Verifying the lock may be necessary when slow processes are holding
 	 * the lock without timely renewals.
 	 * @return true if lock is still in place, otherwise false.
 	 */
@@ -356,7 +356,7 @@ public class LockFile {
 	 * If another lock file already exists, wait for it to expire
 	 * within the specified timeout period.  Method will block
 	 * until either the lock is obtained or the timeout period lapses.
-	 * @param timeout maximum time in milliseconds to wait for lock.  
+	 * @param timeout maximum time in milliseconds to wait for lock.
 	 * @param hold if true the lock will be held and maintained until
 	 * removed, otherwise it is only guaranteed for MAX_LOCK_LEASE_PERIOD seconds.
 	 * @return true if lock creation was successful.
@@ -374,7 +374,7 @@ public class LockFile {
 				return true;
 			}
 
-			// Check if we can get lock immediately	
+			// Check if we can get lock immediately
 			try {
 				if (createLockFileNoWait(true)) {
 					if (waitTask != null) {
@@ -395,14 +395,14 @@ public class LockFile {
 
 			Msg.trace(this, "wait for lock...: " + getLockID());
 
-			// Start lock wait/cleanup task	
+			// Start lock wait/cleanup task
 			startWaitTimer(timeout != 0);
 
 			if (timeout == 0)
 				return false;
 		}
 
-		// Wait for waitTask 
+		// Wait for waitTask
 		if (waitTask != null && timeout > 0) {
 			synchronized (waitTask) {
 				try {
@@ -479,8 +479,8 @@ public class LockFile {
 	/**
 	 * Start the wait task if it is not already running.
 	 * Set the create flag within the wait task.
-	 * @param create an attempt to create a lock file will be done if true, 
-	 * otherwise only attempt to remove stale lock file. 
+	 * @param create an attempt to create a lock file will be done if true,
+	 * otherwise only attempt to remove stale lock file.
 	 */
 	private void startWaitTimer(boolean create) {
 		synchronized (waitLock) {
@@ -586,7 +586,7 @@ public class LockFile {
 						": " + getLockID());
 
 					// Delay after forceful removal to avoid race condition!
-					// If we create a new lock file immediately, another wait task 
+					// If we create a new lock file immediately, another wait task
 					// could remove it due to the delay between checking the lastModified
 					// time and actually removing the file.
 					try {
@@ -668,7 +668,7 @@ public class LockFile {
 	 * Cleanup lock resources and tasks.
 	 * Invoking this method could prevent stale locks from being removed
 	 * if createLock was invoked with a very short timeout.
-	 * Use of dispose is optional - the associated wait task should 
+	 * Use of dispose is optional - the associated wait task should
 	 * stop by it self allowing the LockFile object to be finalized.
 	 */
 	public synchronized void dispose() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,10 +27,10 @@ import generic.random.SecureRandomFactory;
 /**
  * <code>SSHSignatureCallback</code> provides a Callback implementation used
  * to perform SSH authentication.  This callback is instantiated
- * by the server with a random token which must be signed using the 
+ * by the server with a random token which must be signed using the
  * user's SSH private key.
  * <p>
- * It is the responsibility of the callback handler to invoke the 
+ * It is the responsibility of the callback handler to invoke the
  * sign method and return this object in response
  * to the callback.
  */
@@ -43,7 +43,7 @@ public class SSHSignatureCallback implements Callback, Serializable {
 	private byte[] signature;
 
 	/**
-	 * Construct callback with a random token to be signed by the client. 
+	 * Construct callback with a random token to be signed by the client.
 	 * @param token random bytes to be signed
 	 */
 	public SSHSignatureCallback(byte[] token, byte[] serverSignature) {

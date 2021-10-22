@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import ghidra.program.model.listing.*;
 
 /**
  * <CODE>MultiCodeUnitIterator</CODE> is a class for iterating through multiple
- * code unit iterators simultaneously. The next() method returns an array 
+ * code unit iterators simultaneously. The next() method returns an array
  * of code units, since a code unit can be obtained from neither, either, or
  * both of the original code unit iterators.
  */
@@ -77,10 +77,10 @@ public class MultiCodeUnitIterator {
 		return false;
 	}
 
-	/** Returns the next code unit(s). The next code unit could be from any one 
+	/** Returns the next code unit(s). The next code unit could be from any one
 	 * or more of the iterators. The array returns a code unit for each listing
 	 * that has a code unit with a minimum address at the next iterator address.
-	 * The code units in the array match up to the listings in the array passed 
+	 * The code units in the array match up to the listings in the array passed
 	 * to this classes constructor. The code unit will be null in the array if
 	 * no code unit started at the next code unit address for that listing.
 	 * @return an array with the next code unit(s).
@@ -132,7 +132,7 @@ public class MultiCodeUnitIterator {
 		return nextCU;
 	}
 
-	/** Determines whether the first code unit's minimum address is less 
+	/** Determines whether the first code unit's minimum address is less
 	 *  than, equal to, or greater than the second's.
 	 * @param cu1 the first code unit.
 	 * @param cu2 the second code unit.

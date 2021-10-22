@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ package ghidra.app.plugin.match;
 import ghidra.program.model.address.Address;
 
 /**
- * Cheap container for match info. 
+ * Cheap container for match info.
  */
 public class SubroutineMatch {
 
@@ -32,14 +32,14 @@ public class SubroutineMatch {
 	private Address[] progBAddrs;
 	private String reason;
 	/**
-	 * 
+	 *
 	 */
 	public SubroutineMatch(String reason) {
 		progAAddrs = new Address[0];
 		progBAddrs = new Address[0];
 		this.reason = reason;
 	}
-	
+
 	public boolean add( Address addr, boolean isA )
 	{
 		Address[] newOne;
@@ -55,11 +55,11 @@ public class SubroutineMatch {
 			for( int i=0; i<progBAddrs.length; i++)
 				newOne[i] = progBAddrs[i];
 			newOne[progBAddrs.length] = addr;
-			progBAddrs = newOne;			
-		}	
+			progBAddrs = newOne;
+		}
 		return true;
 	}
-	
+
 	public boolean remove( Address addr, boolean isA )
 	{
 		if( addr == null ) return false;
@@ -100,28 +100,28 @@ public class SubroutineMatch {
 		}
 		return false;
 	}
-	
-	
+
+
 	public String getReason()
 	{
 		return reason;
 	}
-	
-	public Address[] getAAddresses(){ 
+
+	public Address[] getAAddresses(){
 		return this.progAAddrs;
 	}
-	
-	public Address[] getBAddresses(){ 
+
+	public Address[] getBAddresses(){
 		return this.progBAddrs;
 	}
-	
+
 	private boolean isOneToOne()
 	{
 		if(progAAddrs.length == 1 && progBAddrs.length == 1)
 			return true;
 		return false;
 	}
-	
+
 	@Override
     public String toString(){
 		String str = reason + " ";

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,7 +74,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 	/**
 	 * Construct a new manager for merging trees
 	 * @param mergeManager the program merge manager
-	 * @param resultProgram latest version of the Program that is the 
+	 * @param resultProgram latest version of the Program that is the
 	 * destination for changes applied from the source program
 	 * @param myProgram source of changes to apply to the destination
 	 * program
@@ -345,7 +345,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 	/**
 	 * Called when we need to know which tree changed (not enough to know
 	 * that the structures are different).
-	 * @param root1 root of the original program 
+	 * @param root1 root of the original program
 	 * @param root2 root for either the source tree or the destination tree
 	 * @return true if there was no original root, OR the modification
 	 * numbers for the original tree and tree containing root do not match
@@ -363,7 +363,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 		try {
 			ProgramModule root = listing.createRootModule(treeName);
 			// get a fragment for each memory block when a tree is created;
-			// rename these fragments so we can remove them after 
+			// rename these fragments so we can remove them after
 			// we populate the tree
 			Group[] kids = root.getChildren();
 			String[] names = new String[kids.length];
@@ -517,23 +517,23 @@ public class ProgramTreeMergeManager implements MergeResolver {
 				latestTreeName = latestRoot.getTreeName();
 			}
 			if (resultRoot == null && myRoot == null) {
-				// case 12: dest tree deleted, source tree delete ==> 
+				// case 12: dest tree deleted, source tree delete ==>
 				// 								no action required
 				continue;
 			}
 			if (resultRoot != null && myRoot == null) {
 				// case 11: any dest change, source tree deleted ==> no action required,
-				// 
+				//
 				// case 15: no changes to dest tree, source deleted tree
 				//  (already handled as a change and not a conflict) OR
-				// case 13: new tree in destination (not a conflict) ==> no action required 
+				// case 13: new tree in destination (not a conflict) ==> no action required
 				// (keep the tree)
 				continue;
 			}
 
 			if (resultRoot == null && myRoot != null) {
 				if (nameChanged(origRoot, myTreeName) || treeStructureChanged(origRoot, myRoot)) {
-					// case 10: dest tree deleted, any source change 
+					// case 10: dest tree deleted, any source change
 					//			(either source name changed or content changed)
 					// keep the tree
 					createTree(resultListing, myTreeName, myRoot);
@@ -548,7 +548,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 			else if (treeStructureChanged(origRoot, latestRoot) &&
 				treeStructureChanged(origRoot, myRoot)) {
 				// case 6: dest content changed, source content changed
-				// case 7: dest name change & content changed, 
+				// case 7: dest name change & content changed,
 				// 		 source name changed & content changed
 				// case 8: dest name changed & content changed, source content changed
 				// case 9: dest content changed, source name changed & content changed
@@ -566,7 +566,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 				nameContentsChanged(myRoot, myTreeName, resultTreeName, origTreeName, i + 1);
 
 			}
-			// case 2: dest Name changed, source content changed 
+			// case 2: dest Name changed, source content changed
 			// (not a conflict that the user must resolve)
 			else if (nameChanged(origRoot, latestTreeName) &&
 				treeStructureChanged(origRoot, myRoot)) {
@@ -594,7 +594,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 	 *        case 7: dest name change and content changed, source name changed and content changed
 	 *        case 8: dest name and content changed, source content changed
 	 *        case 9: dest content changed, source name and content changed
-	 * @throws CancelledException 
+	 * @throws CancelledException
 	 */
 	private void keepOtherOrCreateTree(ProgramModule origRoot, ProgramModule sourceRoot, ProgramModule destRoot,
 			int conflictIndex) throws CancelledException {
@@ -607,7 +607,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 
 		if (bothStructuresChangedChoice == ASK_USER && conflictOption == ASK_USER &&
 			mergeManager != null) {
-			// display prompt that has to choices: KEEP OTHER (lose my changes) 
+			// display prompt that has to choices: KEEP OTHER (lose my changes)
 			// or Create a new tree (if there is a name conflict, append
 			// the user's name to the tree name)
 			// or use original (put the original tree back in and lose my changes)
@@ -620,7 +620,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 			if (conflictOption == CANCELED) {
 				throw new CancelledException();
 			}
-			// If the "Use For All" check box is selected 
+			// If the "Use For All" check box is selected
 			// then save the option chosen for this conflict type.
 			if (mergePanel.getUseForAll()) {
 				bothStructuresChangedChoice = conflictOption;
@@ -673,7 +673,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 			if (conflictOption == CANCELED) {
 				throw new CancelledException();
 			}
-			// If the "Use For All" check box is selected 
+			// If the "Use For All" check box is selected
 			// then save the option chosen for this conflict type.
 			if (mergePanel.getUseForAll()) {
 				onlyNamesChangedChoice = conflictOption;
@@ -756,7 +756,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 			if (conflictOption == CANCELED) {
 				throw new CancelledException();
 			}
-			// If the "Use For All" check box is selected 
+			// If the "Use For All" check box is selected
 			// then save the option chosen for this conflict type.
 			if (mergePanel.getUseForAll()) {
 				onlyDestinationStructureChoice = conflictOption;
@@ -809,7 +809,7 @@ public class ProgramTreeMergeManager implements MergeResolver {
 			if (conflictOption == CANCELED) {
 				throw new CancelledException();
 			}
-			// If the "Use For All" check box is selected 
+			// If the "Use For All" check box is selected
 			// then save the option chosen for this conflict type.
 			if (mergePanel.getUseForAll()) {
 				onlySourceStructureChoice = conflictOption;

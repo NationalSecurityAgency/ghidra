@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,9 +30,9 @@ import utilities.util.reflection.ReflectionUtilities;
  * Pattern converter for Log4j 2.x that adds a hyperlink for the calling class
  * of the current log message. This is to be used in log4j configurations as part
  * of a pattern layout. eg:
- * 
- * 		{@literal <PatternLayout pattern="%-5p %m %hl %n"/>} 
- * 
+ *
+ * 		{@literal <PatternLayout pattern="%-5p %m %hl %n"/>}
+ *
  * See generic.log4jdev.xml for a working example.
  */
 @Plugin(name = "DevPatternConverter", category = "Converter")
@@ -48,18 +48,18 @@ public class Log4jDevelopmentPatternConverter extends LogEventPatternConverter {
 	//@formatter:off
 	private static final MethodPattern[] KNOWN_IGNORE_METHODS = {
 		// logging system
-		new MethodPattern("trace"), 
+		new MethodPattern("trace"),
 		new MethodPattern("debug"),
-		new MethodPattern("info"), 
+		new MethodPattern("info"),
 		new MethodPattern("warn"),
 		new MethodPattern("error"),
-		
+
 		// some API log utility methods names
 		new MethodPattern("log"),
-		
+
 		// scripting
-		new MethodPattern("println"), 
-		new MethodPattern("printerr"), 
+		new MethodPattern("println"),
+		new MethodPattern("printerr"),
 		new MethodPattern("printf")
 		};
 	//@formatter:on
@@ -72,7 +72,7 @@ public class Log4jDevelopmentPatternConverter extends LogEventPatternConverter {
 
 	/**
 	 * Required constructor.
-	 * 
+	 *
 	 * @param name the name of the converter
 	 * @param style the style of the converter
 	 */
@@ -82,7 +82,7 @@ public class Log4jDevelopmentPatternConverter extends LogEventPatternConverter {
 
 	/**
 	 * Required instance method for all log4j 2.x converters.
-	 * 
+	 *
 	 * @param options unused
 	 * @return new converter instance
 	 */
@@ -92,7 +92,7 @@ public class Log4jDevelopmentPatternConverter extends LogEventPatternConverter {
 
 	/**
 	 * Appends the desired hyperlink to the existing event message.
-	 * 
+	 *
 	 * @param event the current log event
 	 * @param toAppendTo the string to append to
 	 */
@@ -124,15 +124,15 @@ public class Log4jDevelopmentPatternConverter extends LogEventPatternConverter {
 		}
 
 		//
-		// Don't print out locations for stack traces, as they already have that info		
+		// Don't print out locations for stack traces, as they already have that info
 		//
 		if (stackString.indexOf(PRINT_STACK_TRACE_METHOD_NAME) >= 0) {
 			return EMPTY_STRING;
 		}
 
-		// 
+		//
 		// Alter how we find our desired source (depending upon whether we have a messaging service)
-		// 
+		//
 		String cutoffName = getHighestLevelMethodNameToIgnore(stackString);
 		return getLogMessageCallerInformation(trace, cutoffName);
 	}
@@ -145,7 +145,7 @@ public class Log4jDevelopmentPatternConverter extends LogEventPatternConverter {
 		// 1) see if we are using a system messaging service
 		int index = stackString.indexOf(TOOL_MESSAGE_SERVICE_CLASSNAME);
 		if (index >= 0) {
-			// assumption: this call to the Messaging 
+			// assumption: this call to the Messaging
 			bestIndex = index;
 			cutoffName = TOOL_MESSAGE_SERVICE_CLASSNAME;
 		}
@@ -173,7 +173,7 @@ public class Log4jDevelopmentPatternConverter extends LogEventPatternConverter {
 			String className = element.getClassName();
 			String methodName = element.getMethodName();
 
-			// assumption: we have to walk the list of elements until we get past all calls to 
+			// assumption: we have to walk the list of elements until we get past all calls to
 			// the logging API (and maybe a Ghidra API call)
 			if (cutoffName.equals(className) || cutoffName.equals(methodName)) {
 				lastIndexOfCutoffFilename = i;
@@ -193,7 +193,7 @@ public class Log4jDevelopmentPatternConverter extends LogEventPatternConverter {
 		String filename = stackTraceElement.getFileName();
 		int lineNumber = stackTraceElement.getLineNumber();
 
-		synchronized (buffer) { // lock the shared resource   
+		synchronized (buffer) { // lock the shared resource
 			buffer.append(' ').append('(');
 			buffer.append(filename);
 			buffer.append(':');

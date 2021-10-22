@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -73,8 +73,8 @@ public class HelpBuildUtils {
 	}
 
 	/**
-	 * Returns a file object that is the help topic directory for the given file.  
-	 * This method is useful for finding the help topic directory when the given 
+	 * Returns a file object that is the help topic directory for the given file.
+	 * This method is useful for finding the help topic directory when the given
 	 * file doesn't live directly under a help topic.
 	 */
 	public static Path getHelpTopicDir(Path file) {
@@ -134,7 +134,7 @@ public class HelpBuildUtils {
 	}
 
 //==================================================================================================
-// Cleanup Methods    
+// Cleanup Methods
 //==================================================================================================
 
 	public static void cleanupHelpFileLinks(Path helpFile) throws IOException {
@@ -437,7 +437,7 @@ public class HelpBuildUtils {
 
 	/**
 	 * Returns true if the given String represents a remote resource
-	 * 
+	 *
 	 * @param uriString the URI to test
 	 * @return true if the given String represents a remote resource
 	 */
@@ -454,7 +454,7 @@ public class HelpBuildUtils {
 
 	/**
 	 * Returns true if the given Path represents a remote resource
-	 * 
+	 *
 	 * @param path the path
 	 * @return true if the given Path represents a remote resource
 	 */
@@ -468,7 +468,7 @@ public class HelpBuildUtils {
 
 	/**
 	 * Returns true if the given URI represents a remote resource
-	 * 
+	 *
 	 * @param uri the URI
 	 * @return true if the given URI represents a remote resource
 	 */
@@ -532,15 +532,15 @@ public class HelpBuildUtils {
 		return Paths.get(uri);
 	}
 
-	/** 
-	 * Turn an HTML IMG reference into a location object that has resolved path info.  This will 
-	 * locate files based upon relative references, specialized help system references (i.e., 
+	/**
+	 * Turn an HTML IMG reference into a location object that has resolved path info.  This will
+	 * locate files based upon relative references, specialized help system references (i.e.,
 	 * help/topics/...),  and absolute URLs.
-	 * 
+	 *
 	 * @param sourceFile the source file path of the image reference
 	 * @param ref the reference text
 	 * @return an absolute path; null if the URI is remote
-	 * @throws URISyntaxException 
+	 * @throws URISyntaxException
 	 */
 	public static ImageLocation locateImageReference(Path sourceFile, String ref)
 			throws URISyntaxException {
@@ -573,14 +573,14 @@ public class HelpBuildUtils {
 		return ImageLocation.createLocalLocation(sourceFile, ref, resolved, path);
 	}
 
-	/** 
-	 * Turn an HTML HREF reference into an absolute path.  This will 
-	 * locate files based upon relative references, specialized help system references (i.e., 
+	/**
+	 * Turn an HTML HREF reference into an absolute path.  This will
+	 * locate files based upon relative references, specialized help system references (i.e.,
 	 * help/topics/...),  and absolute URLs.
-	 * 
+	 *
 	 * @param ref the reference text
 	 * @return an absolute path; null if the URI is remote
-	 * @throws URISyntaxException 
+	 * @throws URISyntaxException
 	 */
 	public static Path locateReference(Path sourceFile, String ref) throws URISyntaxException {
 
@@ -602,7 +602,7 @@ public class HelpBuildUtils {
 		}
 
 		if (scheme.startsWith("file")) {
-			// bug?...we are sometimes handed a URI of the form 'file:/some/path', where the 
+			// bug?...we are sometimes handed a URI of the form 'file:/some/path', where the
 			// single '/' is not a valid file URI
 			URI uri = new URI("file://" + resolved.getRawPath());
 			return Paths.get(uri);
@@ -614,7 +614,7 @@ public class HelpBuildUtils {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================    
+//==================================================================================================
 
 	public static interface Stringizer<T> {
 		public String stringize(T obj);

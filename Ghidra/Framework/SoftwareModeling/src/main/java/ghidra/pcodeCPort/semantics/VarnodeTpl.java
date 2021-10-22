@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -144,7 +144,7 @@ public class VarnodeTpl {
 		boolean doesOffsetPlus = false;
 		int handleIndex=0;
 		int plus=0;
-		
+
 		if ((offset.getType()==const_type.handle)&&(offset.getSelect()==v_field.v_offset_plus)) {
 			handleIndex = offset.getHandleIndex();
 			plus = (int)offset.getReal();
@@ -177,7 +177,7 @@ public class VarnodeTpl {
 		int numbytes = (int)size.getReal();
 		int byteoffset = (int) offset.getReal();
 		if (numbytes + byteoffset > sz) return false;
-		
+
 		// Encode the original truncation amount with the plus value
 		long val = byteoffset;
 		val <<= 16;
@@ -185,11 +185,11 @@ public class VarnodeTpl {
 			val |= (sz - (numbytes + byteoffset));
 		else
 			val |= byteoffset;
-		
+
 		offset = new ConstTpl(const_type.handle,offset.getHandleIndex(),v_field.v_offset_plus,val);
 		return true;
 	}
-	
+
 	public void saveXml(PrintStream s) {
 		s.append("<varnode_tpl>");
 //        s.append( "<varnode_tpl id=\"" + id + "\">" );

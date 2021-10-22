@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.Msg;
 public class FileSystemIndexHelper<METADATATYPE> {
 
 	private GFile rootDir;
-	
+
 	static class FileData<METADATATYPE> {
 		GFile file;
 		METADATATYPE metaData;
@@ -111,7 +111,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 
 	/**
 	 * Sets the associated metadata blob for the specified file.
-	 * 
+	 *
 	 * @param f GFile to update
 	 * @param metaData new metdata blob
 	 * @throws IOException if unknown file
@@ -126,7 +126,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 
 	/**
 	 * Gets the GFile instance that was associated with the filesystem file index.
-	 * 
+	 *
 	 * @param fileIndex index of the file in its filesystem
 	 * @return the associated GFile instance, or null if not found
 	 */
@@ -182,7 +182,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * suffix added to the resultant GFile name, where nnn is the file's
 	 * order of occurrence in the container file.
 	 * <p>
-	 * 
+	 *
 	 * @param path string path and filename of the file being added to the index.  Back
 	 * slashes are normalized to forward slashes
 	 * @param fileIndex the filesystem specific unique index for this file, or -1
@@ -214,7 +214,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 	 * suffix added to the resultant GFile name, where nnn is the file's
 	 * order of occurrence in the container file.
 	 * <p>
-	 * 
+	 *
 	 * @param filename the new file's name
 	 * @param parent the new file's parent directory
 	 * @param fileIndex the filesystem specific unique index for this file, or -1
@@ -271,7 +271,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 
 		dirContents.put(uniqueName, fileData);
 		if (isDirectory) {
-			// side-effect of get will eagerly create the directorylisting entry 
+			// side-effect of get will eagerly create the directorylisting entry
 			getDirectoryContents(file, true);
 		}
 
@@ -354,7 +354,7 @@ public class FileSystemIndexHelper<METADATATYPE> {
 
 	/**
 	 * Updates the FSRL of a file already in the index.
-	 * 
+	 *
 	 * @param file current {@link GFile}
 	 * @param newFSRL the new FSRL the new file will be given
 	 */
@@ -366,9 +366,9 @@ public class FileSystemIndexHelper<METADATATYPE> {
 		if (fileData != null) {
 			fileToEntryMap.remove(file);
 			fileIndexToEntryMap.remove(fileData.fileIndex);
-			
+
 			fileData.file = newFile;
-			
+
 			fileToEntryMap.put(newFile, fileData);
 			if (fileData.fileIndex != -1) {
 				fileIndexToEntryMap.put(fileData.fileIndex, fileData);

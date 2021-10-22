@@ -52,32 +52,32 @@ define token ImmedThree (24)
 
 attach values short01 [ 1 2 4 _ ];
 
-attach variables  [ rm47 rm03 rm47_ rm03_ ] [ 
-	R0  R1  R2  R3  R4  R5  R6  R7 
-	R8  R9  B   ACC R12 R13 R14 R15 
+attach variables  [ rm47 rm03 rm47_ rm03_ ] [
+	R0  R1  R2  R3  R4  R5  R6  R7
+	R8  R9  B   ACC R12 R13 R14 R15
 ];
 
-attach variables  [ rm47_d1 ] [ 
-	R0  R0  R2  R2  R4  R3  R6  R6 
-	R8  R8  B   B R12 R12 R14 R14 
+attach variables  [ rm47_d1 ] [
+	R0  R0  R2  R2  R4  R3  R6  R6
+	R8  R8  B   B R12 R12 R14 R14
 ];
 
-attach variables  [ rm47_d2 ] [ 
-	R1  R1  R3  R3  R5  R5  R7  R7 
-	R9  R9  ACC ACC R13 R13 R15 R15 
+attach variables  [ rm47_d2 ] [
+	R1  R1  R3  R3  R5  R5  R7  R7
+	R9  R9  ACC ACC R13 R13 R15 R15
 ];
 
-attach variables  [ wrj47 wrj03 wrj47_ wrj03_ ] [ 
+attach variables  [ wrj47 wrj03 wrj47_ wrj03_ ] [
 	WR0  WR2  WR4  WR6  WR8  AB   WR12 WR14
     WR16 WR18 WR20 WR22 WR24 WR26 WR28 WR30
 ];
 
-attach variables  [ wrj47_d1 ] [ 
+attach variables  [ wrj47_d1 ] [
 	WR0  WR0  WR4  WR4  WR8  WR8  WR12 WR12
     WR16 WR16 WR20 WR20 WR24 WR24 WR28 WR28
 ];
 
-attach variables  [ wrj47_d2 ] [ 
+attach variables  [ wrj47_d2 ] [
 	WR2  WR2  WR6  WR6  AB   AB   WR14 WR14
     WR18 WR18 WR22 WR22 WR26 WR26 WR30 WR30
 ];
@@ -91,7 +91,7 @@ attach variables  [ drk47 drk03 drk47_ drk03_ ] [
 @define DRK47 "drk47 & (d7=0 | d57=4)" # constraint for using drk47
 @define DRK03 "drk03 & (s3=0 | s13=4)" # constraint for using drk03
 @define DRK47_ "drk47_ & (d7_=0 | d57_=4)" # constraint for using drk47_
-  
+
 AtWRjb: "@"^wrj47	is wrj47   { ptr:3 = zext(wrj47); export *:1 ptr; }
 AtWRjw: "@"^wrj47	is wrj47   { ptr:3 = zext(wrj47); export *:2 ptr; }
 
@@ -140,34 +140,34 @@ xBitAddr: bitaddr^"."^bit02 		is bit02; bitaddr8  [ bitaddr = (bitaddr8 << 3) + 
 xBitAddr2: "/"^bitaddr^"."^bit02 	is bit02; bitaddr8  [ bitaddr = (bitaddr8 << 3) + bit02; ] { export *[BITS]:1 bitaddr; }
 
 
-macro push24(val) {  
+macro push24(val) {
   al:1 = val:1;
   ah:1 = val(1);
   ax:1 = val(2);
-  
+
   ptr:3 = SPX:3;
-  
-  ptr = ptr + 1; 
+
+  ptr = ptr + 1;
   *[RAM]:1 ptr = al;
-  ptr = ptr + 1; 
+  ptr = ptr + 1;
   *[RAM]:1 ptr = ah;
-  ptr = ptr + 1;  
+  ptr = ptr + 1;
   *[RAM]:1 ptr = ax;
-  
+
   SPX = SPX + 3;
 }
 
 macro pop24(val) {
-  
+
   SPX = SPX - 2;
-  
+
   ptr:3 = SPX:3;
   al:1 = *[RAM]:1 ptr;
   ah:1 = *[RAM]:1 (ptr+1);
   ax:1 = *[RAM]:1 (ptr+2);
-  
+
   SPX = SPX - 1;
-  
+
   val = (zext(ax) << 16) | (zext(ah) << 8) | zext(al);
 }
 

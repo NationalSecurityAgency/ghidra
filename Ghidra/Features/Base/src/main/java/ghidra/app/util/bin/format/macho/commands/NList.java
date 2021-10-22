@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Represents an nlist and nlist_64 structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/nlist.h.auto.html">mach-o/nlist.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/nlist.h.auto.html">mach-o/nlist.h</a>
  */
 public class NList implements StructConverter {
 	private int n_strx;
@@ -77,8 +77,8 @@ public class NList implements StructConverter {
 	 * are initialized as the NList entry is created.  The string table indexes are
 	 * scattered.  Initializing the strings linearly from the string table is much
 	 * faster.
-	 * 
-	 * @param reader 
+	 *
+	 * @param reader
 	 * @param stringTableOffset offset of the string table
 	 */
 	public void initString(FactoryBundledWithBinaryReader reader, long stringTableOffset) {

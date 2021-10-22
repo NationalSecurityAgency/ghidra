@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,22 +30,22 @@ public class AddSingleReferenceInSwitchTable extends GhidraScript {
 
     @Override
     public void run() throws Exception {
-    	
+
     	Program program = currentProgram;
-    	Listing listing = program.getListing(); 
-    	
-    	// Ask for base address 
-    	//  (equals the pc when program hits the switch table, 
+    	Listing listing = program.getListing();
+
+    	// Ask for base address
+    	//  (equals the pc when program hits the switch table,
     	//   which equals the address of the "add pc, .." instruction + 4)
     	Address pc = askAddress("Address", "Enter switch base address (hex, don't use 0x)");
 
     	// Get current data value
     	Data data = listing.getDefinedDataAt(currentAddress);
     	long currVal = NumericUtilities.parseHexLong(data.getValue().toString().substring(2));
-    	
+
 		// Calculate referenced addr
 		Address refAddr = pc.add(2 * currVal);
-			
+
 		// Add reference
 		println("Adding ref " + refAddr.toString() + " to address " + data.getAddressString(false, true));
 		data.addValueReference(refAddr, RefType.DATA);

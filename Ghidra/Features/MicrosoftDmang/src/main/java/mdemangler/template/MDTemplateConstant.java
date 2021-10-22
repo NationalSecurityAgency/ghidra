@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -102,7 +102,7 @@ public class MDTemplateConstant extends MDParsableItem {
 					case 'F':
 						// 20140630: seems that '\'' is not there in $Fa'b (documentation
 						// notation failure--the single quote (any type) is not really in the
-						// mangled string)						
+						// mangled string)
 						a = new MDSignedEncodedNumber(dmang);
 						a.parse();
 						b = new MDSignedEncodedNumber(dmang);
@@ -112,7 +112,7 @@ public class MDTemplateConstant extends MDParsableItem {
 					case 'G':
 						// 20140630: seems that '\'' is not there in $Ga'b'c (documentation
 						// notation failure--the single quote (any type) is not really in the
-						// mangled string)						
+						// mangled string)
 						a = new MDSignedEncodedNumber(dmang);
 						a.parse();
 						b = new MDSignedEncodedNumber(dmang);
@@ -140,7 +140,7 @@ public class MDTemplateConstant extends MDParsableItem {
 					case 'I': { // Used in some cases ($$issue!!!!!!)
 						// 20140630: seems that '\'' is not there in $Ix'y (documentation
 						// notation failure--the single quote (any type) is not really in the
-						// mangled string)						
+						// mangled string)
 						// It also seems that the second parameter CAN be negative: $Ixa, where
 						// x is some object, and a is some signed number
 						// Do not do a pushModifierContext here.
@@ -165,7 +165,7 @@ public class MDTemplateConstant extends MDParsableItem {
 					case 'J': { // Used in some cases ($$issue!!!!!!)
 						// 20140630: seems that '\'' is not there in $Jx'y'z (documentation
 						// notation failure--the single quote (any type) is not really in the
-						// mangled string)						
+						// mangled string)
 						// It also seems that the second, third, and fourth parameters CAN be
 						// negative: $Jxabc, where x is some object, and a, b, and care some
 						// signed numbers

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -623,7 +623,7 @@ public class GTaskGUITest extends AbstractDockingTest {
 
 		void advance() {
 			//
-			// Note: the subclass will release the 'workFinishedLatch' early, before work is 
+			// Note: the subclass will release the 'workFinishedLatch' early, before work is
 			//       actually finished.  This means that the test may proceed and perform
 			//       scheduling earlier than anticipated.
 			//
@@ -682,7 +682,7 @@ public class GTaskGUITest extends AbstractDockingTest {
 		}
 
 		protected void debug(String s) {
-			// avoiding the logger, as it can buffer, which makes the output potentially 
+			// avoiding the logger, as it can buffer, which makes the output potentially
 			// out-of-order for multiple threads
 			// Msg.debug(this, s);
 			System.err.println("DEBUG " + s + " (GTaskGUITest.java:667)");

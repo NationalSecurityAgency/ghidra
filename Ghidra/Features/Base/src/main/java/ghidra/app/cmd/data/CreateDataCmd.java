@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,11 +26,11 @@ import ghidra.program.model.listing.Program;
  * This command will create a data of type dataType at the given address.  This
  * command will only work for fixed length dataTypes.  If there are any existing
  * instructions in the area to be made into data, the command will fail.  Existing data
- * in the area may be replaced with the new dataType (with optional pointer conversion).  
+ * in the area may be replaced with the new dataType (with optional pointer conversion).
  * If the existing dataType is a pointer, then
  * the existing data will be changed into a pointer to the given dataType.  If the given dataType
- * is a default-pointer, it will become a pointer to the existing type.  
- * 
+ * is a default-pointer, it will become a pointer to the existing type.
+ *
  * @see DataUtilities#createData(Program, Address, DataType, int, boolean, DataUtilities.ClearDataMode)
  */
 public class CreateDataCmd implements Command {
@@ -59,11 +59,11 @@ public class CreateDataCmd implements Command {
 	/**
 	 * This is the same as {@link #CreateDataCmd(Address, boolean, DataType)} except that
 	 * it allows the caller to control whether or not pointer conversion should be handled.
-	 * 
+	 *
 	 * @param addr the address at which to apply the datatype.  Offcut data
 	 * address allowed, provided force==true.
 	 * @param force if true any existing conflicting data will be cleared
-	 * @param stackPointers if true simple pointer conversion is enabled 
+	 * @param stackPointers if true simple pointer conversion is enabled
 	 * (see {@link DataUtilities#reconcileAppliedDataType(DataType, DataType, boolean)}).
 	 * @param dataType the datatype to be applied at the given address.
 	 */
@@ -75,7 +75,7 @@ public class CreateDataCmd implements Command {
 
 	/**
 	 * Constructs a command for creating data at an address.
-	 * Simple pointer conversion will NOT be performed and existing 
+	 * Simple pointer conversion will NOT be performed and existing
 	 * defined data will not be cleared, however existing Undefined data will
 	 * be cleared.
 	 * @param addr the address at which to apply the datatype.
@@ -92,7 +92,7 @@ public class CreateDataCmd implements Command {
 	 * @param addr the address at which to apply the datatype.
 	 * @param dataType the datatype to be applied at the given address.
 	 * @param isCycle true indicates this is from a cycle group action.
-	 * @param stackPointers if true simple pointer conversion is enabled 
+	 * @param stackPointers if true simple pointer conversion is enabled
 	 * (see {@link DataUtilities#reconcileAppliedDataType(DataType, DataType, boolean)}).
 	 */
 	public CreateDataCmd(Address addr, DataType dataType, boolean isCycle, boolean stackPointers) {
@@ -102,10 +102,10 @@ public class CreateDataCmd implements Command {
 
 	/**
 	 * This constructor provides the most flexibility when creating data, allowing optional pointer conversion and
-	 * various clearing options for conflicting data.  
+	 * various clearing options for conflicting data.
 	 * @param addr the address at which to apply the datatype.
 	 * @param dataType the datatype to be applied at the given address.
-	 * @param stackPointers if true simple pointer conversion is enabled 
+	 * @param stackPointers if true simple pointer conversion is enabled
 	 * (see {@link DataUtilities#reconcileAppliedDataType(DataType, DataType, boolean)}).
 	 * @param clearMode indicates how conflicting data should be cleared
 	 */

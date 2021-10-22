@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,11 +137,11 @@ public class VisualGraphPickingGraphMousePlugin<V extends VisualVertex, E extend
 		viewer.setCursor(newCursor);
 	}
 
-	/* Pretty sure we don't need this now that we update the vertex locations directly.  This 
+	/* Pretty sure we don't need this now that we update the vertex locations directly.  This
 	   was old code that pre-existed the preferred method for updating vertex locations.   Once
-	   all tests are passing, and selecting edges of previously dragged vertices still works, 
+	   all tests are passing, and selecting edges of previously dragged vertices still works,
 	   the delete this code.
-	   
+
 	private void updateVertexLocationToCompensateForDraggingWorkaround(double dx, double dy, V v) {
 		Point2D original = v.getLocation();
 		original.setLocation(original.getX() + dx, original.getY() + dy);
@@ -152,7 +152,7 @@ public class VisualGraphPickingGraphMousePlugin<V extends VisualVertex, E extend
 	@Override
 	public void mouseReleased(MouseEvent e) {
 
-		// We overrode this method here to clear the picked state of edges and vertices if we 
+		// We overrode this method here to clear the picked state of edges and vertices if we
 		// ever get a released event when the user is clicking somewhere that is not an edge or
 		// vertex
 		if (!isDragging() && vertex == null && edge == null) {

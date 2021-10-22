@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,7 +136,7 @@ public class BufferMgr {
 	private static final int INITIAL_BUFFER_TABLE_SIZE = 1024;
 
 	/**
-	 * An optional pre-cache of all buffers can be performed within a separate 
+	 * An optional pre-cache of all buffers can be performed within a separate
 	 * thread if enabled.
 	 */
 	private enum PreCacheStatus {
@@ -258,7 +258,7 @@ public class BufferMgr {
 
 	/**
 	 * Enable and start source buffer file pre-cache if appropriate.
-	 * This may be forced for all use cases by setting the System property 
+	 * This may be forced for all use cases by setting the System property
 	 * db.always.precache=true
 	 * WARNING! EXPERIMENTAL !!!
 	 */
@@ -392,7 +392,7 @@ public class BufferMgr {
 	 * buffer file.
 	 * This method should be called when this buffer manager instance
 	 * is no longer needed.
-	 * @param keepRecoveryData true if existing snapshot recovery files 
+	 * @param keepRecoveryData true if existing snapshot recovery files
 	 * should not be deleted.
 	 */
 	public void dispose(boolean keepRecoveryData) {
@@ -691,7 +691,7 @@ public class BufferMgr {
 
 	/**
 	 * Start pre-cache of source file if appropriate.
-	 * This targets remote buffer file adapters only. 
+	 * This targets remote buffer file adapters only.
 	 */
 	private void startPreCacheIfNeeded() {
 		if (preCacheThread != null) {
@@ -731,7 +731,7 @@ public class BufferMgr {
 	}
 
 	/**
-	 * Pre-cache source file into cache file.  This is intended to be run in a 
+	 * Pre-cache source file into cache file.  This is intended to be run in a
 	 * dedicated thread when the source file is remote.
 	 */
 	private void preCacheSourceFile() throws IOException {

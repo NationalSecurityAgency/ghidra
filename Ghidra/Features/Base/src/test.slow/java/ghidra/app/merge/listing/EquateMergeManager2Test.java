@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 	// 3 = tres @ 01001dd8
 
 	/**
-	 * 
+	 *
 	 * @param arg0
 	 */
 	public EquateMergeManager2Test() {
@@ -62,7 +62,7 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 	@Test
 	public void testAddDiffPickLatest() throws Exception {
 		mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-	
+
 			/* (non-Javadoc)
 			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
 			 */
@@ -86,7 +86,7 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 					program.endTransaction(txId, commit);
 				}
 			}
-	
+
 			/* (non-Javadoc)
 			 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
 			 */
@@ -105,11 +105,11 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 				}
 			}
 		});
-	
+
 		executeMerge(ASK_USER);
 		chooseEquate("0x1002d18", 1, KEEP_MY);
 		waitForMergeCompletion();
-	
+
 		EquateTable equateTab = resultProgram.getEquateTable();
 		List<Equate> equates = equateTab.getEquates(addr("0x1002d18"), 1);
 		assertEquals(2, equates.size());
@@ -125,7 +125,7 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 	@Test
 	    public void testAddDiffPickMy() throws Exception {
 			mtf.initialize("NotepadMergeListingTest", new ProgramModifierListener() {
-	
+
 				/* (non-Javadoc)
 				 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)
 				 */
@@ -149,7 +149,7 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 						program.endTransaction(txId, commit);
 					}
 				}
-	
+
 				/* (non-Javadoc)
 				 * @see ghidra.framework.data.ProgramModifierListener#modifyPrivate(ghidra.program.database.ProgramDB)
 				 */
@@ -168,12 +168,12 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 					}
 				}
 			});
-	
+
 			executeMerge(ASK_USER);
 		waitForPrompting();
 			chooseEquate("0x1002533", 1, KEEP_MY);
 			waitForMergeCompletion();
-	
+
 			EquateTable equateTab = resultProgram.getEquateTable();
 			List<Equate> equates = equateTab.getEquates(addr("0x1002533"), 1);
 			assertEquals(1, equates.size());
@@ -274,7 +274,7 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 	public void testAddNameDiffOnNegativeOperand() throws Exception {
 		// 0x1002d20   LEA  ECX,[ESI + -0x20]
 		mtf.initialize("NotepadMergeListingTest_X86", new OriginalProgramModifierListener() {
-	
+
 			@Override
 			public void modifyOriginal(ProgramDB program) {
 				int txId = program.startTransaction("Setup Original Program");
@@ -297,7 +297,7 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 					program.endTransaction(txId, commit);
 				}
 			}
-	
+
 			@Override
 			public void modifyLatest(ProgramDB program) {
 				int txId = program.startTransaction("Modify Latest Program");
@@ -317,7 +317,7 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 					program.endTransaction(txId, commit);
 				}
 			}
-	
+
 			@Override
 			public void modifyPrivate(ProgramDB program) {
 				int txId = program.startTransaction("Modify My Program");
@@ -338,11 +338,11 @@ public class EquateMergeManager2Test extends AbstractListingMergeManagerTest {
 				}
 			}
 		});
-	
+
 		executeMerge(ASK_USER);
 		chooseEquate("0x1002d20", 1, KEEP_MY); // -0x20
 		waitForMergeCompletion();
-	
+
 		EquateTable equateTab = resultProgram.getEquateTable();
 		List<Equate> equates = equateTab.getEquates(addr("0x1002d20"), 1);
 		assertEquals(1, equates.size());

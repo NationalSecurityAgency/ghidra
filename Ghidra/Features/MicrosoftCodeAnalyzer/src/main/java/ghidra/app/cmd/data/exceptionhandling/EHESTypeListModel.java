@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 
 /**
- * Model for exception handling information about the ESTypeList data type and its 
+ * Model for exception handling information about the ESTypeList data type and its
  * associated exception handling data types.
  * <br>
  * This is based on data type information from ehdata.h
@@ -59,7 +59,7 @@ public class EHESTypeListModel extends AbstractCreateDataTypeModel {
 	/**
 	 * Whether or not the memory at the indicated address appears to be a valid location for the
 	 * indicated number of ESTypeList data types.
-	 * @throws InvalidDataTypeException if this model's location does not appear to be a valid 
+	 * @throws InvalidDataTypeException if this model's location does not appear to be a valid
 	 * group of ESTypeList entries. The exception has a message indicating
 	 * why it does not appear to be a valid location for the data type.
 	 */
@@ -81,7 +81,7 @@ public class EHESTypeListModel extends AbstractCreateDataTypeModel {
 
 	/**
 	 * This gets the ESTypeList structure for the indicated program.
-	 * @param program the program which will contain this data type. 
+	 * @param program the program which will contain this data type.
 	 * @return the ESTypeList structure.
 	 */
 	public static DataType getDataType(Program program) {
@@ -169,7 +169,7 @@ public class EHESTypeListModel extends AbstractCreateDataTypeModel {
 	}
 
 	/**
-	 * Gets the address of the component containing the address of the handler type map, 
+	 * Gets the address of the component containing the address of the handler type map,
 	 * if there is one. Otherwise, this returns null.
 	 * @return the address of the component with the address of the handler type map or null.
 	 * @throws InvalidDataTypeException if valid ESTypeList data can't be created at the model's address.

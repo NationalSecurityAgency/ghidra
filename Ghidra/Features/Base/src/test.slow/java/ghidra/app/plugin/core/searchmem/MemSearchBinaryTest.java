@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,7 +95,7 @@ public class MemSearchBinaryTest extends AbstractMemSearchTest {
 
 	@Test
 	public void testBinaryMoreThan8Chars() throws Exception {
-		// try entering more than 8 binary digits (no spaces); the dialog 
+		// try entering more than 8 binary digits (no spaces); the dialog
 		// should not accept the 9th digit.
 		myTypeText("010101010");
 		assertEquals("01010101", valueField.getText());
@@ -143,7 +143,7 @@ public class MemSearchBinaryTest extends AbstractMemSearchTest {
 									0x01002d52,
 									0x01002d55,
 									0x01002d58,
-									0x01002d5b);		
+									0x01002d5b);
 		//@formatter:on
 
 		for (int i = 0; i < addrs.size(); i++) {
@@ -249,11 +249,11 @@ public class MemSearchBinaryTest extends AbstractMemSearchTest {
 	@Test
 	public void testBinarySearchAll() throws Exception {
 		// QueryResults should get displayed
-		// test the marker stuff		
+		// test the marker stuff
 		setValueText("11110110");
-		
+
 		pressSearchAllButton();
-		
+
 		waitForSearch("Search Memory - ", 1);
 
 		checkMarkerSet(addrs(0x1002d28));
@@ -424,14 +424,14 @@ public class MemSearchBinaryTest extends AbstractMemSearchTest {
 		// Turn on Undefined Data scope and make sure only that scope yields matches
 		//
 		goTo(0x1001000);
-		
+
 		selectCheckBox("Instructions", false);
 		selectCheckBox("Defined Data", false);
 		selectCheckBox("Undefined Data", true);
 
 		setValueText("01100101");
 		pressSearchButton("Next");
-		
+
 		Address expectedSearchAddressHit = addr(0x1001502);
 		assertEquals(
 			"Did not find a hit at the next matching Undefined Data when we are searching Undefined Data",

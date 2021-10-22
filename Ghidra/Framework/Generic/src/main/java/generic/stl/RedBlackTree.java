@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import java.util.Comparator;
 
 
 public class RedBlackTree<K,V> {
-	
+
 	public static final String EOL = System.getProperty( "line.separator" );
 
 	private RedBlackNode<K,V> root;
@@ -58,20 +58,20 @@ public class RedBlackTree<K,V> {
     		node = node.getSuccessor();
     	}
     }
-    
+
     @Override
 	public String toString() {
 		StringBuffer buffy = new StringBuffer( "RedBlackTree[size=" + size + "]\n" );
-		int showSize = Math.min( 20, size() );		
+		int showSize = Math.min( 20, size() );
 		RedBlackNode<K, V> current = getFirst();
 		for ( int i = 0; i < showSize; i++ ) {
-			buffy.append( "\t[" ).append( i ).append( "]=(" ).append( current.key ).append( 
+			buffy.append( "\t[" ).append( i ).append( "]=(" ).append( current.key ).append(
 			    "," ).append( current.value ).append( ")" ).append( EOL );
 			current = current.getSuccessor();
 		}
 		return buffy.toString();
 	}
-    
+
     /**
      * Returns the number keys in this set.
      */
@@ -155,7 +155,7 @@ public class RedBlackTree<K,V> {
         }
         return bestNode;
     }
-    
+
 
     /**
      * Finds the node with the lowest key that is &gt; the given key.  Returns null if all nodes
@@ -185,7 +185,7 @@ public class RedBlackTree<K,V> {
     /**
      * Adds the given key,value to the map. If the map does not allow duplicate keys and a key
      * already exists, the old value will be replaced by the new value and the old value will be
-     * returned. 
+     * returned.
      * @param key the key to add to the set.
      * @param value the key's value.
      * @return the old value associated with the key, or null if the key was not previously in the map.
@@ -210,7 +210,7 @@ public class RedBlackTree<K,V> {
                 }
                 else {
                     size++;
-                    RedBlackNode<K, V> newNode = new RedBlackNode<K,V>(key, value, node); 
+                    RedBlackNode<K, V> newNode = new RedBlackNode<K,V>(key, value, node);
                     node.left = newNode;
                     fixAfterInsertion(newNode);
                     return new Pair<RedBlackNode<K, V>, Boolean>( newNode, Boolean.TRUE );
@@ -222,7 +222,7 @@ public class RedBlackTree<K,V> {
                 }
                 else {
                     size++;
-                    RedBlackNode<K, V> newNode = new RedBlackNode<K,V>(key, value, node); 
+                    RedBlackNode<K, V> newNode = new RedBlackNode<K,V>(key, value, node);
                     node.right = newNode;
                     fixAfterInsertion(newNode);
                     return new Pair<RedBlackNode<K, V>, Boolean>( newNode, Boolean.TRUE );
@@ -263,15 +263,15 @@ public class RedBlackTree<K,V> {
             }
         }
     	return bestNode;
-    }    
-    
+    }
+
     /**
      * Removes the given key (first if duplicates are allowed) from the set.
      * @param key the key to remove from the set.
      * @return the value associated with the key removed or null if the key not found.
      */
     public V remove(K key) {
-    	
+
         RedBlackNode<K,V> node = findFirstNode(key);
         if (node == null) {
             return null;

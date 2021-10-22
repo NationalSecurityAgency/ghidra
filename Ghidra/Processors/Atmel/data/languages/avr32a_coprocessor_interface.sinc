@@ -68,7 +68,7 @@ CRY: "CR13" is cry0_4=0xd & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
 CRY: "CR14" is cry0_4=0xe & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
 CRY: "CR15" is cry0_4=0xf & altcry0_4 { tmp:1 = altcry0_4:1; export tmp; }
 
-CPLoadAddress: is rp0=0xf ; eb15   { ldadd = inst_start; } # Rp=PC 
+CPLoadAddress: is rp0=0xf ; eb15   { ldadd = inst_start; } # Rp=PC
 CPLoadAddress: is rp0     ; eb15   { ldadd = rp0;        } # Rp!=PC
 
 LDCMDinc7:    ",CR14-CR15"     is eb7=1   { tmp:1 = 14; tmpa:1 = 15; LoadCoProcessorDword(tmp,tmpa,ldadd); ldadd = ldadd + 8; }
@@ -129,7 +129,7 @@ LDCMDinc0:    is eb0=0  { }
 LDCMpp:      is rd0 ; eb12=0      { }
 LDCMpp: "++" is rd0 ; eb12=1      { rd0 = ldadd; }
 
-LDCMDcommon: LDCMDinc0^LDCMDinc1^LDCMDinc2^LDCMDinc3^LDCMDinc4^LDCMDinc5^LDCMDinc6^LDCMDinc7 is 
+LDCMDcommon: LDCMDinc0^LDCMDinc1^LDCMDinc2^LDCMDinc3^LDCMDinc4^LDCMDinc5^LDCMDinc6^LDCMDinc7 is
 	LDCMDinc0 & LDCMDinc1 & LDCMDinc2 & LDCMDinc3 & LDCMDinc4 & LDCMDinc5 & LDCMDinc6 & LDCMDinc7
 {
         build LDCMDinc7;
@@ -142,7 +142,7 @@ LDCMDcommon: LDCMDinc0^LDCMDinc1^LDCMDinc2^LDCMDinc3^LDCMDinc4^LDCMDinc5^LDCMDin
         build LDCMDinc0;
 }
 
-LDCMWLcommon: LDCMWinc0^LDCMWinc1^LDCMWinc2^LDCMWinc3^LDCMWinc4^LDCMWinc5^LDCMWinc6^LDCMWinc7 is 
+LDCMWLcommon: LDCMWinc0^LDCMWinc1^LDCMWinc2^LDCMWinc3^LDCMWinc4^LDCMWinc5^LDCMWinc6^LDCMWinc7 is
 	LDCMWinc0 & LDCMWinc1 & LDCMWinc2 & LDCMWinc3 & LDCMWinc4 & LDCMWinc5 & LDCMWinc6 & LDCMWinc7
 {
         build LDCMWinc7;
@@ -155,7 +155,7 @@ LDCMWLcommon: LDCMWinc0^LDCMWinc1^LDCMWinc2^LDCMWinc3^LDCMWinc4^LDCMWinc5^LDCMWi
         build LDCMWinc0;
 }
 
-LDCMWHcommon: LDCMWinc8^LDCMWinc9^LDCMWinc10^LDCMWinc11^LDCMWinc12^LDCMWinc13^LDCMWinc14^LDCMWinc15 is 
+LDCMWHcommon: LDCMWinc8^LDCMWinc9^LDCMWinc10^LDCMWinc11^LDCMWinc12^LDCMWinc13^LDCMWinc14^LDCMWinc15 is
 	LDCMWinc8 & LDCMWinc9 & LDCMWinc10 & LDCMWinc11 & LDCMWinc12 & LDCMWinc13 & LDCMWinc14 & LDCMWinc15
 {
         build LDCMWinc15;
@@ -224,7 +224,7 @@ STCMDdec2:    is eb2=0  { }
 STCMDdec1:    is eb1=0  { }
 STCMDdec0:    is eb0=0  { }
 
-STCMDcommon: STCMDdec0^STCMDdec1^STCMDdec2^STCMDdec3^STCMDdec4^STCMDdec5^STCMDdec6^STCMDdec7 is 
+STCMDcommon: STCMDdec0^STCMDdec1^STCMDdec2^STCMDdec3^STCMDdec4^STCMDdec5^STCMDdec6^STCMDdec7 is
 	STCMDdec0 & STCMDdec1 & STCMDdec2 & STCMDdec3 & STCMDdec4 & STCMDdec5 & STCMDdec6 & STCMDdec7
 {
         build STCMDdec0;
@@ -237,7 +237,7 @@ STCMDcommon: STCMDdec0^STCMDdec1^STCMDdec2^STCMDdec3^STCMDdec4^STCMDdec5^STCMDde
         build STCMDdec7;
 }
 
-STCMWLcommon: STCMWdec0^STCMWdec1^STCMWdec2^STCMWdec3^STCMWdec4^STCMWdec5^STCMWdec6^STCMWdec7 is 
+STCMWLcommon: STCMWdec0^STCMWdec1^STCMWdec2^STCMWdec3^STCMWdec4^STCMWdec5^STCMWdec6^STCMWdec7 is
 	STCMWdec0 & STCMWdec1 & STCMWdec2 & STCMWdec3 & STCMWdec4 & STCMWdec5 & STCMWdec6 & STCMWdec7
 {
         build STCMWdec0;
@@ -250,7 +250,7 @@ STCMWLcommon: STCMWdec0^STCMWdec1^STCMWdec2^STCMWdec3^STCMWdec4^STCMWdec5^STCMWd
         build STCMWdec7;
 }
 
-STCMWHcommon: STCMWdec8^STCMWdec9^STCMWdec10^STCMWdec11^STCMWdec12^STCMWdec13^STCMWdec14^STCMWdec15 is 
+STCMWHcommon: STCMWdec8^STCMWdec9^STCMWdec10^STCMWdec11^STCMWdec12^STCMWdec13^STCMWdec14^STCMWdec15 is
 	STCMWdec8 & STCMWdec9 & STCMWdec10 & STCMWdec11 & STCMWdec12 & STCMWdec13 & STCMWdec14 & STCMWdec15
 {
         build STCMWdec8;
@@ -267,9 +267,9 @@ STCMWHcommon: STCMWdec8^STCMWdec9^STCMWdec10^STCMWdec11^STCMWdec12^STCMWdec13^ST
 STCMmm:      is rd0 ; eb12=0      { }
 STCMmm: "--" is rd0 ; eb12=1      { rd0 = ldadd; }
 
-:COP COPD,CRD,CRX,CRY,ctx_coop	is op11_5=0x1c & op4_5=0x1a & op9_2 & op0_4 & ctx_coop; 
+:COP COPD,CRD,CRX,CRY,ctx_coop	is op11_5=0x1c & op4_5=0x1a & op9_2 & op0_4 & ctx_coop;
 								eop12_1 & COPD & CRD & CRX & CRY [ctx_cohi = op9_2; ctx_comid = op0_4; ctx_colow = eop12_1;] {
-	tmp:1 = ctx_coop;							
+	tmp:1 = ctx_coop;
 	CoprocessorOp(COPD,CRD,CRX,CRY,tmp);
 }
 
@@ -282,7 +282,7 @@ STCMmm: "--" is rd0 ; eb12=1      { rd0 = ldadd; }
 
 :LDC.D COPD,CRD,RPwDisp8 is (op4_12=0xe9a;
                                  eop12_1=0x1 & crd8_1=0x0 & COPD & CRD)
-                                 & RPwDisp8 { 
+                                 & RPwDisp8 {
 	loadCoprocessorDWord(COPD, CRD, RPwDisp8);
 }
 
@@ -386,7 +386,7 @@ STCMmm: "--" is rd0 ; eb12=1      { rd0 = ldadd; }
 
 :STC.D COPD,RPwDisp8,CRD is (op4_12=0xeba;
                                  eop12_1=0x1 & crd8_1=0x0 & COPD & CRD)
-                                 & RPwDisp8 { 
+                                 & RPwDisp8 {
 	storeCoprocessorDword(COPD, CRD, RPwDisp8);
 }
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class OmfIteratedData extends OmfRecord implements OmfData {
 		datablock = new DataBlock[blocklist.size()];
 		blocklist.toArray(datablock);
 	}
-	
+
 	public int getSegmentIndex() {
 		return segmentIndex;
 	}
@@ -99,7 +99,7 @@ public class OmfIteratedData extends OmfRecord implements OmfData {
 		private int blockCount;
 		private byte[] simpleBlock = null;
 		private DataBlock[] nestedBlock = null;
-		
+
 		public static DataBlock read(BinaryReader reader,boolean hasBigFields) throws IOException {
 			DataBlock subblock = new DataBlock();
 			subblock.repeatCount = OmfRecord.readInt2Or4(reader, hasBigFields);

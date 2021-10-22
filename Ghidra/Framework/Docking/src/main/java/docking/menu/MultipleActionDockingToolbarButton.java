@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -80,7 +80,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 	 * method will effectively let the user click anywhere on the button or its drop-down arrow
 	 * to show the popup menu.  During normal operation, the user can only show the popup by
 	 * clicking the drop-down arrow.
-	 * 
+	 *
 	 * @param performActionOnButtonClick true to perform the action when the button is clicked
 	 */
 	public void setPerformActionOnButtonClick(boolean performActionOnButtonClick) {
@@ -161,7 +161,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 		return manager.getActiveComponentProvider();
 	}
 
-	/** 
+	/**
 	 * Show a popup containing all the actions below the button
 	 * @param listener for the created popup menu
 	 * @return the popup menu that was shown
@@ -286,7 +286,7 @@ public class MultipleActionDockingToolbarButton extends EmptyBorderButton {
 	private class PopupMouseListener extends MouseAdapter implements PopupMenuListener {
 		private final MouseListener[] parentListeners;
 		private JPopupMenu popupMenu;
-		private long actionID = 0; // used to determine when the popup was closed by clicking the button 
+		private long actionID = 0; // used to determine when the popup was closed by clicking the button
 
 		public PopupMouseListener(MouseListener[] parentListeners) {
 			this.parentListeners = parentListeners;

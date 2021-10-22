@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.util.xml.XmlUtilities;
  * Note: this class should be created along with a GroupedFunctionGraphVertex, as the info
  * needed by this class is still available then.  To create this class later will result in
  * missing information (for example, edges get removed when vertices are grouped and this info
- * object will collect edge information, but cannot do so if they have been removed from the 
+ * object will collect edge information, but cannot do so if they have been removed from the
  * graph).
  */
 class GroupedVertexInfo extends VertexInfo {
@@ -147,10 +147,10 @@ class GroupedVertexInfo extends VertexInfo {
 	}
 
 	/**
-	 * Locates a vertex for the given info <b>without creating that vertex</b>.  This is in 
+	 * Locates a vertex for the given info <b>without creating that vertex</b>.  This is in
 	 * contrast to {@link #getVertex(FGController, Map)}, which will create a vertex
 	 * (and supporting vertices if it is a group).
-	 * 
+	 *
 	 * @param controller the controller of the current graph
 	 * @param vertexMap a mapping of hashed addresses to vertices (creating this upfront is more
 	 *        efficient when using it over different {@link GroupedVertexInfo} instances.
@@ -163,7 +163,7 @@ class GroupedVertexInfo extends VertexInfo {
 	@Override
 	FGVertex getVertex(FGController controller, Map<AddressHasher, FGVertex> vertexMap) {
 
-// 7937:D - when we can't find a grouped vertex after restoring from XML, do we give 
+// 7937:D - when we can't find a grouped vertex after restoring from XML, do we give
 //		             up completely?  Do we just ignore that vertex and keep grouping others?
 
 		//
@@ -248,8 +248,8 @@ class GroupedVertexInfo extends VertexInfo {
 			return vertex;
 		}
 
-		// Make sure this vertex is added to the graph.  We have to do this here, as 
-		// this method getVertex() is recursive and we cannot build-up the edges of 
+		// Make sure this vertex is added to the graph.  We have to do this here, as
+		// this method getVertex() is recursive and we cannot build-up the edges of
 		// lower-level grouped nodes if they have never been added to the graph.
 		boolean installed =
 			controller.installGroupVertex((GroupedFunctionGraphVertex) vertex, location);

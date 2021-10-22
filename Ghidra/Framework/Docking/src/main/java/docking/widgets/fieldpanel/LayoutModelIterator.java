@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class LayoutModelIterator implements Iterator<Layout> {
 
 	/**
 	 * Returns the LayoutModel index of the item that was just returned via {@link #next()}.
-	 * 
+	 *
 	 * @return index of the last Layout item returned.
 	 */
 	public BigInteger getIndex() {
@@ -48,7 +48,7 @@ public class LayoutModelIterator implements Iterator<Layout> {
 
 	/**
 	 * Returns the LayoutModel index of the next item that will be returned via {@link #next()}.
-	 * 
+	 *
 	 * @return index of the next Layout item returned, or null if no additional items are present
 	 */
 	public BigInteger getNextIndex() {
@@ -57,7 +57,7 @@ public class LayoutModelIterator implements Iterator<Layout> {
 
 	/**
 	 * Returns the LayoutModel index of the previous item that was returned via {@link #next()}.
-	 * 
+	 *
 	 * @return index of the previous Layout item returned, or null if this iterator hasn't been
 	 * used yet.
 	 */

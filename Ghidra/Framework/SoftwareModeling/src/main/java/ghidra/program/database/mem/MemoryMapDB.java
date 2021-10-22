@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -147,13 +147,13 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Update the <code>allInitializedAddrSet</code> and <code>initializedLoadedAddrSet</code>
-	 * with relevant initialized addresses from the specified memory block.  If block is not 
-	 * a mapped-block and it may be a source to existing mapped-blocks then 
+	 * with relevant initialized addresses from the specified memory block.  If block is not
+	 * a mapped-block and it may be a source to existing mapped-blocks then
 	 * <code>scanAllMappedBlocksIfNeeded</code> should be passed as <code>true</code> unless
 	 * all mapped blocks will be processed separately.
 	 * @param block memory block
 	 * @param scanAllMappedBlocksIfNeeded if true and block is initialized and not a mapped block all
-	 * mapped blocks will be processed for possible introduction of newly initialized mapped regions. 
+	 * mapped blocks will be processed for possible introduction of newly initialized mapped regions.
 	 */
 	private void addBlockAddresses(MemoryBlockDB block, boolean scanAllMappedBlocksIfNeeded) {
 		AddressSet blockSet = new AddressSet(block.getStart(), block.getEnd());
@@ -193,7 +193,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 	}
 
 	/**
-	 * Update initialized address set for those mapped blocks which map onto the 
+	 * Update initialized address set for those mapped blocks which map onto the
 	 * specified block which has just completed a transition of its' initialized state.
 	 * @param block block whose initialized state has changed
 	 * @param isInitialized true if block transitioned from uninitialized to initialized,
@@ -331,7 +331,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 				throw new MemoryAccessException(block.getName() + " does not contain range " +
 					start.toString(true) + "-" + endAddr);
 			}
-			
+
 			if (block.isMapped()) {
 				checkMemoryWriteMappedBlock(block, start, endAddr);
 			}
@@ -368,7 +368,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			mappedEndAddress =
 				byteMappingScheme.getMappedSourceAddress(mappedRangeMinAddr, endOffset);
 		}
-		
+
 		for (MemoryBlockDB b : getBlocks(mappedStartAddress, mappedEndAddress)) {
 			Address minAddr = Address.min(b.getEnd(), mappedEndAddress);
 			Address maxAddr = Address.max(b.getStart(), mappedStartAddress);
@@ -381,9 +381,9 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 			throws MemoryAccessException {
 		// TODO: could contain uninitialized region which is illegal to write to although block.isInitialized
 		// may not be of much help since it reflects the first sub-block only - seems like mixing is a bad idea
-		
+
 		checkRangeForInstructions(start, endAddr);
-		
+
 		// Check all mapped-block address ranges which map onto the range to be modified
 		Collection<MemoryBlockDB> mappedBlocks = nonMappedBlock.getMappedBlocks();
 		if (mappedBlocks != null) {
@@ -1955,7 +1955,7 @@ public class MemoryMapDB implements Memory, ManagerDB, LiveMemoryListener {
 
 	/**
 	 * Converts the given address range back from the source range back to the mapped range.
-	 * NOTE: It is important that the specified mappedSourceRange is restricted to the 
+	 * NOTE: It is important that the specified mappedSourceRange is restricted to the
 	 * mapped source area of the specified mappedBlock.
 	 * @param mappedBlock mapped memory block
 	 * @param mappedSourceRange source range which maps into mappedBlock.

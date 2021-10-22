@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -167,7 +167,7 @@ public class SymbolTreeProvider extends ComponentProviderAdapter {
 			public void mouseClicked(MouseEvent e) {
 
 				// This code serves to perform navigation in  the case that the selection handler
-				// above does not, as is the case when the node is already selected.  This code 
+				// above does not, as is the case when the node is already selected.  This code
 				// will get called on the mouse release, whereas the selection handler gets called
 				// on the mouse pressed.
 				// For now, just attempt to perform the goto.  It may get called twice, but this

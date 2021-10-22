@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -445,7 +445,7 @@ public abstract class PropertySet implements Serializable {
 	/**
 	 * Creates an iterator over all the indexes that have this property within
 	 * the given range.
-	 * 
+	 *
 	 * @param start The start address to search
 	 * @param end The end address to search
 	 * @param atStart indicates if the iterator should begin at the start
@@ -457,7 +457,7 @@ public abstract class PropertySet implements Serializable {
 		return new LongIteratorImpl(this, start, end, atStart);
 	}
 
-	/**  
+	/**
 	 * Returns an iterator over the indices having the given property
 	 * value.
 	 */
@@ -465,7 +465,7 @@ public abstract class PropertySet implements Serializable {
 		return new LongIteratorImpl(this);
 	}
 
-	/** 
+	/**
 	 * Returns an iterator over the indices having the given property
 	 * value.
 	 * @param start the starting index for the iterator.
@@ -474,7 +474,7 @@ public abstract class PropertySet implements Serializable {
 		return new LongIteratorImpl(this, start, true);
 	}
 
-	/** 
+	/**
 	 * Returns an iterator over the indices having the given property
 	 * value.
 	 * @param start the starting index for the iterator.

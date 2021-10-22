@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,9 +48,9 @@ public class ExecutableTaskStringHandler implements AnnotatedStringHandler {
 
 	private String getDisplayText(String[] text) {
 		//
-		// We currently support two modes of: 3 parameters or 1. The user can leave off the 
-		// executable's parameter and display string OR they can have all three.  
-		// 
+		// We currently support two modes of: 3 parameters or 1. The user can leave off the
+		// executable's parameter and display string OR they can have all three.
+		//
 		if (text.length == 4) {
 			return text[3]; // 4 items means they have display text
 		}

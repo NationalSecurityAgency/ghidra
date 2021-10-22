@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.app.plugin.assembler.sleigh.tree.AssemblyParseNumericToken;
 
 /**
  * A terminal that accepts any numeric value or program label
- * 
+ *
  * The literal may take any form accepted by UNIX strtol() with base=0. By default, the literal is
  * interpreted in base 10, but it may be prefixed such that it's interpreted in an alternative
  * base. With the prefix '0x', it is interpreted in hexadecimal. With the prefix '0', it is
@@ -62,7 +62,7 @@ public class AssemblyNumericTerminal extends AssemblyTerminal {
 
 	/**
 	 * This is only a convenience for testing
-	 * 
+	 *
 	 * Please use {@link #match(String, int, AssemblyGrammar, Map) match(String, int, AssemblyGrammar, Map&lt;String, Long&gt;)}.
 	 * @param buffer the input buffer
 	 * @return the parsed token

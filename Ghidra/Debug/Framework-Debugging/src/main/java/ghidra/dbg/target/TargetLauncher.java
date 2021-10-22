@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
  * An interface which indicates this object is capable of launching targets
- * 
+ *
  * <p>
  * The targets this launcher creates ought to appear in its successors.
  */
@@ -35,12 +35,12 @@ public interface TargetLauncher extends TargetObject {
 
 	/**
 	 * An interface which provides default implementations for command-line launchers
-	 * 
+	 *
 	 * <p>
 	 * This interface should only be used by implementors. It is not necessarily marshalled by
 	 * remote clients. Clients should instead interrogate {@link TargetLauncher} for its supported
 	 * parameters.
-	 * 
+	 *
 	 * <p>
 	 * For the sake of parameter marshalling, the implementation must still set
 	 * {@link TargetMethod#PARAMETERS_ATTRIBUTE_NAME} explicitly, usually in its constructor.
@@ -67,12 +67,12 @@ public interface TargetLauncher extends TargetObject {
 
 		/**
 		 * Launch a target using the given arguments
-		 * 
+		 *
 		 * <p>
 		 * This is mostly applicable to user-space contexts, in which case, this usually means to
 		 * launch a new process with the given arguments, where the first argument is the path to
 		 * the executable image on the target host's file system.
-		 * 
+		 *
 		 * @param args the arguments
 		 * @return a future which completes when the command has been processed
 		 */
@@ -134,7 +134,7 @@ public interface TargetLauncher extends TargetObject {
 
 	/**
 	 * Launch a target using the given arguments
-	 * 
+	 *
 	 * @param args the map of arguments.
 	 * @return a future which completes when the command is completed
 	 */

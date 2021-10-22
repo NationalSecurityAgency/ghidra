@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -152,7 +152,7 @@ public class DemangledDataType extends DemangledType {
 				if (baseType == null || !(baseType instanceof Enum)) {
 
 					if (enumType == null || INT.equals(enumType) || UNSIGNED_INT.equals(enumType)) {
-						// Can't tell how big an enum is, just use the size of a pointer	
+						// Can't tell how big an enum is, just use the size of a pointer
 						dt = new EnumDataType(getDemanglerCategoryPath(name, getNamespace()), name,
 							dataTypeManager.getDataOrganization().getIntegerSize());
 					}
@@ -333,7 +333,7 @@ public class DemangledDataType extends DemangledType {
 	 * Find non-builtin type
 	 * @param dataTypeManager data type manager to be searched
 	 * @param dtName name of data type
-	 * @param namespace namespace associated with dtName or null if not applicable.  If specified, 
+	 * @param namespace namespace associated with dtName or null if not applicable.  If specified,
 	 * a namespace-base category path will be given precedence.
 	 * @return data type if found, otherwise null.
 	 * @see DataTypeUtilities#findDataType(DataTypeManager, ghidra.program.model.symbol.Namespace, String, Class) for similar namespace
@@ -689,7 +689,7 @@ public class DemangledDataType extends DemangledType {
 			}
 		}
 
-		// the order of __ptr64 and __restrict can vary--with fuzzing... 
+		// the order of __ptr64 and __restrict can vary--with fuzzing...
 		// but what is the natural "real symbol" order?
 		if (isPointer64) {
 			buffer.append(SPACE + PTR64);

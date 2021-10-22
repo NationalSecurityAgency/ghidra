@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,10 +48,10 @@ public class CodeUnitTableCellData implements Comparable<CodeUnitTableCellData> 
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param location the location of the code unit to display
 	 * @param codeUnitFormat the format needed to render the code unit
-	 * @param codeUnitOffset relative code-unit offset from the specified address 
+	 * @param codeUnitOffset relative code-unit offset from the specified address
 	 * 		   (this is not a byte-offset, it is expressed in terms of number of code-units).
 	 * @param codeUnitCount number of code-units to be displayed
 	 */
@@ -85,9 +85,9 @@ public class CodeUnitTableCellData implements Comparable<CodeUnitTableCellData> 
 	}
 
 	/**
-	 * Get the visual representation for the code unit at or containing the address 
+	 * Get the visual representation for the code unit at or containing the address
 	 * associated with this cell's row
-	 * 
+	 *
 	 * @return the display string
 	 */
 	public String getDisplayString() {
@@ -99,9 +99,9 @@ public class CodeUnitTableCellData implements Comparable<CodeUnitTableCellData> 
 	}
 
 	/**
-	 * Get the visual representation as HTML for the code unit at or containing the 
+	 * Get the visual representation as HTML for the code unit at or containing the
 	 * address associated with this cell's row
-	 * 
+	 *
 	 * @return the display string
 	 */
 	public String getHTMLDisplayString() {

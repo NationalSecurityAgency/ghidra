@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,11 +60,11 @@ public interface RowObjectFilterModel<ROW_OBJECT> extends RowObjectTableModel<RO
 	 * Returns the view index of the given item.  When filtered, this is the index is the smaller,
 	 * visible set of data; when unfiltered, this index is the same as that returned by
 	 * {@link #getModelIndex(Object)}.
-	 * 
-	 * <p>This operation will be O(n) unless the implementation is sorted, in which case the 
+	 *
+	 * <p>This operation will be O(n) unless the implementation is sorted, in which case the
 	 * operation is O(log n), as it uses a binary search.
-	 * 
-	 * @param t the item 
+	 *
+	 * @param t the item
 	 * @return the view index
 	 */
 	public int getViewIndex(ROW_OBJECT t);
@@ -73,11 +73,11 @@ public interface RowObjectFilterModel<ROW_OBJECT> extends RowObjectTableModel<RO
 	 * Returns the model index of the given item.  When filtered, this is the index is the larger,
 	 * set of data; when unfiltered, this index is the same as that returned by
 	 * {@link #getModelIndex(Object)}.
-	 * 
-	 * <p>This operation will be O(n) unless the implementation is sorted, in which case the 
+	 *
+	 * <p>This operation will be O(n) unless the implementation is sorted, in which case the
 	 * operation is O(log n), as it uses a binary search.
-	 * 
-	 * @param t the item 
+	 *
+	 * @param t the item
 	 * @return the model index
 	 */
 	public int getModelIndex(ROW_OBJECT t);

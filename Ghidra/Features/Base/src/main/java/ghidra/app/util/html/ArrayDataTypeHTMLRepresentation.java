@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -177,19 +177,19 @@ public class ArrayDataTypeHTMLRepresentation extends HTMLDataTypeRepresentation 
 		Array otherArray = other.array;
 		if (!array.isEquivalent(otherArray)) {
 			//
-			// Note: this is not great--just marking the entire body as different.  It would 
-			//       be nicer to mark the differences line-by-line.  The issue 
+			// Note: this is not great--just marking the entire body as different.  It would
+			//       be nicer to mark the differences line-by-line.  The issue
 			//       is that we do not know what type composes the body of the array, as it can
-			//       be any type.  If we ever care about diffing arrays/pointers and such, 
+			//       be any type.  If we ever care about diffing arrays/pointers and such,
 			//       down through all of the types (and I don't think we will), then this entire
-			//       API needs to be rewritten.  The desired API would create a tree-like 
-			//       structure of objects (as opposed to HTML strings), which can give our 
+			//       API needs to be rewritten.  The desired API would create a tree-like
+			//       structure of objects (as opposed to HTML strings), which can give our
 			//       body parts (header, body, footer), which can then be decorated via HTML
-			//       as needed by the parent nodes.  Right now all we can do is ask the child 
-			//       'representation' for its HTML.  This limits how we style the display of 
-			//       each representation.  In the end, this API is not used much and is a 
-			//       simple tool for showing data type differences, usually for two objects 
-			//       that are the same data type, thus only showing minor differences.  This 
+			//       as needed by the parent nodes.  Right now all we can do is ask the child
+			//       'representation' for its HTML.  This limits how we style the display of
+			//       each representation.  In the end, this API is not used much and is a
+			//       simple tool for showing data type differences, usually for two objects
+			//       that are the same data type, thus only showing minor differences.  This
 			//       API mostly works for that.
 			//
 			body = wrapStringInColorUsingDiv(body, DIFF_COLOR);

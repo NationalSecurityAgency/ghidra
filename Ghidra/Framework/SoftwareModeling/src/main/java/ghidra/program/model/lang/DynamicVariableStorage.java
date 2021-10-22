@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,11 +21,11 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.util.exception.InvalidInputException;
 
 public class DynamicVariableStorage extends VariableStorage {
-	
+
 	private AutoParameterType autoParamType;
 	private boolean forcedIndirect;
 	private boolean isUnassigned = false;
-	
+
 	/**
 	 * Construct Unassigned dynamic variable storage with an optional auto-parameter type
 	 * @param autoParamType auto-parameter type or null if not applicable
@@ -35,11 +35,11 @@ public class DynamicVariableStorage extends VariableStorage {
 		this.autoParamType = autoParamType;
 		isUnassigned = true;
 	}
-	
+
 	/**
 	 * Construct dynamic variable storage
 	 * @param program
-	 * @param forcedIndirect if true indicates that the parameter has been forced to pass 
+	 * @param forcedIndirect if true indicates that the parameter has been forced to pass
 	 * as a pointer instead of its raw type
 	 */
 	private DynamicVariableStorage(boolean forcedIndirect) {
@@ -47,7 +47,7 @@ public class DynamicVariableStorage extends VariableStorage {
 		this.forcedIndirect = forcedIndirect;
 		isUnassigned = true;
 	}
-	
+
 	/**
 	 * Construct dynamic variable storage with an optional auto-parameter type
 	 * @param program
@@ -78,7 +78,7 @@ public class DynamicVariableStorage extends VariableStorage {
 	/**
 	 * Construct dynamic variable storage
 	 * @param program
-	 * @param forcedIndirect if true indicates that the parameter has been forced to pass 
+	 * @param forcedIndirect if true indicates that the parameter has been forced to pass
 	 * as a pointer instead of its raw type
 	 * @param address varnode address
 	 * @param size varnode size
@@ -93,7 +93,7 @@ public class DynamicVariableStorage extends VariableStorage {
 	/**
 	 * Construct dynamic variable storage
 	 * @param program
-	 * @param forcedIndirect if true indicates that the parameter has been forced to pass 
+	 * @param forcedIndirect if true indicates that the parameter has been forced to pass
 	 * as a pointer instead of its raw type
 	 * @param varnodes one or more ordered storage varnodes
 	 * @throws InvalidInputException if specified varnodes violate storage restrictions
@@ -135,7 +135,7 @@ public class DynamicVariableStorage extends VariableStorage {
 		}
 		return str;
 	}
-	
+
 	/**
 	 * Construct Unassigned dynamic variable storage with an optional auto-parameter type.
 	 * NOTE: The {@link #isUnassignedStorage()} method should be used to
@@ -145,12 +145,12 @@ public class DynamicVariableStorage extends VariableStorage {
 	public static DynamicVariableStorage getUnassignedDynamicStorage(AutoParameterType autoParamType) {
 		return new DynamicVariableStorage(autoParamType);
 	}
-	
+
 	/**
 	 * Construct Unassigned dynamic variable storage.
 	 * NOTE: The {@link #isUnassignedStorage()} method should be used to
 	 * detect this type of storage.
-	 * @param forcedIndirect if true indicates that the parameter has been forced to pass 
+	 * @param forcedIndirect if true indicates that the parameter has been forced to pass
 	 * as a pointer instead of its raw type
 	 */
 	public static DynamicVariableStorage getUnassignedDynamicStorage(boolean forcedIndirect) {

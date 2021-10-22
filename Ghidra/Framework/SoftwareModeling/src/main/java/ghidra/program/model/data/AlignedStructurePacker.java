@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import java.util.List;
  * <code>AlignedStructurePacker</code> provides support for performing aligned packing
  * of Structure components.
  * <p>
- * NOTE: We currently have no way of conveying or supporting explicit bitfield component pragmas 
+ * NOTE: We currently have no way of conveying or supporting explicit bitfield component pragmas
  * supported by some compilers (e.g., bit_field_size, bit_field_align, bit_packing).
  */
 public class AlignedStructurePacker {
@@ -120,8 +120,8 @@ public class AlignedStructurePacker {
 	}
 
 	/**
-	 * Perform structure component packing.  Specified components may be updated to reflect 
-	 * packing (ordinal, offset, length and bit-field datatypes may be modified).  The caller 
+	 * Perform structure component packing.  Specified components may be updated to reflect
+	 * packing (ordinal, offset, length and bit-field datatypes may be modified).  The caller
 	 * is responsible for updating structure length and component count based upon
 	 * returned result.  Component count is should only change if component
 	 * list includes DEFAULT members which will be ignored.

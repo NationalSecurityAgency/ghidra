@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,13 +27,13 @@ public interface DisassemblerContext extends ProcessorContext {
 	 * <br>
 	 * When <code>value</code> has conflicting bits with the previously
 	 * saved value, <code>value</code> will take precedence.
-	 * <br> 
-	 * If the register value is the value for the 
+	 * <br>
+	 * If the register value is the value for the
 	 * processor context register and a previously saved
-	 * value does not exist, the user saved values in the 
+	 * value does not exist, the user saved values in the
 	 * stored context of the program will be used as existing
 	 * value.
-	 * 
+	 *
 	 * @param address  the address to store the register value
 	 * @param value    the register value to store at the address
 	 */
@@ -46,13 +46,13 @@ public interface DisassemblerContext extends ProcessorContext {
 	 * <br>
 	 * When <code>value</code> has conflicting bits with the previously
 	 * saved value, <code>value</code> will take precedence.
-	 * <br> 
-	 * If the register value is the value for the 
+	 * <br>
+	 * If the register value is the value for the
 	 * processor context register and a previously saved
-	 * value does not exist, the user saved values in the 
+	 * value does not exist, the user saved values in the
 	 * stored context of the program will be used as existing
 	 * value.
-	 * 
+	 *
 	 * @param fromAddr the address this value if flowing from
 	 * @param toAddr   the address to store the register value
 	 * @param value    the register value to store at the address

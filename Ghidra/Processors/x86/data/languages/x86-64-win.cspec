@@ -31,7 +31,7 @@
      	  <use_MS_convention value="true"/>
      </bitfield_packing>
   </data_organization>
-  
+
   <global>
     <range space="ram"/>
   </global>

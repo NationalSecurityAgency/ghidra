@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -124,9 +124,9 @@ public class LoaderInfoHeader implements StructConverter {
 	}
 
 	/**
-	 * The mainSection field (4 bytes) specifies the number 
-	 * of the section in this container that contains the main 
-	 * symbol. If the fragment does not have a main symbol, 
+	 * The mainSection field (4 bytes) specifies the number
+	 * of the section in this container that contains the main
+	 * symbol. If the fragment does not have a main symbol,
 	 * this field is set to -1.
 	 * @return number of section containing main symbol
 	 */
@@ -134,7 +134,7 @@ public class LoaderInfoHeader implements StructConverter {
 		return mainSection;
 	}
 	/**
-	 * The mainOffset field (4 bytes) indicates the offset (in bytes) from the 
+	 * The mainOffset field (4 bytes) indicates the offset (in bytes) from the
 	 * beginning of the section to the main symbol.
 	 * @return offset to the main symbol
 	 */
@@ -142,8 +142,8 @@ public class LoaderInfoHeader implements StructConverter {
 		return mainOffset;
 	}
 	/**
-	 * The initSection field (4 bytes) contains the number of the 
-	 * section containing the initialization function's transition 
+	 * The initSection field (4 bytes) contains the number of the
+	 * section containing the initialization function's transition
 	 * vector. If no initialization function exists, this field is set to -1.
 	 * @return  number of the section containing the initialization function's transition vector
 	 */
@@ -151,7 +151,7 @@ public class LoaderInfoHeader implements StructConverter {
 		return initSection;
 	}
 	/**
-	 * The initOffset field (4 bytes) indicates the offset (in bytes) from the 
+	 * The initOffset field (4 bytes) indicates the offset (in bytes) from the
 	 * beginning of the section to the initialization function's transition vector.
 	 * @return offset to initialization function's transition vector
 	 */
@@ -159,8 +159,8 @@ public class LoaderInfoHeader implements StructConverter {
 		return initOffset;
 	}
 	/**
-	 * The termSection field (4 bytes) contains the number of the section containing 
-	 * the termination routine's transition vector. If no termination routine exists, 
+	 * The termSection field (4 bytes) contains the number of the section containing
+	 * the termination routine's transition vector. If no termination routine exists,
 	 * this field is set to -1.
 	 * @return number of the section containing the termination routine's transition vector
 	 */
@@ -168,8 +168,8 @@ public class LoaderInfoHeader implements StructConverter {
 		return termSection;
 	}
 	/**
-	 * The termOffset field (4 bytes) indicates the offset 
-	 * (in bytes) from the beginning of the section to the termination routine's 
+	 * The termOffset field (4 bytes) indicates the offset
+	 * (in bytes) from the beginning of the section to the termination routine's
 	 * transition vector.
 	 * @return offset to termination routine's transition vector
 	 */
@@ -177,7 +177,7 @@ public class LoaderInfoHeader implements StructConverter {
 		return termOffset;
 	}
 	/**
-	 * The importedLibraryCount field (4 bytes) indicates the 
+	 * The importedLibraryCount field (4 bytes) indicates the
 	 * number of imported libraries.
 	 * @return number of imported libraries
 	 */
@@ -185,7 +185,7 @@ public class LoaderInfoHeader implements StructConverter {
 		return importedLibraryCount;
 	}
 	/**
-	 * The totalImportedSymbolCount field (4 bytes) 
+	 * The totalImportedSymbolCount field (4 bytes)
 	 * indicates the total number of imported symbols.
 	 * @return number of imported symbols
 	 */
@@ -193,7 +193,7 @@ public class LoaderInfoHeader implements StructConverter {
 		return totalImportedSymbolCount;
 	}
 	/**
-	 * The relocSectionCount field (4 bytes) indicates the 
+	 * The relocSectionCount field (4 bytes) indicates the
 	 * number of sections containing load-time relocations.
 	 * @return number of sections containing load-time relocations
 	 */
@@ -201,7 +201,7 @@ public class LoaderInfoHeader implements StructConverter {
 		return relocSectionCount;
 	}
 	/**
-	 * The relocInstrOffset field (4 bytes) indicates the offset (in bytes) from the 
+	 * The relocInstrOffset field (4 bytes) indicates the offset (in bytes) from the
 	 * beginning of the loader section to the start of the relocations area.
 	 * @return offset to the relocations
 	 */
@@ -209,8 +209,8 @@ public class LoaderInfoHeader implements StructConverter {
 		return relocInstrOffset;
 	}
 	/**
-	 * The loaderStringsOffset field (4 bytes) indicates the offset 
-	 * (in bytes) from the beginning of the loader 
+	 * The loaderStringsOffset field (4 bytes) indicates the offset
+	 * (in bytes) from the beginning of the loader
 	 * section to the start of the loader string table.
 	 * @return offset to the loader string table
 	 */
@@ -218,9 +218,9 @@ public class LoaderInfoHeader implements StructConverter {
 		return loaderStringsOffset;
 	}
 	/**
-	 * The exportHashOffset field (4 bytes) indicates the offset 
-	 * (in bytes) from the beginning of the loader section 
-	 * to the start of the export hash table. The hash table should be 4-byte aligned 
+	 * The exportHashOffset field (4 bytes) indicates the offset
+	 * (in bytes) from the beginning of the loader section
+	 * to the start of the export hash table. The hash table should be 4-byte aligned
 	 * with padding added if necessary.
 	 * @return offset to the export hash table
 	 */
@@ -228,11 +228,11 @@ public class LoaderInfoHeader implements StructConverter {
 		return exportHashOffset;
 	}
 	/**
-	 * The exportHashTablePower field (4 bytes) indicates the 
-	 * number of hash index values (that is, the number of entries in the 
-	 * hash table). The number of entries is specified as a power of two. For example, 
-	 * a value of 0 indicates one entry, while a value of 2 indicates four entries. If 
-	 * no exports exist, the hash table still contains one entry, and the value of this 
+	 * The exportHashTablePower field (4 bytes) indicates the
+	 * number of hash index values (that is, the number of entries in the
+	 * hash table). The number of entries is specified as a power of two. For example,
+	 * a value of 0 indicates one entry, while a value of 2 indicates four entries. If
+	 * no exports exist, the hash table still contains one entry, and the value of this
 	 * field is 0.
 	 * @return number of hash index values
 	 */
@@ -240,7 +240,7 @@ public class LoaderInfoHeader implements StructConverter {
 		return exportHashTablePower;
 	}
 	/**
-	 * The exportedSymbolCount field (4 bytes) indicates the number of 
+	 * The exportedSymbolCount field (4 bytes) indicates the number of
 	 * symbols exported from this container.
 	 * @return number of symbols exported from this container
 	 */

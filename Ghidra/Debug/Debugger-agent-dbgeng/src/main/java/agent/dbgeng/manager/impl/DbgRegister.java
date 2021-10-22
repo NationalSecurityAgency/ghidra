@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ public class DbgRegister implements Comparable<DbgRegister> {
 
 	/**
 	 * Construct a new register descriptor
-	 * 
+	 *
 	 * @param name the register's name
 	 * @param number the dbgeng-assigned register number
 	 * @param size the size in bytes
@@ -45,7 +45,7 @@ public class DbgRegister implements Comparable<DbgRegister> {
 
 	/**
 	 * Get the register's name
-	 * 
+	 *
 	 * @return the name
 	 */
 	public String getName() {
@@ -54,7 +54,7 @@ public class DbgRegister implements Comparable<DbgRegister> {
 
 	/**
 	 * Get the register's Dbg-assigned number
-	 * 
+	 *
 	 * @return the number
 	 */
 	public int getNumber() {
@@ -63,7 +63,7 @@ public class DbgRegister implements Comparable<DbgRegister> {
 
 	/**
 	 * Get the register's size in bytes
-	 * 
+	 *
 	 * @return the size
 	 */
 	public int getSize() {

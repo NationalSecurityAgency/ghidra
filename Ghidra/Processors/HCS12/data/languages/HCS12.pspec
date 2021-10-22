@@ -5,7 +5,7 @@
 -->
 <processor_spec>
   <programcounter register="PC"/>
-  
+
   <segmentop space="RAM" userop="segment" farpointer="no">
     <pcode>
       <input name="base" size="3"/>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,7 @@ public class VTSessionDB extends DomainObjectAdapterDB implements VTSession, VTC
 	 * database schema associated with any of the adapters.
 	 * 14-Nov-2019 - version 2 - Corrected fixed length indexing implementation causing
 	 *                           change in index table low-level storage for newly
-	 *                           created tables. 
+	 *                           created tables.
 	 */
 	private static final int DB_VERSION = 2;
 

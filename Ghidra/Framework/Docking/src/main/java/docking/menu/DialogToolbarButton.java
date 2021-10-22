@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,8 @@ import docking.EmptyBorderToggleButton;
 import docking.action.*;
 
 /**
- * Toolbar buttons for Dialogs.   
- * 
+ * Toolbar buttons for Dialogs.
+ *
  * <p>This class exists because dialog actions are not added to the regular tool's toolbars.  This
  * means that we have to create the dialog's toolbars outside of the tool.  Thus, this class
  * mimics how the tool's toolbar buttons are created.
@@ -40,7 +40,7 @@ public class DialogToolbarButton extends EmptyBorderToggleButton {
 		addMouseListener(new MouseOverMouseListener());
 		action.addPropertyChangeListener(propertyChangeListener);
 
-		// make sure this button gets our specialized tooltip 
+		// make sure this button gets our specialized tooltip
 		DockingToolBarUtils.setToolTipText(this, dockingAction);
 	}
 
@@ -84,7 +84,7 @@ public class DialogToolbarButton extends EmptyBorderToggleButton {
 
 	@Override
 	// overridden to account for the fact that "special" DockableActions can be either
-	// toggle buttons or regular non-toggle buttons, which dictates whether this 
+	// toggle buttons or regular non-toggle buttons, which dictates whether this
 	// button is selected (non-toggle buttons are not selectable).
 	protected boolean isButtonSelected() {
 		if (dockingAction instanceof ToggleDockingAction) {
@@ -101,7 +101,7 @@ public class DialogToolbarButton extends EmptyBorderToggleButton {
 	// overridden to reflect the potentiality that our action is a toggle action
 	public void setSelected(boolean b) {
 		if (dockingAction instanceof ToggleDockingActionIf) {
-			// only change the state if the action is a toggle action; doing otherwise would 
+			// only change the state if the action is a toggle action; doing otherwise would
 			// break the DockableAction
 			((ToggleDockingActionIf) dockingAction).setSelected(b);
 		}

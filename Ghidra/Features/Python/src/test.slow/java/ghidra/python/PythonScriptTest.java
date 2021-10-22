@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public class PythonScriptTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests that Python scripts are running correctly.
-	 * 
+	 *
 	 * @throws Exception If an exception occurred while trying to run the script.
 	 */
 	@Test
@@ -80,7 +80,7 @@ public class PythonScriptTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Tests that Python scripts are running correctly.
-	 * 
+	 *
 	 * @throws Exception If an exception occurred while trying to run the script.
 	 */
 	@Test
@@ -102,7 +102,7 @@ public class PythonScriptTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Runs the given Python script.
-	 * 
+	 *
 	 * @param scriptFile The Python script to run.
 	 * @return The console output of the script.
 	 * @throws Exception If an exception occurred while trying to run the script.
@@ -115,7 +115,7 @@ public class PythonScriptTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Runs the given Python script with the given initial state.
-	 * 
+	 *
 	 * @param scriptFile The Python script to run.
 	 * @param state The initial state of the script.
 	 * @return The console output of the script.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -77,7 +77,7 @@ public abstract class VertexShape {
 	/**
 	 * Gets the relative amount of margin space to allocate above the label. The default is
 	 * 0.5 which will center the label in the associated shape. A value closer to 0 will move
-	 * the label closer to the top and a value closer to 1 will move the label closer to the 
+	 * the label closer to the top and a value closer to 1 will move the label closer to the
 	 * bottom.
 	 * @return the relative amount of margin space to allocate obove the label.s
 	 */
@@ -88,10 +88,10 @@ public abstract class VertexShape {
 	/**
 	 * Returns the size factor for a shape relative to its label. Shapes are sized based on the
 	 * label of a vertex so that the label can fit inside the shape (mostly). Some subclasses
-	 * will need to override this value to some value > 1 to fit the label in the shape. For 
+	 * will need to override this value to some value > 1 to fit the label in the shape. For
 	 * example, a rectangle shape does not need to be extended because text naturally fits. But
 	 * for a shape like a triangle, its bounding box needs to be bigger so that text doesn't
-	 * "stick out" in the narrow part of the triangle. 
+	 * "stick out" in the narrow part of the triangle.
 	 * @return the size factor for a shape relatvie to its label
 	 */
 	public double getShapeToLabelRatio() {

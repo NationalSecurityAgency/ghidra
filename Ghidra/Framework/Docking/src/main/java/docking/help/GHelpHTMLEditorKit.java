@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,11 +43,11 @@ import utilities.util.FileUtilities;
 
 /**
  * A class that allows Ghidra to intercept JavaHelp navigation events in order to resolve them
- * to Ghidra's help system.  Without this class, contribution plugins have no way of 
+ * to Ghidra's help system.  Without this class, contribution plugins have no way of
  * referencing help documents within Ghidra's default help location.
  * <p>
  * This class is currently installed by the {@link GHelpSet}.
- * 
+ *
  * @see GHelpSet
  */
 public class GHelpHTMLEditorKit extends HTMLEditorKit {
@@ -156,9 +156,9 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		}
 	}
 
-	/** 
+	/**
 	 * Tests the URL of the given event.  If the URL is invalid, a new event may be created if
-	 *  a new, valid URL can be created. Creates a new event with a patched URL if 
+	 *  a new, valid URL can be created. Creates a new event with a patched URL if
 	 *  the given event's URL is invalid.
 	 */
 	private HyperlinkEvent validateURL(HyperlinkEvent event) {
@@ -215,10 +215,10 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		}
 
 		//
-		// The item was not found by the ResourceManager (i.e., it is not in a 'resources' 
+		// The item was not found by the ResourceManager (i.e., it is not in a 'resources'
 		// directory).  See if it may be a relative link to a build's installation root (like
 		// a file in <install dir>/docs).
-		// 
+		//
 		newUrl = findApplicationfile(HREF);
 		return newUrl;
 	}
@@ -234,7 +234,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		}
 
 		try {
-			// put the anchor back into the URL                
+			// put the anchor back into the URL
 			return new URL(anchorlessURL, anchor);
 		}
 		catch (MalformedURLException e) {
@@ -377,7 +377,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class GHelpHTMLFactory extends HTMLFactory {
 		@Override
@@ -404,7 +404,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 	}
 
 	/**
-	 * Overridden to allow us to find images that are defined as constants in places like 
+	 * Overridden to allow us to find images that are defined as constants in places like
 	 * {@link Icons}
 	 */
 	private class GHelpImageView extends ImageView {
@@ -413,22 +413,22 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 		 * 						Unusual Code Alert!
 		 * This class exists to enable our help system to find custom icons defined in source
 		 * code.   The default behavior herein is to supply a URL to the base class to load.  This
-		 * works fine.   
-		 * 
+		 * works fine.
+		 *
 		 * There is another use case where we wish to have the base class load an image of our
 		 * choosing.  Why?  Well, we modify, in memory, some icons we use.  We do this for things
 		 * like overlays and rotations.
-		 * 
+		 *
 		 * In order to have our base class use the image that we want (and not the one
 		 * it loads via a URL), we have to play a small game.   We have to allow the base class
 		 * to load the image it wants, which is done asynchronously.  If we install our custom
 		 * image during that process, the loading will throw away the image and not render
-		 * anything.    
-		 * 
-		 * To get the base class to use our image, we override getImage().  However, we should 
+		 * anything.
+		 *
+		 * To get the base class to use our image, we override getImage().  However, we should
 		 * only return our image when the base class is finished loading.  (See the base class'
 		 * paint() method for why we need to do this.)
-		 * 
+		 *
 		 * Note: if we start seeing unusual behavior, like images not rendering, or any size
 		 * issues, then we can revert this code.
 		 */
@@ -518,7 +518,7 @@ public class GHelpHTMLEditorKit extends HTMLEditorKit {
 				// check below
 			}
 
-			// Try the ResourceManager.  This will work for images that start with GHelp 
+			// Try the ResourceManager.  This will work for images that start with GHelp
 			// relative link syntax such as 'help/', 'help/topics/' and 'images/'
 			URL resource = ResourceManager.getResource(srcString);
 			return resource;

@@ -694,7 +694,7 @@
             <TD valign="top">Conditional jump flow from an instruction<BR>
             </TD>
           </TR>
-          
+
            <TR>
             <TD valign="top"><FONT color="#FF6600">CALL_OVERRIDE_UNCONDITIONAL<BR>
             </FONT></TD>
@@ -711,7 +711,7 @@
             address of the reference. <BR>
             </TD>
           </TR>
-          
+
           <TR>
             <TD valign="top"><FONT color="#FF6600">JUMP_OVERRIDE_UNCONDITIONAL<BR>
             </FONT></TD>
@@ -728,7 +728,7 @@
             address of the reference. <BR>
             </TD>
           </TR>
-          
+
           <TR>
             <TD valign="top"><FONT color="#FF6600">CALLOTHER_OVERRIDE_CALL<BR>
             </FONT></TD>
@@ -739,16 +739,16 @@
             <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
             </FONT></TD>
 
-            <TD valign="top">Used to change CALLOTHER pcode operations to CALL operations. The new call target is the "to" address of the 
-            reference.  The override only takes effect when the reference is primary, and only when there is exactly one primary 
+            <TD valign="top">Used to change CALLOTHER pcode operations to CALL operations. The new call target is the "to" address of the
+            reference.  The override only takes effect when the reference is primary, and only when there is exactly one primary
             CALLOTHER_OVERRIDE_CALL reference at the "from" address of the reference. Only the first CALLOTHER operation at the "from"
-            address of the reference is changed. <EM> Applying this override to instances of a CALLOTHER op that have output is not recommended 
-            and can adversely affect decompilation. </EM>  You can see whether a particular instance has an output by enabling the "PCode" field 
+            address of the reference is changed. <EM> Applying this override to instances of a CALLOTHER op that have output is not recommended
+            and can adversely affect decompilation. </EM>  You can see whether a particular instance has an output by enabling the "PCode" field
             of the Listing. Note that this reference override takes precedence over those of CALLOTHER_OVERRIDE_JUMP
-            references. <BR> 
+            references. <BR>
             </TD>
           </TR>
-          
+
           <TR>
             <TD valign="top"><FONT color="#FF6600">CALLOTHER_OVERRIDE_JUMP<BR>
             </FONT></TD>
@@ -759,14 +759,14 @@
             <TD align="center" valign="top"><FONT color="#FF6600">Flow<BR>
             </FONT></TD>
 
-            <TD valign="top">Used to change CALLOTHER pcode operations to BRANCH operations. The new jump target is the "to" address of the 
-            reference.  The override only takes effect when the reference is primary, and only when there is exactly one primary 
+            <TD valign="top">Used to change CALLOTHER pcode operations to BRANCH operations. The new jump target is the "to" address of the
+            reference.  The override only takes effect when the reference is primary, and only when there is exactly one primary
             CALLOTHER_OVERRIDE_JUMP reference at the "from" address of the reference. Only the first CALLOTHER operation at the "from"
             address of the reference is changed. <EM> Applying this override to an instance of a CALLOTHER op with output is not recommended </EM> (see
             the discussion above about CALLOTHER_OVERRIDE_CALL references).<BR>
             </TD>
           </TR>
-          
+
         </TBODY>
       </TABLE>
     </BLOCKQUOTE>
@@ -927,7 +927,7 @@
             <B><I>Destination</I></B> - Indicates the destination location associated with the
             reference. &nbsp;The destination displayed for each type of reference utilizes a
             different format:<BR>
-             
+
 
             <BLOCKQUOTE>
               <TT>&lt;</TT><I>address</I><TT>&gt;</TT> : indicates a memory destination<BR>
@@ -1145,7 +1145,7 @@
 
     <DIV align="center">
       <IMG src="images/MemRefPanel.png" alt=""><BR>
-       
+
 
       <BLOCKQUOTE>
         <DIV align="left">
@@ -1266,7 +1266,7 @@
         <I>Add Reference</I> or <I>Edit Reference Dialogs</I>:<BR>
         </P>
       </DIV><IMG src="images/StackRefPanel.png" alt=""> &nbsp;<BR>
-       
+
 
       <DIV align="left">
         <BLOCKQUOTE>
@@ -1387,7 +1387,7 @@
       Navigation</A></P>
       </LI>
       </UL>
-      
+
      <BR>
   </BODY>
 </HTML>

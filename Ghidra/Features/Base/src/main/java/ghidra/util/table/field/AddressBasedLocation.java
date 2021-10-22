@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public class AddressBasedLocation implements Comparable<AddressBasedLocation> {
 	/**
 	 * Construction a location. The memory block name will never be included in
 	 * string representation.
-	 * 
+	 *
 	 * @param program program to which address belongs
 	 * @param address address object (VARIABLE addresses should be avoided)
 	 */
@@ -64,10 +64,10 @@ public class AddressBasedLocation implements Comparable<AddressBasedLocation> {
 	 * Construct a location which corresponds to a reference TO address. String
 	 * representation includes support for Offset References and allows control
 	 * over inclusion of memory block name with memory addresses.
-	 * 
+	 *
 	 * @param program program to which address belongs
 	 * @param reference program reference (e.g., memory, stack, register, external)
-	 * @param showBlockName ShowBlockName option for controlling inclusion of memory block 
+	 * @param showBlockName ShowBlockName option for controlling inclusion of memory block
 	 * name with address rendering
 	 */
 	public AddressBasedLocation(Program program, Reference reference, ShowBlockName showBlockName) {
@@ -78,7 +78,7 @@ public class AddressBasedLocation implements Comparable<AddressBasedLocation> {
 
 	/**
 	 * Construct a location with a specific address and representation
-	 * 
+	 *
 	 * @param address address object
 	 * @param representation address/location string representation
 	 */
@@ -215,7 +215,7 @@ public class AddressBasedLocation implements Comparable<AddressBasedLocation> {
 
 	/**
 	 * Determine if location corresponds to a reference destination
-	 * 
+	 *
 	 * @return true if location corresponds to a reference destination
 	 */
 	public boolean isReferenceDestination() {

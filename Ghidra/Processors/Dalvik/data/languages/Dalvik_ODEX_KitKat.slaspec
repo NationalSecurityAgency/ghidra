@@ -21,7 +21,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:iget_volatile registerA4,[registerB4:C_BITS_0_15]  is inst0=0xe3 ; registerA4 & registerB4 ; C_BITS_0_15 
+:iget_volatile registerA4,[registerB4:C_BITS_0_15]  is inst0=0xe3 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	registerA4 = getInstanceFieldVolatile( registerB4, C_BITS_0_15:16 );
 }
@@ -29,7 +29,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:iput_volatile registerA4,[registerB4:C_BITS_0_15]  is inst0=0xe4 ; registerA4 & registerB4 ; C_BITS_0_15 
+:iput_volatile registerA4,[registerB4:C_BITS_0_15]  is inst0=0xe4 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	setInstanceFieldVolatile( registerB4, C_BITS_0_15:16, registerA4 );
 }
@@ -53,7 +53,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:iget_object_volatile registerA4,[registerB4:C_BITS_0_15]  is inst0=0xe7 ; registerA4 & registerB4 ; C_BITS_0_15 
+:iget_object_volatile registerA4,[registerB4:C_BITS_0_15]  is inst0=0xe7 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	registerA4 = getInstanceFieldVolatile( registerB4, C_BITS_0_15:16 );
 }
@@ -61,7 +61,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:iget_wide_volatile registerA4w,[registerB4:C_BITS_0_15]  is inst0=0xe8 ; registerA4w & registerB4 ; C_BITS_0_15 
+:iget_wide_volatile registerA4w,[registerB4:C_BITS_0_15]  is inst0=0xe8 ; registerA4w & registerB4 ; C_BITS_0_15
 {
 	registerA4w = getInstanceFieldVolatile( registerB4, C_BITS_0_15:16 );
 }
@@ -69,7 +69,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:iput_wide_volatile registerA4w,[registerB4:C_BITS_0_15]  is inst0=0xe9 ; registerA4w & registerB4 ; C_BITS_0_15 
+:iput_wide_volatile registerA4w,[registerB4:C_BITS_0_15]  is inst0=0xe9 ; registerA4w & registerB4 ; C_BITS_0_15
 {
 	setInstanceFieldVolatile( registerB4, C_BITS_0_15:16, registerA4w );
 }
@@ -94,7 +94,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-#:iput_byte_quick registerA4,[registerB4:C_BITS_0_15]  is inst0=0xec ; registerA4 & registerB4 ; C_BITS_0_15 
+#:iput_byte_quick registerA4,[registerB4:C_BITS_0_15]  is inst0=0xec ; registerA4 & registerB4 ; C_BITS_0_15
 #{
 #	setInstanceFieldQuick( registerB4, C_BITS_0_15:16, registerA4 );
 #}
@@ -124,7 +124,7 @@
 :execute_inline INLINE,{regParamC} is inst0=0xee ; N_PARAMS=1 & INLINE & regParamC
 {
 	destination:4 = *[ram] ( ( 4 * INLINE:4 ) + 0xe0000000 );
-	call [ destination ];	
+	call [ destination ];
 }
 :execute_inline INLINE,{regParamC,regParamD} is inst0=0xee ; N_PARAMS=2 & INLINE & regParamC & regParamD
 {
@@ -169,7 +169,7 @@
 # :invoke_direct_empty METHOD_INDEX,regParamC is inst0=0xf0 ; N_PARAMS=1 & METHOD_INDEX & regParamC
 # {
 # 	destination:4 = *[ram] ( ( 4 * METHOD_INDEX:4 ) + 0xe0000000 );
-# 	call [ destination ];	
+# 	call [ destination ];
 # }
 # :invoke_direct_empty METHOD_INDEX,regParamC,regParamD is inst0=0xf0 ; N_PARAMS=2 & METHOD_INDEX & regParamC & regParamD
 # {
@@ -209,7 +209,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:iget_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xf2 ; registerA4 & registerB4 ; C_BITS_0_15 
+:iget_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xf2 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	registerA4 = getInstanceFieldQuick( registerB4, C_BITS_0_15:16 );
 }
@@ -217,7 +217,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:iget_wide_quick "field@"^C_BITS_0_15,registerA4w,registerB4   is inst0=0xf3 ; registerA4w & registerB4 ; C_BITS_0_15 
+:iget_wide_quick "field@"^C_BITS_0_15,registerA4w,registerB4   is inst0=0xf3 ; registerA4w & registerB4 ; C_BITS_0_15
 {
 	registerA4w = getInstanceFieldQuick( registerB4, C_BITS_0_15:16 );
 }
@@ -225,7 +225,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:iget_object_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xf4 ; registerA4 & registerB4 ; C_BITS_0_15 
+:iget_object_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xf4 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	registerA4 = getInstanceFieldQuick( registerB4, C_BITS_0_15:16 );
 }
@@ -233,7 +233,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:iput_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xf5 ; registerA4 & registerB4 ; C_BITS_0_15 
+:iput_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xf5 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	setInstanceFieldQuick( registerB4, C_BITS_0_15:16, registerA4 );
 }
@@ -241,7 +241,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:iput_wide_quick "field@"^C_BITS_0_15,registerA4w,registerB4  is inst0=0xf6 ; registerA4w & registerB4 ; C_BITS_0_15 
+:iput_wide_quick "field@"^C_BITS_0_15,registerA4w,registerB4  is inst0=0xf6 ; registerA4w & registerB4 ; C_BITS_0_15
 {
 	setInstanceFieldQuick( registerB4, C_BITS_0_15:16, registerA4w );
 }
@@ -249,7 +249,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:iput_object_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xf7 ; registerA4 & registerB4 ; C_BITS_0_15 
+:iput_object_quick "field@"^C_BITS_0_15,registerA4,registerB4  is inst0=0xf7 ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	setInstanceFieldQuick( registerB4, C_BITS_0_15:16, registerA4 );
 }
@@ -329,7 +329,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:iput_object_volatile registerA4,registerB4,C_BITS_0_15 is inst0=0xfc ; registerA4 & registerB4 ; C_BITS_0_15 
+:iput_object_volatile registerA4,registerB4,C_BITS_0_15 is inst0=0xfc ; registerA4 & registerB4 ; C_BITS_0_15
 {
 	setInstanceFieldVolatile( registerB4, C_BITS_0_15:16, registerA4 );
 }
@@ -337,7 +337,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:sget_object_volatile registerA8,B_BITS_0_15 is inst0=0xfd ; registerA8 ; B_BITS_0_15 
+:sget_object_volatile registerA8,B_BITS_0_15 is inst0=0xfd ; registerA8 ; B_BITS_0_15
 {
 	registerA8 = getStaticFieldVolatile( B_BITS_0_15:16 );
 }
@@ -345,7 +345,7 @@
 #------------------------------------------------------------------------------------
 #------------------------------------------------------------------------------------
 
-:sput_object_volatile registerA8,B_BITS_0_15 is inst0=0xfe ; registerA8 ; B_BITS_0_15 
+:sput_object_volatile registerA8,B_BITS_0_15 is inst0=0xfe ; registerA8 ; B_BITS_0_15
 {
 	setStaticFieldVolatile( B_BITS_0_15:16, registerA8 );
 }

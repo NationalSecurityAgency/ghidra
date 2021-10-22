@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import ghidra.javaclass.format.DescriptorDecoder;
 import ghidra.javaclass.format.constantpool.AbstractConstantPoolInfoJava;
 
 /**
- * 
+ *
  * asymmetry in java - methods passed on stack, read from local variable array
  *
  */
@@ -45,7 +45,7 @@ public class InvokeMethods {
 	/**
 	 * Emits the pcode for an invoke instruction.
 	 * @param pCode is the pcode accumulator
-	 * @param offset - the index of the constant pool element containing a symbolic reference 
+	 * @param offset - the index of the constant pool element containing a symbolic reference
 	 * to a method or a call site specifier.
 	 * @param constantPool - the constant pool
 	 * @param type - the JavaInvocationType of the invocation
@@ -86,7 +86,7 @@ public class InvokeMethods {
 	/**
 	 * Emits the pcode for an invoke instruction.
 	 * @param pCode is the pcode accumulator
-	 * @param offset - the index of the constant pool element containing a symbolic reference 
+	 * @param offset - the index of the constant pool element containing a symbolic reference
 	 * to a method or a call site specifier.
 	 * @param constantPool - the constant pool
 	 */
@@ -125,7 +125,7 @@ public class InvokeMethods {
 	 * @param pCode - the pcode buffer
 	 * @param categories - the list of computational categories on the top of the stack
 	 * @param includeThisPointer - true if the first element on the stack is an implicit this parameter
-	 * @param totalSize - 
+	 * @param totalSize -
 	 */
 	static void emitPcodeToMoveParams(PcodeOpEmitter pCode,
 			List<JavaComputationalCategory> categories, boolean includeThisPointer, int totalSize) {
@@ -164,7 +164,7 @@ public class InvokeMethods {
 	}
 
 	/**
-	 * Emits pcode to assign the result of a cpool op to the call_target register for an invocation. 
+	 * Emits pcode to assign the result of a cpool op to the call_target register for an invocation.
 	 * @param pCode - the pcode buffer
 	 * @param offset - index of the method reference in the constant pool
 	 * @param constantPool - the constant pool

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import utilities.util.FileUtilities;
  * A set of static utilities to facilitate JUnit testing.
  */
 public class TestSuiteUtilities {
-	
+
 	private static final char JAR_FILE_SEPARATOR = '/';
 
 	private static Class<?> TEST_CASE_CLASS = createTestClass();
@@ -40,7 +40,7 @@ public class TestSuiteUtilities {
 			throw new AssertException();
 		}
 	}
-	
+
 	/**
 	 * Build JUnit test suite for the specified package.
 	 * TestSuite includes sub-TestSuites for each sub-package.
@@ -50,7 +50,7 @@ public class TestSuiteUtilities {
 	public static TestSuite getTestSuite(String pkgName) {
 		return getTestSuite(pkgName, true);
 	}
-	
+
 	/**
 	 * Build JUnit test suite for the specified package only.
 	 * @param pkgName the java package name
@@ -59,12 +59,12 @@ public class TestSuiteUtilities {
 	public static TestSuite getPkgTestSuite(String pkgName) {
 		return getTestSuite(pkgName, false);
 	}
-	
+
 	private static TestSuite getTestSuite(String pkgName, boolean recurse) {
-	
+
 		TestSuite suite = new TestSuite();
 		suite.setName("[Package] " + pkgName);
-		
+
 		// Add all TestCases contained within the specified package
 		Iterator<String> iter = getClassNames(pkgName, TEST_CASE_CLASS);
 		while (iter.hasNext()) {
@@ -75,7 +75,7 @@ public class TestSuiteUtilities {
 				System.out.println("Failed to load test case: " + name);
 			}
 		}
-		
+
 		// Recursively add TestSuites associated with sub-packages
 		if (recurse) {
 			iter = getSubPkgNames(pkgName);
@@ -87,17 +87,17 @@ public class TestSuiteUtilities {
 				}
 			}
 		}
-		
-		return suite;	
+
+		return suite;
 	}
-	
+
 	private static boolean hasTests(String pkgName, boolean recurse) {
-	
+
 		// Check for TestCases within the specified package
 		Iterator<String> iter = getClassNames(pkgName, TEST_CASE_CLASS);
-		if (iter.hasNext()) 
+		if (iter.hasNext())
 			return true;
-		
+
 		// Recursively check for TestCases within sub-packages
 		if (recurse) {
 			iter = getSubPkgNames(pkgName);
@@ -107,19 +107,19 @@ public class TestSuiteUtilities {
 					return true;
 			}
 		}
-		
-		return false;	
+
+		return false;
 	}
 
 
     /**
-     * Get all class names within the named package which extend or implement the 
+     * Get all class names within the named package which extend or implement the
      * specified search class.
      * @param pkgName package name
      * @param searchClass base or interface class to search for.
      */
     public static Iterator<String> getClassNames(String pkgName, Class<?> searchClass) {
-        	
+
         HashSet<String> classNames = new HashSet<String>();
 
         String classPath = System.getProperty("java.class.path");
@@ -129,13 +129,13 @@ public class TestSuiteUtilities {
         String javaHome = System.getProperty("java.home");
 
         StringTokenizer st = new StringTokenizer(classPath, File.pathSeparator);
-        
+
         while (st.hasMoreElements()) {
             String path = (String)st.nextElement();
             if (path.startsWith(javaHome)) {
                 continue;
             }
-            
+
             if (path.endsWith(".jar") || path.endsWith(".zip")) {
                 // look for all classes in the class path
                 findClassesInJar(path, pkgName, searchClass, classNames);
@@ -150,9 +150,9 @@ public class TestSuiteUtilities {
         }
         return classNames.iterator();
     }
-    
+
     /**
-     * Find and add to classNames, all classes within the classpath and the specified package 
+     * Find and add to classNames, all classes within the classpath and the specified package
      * which extend or implement the specified searchClass.
      * @param classPath directory path that is from CLASSPATH
      * @param pkgName name of package
@@ -172,12 +172,12 @@ public class TestSuiteUtilities {
             // below when we build the class name to pass to the loader...
             classPath = classPath + File.separator;
         }
-        String pkgPath = pkgName.replace('.', File.separatorChar);	
+        String pkgPath = pkgName.replace('.', File.separatorChar);
         classPath += pkgPath;
 
         File dir = new File(classPath);
         String []names = dir.list();
-        
+
         if (names == null) {
             return; // not a directory
         }
@@ -186,7 +186,7 @@ public class TestSuiteUtilities {
 
             File f = new File(dir, name);
             String filename = f.getAbsolutePath();
-            
+
             if (f.isDirectory() || !filename.endsWith(".class")) {
                 continue;  // file is not a class file
             }
@@ -195,7 +195,7 @@ public class TestSuiteUtilities {
             // a filename so that the system can load it...
             // generate the class name to pass to loadClass(), so
             // use classPath to chop off the part we don't want in the
-            // class name. 
+            // class name.
             //
             String className = createClassName(filename, pkgName, File.separatorChar);
             if (!classNames.contains(className)) {
@@ -214,9 +214,9 @@ public class TestSuiteUtilities {
             }
         }
     }
-    
+
     /**
-     * Find and add to classNames, all classes within a jar file and the specified package 
+     * Find and add to classNames, all classes within a jar file and the specified package
      * which extend or implement the specified searchClass.
      * @param jarFilename jar filename
      * @param pkgName name of package
@@ -287,20 +287,20 @@ public class TestSuiteUtilities {
     }
 
     /**
-     * Return true if c is a derivative of the filter class 
+     * Return true if c is a derivative of the filter class
      * and is not abstract.
      */
     private static boolean isClassOfInterest(Class<?> c, Class<?> searchClass) {
         boolean isAbstract = Modifier.isAbstract(c.getModifiers());
         return searchClass.isAssignableFrom(c) && !isAbstract;
     }
-    
+
     /**
      * Get all potential package names within the named package.
      * @param pkgName package name
      */
     public static Iterator<String> getSubPkgNames(String pkgName) {
-        	
+
         HashSet<String> pkgNames = new HashSet<String>();
 
         String classPath = System.getProperty("java.class.path");
@@ -310,13 +310,13 @@ public class TestSuiteUtilities {
         String javaHome = System.getProperty("java.home");
 
         StringTokenizer st = new StringTokenizer(classPath, File.pathSeparator);
-        
+
         while (st.hasMoreElements()) {
             String path = (String)st.nextElement();
             if (path.startsWith(javaHome)) {
                 continue;
             }
-            
+
             if (path.endsWith(".jar") || path.endsWith(".zip")) {
                 // look for all classes in the class path
                 findPkgsInJar(path, pkgName, pkgNames);
@@ -354,7 +354,7 @@ public class TestSuiteUtilities {
         }
         String pkgPath = pkgName != null ? pkgName.replace('.', File.separatorChar) : "";
         classPath += pkgPath;
-        
+
         String pkgPrefix = pkgName;
         if (pkgName != null && pkgName.length() > 0) {
         		pkgPrefix += '.';
@@ -362,7 +362,7 @@ public class TestSuiteUtilities {
 
         File dir = new File(classPath);
         String[] names = dir.list();
-        
+
         if (names == null) {
             return; // not a directory
         }
@@ -428,7 +428,7 @@ public class TestSuiteUtilities {
 			return;
 		}
 	}
-    
+
     private static final String ALL_TESTS_CODE =
     	"package %PACKAGE%;\n" +
 		"import ghidra.util.TestUtilities;\n" +
@@ -443,9 +443,9 @@ public class TestSuiteUtilities {
 		"		return TestUtilities.getPkgTestSuite(testAll.getClass().getPackage().getName());\n" +
 		"	}\n" +
 		"}\n";
-    
+
     /**
-     * Create the Java source file a JUnit TestSuite which 
+     * Create the Java source file a JUnit TestSuite which
      * includes all TestCases within a package directory.
      * @param baseDir the base package directory
      * @param className the class name
@@ -466,9 +466,9 @@ public class TestSuiteUtilities {
 			}
 		}
     }
-    
+
     /**
-     * Create the Java source file a JUnit TestSuite which 
+     * Create the Java source file a JUnit TestSuite which
      * includes all TestCases within a package directory.
      * @param baseDir
      * @param className
@@ -476,15 +476,15 @@ public class TestSuiteUtilities {
      * @param recurse
      */
     public static int createTestSuites(File baseDir, String className, String pkgName, boolean recurse) throws IOException {
-    	
+
     	int cnt = 0;
-    	
+
     	// Create TestSuite for specified package
     	if (hasTests(pkgName, false)) {
     		createTestSuites(baseDir, className, pkgName);
     		++cnt;
     	}
-    	
+
     	// Recursively create TestSuites for all sub-packages which contain TestCases
 		if (recurse) {
 			Iterator<String> iter = getSubPkgNames(pkgName);
@@ -494,7 +494,7 @@ public class TestSuiteUtilities {
 		}
 		return cnt;
     }
-    
+
     /**
      * Make the directory which corresponds to the specified package.
      * @param baseDir
@@ -513,7 +513,7 @@ public class TestSuiteUtilities {
 	 * Parameter usage:
 	 * <pre>{@literal
 	 *    createAllTests <baseDirPath> <className> <topPackage>
-	 * }</pre>   
+	 * }</pre>
 	 * @param args
 	 */
 	public static void main(String[] args) {

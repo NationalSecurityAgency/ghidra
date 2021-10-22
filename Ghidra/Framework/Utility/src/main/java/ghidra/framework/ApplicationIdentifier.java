@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,10 +38,10 @@ public class ApplicationIdentifier {
 
 	/**
 	 * Creates a new {@link ApplicationIdentifier} object from an {@link ApplicationProperties}.
-	 * 
+	 *
 	 * @param applicationProperties An {@link ApplicationProperties}.
-	 * @throws IllegalArgumentException if required elements from the {@link ApplicationProperties} 
-	 *   were missing or otherwise failed to parse.  The exception's message has more detailed 
+	 * @throws IllegalArgumentException if required elements from the {@link ApplicationProperties}
+	 *   were missing or otherwise failed to parse.  The exception's message has more detailed
 	 *   information about why it failed.
 	 */
 	public ApplicationIdentifier(ApplicationProperties applicationProperties)
@@ -51,7 +51,7 @@ public class ApplicationIdentifier {
 		if (applicationName.isEmpty()) {
 			throw new IllegalArgumentException("Application name is undefined.");
 		}
-		
+
 		applicationVersion = new ApplicationVersion(applicationProperties.getApplicationVersion());
 
 		applicationReleaseName =
@@ -63,9 +63,9 @@ public class ApplicationIdentifier {
 
 	/**
 	 * Creates a new {@link ApplicationIdentifier} object from the given string.
-	 * 
+	 *
 	 * @param identifier An identifier string.
-	 * @throws IllegalArgumentException if the identifier string failed to parse.  The 
+	 * @throws IllegalArgumentException if the identifier string failed to parse.  The
 	 *   exception's message has more detailed information about why it failed.
 	 */
 	public ApplicationIdentifier(String identifier) throws IllegalArgumentException {
@@ -74,7 +74,7 @@ public class ApplicationIdentifier {
 
 	/**
 	 * Gets the application name.
-	 * 
+	 *
 	 * @return The application name.
 	 */
 	public String getApplicationName() {
@@ -83,7 +83,7 @@ public class ApplicationIdentifier {
 
 	/**
 	 * Gets the {@link ApplicationVersion application version}.
-	 * 
+	 *
 	 * @return The {@link ApplicationVersion application version}.
 	 */
 	public ApplicationVersion getApplicationVersion() {
@@ -92,7 +92,7 @@ public class ApplicationIdentifier {
 
 	/**
 	 * Gets the application release name.
-	 * 
+	 *
 	 * @return The application release name.
 	 */
 	public String getApplicationReleaseName() {
@@ -136,9 +136,9 @@ public class ApplicationIdentifier {
 
 	/**
 	 * Parses application identifier components out of the given version string.
-	 * 
+	 *
 	 * @param identifier An identifier string.
-	 * @throws IllegalArgumentException if the identifier string failed to parse.  The 
+	 * @throws IllegalArgumentException if the identifier string failed to parse.  The
 	 *   exception's message has more detailed information about why it failed.
 	 */
 	private void parse(String identifier) throws IllegalArgumentException {

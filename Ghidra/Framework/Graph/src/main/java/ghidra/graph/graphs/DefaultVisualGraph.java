@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,20 +38,20 @@ import ghidra.util.datastruct.WeakSet;
 
 /**
  * A default {@link VisualGraph} that implements basic setup for things like event processing.
- * 
+ *
  * <P>Notes:
  * <UL>
- * 	<LI><U>Selected Vertices and the Focused Vertex</U> - 
- * 		there can be multiple selected vertices, but only a single focused vertex.  
- *      <B>{@link #getSelectedVertices()} will return both 
+ * 	<LI><U>Selected Vertices and the Focused Vertex</U> -
+ * 		there can be multiple selected vertices, but only a single focused vertex.
+ *      <B>{@link #getSelectedVertices()} will return both
  *      the selected vertices or	the focused vertex if there are no vertices selected.</B>
  *  </LI>
  *  <LI>Clicking a single vertex will focus it.  Control-clicking multiple vertices will
  *  		cause them all to be selected, with no focused vertex.
  * 	</LI>
- *  <LI><U>Rendering Edges</U> - edges are rendered with or without articulations if 
- *         they have them.  This is built-in to the default graphing edge renderer.  
- *         Some layouts require custom edge rendering and will provide their own 
+ *  <LI><U>Rendering Edges</U> - edges are rendered with or without articulations if
+ *         they have them.  This is built-in to the default graphing edge renderer.
+ *         Some layouts require custom edge rendering and will provide their own
  *         renderer as needed.
  *  </LI>
  * </UL>
@@ -61,7 +61,7 @@ import ghidra.util.datastruct.WeakSet;
  * @param <E> the edge type
  */
 //@formatter:off
-public abstract class DefaultVisualGraph<V extends VisualVertex, 
+public abstract class DefaultVisualGraph<V extends VisualVertex,
 										 E extends VisualEdge<V>>
 		extends JungDirectedVisualGraph<V, E> {
 //@formatter:on
@@ -164,7 +164,7 @@ public abstract class DefaultVisualGraph<V extends VisualVertex,
 	}
 
 	/*
-	 * We need to set the initial location for each vertex so that the various UI graph 
+	 * We need to set the initial location for each vertex so that the various UI graph
 	 * algorithms can work correctly.
 	 */
 	protected void initializeLocation(V v) {
@@ -181,7 +181,7 @@ public abstract class DefaultVisualGraph<V extends VisualVertex,
 
 	/**
 	 * A convenience method to combine retrieval of in and out edges for the given vertex
-	 * 
+	 *
 	 * @param v the vertex
 	 * @return the edges
 	 */
@@ -195,7 +195,7 @@ public abstract class DefaultVisualGraph<V extends VisualVertex,
 
 	/**
 	 * Returns all edges shared between the two given vertices
-	 * 
+	 *
 	 * @param start the start vertex
 	 * @param end the end vertex
 	 * @return the edges
@@ -272,7 +272,7 @@ public abstract class DefaultVisualGraph<V extends VisualVertex,
 	/**
 	 * Called after one or more vertices have been added.  The callback will happen after
 	 * all additions have taken place.  This is an extension point for subclasses.
-	 * 
+	 *
 	 * @param added the added vertices
 	 */
 	protected void verticesAdded(Collection<V> added) {
@@ -282,7 +282,7 @@ public abstract class DefaultVisualGraph<V extends VisualVertex,
 	/**
 	 * Called after one or more vertices have been removed.  The callback will happen after
 	 * all removals have taken place.  This is an extension point for subclasses.
-	 * 
+	 *
 	 * @param removed the removed vertices
 	 */
 	protected void verticesRemoved(Collection<V> removed) {

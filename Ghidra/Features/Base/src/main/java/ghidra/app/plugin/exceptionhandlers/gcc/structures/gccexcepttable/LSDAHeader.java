@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,11 +30,11 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Defines the bounds of exception unwinding support, within a function, 
+ * Defines the bounds of exception unwinding support, within a function,
  * and unwind procedures.
- * * lpStartAddr is the program address where support begins. This value is 
+ * * lpStartAddr is the program address where support begins. This value is
  *   encoded according to lpStartEncoding.
- * * ttypeAddr is the location-relative program address, encoded per 
+ * * ttypeAddr is the location-relative program address, encoded per
  *   ttypeEncoding, of the associated C++ types table (types of thrown values).
  */
 public class LSDAHeader extends GccAnalysisClass {
@@ -69,7 +69,7 @@ public class LSDAHeader extends GccAnalysisClass {
 
 	/**
 	 * Constructor for the LSDA header which indicates encoding for the LSDA tables.
-	 * <br>Note: The <code>create(Address)</code> method must be called after constructing an 
+	 * <br>Note: The <code>create(Address)</code> method must be called after constructing an
 	 * LSDAHeader to associate it with an address before any of its "get..." methods are called.
 	 * @param monitor task monitor to see if the user has cancelled analysis.
 	 * @param program the program containing this header.
@@ -261,7 +261,7 @@ public class LSDAHeader extends GccAnalysisClass {
 
 	/**
 	 * Gets the next address indicating the address after this LSDA header.
-	 * @return the next address after this LSDA header or null if this LSDA header hasn't been 
+	 * @return the next address after this LSDA header or null if this LSDA header hasn't been
 	 * created at any address yet.
 	 */
 	public Address getNextAddress() {
@@ -325,7 +325,7 @@ public class LSDAHeader extends GccAnalysisClass {
 	}
 
 	/**
-	 * Gets the base address of the type table. The base address is the last byte (maximum address) 
+	 * Gets the base address of the type table. The base address is the last byte (maximum address)
 	 * of the type table. The type table is ordered in reverse.
 	 * @return the type table's base address or <code>Address.NO_ADDRESS</code>
 	 */

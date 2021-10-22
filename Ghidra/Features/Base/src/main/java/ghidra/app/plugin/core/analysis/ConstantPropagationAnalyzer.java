@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -360,12 +360,12 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 
 	/**
 	 * Analyze a single location
-	 * 
+	 *
 	 * @param program - program to analyze
 	 * @param start - location to start flowing constants
 	 * @param set - restriction set of addresses to analyze
 	 * @param monitor - monitor to check canceled
-	 * 
+	 *
 	 * @return - set of addresses actually flowed to
 	 * @throws CancelledException
 	 */
@@ -396,13 +396,13 @@ public class ConstantPropagationAnalyzer extends AbstractAnalyzer {
 		symEval.setStoredRefCheck(checkStoredRefsOption);
 
 		// follow all flows building up context
-		// use context to fill out addresses on certain instructions 
+		// use context to fill out addresses on certain instructions
 		return flowConstants(program, flowStart, flowSet, symEval, monitor);
 	}
 
 	/**
 	 * Actually use the setup evauluator to flow the constants
-	 * 
+	 *
 	 * @param flowStart - address to start flowing at
 	 * @param flowSet - address set to restrict constant flowing to
 	 * @param symEval - symbolic propagator to be used

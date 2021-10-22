@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,14 +21,14 @@ import ghidra.framework.plugintool.Plugin;
 
 /**
  * Provider for a {@link MultiFunctionComparisonPanel}. This differs from the
- * base comparison provider in that it has additional actions that are 
+ * base comparison provider in that it has additional actions that are
  * appropriate for managing multiple comparisons (add, remove, etc...).
  */
 public class MultiFunctionComparisonProvider extends FunctionComparisonProvider {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param plugin the parent plugin
 	 */
 	public MultiFunctionComparisonProvider(Plugin plugin) {
@@ -69,7 +69,7 @@ public class MultiFunctionComparisonProvider extends FunctionComparisonProvider 
 	 * Returns an action that opens a table from which users may select
 	 * functions for comparison. By default this returns an action that will
 	 * open a standard function table, but may be overridden as-needed.
-	 *  
+	 *
 	 * @return the docking action
 	 */
 	protected DockingAction getOpenFunctionTableAction() {

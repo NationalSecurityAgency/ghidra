@@ -172,7 +172,7 @@ macro setParity(in_byte) {
 	tmp =  tmp ^ (tmp >> 2);
 	tmp = (tmp ^ (tmp >> 4)) & 1;
 	$(PV_flag) = (tmp == 0);
-	
+
 #     $(PV_flag) = hasEvenParity(in_byte);
 }
 
@@ -188,25 +188,25 @@ macro ioRead(addr,dest) {
 macro push16(val16) {
 	SP = SP - 2;
 	ptr:$(PTRSIZE) = segment(rBBR,SP);
-	*:2 ptr = val16; 
+	*:2 ptr = val16;
 }
 
 macro pop16(ret16) {
     ptr:$(PTRSIZE) = segment(rBBR,SP);
 	ret16 = *:2 ptr;
-	SP = SP + 2; 
+	SP = SP + 2;
 }
 
 macro push8(val8) {
 	SP = SP - 1;
 	ptr:$(PTRSIZE) = segment(rBBR,SP);
-	*:1 ptr = val8; 
+	*:1 ptr = val8;
 }
 
 macro pop8(ret8) {
     ptr:$(PTRSIZE) = segment(rBBR,SP);
 	ret8 = *:1 ptr;
-	SP = SP + 1; 
+	SP = SP + 1;
 }
 
 macro swap(val16) {
@@ -235,24 +235,24 @@ macro JumpToLoc(off) {
 
 macro push16(val16) {
 	SP = SP - 2;
-	*:2 SP = val16; 
+	*:2 SP = val16;
 }
 
 macro pop16(ret16) {
 	ret16 = *:2 SP;
-	SP = SP + 2; 
+	SP = SP + 2;
 }
 
 macro push8(val8) {
 	SP = SP - 1;
 	ptr:$(PTRSIZE) = SP;
-	*:1 ptr = val8; 
+	*:1 ptr = val8;
 }
 
 macro pop8(ret8) {
     ptr:$(PTRSIZE) = SP;
 	ret8 = *:1 ptr;
-	SP = SP + 1; 
+	SP = SP + 1;
 }
 
 macro swap(val16) {
@@ -386,11 +386,11 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 }
 
 :LD reg3_3,ixMem8   is op0_8=0xdd; op6_2=0x1 & reg3_3 & bits3_3!=0x6 & bits0_3=0x6; ixMem8  {
-	reg3_3 = ixMem8; 
+	reg3_3 = ixMem8;
 }
 
 :LD reg3_3,iyMem8   is op0_8=0xfd; op6_2=0x1 & reg3_3 & bits3_3!=0x6 & bits0_3=0x6; iyMem8  {
-	reg3_3 = iyMem8; 
+	reg3_3 = iyMem8;
 }
 
 :LD (HL),reg0_3     is op6_2=0x1 & bits3_3=0x6 & reg0_3 & HL {
@@ -550,7 +550,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 :EX DE,HL           is op0_8=0xeb & DE & HL {
 	tmp:2 = DE;
 	DE = HL;
-	HL = tmp;	
+	HL = tmp;
 }
 
 :EX AF, AF_         is op0_8=0x08 & AF & AF_ {
@@ -652,7 +652,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	setResultFlags(cmp);
 	HL = HL + 1;
 	BC = BC - 1;
-	
+
 	if (cmp != 0 || BC != 0) goto inst_start;
 
 	carries:1 = (~A & val) | (val & cmp) | (cmp & ~A);
@@ -668,7 +668,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	setResultFlags(cmp);
 	HL = HL - 1;
 	BC = BC - 1;
-	
+
 	carries:1 = (~A & val) | (val & cmp) | (cmp & ~A);
 	$(H_flag) = (carries & 0b00001000) != 0;
 	$(PV_flag) = (BC != 0);
@@ -682,9 +682,9 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 	setResultFlags(cmp);
 	HL = HL - 1;
 	BC = BC - 1;
-	
+
 	if (cmp != 0 || BC != 0) goto inst_start;
-	
+
 	carries:1 = (~A & val) | (val & cmp) | (cmp & ~A);
 	$(H_flag) = (carries & 0b00001000) != 0;
 	$(PV_flag) = (BC != 0);
@@ -1095,7 +1095,7 @@ cc2: "C"   is bits3_3=0x7   { c:1 = $(C_flag); export c; }
 
 :DAA                is op0_8=0x27 {
 if (DECOMPILE_MODE) goto <forDecompilation>;
-	
+
 	HN:1 = A >> 4;     # high nibble
 	LN:1 = A & 0xF;    # low nibbble
 	#
@@ -1103,7 +1103,7 @@ if (DECOMPILE_MODE) goto <forDecompilation>;
 	# adjustment is needed.
 	#
 	if (($(C_flag) == 0) & ($(H_flag) == 0) & (HN <= 0x9) & (LN <= 0x9)) goto <exit>;
-	
+
 	if ($(N_flag) == 1) goto <adjustAfterSubtract>;
 
 		#<adjustAfterAdd>, in effect
@@ -1115,40 +1115,40 @@ if (DECOMPILE_MODE) goto <forDecompilation>;
     if ($(C_flag) == 1 & $(H_flag) == 0 & HN <= 0x2 & LN <= 0x9)               goto <addcase7>;
     if ($(C_flag) == 1 & $(H_flag) == 0 & HN <= 0x2 & LN >= 0xA & LN <= 0xF)   goto <addcase8>;
     if ($(C_flag) == 1 & $(H_flag) == 1 & HN <= 0x3 & LN <= 0x3)               goto <addcase9>;
-    goto <exit>; 
+    goto <exit>;
 
 		# Cases for addition
    #<addcase1>
     # Isn't used
    <addcase2>
     A = A + 0x06;
-    goto <exit>; 
+    goto <exit>;
    <addcase3>
     A = A + 0x06;
-    goto <exit>; 
+    goto <exit>;
    <addcase4>
     A = A + 0x60;
     $(C_flag) = 1;
-    goto <exit>; 
+    goto <exit>;
    <addcase5>
     A = A + 0x66;
     $(C_flag) = 1;
-    goto <exit>; 
+    goto <exit>;
    <addcase6>
     A = A + 0x66;
     $(C_flag) = 1;
-    goto <exit>; 
+    goto <exit>;
    <addcase7>
     A = A + 0x60;
-    goto <exit>; 
+    goto <exit>;
    <addcase8>
     A = A + 0x66;
-    goto <exit>; 
+    goto <exit>;
    <addcase9>
     A = A + 0x66;
 	goto <exit>;
-		
-   <adjustAfterSubtract>	
+
+   <adjustAfterSubtract>
 	# Cases for subtraction
     #if ($(C_flag) == 0 & $(H_flag) == 0 & HN >= 0x0 & HN <= 0x9 & LN >= 0x0 & LN <= 0x9)   goto <subcase1>;
     if ($(C_flag) == 0 & $(H_flag) == 1 & HN <= 0x8 & LN >= 0x6 & LN <= 0xF)               goto <subcase2>;
@@ -1156,31 +1156,31 @@ if (DECOMPILE_MODE) goto <forDecompilation>;
     if ($(C_flag) == 1 & $(H_flag) == 1 & HN >= 0x6 & HN <= 0xF & LN >= 0x6 & LN <= 0xF)   goto <subcase4>;
     goto <exit>;
 
-   #<subcase1>  
+   #<subcase1>
     # Isn't used
    <subcase2>
     A = A + 0xFA;
-    goto <exit>; 
+    goto <exit>;
    <subcase3>
     A = A + 0xA0;
-    goto <exit>; 
+    goto <exit>;
    <subcase4>
     A = A + 0x9A;
 
-   <exit>		
-  
+   <exit>
+
    setResultFlags(A);
    setParity(A);
-   
+
    goto <endDAA>;
-    
+
 
 <forDecompilation>
    A_temp:1 = A;
-  
+
    A = BCDadjust(A_temp, $(C_flag), $(H_flag));
    $(C_flag) = BCDadjustCarry(A_temp, $(C_flag), $(H_flag));
-  
+
    setResultFlags(A);
    $(PV_flag) = hasEvenParity(A);
 
@@ -1188,13 +1188,13 @@ if (DECOMPILE_MODE) goto <forDecompilation>;
 }
 
 :CPL                is op0_8=0x2f {
-	A = ~A;	
+	A = ~A;
 	$(H_flag) = 1;
 	$(N_flag) = 1;
 }
 
 :NEG                is op0_8=0xed; op0_8=0x44 {
-	A_temp:1 = A;	
+	A_temp:1 = A;
 
 	A = -A;
 	subtractionFlags(0, A_temp);
@@ -1762,7 +1762,7 @@ if (DECOMPILE_MODE) goto <forDecompilation>;
 }
 
 :JP Addr16          is op0_8=0xc3; Addr16 {
-	goto Addr16;	
+	goto Addr16;
 }
 
 :JP cc,Addr16       is op6_2=0x3 & cc & bits0_3=0x2; Addr16 {
@@ -1779,18 +1779,18 @@ if (DECOMPILE_MODE) goto <forDecompilation>;
 
 :JP (HL)            is op0_8=0xe9 & HL {
 	off:2 = (zext(H) << 8) | zext(L);
-	
+
 	JumpToLoc(off);
 
 }
 
 :JP (IX)            is op0_8=0xdd & IX; op0_8=0xe9 {
-	
+
 	JumpToLoc(IX);
 }
 
 :JP (IY)            is op0_8=0xfd & IY; op0_8=0xe9 {
-	
+
 	JumpToLoc(IY);
 }
 
@@ -1972,7 +1972,7 @@ if (DECOMPILE_MODE) goto <forDecompilation>;
 	$(C_flag)=0;
 }
 
-:TST imm8           is op0_8=0xed; op0_8=0x64; imm8 { 
+:TST imm8           is op0_8=0xed; op0_8=0x64; imm8 {
 	r:1 = imm8 & A;
 	setResultFlags(r);
 	$(H_flag)=1;
@@ -1987,15 +1987,15 @@ if (DECOMPILE_MODE) goto <forDecompilation>;
 	setResultFlags(r);
 	$(H_flag)=0;
 	setParity(r);
-	$(N_flag)=0;	
+	$(N_flag)=0;
 }
 
 :IN0 reg3_3,IOAddr8 is op0_8=0xed; op6_2=0x0 & reg3_3 & bits0_3=0x0; IOAddr8 {
 	ioRead(IOAddr8,reg3_3); # read input location
-	setResultFlags(reg3_3); 
+	setResultFlags(reg3_3);
 	$(H_flag)=0;
 	setParity(reg3_3);
-	$(N_flag)=0;	
+	$(N_flag)=0;
 }
 
 :OUT0 IOAddr8,reg3_3 is op0_8=0xed; op6_2=0x0 & reg3_3 & bits0_3=0x1; IOAddr8 {
@@ -2026,7 +2026,7 @@ if (DECOMPILE_MODE) goto <forDecompilation>;
 	$(H_flag) = 0;
 #	$(PV_flag)=1;
 	$(PV_flag) = (r s< 0); # based upon last output byte
-	$(C_flag)=0;	
+	$(C_flag)=0;
 }
 
 :TSTIO IOAddr8      is op0_8=0xed; op0_8=0x74; IOAddr8 {
@@ -2067,7 +2067,7 @@ if (DECOMPILE_MODE) goto <forDecompilation>;
 	$(H_flag) = 0;
 #	$(PV_flag)=1;
 	$(PV_flag) = (r s< 0); # based upon last output byte
-	$(C_flag)=0;	
+	$(C_flag)=0;
 }
 
 :SLP                is op0_8=0xed; op0_8=0x76 {

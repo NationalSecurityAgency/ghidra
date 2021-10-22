@@ -5,7 +5,7 @@
 /* Function declarations for libiberty.
 
    Copyright (C) 1997-2019 Free Software Foundation, Inc.
-   
+
    Note - certain prototypes declared in this header file are for
    functions whoes implementation copyright does not belong to the
    FSF.  Those prototypes are present in this file for reference
@@ -27,7 +27,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor,
    Boston, MA 02110-1301, USA.
-   
+
    Written by Cygnus Support, 1994.
 
    The libiberty library provides a number of functions which are
@@ -112,7 +112,7 @@ extern int countargv (char * const *);
 #if defined (__GNU_LIBRARY__ ) || defined (__linux__) \
  || defined (__FreeBSD__) || defined (__OpenBSD__) || defined (__NetBSD__) \
  || defined (__CYGWIN__) || defined (__CYGWIN32__) || defined (__MINGW32__) \
- || defined (__DragonFly__) || defined (HAVE_DECL_BASENAME) 
+ || defined (__DragonFly__) || defined (HAVE_DECL_BASENAME)
 extern char *basename (const char *) ATTRIBUTE_RETURNS_NONNULL ATTRIBUTE_NONNULL(1);
 #else
 /* Do not allow basename to be used if there is no prototype seen.  We
@@ -210,7 +210,7 @@ extern char * getpwd (void);
 #ifdef __MINGW32__
 /* Forward declaration to avoid #include <sys/time.h>.   */
 struct timeval;
-extern int gettimeofday (struct timeval *, void *); 
+extern int gettimeofday (struct timeval *, void *);
 #endif
 
 /* Get the amount of time the process has run, in microseconds.  */
@@ -460,7 +460,7 @@ extern struct pex_obj *pex_init (int flags, const char *pname,
 /* Capture stderr to a pipe.  The output can be read by
    calling pex_read_err and reading from the returned
    FILE object.  This flag may be specified only for
-   the last program in a pipeline.  
+   the last program in a pipeline.
 
    This flag is supported only on Unix and Windows.  */
 #define PEX_STDERR_TO_PIPE	0x40

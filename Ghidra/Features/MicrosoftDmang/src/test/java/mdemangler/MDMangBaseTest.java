@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -11650,7 +11650,7 @@ public class MDMangBaseTest extends AbstractGenericTest {
 	//This test is one where MSFT is not looking for a CVMOD ('A' here) in the CLI Array, such
 	// as in the string segment "$01EA"...
 	@Test
-	public void testWin7_4873434() throws Exception { //was testFromLongTest_2() 
+	public void testWin7_4873434() throws Exception { //was testFromLongTest_2()
 		mangled =
 			"?get@Points@GdiGeometryConverter@GDIExporter@Internal@Microsoft@@$$FQE$AAMP$01EAVPointI@345@XZ";
 		msTruth = "public: cli::array<Microsoft::Internal::GDIExporter::VPointI >^";

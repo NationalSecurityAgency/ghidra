@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.program.model.pcode.Varnode;
 
 /**
  * An executor which can perform (some of) its work asynchronously
- * 
+ *
  * <p>
  * Note that a future returned from, e.g., {@link #executeAsync(SleighProgram, SleighUseropLibrary)}
  * may complete before the computation has actually been performed. They complete when all of the
@@ -35,7 +35,7 @@ import ghidra.program.model.pcode.Varnode;
  * the async state, which will return a future. The state will ensure that future does not complete
  * until the computation has been performed -- assuming the requested variable actually depends on
  * that computation.
- * 
+ *
  * @param <T> the type of values in the state
  */
 public class AsyncPcodeExecutor<T> extends PcodeExecutor<CompletableFuture<T>> {

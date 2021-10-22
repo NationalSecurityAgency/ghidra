@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -93,7 +93,7 @@ public class MatchInfo {
 				Address minAddress = codeUnit.getMinAddress();
 				Address maxAddress = codeUnit.getMaxAddress();
 
-				// Adjust the maxAddress for the destination addressSet to show multiple code units 
+				// Adjust the maxAddress for the destination addressSet to show multiple code units
 				// if it is smaller than the source. We want to know what gets overwritten if applied.
 				if (destinationData != null) {
 					int sourceLength = (sourceData != null) ? sourceData.getLength() : 0;
@@ -242,7 +242,7 @@ public class MatchInfo {
 
 		List<VTMarkupItem> list = markupItemsCache.getCachedValue();
 		if (list == null) {
-			// not sure how this could happen--perhaps after 
+			// not sure how this could happen--perhaps after
 			// the cache has been cleared, before we are again loaded?
 			return null;
 		}

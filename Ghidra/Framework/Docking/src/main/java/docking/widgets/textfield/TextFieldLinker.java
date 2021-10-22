@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,34 +33,34 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * A class that links text fields into a "formatted text field", separated by expressions.
- * 
+ *
  * This fulfills a similar purpose to formatted text fields, except the individual parts may be
  * placed independent of the other components. Granted, they ought to appear in an intuitive order.
  * The input string is split among a collection of {@link JTextField}s each according to a given
  * pattern -- excluding the final field. Cursor navigation, insertion, deletion, etc. are all
  * applied as if the linked text fields were part of a single composite text field.
- * 
+ *
  * The individual text fields must be constructed and added by the user, as in the example:
- * 
+ *
  * <pre>
  * {@code
  * Box hbox = Box.createHorizontalBox();
  * TextFieldLinker linker = new TextFieldLinker();
- * 
+ *
  * JTextField first = new JTextField();
  * hbox.add(first);
  * hbox.add(Box.createHorizontalStrut(10));
  * linker.linkField(first, "\\s+", " ");
- * 
+ *
  * JTextField second = new JTextField();
  * hbox.add(second);
  * hbox.add(new GLabel("-"));
  * linker.linkField(second, "-", "-");
- * 
+ *
  * JTextField third = new JTextField();
  * hbox.add(third);
  * linker.linkLastField(third);
- * 
+ *
  * linker.setVisible(true);
  * }
  * </pre>
@@ -201,7 +201,7 @@ public class TextFieldLinker {
 
 		/**
 		 * Erase the state
-		 * 
+		 *
 		 * Blank all the fields, and put the caret at the front of the first field.
 		 */
 		public void reset() {
@@ -221,7 +221,7 @@ public class TextFieldLinker {
 
 		/**
 		 * Get the whole composite string
-		 * 
+		 *
 		 * @return the text
 		 */
 		public String getText() {
@@ -230,7 +230,7 @@ public class TextFieldLinker {
 
 		/**
 		 * Get the composite string, omitting the given separator.
-		 * 
+		 *
 		 * This is used as a helper to delete the separator when backspace/delete is pressed at a
 		 * boundary.
 		 * @param omitSep the separator to omit, or -1 to omit nothing
@@ -309,7 +309,7 @@ public class TextFieldLinker {
 
 		/**
 		 * Figure out whether the caret in the given field immediately proceeds a separator.
-		 * 
+		 *
 		 * In other words, the caret must be to the far left (position 0), and the given field must
 		 * not be the first field. If true, the caret immediately follows separator index
 		 * {@code field - 1}.
@@ -322,7 +322,7 @@ public class TextFieldLinker {
 
 		/**
 		 * Figure out whether the caret in the given field immediately precedes a separator.
-		 * 
+		 *
 		 * In other words, the caret must be to the far right, and the given field must not be the
 		 * last field. If true, the caret immediately precedes separator index {@code field}.
 		 * @param field the field index to check
@@ -338,7 +338,7 @@ public class TextFieldLinker {
 
 		/**
 		 * Change focus to the given field as if navigating left.
-		 * 
+		 *
 		 * The caret will be moved to the rightmost position, because we're moving left from the
 		 * leftmost position of the field to the right.
 		 * @param field the field index to be given focus.
@@ -351,7 +351,7 @@ public class TextFieldLinker {
 
 		/**
 		 * Change focus to the given field as if navigating right.
-		 * 
+		 *
 		 * The caret will be moved to the leftmost position, because we're moving right from the
 		 * rightmost position of the field to the left.
 		 * @param field the field index to be given focus.
@@ -478,7 +478,7 @@ public class TextFieldLinker {
 
 	/**
 	 * Add a new text field to this linker
-	 * 
+	 *
 	 * Links the given field with the others present in this linker, if any. {@code exp} is a
 	 * regular expression that dictates where the given field ends, and the next field begins.
 	 * When {@code exp} matches a part of the text in {@code field}, the text is split and
@@ -486,14 +486,14 @@ public class TextFieldLinker {
 	 * omitted from both fields. The packing of the fields -- and surrounding labels -- ought to
 	 * imply that the separator is still present, because {@link #getText()} or and
 	 * {@link #getTextBeforeCursor(JTextField)} insert {@code sep} between the fields.
-	 * 
+	 *
 	 * Any number of fields may be added in this fashion, but the last field -- having no
 	 * associated pattern or separator -- must be added using
 	 * {@link #linkLastField(JTextField)}. Thus, before linking is actually activated, at least one
 	 * field must be present. To be meaningful, at least two fields should be linked.
-	 * 
+	 *
 	 * NOTE: {@code exp} must match {@code sep}.
-	 * 
+	 *
 	 * @param field the field to link
 	 * @param exp the separator following the field
 	 * @param sep the separator that replaces {@code exp} when matched
@@ -516,7 +516,7 @@ public class TextFieldLinker {
 
 	/**
 	 * Add the final field, and actually link the fields
-	 * 
+	 *
 	 * The fields are not effectively linked until this method is called. Additionally, once this
 	 * method is called, the linker cannot take any additional fields.
 	 * @param field the final field
@@ -562,7 +562,7 @@ public class TextFieldLinker {
 
 	/**
 	 * A listener for all my callbacks
-	 * 
+	 *
 	 * A separate listener is constructed and installed on each field so that we have a reference
 	 * to the field in every callback.
 	 */
@@ -780,7 +780,7 @@ public class TextFieldLinker {
 
 	/**
 	 * Get the individual field last having focus
-	 * 
+	 *
 	 * Effectively, this gives the field containing the composite caret
 	 * @return
 	 */
@@ -808,11 +808,11 @@ public class TextFieldLinker {
 
 	/**
 	 * Add a focus listener
-	 * 
+	 *
 	 * The focus listener will receive a callback only when focus is passed completely outside the
 	 * composite text field. No events are generated when focus passes from one field in the
 	 * composite to another.
-	 * 
+	 *
 	 * @param listener the focus listener to add
 	 */
 	public void addFocusListener(FocusListener listener) {

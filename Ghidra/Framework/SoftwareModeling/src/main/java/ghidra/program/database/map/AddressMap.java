@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public interface AddressMap {
 	 * create is true.
 	 * @param addr the address for which to get a database key.
 	 * @param create true if a new key may be generated
-	 * @return the database key for the given address or INVALID_ADDRESS_KEY if 
+	 * @return the database key for the given address or INVALID_ADDRESS_KEY if
 	 * create is false and one does not exist for the specified addr.
 	 */
 	public long getKey(Address addr, boolean create);
@@ -57,7 +57,7 @@ public interface AddressMap {
 	 * create is true.
 	 * @param addr the address for which to get a database key.
 	 * @param create true if a new key may be generated
-	 * @return the database key for the given address or INVALID_ADDRESS_KEY if 
+	 * @return the database key for the given address or INVALID_ADDRESS_KEY if
 	 * create is false and one does not exist for the specified addr.
 	 */
 	public long getAbsoluteEncoding(Address addr, boolean create);
@@ -67,30 +67,30 @@ public interface AddressMap {
 	 * keyRange which contains the specified addr.
 	 * @param keyRangeList key range list to search
 	 * @param addr address or null
-	 * @return index of the keyRange within the keyRangeList which contains addr 
-	 * if it is contained in the list; otherwise, <code>(-(<i>insertion point</i>) - 1)</code>. 
+	 * @return index of the keyRange within the keyRangeList which contains addr
+	 * if it is contained in the list; otherwise, <code>(-(<i>insertion point</i>) - 1)</code>.
 	 * The <i>insertion point</i> is defined as the point at which the
 	 * addr would be inserted into the list: the index of the first keyRange
 	 * greater than addr, or <code>keyRangeList.size()</code>, if all
 	 * keyRanges in the list are less than the specified addr.  Note
 	 * that this guarantees that the return value will be &gt;= 0 if
-	 * and only if the addr is found within a keyRange.  
+	 * and only if the addr is found within a keyRange.
 	 * An addr of null will always result in a returned index of -1.
 	 */
 	public int findKeyRange(List<KeyRange> keyRangeList, Address addr);
 
 	/**
 	 * Generates a properly ordered list of database key ranges for a
-	 * a specified address range.  If absolute encodings are requested, 
-	 * only memory addresses will be included.  Returned key ranges are 
-	 * generally intended for read-only operations since new keys will 
-	 * never be generated.  The returned key ranges will correspond 
-	 * to those key ranges which have previously been created within 
-	 * the specified address range and may represent a much smaller subset 
+	 * a specified address range.  If absolute encodings are requested,
+	 * only memory addresses will be included.  Returned key ranges are
+	 * generally intended for read-only operations since new keys will
+	 * never be generated.  The returned key ranges will correspond
+	 * to those key ranges which have previously been created within
+	 * the specified address range and may represent a much smaller subset
 	 * of addresses within the specified range.
 	 * @param start minimum address of range
 	 * @param end maximum address of range
-	 * @param create true if a new keys may be generated, otherwise returned 
+	 * @param create true if a new keys may be generated, otherwise returned
 	 * key-ranges will be limited to those already defined.
 	 * @return "sorted" list of KeyRange objects
 	 */
@@ -98,10 +98,10 @@ public interface AddressMap {
 
 	/**
 	 * Generates a properly ordered list of database key ranges for a
-	 * a specified address set.  If absolute encodings are requested, 
+	 * a specified address set.  If absolute encodings are requested,
 	 * only memory addresses will be included.
 	 * @param set address set or null for all addresses.  May not be null if <code>create</code> is true.
-	 * @param create true if a new keys may be generated, otherwise returned 
+	 * @param create true if a new keys may be generated, otherwise returned
 	 * key-ranges will be limited to those already defined.
 	 * @return "sorted" list of KeyRange objects
 	 */
@@ -113,7 +113,7 @@ public interface AddressMap {
 	 * "absoluteEncoding" method.  If the program's default address space is segmented (i.e., SegmentedAddressSpace).
 	 * the address returned will be always be normalized to defined segmented memory blocks if possible.
 	 * @param value the long value to convert to an address.
-	 * @return address decoded from long 
+	 * @return address decoded from long
 	 */
 	public Address decodeAddress(long value);
 
@@ -126,13 +126,13 @@ public interface AddressMap {
 
 	/**
 	 * Generates a properly ordered list of database key ranges for a
-	 * a specified address range.  If absolute encodings are requested, 
+	 * a specified address range.  If absolute encodings are requested,
 	 * only memory addresses will be included.
 	 * @param start minimum address of range
 	 * @param end maximum address of range
-	 * @param absolute if true, absolute key encodings are returned, otherwise 
+	 * @param absolute if true, absolute key encodings are returned, otherwise
 	 * standard/relocatable address key encodings are returned.
-	 * @param create true if a new keys may be generated, otherwise returned 
+	 * @param create true if a new keys may be generated, otherwise returned
 	 * key-ranges will be limited to those already defined.
 	 * @return "sorted" list of KeyRange objects
 	 */
@@ -140,12 +140,12 @@ public interface AddressMap {
 
 	/**
 	 * Generates a properly ordered list of database key ranges for a
-	 * a specified address set.  If absolute encodings are requested, 
+	 * a specified address set.  If absolute encodings are requested,
 	 * only memory addresses will be included.
 	 * @param set address set or null for all addresses.  May not be null if <code>create</code> is true.
-	 * @param absolute if true, absolute key encodings are returned, otherwise 
+	 * @param absolute if true, absolute key encodings are returned, otherwise
 	 * standard/relocatable address key encodings are returned.
-	 * @param create true if a new keys may be generated, otherwise returned 
+	 * @param create true if a new keys may be generated, otherwise returned
 	 * key-ranges will be limited to those already defined.
 	 * @return "sorted" list of KeyRange objects
 	 */
@@ -209,7 +209,7 @@ public interface AddressMap {
 	public void deleteOverlaySpace(String name) throws IOException;
 
 	/**
-	 * Returns true if the two address keys share a common key base and can be 
+	 * Returns true if the two address keys share a common key base and can be
 	 * used within a single key-range.
 	 * @param addrKey1
 	 * @param addrKey2

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package generic.constraint;
 
 /**
  * Constraints are used to make decisions to traverse a decision tree where each node in the
- * tree has a constraint that is used to decide if that node is part of the successful decision path. 
+ * tree has a constraint that is used to decide if that node is part of the successful decision path.
  *
  * @param <T>  The type of object that decisions will be made.
  */
@@ -35,7 +35,7 @@ public abstract class Constraint<T> {
 	}
 
 	/**
-	 * Returns the name of the constraint.  Note: this name is also the XML tag used in the 
+	 * Returns the name of the constraint.  Note: this name is also the XML tag used in the
 	 * constraints specification files.
 	 * @return the name of the constraint
 	 */

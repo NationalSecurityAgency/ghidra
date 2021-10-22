@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -456,7 +456,7 @@ public abstract class CompositeEditorPanel extends JPanel
 
 	/**
 	 * Puts the next editable cell into edit mode
-	 * 
+	 *
 	 * @param currentRow the current row
 	 * @return true if there was a table cell that could be edited
 	 */
@@ -877,7 +877,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	/**
-	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
+	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its
 	 * drop() method.
 	 *
 	 * @param obj Transferable object that is to be dropped.
@@ -905,7 +905,7 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	/**
-	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
+	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its
 	 * drop() method.
 	 *
 	 * @param p the point of insert
@@ -924,9 +924,9 @@ public abstract class CompositeEditorPanel extends JPanel
 	}
 
 	/**
-	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its 
+	 * Add the object to the droppable component. The DragSrcAdapter calls this method from its
 	 * drop() method.
-	 * 
+	 *
 	 * @param p the point of insert
 	 * @param dt the data type to insert
 	 */

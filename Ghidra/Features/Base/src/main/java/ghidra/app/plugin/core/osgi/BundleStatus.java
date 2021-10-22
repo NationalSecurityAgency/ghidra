@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,7 +55,7 @@ public class BundleStatus implements Comparable<BundleStatus> {
 
 	/**
 	 * Set the bundle's status to enabled or disabled.
-	 * 
+	 *
 	 * @param isEnabled true to set status to enabled
 	 */
 	public void setEnabled(boolean isEnabled) {
@@ -71,7 +71,7 @@ public class BundleStatus implements Comparable<BundleStatus> {
 
 	/**
 	 * @return the bundle type
-	 * 
+	 *
 	 * @see GhidraBundle.Type
 	 */
 	public GhidraBundle.Type getType() {
@@ -87,7 +87,7 @@ public class BundleStatus implements Comparable<BundleStatus> {
 
 	/**
 	 * Set the bundle's status to active or inactive.
-	 * 
+	 *
 	 * @param isActive true for active, false for inactive
 	 */
 	public void setActive(boolean isActive) {
@@ -96,7 +96,7 @@ public class BundleStatus implements Comparable<BundleStatus> {
 
 	/**
 	 * Set the bundle's build summary.
-	 * 
+	 *
 	 * @param summary the build summary
 	 */
 	public void setSummary(String summary) {
@@ -125,7 +125,7 @@ public class BundleStatus implements Comparable<BundleStatus> {
 	}
 
 	/**
-	 * @return the bundle file path, using $USER and $GHIDRA_HOME when appropriate 
+	 * @return the bundle file path, using $USER and $GHIDRA_HOME when appropriate
 	 */
 	public String getPathAsString() {
 		return Path.toPathString(file);

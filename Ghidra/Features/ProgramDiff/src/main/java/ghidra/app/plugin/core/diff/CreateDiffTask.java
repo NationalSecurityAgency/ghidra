@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Task that generates the address set containing the differences between
- * two programs. 
- * 
+ * two programs.
+ *
  */
 class CreateDiffTask extends Task {
 	private ProgramDiffPlugin plugin;
@@ -45,10 +45,10 @@ class CreateDiffTask extends Task {
 	private boolean isLimitedToSelection;
 
 	/**
-	 * Construct new LoadDiffTask that loads the dialog with the two 
-	 * programs and indicates their differences. The differences should be 
-	 * restricted to the limitedAddressSet. 
-	 * 
+	 * Construct new LoadDiffTask that loads the dialog with the two
+	 * programs and indicates their differences. The differences should be
+	 * restricted to the limitedAddressSet.
+	 *
 	 */
 	CreateDiffTask(ProgramDiffPlugin plugin, Program program1, Program program2,
 			AddressSetView limitedAddressSet, boolean isLimitedToSelection,
@@ -63,9 +63,9 @@ class CreateDiffTask extends Task {
 		this.applyFilter = applyFilter;
 	}
 
-	/** 
+	/**
 	 * This is the method TaskMonitor called to do the work.
-	 * 
+	 *
 	 * @param monitor The TaskMonitor that will monitor the executing Task.  Will be null if
 	 * 		  this task declared that it does not use a TaskMonitor
 	 */
@@ -138,7 +138,7 @@ class CreateDiffTask extends Task {
 						programMemoryComparator);
 				}
 				else if (noFilteredDifferencesFound) {
-					// Not a Diff on a selection, memory is the same, and no differences found 
+					// Not a Diff on a selection, memory is the same, and no differences found
 					// for current filter and compatible addresses.
 					title = "No Differences";
 					message =

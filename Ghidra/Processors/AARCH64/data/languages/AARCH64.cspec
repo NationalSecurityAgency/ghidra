@@ -22,15 +22,15 @@
           <entry size="8" alignment="8" />
      </size_alignment_map>
   </data_organization>
-  
+
   <global>
     <range space="ram"/>
     <range space="register"  first="0x3000" last="0x3fff"/>
   </global>
-  
+
   <stackpointer register="sp" space="ram"/>
   <funcptr align="4"/>     <!-- Function pointers are word aligned and leastsig bit may encode otherstuff -->
-  
+
   <prefersplit style="inhalf">
     <register name="q0"/>
     <register name="q1"/>
@@ -64,7 +64,7 @@
     <register name="q29"/>
     <register name="q30"/>
   </prefersplit>
-  
+
   <default_proto>
     <prototype name="__cdecl" extrapop="0" stackshift="0">
       <input>
@@ -132,12 +132,12 @@
         <register name="x19"/>
         <register name="x20"/>
         <register name="x21"/>
-        <register name="x22"/> 
-        <register name="x23"/> 
-        <register name="x24"/> 
-        <register name="x25"/> 
-        <register name="x26"/> 
-        <register name="x27"/> 
+        <register name="x22"/>
+        <register name="x23"/>
+        <register name="x24"/>
+        <register name="x25"/>
+        <register name="x26"/>
+        <register name="x27"/>
         <register name="x28"/>
         <register name="x29"/>
         <register name="x30"/>
@@ -196,5 +196,5 @@
       ]]></body>
     </pcode>
   </callfixup>
-  
+
 </compiler_spec>

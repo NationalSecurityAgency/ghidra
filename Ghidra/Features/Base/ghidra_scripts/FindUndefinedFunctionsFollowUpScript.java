@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,12 +18,12 @@
 // identify function entry points.  This script attempts to find and fix
 // those bad entry points.
 //
-// <b>Issues</b>:  Memory bounds checking is hard-coded. It incorrectly identifies random 
-//          0x60000000 values that the compiler inserted between some functions 
-//          as "ori r0,r0,0" instructions that should be added to the head of the 
-//          functions those values precede.  It makes assumptions that wouldn't be helpful in 
-//          an image that hasn't been mostly disassembled already.  I'm sure there are other 
-//          problems with it.  Still, it did a pretty good job of cleaning up after 
+// <b>Issues</b>:  Memory bounds checking is hard-coded. It incorrectly identifies random
+//          0x60000000 values that the compiler inserted between some functions
+//          as "ori r0,r0,0" instructions that should be added to the head of the
+//          functions those values precede.  It makes assumptions that wouldn't be helpful in
+//          an image that hasn't been mostly disassembled already.  I'm sure there are other
+//          problems with it.  Still, it did a pretty good job of cleaning up after
 //          FindUndefinedFunctionsScript.
 //
 //@category CustomerSubmission.Analysis.Repair

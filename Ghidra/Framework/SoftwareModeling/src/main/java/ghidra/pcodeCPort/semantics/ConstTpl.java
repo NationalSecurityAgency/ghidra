@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -91,7 +91,7 @@ public class ConstTpl {
 		handle_index = ht;
 		select = vf;
 	}
-	
+
 	public ConstTpl(const_type tp,int ht,v_field vf,long plus) {
 		type = const_type.handle;
 		handle_index = ht;
@@ -119,7 +119,7 @@ public class ConstTpl {
 	public const_type getType() {
 		return type;
 	}
-	
+
 	public v_field getSelect() {
 		return select;
 	}

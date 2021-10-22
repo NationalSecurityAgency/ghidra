@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,9 +19,9 @@ import java.net.URI;
 import java.nio.file.Path;
 
 /**
- * A class that represents the original location of an IMG tag along with its location 
+ * A class that represents the original location of an IMG tag along with its location
  * resolution within the help system.
- * 
+ *
  * <p>Some images are represented by 'in memory' or 'runtime' values that do not have a valid
  * url.
  */
@@ -120,7 +120,7 @@ public class ImageLocation {
 	@Override
 	public String toString() {
 		//@formatter:off
-		return "{\n" + 
+		return "{\n" +
 			"\tsource file: " + sourceFile + ",\n" +
 			"\tsrc: " + imageSrc + ",\n" +
 			"\turi: " + resolvedUri + ",\n" +

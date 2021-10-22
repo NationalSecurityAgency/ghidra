@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ class RenameDataFieldDialog extends DialogComponentProvider {
 
 	private JComboBox<?> recentChoices;
 	private JTextField choiceTextField;
-	
+
 	private DataTypeComponent component;
 	private DataPlugin plugin;
 	private Program program;
@@ -61,7 +61,7 @@ class RenameDataFieldDialog extends DialogComponentProvider {
     @Override
     protected void okCallback() {
 		close();
-		
+
 		RenameDataFieldCmd cmd = new RenameDataFieldCmd(component, choiceTextField.getText());
 		plugin.getTool().execute(cmd, program);
 		program = null;
@@ -79,10 +79,10 @@ class RenameDataFieldDialog extends DialogComponentProvider {
 
 		JPanel mainPanel = new JPanel(new BorderLayout());
 		JPanel topPanel = new JPanel(new BorderLayout());
-		
+
 		Border border = BorderFactory.createTitledBorder("Data Field Name");
 		topPanel.setBorder(border);
-			
+
 		mainPanel.add(topPanel, BorderLayout.NORTH);
 
 		topPanel.add(recentChoices, BorderLayout.NORTH);

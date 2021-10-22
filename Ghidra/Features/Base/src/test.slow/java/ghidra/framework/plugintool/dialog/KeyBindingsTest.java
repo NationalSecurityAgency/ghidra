@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -240,9 +240,9 @@ public class KeyBindingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		//
 		// This test is verifying a hack that was put in to fix the difference in 'Alt' key handling
-		// on Windows (https://bugs.openjdk.java.net/browse/JDK-8194873).  
-		// Create an action and set the keybinding to use the 'Alt' modifier.  
-		// Verify that the action will also get mapped to the 'Alt Graph' modifier.  
+		// on Windows (https://bugs.openjdk.java.net/browse/JDK-8194873).
+		// Create an action and set the keybinding to use the 'Alt' modifier.
+		// Verify that the action will also get mapped to the 'Alt Graph' modifier.
 		//
 
 		// verify that no action is mapped to the new binding

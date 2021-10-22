@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,13 +43,13 @@ import junit.framework.AssertionFailedError;
 /**
  * This class represents the idea of a shared Ghidra project.  Each project is associated with
  * a {@link FakeRepository}.
- * 
+ *
  * <P>This shared project is intended to allow for easy testing of changes to {@link DomainFile}s
  * under version control.
- * 
- * <P>If you do not need to test version controlled files or any other multi-user interaction, 
+ *
+ * <P>If you do not need to test version controlled files or any other multi-user interaction,
  * then do not use this class, but instead use {@link TestEnv}.
- * 
+ *
  * @see FakeRepository
  */
 public class FakeSharedProject {
@@ -97,7 +97,7 @@ public class FakeSharedProject {
 
 	/**
 	 * Gets the project file manager
-	 * 
+	 *
 	 * @return the project file manager
 	 */
 	public ProjectFileManager getProjectFileManager() {
@@ -106,7 +106,7 @@ public class FakeSharedProject {
 
 	/**
 	 * Gets the root folder of this project
-	 * 
+	 *
 	 * @return the root folder of this project
 	 */
 	public RootGhidraFolder getRootFolder() {
@@ -117,11 +117,11 @@ public class FakeSharedProject {
 	/**
 	 * Adds the file with the given name to this fake project.  The file must exist in the
 	 * test data area. The file will be put in the root folder of the project.
-	 * 
-	 * <P>Note: this does NOT add the file to version control.  Thus, the file will not be 
+	 *
+	 * <P>Note: this does NOT add the file to version control.  Thus, the file will not be
 	 * visible to other projects in the parent repo.  To add to version control, call
 	 * {@link #addToVersionControl(DomainFile, boolean)}.
-	 * 
+	 *
 	 * @param filename the filename (including path of the real file on disk)
 	 * @return the newly created domain file
 	 * @throws Exception if there are any issues finding or adding the file to the project
@@ -134,12 +134,12 @@ public class FakeSharedProject {
 
 	/**
 	 * Adds the file with the given name to this fake project.  The file must exist in the
-	 * test data area. 
-	 * 
-	 * <P>Note: this does NOT add the file to version control.  Thus, the file will not be 
+	 * test data area.
+	 *
+	 * <P>Note: this does NOT add the file to version control.  Thus, the file will not be
 	 * visible to other projects in the parent repo.  To add to version control, call
 	 * {@link #addToVersionControl(DomainFile, boolean)}.
-	 * 
+	 *
 	 * @param parentPath the destination parent folder path
 	 * @param filename the filename (including path of the real file on disk)
 	 * @return the newly created domain file
@@ -152,7 +152,7 @@ public class FakeSharedProject {
 	}
 
 	/**
-	 * Gets the domain file for the given name.  The file must have been added to the 
+	 * Gets the domain file for the given name.  The file must have been added to the
 	 * project via one of:
 	 * <ul>
 	 * 	<li>calling {@link #addDomainFile(String)}</li>
@@ -177,7 +177,7 @@ public class FakeSharedProject {
 	}
 
 	/**
-	 * Gets the domain file for the given name.  The file must have been added to the 
+	 * Gets the domain file for the given name.  The file must have been added to the
 	 * project via one of:
 	 * <ul>
 	 * 	<li>calling {@link #addDomainFile(String)}</li>
@@ -193,9 +193,9 @@ public class FakeSharedProject {
 	}
 
 	/**
-	 * Creates a folder by the given name in the given parent folder, creating the parent 
+	 * Creates a folder by the given name in the given parent folder, creating the parent
 	 * folder if needed
-	 * 
+	 *
 	 * @param parentPath the parent folder path
 	 * @param name the name of the folder to create
 	 * @return the created folder
@@ -209,8 +209,8 @@ public class FakeSharedProject {
 	/**
 	 * Opens the the program by the given name.  The path can be a simple name or a relative or
 	 * absolute path to the file within the project.
-	 * 
-	 * @param filePath the path to the file to open 
+	 *
+	 * @param filePath the path to the file to open
 	 * @return the domain file
 	 * @throws IllegalArgumentException if the given domain file is not in the project
 	 * @throws Exception if there are any exceptions opening the program
@@ -228,7 +228,7 @@ public class FakeSharedProject {
 
 	/**
 	 * Opens a program for the given domain file
-	 * 
+	 *
 	 * @param df the domain file; cannot be null
 	 * @return the opened program
 	 * @throws Exception if there are any exceptions opening the program
@@ -245,7 +245,7 @@ public class FakeSharedProject {
 
 	/**
 	 * Closes the given program
-	 * 
+	 *
 	 * @param p the program
 	 */
 	public void closeProgram(Program p) {
@@ -255,7 +255,7 @@ public class FakeSharedProject {
 
 	/**
 	 * Performs a check-in if the given file
-	 * 
+	 *
 	 * @param df the domain file; cannot be null
 	 * @param keepCheckedOut true to keep the file checked-out after the check-in completes
 	 * @param comment the comment for the check-in
@@ -295,7 +295,7 @@ public class FakeSharedProject {
 
 	/**
 	 * Performs a check-out of the given file
-	 * 
+	 *
 	 * @param df the domain file; cannot be null
 	 * @return true if the check-out was successful
 	 * @throws IOException if there is an issue checking-out the file
@@ -315,7 +315,7 @@ public class FakeSharedProject {
 
 	/**
 	 * Performs an exclusive check-out of the given file
-	 * 
+	 *
 	 * @param df the domain file; cannot be null
 	 * @return true if the check-out was successful
 	 * @throws IOException if there is an issue checking-out the file
@@ -335,7 +335,7 @@ public class FakeSharedProject {
 
 	/**
 	 * Deletes the given version of the given file
-	 * 
+	 *
 	 * @param df the file; cannot be null
 	 * @param version the version to delete
 	 * @throws Exception if there are any exceptions deleting the given version
@@ -350,7 +350,7 @@ public class FakeSharedProject {
 
 	/**
 	 * Adds the given domain file to version control
-	 * 
+	 *
 	 * @param df the domain file; cannot be null
 	 * @param keepCheckedOut true to keep the file checked-out
 	 * @throws Exception if there are any exceptions adding the file to version control
@@ -365,7 +365,7 @@ public class FakeSharedProject {
 
 	/**
 	 * Disposes this project.
-	 * 
+	 *
 	 * @see FakeRepository#dispose()
 	 */
 	public void dispose() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -117,17 +117,17 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		node(1,2);
 		node(1,3);
 		node(2,3);
-		
+
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program,functions,false);
 		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
-		
+
 		Assert.assertEquals(3, graph.size());
-		
+
 		assertDependents(graph, 3, 1, 2);
 		assertDependents(graph, 2, 1);
 		assertDependents(graph, 1);
 	}
-	
+
 @Test
     public void testSimpleCycle() throws Exception {
 		node(1, 2);
@@ -320,12 +320,12 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 			public AddressSetView getBody() {
 				return new AddressSet(address, address.add(0x10));
 			}
-			
+
 			@Override
 			public void setThunkedFunction(Function thunkedFunction) {
 				this.thunkedFunction = thunkedFunction;
 			}
-			
+
 			@Override
 			public Function getThunkedFunction(boolean recursive) {
 				if(!recursive || thunkedFunction == null ) {
@@ -337,7 +337,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 				}
 				return thunked;
 			}
-			
+
 			@Override
 			public boolean isThunk() {
 				return(thunkedFunction != null);

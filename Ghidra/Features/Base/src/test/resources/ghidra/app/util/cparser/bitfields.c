@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
 
         printf("len S1p2: %d\n", sizeof(struct S1p2));
         printf("len S2p2: %d\n", sizeof(struct S2p2));
-        
+
         printf("len T1: %d\n", sizeof(struct T1));
         printf("len T2: %d\n", sizeof(struct T2));
 

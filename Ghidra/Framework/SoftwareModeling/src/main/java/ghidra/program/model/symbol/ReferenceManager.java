@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,14 +64,14 @@ public interface ReferenceManager {
 
 	/**
 	 * Adds a memory reference.  Only first the first memory reference placed on
-	 * an operand will be made primary by default.  All non-memory references 
+	 * an operand will be made primary by default.  All non-memory references
 	 * will be removed from the specified operand.
 	 * @param fromAddr address of the codeunit where the reference occurs
-	 * @param toAddr address of the location being referenced.  
+	 * @param toAddr address of the location being referenced.
 	 * Memory, stack, and register addresses are all permitted.
 	 * @param type reference type - how the location is being referenced.
 	 * @param source the source of this reference
-	 * @param opIndex the operand index 
+	 * @param opIndex the operand index
 	 * display of the operand making this reference
 	 */
 	public Reference addMemoryReference(Address fromAddr, Address toAddr, RefType type,
@@ -79,10 +79,10 @@ public interface ReferenceManager {
 
 	/**
 	 * Add an offset memory reference.  Only first the first memory reference placed on
-	 * an operand will be made primary by default.  All non-memory references 
+	 * an operand will be made primary by default.  All non-memory references
 	 * will be removed from the specified operand.
 	 * @param fromAddr address for the "from"
-	 * @param toAddr address of the "to" 
+	 * @param toAddr address of the "to"
 	 * @param offset value added to a base address to get the toAddr
 	 * @param type reference type - how the location is being referenced
 	 * @param source the source of this reference
@@ -93,13 +93,13 @@ public interface ReferenceManager {
 
 	/**
 	 * Add a shifted memory reference; the "to" address is computed as the value
-	 * at the operand at opIndex shifted by some number of bits, specified in the 
+	 * at the operand at opIndex shifted by some number of bits, specified in the
 	 * shiftValue parameter.  Only first the first memory reference placed on
-	 * an operand will be made primary by default.  All non-memory references 
+	 * an operand will be made primary by default.  All non-memory references
 	 * will be removed from the specified operand.
 	 * @param fromAddr address for the "from"
 	 * @param toAddr computed as the value of the operand at opIndex shifted
-	 * by the number of bits specified by shiftValue 
+	 * by the number of bits specified by shiftValue
 	 * @param shiftValue
 	 * @param type reference type - how the location is being referenced
 	 * @param source the source of this reference
@@ -120,7 +120,7 @@ public interface ReferenceManager {
 	 * @param type reference type - how the location is being referenced
 	 * @param opIndex operand index
 	 * @throws InvalidInputException
-	 * @throws DuplicateNameException 
+	 * @throws DuplicateNameException
 	 */
 	public Reference addExternalReference(Address fromAddr, String libraryName, String extLabel,
 			Address extAddr, SourceType source, int opIndex, RefType type)
@@ -138,7 +138,7 @@ public interface ReferenceManager {
 	 * @param type reference type - how the location is being referenced
 	 * @param opIndex operand index
 	 * @throws InvalidInputException
-	 * @throws DuplicateNameException 
+	 * @throws DuplicateNameException
 	 */
 	public Reference addExternalReference(Address fromAddr, Namespace extNamespace, String extLabel,
 			Address extAddr, SourceType source, int opIndex, RefType type)
@@ -174,7 +174,7 @@ public interface ReferenceManager {
 	public void removeAllReferencesFrom(Address fromAddr);
 
 	/**
-	 * Returns all references to the given variable.  Only data references to storage 
+	 * Returns all references to the given variable.  Only data references to storage
 	 * are considered.
 	 * @param var variable to retrieve references to
 	 * @return array of variable references, or zero length array if no
@@ -183,7 +183,7 @@ public interface ReferenceManager {
 	public Reference[] getReferencesTo(Variable var);
 
 	/**
-	 * Returns the referenced function variable. 
+	 * Returns the referenced function variable.
 	 * @param reference
 	 * @return function variable or null if variable not found
 	 */
@@ -221,7 +221,7 @@ public interface ReferenceManager {
 	public ReferenceIterator getReferencesTo(Address addr);
 
 	/**
-	 * Get an iterator over references starting with the specified 
+	 * Get an iterator over references starting with the specified
 	 * fromAddr.  A forward iterator is returned with references sorted on
 	 * the from address.
 	 * @param startAddr the first from address to consider.
@@ -255,8 +255,8 @@ public interface ReferenceManager {
 
 	/**
 	 * Returns true if there are any memory references at the given
-	 * address/opIndex.  Keep in mind this is a rather inefficient 
-	 * method as it must examine all references from the specified 
+	 * address/opIndex.  Keep in mind this is a rather inefficient
+	 * method as it must examine all references from the specified
 	 * fromAddr.
 	 * @param fromAddr the address of the codeunit being tested
 	 * @param opIndex the index of the operand being tested.
@@ -265,7 +265,7 @@ public interface ReferenceManager {
 
 	/**
 	 * Returns true if there are any memory references at the given
-	 * address. 
+	 * address.
 	 * @param fromAddr the address of the codeunit being tested
 	 */
 	public boolean hasReferencesFrom(Address fromAddr);
@@ -352,7 +352,7 @@ public interface ReferenceManager {
 	 * @param ref the reference to associate with the given symbol
 	 * @throws IllegalArgumentException If the given reference does not already
 	 * exist or its "To" address
-	 * is not the same as the symbol's address. 
+	 * is not the same as the symbol's address.
 	 */
 	public void setAssociation(Symbol s, Reference ref);
 

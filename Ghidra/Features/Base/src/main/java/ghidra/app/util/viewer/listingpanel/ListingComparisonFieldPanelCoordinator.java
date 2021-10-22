@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -102,7 +102,7 @@ public class ListingComparisonFieldPanelCoordinator extends LayoutLockedFieldPan
 	/**
 	 * Kicks the field panels viewChanged() method so that the field panels will realign their
 	 * layouts using the locked line numbers.
-	 * 
+	 *
 	 * @param fp the field panel that has focus.
 	 */
 	void adjustFieldPanel(FieldPanel fp) {
@@ -116,7 +116,7 @@ public class ListingComparisonFieldPanelCoordinator extends LayoutLockedFieldPan
 	/**
 	 * Sets the left and right addresses that should currently be locked together for
 	 * synchronized scrolling.
-	 * 
+	 *
 	 * @param leftAddress the address in the left listing.
 	 * @param rightAddress the address in the right listing.
 	 */
@@ -140,10 +140,10 @@ public class ListingComparisonFieldPanelCoordinator extends LayoutLockedFieldPan
 	}
 
 	/**
-	 * Gets the left and right addresses that are currently locked together for synchronized 
+	 * Gets the left and right addresses that are currently locked together for synchronized
 	 * scrolling.
-	 * 
-	 * @return an array containing the left (index 0) and right (index 1) addresses that are 
+	 *
+	 * @return an array containing the left (index 0) and right (index 1) addresses that are
 	 * locked together.
 	 */
 	Address[] getLockedAddresses() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -156,7 +156,7 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 	/*
 	 * Parses the standard GCC exception handling support sections:
 	 * 1) EHFrameHeader ('.eh_frame_hdr')
-	 * 2) EHFrame ('.eh_frame') 
+	 * 2) EHFrame ('.eh_frame')
 	 */
 	private void handleStandardSections(Program program, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
@@ -405,8 +405,8 @@ public class GccExceptionAnalyzer extends AbstractAnalyzer {
 	}
 
 	/**
-	 * A TypeInfo associates the address of a type information record with the filter value that 
-	 * is used to handle a catch action for that type. 
+	 * A TypeInfo associates the address of a type information record with the filter value that
+	 * is used to handle a catch action for that type.
 	 */
 	private class TypeInfo {
 		private Address typeInfoAddress;

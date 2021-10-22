@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -236,7 +236,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 
 	/**
 	 * Checks to see if this file system is contained in another PRELINK file system.
-	 * 
+	 *
 	 * @return True if this file system is contained in another PRELINK file system; otherwise, false.
 	 */
 	private boolean isContainerAlreadyNestedInsideAPrelinkFS() {
@@ -245,9 +245,9 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 	}
 
 	/**
-	 * Processes PRELINK and Macho-O offsets in order to map files to their Mach-O offsets in the 
+	 * Processes PRELINK and Macho-O offsets in order to map files to their Mach-O offsets in the
 	 * providers.
-	 * 
+	 *
 	 * @param prelinkList The list of discovered {@link PrelinkMap}s.
 	 * @param machoHeaderOffsets The list of provider offsets where prelinked Mach-O headers start.
 	 * @param monitor A monitor
@@ -274,7 +274,7 @@ public class PrelinkFileSystem extends GFileSystemBase implements GFileSystemPro
 				continue;
 			}
 
-			// The following could end up being a directory once we discover it has a child...we'll 
+			// The following could end up being a directory once we discover it has a child...we'll
 			// handle that in storeFile()
 			GFileImpl file =
 				GFileImpl.fromPathString(this, root, info.getPrelinkBundlePath(), null, false, 0);

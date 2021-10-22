@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -571,7 +571,7 @@ Datatype *TypeOpCall::getInputLocal(const PcodeOp *op,int4 slot) const
   vn = op->getIn(0);
   if ((slot==0)||(vn->getSpace()->getType()!=IPTR_FSPEC))// Do we have a prototype to look at
     return TypeOp::getInputLocal(op,slot);
-    
+
   // Get types of call input parameters
   fc = FuncCallSpecs::getFspecFromConst(vn->getAddr());
   // Its false to assume that the parameter symbol corresponds
@@ -945,7 +945,7 @@ string TypeOpIntZext::getOperatorName(const PcodeOp *op) const
 
 {
   ostringstream s;
-  
+
   s << name << dec << op->getIn(0)->getSize() << op->getOut()->getSize();
   return s.str();
 }
@@ -971,7 +971,7 @@ string TypeOpIntSext::getOperatorName(const PcodeOp *op) const
 
 {
   ostringstream s;
-  
+
   s << name << dec << op->getIn(0)->getSize() << op->getOut()->getSize();
   return s.str();
 }

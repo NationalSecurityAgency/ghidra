@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -98,7 +98,7 @@ public class JdiModelTargetMethod extends JdiModelTargetObjectImpl {
 				: new JdiModelTargetLocation(parent, method.location(), false);
 		if (location != null) {
 			changeAttributes(List.of(), List.of( //
-				location //		
+				location //
 			), Map.of(), "Initialized");
 		}
 		try {
@@ -141,7 +141,7 @@ public class JdiModelTargetMethod extends JdiModelTargetObjectImpl {
 			returnType = (JdiModelTargetType) getInstance(method.returnType());
 			if (returnType != null) {
 				changeAttributes(List.of(), List.of( //
-					returnType //		
+					returnType //
 				), Map.of(), "Initialized");
 			}
 		}
@@ -153,7 +153,7 @@ public class JdiModelTargetMethod extends JdiModelTargetObjectImpl {
 				new JdiModelTargetLocalVariableContainer(this, "Variables", method.variables());
 			if (variables != null) {
 				changeAttributes(List.of(), List.of( //
-					variables //		
+					variables //
 				), Map.of(), "Initialized");
 			}
 		}

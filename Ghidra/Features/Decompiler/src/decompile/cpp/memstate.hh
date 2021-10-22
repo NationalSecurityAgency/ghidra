@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ class MemoryBank {
 protected:
   virtual void insert(uintb addr,uintb val)=0; ///< Insert a word in memory bank at an aligned location
   virtual uintb find(uintb addr) const=0; ///< Retrieve a word from memory bank at an aligned location
-  virtual void getPage(uintb addr,uint1 *res,int4 skip,int4 size) const; ///< Retrieve data from a memory \e page 
+  virtual void getPage(uintb addr,uint1 *res,int4 skip,int4 size) const; ///< Retrieve data from a memory \e page
   virtual void setPage(uintb addr,const uint1 *val,int4 skip,int4 size); ///< Write data into a memory page
 public:
   MemoryBank(AddrSpace *spc,int4 ws,int4 ps); ///< Generic constructor for a memory bank
@@ -50,7 +50,7 @@ public:
   int4 getWordSize(void) const;	///< Get the number of bytes in a word for this memory bank
   int4 getPageSize(void) const;	///< Get the number of bytes in a page for this memory bank
   AddrSpace *getSpace(void) const; ///< Get the address space associated with this memory bank
-  
+
   void setValue(uintb offset,int4 size,uintb val); ///< Set the value of a (small) range of bytes
   uintb getValue(uintb offset,int4 size) const; ///< Retrieve the value encoded in a (small) range of bytes
   void setChunk(uintb offset,int4 size,const uint1 *val); ///< Set values of an arbitrary sequence of bytes

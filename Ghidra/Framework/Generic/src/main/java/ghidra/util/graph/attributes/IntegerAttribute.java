@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public class IntegerAttribute<T extends KeyedObject> extends Attribute<T> {
 	}
 
 	/** Return the value associated to the specified KeyedObject.
-	 * @throws NoValueException if the value has not been set or 
+	 * @throws NoValueException if the value has not been set or
 	 * the KeyedObject does not belong to the owningSet.
 	 */
 	public int getValue(KeyedObject o) throws NoValueException {
@@ -80,7 +80,7 @@ public class IntegerAttribute<T extends KeyedObject> extends Attribute<T> {
 //  }
 
 	/** Returns the elements of the owningSet sorted by their
-	 * values of this Attribute. 
+	 * values of this Attribute.
 	 */
 	public KeyedObject[] toSortedArray() {
 		KeyedObject[] keyedObjects = this.owningSet().toArray();
@@ -88,7 +88,7 @@ public class IntegerAttribute<T extends KeyedObject> extends Attribute<T> {
 		return keyedObjects;
 	}
 
-	/** Sorts the array of keyedObjects by their values of this 
+	/** Sorts the array of keyedObjects by their values of this
 	 * Attribute.
 	 */
 	public KeyedObject[] toSortedArray(KeyedObject[] keyedObjects) {

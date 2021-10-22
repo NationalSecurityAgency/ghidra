@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,12 +56,12 @@ public class AUDataType extends BuiltIn implements Dynamic {
 				Msg.debug(this, "Invalid AU magic number");
 				return -1;
 			}
-			//Ints always stored as big endian in this format but can be in any kind of program so must get the ints as big endian even when in a little endian program			
+			//Ints always stored as big endian in this format but can be in any kind of program so must get the ints as big endian even when in a little endian program
 			int dataOffset = GhidraBigEndianDataConverter.INSTANCE.getInt(buf, 4);
 
 			int dataSize = GhidraBigEndianDataConverter.INSTANCE.getInt(buf, 8);
 
-			int totalSize = dataOffset + dataSize; //header + data = total size			
+			int totalSize = dataOffset + dataSize; //header + data = total size
 			return totalSize;
 
 		}

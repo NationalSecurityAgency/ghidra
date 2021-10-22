@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,20 +26,20 @@ public class EntropyCalculate {
 	private int[] histo;				// histogram of a chunk (reused for each chunk)
 	private byte[] chunk;				// chunk of bytes
 	private double[] logtable;			// Table of precalculated logarithms
-	
+
 	public EntropyCalculate(MemoryBlock b,int csize) {
 		block = b;
 		chunksize = csize;
 		doEntropy();
 	}
-	
+
 	public int getValue(int offset) {
 		if (offset < 0) return -1;
 		offset /= chunksize;
 		if (offset >= entropy.length) return -1;
 		return entropy[offset];
 	}
-	
+
 	private void doEntropy() {
 		histo = new int[256];
 		chunk = new byte[chunksize];
@@ -48,7 +48,7 @@ public class EntropyCalculate {
 		int numchunks = (int)(size / chunksize);
 		if ((size % chunksize)!=0)
 			numchunks += 1;
-		
+
 		entropy = new int[numchunks];
 		long offset = 0;
 		int chunknum = 0;
@@ -66,7 +66,7 @@ public class EntropyCalculate {
 		chunk = null;
 		logtable = null;
 	}
-	
+
 	private void histogramChunk(long offset) throws MemoryAccessException {
 		// The add method is byte based, so if the word-size of the space does not divide evenly into -offset- we
 		// may be slightly off cut here.  It probably doesn't matter very much for a histogram though
@@ -77,7 +77,7 @@ public class EntropyCalculate {
 		for(int i=0;i<len;++i)
 			histo[128 + chunk[i]] += 1;
 	}
-	
+
 	private void buildLogTable() {
 		logtable = new double[chunksize+1];
 		double logtwo = Math.log(2.0);
@@ -89,7 +89,7 @@ public class EntropyCalculate {
 		logtable[0] = 0.0;
 		logtable[chunksize] = 0.0;
 	}
-	
+
 	private void quantizeChunk(int pos) {
 		double sum = 0.0;
 		for(int i=0;i<256;++i)

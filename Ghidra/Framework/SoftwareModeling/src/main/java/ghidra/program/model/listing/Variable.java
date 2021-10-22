@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * 
+ *
  *  Defines an object that stores a value of some specific data type. The
  * variable has a name, type, size, and a comment.
  */
@@ -35,13 +35,13 @@ public interface Variable extends Comparable<Variable> {
 
 	/**
 	 * Get the Data Type of this variable
-	 * 
+	 *
 	 * @return the data type of the variable
 	 */
 	public DataType getDataType();
 
 	/**
-	 * Set the Data Type of this variable and the associated storage whose size matches the 
+	 * Set the Data Type of this variable and the associated storage whose size matches the
 	 * data type length.
 	 * <p>NOTE: The storage and source are ignored if the function does not have custom storage enabled.
 	 * @param type the data type
@@ -49,19 +49,19 @@ public interface Variable extends Comparable<Variable> {
 	 * @param force overwrite conflicting variables
 	 * @param source variable storage source (used only for function parameters and return)
 	 * @throws InvalidInputException if data type is not a fixed length or violates storage constraints.
-	 * @throws VariableSizeException if force is false and data type size causes a conflict 
+	 * @throws VariableSizeException if force is false and data type size causes a conflict
 	 * with other variables
 	 */
 	public void setDataType(DataType type, VariableStorage storage, boolean force, SourceType source)
 			throws InvalidInputException;
 
 	/**
-	 * Set the Data Type of this variable using the default alignment behavior (implementation specific). 
+	 * Set the Data Type of this variable using the default alignment behavior (implementation specific).
 	 * The given dataType must have a fixed length.  If contained within a stack-frame, data-type size
 	 * will be constrained by existing variables (e.g., equivalent to force=false)
 	 * Note: stack offset will be maintained for stack variables.
 	 * @param type the data type
-	 * @param source signature source 
+	 * @param source signature source
 	 * @throws InvalidInputException if data type is not a fixed length or violates storage constraints.
 	 * @throws VariableSizeException if data type size causes a conflict with other variables
 	 * @see #setDataType(DataType, boolean, boolean, SourceType)
@@ -78,9 +78,9 @@ public interface Variable extends Comparable<Variable> {
 	 * @param force overwrite conflicting variables
 	 * @param source signature source
 	 * @throws InvalidInputException if data type is not a fixed length or violates storage constraints.
-	 * @throws VariableSizeException if force is false and data type size causes a conflict 
+	 * @throws VariableSizeException if force is false and data type size causes a conflict
 	 * with other variables
-	 * 
+	 *
 	 */
 	public void setDataType(DataType type, boolean alignStack, boolean force, SourceType source)
 			throws InvalidInputException;
@@ -100,7 +100,7 @@ public interface Variable extends Comparable<Variable> {
 	public int getLength();
 
 	/**
-	 * Verify that the variable is valid 
+	 * Verify that the variable is valid
 	 * (i.e., storage is valid and size matches variable data type size)
 	 * @return true if variable is valid
 	 */
@@ -171,9 +171,9 @@ public interface Variable extends Comparable<Variable> {
 	 */
 	public Varnode getLastStorageVarnode();
 
-	/** 
+	/**
 	 * @return true if this is a simple variable consisting of a single stack varnode
-	 * which will be returned by either the {@link #getFirstStorageVarnode()} or 
+	 * which will be returned by either the {@link #getFirstStorageVarnode()} or
 	 * {@link #getLastStorageVarnode()} methods. The stack offset can be obtained using:
 	 * <pre>
 	 * 		getFirstStorageVarnode().getOffset()
@@ -182,16 +182,16 @@ public interface Variable extends Comparable<Variable> {
 	public boolean isStackVariable();
 
 	/**
-	 * @return true if this variable uses simple or compound storage which contains a stack element.  
+	 * @return true if this variable uses simple or compound storage which contains a stack element.
 	 * If true, the last storage varnode will always be the stack element.
 	 * @see #getLastStorageVarnode()
 	 */
 	public boolean hasStackStorage();
 
-	/** 
+	/**
 	 * @return true if this is a simple variable consisting of a single register varnode
-	 * which will be returned by either the {@link #getFirstStorageVarnode()} or 
-	 * {@link #getLastStorageVarnode()} methods.  The register can be obtained using the 
+	 * which will be returned by either the {@link #getFirstStorageVarnode()} or
+	 * {@link #getLastStorageVarnode()} methods.  The register can be obtained using the
 	 * {@link #getRegister()} method.
 	 */
 	public boolean isRegisterVariable();
@@ -205,8 +205,8 @@ public interface Variable extends Comparable<Variable> {
 	public Register getRegister();
 
 	/**
-	 * @return all storage register(s) associated with this variable, else null is returned if 
-	 * no registers are used.  A variable with compound storage may have more than one register 
+	 * @return all storage register(s) associated with this variable, else null is returned if
+	 * no registers are used.  A variable with compound storage may have more than one register
 	 * or other storage in addition to the register(s) returned by this method.
 	 * @see #isRegisterVariable()
 	 * @see #isCompoundVariable()
@@ -221,23 +221,23 @@ public interface Variable extends Comparable<Variable> {
 	public Address getMinAddress();
 
 	/**
-	 * @return the stack offset associated with simple stack variable (i.e., {@link #isStackVariable()} 
-	 * returns true). 
+	 * @return the stack offset associated with simple stack variable (i.e., {@link #isStackVariable()}
+	 * returns true).
 	 * @throws UnsupportedOperationException if storage is not a simple stack variable
 	 */
 	public int getStackOffset();
 
-	/** 
+	/**
 	 * @return true if this is a simple variable consisting of a single storage memory element
-	 * which will be returned by either the {@link #getFirstStorageVarnode()} or 
+	 * which will be returned by either the {@link #getFirstStorageVarnode()} or
 	 * {@link #getVariableStorage()} methods.
 	 */
 	public boolean isMemoryVariable();
 
-	/** 
+	/**
 	 * @return true if this is a simple variable consisting of a single storage unique/hash element
-	 * which will be returned by either the {@link #getFirstStorageVarnode()} or 
-	 * {@link #getVariableStorage()} methods.  The unique hash can be obtained from the 
+	 * which will be returned by either the {@link #getFirstStorageVarnode()} or
+	 * {@link #getVariableStorage()} methods.  The unique hash can be obtained from the
 	 * storage address offset corresponding to the single storage element.
 	 */
 	public boolean isUniqueVariable();
@@ -250,20 +250,20 @@ public interface Variable extends Comparable<Variable> {
 	public boolean isCompoundVariable();
 
 	/**
-	 * @return true if this variable has been assigned storage.  This is equivalent to 
+	 * @return true if this variable has been assigned storage.  This is equivalent to
 	 * {@link #getVariableStorage()} != null
 	 */
 	public boolean hasAssignedStorage();
 
 	/**
-	 * @return the first use offset relative to the function entry point. 
+	 * @return the first use offset relative to the function entry point.
 	 */
 	public int getFirstUseOffset();
 
 	/**
-	 * @return the symbol associated with this variable or null if no symbol 
+	 * @return the symbol associated with this variable or null if no symbol
 	 * associated.  Certain dynamic variables such as auto-parameters do not
-	 * have a symbol and will return null. 
+	 * have a symbol and will return null.
 	 */
 	public Symbol getSymbol();
 

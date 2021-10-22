@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,13 +15,13 @@
  */
 package ghidra.app.util.bin.format.macho.relocation;
 
-/** 
+/**
  * {@link ARM_MachoRelocationHandler} constants
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/arm/reloc.h.auto.html">mach-o/arm/reloc.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/arm/reloc.h.auto.html">mach-o/arm/reloc.h</a>
  */
 public class ARM_MachoRelocationConstants {
-	
+
 	/**
 	 * Generic relocation as described above
 	 */
@@ -65,16 +65,16 @@ public class ARM_MachoRelocationConstants {
 	/**
 	 * For these two r_type relocations they always have a pair following them and the r_length bits
 	 * are used differently.  The encoding of the r_length is as follows:
-	 * 
+	 *
 	 * low bit of r_length:
 	 *    0 - :lower16: for movw instructions
 	 *    1 - :upper16: for movt instructions
-	 *    
+	 *
 	 * high bit of r_length:
 	 *    0 - arm instructions
 	 *    1 - thumb instructions
-	 *       
-	 * The other half of the relocated expression is in the following pair relocation entry in the 
+	 *
+	 * The other half of the relocated expression is in the following pair relocation entry in the
 	 * low 16 bits of r_address field.
 	 */
 	public final static int ARM_RELOC_HALF = 8;

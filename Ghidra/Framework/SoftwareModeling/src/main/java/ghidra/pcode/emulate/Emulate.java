@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -156,7 +156,7 @@ public class Emulate {
 		return current_address;
 	}
 
-	/// \return the last address 
+	/// \return the last address
 	public Address getLastExecuteAddress() {
 		return last_execute_address;
 	}
@@ -235,12 +235,12 @@ public class Emulate {
 
 	/**
 	 * Returns the current context register value.  The context value returned reflects
-	 * its state when the previously executed instruction was 
-	 * parsed/executed.  The context value returned will feed into the next 
+	 * its state when the previously executed instruction was
+	 * parsed/executed.  The context value returned will feed into the next
 	 * instruction to be parsed with its non-flowing bits cleared and
 	 * any future context state merged in.  If no instruction has been executed,
 	 * the explicitly set context will be returned.  A null value is returned
-	 * if no context register is defined by the language or initial context has 
+	 * if no context register is defined by the language or initial context has
 	 * not been set.
 	 */
 	public RegisterValue getContextRegisterValue() {
@@ -261,7 +261,7 @@ public class Emulate {
 	 * will be cleared prior to parsing on instruction.  In addition,
 	 * any future context state set by the pcode emitter will
 	 * take precedence over context set using this method.  This method
-	 * is primarily intended to be used to establish the initial 
+	 * is primarily intended to be used to establish the initial
 	 * context state.
 	 * @param regValue
 	 */
@@ -622,9 +622,9 @@ public class Emulate {
 
 }
 /** \page sleighAPIemulate The SLEIGH Emulator
-    
+
   \section emu_overview Overview
-  
+
   \b SLEIGH provides a framework for emulating the processors which have a specification written
    for them.  The key classes in this framework are:
 
@@ -680,7 +680,7 @@ public class Emulate {
   by caching memory \e pages.  Any write creates an aligned page to hold the new data.  The class
   takes care of loading and filling in pages as needed.
 
-  The Emulate constructor always adds a unique space memory bank using the UniqueMemoryBank, 
+  The Emulate constructor always adds a unique space memory bank using the UniqueMemoryBank,
   the user needs not add this space.
 
   All the memory bank constructors need a page size, which is most relevant to the page implementation.  The
@@ -720,10 +720,10 @@ public class Emulate {
       uint4 returnaddr = mem->getValue(ram,esp,4);
       mem->setValue("ESP",esp+8);
       emulate->setExecuteAddress(Address(ram,returnaddr));
-  
+
       return true;			// This replaces the indicated instruction
     }
-      
+
   \endcode
 
   Notice that the callback retrieves the value of the stack pointer by name.  Using this
@@ -733,7 +733,7 @@ public class Emulate {
 
   \section emu_finalsetup Running the Emulator
   Here is an example of instantiating an EmulatePcodeCache object. A breakpoint is also instantiated
-  and registered with the BreakTable.  
+  and registered with the BreakTable.
 
   \code
     ...
@@ -747,7 +747,7 @@ public class Emulate {
     // Set up the initial stack pointer
     memstate.setValue("ESP",0xbffffffc);
     emulator.setExecuteAddress(Address(trans.getDefaultSpace(),0x1D00114));  // Initial execution address
-    
+
     PutsCallBack putscallback;
     breaktable.registerAddressCallback(Address(trans.getDefaultSpace(),0x1D00130),&putscallback);
 

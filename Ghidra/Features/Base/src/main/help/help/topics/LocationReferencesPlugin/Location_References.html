@@ -29,12 +29,12 @@
       label and not the current address. In the following snippet, the label "LAB_40768a" is the
       field at the current location.</P>
       <BR>
-       
+
 
       <CENTER>
         <IMG alt="" border="1" src="images/LabelReferencesSample.png">
       </CENTER><BR>
-       
+
 
       <P>Showing the <I>Location References Dialog</I> dialog at this location will show all
       references to the label "LAB_4078d2".</P>
@@ -47,12 +47,12 @@
       references to the address that the XRef field represents. In the following snippet, the Xref
       field "0040767d(j)" is the field at the current location.</P>
       <BR>
-       
+
 
       <CENTER>
         <IMG alt="" border="1" src="images/XRefLabelReferencesSample.png">
       </CENTER><BR>
-       
+
 
       <P>Showing the <I>Location References Dialog</I> dialog at this location will show all
       references to the address 0040767d.</P>
@@ -62,9 +62,9 @@
         references to data types</A> from the Data Type Manager. In this case, all locations where
         the selected data type is applied will be highlighted.</P>
       </BLOCKQUOTE>
-      
+
     </BLOCKQUOTE><BR>
-     
+
 
     <H2>To Find Location References</H2>
 
@@ -84,10 +84,10 @@
 
     <BLOCKQUOTE>
       <P>
-      <SPAN style="font-size: 0.7em;">*If the Location References Dialog cannot show 
+      <SPAN style="font-size: 0.7em;">*If the Location References Dialog cannot show
       references to the location that
       was clicked, then the menu item will be disabled.</SPAN>
-      </P> 
+      </P>
 
 		<P>
 		The results of performing this action depend upon the location the cursor when the
@@ -100,7 +100,7 @@
 			</LI>
 			<LI>
 			When over an address, all references to the code unit containing that address will
-			be shown, (which is what the 
+			be shown, (which is what the
 			<A HREF="#Show_Refs_To_Code_Unit">Show References to Address</A> action does),
 			</LI>
 		</UL>
@@ -129,22 +129,22 @@
         <P align="left"><A name="Highlight"></A>The <IMG alt="" src="images/tag_yellow.png">
         button toggles the highlighting of the matching references.   In this case, the
         term highlight refers to the background color of the item in the Listing and not
-        a <A HREF="help/topics/SetHighlightPlugin/Highlighting.htm">Program Selection 
+        a <A HREF="help/topics/SetHighlightPlugin/Highlighting.htm">Program Selection
         Highlight</A>.
         </P>
       	<BLOCKQUOTE>
       		<P>
       		<IMG alt="" src="../../shared/tip.png">
-      		To instead make a Program Selection Highlight, use the select button mentioned above.  
-      		Then, click from the menu bar <B>Select 
+      		To instead make a Program Selection Highlight, use the select button mentioned above.
+      		Then, click from the menu bar <B>Select
       		<img src="../../shared/arrow.gif" alt="-&gt;" border="0">
       		 Program Highlight
-      		 <img src="../../shared/arrow.gif" alt="-&gt;" border="0"> 
+      		 <img src="../../shared/arrow.gif" alt="-&gt;" border="0">
       		 Entire Selection
       		 </B>
       		</P>
-      	</BLOCKQUOTE>  
-        
+      	</BLOCKQUOTE>
+
       </BLOCKQUOTE>
 
       <H3>Search Results</H3>
@@ -161,9 +161,9 @@
         <P><B><I>Preview -</I></B> Shows the instruction or data item at the source address.
         </P>
 
-        <P><B><I>Context -</I></B> Shows the type of reference to the current location.  If the 
-        		result is a Ghidra in-memory Reference, then this column will show the type of 
-        		reference.  If the result is found by way of the Decompiler, then the line from 
+        <P><B><I>Context -</I></B> Shows the type of reference to the current location.  If the
+        		result is a Ghidra in-memory Reference, then this column will show the type of
+        		reference.  If the result is found by way of the Decompiler, then the line from
         		the decompiled function will be shown.
         </P>
 
@@ -174,7 +174,7 @@
           <LI>Click on an entry in the table, or Ctrl-click to select multiple entries.</LI>
 
           <LI>
-            Right mouse click and choose <B>Make</B> <B>Selection</B>. 
+            Right mouse click and choose <B>Make</B> <B>Selection</B>.
 
             <UL>
               <LI>The current selection in the Code Browser is set to include the addresses that
@@ -184,7 +184,7 @@
         </OL>
       </BLOCKQUOTE>
     </BLOCKQUOTE><BR>
-     
+
 
     <H2><A name="Data_Types"></A>To Find Location References to Data Types</H2>
 
@@ -196,47 +196,47 @@
 
       applied, such as in function signatures, return types, structures, etc. For <TT>FunctionDefinition</TT>s
       the action will display all places that function is applied.</P>
-      
-      
+
+
       	<BLOCKQUOTE>
 	      <P>
 	      <IMG border="0" src="../../shared/note.png" alt="">
 	      <A name="Data_Type_Discovery"></A>
-	      By default, finding uses of 
-	      data types will search not only for applied data types, but also will perform 
+	      By default, finding uses of
+	      data types will search not only for applied data types, but also will perform
 	      dynamic discovery of data types using the <CODE>Data Type Reference Finder</CODE>
-	      service.   This causes the search to be slower, but also reports many more type 
-	      uses.  To disable the dynamic searching, use the 
-	      <B>Search</B><img src="../../shared/arrow.gif" alt="-&gt;" border="0"> 
-	      <B>Dynamic Data Type Discovery</B> 
+	      service.   This causes the search to be slower, but also reports many more type
+	      uses.  To disable the dynamic searching, use the
+	      <B>Search</B><img src="../../shared/arrow.gif" alt="-&gt;" border="0">
+	      <B>Dynamic Data Type Discovery</B>
 	      <A href="help/topics/Tool/ToolOptions_Dialog.htm">tool option</A>.
 	      </P>
 	    </BLOCKQUOTE>
-      
-    </BLOCKQUOTE>     
-     
+
+    </BLOCKQUOTE>
+
 
     <H2><A name="Show_Refs_To_Code_Unit"></A>To Show Location References to Code Unit</H2>
 
     <OL start="1" type="1">
       <LI>Right-mouse anywhere on the code unit*</LI>
 
-      <LI>Select <B>References <IMG alt="" src="../../shared/arrow.gif"> Show References to 
-      Address </B> from the popup menu.</LI>      
+      <LI>Select <B>References <IMG alt="" src="../../shared/arrow.gif"> Show References to
+      Address </B> from the popup menu.</LI>
     </OL>
 
     <BLOCKQUOTE>
       <P>
-      This will show all references to the current address, as well as all addresses consumed 
+      This will show all references to the current address, as well as all addresses consumed
       by the current instruction or data.
       </P>
       <P>
-      <SPAN style="font-size: 0.7em;">*If the Location References Dialog cannot show 
+      <SPAN style="font-size: 0.7em;">*If the Location References Dialog cannot show
       references to the location that
       was clicked, then the menu item will be disabled.</SPAN>
-      </P> 
+      </P>
     </BLOCKQUOTE>
-     
+
 
     <BLOCKQUOTE>
       <P>
@@ -244,7 +244,7 @@
       references to the current code unit. No other special reference finding will take place.
       </P>
     </BLOCKQUOTE>
-     
+
 
     <H2>Renaming Windows</H2>
 

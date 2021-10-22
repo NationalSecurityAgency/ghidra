@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,14 +31,14 @@ import ghidra.xml.XmlPullParser;
 public class BlockGraph extends PcodeBlock {
 	private ArrayList<PcodeBlock> list;			// List of blocks within the super-block
 	private int maxindex;						// -index- contains minimum -maxindex- contains max
-	
+
 	public BlockGraph() {
 		super();
 		blocktype = PcodeBlock.GRAPH;
 		list = new ArrayList<PcodeBlock>();
 		maxindex = -1;
 	}
-	
+
 	/**
 	 * Add a block to this container. There are (initially) no edges between
 	 * it and any other block in the container.
@@ -55,7 +55,7 @@ public class BlockGraph extends PcodeBlock {
 			min = bl.index;
 			max = min;
 		}
-		
+
 		if (list.isEmpty()) {
 			index = min;
 			maxindex = max;
@@ -81,14 +81,14 @@ public class BlockGraph extends PcodeBlock {
 		index = 0;
 		maxindex = list.size()-1;
 	}
-	
+
 	/**
 	 * @return the number of blocks in this container
 	 */
 	public int getSize() {
 		return list.size();
 	}
-	
+
 	/**
 	 * Retrieve the i-th block from this container
 	 * @param i is the index of the block to fetch
@@ -110,7 +110,7 @@ public class BlockGraph extends PcodeBlock {
 	/**
 	 * Recursively run through this structured BlockGraph finding the BlockCopy leaves.
 	 * Using the BlockCopy altindex, lookup the original BlockCopy in -ingraph- and
-	 * transfer the Object ref and Address into the leaf 
+	 * transfer the Object ref and Address into the leaf
 	 * @param ingraph is the original flow graph
 	 */
 	public void transferObjectRef(BlockGraph ingraph) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import generic.test.AbstractGenericTest;
 
 /**
  *
- * @version 
+ * @version
  */
 public class ArrayTest extends AbstractGenericTest {
 
@@ -37,7 +37,7 @@ public class ArrayTest extends AbstractGenericTest {
     public ArrayTest() {
         super();
     }
-    
+
 @Test
     public void testByteArray() {
         ByteArray ba = new ByteArray();
@@ -70,7 +70,7 @@ public class ArrayTest extends AbstractGenericTest {
         assertEquals(0,sa.get(0));
         assertEquals(0,sa.get(1000));
     }
-   
+
 @Test
     public void testIntArray() {
         IntArray ia = new IntArray();
@@ -119,7 +119,7 @@ public class ArrayTest extends AbstractGenericTest {
         for(int i=0;i<n+10;i++) {
             assertEquals("n = "+n+"i = "+i,false, ba.get(i));
         }
-    
+
     }
-           
+
 }

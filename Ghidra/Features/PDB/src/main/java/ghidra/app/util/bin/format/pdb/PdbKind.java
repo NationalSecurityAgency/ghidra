@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,13 +18,13 @@ package ghidra.app.util.bin.format.pdb;
 public enum PdbKind {
 
 	//@formatter:off
-	STRUCTURE, 
-	UNION, 
-	MEMBER, 
-	STATIC_LOCAL, 
-	OBJECT_POINTER, 
-	PARAMETER, 
-	LOCAL, 
+	STRUCTURE,
+	UNION,
+	MEMBER,
+	STATIC_LOCAL,
+	OBJECT_POINTER,
+	PARAMETER,
+	LOCAL,
 	UNKNOWN;
 	//@formatter:on
 
@@ -60,7 +60,7 @@ public enum PdbKind {
 
 	/**
 	 * Parse case-insensitive kind string and return corresponding PdbKind.
-	 * It is expected that kind strings will be camel notation (e.g., OBJECT_POINTER 
+	 * It is expected that kind strings will be camel notation (e.g., OBJECT_POINTER
 	 * kind string would be ObjectPointer).
 	 * If not identified UNKNOWN will be returned.
 	 * @param kind kind string (underscores not permitted)

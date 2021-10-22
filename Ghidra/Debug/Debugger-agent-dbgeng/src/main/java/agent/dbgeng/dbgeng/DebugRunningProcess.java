@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,7 +59,7 @@ public interface DebugRunningProcess {
 
 		/**
 		 * The system ID (PID) for the process.
-		 * 
+		 *
 		 * @return the PID
 		 */
 		public int getSystemId() {
@@ -68,7 +68,7 @@ public interface DebugRunningProcess {
 
 		/**
 		 * The name of the executable defining the process
-		 * 
+		 *
 		 * @return the name
 		 */
 		public String getExecutableName() {
@@ -77,7 +77,7 @@ public interface DebugRunningProcess {
 
 		/**
 		 * A textual description of the process.
-		 * 
+		 *
 		 * @return the description
 		 */
 		public String getDescription() {
@@ -92,14 +92,14 @@ public interface DebugRunningProcess {
 
 	/**
 	 * The system ID (PID) for the process.
-	 * 
+	 *
 	 * @return the PID
 	 */
 	int getSystemId();
 
 	/**
 	 * Get the "full" description of the process.
-	 * 
+	 *
 	 * @param flags indicate which information to include in the description
 	 * @return the description
 	 */
@@ -107,7 +107,7 @@ public interface DebugRunningProcess {
 
 	/**
 	 * The name of the executable defining the process.
-	 * 
+	 *
 	 * @param flags indicate which information to include in the description
 	 * @return the name
 	 */
@@ -115,7 +115,7 @@ public interface DebugRunningProcess {
 
 	/**
 	 * A textual description of the process.
-	 * 
+	 *
 	 * @param flags indicate which information to include in the description
 	 * @return the description
 	 */

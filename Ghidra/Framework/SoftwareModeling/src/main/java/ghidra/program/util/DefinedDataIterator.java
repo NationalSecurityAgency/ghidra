@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -116,8 +116,8 @@ public class DefinedDataIterator implements DataIterator {
 
 	/**
 	 * LIFO stack of iterators.  Newly found iterators of sub-components are
-	 * pushed onto the end and become the current iterator.  When an iterator is exhausted, 
-	 * it is popped of the end and the uncovered iterator is now the current.    
+	 * pushed onto the end and become the current iterator.  When an iterator is exhausted,
+	 * it is popped of the end and the uncovered iterator is now the current.
 	 */
 	private Deque<DataIterator> itStack = new ArrayDeque<>();
 	private Data currentDataResult;

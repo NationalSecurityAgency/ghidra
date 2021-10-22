@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,7 +53,7 @@ public class VariableStorageManagerDB {
 	 * @param monitor the task monitor.
 	 * @throws IOException if a database error occurs.
 	 * @throws VersionException if the table version is different from this adapter.
-	 * @throws IOException 
+	 * @throws IOException
 	 * @throws CancelledException if the user cancels the upgrade.
 	 */
 	public VariableStorageManagerDB(DBHandle handle, AddressMap addrMap, int openMode, Lock lock,
@@ -275,7 +275,7 @@ public class VariableStorageManagerDB {
 	 * Update variable storage specifications to reflect address space and register mappings
 	 * @param translator
 	 * @param monitor
-	 * @throws CancelledException 
+	 * @throws CancelledException
 	 */
 	public void setLanguage(LanguageTranslator translator, TaskMonitor monitor)
 			throws CancelledException {

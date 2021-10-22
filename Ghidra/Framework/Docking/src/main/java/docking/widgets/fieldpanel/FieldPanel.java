@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -300,7 +300,7 @@ public class FieldPanel extends JPanel
 	/**
 	 * Returns true if the given field location is rendered on the screen; false if scrolled
 	 * offscreen
-	 * 
+	 *
 	 * @param location the location to check
 	 * @return true if the location is on the screen
 	 */
@@ -320,7 +320,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the first visible layout or null if there are no visible layouts
-	 * 
+	 *
 	 * @return the first visible layout
 	 */
 	public AnchoredLayout getVisibleStartLayout() {
@@ -332,7 +332,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the last visible layout or null if there are no visible layouts
-	 * 
+	 *
 	 * @return the last visible layout
 	 */
 	public AnchoredLayout getVisibleEndLayout() {
@@ -529,7 +529,7 @@ public class FieldPanel extends JPanel
 		selectionListeners.remove(listener);
 	}
 
-	/** 
+	/**
 	 * Adds a selection listener that will be notified while the selection is being created
 	 * @param listener the listener to be notified
 	 */
@@ -537,7 +537,7 @@ public class FieldPanel extends JPanel
 		liveSelectionListeners.add(listener);
 	}
 
-	/** 
+	/**
 	 * Removes the selection listener from being notified when the selection is being created
 	 * @param listener the listener to be removed from being notified
 	 */
@@ -604,7 +604,7 @@ public class FieldPanel extends JPanel
 
 	/**
 	 * Returns the class responsible for triggering popups for this field panel.
-	 * 
+	 *
 	 * @return the hover handler.
 	 */
 	public HoverHandler getHoverHandler() {
@@ -733,7 +733,7 @@ public class FieldPanel extends JPanel
 	// for subclasses to control the event trigger
 	/**
 	 * Sets the cursorPosition to the given location with the given trigger.
-	 * 
+	 *
 	 * @param index the index of the Layout on which to place the cursor.
 	 * @param fieldNum the index of the field within its layout on which to place the cursor.
 	 * @param row the row within the field to place the cursor.
@@ -1661,7 +1661,7 @@ public class FieldPanel extends JPanel
 			cursorHandler.setCursorPos(e.getX(), e.getY(), EventTrigger.GUI_ACTION);
 			if (didDrag) {
 				// Send an event after the drag is finished.  Event are suppressed while dragging,
-				// meaning that the above call to setCursorPos() will not have fired an event 
+				// meaning that the above call to setCursorPos() will not have fired an event
 				// because the internal cursor position did not change during the mouse release.
 				cursorHandler.notifyCursorChanged(EventTrigger.GUI_ACTION);
 			}

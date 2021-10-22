@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ class RegisterContextBuilder {
 	private BigInteger value;
 
 	/**
-	 * 
+	 *
 	 * @param program
 	 * @param reg tracked register (may not be the context-register)
 	 * @param isBitRegister
@@ -103,13 +103,13 @@ class RegisterContextBuilder {
 
 	/**
 	 * Set an assumed register value at the specified instr using
-	 * the register value at valueFrom.  If overwrite is true and a 
-	 * context value is not found at valueFrom, the value state will revert 
+	 * the register value at valueFrom.  If overwrite is true and a
+	 * context value is not found at valueFrom, the value state will revert
 	 * to unknown.
 	 * @param instr first instruction of range
 	 * @param valueFrom point from which existing register value should
 	 * be read from program context.
-	 * @param overwrite this method will take not action and return false if 
+	 * @param overwrite this method will take not action and return false if
 	 * this parameter is false and and a context value has previously been set,
 	 * otherwise an attempt will be made to overwrite the current value state.
 	 * @return true if value was set, otherwise false.
@@ -163,7 +163,7 @@ class RegisterContextBuilder {
 	boolean writeValue(Address rangeEnd) {
 		if (setAddr != null && setAddr.compareTo(rangeEnd) < 0) {
 
-//boolean overwrite = (program.getProgramContext().getValue(reg, setAddr, false) != null);				
+//boolean overwrite = (program.getProgramContext().getValue(reg, setAddr, false) != null);
 //String setStr = setAddrAssumed ? "" : " *SET*";
 //String owStr = overwrite ? " ???" : "";
 			try {
@@ -183,9 +183,9 @@ class RegisterContextBuilder {
 	 * @param instr instruction which has made the bit modification
 	 * @param bit the bit to be set.
 	 * @param rightShiftFactor value will be subtracted from specified bit to determine actual bit
-	 * to be set. 
+	 * to be set.
 	 * @return false if setting not possible (caused by instr not having a fall-through or
-	 * this is a multi-bit register without a previous value setting, or bit is null). 
+	 * this is a multi-bit register without a previous value setting, or bit is null).
 	 */
 	public boolean setBitAt(Instruction instr, Scalar bit, int rightShiftFactor) {
 		if (bit != null) {
@@ -202,7 +202,7 @@ class RegisterContextBuilder {
 	 * @param instr instruction which has made the bit modification
 	 * @param bit the bit to be set.
 	 * @return false if setting not possible (caused by instr not having a fall-through or
-	 * this is a multi-bit register without a previous value setting, or bit is null). 
+	 * this is a multi-bit register without a previous value setting, or bit is null).
 	 */
 	public boolean setBitAt(Instruction instr, int bit) {
 		if (isBitRegister || value != null) {
@@ -228,9 +228,9 @@ class RegisterContextBuilder {
 	 * @param instr instruction which has made the bit modification
 	 * @param bit the bit to be cleared.
 	 * @param rightShiftFactor value will be subtracted from specified bit to determine actual bit
-	 * to be cleared. 
+	 * to be cleared.
 	 * @return false if clear not possible (caused by instr not having a fall-through or
-	 * this is a multi-bit register without a previous value setting, or bit is null). 
+	 * this is a multi-bit register without a previous value setting, or bit is null).
 	 */
 	public boolean clearBitAt(Instruction instr, Scalar bit, int rightShiftFactor) {
 		if (bit != null) {
@@ -247,7 +247,7 @@ class RegisterContextBuilder {
 	 * @param instr instruction which has made the bit modification
 	 * @param bit the bit to be cleared.
 	 * @return false if clear not possible (caused by instr not having a fall-through or
-	 * this is a multi-bit register without a previous value setting, or bit is null). 
+	 * this is a multi-bit register without a previous value setting, or bit is null).
 	 */
 	public boolean clearBitAt(Instruction instr, int bit) {
 		if (isBitRegister || value != null) {

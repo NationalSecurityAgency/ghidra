@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,12 +23,12 @@ import agent.gdb.manager.parsing.GdbParsingUtils;
 
 /**
  * Information about a GDB breakpoint
- * 
+ *
  * <p>
  * This contains the semantic processing for GDB breakpoint information. Mostly, it just stores the
  * information, but it also enumerates the locations of a breakpoint and generates the "effective"
  * breakpoints.
- * 
+ *
  * <p>
  * Note this is not a handle to the breakpoint. Rather, this is the captured information from some
  * event or request. If other commands have been executed since this information was gathered, the
@@ -49,15 +49,15 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Process a parsed GDB breakpoint information block
-	 * 
+	 *
 	 * <p>
 	 * The passed info should be the field list containing "{@code bkpt={...}}."
-	 * 
+	 *
 	 * <p>
 	 * It may also contain {@code wpt}, {@code hw-awpt}, or {@code hw-rwpt}, in which case the
 	 * "parsed info" is synthesized to match what would be given by {@code -break-list} for that
 	 * watchpoint.
-	 * 
+	 *
 	 * @param info the parsed information block
 	 * @param curIid in case of a watchpoint, the current inferior id
 	 * @return the processed GDB breakpoint information
@@ -87,7 +87,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Parse the usual {@code bkpt} fields
-	 * 
+	 *
 	 * @param bkpt the breakpoint field list
 	 * @param allLocs all (sub)locations given in the info or table body
 	 * @param curIid in case of missing {@code thread-ids} field, the current inferior id
@@ -131,7 +131,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Parse watchpoint fields and synthesize the info
-	 * 
+	 *
 	 * @param wpt the watchpoint field list
 	 * @param type the type of watchpoint
 	 * @param curIid the inferior id in which the watchpoint was created
@@ -155,7 +155,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Parse all (sub)locations from the given info or table body
-	 * 
+	 *
 	 * @param info the info or table body
 	 * @return all locations parsed
 	 */
@@ -191,7 +191,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Construct GDB breakpoint information
-	 * 
+	 *
 	 * @param number the GDB-assigned breakpoint number
 	 * @param type the type of breakpoint
 	 * @param disp the breakpoint disposition
@@ -267,10 +267,10 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Get the GDB-assigned breakpoint number
-	 * 
+	 *
 	 * This is the key into GDB's breakpoint table to locate the breakpoint this information
 	 * describes.
-	 * 
+	 *
 	 * @return the number
 	 */
 	public long getNumber() {
@@ -279,7 +279,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Get the type of breakpoint
-	 * 
+	 *
 	 * @return the type
 	 */
 	public GdbBreakpointType getType() {
@@ -288,11 +288,11 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Get the type of breakpoint as named by GDB
-	 * 
+	 *
 	 * <p>
 	 * In case of {@link GdbBreakpointType#OTHER}, this at least reports the string GDB uses to name
 	 * the type.
-	 * 
+	 *
 	 * @return the type name
 	 */
 	public String getTypeName() {
@@ -301,7 +301,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Get the breakpoint disposition, i.e., what happens to the breakpoint once it has been hit
-	 * 
+	 *
 	 * @return the disposition
 	 */
 	public GdbBreakpointDisp getDisp() {
@@ -310,7 +310,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Get the location of the breakpoint
-	 * 
+	 *
 	 * @return the location (address)
 	 */
 	public String getAddress() {
@@ -319,7 +319,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Get the user-specified location ("What" column)
-	 * 
+	 *
 	 * @return the location
 	 */
 	public String getWhat() {
@@ -328,7 +328,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * For a catchpoint, get the event being caught
-	 * 
+	 *
 	 * @return the catch-type
 	 */
 	public String getCatchType() {
@@ -337,7 +337,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Get the location as specified by the user
-	 * 
+	 *
 	 * @return the original location
 	 */
 	public String getOriginalLocation() {
@@ -346,7 +346,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Assuming the location is an address, get it as a long
-	 * 
+	 *
 	 * @return the address
 	 */
 	public long addrAsLong() {
@@ -355,7 +355,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * If the breakpoint is pending resolution, get the location that is pending
-	 * 
+	 *
 	 * @return the pending location
 	 */
 	public String getPending() {
@@ -364,7 +364,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Check if the breakpoint is enabled
-	 * 
+	 *
 	 * @return true if enabled, false otherwise
 	 */
 	public boolean isEnabled() {
@@ -373,7 +373,7 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Get the number of times the breakpoint has been hit
-	 * 
+	 *
 	 * @return the hit count
 	 */
 	public int getTimes() {
@@ -382,11 +382,11 @@ public class GdbBreakpointInfo {
 
 	/**
 	 * Get a list of resolved addresses
-	 * 
+	 *
 	 * The effective locations may change for a variety of reasons. Most notable, a new module may
 	 * be loaded, having location(s) that match the desired location of this breakpoint. The binary
 	 * addresses within will become new effective locations of this breakpoint.
-	 * 
+	 *
 	 * @return the list of locations at the time the breakpoint information was captured
 	 */
 	public List<GdbBreakpointLocation> getLocations() {

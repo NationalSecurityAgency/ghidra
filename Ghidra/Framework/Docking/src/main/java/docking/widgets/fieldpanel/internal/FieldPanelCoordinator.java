@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,7 +63,7 @@ public class FieldPanelCoordinator implements ViewListener {
 		ViewerPosition vp = fp.getViewerPosition();
 		viewChanged(fp, vp.getIndex(), vp.getXOffset(), vp.getYOffset());
 	}
-	
+
 	/**
 	 * Removes the given field panel from the list to be synchronized.
 	 */
@@ -78,7 +78,7 @@ public class FieldPanelCoordinator implements ViewListener {
 		}
 		panels = newPanels;
 	}
-	
+
 	@Override
 	public void viewChanged(FieldPanel fp, BigInteger index, int xPos, int yPos) {
 		if (valuesChanging) return;
@@ -90,18 +90,18 @@ public class FieldPanelCoordinator implements ViewListener {
 				}
 			}
 		}finally {
-			valuesChanging = false;		
+			valuesChanging = false;
 		}
 	}
 
 	private void addListeners(FieldPanel fp) {
 		fp.addViewListener(this);
-	
-	
+
+
 	}
 	private void removeListeners(FieldPanel fp) {
 		fp.removeViewListener(this);
-	
+
 	}
 
 

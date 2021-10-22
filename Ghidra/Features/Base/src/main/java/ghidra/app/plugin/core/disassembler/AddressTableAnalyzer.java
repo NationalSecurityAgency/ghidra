@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -339,7 +339,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 
 		AddressIterator addrIter = addrSet.getAddresses(true);
 		long maxBytes = addrSet.getNumAddresses();
-		
+
 		MemoryBufferImpl buffer = new MemoryBufferImpl(memory, addrSet.getMinAddress(), (int) (maxBytes > 1024 ? 1024 : maxBytes));
 
 		while (addrIter.hasNext()) {

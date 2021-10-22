@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ public interface PropertyMap {
 	 * has the property, false otherwise.
 	 */
 	public boolean intersects(Address start, Address end);
-	
+
 	/**
 	 * Indicate whether there is an address within
 	 * the set which exists within this map.<p>
@@ -47,7 +47,7 @@ public interface PropertyMap {
 	 * has the property, false otherwise.
 	 */
 	public boolean intersects(AddressSetView set);
-	
+
 	/**
 	 * Removes all property values within a given range.
 	 * @param start begin range
@@ -68,15 +68,15 @@ public interface PropertyMap {
 	 * @param addr the address in question
 	 */
 	public boolean hasProperty(Address addr);
-	
+
 	/**
-	 * Returns the property value stored at the specified 
+	 * Returns the property value stored at the specified
 	 * address or null if no property found.
 	 * @param addr property address
 	 * @return property value
 	 */
 	public Object getObject(Address addr);
-	
+
 	/**
 	 * Get the next address where the property value exists.
 	 * @param addr the address from which to begin the search (exclusive).
@@ -134,7 +134,7 @@ public interface PropertyMap {
 	 * are in the given address set.
 	 * @param asv the set of addresses to iterate over.
 	 */
-	public AddressIterator getPropertyIterator(AddressSetView asv); 
+	public AddressIterator getPropertyIterator(AddressSetView asv);
 
 	/**
 	 * Returns an iterator over the addresses that have a property value and
@@ -143,7 +143,7 @@ public interface PropertyMap {
 	 * the end and iterate in decreasing address order
 	 */
 	public AddressIterator getPropertyIterator(AddressSetView asv, boolean forward);
-	
+
 	/**
 	 * Returns an iterator over the address having a property
 	 * value.
@@ -154,24 +154,24 @@ public interface PropertyMap {
 	 * have values of type <CODE>Object</CODE>.
 	 */
 	public AddressIterator getPropertyIterator(Address start, boolean forward);
-	
+
 	/**
-	 * Applies a property value at the indicated address without knowing its 
+	 * Applies a property value at the indicated address without knowing its
 	 * type (String, int, long, etc.) by using the property visitor.
 	 * @param visitor the property visitor that lets you apply the property
 	 * without knowing its specific type ahead of time.
 	 * @param addr the address where the property is to be applied.
 	 */
 	public void applyValue(PropertyVisitor visitor, Address addr);
-	
+
 	/**
-	 * Moves the properties defined in the range from the start address thru the 
-	 * end address to now be located beginning at the newStart address. 
-	 * The moved properties will be located at the same relative location to 
+	 * Moves the properties defined in the range from the start address thru the
+	 * end address to now be located beginning at the newStart address.
+	 * The moved properties will be located at the same relative location to
 	 * the newStart address as they were previously to the start address.
 	 * @param start the start of the range to move.
 	 * @param end the end of the range to move.
-	 * @param newStart the new start location of the range of properties 
+	 * @param newStart the new start location of the range of properties
 	 * after the move.
 	 */
 	public void moveRange(Address start, Address end, Address newStart);

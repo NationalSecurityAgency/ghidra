@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,14 +22,14 @@ import java.util.*;
  * on other values being process before them.  In other words, an acyclic directed graph will
  * be formed where the vertexes are the values and the edges represent dependencies.  Values can
  * only be removed if they have no dependencies.  Since the graph is acyclic, as values are removed
- * that have no dependencies, other nodes that depend on those nodes will become eligible for 
+ * that have no dependencies, other nodes that depend on those nodes will become eligible for
  * processing and removal.  If cycles are introduced, they will eventually cause an IllegalState
  * exception to occur when removing and processing values.  There is also a hasCycles() method
- * that can be called before processing to find cycle problems up front without wasting time 
- * processing values. 
+ * that can be called before processing to find cycle problems up front without wasting time
+ * processing values.
  *
  * @param <T> the type of value.  Some concrete classes might have restrictions on T.
- * 
+ *
  * @see DependencyGraph
  * @see DeterministicDependencyGraph
  */
@@ -149,9 +149,9 @@ public abstract class AbstractDependencyGraph<T> {
 
 	/**
 	 * Returns true if there are unvisited values ready (no dependencies) for processing.
-	 * 
+	 *
 	 * @return true if there are unvisited values ready for processing.
-	 * 
+	 *
 	 * @exception IllegalStateException is thrown if the graph is not empty and there are no nodes
 	 * without dependency which indicates there is a cycle in the graph.
 	 */
@@ -167,7 +167,7 @@ public abstract class AbstractDependencyGraph<T> {
 	 * Removes and returns a value that has no dependencies from the graph.  If the graph is empty
 	 * or all the nodes without dependencies are currently visited, then null will be returned.
 	 * NOTE: If the getUnvisitedIndependentValues() method has been called(), this method may
-	 * return null until all those "visited" nodes are removed from the graph.  
+	 * return null until all those "visited" nodes are removed from the graph.
 	 * @return return an arbitrary value that has no dependencies and hasn't been visited or null.
 	 */
 	public synchronized T pop() {
@@ -189,7 +189,7 @@ public abstract class AbstractDependencyGraph<T> {
 
 	/**
 	 * Checks if this graph has cycles.  Normal processing of this graph will eventually reveal
-	 * a cycle and throw an exception at the time it is detected.  This method allows for a 
+	 * a cycle and throw an exception at the time it is detected.  This method allows for a
 	 * "fail fast" way to detect cycles.
 	 * @return true if cycles exist in the graph.
 	 */
@@ -239,9 +239,9 @@ public abstract class AbstractDependencyGraph<T> {
 	 * "visited" and future calls to this method will not include those values.  To continue
 	 * processing the values in the graph, all values return from this method should eventually
 	 * be deleted from the graph to "free up" other values.  NOTE: values retrieved by this method
-	 * will no longer be eligible for return by the pop() method. 
+	 * will no longer be eligible for return by the pop() method.
 	 *
-	 * @return the set of values without dependencies that have never been returned by this method 
+	 * @return the set of values without dependencies that have never been returned by this method
 	 * before.
 	 */
 	public synchronized Set<T> getUnvisitedIndependentValues() {

@@ -18,7 +18,7 @@ public class CrushedPNGUtil {
 	 * the structure and formatting of a normal non-crushed PNG.
 	 * @param png the CrushedPNG object
 	 * @return An InputStream of the correctly formated bytes of a png
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	public static byte[] getUncrushedPNGBytes(ProcessedPNG png) throws Exception {
 		boolean foundIHDR = false;
@@ -318,7 +318,7 @@ public class CrushedPNGUtil {
 	private static void removeRowFilters(int width, int height, byte[] data, int offset) {
 
 		/*
-		 * Yes, it is generally bad convention to have x in function scope in this way. However the 
+		 * Yes, it is generally bad convention to have x in function scope in this way. However the
 		 * source code this was retrieved from www.jongware.com/pngdefry.html
 		 * has cases where x could be 4*width or 0 such as case 3 in the switch below
 		 * so I am duplicating the original implementation as closely as possible.
@@ -426,7 +426,7 @@ public class CrushedPNGUtil {
 	private static void applyRowFilters(int width, int height, byte[] data, int offset) {
 
 		/*
-		 * Yes, it is generally bad convention to have x in function scope in this way. However the 
+		 * Yes, it is generally bad convention to have x in function scope in this way. However the
 		 * source code this was retrieved from www.jongware.com/pngdefry.html
 		 * has cases where x could be 4*width or 0 such as case 3 in the switch below
 		 * so I am duplicating the original implementation as closely as possible.
@@ -550,7 +550,7 @@ public class CrushedPNGUtil {
 	}
 
 	/**
-	 * Prepends the needed Zlib header to the set of idatChunks 
+	 * Prepends the needed Zlib header to the set of idatChunks
 	 * in order to inflate the bytes
 	 * @param idatChunks the set of idat chunks
 	 * @return idat chunks with the new header

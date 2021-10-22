@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,8 +30,8 @@ import ghidra.util.exception.NotFoundException;
 
 /**
  * Test the tree merger.
- * 
- * 
+ *
+ *
  */
 public class ProgramTreeMergeManager1Test extends AbstractProgramTreeMergeManagerTest {
 
@@ -551,7 +551,7 @@ public class ProgramTreeMergeManager1Test extends AbstractProgramTreeMergeManage
 				try {
 					Listing listing = program.getListing();
 
-					// change the name					
+					// change the name
 					listing.renameTree("Main Tree", "Another Main Tree");
 					commit = true;
 				}
@@ -565,7 +565,7 @@ public class ProgramTreeMergeManager1Test extends AbstractProgramTreeMergeManage
 		});
 		// conflict resolution option is to keep other name
 		executeMerge(ProgramTreeMergeManager.KEEP_OTHER_NAME);
-		// should have "Some Other Tree" 
+		// should have "Some Other Tree"
 		ProgramModule root = resultProgram.getListing().getRootModule("Some Other Tree");
 		assertNotNull(root);
 		assertNotNull(resultProgram.getListing().getModule("Some Other Tree", "my sub module"));
@@ -613,7 +613,7 @@ public class ProgramTreeMergeManager1Test extends AbstractProgramTreeMergeManage
 				try {
 					Listing listing = program.getListing();
 
-					// change the name					
+					// change the name
 					listing.renameTree("Main Tree", "Another Main Tree");
 					commit = true;
 				}
@@ -626,7 +626,7 @@ public class ProgramTreeMergeManager1Test extends AbstractProgramTreeMergeManage
 			}
 		});
 		executeMerge(ProgramTreeMergeManager.KEEP_PRIVATE_NAME);
-		// should not have "Some Other Tree" 
+		// should not have "Some Other Tree"
 		assertNull(resultProgram.getListing().getRootModule("Some Other Tree"));
 		assertNotNull(resultProgram.getListing().getRootModule("Another Main Tree"));
 
@@ -673,7 +673,7 @@ public class ProgramTreeMergeManager1Test extends AbstractProgramTreeMergeManage
 				try {
 					Listing listing = program.getListing();
 
-					// change the name					
+					// change the name
 					listing.renameTree("Main Tree", "Another Main Tree");
 					commit = true;
 				}
@@ -687,7 +687,7 @@ public class ProgramTreeMergeManager1Test extends AbstractProgramTreeMergeManage
 		});
 
 		executeMerge(ProgramTreeMergeManager.ADD_NEW_TREE);
-		// should  have "Some Other Tree" and "Another Main Tree" 
+		// should  have "Some Other Tree" and "Another Main Tree"
 		assertNotNull(resultProgram.getListing().getRootModule("Some Other Tree"));
 		assertNotNull(resultProgram.getListing().getRootModule("Another Main Tree"));
 
@@ -734,7 +734,7 @@ public class ProgramTreeMergeManager1Test extends AbstractProgramTreeMergeManage
 				try {
 					Listing listing = program.getListing();
 
-					// change the name					
+					// change the name
 					listing.renameTree("Main Tree", "Another Main Tree");
 					commit = true;
 				}

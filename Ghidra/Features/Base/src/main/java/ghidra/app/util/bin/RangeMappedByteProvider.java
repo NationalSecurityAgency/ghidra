@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.formats.gfilesystem.FSRL;
 /**
  * A {@link ByteProvider} that is a concatenation of sub-ranges of another ByteProvider, also
  * allowing for non-initialized (sparse) regions.
- * <p> 
+ * <p>
  * Not thread-safe when ranges are being added.
  * <p>
  * Does not assume ownership of wrapped ByteProvider.
@@ -38,7 +38,7 @@ public class RangeMappedByteProvider implements ByteProvider {
 	 * <p>
 	 * Each range in the delegate provider is defined by the gap between
 	 * adjacent offsetMap entries.  The last entry is bounded by the total
-	 * length of the provider as specified by the length field. 
+	 * length of the provider as specified by the length field.
 	 */
 	private TreeMap<Long, Long> offsetMap = new TreeMap<>(); // this-provider offset -> delegate-provider offset
 	private long length;
@@ -46,7 +46,7 @@ public class RangeMappedByteProvider implements ByteProvider {
 
 	/**
 	 * Creates a new {@link RangeMappedByteProvider}.
-	 * 
+	 *
 	 * @param provider {@link ByteProvider} to wrap
 	 * @param fsrl {@link FSRL} of this new byte provider
 	 */
@@ -60,7 +60,7 @@ public class RangeMappedByteProvider implements ByteProvider {
 	 * <p>
 	 * If the new range immediately follows the previous range, the new range is merged
 	 * into the previous entry.
-	 * 
+	 *
 	 * @param offset long byte offset in the delegate ByteProvider, -1 indicates a sparse
 	 * range with no storage
 	 * @param rangeLen long length of the range in the delegate ByteProvider
@@ -91,7 +91,7 @@ public class RangeMappedByteProvider implements ByteProvider {
 
 	/**
 	 * Adds a sparse range to the current end of this instance.
-	 * 
+	 *
 	 * @param rangeLen long length of the sparse range
 	 */
 	public void addSparseRange(long rangeLen) {
@@ -101,7 +101,7 @@ public class RangeMappedByteProvider implements ByteProvider {
 	/**
 	 * Return the number of ranges.  Adjacent ranges that were merged
 	 * will count as a single range.
-	 * 
+	 *
 	 * @return number of ranges
 	 */
 	public int getRangeCount() {
@@ -178,7 +178,7 @@ public class RangeMappedByteProvider implements ByteProvider {
 	 * <p>
 	 * See {@link InputStream#read(byte[], int, int)}.
 	 * <p>
-	 * 
+	 *
 	 * @param index file offset to start reading
 	 * @param buffer byte array that will receive the bytes
 	 * @param offset offset inside the byte array to place the bytes
@@ -219,7 +219,7 @@ public class RangeMappedByteProvider implements ByteProvider {
 		}
 		return totalBytesRead;
 	}
-	
+
 	private void ensureBounds(long index, long count) throws IOException {
 		if (index < 0 || index > length) {
 			throw new IOException("Invalid index: " + index);

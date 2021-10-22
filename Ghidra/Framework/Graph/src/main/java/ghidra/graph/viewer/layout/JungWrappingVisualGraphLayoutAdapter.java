@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,13 +38,13 @@ import ghidra.util.exception.AssertException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A wrapper that allows for existing Jung layouts to be used inside of the Visual Graph system. 
+ * A wrapper that allows for existing Jung layouts to be used inside of the Visual Graph system.
  *
  * @param <V> the vertex type
  * @param <E> the edge type
  */
 //@formatter:off
-public class JungWrappingVisualGraphLayoutAdapter<V extends VisualVertex, 
+public class JungWrappingVisualGraphLayoutAdapter<V extends VisualVertex,
                                                   E extends VisualEdge<V>>
 
 	implements VisualGraphLayout<V, E> {
@@ -175,7 +175,7 @@ public class JungWrappingVisualGraphLayoutAdapter<V extends VisualVertex,
 
 //==================================================================================================
 // Default Edge Stuff
-//==================================================================================================	
+//==================================================================================================
 	@Override
 	public BasicEdgeRenderer<V, E> getEdgeRenderer() {
 		return edgeRenderer;

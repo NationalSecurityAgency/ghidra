@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
  * An object that can emit events affecting itself and its successors
- * 
+ *
  * <p>
  * Most often, this interface is supported by the (root) session.
  */
@@ -36,7 +36,7 @@ public interface TargetEventScope extends TargetObject {
 		STOPPED(true),
 		/**
 		 * The session is running for an unspecified reason
-		 * 
+		 *
 		 * <p>
 		 * Note that execution state changes are communicated via {@link TargetExecutionStateful},
 		 * since the sessiopn may specify such state on a per-target and/or per-thread basis.
@@ -44,7 +44,7 @@ public interface TargetEventScope extends TargetObject {
 		RUNNING(false),
 		/**
 		 * A new target process was created by this session
-		 * 
+		 *
 		 * <p>
 		 * If the new process is part of the session, too, it must be passed as a parameter.
 		 */
@@ -55,7 +55,7 @@ public interface TargetEventScope extends TargetObject {
 		PROCESS_EXITED(false),
 		/**
 		 * A new target thread was created by this session
-		 * 
+		 *
 		 * <p>
 		 * The new thread must be part of the session, too, and must be given as the event thread.
 		 */
@@ -66,7 +66,7 @@ public interface TargetEventScope extends TargetObject {
 		THREAD_EXITED(false),
 		/**
 		 * A new module has been loaded by this session
-		 * 
+		 *
 		 * <p>
 		 * The new module must be passed as a parameter.
 		 */
@@ -77,7 +77,7 @@ public interface TargetEventScope extends TargetObject {
 		MODULE_UNLOADED(false),
 		/**
 		 * The session has stopped, because one if its targets was trapped by a breakpoint
-		 * 
+		 *
 		 * <p>
 		 * If the breakpoint (specification) is part of the session, too, it must be passed as a
 		 * parameter. The trapped target must also be passed as a parameter.
@@ -85,7 +85,7 @@ public interface TargetEventScope extends TargetObject {
 		BREAKPOINT_HIT(true),
 		/**
 		 * The session has stopped, because a stepping command has completed
-		 * 
+		 *
 		 * <p>
 		 * The target completing the command must also be passed as a parameter, unless it is the
 		 * event thread. If it is a thread, it must be given as the event thread.
@@ -93,7 +93,7 @@ public interface TargetEventScope extends TargetObject {
 		STEP_COMPLETED(true),
 		/**
 		 * The session has stopped, because one if its targets was trapped on an exception
-		 * 
+		 *
 		 * <p>
 		 * The trapped target must also be passed as a parameter, unless it is the event thread. If
 		 * it is a thread, it must be given as the event thread.
@@ -101,7 +101,7 @@ public interface TargetEventScope extends TargetObject {
 		EXCEPTION(false),
 		/**
 		 * The session has stopped, because one of its targets was trapped on a signal
-		 * 
+		 *
 		 * <p>
 		 * The trapped target must also be passed as a parameter, unless it is the event thread. If
 		 * it is a thread, it must be given as the event thread.
@@ -117,7 +117,7 @@ public interface TargetEventScope extends TargetObject {
 
 	/**
 	 * If applicable, get the thread producing the last reported event
-	 * 
+	 *
 	 * @return the thread or reference
 	 */
 	@TargetAttributeType(name = EVENT_OBJECT_ATTRIBUTE_NAME, hidden = true)

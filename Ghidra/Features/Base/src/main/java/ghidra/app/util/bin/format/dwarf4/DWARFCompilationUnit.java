@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,15 +112,15 @@ public class DWARFCompilationUnit {
 	 * leaves the input stream at the next compilation unit to read), otherwise throws
 	 * an IOException if there was an unrecoverable error.
 	 * <p>
-	 * Also returns {@code NULL} (and leaves the stream at EOF) if the remainder of the stream 
-	 * is filled with null bytes. 
+	 * Also returns {@code NULL} (and leaves the stream at EOF) if the remainder of the stream
+	 * is filled with null bytes.
 	 *
 	 * @param dwarfProgram the dwarf program.
 	 * @param debugInfoBR the debug info binary reader.
 	 * @param debugAbbrBR the debug abbreviation binary reader
 	 * @param cuNumber the compilation unit number
 	 * @param monitor the current task monitor
-	 * @return the read compilation unit, or null if the compilation unit was bad/empty and should 
+	 * @return the read compilation unit, or null if the compilation unit was bad/empty and should
 	 * be ignored
 	 * @throws DWARFException if an invalid or unsupported DWARF version is read.
 	 * @throws IOException if the length of the compilation unit is invalid.
@@ -206,14 +206,14 @@ public class DWARFCompilationUnit {
 
 	/**
 	 * This ctor is public only for junit tests.  Do not use directly.
-	 * 
-	 * @param dwarfProgram {@link DWARFProgram} 
+	 *
+	 * @param dwarfProgram {@link DWARFProgram}
 	 * @param startOffset offset in provider where it starts
 	 * @param endOffset offset in provider where it ends
 	 * @param length how many bytes following the header the DIEs of this unit take
 	 * @param format DWARF_32 or DWARF_64
 	 * @param version 2, 3, 4
-	 * @param abbreviationOffset offset into abbrev section 
+	 * @param abbreviationOffset offset into abbrev section
 	 * @param pointerSize default size of pointers
 	 * @param compUnitNumber this compunits ordinal in the file
 	 * @param firstDIEOffset start of DIEs in the provider

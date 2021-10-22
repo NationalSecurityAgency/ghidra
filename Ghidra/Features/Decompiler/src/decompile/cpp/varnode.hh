@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,11 +61,11 @@ typedef set<Varnode *,VarnodeCompareDefLoc> VarnodeDefSet;
 /// represents a node in the tree. In this case the Varnode is not free, and
 /// each individual write to a storage location, as per SSA form, creates a unique Varnode, which
 /// is represented by a separate instance, so there may be multiple Varnode instances
-/// with the same Address and size. 
+/// with the same Address and size.
 class Varnode {
 public:
   /// There are a large number of boolean attributes that can be placed on a Varnode.
-  /// Some are calculated and maintained by the friend classes Funcdata and VarnodeBank, 
+  /// Some are calculated and maintained by the friend classes Funcdata and VarnodeBank,
   /// and others can be set and cleared publicly by separate subsystems.
   enum varnode_flags {
     mark = 0x01,	///< Prevents infinite loops
@@ -78,12 +78,12 @@ public:
 				///< The output is a constant \e or the output is an input
     implied = 0x40,	///< This varnode is a temporary variable
     explict = 0x80,	///< This varnode \e CANNOT be a temporary variable
-    
+
     typelock = 0x100,	///< The Dataype of the Varnode is locked
     namelock = 0x200,	///< The Name of the Varnode is locked
     nolocalalias = 0x400,	///< There are no aliases pointing to this varnode
     volatil = 0x800,	///< This varnode's value is volatile
-    
+
     externref = 0x1000,	///< Varnode address is specially mapped by the loader
     readonly = 0x2000,	///< Varnode is stored at a readonly location
     persist = 0x4000,	///< Persists after (and before) function
@@ -93,7 +93,7 @@ public:
     indirectonly = 0x40000, ///< If all uses of illegalinput varnode are inputs to INDIRECT
     directwrite = 0x80000, ///< (could be) Directly affected by a valid input
     addrforce = 0x100000, ///< Varnode is used to force variable into an address
-    
+
     mapped = 0x200000, ///< Varnode has a database entry associated with it
     indirect_creation = 0x400000, ///< The value in this Varnode is created indirectly
     return_address = 0x800000, ///< Is the varnode storage for a return address

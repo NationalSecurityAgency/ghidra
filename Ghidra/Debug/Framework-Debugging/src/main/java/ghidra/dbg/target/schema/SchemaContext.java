@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,12 +25,12 @@ import ghidra.dbg.target.schema.TargetObjectSchema.SchemaName;
 public interface SchemaContext {
 	/**
 	 * Resolve a schema in this context by name
-	 * 
+	 *
 	 * <p>
 	 * Note that resolving a name generated outside of this context may have undefined results. In
 	 * most cases, it will resolve to the schema whose name has the same string representation, but
 	 * it might instead throw a {@link NullPointerException}.
-	 * 
+	 *
 	 * @param name the schema's name
 	 * @return the schema
 	 * @throws NullPointerException if no schema by the given name exists
@@ -39,7 +39,7 @@ public interface SchemaContext {
 
 	/**
 	 * Resolve a schema in this context by name
-	 * 
+	 *
 	 * @param name the schema's name
 	 * @return the schema, or null if no schema by the given name exists
 	 */
@@ -47,7 +47,7 @@ public interface SchemaContext {
 
 	/**
 	 * Collect all schemas in this context
-	 * 
+	 *
 	 * @return the set of all schemas
 	 */
 	Set<TargetObjectSchema> getAllSchemas();

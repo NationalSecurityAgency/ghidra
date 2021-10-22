@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.util.datastruct.LRUMap;
 
 /**
  * A {@link ByteProvider} that reads its bytes from a file.
- * 
+ *
  */
 public class FileByteProvider implements ByteProvider, MutableByteProvider {
 
@@ -43,7 +43,7 @@ public class FileByteProvider implements ByteProvider, MutableByteProvider {
 
 	/**
 	 * Creates a new instance.
-	 * 
+	 *
 	 * @param file {@link File} to open
 	 * @param fsrl {@link FSRL} identity of the file
 	 * @param accessMode {@link AccessMode#READ} or {@link AccessMode#WRITE}
@@ -60,7 +60,7 @@ public class FileByteProvider implements ByteProvider, MutableByteProvider {
 
 	/**
 	 * Returns the access mode the file was opened with.
-	 * 
+	 *
 	 * @return {@link AccessMode} used to open file
 	 */
 	public AccessMode getAccessMode() {
@@ -136,7 +136,7 @@ public class FileByteProvider implements ByteProvider, MutableByteProvider {
 	 * <p>
 	 * See {@link InputStream#read(byte[], int, int)}.
 	 * <p>
-	 * 
+	 *
 	 * @param index file offset to start reading
 	 * @param buffer byte array that will receive the bytes
 	 * @param offset offset inside the byte array to place the bytes
@@ -172,10 +172,10 @@ public class FileByteProvider implements ByteProvider, MutableByteProvider {
 
 	/**
 	 * Writes bytes to the specified offset in the file.
-	 * 
+	 *
 	 * @param index the location in the file to starting writing
 	 * @param buffer bytes to write
-	 * @param offset offset in the buffer byte array to start 
+	 * @param offset offset in the buffer byte array to start
 	 * @param length number of bytes to write
 	 * @throws IOException if bad {@link AccessMode} or other io error
 	 */
@@ -230,7 +230,7 @@ public class FileByteProvider implements ByteProvider, MutableByteProvider {
 	 * Reads bytes from the file.
 	 * <p>
 	 * Protected by synchronized lock.  (See {@link #getBufferFor(long)}).
-	 * 
+	 *
 	 * @param index file position of where to read
 	 * @param buffer byte array that will receive bytes
 	 * @return actual number of byte read
@@ -245,7 +245,7 @@ public class FileByteProvider implements ByteProvider, MutableByteProvider {
 	 * Writes the specified bytes to the file.
 	 * <p>
 	 * Protected by synchronized lock (See {@link #writeBytes(long, byte[], int, int)})
-	 * 
+	 *
 	 * @param index file position of where to write
 	 * @param buffer byte array containing bytes to write
 	 * @param offset offset inside of byte array to start

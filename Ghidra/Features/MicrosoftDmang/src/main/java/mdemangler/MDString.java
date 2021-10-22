@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -116,9 +116,9 @@ public class MDString extends MDParsableItem {
 	//                                                     [a-z|A-Z|0-9|_|$]
 	//                   = ?$<hex digit> <hex digit>    # theses two nibbles encode the byte for
 	//                                                     the character
-	//                   = ?[a-z]                       # 0xe1 - 0xfa 
-	//                   = ?[A-Z]                       # 0xc1 - 0xda 
-	//                   = ?[0-9]                       # [,/\:. \n\t'-] 
+	//                   = ?[a-z]                       # 0xe1 - 0xfa
+	//                   = ?[A-Z]                       # 0xc1 - 0xda
+	//                   = ?[0-9]                       # [,/\:. \n\t'-]
 	//                                                  # Has up to 32 characters (of the
 	//                                                     character type).
 	@Override

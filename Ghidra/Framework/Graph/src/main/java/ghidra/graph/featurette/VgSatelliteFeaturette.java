@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,21 +34,21 @@ import resources.ResourceManager;
 
 /**
  * A sub-feature that provides a satellite viewer to {@link VisualGraphComponentProvider}s
- * 
- * <p>Note: this class installs actions to manipulate the satellite view.  For these to be 
+ *
+ * <p>Note: this class installs actions to manipulate the satellite view.  For these to be
  * correctly enabled, you must produce {@link VgActionContext} objects in your
- * {@link VisualGraphComponentProvider#getActionContext(MouseEvent)} method.  Specifically, 
- * the context returned must be a type of {@link VgActionContext}, with the 
+ * {@link VisualGraphComponentProvider#getActionContext(MouseEvent)} method.  Specifically,
+ * the context returned must be a type of {@link VgActionContext}, with the
  * {@link VgActionContext#shouldShowSatelliteActions()} returning true.
- * 
- * @param <V> the vertex type 
+ *
+ * @param <V> the vertex type
  * @param <E> the edge type
  * @param <G> the graph type
  */
 //@formatter:off
-public class VgSatelliteFeaturette<V extends VisualVertex, 
-								   E extends VisualEdge<V>, 
-								   G extends VisualGraph<V, E>> 
+public class VgSatelliteFeaturette<V extends VisualVertex,
+								   E extends VisualEdge<V>,
+								   G extends VisualGraph<V, E>>
 	implements VisualGraphFeaturette<V, E, G> {
 //@formatter:on
 
@@ -109,7 +109,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 	@Override
 	public void providerOpened(VisualGraphComponentProvider<V, E, G> provider) {
 		if (satelliteProvider != null) {
-			// since the provider is not null, we know that it was previously open, closed 
+			// since the provider is not null, we know that it was previously open, closed
 			satelliteProvider.setVisible(true);
 			view.setSatelliteVisible(true);
 		}
@@ -263,7 +263,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 		public void componentHidden() {
 
 			if (!dockSatelliteAction.isSelected()) {
-				// this implies the user has closed the provider, but it is still undocked; 
+				// this implies the user has closed the provider, but it is still undocked;
 				// sync the state of the view with this provider
 				view.setSatelliteVisible(false);
 			}
@@ -271,7 +271,7 @@ public class VgSatelliteFeaturette<V extends VisualVertex,
 			if (!closedByPrimaryProvider) {
 				// This is the case where the user closed this satellite provider directly.  In
 				// this case, we do not want to show this provider if the main provider is later
-				// re-opened.		
+				// re-opened.
 				satelliteProvider.removeFromTool();
 				satelliteProvider = null;
 			}

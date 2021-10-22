@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,9 +22,9 @@ import ghidra.formats.gfilesystem.FSRL;
 /**
  * Instances of this interface provide passwords to decrypt files.
  * <p>
- * Instances are typically not called directly, instead are used 
+ * Instances are typically not called directly, instead are used
  * by a {@link CryptoSession} along with other provider instances to provide
- * a balanced breakfast. 
+ * a balanced breakfast.
  * <p>
  * Multiple passwords can be returned for each request with the
  * assumption that the consumer of the values can test and validate each one
@@ -40,7 +40,7 @@ public interface PasswordProvider extends CryptoProvider {
 	/**
 	 * Returns a sequence of passwords (ordered by quality) that may apply to
 	 * the specified file.
-	 * 
+	 *
 	 * @param fsrl {@link FSRL} path to the password protected file
 	 * @param prompt optional prompt that may be displayed to a user
 	 * @param session a place to hold state values that persist across

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 /**
- * 
+ *
  */
 public class OpTemplate implements Serializable {
 	private Operand omit;
@@ -57,7 +57,7 @@ public class OpTemplate implements Serializable {
 		Varnode in[] = new Varnode[numInputs];
 		for (int i = 0; i < numInputs; i++)
 			in[i] = input[i].resolve(handles, position, off);
-		
+
 		// optimization: convert STOREs and LOADs to COPYs if possible
 		if (opcode == PcodeOp.STORE) {
 			Varnode ptr = in[1];
@@ -82,11 +82,11 @@ public class OpTemplate implements Serializable {
 				opc = PcodeOp.COPY;
 			}
 		}
-		
+
 		// just before emitting pcode, trim constant varnodes to proper size
 		for (int i = 0; i < in.length; i++)
 			in[i].trim();
-			
+
 		return new PcodeOp(position.startAddr(),opSequenceNumber,opc,in,out);
 	}
 

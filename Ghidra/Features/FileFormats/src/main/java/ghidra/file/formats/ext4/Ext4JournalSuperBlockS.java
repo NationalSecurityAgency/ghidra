@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,15 +50,15 @@ public class Ext4JournalSuperBlockS implements StructConverter {
 	private int[] s_padding; //42 ints long.
 	private int s_checksum;
 	private byte[] s_users; //768 (16*48) bytes long.
-	
+
 	public Ext4JournalSuperBlockS(ByteProvider provider) throws IOException {
 		this( new BinaryReader( provider, false ) );
 	}
-	
+
 	public Ext4JournalSuperBlockS(BinaryReader reader) throws IOException {
 		// Journal is big-endian... opposite of the rest of the file.
 		reader.setLittleEndian(false);
-		
+
 		s_header = new Ext4JournalHeaderS(reader);
 		s_blocksize = reader.readNextInt();
 		s_maxlen = reader.readNextInt();
@@ -80,7 +80,7 @@ public class Ext4JournalSuperBlockS implements StructConverter {
 		s_checksum = reader.readNextInt();
 		s_users = reader.readNextByteArray(768); //768 (16*48) bytes long.
 	}
-	
+
 	public Ext4JournalHeaderS getS_header() {
 		return s_header;
 	}

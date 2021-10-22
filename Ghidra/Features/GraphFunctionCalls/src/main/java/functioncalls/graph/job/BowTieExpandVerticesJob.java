@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,11 +35,11 @@ import ghidra.util.Msg;
 /**
  * A graph job to layout a given set of graph vertices.  Most of the work for this class is
  * done in {@link #arrangeNewVertices()}.
- * 
+ *
  * <P>This class is handed a group of edges to processes.  In this group there are vertices that
- * do not need to be arranged, referred to as the <tt>existing</tt> vertices.  This 
+ * do not need to be arranged, referred to as the <tt>existing</tt> vertices.  This
  * classes uses {@link VertexCollection} to find and store the new vertices that need
- * to be arranged. 
+ * to be arranged.
  */
 public class BowTieExpandVerticesJob extends AbstractGraphTransitionJob<FcgVertex, FcgEdge> {
 
@@ -49,7 +49,7 @@ public class BowTieExpandVerticesJob extends AbstractGraphTransitionJob<FcgVerte
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param viewer the graph viewer
 	 * @param newVertexCollection the collection of new vertices and edges being addeds
 	 * @param useAnimation true to use animation
@@ -90,7 +90,7 @@ public class BowTieExpandVerticesJob extends AbstractGraphTransitionJob<FcgVerte
 		 */
 		double x = percentComplete;
 		double x2 = x * x;  					 // change slower than x
-		double remaining = 1 - percentComplete;  // start opacity towards the end 
+		double remaining = 1 - percentComplete;  // start opacity towards the end
 		double y = x2 - remaining;
 
 		//Msg.debug(this, String.format("%%: %.3f - x^2: %.3f - remaining: %.3f - edge alpha: %.3f",
@@ -178,14 +178,14 @@ public class BowTieExpandVerticesJob extends AbstractGraphTransitionJob<FcgVerte
 		/*
 		 	Add the new row above (or below) the existing row that is being expanded.  So,
 		 	the new graph will appear as so:
-		 	
+
 		 		v3.1  v3.2   v3.4  v3.5   v3.6
 		 				v2.1      v2.2
 		 					 v1.1
-		 					 
+
 		 	Where the '3.x' nodes are those being added.  They will be centered in relation to
 		 	the existing row.
-		 	
+
 		 */
 
 		BowTieLayout bowTie = (BowTieLayout) graphLayout;
@@ -193,7 +193,7 @@ public class BowTieExpandVerticesJob extends AbstractGraphTransitionJob<FcgVerte
 		int widthPadding = isCondensed ? GraphViewerUtils.EXTRA_LAYOUT_COLUMN_SPACING_CONDENSED
 				: GraphViewerUtils.EXTRA_LAYOUT_COLUMN_SPACING;
 
-		// More space the further away from center, for aesthetics/readability (as the graph 
+		// More space the further away from center, for aesthetics/readability (as the graph
 		// gets larger, more edges are added, cluttering up the display).
 		widthPadding *= expandingLevel.getDistance();
 		int heightPadding = calculateHeightPadding(isCondensed);
@@ -212,7 +212,7 @@ public class BowTieExpandVerticesJob extends AbstractGraphTransitionJob<FcgVerte
 		double existingCenterX = existingRowBounds.x + (existingRowBounds.width / 2);
 
 		// Layout all vertices at the new level, even the hidden ones, so the new ones fit
-		// within the overall level.  This allows future expansions to put the new nodes in 
+		// within the overall level.  This allows future expansions to put the new nodes in
 		// the correct spot.
 		List<FcgVertex> allLevelVertices = newVertexCollection.getAllVerticesAtNewLevel();
 		double newRowWidth = getWidth(allLevelVertices, widthPadding);
@@ -280,8 +280,8 @@ public class BowTieExpandVerticesJob extends AbstractGraphTransitionJob<FcgVerte
 		 	distance, based upon how busyness (how many edges) of the new level being added.
 		 		-If the new level is not busy, then keep the standard distance;
 		 		-If the new level is busy, increase the y-distance, up to the max, based upon
-		 		 the busyness 
-		 	
+		 		 the busyness
+
 		 */
 		List<FcgVertex> allLevelVertices = newVertexCollection.getAllVerticesAtNewLevel();
 		int count = allLevelVertices.size();
@@ -324,7 +324,7 @@ public class BowTieExpandVerticesJob extends AbstractGraphTransitionJob<FcgVerte
 			Point2D loc = layout.apply(v);
 			int x = (int) loc.getX();
 			int y = (int) loc.getY();
-			// do we need to compensate for vertex centering (like is done in the default layout)?		
+			// do we need to compensate for vertex centering (like is done in the default layout)?
 			//	x -= (bounds.width / 2);
 			//	y -= (bounds.height / 2);
 			bounds.setLocation(x, y);

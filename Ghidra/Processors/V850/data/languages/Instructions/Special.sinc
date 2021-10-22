@@ -51,7 +51,7 @@
 #Bcond adr9 - ddddd1011dddcccc
 :b^c0003 adr9 is op0710=0xB & c0003 & adr9
 {
-	if (c0003) 
+	if (c0003)
 		goto adr9;
 }
 :br adr9 is op0710=0xB & op0003=0x5 & adr9
@@ -110,7 +110,7 @@
 
 
 # CALLT imm6 - 0000001000iiiiii
-:callt op0005 is op0615=0x8 & op0005 
+:callt op0005 is op0615=0x8 & op0005
 {
 	CTPC = inst_next;
 	CTPSW = PSW;
@@ -285,7 +285,7 @@ define pcodeop __halt;
 }
 
 # RIE - 0000000001000000
-:rie is op0015=0x40 
+:rie is op0015=0x40
 {
 	FEPC = PC;
 	FEPSW = PSW;
@@ -324,7 +324,7 @@ define pcodeop __halt;
 
 # SYNCE - 0000000000011101
 define pcodeop __synchronize;
-:synce is op0015=0x1D 
+:synce is op0015=0x1D
 {
 	__synchronize();
 }
@@ -342,7 +342,7 @@ define pcodeop __synchronize;
 }
 
 # SYSCALL vector8 - 11010111111vvvvv|00VVV00101100000
-:syscall vector8 is op0515=0x6BF & op0004; op3031=0 & op2729 & op1626=0x160 
+:syscall vector8 is op0515=0x6BF & op0004; op3031=0 & op2729 & op1626=0x160
 [ vector8 = (op2729 << 5) | op0004; ]
 {
 	EIPC = inst_next;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -182,7 +182,7 @@ public class PdbPlugin extends Plugin {
 
 	/**
 	 * Searches the currently configured symbol server paths for a Pdb symbol file.
-	 * 
+	 *
 	 * @param program the program associated with the requested pdb file
 	 * @param findOptions options that control how to search for the symbol file
 	 * @param monitor a {@link TaskMonitor} that allows the user to cancel
@@ -224,7 +224,7 @@ public class PdbPlugin extends Plugin {
 	/**
 	 * Returns a new instance of a {@link SymbolServerService} configured with values from the
 	 * application's preferences, defaulting to a minimal instance if there is no config.
-	 * 
+	 *
 	 * @param symbolServerInstanceCreatorContext an object that provides the necessary context to
 	 * the SymbolServerInstanceCreatorRegistry to create the SymbolServers that are listed in the
 	 * config values
@@ -249,7 +249,7 @@ public class PdbPlugin extends Plugin {
 	/**
 	 * Persists the {@link SymbolStore} and {@link SymbolServer}s contained in the
 	 * {@link SymbolServerService}.
-	 * 
+	 *
 	 * @param symbolServerService {@link SymbolServerService} to save, or null if clear p
 	 * reference values
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -184,7 +184,7 @@ class DirectoryTable extends GTable implements GhidraFileChooserDirectoryModelIf
 
 		File file = selectedFiles.get(0);
 		if (chooser.getModel().isDirectory(file)) {
-			chooser.setCurrentDirectory(file); // the user wants to navigate into the directory 
+			chooser.setCurrentDirectory(file); // the user wants to navigate into the directory
 		}
 		else {
 			chooser.userChoseFile(file); // the user has chosen the file
@@ -268,7 +268,7 @@ class DirectoryTable extends GTable implements GhidraFileChooserDirectoryModelIf
 	}
 
 	/**
-	 * Table cell renderer to display file sizes in more friendly terms 
+	 * Table cell renderer to display file sizes in more friendly terms
 	 */
 	private class FileSizeRenderer extends GTableCellRenderer {
 		@Override

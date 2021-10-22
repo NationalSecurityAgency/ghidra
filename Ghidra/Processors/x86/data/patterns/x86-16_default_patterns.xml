@@ -3,7 +3,7 @@
     <prepatterns>
       <data>0xc9c3</data>               	<!-- LEAVE() RET() -->
       <data>0xc9cb</data>               	<!-- LEAVE() RET() -->
-      <data>0x4dcb</data>               	<!-- DEC(BP) RET() -->  
+      <data>0x4dcb</data>               	<!-- DEC(BP) RET() -->
       <data>0.011... 1100.011</data>		<!-- POP(BP|BX|DS|SI) RET -->
       <data>1100.010 .0.....0 0x00</data>	<!-- RET(constant) -->
       <data>1100.010 .0.....0 0x00 0x90</data>	<!-- RET(constant) NOP -->

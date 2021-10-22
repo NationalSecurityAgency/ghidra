@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ public class CoffRelocation implements StructConverter {
 	private int    r_vaddr;  // address of relocation
 	private int    r_symndx; // symbol being relocated
 	private short  r_exa;    // for COFF1 files: reserved
-                             // for COFF2 files: additional byte used for 
+                             // for COFF2 files: additional byte used for
 	                         // extended address calculations
 	private short  r_type;   // relocation type
 
@@ -56,7 +56,7 @@ public class CoffRelocation implements StructConverter {
 	}
 
 	/**
-	 * Returns the address where the relocation 
+	 * Returns the address where the relocation
 	 * should be performed.
 	 * @return the relocation address
 	 */

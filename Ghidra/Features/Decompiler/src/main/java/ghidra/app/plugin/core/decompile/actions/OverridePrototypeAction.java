@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -138,8 +138,8 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 
 	private String generateSignature(PcodeOp op, String name, Function calledfunc) {
 
-		// TODO: If an override has already be placed-down it should probably be used 
-		// for the initial signature.  HighFunction does not make it easy to grab 
+		// TODO: If an override has already be placed-down it should probably be used
+		// for the initial signature.  HighFunction does not make it easy to grab
 		// existing override prototype
 
 		if (calledfunc != null) {
@@ -278,7 +278,7 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 	/**
 	 * <code>ProtoOverrideDialog</code> provides the ability to edit the
 	 * function signature associated with a specific function definition override
-	 * at a sub-function callsite.  
+	 * at a sub-function callsite.
 	 * Use of this editor requires the presence of the tool-based datatype manager service.
 	 */
 	private class ProtoOverrideDialog extends EditFunctionSignatureDialog {
@@ -289,7 +289,7 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 		/**
 		 * Construct signature override for called function
 		 * @param tool active tool
-		 * @param func function from which program access is achieved and supply of preferred 
+		 * @param func function from which program access is achieved and supply of preferred
 		 * datatypes when parsing signature
 		 * @param signature initial prototype signature to be used
 		 * @param conv initial calling convention

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,9 +31,9 @@ import ghidra.util.exception.NotFoundException;
 abstract public class CoffRelocationHandler implements ExtensionPoint {
 
 	/**
-	 * Checks to see whether or not an instance of this COFF relocation hander can handle 
+	 * Checks to see whether or not an instance of this COFF relocation hander can handle
 	 * relocating the COFF defined by the provided file header.
-	 * 
+	 *
 	 * @param fileHeader The file header associated with the COFF to relocate.
 	 * @return True if this relocation handler can do the relocation; otherwise, false.
 	 */
@@ -41,7 +41,7 @@ abstract public class CoffRelocationHandler implements ExtensionPoint {
 
 	/**
 	 * Performs a relocation.
-	 * 
+	 *
 	 * @param program The program to relocate.
 	 * @param address The address at which to perform the relocation.
 	 * @param symbol The symbol used during relocation.

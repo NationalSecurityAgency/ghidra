@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,9 @@ import ghidra.util.Msg;
 
 /**
  * Structured Dynamic Data type.
- * 
+ *
  * Dynamic Structure that is built by adding data types to it.
- * 
+ *
  * NOTE: This is a special Dynamic data-type which can only appear as a component
  * created by a Dynamic data-type
  */
@@ -40,7 +40,7 @@ public abstract class StructuredDynamicDataType extends DynamicDataType {
 
 	/**
 	 * Construct an empty dynamic structure
-	 * 
+	 *
 	 * @param name        name of the dynamic structure
 	 * @param description description of the dynamic structure
 	 */
@@ -64,7 +64,7 @@ public abstract class StructuredDynamicDataType extends DynamicDataType {
 
 	/**
 	 * Add a component data type onto the end of the dynamic structure
-	 * 
+	 *
 	 * @param data        data type to add
 	 * @param componentName        name of the field in the dynamic structure
 	 * @param componentDescription description of the field
@@ -78,7 +78,7 @@ public abstract class StructuredDynamicDataType extends DynamicDataType {
 	/**
 	 * Set the components of the dynamic structure all at once.
 	 * This does not add the components in, it replaces any existing ones.
-	 * 
+	 *
 	 * @param components      list of components to add
 	 * @param componentNames  list of field names of each component
 	 * @param componentDescs  list of descriptions of each component

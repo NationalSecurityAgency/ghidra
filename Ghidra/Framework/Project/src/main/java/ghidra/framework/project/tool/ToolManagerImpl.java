@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,8 +86,8 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	}
 
-	/** 
-	 * Registers the new instance of the tool in the namesMap and returns the total number of 
+	/**
+	 * Registers the new instance of the tool in the namesMap and returns the total number of
 	 * running instances of that tool
 	 * @param toolName the name of the tool being registers
 	 * @param tool the tool being registered
@@ -306,7 +306,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/**
 	 * restores the object from an XML element
-	 * 
+	 *
 	 * @param root root element of saved XML state
 	 */
 	public void restoreFromXml(Element root) {
@@ -387,7 +387,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		}
 	}
 
-	/** 
+	/**
 	 * Save the tools that are opened and changed, that will be brought back up when the project
 	 * is reopened
 	 * @return true if the session was saved
@@ -518,7 +518,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/**
 	 * Get any tool services available from this tool
-	 * 
+	 *
 	 * @return ToolServices list of tool services this tool can provide.
 	 */
 	public ToolServices getToolServices() {
@@ -557,7 +557,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/**
 	 *  Close a tool.
-	 * 
+	 *
 	 * @param tool tool to be closed.
 	 */
 	void closeTool(PluginTool tool) {
@@ -577,7 +577,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/**
 	 * Set the active workspace.
-	 * 
+	 *
 	 * @param workspace workspace to set active
 	 */
 	void setActiveWorkspace(WorkspaceImpl workspace) {
@@ -608,9 +608,9 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/**
 	 * Get a handle to the workspace with the given name.
-	 * 
+	 *
 	 * @param name name of the workspace.
-	 * 
+	 *
 	 * @return workspace handle if one exists.
 	 */
 	Workspace getWorkspace(String name) {
@@ -619,7 +619,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/**
 	 * Mark workspace as changed.
-	 * 
+	 *
 	 * @param ws workspace to tag
 	 */
 	void setWorkspaceChanged(WorkspaceImpl ws) {
@@ -631,10 +631,10 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 	/**
 	 * Called by the workspace when it is updating its name;
 	 * causes a property change event to be fired.
-	 * 
+	 *
 	 * @param ws workspace to rename
 	 * @param name new name of workspace
-	 * 
+	 *
 	 * @throws DuplicateNameException if there already exists a workspace by the given name
 	 */
 	void setWorkspaceName(Workspace ws, String name) throws DuplicateNameException {
@@ -758,10 +758,10 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 
 	/**
 	 * Get the key for the connection map.
-	 * 
+	 *
 	 * @param producer tool producing an event
 	 * @param consumer tool consuming an event
-	 * 
+	 *
 	 */
 	private String getKey(PluginTool producer, PluginTool consumer) {
 		return producer.getName() + "+" + consumer.getName();

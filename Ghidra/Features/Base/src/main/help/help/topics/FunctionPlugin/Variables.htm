@@ -12,9 +12,9 @@
 
   <BODY lang="EN-US">
     <H1>Function Signature, Attributes and Variables</H1>
-    
+
     <H2>Function Signature</H2>
-    
+
     <P>A function's signature conveys the following information about a
     function:<BR>
     </P>
@@ -28,23 +28,23 @@
 
       <LI>Ordered list of named parameters and associated data types.</LI>
     </OL>
-    
-    
-    
-    
+
+
+
+
 
     <H2><A name="Function_Attributes"></A>Function Attributes</H2>
 
     <BLOCKQUOTE>
       <P>The following function attributes affect disassembly and semantic analysis and may be set
       via the <A href="Variables.htm#Edit_Function">Edit Function</A> dialog.</P>
-      
+
       <H3>Custom Storage</H3>
-      
-      <P>The <I>Custom Storage</I> option, if enabled, provides the ability to 
-      explicitly specify return/parameter storage.  By default, storage will be dynamically 
-      computed based upon calling convention and return/parameter data types.  When dynamic 
-      storage is computed, hidden "auto-parameters" may be injected as well as the use of 
+
+      <P>The <I>Custom Storage</I> option, if enabled, provides the ability to
+      explicitly specify return/parameter storage.  By default, storage will be dynamically
+      computed based upon calling convention and return/parameter data types.  When dynamic
+      storage is computed, hidden "auto-parameters" may be injected as well as the use of
       "forced-indirect" storage.
 
       <H3>Inline</H3>
@@ -78,15 +78,15 @@
       well-known function need to be simplified so that the caller can be more easily analyzed
       and/or understood.</P>
     </BLOCKQUOTE>
-    
-    
+
+
     <H2>Variables</H2>
-    
-    <P>There are two classes of function variables: Parameters and Local Variables.  The term Parameter 
-    also includes the Function return value which has an associated data type and storage but has no 
+
+    <P>There are two classes of function variables: Parameters and Local Variables.  The term Parameter
+    also includes the Function return value which has an associated data type and storage but has no
     ordinal. </P>
 
-    <P>Many processors use a stack as part of their calling conventions and/or for local variable storage. 
+    <P>Many processors use a stack as part of their calling conventions and/or for local variable storage.
     In some cases, the return address is pushed onto the stack during the call operation. Any references to the
     stack (e.g., references and variable storage) are relative to the stack pointer when the function is entered. For a negative growing
     stack (like the X86 processor), the stack would look something like this:</P>
@@ -134,22 +134,22 @@
         </TR>
       </TABLE>
     </CENTER>
-    
+
     <P>Structures, Unions, and Arrays can be used to define variables as well as the built in
     primitive <A href="../DataPlugin/Data.htm#DataTypes">data types</A>.&nbsp; To define
     structures, see <A href="../DataTypeEditors/StructureEditor.htm">Data Structure
-    Editor</A></P> 
-    
+    Editor</A></P>
+
     <H3>Parameters (includes Function Return)</H3>
-    
-    <P>Storage for return/parameters can be computed dynamically based upon 
+
+    <P>Storage for return/parameters can be computed dynamically based upon
     the associated calling convention and data types (i.e., complete function signature).  The ability
-    to properly compute the correct storage is limited by the current capabilities of the 
-    function prototype models and Decompiler within Ghidra.  In some cases it will be necessary to enable 
-    Custom Storage for a function and specify the correct storage locations for the return/parameters 
+    to properly compute the correct storage is limited by the current capabilities of the
+    function prototype models and Decompiler within Ghidra.  In some cases it will be necessary to enable
+    Custom Storage for a function and specify the correct storage locations for the return/parameters
     including the ability to join multiple storage elements (i.e., varnodes) for a single parameter.</P>
-    
-    <P>When parameter storage is determined dynamically, the calling convention may dictate the 
+
+    <P>When parameter storage is determined dynamically, the calling convention may dictate the
     use of hidden parameters which we refer to as "<i>auto-parameters</i>" <b>(auto)</b>.
     In addition, the "<i>forced-indirect</i>" <b>(ptr)</b> condition may be imposed on
     parameters when large data is forced to be passed by reference.  When either of these
@@ -158,18 +158,18 @@
     and <b>'__return_storage_ptr__'</b> are reserved for the two supported auto-parameter cases.
     The <b>'this'</b> <i>auto-parameter</i> is imposed by the <i>__thiscall</i> calling convention,
     while <i>forced-indirect</i> is imposed by certain calling conventions which limit the maximum size
-    of any parameter passed by value.  If <i>forced-indirect</i> is imposed on the return storage, the 
+    of any parameter passed by value.  If <i>forced-indirect</i> is imposed on the return storage, the
     <b>'__return_storage_ptr__'</b> <i>auto-parameter</i> will be imposed to allow the function caller
     to specify a pointer to the full return storage data location.  When using custom storage,
-    it is assumed any <i>auto-parameters</i> will be explicitly defined as normal parameters if applicable.  
+    it is assumed any <i>auto-parameters</i> will be explicitly defined as normal parameters if applicable.
     Within the Program API, <i>auto-parameters</i> may not be directly manipulated and are immutable.
     </P>
-    
-    <P>The <A href="#Edit_Function">Function Editor</A> is the most affective means of modifying the 
+
+    <P>The <A href="#Edit_Function">Function Editor</A> is the most affective means of modifying the
     function signature either via the Code Browser listing or within the Decompiler</P>
-    
+
     <H3>Local Variables</H3>
-    
+
     <DIV style="margin-left: 40px;">
       <P><I>&nbsp;<IMG src="../../shared/note.png">Currently, there is no specific user interface
       action for creating Local Variables.&nbsp; Stack and register variables will be created
@@ -177,16 +177,16 @@
       interface.&nbsp; Additionally, the Decompiler's commit actions will create Local Variables as
       needed.&nbsp;&nbsp;</I> <I>They can also be created programmatically.</I></P>
     </DIV>
-    
+
     <P>In addition to register and stack locations, Local Variables
-    also have the ability to be defined by the Decompiler to reflect temporary storage identified 
-    by a hash value.  Please note that these hash type variables can sometimes not work as expected within the 
+    also have the ability to be defined by the Decompiler to reflect temporary storage identified
+    by a hash value.  Please note that these hash type variables can sometimes not work as expected within the
     Decompiler.  In addition, the scope of a local register variable is determined by its <i>first-use-offset</i>
     which reflects the instruction offset relative to the function entry point at which the variable
     is first written.  The variable will remain in scope from that point forward until another
-    local variable comes into scope for the same storage location. Local stack variables assume a 
+    local variable comes into scope for the same storage location. Local stack variables assume a
     <i>first-use-offset</i> of zero (0).</P>
-    
+
 
     <H2><A name="DataType"></A>Define Variable Data Type or Function Return Type</H2>
 
@@ -211,7 +211,7 @@
           <LI>
             If the cursor is over the return type, Select <B>Set Data Type</B><IMG src=
             "../../shared/arrow.gif"> ; if the cursor is over a parameter, select <B>Set Data
-            Type</B><IMG src="../../shared/arrow.gif"> 
+            Type</B><IMG src="../../shared/arrow.gif">
 
             <UL>
               <LI>The pull right menu lists data types that you have marked as "<A href=
@@ -235,7 +235,7 @@
           <LI>Right mouse click on a parameter, &lt;RETURN&gt; or local variable</LI>
 
           <LI>
-            Select <B>Set Data Type</B><IMG src="../../shared/arrow.gif"> 
+            Select <B>Set Data Type</B><IMG src="../../shared/arrow.gif">
 
             <UL>
               <LI>The pull right menu lists data types that you have marked as "<A href=
@@ -251,7 +251,7 @@
 
       <UL>
         <LI>Using the <I><A href=
-        "../DataTypeManagerPlugin/data_type_manager_description.htm">Data Type Manager</A></I> 
+        "../DataTypeManagerPlugin/data_type_manager_description.htm">Data Type Manager</A></I>
         window (drag and drop)</LI>
       </UL>
 
@@ -313,8 +313,8 @@
       <P>If the parser fails to successfully parse your changed signature field, a dialog will appear
       giving you the option to continue typing in the field or aborting your edits in that field. </P>
 		<BLOCKQUOTE>
-	<P><I><IMG src="../../shared/note.png">Due to limitations in the parser, there are many 
-	function signatures that Ghidra supports that you cannot directly enter by typing in the 
+	<P><I><IMG src="../../shared/note.png">Due to limitations in the parser, there are many
+	function signatures that Ghidra supports that you cannot directly enter by typing in the
 	function signature field.  For example, you cannot use the signature field to enter templated types.
 	Also, the parser currently only supports common datatypes and datatypes that are currently used in your program.
 	To enter more complicated values or find datatypes from open archives, use the more precise controls that the dialog provides.</I></P>
@@ -449,7 +449,7 @@
     </UL>
 	</BLOCKQUOTE>
 	</BLOCKQUOTE>
-    
+
     <H2><A name="Create_Function_Definition"></A>Create Function Definition</H2>
 
     <BLOCKQUOTE>

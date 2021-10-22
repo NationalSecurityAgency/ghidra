@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,20 +45,20 @@ public abstract class OmfRecord {
 	public byte getRecordType() {
 		return recordType;
 	}
-	
+
 	public int getRecordLength() {
 		return recordLength;
 	}
-	
+
 	public void readRecordHeader(BinaryReader reader) throws IOException {
 		recordType = reader.readNextByte();
 		recordLength = reader.readNextShort() & 0xffff;
 	}
-	
+
 	public void readCheckSumByte(BinaryReader reader) throws IOException {
 		checkSum = reader.readNextByte();
 	}
-	
+
 	public byte calcCheckSum(BinaryReader reader) throws IOException {
 		byte res = reader.readNextByte();
 		res += reader.readNextByte();
@@ -67,28 +67,28 @@ public abstract class OmfRecord {
 			res += reader.readNextByte();
 		return res;
 	}
-	
+
 	public boolean validCheckSum(BinaryReader reader) throws IOException {
 		if (checkSum == 0) return true;			// Sum compilers just set this to zero
 		return (calcCheckSum(reader) == 0);
 	}
-	
+
 	public boolean hasBigFields() {
 		return ((recordType & 1)!=0);
 	}
-	
+
 	public static int readInt1Or2(BinaryReader reader,boolean isBig) throws IOException {
 		if (isBig)
 			return (reader.readNextShort()  & 0xffff);
 		return (reader.readNextByte() & 0xff);
 	}
-	
+
 	public static int readInt2Or4(BinaryReader reader,boolean isBig) throws IOException {
 		if (isBig)
 			return reader.readNextInt();
 		return (reader.readNextShort() & 0xffff);
 	}
-	
+
 	public static int readIndex(BinaryReader reader) throws IOException {
 		int indexWord;
 		byte firstByte = reader.readNextByte();
@@ -98,7 +98,7 @@ public abstract class OmfRecord {
 			indexWord = firstByte;
 		return indexWord;
 	}
-	
+
 	public static OmfRecord readRecord(BinaryReader reader) throws IOException, OmfException {
 		OmfRecord res = null;
 		byte type = reader.peekNextByte();
@@ -158,12 +158,12 @@ public abstract class OmfRecord {
 		}
 		return res;
 	}
-	
+
 	/**
 	 * Read the OMF string format,  1-byte length, followed by that many ascii characters
 	 * @param reader
 	 * @return
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public static String readString(BinaryReader reader) throws IOException {
 		int count = reader.readNextByte() & 0xff;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public class SymbolServerInstanceCreatorRegistry {
 
 	/**
 	 * A static singleton pre-configured with the default symbol server implementations.
-	 * 
+	 *
 	 * @return static singleton {@link SymbolServerInstanceCreatorRegistry} instance.
 	 */
 	public static SymbolServerInstanceCreatorRegistry getInstance() {
@@ -51,9 +51,9 @@ public class SymbolServerInstanceCreatorRegistry {
 	}
 
 	/**
-	 * Registers a new SymbolServer implementation so that instances of 
+	 * Registers a new SymbolServer implementation so that instances of
 	 * it can be created by the user and saved / restored from preferences.
-	 *  
+	 *
 	 * @param priority relative order of precedence of polling this
 	 * implementation's predicate to detect the specific SymbolServer
 	 * implementation from a locationString.
@@ -73,9 +73,9 @@ public class SymbolServerInstanceCreatorRegistry {
 
 	/**
 	 * Converts a list of symbol server location strings to a list of SymbolServer instances.
-	 * 
+	 *
 	 * @param locationStrings list of symbol server location strings
-	 * @param symbolServerInstanceCreatorContext a {@link SymbolServerInstanceCreatorContext} 
+	 * @param symbolServerInstanceCreatorContext a {@link SymbolServerInstanceCreatorContext}
 	 * - see {@link #getContext()} or {@link #getContext(Program)}
 	 * @return list of {@link SymbolServer}
 	 */
@@ -94,7 +94,7 @@ public class SymbolServerInstanceCreatorRegistry {
 
 	/**
 	 * Creates a new SymbolServer instance, using the registered SymbolServer types.
-	 * 
+	 *
 	 * @param symbolServerLocationString SymbolServer location - see {@link SymbolServer#getName()}
 	 * @param symbolServerInstanceCreatorContext a {@link SymbolServerInstanceCreatorContext}
 	 * - see {@link #getContext()}
@@ -109,9 +109,9 @@ public class SymbolServerInstanceCreatorRegistry {
 
 	/**
 	 * Creates a new SymbolServer instance, using the registered SymbolServer types.
-	 * 
+	 *
 	 * @param symbolServerLocationString SymbolServer location - see {@link SymbolServer#getName()}
-	 * @param symbolServerInstanceCreatorContext a {@link SymbolServerInstanceCreatorContext} 
+	 * @param symbolServerInstanceCreatorContext a {@link SymbolServerInstanceCreatorContext}
 	 * - see {@link #getContext()}
 	 * @param expectedSymbolServerClass expected class of the new symbol server being created
 	 * @return new SymbolServer instance, or null if bad location string
@@ -149,7 +149,7 @@ public class SymbolServerInstanceCreatorRegistry {
 
 	/**
 	 * Creates a {@link SymbolServerInstanceCreatorContext} that is not bound to a Program.
-	 * 
+	 *
 	 * @return new {@link SymbolServerInstanceCreatorContext}
 	 */
 	public SymbolServerInstanceCreatorContext getContext() {
@@ -158,7 +158,7 @@ public class SymbolServerInstanceCreatorRegistry {
 
 	/**
 	 * Creates a new {@link SymbolServerInstanceCreatorContext} that is bound to a Program.
-	 * 
+	 *
 	 * @param program Ghidra program
 	 * @return new {@link SymbolServerInstanceCreatorContext}
 	 */
@@ -179,7 +179,7 @@ public class SymbolServerInstanceCreatorRegistry {
 	}
 
 	/**
-	 * Functional interface that creates a new {@link SymbolServer} instance using a 
+	 * Functional interface that creates a new {@link SymbolServer} instance using a
 	 * location string and a context instance.
 	 * <p>
 	 * See {@link #createSymbolServerFromLocationString(String, SymbolServerInstanceCreatorContext)}
@@ -188,7 +188,7 @@ public class SymbolServerInstanceCreatorRegistry {
 		/**
 		 * Creates a new {@link SymbolServer} instance using the specified location string
 		 * and the context available in the symbolServerInstanceCreatorContext.
-		 * 
+		 *
 		 * @param symbolServerLocationString location string
 		 * @param symbolServerInstanceCreatorContext context
 		 * @return new {@link SymbolServer} instance, null if error

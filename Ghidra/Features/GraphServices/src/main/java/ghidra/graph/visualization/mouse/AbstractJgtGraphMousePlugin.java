@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,10 +25,10 @@ import org.jungrapht.visualization.selection.MutableSelectedState;
 
 /**
  * Graph mouse plugin base class.
- * 
+ *
  * Usage Notes:
  * <ul>
- * 		<li>We clear state on mouseReleased() and mouseExited(), since we will get 
+ * 		<li>We clear state on mouseReleased() and mouseExited(), since we will get
  * 			at least one of those calls</li>
  * </ul>
  * @param <V> the vertex type
@@ -37,7 +37,7 @@ import org.jungrapht.visualization.selection.MutableSelectedState;
 //@formatter:off
 public abstract class AbstractJgtGraphMousePlugin<V, E>
 		extends AbstractGraphMousePlugin
-		implements MouseListener, MouseMotionListener { 
+		implements MouseListener, MouseMotionListener {
 //@formatter:on
 
 	protected boolean isHandlingMouseEvents;
@@ -52,7 +52,7 @@ public abstract class AbstractJgtGraphMousePlugin<V, E>
 
 	/**
 	 * Returns the <b>primary/master</b> graph viewer.
-	 * 
+	 *
 	 * @param e the mouse event from which to get the viewer
 	 * @return the viewer
 	 */
@@ -60,7 +60,7 @@ public abstract class AbstractJgtGraphMousePlugin<V, E>
 	public VisualizationViewer<V, E> getGraphViewer(MouseEvent e) {
 		VisualizationViewer<V, E> viewer = (VisualizationViewer<V, E>) e.getSource();
 
-		// is this the satellite viewer? 
+		// is this the satellite viewer?
 		if (viewer instanceof SatelliteVisualizationViewer) {
 			return ((SatelliteVisualizationViewer<V, E>) viewer).getMaster();
 		}
@@ -69,9 +69,9 @@ public abstract class AbstractJgtGraphMousePlugin<V, E>
 	}
 
 	/**
-	 * Returns the satellite graph viewer.  This assumes that the mouse event originated from 
+	 * Returns the satellite graph viewer.  This assumes that the mouse event originated from
 	 * the satellite viewer.
-	 * 
+	 *
 	 * @param e the mouse event from which to get the viewer
 	 * @return the viewer
 	 */
@@ -80,7 +80,7 @@ public abstract class AbstractJgtGraphMousePlugin<V, E>
 
 		VisualizationViewer<V, E> viewer = (VisualizationViewer<V, E>) e.getSource();
 
-		// is this the satellite viewer? 
+		// is this the satellite viewer?
 		if (viewer instanceof SatelliteVisualizationViewer) {
 			return (SatelliteVisualizationViewer<V, E>) viewer;
 		}

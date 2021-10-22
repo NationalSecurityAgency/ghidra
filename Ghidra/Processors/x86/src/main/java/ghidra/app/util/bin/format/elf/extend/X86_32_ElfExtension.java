@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,11 +32,11 @@ public class X86_32_ElfExtension extends ElfExtension {
 	public boolean canHandle(ElfHeader elf) {
 		return elf.e_machine() == ElfConstants.EM_386 && elf.is32Bit();
 	}
-	
+
 	@Override
 	public boolean canHandle(ElfLoadHelper elfLoadHelper) {
 		Language language = elfLoadHelper.getProgram().getLanguage();
-		return canHandle(elfLoadHelper.getElfHeader()) && 
+		return canHandle(elfLoadHelper.getElfHeader()) &&
 				"x86".equals(language.getProcessor().toString()) &&
 						language.getLanguageDescription().getSize() == 32;
 	}
@@ -48,44 +48,44 @@ public class X86_32_ElfExtension extends ElfExtension {
 
 	@Override
 	public void processGotPlt(ElfLoadHelper elfLoadHelper, TaskMonitor monitor) throws CancelledException {
-		
+
 		if (!canHandle(elfLoadHelper)) {
 			return;
 		}
-		
+
 		super.processGotPlt(elfLoadHelper, monitor);
-		
+
 		processX86Plt(elfLoadHelper, monitor);
 	}
 
 	/**
-	 * Handle the case where GOT entry offset are computed based upon EBX.  
+	 * Handle the case where GOT entry offset are computed based upon EBX.
 	 * This implementation replaces the old "magic map" which had previously been used.
 	 * @param elfLoadHelper
 	 * @param monitor
 	 * @throws CancelledException
 	 */
 	private void processX86Plt(ElfLoadHelper elfLoadHelper, TaskMonitor monitor) throws CancelledException {
-		
+
 		// TODO: Does 64-bit have a similar mechanism?
 
 		// TODO: Would be better to use only dynamic table entries since sections may be stripped -
 		// the unresolved issue is to determine the length of the PLT area without a section
-		
+
 		ElfHeader elfHeader = elfLoadHelper.getElfHeader();
 		ElfSectionHeader pltSection = elfHeader.getSection(ElfSectionHeaderConstants.dot_plt);
 		if (pltSection == null || !pltSection.isExecutable()) {
 			return;
 		}
-		
+
 		ElfDynamicTable dynamicTable = elfHeader.getDynamicTable();
 		if (dynamicTable == null || !dynamicTable.containsDynamicValue(ElfDynamicType.DT_PLTGOT)) {
 			return; // avoid NotFoundException which causes issues for importer
 		}
-		
+
 		Program program = elfLoadHelper.getProgram();
 		Memory memory = program.getMemory();
-		
+
 		// MemoryBlock pltBlock = getBlockPLT(pltSection);
 		MemoryBlock pltBlock = memory.getBlock(pltSection.getNameAsString());
 		if (pltBlock == null) {

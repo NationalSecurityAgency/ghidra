@@ -4,18 +4,18 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Example script to show how to export the current program in its original binary format by 
-//looking at the original bytes compared to the current bytes and exporting the original if they 
-//are the same and the current bytes if they are different. If the changed bytes are relocations, 
+//Example script to show how to export the current program in its original binary format by
+//looking at the original bytes compared to the current bytes and exporting the original if they
+//are the same and the current bytes if they are different. If the changed bytes are relocations,
 //the original bytes are used. The script only handles simple use cases.
 //@category Examples
 
@@ -113,13 +113,13 @@ public class ExportProgramScript extends GhidraScript {
 			if (originalByte != currentByte) {
 
 				// TODO: once new method is created to use the fileBytes and offset to retrieve the
-				// address, update this to use the correct method and lift the above restriction 
+				// address, update this to use the correct method and lift the above restriction
 				// on only handling one imported file.
 				List<Address> addresses = memory.locateAddressesForFileOffset(i);
 
 
 				// NOTE: It is rare that there would be more than one address in the program corresponding
-				// to a given offset but check anyway and if any of them are a relocation then 
+				// to a given offset but check anyway and if any of them are a relocation then
 				// output the original byte
 				if (!addressSetContainsAnyInList(relocationAddrs, addresses)) {
 

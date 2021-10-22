@@ -4,7 +4,7 @@
 
 #---------------------------------------------------------------------
 # SR{cond} - Set Register Conditionally
-# I.    cond4 -> {eq,ne,hs,lo,ge,lt,mi,pl,ls,gt,le,hi,vs,vc,qs,al} 
+# I.    cond4 -> {eq,ne,hs,lo,ge,lt,mi,pl,ls,gt,le,hi,vs,vc,qs,al}
 #           d -> {0, 1, ..., 15}
 #---------------------------------------------------------------------
 
@@ -82,7 +82,7 @@
 }
 
 SLGM: val			is disp_8 [ val = disp_8 << 0; ] { export *[const]:1 val; }
-SLGM: val			is eb7=1 & disp_8 [ val = disp_8 << 0; ] { GM = 0; export *[const]:1 val; }  
+SLGM: val			is eb7=1 & disp_8 [ val = disp_8 << 0; ] { GM = 0; export *[const]:1 val; }
 :SLEEP SLGM 		is op0_16=0xe9b0 ; eop8_8=0x0 & SLGM {
 	doSleep(SLGM);
 }

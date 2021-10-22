@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,8 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Command for renaming a fragment or a module in listing.
- * 
- * 
+ *
+ *
  */
 public class RenameCmd implements Command {
 
@@ -34,8 +34,8 @@ public class RenameCmd implements Command {
 	private String statusMsg;
 	private String treeName;
 	private boolean ignoreDuplicateName;
-	
-	/** 
+
+	/**
 	 * Construct a new RenameCmd.
 	 * @param treeName name of the tree where the module or fragment resides
 	 * @param isModule true if a module is to be renamed
@@ -44,7 +44,7 @@ public class RenameCmd implements Command {
 	 * @param ignoreDuplicateName true means to ignore the exception and
 	 * don't do anything
 	 */
-	public RenameCmd(String treeName, boolean isModule, 
+	public RenameCmd(String treeName, boolean isModule,
 					String oldName, String newName, boolean ignoreDuplicateName) {
 		this.treeName = treeName;
 		this.isModule = isModule;
@@ -56,9 +56,9 @@ public class RenameCmd implements Command {
 		}
 		else {
 			cmdName = "Rename Fragment";
-		}			 					 	
+		}
 	}
-		
+
 	/**
 	 * Construct a new RenameCmd.
 	 * @param treeName name of the tree where the module or fragment resides
@@ -66,18 +66,18 @@ public class RenameCmd implements Command {
 	 * @param oldName current name of the module or fragment
 	 * @param newName new name for the module or fragment
 	 */
-	public RenameCmd(String treeName, boolean isModule, 
+	public RenameCmd(String treeName, boolean isModule,
 					 String oldName, String newName) {
 		this(treeName, isModule, oldName, newName, false);
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
 	public boolean applyTo(DomainObject obj) {
 		Program program = (Program)obj;
-		
+
 		return setName(program, oldName, newName);
 	}
 
@@ -94,7 +94,7 @@ public class RenameCmd implements Command {
 	public String getName() {
 		return cmdName;
 	}
-	
+
 	private boolean setName(Program program, String oldN, String newN) {
 		Listing listing = program.getListing();
 		try {

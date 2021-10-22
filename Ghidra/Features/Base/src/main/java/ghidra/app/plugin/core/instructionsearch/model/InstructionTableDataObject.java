@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -52,7 +52,7 @@ public class InstructionTableDataObject {
 	private Color foregroundColor;
 	private int fontStyle;
 
-	// The border style of the cell.  This is used to facilitate the 3D look of the 
+	// The border style of the cell.  This is used to facilitate the 3D look of the
 	// cells (bevel-styling).
 	private Border border;
 
@@ -76,7 +76,7 @@ public class InstructionTableDataObject {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param data the text to be displayed
 	 * @param isInstruction true if the code unit is an instruction, false if
 	 *            data or something else.
@@ -91,7 +91,7 @@ public class InstructionTableDataObject {
 	/**
 	 * Toggles the state of the cell between masked/unmasked. A notification is
 	 * issued to subscribers if there is a state change.
-	 * 
+	 *
 	 */
 	public void toggleMaskState() {
 		switch (state) {
@@ -114,7 +114,7 @@ public class InstructionTableDataObject {
 
 	/**
 	 * Changes the state of the operand or mnemonic.
-	 * 
+	 *
 	 * @param state the new operand state
 	 * @param update if true, a notification is issued to subscribers
 	 */

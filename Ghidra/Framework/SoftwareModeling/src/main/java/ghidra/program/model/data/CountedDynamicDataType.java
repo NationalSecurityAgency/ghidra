@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.util.Msg;
  * header data type.
  * The data type has a header data type which will contain the number of base data types following
  * the header data type.
- * 
+ *
  * NOTE: This is a special Dynamic data-type which can only appear as a component
  * created by a Dynamic data-type
  */
@@ -42,7 +42,7 @@ public abstract class CountedDynamicDataType extends DynamicDataType {
 
 	/**
 	 * Constructor for this dynamic data type builder.
-	 * 
+	 *
 	 * @param name name of this dynamic data type
 	 * @param description description of the data type
 	 * @param header header data type that will contain the number of following elements
@@ -147,7 +147,7 @@ public abstract class CountedDynamicDataType extends DynamicDataType {
 
 	/**
 	 * Extract the size of the data type from the given location in memory
-	 * 
+	 *
 	 * @param memory the memory to get the size from
 	 * @param loc the address in memory where the size is located
 	 * @return the size

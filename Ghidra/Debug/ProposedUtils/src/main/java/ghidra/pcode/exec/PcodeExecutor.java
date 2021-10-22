@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public class PcodeExecutor<T> {
 
 	/**
 	 * Get the executor's SLEIGH language (processor model)
-	 * 
+	 *
 	 * @return the language
 	 */
 	public SleighLanguage getLanguage() {
@@ -56,7 +56,7 @@ public class PcodeExecutor<T> {
 
 	/**
 	 * Get the arithmetic applied by the executor
-	 * 
+	 *
 	 * @return the arithmetic
 	 */
 	public PcodeArithmetic<T> getArithmetic() {
@@ -65,7 +65,7 @@ public class PcodeExecutor<T> {
 
 	/**
 	 * Get the state bound to this executor
-	 * 
+	 *
 	 * @return the state
 	 */
 	public PcodeExecutorStatePiece<T, T> getState() {
@@ -99,12 +99,12 @@ public class PcodeExecutor<T> {
 
 	/**
 	 * Finish execution of a frame
-	 * 
+	 *
 	 * <p>
 	 * TODO: This is not really sufficient for continuation after a break, esp. if that break occurs
 	 * within a nested call back into the executor. This would likely become common when using pCode
 	 * injection.
-	 * 
+	 *
 	 * @param frame the incomplete frame
 	 * @param library the library of userops to use
 	 */
@@ -226,10 +226,10 @@ public class PcodeExecutor<T> {
 
 	/**
 	 * Called when execution branches to a target address
-	 * 
+	 *
 	 * <p>
 	 * NOTE: This is <em>not</em> called for the fall-through case
-	 * 
+	 *
 	 * @param target the target address
 	 */
 	protected void branchToAddress(Address target) {

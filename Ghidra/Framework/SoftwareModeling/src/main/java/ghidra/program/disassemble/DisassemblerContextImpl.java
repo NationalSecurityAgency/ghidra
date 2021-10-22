@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,10 +24,10 @@ import java.math.BigInteger;
 import java.util.*;
 
 /**
- * Maintains processor state information during disassembly and analysis.  Tracks register state 
+ * Maintains processor state information during disassembly and analysis.  Tracks register state
  * associated with instruction flows.  Within this context, a flow is defined as a contiguous
  * range of instructions.  Also, this context provides storage for context states at future flow
- * addresses, which will be used when subsequent flowTo(Address) or flowStart(Address) calls 
+ * addresses, which will be used when subsequent flowTo(Address) or flowStart(Address) calls
  * are made with those addresses.
  */
 public class DisassemblerContextImpl implements DisassemblerContext {
@@ -55,7 +55,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 
 // TODO: Need to decide when previously stored context (flow & non-flow bits) should be
 // used during disassembly.  This must be done carefully since it would seem we should
-// always give precedence to any flow/future context determined during disassembly 
+// always give precedence to any flow/future context determined during disassembly
 
 	private RegisterValue repeatedNoflowValue;
 
@@ -70,10 +70,10 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	/**
 	 * Future Register context values for specific flow starting locations when
 	 * the flowFrom address is NO_ADDRESS.
-	 * 
+	 *
 	 * A flow from address of NO_ADDRESS is used when it doesn't matter from where
 	 * the flow originates.
-	 * 
+	 *
 	 * NOTE: default register values are never included within this future state
 	 */
 	private Map<Address, Map<Register, RegisterValue>> noAddressFutureRegisterStateMap;
@@ -84,7 +84,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	 * NOTE: default register values are never included within this future state
 	 */
 	private Map<Address, Map<Address, Map<Register, RegisterValue>>> futureFlowRegisterStateMaps;
-	
+
 	/**
 	 * Constructor for DisassemblerContext.
 	 * @param programContext contains the values for registers at specific addresses store in the program.
@@ -97,7 +97,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 		registerStateMap = new HashMap<Register, RegisterValue>();
 
 		futureFlowRegisterStateMaps = new HashMap<Address, Map<Address, Map<Register, RegisterValue>>>();
-		
+
 		// add a flow for the default Address.NO_ADDRESS
 		noAddressFutureRegisterStateMap = new HashMap<Address, Map<Register, RegisterValue>>();
 		futureFlowRegisterStateMaps.put(Address.NO_ADDRESS, noAddressFutureRegisterStateMap);
@@ -114,16 +114,16 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 
 	/**
 	 * Saves the current processor state for when this context flows to the given address.
-	 * 
+	 *
 	 * Use this method if keeping separate flows from different flow from addresses is not important.
-	 * 
+	 *
 	 * @param address the address at which to save the current processor state.
 	 * @return context register value which was copied
 	 */
 	public RegisterValue copyToFutureFlowState(Address address) {
 		return copyToFutureFlowState(Address.NO_ADDRESS, address);
 	}
-	
+
 	/**
 	 * Saves the current processor state flowing from the fromAddr, for when this context flows to the given address.
 	 *
@@ -135,7 +135,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 		if (destAddr.equals(currentAddress)) {
 			return contextRegisterValue;
 		}
-		// give precedence to any future context set explicitly during instruction parse 
+		// give precedence to any future context set explicitly during instruction parse
 		RegisterValue flowValue =
 			programContext.getFlowValue(delayedContextRegisterValue != null ? delayedContextRegisterValue
 					: contextRegisterValue);
@@ -153,9 +153,9 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	/**
 	 * Saves the current processor state for when this context is later used at the given address.
 	 * If the address already has a value, return the value on a collision list!
-	 * 
+	 *
 	 * Use this method if keeping separate flows from different flow from addresses is not important.
-	 * 
+	 *
 	 * @param address the address at which to save the current processor state.
 	 */
 	public ArrayList<RegisterValue> mergeToFutureFlowState(Address address) {
@@ -165,7 +165,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	/**
 	 * Saves the current processor state flowing from the fromAddr to the destAddr for when this context is later used.
 	 * If the address already has a value, return the value on a collision list!
-	 * 
+	 *
 	 * @param fromAddr the address from which this flow originated
 	 * @param destAddr the address at which to save the current processor state.
 	 */
@@ -193,7 +193,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 
 	/**
 	 * Terminate active flow while preserving any accumulated future context.
-	 * Any context commits resulting from a flowToAddress or flowEnd will be 
+	 * Any context commits resulting from a flowToAddress or flowEnd will be
 	 * unaffected.
 	 */
 	public void flowAbort() {
@@ -207,9 +207,9 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	/**
 	 * Starts a new flow. Initializes the current state for all registers using any future flow state
 	 * that has been set.
-	 * 
+	 *
 	 * Use this method if keeping separate flows from different flow from addresses is not important.
-	 * 
+	 *
 	 * @param address the starting address of a new instruction flow.
 	 * @throws IllegalStateException if a previous flow was not ended.
 	 */
@@ -239,7 +239,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 
 		// get next context value within flow, combining current, future, previously stored and default context values
 		Map<Register, RegisterValue> futureStateMap = getFutureRegisterStateMap(fromAddr, toAddr, true);
-		
+
 		if (futureStateMap != null) {
 			registerStateMap = futureStateMap;
 		}
@@ -254,9 +254,9 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 
 	/**
 	 * Get flowed context value at arbitrary destination address without affecting state.
-	 * 
+	 *
 	 * Use this method if keeping separate flows from different flow from addresses is not important.
-	 * 
+	 *
 	 * @param destAddr
 	 * @param isFallThrough
 	 * @return the flowed context value
@@ -264,7 +264,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	public RegisterValue getFlowContextValue(Address destAddr, boolean isFallThrough) {
 		return getFlowContextValue(Address.NO_ADDRESS, destAddr, isFallThrough);
 	}
-	
+
 	/**
 	 * Get flowed context value at a destination address, that has been flowed from the fromAddr, without affecting state.
 	 *
@@ -282,10 +282,10 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 
 		// combine in any contextRegisterValue from the future flow state.
 		RegisterValue futureContextRegisterValue = null;
-		
+
 		// get next context value within flow, combining current, future, previously stored and default context values
 		Map<Register, RegisterValue> futureStateMap = getFutureRegisterStateMap(fromAddr, destAddr, false);
-		
+
 		if (futureStateMap != null) {
 			futureContextRegisterValue = futureStateMap.get(contextRegister);
 			nextContextRegisterValue =
@@ -319,9 +319,9 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	 * stored in the future flow state.  If any registers have saved future state, the current state
 	 * for all registers is written to the program context upto the specified address(exclusive).
 	 * The future flow state values are then loaded into the current context.
-	 * 
+	 *
 	 * Use this method if keeping separate flows from different flow from addresses is not important.
-	 * 
+	 *
 	 * @param address the address to flow to.
 	 * @throws IllegalStateException if no flow was started.
 	 */
@@ -330,7 +330,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	}
 
 	/**
-	 * 
+	 *
 	 * Continues the current flow from an address to the given address.  Checks for register values that have been
 	 * stored in the future flow state.  If any registers have saved future state, the current state
 	 * for all registers is written to the program context upto the specified address(exclusive).
@@ -365,7 +365,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 
 		// get next context value within flow, combining current, future, previously stored and default context values
 		Map<Register, RegisterValue> futureStateMap = getFutureRegisterStateMap(fromAddr, destAddr, true);
-		
+
 		RegisterValue nextContextRegisterValue = getNextContextInFlow(destAddr, futureStateMap, false);
 		delayedContextRegisterValue = null;
 
@@ -398,7 +398,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 
 	/**
 	 * Get the future Register state map and conditionally remove the map
-	 * 
+	 *
 	 * @param fromAddr Address flowing from
 	 * @param destAddr Address flowing to
 	 * @param remove true to remove the entry
@@ -409,7 +409,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 		//    the flow map from NO_ADDRES is always indexed on destAddr
 		if (fromAddr == Address.NO_ADDRESS) {
 			Map<Address, Map<Register, RegisterValue>> futureRegisterStateMap = noAddressFutureRegisterStateMap;
-			
+
 			Map<Register, RegisterValue> futureStateMap = null;
 			if (remove) {
 				futureStateMap = futureRegisterStateMap.remove(destAddr);
@@ -422,7 +422,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 		// if we have a fromAddr for this flow, then it looks up the destAddr
 		//   then looks in a sub-map to find the address we flowed from
 		Map<Address, Map<Register, RegisterValue>> futureRegisterStateMap = futureFlowRegisterStateMaps.get(destAddr);
-	
+
 		Map<Register, RegisterValue> futureStateMap = null;
 		if (futureRegisterStateMap != null) {
 			if (remove) {
@@ -436,13 +436,13 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 		}
 		return futureStateMap;
 	}
-	
+
 	/**
 	 * Lookup and if not found create a future Register flow state
-	 * 
+	 *
 	 * @param fromAddr can be NO_ADDRESS if flow from is unknown
 	 * @param destAddr future flow state destination.
-	 * 
+	 *
 	 * @return future flow state at the destination
 	 */
 	private Map<Register, RegisterValue> findFutureFlowStateMap(Address fromAddr, Address destAddr) {
@@ -622,9 +622,9 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	 * Sets the value for the given register to be used when the flow advances to the given address
 	 * using either the flowTo() or flowStart() methods.  The new value has precedence over any
 	 * existing value.
-	 * 
+	 *
 	 * Use this method if keeping separate flows from different flow from addresses is not important.
-	 * 
+	 *
 	 * @param register the register for which the value is to be saved.
 	 * @param address the future flow address to save the value.
 	 * @param newValue the value to save for future flow.
@@ -632,12 +632,12 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	public void setValue(Register register, Address address, BigInteger newValue) {
 		setRegisterValue(Address.NO_ADDRESS, address, new RegisterValue(register, newValue), true);
 	}
-	
+
 	/**
 	 * Sets the value for the given register to be used when the flow advances to the given address
 	 * using either the flowTo() or flowStart() methods.  The new value has precedence over any
 	 * existing value.
-	 * 
+	 *
 	 * @param register the register for which the value is to be saved.
 	 * @param fromAddr the address from which this flow originated
 	 * @param toAddr the future flow address to save the value.
@@ -651,7 +651,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	public void setFutureRegisterValue(Address address, RegisterValue value) {
 		setFutureRegisterValue(Address.NO_ADDRESS, address, value);
 	}
-	
+
 	@Override
 	public void setFutureRegisterValue(Address fromAddr, Address toAddr, RegisterValue value) {
 		setRegisterValue(fromAddr, toAddr, value, true);
@@ -661,7 +661,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	 * Stores register value in map.
 	 * If <code>newValuePrecedence</code> is true, then the given <code>newValue</code>
 	 * overrides the <code>currentValue</code>.
-	 * 
+	 *
 	 * @param fromAddr the address from which the Register value flows.
 	 * @param destAddr the address to store the new value
 	 * @param newValue new value to store
@@ -696,7 +696,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	}
 
 	/**
-	 * Combines two Register values.  
+	 * Combines two Register values.
 	 * @param currentValue the current value
 	 * @param newValue the new value
 	 * @param newValuePrecedence if true, new value has precedence for active bits, else currentValue
@@ -727,8 +727,8 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	/**
 	 * Saves the context from the startAddr (inclusive) to the end address (inclusive)
 	 * back to the program's stored context.
-	 * @param startAddress 
-	 * @param endAddress 
+	 * @param startAddress
+	 * @param endAddress
 	 */
 	private void saveProgramContext(Address start, Address end) {
 		if (end == null || start.compareTo(end) > 0) {
@@ -791,28 +791,28 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	}
 
 	/**
-	 * Modify the current context register value at the specified address.  If current 
-	 * disassembly flow address equals specified address the current disassembly context 
-	 * will be changed, otherwise the future flow state will be changed. This differs from 
-	 * {@link #setValue(Register, Address, BigInteger)} in that is can affect the current 
+	 * Modify the current context register value at the specified address.  If current
+	 * disassembly flow address equals specified address the current disassembly context
+	 * will be changed, otherwise the future flow state will be changed. This differs from
+	 * {@link #setValue(Register, Address, BigInteger)} in that is can affect the current
 	 * context state at the current address in a non-delayed fashion.
-	 * 
+	 *
 	 * Use this method if keeping separate flows from different flow from addresses is not important.
-	 * 
+	 *
 	 * @param value register value
 	 * @param address disassembly address
 	 */
 	public void setContextRegisterValue(RegisterValue value, Address address) {
 		setContextRegisterValue(value, Address.NO_ADDRESS, address);
 	}
-	
+
 	/**
-	 * Modify the current context register value at the specified address.  If current 
-	 * disassembly toAddr address equals specified address the current disassembly context 
+	 * Modify the current context register value at the specified address.  If current
+	 * disassembly toAddr address equals specified address the current disassembly context
 	 * will be changed, otherwise the future flow state flowing from the fromAddr will be changed.
 	 * This differs from {@link #setValue(Register, Address, BigInteger)} in that is can
 	 * affect the current context state at the current address in a non-delayed fashion.
-	 * 
+	 *
 	 * @param value register value
 	 * @param fromAddr the address from which this flow originated
 	 * @param toAddr the future flow address to save the value.
@@ -866,9 +866,9 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	/**
 	 * Returns the future register value at the specified address.  If no future value is stored,
 	 * it will return the value stored in the program.
-	 * 
+	 *
 	 * Use this method if keeping separate flows from different flow from addresses is not important.
-	 * 
+	 *
 	 * @param register the register to get a value for.
 	 * @param address the address at which to get a value.
 	 * @param signed if true, interpret the value as signed.
@@ -877,7 +877,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	public BigInteger getValue(Register register, Address address, boolean signed) {
 		return getValue(register, Address.NO_ADDRESS, address, signed);
 	}
-	
+
 	/**
 	 * Returns the future register value at the specified address that occurred because of a flow
 	 * from the fromAddr.  If no future value is stored, it will return the value stored in the program.
@@ -900,9 +900,9 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	 * Returns the future RegisterValue at the specified address.  If no future value is stored,
 	 * it will return the value stored in the program. The value returned may not have a complete
 	 * value for the requested register.
-	 * 
+	 *
 	 * Use this method if keeping separate flows from different flow from addresses is not important.
-	 * 
+	 *
 	 * @param register the register to get a value for.
 	 * @param address the address at which to get a value.
 	 * @return a RegisterValue object if one has been stored in the future flow or the program.
@@ -912,16 +912,16 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 	public RegisterValue getRegisterValue(Register register, Address address) {
 		return getRegisterValue(register, Address.NO_ADDRESS, address);
 	}
-	
+
 	/**
 	 * Returns the future RegisterValue at the specified address that occurred because of a flow from
 	 * the fromAddr.  If no future value is stored, it will return the value stored in the program.
 	 * The value returned may not have a complete value for the requested register.
-	 * 
+	 *
 	 * @param register the register to get a value for.
 	 * @param fromAddr the address from which the flow originated
 	 * @param destAddr the address at which to get a value.
-	 * 
+	 *
 	 * @return a RegisterValue object if one has been stored in the future flow or the program.
 	 * The RegisterValue object may have a "no value" state for the bits specified by the given register.
 	 * Also, null may be returned if no value have been stored.
@@ -931,7 +931,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 				destAddr.compareTo(currentAddress) <= 0) {
 			return getRegisterValue(register);
 		}
-		
+
 		Map<Address, Map<Register, RegisterValue>> futureRegisterStateMap = noAddressFutureRegisterStateMap;
 		if (destAddr != Address.NO_ADDRESS) {
 			futureRegisterStateMap = futureFlowRegisterStateMaps.get(destAddr);
@@ -940,7 +940,7 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 		if (futureRegisterStateMap != null) {
 			map = futureRegisterStateMap.get(fromAddr);
 		}
-		
+
 		if (map != null) {
 			RegisterValue value = map.get(register.getBaseRegister());
 			if (value != null) {
@@ -949,35 +949,35 @@ public class DisassemblerContextImpl implements DisassemblerContext {
 		}
 		return programContext.getRegisterValue(register, destAddr);
 	}
-	
+
 	/**
 	 * Returns an array of locations that have values that will flow to this location
-	 * 
+	 *
 	 * @param toAddr address that is the target of a flow to
 	 * @return and array of known address flows to this location
 	 */
-	public Address[] getKnownFlowToAddresses(Address toAddr) {		
+	public Address[] getKnownFlowToAddresses(Address toAddr) {
 
 		// does this have a NO_ADRESS from flow to the toAddr?
 		Map<Register, RegisterValue> map = noAddressFutureRegisterStateMap.get(toAddr);
 		boolean has_NO_ADDRESS_flow = map != null;
-		
+
 		int extraForNoAddr = (has_NO_ADDRESS_flow ? 1 : 0);
 		Address[] flowsTo = new Address[0+extraForNoAddr];
-		
+
 		if (toAddr != null && toAddr != Address.NO_ADDRESS) {
 			Map<Address, Map<Register, RegisterValue>> futureRegisterStateMap = futureFlowRegisterStateMaps.get(toAddr);
-			
+
 			if (futureRegisterStateMap != null) {
 				Set<Address> keySet = futureRegisterStateMap.keySet();
 				flowsTo = keySet.toArray(new Address[keySet.size() + extraForNoAddr]);
 			}
 		}
-		
+
 		if (has_NO_ADDRESS_flow) {
 			flowsTo[flowsTo.length-1] = Address.NO_ADDRESS;
 		}
-		
+
 		return flowsTo;
 	}
 

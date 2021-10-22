@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -102,7 +102,7 @@ public class MarkupItemImpl implements VTMarkupItem {
 		hasSameValues = null;
 
 		if (isDefault && !isResettingAddress) {
-			// don't call the setObjectChanged() method, as this address is transient and 
+			// don't call the setObjectChanged() method, as this address is transient and
 			// we don't want to make the DB dirty
 			return;
 		}
@@ -222,8 +222,8 @@ public class MarkupItemImpl implements VTMarkupItem {
 			//                   everything is options-based.  Why do we even need the
 			//                   'VTMarkupItemApplyActionType'? (bad name, BTW).  At issue
 			//                   is the fact that the apply type may be overridden by the
-			//                   options.  
-			//       
+			//                   options.
+			//
 			//                   The state of things right now, with a mix of 'apply type'
 			//                   and options, makes the API confusing to me, and probably
 			//                   to the user too.
@@ -378,7 +378,7 @@ public class MarkupItemImpl implements VTMarkupItem {
 
 	private MarkupItemStorage maybeReset() {
 		//
-		// We can reset if the data in the DB is all default data.  The data we care about is 
+		// We can reset if the data in the DB is all default data.  The data we care about is
 		// that which can trigger a DB entry to be created, which as of this writing is:
 		// 	1) applying
 		// 	2) setting an item considered

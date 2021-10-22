@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,8 @@ class ArrayTests{
        array[0] = input[0];
        array[1] = input[1];
        return array;
-   }  
-  
+   }
+
    public int[][] primitiveMultiArrayTest(int[][] input){
        int[][] array = new int[5][5];
        array[0][1] = input[0][1];
@@ -39,14 +39,14 @@ class ArrayTests{
       array[0][1][2] = input[0][1][2];
       array[2][1][0] = input[2][1][0];
       return array;
-   }   
-  
+   }
+
    public Integer twoMultiAnewArrayCalls(){
        Integer[][][][][] one = new Integer[1][2][3][4][5];
        Integer[][][][][][] two = new Integer[1][2][3][4][5][6];
        return one[1][2][3][4][5] + two[1][2][3][4][5][6];
     }
- 
+
 
    public boolean[] booleanArrayTest(boolean[] input){
        boolean[] array = new boolean[2];
@@ -102,7 +102,7 @@ class ArrayTests{
        array[1] = input[1];
        return array;
    }
-   
+
    public Comparable[] comparableArrayTest(Comparable[] input){
        Comparable[] array = new Comparable[2];
        array[0] = input[0];
@@ -141,7 +141,7 @@ class ArrayTests{
        ArrayList<Comparable> arrayList = new ArrayList<>();
        return comparableArrayTest(arrayList.toArray(new Comparable[0]));
   }
-   
+
    public Comparable[] dwarfTest2(){
        ArrayList<Comparable> arrayList = new ArrayList<>();
        Comparable[] ret = comparableArrayTest(arrayList.toArray(new Comparable[0]));

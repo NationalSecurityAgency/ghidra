@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -820,7 +820,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 			assertEquals(3, getBlockRecordCount());
 			assertEquals(1, getBufferRecordCount());
 			/* 0x fe ff 00 01 02 03 04 05 06 07
-			 * 
+			 *
 			 * 4:        5  6  7  8
 			 * 3:              1  2  3  4
 			 * 2:  9 10 11 12 13 14 15 16 17 18
@@ -828,7 +828,7 @@ public abstract class AbstractDBTraceMemoryManagerTest
 
 			memory.removeBytes(2, b.addr(0x47ff), 14);
 			/* 0x fe ff 00 01 02 03 04 05 06 07
-			 * 
+			 *
 			 * 4:        5  6  7  8
 			 * 3:              1  2  3  4
 			 * 2:  9 .. .. .. .. .. .. .. .. ..

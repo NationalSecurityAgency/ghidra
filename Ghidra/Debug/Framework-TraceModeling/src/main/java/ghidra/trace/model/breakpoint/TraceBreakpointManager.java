@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public interface TraceBreakpointManager {
 
 	/**
 	 * Add a breakpoint to the trace
-	 * 
+	 *
 	 * @param path the "full name" of the breakpoint
 	 * @param lifespan the lifespan of the breakpoint
 	 * @param range the address range of the breakpoint
@@ -50,7 +50,7 @@ public interface TraceBreakpointManager {
 
 	/**
 	 * Add a breakpoint to the trace at a single address
-	 * 
+	 *
 	 * @see #addBreakpoint(String, Range, AddressRange, Collection, Collection, boolean, String)
 	 */
 	default TraceBreakpoint addBreakpoint(String path, Range<Long> lifespan, Address address,
@@ -62,7 +62,7 @@ public interface TraceBreakpointManager {
 
 	/**
 	 * Add a breakpoint to the trace starting at a given snap
-	 * 
+	 *
 	 * @see #addBreakpoint(String, Range, AddressRange, Collection, Collection, boolean, String)
 	 */
 	default TraceBreakpoint placeBreakpoint(String path, long snap, AddressRange range,
@@ -74,7 +74,7 @@ public interface TraceBreakpointManager {
 
 	/**
 	 * Add a breakpoint to the trace at a single address, starting at a given snap
-	 * 
+	 *
 	 * @see #addBreakpoint(String, Range, AddressRange, Collection, Collection, boolean, String)
 	 */
 	default TraceBreakpoint placeBreakpoint(String path, long snap, Address address,
@@ -86,14 +86,14 @@ public interface TraceBreakpointManager {
 
 	/**
 	 * Collect all breakpoints in the trace
-	 * 
+	 *
 	 * @return the collection of all breakpoints
 	 */
 	Collection<? extends TraceBreakpoint> getAllBreakpoints();
 
 	/**
 	 * Collect breakpoints having the given "full name"
-	 * 
+	 *
 	 * @param path the path
 	 * @return the collection of breakpoints
 	 */
@@ -101,7 +101,7 @@ public interface TraceBreakpointManager {
 
 	/**
 	 * Get the placed breakpoint at the given snap by the given path
-	 * 
+	 *
 	 * @param snap the snap which the breakpoint's lifespan must contain
 	 * @param path the path of the breakpoint
 	 * @return the breakpoint, or {@code null} if no breakpoint matches
@@ -110,7 +110,7 @@ public interface TraceBreakpointManager {
 
 	/**
 	 * Collect breakpoints containing the given snap and address
-	 * 
+	 *
 	 * @param snap the time
 	 * @param address the location
 	 * @return the collection of breakpoints
@@ -119,7 +119,7 @@ public interface TraceBreakpointManager {
 
 	/**
 	 * Collect breakpoints intersecting the given span and address range
-	 * 
+	 *
 	 * @param span the span
 	 * @param range the address range
 	 * @return the collection of breakpoints

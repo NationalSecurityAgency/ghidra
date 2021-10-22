@@ -146,7 +146,7 @@ for reverse engineering applications. The language is general enough
 to model the behavior of many different processors. By modeling in
 this way, the analysis of different processors is put into a common
 framework, facilitating the development of retargetable analysis
-algorithms and applications. 
+algorithms and applications.
 </para>
 <para>
 Fundamentally, p-code works by translating individual processor instructions
@@ -161,7 +161,7 @@ instruction execution and generally follows the same control-flow,
 although it may add some of its own internal control-flow. The subset of
 opcodes that can occur in raw p-code is described in
 <xref linkend="pcodedescription"/> and in <xref linkend="pseudo-ops"/>, making up
-the bulk of this document. 
+the bulk of this document.
 </para>
 <para>
 P-code is designed specifically to facilitate the
@@ -3322,7 +3322,7 @@ This is a floating-point to integer conversion operator. The
 floating-point value in input0 is converted to a signed integer and
 stored in output using the default twos complement encoding.
 The fractional part of input0 is dropped in the conversion by rounding <emphasis>towards zero</emphasis>.
-Input0 and output can be different sizes. 
+Input0 and output can be different sizes.
 </para>
 </sect2>
 </sect1>
@@ -3461,7 +3461,7 @@ This operator returns specific run-time dependent values from the
 <emphasis>constant pool</emphasis>.  This is a concept for object-oriented
 instruction sets and other managed code environments, where some details about
 how instructions behave can be deferred
-until run-time and are not directly encoded in the instruction. 
+until run-time and are not directly encoded in the instruction.
 The <emphasis role="bold">CPOOLREF</emphasis> operator acts a query to the system to
 recover this type of information. The first parameter is a
 pointer to a specific object, and subsequent parameters are IDs or other special constants
@@ -3800,7 +3800,7 @@ pointer to the subcomponent and stores it in output.
 <para>
 A <emphasis role="bold">CAST</emphasis> performs identically to the <emphasis role="bold">COPY</emphasis>
 operator but also indicates that there is a forced change in the data-types associated with the varnodes
-at this point in the code. The value input0 is strictly copied into output; it is not a conversion cast. 
+at this point in the code. The value input0 is strictly copied into output; it is not a conversion cast.
 This operator is intended specifically for when the value doesn't change but its
 interpretation as a data-type changes at this point.
 </para>
@@ -3865,7 +3865,7 @@ but leaving any other bits in input0 unchanged. The least significant bit of the
 range is given by <emphasis>position</emphasis>, where bits in index0 are labeled from least significant
 to most significant, starting at 0. The value obtained after this overwriting is returned
 as output.
-Varnodes input0 and output must be the same size and are intended to be the same varnode. 
+Varnodes input0 and output must be the same size and are intended to be the same varnode.
 The value <emphasis>size</emphasis> must be not be bigger than the varnode input1, and
 <emphasis>size</emphasis> + <emphasis>position</emphasis> must not be bigger than the varnode input0.
 </para>

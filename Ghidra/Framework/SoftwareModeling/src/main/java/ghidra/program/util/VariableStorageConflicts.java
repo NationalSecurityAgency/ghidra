@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -250,7 +250,7 @@ public class VariableStorageConflicts {
 	 * @param var1 a variable which corresponds to function1 at time of construction or null
 	 * @param var2 a variable which corresponds to function2 at time of construction or null
 	 * @return true if either variable is contained within the conflicted/overlapping
-	 * set of variables. 
+	 * set of variables.
 	 */
 	public boolean isConflicted(Variable var1, Variable var2) {
 		for (Pair<List<Variable>, List<Variable>> pair : overlappingVariables) {

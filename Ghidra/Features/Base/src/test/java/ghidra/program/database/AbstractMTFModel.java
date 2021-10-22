@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This model is used by the {@link MergeTestFacilitator} to configure programs needed 
+ * This model is used by the {@link MergeTestFacilitator} to configure programs needed
  * for testing.
  */
 public abstract class AbstractMTFModel {
@@ -60,7 +60,7 @@ public abstract class AbstractMTFModel {
 	/**
 	 * Returns original Immutable program.
 	 * This represents the original checked-out version.
-	 * Program returned will be released by the MergeTestFacilitator 
+	 * Program returned will be released by the MergeTestFacilitator
 	 * when disposed or re-initialized.
 	 * @return the program
 	 */
@@ -71,7 +71,7 @@ public abstract class AbstractMTFModel {
 	/**
 	 * Returns latest Immutable program.
 	 * This represents the current version.
-	 * Program returned will be released by the MergeTestFacilitator 
+	 * Program returned will be released by the MergeTestFacilitator
 	 * when disposed or re-initialized.
 	 * @return the program
 	 */
@@ -82,7 +82,7 @@ public abstract class AbstractMTFModel {
 	/**
 	 * Returns private Immutable program.
 	 * This represents the local program to be checked-in.
-	 * Program returned will be released by the MergeTestFacilitator 
+	 * Program returned will be released by the MergeTestFacilitator
 	 * when disposed or re-initialized.
 	 * @return the program
 	 */
@@ -93,7 +93,7 @@ public abstract class AbstractMTFModel {
 	/**
 	 * Returns results program for update.
 	 * This represents the checkin program containing the merged data.
-	 * Program returned will be released by the MergeTestFacilitator 
+	 * Program returned will be released by the MergeTestFacilitator
 	 * when disposed or re-initialized.
 	 * @return the program
 	 */

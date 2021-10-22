@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,7 +97,7 @@ public class DebuggerObjectsPluginScreenShots extends GhidraScreenShotGenerator
 	 * NOTE: The icon selection looks like it relies of "duck typing", which is probably not the
 	 * Right Way. I would have expected it to consume the type hint. Eh. Anyway, let's take a
 	 * screenshot, shall we?
-	 * 
+	 *
 	 * <p>
 	 * Depending on the text in the help, we could probably do something more generic, or maybe even
 	 * just use the test model as is. Don't know how much illustration is needed in the screenshot.

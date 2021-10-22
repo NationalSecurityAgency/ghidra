@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public class CodeUnitMergeManager5Test extends AbstractListingMergeManagerTest {
 	// 0x100753e - 0x100754a is a "ds" of "UpdateWindow",00
 
 	/**
-	 * 
+	 *
 	 * @param arg0
 	 */
 	public CodeUnitMergeManager5Test() {
@@ -372,7 +372,7 @@ public class CodeUnitMergeManager5Test extends AbstractListingMergeManagerTest {
 //		assertSameBytes(resultProgram, latestProgram, new AddressSet(addr("0x1006674"), addr("0x1006677")));
 //		assertSameBytes(resultProgram, myProgram, new AddressSet(addr("0x1006be2"), addr("0x1006be3")));
 //		assertSameBytes(resultProgram, originalProgram, new AddressSet(addr("0x1007446"), addr("0x1007447")));
-//		
+//
 //		assertSameCodeUnits(resultProgram, latestProgram, new AddressSet(addr("0x1001bb8"), addr("0x1001bbc")));
 //		assertSameCodeUnits(resultProgram, myProgram, new AddressSet(addr("0x1001c2b"), addr("0x1001c33")));
 //		assertSameCodeUnits(resultProgram, originalProgram, new AddressSet(addr("0x1006654"), addr("0x1006657")));
@@ -418,7 +418,7 @@ public class CodeUnitMergeManager5Test extends AbstractListingMergeManagerTest {
 //		assertSameBytes(resultProgram, latestProgram, new AddressSet(addr("0x1006674"), addr("0x1006677")));
 //		assertSameBytes(resultProgram, myProgram, new AddressSet(addr("0x1006be2"), addr("0x1006be3")));
 //		assertSameBytes(resultProgram, originalProgram, new AddressSet(addr("0x1007446"), addr("0x1007447")));
-//		
+//
 //		assertSameCodeUnits(resultProgram, latestProgram, new AddressSet(addr("0x1001bb8"), addr("0x1001bbc")));
 //		assertSameCodeUnits(resultProgram, myProgram, new AddressSet(addr("0x1001c2b"), addr("0x1001c33")));
 //		assertSameCodeUnits(resultProgram, originalProgram, new AddressSet(addr("0x1006654"), addr("0x1006657")));

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class ScrollableOptionsEditor implements OptionsEditor {
 	 * Creates a panel for editing options. This version of the constructor allows the client
 	 * to specify the option names to put them in some order other than the default alphabetical
 	 * ordering.
-	 * 
+	 *
 	 * @param title The title of the options panel
 	 * @param optionNames the names of the options for this panel
 	 */
@@ -139,9 +139,9 @@ public class ScrollableOptionsEditor implements OptionsEditor {
 			//
 			// This method tells the viewport whether this panel should be expanded to fit the
 			// size of the viewport.  We wish to do this when the viewport is larger than us.
-			// When it is smaller than us, we want to use our size, which will then trigger 
+			// When it is smaller than us, we want to use our size, which will then trigger
 			// scrollbars.
-			//			
+			//
 			Dimension mySize = getPreferredSize();
 			Dimension viewSize = scrollPane.getViewport().getSize();
 			boolean viewIsLarger = viewSize.height > mySize.height;
@@ -154,9 +154,9 @@ public class ScrollableOptionsEditor implements OptionsEditor {
 			//
 			// This method tells the viewport whether this panel should be expanded to fit the
 			// size of the viewport.  We wish to do this when the viewport is larger than us.
-			// When it is smaller than us, we want to use our size, which will then trigger 
+			// When it is smaller than us, we want to use our size, which will then trigger
 			// scrollbars.
-			//			
+			//
 			Dimension mySize = getPreferredSize();
 			Dimension viewSize = scrollPane.getViewport().getSize();
 			boolean viewIsLarger = viewSize.width > mySize.width;

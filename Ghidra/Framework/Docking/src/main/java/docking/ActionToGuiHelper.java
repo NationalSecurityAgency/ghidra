@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import docking.action.DockingActionIf;
 
 /**
  * A class that exists primarily to provide access to action-related package-level methods of the
- * {@link DockingWindowManager}.  This allows the manager's interface to hide methods that 
+ * {@link DockingWindowManager}.  This allows the manager's interface to hide methods that
  * don't make sense for public consumption.
  */
 public class ActionToGuiHelper {
@@ -33,7 +33,7 @@ public class ActionToGuiHelper {
 	}
 
 	/**
-	 * Adds an action to the global menu or toolbar which appear in the main frame. If the action 
+	 * Adds an action to the global menu or toolbar which appear in the main frame. If the action
 	 * has a menu path, it will be in the menu.  If it has an icon, it will appear in the toolbar.
 	 * @param action the action to be added
 	 */
@@ -53,7 +53,7 @@ public class ActionToGuiHelper {
 	 * Adds an action that will be associated with the given provider.  These actions will
 	 * appear in the local header for the component as a toolbar button or a drop-down menu
 	 * item if it has an icon and menu path respectively.
-	 * 
+	 *
 	 * @param provider the provider whose header on which the action is to be placed
 	 * @param action the action to add to the providers header bar
 	 */

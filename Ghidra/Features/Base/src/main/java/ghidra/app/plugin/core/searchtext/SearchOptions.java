@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class SearchOptions implements Cloneable {
 
 	/**
 	 * Constructor
-	 * @param text string to match 
+	 * @param text string to match
 	 * @param functions true to search for function text
 	 * @param comments true to search comments
 	 * @param labels true to search labels
@@ -48,7 +48,7 @@ public class SearchOptions implements Cloneable {
 	 * @param dataMnemonic true to search data mnemonics
 	 * @param dataValue true to search data values
 	 * @param caseSensitive true if search is to be case sensitive
-	 * @param direction true means forward, false means backward search 
+	 * @param direction true means forward, false means backward search
 	 */
 	public SearchOptions(String text, boolean quickSearch, boolean functions, boolean comments,
 			boolean labels, boolean instructionMnemonics, boolean instructionOperands,

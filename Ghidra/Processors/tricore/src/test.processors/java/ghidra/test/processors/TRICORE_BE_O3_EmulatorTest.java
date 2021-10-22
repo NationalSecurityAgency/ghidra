@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,14 +40,14 @@ public class TRICORE_BE_O3_EmulatorTest extends ProcessorEmulatorTestAdapter {
 	@Override
 	protected void initializeState(EmulatorTestRunner testRunner, Program program) throws Exception {
 		testRunner.setRegister("a10", 0x40000000L);  // stack, unused location
-		
+
 		testRunner.setRegister("FCX", 0x00020000L);  // free context list start, unused location
 		testRunner.setRegister("LCX", 0x00030000L);  // free context list max
-		
+
 		testRunner.setRegister("PCXI", 0x0L);        // current thread context list
 	}
-	
-	
+
+
 
 	@Override
 	protected void setAnalysisOptions(Options analysisOptions) {

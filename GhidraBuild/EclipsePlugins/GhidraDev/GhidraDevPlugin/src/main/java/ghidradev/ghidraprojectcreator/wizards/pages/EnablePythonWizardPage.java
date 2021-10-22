@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public class EnablePythonWizardPage extends WizardPage {
 
 	/**
 	 * Creates a new Python enablement wizard page.
-	 * 
+	 *
 	 * @param ghidraInstallationPage Ghidra installation wizard page.
 	 */
 	public EnablePythonWizardPage(ChooseGhidraInstallationWizardPage ghidraInstallationPage) {
@@ -133,7 +133,7 @@ public class EnablePythonWizardPage extends WizardPage {
 
 	/**
 	 * Checks whether or not Python should be enabled.
-	 * 
+	 *
 	 * @return True if python should be enabled; otherwise, false.
 	 */
 	public boolean shouldEnablePython() {
@@ -141,10 +141,10 @@ public class EnablePythonWizardPage extends WizardPage {
 	}
 
 	/**
-	 * Gets the name of the Jython interpreter to use. 
-	 * 
+	 * Gets the name of the Jython interpreter to use.
+	 *
 	 * @return The name of the Jython interpreter to use.  Could be null of Python isn't
-	 *   enabled. 
+	 *   enabled.
 	 */
 	public String getJythonInterpreterName() {
 		if (enablePythonCheckboxButton.getSelection()) {
@@ -209,7 +209,7 @@ public class EnablePythonWizardPage extends WizardPage {
 
 	/**
 	 * Find's a Jython interpreter file in the given Ghidra installation directory.
-	 * 
+	 *
 	 * @param ghidraInstallDir The Ghidra installation directory to search.
 	 * @return A Jython interpreter file from the given Ghidra installation directory, or
 	 *   null if one could not be found.
@@ -232,7 +232,7 @@ public class EnablePythonWizardPage extends WizardPage {
 
 	/**
 	 * Find's a Jython library directory in the given Ghidra installation directory.
-	 * 
+	 *
 	 * @param ghidraInstallDir The Ghidra installation directory to search.
 	 * @return A Jython library directory from the given Ghidra installation directory, or
 	 *   null if one could not be found.

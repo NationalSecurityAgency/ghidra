@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,10 @@ import ghidra.program.model.listing.Function;
 
 /**
  * Defines the structure of a function comparison. The relationship is strictly
- * one-to-many; a single <code>source</code> function may be associated with one 
- * or more <code>target</code> functions. 
+ * one-to-many; a single <code>source</code> function may be associated with one
+ * or more <code>target</code> functions.
  * <p>
- * This is the basic unit for the 
+ * This is the basic unit for the
  * {@link FunctionComparisonModel function comparison data model}
  */
 public class FunctionComparison implements Comparable<FunctionComparison> {
@@ -37,7 +37,7 @@ public class FunctionComparison implements Comparable<FunctionComparison> {
 
 	/**
 	 * Returns the source function
-	 * 
+	 *
 	 * @return the source function
 	 */
 	public Function getSource() {
@@ -46,7 +46,7 @@ public class FunctionComparison implements Comparable<FunctionComparison> {
 
 	/**
 	 * Returns the set of targets, in sorted order by function name
-	 * 
+	 *
 	 * @return the set of targets
 	 */
 	public Set<Function> getTargets() {
@@ -55,7 +55,7 @@ public class FunctionComparison implements Comparable<FunctionComparison> {
 
 	/**
 	 * Sets a given function as the comparison source
-	 * 
+	 *
 	 * @param function the source function
 	 */
 	public void setSource(Function function) {
@@ -64,7 +64,7 @@ public class FunctionComparison implements Comparable<FunctionComparison> {
 
 	/**
 	 * Adds a target function to the comparison
-	 * 
+	 *
 	 * @param function the function to add to the target list
 	 */
 	public void addTarget(Function function) {
@@ -73,7 +73,7 @@ public class FunctionComparison implements Comparable<FunctionComparison> {
 
 	/**
 	 * Adds a set of functions to the target list
-	 * 
+	 *
 	 * @param functions the functions to add
 	 */
 	public void addTargets(Set<Function> functions) {
@@ -81,11 +81,11 @@ public class FunctionComparison implements Comparable<FunctionComparison> {
 	}
 
 	/**
-	 * Removes the given function from the target list. 
+	 * Removes the given function from the target list.
 	 * <p>
 	 * Note that the target list is a {@link Set}, so there will only ever
 	 * be at most one entry that matches the given function
-	 * 
+	 *
 	 * @param function the function to remove
 	 */
 	public void removeTarget(Function function) {
@@ -130,8 +130,8 @@ public class FunctionComparison implements Comparable<FunctionComparison> {
 	}
 
 	/**
-	 * Forces an ordering on {@link Function} objects by program path, name and 
-	 * address. This is to ensure that the list of targets is kept in sorted 
+	 * Forces an ordering on {@link Function} objects by program path, name and
+	 * address. This is to ensure that the list of targets is kept in sorted
 	 * order at all times.
 	 */
 	class FunctionComparator implements Comparator<Function> {

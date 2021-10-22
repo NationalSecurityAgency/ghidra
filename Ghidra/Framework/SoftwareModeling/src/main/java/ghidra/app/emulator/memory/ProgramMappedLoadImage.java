@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,12 +21,12 @@ public class ProgramMappedLoadImage implements MemoryLoadImage {
 
 	private ProgramMappedMemory pmm;
 	//private Language lang;
-	
+
 	public ProgramMappedLoadImage(ProgramMappedMemory memory) {
 		this.pmm = memory;
 		//this.lang = memory.getProgram().getLanguage();
 	}
-	
+
 	@Override
 	public byte[] loadFill(byte[] bytes, int size, Address addr, int offset, boolean generateInitializedMask) {
 		return pmm.read(bytes, size, addr, offset, generateInitializedMask);
@@ -37,7 +37,7 @@ public class ProgramMappedLoadImage implements MemoryLoadImage {
 //				break;
 //			}
 //		}
-//		return generateInitializedMask ? MemoryPage.getInitializedMask(size, initialized) : null;  
+//		return generateInitializedMask ? MemoryPage.getInitializedMask(size, initialized) : null;
 	}
 
 	@Override
@@ -49,5 +49,5 @@ public class ProgramMappedLoadImage implements MemoryLoadImage {
 	public void dispose() {
 		pmm.dispose();
 	}
-	
+
 }

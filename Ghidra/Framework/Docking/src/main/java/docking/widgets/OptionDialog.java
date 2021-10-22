@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -87,7 +87,7 @@ import ghidra.util.exception.AssertException;
  * Note, the user will be unable to select any text shown in the message area of the dialog.
  * </p>
  * </blockquote>
- * 
+ *
  * <h3>"Apply to All" / "Don't Show Again"</h3><br>
  * <blockquote>
  * <p>For more advanced input dialog usage, to include allowing the user to tell the dialog
@@ -190,7 +190,7 @@ public class OptionDialog extends DialogComponentProvider {
 	 * @param icon allows the user to specify the icon to be used.  If non-null,
 	 *     this will override the messageType.
 	 * @param addCancel true means add a Cancel button
-	 * @param defaultButtonName The default button name	
+	 * @param defaultButtonName The default button name
 	 */
 	protected OptionDialog(String title, String message, String option1, String option2,
 			int messageType, Icon icon, boolean addCancel, String defaultButtonName) {

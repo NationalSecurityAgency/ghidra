@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * A dialog that allows the user to choose from a tree of similarly named data types.  This class
- * is meant to be used by the {@link DataTypeManagerPlugin}.  For API needs, clients should use the 
+ * is meant to be used by the {@link DataTypeManagerPlugin}.  For API needs, clients should use the
  * {@link DataTypeSelectionDialog} utility widget.
  */
 public class DataTypeChooserDialog extends DialogComponentProvider {
@@ -126,11 +126,11 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 	 * A convenience method to show this dialog with the following configuration:
 	 * <ul>
 	 *  <li>the tree will be filtered using the given filter text</li>
-	 *  <li>the filter field will be disabled so the user cannot change the nodes available in the 
+	 *  <li>the filter field will be disabled so the user cannot change the nodes available in the
 	 *  tree</li>
 	 *  <li>the first child node of the root node in the tree will be selected</li>
 	 * </ul>
-	 * 
+	 *
 	 * @param tool the tool to which this dialog will be parented; cannot be null
 	 * @param dataTypeText the filter text; cannot be null
 	 * @throws IllegalArgumentException if the given filter text is null or empty
@@ -178,9 +178,9 @@ public class DataTypeChooserDialog extends DialogComponentProvider {
 	}
 
 	/**
-	 * Sets the enabled state of the filter field.  This method can be used to prevent the user 
+	 * Sets the enabled state of the filter field.  This method can be used to prevent the user
 	 * from changing the nodes displayed by the tree.  By default, the filter is enabled.
-	 * 
+	 *
 	 * @param editable true if the field should be editable; false to disable the field
 	 */
 	public void setFilterFieldEditable(boolean editable) {

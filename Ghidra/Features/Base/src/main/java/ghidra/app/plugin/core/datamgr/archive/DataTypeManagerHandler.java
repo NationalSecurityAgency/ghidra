@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -893,7 +893,7 @@ public class DataTypeManagerHandler {
 		}
 		saveState.putStrings(RECENT_NAMES, getSaveableArchiveNames(recentMenuList));
 
-		// update the initialArchives list so that future checks on that list do not trigger a 
+		// update the initialArchives list so that future checks on that list do not trigger a
 		// state change
 		initiallyOpenedFileArchiveNames = getOpenFileArchiveNames(openArchives);
 	}
@@ -950,11 +950,11 @@ public class DataTypeManagerHandler {
 
 	/**
 	 * Determine if we can remember the specified project archive using a simple project path
-	 * (e.g., we can't remember specific versions). 
+	 * (e.g., we can't remember specific versions).
 	 * @param pa project archive
-	 * @param activeProjectOnly if true pa must be contained within the 
+	 * @param activeProjectOnly if true pa must be contained within the
 	 * active project to be remembered.
-	 * @return return project path which can be remembered or null 
+	 * @return return project path which can be remembered or null
 	 */
 	public String getProjectPathname(ProjectArchive pa, boolean activeProjectOnly) {
 		// Project archives are always opened by a user.
@@ -1220,7 +1220,7 @@ public class DataTypeManagerHandler {
 	}
 
 	/**
-	 * Signals to this manager to save the knowledge of all currently opened archives and to mark 
+	 * Signals to this manager to save the knowledge of all currently opened archives and to mark
 	 * the tool as dirty (changed) if the current open archives are not the same as those that
 	 * were initially opened.
 	 */
@@ -1583,7 +1583,7 @@ public class DataTypeManagerHandler {
 		 * @param folder new parent folder
 		 * @param newName name for domain object
 		 * @param doOverwrite true means the given name already exists and the user
-		 * wants to overwrite that existing file; false means a new file will 
+		 * wants to overwrite that existing file; false means a new file will
 		 * get created
 		 */
 		DomainObjectSaveAsTask(String domainObjectType, UndoableDomainObject domainObject,
@@ -1751,7 +1751,7 @@ public class DataTypeManagerHandler {
 
 	/**
 	 * Provides an exception handler for a failed attempt to open an datatype archive file.
-	 * This method will display exception information to the user and/or log. 
+	 * This method will display exception information to the user and/or log.
 	 * @param plugin datatype manager plugin
 	 * @param archiveFile archive file resource being opened
 	 * @param t throwable

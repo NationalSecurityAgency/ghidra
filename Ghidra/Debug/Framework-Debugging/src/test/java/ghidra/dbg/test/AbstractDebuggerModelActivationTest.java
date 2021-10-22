@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.dbg.util.PathUtils;
 
 /**
  * Test model object activation and focus
- * 
+ *
  * <p>
  * Activation and focus are related but separate concepts. Focus is a little looser, and is allowed
  * by the model to exactly match the client's notion of focus, usually indicating the object of the
@@ -46,7 +46,7 @@ public abstract class AbstractDebuggerModelActivationTest extends AbstractDebugg
 
 	/**
 	 * Use the interpreter to activate the given object
-	 * 
+	 *
 	 * @param obj the object to activate
 	 * @param interpreter the interpreter to use
 	 * @throws Throwable if anything goes wrong
@@ -58,13 +58,13 @@ public abstract class AbstractDebuggerModelActivationTest extends AbstractDebugg
 
 	/**
 	 * Use the interpreter to verify the given object is active/current
-	 * 
+	 *
 	 * <p>
 	 * Note, it may be necessary to run and capture several commands, depending on what's being
 	 * verified and what sort of commands the interpreter makes available. For example, to verify a
 	 * frame is active, the test should check that the containing thread and process are active,
 	 * too.
-	 * 
+	 *
 	 * @param expected the expected active or current object
 	 * @param interpreter the interpreter to use
 	 * @throws Throwable if anything goes wrong
@@ -76,14 +76,14 @@ public abstract class AbstractDebuggerModelActivationTest extends AbstractDebugg
 
 	/**
 	 * Get (possibly generate) things for this focus test to try out
-	 * 
+	 *
 	 * @throws Throwable if anything goes wrong
 	 */
 	protected abstract Set<TargetObject> getActivatableThings() throws Throwable;
 
 	/**
 	 * Governs whether assertions permit the actual object to be a successor of the expected object
-	 * 
+	 *
 	 * @return true to permit successors, false to require exact
 	 */
 	protected boolean permitSuccessor() {
@@ -104,7 +104,7 @@ public abstract class AbstractDebuggerModelActivationTest extends AbstractDebugg
 
 	/**
 	 * If the default focus is one of the activatable things (after generation), assert its path
-	 * 
+	 *
 	 * @return the path of the expected default focus, or {@code null} for no assertion
 	 */
 	protected List<String> getExpectedDefaultActivePath() {

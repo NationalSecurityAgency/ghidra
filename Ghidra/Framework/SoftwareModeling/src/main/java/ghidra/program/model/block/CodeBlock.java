@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,8 @@ import ghidra.util.task.TaskMonitor;
 
 
 public interface CodeBlock extends AddressSetView {
-    
-    /** 
+
+    /**
      * Return the first start address of the CodeBlock.
      * Depending on the model used to generate the CodeBlock,
      * there may be multiple entry points to the block.  This will
@@ -44,8 +44,8 @@ public interface CodeBlock extends AddressSetView {
      * @return the first start address of the block.
      */
     public Address getFirstStartAddress();
-    
-    /** 
+
+    /**
      * Get all the entry points to this block.  Depending on the
      * model, there may be more than one entry point.
      * Entry points will be returned in natural sorted order.
@@ -54,15 +54,15 @@ public interface CodeBlock extends AddressSetView {
      * a zero length array if there are no entry points.
      */
     public Address[] getStartAddresses();
-    
-    /** 
+
+    /**
      * Return the name of the block.
-     * 
+     *
      * @return name of block,
      *  normally the symbol at the starting address
      */
     public String getName();
-    
+
     /**
      * Return, in theory, how things flow out of this node.
      * If there are any abnormal ways to flow out of this node,
@@ -75,7 +75,7 @@ public interface CodeBlock extends AddressSetView {
      * @return flow type of this node
      */
     public FlowType getFlowType();
-    
+
     /**
      * Get the number of CodeBlocks that flow into this CodeBlock.
      * Note that this is almost as much work as getting the actual source references.
@@ -85,7 +85,7 @@ public interface CodeBlock extends AddressSetView {
      * @see #getSources(ghidra.util.task.TaskMonitor)
      */
     public int getNumSources(TaskMonitor monitor) throws CancelledException;
-    
+
     /**
      * Get an Iterator over the CodeBlocks that flow into this CodeBlock.
      * @param monitor task monitor which allows user to cancel operation.
@@ -93,7 +93,7 @@ public interface CodeBlock extends AddressSetView {
      * @throws CancelledException if the monitor cancels the operation.
      */
     public CodeBlockReferenceIterator getSources(TaskMonitor monitor) throws CancelledException;
-    
+
     /**
      * Get the number of CodeBlocks this block flows to.
      * Note that this is almost as much work as getting the actual destination references.
@@ -103,7 +103,7 @@ public interface CodeBlock extends AddressSetView {
      * @see #getDestinations(ghidra.util.task.TaskMonitor)
      */
     public int getNumDestinations(TaskMonitor monitor) throws CancelledException;
-    
+
     /**
      * Get an Iterator over the CodeBlocks that are flowed to from this
      * CodeBlock.
@@ -112,7 +112,7 @@ public interface CodeBlock extends AddressSetView {
      * @throws CancelledException if the monitor cancels the operation.
      */
     public CodeBlockReferenceIterator getDestinations(TaskMonitor monitor) throws CancelledException;
-    
+
     /**
      * Get the model instance which was used to generate this block.
      * @return the model used to build this CodeBlock

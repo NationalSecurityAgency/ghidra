@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -114,7 +114,7 @@ abstract public class AbstractStringDataType extends BuiltIn
 	/**
 	 * Protected constructor used by derived types to provide all their datatype details.
 	 * <p>
-	 * 
+	 *
 	 * @param name Name of this datatype
 	 * @param mnemonic Mnemonic of this datatype
 	 * @param defaultLabel Label string for this datatype. See {@link #defaultLabel}.
@@ -176,7 +176,7 @@ abstract public class AbstractStringDataType extends BuiltIn
 	 * Creates a new {@link StringDataInstance} using the bytes in the supplied MemBuffer and
 	 * options provided by this DataType.
 	 * <p>
-	 * 
+	 *
 	 * @param buf the data.
 	 * @param settings the settings to use for the representation.
 	 * @param length the number of bytes to represent.

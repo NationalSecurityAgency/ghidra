@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.exception.NotYetImplementedException;
 import java.util.ArrayList;
 
 /**
- * 
+ *
  *
  * Template for a constructor which is officially "unimplemented" as opposed to a
  * constructor which does nothing (like a NOP). Any instruction which is "unimplemented"
@@ -49,7 +49,7 @@ public class UnimplementedConstructor extends ConstructorPcodeTemplate {
 		catch(Exception e) {}
 	 }
 	@Override
-    public void addPcodeOpTemplate(Object opT) throws SledException { 
+    public void addPcodeOpTemplate(Object opT) throws SledException {
 		// Since this is unimplemented we ignore any ops assigned to it
 	}
 	@Override

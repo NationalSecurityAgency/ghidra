@@ -31,12 +31,12 @@ define space CODE type=ram_space wordsize=2 size=2 default;
 
 # General Purpose Register Memory consists of 2-banks of 32-bytes each
 # Bank selection occurs using FSR bits <6:5>
-define space DATA type=ram_space size=1; 
+define space DATA type=ram_space size=1;
 
 # HWSTACK consists of a 2-word by 12-bit RAM and a corresponding to a hidden stack pointer (STKPTR).
 define space HWSTACK type=ram_space wordsize=2 size=1;  # WORDSIZE is actually 12-bits
- 
-define space register type=register_space size=2; 
+
+define space register type=register_space size=2;
 
 # Program Counter (9-bits) - PC Latch: PCL<PC:7-0>
 define register offset=0x0000 size=2 [ PC ];

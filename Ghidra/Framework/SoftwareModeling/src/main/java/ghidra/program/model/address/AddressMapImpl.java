@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import ghidra.util.UniversalIdGenerator;
 /**
  * <code>AddressMapImpl</code> provides a stand-alone AddressMap.
  * An AddressMapImpl instance should only be used to decode keys which it has generated.
- * If this map is used for a specific program instance, the map should be discard if any changes 
+ * If this map is used for a specific program instance, the map should be discard if any changes
  * are made to that programs address map (e.g., removing or renaming overlay spaces).
  */
 public class AddressMapImpl {
@@ -91,7 +91,7 @@ public class AddressMapImpl {
 	}
 
 	/**
-	 * Comparator used to identify if an addr occurs before or after the 
+	 * Comparator used to identify if an addr occurs before or after the
 	 * start of a key range.
 	 */
 	private Comparator<Object> addressInsertionKeyRangeComparator = new Comparator<Object>() {
@@ -190,8 +190,8 @@ public class AddressMapImpl {
 	}
 
 	/**
-	 * Generate a unique key for the specified addr.  Only addresses from a single address space or 
-	 * single program should be passed to this method. Only limited checking is not performed in order to 
+	 * Generate a unique key for the specified addr.  Only addresses from a single address space or
+	 * single program should be passed to this method. Only limited checking is not performed in order to
 	 * improve performance.
 	 * @param addr address
 	 * @see ghidra.program.database.map.AddressMap#getKey(Address, boolean)

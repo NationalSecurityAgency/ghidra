@@ -63,23 +63,23 @@
               <TD style="background-color: #DEE3E7;">
 <PRE>
                                                                 <CODE class="code">
-                                                               
+
         public void run() throws Exception {
                 setBackgroundColor(anotherAddress, Color.YELLOW);
-                
-                
+
+
                 // OR, using a range of addresses
-                
+
                 // create an address set with values you want to change
-                AddressSet addresses = new AddressSet(currentProgram.getAddressFactory());                     
+                AddressSet addresses = new AddressSet(currentProgram.getAddressFactory());
                 addresses.add(currentAddress.add(10));
                 addresses.add(currentAddress.add(11));
                 addresses.add(currentAddress.add(12));
 
                 setBackgroundColor(addresses, new Color(100, 100, 200));
         }
-                                                               </CODE> 
-                                                       
+                                                               </CODE>
+
 </PRE>
               </TD>
             </TR>
@@ -94,18 +94,18 @@
               <TD style="background-color: #DEE3E7;">
 <PRE>
                                                                 <CODE class="code">
-                                                               
+
         public void run() throws Exception {
                 ColorizingService service = state.getTool().getService(ColorizingService.class);
                 if (service == null) {
-                        println("Can't find ColorizingService service--ColorizingPlugin not installed");       
+                        println("Can't find ColorizingService service--ColorizingPlugin not installed");
                         return;
                 }
 
                 service.setBackgroundColor(currentAddress, currentAddress, new Color(255, 200, 200));
         }
-                                                               </CODE> 
-                                                       
+                                                               </CODE>
+
 </PRE>
               </TD>
             </TR>

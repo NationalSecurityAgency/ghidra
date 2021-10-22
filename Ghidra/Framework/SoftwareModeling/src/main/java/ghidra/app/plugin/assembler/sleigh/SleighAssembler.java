@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,7 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * An {@link Assembler} for a {@link SleighLanguage}.
- * 
+ *
  * To obtain one of these, please use {@link SleighAssemblerBuilder}, or better yet, the static
  * methods of {@link Assemblers}.
  */
@@ -57,7 +57,7 @@ public class SleighAssembler implements Assembler {
 
 	/**
 	 * Construct a SleighAssembler.
-	 * 
+	 *
 	 * @param selector a method of selecting one result from many
 	 * @param program the program to bind to (must have same language as parser)
 	 * @param parser the parser for the SLEIGH language
@@ -77,9 +77,9 @@ public class SleighAssembler implements Assembler {
 
 	/**
 	 * Construct a SleighAssembler.
-	 * 
+	 *
 	 * NOTE: This variant does not permit {@link #assemble(Address, String...)}.
-	 * 
+	 *
 	 * @param selector a method of selecting one result from many
 	 * @param lang the SLEIGH language (must be same as to create the parser)
 	 * @param parser the parser for the SLEIGH language
@@ -233,9 +233,9 @@ public class SleighAssembler implements Assembler {
 
 	/**
 	 * A convenience to obtain a map of program labels strings to long values
-	 * 
+	 *
 	 * @return the map
-	 * 
+	 *
 	 *         {@literal TODO Use a Map<String, Address> instead so that, if possible, symbol values can be checked}
 	 *         lest they be an invalid substitution for a given operand.
 	 */

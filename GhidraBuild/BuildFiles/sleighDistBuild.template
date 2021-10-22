@@ -3,7 +3,7 @@
 <!--
   + Compile sleigh languages within this distribution language module via Eclipse or
   + a command shell.
-  + 
+  +
   +   * Eclipse: right-click on this file and choose menu item "Run As->Ant Build"
   +
   +   * From command line (requires ant install)
@@ -12,15 +12,15 @@
   +
   + Sleigh compiler options are read from sleighArgs.txt.
   -->
-                                     
+
 <project name="privateBuildDistribution" default="sleigh-compile">
-	
+
 	<property name="sleigh.compile.class" value="ghidra.pcodeCPort.slgh_compile.SleighCompile"/>
-	
+
 	<target name="sleigh-compile">
-	    
+
 	    <property name="framework.path" value="../../../Framework"/>
-		
+
 		<path id="sleigh.class.path">
 			<fileset dir="${framework.path}/SoftwareModeling/lib">
 				<include name="*.jar"/>
@@ -32,11 +32,11 @@
 				<include name="*.jar"/>
 			</fileset>
 		</path>
-		
+
 		<available classname="${sleigh.compile.class}" classpathref="sleigh.class.path" property="sleigh.compile.exists"/>
-			
+
 		<fail unless="sleigh.compile.exists" />
-		
+
 		<java classname="${sleigh.compile.class}"
 			classpathref="sleigh.class.path"
 			fork="true"
@@ -48,7 +48,7 @@
 			<arg value="-a"/>
 			<arg value="./languages"/>
 		</java>
-		
+
  	</target>
 
 </project>

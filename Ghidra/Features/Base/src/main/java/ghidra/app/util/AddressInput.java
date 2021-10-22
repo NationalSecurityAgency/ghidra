@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -119,7 +119,7 @@ public class AddressInput extends JPanel {
 	/**
 	 * Returns the address in the field or null if the address can't
 	 * be parsed.
-	 * 
+	 *
 	 * @throws NullPointerException if AddressFactory has not been set.
 	 */
 	public Address getAddress() {
@@ -138,7 +138,7 @@ public class AddressInput extends JPanel {
 	 * Returns the address space selected in the combobox or in the input text itself
 	 * if specified (eg: "register:1"). If the address space is not specified; returns the
 	 * default space.
-	 * 
+	 *
 	 * @throws NullPointerException if AddressFactory has not been set.
 	 */
 	public AddressSpace getAddressSpace() {
@@ -176,7 +176,7 @@ public class AddressInput extends JPanel {
 	 * @param factory address factory to use
 	 * @param filterOverlaySpaces true if overlay spaces should not appear in the combo box
 	 * for the address spaces.
-	 * @param allowOtherSpace true if the OTHER space should appear in the combo box for 
+	 * @param allowOtherSpace true if the OTHER space should appear in the combo box for
 	 * the address spaces
 	 */
 	public void setAddressFactory(AddressFactory factory, boolean filterOverlaySpaces,

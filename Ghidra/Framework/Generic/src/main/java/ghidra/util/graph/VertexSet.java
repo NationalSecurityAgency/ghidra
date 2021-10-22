@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,11 +22,11 @@ import ghidra.util.exception.NoValueException;
 
 import java.util.*;
 
-/** 
+/**
  * VertexSet is a container class for objects of type Vertex. It is
  * designed to be used in conjunction with EdgeSet as part of DirectedGraph.
- * 
- * 
+ *
+ *
  */
 class VertexSet implements KeyIndexableSet<Vertex>
 {
@@ -40,10 +40,10 @@ class VertexSet implements KeyIndexableSet<Vertex>
 	  private Edge [] lastOutgoingEdge;
 	  private Edge [] lastIncomingEdge;
 	  private Vertex [] vertices;
-	
-	  /** 
+
+	  /**
 	   * Constructor
-	   * 
+	   *
 	   * @param parent The DirectedGraph this is a VertexSet of.
 	   * @param capacity number of vertices that may be held without invoking grow()
 	   */
@@ -60,9 +60,9 @@ class VertexSet implements KeyIndexableSet<Vertex>
 	      lastIncomingEdge = new Edge[capacity];
 	      vertices = new Vertex[capacity];
 	  }
-	
-	
-	  /** 
+
+
+	  /**
 	   * Return the internal index of the given vertex within this edge set.
 	   * @return the internal index of o.
 	   * @throws ClassCastException if the object is not a Vertex.
@@ -78,10 +78,10 @@ class VertexSet implements KeyIndexableSet<Vertex>
 	  }
 
 
-	  /** 
+	  /**
 	   * Adds the given vertex to the vertex set, if it does not already contain
 	   * it.
-	   * 
+	   *
 	   * @return true if and only if the vertex was sucessfully added.
 	   */
 	  public boolean add( Vertex v )
@@ -100,9 +100,9 @@ class VertexSet implements KeyIndexableSet<Vertex>
 	      }
 	      return false;
 	  }
-	
-	  /** 
-	   * Removes the given vertex from this vertex set if it contains it. 
+
+	  /**
+	   * Removes the given vertex from this vertex set if it contains it.
 	   * @return true if and only if the vertex was sucessfully removed.
 	   */
 	  public boolean remove( Vertex v )
@@ -138,15 +138,15 @@ class VertexSet implements KeyIndexableSet<Vertex>
 	    return false;
 	  }
 
-	/** 
-	 * Return The number of vertices in this VertexSet. 
+	/**
+	 * Return The number of vertices in this VertexSet.
 	 */
   public int size()
   {
        return keyIndices.size();
   }
 
-	/** 
+	/**
 	 * Return true iff the specified KeyedObject is contained in
 	 * this VertexSet.
 	 */
@@ -158,18 +158,18 @@ class VertexSet implements KeyIndexableSet<Vertex>
 	  return keyIndices.contains( v.key() );
   }
 
-	/** 
-	 * Return the Vertex at the specified index. May be null. 
+	/**
+	 * Return the Vertex at the specified index. May be null.
 	 */
   private Vertex getByIndex( int index )
   {
       return vertices[index];
   }
 
-  /** 
+  /**
    * Return the number of sources.
    * This equals the number of vertices with no incoming
-   * edges in the VertexSet. 
+   * edges in the VertexSet.
    */
   public int numSources()
   {
@@ -185,10 +185,10 @@ class VertexSet implements KeyIndexableSet<Vertex>
       return cnt;
   }
 
-  /** 
-   * Return the number of sinks.  
+  /**
+   * Return the number of sinks.
    * This equals the number of vertices with no outgoing
-   * edges in the VertexSet. 
+   * edges in the VertexSet.
    */
   public int numSinks()
   {
@@ -204,9 +204,9 @@ class VertexSet implements KeyIndexableSet<Vertex>
       return cnt;
   }
 
-	/** 
+	/**
 	 * Return a Vertex[] containing all vertices in the VertexSet that
-	 * have no incoming edges. If there are none an array of length 0 
+	 * have no incoming edges. If there are none an array of length 0
 	 * will be returned.
 	 */
   Vertex [] getSources()
@@ -227,9 +227,9 @@ class VertexSet implements KeyIndexableSet<Vertex>
       return answer;
   }
 
-	/** 
+	/**
 	 * Return a Vertex[] containing all vertices in the VertexSet that
-	 * have no outgoing edges. If there are none an array of length 0 
+	 * have no outgoing edges. If there are none an array of length 0
 	 * will be returned.
 	 */
   Vertex [] getSinks()
@@ -250,8 +250,8 @@ class VertexSet implements KeyIndexableSet<Vertex>
       return answer;
   }
 
-	/** 
-	 * Get the first outgoing edge in the internal structures for this 
+	/**
+	 * Get the first outgoing edge in the internal structures for this
 	 * VertexSet for the parent DirectedGraph.
 	 */
   Edge getFirstOutgoingEdge( Vertex v )
@@ -264,8 +264,8 @@ class VertexSet implements KeyIndexableSet<Vertex>
       }
   }
 
-	/** 
-	 * Get the last outgoing edge in the internal structures for this 
+	/**
+	 * Get the last outgoing edge in the internal structures for this
 	 * VertexSet for the parent DirectedGraph.
 	 */
   Edge getLastOutgoingEdge( Vertex v )
@@ -288,8 +288,8 @@ class VertexSet implements KeyIndexableSet<Vertex>
   }
 
 
-	/** 
-	 * Get the first incoming edge in the internal structures for this 
+	/**
+	 * Get the first incoming edge in the internal structures for this
 	 * VertexSet for the parent DirectedGraph.
 	 */
   Edge getFirstIncomingEdge( Vertex v )
@@ -302,8 +302,8 @@ class VertexSet implements KeyIndexableSet<Vertex>
       }
   }
 
-	/** 
-	 * Get the last incoming edge in the internal structures for this 
+	/**
+	 * Get the last incoming edge in the internal structures for this
 	 * VertexSet for the parent DirectedGraph.
 	 */
   Edge getLastIncomingEdge( Vertex v )
@@ -324,9 +324,9 @@ class VertexSet implements KeyIndexableSet<Vertex>
       }
   }
 
-	/** 
-	 * Set the first outgoing edge of v to be e. 
-	 * It is assumed that v has already been added to the graph. 
+	/**
+	 * Set the first outgoing edge of v to be e.
+	 * It is assumed that v has already been added to the graph.
 	 */
   void setFirstOutgoingEdge( Vertex v, Edge e )
   {
@@ -342,9 +342,9 @@ class VertexSet implements KeyIndexableSet<Vertex>
       }
   }
 
-	/** 
-	 * Set the last outgoing edge of v to be e. 
-	 * It is assumed that v has already been added to the graph. 
+	/**
+	 * Set the last outgoing edge of v to be e.
+	 * It is assumed that v has already been added to the graph.
 	 */
   void setLastOutgoingEdge( Vertex v, Edge e )
   {
@@ -360,9 +360,9 @@ class VertexSet implements KeyIndexableSet<Vertex>
       }
   }
 
-	/** 
-	 * Set the first incoming edge of v to be e. 
-	 * It is assumed that v has already been added to the graph. 
+	/**
+	 * Set the first incoming edge of v to be e.
+	 * It is assumed that v has already been added to the graph.
 	 */
   void setFirstIncomingEdge( Vertex v, Edge e )
   {
@@ -379,9 +379,9 @@ class VertexSet implements KeyIndexableSet<Vertex>
 
   }
 
-	/** 
-	 * Set the last incoming edge of v to be e. 
-	 * It is assumed that v has already been added to the graph. 
+	/**
+	 * Set the last incoming edge of v to be e.
+	 * It is assumed that v has already been added to the graph.
 	 */
   void setLastIncomingEdge( Vertex v, Edge e )
   {
@@ -397,7 +397,7 @@ class VertexSet implements KeyIndexableSet<Vertex>
       }
   }
 
-	/** 
+	/**
 	 * Remove all of the vertices from this VertexSet without changing
 	 * the capacity. Much faster than removing each vertex individually.
 	 * The EdgeSet for this graph gets cleared first.
@@ -451,7 +451,7 @@ class VertexSet implements KeyIndexableSet<Vertex>
 //      Err.debug(this, "\n");
 //  }
 
-  /** 
+  /**
    * Return the number of vertices this VertexSet may hold without growing.
    */
   public int capacity()
@@ -459,7 +459,7 @@ class VertexSet implements KeyIndexableSet<Vertex>
       return this.capacity;
   }
 
-	/** 
+	/**
 	 * Increases the capacity of the VertexSet so additional vertices
 	 * can be added.
 	 */
@@ -504,8 +504,8 @@ class VertexSet implements KeyIndexableSet<Vertex>
       }
   }
 
-  /** 
-   * Clean up the internal storage of the VertexSet. 
+  /**
+   * Clean up the internal storage of the VertexSet.
    */
   private void tighten()
   {
@@ -536,15 +536,15 @@ class VertexSet implements KeyIndexableSet<Vertex>
     }
   }
 
-	/** 
-	 * Get the number of times this VertexSet has changed 
+	/**
+	 * Get the number of times this VertexSet has changed
 	 */
   public long getModificationNumber()
   {
       return this.modificationNumber;
   }
 
-	/** 
+	/**
 	 * Return an iterator over all of the vertices in this VertexSet.
 	 * The iterator becomes invalid and throws a ConcurrentModificationException
 	 * if any changes are made to the VertexSet after the iterator is created.
@@ -555,8 +555,8 @@ class VertexSet implements KeyIndexableSet<Vertex>
   }
 
 
-	/** 
-	 * Return the elements of this VertexSet as a java.util.Set. 
+	/**
+	 * Return the elements of this VertexSet as a java.util.Set.
 	 */
   public Set<Vertex> toSet()
   {
@@ -569,8 +569,8 @@ class VertexSet implements KeyIndexableSet<Vertex>
       return vs;
   }
 
-	/** 
-	 * Return the elements of this VertexSet as an Vertex[]. 
+	/**
+	 * Return the elements of this VertexSet as an Vertex[].
 	 */
   public Vertex[] toArray()
   {
@@ -588,17 +588,17 @@ class VertexSet implements KeyIndexableSet<Vertex>
       return theVertices;
   }
 
-	/** 
-	 * Implements an Iterator for this VertexSet. 
+	/**
+	 * Implements an Iterator for this VertexSet.
 	 */
 	private class VertexSetIterator implements GraphIterator<Vertex>
 	{
 	    private int currentPosition;
 	    private int nextPosition;
 	    private long setModificationNumber;
-	
-		/** 
-		 * Constructor 
+
+		/**
+		 * Constructor
 		 */
 	    public VertexSetIterator()     // VertexSet cvs)
 	    {
@@ -607,7 +607,7 @@ class VertexSet implements KeyIndexableSet<Vertex>
 	        this.setModificationNumber = getModificationNumber();
 	        getNextPosition();
 	    }
-	
+
 	    private void getNextPosition()
 	    {
 	        nextPosition++;
@@ -616,10 +616,10 @@ class VertexSet implements KeyIndexableSet<Vertex>
 	            nextPosition++;
 	        }
 	    }
-	
-		/** 
+
+		/**
 		 * Return true if there is another vertex in this iteration.
-		 * @throws ConcurrentModificationException if the VertexSet is 
+		 * @throws ConcurrentModificationException if the VertexSet is
 		 * modified by methods outside this iterator.
 		 */
 	    public boolean hasNext() throws ConcurrentModificationException
@@ -628,15 +628,15 @@ class VertexSet implements KeyIndexableSet<Vertex>
 	        {
 	            throw new ConcurrentModificationException("Set Modified");
 	        }
-	
+
 	        if( nextPosition < capacity() )
 	        {
 	            return true;
 	        }
 	        return false;
 	    }
-	
-		/** 
+
+		/**
 		 * Return the next Vertex in the iteration
 		 */
 	    public Vertex next() throws ConcurrentModificationException
@@ -653,9 +653,9 @@ class VertexSet implements KeyIndexableSet<Vertex>
 	        }
 	        throw new NoSuchElementException();
 	    }
-	
-		/** 
-		 * Remove the vertex returned by the most recent call to next(). 
+
+		/**
+		 * Remove the vertex returned by the most recent call to next().
 		 */
 	    public boolean remove() throws ConcurrentModificationException
 	    {
@@ -668,7 +668,7 @@ class VertexSet implements KeyIndexableSet<Vertex>
 	        setModificationNumber = getModificationNumber();
 	        return removed;
 	    }
-	
+
 	}
 
 }

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,13 +48,13 @@ import utilities.util.FileUtilities;
  * 		- Archive directory (hidden)
  * </pre>
  * <p>
- * All columns are for display purposes only, except for the <code>installed</code> column, which 
- * is a checkbox allowing users to install/uninstall a particular extension. 
- * 
+ * All columns are for display purposes only, except for the <code>installed</code> column, which
+ * is a checkbox allowing users to install/uninstall a particular extension.
+ *
  */
 class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<ExtensionDetails>> {
 
-	/** We don't care about the ordering of other columns, but the install/uninstall checkbox should be 
+	/** We don't care about the ordering of other columns, but the install/uninstall checkbox should be
 	 the first one and the name col is our initial sort column. */
 	final static int INSTALLED_COL = 0;
 	final static int NAME_COL = 1;
@@ -67,7 +67,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param serviceProvider the tool providing the extensions table
 	 */
 	protected ExtensionTableModel(ServiceProvider serviceProvider) {
@@ -106,7 +106,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 			return false;
 		}
 
-		// Do not allow GUI uninstallation of extensions manually installed in installation 
+		// Do not allow GUI uninstallation of extensions manually installed in installation
 		// directory
 		if (extension.getInstallPath() != null && FileUtilities.isPathContainedWithin(
 			Application.getApplicationLayout().getApplicationInstallationDir().getFile(false),
@@ -126,12 +126,12 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 		super.setValueAt(aValue, rowIndex, columnIndex);
 
 		// We only care about the install column here, as it's the only one that
-		// is editable. 
+		// is editable.
 		if (columnIndex != INSTALLED_COL) {
 			return;
 		}
 
-		// If the user does not have write permissions on the installation dir, they cannot 
+		// If the user does not have write permissions on the installation dir, they cannot
 		// install.
 		ResourceFile installDir =
 			Application.getApplicationLayout().getExtensionInstallationDirs().get(0);
@@ -190,7 +190,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 
 	/**
 	 * Returns true if the model has changed as a result of installing or uninstalling an extension.
-	 * 
+	 *
 	 * @return true if the model has changed as a result of installing or uninstalling an extension.
 	 */
 	public boolean hasModelChanged() {
@@ -199,7 +199,7 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 
 	/**
 	 * Replaces the table model data with the given list.
-	 * 
+	 *
 	 * @param model the list to use as the model
 	 */
 	public void setModelData(List<ExtensionDetails> model) {
@@ -220,11 +220,11 @@ class ExtensionTableModel extends ThreadedTableModel<ExtensionDetails, List<Exte
 	}
 
 	/**
-	 * Returns the selected extension. 
+	 * Returns the selected extension.
 	 * <p>
 	 * Note that this table is single-selection only, so this will only
 	 * ever return 1 item.
-	 * 
+	 *
 	 * @param row the selected row
 	 * @return the selected extension, or null if nothing is selected
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,12 +32,12 @@ public interface BookmarkManager {
 
 	//
 	// In the beginning ... a bookmark was stored as a property object associated
-	// with an address location.  Property objects are still supported and 
+	// with an address location.  Property objects are still supported and
 	// managed by the DBPropertyMapManager.  DBPropertyMapManager has been modified to
 	// generate a VersionException if a bookmark property map exists for either of these
-	// bookmark classes except in the upgrade case.  When upgrading, the  
-	// DBPropertyMapManager will utilize the OldBookmark class to store the old 
-	// bookmark properties, which may then be converted to the new storage mechanism 
+	// bookmark classes except in the upgrade case.  When upgrading, the
+	// DBPropertyMapManager will utilize the OldBookmark class to store the old
+	// bookmark properties, which may then be converted to the new storage mechanism
 	// supported by this bookmark manager.
 	//
 
@@ -55,14 +55,14 @@ public interface BookmarkManager {
 	/**
 	 * Define a bookmark type with its marker icon and color.  The icon and color
 	 * values are not permanently stored.  Therefor, this method must be re-invoked
-	 * by a plugin each time a program is opened if a custom icon and color 
+	 * by a plugin each time a program is opened if a custom icon and color
 	 * are desired.
 	 * @param type bookmark type
 	 * @param icon marker icon which may get scaled
 	 * @param color marker color
 	 * @param priority the bookmark priority
 	 * @return bookmark type object
-	 * @throws IllegalArgumentException if any of the arguments are null or if the type is empty 
+	 * @throws IllegalArgumentException if any of the arguments are null or if the type is empty
 	 */
 	BookmarkType defineType(String type, ImageIcon icon, Color color, int priority);
 
@@ -106,7 +106,7 @@ public interface BookmarkManager {
 	Bookmark getBookmark(Address addr, String type, String category);
 
 	/**
-	 * Remove bookmark 
+	 * Remove bookmark
 	 * @param bookmark the bookmark to remove.
 	 */
 	void removeBookmark(Bookmark bookmark);
@@ -194,10 +194,10 @@ public interface BookmarkManager {
 	/**
 	 * Returns an iterator over all bookmark types, starting at the given address, with traversal
 	 * in the given direction.
-	 * 
+	 *
 	 * @param startAddress the address at which to start
 	 * @param forward true to iterate in the forward direction; false for backwards
-	 * 
+	 *
 	 * @return an iterator over all bookmark types, starting at the given address, with traversal
 	 * 		   in the given direction.
 	 */

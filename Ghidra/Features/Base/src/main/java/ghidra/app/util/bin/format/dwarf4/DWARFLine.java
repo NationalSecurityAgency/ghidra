@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,10 +44,10 @@ public class DWARFLine {
 	private List<DWARFFile> file_names;
 
 	/**
-	 * Read a DWARFLine from the compile unit's DW_AT_stmt_list location in the 
+	 * Read a DWARFLine from the compile unit's DW_AT_stmt_list location in the
 	 * DebugLine stream (if present).
-	 * 
-	 * @param diea {@link DIEAggregate} compile unit DIE(a) 
+	 *
+	 * @param diea {@link DIEAggregate} compile unit DIE(a)
 	 * @return a new DWARFLine instance if DW_AT_stmt_list & stream are present, otherwise null
 	 * @throws IOException if error reading data
 	 * @throws DWARFException if bad DWARF values

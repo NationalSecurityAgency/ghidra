@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,16 +50,16 @@ public class ImportedSymbol extends AbstractSymbol {
 		return SymbolClass.get(symbolClass & 0xf);
 	}
 	/**
-	 * The imported symbol does not have to 
-	 * be present at fragment preparation time in 
-	 * order for execution to continue. 
+	 * The imported symbol does not have to
+	 * be present at fragment preparation time in
+	 * order for execution to continue.
 	 * @return if the symbol is weak
 	 */
 	public boolean isWeak() {
 		return (symbolClass & kPEFWeakImportSymMask) != 0;
 	}
 	/**
-	 * The offset (in bytes) from the beginning of the loader 
+	 * The offset (in bytes) from the beginning of the loader
 	 * string table to the null-terminated name of the symbol.
 	 * @return offset to the null-terminated name of the symbol
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public class VTImpliedMatchCorrelatorTest extends AbstractVTCorrelatorTest {
 	}
 
 	/*
-	 * Run the Exact Function Bytes Match correlator and accept all matches, 
+	 * Run the Exact Function Bytes Match correlator and accept all matches,
 	 * then check to see that the expected implied matches are created
 	 */
 	@Test
@@ -61,7 +61,7 @@ public class VTImpliedMatchCorrelatorTest extends AbstractVTCorrelatorTest {
 
 		Assert.assertNotEquals("vtMatchSet does not exist", null, testMatchSet);
 
-		/* 
+		/*
 		 * Test that only non-thunks are in this set
 		 */
 
@@ -107,7 +107,7 @@ public class VTImpliedMatchCorrelatorTest extends AbstractVTCorrelatorTest {
 	}
 
 	/*
-	 * Run the Exact Function Instructions Match correlator and accept all matches, 
+	 * Run the Exact Function Instructions Match correlator and accept all matches,
 	 * then make sure there are no implied match thunks
 	 */
 	@Test
@@ -132,12 +132,12 @@ public class VTImpliedMatchCorrelatorTest extends AbstractVTCorrelatorTest {
 
 		Assert.assertNotEquals("vtMatchSet does not exist", null, testMatchSet);
 
-		/* 
+		/*
 		 * Test that only non-thunks are in this set
 		 */
 
-		// too many to check them all individually so iterate over all the matches and test to see 
-		// that none are thunks				
+		// too many to check them all individually so iterate over all the matches and test to see
+		// that none are thunks
 		FunctionManager srcFunctionManager = session.getSourceProgram().getFunctionManager();
 		FunctionManager destFunctionManager = session.getDestinationProgram().getFunctionManager();
 
@@ -166,17 +166,17 @@ public class VTImpliedMatchCorrelatorTest extends AbstractVTCorrelatorTest {
 		String exactSymbolMatchCorrelator = "Exact Symbol Name Match";
 		runTestCorrelator(exactSymbolMatchCorrelator);
 
-		// Now Run the Exact Function Instruction Correlator to get all possible exact instruction 
+		// Now Run the Exact Function Instruction Correlator to get all possible exact instruction
 		// function matches
 		String exactMatchCorrelator = "Exact Function Instructions Match";
 		runTestCorrelator(exactMatchCorrelator);
 
-		// accept/apply just the "addPeople" function match which will attempt to create implied 
+		// accept/apply just the "addPeople" function match which will attempt to create implied
 		// matches just for this match
 
-		// Note: This function has the implied matches that were all already found by either the 
-		// symbol name correlator or the exact function instruction match correlator so we do not 
-		// expect to have any implied matches created. However, the vote count for the matches that 
+		// Note: This function has the implied matches that were all already found by either the
+		// symbol name correlator or the exact function instruction match correlator so we do not
+		// expect to have any implied matches created. However, the vote count for the matches that
 		// would have been implied matches should now be 1
 		VTMatch match = createMatch(addr(srcProg, "0x411700"), addr(destProg, "0x004116f0"),
 			srcProg, destProg, true);
@@ -188,30 +188,30 @@ public class VTImpliedMatchCorrelatorTest extends AbstractVTCorrelatorTest {
 		runTask(task);
 
 		// get the resulting implied matches and verify that none of the matches that were already
-		// created 
+		// created
 		VTMatchSet impliedMatchSet = getVTMatchSet("Implied Match");
 		Assert.assertNotEquals("vtMatchSet does not exist", null, impliedMatchSet);
 
-		// Now test that only the expected items are in this set for the given function we just 
+		// Now test that only the expected items are in this set for the given function we just
 		// applied
 		assertEquals(0, impliedMatchSet.getMatchCount());
 
 		VTAssociationManager associationManager = session.getAssociationManager();
 
 		assertEquals(1, associationManager.getAssociation(addr(srcProg, "0x00411860"),
-			addr(destProg, "0x00411830")).getVoteCount()); // addPerson 
+			addr(destProg, "0x00411830")).getVoteCount()); // addPerson
 		assertEquals(1, associationManager.getAssociation(addr(srcProg, "0x004168a0"),
-			addr(destProg, "0x004168a0")).getVoteCount()); // s_Lord_Victor_Quartermaine 
+			addr(destProg, "0x004168a0")).getVoteCount()); // s_Lord_Victor_Quartermaine
 		assertEquals(1, associationManager.getAssociation(addr(srcProg, "0x0041688c"),
-			addr(destProg, "0x00041688c")).getVoteCount()); // s_Lady_Tottington 
+			addr(destProg, "0x00041688c")).getVoteCount()); // s_Lady_Tottington
 		assertEquals(1, associationManager.getAssociation(addr(srcProg, "0x004168a0"),
-			addr(destProg, "0x004168a0")).getVoteCount()); // s_Were_Rabbit 
+			addr(destProg, "0x004168a0")).getVoteCount()); // s_Were_Rabbit
 		assertEquals(1, associationManager.getAssociation(addr(srcProg, "0x0041687c"),
-			addr(destProg, "0x0041687c")).getVoteCount()); // s_Rabbit 
+			addr(destProg, "0x0041687c")).getVoteCount()); // s_Rabbit
 		assertEquals(1, associationManager.getAssociation(addr(srcProg, "0x00416874"),
-			addr(destProg, "0x00416874")).getVoteCount()); // s_Wallace 
+			addr(destProg, "0x00416874")).getVoteCount()); // s_Wallace
 		assertEquals(1, associationManager.getAssociation(addr(srcProg, "0x00411b80"),
-			addr(destProg, "0x00411b60")).getVoteCount()); // __RTC_CheckEsp 	
+			addr(destProg, "0x00411b60")).getVoteCount()); // __RTC_CheckEsp
 
 	}
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -108,7 +108,7 @@ class ArticulatedEdgeRouter<V extends VisualVertex, E extends VisualEdge<V>>
 				continue;
 			}
 
-// TODO: add a loop here to try moving the articulations out a bit			
+// TODO: add a loop here to try moving the articulations out a bit
 
 			routedShape = createRoutedTwoPointShape(start, end, edge, false);
 			debugShape = new DebugShape<>(viewer, debugCounter, "Right edge", routedShape,
@@ -228,7 +228,7 @@ class ArticulatedEdgeRouter<V extends VisualVertex, E extends VisualEdge<V>>
 
 	/**
 	 * Returns a mapping edges to vertices that touch them.
-	 * 
+	 *
 	 * @param viewer the viewer containing the graph
 	 * @param edgeCollection the edges to check for occlusion
 	 * @return a mapping of occluded edges (a subset of the provided edges) to those vertices that

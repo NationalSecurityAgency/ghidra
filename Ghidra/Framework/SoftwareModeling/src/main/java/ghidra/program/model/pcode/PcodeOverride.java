@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public interface PcodeOverride {
 	FlowOverride getFlowOverride();
 
 	/**
-	 * Get the primary overriding reference address of {@link RefType} {@code type} from 
+	 * Get the primary overriding reference address of {@link RefType} {@code type} from
 	 * the current instruction
 	 * @param type type of reference
 	 * @return call reference address or null
@@ -43,7 +43,7 @@ public interface PcodeOverride {
 	Address getOverridingReference(RefType type);
 
 	/**
-	 * Get the fall-through override address which may have been 
+	 * Get the fall-through override address which may have been
 	 * applied to the current instruction.
 	 * @return fall-through override address or null
 	 */
@@ -51,18 +51,18 @@ public interface PcodeOverride {
 
 	/**
 	 * Returns the call-fixup for a specified call destination.
-	 * @param callDestAddr call destination address.  This address is used to 
-	 * identify a function which may have been tagged with a CallFixup.  
+	 * @param callDestAddr call destination address.  This address is used to
+	 * identify a function which may have been tagged with a CallFixup.
 	 * @return true if call destination function has been tagged with a call-fixup
 	 */
 	boolean hasCallFixup(Address callDestAddr);
 
 	/**
 	 * Returns the call-fixup for a specified call destination.
-	 * If the destination function has not be tagged or was tagged 
+	 * If the destination function has not be tagged or was tagged
 	 * with an unknown CallFixup name this method will return null.
-	 * @param callDestAddr call destination address.  This address is used to 
-	 * identify a function which may have been tagged with a CallFixup.  
+	 * @param callDestAddr call destination address.  This address is used to
+	 * identify a function which may have been tagged with a CallFixup.
 	 * @return call fixup object or null
 	 */
 	InjectPayload getCallFixup(Address callDestAddr);
@@ -114,14 +114,14 @@ public interface PcodeOverride {
 	boolean isCallOtherJumpOverrideApplied();
 
 	/**
-	 * Returns a boolean indicating whether there are any primary overriding references at the current 
+	 * Returns a boolean indicating whether there are any primary overriding references at the current
 	 * instruction
 	 * @return are there primary overriding references
 	 */
 	boolean hasPotentialOverride();
 
 	/**
-	 * 
+	 *
 	 * Get the primary call reference address from the current instruction
 	 * @return call reference address or null
 	*/

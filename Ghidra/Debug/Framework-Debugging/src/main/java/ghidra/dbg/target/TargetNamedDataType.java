@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.dbg.util.TargetDataTypeConverter;
 
 /**
  * A data type that would have a name in Ghidra's data type manager
- * 
+ *
  * <ul>
  * <li>{@code enum}</li>
  * <li>Function signature</li>
@@ -34,13 +34,13 @@ import ghidra.dbg.util.TargetDataTypeConverter;
  * <li>{@code typedef}</li>
  * <li>{@code union}</li>
  * </ul>
- * 
+ *
  * <p>
  * Other types, e.g., pointers, arrays, are modeled as attributes.
- * 
+ *
  * <p>
  * See {@link TargetDataTypeConverter} to get a grasp of the conventions
- * 
+ *
  * @param <T> the type of this object
  */
 @DebuggerTargetObjectIface("DataType")
@@ -59,11 +59,11 @@ public interface TargetNamedDataType extends TargetObject, TargetDataType {
 
 	/**
 	 * Get the members of this data type in order.
-	 * 
+	 *
 	 * <p>
 	 * While it is most common for members to be immediate children of the type, that is not
 	 * necessarily the case.
-	 * 
+	 *
 	 * @implNote By default, this method collects all successor members ordered by path. Overriding
 	 *           that behavior is not yet supported.
 	 * @return the members
@@ -74,12 +74,12 @@ public interface TargetNamedDataType extends TargetObject, TargetDataType {
 
 	/**
 	 * Get the namespace for this data type.
-	 * 
+	 *
 	 * <p>
 	 * While it is most common for a data type to be an immediate child of its namespace, that is
 	 * not necessarily the case. This method is a reliable and type-safe means of obtaining that
 	 * namespace.
-	 * 
+	 *
 	 * @return a reference to the namespace
 	 */
 	@TargetAttributeType(
@@ -94,7 +94,7 @@ public interface TargetNamedDataType extends TargetObject, TargetDataType {
 
 	/**
 	 * Get the kind of this data type
-	 * 
+	 *
 	 * @return the kind
 	 */
 	@TargetAttributeType(

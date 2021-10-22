@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ public class BoundedRangeInputVerifier extends InputVerifier {
     private final Number upperRangeValue;
     private final Number lowerRangeValue;
 
-    public BoundedRangeInputVerifier( JFormattedTextField otherField, boolean isOtherFieldUpperRange, 
+    public BoundedRangeInputVerifier( JFormattedTextField otherField, boolean isOtherFieldUpperRange,
             Number upperRangeValue, Number lowerRangeValue ) {
         this.otherField = otherField;
         this.isOtherFieldUpperRange = isOtherFieldUpperRange;
@@ -54,7 +54,7 @@ public class BoundedRangeInputVerifier extends InputVerifier {
 
             //
             // First, make sure we are within bounds
-            // 
+            //
             Number number = (Number) formatter.stringToValue(text);
             if ( compareNumbers( number, upperRangeValue ) > 0 ||
                  compareNumbers( number, lowerRangeValue ) < 0 ) {
@@ -62,9 +62,9 @@ public class BoundedRangeInputVerifier extends InputVerifier {
                 return false;
             }
 
-            // 
+            //
             // Second, don't let any value through that crosses our other field's range
-            // 
+            //
             boolean result = false;
             Number otherNumber = (Number) otherField.getValue();
             if ( isOtherFieldUpperRange ) {
@@ -82,7 +82,7 @@ public class BoundedRangeInputVerifier extends InputVerifier {
             return false;
         }
     }
-    
+
     private int compareNumbers( Number number, Number otherNumber ) {
         if ( number instanceof Double ) {
             Double double1 = (Double) number;

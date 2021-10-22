@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,7 +72,7 @@ import utilities.util.SuppressableCallback.Suppression;
 	},
 	eventsProduced = {
 		ProgramLocationPluginEvent.class,
-		// ProgramSelectionPluginEvent.class, 
+		// ProgramSelectionPluginEvent.class,
 		TraceLocationPluginEvent.class,
 		TraceSelectionPluginEvent.class
 	},
@@ -353,7 +353,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * <p>
 	 * This is only used by the ProgramManager. I don't need state per program. It would be nice to
 	 * have state per Trace, but this facility is usurped only for the ProgramManager. Here, it gets
@@ -368,7 +368,7 @@ public class DebuggerListingPlugin extends AbstractCodeBrowserPlugin<DebuggerLis
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * @see #getTransientState()
 	 */
 	@Override

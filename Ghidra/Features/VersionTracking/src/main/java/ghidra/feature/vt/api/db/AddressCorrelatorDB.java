@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ import ghidra.util.task.TaskMonitor;
 
 
 public class AddressCorrelatorDB {
-	
+
 	private VTAddressCorrelatorAdapter adapter;
 	private final Program sourceProgram;
 	private final Program destinationProgram;
@@ -43,28 +43,28 @@ public class AddressCorrelatorDB {
 
 	public static AddressCorrelatorDB createAddressCorrelator(
 			Program sourceProgram, Program destinationProgram) throws IOException {
-	    
+
 		DBHandle dbHandle = new DBHandle();
 		AddressCorrelatorDB correlator = new AddressCorrelatorDB(
 			sourceProgram, destinationProgram);
-		
+
 		long ID = dbHandle.startTransaction();
         try {
         	correlator.adapter = VTAddressCorrelatorAdapter.createAdapter( dbHandle );
-     
+
         }
         finally {
         	dbHandle.endTransaction(ID, true);
         }
-		
+
  		return correlator;
 	}
 
 
-	public static AddressCorrelatorDB getAddressCorrelator(DBHandle dbHandle, 
+	public static AddressCorrelatorDB getAddressCorrelator(DBHandle dbHandle,
 			Program sourceProgram, Program destinationProgram, TaskMonitor monitor)
 			throws VersionException {
-        
+
 		AddressCorrelatorDB correlator = new AddressCorrelatorDB(
 				sourceProgram, destinationProgram );
 		correlator.adapter = VTAddressCorrelatorAdapter.getAdapter( dbHandle,  monitor );
@@ -75,7 +75,7 @@ public class AddressCorrelatorDB {
 		this.sourceProgram = sourceProgram;
 		this.destinationProgram = destinationProgram;
 	}
-	
+
 	public void addAddressCorrelation(Address sourceEntryPoint,
 			Address sourceAddress, Address destinationAddress) throws IOException {
 		long sourceEntryLong = getLongFromSourceAddress(sourceEntryPoint);
@@ -110,17 +110,17 @@ public class AddressCorrelatorDB {
         AddressMap addressMap = sourceProgram.getAddressMap();
         return addressMap.getKey( address, false );
     }
-    
+
     private long getLongFromDestinationAddress( Address address ) {
         AddressMap addressMap = destinationProgram.getAddressMap();
         return addressMap.getKey( address, false );
     }
-    
+
     private Address getSourceAddressFromLong(long value) {
         AddressMap addressMap = sourceProgram.getAddressMap();
         return addressMap.decodeAddress( value );
     }
-    
+
     private Address getDestinationAddressFromLong(long value) {
         AddressMap addressMap = destinationProgram.getAddressMap();
         return addressMap.decodeAddress( value );

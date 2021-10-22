@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,15 +46,15 @@ public abstract class GhidraBundle {
 
 	/**
 	 * clean build artifacts generated during build of this bundle
-	 * 
+	 *
 	 * @return true if anything was done
 	 */
 	abstract boolean clean();
 
 	/**
 	 * build OSGi bundle if possible
-	 *  
-	 * @param writer console for build messages to user 
+	 *
+	 * @param writer console for build messages to user
 	 * @return true if build happened, false if already built
 	 * @throws Exception if the build cannot complete
 	 */
@@ -62,7 +62,7 @@ public abstract class GhidraBundle {
 
 	/**
 	 * same as {@link #build(PrintWriter)} with writer = {@link System#err}.
-	 * 
+	 *
 	 * @return true if build happened, false if already built
 	 * @throws Exception if the build cannot complete
 	 */
@@ -72,15 +72,15 @@ public abstract class GhidraBundle {
 
 	/**
 	 * Return the location identifier of the bundle that this GhidraBundle represents.
-	 * 
+	 *
 	 * <p>The location identifier is used by the framework, e.g. it is passed to
-	 * {@link org.osgi.framework.BundleContext#installBundle} when the bundle is 
+	 * {@link org.osgi.framework.BundleContext#installBundle} when the bundle is
 	 * first installed.
-	 * 
+	 *
 	 * <p>Although the bundle location is a URI, outside of interactions with the framework,
 	 * the bundle location should remain opaque.
-	 * 
-	 * @return location identifier of this bundle 
+	 *
+	 * @return location identifier of this bundle
 	 */
 	public abstract String getLocationIdentifier();
 
@@ -104,9 +104,9 @@ public abstract class GhidraBundle {
 
 	/**
 	 * set the enablement flag for this bundle.
-	 * 
+	 *
 	 * <p>If a bundle is enabled its contents will be scanned, e.g. for scripts.
-	 * 
+	 *
 	 * @param enabled new state
 	 */
 	void setEnabled(boolean enabled) {
@@ -115,7 +115,7 @@ public abstract class GhidraBundle {
 
 	/**
 	 * If a bundle is a "system bundle" it cannot be removed and its contends cannot be edited.
-	 * 
+	 *
 	 * @return true if this is a system bundle
 	 */
 	public boolean isSystemBundle() {
@@ -124,7 +124,7 @@ public abstract class GhidraBundle {
 
 	/**
 	 * Get the type of a GhidraBundle from its file.
-	 * 
+	 *
 	 * @param file a bundle file
 	 * @return the type
 	 */
@@ -144,7 +144,7 @@ public abstract class GhidraBundle {
 
 	/**
 	 * Get the type of a GhidraBundle from its file.
-	 * 
+	 *
 	 * @param file a bundle file
 	 * @return the type
 	 */
@@ -165,7 +165,7 @@ public abstract class GhidraBundle {
 	/**
 	 * Get the OSGi bundle represented by this GhidraBundle or null if it isn't in
 	 * the "installed" state.
-	 * 
+	 *
 	 * @return a Bundle or null
 	 */
 	public Bundle getOSGiBundle() {
@@ -187,7 +187,7 @@ public abstract class GhidraBundle {
 	 * <li>an OSGi bundle .jar file</li>
 	 * <li>a directory of Java source</li>
 	 * </ul>
-	 *  
+	 *
 	 */
 	enum Type {
 		BND_SCRIPT, JAR, SOURCE_DIR, INVALID

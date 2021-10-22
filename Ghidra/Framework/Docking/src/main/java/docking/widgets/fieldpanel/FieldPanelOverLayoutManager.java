@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,13 +37,13 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 /**
  * A {@link LayoutManager} that can be applied to a {@link FieldPanel}, allowing
  * {@link Component}s to be placed over a given field location.
- * 
+ *
  * To apply it, use {@link Container#setLayout(LayoutManager)} to install it. In this case, the
  * {@link Container} must be a {@link FieldPanel}. Then, use
  * {@link Container#add(Component, Object)}, passing a {@link FieldLocation} as the constraint.
  * Currently, you must call {@link #layoutContainer(Container)} manually after you add or remove
  * any components.
- * 
+ *
  * When this layout manager is removed from the {@link FieldPanel}, you should call
  * {@link #unregister()} in order to dispose of internal resources.
  */

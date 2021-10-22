@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,11 +21,11 @@ public abstract class MemoryAccessFilter {
 
 	private MemoryAccessFilter prevFilter;
 	private MemoryAccessFilter nextFilter;
-	
+
 	protected Emulator emu;
-	
+
 	private boolean filterOnExecutionOnly = true;
-	
+
 	final void filterRead(AddressSpace spc, long off, int size, byte [] values) {
 		if (filterOnExecutionOnly() && !emu.isExecuting()) return; // do not filter idle queries
 		processRead(spc, off, size, values);
@@ -33,7 +33,7 @@ public abstract class MemoryAccessFilter {
 			nextFilter.filterRead(spc, off, size, values);
 		}
 	}
-	
+
 	protected abstract void processRead(AddressSpace spc, long off, int size, byte[] values);
 
 	final void filterWrite(AddressSpace spc, long off, int size, byte [] values) {
@@ -53,7 +53,7 @@ public abstract class MemoryAccessFilter {
 			nextFilter.prevFilter = this;
 		}
 	}
-	
+
 	/**
 	 * Dispose this filter which will cause it to be removed from the memory state.
 	 * If overriden, be sure to invoke super.dispose().
@@ -77,7 +77,7 @@ public abstract class MemoryAccessFilter {
 	public void setFilterOnExecutionOnly(boolean filterOnExecutionOnly) {
 		this.filterOnExecutionOnly = filterOnExecutionOnly;
 	}
-	
+
 //	public void compare(String id);
 //	public void clear();
 //	public void updateFlags(String id);

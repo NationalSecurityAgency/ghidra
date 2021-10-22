@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class MouseDebugPaintable implements Paintable {
 
 			if (s.isShapeFinished()) {
 				// this will draw the shape, after dragging is finished, at a position
-				// relative to its start point 
+				// relative to its start point
 				double dx = tx - s.getTx();
 				double dy = ty - s.getTy();
 

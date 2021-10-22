@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 	private Pointer createPointer(DataType dataType, int length) {
 		return new PointerDataType(dataType, length);
 	}
-	
+
 	@Test
 	public void testEmpty() throws Exception {
 		Structure s = new StructureDataType("foo", 0);
@@ -75,7 +75,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		assertEquals(0, s.getNumComponents());
 		assertEquals(0, s.getNumDefinedComponents());
 	}
-	
+
 	@Test
 	public void testSizeOne() throws Exception {
 		Structure s = new StructureDataType("foo", 1);
@@ -422,7 +422,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		assertEquals(DWordDataType.class, comps[3].getDataType().getClass());
 
 	}
-	
+
 	@Test
 	public void testInsertWithZeroArrayAtOffset() {
 		struct.insertAtOffset(2, FloatDataType.dataType, -1);
@@ -441,7 +441,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		assertEquals(2, comps[1].getOffset());
 		assertEquals(2, comps[1].getOrdinal());
 		assertTrue(zeroArray.isEquivalent(comps[1].getDataType()));
-		
+
 		assertEquals(2, comps[2].getOffset());
 		assertEquals(3, comps[2].getOrdinal());
 		assertEquals(FloatDataType.class, comps[2].getDataType().getClass());
@@ -455,7 +455,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		assertEquals(DWordDataType.class, comps[4].getDataType().getClass());
 
 	}
-	
+
 	@Test
 	public void testInsertWithZeroArrayAtOffset2() {
 		Array zeroArray = new ArrayDataType(FloatDataType.dataType, 0, -1);
@@ -474,11 +474,11 @@ public class StructureDataTypeTest extends AbstractGTest {
 		assertEquals(2, comps[1].getOffset());
 		assertEquals(2, comps[1].getOrdinal());
 		assertEquals(FloatDataType.class, comps[1].getDataType().getClass());
-		
+
 		assertEquals(6, comps[2].getOffset());
 		assertEquals(3, comps[2].getOrdinal());
 		assertTrue(zeroArray.isEquivalent(comps[2].getDataType()));
-		
+
 		assertEquals(6, comps[3].getOffset());
 		assertEquals(4, comps[3].getOrdinal());
 		assertEquals(WordDataType.class, comps[3].getDataType().getClass());
@@ -494,7 +494,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.insertAtOffset(100, new FloatDataType(), 4);
 		assertEquals(104, struct.getLength());
 	}
-	
+
 	@Test
 	public void testSetFlexArray() throws Exception {
 
@@ -506,14 +506,14 @@ public class StructureDataTypeTest extends AbstractGTest {
 			struct.add(new ArrayDataType(CharDataType.dataType, 0, -1), "flex", "FlexComment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack()\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   2   word   2   null   \"Comment2\"\n" + 
-			"   4   byte   1   field4   \"Comment4\"\n" + 
-			"   5   char[0]   0   flex   \"FlexComment\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack()\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+			"   2   word   2   null   \"Comment2\"\n" +
+			"   4   byte   1   field4   \"Comment4\"\n" +
+			"   5   char[0]   0   flex   \"FlexComment\"\n" +
+			"}\n" +
 			"Size = 6   Actual Alignment = 2", struct);
 		//@formatter:on
 
@@ -521,14 +521,14 @@ public class StructureDataTypeTest extends AbstractGTest {
 			"flex", "FlexComment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack()\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   2   word   2   null   \"Comment2\"\n" + 
-			"   4   byte   1   field4   \"Comment4\"\n" + 
-			"   8   int[0]   0   flex   \"FlexComment\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack()\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+			"   2   word   2   null   \"Comment2\"\n" +
+			"   4   byte   1   field4   \"Comment4\"\n" +
+			"   8   int[0]   0   flex   \"FlexComment\"\n" +
+			"}\n" +
 			"Size = 8   Actual Alignment = 4", struct);
 		//@formatter:on
 	}
@@ -545,33 +545,33 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.insertBitField(1, 0, 0, IntegerDataType.dataType, 0, "z1", "zero bitfield 1");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack()\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   4   int:0(0)   0      \"zero bitfield 1\"\n" + 
-			"   4   int:3(0)   1   bf2   \"bf1Comment\"\n" + 
-			"   5   byte   1   field1   \"Comment1\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
-			"   8   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack()\n" +
+			"Structure TestStruct {\n" +
+			"   0   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+			"   4   int:0(0)   0      \"zero bitfield 1\"\n" +
+			"   4   int:3(0)   1   bf2   \"bf1Comment\"\n" +
+			"   5   byte   1   field1   \"Comment1\"\n" +
+			"   6   word   2   null   \"Comment2\"\n" +
+			"   8   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 12   Actual Alignment = 4", struct);
 		//@formatter:on
 
 		struct.insertBitField(2, 0, 0, IntegerDataType.dataType, 0, "z2", "zero bitfield 2");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack()\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   4   int:0(0)   0      \"zero bitfield 1\"\n" + 
-			"   4   int:0(0)   0      \"zero bitfield 2\"\n" + 
-			"   4   int:3(0)   1   bf2   \"bf1Comment\"\n" + 
-			"   5   byte   1   field1   \"Comment1\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
-			"   8   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack()\n" +
+			"Structure TestStruct {\n" +
+			"   0   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+			"   4   int:0(0)   0      \"zero bitfield 1\"\n" +
+			"   4   int:0(0)   0      \"zero bitfield 2\"\n" +
+			"   4   int:3(0)   1   bf2   \"bf1Comment\"\n" +
+			"   5   byte   1   field1   \"Comment1\"\n" +
+			"   6   word   2   null   \"Comment2\"\n" +
+			"   8   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 12   Actual Alignment = 4", struct);
 		//@formatter:on
 	}
@@ -582,37 +582,37 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.insertBitField(4, 4, 0, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   word   2   null   \"Comment2\"\n" + 
-			"   3   dword   4   field3   \"\"\n" + 
-			"   7   byte   1   field4   \"Comment4\"\n" + 
-			"   8   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-//			"   9   undefined   1   null   \"\"\n" + 
-//			"   10   undefined   1   null   \"\"\n" + 
-//			"   11   undefined   1   null   \"\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+			"   1   word   2   null   \"Comment2\"\n" +
+			"   3   dword   4   field3   \"\"\n" +
+			"   7   byte   1   field4   \"Comment4\"\n" +
+			"   8   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+//			"   9   undefined   1   null   \"\"\n" +
+//			"   10   undefined   1   null   \"\"\n" +
+//			"   11   undefined   1   null   \"\"\n" +
+			"}\n" +
 			"Size = 12   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.insertBitField(4, 4, 3, IntegerDataType.dataType, 3, "bf2", "bf2Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   word   2   null   \"Comment2\"\n" + 
-			"   3   dword   4   field3   \"\"\n" + 
-			"   7   byte   1   field4   \"Comment4\"\n" + 
-			"   8   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   8   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-//			"   9   undefined   1   null   \"\"\n" + 
-//			"   10   undefined   1   null   \"\"\n" + 
-//			"   11   undefined   1   null   \"\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+			"   1   word   2   null   \"Comment2\"\n" +
+			"   3   dword   4   field3   \"\"\n" +
+			"   7   byte   1   field4   \"Comment4\"\n" +
+			"   8   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+			"   8   int:3(3)   1   bf2   \"bf2Comment\"\n" +
+//			"   9   undefined   1   null   \"\"\n" +
+//			"   10   undefined   1   null   \"\"\n" +
+//			"   11   undefined   1   null   \"\"\n" +
+			"}\n" +
 			"Size = 12   Actual Alignment = 1", struct);
 		//@formatter:on
 	}
@@ -623,41 +623,41 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.insertBitFieldAt(10, 4, 0, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   word   2   null   \"Comment2\"\n" + 
-			"   3   dword   4   field3   \"\"\n" + 
-			"   7   byte   1   field4   \"Comment4\"\n" + 
-//			"   8   undefined   1   null   \"\"\n" + 
-//			"   9   undefined   1   null   \"\"\n" + 
-			"   10   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-//			"   11   undefined   1   null   \"\"\n" + 
-//			"   12   undefined   1   null   \"\"\n" + 
-//			"   13   undefined   1   null   \"\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+			"   1   word   2   null   \"Comment2\"\n" +
+			"   3   dword   4   field3   \"\"\n" +
+			"   7   byte   1   field4   \"Comment4\"\n" +
+//			"   8   undefined   1   null   \"\"\n" +
+//			"   9   undefined   1   null   \"\"\n" +
+			"   10   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+//			"   11   undefined   1   null   \"\"\n" +
+//			"   12   undefined   1   null   \"\"\n" +
+//			"   13   undefined   1   null   \"\"\n" +
+			"}\n" +
 			"Size = 14   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.insertBitFieldAt(10, 4, 3, IntegerDataType.dataType, 3, "bf2", "bf2Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   word   2   null   \"Comment2\"\n" + 
-			"   3   dword   4   field3   \"\"\n" + 
-			"   7   byte   1   field4   \"Comment4\"\n" + 
-//			"   8   undefined   1   null   \"\"\n" + 
-//			"   9   undefined   1   null   \"\"\n" + 
-			"   10   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   10   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-//			"   11   undefined   1   null   \"\"\n" + 
-//			"   12   undefined   1   null   \"\"\n" + 
-//			"   13   undefined   1   null   \"\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+			"   1   word   2   null   \"Comment2\"\n" +
+			"   3   dword   4   field3   \"\"\n" +
+			"   7   byte   1   field4   \"Comment4\"\n" +
+//			"   8   undefined   1   null   \"\"\n" +
+//			"   9   undefined   1   null   \"\"\n" +
+			"   10   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+			"   10   int:3(3)   1   bf2   \"bf2Comment\"\n" +
+//			"   11   undefined   1   null   \"\"\n" +
+//			"   12   undefined   1   null   \"\"\n" +
+//			"   13   undefined   1   null   \"\"\n" +
+			"}\n" +
 			"Size = 14   Actual Alignment = 1", struct);
 		//@formatter:on
 	}
@@ -668,58 +668,58 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.insertBitFieldAt(2, 4, 0, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
-			"   8   dword   4   field3   \"\"\n" + 
-			"   12   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+//			"   3   undefined   1   null   \"\"\n" +
+//			"   4   undefined   1   null   \"\"\n" +
+//			"   5   undefined   1   null   \"\"\n" +
+			"   6   word   2   null   \"Comment2\"\n" +
+			"   8   dword   4   field3   \"\"\n" +
+			"   12   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 13   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.insertBitFieldAt(2, 4, 3, IntegerDataType.dataType, 3, "bf2", "bf2Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
-			"   8   dword   4   field3   \"\"\n" + 
-			"   12   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" +
+//			"   3   undefined   1   null   \"\"\n" +
+//			"   4   undefined   1   null   \"\"\n" +
+//			"   5   undefined   1   null   \"\"\n" +
+			"   6   word   2   null   \"Comment2\"\n" +
+			"   8   dword   4   field3   \"\"\n" +
+			"   12   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 13   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.insertBitFieldAt(2, 4, 6, IntegerDataType.dataType, 15, "bf3", "bf3Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
-			"   8   dword   4   field3   \"\"\n" + 
-			"   12   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" +
+			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" +
+//			"   5   undefined   1   null   \"\"\n" +
+			"   6   word   2   null   \"Comment2\"\n" +
+			"   8   dword   4   field3   \"\"\n" +
+			"   12   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 13   Actual Alignment = 1", struct);
 		//@formatter:on
 
@@ -735,19 +735,19 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.insertBitFieldAt(2, 4, 21, IntegerDataType.dataType, 11, "bf4", "bf4Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
-			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
-			"   8   dword   4   field3   \"\"\n" + 
-			"   12   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" +
+			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" +
+			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" +
+			"   6   word   2   null   \"Comment2\"\n" +
+			"   8   dword   4   field3   \"\"\n" +
+			"   12   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 13   Actual Alignment = 1", struct);
 		//@formatter:on
 	}
@@ -769,77 +769,77 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.insertBitFieldAt(2, 4, 29, IntegerDataType.dataType, 3, "bf1", "bf1Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
-			"   8   dword   4   field3   \"\"\n" + 
-			"   12   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" +
+//			"   3   undefined   1   null   \"\"\n" +
+//			"   4   undefined   1   null   \"\"\n" +
+//			"   5   undefined   1   null   \"\"\n" +
+			"   6   word   2   null   \"Comment2\"\n" +
+			"   8   dword   4   field3   \"\"\n" +
+			"   12   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 13   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.insertBitFieldAt(2, 4, 26, IntegerDataType.dataType, 3, "bf2", "bf2Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
-			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
-			"   8   dword   4   field3   \"\"\n" + 
-			"   12   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" +
+			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" +
+//			"   3   undefined   1   null   \"\"\n" +
+//			"   4   undefined   1   null   \"\"\n" +
+//			"   5   undefined   1   null   \"\"\n" +
+			"   6   word   2   null   \"Comment2\"\n" +
+			"   8   dword   4   field3   \"\"\n" +
+			"   12   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 13   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.insertBitFieldAt(2, 4, 11, IntegerDataType.dataType, 15, "bf3", "bf3Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
-			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" + 
-			"   2   int:15(3)   3   bf3   \"bf3Comment\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
-			"   8   dword   4   field3   \"\"\n" + 
-			"   12   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" +
+			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" +
+			"   2   int:15(3)   3   bf3   \"bf3Comment\"\n" +
+//			"   5   undefined   1   null   \"\"\n" +
+			"   6   word   2   null   \"Comment2\"\n" +
+			"   8   dword   4   field3   \"\"\n" +
+			"   12   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 13   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.insertBitFieldAt(2, 4, 0, IntegerDataType.dataType, 11, "bf4", "bf4Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" + 
-			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" + 
-			"   2   int:15(3)   3   bf3   \"bf3Comment\"\n" + 
-			"   4   int:11(0)   2   bf4   \"bf4Comment\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
-			"   8   dword   4   field3   \"\"\n" + 
-			"   12   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(5)   1   bf1   \"bf1Comment\"\n" +
+			"   2   int:3(2)   1   bf2   \"bf2Comment\"\n" +
+			"   2   int:15(3)   3   bf3   \"bf3Comment\"\n" +
+			"   4   int:11(0)   2   bf4   \"bf4Comment\"\n" +
+			"   6   word   2   null   \"Comment2\"\n" +
+			"   8   dword   4   field3   \"\"\n" +
+			"   12   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 13   Actual Alignment = 1", struct);
 		//@formatter:on
 	}
@@ -855,20 +855,20 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.insertAtOffset(2, FloatDataType.dataType, 4);
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   float   4   null   \"\"\n" + 
-			"   6   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   6   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-			"   6   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
-			"   8   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
-			"   10   word   2   null   \"Comment2\"\n" + 
-			"   12   dword   4   field3   \"\"\n" + 
-			"   16   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   float   4   null   \"\"\n" +
+			"   6   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+			"   6   int:3(3)   1   bf2   \"bf2Comment\"\n" +
+			"   6   int:15(6)   3   bf3   \"bf3Comment\"\n" +
+			"   8   int:11(5)   2   bf4   \"bf4Comment\"\n" +
+			"   10   word   2   null   \"Comment2\"\n" +
+			"   12   dword   4   field3   \"\"\n" +
+			"   16   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 17   Actual Alignment = 1", struct);
 		//@formatter:on
 
@@ -1079,36 +1079,36 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.insertBitFieldAt(2, 4, 21, IntegerDataType.dataType, 11, "bf4", "bf4Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//					"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
-			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
-			"   8   dword   4   field3   \"\"\n" + 
-			"   12   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//					"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" +
+			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" +
+			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" +
+			"   6   word   2   null   \"Comment2\"\n" +
+			"   8   dword   4   field3   \"\"\n" +
+			"   12   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 13   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.delete(Sets.newHashSet(1, 2, 3, 4, 5, 6));
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//					"   1   undefined   1   null   \"\"\n" + 
-//					"   2   undefined   1   null   \"\"\n" + 
-//					"   3   undefined   1   null   \"\"\n" + 
-//					"   4   undefined   1   null   \"\"\n" + 
-			"   5   dword   4   field3   \"\"\n" + 
-			"   9   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//					"   1   undefined   1   null   \"\"\n" +
+//					"   2   undefined   1   null   \"\"\n" +
+//					"   3   undefined   1   null   \"\"\n" +
+//					"   4   undefined   1   null   \"\"\n" +
+			"   5   dword   4   field3   \"\"\n" +
+			"   9   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 10   Actual Alignment = 1", struct);
 		//@formatter:on
 
@@ -1139,124 +1139,124 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.insertBitFieldAt(2, 4, 21, IntegerDataType.dataType, 11, "bf4", "bf4Comment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
-			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
-			"   6   word   2   null   \"Comment2\"\n" + 
-			"   8   dword   4   field3   \"\"\n" + 
-			"   12   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" +
+			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" +
+			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" +
+			"   6   word   2   null   \"Comment2\"\n" +
+			"   8   dword   4   field3   \"\"\n" +
+			"   12   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 13   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.delete(6);
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" + 
-			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
-			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
-			"   6   dword   4   field3   \"\"\n" + 
-			"   10   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+			"   2   int:3(3)   1   bf2   \"bf2Comment\"\n" +
+			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" +
+			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" +
+			"   6   dword   4   field3   \"\"\n" +
+			"   10   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 11   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.delete(3);
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" + 
-			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
-			"   6   dword   4   field3   \"\"\n" + 
-			"   10   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+			"   2   int:15(6)   3   bf3   \"bf3Comment\"\n" +
+			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" +
+			"   6   dword   4   field3   \"\"\n" +
+			"   10   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 11   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.delete(3);
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" + 
-			"   6   dword   4   field3   \"\"\n" + 
-			"   10   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+//			"   3   undefined   1   null   \"\"\n" +
+			"   4   int:11(5)   2   bf4   \"bf4Comment\"\n" +
+			"   6   dword   4   field3   \"\"\n" +
+			"   10   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 11   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.delete(4);
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   dword   4   field3   \"\"\n" + 
-			"   10   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+			"   2   int:3(0)   1   bf1   \"bf1Comment\"\n" +
+//			"   3   undefined   1   null   \"\"\n" +
+//			"   4   undefined   1   null   \"\"\n" +
+//			"   5   undefined   1   null   \"\"\n" +
+			"   6   dword   4   field3   \"\"\n" +
+			"   10   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 11   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.delete(2);
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-//			"   2   undefined   1   null   \"\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
-//			"   5   undefined   1   null   \"\"\n" + 
-			"   6   dword   4   field3   \"\"\n" + 
-			"   10   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+//			"   2   undefined   1   null   \"\"\n" +
+//			"   3   undefined   1   null   \"\"\n" +
+//			"   4   undefined   1   null   \"\"\n" +
+//			"   5   undefined   1   null   \"\"\n" +
+			"   6   dword   4   field3   \"\"\n" +
+			"   10   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 11   Actual Alignment = 1", struct);
 		//@formatter:on
 
 		struct.delete(2);
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-//			"   1   undefined   1   null   \"\"\n" + 
-//			"   2   undefined   1   null   \"\"\n" + 
-//			"   3   undefined   1   null   \"\"\n" + 
-//			"   4   undefined   1   null   \"\"\n" + 
-			"   5   dword   4   field3   \"\"\n" + 
-			"   9   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+//			"   1   undefined   1   null   \"\"\n" +
+//			"   2   undefined   1   null   \"\"\n" +
+//			"   3   undefined   1   null   \"\"\n" +
+//			"   4   undefined   1   null   \"\"\n" +
+			"   5   dword   4   field3   \"\"\n" +
+			"   9   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 10   Actual Alignment = 1", struct);
 		//@formatter:on
 
@@ -1317,17 +1317,17 @@ public class StructureDataTypeTest extends AbstractGTest {
 		assertEquals(DWordDataType.class, comps[1].getDataType().getClass());
 		assertEquals(1, comps[1].getOffset());
 	}
-	
+
 	@Test
 	public void testDeleteAtOffset2() {
-		
+
 		assertEquals(8, struct.getLength());
-		
+
 		Array zeroArray = new ArrayDataType(CharDataType.dataType, 0, -1);
 		struct.insertAtOffset(1, zeroArray, -1);
-		
+
 		assertEquals(8, struct.getLength());
-		
+
 		DataTypeComponent[] comps = struct.getDefinedComponents();
 		assertEquals(5, comps.length);
 
@@ -1338,17 +1338,17 @@ public class StructureDataTypeTest extends AbstractGTest {
 		assertEquals(1, comps[1].getOffset());
 		assertEquals(1, comps[1].getOrdinal());
 		assertTrue(zeroArray.isEquivalent(comps[1].getDataType()));
-		
+
 		assertEquals(1, comps[2].getOffset());
 		assertEquals(2, comps[2].getOrdinal());
 		assertEquals(WordDataType.class, comps[2].getDataType().getClass());
-		
+
 		struct.deleteAtOffset(1);
-		
+
 		assertEquals(6, struct.getLength());
 		assertEquals(3, struct.getNumComponents());
 		comps = struct.getDefinedComponents();
-		
+
 		assertEquals(DWordDataType.class, comps[1].getDataType().getClass());
 		assertEquals(1, comps[1].getOffset());
 	}
@@ -1691,9 +1691,9 @@ public class StructureDataTypeTest extends AbstractGTest {
 
 	@Test
 	public void testReplaceAtVarLengthDataTypes() {
-		
+
 		// TODO: these tests are too simple since they only replace undefined components
-		
+
 		Structure s1 = new StructureDataType("Test1", 25);
 
 		s1.replaceAtOffset(0, new StringDataType(), 5, null, null);
@@ -1709,7 +1709,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 
 	@Test
 	public void testReplaceAtVarLengthDataTypes2() {
-		
+
 		// TODO: these tests are too simple since they only replace undefined components
 
 		Structure s1 = new StructureDataType("Test1", 0x60);
@@ -1733,22 +1733,22 @@ public class StructureDataTypeTest extends AbstractGTest {
 		assertEquals("string", dt.getDisplayName());
 		assertEquals(0xd, dtc.getLength());
 	}
-	
+
 	@Test
 	public void testReplaceAtPacked() {
-		
+
 		struct.setPackingEnabled(true); // test case where there is no component
 
 		assertEquals(12, struct.getLength());
 		assertEquals(4, struct.getNumDefinedComponents());
-		
+
 		struct.replaceAtOffset(0, DataType.DEFAULT, -1, "a", null);
 		struct.replaceAtOffset(1, ByteDataType.dataType, -1, "b", null);
 		struct.replaceAtOffset(2, ByteDataType.dataType, -1, "c", null);
-		
+
 		assertEquals(12, struct.getLength());
 		assertEquals(5, struct.getNumDefinedComponents());
-		
+
 		DataTypeComponent[] comps = struct.getDefinedComponents();
 
 		assertEquals(0, comps[0].getOffset());
@@ -1758,21 +1758,21 @@ public class StructureDataTypeTest extends AbstractGTest {
 		assertEquals(1, comps[1].getOffset());
 		assertEquals(1, comps[1].getOrdinal());
 		assertTrue(ByteDataType.dataType.isEquivalent(comps[1].getDataType()));
-		
+
 		assertEquals(2, comps[2].getOffset());
 		assertEquals(2, comps[2].getOrdinal());
 		assertTrue(ByteDataType.dataType.isEquivalent(comps[2].getDataType()));
-		
+
 		assertEquals(4, comps[3].getOffset());
 		assertEquals(3, comps[3].getOrdinal());
 		assertTrue(DWordDataType.dataType.isEquivalent(comps[3].getDataType()));
-		
+
 		assertEquals(8, comps[4].getOffset());
 		assertEquals(4, comps[4].getOrdinal());
 		assertTrue(ByteDataType.dataType.isEquivalent(comps[4].getDataType()));
 
 	}
-	
+
 	@Test
 	public void testReplaceAt() {
 
@@ -1813,10 +1813,10 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.insertAtOffset(3, zeroArray, -1);
 		assertEquals(8, struct.getLength());
 		assertEquals(5, struct.getNumDefinedComponents());
-		
+
 		// replace dword with short
 		struct.replaceAtOffset(3, ShortDataType.dataType, -1, "b", null);
-		
+
 		assertEquals(8, struct.getLength());
 		assertEquals(5, struct.getNumDefinedComponents());
 
@@ -1937,7 +1937,7 @@ public class StructureDataTypeTest extends AbstractGTest {
 
 		// NOTE: pack(disabled) bitfields should remain unchanged when
 		// transitioning endianess even though it makes little sense.
-		// pack(disabled) structures are not intended to be portable! 
+		// pack(disabled) structures are not intended to be portable!
 
 		TypeDef td = new TypedefDataType("Foo", IntegerDataType.dataType);
 
@@ -1949,20 +1949,20 @@ public class StructureDataTypeTest extends AbstractGTest {
 		struct.add(new ArrayDataType(td, 0, -1), "myFlex", "flexComment");
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure TestStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   word   2   null   \"Comment2\"\n" + 
-			"   3   dword   4   field3   \"\"\n" + 
-			"   7   byte   1   field4   \"Comment4\"\n" + 
-//			"   8   undefined   1   null   \"\"\n" + 
-			"   9   Foo:4(0)   1   MyBit1   \"bitComment1\"\n" + 
-			"   9   Foo:3(4)   1   MyBit2   \"bitComment2\"\n" + 
-			"   9   Foo:2(7)   2   MyBit3   \"bitComment3\"\n" + 
-//			"   11   undefined   1   null   \"\"\n" + 
-			"   12   Foo[0]   0   myFlex   \"flexComment\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestStruct\n" +
+			"pack(disabled)\n" +
+			"Structure TestStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+			"   1   word   2   null   \"Comment2\"\n" +
+			"   3   dword   4   field3   \"\"\n" +
+			"   7   byte   1   field4   \"Comment4\"\n" +
+//			"   8   undefined   1   null   \"\"\n" +
+			"   9   Foo:4(0)   1   MyBit1   \"bitComment1\"\n" +
+			"   9   Foo:3(4)   1   MyBit2   \"bitComment2\"\n" +
+			"   9   Foo:2(7)   2   MyBit3   \"bitComment3\"\n" +
+//			"   11   undefined   1   null   \"\"\n" +
+			"   12   Foo[0]   0   myFlex   \"flexComment\"\n" +
+			"}\n" +
 			"Size = 12   Actual Alignment = 1", struct);
 		//@formatter:on
 
@@ -1974,20 +1974,20 @@ public class StructureDataTypeTest extends AbstractGTest {
 		assertTrue(newStruct.getDataOrganization().isBigEndian());
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/bigStruct\n" + 
-			"pack(disabled)\n" + 
-			"Structure bigStruct {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   1   word   2   null   \"Comment2\"\n" + 
-			"   3   dword   4   field3   \"\"\n" + 
-			"   7   byte   1   field4   \"Comment4\"\n" + 
-//			"   8   undefined   1   null   \"\"\n" + 
-			"   9   Foo:4(0)   1   MyBit1   \"bitComment1\"\n" + 
-			"   9   Foo:3(4)   1   MyBit2   \"bitComment2\"\n" + 
-			"   9   Foo:2(7)   2   MyBit3   \"bitComment3\"\n" + 
-//			"   11   undefined   1   null   \"\"\n" + 
-			"   12   Foo[0]   0   myFlex   \"flexComment\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/bigStruct\n" +
+			"pack(disabled)\n" +
+			"Structure bigStruct {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+			"   1   word   2   null   \"Comment2\"\n" +
+			"   3   dword   4   field3   \"\"\n" +
+			"   7   byte   1   field4   \"Comment4\"\n" +
+//			"   8   undefined   1   null   \"\"\n" +
+			"   9   Foo:4(0)   1   MyBit1   \"bitComment1\"\n" +
+			"   9   Foo:3(4)   1   MyBit2   \"bitComment2\"\n" +
+			"   9   Foo:2(7)   2   MyBit3   \"bitComment3\"\n" +
+//			"   11   undefined   1   null   \"\"\n" +
+			"   12   Foo[0]   0   myFlex   \"flexComment\"\n" +
+			"}\n" +
 			"Size = 12   Actual Alignment = 1", newStruct);
 		//@formatter:on
 	}

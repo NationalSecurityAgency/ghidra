@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class StringTableTest extends AbstractGenericTest {
 	public void testStr() throws IOException {
 		// @formatter:off
 		BinaryReader br = br(
-			/* str1 */ (byte) 'a', (byte) 'b', (byte) 0, 
+			/* str1 */ (byte) 'a', (byte) 'b', (byte) 0,
 			/* str2 */ (byte) 'c', (byte) 0,
 			/* str3 */ (byte) 'x', (byte) 'y', (byte) '\n', (byte) 0
 		);
@@ -60,7 +60,7 @@ public class StringTableTest extends AbstractGenericTest {
 	public void testOffcutStr() throws IOException {
 		// @formatter:off
 		BinaryReader br = br(
-			/* str1 */ (byte) 'a', (byte) 'b', (byte) 0, 
+			/* str1 */ (byte) 'a', (byte) 'b', (byte) 0,
 			/* str2 */ (byte) 'c', (byte) 0,
 			/* str3 */ (byte) 'x', (byte) 'y', (byte) '\n', (byte) 0
 		);
@@ -77,7 +77,7 @@ public class StringTableTest extends AbstractGenericTest {
 	public void testTrailingOffcutStr() throws IOException {
 		// @formatter:off
 		BinaryReader br = br(
-			/* str1 */ (byte) 'a', (byte) 'b', (byte) 0, 
+			/* str1 */ (byte) 'a', (byte) 'b', (byte) 0,
 			/* str2 */ (byte) 'c', (byte) 0,
 			/* str3 */ (byte) 'x', (byte) 'y', (byte) '\n', (byte) 0
 		);
@@ -97,7 +97,7 @@ public class StringTableTest extends AbstractGenericTest {
 	public void testNegOffset() throws IOException {
 		// @formatter:off
 		BinaryReader br = br(
-			/* str1 */ (byte) 'a', (byte) 'b', (byte) 0, 
+			/* str1 */ (byte) 'a', (byte) 'b', (byte) 0,
 			/* str2 */ (byte) 'c', (byte) 0,
 			/* str3 */ (byte) 'x', (byte) 'y', (byte) '\n', (byte) 0
 		);

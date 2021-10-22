@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import ghidra.util.task.TaskMonitor;
 class SymbolDatabaseAdapterV1 extends SymbolDatabaseAdapter {
 
 /* Do not remove the following commented out schema! It shows the version 1 symbol table schema. */
-//	static final Schema SYMBOL_SCHEMA = new Schema(1, "Key", 
+//	static final Schema SYMBOL_SCHEMA = new Schema(1, "Key",
 //			new Class[] {StringField.class,
 //				LongField.class, LongField.class, ByteField.class,
 //				LongField.class, IntField.class, StringField.class},
@@ -148,7 +148,7 @@ class SymbolDatabaseAdapterV1 extends SymbolDatabaseAdapter {
 		int data2 = record.getIntValue(V1_SYMBOL_DATA2_COL);
 		// The data1 field was used in two ways for label symbols, it stored a 1 for primary and 0
 		// for non-primary.  If the type was a parameter or variable, it stored the ordinal or
-		// first use offset respectively. 
+		// first use offset respectively.
 		if (SymbolType.LABEL.equals(type)) {
 			if (data2 == 1) { // if it was primary, put the address in the indexed primary col
 				rec.setLongValue(SymbolDatabaseAdapter.SYMBOL_PRIMARY_COL, symbolAddrKey);

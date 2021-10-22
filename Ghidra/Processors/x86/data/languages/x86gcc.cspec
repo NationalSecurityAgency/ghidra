@@ -286,7 +286,7 @@
       <register name="EAX"/>
     </killedbycall>
   </prototype>
-  
+
   <resolveprototype name="__cdecl/__regparm">
     <model name="__cdecl"/>        <!-- The default case -->
     <model name="__regparm3"/>
@@ -305,7 +305,7 @@
       ]]></body>
     </pcode>
   </callfixup>
-  
+
   <callfixup name="get_pc_thunk_bx">
     <target name="__i686.get_pc_thunk.bx"/>
     <target name="__x86.get_pc_thunk.bx"/>
@@ -338,7 +338,7 @@
       ]]></body>
     </pcode>
   </callfixup>
-  
+
     <callfixup name="get_pc_thunk_si">
     <target name="__i686.get_pc_thunk.si"/>
     <target name="__x86.get_pc_thunk.si"/>

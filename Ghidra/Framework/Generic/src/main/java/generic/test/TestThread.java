@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,11 +34,11 @@ public class TestThread extends Thread {
 
 //==================================================================================================
 // Static Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Returns true if the current thread is the test thread
-	 * 
+	 *
 	 * @return true if the current thread is the test thread
 	 */
 	public static boolean isTestThread() {
@@ -47,7 +47,7 @@ public class TestThread extends Thread {
 
 	/**
 	 * Returns true if the given thread is the test thread
-	 * 
+	 *
 	 * @param t the thread to check
 	 * @return true if the given thread is the test thread
 	 */
@@ -57,7 +57,7 @@ public class TestThread extends Thread {
 
 	/**
 	 * Returns true if the given thread name is the test thread name
-	 * 
+	 *
 	 * @param name the thread name to check
 	 * @return true if the given thread name is the test thread name
 	 */
@@ -66,21 +66,21 @@ public class TestThread extends Thread {
 	}
 
 	/**
-	 * Filters the given stack trace to remove entries known to be present in the test 
+	 * Filters the given stack trace to remove entries known to be present in the test
 	 * thread that offer little forensic value
-	 * 
+	 *
 	 * @param trace the trace to filter
 	 * @return the filtered trace
 	 */
 	public static StackTraceElement[] filterTrace(StackTraceElement[] trace) {
 		//@formatter:off
 		StackTraceElement[] filtered =
-				ReflectionUtilities.filterStackTrace(trace, JUNIT_ORG_PACKAGE, 
+				ReflectionUtilities.filterStackTrace(trace, JUNIT_ORG_PACKAGE,
 															JUNIT_FRAMEWORK_PACKAGE,
 															MOCKIT_JUNIT_PACKAGE,
-															JAVA_AWT_EVENT_PACKAGE, 
-															JAVA_LANG_PACKAGE, 
-															SUN_PACKAGE, 
+															JAVA_AWT_EVENT_PACKAGE,
+															JAVA_LANG_PACKAGE,
+															SUN_PACKAGE,
 															GHIDRA_SWING_RUNNER);
 		//@formatter:on
 		return filtered;
@@ -88,7 +88,7 @@ public class TestThread extends Thread {
 
 //==================================================================================================
 // Instance Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/*package*/ final Statement statement;
 	/*package*/ volatile boolean finished = false;

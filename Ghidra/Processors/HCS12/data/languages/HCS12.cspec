@@ -22,9 +22,9 @@
     <range space="RAM" first="0x18"  last="0x2f"/>
     <range space="RAM" first="0x31"  last="0xffff"/>
   </global>
-  
+
   <stackpointer register="SP" space="RAM" growth="negative"/>
-  
+
   <default_proto>
       <prototype name="__asmA" extrapop="2" stackshift="2" strategy="register">
       <input>
@@ -61,7 +61,7 @@
       </unaffected>
     </prototype>
   </default_proto>
-  
+
 
 <prototype name="__asmA_longcall" extrapop="3" stackshift="3" strategy="register">
 	  <input>
@@ -97,15 +97,15 @@
 	    <register name="GPAGE"/>
 	  </unaffected>
   </prototype>
-  
 
-    
+
+
 <resolveprototype name="__asmA_longcall/__asmA">
     <model name="__asmA_longcall"/>        <!-- The default case -->
     <model name="__asmA"/>
   </resolveprototype>
   <eval_current_prototype name="__asmA_longcall/__asmA"/>
-  
+
  <prototype name="__asm_xgate" extrapop="0" stackshift="0" strategy="register">
 	  <input>
 	    <pentry minsize="1" maxsize="2">

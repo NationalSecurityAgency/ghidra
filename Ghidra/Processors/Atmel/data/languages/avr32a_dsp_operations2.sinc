@@ -32,7 +32,7 @@ XPART: ":T" is ctx_usex & xpart=0x1 {
 	export *:4 tmpb;
 }
 
-XPART: ":B" is ctx_usex & xpart=0x0 { 
+XPART: ":B" is ctx_usex & xpart=0x0 {
 	tmp:4 = ctx_usex;
 	tmp = tmp & 0xFFFF;
 	tmpa:2 = tmp:2;
@@ -40,7 +40,7 @@ XPART: ":B" is ctx_usex & xpart=0x0 {
 	export *:4 tmpb;
 }
 
-YPART: ":T" is ctx_usey & ypart=0x1 { 
+YPART: ":T" is ctx_usey & ypart=0x1 {
 	tmp:4 = ctx_usey;
 	tmp = tmp >> 16;
 	tmpa:2 = tmp:2;
@@ -48,7 +48,7 @@ YPART: ":T" is ctx_usey & ypart=0x1 {
 	export *:4 tmpb;
 }
 
-YPART: ":B" is ctx_usey & ypart=0x0 { 
+YPART: ":B" is ctx_usey & ypart=0x0 {
 	tmp:4 = ctx_usey;
 	tmp = tmp & 0xFFFF;
 	tmpa:2 = tmp:2;
@@ -60,7 +60,7 @@ YPART: ":B" is ctx_usey & ypart=0x0 {
         eop6_10=0x38 & XPART & YPART & erd0 [ctx_savex=rx9; ctx_savey=ry0; ]
 {
 	erd0 =  XPART + YPART;
-    addflags(XPART, YPART, erd0);	
+    addflags(XPART, YPART, erd0);
 }
 
 
@@ -81,13 +81,13 @@ YPART: ":B" is ctx_usey & ypart=0x0 {
 
 :MACHH.W erd0, rx9^XPART, ry0^YPART is op13_3=0x7 & op4_5=0x0 & rx9 & ry0 ;
         eop6_10=0x12 & XPART & YPART & erd0 [ctx_savex=rx9; ctx_savey=ry0; ]
-{ 
+{
 	erd0 = erd0 + (XPART * YPART);
 }
 
 :MACSATHH.W erd0, rx9^PXPART, ry0^PYPART is op13_3=0x7 & op4_5=0x0 & rx9 & ry0 ;
         eop6_10=0x1a & PXPART & PYPART & erd0
-{ 
+{
 	TMPX:2 = PXPART;
 	TMPY:2 = PYPART;
 	RES:4 = 0;
@@ -144,12 +144,12 @@ YPART: ":B" is ctx_usey & ypart=0x0 {
 	erd0 = tmp64a:4;
 	erd0 = erd0 << 16;
 	tmp64a = tmp64a s>> 16;
-	ctx_rdplus = tmp64a:4;	
+	ctx_rdplus = tmp64a:4;
 }
 
 :MULSATHH.H erd0, rx9^PXPART, ry0^PYPART is op13_3=0x7 & op4_5=0x0 & rx9 & ry0 ;
         eop6_10=0x22 & PXPART & PYPART & erd0
-{ 
+{
 	TMPX:2 = PXPART;
 	TMPY:2 = PYPART;
 	RES:4 = 0;
@@ -164,7 +164,7 @@ YPART: ":B" is ctx_usey & ypart=0x0 {
 
 :MULSATHH.W erd0, rx9^PXPART, ry0^PYPART is op13_3=0x7 & op4_5=0x0 & rx9 & ry0 ;
         eop6_10=0x26 & PXPART & PYPART & erd0
-{ 
+{
 	TMPX:2 = PXPART;
 	TMPY:2 = PYPART;
 	RES:4 = 0;
@@ -178,7 +178,7 @@ YPART: ":B" is ctx_usey & ypart=0x0 {
 
 :MULSATRNDHH.H erd0, rx9^PXPART, ry0^PYPART is op13_3=0x7 & op4_5=0x0 & rx9 & ry0 ;
         eop6_10=0x2a & PXPART & PYPART & erd0
-{ 
+{
 	TMPX:2 = PXPART;
 	TMPY:2 = PYPART;
 	RES:4 = 0;
@@ -195,16 +195,16 @@ YPART: ":B" is ctx_usey & ypart=0x0 {
 {
 	SAT:1 = (rx9 == 0x80000000) && (YPART == 0xFFFF8000);
 	TMP:8 = ((sext(rx9) * sext(YPART)) + 0x4000) s>> 15;
-	erd0 = (zext(SAT) * 0x7FFFFFFF) + zext(SAT == 0) * TMP:4; 
+	erd0 = (zext(SAT) * 0x7FFFFFFF) + zext(SAT == 0) * TMP:4;
 }
 
 
 :MULSATWH.W erd0, rx9, ry0^YPART is op13_3=0x7 & op4_5=0x0 & rx9 & ry0 ;
         eop5_11=0x74 & YPART & erd0
-{ 
+{
 	SAT:1 = (rx9 == 0x80000000) && (YPART == 0xFFFF8000);
 	TMP:8 = (sext(rx9) * sext(YPART)) s>> 15;
-	erd0 = (zext(SAT) * 0x7FFFFFFF) + zext(SAT == 0) * TMP:4; 
+	erd0 = (zext(SAT) * 0x7FFFFFFF) + zext(SAT == 0) * TMP:4;
 }
 
 
@@ -217,7 +217,7 @@ YPART: ":B" is ctx_usey & ypart=0x0 {
 	erd0 = tmp64a:4;
 	erd0 = erd0 << 16;
 	tmp64a = tmp64a s>> 16;
-	ctx_rdplus = tmp64a:4;		
+	ctx_rdplus = tmp64a:4;
 }
 
 :SATADD.H erd0, rx9, ry0 is op13_3=0x7 & op4_5=0x0 & rx9 & ry0 ;
@@ -235,7 +235,7 @@ YPART: ":B" is ctx_usey & ypart=0x0 {
 
 :SATADD.W erd0, rx9, ry0 is op13_3=0x7 & op4_5=0x0 & rx9 & ry0 ;
         eop4_12=0xc & erd0
-{ 
+{
 	TMP:8 = zext(rx9) + zext(ry0);
 	satdspsw(TMP);
 	erd0 = TMP:4;
@@ -283,7 +283,7 @@ SATM:	is ebp5_5=31 { tmp:4 = 0xC0000000; export tmp; }
 
 :SATRNDS rd0^" >> "^esa0_5, ebp5_5^SATM is op4_12=0xf3b & rd0 ;
         eop10_6=0x0 & esa0_5 & ebp5_5 & SATM
-{ 
+{
 	build SATM;
 	BIT:1 = ebp5_5;
 	BITA:1 = esa0_5;
@@ -293,7 +293,7 @@ SATM:	is ebp5_5=31 { tmp:4 = 0xC0000000; export tmp; }
 	TMPB:4 = TMPA s>> (32-ebp5_5);
 	NSAT:1 = (TMP == TMPB) || (BIT == 0x0);
 	TMPC:1 = (TMP & 0x80000000) != 0;
-	rd0 = (TMP * zext(NSAT)) + (zext(NSAT == 0) * ((zext(TMPC) * SATM) +  ((1 << (ebp5_5-1) - 1) * zext(TMPC == 0)))); 
+	rd0 = (TMP * zext(NSAT)) + (zext(NSAT == 0) * ((zext(TMPC) * SATM) +  ((1 << (ebp5_5-1) - 1) * zext(TMPC == 0))));
 	Q = Q || (NSAT != 0);
 	QTOSR();
 }
@@ -301,7 +301,7 @@ SATM:	is ebp5_5=31 { tmp:4 = 0xC0000000; export tmp; }
 
 :SATRNDU rd0^" >> "^esa0_5, ebp5_5 is op4_12=0xf3b & rd0 ;
         eop10_6=0x1 & esa0_5 & ebp5_5
-{ 
+{
 	BIT:1 = ebp5_5;
 	BITA:1 = esa0_5;
 	TMP:4 = rd0 >> esa0_5;
@@ -325,7 +325,7 @@ SATM:	is ebp5_5=31 { tmp:4 = 0xC0000000; export tmp; }
 	TMPB:4 = TMPA s>> (32-ebp5_5);
 	NSAT:1 = (TMP == TMPB) || (BIT == 0x0);
 	TMPC:1 = (TMP & 0x80000000) != 0;
-	rd0 = (TMP * zext(NSAT)) + (zext(NSAT == 0) * ((zext(TMPC) * SATM) +  ((1 << (ebp5_5-1) - 1) * zext(TMPC == 0)))); 
+	rd0 = (TMP * zext(NSAT)) + (zext(NSAT == 0) * ((zext(TMPC) * SATM) +  ((1 << (ebp5_5-1) - 1) * zext(TMPC == 0))));
 	Q = Q || (NSAT != 0);
 	QTOSR();
 }
@@ -333,7 +333,7 @@ SATM:	is ebp5_5=31 { tmp:4 = 0xC0000000; export tmp; }
 
 :SATSUB.H erd0, rx9, ry0 is op13_3=0x7 & op4_5=0x0 & rx9 & ry0 ;
         eop4_12=0x3c & erd0
-{ 
+{
 	TMP:4 = zext(rx9:2) - zext(ry0:2);
 	satdspsh(TMP);
 	erd0 = sext(TMP:2);
@@ -345,7 +345,7 @@ SATM:	is ebp5_5=31 { tmp:4 = 0xC0000000; export tmp; }
 
 :SATSUB.W erd0, rx9, ry0 is op13_3=0x7 & op4_5=0x0 & rx9 & ry0 ;
         eop4_12=0x1c & erd0
-{ 
+{
 	TMP:8 = zext(rx9) - zext(ry0);
 	satdspsw(TMP);
 	erd0 = TMP:4;
@@ -355,9 +355,9 @@ SATM:	is ebp5_5=31 { tmp:4 = 0xC0000000; export tmp; }
 	CZNVQTOSR();
 }
 
-:SATSUB.W rd0, rs9, simm16 is op13_3=0x7 & op4_5=0xd & rd0 & rs9 ; 
+:SATSUB.W rd0, rs9, simm16 is op13_3=0x7 & op4_5=0xd & rd0 & rs9 ;
         simm16
-{ 
+{
 	TMPY:2 = simm16;
 	TMP:8 = zext(rs9) - sext(TMPY);
 	satdspsw(TMP);
@@ -388,5 +388,5 @@ SATM:	is ebp5_5=31 { tmp:4 = 0xC0000000; export tmp; }
         eop6_10=0x3c & XPART & YPART & erd0 [ctx_savex=rx9; ctx_savey=ry0; ]
 {
 	erd0 =  XPART - YPART;
-    subflags(XPART, YPART, erd0);	
+    subflags(XPART, YPART, erd0);
 }

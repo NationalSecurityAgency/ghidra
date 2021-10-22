@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -127,7 +127,7 @@ public class RedBlackTree<K extends Comparable<K>, V> implements Iterable<RedBla
 	/**
 	 * Adds the given key,value to the map. If the map does not allow duplicate keys and a key
 	 * already exists, the old value will be replaced by the new value and the old value will be
-	 * returned. 
+	 * returned.
 	 * @param key the key to add to the set.
 	 * @return the old value associated with the key, or null if the key was not previously in the map.
 	 */

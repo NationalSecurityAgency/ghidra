@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -185,11 +185,11 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	public void testSimpleBuildAndLoadclass() throws Exception {
 		// @formatter:off
 		addClass(
-			"apackage.AClass", 
-			"@Override\n" + 
-			"public String toString() {\n" + 
-			"	return \"yupyup\";\n" + 
-			"}\n" 
+			"apackage.AClass",
+			"@Override\n" +
+			"public String toString() {\n" +
+			"	return \"yupyup\";\n" +
+			"}\n"
 		);
 		// @formatter:on
 
@@ -203,33 +203,33 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	public void testCompileWhatYouCan() throws Exception {
 		// @formatter:off
 		addClass(
-			"apackage.AClass", 
-			"@Override\n" + 
-			"public String toString() {\n" + 
-			"	return \"yupyup\";\n" + 
-			"}\n" 
+			"apackage.AClass",
+			"@Override\n" +
+			"public String toString() {\n" +
+			"	return \"yupyup\";\n" +
+			"}\n"
 		);
 
 		addClass(
-			"apackage.BClass", 
-			"@Override\n" + 
+			"apackage.BClass",
+			"@Override\n" +
 			"public String toString() {\n" +
 			"   failing java goes here\n" +
-			"	return \"yupyup\";\n" + 
-			"}\n" 
+			"	return \"yupyup\";\n" +
+			"}\n"
 		);
 
 		buildWithExpectations(
-			"BClass.java:7: error: ';' expected\n" + 
-			"   failing java goes here\n" + 
-			"               ^\n" + 
-			"BClass.java:7: error: ';' expected\n" + 
-			"   failing java goes here\n" + 
-			"                         ^\n" + 
+			"BClass.java:7: error: ';' expected\n" +
+			"   failing java goes here\n" +
+			"               ^\n" +
+			"BClass.java:7: error: ';' expected\n" +
+			"   failing java goes here\n" +
+			"                         ^\n" +
 			"skipping "+currentBundle.getFile().toString()+File.separator+"apackage"+File.separator+"BClass.java\n"
 			,
 			"1 source file with errors"
-		); 
+		);
 		// @formatter:on
 
 		activate();
@@ -242,17 +242,17 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	public void testLibraryInBundle() throws Exception {
 		// @formatter:off
 		addClass(
-			"lib.Library", 
-			"public static String sup() {\n" + 
-			"	return \"yupyup\";\n" + 
-			"}\n" 
+			"lib.Library",
+			"public static String sup() {\n" +
+			"	return \"yupyup\";\n" +
+			"}\n"
 		);
 		addClass(
 			"import lib.Library;\n",
-			"apackage.AClass", 
-			"@Override\n" + 
-			"public String toString() {\n" + 
-			"	return \"lib says \" + Library.sup();\n" + 
+			"apackage.AClass",
+			"@Override\n" +
+			"public String toString() {\n" +
+			"	return \"lib says \" + Library.sup();\n" +
 			"}\n"
 		);
 		// @formatter:on
@@ -265,35 +265,35 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	public void testCantLoadLibraryFromOtherBundle() throws Exception {
 		// @formatter:off
 		addClass(
-			"lib.Library", 
-			"public static String sup() {\n" + 
-			"	return \"yupyup\";\n" + 
-			"}\n" 
+			"lib.Library",
+			"public static String sup() {\n" +
+			"	return \"yupyup\";\n" +
+			"}\n"
 		);
 		buildAndActivate();
 		Class<?> libclass = loadClass("lib.Library");
 		assertEquals("wrong response from loaded class", "yupyup",
 			libclass.getMethod("sup").invoke(null).toString());
 
-		
+
 		pushNewBundle();
 		addClass(
 			"import lib.Library;\n",
-			"apackage.AClass", 
-			"@Override\n" + 
-			"public String toString() {\n" + 
-			"	return \"lib says \" + Library.sup();\n" + 
+			"apackage.AClass",
+			"@Override\n" +
+			"public String toString() {\n" +
+			"	return \"lib says \" + Library.sup();\n" +
 			"}\n"
 		);
 
 		buildWithExpectations(
-			"AClass.java:3: error: package lib does not exist\n" + 
-			"import lib.Library;\n" + 
-			"          ^\n" + 
-			"AClass.java:8: error: cannot find symbol\n" + 
-			"	return \"lib says \" + Library.sup();\n" + 
-			"	                     ^\n" + 
-			"  symbol:   variable Library\n" + 
+			"AClass.java:3: error: package lib does not exist\n" +
+			"import lib.Library;\n" +
+			"          ^\n" +
+			"AClass.java:8: error: cannot find symbol\n" +
+			"	return \"lib says \" + Library.sup();\n" +
+			"	                     ^\n" +
+			"  symbol:   variable Library\n" +
 			"  location: class apackage.AClass\n" +
 			"skipping "+currentBundle.getFile().toString()+File.separator+"apackage"+File.separator+"AClass.java\n"
 			,
@@ -306,17 +306,17 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	public void testLoadLibraryFromOtherBundleWithImportsTag() throws Exception {
 		// @formatter:off
 		addClass(
-			"lib.Library", 
-			"public static String sup() {\n" + 
-			"	return \"yupyup\";\n" + 
-			"}\n" 
+			"lib.Library",
+			"public static String sup() {\n" +
+			"	return \"yupyup\";\n" +
+			"}\n"
 		);
 		buildAndActivate();
 		Class<?> libclass = loadClass("lib.Library");
 		assertEquals("wrong response from loaded class", "yupyup",
 			libclass.getMethod("sup").invoke(null).toString());
 
-		
+
 		pushNewBundle();
 		// @importpackage tag is only parsed from classes in default package
 		addClass(
@@ -324,10 +324,10 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 			,
 			"import lib.Library;\n"
 			,
-			"AClass", 
-			"@Override\n" + 
-			"public String toString() {\n" + 
-			"	return \"lib says \" + Library.sup();\n" + 
+			"AClass",
+			"@Override\n" +
+			"public String toString() {\n" +
+			"	return \"lib says \" + Library.sup();\n" +
 			"}\n"
 		);
 
@@ -344,10 +344,10 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 		addClass(
 			"//@importpackage com.google.common.io;version=\""+goodRange+"\"\n",
 			"import com.google.common.io.BaseEncoding;",
-			"AClass", 
-			"@Override\n" + 
-			"public String toString() {\n" + 
-			"	return BaseEncoding.base16().encode(new byte[] {0x42});\n" + 
+			"AClass",
+			"@Override\n" +
+			"public String toString() {\n" +
+			"	return BaseEncoding.base16().encode(new byte[] {0x42});\n" +
 			"}\n"
 		);
 
@@ -364,15 +364,15 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 		addClass(
 			"//@importpackage com.google.common.io;version=\""+badRange+"\"\n",
 			"import com.google.common.io.BaseEncoding;",
-			"AClass", 
-			"@Override\n" + 
-			"public String toString() {\n" + 
-			"	return BaseEncoding.base16().encode(new byte[] {0x42});\n" + 
+			"AClass",
+			"@Override\n" +
+			"public String toString() {\n" +
+			"	return BaseEncoding.base16().encode(new byte[] {0x42});\n" +
 			"}\n"
 		);
 
 		buildWithExpectations(
-			"1 import requirement remains unresolved:\n" + 
+			"1 import requirement remains unresolved:\n" +
 			"  [null] osgi.wiring.package; (&(osgi.wiring.package=com.google.common.io)" +
 			  "(version>="+(GUAVA_MAJOR_VERSION+1)+".0.0)" +
 			  "(!(version>="+(GUAVA_MAJOR_VERSION+2)+".0.0))), " +
@@ -387,36 +387,36 @@ public class BundleHostTest extends AbstractGhidraHeadlessIntegrationTest {
 	public void testLoadLibraryFromOtherBundleWithManifest() throws Exception {
 		// @formatter:off
 		addClass(
-			"lib.Library", 
-			"public static String sup() {\n" + 
-			"	return \"yupyup\";\n" + 
-			"}\n" 
+			"lib.Library",
+			"public static String sup() {\n" +
+			"	return \"yupyup\";\n" +
+			"}\n"
 		);
 		buildAndActivate();
-		
+
 		pushNewBundle();
 		addClass(
 			"import lib.Library;\n",
-			"apackage.AClass", 
-			"@Override\n" + 
-			"public String toString() {\n" + 
-			"	return \"lib says \" + Library.sup();\n" + 
+			"apackage.AClass",
+			"@Override\n" +
+			"public String toString() {\n" +
+			"	return \"lib says \" + Library.sup();\n" +
 			"}\n"
 		);
-		
+
 		Path path = currentBundle.getFile().getFile(false).toPath();
 		path=path.resolve("META-INF");
 		Files.createDirectories(path);
 		Path manifest=path.resolve("MANIFEST.MF");
-		
+
 		Files.writeString(manifest,
-			"Manifest-Version: 1.0\n" + 
-			"Bundle-ManifestVersion: 2\n" + 
-			"Import-Package: lib\n" + 
-			"Require-Capability: osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version=11))\"\n" + 
-			"Bundle-SymbolicName: ghidratesting.bundleX\n" + 
-			"Bundle-Version: 1.0\n" + 
-			"Bundle-Name: bundlex\n" 
+			"Manifest-Version: 1.0\n" +
+			"Bundle-ManifestVersion: 2\n" +
+			"Import-Package: lib\n" +
+			"Require-Capability: osgi.ee;filter:=\"(&(osgi.ee=JavaSE)(version=11))\"\n" +
+			"Bundle-SymbolicName: ghidratesting.bundleX\n" +
+			"Bundle-Version: 1.0\n" +
+			"Bundle-Name: bundlex\n"
 		);
 
 		buildAndActivate();

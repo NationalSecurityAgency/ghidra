@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -103,7 +103,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 	}
 
 	/**
-	 * Sets the {@link SequenceSearchState}. Use this method when you've created a 
+	 * Sets the {@link SequenceSearchState}. Use this method when you've created a
 	 * {@link SequenceSearchState} that you want to apply to the program. If you don't set
 	 * the state explicitly, Ghidra will create one from the appropriate pattern file in
 	 * {@link SequenceSearchState#initialize}
@@ -416,7 +416,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 			Function funcAbove = getFunctionAbove(program, addr);
 			return checkAlreadyInFunctionAbove(program, addr, funcAbove);
 		}
-		
+
 		/*
 		 * Check if in a function above
 		 * return true if already in function above, false otherwise even if in another function
@@ -460,13 +460,13 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 
 			return false;
 		}
-		
+
 		/**
 		 * Get an existing function right above the addr.
 		 * @param program program to check
 		 * @param addr address to check
 		 * @return true if there is an existing function above addr
-		 */				
+		 */
 		private Function getFunctionAbove(Program program, Address addr) {
 			// make sure there is an end of function before this one, and addr is not in the function
 			Function func = null;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,11 +24,11 @@ import ghidra.docking.settings.Settings;
 import ghidra.util.table.column.GColumnRenderer;
 
 /**
- * A special version of the backup comparator that uses the column's rendered value for 
+ * A special version of the backup comparator that uses the column's rendered value for
  * the backup sort, rather the just <code>toString</code>, which is what the default parent
  * table model will do.
- * 
- * @param <T> the row type 
+ *
+ * @param <T> the row type
  */
 public class ColumnRenderedValueBackupComparator<T> implements Comparator<Object> {
 
@@ -49,7 +49,7 @@ public class ColumnRenderedValueBackupComparator<T> implements Comparator<Object
 		GColumnRenderer<Object> renderer = (GColumnRenderer<Object>) column.getColumnRenderer();
 		if (renderer != null) {
 			if (renderer.getColumnConstraintFilterMode() == ALLOW_CONSTRAINTS_FILTER_ONLY) {
-				// this implies that the column has signaled that it does not support 
+				// this implies that the column has signaled that it does not support
 				// filtering/sorting using its rendered value
 				supportsColumnSorting = false;
 			}

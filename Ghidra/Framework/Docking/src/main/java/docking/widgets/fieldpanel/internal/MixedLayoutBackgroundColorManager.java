@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ public class MixedLayoutBackgroundColorManager implements LayoutBackgroundColorM
 	private final Color selectionColor;
 	private final Color highlightColor;
 	private final Color mixedColor;
-	
+
 	private final BigInteger index;
 	private final FieldSelection selection;
 	private final FieldSelection highlight;
@@ -36,7 +36,7 @@ public class MixedLayoutBackgroundColorManager implements LayoutBackgroundColorM
 	public MixedLayoutBackgroundColorManager(BigInteger index, FieldSelection selection, FieldSelection highlight,
 			Color backgroundColor, Color selectionColor, Color highlightColor,
 			Color mixedColor, Color leftBorderColor, Color rightBorderColor) {
-	
+
 		this.index = index;
 		this.selection = selection;
 		this.highlight = highlight;

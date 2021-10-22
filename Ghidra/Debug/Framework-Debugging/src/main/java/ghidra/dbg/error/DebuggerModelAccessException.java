@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import ghidra.dbg.util.PathUtils;
 /**
  * An exception that may be thrown if an ancestor of an object is
  * {@link TargetAccessibility#INACCESSIBLE} at the time a method is invoked on that object.
- * 
+ *
  * <p>
  * In general, this exception should be considered a temporary condition, meaning the client should
  * just try again later. If a UI is involved, the error, if displayed at all, should be displayed in

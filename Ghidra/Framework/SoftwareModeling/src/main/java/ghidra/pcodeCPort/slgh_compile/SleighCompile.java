@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -243,7 +243,7 @@ public class SleighCompile extends SleighBase {
 //    VectorSTL<String> filename = new VectorSTL<String>();
 
 	// Current line number for each file in stack
-//    VectorSTL<Integer> lineno = new VectorSTL<Integer>(); 
+//    VectorSTL<Integer> lineno = new VectorSTL<Integer>();
 
 	private int userop_count; // Number of userops defined
 
@@ -1844,7 +1844,7 @@ public class SleighCompile extends SleighBase {
 
 	/**
 	 * Run the sleigh compiler.  This provides a direct means of invoking the
-	 * compiler without using the launcher.  The full SoftwareModeling classpath 
+	 * compiler without using the launcher.  The full SoftwareModeling classpath
 	 * must be established including any dependencies.
 	 * @param args compiler command line arguments
 	 * @throws JDOMException for XML errors

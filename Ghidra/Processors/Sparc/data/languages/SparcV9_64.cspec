@@ -124,7 +124,7 @@
       </localrange>
     </prototype>
   </default_proto>
-  
+
       <prototype name="__nonwindowcall" extrapop="0" stackshift="0">
       <input>
         <pentry minsize="1" maxsize="8">
@@ -170,7 +170,7 @@
         <register name="l4"/>
         <register name="l5"/>
         <register name="l6"/>
-        <register name="l7"/> 
+        <register name="l7"/>
         <register name="i0"/>
         <register name="i1"/>
         <register name="i2"/>

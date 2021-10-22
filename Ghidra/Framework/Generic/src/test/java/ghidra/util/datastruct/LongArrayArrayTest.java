@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,8 +29,8 @@ import generic.test.AbstractGenericTest;
 
 /**
  *
- * 
- * @version 
+ *
+ * @version
  */
 public class LongArrayArrayTest extends AbstractGenericTest {
 
@@ -49,14 +49,14 @@ public class LongArrayArrayTest extends AbstractGenericTest {
         assertEquals(0,b[0]);
         assertEquals(1,b[1]);
         assertEquals(2,b[2]);
-        
+
         baa.put(1,new long[]{});
         b = baa.get(1);
         assertEquals(0,b.length);
         baa.put(2,new long[]{5});
         b = baa.get(2);
         assertEquals(1,b.length);
-        
+
         baa.remove(1);
         assertNull(baa.get(1));
     }
@@ -76,7 +76,7 @@ public class LongArrayArrayTest extends AbstractGenericTest {
                 assertEquals("i="+i+"j="+j,t,b[j]);
             }
         }
-        
+
         for(int i=999;i>=0;i--) {
             baa.remove(i);
         }
@@ -94,7 +94,7 @@ public class LongArrayArrayTest extends AbstractGenericTest {
                 assertEquals("i="+i+"j="+j,t,b[j]);
             }
         }
- 
+
     }
 
 }

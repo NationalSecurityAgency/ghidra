@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ import ghidra.util.xml.SpecXmlUtils;
 import ghidra.util.xml.XmlUtilities;
 
 /**
- * 
+ *
  *
  * Routines that the decompiler invokes to gather info during decompilation of a
  * function.
@@ -115,7 +115,7 @@ public class DecompileCallback {
 
 	/**
 	 * Establish function and debug context for next decompilation
-	 * 
+	 *
 	 * @param func is the function to be decompiled
 	 * @param entry is the function's entry address
 	 * @param dbg is the debugging context (or null)
@@ -150,7 +150,7 @@ public class DecompileCallback {
 
 	/**
 	 * Cache a message returned by the decompiler process
-	 * 
+	 *
 	 * @param msg is the message
 	 */
 	void setNativeMessage(String msg) {
@@ -214,7 +214,7 @@ public class DecompileCallback {
 	/**
 	 * Collect any/all comments for the function starting at the indicated
 	 * address
-	 * 
+	 *
 	 * @param addrstring is the XML rep of function address
 	 * @param types is the string encoding of the comment type flags
 	 * @return XML document describing comments
@@ -313,7 +313,7 @@ public class DecompileCallback {
 	/**
 	 * Build an XML representation of all the pcode op's a given Instruction is
 	 * defined to perform.
-	 * 
+	 *
 	 * @param ops pcode ops
 	 * @param fallthruoffset number of bytes after instruction start that pcode
 	 *            flow falls into
@@ -642,7 +642,7 @@ public class DecompileCallback {
 
 	/**
 	 * Generate XML for comments of a certain type
-	 * 
+	 *
 	 * @param addrset = addresses over which to search for comments
 	 * @param buf = StringBuilder where XML should be written
 	 * @param commenttype = type of comment
@@ -697,7 +697,7 @@ public class DecompileCallback {
 	/**
 	 * Called by the native decompiler to query the GHIDRA database about any
 	 * symbols at the given address.
-	 * 
+	 *
 	 * @param addrstring XML encoded address to query
 	 * @return XML encoded result. Either function, reference, datatype, or hole
 	 */
@@ -958,7 +958,7 @@ public class DecompileCallback {
 
 	/**
 	 * Generate description of a non-data symbol, probably a code label
-	 * 
+	 *
 	 * @param sym is the symbol
 	 * @return the XML description
 	 */
@@ -972,9 +972,9 @@ public class DecompileCallback {
 	 * Check address is read only. This only checks whether the block containing
 	 * the address is read-only. It does not, and should not, check if there is
 	 * a data object that has been set to constant
-	 * 
+	 *
 	 * @param addr - address to check
-	 * 
+	 *
 	 * @return true if the block is read_only, and there are no write
 	 *         references.
 	 */
@@ -1022,7 +1022,7 @@ public class DecompileCallback {
 	 * function data is sent. Otherwise a hole is sent back of the biggest
 	 * contiguous block in the body of the function containing the queried
 	 * address
-	 * 
+	 *
 	 * @param func Function whose body contains the address
 	 * @param addr The queried address
 	 * @param includeDefaultNames true if default parameter names should be
@@ -1117,13 +1117,13 @@ public class DecompileCallback {
 	/**
 	 * Calculate the beginning and ending address of the biggest region around
 	 * addr that does not contain any symbol.
-	 * 
+	 *
 	 * This was not working correctly and it is too difficult to find the
 	 * biggest region for which there is no codeunit, and where the volatile and
 	 * readonly properties don't vary
-	 * 
+	 *
 	 * So now we assume that biggest hole we can find is just 1 byte
-	 * 
+	 *
 	 * @param addr = Address around which to find region
 	 * @return String <hole> tag
 	 */
@@ -1223,7 +1223,7 @@ public class DecompileCallback {
 
 	/**
 	 * Return the global object being referred to by addr
-	 * 
+	 *
 	 * @param addr = Address being queried
 	 * @return the global object
 	 */
@@ -1246,7 +1246,7 @@ public class DecompileCallback {
 			return data;
 		}
 		// This final query checks for labels with no real datatype attached
-		// which works especially for labels for addresses without a memory block 
+		// which works especially for labels for addresses without a memory block
 		Symbol sym = program.getSymbolTable().getPrimarySymbol(addr);
 		if ((sym != null) && sym.isGlobal()) {
 			return sym; // A label of global data of some sort
@@ -1256,7 +1256,7 @@ public class DecompileCallback {
 
 	/**
 	 * Check whether the address is volatile. Do not check the data object.
-	 * 
+	 *
 	 * @param addr is address to check for volatility
 	 * @return true if the address is volatile
 	 */
@@ -1414,7 +1414,7 @@ public class DecompileCallback {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class NameListHandler extends DefaultHandler {
 		private ArrayList<String> res;

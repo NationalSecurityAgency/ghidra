@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package ghidra.program.model.util;
 import ghidra.program.model.address.*;
 
 /**
- * Defines methods to mark ranges in a property map. 
+ * Defines methods to mark ranges in a property map.
  *
  */
 public interface AddressSetPropertyMap {
@@ -37,7 +37,7 @@ public interface AddressSetPropertyMap {
 	void add(AddressSetView addressSet);
 
 	/**
-	 * Clear the property map and set it with the given address set. 
+	 * Clear the property map and set it with the given address set.
 	 * @param addressSet address set to use
 	 */
 	void set(AddressSetView addressSet);
@@ -61,7 +61,7 @@ public interface AddressSetPropertyMap {
 	AddressSet getAddressSet();
 
 	/**
-	 * Return an address iterator over the property map. 
+	 * Return an address iterator over the property map.
 	 */
 	AddressIterator getAddresses();
 

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,11 +21,11 @@ import ghidra.program.model.pcode.Varnode;
 import ghidra.util.state.VarnodeOperation;
 
 class ComputedTableOffset {
-	
+
 	private final int factor;
 	private final Varnode indexValue;
-	
-	
+
+
 	ComputedTableOffset(Varnode indexValue, int factor) {
 		this.indexValue = indexValue;
 		this.factor = factor;
@@ -37,14 +37,14 @@ class ComputedTableOffset {
 	Varnode getIndexValue() {
 		return indexValue;
 	}
-	
+
 	/**
 	 * Returns table entry size in bytes
 	 */
 	int getTableEntrySize() {
 		return factor;
 	}
-	
+
 	/**
 	 * Get the ComputedTableOffset which corresponds to the specified input varnode v.
 	 * No qualification is performed.
@@ -87,7 +87,7 @@ class ComputedTableOffset {
 			indexValue = v;
 		}
 		if (indexValue instanceof VarnodeOperation) {
-			// Ignore zero-extend operation which is stored in unique variable 
+			// Ignore zero-extend operation which is stored in unique variable
 			// and can not be used by a subsequent instruction
 			VarnodeOperation op = (VarnodeOperation)indexValue;
 			if (op.getPCodeOp().getOutput().isUnique() && op.getPCodeOp().getOpcode() == PcodeOp.INT_ZEXT) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,10 +43,10 @@ public final class DyldArchitecture {
 	public final static DyldArchitecture ARMV8A  = new DyldArchitecture( CpuTypes.CPU_TYPE_ARM_64,  CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1   arm64", "AARCH64",    Endian.LITTLE );
 	public final static DyldArchitecture ARMV8Ae = new DyldArchitecture(CpuTypes.CPU_TYPE_ARM_64,   CpuSubTypes.CPU_SUBTYPE_MULTIPLE, "dyld_v1  arm64e", "AARCH64", Endian.LITTLE);
 
-	
+
 	public final static DyldArchitecture [] ARCHITECTURES = new DyldArchitecture [] { X86, X86_64, X86_64h, POWERPC, ARMV6, ARMV7, ARMV7F, ARMV7S, ARMV7K, ARMV8A, ARMV8Ae };
 	// @formatter:on
-	
+
 	/**
 	 * Returns the architecture object with the given signature.
 	 * Returns NULL if one does not exist.
@@ -73,7 +73,7 @@ public final class DyldArchitecture {
 	private String signature;
 	private String processor;
 	private Endian endianness;
-	
+
 	private DyldArchitecture(int cpuType, int cpuSubType, String signature, String processor, Endian endianness) {
 		this.cpuType    = cpuType;
 		this.cpuSubType = cpuSubType;

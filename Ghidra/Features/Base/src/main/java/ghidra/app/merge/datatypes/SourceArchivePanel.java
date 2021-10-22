@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,30 +37,30 @@ class SourceArchivePanel extends JPanel {
 	private SimpleAttributeSet headingAttrSet;
 	private SimpleAttributeSet valueAttrSet;
 	private SimpleAttributeSet deletedAttrSet;
-	
+
 	SourceArchivePanel() {
 		super(new BorderLayout());
 		create();
 	}
-	
+
 	public void setSourceArchive(SourceArchive sourceArchive) {
 		this.sourceArchive = sourceArchive;
 		textPane.setText("");
-		formatSourceArchive(); 
+		formatSourceArchive();
 		textPane.setCaretPosition(0);
 	}
-	
+
 	private void create() {
-		textPane = new JTextPane(); 
+		textPane = new JTextPane();
 		doc = textPane.getStyledDocument();
 		add(textPane, BorderLayout.CENTER);
 		textPane.setEditable(false);
-		
+
 		headingAttrSet = new SimpleAttributeSet();
 		headingAttrSet.addAttribute(StyleConstants.FontFamily, "Monospaced");
 		headingAttrSet.addAttribute(StyleConstants.FontSize, new Integer(12));
 		headingAttrSet.addAttribute(StyleConstants.Foreground, Color.BLUE);
-		
+
 		valueAttrSet = new SimpleAttributeSet();
 		valueAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
 		valueAttrSet.addAttribute(StyleConstants.FontSize, new Integer(11));
@@ -71,13 +71,13 @@ class SourceArchivePanel extends JPanel {
 		deletedAttrSet.addAttribute(StyleConstants.FontSize, new Integer(12));
 		deletedAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
 		deletedAttrSet.addAttribute(StyleConstants.Foreground, Color.RED);
-		
+
 		setSourceArchive(null);
 	}
-	
+
 	private void formatSourceArchive() {
 		if (sourceArchive == null) {
-			insertString("\n\nDeleted", deletedAttrSet); 
+			insertString("\n\nDeleted", deletedAttrSet);
 			return;
 		}
 //		formatArchiveID();
@@ -87,24 +87,24 @@ class SourceArchivePanel extends JPanel {
 		formatSyncTime();
 		formatDirtyFlag();
 	}
-	
+
 	@SuppressWarnings("unused")
 	private void formatArchiveID() {
 		insertString("    Archive ID: ", headingAttrSet);
 		insertString(sourceArchive.getSourceArchiveID().getValue() + "\n", valueAttrSet);
 	}
-	
+
 	private void formatName() {
 		insertString("Name: ", headingAttrSet);
 		insertString(sourceArchive.getName() + "\n", valueAttrSet);
 	}
-	
+
 	@SuppressWarnings("unused")
 	private void formatFileID() {
 		insertString("       File ID: ", headingAttrSet);
 		insertString(sourceArchive.getDomainFileID() + "\n", valueAttrSet);
 	}
-	
+
 	@SuppressWarnings("unused")
 	private void formatType() {
 		ArchiveType archiveType = sourceArchive.getArchiveType();
@@ -116,18 +116,18 @@ class SourceArchivePanel extends JPanel {
 		insertString("          Type: ", headingAttrSet);
 		insertString(typeString + "\n", valueAttrSet);
 	}
-	
+
 	private void formatSyncTime() {
 		String syncTime = new Date(sourceArchive.getLastSyncTime()).toString();
 		insertString("Last Sync Time: ", headingAttrSet);
 		insertString(syncTime + "\n", valueAttrSet);
 	}
-	
+
 	private void formatDirtyFlag() {
 		insertString("Changed Since Last Sync? ", headingAttrSet);
 		insertString((sourceArchive.isDirty() ? "yes" : "no") + "\n", valueAttrSet);
 	}
-	
+
 //	private String pad(String str, int length) {
 //		StringBuffer sb = new StringBuffer(str);
 //		int len = length - str.length();
@@ -136,7 +136,7 @@ class SourceArchivePanel extends JPanel {
 //		}
 //		return sb.toString();
 //	}
-//	
+//
 	private void insertString(String str, SimpleAttributeSet attributeSet) {
 		int offset = doc.getLength();
 

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,9 +21,9 @@ import ghidra.util.exception.NoValueException;
 import java.util.*;
 
 
-/** Container class for a set of edges (ghidra.util.graph.Edge). 
- * 
- * 
+/** Container class for a set of edges (ghidra.util.graph.Edge).
+ *
+ *
  */
 class EdgeSet implements KeyIndexableSet<Edge> {
   private final DirectedGraph parentGraph;
@@ -143,7 +143,7 @@ class EdgeSet implements KeyIndexableSet<Edge> {
 
 
   /** Adds an edge to the graph. If either endpoint is not in the graph add it.
-   *   If the edge is already in the graph return false and do nothing. 
+   *   If the edge is already in the graph return false and do nothing.
    *  @return true if and only if the edge was sucessfully added.
    */
   public boolean add( Edge e )
@@ -275,7 +275,7 @@ class EdgeSet implements KeyIndexableSet<Edge> {
   {
       nextEdgeWithSameFrom[ index( e ) ] = nextEdge;
   }
-  
+
 	/** Helper method for maintaining internal data structures. */
   private void setNextEdgeWithSameTo(Edge e, Edge nextEdge)
   {
@@ -411,7 +411,7 @@ class EdgeSet implements KeyIndexableSet<Edge> {
   {
      return this.modificationNumber;
   }
-  
+
   /* (non-Javadoc)
    * @see ghidra.util.graph.KeyIndexableSet#getKeyedObject(long)
    */
@@ -424,9 +424,9 @@ class EdgeSet implements KeyIndexableSet<Edge> {
 			  return null;
 		  }
 	  }
-	  return null; 
+	  return null;
   }
-  
+
 
 //  /** Used for debugging. */
 //  void verbosePrint()
@@ -501,8 +501,8 @@ class EdgeSet implements KeyIndexableSet<Edge> {
         }
     }
 
-    /** @return true if and only if a call to next() will return a valid edge. 
-     * @throws ConcurrentModificationException 
+    /** @return true if and only if a call to next() will return a valid edge.
+     * @throws ConcurrentModificationException
      */
     public boolean hasNext() throws ConcurrentModificationException
     {

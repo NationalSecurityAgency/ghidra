@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,14 +27,14 @@ public class MaskContainer {
 	private byte[] value;
 
 	/**
-	 * 
+	 *
 	 * @param mask
 	 * @param value
 	 * @throws InvalidInputException
 	 */
 	public MaskContainer(byte[] mask, byte[] value) throws IllegalArgumentException {
 
-		// Mask and value arrays must be the same size, and not be null. 
+		// Mask and value arrays must be the same size, and not be null.
 		if (mask == null || value == null) {
 			throw new IllegalArgumentException(
 				"Mask container initialization error: mask and/or value arrays cannot be null");
@@ -56,7 +56,7 @@ public class MaskContainer {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	public String getMaskAsBinaryString() {
@@ -84,7 +84,7 @@ public class MaskContainer {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	public String getValueAsBinaryString() {
@@ -106,7 +106,7 @@ public class MaskContainer {
 
 	/**
 	 * Returns the bytes and masking merged together, as a binary string.
-	 * 
+	 *
 	 * @param mask
 	 * @param value
 	 * @return list containing the value (index 0) and mask (index 1).

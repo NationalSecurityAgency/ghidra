@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -311,9 +311,9 @@ public class IndexedScrollPane extends JPanel implements IndexScrollListener {
 
 	/**
 	 * Sets whether the scroll wheel triggers scrolling <b>when over the scroll pane</b> of this
-	 * class.   When disabled, scrolling will still work when over the component inside of 
+	 * class.   When disabled, scrolling will still work when over the component inside of
 	 * this class, but not when over the scroll bar.
-	 * 
+	 *
 	 * @param enabled true to enable
 	 */
 	public void setWheelScrollingEnabled(boolean enabled) {

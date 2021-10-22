@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.program.model.listing.CodeUnit;
 import java.util.ArrayList;
 
 /**
- * 
+ *
  *
  * To change the template for this generated type comment go to
  * Window>Preferences>Java>Code Generation>Code and Comments
@@ -43,7 +43,7 @@ public class Match implements Comparable<Match>
 	private ArrayList<Object> thisMatch;
 	private ArrayList<Object> otherMatch;
 	private int totalLength;
-	
+
 	/**
 	 * @param thisBeginning The start Address of the match in the program
 	 * from which the matches are being found.
@@ -52,8 +52,8 @@ public class Match implements Comparable<Match>
 	 * @param bytes the bytes which make up this match.
 	 * @param length the length of the bytes array.
 	 */
-	public Match( Address thisBeginning, Address otherBeginning, byte[] bytes, int length)	
-	{	
+	public Match( Address thisBeginning, Address otherBeginning, byte[] bytes, int length)
+	{
 
 		this.thisBeginning = thisBeginning;
 		this.otherBeginning = otherBeginning;
@@ -62,7 +62,7 @@ public class Match implements Comparable<Match>
 		for( int i=0; i< length; i++)
 		{
 			String str;
-			if( bytes[i] < 0 ) 
+			if( bytes[i] < 0 )
 				str = Long.toHexString( bytes[i] + 256);
 			else
 				str = Long.toHexString( bytes[i]);
@@ -70,7 +70,7 @@ public class Match implements Comparable<Match>
 			totalLength++;
 		}
 	}
-	
+
 	/**
 	 * @param thisBeginning The start Address of the match in the program
 	 * from which the matches are being found.
@@ -78,8 +78,8 @@ public class Match implements Comparable<Match>
 	 * to which the matches are being found.
 	 * @param codeUnits The CodeUnits which make up the match in this
 	 * Program.
-	 * @param otherUnits The CodeUnits which make up this match in the 
-	 * other program. Note, the code units need no match up byte for 
+	 * @param otherUnits The CodeUnits which make up this match in the
+	 * other program. Note, the code units need no match up byte for
 	 * byte.
 	 * @param length The length of the CodeUnit arrays.
 	 */
@@ -97,21 +97,21 @@ public class Match implements Comparable<Match>
 		}
 
 	}
-	
+
 	/**
 	 * @param b Continue the match by adding the additional byte b.
 	 */
 	public void continueMatch( byte b )
 	{
 		String str;
-		if( b < 0 ) 
+		if( b < 0 )
 			str = Long.toHexString( b + 256);
 		else
 			str = Long.toHexString( b);
 		thisMatch.add( str );
-		totalLength++;	
+		totalLength++;
 	}
-	
+
 //	/**
 //	 * @param index
 //	 * @return
@@ -127,7 +127,7 @@ public class Match implements Comparable<Match>
 //	/**
 //	 * @param index Zero-based index into an internal list of objects
 //	 * making up this match.
-//	 * @return The address of the object at the specified index in 
+//	 * @return The address of the object at the specified index in
 //	 * the other program.
 //	 */
 //	private Address getAddressAt( int index )
@@ -140,8 +140,8 @@ public class Match implements Comparable<Match>
 //		}
 //		return getOtherBeginning().add(index);
 //	}
-	
-	
+
+
 	/**
 	 * @param cu The CodeUnit which extends the match in 'this' program.
 	 * @param otherUnit The CodeUnit which extends the match in 'the other'
@@ -151,21 +151,21 @@ public class Match implements Comparable<Match>
 	{
 		thisMatch.add( cu );//.getMinAddress().toString() );
 		otherMatch.add( otherUnit );
-		totalLength += cu.getLength();		
+		totalLength += cu.getLength();
 	}
-	
+
 	/** @return The number of items that make up this match. */
 	public int length()
 	{
 		return thisMatch.size();
 	}
-	
+
 	/** @return The total number of bytes that make up this match. */
 	public int totalLength()
 	{
 		return totalLength;
 	}
-	
+
 	@Override
     public String toString()
 	{
@@ -176,7 +176,7 @@ public class Match implements Comparable<Match>
 		}
 		return str;
 	}
-	
+
 	/**
 	 * @return The Address that starts the match in the other program.
 	 */
@@ -193,35 +193,35 @@ public class Match implements Comparable<Match>
 	{
 		return thisBeginning;
 	}
-	
-	
+
+
 	/**
-	 * @return array containing the objects that make up the match 
+	 * @return array containing the objects that make up the match
 	 * in this program.
 	 */
 	public Object[] getBytes()
 	{
 		return thisMatch.toArray(new Object[0]);
 	}
-	
+
 	/**
-	 * @return array containing the objects that make up the match 
+	 * @return array containing the objects that make up the match
 	 * in the other program.
 	 */
 	public Object[] getOtherBytes()
 	{
 		return otherMatch.toArray(new Object[0]);
 	}
-	
+
 	public String printMatch()
 	{
 		String str;
-		str = "1.00 " + length() + " " + length() 
-			+ thisBeginning.toString(true) + " " + Long.toHexString(thisBeginning.getOffset()) 
+		str = "1.00 " + length() + " " + length()
+			+ thisBeginning.toString(true) + " " + Long.toHexString(thisBeginning.getOffset())
 			+ otherBeginning.toString(true)+ " " + Long.toHexString(otherBeginning.getOffset()) + "\n";
-		return str;											
+		return str;
 	}
-	
+
 
 	/* (non-Javadoc)
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
@@ -232,10 +232,10 @@ public class Match implements Comparable<Match>
 			return val;
 		val = getOtherBeginning().compareTo( m.getOtherBeginning() );
 		if( val != 0 )
-			return val;		
+			return val;
 		return length() - m.length();
 	}
-	
+
 	/**
 	 * @param baseLength the minimum number of items which make up a match.
 	 * There are different values for instruction and byte matches. This
@@ -249,11 +249,11 @@ public class Match implements Comparable<Match>
 	{
 		Object o  = thisMatch.get( length() - baseLength + 1 );
 		if( o instanceof CodeUnit)
-		{	
+		{
 			CodeUnit cu = (CodeUnit)thisMatch.get( length() - baseLength +1 );
 			return cu.getMinAddress();
 		}
-		return this.thisBeginning.add(totalLength() - baseLength + 1);		
+		return this.thisBeginning.add(totalLength() - baseLength + 1);
 	}
 
 }

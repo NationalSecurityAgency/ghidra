@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -105,7 +105,7 @@ public strictfp class FloatFormatTest extends AbstractGenericTest {
 		// this test is a verbose exposition of the more complete assertDoubleMidpointRound
 
 		// IEEE754 recommends "round to nearest even" for binary formats, like single and double
-		// precision floating point.  It rounds to the nearest integer (significand) when unambiguous, 
+		// precision floating point.  It rounds to the nearest integer (significand) when unambiguous,
 		// and to the nearest even on the midpoint.
 
 		// There are 52 bits of significand in a double and 23 in a float.

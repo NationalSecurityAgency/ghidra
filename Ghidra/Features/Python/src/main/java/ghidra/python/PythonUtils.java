@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ public class PythonUtils {
 
 	/**
 	 * Sets up the python home directory.  This is the directory that has the "Lib" directory in it.
-	 *  
+	 *
 	 * @return The python home directory.
 	 * @throws IOException If there was a disk-related problem setting up the home directory.
 	 */
@@ -57,7 +57,7 @@ public class PythonUtils {
 	 * Sets up the python cache directory.  This is a temporary space that python source files
 	 * get compiled to and cached.  It should NOT be in the Ghidra installation directory, because
 	 * some installations will not have the appropriate directory permissions to create new files in.
-	 * 
+	 *
 	 * @param monitor A monitor to use during the cache directory setup.
 	 * @return The python cache directory.
 	 * @throws IOException If there was a disk-related problem setting up the cache directory.

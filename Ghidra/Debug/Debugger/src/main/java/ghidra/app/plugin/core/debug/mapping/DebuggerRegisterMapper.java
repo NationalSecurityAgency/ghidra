@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.program.model.lang.RegisterValue;
 
 /**
  * A mapper which can convert register names and values from trace to target and vice versa.
- * 
+ *
  * <P>
  * As a general principle, and as a means of avoiding aliasing within caches, the debugger transfers
  * register values to and from the target using its base registers only. This has its own drawbacks,
@@ -39,7 +39,7 @@ import ghidra.program.model.lang.RegisterValue;
 public interface DebuggerRegisterMapper {
 	/**
 	 * Get a target register (name) by string
-	 * 
+	 *
 	 * @param name the name of the register as a string
 	 * @return the register description (name) on target
 	 */
@@ -47,7 +47,7 @@ public interface DebuggerRegisterMapper {
 
 	/**
 	 * Get a trace register (name) by string
-	 * 
+	 *
 	 * @param name the name of the register as a string
 	 * @return the register description (as defined by the Ghidra language) in the trace
 	 */
@@ -55,10 +55,10 @@ public interface DebuggerRegisterMapper {
 
 	/**
 	 * Convert a register value to a string-byte-array entry suitable for the debug API
-	 * 
+	 *
 	 * <P>
 	 * Byte arrays for the debug model API are always big-endian, no matter the target architecture.
-	 * 
+	 *
 	 * @param registerValue the register value
 	 * @return the entry
 	 */
@@ -77,7 +77,7 @@ public interface DebuggerRegisterMapper {
 
 	/**
 	 * Convert a collection of register values to a string-byte-array map suitable for the debug API
-	 * 
+	 *
 	 * @param registerValues the collection of values
 	 * @return the map
 	 */
@@ -94,7 +94,7 @@ public interface DebuggerRegisterMapper {
 
 	/**
 	 * Convert a trace register name to a target register name
-	 * 
+	 *
 	 * @param register the trace register
 	 * @return the target register
 	 */
@@ -102,7 +102,7 @@ public interface DebuggerRegisterMapper {
 
 	/**
 	 * Convert a target register name and byte array value into a trace register value
-	 * 
+	 *
 	 * @param tRegName the name of the target register as a string
 	 * @param value the value of the target register
 	 * @return the converted register value suitable for trace storage
@@ -117,7 +117,7 @@ public interface DebuggerRegisterMapper {
 
 	/**
 	 * Convert a target register name and byte array value into a trace register value
-	 * 
+	 *
 	 * @param tReg the name of the target register
 	 * @param value the value of the target register
 	 * @return the converted register value suitable for trace storage
@@ -136,7 +136,7 @@ public interface DebuggerRegisterMapper {
 
 	/**
 	 * Convert a string-byte-value map to a map of trace register values
-	 * 
+	 *
 	 * @param values the target values
 	 * @return the trace values
 	 */
@@ -153,7 +153,7 @@ public interface DebuggerRegisterMapper {
 
 	/**
 	 * Convert a target register name to a trace register name
-	 * 
+	 *
 	 * @param tReg the target register name
 	 * @return the trace register name (as defined by the Ghidra language)
 	 */
@@ -161,10 +161,10 @@ public interface DebuggerRegisterMapper {
 
 	/**
 	 * Get suggested type information for a given trace register
-	 * 
+	 *
 	 * <P>
 	 * TODO: The recorder should apply this type when recording register values
-	 * 
+	 *
 	 * @param lReg the name of the trace register
 	 * @return the default type information
 	 */
@@ -172,33 +172,33 @@ public interface DebuggerRegisterMapper {
 
 	/**
 	 * Get the (base) registers on target that can be mapped
-	 * 
+	 *
 	 * @return the collection of base registers
 	 */
 	Set<Register> getRegistersOnTarget();
 
 	/**
 	 * The recorder is informing this mapper of a new target register
-	 * 
+	 *
 	 * <P>
 	 * The mapper should check that the given register is in its scope.
-	 * 
+	 *
 	 * @param register the new register
 	 */
 	void targetRegisterAdded(TargetRegister register);
 
 	/**
 	 * The recorder is informing this mapper of a removed target register
-	 * 
+	 *
 	 * <P>
 	 * This may seem impossible, but it can happen on architectures that support native emulation,
 	 * and the debugger changes its register definitions (mid-execution) accordingly. One important
 	 * example is WoW64 when switching between the 32-bit executable image and 64-bit system
 	 * libraries. The 64-bit registers are not accessible when the processor is in 32-bit mode.
-	 * 
+	 *
 	 * <P>
 	 * The mapper should check that the given register is/was in its scope.
-	 * 
+	 *
 	 * @param register the old register
 	 */
 	void targetRegisterRemoved(TargetRegister register);

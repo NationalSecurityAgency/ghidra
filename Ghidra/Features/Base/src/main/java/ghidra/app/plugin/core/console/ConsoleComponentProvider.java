@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -203,7 +203,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 			return;
 		}
 
-		// NOTE: must be case sensitive otherwise the service will report that it has 
+		// NOTE: must be case sensitive otherwise the service will report that it has
 		//       processed the request even if there are no matches
 		boolean found =
 			gotoService.goToQuery(currentAddress, new QueryData(word.word, true), null, null);
@@ -316,7 +316,7 @@ public class ConsoleComponentProvider extends ComponentProviderAdapter
 			//
 			// sometimes an exception will occur while printing
 			// the stack trace on an exception.
-			// if that happens catch it and manually print 
+			// if that happens catch it and manually print
 			// some information about it.
 			// see org.jruby.exceptions.RaiseException
 			//

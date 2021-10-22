@@ -69,7 +69,7 @@ since it's basically a stand-alone grammar.
 There are now 3 lexers each with its own source:
 	BaseLexer.g: The "normal" lexer for .slaspec files
 	DisplayLexer.g imports SleighLexer.g: The lexer for the display portion, e.g.:
-		':ADD op1,op2 is' 
+		':ADD op1,op2 is'
 	SemanticLexer.g imports SleighLexer.g: The lexer for the semantics portion, e.g.:
 		'{ export *[register]:4 reg; }'
 

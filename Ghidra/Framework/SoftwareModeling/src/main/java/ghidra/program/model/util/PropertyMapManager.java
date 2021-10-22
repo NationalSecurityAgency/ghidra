@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,14 +27,14 @@ import java.util.Iterator;
 /**
  *
  * Interface for managing a set of PropertyManagers.
- * 
+ *
  */
 public interface PropertyMapManager {
 	/**
 	 * Creates a new IntPropertyMap with the given name.
 	 * @param propertyName the name for the new property.
 	 * @exception DuplicateNameException thrown if a PropertyMap already
-	 * exists with that name. 
+	 * exists with that name.
 	 */
 	public IntPropertyMap createIntPropertyMap(String propertyName) throws DuplicateNameException;
 
@@ -42,7 +42,7 @@ public interface PropertyMapManager {
 	 * Creates a new LongPropertyMap with the given name.
 	 * @param propertyName the name for the new property.
 	 * @exception DuplicateNameException thrown if a PropertyMap already
-	 * exists with that name. 
+	 * exists with that name.
 	 */
 	public LongPropertyMap createLongPropertyMap(String propertyName) throws DuplicateNameException;
 
@@ -132,18 +132,18 @@ public interface PropertyMapManager {
 	public Iterator<String> propertyManagers();
 
 	/**
-	 * Removes any property at the given address from all defined 
+	 * Removes any property at the given address from all defined
 	 * PropertyMaps.
 	 * @param addr the address at which to remove all property values.
 	 */
 	public void removeAll(Address addr);
 
 	/**
-	 * Removes all properties in the given range from all user 
+	 * Removes all properties in the given range from all user
 	 * defined PropertyMaps.
-	 * @param startAddr the first address in the range of addresses where 
+	 * @param startAddr the first address in the range of addresses where
 	 * propertie values are to be removed.
-	 * @param endAddr the last address in the range of addresses where 
+	 * @param endAddr the last address in the range of addresses where
 	 * propertie values are to be removed.
 	 * @param monitor monitors progress
 	 * @throws CancelledException if the user cancelled the operation.

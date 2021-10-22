@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -118,7 +118,7 @@ class ApplySymbols {
 			}
 
 			////////////
-			// Commented out the following for now, because it appears to be doing things it 
+			// Commented out the following for now, because it appears to be doing things it
 			// shouldn't. Many of the things are very loosely speculative.
 			// TODO Someone needs to determine if the attempted functionality can be properly refined.
 			////////////
@@ -141,14 +141,14 @@ class ApplySymbols {
 //					address = address.add(dword.getLength());
 //				}
 //			}
-//			else 
+//			else
 //			if (name.startsWith(MS_STRING_PREFIX)) {
 // TODO: Should this be handled by the demangler instead of here?
 //				boolean isUnicode = isUnicode(name);
 //				pdbParser.createString(isUnicode, address, log);
 //			}
 			////////////
-			// Commented out the following for now, because it appears to be doing things it 
+			// Commented out the following for now, because it appears to be doing things it
 			// shouldn't. Many of the things are very loosely speculative.
 			// TODO Someone needs to determine if the attempted functionality can be properly refined.
 			////////////

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -811,7 +811,7 @@ OperandSymbol *ConsistencyChecker::getOperandSymbol(int4 slot,OpTpl *op,Construc
     vn = op->getOut();
   else
     vn = op->getIn(slot);
-  
+
   switch(vn->getSize().getType()) {
   case ConstTpl::handle:
     handindex = vn->getSize().getHandleIndex();
@@ -978,7 +978,7 @@ bool ConsistencyChecker::checkSectionTruncations(Constructor *ct,ConstructTpl *c
   vector<OpTpl *>::const_iterator iter;
   const vector<OpTpl *> &ops(cttpl->getOpvec());
   bool testresult = true;
-  
+
   for(iter=ops.begin();iter!=ops.end();++iter) {
     OpTpl *op = *iter;
     VarnodeTpl *outvn = op->getOut();
@@ -1062,7 +1062,7 @@ bool ConsistencyChecker::checkSubtable(SubtableSymbol *sym)
   }
   else
     sizemap[sym] = -1;
-  
+
   return testresult;
 }
 
@@ -1402,7 +1402,7 @@ void ConsistencyChecker::applyOptimization(Constructor *ct,const OptimizeRecord 
     ctempl = ct->getTempl();
   else
     ctempl = ct->getNamedTempl(rec.readsection);
-  
+
   if (rec.opttype == 0) { // If read op is COPY
     int4 readop = rec.readop;
     OpTpl *op = ctempl->getOpvec()[ readop ];
@@ -1701,7 +1701,7 @@ void MacroBuilder::dump(OpTpl *op)
 {
   OpTpl *clone;
   VarnodeTpl *v_clone,*vn;
-  
+
   clone = new OpTpl(op->getOpcode());
   vn = op->getOut();
   if (vn != (VarnodeTpl *)0) {
@@ -1840,7 +1840,7 @@ int4 SleighCompile::calcContextVarLayout(int4 start,int4 sz,int4 numbits)
   FieldQuality *qual;
   int4 i,j;
   int4 maxbits;
-  
+
   if ((sym->getSize()) % 4 != 0)
     reportError(getCurrentLocation(), "Invalid size of context register '"+sym->getName()+"': must be a multiple of 4 bytes");
   maxbits = sym->getSize() * 8 -1;
@@ -1884,7 +1884,7 @@ int4 SleighCompile::calcContextVarLayout(int4 start,int4 sz,int4 numbits)
       ContextField *field = new ContextField(qual->signext,l,h);
       addSymbol(new ContextSymbol(qual->name,field,sym,qual->low,qual->high,qual->flow));
     }
-    
+
   }
   sym->markAsContext();
   return numbits;
@@ -2338,7 +2338,7 @@ void SleighCompile::calcContextLayout(void)
       sz += 1;
     context_offset = calcContextVarLayout(begin,sz,context_offset);
     begin += sz;
-  } 
+  }
 
   //  context_size = (context_offset+8*sizeof(uintm)-1)/(8*sizeof(uintm));
 
@@ -2721,7 +2721,7 @@ void SleighCompile::attachVarnodes(vector<SleighSymbol *> *symlist,vector<Sleigh
     if (patval->maxValue() + 1 != varlist->size()) {
       reportError(getCurrentLocation(), "Attach varnode '" + sym->getName() + "' is wrong size for list");
     }
-    int4 sz = 0;      
+    int4 sz = 0;
     for(int4 j=0;j<varlist->size();++j) {
       VarnodeSymbol *vsym = (VarnodeSymbol *)(*varlist)[j];
       if (vsym != (VarnodeSymbol *)0) {
@@ -3165,7 +3165,7 @@ bool SleighCompile::expandMacros(ConstructTpl *ctpl)
   vector<OpTpl *> newvec;
   vector<OpTpl *>::const_iterator iter;
   OpTpl *op;
-  
+
   for(iter=ctpl->getOpvec().begin();iter!=ctpl->getOpvec().end();++iter) {
     op = *iter;
     if (op->getOpcode() == MACROBUILD) {
@@ -3224,7 +3224,7 @@ bool SleighCompile::finalizeSections(Constructor *big,SectionVector *vec)
 	errors.push_back(sectionstring + "Duplicate BUILD statements");
       if (res == 2)
 	errors.push_back(sectionstring + "Unnecessary BUILD statements");
-  
+
       if (!PcodeCompile::propagateSize(cur.section))
 	errors.push_back(sectionstring + "Could not resolve at least 1 variable size");
     }
@@ -3252,7 +3252,7 @@ bool SleighCompile::finalizeSections(Constructor *big,SectionVector *vec)
       if (i >= max) break;
       cur = vec->getNamedPair(i);
     } while(cur.section == (ConstructTpl *)0);
-      
+
     if (i >= max) break;
     SectionSymbol *sym = sections[i];
     sectionstring = "   " + sym->getName() + " section: ";
@@ -3370,7 +3370,7 @@ void SleighCompile::shiftUniqueHandle(HandleTpl *hand,int4 sa)
     val <<= sa;
     hand->setPtrOffset(val);
   }
-  
+
   if (hand->getTempSpace().isUniqueSpace() && (hand->getTempOffset().getType() == ConstTpl::real)) {
     uintb val = hand->getTempOffset().getReal();
     val <<= sa;
@@ -3625,7 +3625,7 @@ static void findSlaSpecs(vector<string> &res, const string &dir, const string &s
 
 {
   FileManage::matchListDir(res, suffix, true, dir, false);
-  
+
   vector<string> dirs;
   FileManage::directoryList(dirs, dir);
   vector<string>::const_iterator iter;
@@ -3707,9 +3707,9 @@ int main(int argc,char **argv)
   bool enforceLocalKeyWord = false;
   bool largeTemporaryWarning = false;
   bool caseSensitiveRegisterNames = false;
-  
+
   bool compileAll = false;
-  
+
   int4 i;
   for(i=1;i<argc;++i) {
     if (argv[i][0] != '-') break;
@@ -3751,15 +3751,15 @@ int main(int argc,char **argv)
       exit(1);
     }
   }
-  
+
   if (compileAll) {
-    
+
     if (i< argc-1) {
       cerr << "Too many parameters" << endl;
       exit(1);
     }
     const string::size_type slaspecExtLen = SLASPECEXT.length();
-    
+
     vector<string> slaspecs;
     string dirStr = ".";
     if (i != argc)
@@ -3779,14 +3779,14 @@ int main(int argc,char **argv)
 	return retval; // stop on first error
       }
     }
-    
+
   } else { // compile single specification
-    
+
     if (i==argc) {
       cerr << "Missing input file name" << endl;
       exit(1);
     }
-    
+
     string fileinExamine(argv[i]);
 
     string::size_type extInPos = fileinExamine.find(SLASPECEXT);
@@ -3801,16 +3801,16 @@ int main(int argc,char **argv)
       fileinPreExt = fileinExamine.substr(0,extInPos);
       extIsSLASPECEXT = true;
     }
-    
+
     if (i< argc-2) {
       cerr << "Too many parameters" << endl;
       exit(1);
     }
-    
+
     SleighCompile compiler;
     compiler.setAllOptions(defines, unnecessaryPcodeWarning, lenientConflict, allCollisionWarning, allNopWarning,
 			   deadTempWarning, enforceLocalKeyWord,largeTemporaryWarning,caseSensitiveRegisterNames);
-    
+
     if (i < argc - 1) {
       string fileoutExamine(argv[i+1]);
       string::size_type extOutPos = fileoutExamine.find(SLAEXT);
@@ -3828,7 +3828,7 @@ int main(int argc,char **argv)
       }else{
 	retval = run_xml(fileinExamine,compiler);
       }
-      
+
     }
   }
   return retval;

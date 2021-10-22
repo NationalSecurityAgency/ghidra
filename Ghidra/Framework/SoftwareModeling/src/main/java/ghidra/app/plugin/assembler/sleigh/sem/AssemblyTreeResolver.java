@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,11 +36,11 @@ import ghidra.app.plugin.processors.sleigh.symbol.OperandSymbol;
 
 /**
  * The workhorse of semantic resolution for the assembler
- * 
+ *
  * This class takes a parse tree and some additional information (start address, context, etc.) and
  * attempts to determine possible encodings using the semantics associated with each branch of the
  * given parse tree. Details of this process are described in {@link SleighAssemblerBuilder}.
- * 
+ *
  * @see SleighAssemblerBuilder
  */
 public class AssemblyTreeResolver {
@@ -60,7 +60,7 @@ public class AssemblyTreeResolver {
 
 	/**
 	 * Construct a resolver for the given parse tree
-	 * 
+	 *
 	 * @param lang
 	 * @param instStart the byte offset where the instruction will start
 	 * @param tree the parse tree
@@ -80,7 +80,7 @@ public class AssemblyTreeResolver {
 
 	/**
 	 * Resolve the tree for the given parameters
-	 * 
+	 *
 	 * @return a set of resolutions (encodings and errors)
 	 */
 	public AssemblyResolutionResults resolve() {
@@ -135,7 +135,7 @@ public class AssemblyTreeResolver {
 
 	/**
 	 * Resolve a branch of the parse tree
-	 * 
+	 *
 	 * @param branch the branch
 	 * @return the intermediate results
 	 */
@@ -153,9 +153,9 @@ public class AssemblyTreeResolver {
 
 	/**
 	 * Apply constructors as indicated by a path returned by the context resolution graph
-	 * 
+	 *
 	 * Please note: The path given will be emptied during processing.
-	 * 
+	 *
 	 * @param path the path to apply
 	 * @param branch the branch corresponding to the production whose LHS has a purely-recursive
 	 *            definition.
@@ -200,7 +200,7 @@ public class AssemblyTreeResolver {
 
 	/**
 	 * Resolve a branch where the production's LHS has a purely-recursive definition
-	 * 
+	 *
 	 * @param branch the branch
 	 * @param rec the purely-recursive definition
 	 * @return the results
@@ -239,7 +239,7 @@ public class AssemblyTreeResolver {
 
 	/**
 	 * Resolve the given branch, having selected a particular combination of subconstructor results
-	 * 
+	 *
 	 * @param prod the production
 	 * @param substs the braches and tokens corrresponding to the symbols of the production's RHS
 	 * @param sel the selected subconstructor results
@@ -456,10 +456,10 @@ public class AssemblyTreeResolver {
 
 	/**
 	 * Resolve a branch without considering any purely-recursive productions
-	 * 
+	 *
 	 * This method is used either when the LHS has no purely-recursive definition, or before
 	 * considering the purely-recursive definition when it is present.
-	 * 
+	 *
 	 * @param branch the branch
 	 * @return the results
 	 */
@@ -514,7 +514,7 @@ public class AssemblyTreeResolver {
 
 	/**
 	 * Compute the offset of an operand encoded in the instruction block
-	 * 
+	 *
 	 * @param opsym the operand symbol
 	 * @param cons the constructor containing the operand
 	 * @param res the selected subconstructor encodings
@@ -541,7 +541,7 @@ public class AssemblyTreeResolver {
 
 	/**
 	 * Attempt to solve an expression
-	 * 
+	 *
 	 * @param exp the expression to solve
 	 * @param goal the desired value of the expression
 	 * @param vals any defined symbols
@@ -564,9 +564,9 @@ public class AssemblyTreeResolver {
 
 	/**
 	 * Attempt to solve an expression
-	 * 
+	 *
 	 * Converts the given goal to a fully-defined {@link MaskedLong} and then solves as before.
-	 * 
+	 *
 	 * @see #solveOrBackfill(PatternExpression, MaskedLong, Map, Map, AssemblyResolvedConstructor,
 	 *      String)
 	 */
@@ -578,14 +578,14 @@ public class AssemblyTreeResolver {
 
 	/**
 	 * Attempt to solve an expression
-	 * 
+	 *
 	 * Converts the given goal and bits count to a {@link MaskedLong} and then solves as before. As
 	 * a special case, if {@code bits == 0}, the goal is considered fully-defined (as if
 	 * {@code bits == 64}).
-	 * 
+	 *
 	 * @see #solveOrBackfill(PatternExpression, MaskedLong, Map, Map, AssemblyResolvedConstructor,
 	 *      String)
-	 * 
+	 *
 	 */
 	protected static AssemblyResolution solveOrBackfill(PatternExpression exp, long goal, int bits,
 			Map<String, Long> vals, Map<Integer, Object> res, AssemblyResolvedConstructor cur,

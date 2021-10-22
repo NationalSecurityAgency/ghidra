@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,9 +16,9 @@
  */
 package ghidra.util.graph;
 
-/**  
+/**
  * An implementation of vertices for use in ghidra.util.graph.
- * 
+ *
  */
 public class Vertex implements KeyedObject, Comparable<Vertex> {
 	private final long key;
@@ -38,8 +38,8 @@ public class Vertex implements KeyedObject, Comparable<Vertex> {
 		this.referent = referent;
 	}
 
-	/** 
-	 * @return The key of this vertex. 
+	/**
+	 * @return The key of this vertex.
 	 */
 	public long key() {
 		return this.key;
@@ -53,7 +53,7 @@ public class Vertex implements KeyedObject, Comparable<Vertex> {
 		return "Nexus";
 	}
 
-	/** 
+	/**
 	 * @return true iff and only if the given object is a Vertex with the same
 	 * key.
 	 */
@@ -65,14 +65,14 @@ public class Vertex implements KeyedObject, Comparable<Vertex> {
 		return false;
 	}
 
-	/** 
+	/**
 	 * @return The Object this vertex refers to specified at creation time.
 	 */
 	public Object referent() {
 		return this.referent;
 	}
 
-	/** 
+	/**
 	 * @see java.lang.Object#hashCode()
 	 * Overides hashCode() to use the key of this Vertex.
 	 */
@@ -81,7 +81,7 @@ public class Vertex implements KeyedObject, Comparable<Vertex> {
 		return (int) this.key;
 	}
 
-	/** 
+	/**
 	 * Compares two vertices by keys. If the specified object o is not a Vertex a
 	 * ClassCastException will be thrown.
 	 */
@@ -98,8 +98,8 @@ public class Vertex implements KeyedObject, Comparable<Vertex> {
 		}
 	}
 
-	/** 
-	 * Return the name of this vertex. If the Vertex has a referent, the 
+	/**
+	 * Return the name of this vertex. If the Vertex has a referent, the
 	 * referent's toString() method will be used to create the name. If
 	 * the Vertex has a null referent, then the key will be used to determine
 	 * the name.

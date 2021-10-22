@@ -850,15 +850,15 @@ SBTarget SBDebugger::CreateTargetWithFileAndArch(const char *filename,
       // The version of CreateTarget that takes an ArchSpec won't accept an
       // empty ArchSpec, so when the arch hasn't been specified, we need to
       // call the target triple version.
-      error = m_opaque_sp->GetTargetList().CreateTarget(*m_opaque_sp, filename, 
+      error = m_opaque_sp->GetTargetList().CreateTarget(*m_opaque_sp, filename,
           arch_cstr, eLoadDependentsYes, nullptr, target_sp);
     } else {
       PlatformSP platform_sp = m_opaque_sp->GetPlatformList()
           .GetSelectedPlatform();
-      ArchSpec arch = Platform::GetAugmentedArchSpec(platform_sp.get(), 
+      ArchSpec arch = Platform::GetAugmentedArchSpec(platform_sp.get(),
           arch_cstr);
       if (arch.IsValid())
-        error = m_opaque_sp->GetTargetList().CreateTarget(*m_opaque_sp, filename, 
+        error = m_opaque_sp->GetTargetList().CreateTarget(*m_opaque_sp, filename,
             arch, eLoadDependentsYes, platform_sp, target_sp);
       else
         error.SetErrorStringWithFormat("invalid arch_cstr: %s", arch_cstr);

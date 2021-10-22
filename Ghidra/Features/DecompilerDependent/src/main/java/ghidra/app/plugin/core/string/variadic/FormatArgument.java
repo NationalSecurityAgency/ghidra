@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ public class FormatArgument {
 
 	/**
 	 * Constructor for a FormatArg
-	 * 
+	 *
 	 * @param lengthModifier length modifier of a format argument
 	 * @param conversionSpec conversion specifier of a format argument
 	 */
@@ -35,7 +35,7 @@ public class FormatArgument {
 
 	/**
 	 * lenghtModifier getter
-	 * 
+	 *
 	 * @return lengthModifier
 	 */
 	public String getLengthModifier() {
@@ -44,7 +44,7 @@ public class FormatArgument {
 
 	/**
 	 * convertionSpec getter
-	 * 
+	 *
 	 * @return conversionSpecifier
 	 */
 	public String getConversionSpecifier() {
@@ -53,7 +53,7 @@ public class FormatArgument {
 
 	/**
 	 * Converts FormatArg to String
-	 * 
+	 *
 	 * @return FormatArgument as String
 	 */
 	public String toString() {

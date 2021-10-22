@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ public interface HoverProvider {
 	public void closeHover();
 
 	/**
-	 * Notify this service that the mouse is hovering over a specific field within a 
+	 * Notify this service that the mouse is hovering over a specific field within a
 	 * field viewer.
 	 * @param fieldLocation the precise mouse location within the field viewer
 	 * @param field the field over which the mouse is hovering
@@ -47,7 +47,7 @@ public interface HoverProvider {
 	/**
 	 * If this service's window supports scrolling, scroll by the specified amount.  The value
 	 * will be negative when scrolling should move up.
-	 * 
+	 *
 	 * @param amount the amount by which to scroll
 	 */
 	public void scroll(int amount);

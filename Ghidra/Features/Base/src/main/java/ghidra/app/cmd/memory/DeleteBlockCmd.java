@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.util.Msg;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Command that runs in the background to delete a memory block, as 
+ * Command that runs in the background to delete a memory block, as
  * the delete may be a time consuming operation.
  */
 public class DeleteBlockCmd extends BackgroundCommand {
@@ -39,7 +39,7 @@ public class DeleteBlockCmd extends BackgroundCommand {
 	 * the array of block addresses indicates that the block containing that
 	 * address should be removed.
 	 * After the command has completed, getStatus() can be called to check the success.
-	 * If unsuccessful, getStatusMsg() can be called to get a message 
+	 * If unsuccessful, getStatusMsg() can be called to get a message
 	 * indicating why the command failed.
 	 * @param blockAddresses addresses indicating each block to be removed.
 	 * @param listener listener that will be notified when the delete block has completed.

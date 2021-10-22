@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,9 +42,9 @@ import ghidra.util.bean.opteditor.OptionsVetoException;
  * address. As viewer plugins are directed to one or more addresses it maintains
  * information about where the viewers have been to support ability for the
  * viewers to go back to a previous "focus" point.
- * 
+ *
  * Services Provided: NavigationHistoryService
- * Events Consumed: ProgramLocationPluginEvent, ProgramPluginEvent 
+ * Events Consumed: ProgramLocationPluginEvent, ProgramPluginEvent
  * Event Produced: HistoryChangePluginEvent Actions: None.
  */
 //@formatter:off
@@ -441,7 +441,7 @@ public class NavigationHistoryPlugin extends Plugin
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================    
+//==================================================================================================
 
 	private static class HistoryList {
 		private List<LocationMemento> list = new ArrayList<>();
@@ -545,9 +545,9 @@ public class NavigationHistoryPlugin extends Plugin
 		/**
 		 * Find the next history LocationMemento that contains a different function.  If no such
 		 * LocationMemento is found, null is returned.
-		 * 
+		 *
 		 * @param navigatable the navigatable being navigated
-		 * @param moveTo true means after finding, get current location to it. false to just find 
+		 * @param moveTo true means after finding, get current location to it. false to just find
 		 * 			and do nothing
 		 * @return next LocationMemento, or null if no next function
 		 */
@@ -589,9 +589,9 @@ public class NavigationHistoryPlugin extends Plugin
 		/**
 		 * Find the previous history LocationMemento that contains a different function. If no such
 		 * LocationMemento is found, null is returned.
-		 * 
+		 *
 		 * @param navigatable the navigatable being navigated
-		 * @param moveTo true means after finding, get current location to it. false to just find 
+		 * @param moveTo true means after finding, get current location to it. false to just find
 		 * 		   and do nothing
 		 * @return previous LocationMemento, or null if no previous function found
 		 */
@@ -630,7 +630,7 @@ public class NavigationHistoryPlugin extends Plugin
 
 			//
 			// The active component may still be showing the previously loaded function, instead
-			// of the current location when that location is not in a function.  In that case, 
+			// of the current location when that location is not in a function.  In that case,
 			// when that provider is focused, prefer its notion of the current function so that
 			// users navigating from that view will go to the function before the one that is
 			// on the history stack.  This should feel more intuitive to the user, with the risk

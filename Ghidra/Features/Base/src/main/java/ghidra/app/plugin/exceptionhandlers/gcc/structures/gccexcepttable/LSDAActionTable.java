@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ public class LSDAActionTable {
 
 	/**
 	 * Constructor for an action table.
-	 * <br>Note: The <code>create(Address)</code> method must be called after constructing an 
+	 * <br>Note: The <code>create(Address)</code> method must be called after constructing an
 	 * LSDAActionTable to associate it with an address before any of its "get..." methods are called.
 	 * @param monitor task monitor to see if the user has cancelled analysis.
 	 * @param program the program containing the action table.
@@ -75,7 +75,7 @@ public class LSDAActionTable {
 		monitor.setMessage("Creating LSDA Action Table");
 
 		LSDAActionRecord rec = null;
-		
+
 		while (address.compareTo(maxAddress) <= 0) {
 			rec = new LSDAActionRecord(monitor, program, region, this);
 			rec.create(address);
@@ -94,7 +94,7 @@ public class LSDAActionTable {
 
 	/**
 	 * Gets the base address (minimum address) indicating the start of this action table.
-	 * @return the address of this action table or null if this action table hasn't been 
+	 * @return the address of this action table or null if this action table hasn't been
 	 * created at any address yet.
 	 */
 	Address getAddress() {
@@ -103,7 +103,7 @@ public class LSDAActionTable {
 
 	/**
 	 * Gets the next address indicating the address after this action table.
-	 * @return the next address after this action table or null if this action table hasn't been 
+	 * @return the next address after this action table or null if this action table hasn't been
 	 * created at any address yet.
 	 */
 	Address getNextAddress() {
@@ -112,7 +112,7 @@ public class LSDAActionTable {
 
 	/**
 	 * Gets all of the action records in this action table.
-	 * @return the action records in this table or empty if no address has been established for 
+	 * @return the action records in this table or empty if no address has been established for
 	 * this table.
 	 */
 	public List<LSDAActionRecord> getActionRecords() {
@@ -120,9 +120,9 @@ public class LSDAActionTable {
 	}
 
 	/**
-	 * Gets the action record from the table by its index. 
+	 * Gets the action record from the table by its index.
 	 * @param actionIndex indicates which action record (0 based) to get from the table.
-	 * @return the action record or null if the index is invalid or an address hasn't been 
+	 * @return the action record or null if the index is invalid or an address hasn't been
 	 * established for this table yet.
 	 */
 	public LSDAActionRecord getActionRecord(int actionIndex) {

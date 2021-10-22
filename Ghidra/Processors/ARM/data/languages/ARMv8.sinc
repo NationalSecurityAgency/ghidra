@@ -579,7 +579,7 @@ define pcodeop PolynomialMult;
 	is ((TMode=0 &     c2831=0b1111 &     c2327=0b00111 &     c2021=0b11 &     c1819=0b01 &     c1617=0b10 &     c0911=0b011 &     c0607=0b00 &     c0404=0 &     c0808=1)
 	|   (TMode=1 & thv_c2831=0b1111 & thv_c2327=0b11111 & thv_c2021=0b11 & thv_c1819=0b01 & thv_c1617=0b10 & thv_c0911=0b011 & thv_c0607=0b00 & thv_c0404=0 & thv_c0808=1))
 	& Qd & Dm
-	{ 
+	{
 		Qd = float2float(Dm:2);
 	}
 

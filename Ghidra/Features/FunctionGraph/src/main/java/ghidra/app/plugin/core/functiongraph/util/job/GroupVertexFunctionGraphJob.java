@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,11 +54,11 @@ public class GroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraphJo
 
 //==================================================================================================
 // Factory Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * Constructor - used when creating a new group
-	 * 
+	 *
 	 * @param controller the controller of the graph to be ungrouped
 	 * @param groupVertex The group vertex to be ungrouped
 	 * @param location The default groupVertex location (only used if not performing a relayout).
@@ -66,7 +66,7 @@ public class GroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraphJo
 	 * 		  	  			   regardless of the user's relayout options</b>.  This is required to
 	 *                         perform a manual relayout.
 	 * @param useAnimation whether to use animation
-	 * @param isRegroupOperation true if the group is being created as a result of an 
+	 * @param isRegroupOperation true if the group is being created as a result of an
 	 *                           operation that restores a previously existing group
 	 */
 	private GroupVertexFunctionGraphJob(FGController controller,
@@ -81,7 +81,7 @@ public class GroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraphJo
 
 	/**
 	 * Constructor - used when updating an existing group
-	 * 
+	 *
 	 * @param controller the controller of the graph to be ungrouped
 	 * @param groupVertex The group vertex to be ungrouped
 	 * @param verticesToGroup the vertices to combine into a group
@@ -97,7 +97,7 @@ public class GroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraphJo
 
 //==================================================================================================
 // Required Template Methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	protected void notifyGroupChange() {
@@ -117,7 +117,7 @@ public class GroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraphJo
 			groupVertexDestinationLocation = groupVertexCurrentLocation;
 		}
 
-		// 'isRelayout' or not, we always want our grouped vertices to end up 
+		// 'isRelayout' or not, we always want our grouped vertices to end up
 		// at the same locations...
 		Map<FGVertex, Point2D> locations = new HashMap<>();
 
@@ -126,7 +126,7 @@ public class GroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraphJo
 			locations.put(vertex, groupVertexDestinationLocation);
 		}
 
-		// ...however, the group vertex will either be at the given location, or the layout 
+		// ...however, the group vertex will either be at the given location, or the layout
 		// location
 		if (!isRelayout) {
 			// not a relayout--specify the location
@@ -142,7 +142,7 @@ public class GroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraphJo
 		//
 		// This may be the same as the current locations, or they may be updated, depending upon
 		// user options
-		// 
+		//
 		LayoutPositions<FGVertex, FGEdge> positions = updateDestinationLocations();
 		Map<FGVertex, Point2D> destinationLocations = positions.getVertexLocations();
 		finalEdgeArticulations = positions.getEdgeArticulations();
@@ -150,7 +150,7 @@ public class GroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraphJo
 		//
 		// This group of vertices (all those besides the 'verticesToBeRemoved') will be moved
 		// to either 1) their new layout positions, or 2) they will stay just where they are.  The
-		// 'verticesToBeRemoved' will always be moved somewhere, depending upon the 'relayout' 
+		// 'verticesToBeRemoved' will always be moved somewhere, depending upon the 'relayout'
 		// variable.
 		//
 		Collection<FGVertex> vertices = getVerticesToMove();
@@ -163,7 +163,7 @@ public class GroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraphJo
 		}
 
 		//
-		// We have to move edge articulations--create transition points.  Depending upon the 
+		// We have to move edge articulations--create transition points.  Depending upon the
 		// value of 'relayout', there may be no edges to update.
 		//
 		Map<FGEdge, List<Point2D>> edgeArticulations = positions.getEdgeArticulations();
@@ -228,7 +228,7 @@ public class GroupVertexFunctionGraphJob extends AbstractGroupingFunctionGraphJo
 
 		List<ArticulationTransitionPoints> transitionPoints = new ArrayList<>();
 
-		// 
+		//
 		// In this case we will have to add articulations to the current edge now so that we can
 		// animate their creation.
 		//

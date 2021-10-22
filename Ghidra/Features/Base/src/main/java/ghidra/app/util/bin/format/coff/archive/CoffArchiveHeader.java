@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.util.task.TaskMonitor;
  * <p>
  * COFF archives are very primitive compared to containers like ZIP or even TAR.
  * <p>
- * The name of entries (ie. files) inside the archive is limited to 16 bytes, and to 
+ * The name of entries (ie. files) inside the archive is limited to 16 bytes, and to
  * support longer names a couple of different schemes have been invented.  See the
  * comments in {@link CoffArchiveMemberHeader#read(BinaryReader, LongNamesMember)} for
  * decoding the name.
@@ -54,7 +54,7 @@ public final class CoffArchiveHeader implements StructConverter {
 	/**
 	 * Reads and parses the headers and meta-data in a COFF Archive file.
 	 * <p>
-	 * Returns a {@link CoffArchiveHeader} that has a list of the 
+	 * Returns a {@link CoffArchiveHeader} that has a list of the
 	 * {@link CoffArchiveMemberHeader members} in the archive.
 	 * <p>
 	 * @param provider

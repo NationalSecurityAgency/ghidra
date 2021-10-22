@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ import ghidra.program.model.pcode.HighFunction;
 import ghidra.util.Msg;
 
 /**
- * 
+ *
  *
  * Control the GUI layout for displaying tokenized C code
  */
@@ -240,7 +240,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 		syntax_color[ClangToken.GLOBAL_COLOR] = options.getGlobalColor();
 		syntax_color[ClangToken.DEFAULT_COLOR] = options.getDefaultColor();
 
-		// setting the metrics here will indirectly trigger the new font to be used deeper in 
+		// setting the metrics here will indirectly trigger the new font to be used deeper in
 		// the bowels of the FieldPanel (you can get the font from the metrics)
 		Font font = options.getDefaultFont();
 		metrics = Toolkit.getDefaultToolkit().getFontMetrics(font);
@@ -369,7 +369,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 
 //==================================================================================================
 // Search Related Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private SearchLocation findNextTokenGoingForward(
 			java.util.function.Function<String, SearchMatch> matcher, String searchString,
@@ -550,7 +550,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 	}
 //==================================================================================================
 // End Search Related Methods
-//==================================================================================================	
+//==================================================================================================
 
 	ClangToken getTokenForLocation(FieldLocation fieldLocation) {
 		int row = fieldLocation.getIndex().intValue();
@@ -573,7 +573,7 @@ public class ClangLayoutController implements LayoutModel, LayoutModelListener {
 	}
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private static class LineNumberFieldElement extends ClangFieldElement {
 		private static final Color FOREGROUND_COLOR = new Color(125, 125, 125);

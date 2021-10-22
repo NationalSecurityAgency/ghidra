@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * More data type merge tests.
- * 
- * 
+ *
+ *
  */
 public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 
@@ -305,7 +305,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		DataTypeComponent dtc = bar.getComponent(1);
 		DataType dt = dtc.getDataType();
 
-		// Bar should contain Structure_1* 
+		// Bar should contain Structure_1*
 
 		assertTrue(dt.isEquivalent(PointerDataType.getPointer(s1, 4)));
 		dt = dtm.getDataType(new CategoryPath("/MISC"), "OtherFoo_Typedef");
@@ -891,7 +891,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		checkConflictCount(4);// get .conflict for pointer to s3
 
 		Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
-		// Foo from ORIGINAL 
+		// Foo from ORIGINAL
 		assertEquals(2, bar.getNumComponents());
 
 		// Structure_1 should contain Foo from MY
@@ -1251,7 +1251,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 					// change Bar
 					bar.add(new ByteDataType());
 					Pointer p = PointerDataType.getPointer(td, 4);// FooTypedef *
-					p = PointerDataType.getPointer(p, 4);// FooTypedef * * 
+					p = PointerDataType.getPointer(p, 4);// FooTypedef * *
 					p = PointerDataType.getPointer(p, 4);// FooTypedef * * *
 					p = PointerDataType.getPointer(p, 4);// FooTypedef * * * *
 					p = PointerDataType.getPointer(p, 4);// FooTypedef * * * * *
@@ -1294,11 +1294,11 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		dt = ((Pointer) dt).getDataType();
 		assertTrue(dt instanceof Pointer);// FooTypedef * * * *
 		dt = ((Pointer) dt).getDataType();
-		assertTrue(dt instanceof Pointer);// FooTypedef * * * 
+		assertTrue(dt instanceof Pointer);// FooTypedef * * *
 		dt = ((Pointer) dt).getDataType();
-		assertTrue(dt instanceof Pointer);// FooTypedef * * 
+		assertTrue(dt instanceof Pointer);// FooTypedef * *
 		dt = ((Pointer) dt).getDataType();
-		assertTrue(dt instanceof Pointer);// FooTypedef * 
+		assertTrue(dt instanceof Pointer);// FooTypedef *
 		dt = ((Pointer) dt).getDataType();
 		assertEquals(td, dt);
 
@@ -1337,7 +1337,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 
 					// edit Bar to create conflict because Latest deleted it
 					Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
-					p = PointerDataType.getPointer(p, 4);// Foo * * 
+					p = PointerDataType.getPointer(p, 4);// Foo * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * * * *
@@ -1357,7 +1357,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 						new TypedefDataType(new CategoryPath("/MISC"), "MyArray_Typedef", array);
 					// create a Pointer to typedef on MyArray_Typedef
 					p = PointerDataType.getPointer(td, 4);// MyArray_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * 
+					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * *
 					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * *
 					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * *
 					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * *
@@ -1394,19 +1394,19 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		assertTrue(dt instanceof Pointer);//Foo * * * * * *
 		dt = ((Pointer) dt).getDataType();
 
-		assertTrue(dt instanceof Pointer);// Foo * * * * * 
+		assertTrue(dt instanceof Pointer);// Foo * * * * *
 		dt = ((Pointer) dt).getDataType();
 
-		assertTrue(dt instanceof Pointer);// Foo * * * *  
+		assertTrue(dt instanceof Pointer);// Foo * * * *
 		dt = ((Pointer) dt).getDataType();
 
-		assertTrue(dt instanceof Pointer);// Foo * * * 
+		assertTrue(dt instanceof Pointer);// Foo * * *
 		dt = ((Pointer) dt).getDataType();
 
-		assertTrue(dt instanceof Pointer);// Foo * * 
+		assertTrue(dt instanceof Pointer);// Foo * *
 		dt = ((Pointer) dt).getDataType();
 
-		assertTrue(dt instanceof Pointer);// Foo * 
+		assertTrue(dt instanceof Pointer);// Foo *
 		dt = ((Pointer) dt).getDataType();
 
 		assertEquals(foo, dt);
@@ -1460,7 +1460,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 
 					// edit Bar to create conflict because Latest deleted it
 					Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
-					p = PointerDataType.getPointer(p, 4);// Foo * * 
+					p = PointerDataType.getPointer(p, 4);// Foo * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * * * *
@@ -1481,7 +1481,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 						new TypedefDataType(new CategoryPath("/MISC"), "MyArray_Typedef", array);
 					// create a Pointer to typedef on MyArray_Typedef
 					p = PointerDataType.getPointer(td, 4);// MyArray_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * 
+					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * *
 					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * *
 					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * *
 					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * *
@@ -1518,7 +1518,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		assertEquals(2, dtcs.length);
 		assertTrue(dtcs[1].getDataType() instanceof Pointer);
 
-		//Foo should have MyArray_Typedef * * * * * * * * 
+		//Foo should have MyArray_Typedef * * * * * * * *
 		dtcs = foo.getDefinedComponents();
 		assertEquals(5, dtcs.length);
 		DataType dt = dtcs[4].getDataType();
@@ -1585,7 +1585,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 						new TypedefDataType(new CategoryPath("/MISC"), "MyFooArray_Typedef", array);
 					// create a Pointer to typedef on MyArray_Typedef
 					Pointer p = PointerDataType.getPointer(td, 4);// MyArray_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * 
+					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * *
 					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * *
 					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * *
 					p = PointerDataType.getPointer(p, 4);// MyArray_Typedef * * * * *
@@ -1607,7 +1607,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		// Conflict on Bar
 		chooseOption(DataTypeMergeManager.OPTION_MY);// choose MY Bar
 
-		// NOTE: while Foo grows because of Bar it was not explicitly change in 
+		// NOTE: while Foo grows because of Bar it was not explicitly change in
 		// MY so no conflict should be detected for Foo
 
 		waitForCompletion();
@@ -1662,7 +1662,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 
 					// edit Bar to create conflict because Latest deleted it
 					Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
-					p = PointerDataType.getPointer(p, 4);// Foo * * 
+					p = PointerDataType.getPointer(p, 4);// Foo * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * * * *
@@ -1674,7 +1674,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 						new TypedefDataType(new CategoryPath("/MISC"), "MyBar_Typedef", bar);
 					// create a Pointer to typedef on Bar
 					p = PointerDataType.getPointer(td, 4);// MyBar_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * 
+					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * *
 					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * *
 					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * *
 					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * *
@@ -1709,19 +1709,19 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		assertTrue(dt instanceof Pointer);//Foo * * * * * *
 		dt = ((Pointer) dt).getDataType();
 
-		assertTrue(dt instanceof Pointer);// Foo * * * * * 
+		assertTrue(dt instanceof Pointer);// Foo * * * * *
 		dt = ((Pointer) dt).getDataType();
 
-		assertTrue(dt instanceof Pointer);// Foo * * * *  
+		assertTrue(dt instanceof Pointer);// Foo * * * *
 		dt = ((Pointer) dt).getDataType();
 
-		assertTrue(dt instanceof Pointer);// Foo * * * 
+		assertTrue(dt instanceof Pointer);// Foo * * *
 		dt = ((Pointer) dt).getDataType();
 
-		assertTrue(dt instanceof Pointer);// Foo * * 
+		assertTrue(dt instanceof Pointer);// Foo * *
 		dt = ((Pointer) dt).getDataType();
 
-		assertTrue(dt instanceof Pointer);// Foo * 
+		assertTrue(dt instanceof Pointer);// Foo *
 		dt = ((Pointer) dt).getDataType();
 
 		assertEquals(foo, dt);
@@ -1769,7 +1769,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 
 					// edit Bar to create conflict because Latest deleted it
 					Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
-					p = PointerDataType.getPointer(p, 4);// Foo * * 
+					p = PointerDataType.getPointer(p, 4);// Foo * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * * * *
@@ -1781,7 +1781,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 						new TypedefDataType(new CategoryPath("/MISC"), "MyBar_Typedef", bar);
 					// create a Pointer to typedef on Bar
 					p = PointerDataType.getPointer(td, 4);// MyBar_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * 
+					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * *
 					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * *
 					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * *
 					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * *
@@ -1820,7 +1820,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 		assertEquals(3, dtcs.length);
 		dtcs = foo.getComponents();
 
-		// pointer gets converted to default 
+		// pointer gets converted to default
 		for (int i = 4; i < dtcs.length; i++) {
 			assertEquals(DataType.DEFAULT, dtcs[i].getDataType());
 		}
@@ -1863,7 +1863,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 
 					// edit Bar to create conflict because Latest deleted it
 					Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
-					p = PointerDataType.getPointer(p, 4);// Foo * * 
+					p = PointerDataType.getPointer(p, 4);// Foo * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * * * *
@@ -1875,7 +1875,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 						new TypedefDataType(new CategoryPath("/MISC"), "MyBar_Typedef", bar);
 					// create a Pointer to typedef on Bar
 					p = PointerDataType.getPointer(td, 4);// MyBar_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * 
+					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * *
 					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * *
 					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * *
 					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * *
@@ -1962,12 +1962,12 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 
 					// edit Bar to create conflict because Latest deleted it
 					Pointer p = PointerDataType.getPointer(foo, 4);// Foo *
-					p = PointerDataType.getPointer(p, 4);// Foo * * 
+					p = PointerDataType.getPointer(p, 4);// Foo * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * * * *
 					p = PointerDataType.getPointer(p, 4);// Foo * * * * * *
-					bar.add(p);// This causes Bar to increase by 4 bytes 
+					bar.add(p);// This causes Bar to increase by 4 bytes
 					// and Foo contains Bar at the end so it also increases by 4.
 
 					// create a TypeDef on Bar
@@ -1975,7 +1975,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 						new TypedefDataType(new CategoryPath("/MISC"), "MyBar_Typedef", bar);
 					// create a Pointer to typedef on Bar
 					p = PointerDataType.getPointer(td, 4);// MyBar_Typedef *
-					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * 
+					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * *
 					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * *
 					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * *
 					p = PointerDataType.getPointer(p, 4);// MyBar_Typedef * * * * *
@@ -2002,7 +2002,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 
 		waitForCompletion();
 
-		// Bar should have been removed 
+		// Bar should have been removed
 		Structure bar = (Structure) dtm.getDataType(new CategoryPath("/MISC"), "Bar");
 		assertNull(bar);
 
@@ -2016,7 +2016,7 @@ public class DataTypeMerge4Test extends AbstractDataTypeMergeTest {
 
 		dtcs = foo.getComponents();
 
-		// pointer gets converted to default 
+		// pointer gets converted to default
 		for (int i = 4; i < dtcs.length; i++) {
 			assertEquals(DataType.DEFAULT, dtcs[i].getDataType());
 		}

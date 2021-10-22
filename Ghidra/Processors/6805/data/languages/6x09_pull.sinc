@@ -21,7 +21,7 @@ puls6: puls5        is imm86=0 & puls5      { }
 puls7: puls6" "PC   is PC & imm87=1 & puls6 { local t:2 = 0; Pull2(S, t); goto [t]; }
 puls7: puls6        is imm87=0 & puls6      { }
 
-:PULS puls7    is op=0x35; puls7 { }                                                                                           
+:PULS puls7    is op=0x35; puls7 { }
 
 ################################################################
 # PULU helper

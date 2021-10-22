@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -234,7 +234,7 @@ public class CachedAddressSetView implements AddressSetView {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * Only use this for small sets, otherwise, this cache may become overloaded. This method is
 	 * also generally not efficient for sets comprised of many ranges.
 	 */
@@ -255,7 +255,7 @@ public class CachedAddressSetView implements AddressSetView {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * After this method is executed, the entire delegate will be loaded in the cache.
 	 */
 	@Override
@@ -266,7 +266,7 @@ public class CachedAddressSetView implements AddressSetView {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * After this method is executed, the entire delegate is loaded into the cache.
 	 */
 	@Override
@@ -277,7 +277,7 @@ public class CachedAddressSetView implements AddressSetView {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * After this method is executed, the entire delegate is loaded into the cache.
 	 */
 	@Override
@@ -288,7 +288,7 @@ public class CachedAddressSetView implements AddressSetView {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * If this method returns true, then the entire delegate has been loaded into the cache.
 	 */
 	@Override

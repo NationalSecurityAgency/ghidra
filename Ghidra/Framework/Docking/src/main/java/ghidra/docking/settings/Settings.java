@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ package ghidra.docking.settings;
  * of value and how to interpret the value is done by the SettingsDefinition object.
  */
 public interface Settings {
-	
+
 	/**
 	 * Gets the Long value associated with the given name
 	 * @param name the key used to retrieve a value
@@ -42,14 +42,14 @@ public interface Settings {
 	 * @return the byte[] value for a key
 	 */
 	byte[] getByteArray(String name);
-	
+
 	/**
 	 * Gets the object associated with the given name
 	 * @param name the key used to retrieve a value
 	 * @return the object associated with a given key
 	 */
 	Object getValue(String name);
-	
+
 	/**
 	 * Associates the given long value with the name
 	 * @param name the key
@@ -68,42 +68,42 @@ public interface Settings {
 	 * @param value the value associated with the key
 	 */
 	void setByteArray(String name, byte[] value);
-	
+
 	/**
 	 * Associates the given object with the name
 	 * @param name the key
 	 * @param value the value to associate with the key
 	 */
 	void setValue(String name, Object value);
-	
+
 	/**
 	 * Removes any value associated with the given name
 	 * @param name the key to remove any association
 	 */
 	void clearSetting(String name);
-	
+
 	/**
 	 * Removes all name-value pairs from this settings object
 	 */
 	void clearAllSettings();
-	
+
 	/**
 	 * Get this list of keys that currently have values associated with them
 	 * @return an array of string keys.
 	 */
 	String[] getNames();
-	
+
 	/**
 	 * Returns true if there are no key-value pairs stored in this settings object
 	 */
 	boolean isEmpty();
-	
+
 //	/**
 //	 * Sets the settings object to use if this settings object does not have the requested settings name.
 //	 * @param settings the settings object to use if this settings object does not have the requested settings name.
 //	 */
 //	void setDefaultSettings(Settings settings);
-	
+
 	/**
 	 * Returns the underlying default settings for these settings or null if there are none
 	 */

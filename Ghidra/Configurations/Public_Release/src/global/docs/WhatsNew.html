@@ -21,19 +21,19 @@
   <BODY>
 
 	<H1>Ghidra: NSA Reverse Engineering Software</H2>
-    
+
     <P>
     Ghidra is a software reverse engineering (SRE) framework developed by NSA's Research Directorate.
     This framework includes a suite of full-featured, high-end software analysis tools that enable
     users to analyze compiled code on a variety of platforms including Windows, MacOS, and Linux.
     Capabilities include disassembly, assembly, decompilation, graphing, and scripting, along with
-    hundreds of other features.  Ghidra supports a wide variety of processor instruction sets and 
+    hundreds of other features.  Ghidra supports a wide variety of processor instruction sets and
     executable formats and can be run in both user-interactive and automated modes.  Users may also
     develop their own Ghidra plug-in components and/or scripts using the exposed API.  In addition there are
     numerous ways to extend Ghidra such as new processors, loaders/exporters, automated analyzers,
     and new visualizations.
     </P>
-    
+
     <P>
     In support of NSA's Cybersecurity mission, Ghidra was built to solve scaling and teaming problems
     on complex SRE efforts, and to provide a customizable and extensible SRE research platform.  NSA
@@ -41,12 +41,12 @@
     code and generating deep insights for NSA analysts who seek a better understanding of potential
     vulnerabilities in networks and systems.
     </P>
-    
+
 
     <H1> What's new in Ghidra 10.0</H1>
-    
+
     <H2> <a id="finePrint10"/>The not-so-fine print: Please Read!</H2>
-    
+
 	<P>Ghidra 10.0 is fully backward compatible with project data from previous releases. However, programs and data type archives
 	which are created or modified in 10.0 will not be useable by an earlier Ghidra version.</P>
 
@@ -54,16 +54,16 @@
 	contributions.  Thanks to all those who have contributed their time, thoughts, and code. The Ghidra user community
 	thanks you too!</P>
 
-	<P>NOTE: Ghidra Server: The Ghidra 10.0 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 10.0 
+	<P>NOTE: Ghidra Server: The Ghidra 10.0 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 10.0
 	clients are compatible with all 9.x servers.</P>
 
     <H2>Debugger</H2>
-    
+
     <P>With the release of Ghidra 10.0, we are excited to officially introduce our new Debugger. It is still geared primarily for user-mode application debugging on Linux and Windows;
     however, you may find its components usable in other scenarios. To get started, please Ghidra Functionality / Debugger / Getting Started in the Help. For most, it is as easy as importing
     your program, opening it with the Debugger tool, and clicking the "bug" icon in the main toolbar. The Debugger's features include:</P>
     <BLOCKQUOTE><UL>
-    
+
     <li>Debugging user-mode Windows applications on x64 hosts via dbgeng.dll/WinDbg (including 32-bit x86 applications via WoW64)</li>
     <li>Debugging user-mode Linux applications on amd64/x86_64 hosts via GDB (including 32-bit i686/x86 applications)</li>
     <li>Quick launch to locally debug the current program</li>
@@ -137,7 +137,7 @@
         The following are areas where we've seen the most recurring problem tickets, for which we've not been able to produce quick fixes.
         We don't necessarily have answers for these problems, so we're listing them here so people are aware, and to open up some discussion.
         </P>
-        
+
         <H4>1. The breakpoints interface is complicated</H4>
         <P>
         We attempt to present an abstract view of breakpoints and save them to the program databases, but we also didn't want to hide the raw breakpoint locations listed for each target.
@@ -148,7 +148,7 @@
         While we've made some changes recently to try to communicate actual breakpoint state, it has not alleviated this confusion.
         We're also not sure if this is just a learning curve thing, or a real problem regarding UI intuition.
         </P>
-        
+
         <H4>2. Loading the correct dbgeng DLL for Windows debugging is a kludge</H4>
         <P>
         It turns out the OpenJDK 11 JVM is already linked to <code>dbgeng.dll</code> in order to implement its service agent.
@@ -168,7 +168,7 @@
         Ideally, we'd find an environment variable to override the JVM's link to <code>dbgeng.dll</code>, so that we can link to a configured WinDbg installation.
         Furthermore, we have some configuration management to do in cataloging and deciding which versions of WinDbg to prescribe.
         </P>
-        
+
         <H4>3. Errors due to configuration / installation issues are not clear</H4>
         <P>
         While we've done our best to document version requirements, when those requirements are not met, we don't fail fast.
@@ -183,7 +183,7 @@
         Granted, some of these situations are outside the prescribed use cases, not all are.
         While this can be addressed in support forums or FAQs, we really ought to put in some better diagnostics.
         </P>
-        
+
         <H4>4. A trace database is required to accomplish even basic operations, and it's becoming a burden.</H4>
         <P>
         The trace database was a bit serendipitous.
@@ -214,7 +214,7 @@
         The latter is mitigated somewhat by the "Objects" viewer's table mode, using the Registers container as the root, but this is not an intuitive solution until the user is familiar with that viewer.
         We need either/both to support simpler forms of tracing that have fewer dependencies and/or to implement some state viewers outside of tracing &mdash; but without taking us back to our original problems.
         </P>
-        
+
         <H4>5. The threads timeline view has not been receiving enough TLC</H4>
         <P>
         This particular view was meant to expose the time axis of the trace database in a sort of "cool" fashion by plotting the lifetimes of every observed thread.
@@ -227,9 +227,9 @@
         We'd like to devise something more cogent, perhaps allowing queries or establishing visual cues to identify interesting points in time.
         </P>
         </BLOCKQUOTE>
-        
+
     <H2>User-defined Compiler Specification Extensions</H2>
-    
+
         <P>Ghidra 10.0 adds support for user-defined extensions to the <b>compiler specification</b> assigned to a specific Program.  In particular,
             users can now define their own:</P>
         <BLOCKQUOTE><UL>
@@ -241,11 +241,11 @@
     <P>Prior releases only provided compiler specifications statically via <B>.cspec</B> files in the distribution.  The new extensions
       are stored as part of the Program and can be added or adjusted dynamically as users build up their understanding.
       Extensions can be added from the <B>Specification Extensions</B> tab under the <I>Options</I> dialog for the Program.</P>
-    
+
     <H2>Prototype Class Recovery From RTTI</H2>
-    <P>A new prototype script <B>RecoverClassesFromRTTIScript</B> which recovers class information using RTTI structures has been added. 
-    The script recovers class hierarchy, inheritance types, constructors and destructors, class data types, and more. If available, PDB information 
-    is used to help fill in class structures with known names and types for class member data. If PDB is unavailable, the decompiler structure 
+    <P>A new prototype script <B>RecoverClassesFromRTTIScript</B> which recovers class information using RTTI structures has been added.
+    The script recovers class hierarchy, inheritance types, constructors and destructors, class data types, and more. If available, PDB information
+    is used to help fill in class structures with known names and types for class member data. If PDB is unavailable, the decompiler structure
     recovery is utilized to populate class data structure members.</P>
     <P>Things to consider when using this script:</P>
     <BLOCKQUOTE><UL>
@@ -254,61 +254,61 @@
         <LI>Windows class recovery is fairly complete and tested, however GCC class recovery is still in early development.</LI>
         <LI>For best results, run this script on freshly imported and analyzed programs. No testing has been done on programs previously imported with pre-existing user mark-up.</LI>
     </UL></BLOCKQUOTE>
-    <P>Two related scripts have been added, <B>ApplyClassFunctionSignatureUpdatesScript</B> and <B>ApplyClassFunctionDefinitionUpdatesScript</B>, which are fix-up scripts that can be applied if a user 
-    makes changes to a virtual function recovered by the <B>RecoverClassesFromRTTIScript</B>. Both scripts identify differences between Function Signatures in the 
+    <P>Two related scripts have been added, <B>ApplyClassFunctionSignatureUpdatesScript</B> and <B>ApplyClassFunctionDefinitionUpdatesScript</B>, which are fix-up scripts that can be applied if a user
+    makes changes to a virtual function recovered by the <B>RecoverClassesFromRTTIScript</B>. Both scripts identify differences between Function Signatures in the
     Listing and Function Definitions in the Data Type Manager, but the first script fixes all changes to match the signature and the second to match the definition. NOTE: These
     scripts are a temporary measure until an underlying connection between function signatures and their associated function definition can be implemented in the Ghidra API.</P>
 
     <H2>PDB Symbol Server</H2>
     <P>Managing and applying PDB files has a much improved GUI, including support for multiple symbol server locations.</P>
-    
+
     <H2>Saved Analysis Options Configuration</H2>
-    
+
     <P>Analysis options configurations can be saved by name and quickly changed using a new feature in the Analysis configuration menu. The
     last used named configuration will be used as the default option the next time a program is analyzed even after exiting Ghidra.  This can be useful
     to disable one or more options, such as Stack Analysis, if the analyzer is providing poor results or the analysis is not desired for a type of binary
     you will be working with.  For example some analysis options should be turned off by default for all suspect malware binaries on the first pass to avoid
     issues with some types of obfuscation.<P>
-    
+
     <H2>Graphs</H2>
-    
+
     <P>Data types can get complicated and might have many references to other data structures, either by declaring them as a field or as a pointer at another data type.
     A general graph of data type relationships from the Data Type manager has been added. In addition defined data structures in memory can be graphed by following all references
     to other defined data or code using the Graph->Data menu.<P>
-    
+
     <P>A new favored edge and associated layout has been added for hierarchical graphs.  This edge can help closely align graph nodes that should
-    be arranged more closely to a neighboring node, for example the node from a fall-thru edge should be arranged closer than from a branching edge.<P>   
-    
+    be arranged more closely to a neighboring node, for example the node from a fall-thru edge should be arranged closer than from a branching edge.<P>
+
     <H2>Structure/Union Changes</H2>
-    
+
     <P>A significant refactor of the Composite datatype interfaces and internals has been completed which affects
-    Structures and Unions.  The changes are intended to provide a more understandable API and allow an alignment 
+    Structures and Unions.  The changes are intended to provide a more understandable API and allow an alignment
     to be specified for non-packed composites (aka, composites with internal alignment disabled).</P>
-    
+
     <H3>Editor Changes</H3>
-    
+
     <P>Previously, the editor contained an <B>Align</B> checkbox which determined if packing should be performed or not.
-    This checkbox has been replaced by a checkbox adjacent to the <B>pack</B> choices (i.e., enable/disable packing).  
-    Generally, this setting would be "not-checked" (i.e., disabled) when reverse-engineering the content of a 
-    structure so that components may be placed at specific offsets.  Only when there is a complete understanding 
+    This checkbox has been replaced by a checkbox adjacent to the <B>pack</B> choices (i.e., enable/disable packing).
+    Generally, this setting would be "not-checked" (i.e., disabled) when reverse-engineering the content of a
+    structure so that components may be placed at specific offsets.  Only when there is a complete understanding
     of all components, as conveyed by a source header file, should
     this be enabled with the appropriate <B>pack</B> and <B>align</B> settings specified.  In addition, when <B>pack</B>
-    is enabled it is important that the component datatypes emit the correct alignment to ensure proper 
-    placement during packing.</P> 
-    
-    <P>The <B>align</B> setting may now be used when packing is disabled with the composite adopting 
-    the specified alignment.  The default alignment for a non-packed composite is <B>1</B> which is consistent 
+    is enabled it is important that the component datatypes emit the correct alignment to ensure proper
+    placement during packing.</P>
+
+    <P>The <B>align</B> setting may now be used when packing is disabled with the composite adopting
+    the specified alignment.  The default alignment for a non-packed composite is <B>1</B> which is consistent
     with the current behavior in Ghidra 9.x.</P>
-     
+
     <H3>Composite API Changes</H3>
-    
-    <P>The various pack and align methods of the <I>Composite</I> (i.e., <I>Structure</I> and <I>Union</I>) 
+
+    <P>The various pack and align methods of the <I>Composite</I> (i.e., <I>Structure</I> and <I>Union</I>)
     API have been changed extensively. Since these changes were primarily intended to "cleanup" the
     interface we decided to eliminate (i.e., not deprecate) the old methods.  It was felt leaving them in
-    place would only confuse matters when attempting to understand the new interface.  It is also believed that 
-    most uses of the API generally do not utilize the pack and align settings which should minimize the 
+    place would only confuse matters when attempting to understand the new interface.  It is also believed that
+    most uses of the API generally do not utilize the pack and align settings which should minimize the
     impact to existing user code.<P>
-    
+
     <P>The tables below convey the <I>Composite</I> API changes as they relate to the pack and align settings.</P>
     <BLOCKQUOTE>
     <P>
@@ -348,9 +348,9 @@
        </TR><TR>
            <TD><CODE>realign()</CODE></TD>
            <TD><CODE>repack()</CODE></TD>
-           <TD>Update component sizing and placement if composite has packing enabled. 
-             Changes to data organization (e.g., type sizes and alignments) are problematic and difficult to fully 
-             recover from.  Any attempted repair to component sizes and alignments need to be performed in 
+           <TD>Update component sizing and placement if composite has packing enabled.
+             Changes to data organization (e.g., type sizes and alignments) are problematic and difficult to fully
+             recover from.  Any attempted repair to component sizes and alignments need to be performed in
              dependency order (ignoring pointer components).</TD>
        </TR>
     </TABLE>
@@ -358,19 +358,19 @@
     <TABLE WIDTH="100%">
        <TR>
            <TD COLSPAN="3"><CENTER><B>Composite Align API Changes</B></CENTER><BR>
-           <B>NOTE!</B> The old alignment <I>set</I> methods previously forced packing to be enabled.  
-             This is no longer the case since the alignment setting is now supported for composites 
-             where packing is not enabled.  If packing should be enabled a separate 
+           <B>NOTE!</B> The old alignment <I>set</I> methods previously forced packing to be enabled.
+             This is no longer the case since the alignment setting is now supported for composites
+             where packing is not enabled.  If packing should be enabled a separate
              call to a packing enablement method (see above) is required.  When packing is <U>disabled</U>
-             the composite's computed alignment will match the specified align setting (default is 
+             the composite's computed alignment will match the specified align setting (default is
              1 which is consistent with old behavior).
            </TD>
        </TR><TR style="background-color:#DFDFDF;">
-           <TH>Old Method 9.x</TH><TH>New Method 10.0</TH><TH>Comments</TH>    
+           <TH>Old Method 9.x</TH><TH>New Method 10.0</TH><TH>Comments</TH>
        </TR><TR>
            <TD><CODE>setToDefaultAlignment()</CODE></TD>
            <TD><CODE>setToDefaultAligned()</CODE></TD>
-           <TD>Default alignment for a non-packed composite is 1.  When packing is enabled the 
+           <TD>Default alignment for a non-packed composite is 1.  When packing is enabled the
            default alignment is a function of the component packing.</TD>
        </TR><TR>
            <TD><CODE>isDefaultAligned()</CODE></TD>
@@ -380,7 +380,7 @@
            <TD><CODE>setToMachineAlignment()</CODE></TD>
            <TD><CODE>setToMachineAligned()</CODE></TD>
            <TD>Non-packed composites will have an alignment which equals the machine alignment
-           specified by the compiler specification (data organization).  Packed structures 
+           specified by the compiler specification (data organization).  Packed structures
            will have an alignment which is a multiple of the machine alignment.</TD>
        </TR><TR>
            <TD><CODE>isMachineAligned()</CODE></TD>
@@ -389,9 +389,9 @@
        </TR><TR>
            <TD><CODE>setMinimumAlignment(DEFAULT_ALIGNMENT_VALUE)<BR>setMinimumAlignment(1..n)</CODE></TD>
            <TD><CODE>setToDefaultAligned()<BR>setExplicitMinimumAlignment(1..n)<BR>align(1..n)</CODE></TD>
-           <TD> 
-             If an explicit minimum alignment is set (1..n), non-packed composites will have an alignment 
-             which equals this value, while packed structures 
+           <TD>
+             If an explicit minimum alignment is set (1..n), non-packed composites will have an alignment
+             which equals this value, while packed structures
              will have an alignment which is a multiple of this value.
              Old constant <CODE>DEFAULT_ALIGNMENT_VALUE</CODE> has been eliminated.
            </TD>
@@ -411,21 +411,21 @@
     </TABLE>
     </BLOCKQUOTE>
     </P>
-    
+
     <H2>Gradle</H2>
     <P>The build infrastructure has been upgraded to support both Gradle 6 and 7. Gradle 5 is no longer supported.<P>
 
     <H2>New Processors</H2>
     <P>We are working on .NET/CIL that may make it into the final 10.0 release, but most likely into 10.1</P>
 
-    <H2>Binary Exporter</H2>    
+    <H2>Binary Exporter</H2>
     <P>New exporters that write programs imported with the PE and ELF loaders back to their original file layout have been added.
     Any file-backed bytes that were modified by the user in the program database will be reflected in the written file.
     Bytes that are part of the import process such as relocations or modified Memory Maps are not currently handled.</P>
-    
+
     <H2>Bug Fixes and Enhancements</H2>
     <P> Numerous other bug fixes and improvements are fully listed in the <a href="ChangeHistory.html">ChangeHistory</a> file.</P>
-    		   
+
     <BR>
     <P align="center">
     <B><a href="https://www.nsa.gov/ghidra"> https://www.nsa.gov/ghidra</a></B>

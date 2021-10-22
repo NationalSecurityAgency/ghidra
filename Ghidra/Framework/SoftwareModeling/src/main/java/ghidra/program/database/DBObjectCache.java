@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.program.model.address.KeyRange;
  * cache such that objects are only ever automatically removed from the cache when there are no
  * references to that object. It also maintains a small "hard" cache so that recently accessed objects
  * are not prematurely removed from the cache if there are no references to them.
- * 
+ *
  * @param <T> The type of the object stored in this cache
  */
 public class DBObjectCache<T extends DatabaseObject> {

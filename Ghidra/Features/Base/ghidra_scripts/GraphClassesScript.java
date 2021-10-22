@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 //Script to graph class hierarchies given metadata found in class structure description that
-// was applied using the RecoverClassesFromRTTIScript.  
+// was applied using the RecoverClassesFromRTTIScript.
 //@category C++
 import java.util.ArrayList;
 import java.util.List;
@@ -100,8 +100,8 @@ public class GraphClassesScript extends GhidraScript {
 	}
 
 	/**
-	 * Method to create a graph using preconfigured information found in class structure descriptions. 
-	 * The structure descriptions are created using 
+	 * Method to create a graph using preconfigured information found in class structure descriptions.
+	 * The structure descriptions are created using
 	 * {@link RecoveredClassUtils#createParentStringBuffer(RecoveredClass)}
 	 * @return the newly created graph
 	 */
@@ -231,7 +231,7 @@ public class GraphClassesScript extends GhidraScript {
 
 	private int getIndexOfFirstSingleColon(String string) {
 
-		// replace all :: with something else so can isolate :'s 
+		// replace all :: with something else so can isolate :'s
 		String testString = new String(string);
 		testString = testString.replace("::", "xx");
 

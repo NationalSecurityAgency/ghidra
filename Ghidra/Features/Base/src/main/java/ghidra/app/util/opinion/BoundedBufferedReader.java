@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,12 +42,12 @@ public class BoundedBufferedReader extends Reader {
 	/**
 	 * Creates a buffering character-input stream that uses an input buffer of
 	 * the specified size.
-	 * 
+	 *
 	 * @param in
 	 *            A Reader
 	 * @param sz
 	 *            Input-buffer size
-	 * 
+	 *
 	 * @exception IllegalArgumentException
 	 *                If sz is &lt;= 0
 	 */
@@ -63,7 +63,7 @@ public class BoundedBufferedReader extends Reader {
 	/**
 	 * Creates a buffering character-input stream that uses a default-sized
 	 * input buffer.
-	 * 
+	 *
 	 * @param in
 	 *            A Reader
 	 */
@@ -123,7 +123,7 @@ public class BoundedBufferedReader extends Reader {
 
 	/**
 	 * Reads a single character.
-	 * 
+	 *
 	 * @return The character read, as an integer in the range 0 to 65535 (
 	 *         <code>0x00-0xffff</code>), or -1 if the end of the stream has been
 	 *         reached
@@ -189,7 +189,7 @@ public class BoundedBufferedReader extends Reader {
 
 	/**
 	 * Reads characters into a portion of an array.
-	 * 
+	 *
 	 * <p>
 	 * This method implements the general contract of the corresponding
 	 * <code>{@link Reader#read(char[], int, int) read}</code> method of the
@@ -199,25 +199,25 @@ public class BoundedBufferedReader extends Reader {
 	 * <code>read</code> continues until one of the following conditions becomes
 	 * true:
 	 * <ul>
-	 * 
+	 *
 	 * <li>The specified number of characters have been read,
-	 * 
+	 *
 	 * <li>The <code>read</code> method of the underlying stream returns
 	 * <code>-1</code>, indicating end-of-file, or
-	 * 
+	 *
 	 * <li>The <code>ready</code> method of the underlying stream returns
 	 * <code>false</code>, indicating that further input requests would block.
-	 * 
+	 *
 	 * </ul>
 	 * If the first <code>read</code> on the underlying stream returns
 	 * <code>-1</code> to indicate end-of-file then this method returns
 	 * <code>-1</code>. Otherwise this method returns the number of characters
 	 * actually read.
-	 * 
+	 *
 	 * <p>
 	 * Subclasses of this class are encouraged, but not required, to attempt to
 	 * read as many characters as possible in the same fashion.
-	 * 
+	 *
 	 * <p>
 	 * Ordinarily this method takes characters from this stream's character
 	 * buffer, filling it from the underlying stream as necessary. If, however,
@@ -225,17 +225,17 @@ public class BoundedBufferedReader extends Reader {
 	 * at least as large as the buffer, then this method will read characters
 	 * directly from the underlying stream into the given array. Thus redundant
 	 * <code>BufferedReader</code>s will not copy data unnecessarily.
-	 * 
+	 *
 	 * @param cbuf
 	 *            Destination buffer
 	 * @param off
 	 *            Offset at which to start storing characters
 	 * @param len
 	 *            Maximum number of characters to read
-	 * 
+	 *
 	 * @return The number of characters read, or -1 if the end of the stream has
 	 *         been reached
-	 * 
+	 *
 	 * @exception IOException
 	 *                If an I/O error occurs
 	 */
@@ -266,16 +266,16 @@ public class BoundedBufferedReader extends Reader {
 	 * Reads a line of text. A line is considered to be terminated by any one of
 	 * a line feed ('\n'), a carriage return ('\r'), or a carriage return
 	 * followed immediately by a linefeed.
-	 * 
+	 *
 	 * @param ignoreLF
 	 *            If true, the next '\n' will be skipped
-	 * 
+	 *
 	 * @return A String containing the contents of the line, not including any
 	 *         line-termination characters, or null if the end of the stream has
 	 *         been reached
-	 * 
+	 *
 	 * @see java.io.LineNumberReader#readLine()
-	 * 
+	 *
 	 * @exception IOException
 	 *                If an I/O error occurs
 	 */
@@ -336,7 +336,7 @@ public class BoundedBufferedReader extends Reader {
 				if (s == null)
 					s = new StringBuffer(defaultExpectedLineLength);
 				s.append(cb, startChar, i - startChar);
-				
+
 				if (cb.length > 0x1000) {
 					return "";
 				}
@@ -348,11 +348,11 @@ public class BoundedBufferedReader extends Reader {
 	 * Reads a line of text. A line is considered to be terminated by any one of
 	 * a line feed ('\n'), a carriage return ('\r'), or a carriage return
 	 * followed immediately by a linefeed.
-	 * 
+	 *
 	 * @return A String containing the contents of the line, not including any
 	 *         line-termination characters, or null if the end of the stream has
 	 *         been reached
-	 * 
+	 *
 	 * @exception IOException
 	 *                If an I/O error occurs
 	 */
@@ -362,12 +362,12 @@ public class BoundedBufferedReader extends Reader {
 
 	/**
 	 * Skips characters.
-	 * 
+	 *
 	 * @param n
 	 *            The number of characters to skip
-	 * 
+	 *
 	 * @return The number of characters actually skipped
-	 * 
+	 *
 	 * @exception IllegalArgumentException
 	 *                If <code>n</code> is negative.
 	 * @exception IOException
@@ -408,7 +408,7 @@ public class BoundedBufferedReader extends Reader {
 	 * Tells whether this stream is ready to be read. A buffered character
 	 * stream is ready if the buffer is not empty, or if the underlying
 	 * character stream is ready.
-	 * 
+	 *
 	 * @exception IOException
 	 *                If an I/O error occurs
 	 */
@@ -448,7 +448,7 @@ public class BoundedBufferedReader extends Reader {
 	/**
 	 * Marks the present position in the stream. Subsequent calls to reset()
 	 * will attempt to reposition the stream to this point.
-	 * 
+	 *
 	 * @param readAheadLimit
 	 *            Limit on the number of characters that may be read while still
 	 *            preserving the mark. An attempt to reset the stream after
@@ -456,7 +456,7 @@ public class BoundedBufferedReader extends Reader {
 	 *            limit value larger than the size of the input buffer will
 	 *            cause a new buffer to be allocated whose size is no smaller
 	 *            than limit. Therefore large values should be used with care.
-	 * 
+	 *
 	 * @exception IllegalArgumentException
 	 *                If readAheadLimit is &lt; 0
 	 * @exception IOException
@@ -476,7 +476,7 @@ public class BoundedBufferedReader extends Reader {
 
 	/**
 	 * Resets the stream to the most recent mark.
-	 * 
+	 *
 	 * @exception IOException
 	 *                If the stream has never been marked, or if the mark has
 	 *                been invalidated

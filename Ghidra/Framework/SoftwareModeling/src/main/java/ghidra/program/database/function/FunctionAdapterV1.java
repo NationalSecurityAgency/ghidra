@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,22 +38,22 @@ class FunctionAdapterV1 extends FunctionAdapter {
 //	static final byte FUNCTION_VARARG_FLAG    = (byte)0x1; // Bit 0 is flag for "has vararg".
 //	static final byte FUNCTION_INLINE_FLAG    = (byte)0x2; // Bit 1 is flag for "is inline".
 //	static final byte FUNCTION_NO_RETURN_FLAG = (byte)0x4; // Bit 2 is flag for "has no return".
-//	
+//
 //	final static Schema FUNCTION_SCHEMA = new Schema(CURRENT_VERSION,
 //			"ID",
 //			new Class [] {
-//						LongField.class, 
+//						LongField.class,
 //						IntField.class,
 //						IntField.class,
-//						IntField.class, 
+//						IntField.class,
 //						IntField.class,
 //						ByteField.class
 //			},
 //			new String [] {
-//						"Return DataType ID", 
-//						"StackPurge", 
-//						"StackParamOffset", 
-//						"StackReturnOffset", 
+//						"Return DataType ID",
+//						"StackPurge",
+//						"StackParamOffset",
+//						"StackReturnOffset",
 //						"StackLocalSize",
 //						"Flags"
 //						}
@@ -62,7 +62,7 @@ class FunctionAdapterV1 extends FunctionAdapter {
 	private Table table;
 
 	/**
-	 * 
+	 *
 	 * @param dbHandle
 	 * @param addrMap
 	 * @param create

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -303,7 +303,7 @@ public class PatternBlock {
 
 	public int getMask(int startbit, int size) {
 		startbit -= 8 * offset;
-		// Note the division and remainder here is unsigned.  Then it is recast to signed. 
+		// Note the division and remainder here is unsigned.  Then it is recast to signed.
 		// If startbit is negative, then wordnum1 is either negative or very big,
 		// if (unsigned size is same as sizeof int)
 		// In either case, shift should come out between 0 and 8*sizeof(uintm)-1

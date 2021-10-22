@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ import ghidra.xml.XmlPullParser;
 /**
  *
  * Class for making Ghidra DataTypes suitable for use with pcode
- * 
- * 
+ *
+ *
  */
 public class PcodeDataTypeManager {
 
@@ -160,8 +160,8 @@ public class PcodeDataTypeManager {
 	 * Get the data type that corresponds to the given XML element.
 	 * @param parser the xml parser
 	 * @return the read data type
-	 * @throws PcodeXMLException if the data type could be resolved from the 
-	 * element 
+	 * @throws PcodeXMLException if the data type could be resolved from the
+	 * element
 	 */
 	public DataType readXMLDataType(XmlPullParser parser) throws PcodeXMLException {
 		XmlElement el = parser.start("type", "void", "typeref", "def");
@@ -625,7 +625,7 @@ public class PcodeDataTypeManager {
 
 	/**
 	 * Build an XML document string representing the type information for a data type
-	 * 
+	 *
 	 * @param resBuf is the stream to append the document to
 	 * @param type data type to build XML for
 	 * @param size size of the data type
@@ -657,9 +657,9 @@ public class PcodeDataTypeManager {
 	/**
 	 * Build an XML document string representing the Structure that has
 	 *  its size reported as zero.
-	 * 
+	 *
 	 * @param type data type to build XML for
-	 * 
+	 *
 	 * @return XML string document
 	 */
 	public StringBuilder buildStructTypeZeroSizeOveride(DataType type) {

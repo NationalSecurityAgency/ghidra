@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,25 +32,25 @@ import ghidra.async.seq.AsyncSequenceWithoutTemp;
  * Were it not for the argument {@code TypeSpec<R> type}, Java could only resolve {@code <R>} by
  * assigning the sequence to a temporary variable. This would require an extra line for the
  * assignment, including the full specification of the type, e.g.:
- * 
+ *
  * <pre>
  * AsyncSequenceWithoutTemp<Integer> s = sequence().then((seq) -> {
  * 	// Do stuff
  * });
  * return s.asCompletableFuture();
  * </pre>
- * 
+ *
  * However, this makes the definition exceedingly verbose, and it exposes the implementation
  * details. While the unused argument is a nuisance, it is preferred to the above alternative. Thus,
  * the static methods in this class seek to ease obtaining an appropriate {@code TypeSpec}. Several
  * primitive and common types are pre-defined.
- * 
+ *
  * This interface is not meant to be implemented by any classes or extended by other interfaces. The
  * runtime value of a {@code TypeSpec} argument is always {@link #RAW}. The arguments only serve a
  * purpose at compile time.
- * 
+ *
  * TODO: Look at TypeLiteral instead....
- * 
+ *
  * @param <U> the type of this specification
  */
 public interface TypeSpec<U> {
@@ -75,19 +75,19 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain the most concrete type specifier suitable in the context
-	 * 
+	 *
 	 * This is a sort of syntactic filler to satisfy Java's type checker while carrying useful type
 	 * information from action to action of an asynchronous sequence. This method is likely
 	 * preferred for all cases. The cases where this is not used are equivalent to the explicit use
 	 * of type annotations in normal synchronous programming. Either the programmer would like to
 	 * ensure an intermediate result indeed has the given type, or the programmer would like to
 	 * ascribe a more abstract type to the result.
-	 * 
+	 *
 	 * NOTE: For some compilers, this doesn't work in all contexts. It tends to work in Eclipse, but
 	 * not in Gradle when used with directly
 	 * {@link AsyncSequenceWithoutTemp#then(java.util.concurrent.Executor, ghidra.async.seq.AsyncSequenceActionProduces, TypeSpec)}.
 	 * Not sure what compiler option(s) are causing the difference.
-	 * 
+	 *
 	 * @return
 	 */
 	@SuppressWarnings({ "unchecked" })
@@ -101,7 +101,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier of a given raw class type
-	 * 
+	 *
 	 * @param cls the type of the producer
 	 * @return the specifier
 	 */
@@ -111,7 +111,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier of a type given by an example
-	 * 
+	 *
 	 * @param example the example having the desired type, often {@code null} cast to the type
 	 * @return the specifier
 	 */
@@ -121,7 +121,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier for a collection of this type
-	 * 
+	 *
 	 * @return the collection specifier
 	 */
 	public default <C extends Collection<U>> TypeSpec<C> col() {
@@ -130,7 +130,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier for a given collection type of this type
-	 * 
+	 *
 	 * @param <C> the type of collection
 	 * @param cls the raw type of the collection
 	 * @return the collection specifier
@@ -141,7 +141,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier for a set of this type
-	 * 
+	 *
 	 * @return the collection specifier
 	 */
 	public default <C extends Set<U>> TypeSpec<C> set() {
@@ -150,7 +150,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier for a list of this type
-	 * 
+	 *
 	 * @return the collection specifier
 	 */
 	public default <C extends List<U>> TypeSpec<C> list() {
@@ -159,7 +159,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier for a list of this type
-	 * 
+	 *
 	 * @return the collection specifier
 	 */
 	/*public default <C extends List<? extends U>> TypeSpec<C> listExt() {
@@ -168,7 +168,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Object a type specifier which allows extensions of this type
-	 * 
+	 *
 	 * @return the "extends" type specifier
 	 */
 	public default TypeSpec<? extends U> ext() {
@@ -177,7 +177,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier for a map from the given type to this type
-	 * 
+	 *
 	 * @param <K> the type of key
 	 * @param keyType the type specifier for the keys
 	 * @return the map type specifier
@@ -188,7 +188,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier for a map from the given class to this type
-	 * 
+	 *
 	 * @param <K> the type of key
 	 * @param keyCls the class for the keys
 	 * @return the map type specifier
@@ -199,7 +199,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier of a map given the raw class types for keys and values
-	 * 
+	 *
 	 * @param keyCls the type for keys
 	 * @param valCls the type for values
 	 * @return the specifier
@@ -269,12 +269,12 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier for the result of an asynchronous method
-	 * 
+	 *
 	 * This is a shortcut for asynchronous methods whose implementations return a completable future
 	 * from {@link AsyncUtils#sequence(TypeSpec)}, especially when the result is a complicated type.
 	 * To work, the referenced method, usually the containing method, must return an implementation
 	 * of {@link Future}. For example:
-	 * 
+	 *
 	 * <pre>
 	 * public CompletableFuture<Map<String, Set<Integer>>> computeNamedSets() {
 	 * 	return sequence(TypeSpec.future(this::computeNamedSets)).then((seq) -> {
@@ -282,13 +282,13 @@ public interface TypeSpec<U> {
 	 * 	}).asCompletableFuture();
 	 * }
 	 * </pre>
-	 * 
+	 *
 	 * This causes the sequence to have the correct type such that
 	 * {@link AsyncSequenceWithoutTemp#finish()} returns a future having type compatible with the
 	 * return type of the function. The referred method may take up to four parameters. Depending on
 	 * optimizations applied by the JVM, this shortcut costs one instantiation of a method reference
 	 * that is never used.
-	 * 
+	 *
 	 * @param func the method returning a {@link Future}
 	 * @return the specifier
 	 */
@@ -298,7 +298,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier for the result of an asynchronous method
-	 * 
+	 *
 	 * @see #future(FuncArity0)
 	 * @param func the method returning a {@link Future}
 	 * @return the specifier
@@ -309,7 +309,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier for the result of an asynchronous method
-	 * 
+	 *
 	 * @see #future(FuncArity0)
 	 * @param func the method returning a {@link Future}
 	 * @return the specifier
@@ -320,7 +320,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier for the result of an asynchronous method
-	 * 
+	 *
 	 * @see #future(FuncArity0)
 	 * @param func the method returning a {@link Future}
 	 * @return the specifier
@@ -332,7 +332,7 @@ public interface TypeSpec<U> {
 
 	/**
 	 * Obtain a type specifier for the result of an asynchronous method
-	 * 
+	 *
 	 * @see #future(FuncArity0)
 	 * @param func the method returning a {@link Future}
 	 * @return the specifier

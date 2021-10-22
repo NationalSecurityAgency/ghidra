@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,8 @@ import ghidra.util.exception.NotFoundException;
 
 /**
  * <code>IndexedLocalFileSystem</code> implements a case-sensitive indexed filesystem
- * which uses a shallow storage hierarchy with no restriction on file name or path 
- * length.  This filesystem is identified by the existence of an index file (~index.dat) 
+ * which uses a shallow storage hierarchy with no restriction on file name or path
+ * length.  This filesystem is identified by the existence of an index file (~index.dat)
  * and recovery journal (~index.jrn).
  */
 public class IndexedLocalFileSystem extends LocalFileSystem {
@@ -210,7 +210,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 	}
 
 	/**
-	 * Ensure that the nextFileIndexID is adjusted when replaying 
+	 * Ensure that the nextFileIndexID is adjusted when replaying
 	 * item adds and moves from the index journal
 	 * @param storageName previously allocated storageName
 	 */
@@ -634,7 +634,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 	}
 
 	/**
-	 * Verify that the specified root directory passes all criteria to be an indexed 
+	 * Verify that the specified root directory passes all criteria to be an indexed
 	 * filesystem.
 	 * @param root
 	 * @return number of property files processed
@@ -757,9 +757,9 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 	 * Find an existing storage location
 	 * @param folderPath
 	 * @param itemName
-	 * @return storage location.  A non-null value does not guarantee that the associated 
+	 * @return storage location.  A non-null value does not guarantee that the associated
 	 * item actually exists.
-	 * @throws FileNotFoundException 
+	 * @throws FileNotFoundException
 	 */
 	@Override
 	protected ItemStorage findItemStorage(String folderPath, String itemName)
@@ -1234,7 +1234,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 
 		/**
-		 * Construct a previously allocated item and add it to the parent's 
+		 * Construct a previously allocated item and add it to the parent's
 		 * item map.  Property file will not be read.
 		 * @param parent
 		 * @param name
@@ -1247,7 +1247,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 		}
 
 		/**
-		 * Construct a previously allocated item and add it to the parent's 
+		 * Construct a previously allocated item and add it to the parent's
 		 * item map.  The FileID will be read from the Property file.
 		 * @param parent
 		 * @param name
@@ -1621,7 +1621,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 	}
 
 	/**
-	 * Determine if the specified directory corresponds to an 
+	 * Determine if the specified directory corresponds to an
 	 * indexed filesystem.
 	 * @param rootPath filesystem root
 	 * @return true if filesystem contains an index (not mangled)
@@ -1636,7 +1636,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 	}
 
 	/**
-	 * Determine if the specified directory contains a likely 
+	 * Determine if the specified directory contains a likely
 	 * indexed filesystem.
 	 * @param rootPath filesystem root
 	 * @return true if filesystem appears to be indexed (not mangled)
@@ -1659,7 +1659,7 @@ public class IndexedLocalFileSystem extends LocalFileSystem {
 	}
 
 	/**
-	 * Get the V0 indexed-file-system instance.  File system storage should first be 
+	 * Get the V0 indexed-file-system instance.  File system storage should first be
 	 * pre-qualified as an having indexed storage using the {@link #isIndexed(String)} method.
 	 * @param rootPath
 	 * @param isVersioned

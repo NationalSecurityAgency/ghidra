@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,10 +38,10 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	// TODO: Disassembler Concerns
 	// - Unsure we can detect context inconsistencies where context produces constant and
 	//   does not influence parse decision (i.e., prototypes are equal)
-	// - Once CodeManager detects block overlap it stops processing instructions within the 
+	// - Once CodeManager detects block overlap it stops processing instructions within the
 	//   block at the point of duplication causing inconsistent prototypes not to be detected
 	//   in some cases (see testDisassemblerMidBlockOverlapWithProgramAndConflictDetection)
-	// - InstructionBlock holds only one conflict - this may cause 
+	// - InstructionBlock holds only one conflict - this may cause
 	//   some conflicts to get lost - CodeManager also sets conflicts which
 	//   can wipe a previous conflict
 	// - Conflicting context setting (via globalset) are not detected - last one wins
@@ -53,7 +53,7 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	// TODO: Add test where internal conflict occurs on top of different program
 	// code units - CODE_UNIT conflict handling assumes real code unit exists at conflictAddress
 
-	private ToyProgramBuilder programBuilder;// Instructions are 2-byte aligned 
+	private ToyProgramBuilder programBuilder;// Instructions are 2-byte aligned
 	private Program program;
 	private Listing listing;
 	private Disassembler disassembler;
@@ -191,15 +191,15 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/**
-	 * 
+	 *
 	 * +-> 10: breq 20 --+ (start)
 	 * |   12: ret       |
 	 * |                 |
 	 * +-- 20: breq 10 <-+
 	 *     22: ret
-	 *     
+	 *
 	 * Test circular flow
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerCircularFlow() throws Exception {
@@ -220,15 +220,15 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/**
-	 * 
+	 *
 	 *     10: call 20 --+ (start)
 	 *     12: ret       |
 	 *                   |
 	 *     20: or   <----+
 	 *     22: ret
-	 *     
+	 *
 	 * Test call
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerCallFlow() throws Exception {
@@ -249,15 +249,15 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/**
-	 * 
+	 *
 	 *     10: call 20 --+ (start)
 	 *     12: ret       | (should not disassemble)
 	 *                   |
 	 *     20: or   <----+ (no-return)
 	 *     22: ret
-	 *     
+	 *
 	 * Test call
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerCallFlowNoReturn() throws Exception {
@@ -298,7 +298,7 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *	 |	32: bral 40 -+
 	 *	 |	             |
 	 *	 +->40: ret  <---+
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerMultipath() throws Exception {
@@ -325,16 +325,16 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/**
-	 * 
+	 *
 	 *     10: callds 20 --+ (start)
 	 *     12: _or         |
 	 *     14: ret         |
 	 *                     |
 	 *     20: or   <------+
 	 *     22: ret
-	 *     
+	 *
 	 * Test simple delay slot flow
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerDelaySlot() throws Exception {
@@ -356,16 +356,16 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	/**
 	 *     10: or          (start)
-	 *  +- 12: brds   20   
+	 *  +- 12: brds   20
 	 *  |  14: _or   <-----+
 	 *  |  16: ret         |
 	 *  |                  |
 	 *  +->20: or          |
 	 *     22: breq 14 ----+
 	 *     24: ret
-	 *     
+	 *
 	 * Test branch into delay slot already in InstructionSet
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerBranchIntoDelaySlot() throws Exception {
@@ -397,13 +397,13 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *                     |
 	 *     10: or          |   (start1)
 	 *  +- 12: brds   20   |
-	 *  |  14: _or   <-----+     
+	 *  |  14: _or   <-----+
 	 *  |  16: ret            (part of second run)
-	 *  |         
-	 *  +->20: ret   
-	 *     
+	 *  |
+	 *  +->20: ret
+	 *
 	 * Test branch into delay slot already in Program
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerBranchIntoDelaySlotInProgram() throws Exception {
@@ -445,9 +445,9 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *     22: bral 10 ----+  |
 	 *                        |
 	 *     30: ret  <---------+
-	 *     
+	 *
 	 * Test delay slot disassembled first
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerDelaySlotFirst() throws Exception {
@@ -485,9 +485,9 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *     14: ret                         |
 	 *                                     |
 	 *                     20: ret  <------+
-	 *     
+	 *
 	 * Test delay slot disassembled first in program
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerDelaySlotFirstInProgram() throws Exception {
@@ -518,7 +518,7 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	/**
 	 *      4: fctx   #2   (start)
-	 * +--  6: bral   14 
+	 * +--  6: bral   14
 	 * |
 	 * |   10: nfctx  #3 <-+
 	 * |   12: callds 30   |  --+
@@ -527,9 +527,9 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *     18: ret              |
 	 *                          |
 	 *     30: ret  <-----------+
-	 *     
+	 *
 	 * Test delay slot disassembled first w/ context
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerDelaySlotFirstWithContext() throws Exception {
@@ -562,13 +562,13 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 		//openProgramInTool();
 
 		//@formatter:off
-		verifyContextRanges(0, 40, "fctx", 
+		verifyContextRanges(0, 40, "fctx",
 			new ContextRangeValue(6, 7, 2),
 			new ContextRangeValue(10, 11, 2),
 			new ContextRangeValue(12, 12, 2), // range split due to nfctx set @ 12
 			new ContextRangeValue(13, 19, 2),
 			new ContextRangeValue(30, 31, 2));
-		verifyContextRanges(0, 40, "nfctx", 
+		verifyContextRanges(0, 40, "nfctx",
 			new ContextRangeValue(12, 12, 3));
 		//@formatter:on
 
@@ -576,7 +576,7 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	/**
 	 *      4: fctx   #2   (start)
-	 * +--  6: bral   14 
+	 * +--  6: bral   14
 	 * |
 	 * |   10: nfctx  #3 <-+
 	 * |   12: call 30     |  --+
@@ -584,9 +584,9 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *     16: ret              |
 	 *                          |
 	 *     30: ret  <-----------+
-	 *     
+	 *
 	 * Test disassembly w/ context (without delay slot)
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerWithContext() throws Exception {
@@ -609,25 +609,25 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 		verifyNoBookmarks();
 
 		//@formatter:off
-		verifyContextRanges(0, 40, "fctx", 
+		verifyContextRanges(0, 40, "fctx",
 			new ContextRangeValue(6, 7, 2),
-			new ContextRangeValue(10, 11, 2), 
+			new ContextRangeValue(10, 11, 2),
 			new ContextRangeValue(12, 12, 2), // range split due to nfctx set @ 12
 			new ContextRangeValue(13, 17, 2),
 			new ContextRangeValue(30, 31, 2));
-		verifyContextRanges(0, 40, "nfctx", 
+		verifyContextRanges(0, 40, "nfctx",
 			new ContextRangeValue(12, 12, 3));
 		//@formatter:on
 
 	}
 
 	/**
-	 *     10: nfctx  #3 
+	 *     10: nfctx  #3
 	 *     12: cop3
 	 *     14: ret
-	 *     
+	 *
 	 * Test use of non-flow context in disassembly
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerNonFlowContextParse() throws Exception {
@@ -644,7 +644,7 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 		verifyNoBookmarks();
 
 		//@formatter:off
-		verifyContextRanges(0, 40, "nfctx", 
+		verifyContextRanges(0, 40, "nfctx",
 			new ContextRangeValue(12, 12, 3));
 		//@formatter:on
 
@@ -653,12 +653,12 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/**
-	 *     10: or 
+	 *     10: or
 	 *     12: cop3
 	 *     14: ret
-	 *     
+	 *
 	 * Test use of non-flow context in disassembly (previously set)
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerNonFlowContextParsePreset() throws Exception {
@@ -682,12 +682,12 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/**
-	 *     10: or 
+	 *     10: or
 	 *     12: cop3
 	 *     14: ret
-	 *     
+	 *
 	 * Test use of non-flow context in disassembly (previously set - mid-range)
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerNonFlowContextParsePresetRange() throws Exception {
@@ -715,7 +715,7 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	//
 
 	/**
-	 * 
+	 *
 	 *     10: call 30 ----+ (start)
 	 *     12: breq 20 --+ |
 	 *     14: ret       | |
@@ -726,9 +726,9 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *     22: ret         | (should not disassemble)
 	 *                     |
 	 *     30: ret     <---+ (should not disassemble)
-	 *     
+	 *
 	 * Test restricted disassembly
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerRestricted() throws Exception {
@@ -755,15 +755,15 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/**
-	 * 
+	 *
 	 *     10: or
 	 *     12: breq 14 --+
 	 *     14: or   <----+
-	 *     16: or 
+	 *     16: or
 	 *     18: ret   (should not disassemble)
-	 *     
+	 *
 	 * Test restricted disassembly
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerRestricted2() throws Exception {
@@ -798,9 +798,9 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *     16: ret              |
 	 *                          |
 	 *     20: ret  <-----------+
-	 *     
+	 *
 	 * Test fragmented disassembly with InstructionSet size limit of 1
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerLimit1() throws Exception {
@@ -839,9 +839,9 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *     16: ret              |
 	 *                          |
 	 *     20: ret  <-----------+
-	 *     
+	 *
 	 * Test fragmented disassembly with InstructionSet size limit of 2
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerLimit2() throws Exception {
@@ -885,7 +885,7 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *	 +->40: ret  <---+
 	 *
 	 * Test fragmented disassembly with InstructionSet size limit of 2
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerLimit3() throws Exception {
@@ -922,7 +922,7 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *   2002: ret
 	 *
 	 * Test fragmented disassembly with InstructionSet size limit of 2
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerLimit4() throws Exception {
@@ -947,23 +947,23 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	/**
 	 *     10: nfctx #3   (start) -- writes no-flow context =3 @ 30
 	 * +-- 14: br     22
-	 * |    
+	 * |
 	 * |   20: nop       <-+
 	 * +-> 22: breq   30 - | -+
 	 *     24: br     20 --+  |
 	 *                        |
 	 *     30: cop3   <-------+
 	 *     32: ret
-	 *     
+	 *
 	 * Limit Size: 4
 	 * InstructionSet Order: 10,14,22,24/20,(22),(24),(30)/30,32
 	 * () - indicates instructions blocked by those already added to program
-	 *     
+	 *
 	 * Test fragmented disassembly with InstructionSet size limit of 4
 	 * and flow priority given to code blocks already added to program.
 	 * Flow priority is needed to ensure that block which consumes context
 	 * is assured of being added.
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerFlowPriority() throws Exception {
@@ -1000,7 +1000,7 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	//
 
 	/**
-	 * 
+	 *
 	 * +-> 10: breq 20 --+ (start1)
 	 * |   12: ret       |
 	 * |                 |     18: breq 30 -+ (start2)
@@ -1008,9 +1008,9 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *     22: ret                          |
 	 *                                      |
 	 *                         30: ret  <---+
-	 *                         
+	 *
 	 * Test bumping into existing instructions in Program mid-block
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerMidBlockOverlapWithProgram() throws Exception {
@@ -1051,12 +1051,12 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	//
 
 	/**
-	 *     10: or 
+	 *     10: or
 	 *     12: BAD  (Unable to resolve constructor)
 	 *     14: ret  (Not parsed due to parse error @ 12)
-	 *     
+	 *
 	 * Test parse error
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerBadParse1() throws Exception {
@@ -1075,12 +1075,12 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/**
-	 *     10: or 
+	 *     10: or
 	 *     12: cop#  (Unable to resolve constructor without context)
 	 *     14: ret   (Not parsed due to parse error @ 12)
-	 *     
+	 *
 	 * Test use of non-flow context in disassembly with expected parse error (not set)
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerBadParse2() throws Exception {
@@ -1103,11 +1103,11 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	//
 
 	/**
-	 *     10: or    
+	 *     10: or
 	 *     12: ret   (Not parsed due to data conflict @ 13)
-	 *     
+	 *
 	 * Test data conflict error
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerDataConflict() throws Exception {
@@ -1128,21 +1128,21 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/**
-	 *      10: or    (start2) 
+	 *      10: or    (start2)
 	 *      12: nfctx 20,2   (4-byte instr not parsed due to instruction conflict @ 14)
 	 *   +->16: ret
-	 *   |  
+	 *   |
 	 *   |  14: imm   (start1) (parsed tail of 4-byte nfctx instr)
 	 *   +--+
-	 *     
+	 *
 	 * Test instruction conflict error
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerInstructionConflict() throws Exception {
 
 		// instr at 14 is tail of nfctx but we need to add to program builder to register
-		// instruction location for verification purpose only 
+		// instruction location for verification purpose only
 		programBuilder.addBytesFallthrough(14);
 
 		programBuilder.addBytesFallthrough(10);
@@ -1168,20 +1168,20 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *   |	               |
 	 *   +->	20: or         |
 	 *      22: nfctx 18,2 | 24: imm (forced conflict)
-	 *	 +--	26: bral 40    | 
+	 *	 +--	26: bral 40    |
 	 *	 |	               |
 	 *	 |	30: or   <-----+
-	 *	 |  32: nfctx 28,2   
+	 *	 |  32: nfctx 28,2
 	 *	 |	36: bral 40 ---+
 	 *	 |	               |
 	 *	 +->40: ret  <-----+ (clear after first dis to allow flow from 36)
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerMultipathInstructionConflict1() throws Exception {
 
 		// instr at 24 is tail of nfctx but we need to add to program builder to register
-		// instruction location for verification purpose only 
+		// instruction location for verification purpose only
 		programBuilder.addBytesFallthrough(24);
 
 		programBuilder.addBytesBranchConditional(10, 20);
@@ -1220,20 +1220,20 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *   |	               |
 	 *   +->	20: or         |
 	 *      22: nfctx 18,2 |
-	 *	 +--	26: bral 40    | 
+	 *	 +--	26: bral 40    |
 	 *	 |	               |
 	 *	 |	30: or   <-----+
 	 *	 |  32: nfctx 28,2   34: imm (forced conflict)
 	 *	 |	36: bral 40 ---+
 	 *	 |	               |
 	 *	 +->40: ret  <-----+ (clear after first dis to allow flow from 26)
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerMultipathInstructionConflict2() throws Exception {
 
 		// instr at 24 is tail of nfctx but we need to add to program builder to register
-		// instruction location for verification purpose only 
+		// instruction location for verification purpose only
 		programBuilder.addBytesFallthrough(34);
 
 		programBuilder.addBytesBranchConditional(10, 20);
@@ -1271,11 +1271,11 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *       14: bral 20 -----+ |
 	 *                        | |
 	 *       20: nfctx 12,2 <-+ | (4-byte instr)
-	 *       24: breq 12  ------+ 
+	 *       24: breq 12  ------+
 	 *       26: ret
-	 *     
+	 *
 	 * Test use of non-flow context in disassembly with expected parse error
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerInconsistentStartBlock() throws Exception {
@@ -1300,12 +1300,12 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	/**
 	 *       6: bral 12  --+ (start w/ nfctx=2 @ 12)
 	 *                     |
-	 *  +-> 10: nfctx #3   | 
+	 *  +-> 10: nfctx #3   |
 	 *  |   12: cop3    <--+ (conflict due to varying context)
 	 *  +-- 14: bral 10
-	 *     
+	 *
 	 * Test use of non-flow context in disassembly with expected parse error
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerInconsistentMidBlock() throws Exception {
@@ -1334,11 +1334,11 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *       14: ret            |
 	 *                          |
 	 *       20: nfctx 12,2     | (start2) (4-byte instr)
-	 *       24: breq 12  ------+ 
+	 *       24: breq 12  ------+
 	 *       26: ret
-	 *     
+	 *
 	 * Test use of non-flow context in disassembly with expected parse error
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerInconsistentStartBlockInProgram() throws Exception {
@@ -1366,12 +1366,12 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	/**
 	 *       6: bral 12  --+ (start1 w/ nfctx=2 @ 12)
 	 *                     |
-	 *      10: nfctx #3   | (start2) 
+	 *      10: nfctx #3   | (start2)
 	 *      12: cop3    <--+ (conflict due to varying context)
 	 *      14: ret
-	 *     
+	 *
 	 * Test use of non-flow context in disassembly with expected parse error
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerInconsistentMidBlockInProgram() throws Exception {
@@ -1410,9 +1410,9 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	 *  |   6: ret     (not disassembled - due to halted flow)
 	 *  |
 	 *  +-> 11: ret (not allowed - unaligned)
-	 *     
+	 *
 	 * Test unaligned disassembly
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerUnaligned() throws Exception {
@@ -1432,16 +1432,16 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/**
-	 * 	+-- 4: bral 10 
+	 * 	+-- 4: bral 10
 	 *  |
 	 *  +-> 10: nfctx 20,2  (4-byte instr)
 	 *      14: bral 20 --+ | (offcut conflict error @ 12)
 	 *                    | |
 	 *      20: cop #2  <-+ |
 	 *      22: bral 12 ----+    (offcut conflict error)
-	 *     
+	 *
 	 * Test offcut-conflict disassembly
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerOffcutConflict() throws Exception {
@@ -1464,18 +1464,18 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	/**
-	 * 	+-- 4: bral 10 
+	 * 	+-- 4: bral 10
 	 *  |
 	 *  +-> 10: nfctx 20,2  (4-byte instr)
 	 *      14: bral 20 --+ | (offcut conflict error @ 12)
 	 *                    | |
 	 *      20: cop #2  <-+ |
-	 *      22: ret         | 
+	 *      22: ret         |
 	 *                      |
-	 *      30: bral 12 ----+ 
-	 *     
+	 *      30: bral 12 ----+
+	 *
 	 * Test offcut-conflict disassembly
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerOffcutConflictInProgram() throws Exception {
@@ -1504,9 +1504,9 @@ public class DisassemblerTest extends AbstractGhidraHeadlessIntegrationTest {
 
 	/**
 	 *     10: bral 200  (error on flow to non-existing memory)
-	 *     
+	 *
 	 * Test flow into non-existing memory
-	 * 
+	 *
 	 */
 	@Test
 	public void testDisassemblerNoMemory() throws Exception {

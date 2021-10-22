@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ class S_PROCREF extends DebugSymbol {
 
 			ptr += Conv.byteToInt(nameLen);
 
-			int val = ptr & 0xf; 
+			int val = ptr & 0xf;
 
 			switch (val) {
 				case 0x1:
@@ -83,7 +83,7 @@ class S_PROCREF extends DebugSymbol {
 			}
 
 			ptr += paddingLen;
-		} 
+		}
 	}
 
 	public int getModule() {

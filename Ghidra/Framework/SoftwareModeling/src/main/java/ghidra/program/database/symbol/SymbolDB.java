@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,7 +137,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	/**
 	 * 	low level record adjustment to move a symbol. Used only when moving a memory block or
 	 *  changing the image base.
-	 *  
+	 *
 	 * @param newAddress the new address for the symbol
 	 * @param newName the new name for the symbol (or null if the name should stay the same)
 	 * @param newNamespace the new namespace for the symbol (or null if it should stay the same)
@@ -203,9 +203,9 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	/**
-	 * The code for creating the name content for this symbol.  This code will be called 
+	 * The code for creating the name content for this symbol.  This code will be called
 	 * with the symbol's lock.
-	 * 
+	 *
 	 * @return the name
 	 */
 	protected String doGetName() {
@@ -271,7 +271,7 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 			checkIsValid();
 			ReferenceManager rm = symbolMgr.getReferenceManager();
 
-			// if there is only one symbol, then all the references to this address count 
+			// if there is only one symbol, then all the references to this address count
 			if (hasExactlyOneSymbolAtAddress(address)) {
 				return rm.getReferenceCountTo(address);
 			}
@@ -552,8 +552,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	/**
 	 * Allow symbol implementations to validate the source when setting the name of
 	 * this symbol
-	 * 
-	 * @param newName the new name 
+	 *
+	 * @param newName the new name
 	 * @param source the source type
 	 * @return the validated source type
 	 */
@@ -831,8 +831,8 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	/**
-	 * Sets the symbol's string data field. This field's data has different uses depending on the 
-	 * symbol type and whether or not it is external. 
+	 * Sets the symbol's string data field. This field's data has different uses depending on the
+	 * symbol type and whether or not it is external.
 	 * @param stringData the string to store in the string data field
 	 */
 	public void setSymbolStringData(String stringData) {
@@ -920,9 +920,9 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 	}
 
 	/**
-	 * Sets the symbol's variable offset. For parameters, this is the ordinal, for locals, it is 
+	 * Sets the symbol's variable offset. For parameters, this is the ordinal, for locals, it is
 	 * the first use offset
-	 * @param offset the value to set as the symbols variable offset. 
+	 * @param offset the value to set as the symbols variable offset.
 	 */
 	public void setVariableOffset(int offset) {
 		lock.acquire();

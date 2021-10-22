@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,16 +19,16 @@ import java.awt.*;
 
 /**
  * <CODE>MaximizeSpecificColumnGridLayout</CODE> is a row oriented grid type of layout.
- * It lays out rows of information in a table format using a specific number of columns. 
+ * It lays out rows of information in a table format using a specific number of columns.
  * Components are added left to right and top to bottom. The table will try to give each column
- * the width that is necessary to display the longest item in that column. The columns with the 
- * widest desired component size will get reduced first if there isn't enough room. 
+ * the width that is necessary to display the longest item in that column. The columns with the
+ * widest desired component size will get reduced first if there isn't enough room.
  * The maximizeColumn(int) method allows you to indicate that you want to try to keep the size
- * of a column at the preferred size of the widest component in that column as the parent 
- * container component is resized. Any column that has been maximized won't shrink until the 
+ * of a column at the preferred size of the widest component in that column as the parent
+ * container component is resized. Any column that has been maximized won't shrink until the
  * non-maximized windows are reduced to a width of zero.
  * The intent is that all non-maximized columns will shrink from largest to smallest so that
- * they all will become zero width together at which point the maximized columns will begin 
+ * they all will become zero width together at which point the maximized columns will begin
  * shrinking in a similar manner.
  */
 public class MaximizeSpecificColumnGridLayout implements LayoutManager {
@@ -65,9 +65,9 @@ public class MaximizeSpecificColumnGridLayout implements LayoutManager {
 	}
 
 	/**
-	 * Allows you to indicate that you want to try to keep the size of a column at the preferred 
-	 * size of the widest component in that column as the parent container component is resized. 
-	 * Any column that has been maximized won't shrink until the non-maximized windows are reduced 
+	 * Allows you to indicate that you want to try to keep the size of a column at the preferred
+	 * size of the widest component in that column as the parent container component is resized.
+	 * Any column that has been maximized won't shrink until the non-maximized windows are reduced
 	 * to a width of zero.
 	 * @param column the number (0 based) of the column to keep maximized.
 	 */

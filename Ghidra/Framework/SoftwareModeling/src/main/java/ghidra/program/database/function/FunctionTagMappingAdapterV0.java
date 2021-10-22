@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,8 @@ import ghidra.program.database.util.EmptyRecordIterator;
 import ghidra.util.exception.VersionException;
 
 /**
- * Initial version of the {@link FunctionTagMappingAdapter}. 
- * 
+ * Initial version of the {@link FunctionTagMappingAdapter}.
+ *
  */
 class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements DBListener {
 
@@ -50,8 +50,8 @@ class FunctionTagMappingAdapterV0 extends FunctionTagMappingAdapter implements D
 		// Both function tag tables are transient, meaning they're created only when necessary,
 		// and destroyed when possible. Because of this, the Table object maintained by this
 		// class will at times be invalid and generate an exception if accessed. To protect
-		// against this, we listen for db updates and refresh that Table object when the 
-		// database is restored. 
+		// against this, we listen for db updates and refresh that Table object when the
+		// database is restored.
 		dbHandle.addListener(this);
 
 		if (!create) {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -228,7 +228,7 @@ public class ElfRelocationContext {
 	 * If no such dynamic value defined, the symbol offset for _GLOBAL_OFFSET_TABLE_
 	 * will be used, otherwise a NotFoundException will be thrown.
 	 * @return the .got section address offset
-	 * @throws NotFoundException if the dynamic DT_PLTGOT not defined and 
+	 * @throws NotFoundException if the dynamic DT_PLTGOT not defined and
 	 * _GLOBAL_OFFSET_TABLE_ symbol not defined
 	 */
 	public long getGOTValue() throws NotFoundException {

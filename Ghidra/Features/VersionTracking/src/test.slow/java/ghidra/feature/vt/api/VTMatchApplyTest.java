@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -666,7 +666,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		Address destinationAddress = addr("0x0100808c", destinationProgram);
 		Listing destinationListing = destinationProgram.getListing();
 
-		// force known values for the test 
+		// force known values for the test
 		DataType sourceDataType = new DWordDataType();
 		DataType destinationDataType1 = new StringDataType();
 		setData(sourceDataType, 4, sourceAddress, sourceProgram);
@@ -674,7 +674,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
-		// data type choice 
+		// data type choice
 		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
 			ReplaceDataChoices.REPLACE_FIRST_DATA_ONLY);
 
@@ -687,9 +687,9 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(VTAssociationStatus.ACCEPTED, status);
 		checkDataMatchDataType(sourceDataType, 4, destinationAddress, destinationListing);
 
-		// 
-		// Now test the unapply 
-		// 
+		//
+		// Now test the unapply
+		//
 		ClearMatchTask unapplyTask = new ClearMatchTask(controller, matches);
 		runTask(unapplyTask);
 
@@ -706,7 +706,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		Address destinationAddress = addr("0x0100808c", destinationProgram);
 		Listing destinationListing = destinationProgram.getListing();
 
-		// force known values for the test 
+		// force known values for the test
 		DataType sourceDataType = new DWordDataType();
 		DataType destinationDataType1 = new StringDataType();
 		setData(sourceDataType, 4, sourceAddress, sourceProgram);
@@ -715,7 +715,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 
 		VTMatch match = createMatchSetWithOneDataMatch(session, sourceAddress, destinationAddress);
 
-		// data type choice 
+		// data type choice
 		controller.getOptions().setEnum(VTOptionDefines.DATA_MATCH_DATA_TYPE,
 			ReplaceDataChoices.REPLACE_ALL_DATA);
 
@@ -733,7 +733,7 @@ public class VTMatchApplyTest extends AbstractGhidraHeadedIntegrationTest {
 		int txID = program.startTransaction("Creating instruction");
 		boolean commit = false;
 		try {
-			// Create instruction here. 
+			// Create instruction here.
 			DisassembleCommand cmd = new DisassembleCommand(address,
 				new AddressSet(address, address.add(length)), false);
 			cmd.applyTo(program);

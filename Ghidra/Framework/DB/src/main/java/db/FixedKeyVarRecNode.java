@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,15 +25,15 @@ import ghidra.util.exception.AssertException;
  * <code>FixedKeyVarRecNode</code> is an implementation of a BTree leaf node
  * which utilizes fixed-length key values and stores variable-length records.
  * <p>
- * This type of node has the following layout within a single DataBuffer 
- * (field size in bytes, where 'L' is the fixed length of the fixed-length 
+ * This type of node has the following layout within a single DataBuffer
+ * (field size in bytes, where 'L' is the fixed length of the fixed-length
  * key as specified by key type in associated Schema)::
  * <pre>
- *   | NodeType(1) | KeyCount(4) | PrevLeafId(4) | NextLeafId(4) | Key0(L) | RecOffset0(4) | IndFlag0(1) |...  
- *     
+ *   | NodeType(1) | KeyCount(4) | PrevLeafId(4) | NextLeafId(4) | Key0(L) | RecOffset0(4) | IndFlag0(1) |...
+ *
  *   | KeyN(L) | RecOffsetN(4) | IndFlagN(1) |...&lt;FreeSpace&gt;... | RecN |... | Rec0 |
  * </pre>
- * IndFlag - if not zero the record has been stored within a chained DBBuffer 
+ * IndFlag - if not zero the record has been stored within a chained DBBuffer
  * whose 4-byte integer buffer ID has been stored within this leaf at the record offset.
  */
 class FixedKeyVarRecNode extends FixedKeyRecordNode {
@@ -142,7 +142,7 @@ class FixedKeyVarRecNode extends FixedKeyRecordNode {
 	}
 
 	/**
-	 * Get the length of a stored record.  Optimized if record offset 
+	 * Get the length of a stored record.  Optimized if record offset
 	 * already known.
 	 * @param index index associated with record.
 	 * @param offset record offset
@@ -157,11 +157,11 @@ class FixedKeyVarRecNode extends FixedKeyRecordNode {
 	/**
 	 * Move all record data, starting with index, by the specified offset amount.
 	 * If the node contains 5 records, an index of 3 would shift the record data
-	 * for indexes 3 and 4 left by the spacified offset amount.  This is used to 
+	 * for indexes 3 and 4 left by the spacified offset amount.  This is used to
 	 * make space for a new or updated record.
 	 * @param index the smaller key/record index (0 &lt;= index1)
 	 * @param offset movement offset in bytes
-	 * @return insertion offset immediately following moved block. 
+	 * @return insertion offset immediately following moved block.
 	 */
 	private int moveRecords(int index, int offset) {
 
@@ -259,7 +259,7 @@ class FixedKeyVarRecNode extends FixedKeyRecordNode {
 		int start = getRecordDataOffset(keyCount - 1);	// start of block to be moved
 		int end = getRecordDataOffset(splitIndex - 1);  // end of block to be moved
 		int splitLen = end - start;				// length of block to be moved
-		int rightOffset = buffer.length() - splitLen;    // data offset within new leaf node 
+		int rightOffset = buffer.length() - splitLen;    // data offset within new leaf node
 
 		// Copy data to new leaf node
 		DataBuffer newBuf = rightNode.buffer;
@@ -313,7 +313,7 @@ class FixedKeyVarRecNode extends FixedKeyRecordNode {
 		// See if updated record will fit in current buffer
 		if (useIndirect || len <= (getFreeSpace() + oldLen)) {
 
-			// Overwrite record data - move other data if needed			
+			// Overwrite record data - move other data if needed
 			int dataShift = oldLen - len;
 			if (dataShift != 0) {
 				offset = moveRecords(index + 1, dataShift);

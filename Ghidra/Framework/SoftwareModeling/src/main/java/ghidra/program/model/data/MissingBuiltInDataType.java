@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Provides an implementation of a data type that stands-in for a missing Built-In data type.
- *  <P> 
+ *  <P>
  *  This field is not meant to be loaded by the {@link ClassSearcher}, hence the X in the name.
  */
 public class MissingBuiltInDataType extends DataTypeImpl implements Dynamic {

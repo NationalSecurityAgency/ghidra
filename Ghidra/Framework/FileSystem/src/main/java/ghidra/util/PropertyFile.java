@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,7 @@ public class PropertyFile {
 	 * @param storageName stored property file name (without extension)
 	 * @param parentPath path to parent
 	 * @param name name of the property file
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public PropertyFile(File dir, String storageName, String parentPath, String name)
 			throws IOException {
@@ -279,7 +279,7 @@ public class PropertyFile {
 	}
 
 	/**
-	 * Return the time of last modification in number of milliseconds. 
+	 * Return the time of last modification in number of milliseconds.
 	 */
 	public long lastModified() {
 		return propertyFile.lastModified();

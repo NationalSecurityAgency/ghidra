@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,8 +23,8 @@ import ghidra.program.model.listing.*;
  * Defines the information being displayed in the left or right panels
  * of a {@link FunctionComparisonPanel}, which can display either
  * {@link Function functions}, {@link Data data}, or specified
- * {@link AddressSet address sets}. At any given time, only one of the 
- * Function or Data attributes may be set; the other will be 
+ * {@link AddressSet address sets}. At any given time, only one of the
+ * Function or Data attributes may be set; the other will be
  * set to null.
  */
 class FunctionComparisonData {
@@ -36,7 +36,7 @@ class FunctionComparisonData {
 
 	/**
 	 * Returns the program for this model
-	 * 
+	 *
 	 * @return the program, or null if not set
 	 */
 	public Program getProgram() {
@@ -45,7 +45,7 @@ class FunctionComparisonData {
 
 	/**
 	 * Sets the program for this model
-	 * 
+	 *
 	 * @param program the program to set
 	 */
 	public void setProgram(Program program) {
@@ -54,7 +54,7 @@ class FunctionComparisonData {
 
 	/**
 	 * Returns the function for this model
-	 * 
+	 *
 	 * @return the function, or null if not set
 	 */
 	public Function getFunction() {
@@ -63,7 +63,7 @@ class FunctionComparisonData {
 
 	/**
 	 * Sets the function for this model
-	 * 
+	 *
 	 * @param function the function to set
 	 */
 	public void setFunction(Function function) {
@@ -79,7 +79,7 @@ class FunctionComparisonData {
 
 	/**
 	 * Returns the data for this model
-	 * 
+	 *
 	 * @return the data, or null if not set
 	 */
 	public Data getData() {
@@ -88,7 +88,7 @@ class FunctionComparisonData {
 
 	/**
 	 * Sets the data for this model
-	 * 
+	 *
 	 * @param data the data to set
 	 */
 	public void setData(Data data) {
@@ -104,7 +104,7 @@ class FunctionComparisonData {
 
 	/**
 	 * Returns the address set for this model
-	 * 
+	 *
 	 * @return the address set, or null if not set
 	 */
 	public AddressSetView getAddressSet() {
@@ -113,7 +113,7 @@ class FunctionComparisonData {
 
 	/**
 	 * Sets the address for this model
-	 * 
+	 *
 	 * @param addressSet the addressSet to set
 	 */
 	public void setAddressSet(AddressSetView addressSet) {
@@ -125,7 +125,7 @@ class FunctionComparisonData {
 	/**
 	 * Returns true if the data being managed by this model is of type
 	 * {@link Data}
-	 * 
+	 *
 	 * @return true if this model is set to display {@link Data}
 	 */
 	public boolean isData() {
@@ -135,7 +135,7 @@ class FunctionComparisonData {
 	/**
 	 * Returns true if the data being managed by this model is of type
 	 * {@link Function}
-	 * 
+	 *
 	 * @return true if this model is set to display a {@link Function}
 	 */
 	public boolean isFunction() {
@@ -145,7 +145,7 @@ class FunctionComparisonData {
 	/**
 	 * Returns true if this class holds no function, data or address set
 	 * information
-	 * 
+	 *
 	 * @return true if this class holds no function, data or address set
 	 * information
 	 */

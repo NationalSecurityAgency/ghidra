@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,7 +56,7 @@ public class ExportedSymbol extends AbstractSymbol {
 		sectionIndex = reader.readNextShort();
 
 		long offset = loader.getSection().getContainerOffset()+loader.getLoaderStringsOffset()+getNameOffset();
-		_name = reader.readAsciiString(offset, key.getNameLength()); 
+		_name = reader.readAsciiString(offset, key.getNameLength());
 	}
 
 	@Override
@@ -68,8 +68,8 @@ public class ExportedSymbol extends AbstractSymbol {
 		return SymbolClass.get(classAndName >> kPEFExpSymClassShift);
 	}
 	/**
-	 * Returns offset of symbol name in loader string table.  
-	 * @return offset of symbol name in loader string table  
+	 * Returns offset of symbol name in loader string table.
+	 * @return offset of symbol name in loader string table
 	 */
 	public int getNameOffset() {
 		return classAndName & 0x00ffffff;

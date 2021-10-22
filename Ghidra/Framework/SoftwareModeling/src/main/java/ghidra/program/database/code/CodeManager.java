@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -3019,7 +3019,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * @param opIndex operand to which reference applies
 	 * @param refAddr default reference to-address
 	 * @param refType default reference type
-	 * @param oldRefList list of old references which exist on instruction which have 
+	 * @param oldRefList list of old references which exist on instruction which have
 	 * yet to be accounted for (may be null).
 	 * @param operandPrimaryRef current preferred primary reference for operand
 	 * @return updated preferred primary address for operand (i.e., operandPrimaryRef)
@@ -3468,8 +3468,8 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	/**
-	 * Get the comment history for the comment type at the given address 
-	 * 
+	 * Get the comment history for the comment type at the given address
+	 *
 	 * @param addr address for the comment history
 	 * @param commentType comment type
 	 * @return zero length array if no history exists
@@ -3478,7 +3478,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		lock.acquire();
 		try {
 
-			// records are sorted by date ascending						
+			// records are sorted by date ascending
 			List<DBRecord> allRecords = getHistoryRecords(addr, commentType);
 
 			List<CommentHistory> results = new ArrayList<>();
@@ -3610,7 +3610,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	 * be discarded and all instructions redisassembled following flow and adjusting context as needed.
 	 * Instructions which fail to redisassemble will be marked - since only one byte will be skipped, such bad
 	 * instruction disassembly may cause subsequent errors due to possible instruction shift.
-	 * This method is only intended for use by the ProgramDB setLanguage method which must ensure that 
+	 * This method is only intended for use by the ProgramDB setLanguage method which must ensure that
 	 * the context has been properly initialized.
 	 * @param monitor task monitor
 	 * @throws IOException if IO error occurs

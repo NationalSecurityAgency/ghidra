@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -224,9 +224,9 @@ public class DWARFDataTypeImporter {
 	 * Returns true if the previously imported data type should be reused.
 	 * <p>
 	 * Don't re-use empty structs (isNotYetDefined) to ensure that newer
-	 * definitions of the same struct are given a chance to be resolved() 
-	 * into the DTM. 
-	 * 
+	 * definitions of the same struct are given a chance to be resolved()
+	 * into the DTM.
+	 *
 	 * @param alreadyImportedDT dataType to check
 	 * @return boolean true if its okay to reuse the data type
 	 */
@@ -720,7 +720,7 @@ public class DWARFDataTypeImporter {
 		if (union.getLength() < unionSize) {
 			// NOTE: this is likely due incorrect alignment for union or one or more of its components.
 			// Default alignment is 1 for non-packed unions and structures.
-			
+
 			// if the Ghidra union data type is smaller than the DWARF union, pad it out
 			DataType padding = Undefined.getUndefinedDataType((int) unionSize);
 			try {

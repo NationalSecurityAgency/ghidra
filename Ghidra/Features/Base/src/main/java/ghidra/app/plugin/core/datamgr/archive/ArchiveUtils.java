@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class ArchiveUtils {
 
 	/**
 	 * Saves the given archive to a file of the user's choosing.
-	 * 
+	 *
 	 * @param component The component over which GUI message will be shown when required.
 	 * @param archive The archive to save.
 	 * @throws DuplicateFileException thrown in the case of a naming conflict.
@@ -64,7 +64,7 @@ public class ArchiveUtils {
 	 * This method will perform a save on the given archive.  However, the one caveat is that if
 	 * the archive has never been saved, then a filename needs to be chosen.  Under this 'special'
 	 * condition this method logically turns into a {@link #saveAs(Component, FileArchive)}.
-	 * 
+	 *
 	 * @param component The component over which GUI message will be shown when required.
 	 * @param archive The archive to save.
 	 * @throws DuplicateFileException thrown only in the {@link #saveAs(Component, FileArchive)}
@@ -113,7 +113,7 @@ public class ArchiveUtils {
 
 // ==================================================================================================
 //	Private methods
-//==================================================================================================	
+//==================================================================================================
 
 	static File getFile(Component component, FileArchive archive) {
 		ArchiveFileChooser fileChooser = new ArchiveFileChooser(component);

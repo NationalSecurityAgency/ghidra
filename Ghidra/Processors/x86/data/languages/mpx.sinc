@@ -96,11 +96,11 @@ bndmk_addr32: [Base]							is mod=2 & r_m=4; index=4 & Base; imm32=0		{ export B
  <done>
 }
 
-#TODO: This probably cannot be fully modeled 
+#TODO: This probably cannot be fully modeled
 :BNDLDX bnd1, Mem      is $(LONGMODE_ON) & vexMode=0 & byte=0x0F; byte=0x1A; bnd1 ... & Mem {
 #	BNDSTATUS = bndldx_status( Mem, BNDCFGS, BNDCFGU );
 #	bnd1      = bndldx( Mem, BNDCFGS, BNDCFGU );
-	
+
 # core implementation
    bnd1 = *:16 Mem;
 }
@@ -127,7 +127,7 @@ bndmk_addr32: [Base]							is mod=2 & r_m=4; index=4 & Base; imm32=0		{ export B
 	bnd2 = bnd1;
 }
 
-#TODO: This probably cannot be fully modeled 
+#TODO: This probably cannot be fully modeled
 :BNDSTX Mem, bnd1      is $(LONGMODE_ON) & vexMode=0 & byte=0x0F; byte=0x1B; bnd1 ... & Mem {
 #	BNDSTATUS = bndstx_status( bnd1, BNDCFGS, BNDCFGU );
 #	Mem       = bndstx( bnd1, BNDCFGS, BNDCFGU );
@@ -186,11 +186,11 @@ bndmk_addr32: [Base]							is mod=2 & r_m=4; index=4 & Base; imm32=0		{ export B
  <done>
 }
 
-#TODO: This probably cannot be fully modeled 
+#TODO: This probably cannot be fully modeled
 :BNDLDX bnd1, Mem      is $(LONGMODE_OFF) & vexMode=0 & byte=0x0F; byte=0x1A; ( bnd1 & bnd1_lb & bnd1_ub ) ... & Mem {
 #	BNDSTATUS = bndldx_status( Mem, BNDCFGS, BNDCFGU );
 #	bnd1      = bndldx( Mem, BNDCFGS, BNDCFGU );
-	
+
 # core implementation
    tmp:8 = *:8 Mem;
    bnd1_lb = zext(tmp:4);
@@ -223,7 +223,7 @@ bndmk_addr32: [Base]							is mod=2 & r_m=4; index=4 & Base; imm32=0		{ export B
 	bnd2 = bnd1;
 }
 
-#TODO: This probably cannot be fully modeled 
+#TODO: This probably cannot be fully modeled
 :BNDSTX Mem, bnd1      is $(LONGMODE_OFF) & vexMode=0 & byte=0x0F; byte=0x1B; ( bnd1 & bnd1_lb & bnd1_ub ) ... & Mem {
 #	BNDSTATUS = bndstx_status( bnd1, BNDCFGS, BNDCFGU );
 #	Mem       = bndstx( bnd1, BNDCFGS, BNDCFGU );

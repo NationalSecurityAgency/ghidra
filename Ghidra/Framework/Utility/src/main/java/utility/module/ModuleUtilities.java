@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,14 +39,14 @@ public class ModuleUtilities {
 	public static final String MODULE_LIST = "MODULE_LIST";
 
 	/**
-	 * How many directories deep to look for module directories, starting from an application root 
+	 * How many directories deep to look for module directories, starting from an application root
 	 * directory. For example, 3 would pick up modules as deep as: root/category/category/module
 	 */
 	private static final int MAX_MODULE_DEPTH = 3;
 
 	/**
 	 * Checks if the given directory is a module.
-	 * 
+	 *
 	 * @param dir the directory to check.
 	 * @return true if the given directory is a module
 	 */
@@ -56,7 +56,7 @@ public class ModuleUtilities {
 
 	/**
 	 * Returns true if the given path is a module root directory.
-	 * 
+	 *
 	 * @param path the path to check
 	 * @return true if the given path is a module root directory.
 	 */
@@ -68,14 +68,14 @@ public class ModuleUtilities {
 	/**
 	 * Searches the given root directory for module root directories.  Adds any discovered module
 	 * root directories to the given collection.
-	 * 
+	 *
 	 * @param rootDir The directory to start looking for module root directories in.
 	 * @param moduleRootDirs A collection to add discovered module root directories to.
 	 * @return The given collection with any discovered modules added.
 	 */
 	public static Collection<ResourceFile> findModuleRootDirectories(ResourceFile rootDir,
 			Collection<ResourceFile> moduleRootDirs) {
-		// look for any external GPL modules 
+		// look for any external GPL modules
 		findModuleRootDirectoriesHelper(new ResourceFile(rootDir, "../GPL"), moduleRootDirs,
 			MAX_MODULE_DEPTH);
 		return findModuleRootDirectoriesHelper(rootDir, moduleRootDirs, MAX_MODULE_DEPTH);
@@ -103,7 +103,7 @@ public class ModuleUtilities {
 	/**
 	 * Searches the given root directories for module root directories.  Adds any discovered module
 	 * root directories to the given collection.
-	 * 
+	 *
 	 * @param rootDirs The directories to look for module root directories in.
 	 * @param moduleRootDirs A collection to add discovered module root directories to.
 	 * @return The given collection with any discovered modules added.
@@ -120,7 +120,7 @@ public class ModuleUtilities {
 	 * Searches the given jar root directory for module root directories.  Uses a "module list"
 	 * file to locate the module root directories. Adds any discovered module root directories
 	 * to the given collection.
-	 * 
+	 *
 	 * @param rootDir The jar directory to start looking for module root directories in.
 	 * @param moduleRootDirs A collection to add discovered module root directories to.
 	 * @return The given collection with any discovered modules added.
@@ -137,7 +137,7 @@ public class ModuleUtilities {
 
 	/**
 	 * Searches for modules in a given collection of module root directories.
-	 * 
+	 *
 	 * @param appRootDirs The collection of application root directories associated with the the given
 	 *   list of module root directories.
 	 * @param moduleRootDirs A collection of module root directories to search for modules in.
@@ -167,7 +167,7 @@ public class ModuleUtilities {
 
 	/**
 	 * Gets the "lib" directories from the given modules.
-	 * 
+	 *
 	 * @param modules The modules to get the lib directories of.
 	 * @return A collection of lib directories from the given modules.
 	 */
@@ -189,7 +189,7 @@ public class ModuleUtilities {
 
 	/**
 	 * Gets the directory locations of the .class files and resources from the given modules.
-	 * 
+	 *
 	 * @param modules The modules to get the compiled .class and resources directories of.
 	 * @return A collection of directories containing classes and resources from the given modules.
 	 */
@@ -215,10 +215,10 @@ public class ModuleUtilities {
 	 * <br>
 	 * <br>and false for these paths:
 	 * <br>
-	 * <br> 
+	 * <br>
 	 * <code>/some/random/path</code><br>
 	 * <code>/some/dir/features/</code>
-	 * 
+	 *
 	 * @param pathName the path name to check
 	 * @return true if the given path is parented by a module root directory.
 	 * @see #isModuleDirectory(Path)
@@ -228,7 +228,7 @@ public class ModuleUtilities {
 	}
 
 	/**
-	 * Returns the path of the module containing the given path string, if it is parented by a 
+	 * Returns the path of the module containing the given path string, if it is parented by a
 	 * module root directory.
 	 * <p>
 	 * For example, given a module path of <code>/some/dir/features/cool_module/</code>, then this
@@ -240,10 +240,10 @@ public class ModuleUtilities {
 	 * <br>
 	 * <br>and null for these paths:
 	 * <br>
-	 * <br> 
+	 * <br>
 	 * <code>/some/random/path</code><br>
 	 * <code>/some/dir/features/</code>
-	 * 
+	 *
 	 * @param pathName the path name to check
 	 * @return the module root directory; null if the path is not in a module
 	 * @see #isModuleDirectory(Path)
@@ -271,18 +271,18 @@ public class ModuleUtilities {
 
 	/**
 	 * Returns a file that is the root folder of the repository containing the given file.  'Root'
-	 * here means a folder that contains a repository folder.  As an example, given a repo 
+	 * here means a folder that contains a repository folder.  As an example, given a repo
 	 * structure of:
-	 * 
+	 *
 	 * <p><code>/userdir/repoRoot/repoDir/.git</code><br>
-	 * 
+	 *
 	 * <p>then this method, given will produce the following results (input -&gt; output):<br>
-	 * 
+	 *
 	 * <p><code>/userdir/repoRoot/repoDir/.git -&gt; /userdir/repoRoot</code>
 	 * <br><code>/userdir/repoRoot/repoDir -&gt; /userdir/repoRoot</code>
 	 * <br><code>/userdir/repoRoot -&gt; /userdir/repoRoot</code>
-	 * 
-	 * 
+	 *
+	 *
 	 * @param f the child file of the desired repo
 	 * @return a file that is the root folder of the repository containing the given file; null
 	 *         if the given file is not under a repo directory or itself a repo root
@@ -311,16 +311,16 @@ public class ModuleUtilities {
 	}
 
 	/**
-	 * Returns a file that is the repository folder containing the given file.  As an example, 
+	 * Returns a file that is the repository folder containing the given file.  As an example,
 	 * given a repo structure of:
-	 * 
+	 *
 	 * <p><code>/userdir/repoRoot/repoDir/.git</code><br>
-	 * 
+	 *
 	 * <p>then this method, given will produce the following results (input -&gt; output):<br>
-	 * 
+	 *
 	 * <p><code>/userdir/repoRoot/repoDir/.git -&gt; /userdir/repoRoot/repoDir</code>
 	 * <br><code>/userdir/repoRoot/repoDir -&gt; /userdir/repoRoot/repoDir</code>
-	 * 
+	 *
 	 * @param f the child file of the desired repo
 	 * @return a file that is the repo folder of the repository containing the given file; null
 	 *         if the given file is not under a repo directory
@@ -339,7 +339,7 @@ public class ModuleUtilities {
 	/**
 	 * Checks to see if the given {@link GModule module} is external to the Ghidra installation
 	 * directory
-	 * 
+	 *
 	 * @param module the module to check
 	 * @param layout Ghidra's layout
 	 * @return true if the given {@link GModule module} is external to the Ghidra installation

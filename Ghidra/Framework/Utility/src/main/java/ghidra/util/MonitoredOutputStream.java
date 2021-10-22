@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,13 +40,13 @@ public class MonitoredOutputStream extends OutputStream {
 	}
 
 	/**
-	 * Writes the specified <code>byte</code> to this output stream. 
+	 * Writes the specified <code>byte</code> to this output stream.
 	 * <p>
-	 * The <code>write</code> method of <code>FilterOutputStream</code> 
-	 * calls the <code>write</code> method of its underlying output stream, 
+	 * The <code>write</code> method of <code>FilterOutputStream</code>
+	 * calls the <code>write</code> method of its underlying output stream,
 	 * that is, it performs <code>out.write(b)</code>.
 	 * <p>
-	 * Implements the abstract <code>write</code> method of <code>OutputStream</code>. 
+	 * Implements the abstract <code>write</code> method of <code>OutputStream</code>.
 	 *
 	 * @param      b   the <code>byte</code>.
 	 * @exception  IOException  if an I/O error occurs.
@@ -66,16 +66,16 @@ public class MonitoredOutputStream extends OutputStream {
 	}
 
 	/**
-	 * Writes <code>b.length</code> bytes to this output stream. 
+	 * Writes <code>b.length</code> bytes to this output stream.
 	 * <p>
-	 * The <code>write</code> method of <code>FilterOutputStream</code> 
-	 * calls its <code>write</code> method of three arguments with the 
-	 * arguments <code>b</code>, <code>0</code>, and 
-	 * <code>b.length</code>. 
+	 * The <code>write</code> method of <code>FilterOutputStream</code>
+	 * calls its <code>write</code> method of three arguments with the
+	 * arguments <code>b</code>, <code>0</code>, and
+	 * <code>b.length</code>.
 	 * <p>
-	 * Note that this method does not call the one-argument 
-	 * <code>write</code> method of its underlying stream with the single 
-	 * argument <code>b</code>. 
+	 * Note that this method does not call the one-argument
+	 * <code>write</code> method of its underlying stream with the single
+	 * argument <code>b</code>.
 	 *
 	 * @param      b   the data to be written.
 	 * @exception  IOException  if an I/O error occurs.
@@ -87,18 +87,18 @@ public class MonitoredOutputStream extends OutputStream {
 	}
 
 	/**
-	 * Writes <code>len</code> bytes from the specified 
-	 * <code>byte</code> array starting at offset <code>off</code> to 
-	 * this output stream. 
+	 * Writes <code>len</code> bytes from the specified
+	 * <code>byte</code> array starting at offset <code>off</code> to
+	 * this output stream.
 	 * <p>
-	 * The <code>write</code> method of <code>FilterOutputStream</code> 
-	 * calls the <code>write</code> method of one argument on each 
-	 * <code>byte</code> to output. 
+	 * The <code>write</code> method of <code>FilterOutputStream</code>
+	 * calls the <code>write</code> method of one argument on each
+	 * <code>byte</code> to output.
 	 * <p>
-	 * Note that this method does not call the <code>write</code> method 
-	 * of its underlying input stream with the same arguments. Subclasses 
-	 * of <code>FilterOutputStream</code> should provide a more efficient 
-	 * implementation of this method. 
+	 * Note that this method does not call the <code>write</code> method
+	 * of its underlying input stream with the same arguments. Subclasses
+	 * of <code>FilterOutputStream</code> should provide a more efficient
+	 * implementation of this method.
 	 *
 	 * @param      b     the data.
 	 * @param      off   the start offset in the data.
@@ -122,11 +122,11 @@ public class MonitoredOutputStream extends OutputStream {
 	}
 
 	/**
-	 * Flushes this output stream and forces any buffered output bytes 
-	 * to be written out to the stream. 
+	 * Flushes this output stream and forces any buffered output bytes
+	 * to be written out to the stream.
 	 * <p>
-	 * The <code>flush</code> method of <code>FilterOutputStream</code> 
-	 * calls the <code>flush</code> method of its underlying output stream. 
+	 * The <code>flush</code> method of <code>FilterOutputStream</code>
+	 * calls the <code>flush</code> method of its underlying output stream.
 	 *
 	 * @exception  IOException  if an I/O error occurs.
 	 */
@@ -136,12 +136,12 @@ public class MonitoredOutputStream extends OutputStream {
 	}
 
 	/**
-	 * Closes this output stream and releases any system resources 
-	 * associated with the stream. 
+	 * Closes this output stream and releases any system resources
+	 * associated with the stream.
 	 * <p>
-	 * The <code>close</code> method of <code>FilterOutputStream</code> 
-	 * calls its <code>flush</code> method, and then calls the 
-	 * <code>close</code> method of its underlying output stream. 
+	 * The <code>close</code> method of <code>FilterOutputStream</code>
+	 * calls its <code>flush</code> method, and then calls the
+	 * <code>close</code> method of its underlying output stream.
 	 *
 	 * @exception  IOException  if an I/O error occurs.
 	 * @see        java.io.FilterOutputStream#flush()

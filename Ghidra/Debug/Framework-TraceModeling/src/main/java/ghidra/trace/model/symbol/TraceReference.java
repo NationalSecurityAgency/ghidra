@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,17 +29,17 @@ public interface TraceReference extends Reference {
 
 	/**
 	 * Make this reference primary.
-	 * 
+	 *
 	 * Only one reference at a given "from" location can be primary. If a primary reference already
 	 * exists at this location, it will become a secondary reference.
-	 * 
+	 *
 	 * @param primary
 	 */
 	void setPrimary(boolean primary);
 
 	/**
 	 * Set the reference type
-	 * 
+	 *
 	 * @param refType the new reference type
 	 */
 	void setReferenceType(RefType refType);

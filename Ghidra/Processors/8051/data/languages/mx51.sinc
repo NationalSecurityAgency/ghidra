@@ -68,7 +68,7 @@ EDirect2:  EPL       is bank2=1 & direct2=0xfc & EPL 	{ export EPL; }
 EDirect2:  EPM       is bank2=1 & direct2=0xfd & EPM 	{ export EPM; }
 EDirect2:  EPH       is bank2=1 & direct2=0xfe & EPH 	{ export EPH; }
 
-# Continuing with pattern via copying from stock 8051 sleighspec.  
+# Continuing with pattern via copying from stock 8051 sleighspec.
 # Note that there is a known bug with the Bit addressing of the SFR.
 EBitAddr:  bitaddr is bitbank=1 & sfrbyte & sfrbit [ bitaddr =(sfrbyte << 3)+sfrbit; ] { export *[EBITS]:1 bitaddr; }
 EBitAddr:  bitaddr is bitbank=0 & lowbyte & sfrbit [ bitaddr =(lowbyte << 3)+sfrbit; ] { export *[EBITS]:1 bitaddr; }
@@ -81,37 +81,37 @@ EBitByteAddr: byteaddr 	is bitbank=0 & lowbyte & sfrbit [ byteaddr = lowbyte + 0
 
 ####################
 
-:inc EDirect is opfull=0xa5; ophi=0 & oplo=5; EDirect { 
-  EDirect = EDirect + 1; 
+:inc EDirect is opfull=0xa5; ophi=0 & oplo=5; EDirect {
+  EDirect = EDirect + 1;
 }
-:dec EDirect is opfull=0xa5; opfull=0x15; EDirect { 
+:dec EDirect is opfull=0xa5; opfull=0x15; EDirect {
   EDirect = EDirect - 1;
 }
-:add Areg,EDirect is opfull=0xa5; opfull=0x25 & Areg; EDirect { 
+:add Areg,EDirect is opfull=0xa5; opfull=0x25 & Areg; EDirect {
   addflags(ACC,EDirect); ACC = ACC + EDirect; resultflags(ACC);
 }
-:addc Areg,EDirect is opfull=0xa5; opfull=0x35 & Areg; EDirect { 
+:addc Areg,EDirect is opfull=0xa5; opfull=0x35 & Areg; EDirect {
   tmp:1 =$(CY)+ EDirect; addflags(ACC,tmp); ACC = ACC + tmp; resultflags(ACC);
 }
-:orl Areg,EDirect is opfull=0xa5; opfull=0x45 & Areg; EDirect { 
+:orl Areg,EDirect is opfull=0xa5; opfull=0x45 & Areg; EDirect {
   ACC = ACC | EDirect;
 }
-:anl Areg,EDirect is opfull=0xa5; opfull=0x55 & Areg; EDirect { 
-  ACC = ACC & EDirect; resultflags(ACC); 
+:anl Areg,EDirect is opfull=0xa5; opfull=0x55 & Areg; EDirect {
+  ACC = ACC & EDirect; resultflags(ACC);
 }
-:xrl Areg,EDirect is opfull=0xa5; opfull=0x65 & Areg; EDirect { 
+:xrl Areg,EDirect is opfull=0xa5; opfull=0x65 & Areg; EDirect {
   ACC = ACC ^ EDirect;
 }
-:subb Areg,EDirect is opfull=0xa5; opfull=0x95 & Areg; EDirect { 
+:subb Areg,EDirect is opfull=0xa5; opfull=0x95 & Areg; EDirect {
   tmp:1 = EDirect+$(CY); subflags(ACC,tmp); ACC = ACC - tmp;
 }
-:xch Areg,EDirect is opfull=0xa5; opfull=0xc5 & Areg; EDirect { 
+:xch Areg,EDirect is opfull=0xa5; opfull=0xc5 & Areg; EDirect {
   tmp:1 = ACC; ACC = EDirect; EDirect = tmp;
 }
-:mov Areg,EDirect is opfull=0xa5; opfull=0xe5 & Areg; EDirect { 
+:mov Areg,EDirect is opfull=0xa5; opfull=0xe5 & Areg; EDirect {
   ACC = EDirect;
 }
-:mov EDirect,Areg is opfull=0xa5; opfull=0xf5 & Areg; EDirect { 
+:mov EDirect,Areg is opfull=0xa5; opfull=0xf5 & Areg; EDirect {
   EDirect = ACC;
 }
 :mov EDirect,rn is opfull=0xa5; ophi=0x8 & rnfill=1 & rn; EDirect {
@@ -120,93 +120,93 @@ EBitByteAddr: byteaddr 	is bitbank=0 & lowbyte & sfrbit [ byteaddr = lowbyte + 0
 :mov rn,EDirect is opfull=0xa5; ophi=0xa & rnfill=1 & rn; EDirect {
   rn = EDirect;
 }
-:mov EDirect2,EDirect is opfull=0xa5; ophi=8 & oplo=5; EDirect; EDirect2  { 
-  EDirect2 = EDirect; 
+:mov EDirect2,EDirect is opfull=0xa5; ophi=8 & oplo=5; EDirect; EDirect2  {
+  EDirect2 = EDirect;
 }
-:mov EDirect,Data    is opfull=0xa5; ophi=7 & oplo=5; EDirect; Data { 
-  EDirect = Data; 
+:mov EDirect,Data    is opfull=0xa5; ophi=7 & oplo=5; EDirect; Data {
+  EDirect = Data;
 }
-:mov EDirect,Ri      is opfull=0xa5; ophi=8 & rifill=3 & Ri; EDirect { 
-  EDirect = Ri; 
+:mov EDirect,Ri      is opfull=0xa5; ophi=8 & rifill=3 & Ri; EDirect {
+  EDirect = Ri;
 }
-:mov Ri,EDirect is opfull=0xa5; ophi=10 & rifill=3 & Ri; EDirect { 
-  Ri = EDirect; 
+:mov Ri,EDirect is opfull=0xa5; ophi=10 & rifill=3 & Ri; EDirect {
+  Ri = EDirect;
 }
-:orl EDirect,Areg is opfull=0xa5; ophi=4 & oplo=2 & Areg; EDirect { 
-  EDirect = EDirect | ACC; 
+:orl EDirect,Areg is opfull=0xa5; ophi=4 & oplo=2 & Areg; EDirect {
+  EDirect = EDirect | ACC;
 }
-:anl EDirect,Areg is opfull=0xa5; ophi=5 & oplo=2 & Areg; EDirect { 
-  tmp:1 = EDirect & ACC; EDirect = tmp; resultflags(tmp); 
+:anl EDirect,Areg is opfull=0xa5; ophi=5 & oplo=2 & Areg; EDirect {
+  tmp:1 = EDirect & ACC; EDirect = tmp; resultflags(tmp);
 }
-:xrl EDirect,Areg is opfull=0xa5; ophi=6 & oplo=2 & Areg; EDirect { 
-  EDirect = EDirect ^ ACC; 
+:xrl EDirect,Areg is opfull=0xa5; ophi=6 & oplo=2 & Areg; EDirect {
+  EDirect = EDirect ^ ACC;
 }
-:xrl EDirect,Data is opfull=0xa5; ophi=6 & oplo=3; EDirect; Data  { 
-  EDirect = EDirect ^ Data; 
+:xrl EDirect,Data is opfull=0xa5; ophi=6 & oplo=3; EDirect; Data  {
+  EDirect = EDirect ^ Data;
 }
-:anl EDirect,Data is opfull=0xa5; ophi=5 & oplo=3; EDirect; Data  { 
-  tmp:1 = EDirect & Data; EDirect = tmp; resultflags(tmp); 
+:anl EDirect,Data is opfull=0xa5; ophi=5 & oplo=3; EDirect; Data  {
+  tmp:1 = EDirect & Data; EDirect = tmp; resultflags(tmp);
 }
-:orl EDirect,Data is opfull=0xa5; ophi=4 & oplo=3 & Areg; EDirect; Data { 
-  EDirect = EDirect | Data; 
+:orl EDirect,Data is opfull=0xa5; ophi=4 & oplo=3 & Areg; EDirect; Data {
+  EDirect = EDirect | Data;
 }
-:push EDirect is opfull=0xa5; opfull=0xc0; EDirect { 
+:push EDirect is opfull=0xa5; opfull=0xc0; EDirect {
   push8(EDirect);
 }
-:pop EDirect is opfull=0xa5; opfull=0xd0; EDirect { 
+:pop EDirect is opfull=0xa5; opfull=0xd0; EDirect {
   pop8(EDirect);
 }
-:cjne Areg,EDirect,Rel8 is opfull=0xa5; ophi=11 & oplo=5 & Areg; EDirect; Rel8	 { 
-  compflags(ACC,EDirect); if (ACC!=EDirect) goto Rel8; 
+:cjne Areg,EDirect,Rel8 is opfull=0xa5; ophi=11 & oplo=5 & Areg; EDirect; Rel8	 {
+  compflags(ACC,EDirect); if (ACC!=EDirect) goto Rel8;
 }
-:djnz EDirect,Rel8 is opfull=0xa5; ophi=13 & oplo=5; EDirect; Rel8 { 
-  EDirect = EDirect - 1; 
-  if (EDirect!=0) goto Rel8; 
+:djnz EDirect,Rel8 is opfull=0xa5; ophi=13 & oplo=5; EDirect; Rel8 {
+  EDirect = EDirect - 1;
+  if (EDirect!=0) goto Rel8;
 }
 
 
 # EPTR operations
-:ejmp ecallImmAddr is opfull=0xa5; opfull=0x02; ecallImmAddr { 
+:ejmp ecallImmAddr is opfull=0xa5; opfull=0x02; ecallImmAddr {
    goto ecallImmAddr;
 }
-:ecall ecallImmAddr is opfull=0xa5; opfull=0x12; ecallImmAddr { 
+:ecall ecallImmAddr is opfull=0xa5; opfull=0x12; ecallImmAddr {
   ret:3 = inst_next; push24(ret); call ecallImmAddr;
 }
-:mov eptrReg,ecallImmAddr is opfull=0xa5; opfull=0x90; ecallImmAddr & eptrReg & imm24 { 
+:mov eptrReg,ecallImmAddr is opfull=0xa5; opfull=0x90; ecallImmAddr & eptrReg & imm24 {
   EPTR = imm24;
 }
-:eret is opfull=0xa5; opfull=0x22 { 
-  pc:3 = 0; pop24(pc); return[pc]; 
+:eret is opfull=0xa5; opfull=0x22 {
+  pc:3 = 0; pop24(pc); return[pc];
 }
-:jmp APlusEptr is opfull=0xa5; opfull=0x73 & APlusEptr { 
+:jmp APlusEptr is opfull=0xa5; opfull=0x73 & APlusEptr {
   # this is correct, but causes disassembler problems
-  # goto APlusEptr;  
+  # goto APlusEptr;
   # added additional indirection to stop disassembler problems.
-  goto [APlusEptr];  
+  goto [APlusEptr];
 }
-:movx Areg",@"eptrReg is opfull=0xa5; opfull=0xe0 & Areg & eptrReg { 
+:movx Areg",@"eptrReg is opfull=0xa5; opfull=0xe0 & Areg & eptrReg {
   ACC = *:1 EPTR;
 }
-:movx "@"eptrReg,Areg is opfull=0xa5; opfull=0xf0 & Areg & eptrReg { 
+:movx "@"eptrReg,Areg is opfull=0xa5; opfull=0xf0 & Areg & eptrReg {
   *:1 EPTR = ACC;
 }
-:movc Areg,APlusEptr is opfull=0xa5; opfull=0x93 & Areg & APlusEptr { 
+:movc Areg,APlusEptr is opfull=0xa5; opfull=0x93 & Areg & APlusEptr {
   ACC = *:1 APlusEptr;
 }
-:inc EPTR is opfull=0xa5; opfull=0xa3 & EPTR { 
+:inc EPTR is opfull=0xa5; opfull=0xa3 & EPTR {
   EPTR = EPTR + 1;
 }
 
 # PRi operations
-:emov Areg",@"PRi"+"emov_delta is opfull=0xa5; ophi=4 & PRi & emov_delta & Areg { 
+:emov Areg",@"PRi"+"emov_delta is opfull=0xa5; ophi=4 & PRi & emov_delta & Areg {
   tmp:3 = zext(PRi) + emov_delta;
   ACC = *:1 tmp;
 }
-:emov "@"PRi"+"emov_delta,Areg is opfull=0xa5; ophi=5 & PRi & emov_delta & Areg { 
+:emov "@"PRi"+"emov_delta,Areg is opfull=0xa5; ophi=5 & PRi & emov_delta & Areg {
   tmp:3 = PRi + emov_delta;
   *:1 tmp = ACC;
 }
-:add PRi_revend,add_with_pr_const is opfull=0xa5; ophi=6 & PRi_revend & PRi & add_with_pr_const { 
+:add PRi_revend,add_with_pr_const is opfull=0xa5; ophi=6 & PRi_revend & PRi & add_with_pr_const {
   x:3 = zext(add_with_pr_const);
   tmp:3 = PRi + x;
 @if defined(ENDIANSWAPFUNC)

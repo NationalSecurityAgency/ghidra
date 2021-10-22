@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public class ProjectLocator {
 
 	/**
 	 * Construct a project URL.
-	 * @param path path to parent directory 
+	 * @param path path to parent directory
 	 * @param name name of the project
 	 */
 	public ProjectLocator(String path, String name) {
@@ -157,7 +157,7 @@ public class ProjectLocator {
 	/**
 	 * Returns whether the given file is a project directory.
 	 * @param file file to check
-	 * @return  true if the file is a project directory 
+	 * @return  true if the file is a project directory
 	 */
 	public static boolean isProjectDir(File file) {
 		return file.isDirectory() && file.getName().endsWith(PROJECT_DIR_SUFFIX);

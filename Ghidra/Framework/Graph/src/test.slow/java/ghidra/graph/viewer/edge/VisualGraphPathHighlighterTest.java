@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Override
 	protected TestVisualGraph buildGraph() {
 
-		// each test will populate the graph as needed 
+		// each test will populate the graph as needed
 		TestVisualGraph g = new TestVisualGraph();
 		return g;
 	}
@@ -52,20 +52,20 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Test
 	public void testEdgeFocusMode_IN() {
 
-		/*		  
+		/*
 		  		   v1
 		           |
 		 		   v2
 				 / |
-		        /  | 
+		        /  |
 		      v3   v4
 		       \   |
 		        \  |
 		         - v5
 		           |
 		           |
-		           v6		  
-		  
+		           v6
+
 		 */
 
 		edge(1, 2);
@@ -87,20 +87,20 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Test
 	public void testEdgeFocusMode_OUT() {
 
-		/*		  
+		/*
 			   v1
 		        |
 			   v2
 			  / |
-		     /  | 
+		     /  |
 		   v3   v4
 		    \   |
 		     \  |
 		      - v5
 		        |
 		        |
-		        v6		  
-		
+		        v6
+
 		 */
 
 		edge(1, 2);
@@ -122,20 +122,20 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Test
 	public void testEdgeFocusMode_INOUT() {
 
-		/*		  
+		/*
 			   v1
 		        |
 			   v2
 			  / |
-		     /  | 
+		     /  |
 		   v3   v4
 		    \   |
 		     \  |
 		      - v5
 		        |
 		        |
-		        v6		  
-		
+		        v6
+
 		 */
 
 		edge(1, 2);
@@ -157,11 +157,11 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Test
 	public void testEdgeFocusMode_CYCLE() {
 
-		/*		  
-			v1 --> v2 --> v3 --> v4 --> v5 --> v6		  
+		/*
+			v1 --> v2 --> v3 --> v4 --> v5 --> v6
 			       ^      |      ^      |
 			       | - <--.      | - <--.
-			   
+
 			       cycle 1       cycle 2
 		 */
 
@@ -189,11 +189,11 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Test
 	public void testEdgeFocusMode_ALLCYCLE() {
 
-		/*		  
-		v1 --> v2 --> v3 --> v4 --> v5 --> v6		  
+		/*
+		v1 --> v2 --> v3 --> v4 --> v5 --> v6
 		       ^      |      ^      |
 		       | - <--.      | - <--.
-		   
+
 		       cycle 1       cycle 2
 		*/
 
@@ -209,7 +209,7 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 
 		//@formatter:off
 		assertInFocusedPath(edge(2, 3),
-			   		   edge(3, 2), 
+			   		   edge(3, 2),
 			   		   edge(4, 5),
 			   		   edge(5, 4));
 		//@formatter:on
@@ -219,7 +219,7 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 
 		//@formatter:off
 		assertInFocusedPath(edge(2, 3),
-			   		   edge(3, 2), 
+			   		   edge(3, 2),
 			   		   edge(4, 5),
 			   		   edge(5, 4));
 		//@formatter:on
@@ -228,20 +228,20 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Test
 	public void testEdgeFocusMode_SCOPED_FORWARD() {
 
-		/*		  
+		/*
 			   v1
 		        |
 			   v2
 			  / |
-		     /  | 
+		     /  |
 		   v3   v4
 		    \   |
 		     \  |
 		      - v5
 		        |
 		        |
-		        v6		  
-		
+		        v6
+
 		 */
 
 		edge(1, 2);
@@ -266,20 +266,20 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Test
 	public void testEdgeFocusMode_SCOPED_REVERSE() {
 
-		/*		  
+		/*
 			   v1
 		        |
 			   v2
 			  / |
-		     /  | 
+		     /  |
 		   v3   v4
 		    \   |
 		     \  |
 		      - v5
 		        |
 		        |
-		        v6		  
-		
+		        v6
+
 		 */
 
 		edge(1, 2);
@@ -304,20 +304,20 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Test
 	public void testEdgeHoverMode_IN() {
 
-		/*		  
+		/*
 		   		v1
 		        |
 				v2
 			  / |
-		     /  | 
+		     /  |
 		   v3   v4
 		    \   |
 		     \  |
 		      - v5
 		        |
 		        |
-		        v6		  
-		
+		        v6
+
 		*/
 
 		edge(1, 2);
@@ -338,20 +338,20 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 
 	@Test
 	public void testEdgeHoverMode_OUT() {
-		/*		  
+		/*
 			   v1
 		        |
 			   v2
 			  / |
-		     /  | 
+		     /  |
 		   v3   v4
 		    \   |
 		     \  |
 		      - v5
 		        |
 		        |
-		        v6		  
-		
+		        v6
+
 		 */
 
 		edge(1, 2);
@@ -373,20 +373,20 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Test
 	public void testEdgeHoverMode_INOUT() {
 
-		/*		  
+		/*
 			   v1
 		        |
 			   v2
 			  / |
-		     /  | 
+		     /  |
 		   v3   v4
 		    \   |
 		     \  |
 		      - v5
 		        |
 		        |
-		        v6		  
-		
+		        v6
+
 		 */
 
 		edge(1, 2);
@@ -408,11 +408,11 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Test
 	public void testEdgeHoverMode_CYCLE() {
 
-		/*		  
-			v1 --> v2 --> v3 --> v4 --> v5 --> v6		  
+		/*
+			v1 --> v2 --> v3 --> v4 --> v5 --> v6
 			       ^      |      ^      |
 			       | - <--.      | - <--.
-			   
+
 			       cycle 1       cycle 2
 		 */
 
@@ -440,23 +440,23 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Test
 	public void testEdgeHoverMode_PATH() {
 		//
-		// Test that all paths between the focused and hovered vertices are 'hovered' 
+		// Test that all paths between the focused and hovered vertices are 'hovered'
 		//
 
-		/*		  
+		/*
 			   v1
 		        |
 			   v2
 			  / |
-		     /  | 
+		     /  |
 		   v3   v4
 		    \   |
 		     \  |
 		      - v5
 		        |
 		        |
-		        v6		  
-		
+		        v6
+
 		 */
 
 		edge(1, 2);
@@ -485,20 +485,20 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Test
 	public void testEdgeHoverMode_SCOPED_FORWARD() {
 
-		/*		  
+		/*
 			   v1
 		        |
 			   v2
 			  / |
-		     /  | 
+		     /  |
 		   v3   v4
 		    \   |
 		     \  |
 		      - v5
 		        |
 		        |
-		        v6		  
-		
+		        v6
+
 		 */
 
 		edge(1, 2);
@@ -523,20 +523,20 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 	@Test
 	public void testEdgeHoverMode_SCOPED_REVERSE() {
 
-		/*		  
+		/*
 			   v1
 		        |
 			   v2
 			  / |
-		     /  | 
+		     /  |
 		   v3   v4
 		    \   |
 		     \  |
 		      - v5
 		        |
 		        |
-		        v6		  
-		
+		        v6
+
 		 */
 
 		edge(1, 2);
@@ -564,11 +564,11 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 		// Test that clearing the cache will keep the circuits already calculated
 		//
 
-		/*		  
-		v1 --> v2 --> v3 --> v4 --> v5 --> v6		  
+		/*
+		v1 --> v2 --> v3 --> v4 --> v5 --> v6
 		       ^      |      ^      |
 		       | - <--.      | - <--.
-		   
+
 		       cycle 1       cycle 2
 		*/
 
@@ -584,7 +584,7 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 
 		//@formatter:off
 		assertInFocusedPath(edge(2, 3),
-			   		   edge(3, 2), 
+			   		   edge(3, 2),
 			   		   edge(4, 5),
 			   		   edge(5, 4));
 		//@formatter:on
@@ -595,7 +595,7 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 
 		//@formatter:off
 		assertInFocusedPath(edge(2, 3),
-			   		   edge(3, 2), 
+			   		   edge(3, 2),
 			   		   edge(4, 5),
 			   		   edge(5, 4));
 		//@formatter:on
@@ -603,7 +603,7 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	// a shortcut for edge(v(startId), v(endId)), for readability
 	private TestEdge edge(int startId, int endId) {
@@ -612,14 +612,14 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 
 	/**
 	 * Returns the edge for the given vertices, creating it if it does not yet exist.
-	 * 
+	 *
 	 * @param v1 the start vertex
 	 * @param v2 the end vertex
 	 * @return the edge
 	 */
 	private TestEdge edge(AbstractTestVertex v1, AbstractTestVertex v2) {
 		//
-		// First, find the exact instance of the edge in the graph, as it may have state 
+		// First, find the exact instance of the edge in the graph, as it may have state
 		// applied to it that we need to verify for testing.
 		//
 		TestEdge e = graph.findEdge(v1, v2);
@@ -640,13 +640,13 @@ public class VisualGraphPathHighlighterTest extends AbstractVisualGraphTest {
 
 	/**
 	 * Returns the vertex for the given ID, creating it if it does not yet exist.
-	 * 
+	 *
 	 * @param id the vertex id
 	 * @return the vertex
 	 */
 	private AbstractTestVertex vertex(int id) {
 		//
-		// First, find the exact instance of the vertex in the graph, as it may have state 
+		// First, find the exact instance of the vertex in the graph, as it may have state
 		// applied to it that we need to verify for testing.
 		//
 		AbstractTestVertex v = runSwing(() -> {

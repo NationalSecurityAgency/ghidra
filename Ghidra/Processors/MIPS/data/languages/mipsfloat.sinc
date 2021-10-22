@@ -60,26 +60,26 @@ define pcodeop mipsFloatPS;
 }
 
 # 0100 0100 010t tttt ssss s000 0000 0000
-:cfc1 RT, fs_unk                    is $(AMODE) & prime=17 & copop=2 & RT & fs_unk & bigfunct=0 {    
+:cfc1 RT, fs_unk                    is $(AMODE) & prime=17 & copop=2 & RT & fs_unk & bigfunct=0 {
     tmp:4 = getCopControlWord( 1:1, fs_unk:4 );
     RT = sext(tmp);
 }
-:cfc1 RT, fs_fcr                is $(AMODE) & prime=17 & copop=2 & RT & fs_fcr & (fs=0 | fs=25 | fs=26 | fs=28 | fs=31) & bigfunct=0 { 
+:cfc1 RT, fs_fcr                is $(AMODE) & prime=17 & copop=2 & RT & fs_fcr & (fs=0 | fs=25 | fs=26 | fs=28 | fs=31) & bigfunct=0 {
     RT = sext(fs_fcr);
 }
 # Since we don't track the state of the FCSR bits, no sense in introducing complex code
-#:cfc1 RT, fs_fcr               is $(AMODE) & prime=17 & copop=2 & RT & fs_fcr & fs=25 & bigfunct=0 {  
-#    tmp1:4 = (fcsr & 0x00800000) >> 23;  
+#:cfc1 RT, fs_fcr               is $(AMODE) & prime=17 & copop=2 & RT & fs_fcr & fs=25 & bigfunct=0 {
+#    tmp1:4 = (fcsr & 0x00800000) >> 23;
 #    tmp2:4 = (fcsr & 0xfe000000) >> 24;
 #    RT = sext(tmp2 + tmp1);
 #}
 #:cfc1 RT, fs_fcr                    is $(AMODE) & prime=17 & copop=2 & RT & fs_fcr & fs=26 & bigfunct=0 {
-#    tmp1:4 = fcsr & 0x0003f07c;   
+#    tmp1:4 = fcsr & 0x0003f07c;
 #    RT = sext(tmp1);
 #}
 #:cfc1 RT, fs_fcr                    is $(AMODE) & prime=17 & copop=2 & RT & fs_fcr & fs=28 & bigfunct=0 {
 #    tmp1:4 = fcsr & 0x00000f83;
-#    tmp2:4 = (fcsr & 0x01000000) >> 24;  
+#    tmp2:4 = (fcsr & 0x01000000) >> 24;
 #    RT = sext(tmp1 + tmp2);
 #}
 #:cfc1 RT, fs_fcr                    is $(AMODE) & prime=17 & copop=2 & RT & fs_fcr & fs=31 & bigfunct=0 {
@@ -87,10 +87,10 @@ define pcodeop mipsFloatPS;
 #}
 
 # 0100 0100 110t tttt ssss s000 0000 0000
-:ctc1 RTsrc, fs_unk             is $(AMODE) & prime=17 & copop=6 & RTsrc & fs_unk & bigfunct=0 {    
+:ctc1 RTsrc, fs_unk             is $(AMODE) & prime=17 & copop=6 & RTsrc & fs_unk & bigfunct=0 {
     setCopControlWord( 1:1, fs_unk:4, RTsrc );
 }
-:ctc1 RTsrc, fs_fcr             is $(AMODE) & prime=17 & copop=6 & RTsrc & fs_fcr & (fs=0 | fs=25 | fs=26 | fs=28 | fs=31) & bigfunct=0 {    
+:ctc1 RTsrc, fs_fcr             is $(AMODE) & prime=17 & copop=6 & RTsrc & fs_fcr & (fs=0 | fs=25 | fs=26 | fs=28 | fs=31) & bigfunct=0 {
     fs_fcr = RTsrc:$(SIZETO4);
 }
 
@@ -229,7 +229,7 @@ define pcodeop mipsFloatPS;
 }
 
 # 1100 01bb bbbt tttt iiii iiii iiii iiii
-:lwc1 ft, OFF_BASE              is $(AMODE) & prime=49 & OFF_BASE & ft {        
+:lwc1 ft, OFF_BASE              is $(AMODE) & prime=49 & OFF_BASE & ft {
     ft[0,32] = *[ram]:4 OFF_BASE;
 }
 
@@ -346,8 +346,8 @@ define pcodeop mipsFloatPS;
 }
 
 # 1110 01bb bbbt tttt iiii iiii iiii iiii
-:swc1 ft, OFF_BASE              is $(AMODE) & prime=57 & OFF_BASE & ft { 
-    *[ram]:4 OFF_BASE = ft:$(SIZETO4); 
+:swc1 ft, OFF_BASE              is $(AMODE) & prime=57 & OFF_BASE & ft {
+    *[ram]:4 OFF_BASE = ft:$(SIZETO4);
 }
 
 # 0100 01ff fff0 0000 ssss sddd dd00 1001
@@ -379,13 +379,13 @@ define pcodeop mipsFloatPS;
 }
 
 # 0100 11bb bbbi iiii 0000 0ddd dd00 0001
-:ldxc1 fd, INDEX_BASE           is $(AMODE) & REL6=0 & prime=0x13 & zero4=0 & fct=0x01 & INDEX_BASE & fd & fdD {   
+:ldxc1 fd, INDEX_BASE           is $(AMODE) & REL6=0 & prime=0x13 & zero4=0 & fct=0x01 & INDEX_BASE & fd & fdD {
     fdD = *[ram]:8 INDEX_BASE;
 }
 
 # 0100 11bb bbbi iiii 0000 0ddd dd00 0101
 :luxc1 fd, INDEX_BASE           is $(AMODE) & REL6=0 & prime=0x13 & zero4=0 & fct=0x05 & INDEX_BASE & fd & fdD {
-    ptr:$(ADDRSIZE) = INDEX_BASE & -16:$(ADDRSIZE);          
+    ptr:$(ADDRSIZE) = INDEX_BASE & -16:$(ADDRSIZE);
     fdD = *[ram]:8 ptr;
 }
 
@@ -444,7 +444,7 @@ define pcodeop mipsFloatPS;
 
 # 0100 11bb bbbi iiii hhhh h000 0000 1111
 :prefx hint, INDEX_BASE         is $(AMODE) & REL6=0 & prime=0x13 & zero5=0x0 & fct=0x0F & hint & INDEX_BASE {
-    prefetch(INDEX_BASE, hint:1); 
+    prefetch(INDEX_BASE, hint:1);
 }
 # 0100 11bb bbbi iiii ssss s000 0000 1001
 :sdxc1 fs, INDEX_BASE           is $(AMODE) & REL6=0 & prime=0x13 & zero5=0x0 & fct=0x09 & fs & fsD & INDEX_BASE {
@@ -452,12 +452,12 @@ define pcodeop mipsFloatPS;
 }
 # 0100 11bb bbbi iiii ssss s000 0000 1101
 :suxc1 fs, INDEX_BASE           is $(AMODE) & REL6=0 & prime=19 & fct=13 & INDEX_BASE & fs & fsD {
-    INDEX_BASE = INDEX_BASE & 0xfffffffffffffff0;          
-    *[ram]:8 INDEX_BASE = fsD;    
+    INDEX_BASE = INDEX_BASE & 0xfffffffffffffff0;
+    *[ram]:8 INDEX_BASE = fsD;
 }
 # 0100 11bb bbbi iiii ssss s000 0000 1000
 :swxc1 fs, INDEX_BASE           is $(AMODE) & REL6=0 & prime=19 & INDEX_BASE & fs & fd=0 & fct=8  {
-    *[ram]:4 INDEX_BASE = fs:$(SIZETO4);    
+    *[ram]:4 INDEX_BASE = fs:$(SIZETO4);
 }
 ####
 #
@@ -847,7 +847,7 @@ macro trapIfSNaN(x1, x2) { }
     tmp_sign:4 = zext(tmp_fs[31,1]);
     tmp_b1:4 = zext(tmp_fs[22,1]); # High order bit of fraction, used for NaN
 
-    tmp_SNaN:4 = zext((tmp_exponent == 0x0ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x0)); 
+    tmp_SNaN:4 = zext((tmp_exponent == 0x0ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x0));
     tmp_QNaN:4 = zext((tmp_exponent == 0x0ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x01));
     tmp_Neg_Infinity:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x0ff)  && (tmp_fraction == 0x0));
     tmp_Neg_Normal:4 = zext((tmp_sign == 0x01) && (tmp_exponent != 0x0) && (tmp_exponent != 0x0ff));
@@ -944,7 +944,7 @@ macro trapIfSNaN(x1, x2) { }
     trapIfSNaN(fs:4, ft:4);
     fd[0,32] = sext((nan(fs:4) || nan(ft:4)) * 0xff); # True if operands are NaN
 }
-:cmp.un.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x01 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD { 
+:cmp.un.D fd, fs, ft    is $(AMODE) & REL6=1 & prime=0x11 & fct=0x01 & bit5=0 & fmt6 & format=0x15 & fd & fdD & fs & fsD & ft & ftD {
     trapIfSNaN(fsD, ftD);
     fdD = sext((nan(fsD) || nan(ftD)) * 0xff);
 }
@@ -1166,7 +1166,7 @@ macro trapIfSNaN(x1, x2) { }
     tmp_cond:1 = fs:4 f< ft:4;
     fd[0,32] = (fs:4 * zext(tmp_cond == 1)) | (ft:4 * zext(tmp_cond == 0) );
 }
-:min.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x1c 
+:min.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x1c
 				& fsD & fdD & ftD {
     tmp_cond:1 = fsD f< ftD;
     fdD = zext( (fsD * zext(tmp_cond == 1)) | (ftD * zext(tmp_cond == 0) ) );
@@ -1188,7 +1188,7 @@ macro trapIfSNaN(x1, x2) { }
     tmp_cond:1 = abs(fs:4) f< abs(ft:4);
     fd[0,32] = (fs:4 * zext(tmp_cond == 1)) | (ft:4 * zext(tmp_cond == 0) );
 }
-:mina.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x1e 
+:mina.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x1e
                                 & fsD & fdD & ftD {
     tmp_cond:1 = abs(fsD) f< abs(ftD);
     fdD = zext( (fsD * zext(tmp_cond == 1)) | (ftD * zext(tmp_cond == 0) ) );
@@ -1218,7 +1218,7 @@ macro trapIfSNaN(x1, x2) { }
     # set floating point fd = fd - fs * ft, using 32-bit floating values
     fd[0,32] = fd:4 f- (fs:4 f* ft:4);
 }
-:msubf.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x19 
+:msubf.D fd, fs, ft       is $(AMODE) & REL6=1 & prime=0x11 & format=0x11 & cop1code=0x0 & fs & fd & ft & fct=0x19
                                 & fsD & fdD & ftD {
     fdD = fdD f- (fsD f* ftD);
 }

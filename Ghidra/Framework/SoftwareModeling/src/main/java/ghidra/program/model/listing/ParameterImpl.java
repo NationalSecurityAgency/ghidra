@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,7 +81,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * prior to determining storage elements since their length may change)
 	 * @param stackOffset
 	 * @param program target program
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * address is specified, or unable to resolve storage element for specified datatype
 	 * @throws AddressOutOfBoundsException if invalid stack offset specified
 	 */
@@ -100,7 +100,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * @param stackOffset
 	 * @param program target program
 	 * @param sourceType name source type
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * address is specified, or unable to resolve storage element for specified datatype
 	 * @throws AddressOutOfBoundsException if invalid stack offset specified
 	 */
@@ -118,7 +118,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * prior to determining storage elements since their length may change)
 	 * @param register
 	 * @param program target program
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * address is specified, or unable to resolve storage element for specified datatype
 	 */
 	public ParameterImpl(String name, DataType dataType, Register register, Program program)
@@ -135,7 +135,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * @param register
 	 * @param program target program
 	 * @param sourceType name source type
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * address is specified, or unable to resolve storage element for specified datatype
 	 */
 	public ParameterImpl(String name, DataType dataType, Register register, Program program,
@@ -145,16 +145,16 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	}
 
 	/**
-	 * Construct a parameter with a single storage element at the specified address.  If address 
-	 * is contained within a register it may get realigned to the register based upon the resolved 
-	 * datatype length.  Variable storage will be aligned to the least-significant portion of the 
+	 * Construct a parameter with a single storage element at the specified address.  If address
+	 * is contained within a register it may get realigned to the register based upon the resolved
+	 * datatype length.  Variable storage will be aligned to the least-significant portion of the
 	 * register.  Ordinal assignment is not established (UNASSIGNED_ORDINAL).
 	 * @param name variable name or null for default name
 	 * @param dataType a fixed-length datatype.  (NOTE: Should be cloned to program datatype manager
 	 * prior to determining storage elements since their length may change)
 	 * @param storageAddr storage address or null if no storage has been identified
 	 * @param program target program
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * address is specified, or unable to resolve storage element for specified datatype
 	 */
 	public ParameterImpl(String name, DataType dataType, Address storageAddr, Program program)
@@ -164,9 +164,9 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	}
 
 	/**
-	 * Construct a parameter with a single storage element at the specified address.  If address 
-	 * is contained within a register it may get realigned to the register based upon the resolved 
-	 * datatype length.  Variable storage will be aligned to the least-significant portion of the 
+	 * Construct a parameter with a single storage element at the specified address.  If address
+	 * is contained within a register it may get realigned to the register based upon the resolved
+	 * datatype length.  Variable storage will be aligned to the least-significant portion of the
 	 * register.  Ordinal assignment is not established (UNASSIGNED_ORDINAL).
 	 * @param name variable name or null for default name
 	 * @param dataType a fixed-length datatype.  (NOTE: Should be cloned to program datatype manager
@@ -174,7 +174,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * @param storageAddr storage address or null if no storage has been identified
 	 * @param program target program
 	 * @param sourceType name source type
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * address is specified, or unable to resolve storage element for specified datatype
 	 */
 	public ParameterImpl(String name, DataType dataType, Address storageAddr, Program program,
@@ -192,7 +192,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * prior to determining storage elements since their length may change)
 	 * @param storage variable storage or null for unassigned storage
 	 * @param program target program
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * element is specified, or error while resolving storage element for specified datatype
 	 */
 	public ParameterImpl(String name, DataType dataType, VariableStorage storage, Program program)
@@ -210,7 +210,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * @param storage variable storage or null for unassigned storage
 	 * @param program target program
 	 * @param sourceType name source type
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * element is specified, or error while resolving storage element for specified datatype
 	 */
 	public ParameterImpl(String name, DataType dataType, VariableStorage storage, Program program,
@@ -230,7 +230,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * @param force if true storage will be forced even if incorrect size
 	 * @param program target program
 	 * @param sourceType name source type
-	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage 
+	 * @throws InvalidInputException if dataType restrictions are violated, an invalid storage
 	 * element is specified, or error while resolving storage element for specified datatype
 	 */
 	protected ParameterImpl(String name, int ordinal, DataType dataType, VariableStorage storage,
@@ -254,7 +254,7 @@ public class ParameterImpl extends VariableImpl implements Parameter {
 	 * @param force if true storage will be forced even if mismatch with datatype size
 	 * @param program target program
 	 * @param sourceType source type
-	 * @throws InvalidInputException if dataType restrictions are violated or an error occurs while 
+	 * @throws InvalidInputException if dataType restrictions are violated or an error occurs while
 	 * resolving storage for specified datatype
 	 * @throws AddressOutOfBoundsException if invalid stack offset specified
 	 */

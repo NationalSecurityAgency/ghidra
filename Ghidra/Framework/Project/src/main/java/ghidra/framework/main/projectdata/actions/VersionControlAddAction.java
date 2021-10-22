@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -124,7 +124,7 @@ public class VersionControlAddAction extends VersionControlAction {
 	}
 
 	/**
-	 * Task for adding files to version control. This task displays a dialog for each file 
+	 * Task for adding files to version control. This task displays a dialog for each file
 	 * which allows a comment to be entered for each check-in.
 	 */
 	private class AddToVersionControlTask extends VersionControlTask {
@@ -148,7 +148,7 @@ public class VersionControlAddAction extends VersionControlAction {
 						return;
 					}
 
-					// Note: this used to be a sleep(200) 
+					// Note: this used to be a sleep(200)
 					Swing.allowSwingToProcessEvents();
 
 					df.addToVersionControl(comments, keepCheckedOut, monitor);

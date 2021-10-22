@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,15 +47,15 @@ public class CreateDataInStructureCmd implements Command {
 
 	/**
 	 * This is the same as {@link #CreateDataInStructureCmd(Address, int[], DataType)} except that
-	 * it allows the caller to control whether or not a pointer data type is created when a 
+	 * it allows the caller to control whether or not a pointer data type is created when a
 	 * non-pointer data type is applied at a location that previously contained a pointer data
 	 * type.
-	 *  
+	 *
 	 * @param addr the address of the structure in which to apply the given datatype.
 	 * @param componentPath the component path of the component where the datatype
 	 * will be applied.
 	 * @param dt the datatype to apply in the structure.
-	 * @param stackPointers if true simple pointer conversion is enabled 
+	 * @param stackPointers if true simple pointer conversion is enabled
 	 * (see {@link DataUtilities#reconcileAppliedDataType(DataType, DataType, boolean)}).
 	 */
 	public CreateDataInStructureCmd(Address addr, int[] componentPath, DataType dt,
@@ -112,7 +112,7 @@ public class CreateDataInStructureCmd implements Command {
 					struct.clearComponent(index);
 				}
 				else {
-//			        MemBuffer memBuf = new ProgramStructureProviderContext(program,addr, 
+//			        MemBuffer memBuf = new ProgramStructureProviderContext(program,addr,
 //	    	        					struct, dataComp.getParentOffset());
 					DataTypeInstance dti = DataTypeInstance.getDataTypeInstance(newDataType, -1);
 					struct.replace(index, dti.getDataType(), dti.getLength());

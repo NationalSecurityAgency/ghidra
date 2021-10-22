@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
-/** 
+/**
  * Convenience methods for creating memory blocks.
  */
 public class MemoryBlockUtils {
@@ -110,7 +110,7 @@ public class MemoryBlockUtils {
 	/**
 	 * Creates a new bit mapped memory block. (A bit mapped block is a block where each byte value
 	 * is either 1 or 0 and the value is taken from a bit in a byte at some other address in memory)
-	 * 
+	 *
 	 * @param program the program in which to create the block.
 	 * @param name the name of the new block.
 	 * @param start the starting address of the new block.
@@ -149,10 +149,10 @@ public class MemoryBlockUtils {
 	}
 
 	/**
-	 * Creates a new byte mapped memory block with a 1:1 byte mapping scheme. 
+	 * Creates a new byte mapped memory block with a 1:1 byte mapping scheme.
 	 * (A byte mapped block is a block where each byte value
 	 * is taken from a byte at some other address in memory)
-	 * 
+	 *
 	 * @param program the program in which to create the block.
 	 * @param name the name of the new block.
 	 * @param start the starting address of the new block.
@@ -195,7 +195,7 @@ public class MemoryBlockUtils {
 	 * If there is a conflict when creating this block (some other block occupies at least some
 	 * of the addresses that would be occupied by the new block), then an attempt will be made
 	 * to create the new block in an overlay.
-	 * 
+	 *
 	 * @param program the program in which to create the block.
 	 * @param isOverlay if true, the block will be created in a new overlay space for that block
 	 * @param name the name of the new block.
@@ -210,7 +210,7 @@ public class MemoryBlockUtils {
 	 * @param x the execute permission for the new block.
 	 * @param log a {@link MessageLog} for appending error messages
 	 * @return the new created block
-	 * @throws AddressOverflowException if the address 
+	 * @throws AddressOverflowException if the address
 	 */
 	public static MemoryBlock createInitializedBlock(Program program, boolean isOverlay,
 			String name, Address start, FileBytes fileBytes, long offset, long length,
@@ -248,7 +248,7 @@ public class MemoryBlockUtils {
 	 * If there is a conflict when creating this block (some other block occupies at least some
 	 * of the addresses that would be occupied by the new block), then an attempt will be made
 	 * to create the new block in an overlay.
-	 * 
+	 *
 	 * @param program the program in which to create the block.
 	 * @param isOverlay if true, the block will be created in a new overlay space for that block
 	 * @param name the name of the new block.
@@ -263,7 +263,7 @@ public class MemoryBlockUtils {
 	 * @param log a {@link MessageLog} for appending error messages
 	 * @param monitor the monitor for canceling this potentially long running operation.
 	 * @return the new created block
-	 * @throws AddressOverflowException if the address 
+	 * @throws AddressOverflowException if the address
 	 */
 	public static MemoryBlock createInitializedBlock(Program program, boolean isOverlay,
 			String name, Address start, InputStream dataInput, long dataLength, String comment,

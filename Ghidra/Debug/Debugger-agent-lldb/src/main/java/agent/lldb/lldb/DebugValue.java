@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -326,7 +326,7 @@ public interface DebugValue {
 
 	/**
 	 * Specific to IA-64 (Itanium) floating-point registers
-	 * 
+	 *
 	 * 17-bit exponent, 64-bit fraction. Not sure how it's aligned in memory, though.
 	 */
 	@ForDebugValueType(DebugValueType.FLOAT82)
@@ -443,9 +443,9 @@ public interface DebugValue {
 
 	/**
 	 * TODO: Document me
-	 * 
+	 *
 	 * Encodes the value as an array of bytes in big-endian order
-	 * 
+	 *
 	 * @return the encoded value
 	 */
 	public byte[] encodeAsBytes();

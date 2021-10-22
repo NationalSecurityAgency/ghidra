@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -160,7 +160,7 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 
 	/**
 	 * For testing purposes, but should probably be promoted to InterpreterConsole interface
-	 * 
+	 *
 	 * @return the prompt;
 	 */
 	public String getPrompt() {
@@ -181,7 +181,7 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 	@Override
 	public void componentActivated() {
 
-		// Since we only care about the first activation, clear the list of callbacks so future 
+		// Since we only care about the first activation, clear the list of callbacks so future
 		// activations don't trigger anything.  First save them off to a local list so when we
 		// process them we aren't affected by concurrent modification due to reentrance.
 		List<Callback> callbacks = new ArrayList<>(firstActivationCallbacks);
@@ -218,7 +218,7 @@ public class InterpreterComponentProvider extends ComponentProviderAdapter
 
 	/**
 	 * For testing purposes only
-	 * 
+	 *
 	 * @return the text in the output buffer
 	 */
 	public String getOutputText() {

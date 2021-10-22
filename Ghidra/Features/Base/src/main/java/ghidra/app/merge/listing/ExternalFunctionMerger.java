@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -719,8 +719,8 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 				replaceNamespace(resultExternalLocation, fromExternalLocation, monitor);
 				return;
 			case EXTERNAL_LABEL:
-				// TODO: The order of detail merge could be problematic since we can't set 
-				// default label if EXTERNAL_ADDRESS is currently null.  
+				// TODO: The order of detail merge could be problematic since we can't set
+				// default label if EXTERNAL_ADDRESS is currently null.
 				String fromLabel = fromExternalLocation.getLabel();
 				SourceType resultSource = resultExternalLocation.getSource();
 				SourceType fromSource = fromExternalLocation.getSource();
@@ -741,7 +741,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 				}
 				return;
 			case EXTERNAL_ADDRESS:
-				// TODO: The order of detail merge could be problematic since we can't set 
+				// TODO: The order of detail merge could be problematic since we can't set
 				// null address if EXTERNAL_LABEL is currently null/default.
 				Address address = fromExternalLocation.getAddress();
 				try {
@@ -3265,7 +3265,7 @@ public class ExternalFunctionMerger extends AbstractFunctionMerger implements Li
 		replaceLocation(toExternalLocation, fromExternalLocation, monitor);
 
 		// TODO: replacing data type on a function seems wrong.  Do we handle the case
-		// where we replace a function with a non-function?  
+		// where we replace a function with a non-function?
 
 		// Replace the data type.
 		replaceExternalDataType(toExternalLocation, fromExternalLocation, monitor);

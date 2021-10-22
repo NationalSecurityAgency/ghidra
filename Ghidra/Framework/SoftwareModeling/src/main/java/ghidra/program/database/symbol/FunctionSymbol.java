@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Symbol class for functions.
- * 
+ *
  * Symbol Data Usage:
  *   EXTERNAL:
  *   	String stringData - external memory address/label
@@ -133,7 +133,7 @@ public class FunctionSymbol extends SymbolDB {
 	}
 
 	/**
-	 * Recreate a symbol with the function symbol's name because deleting the function 
+	 * Recreate a symbol with the function symbol's name because deleting the function
 	 * does not mean that we want to lose the function name (that is our policy).
 	 */
 	private boolean createLabelForDeletedFunctionName(Address entryPoint, String symName,

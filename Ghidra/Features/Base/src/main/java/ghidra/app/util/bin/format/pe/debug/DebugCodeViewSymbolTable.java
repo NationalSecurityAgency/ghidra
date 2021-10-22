@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,16 +29,16 @@ import java.util.*;
  * code view symbol table.
  */
 public class DebugCodeViewSymbolTable implements StructConverter {
-	public final static int MAGIC_NB_09 = 
+	public final static int MAGIC_NB_09 =
 		DebugCodeViewConstants.SIGNATURE_NB << 16 |
 		DebugCodeViewConstants.VERSION_09;
-	public final static int MAGIC_NB_11 = 
+	public final static int MAGIC_NB_11 =
 		DebugCodeViewConstants.SIGNATURE_NB << 16 |
 		DebugCodeViewConstants.VERSION_11;
-	public final static int MAGIC_N1_12 = 
+	public final static int MAGIC_N1_12 =
 		DebugCodeViewConstants.SIGNATURE_N1 << 16 |
 		DebugCodeViewConstants.VERSION_12;
-	public final static int MAGIC_N1_13 = 
+	public final static int MAGIC_N1_13 =
 		DebugCodeViewConstants.SIGNATURE_N1 << 16 |
 		DebugCodeViewConstants.VERSION_13;
 
@@ -48,7 +48,7 @@ public class DebugCodeViewSymbolTable implements StructConverter {
 					reader.readByte(ptr+1) << 16 |
 					reader.readByte(ptr+2) << 8 |
 					reader.readByte(ptr+3);
-		return (MAGIC_NB_09 == value) || (MAGIC_NB_11 == value) || 
+		return (MAGIC_NB_09 == value) || (MAGIC_NB_11 == value) ||
 			   (MAGIC_N1_12 == value) || (MAGIC_N1_13 == value);
 	}
 

@@ -6,7 +6,7 @@ import org.eclipse.xtext.xtext.generator.model.project.*
 var rootPath = ".."
 
 Workflow {
-	
+
 	component = XtextGenerator {
 		configuration = {
 			project = StandardProjectConfig {
@@ -42,14 +42,14 @@ Workflow {
 				generateDeprecationValidation = true
 			}
 			fragment = ui.labeling.LabelProviderFragment2 {}
-			
+
 			fragment = formatting.Formatter2Fragment2 {}
-			
+
 			fragment = ui.quickfix.QuickfixProviderFragment2 {}
-			
+
 			// enable rename refactoring
 			fragment = ui.refactoring.RefactorElementNameFragment2 {}
-			
+
 			junitSupport = {
 				junitVersion = "5"
 			}

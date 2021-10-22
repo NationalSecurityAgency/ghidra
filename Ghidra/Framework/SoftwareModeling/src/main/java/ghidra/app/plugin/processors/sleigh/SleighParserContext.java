@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 
 /**
- * 
+ *
  *
  * All the recovered context for a single instruction
  * The main data structure is the tree of constructors and operands
@@ -79,7 +79,7 @@ public class SleighParserContext implements ParserContext {
 
 	/**
 	 * Constructor for building precompiled templates
-	 * @param aAddr  = address to which 'inst_start' resolves 
+	 * @param aAddr  = address to which 'inst_start' resolves
 	 * @param nAddr  = address to which 'inst_next' resolves
 	 * @param rAddr  = special address associated with original call
 	 * @param dAddr  = destination address of original call being replaced
@@ -183,10 +183,10 @@ public class SleighParserContext implements ParserContext {
 
 	/**
 	 * Get bytes from the instruction stream into an int
-	 * (packed in big endian format).  Uninitialized or 
+	 * (packed in big endian format).  Uninitialized or
 	 * undefined memory will return zero byte values.
 	 * @param offset offset relative start of this context
-	 * @param bytestart pattern byte offset relative to specified context offset 
+	 * @param bytestart pattern byte offset relative to specified context offset
 	 * @param size
 	 * @return requested byte-range value
 	 * @throws MemoryAccessException if no bytes are available at first byte when (offset+bytestart==0).
@@ -209,7 +209,7 @@ public class SleighParserContext implements ParserContext {
 
 	/**
 	 * Get bits from the instruction stream into an int
-	 * (packed in big endian format).  Uninitialized or 
+	 * (packed in big endian format).  Uninitialized or
 	 * undefined memory will return zero bit values.
 	 * @param offset offset relative start of this context
 	 * @param startbit
@@ -242,7 +242,7 @@ public class SleighParserContext implements ParserContext {
 
 	/**
 	 * Get bytes from context into an int
-	 * @param bytestart 
+	 * @param bytestart
 	 * @param bytesize number of bytes (range: 1 - 4)
 	 * @return
 	 */
@@ -274,7 +274,7 @@ public class SleighParserContext implements ParserContext {
 
 	/**
 	 * Get bits from context into an int
-	 * @param startbit 
+	 * @param startbit
 	 * @param bitsize number of bits (range: 1 - 32)
 	 * @return
 	 */

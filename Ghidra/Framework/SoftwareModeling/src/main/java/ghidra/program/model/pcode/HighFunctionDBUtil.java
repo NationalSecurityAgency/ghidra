@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -131,7 +131,7 @@ public class HighFunctionDBUtil {
 	 * @throws DuplicateNameException if commit of parameters caused conflict with other
 	 * local variable/label.  Should not occur if renameConflicts is true.
 	 * @throws InvalidInputException for invalid variable names or for parameter data-types that aren't fixed length
-	 * @throws DuplicateNameException is there are collisions between variable names in the function's scope 
+	 * @throws DuplicateNameException is there are collisions between variable names in the function's scope
 	 */
 	public static void commitParamsToDatabase(Function function, String modelName,
 			List<Parameter> params, boolean hasVarArgs, boolean renameConflicts, SourceType source)

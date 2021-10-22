@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,8 +62,8 @@ import util.CollectionUtils;
  *      <p>
  *      There are two situations where the {@link #equals(Object)} and {@link #hashCode()} using the
  *      name are insufficient.  One is if your tree implementation allows nodes with the same name
- *      with the same parent.  The other possible situation is if your nodes can change their name, 
- *      which may confuse the tree.  If either of these situations apply, just override the 
+ *      with the same parent.  The other possible situation is if your nodes can change their name,
+ *      which may confuse the tree.  If either of these situations apply, just override the
  *      {@link #equals(Object)} and {@link #hashCode()} methods to make them more robust.
  *      <p><br>
  *   </li>
@@ -79,11 +79,11 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 
 	/**
 	 * Returns the display text for the node.  By default, this is the same as the name of the node.
-	 * The name of the node usually serves two purposes: 1) to uniquely identify the node (the 
-	 * identity) and 2) the display text (what you see in the tree). Sometimes, it is useful to 
+	 * The name of the node usually serves two purposes: 1) to uniquely identify the node (the
+	 * identity) and 2) the display text (what you see in the tree). Sometimes, it is useful to
 	 * display more information in the tree without affecting the nodes identity.  In this case,
 	 * you can override this method to return the "display" name, while {@link #getName()} will
-	 * still return the name used to identify the node. 
+	 * still return the name used to identify the node.
 	 * @return the display text for the node.
 	 */
 	public String getDisplayText() {
@@ -94,8 +94,8 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * Returns the name of the node.  If {@link #getDisplayText()} is not overridden, then this is
 	 * also the text that will be displayed in the tree for that node. In general, the name of a node
 	 * should not change. If the text displayed in the tree changes over time, override
-	 * {@link #getDisplayText()}. 
-	 * 
+	 * {@link #getDisplayText()}.
+	 *
 	 * @return the name of the node
 	 */
 	public abstract String getName();
@@ -108,7 +108,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	public abstract Icon getIcon(boolean expanded);
 
 	/**
-	 * Returns the string to be displayed as a tooltip when the user 
+	 * Returns the string to be displayed as a tooltip when the user
 	 * hovers the mouse on this node in the tree
 	 * @return the tooltip to be displayed
 	 */
@@ -154,7 +154,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	/**
 	 * Returns all of the <b>visible</b> children of this node.  If there are filtered nodes, then
 	 * they will not be returned.
-	 * 
+	 *
 	 * @return all of the <b>visible</b> children of this node.  If there are filtered nodes, then
 	 * 		   they will not be returned.
 	 */
@@ -211,7 +211,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	/**
 	 * Returns the total number of leaf nodes in the subtree from this node.  Note that if any
 	 * nodes are "lazy" (see {@link GTreeLazyNode}) and not currently loaded, then it will be
-	 * considered as a leaf and return 1. 
+	 * considered as a leaf and return 1.
 	 * @return the total number of leaf nodes in the subtree from this node
 	 */
 	public int getLeafCount() {
@@ -296,7 +296,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 
 	/**
 	 * Notification method called when a cell editor completes editing to notify this
-	 * node that its value has changed.  If you override this method you must also override 
+	 * node that its value has changed.  If you override this method you must also override
 	 * {@link #isEditable()}.
 	 * @param newValue the new value provided by the cell editor
 	 * @see #isEditable()
@@ -341,12 +341,12 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	 * Generates a filtered copy of this node and its children.
 	 * <P>
 	 * A node will be included if it or any of its descendants are accepted by the filter.
-	 * NOTE: the filter will only be applied to a nodes children if they are loaded. So to 
+	 * NOTE: the filter will only be applied to a nodes children if they are loaded. So to
 	 * perform a filter on all the nodes in the tree, the {@link #loadAll(TaskMonitor)} should
-	 * be called before the filter call. 
+	 * be called before the filter call.
 	 * @param filter the filter being applied
 	 * @param monitor a TaskMonitor for tracking the progress and cancelling
-	 * @return A copy of this node and its children that matches the filter or null 
+	 * @return A copy of this node and its children that matches the filter or null
 	 * if this node and none of its children match the filter.
 	 * @throws CancelledException if the operation is cancelled via the TaskMonitor
 	 * @throws CloneNotSupportedException if any nodes in the tree explicitly prevents cloning
@@ -376,7 +376,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	}
 
 	/**
-	 * Causes any lazy or slow loading nodes in the tree to load their children so that the tree 
+	 * Causes any lazy or slow loading nodes in the tree to load their children so that the tree
 	 * is fully loaded. Nodes that are already loaded (including normal nodes which are always loaded)
 	 * do nothing except recursively call {@link #loadAll(TaskMonitor)} on their children.
 	 * @param monitor the TaskMonitor to monitor progress and provide cancel checking
@@ -442,7 +442,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 	}
 
 	/**
-	 * Notifies the tree that the node has different children.  This method 
+	 * Notifies the tree that the node has different children.  This method
 	 * @param node the node that has changed.
 	 */
 	public void fireNodeStructureChanged(GTreeNode node) {

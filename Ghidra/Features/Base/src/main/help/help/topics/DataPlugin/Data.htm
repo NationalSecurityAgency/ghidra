@@ -31,8 +31,8 @@
       etc).&nbsp; Ghidra also provides the capability of creating "User-defined" Data types
       (structure, array, typedef, etc) and supports dynamic data types whose structure depends on the
       underlying data.</FONT></P>
-      
-      <P><IMG src="../../shared/note.yellow.png"> It is important to note that the size of many of the primitive built-in types is 
+
+      <P><IMG src="../../shared/note.yellow.png"> It is important to note that the size of many of the primitive built-in types is
       determined by the language and compiler specification (e.g., the size of an integer
       can vary).</P>
 
@@ -88,21 +88,21 @@
               <TD align="left">8</TD>
             </TR>
             <TR>
-            
+
               <TD colspan="4" bgcolor="#c0c0c0" height="21" align="left">
                 Settings
                 <ul>
                 		<li>Mutability (normal, volatile, constant)
                 </ul>
               </TD>
-                        
+
             </TR>
           </TBODY>
         </TABLE>
     </DIV>
-    
+
     <BR>
-    
+
     <DIV align="center">
         <TABLE border="1" width="50%">
           <TBODY>
@@ -128,7 +128,7 @@
               <TD align="left">sdb</TD>
               <TD align="left">1</TD>
               <TD align="left">Signed</TD>
-            </TR>           
+            </TR>
             <TR>
               <TD align="left">word</TD>
               <TD align="left">dw</TD>
@@ -214,7 +214,7 @@
               <TD align="left">Signed</TD>
             </TR>
             <TR>
-                        
+
               <TD colspan="4" bgcolor="#c0c0c0" height="21" align="left">
                 Settings
                 <ul>
@@ -225,14 +225,14 @@
                 		<li>Padding (*unpadded, padded)
                 </ul>
               </TD>
-        
+
             </TR>
           </TBODY>
         </TABLE>
     </DIV>
-    
+
         <BR>
-    
+
     <DIV align="center">
         <TABLE border="1" width="50%">
           <TBODY>
@@ -266,21 +266,21 @@
               <TD align="left">Signed</TD>
             </TR>
             <TR>
-            
+
             <TD colspan="4" bgcolor="#c0c0c0" height="21" align="left">
                 Settings
                 <ul>
                 		<li>Mutability (normal, volatile, constant)
                 </ul>
               </TD>
-        
+
             </TR>
           </TBODY>
         </TABLE>
     </DIV>
-    
+
     <BR>
-    
+
         <DIV align="center">
         <TABLE border="1" width="50%">
           <TBODY>
@@ -327,8 +327,8 @@
               <TD align="left">Unsigned</TD>
             </TR>
             <TR>
-            
-            
+
+
             <TD colspan="4" bgcolor="#c0c0c0" height="21" align="left">
                 Settings <i>(may vary)</i>
                 <ul>
@@ -339,14 +339,14 @@
                 		<li>Padding (*unpadded, padded)
                 </ul>
               </TD>
-   
+
             </TR>
           </TBODY>
         </TABLE>
     </DIV>
-    
+
         <BR>
-    
+
         <DIV align="center">
         <TABLE border="1" width="50%">
           <TBODY>
@@ -389,21 +389,21 @@
               <TD>Long double-precision floating point data</TD>
             </TR>
             <TR>
-            
+
                <TD colspan="4" bgcolor="#c0c0c0" height="21" align="left">
                 Settings
                 <ul>
                 		<li>Mutability (normal, volatile, constant)
                 </ul>
               </TD>
- 
+
             </TR>
           </TBODY>
         </TABLE>
     </DIV>
-    
+
            <BR>
-    
+
         <DIV align="center">
         <TABLE border="1" width="70%">
           <TBODY>
@@ -492,9 +492,9 @@
           </TBODY>
         </TABLE>
     </DIV>
-    
 
-    
+
+
 
     <BLOCKQUOTE>
       <H3>User-Defined Data Types</H3>
@@ -553,7 +553,7 @@
                 <TD height="21" width="62%">A specified number of consecutive data objects of the
                 same type</TD>
               </TR>
-              
+
               <TR>
                 <TD height="21" width="10%">function definition</TD>
 
@@ -1102,24 +1102,24 @@
           the referenced data type's mnemonic (ie: for a byte "db *", for a pointer "addr *")</P>
         </LI>
       </OL>
-  
+
     <P>Pressing the '<B>p</B>' key invokes the pointer action. This will generally create
-    a default pointer unless the existing data is already a pointer in which case that 
+    a default pointer unless the existing data is already a pointer in which case that
     pointer will be wrapped with an additional pointer (e.g., int * would become int **).
     This action will always apply a default sized pointer.
-    Otherwise you can drag one of the other pointer types from the 
+    Otherwise you can drag one of the other pointer types from the
     <I>Data Type Manager</I> window.
     With existing pointer data, the base type of that pointer may be changed simply by applying
     another type onto the pointer (e.g., applying byte to default pointer becomes db *).
-    If you do not want this pointer stacking behavior to happen, 
+    If you do not want this pointer stacking behavior to happen,
     it is best to clear the code unit(s) before applying a data type via drag-n-drop or
-    key-binding actions.  
+    key-binding actions.
     </P>
 
 	<P><IMG src="../../shared/note.png">To create a pointer of a specific size apply either
       pointer8, pointer16, pointer32, or pointer64 to create a pointer sizes of 1, 2, 4, 8,
       respectively.</P>
-      
+
     </BLOCKQUOTE>
 
     <H3>Array</H3>
@@ -1181,9 +1181,9 @@
     <H3>Void</H3>
 
     <BLOCKQUOTE>
-      <P>A <i>void</i> data type can only be used as the return type (i.e., &lt;RETURN&gt; variable) 
+      <P>A <i>void</i> data type can only be used as the return type (i.e., &lt;RETURN&gt; variable)
       of a function and can be specified from
-      the <A href="../FunctionPlugin/Variables.htm#Edit_Function">Function Editor</A>, 
+      the <A href="../FunctionPlugin/Variables.htm#Edit_Function">Function Editor</A>,
       <A href="../FunctionPlugin/Variables.htm#DataType">Set Data Type</A> popup action menu,
       as well as from the Data Type Manager using <i>drag-and-drop</i>.</P>
     </BLOCKQUOTE>
@@ -1192,8 +1192,8 @@
 
     <BLOCKQUOTE>
       <P>A String consists of a sequence of characters and is generally terminated by a
-      null character ('\0') or has a length value prefixed before the string. 
-      
+      null character ('\0') or has a length value prefixed before the string.
+
       <P><B>Characters in a string</B></P>
       <BLOCKQUOTE>
 	      <P>The characters that make up a string can be encoded from bytes in a multitude of ways:</P>
@@ -1204,26 +1204,26 @@
 	      	or UTF-16.
 	      </ul>
       </BLOCKQUOTE>
-      
+
       <P><B><A name="StringLayouts">Size of a string</A></B></P>
       <BLOCKQUOTE>
 	      <P>The extent of the string is determined by:</P>
-	      
+
 	      <ul>
 	      	<li>Null terminating character ('\0').
 	      	<li>Containing field length (ie. fixed length strings, or length of an array of characters).
 	      	<li>Prefixed length value for Pascal strings.
 	      </ul>
-	      
+
 	      <P>Each Ghidra string data type will document if its null-terminated or fixed length or
 	      pascal in its description or its type name.</P>
-	      
+
 	      <P>The difference between null-terminated and fixed length strings is subtle.  A null-
 	      terminated string will extend until a null character is found (with a sanity check max of 16k),
-	      regardless of the size of the field/structure that contains the string, 
+	      regardless of the size of the field/structure that contains the string,
 	      whereas a fixed length string's length is determined by its containing field, with trailing
 	      null characters trimmed, but interior null characters preserved.</P>
-	      
+
 	      <P>In practice, the user will be unable to create a null-terminated string in Ghidra
 	      that exceeds its containing field/structure as the UI will size the containing field
 	      to match the detected length of the null-terminated string.  However, if the bytes that
@@ -1237,17 +1237,17 @@
       <BLOCKQUOTE>
       	<P>Character sets define how characters are represented as byte values, and how byte
       	values are converted into characters.</P>
-      	
+
       	<P>Not all byte values are valid character encodings, and may result in undecode-able
       	values - for example, byte values from 128..255 are not valid when using a US-ASCII
       	character set, but are valid when using IBM437.</P>
-      	
+
       	<P>When a invalid mapping is encountered, it will be represented as the Unicode
-      	character '&#xFFFD;', which will render on your screen with an OS and font specific 
+      	character '&#xFFFD;', which will render on your screen with an OS and font specific
       	shape (it is called the "REPLACEMENT CHARACTER" and is typically encoded as [\uFFFD]).
-      	
+
       	<P>The following character sets are always available:</P>
-      	
+
       	<ul>
       		<li>US-ASCII
       			<ul><li>limited to values between 0-127.</ul>
@@ -1269,9 +1269,9 @@
       				<li>4 byte Unicode encoding.
       			</ul>
       	</ul>
-      	
+
       	<P>Other character sets that are typically implemented in the Java JVM:</P>
-      	
+
       	<ul>
       		<li>IBM437
       			<ul><li>old school extended ASCII.</ul>
@@ -1283,35 +1283,35 @@
       			</ul>
       		<li>Many many more...
       	</ul>
-      	
+
       	<P><B>Unicode Byte Order Marks (BOM)</B></P>
       	<BLOCKQUOTE>
       		<P>Unicode strings can start with a special character that signals the endian-ness
-      		of the string.  The BOM character bytes will be FE FF (16 bit) or 
+      		of the string.  The BOM character bytes will be FE FF (16 bit) or
       		00 00 FE FF (32 bit) if the string is big endian, otherwise it will be
       		FF FE (16 bit) or FF FE 00 00 (32 bit) if the string is little endian.</P>
       		<P>If the BOM is present, it will override the endian-ness of the binary that
       		contains the string.</P>
       	</BLOCKQUOTE>
-      	
+
       </BLOCKQUOTE>
-      
+
       <P><B>Arrays of character elements</B></P>
       <BLOCKQUOTE>
       	<P>Arrays of character elements (ie. char[16]) are treated as fixed-length string data types.</P>
       	<P>Arrays of wide char data types (wchar, wchar16, wchar32) are treated as Unicode strings.</P>
       </BLOCKQUOTE>
-      
+
       <P><B>Creating string instances</B></P>
       <BLOCKQUOTE>
-	      <P>When creating a String at a location, consecutive characters will be included 
+	      <P>When creating a String at a location, consecutive characters will be included
 	      in the String until a null character ('\0') is encountered.</p>
-	      <P>When applied to a selection, String data types absorb all bytes in the 
+	      <P>When applied to a selection, String data types absorb all bytes in the
 	      selection into a single string ignoring terminators.</P>
 	      <P>TerminatedCStrings, on the other hand, create multiple strings for the selected bytes,
-	      beginning a new string at each terminator.</P>	      
+	      beginning a new string at each terminator.</P>
       </BLOCKQUOTE>
-      
+
       <P><B><A name="StringSettings">Settings for string instances</A></B></P>
       <BLOCKQUOTE>
       	<P>Each string instance has settings that can be customized to change the way the
@@ -1323,7 +1323,7 @@
      				<li>Defaults to US-ASCII
      				<li>See charset_info.xml to customize display order or character size.
      				<li>Not available on string types that have "UTF*" or "Unicode" in the
-     				name.   
+     				name.
      			</ul>
       		<li>Render non-ASCII Unicode
       			<ul>

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,12 +23,12 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({
 	ClipboardPluginTest.class,
-	
+
 	// Uncomment this to run in IDE.  This can also be uncommented if the integration test module
 	// is updated to have a dependency on every module's test classes as well as source code.
 	//ByteViewerClipboardProviderTest.class,
 	CodeBrowserClipboardProviderTest.class,
-	CopyPasteCommentsTest.class, 
+	CopyPasteCommentsTest.class,
 	CopyPasteFunctionInfoTest.class
 })
 public class CopyPasteTestSuite {

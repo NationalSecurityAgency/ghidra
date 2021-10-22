@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class EclipseMessageUtils {
 
 	/**
 	 * Shows an information dialog with a custom title and message.
-	 * 
+	 *
 	 * @param title The title of the information dialog.
 	 * @param message The message of the information dialog.
 	 */
@@ -55,7 +55,7 @@ public class EclipseMessageUtils {
 
 	/**
 	 * Shows a confirmation dialog with a custom title and message.
-	 * 
+	 *
 	 * @param title The title of the confirmation dialog.
 	 * @param message The message of the confirmation dialog.
 	 * @return True of ok was pressed; false if canceled was pressed.
@@ -71,7 +71,7 @@ public class EclipseMessageUtils {
 
 	/**
 	 * Shows a question dialog with a custom title and message.
-	 * 
+	 *
 	 * @param title The title of the question dialog.
 	 * @param message The message of the question dialog.
 	 * @return True of yes was pressed; false if no was pressed.
@@ -87,7 +87,7 @@ public class EclipseMessageUtils {
 
 	/**
 	 * Shows an error dialog with a custom title and message.
-	 * 
+	 *
 	 * @param title The title of the error dialog.
 	 * @param message The message of the error dialog.
 	 */
@@ -100,7 +100,7 @@ public class EclipseMessageUtils {
 
 	/**
 	 * Shows an error dialog with a default title and custom message.
-	 * 
+	 *
 	 * @param message The message of the error dialog.
 	 */
 	public static void showErrorDialog(final String message) {
@@ -109,7 +109,7 @@ public class EclipseMessageUtils {
 
 	/**
 	 * Shows a warning dialog with a custom title and custom message.
-	 * 
+	 *
 	 * @param title The title of the warning dialog.
 	 * @param message The message of the error dialog.
 	 */
@@ -123,7 +123,7 @@ public class EclipseMessageUtils {
 	/**
 	 * Shows an error dialog that a wizard can use to display information about an exception that
 	 * occurred while wizard'ing.
-	 *  
+	 *
 	 * @param wizardShell The wizard's shell.
 	 * @param e The exception that occurred.
 	 * @return The displayed message.
@@ -146,7 +146,7 @@ public class EclipseMessageUtils {
 
 	/**
 	 * Logs an info message.
-	 * 
+	 *
 	 * @param message The message to display.
 	 */
 	public static void info(String message) {
@@ -155,7 +155,7 @@ public class EclipseMessageUtils {
 
 	/**
 	 * Logs an error message.
-	 * 
+	 *
 	 * @param message The message to display.
 	 */
 	public static void error(String message) {
@@ -164,7 +164,7 @@ public class EclipseMessageUtils {
 
 	/**
 	 * Logs an error message with the responsible error included.
-	 * 
+	 *
 	 * @param message The message to display.
 	 * @param t The responsible throwable.
 	 */
@@ -217,9 +217,9 @@ public class EclipseMessageUtils {
 	}
 
 	/**
-	 * Displays the given file in an editor using the Java perspective.  
-	 * If something goes wrong, this method has no effect. 
-	 * 
+	 * Displays the given file in an editor using the Java perspective.
+	 * If something goes wrong, this method has no effect.
+	 *
 	 * @param file The file to display.
 	 * @param workbench The workbench.
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -103,7 +103,7 @@ public:
 /// A SeqNum extends the address for a PcodeOp to include:
 ///   - A fixed \e time field, which is set at the time the PcodeOp
 ///     is created. The \e time field guarantees a unique SeqNum
-///     for the life of the PcodeOp. 
+///     for the life of the PcodeOp.
 ///   - An \e order field, which is guaranteed to be comparable
 ///     for the execution order of the PcodeOp within its basic
 ///     block.  The \e order field also provides uniqueness but
@@ -127,7 +127,7 @@ public:
 
   /// Get the \e time field of a sequence number
   uintm getTime(void) const { return uniq; }
-  
+
   /// Get the \e order field of a sequence number
   uintm getOrder(void) const { return order; }
 
@@ -324,7 +324,7 @@ inline Address &Address::operator=(const Address &op2)
 /// space and offset are the same.
 /// \param op2 is the address to compare to \e this
 /// \return \b true if the addresses are the same
-inline bool Address::operator==(const Address &op2) const { 
+inline bool Address::operator==(const Address &op2) const {
   return ((base==op2.base)&&(offset==op2.offset));
 }
 

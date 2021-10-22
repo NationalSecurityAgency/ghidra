@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -63,7 +63,7 @@ public abstract class AbstractTextFilter<T> extends Filter<T> {
 
 		DefaultFormatterFactory factory = new DefaultFormatterFactory(new DefaultFormatter());
 		textField = new FilterFormattedTextField(factory, defaultValue);
-		textField.setName(filterName + " Field"); // for debugging 	
+		textField.setName(filterName + " Field"); // for debugging
 		textField.setColumns(20);
 		textField.setMinimumSize(textField.getPreferredSize());
 
@@ -207,7 +207,7 @@ public abstract class AbstractTextFilter<T> extends Filter<T> {
 
 		//
 		// We are a 'contains' filter; we are a sub-filter if we completely contain the other
-		// filter.  For example, if our value is 'cats', then we are a sub-filter of 'cat', 
+		// filter.  For example, if our value is 'cats', then we are a sub-filter of 'cat',
 		// since all 'cats' are in the set of 'cat' filter matches.
 		//
 		return value.contains(otherValue);

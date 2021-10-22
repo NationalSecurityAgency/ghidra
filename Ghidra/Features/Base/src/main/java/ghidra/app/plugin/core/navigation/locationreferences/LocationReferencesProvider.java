@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -170,9 +170,9 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 		setTitle(generateTitle());
 	}
 
-	/** 
-	 * Sets the new LocationDescriptor and updates the providers table contents. 
-	 * @param locationDescriptor the new descriptor 
+	/**
+	 * Sets the new LocationDescriptor and updates the providers table contents.
+	 * @param locationDescriptor the new descriptor
 	 */
 	void update(LocationDescriptor locationDescriptor) {
 		setLocationDescriptor(locationDescriptor, navigatable);
@@ -371,7 +371,7 @@ public class LocationReferencesProvider extends ComponentProviderAdapter
 	@Override
 	public void componentHidden() {
 		// Not sure if this can even be called outside of the normal disposal action.  Just in
-		// case, free-up some of our resources.  Do not call 
+		// case, free-up some of our resources.  Do not call
 		// locationReferencesPlugin.providerDismissed(this); here, as that can trigger a loop
 		// back when we are disposing.
 		clearHighlights();

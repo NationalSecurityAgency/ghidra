@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Imported Libraries
- * 
+ *
  * See Apple's -- PEFBinaryFormat.h
  * <pre>
  * struct PEFImportedLibrary {
@@ -80,7 +80,7 @@ public class ImportedLibrary implements StructConverter {
 		return _name;
 	}
 	/**
-	 * The nameOffset field (4 bytes) indicates the offset (in bytes) from the beginning 
+	 * The nameOffset field (4 bytes) indicates the offset (in bytes) from the beginning
 	 * of the loader string table to the start of the null-terminated library name.
 	 * @return loader string table offset of library's name.
 	 */
@@ -88,7 +88,7 @@ public class ImportedLibrary implements StructConverter {
 		return nameOffset;
 	}
 	/**
-	 * The oldImpVersion and currentVersion fields (4 bytes each) provide version 
+	 * The oldImpVersion and currentVersion fields (4 bytes each) provide version
 	 * information for checking the compatibility of the imported library.
 	 * @return oldest compatible implementation version
 	 */
@@ -96,7 +96,7 @@ public class ImportedLibrary implements StructConverter {
 		return oldImpVersion;
 	}
 	/**
-	 * The oldImpVersion and currentVersion fields (4 bytes each) provide version 
+	 * The oldImpVersion and currentVersion fields (4 bytes each) provide version
 	 * information for checking the compatibility of the imported library.
 	 * @return current version at build time
 	 */
@@ -104,7 +104,7 @@ public class ImportedLibrary implements StructConverter {
 		return currentVersion;
 	}
 	/**
-	 * The importedSymbolCount field (4 bytes) indicates the number of symbols 
+	 * The importedSymbolCount field (4 bytes) indicates the number of symbols
 	 * imported from this library.
 	 * @return imported symbol count for this library
 	 */
@@ -112,7 +112,7 @@ public class ImportedLibrary implements StructConverter {
 		return importedSymbolCount;
 	}
 	/**
-	 * The firstImportedSymbol field (4 bytes) holds the (zero-based) index of the 
+	 * The firstImportedSymbol field (4 bytes) holds the (zero-based) index of the
 	 * first entry in the imported symbol table for this library.
 	 * @return index of first imported symbol from this library
 	 */
@@ -122,20 +122,20 @@ public class ImportedLibrary implements StructConverter {
 	/**
 	 * The options byte contains bit flag information as follows:
 	 * <p>
-	 * The high-order bit (mask 0x80) controls the order that the import libraries 
-	 * are initialized. If set to 0, the default initialization order is used, which 
-	 * specifies that the Code Fragment Manager should try to initialize the 
-	 * import library before the fragment that imports it. When set to 1, the import 
+	 * The high-order bit (mask 0x80) controls the order that the import libraries
+	 * are initialized. If set to 0, the default initialization order is used, which
+	 * specifies that the Code Fragment Manager should try to initialize the
+	 * import library before the fragment that imports it. When set to 1, the import
 	 * library must be initialized before the client fragment.
 	 * <p>
-	 * The next bit (mask 0x40) controls whether the import library is weak. 
-	 * When set to 1 (weak import), the Code Fragment Manager continues 
-	 * preparation of the client fragment (and does not generate an error) even if 
-	 * the import library cannot be found. If the import library is not found, all 
-	 * imported symbols from that library have their addresses set to 0. You can 
-	 * use this information to determine whether a weak import library is actually 
+	 * The next bit (mask 0x40) controls whether the import library is weak.
+	 * When set to 1 (weak import), the Code Fragment Manager continues
+	 * preparation of the client fragment (and does not generate an error) even if
+	 * the import library cannot be found. If the import library is not found, all
+	 * imported symbols from that library have their addresses set to 0. You can
+	 * use this information to determine whether a weak import library is actually
 	 * present.
-	 * 
+	 *
 	 * @return option bits for this library
 	 */
 	public byte getOptions() {

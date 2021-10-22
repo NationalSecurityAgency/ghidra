@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,13 +17,13 @@ package ghidra.app.util.demangler;
 
 /**
  * A class for bidirectional iteration over a string.
- * 
+ *
  * Iterators maintain a current character index, whose valid range is from
  * 0 to string.length()-1.
- * 
+ *
  * The current index can be retrieved by calling getIndex() and set directly
  * by calling setIndex().
- * 
+ *
  * The methods previous() and next() are used for iteration. They return DONE if
  * they would move outside the range from 0 to string.length()-1.
  */
@@ -72,7 +72,7 @@ public class CharacterIterator {
 
 	/**
 	 * Sets the position to the specified position in the text.
-	 * @param index the position within the text.  
+	 * @param index the position within the text.
 	 */
 	public void setIndex(int index) {
 		if (index < 0 || index > string.length() - 1) {
@@ -90,7 +90,7 @@ public class CharacterIterator {
 	}
 
 	/**
-	 * Returns the next character without incrementing the current index. 
+	 * Returns the next character without incrementing the current index.
 	 * @return the next character without incrementing the current index
 	 */
 	public char peek() {
@@ -135,7 +135,7 @@ public class CharacterIterator {
 	}
 
 	/**
-	 * Returns the character at the current index and then increments the index by one.  
+	 * Returns the character at the current index and then increments the index by one.
 	 * If the resulting index is greater or equal
 	 * to the end index, the current index is reset to the end index and
 	 * a value of DONE is returned.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -90,8 +90,8 @@ public class VTDuplicateSymbolMatchTest extends AbstractGhidraHeadedIntegrationT
 		assertTrue(isMatch(addr(srcProg, "00416830"), addr(destProg, "00416830")));
 
 		//Make sure these are not found by the duplicate matcher (should be found by unique matcher)
-		//they were erroneously being found because the old way of removing the address tail removed 
-		//the _e from these so they all appeared to match each other		
+		//they were erroneously being found because the old way of removing the address tail removed
+		//the _e from these so they all appeared to match each other
 
 		//_initterm_e	00419284	_initterm_e	00419280
 		assertFalse(isMatch(addr(srcProg, "00419284"), addr(destProg, "00419280")));

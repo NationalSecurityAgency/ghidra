@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ package ghidra.util.exception;
  * If it does, then there is a programming error of some kind.
  */
 public class AssertException extends RuntimeException {
-    
+
     /**
      * Create a new AssertException with no message.
      */
@@ -36,7 +36,7 @@ public class AssertException extends RuntimeException {
     public AssertException(String msg) {
         super(msg);
     }
-    
+
     /**
      * Create a new AssertException using another exception (Throwable) has occurred.
      * The message for this exception will be derived from the Throwable.
@@ -45,7 +45,7 @@ public class AssertException extends RuntimeException {
     public AssertException(Throwable t) {
     	super("Unexpected Error: " + (t.getMessage() == null ? t.toString() : t.getMessage()), t);
     }
-    
+
     /**
      * Create a new AssertException with the given message.
      *

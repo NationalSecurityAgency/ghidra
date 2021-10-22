@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ public class LSHVectorEqualityTest {
 	LSHCosineVector vec1;
 	LSHCosineVector vec2;
 
-	// Also define some hash entries that we can populate the vectors with. 
+	// Also define some hash entries that we can populate the vectors with.
 	HashEntry entry1;
 	HashEntry entry2;
 	HashEntry entry3;
@@ -41,7 +41,7 @@ public class LSHVectorEqualityTest {
 
 	/**
 	 * Creates data objects for use in all tests.
-	 * 
+	 *
 	 * @see HashEntry
 	 * @throws Exception
 	 */
@@ -50,7 +50,7 @@ public class LSHVectorEqualityTest {
 		vec1 = new LSHCosineVector();
 		vec2 = new LSHCosineVector();
 
-		// Create the test hashes. Note that the first two are the same - this is by design so 
+		// Create the test hashes. Note that the first two are the same - this is by design so
 		// we can verify that our equality tests will handle objects that are distinct but have
 		// identical internal values.
 		entry1 = new HashEntry(1, 2, 3.0);
@@ -77,7 +77,7 @@ public class LSHVectorEqualityTest {
 	/**
 	 * Test:
 	 *   1. Hash arrays are null
-	 *   
+	 *
 	 * Expected Result: EQUAL
 	 */
 	@Test
@@ -89,7 +89,7 @@ public class LSHVectorEqualityTest {
 	 * Test:
 	 *   1. Hash arrays are the same size
 	 *   2. Elements are NULL
-	 *   
+	 *
 	 * Expected Result: EQUAL
 	 */
 	@Test
@@ -107,7 +107,7 @@ public class LSHVectorEqualityTest {
 	 * Test:
 	 *   1. Hash arrays are different sizes
 	 *   2. Elements are NULL
-	 *   
+	 *
 	 * Expected Result: NOT EQUAL
 	 */
 	@Test
@@ -128,11 +128,11 @@ public class LSHVectorEqualityTest {
 	 *   2. Hash arrays contain the same elements
 	 *   3. Elements are in the same order
 	 *   4. Elements contain the same values
-	 *   
-	 *   Note: entry1 and entry2 in this test contain the same values. This test is meant to 
+	 *
+	 *   Note: entry1 and entry2 in this test contain the same values. This test is meant to
 	 *         verify that ordering does not matter in checking equality of the arrays, so the
 	 *         contents of the hash entry elements is kept the same to remove that as a variable.
-	 *   
+	 *
 	 * Expected Result: EQUAL
 	 */
 	@Test
@@ -149,14 +149,14 @@ public class LSHVectorEqualityTest {
 	/**
 	 * Test:
 	 *   1. Hash arrays are the same size
-	 *   2. Hash arrays contain the same elements 
+	 *   2. Hash arrays contain the same elements
 	 *   3. Elements are NOT in the same order
 	 *   4. Elements contain the same values
-	 *   
-	 *   Note: entry1 and entry2 in this test contain the same values. This test is meant to 
+	 *
+	 *   Note: entry1 and entry2 in this test contain the same values. This test is meant to
 	 *         verify that ordering does not matter in checking equality of the arrays, so the
 	 *         contents of the hash entry elements is kept the same to remove that as a variable.
-	 *   
+	 *
 	 * Expected Result: EQUAL
 	 */
 	@Test
@@ -173,12 +173,12 @@ public class LSHVectorEqualityTest {
 	/**
 	 * Test:
 	 *   1. Hash arrays are the same size
-	 *   2. Hash arrays contain the same elements 
+	 *   2. Hash arrays contain the same elements
 	 *   3. Elements are in the same order
 	 *   4. Elements do NOT contain the same values
-	 *   
+	 *
 	 * Expected Result: EQUAL
-	 *   
+	 *
 	 */
 	@Test
 	public void testEquality6() {
@@ -197,9 +197,9 @@ public class LSHVectorEqualityTest {
 	 *   2. Hash arrays contain same elements
 	 *   3. Elements are NOT in the same order
 	 *   4. Elements do NOT contain the same values
-	 *   
+	 *
 	 * Expected Result: NOT EQUAL
-	 *   
+	 *
 	 */
 	@Test
 	public void testEquality7() {
@@ -216,9 +216,9 @@ public class LSHVectorEqualityTest {
 	 * Test:
 	 *   1. Hash arrays same size
 	 *   2. Hash arrays contain different elements
-	 *   
+	 *
 	 * Expected Result: NOT EQUAL
-	 *   
+	 *
 	 */
 	@Test
 	public void testEquality8() {
@@ -234,9 +234,9 @@ public class LSHVectorEqualityTest {
 	/**
 	 * Test:
 	 *   1. Hash arrays different size
-	 *   
+	 *
 	 * Expected Result: NOT EQUAL
-	 *   
+	 *
 	 */
 	@Test
 	public void testEquality9() {
@@ -253,9 +253,9 @@ public class LSHVectorEqualityTest {
 	 * Test:
 	 *   1. Hash arrays are identical except for the {@link HashEntry#getCoeff()} value. These vectors should
 	 *   still be considered equal.
-	 *   
+	 *
 	 * Expected Result: EQUAL
-	 *   
+	 *
 	 */
 	@Test
 	public void testEquality10() {
@@ -272,9 +272,9 @@ public class LSHVectorEqualityTest {
 	/**
 	 * Test:
 	 *   1. Hash arrays are identical except for the {@link HashEntry#getTF()} value.
-	 *   
+	 *
 	 * Expected Result: NOT EQUAL
-	 *   
+	 *
 	 */
 	@Test
 	public void testEquality11() {
@@ -291,9 +291,9 @@ public class LSHVectorEqualityTest {
 	/**
 	 * Test:
 	 *   1. Hash arrays are identical except for the {@link HashEntry#getCoeff()} value.
-	 *   
+	 *
 	 * Expected Result: NOT EQUAL
-	 *   
+	 *
 	 */
 	@Test
 	public void testEquality12() {
@@ -310,9 +310,9 @@ public class LSHVectorEqualityTest {
 	/**
 	 * Test:
 	 *   1. Elements contain the same IDF values calculated by {@link WeightFactory}
-	 *   
+	 *
 	 * Expected Result: EQUAL
-	 *   
+	 *
 	 */
 	@Test
 	public void testEquality13() {
@@ -329,9 +329,9 @@ public class LSHVectorEqualityTest {
 	/**
 	 * Test:
 	 *   1. Elements contain different IDF values calculated by {@link WeightFactory}
-	 *   
+	 *
 	 * Expected Result: NOT EQUAL
-	 *   
+	 *
 	 */
 	@Test
 	public void testEquality14() {

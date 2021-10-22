@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,16 +20,16 @@ import java.util.LinkedList;
 import java.util.TreeMap;
 
 /**
- * Maintains a list of objects in priority order where priority is just 
+ * Maintains a list of objects in priority order where priority is just
  * an integer value.  The object with the lowest
  * priority number can be retrieved using getFirst() and the object with the highest
  * priority number can be retrieved using getLast().
- * 
+ *
  */
 public class PriorityQueue<T> {
 	private int size = 0;
 	private TreeMap<Integer, LinkedList<T>> tree = new TreeMap<Integer, LinkedList<T>>();
-	
+
 	/**
 	 * Adds the given object to the queue at the appropriate insertion point based
 	 * on the given priority.
@@ -44,16 +44,16 @@ public class PriorityQueue<T> {
 			tree.put(key, list);
 		}
 		list.addLast(obj);
-		size++;	
+		size++;
 	}
-	
+
 	/**
 	 * Returns the number of objects in the queue.
 	 */
 	public int size() {
 		return size;
 	}
-	
+
 	/**
 	 * Returns true if the queue is empty.
 	 */
@@ -75,7 +75,7 @@ public class PriorityQueue<T> {
 		LinkedList<T> list = tree.get(key);
 		return list.getFirst();
 	}
-	
+
 	/**
 	 * Returns the priority of the object with the lowest priority in the queue.
 	 * Null returned if the queue is empty.
@@ -87,7 +87,7 @@ public class PriorityQueue<T> {
 		Integer key = tree.firstKey();
 		return key;
 	}
-		
+
 	/**
 	 * Returns the object with the highest priority number in the queue.
 	 * If more than one object has the same priority, then the object that
@@ -102,7 +102,7 @@ public class PriorityQueue<T> {
 		LinkedList<T> list = tree.get(key);
 		return list.getLast();
 	}
-	
+
 	/**
 	 * Returns the priority of the object with the highest priority in the queue.
 	 * Null returned if the queue is empty.
@@ -134,7 +134,7 @@ public class PriorityQueue<T> {
 		}
 		return list.removeFirst();
 	}
-	
+
 	/**
 	 * Removes and returns the object with the highest priority number in the queue.
 	 * If more than one object has the same priority, then the object that
@@ -142,7 +142,7 @@ public class PriorityQueue<T> {
 	 * Null is returned if the queue is empty.
 	 * @return the object with the highest priority number or null if the list is empty.
 	 */
-	public T removeLast() {	
+	public T removeLast() {
 		if (tree.isEmpty()) {
 			return null;
 		}

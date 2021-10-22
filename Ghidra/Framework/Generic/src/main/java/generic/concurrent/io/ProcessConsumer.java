@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,11 +31,11 @@ import utility.function.Dummy;
 public class ProcessConsumer {
 
 	/**
-	 * Read the given input stream line-by-line. 
-	 * 
-	 * <p>To get all output after all reading is done you can call the blocking operation 
+	 * Read the given input stream line-by-line.
+	 *
+	 * <p>To get all output after all reading is done you can call the blocking operation
 	 * {@link Future#get()}.
-	 * 
+	 *
 	 * @param is the input stream
 	 * @return the future that will be complete when all lines are read
 	 */
@@ -45,10 +45,10 @@ public class ProcessConsumer {
 
 	/**
 	 * Read the given input stream line-by-line.
-	 * 
-	 * <p>If you wish to get all output after all reading is done you can call the blocking 
+	 *
+	 * <p>If you wish to get all output after all reading is done you can call the blocking
 	 * operation {@link Future#get()}.
-	 * 
+	 *
 	 * @param is the input stream
 	 * @param lineConsumer the line consumer; may be null
 	 * @return the future that will be complete when all lines are read

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -73,10 +73,10 @@ public class DefaultDropDownSelectionDataModel<T> implements DropDownTextFieldDa
 
 	@Override
 	public int getIndexOfFirstMatchingEntry(List<T> list, String text) {
-		// The data are sorted such that lower-case is before upper-case and smaller length 
-		// matches come before longer matches.  If we ever find a case-sensitive exact match, 
-		// use that. Otherwise, keep looking for a case-insensitve exact match.  The 
-		// case-insensitive match is preferred over a non-matching item.  Once we get to a 
+		// The data are sorted such that lower-case is before upper-case and smaller length
+		// matches come before longer matches.  If we ever find a case-sensitive exact match,
+		// use that. Otherwise, keep looking for a case-insensitve exact match.  The
+		// case-insensitive match is preferred over a non-matching item.  Once we get to a
 		// non-matching item, we can quit.
 		int lastPreferredMatchIndex = -1;
 		for (int i = 0; i < list.size(); i++) {
@@ -117,7 +117,7 @@ public class DefaultDropDownSelectionDataModel<T> implements DropDownTextFieldDa
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class ObjectStringComparator implements Comparator<Object> {
 		Comparator<String> stringComparator = new CaseInsensitiveDuplicateStringComparator();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,9 +29,9 @@ import ghidra.util.datastruct.WeakSet;
 
 /**
  * Extension of the {@link DropDownSelectionTextField} that allows multiple items to
- * be selected. 
+ * be selected.
  * <p>
- * Note that multiple selection introduces some display complications that are not an 
+ * Note that multiple selection introduces some display complications that are not an
  * issue with single selection. Namely:
  * <ul>
  * <li>how do you display multiple selected items in the preview pane</li>
@@ -54,7 +54,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param dataModel the model for the drop down widget
 	 */
 	public DropDownMultiSelectionTextField(DropDownTextFieldDataModel<T> dataModel) {
@@ -63,7 +63,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 
 	/**
 	 * Adds the caller to a list of subscribers who will be notified when selection changes.
-	 * 
+	 *
 	 * @param listener the subscriber to be added
 	 */
 	public void addDropDownSelectionChoiceListener(
@@ -79,7 +79,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 
 	/**
 	 * Returns a list of all selected items in the list.
-	 * 
+	 *
 	 * @return the selected items
 	 */
 	public List<T> getSelectedValues() {
@@ -162,7 +162,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 	/**
 	 * Returns a string representing all items selected in the pulldown. If multiple
 	 * items are selected, they will be comma-delimited.
-	 * 
+	 *
 	 * @return the comma-delimited selection
 	 */
 	private String getSelectionText() {
@@ -177,7 +177,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 
 	/**
 	 * Notifies subscribers when the list selection has changed.
-	 * 
+	 *
 	 * @param selectedItems the list of selected items
 	 */
 	private void fireUserChoiceMade(List<T> selectedItems) {
@@ -188,7 +188,7 @@ public class DropDownMultiSelectionTextField<T> extends DropDownSelectionTextFie
 
 	/**
 	 * Saves the selected list items.
-	 * 
+	 *
 	 * @param newValues the new selected items
 	 */
 	private void storeSelectedValues(List<T> newValues) {

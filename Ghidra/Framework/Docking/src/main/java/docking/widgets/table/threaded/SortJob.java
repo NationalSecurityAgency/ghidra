@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public class SortJob<T> extends TableUpdateJob<T> {
 	public synchronized boolean requestFilter() {
 		//
 		// This is a request to fully filter the table's data (like when the filter changes).
-		// In this case, we had disabled 'force filter', as the sorting did not need it. 
+		// In this case, we had disabled 'force filter', as the sorting did not need it.
 		// However, when the client asks to filter, make sure we filter.
 		//
 		boolean canFilter = super.requestFilter();

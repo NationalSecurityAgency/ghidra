@@ -526,7 +526,7 @@ define pcodeop store_upper_context;
 
 
 
-#TODO  
+#TODO
 define pcodeop reverse16;
 # macro reverse16(src, dst) {
 #       dst[0,1]=src[15,1];

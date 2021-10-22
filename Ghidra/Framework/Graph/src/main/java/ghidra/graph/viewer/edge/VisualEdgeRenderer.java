@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,15 +43,15 @@ import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
 
 /**
  * Edge render for the {@link VisualGraph} system
- * 
+ *
  * <h2 style="text-align:center">Implementation Notes</h2>
- * 
+ *
  * <h3>Jung Vertex/Edge Rendering</h3>
  * <p>Jung creates shapes for vertices (see {@link VertexShapeFactory}) that are centered.  They
- * do this by getting the width/height of the shape and then creating an x/y value that is 
- * half of the width and height, respectively.  This has the effect of the vertex appearing 
- * centered over its connected edge.  We mimic that with our 
- * {@link VisualGraphVertexShapeTransformer} so that our edge rendering code is similar to 
+ * do this by getting the width/height of the shape and then creating an x/y value that is
+ * half of the width and height, respectively.  This has the effect of the vertex appearing
+ * centered over its connected edge.  We mimic that with our
+ * {@link VisualGraphVertexShapeTransformer} so that our edge rendering code is similar to
  * Jung's.
  * <p>If we ever decide instead to not center our shapes, then this renderer would have to be
  * updated to itself center the edge shape created herein, like this:
@@ -71,7 +71,7 @@ import ghidra.graph.viewer.vertex.VisualGraphVertexShapeTransformer;
  *		float ty2 = y2 + h2;
  * 		Shape edgeShape = getEdgeShape(rc, graph, e, tx1, ty1, tx2, ty2, isLoop, xs1);
  * }</pre>
- * <p>Also, there are other spots in the system where we account for this center that would 
+ * <p>Also, there are other spots in the system where we account for this center that would
  * have to be changed, such as the {@link AbstractVisualGraphLayout}, which needs the centering
  * offsets to handle vertex clipping.
  *
@@ -95,9 +95,9 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		new VisualEdgeArrowRenderingSupport<>();
 
 	/**
-	 * Sets the offset value for painting dashed lines.  This allows clients to animate the 
+	 * Sets the offset value for painting dashed lines.  This allows clients to animate the
 	 * lines being drawn for edges in the edge direction.
-	 * 
+	 *
 	 * @param dashingPatterOffset the offset value
 	 */
 	// TODO this method is too specific for this interface. It paints a special view when
@@ -211,7 +211,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		Paint oldPaint = g.getPaint();
 
 		// get Paints for filling and drawing
-		// (filling is done first so that drawing and label use the same Paint)		
+		// (filling is done first so that drawing and label use the same Paint)
 		BasicStroke hoverStroke = getHoveredPathStroke(e, scale);
 		BasicStroke focusedStroke = getFocusedPathStroke(e, scale);
 		BasicStroke selectedStroke = getSelectedStroke(e, scale);
@@ -220,7 +220,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 
 		//
 		// Fill
-		// 
+		//
 		Paint fillPaint = rc.getEdgeFillPaintTransformer().apply(e);
 		if (fillPaint != null) {
 			// basic shape
@@ -228,7 +228,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 			g.fill(edgeShape);
 
 			// Currently, graphs with complicated edge shapes (those with articulations) do not
-			// use a fill paint.  If we execute this code with articulated edges, the display 
+			// use a fill paint.  If we execute this code with articulated edges, the display
 			// looks unusual.   So, for now, only 'fill' with these effects when the client has
 			// explicitly used a fill paint transformer.
 			if (isEmphasized) {
@@ -316,7 +316,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 		//g.setPaint(Color.ORANGE);
 		//g.draw(shapeBounds);
 
-		// can add this feature as needed to speed up painting 
+		// can add this feature as needed to speed up painting
 		//if (scale < .3) {
 		//	return;
 		//}
@@ -410,7 +410,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 
 	/**
 	 * Returns the edge shape for the given points
-	 * 
+	 *
 	 * @param rc the render context for the graph
 	 * @param graph the graph
 	 * @param e the edge to shape
@@ -419,7 +419,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 	 * @param x2 the end vertex point x; layout space
 	 * @param y2 the end vertex point y; layout space
 	 * @param isLoop true if the start == end, which is a self-loop
-	 * @param vertexShape the vertex shape (used in the case of a loop to draw a circle from the 
+	 * @param vertexShape the vertex shape (used in the case of a loop to draw a circle from the
 	 *              shape to itself)
 	 * @return the edge shape
 	 */
@@ -471,7 +471,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 
 	/**
 	 * Uses the render context to create a compact shape for the given vertex
-	 * 
+	 *
 	 * @param rc the render context
 	 * @param layout the layout
 	 * @param vertex the vertex
@@ -498,7 +498,7 @@ public abstract class VisualEdgeRenderer<V extends VisualVertex, E extends Visua
 
 	/**
 	 * Uses the render context to create a compact shape for the given vertex
-	 * 
+	 *
 	 * @param rc the render context
 	 * @param layout the layout
 	 * @param vertex the vertex

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -70,12 +70,12 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * A wrapper on a trace, which given a snap, implements the {@link Program} interface
- * 
+ *
  * <p>
  * NOTE: Calling {@link CodeUnit#getProgram()} from units contained in this view may not necessarily
  * return this same view. If the code unit comes from a less-recent snap than the snap associated
  * with this view, the view for that snap is returned instead.
- * 
+ *
  * <p>
  * TODO: Unit tests for all of this.
  */
@@ -1337,7 +1337,7 @@ public class DBTraceProgramView implements TraceProgramView {
 		/*
 		 * TODO: Trying to save the view instead of the trace causes a cast exception.... I may need
 		 * to always return false here, and use my own "TraceManager" to handle saving
-		 * 
+		 *
 		 * I might also extend DomainObjectAdapter, and create a ContentHandler for views, but that
 		 * might get weird....
 		 */

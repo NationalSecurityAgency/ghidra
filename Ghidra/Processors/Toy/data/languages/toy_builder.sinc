@@ -39,14 +39,14 @@ define token extra8(8)
 #  1101 1010 xxxx xxxx  # RESERVED BANK
 #  1111 0111 xxxx xxxx  # RESERVED BANK
 
-# fctx i      1101 1001 0000 iiii                      # set flow context (fctx) on next instr  
+# fctx i      1101 1001 0000 iiii                      # set flow context (fctx) on next instr
 # nfctx i     1101 1001 0001 iiii                      # set noflow context (nfctx) on next instr
 # nfctx rel,i 1101 1001 0010 iiii; 0000 0000 iiii iiii # set noflow context on rel instr
 
-# cop# s      1101 1010 ssss 0000                      # coprocessor # determined by nfctx val (1-3) 
+# cop# s      1101 1010 ssss 0000                      # coprocessor # determined by nfctx val (1-3)
 
 # nop #1      1111 0111
-# nop #<n+2>  1101 1001 0011 nnnn; ...                 # nop where nnnn indicates number of additional bytes consumed  
+# nop #<n+2>  1101 1001 0011 nnnn; ...                 # nop where nnnn indicates number of additional bytes consumed
 
 
 # operations

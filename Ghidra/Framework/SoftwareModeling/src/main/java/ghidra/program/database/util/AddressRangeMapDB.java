@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * <code>RangeMapDB</code> provides a generic value range map backed by a database table.
- * A given range may be occupied by at most a single value which is painted over 
+ * A given range may be occupied by at most a single value which is painted over
  * that range.
  */
 public class AddressRangeMapDB implements DBListener {
@@ -66,11 +66,11 @@ public class AddressRangeMapDB implements DBListener {
 	/**
 	 * Construct a generic range map.
 	 * @param dbHandle database handle.
-	 * @param name map name used in naming the underlying database table.  
+	 * @param name map name used in naming the underlying database table.
 	 * This name must be unique across all range maps.
 	 * @param errHandler database error handler.
 	 * @param valueField Field to be used for stored values.
-	 * @param indexed if true, values will be indexed allowing use of the 
+	 * @param indexed if true, values will be indexed allowing use of the
 	 * getValueRangeIterator method.
 	 */
 	public AddressRangeMapDB(DBHandle dbHandle, AddressMap addrMap, Lock lock, String name,
@@ -402,7 +402,7 @@ public class AddressRangeMapDB implements DBListener {
 	}
 
 	/**
-	 * Returns a complete address set where any value has been set. 
+	 * Returns a complete address set where any value has been set.
 	 * @return address set
 	 */
 	public AddressSet getAddressSet() {
@@ -472,7 +472,7 @@ public class AddressRangeMapDB implements DBListener {
 
 	/**
 	 * Returns an address range iterator over all occupied ranges in the map.
-	 * The first range must have a FROM address at or after 
+	 * The first range must have a FROM address at or after
 	 * the specified startAddr.
 	 * @param startAddr the address to start the iterator.
 	 * @return AddressRangeIterator that iterates over all occupied ranges in th
@@ -592,10 +592,10 @@ public class AddressRangeMapDB implements DBListener {
 		/**
 		 * Construct a new iterator which returns occupied ranges whose
 		 * FROM address falls within the specified range.  If the specified
-		 * 'startAddr' falls anywhere within a stored range, the FROM address of the 
+		 * 'startAddr' falls anywhere within a stored range, the FROM address of the
 		 * first range returned will be changed to 'startAddr'.
-		 * 
-		 * @param startAddr 
+		 *
+		 * @param startAddr
 		 */
 		RangeIterator(Address startAddr) {
 			expectedModCount = modCount;
@@ -627,12 +627,12 @@ public class AddressRangeMapDB implements DBListener {
 		/**
 		 * Construct a new iterator which returns occupied ranges whose
 		 * FROM address falls within the specified range.  If the specified
-		 * 'startAddr' falls anywhere within a stored range, the FROM address of the 
+		 * 'startAddr' falls anywhere within a stored range, the FROM address of the
 		 * first range returned will be changed to 'startAddr'.  Similarly, if the
 		 * specified 'endAddr' falls within a stored range, the TO address of the
 		 * last range returned will be changed to 'endAddr'.
-		 * 
-		 * @param startAddr 
+		 *
+		 * @param startAddr
 		 * @param endAddr
 		 */
 		RangeIterator(Address startAddr, Address endAddr) {
@@ -782,7 +782,7 @@ public class AddressRangeMapDB implements DBListener {
 	}
 
 	/**
-	 * An address range iterator which returns all ranges which contain 
+	 * An address range iterator which returns all ranges which contain
 	 * a specific value or range of values.
 	 */
 	private class ValueRangeIterator implements AddressRangeIterator {
@@ -793,7 +793,7 @@ public class AddressRangeMapDB implements DBListener {
 		private int expectedModCount;
 
 		/**
-		 * Construct an index range iterator for those ranges 
+		 * Construct an index range iterator for those ranges
 		 * which contain the specified value.  A database error will
 		 * occur if the value column is not indexed.
 		 * @param value

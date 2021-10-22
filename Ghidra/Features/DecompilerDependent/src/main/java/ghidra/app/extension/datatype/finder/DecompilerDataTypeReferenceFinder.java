@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Implementation of {@link DataTypeReferenceFinder} that uses the Decompiler's output 
+ * Implementation of {@link DataTypeReferenceFinder} that uses the Decompiler's output
  * to find data type and composite field usage.
  */
 public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinder {
@@ -175,12 +175,12 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 
 		// We have a different type, should we search for it?
 		if (baseType instanceof BuiltInDataType) {
-			// When given a wrapper type (e.g., typedef) , ignore 
-			// built-ins (e.g., int, byte, etc), as 
+			// When given a wrapper type (e.g., typedef) , ignore
+			// built-ins (e.g., int, byte, etc), as
 			// they will be of little value due to their volume in the program and the
-			// user *probably* did not intend to search for them.  (Below we do not do 
-			// this check, which allows the user to search directly for a 
-			// built-in type, if they wish.)			
+			// user *probably* did not intend to search for them.  (Below we do not do
+			// this check, which allows the user to search directly for a
+			// built-in type, if they wish.)
 			return;
 		}
 
@@ -279,7 +279,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 	}
 
 	/**
-	 * Class to do the work of searching through the Decompiler's results for the desired 
+	 * Class to do the work of searching through the Decompiler's results for the desired
 	 * data type access.
 	 */
 	private static class DecompilerDataTypeFinder {
@@ -308,7 +308,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 
 			ClangTokenGroup tokens = decompilation.getCCodeMarkup();
 
-// TODO delete this when the ticket settles down			
+// TODO delete this when the ticket settles down
 //			dumpTokens(tokens, 0);
 //			dumpTokenNames(tokens, 0);
 
@@ -339,17 +339,17 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 		}
 
 		/**
-		 * Uses the given line to find variables (also parameters and return types) and any 
-		 * accesses to them in that line.   A given variable may be used directly or, as in 
+		 * Uses the given line to find variables (also parameters and return types) and any
+		 * accesses to them in that line.   A given variable may be used directly or, as in
 		 * the case with Composite types, may have one of its fields accessed.  Each result
 		 * found by this method will be at least a variable access and may also itself have
 		 * field accesses.
-		 * 
+		 *
 		 * <p>Sometimes a line is structured such that there are anonymous variable accesses.  This
 		 * is the case where a Composite is being accessed, but the Composite itself is
-		 * not a variable in the current function.  See {@link AnonymousVariableAccessDR} for 
+		 * not a variable in the current function.  See {@link AnonymousVariableAccessDR} for
 		 * more details.
-		 * 
+		 *
 		 * @param line the current line being processed from the Decompiler
 		 * @param results the accumulator into which matches will be placed
 		 */
@@ -396,14 +396,14 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 				else if (token instanceof ClangVariableToken) {
 
 					//
-					// Observations: 
-					// 1) 'access' will be null if we are on a C statement that 
-					//    is a declaration (parameter or variable).  In this case, 
+					// Observations:
+					// 1) 'access' will be null if we are on a C statement that
+					//    is a declaration (parameter or variable).  In this case,
 					//    'declaration' will be an instance of VariableDR.
 					// 2) 'access' will be null the first time a variable is used in
 					//    a statement.
-					// 3) if 'access' is non-null, but already has a variable assigned, 
-					//    then this means the current ClangVariableToken represents a new 
+					// 3) if 'access' is non-null, but already has a variable assigned,
+					//    then this means the current ClangVariableToken represents a new
 					//    variable access/usage.
 					//
 					if (declaration != null) {
@@ -427,7 +427,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 
 					if (access == null) {
 						// Uh-oh.  I've only seen this when line-wrapping is happening.  In that
-						// case, try to get the last variable that we've seen and assume that 
+						// case, try to get the last variable that we've seen and assume that
 						// is the variable to which this field belongs.
 						access = getLastAccess(results);
 						if (access == null) {
@@ -442,7 +442,7 @@ public class DecompilerDataTypeReferenceFinder implements DataTypeReferenceFinde
 
 					ClangFieldToken field = (ClangFieldToken) token;
 					if (typesDoNotMatch(access, field)) {
-						// this can happen when a field is used anonymously, such as directly 
+						// this can happen when a field is used anonymously, such as directly
 						// after a nested array index operation
 						results.add(new AnonymousVariableAccessDR(line, field));
 						continue;

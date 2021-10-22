@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -340,7 +340,7 @@ rangemap<_recordtype>::find(linetype point) const
 
   AddrRange addrend((*iter1).last,subsorttype(true));
   iter2 = tree.upper_bound(addrend);
-    
+
   return std::pair<PartIterator,PartIterator>(PartIterator(iter1),PartIterator(iter2));
 }
 
@@ -359,7 +359,7 @@ rangemap<_recordtype>::find(linetype point,const subsorttype &sub1,const subsort
   iter1 = tree.lower_bound(addrrange);
   if ((iter1==tree.end())||(point < (*iter1).first))
     return std::pair<PartIterator,PartIterator>(PartIterator(iter1),PartIterator(iter1));
-  
+
   AddrRange addrend((*iter1).last,sub2);
   iter2 = tree.upper_bound(addrend);
 

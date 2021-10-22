@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,10 +27,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <code>EmulateInstructionStateModifier</code> defines a language specific 
+ * <code>EmulateInstructionStateModifier</code> defines a language specific
  * handler to assist emulation with adjusting the current execution state,
  * providing support for custom pcodeop's (i.e., CALLOTHER).
- * The implementation of this interface must provide a public constructor which 
+ * The implementation of this interface must provide a public constructor which
  * takes a single Emulate argument.
  */
 public abstract class EmulateInstructionStateModifier {
@@ -95,7 +95,7 @@ public abstract class EmulateInstructionStateModifier {
 	public void initialExecuteCallback(Emulate emulate, Address current_address, RegisterValue contextRegisterValue) throws LowlevelError {
 		// no default implementation
 	}
-	
+
 	/**
 	 * Emulation callback immediately following execution of the lastExecuteAddress.
 	 * One use of this callback is to modify the flowing/future context state.

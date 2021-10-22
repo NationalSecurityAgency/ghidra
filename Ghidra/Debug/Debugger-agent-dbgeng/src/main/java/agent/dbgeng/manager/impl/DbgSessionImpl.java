@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class DbgSessionImpl implements DbgSession {
 
 	/**
 	 * Construct a new session
-	 * 
+	 *
 	 * @param manager the manager creating the session
 	 * @param id the dbgeng-assigned session ID
 	 */
@@ -64,7 +64,7 @@ public class DbgSessionImpl implements DbgSession {
 
 	/**
 	 * Set the exit code
-	 * 
+	 *
 	 * @param exitCode the exit code (status or signal)
 	 */
 	public void setExitCode(Long exitCode) {
@@ -78,7 +78,7 @@ public class DbgSessionImpl implements DbgSession {
 
 	/**
 	 * Add this process to the manager's list of processes, because of a given cause
-	 * 
+	 *
 	 * @param cause the cause of the new inferior
 	 */
 	public void add() {
@@ -89,7 +89,7 @@ public class DbgSessionImpl implements DbgSession {
 
 	/**
 	 * Remove this process from the manager's list of processes, because of a given cause
-	 * 
+	 *
 	 * @param cause the cause of removal
 	 */
 	public void remove(DbgCause cause) {
@@ -98,7 +98,7 @@ public class DbgSessionImpl implements DbgSession {
 
 	/**
 	 * Use {@link DbgSessionImpl#add()} instead
-	 * 
+	 *
 	 * @param process the process to add
 	 */
 	public void addProcess(DbgProcessImpl process) {
@@ -121,7 +121,7 @@ public class DbgSessionImpl implements DbgSession {
 
 	/**
 	 * Use {@link DbgProcessImpl#remove()} instead
-	 * 
+	 *
 	 * @param pid the ID of the thread to remove
 	 */
 	public void removeProcess(DebugProcessId pid) {

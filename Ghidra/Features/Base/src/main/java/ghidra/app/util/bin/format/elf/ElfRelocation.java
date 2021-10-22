@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,38 +37,38 @@ import ghidra.util.exception.AssertException;
  * typedef uint64_t Elf64_Addr;
  * typedef uint32_t Elf32_Word;
  * typedef uint64_t Elf64_Xword;
- * 
+ *
  * REL entry:
- * 
+ *
  *    typedef struct {
  *        Elf32_Addr   r_offset;
  *        Elf32_Word   r_info;
  *    } Elf32_Rel;
- * 
+ *
  *    typedef struct {
  *        Elf64_Addr   r_offset;
  *        Elf64_Xword  r_info;
  *    } Elf64_Rel;
- * 
+ *
  * RELA entry with addend:
- * 
+ *
  *    typedef struct {
  *        Elf32_Addr    r_offset;
  *        Elf32_Word    r_info;
  *        Elf32_Sword   r_addend;
  *    } Elf32_Rela;
- * 
+ *
  *    typedef struct {
  *        Elf64_Addr    r_offset;   //Address
  *        Elf64_Xword   r_info;     //Relocation type and symbol index
- *        Elf64_Sxword  r_addend;   //Addend 
+ *        Elf64_Sxword  r_addend;   //Addend
  *    } Elf64_Rela;
- * 
+ *
  * RELR entry (see SHT_RELR, DT_RELR):
  *    NOTE: Relocation type is data <i>relative</i> and must be specified by appropriate relocation handler
- *    (see {@link ElfRelocationHandler#getRelrRelocationType()}) since it is not contained within the 
+ *    (see {@link ElfRelocationHandler#getRelrRelocationType()}) since it is not contained within the
  *    relocation table which only specifies <i>r_offset</i> for each entry.
- * 
+ *
  * </pre>
  */
 public class ElfRelocation implements ByteArrayConverter, StructConverter {
@@ -107,8 +107,8 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 	}
 
 	/**
-	 * GenericFactory construction and initialization method for a ELF representative 
-	 * relocation entry 
+	 * GenericFactory construction and initialization method for a ELF representative
+	 * relocation entry
 	 * @param reader binary reader positioned at start of relocation entry.
 	 * @param elfHeader ELF header
 	 * @param relocationIndex index of entry in relocation table
@@ -154,8 +154,8 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 	}
 
 	/**
-	 * Initialize ELF relocation entry using data from the binary reader's current position. 
-	 * @param reader binary reader positioned to the relocation entry data.  If null, 
+	 * Initialize ELF relocation entry using data from the binary reader's current position.
+	 * @param reader binary reader positioned to the relocation entry data.  If null,
 	 * a representative instance will be generated with all fields set to 0.
 	 * @param elfHeader ELF header
 	 * @param relocationTableIndex index of relocation within relocation table
@@ -236,14 +236,14 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 	}
 
 	/**
-	 * This member gives the location at which to apply the relocation action. 
-	 * 
-	 * For a relocatable file, the value is the byte offset from the 
-	 * beginning of the section to the storage unit affected by the relocation. 
-	 * 
+	 * This member gives the location at which to apply the relocation action.
+	 *
+	 * For a relocatable file, the value is the byte offset from the
+	 * beginning of the section to the storage unit affected by the relocation.
+	 *
 	 * For an executable file or a shared object, the value is the virtual address of
 	 * the storage unit affected by the relocation.
-	 * 
+	 *
 	 * @return the location at which to apply the relocation
 	 */
 	public long getOffset() {
@@ -279,10 +279,10 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 	/**
 	 * The type of relocation to apply.
 	 * NOTE 1: Relocation types are processor-specific (see {@link ElfRelocationHandler}).
-	 * NOTE 2: A type of 0 is returned by default for RELR relocations and must be updated 
-	 * during relocation processing (see {@link #setType(long)}).  The appropriate RELR 
-	 * relocation type can be obtained from the appropriate 
-	 * {@link ElfRelocationHandler#getRelrRelocationType()} or 
+	 * NOTE 2: A type of 0 is returned by default for RELR relocations and must be updated
+	 * during relocation processing (see {@link #setType(long)}).  The appropriate RELR
+	 * relocation type can be obtained from the appropriate
+	 * {@link ElfRelocationHandler#getRelrRelocationType()} or
 	 * {@link ElfRelocationContext#getRelrRelocationType()} if available.
 	 * @return type of relocation to apply
 	 */
@@ -309,7 +309,7 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 	}
 
 	/**
-	 * This member specifies a constant addend used to compute 
+	 * This member specifies a constant addend used to compute
 	 * the value to be stored into the relocatable field.  This
 	 * value will be 0 for REL entries which do not supply an addend.
 	 * @return a constant addend
@@ -344,7 +344,7 @@ public class ElfRelocation implements ByteArrayConverter, StructConverter {
 
 	/**
 	 * Get the standard relocation size when one has notbeen specified
-	 * @param is64bit true if ELF 64-bit 
+	 * @param is64bit true if ELF 64-bit
 	 * @param hasAddend true if relocation has addend
 	 * @return size of relocation entry
 	 */

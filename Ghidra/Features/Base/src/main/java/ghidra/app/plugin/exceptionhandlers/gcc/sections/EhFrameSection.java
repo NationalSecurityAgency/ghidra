@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.program.util.ProgramLocation;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * Parses the call frame information exception handling structures within an '.eh_frame' 
+ * Parses the call frame information exception handling structures within an '.eh_frame'
  * memory section.
  */
 public class EhFrameSection extends AbstractFrameSection {
@@ -39,7 +39,7 @@ public class EhFrameSection extends AbstractFrameSection {
 
 	/**
 	 * Constructor for an eh frame section.
-	 * 
+	 *
 	 * @param monitor a status monitor for indicating progress or allowing a task to be cancelled.
 	 * @param program the program containing this eh frame section.
 	 */
@@ -55,7 +55,7 @@ public class EhFrameSection extends AbstractFrameSection {
 
 	/**
 	 * Analyzes and annotates the eh frame section.
-	 * 
+	 *
 	 * @param fdeTableCount the number of exception handler FDEs.
 	 * @return the region descriptors for the eh frame section.
 	 * @throws MemoryAccessException if memory couldn't be read/written while processing the eh frame.
@@ -104,7 +104,7 @@ public class EhFrameSection extends AbstractFrameSection {
 
 			curAddress = cie.getNextAddress();
 
-			/* 
+			/*
 			 * Add each Frame Description Entry (FDE) for the current CIE.
 			 */
 			while (curAddress != null && (curAddress.compareTo(curMemBlock.getEnd()) < 0)) {

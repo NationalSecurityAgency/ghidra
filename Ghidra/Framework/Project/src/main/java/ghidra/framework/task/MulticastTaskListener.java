@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,18 +19,18 @@ package ghidra.framework.task;
 import ghidra.util.exception.AssertException;
 
 /**
- * Used by the GTaskManager to efficiently manage multiple GTaskListeners.  
+ * Used by the GTaskManager to efficiently manage multiple GTaskListeners.
  * <P>
  * When an GTaskManager has multiple listeners, instead of having a list of listeners, listeners
  * are chained together using MulticastTaskListeners. It avoids the creation of
  * an iterator every time a listener method needs to be called.
  * <P>
  * For example, the GTaskManager has a single TaskListener variable that it notifies when its state
- * changes.  If someone adds a listener, and the current listener is null, then it becomes the 
+ * changes.  If someone adds a listener, and the current listener is null, then it becomes the
  * listener.  If it already has a listener, it will create a new MulticaseTaskListener taking in the
  * old listener and the new listener.  When a TaskListener method is called, it simply calls the same
  * method on those two listeners.
- * 
+ *
  */
 class MulticastTaskListener implements GTaskListener {
 	private GTaskListener a;
@@ -92,7 +92,7 @@ class MulticastTaskListener implements GTaskListener {
 	@Override
 	public void initialize() {
 		// Special case: initialize() should only be called once when a new listener is added.  So
-		// initialize is called on the new listener before it is added to a MulticastTaskListener, 
+		// initialize is called on the new listener before it is added to a MulticastTaskListener,
 		// therefore, this should never be called on a MulticastTaskListener.
 		throw new AssertException("Initialize should not be called here.");
 	}

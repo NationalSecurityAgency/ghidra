@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +65,7 @@ public class CodeUnitInfo {
 	private String[] varNames = emptyStringArray;
 	private SourceType[] varSources = emptySourceTypeArray;
 
-// put in place to prevent exception when putting this object on the clipboard (SCR 6159)    
+// put in place to prevent exception when putting this object on the clipboard (SCR 6159)
 	private Address[] varAddrs = emptyAddrArray;
 	private int[] varFUOffsets = emptyIntArray;
 	private String[] varComments = emptyStringArray;
@@ -83,7 +83,7 @@ public class CodeUnitInfo {
 	}
 
 	/**
-	 * Set the symbols to be transferred. 
+	 * Set the symbols to be transferred.
 	 */
 	public void setSymbols(Symbol[] symbols) {
 		primarySymbolName = null;
@@ -122,7 +122,7 @@ public class CodeUnitInfo {
 
 	/**
 	 * Set the comment to be transferred.
-	 * @param commentType CodeUnit.PRE_COMMENT, POST_COMMENT, 
+	 * @param commentType CodeUnit.PRE_COMMENT, POST_COMMENT,
 	 * PLATE_COMMENT, EOL_COMMENT, or REPEATABLE.
 	 * @param comment comment
 	 */
@@ -151,7 +151,7 @@ public class CodeUnitInfo {
 
 	/**
 	 * Set the function info.
-	 * @param function function used to get function info to transfer 
+	 * @param function function used to get function info to transfer
 	 */
 	public void setFunction(Function function) {
 		functionName = function.getName();
@@ -401,39 +401,39 @@ public class CodeUnitInfo {
 			++variableIndex;
 		}
 	}
-//    
+//
 //    private void writeObject( ObjectOutputStream oos ) throws IOException {
 //        // write out all of the serializable objects
 //        oos.defaultWriteObject();
-//        
+//
 //        // now write out the non-serializable variables (the ones we've marked as 'transient')
 //        oos.writeInt( varAddrs.length );
 //        for ( Address address : varAddrs ) {
 //            AddressSpace addressSpace = address.getAddressSpace();
 //            String spaceName = addressSpace.getName();
 //            oos.writeChars( spaceName );
-//            
+//
 //            int spaceSize = addressSpace.getSize();
 //            oos.writeInt( spaceSize );
-//            
+//
 //            int spaceUnitSize = addressSpace.getAddressableUnitSize();
 //            oos.writeInt( spaceUnitSize );
-//            
+//
 //            int spaceType = addressSpace.getType();
 //            oos.writeInt( spaceType );
-//            
+//
 //            int spaceUniqueValue = addressSpace.getUnique();
 //            oos.writeInt( spaceUniqueValue );
-//            
+//
 //            long addressOffset = address.getOffset();
 //            oos.writeLong( addressOffset );
 //        }
 //    }
-//    
+//
 //    private void readObject( ObjectInputStream ois ) throws IOException, ClassNotFoundException {
 //        // read in all of the serializable objects
 //        ois.defaultReadObject();
-//        
+//
 //        // now read in the non-serializable variables (the ones we've marked as 'transient')
 //        int varAddrsSize = ois.readInt();
 //        if ( varAddrsSize == 0 ) {
@@ -448,8 +448,8 @@ public class CodeUnitInfo {
 //                int spaceType = ois.readInt();
 //                int spaceUniqueValue = ois.readInt();
 //                long addressOffset = ois.readLong();
-//                
-//                GenericAddressSpace addressSpace = new GenericAddressSpace( spaceName, 
+//
+//                GenericAddressSpace addressSpace = new GenericAddressSpace( spaceName,
 //                    spaceSize, spaceUnitSize, spaceType, spaceUniqueValue );
 //                varAddrs[i] = addressSpace.getAddress( addressOffset );
 //            }

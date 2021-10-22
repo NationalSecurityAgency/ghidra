@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,10 @@ import agent.gdb.manager.parsing.GdbMiParser.GdbMiFieldList;
 
 /**
  * Information about a GDB frame
- * 
+ *
  * <p>
  * The contains the semantic processing for GDB frame information.
- * 
+ *
  * <p>
  * Note this is not a handle to the frame. Rather, this is the captured information from some event
  * or request. If other commands have been executed since this information was gathered, the
@@ -34,7 +34,7 @@ public class GdbFrameInfo {
 
 	/**
 	 * Process a parsed GDB frame information
-	 * 
+	 *
 	 * @param info the parsed information block
 	 * @return the processed GDB frame information
 	 */
@@ -59,7 +59,7 @@ public class GdbFrameInfo {
 
 	/**
 	 * Construct GDB frame information
-	 * 
+	 *
 	 * @param level frame id
 	 * @param addr the stack address
 	 * @param func the enclosing function

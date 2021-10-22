@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -110,10 +110,10 @@ public class PIC30_ElfRelocationHandler extends ElfRelocationHandler {
 			ElfRelocationTable relocationTable, Map<ElfSymbol, Address> symbolMap) {
 		return new PIC30_ElfRelocationContext(this, loadHelper, relocationTable, symbolMap);
 	}
-	
+
 	private boolean isEDSVariant(ElfRelocationContext elfRelocationContext) {
 		if (isEDSVariant == null) {
-			// NOTE: non-EDS variants may improperly define DSRPAG 
+			// NOTE: non-EDS variants may improperly define DSRPAG
 			// in register space which should be corrected
 			Register reg = elfRelocationContext.program.getRegister("DSRPAG");
 			isEDSVariant = reg != null && reg.getAddressSpace().isMemorySpace();

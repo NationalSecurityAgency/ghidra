@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -115,7 +115,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 
 		view = new VisualGraphView<>();
 
-		// these default to off; they are typically controlled via a UI element; the 
+		// these default to off; they are typically controlled via a UI element; the
 		// values set here are arbitrary and are for demo purposes
 		view.setVertexFocusPathHighlightMode(PathHighlightMode.OUT);
 		view.setVertexHoverPathHighlightMode(PathHighlightMode.IN);
@@ -188,7 +188,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 
 	private JComponent createFilterEffectWidget() {
 		//
-		// How should we display the filtered-out vertices? 
+		// How should we display the filtered-out vertices?
 		//
 		fadedButton = new GRadioButton("Faded");
 		fadedButton.setToolTipText("Filtered vertices remain in the graph, but are grayed-out");
@@ -400,7 +400,7 @@ public class SampleGraphProvider extends ComponentProviderAdapter {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class FilterDocumentListener implements DocumentListener {
 

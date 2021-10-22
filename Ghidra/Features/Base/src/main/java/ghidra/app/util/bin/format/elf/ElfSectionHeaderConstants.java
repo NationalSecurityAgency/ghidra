@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,7 +72,7 @@ public class ElfSectionHeaderConstants {
 	/**RESERVED SECTION NAME*/
 	public static final String dot_tdata1 = ".tdata1";
 
-	// Section Header Types 
+	// Section Header Types
 
 	/**Inactive section header*/
 	public static final int SHT_NULL = 0;
@@ -169,7 +169,7 @@ public class ElfSectionHeaderConstants {
 	/**Processor-specific*/
 	public static final int SHF_MASKPROC = 0xf0000000;
 
-	//  
+	//
 
 	/**undefined, missing, irrelevant section*/
 	public static final short SHN_UNDEF = (short) 0x0000;
@@ -191,7 +191,7 @@ public class ElfSectionHeaderConstants {
 	public static final short SHN_XINDEX = (short) 0xffff;
 	/**upper bound on range of reserved indexes*/
 	public static final short SHN_HIRESERVE = (short) 0xffff;
-	
+
 	/**
 	 * @param symbolSectionIndex symbol section index (st_shndx)
 	 * @return true if specified symbol section index corresponds to a processor

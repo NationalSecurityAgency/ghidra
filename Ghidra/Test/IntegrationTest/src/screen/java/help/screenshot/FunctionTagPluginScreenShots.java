@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -73,10 +73,10 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 	}
 
 	/*
-	 * Captures the warning dialog when trying to delete a tag. Note that this assumes the 
+	 * Captures the warning dialog when trying to delete a tag. Note that this assumes the
 	 * tag in row 1 is NOT read-only. If that's the not the case, modify the function_tags.xml
 	 * file to remove any tags that may be interfering with this.
-	 * 
+	 *
 	 * @throws UsrException
 	 */
 	@Test
@@ -98,7 +98,7 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 
 	/*
 	 * Captures the read-only warning when trying to edit a tag
-	 * 
+	 *
 	 * @throws UsrException
 	 */
 	@Test
@@ -157,7 +157,7 @@ public class FunctionTagPluginScreenShots extends GhidraScreenShotGenerator {
 	/**
 	 * Simulates a location change on the listing so the dialog thinks the user has
 	 * navigated to a function.
-	 * 
+	 *
 	 * @param provider the component provider
 	 */
 	private void navigateToFunction(FunctionTagProvider provider) {

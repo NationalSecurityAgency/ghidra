@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,8 +29,8 @@ import ghidra.util.task.TaskMonitorAdapter;
 
 /**
  * Tests for the merge data type manager.
- * 
- * 
+ *
+ *
  */
 public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
@@ -298,7 +298,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 	@Test
     public void testCategoryDeleteMoveConflicts() throws Exception {
-		// delete category in Latest program; move same category in My Program 
+		// delete category in Latest program; move same category in My Program
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -308,7 +308,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 			public void modifyLatest(ProgramDB program) {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				// delete MISC 
+				// delete MISC
 				int transactionID = program.startTransaction("test");
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				try {
@@ -357,7 +357,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 	@Test
     public void testCategoryDeleteMoveConflicts2() throws Exception {
-		// move category in Latest program; delete same category in My Program 
+		// move category in Latest program; delete same category in My Program
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -391,7 +391,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				// delete MISC 
+				// delete MISC
 				int transactionID = program.startTransaction("test");
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				try {
@@ -416,7 +416,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 	@Test
     public void testCategoryDeleteMoveConflicts3() throws Exception {
-		// move category in Latest program; delete same category in My Program 
+		// move category in Latest program; delete same category in My Program
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -450,7 +450,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				// delete MISC 
+				// delete MISC
 				int transactionID = program.startTransaction("test");
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				try {
@@ -463,7 +463,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 			}
 		});
-		// choose ORIGinal 
+		// choose ORIGinal
 		executeMerge(DataTypeMergeManager.OPTION_ORIGINAL);
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category root = resultProgram.getDataTypeManager().getCategory(CategoryPath.ROOT);
@@ -475,7 +475,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 	@Test
     public void testCategoryDeleteRenameConflicts4() throws Exception {
-		// rename category in Latest program; delete parent category in My Program 
+		// rename category in Latest program; delete parent category in My Program
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -510,7 +510,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				// delete /Category1/Category2 
+				// delete /Category1/Category2
 				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1"));
 				try {
@@ -523,7 +523,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 			}
 		});
-		// choose My program 
+		// choose My program
 		executeMerge(DataTypeMergeManager.OPTION_MY);
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1"));
@@ -534,7 +534,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 	@Test
     public void testCategoryDeleteRenameConflicts5() throws Exception {
-		// rename category in Latest program; delete parent category in My Program 
+		// rename category in Latest program; delete parent category in My Program
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -570,7 +570,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				// delete /Category1/Category2 
+				// delete /Category1/Category2
 				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1"));
 				try {
@@ -583,7 +583,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 			}
 		});
-		// choose original program 
+		// choose original program
 		executeMerge(DataTypeMergeManager.OPTION_ORIGINAL);
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1"));
@@ -598,7 +598,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 	@Test
     public void testCategoryDeleteRenameConflicts6() throws Exception {
-		// rename category in Latest program; delete parent category in My Program 
+		// rename category in Latest program; delete parent category in My Program
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -634,7 +634,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				// delete /Category1/Category2 
+				// delete /Category1/Category2
 				int transactionID = program.startTransaction("test");
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				try {
@@ -647,7 +647,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 			}
 		});
-		// choose original program 
+		// choose original program
 		executeMerge(DataTypeMergeManager.OPTION_ORIGINAL);
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1"));
@@ -662,7 +662,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 	@Test
     public void testCategoryDeleteRenameConflicts7() throws Exception {
-		// rename category in Latest program; delete parent category in My Program 
+		// rename category in Latest program; delete parent category in My Program
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -697,7 +697,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				// delete /Category1/Category2 
+				// delete /Category1/Category2
 				int transactionID = program.startTransaction("test");
 				Category c = dtm.getCategory(new CategoryPath("/Category1"));
 				try {
@@ -710,7 +710,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 			}
 		});
-		// choose My program 
+		// choose My program
 		executeMerge(DataTypeMergeManager.OPTION_LATEST);
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 		Category c = dtm.getCategory(new CategoryPath("/Category1"));
@@ -883,7 +883,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
     public void testCategoryMoveRenameConflict3() throws Exception {
 
 		//Latest: rename Category1/Category2/Category3 to "My Category3",
-		//My program : move Category1/Category2/Category3 to Root; 
+		//My program : move Category1/Category2/Category3 to Root;
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -949,7 +949,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 	@Test
     public void testCategoryAddedInMyProgram() throws Exception {
 
-		// In Latest, rename /Category1/Category2/Category5 to 
+		// In Latest, rename /Category1/Category2/Category5 to
 		// /Category1/Category2/My Category5;
 		// in My program, create "AnotherCategory" in
 		// /Category1/Category2/Category5
@@ -1025,7 +1025,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 	@Test
     public void testCategoryAddedInLatestProgram() throws Exception {
-		// In Latest, add "AnotherCategory to /Category1/Category2/Category5; 
+		// In Latest, add "AnotherCategory to /Category1/Category2/Category5;
 		// in my program, rename /Category1/Category2/Category5 to
 		// /Category1/Category2/My Category5
 		mtf.initialize("notepad", new ProgramModifierListener() {
@@ -1092,7 +1092,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 	@Test
     public void testCategoryAddedInLatestProgram2() throws Exception {
-		// In Latest, add "AnotherCategory to /Category1/Category2/Category5; 
+		// In Latest, add "AnotherCategory to /Category1/Category2/Category5;
 		// in my program, add a category to /MISC
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -1154,7 +1154,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 	@Test
     public void testCategoryAddedInBoth() throws Exception {
-		// In Latest, add "AnotherCategory to /Category1/Category2/Category5; 
+		// In Latest, add "AnotherCategory to /Category1/Category2/Category5;
 		// in my program, add a category to /MISC
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -1223,7 +1223,7 @@ public class CategoryMerge2Test extends AbstractDataTypeMergeTest {
 
 	@Test
     public void testCategoryAddedInBoth2() throws Exception {
-		// In Latest and My, add same category name; add new data type 
+		// In Latest and My, add same category name; add new data type
 		// to category in My
 
 		mtf.initialize("notepad3", new ProgramModifierListener() {

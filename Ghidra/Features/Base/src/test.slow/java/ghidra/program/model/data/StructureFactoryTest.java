@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,8 +31,8 @@ import ghidra.test.TestEnv;
 
 /**
  * Tests the {@link StructureFactory}.
- * 
- * 
+ *
+ *
  * @since Tracker Id 383
  */
 public class StructureFactoryTest extends AbstractGhidraHeadedIntegrationTest {
@@ -45,7 +45,7 @@ public class StructureFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 	/**
 	 * Constructor for StructureFactoryTest.
-	 * 
+	 *
 	 * @param testName
 	 */
 	public StructureFactoryTest() {
@@ -83,7 +83,7 @@ public class StructureFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/*
-	 * Class under test for Structure 
+	 * Class under test for Structure
 	 * createStructureDataType(Program, Address, int, String, boolean)
 	 */
 	@Test
@@ -212,7 +212,7 @@ public class StructureFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	/*
-	 * Class under test for Structure 
+	 * Class under test for Structure
 	 * createStructureDataTypeInStrucuture(Program, Address, int[], int[], String, boolean)
 	 */
 	@Test

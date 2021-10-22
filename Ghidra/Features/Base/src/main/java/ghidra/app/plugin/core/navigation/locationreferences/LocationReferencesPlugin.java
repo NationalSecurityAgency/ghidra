@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,10 +97,10 @@ public class LocationReferencesPlugin extends Plugin
 		tool.addAction(referencesToAddressAction);
 
 		//
-		// Unusual Code: This plugin does not use the delete action directly, but our transient 
-		//               tables do. We need a way to have keybindings shared for this action.  
+		// Unusual Code: This plugin does not use the delete action directly, but our transient
+		//               tables do. We need a way to have keybindings shared for this action.
 		//               Further, we need to register it now, not when the transient
-		//               providers are created, as they would only appear in the options at 
+		//               providers are created, as they would only appear in the options at
 		//               that point.
 		//
 		DeleteTableRowAction.registerDummy(tool, getName());
@@ -140,7 +140,7 @@ public class LocationReferencesPlugin extends Plugin
 
 		tool.showComponentProvider(provider, true);
 
-// REFS: is the following statement true???...it seems that the loading is off the swing thread, 
+// REFS: is the following statement true???...it seems that the loading is off the swing thread,
 // so it still may not be done at this point!
 
 		// we add the provider here instead of where it is created above to allow the provider to

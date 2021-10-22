@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,8 +22,8 @@ import ghidra.util.Conv;
 
 /**
  * An implementation of the new-executable TNAMEINFO structure.
- * 
- * 
+ *
+ *
  */
 public class Resource {
 	/**The resources is not fixed.*/
@@ -164,8 +164,8 @@ public class Resource {
 		if ((resourceID & 0x8000) != 0) {
 			return "" + (resourceID & 0x7fff);
 		}
-		//if the MSB is not set, then resourceID is an 
-		//index to a resource name relative to the 
+		//if the MSB is not set, then resourceID is an
+		//index to a resource name relative to the
 		//beginning of the resource table...
 		ResourceName[] names = rt.getResourceNames();
 		for (ResourceName name : names) {

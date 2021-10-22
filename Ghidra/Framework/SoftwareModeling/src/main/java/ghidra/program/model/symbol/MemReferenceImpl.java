@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import ghidra.program.model.address.Address;
 
 /**
  *
- * Implementation for a reference, not associated with a program. 
+ * Implementation for a reference, not associated with a program.
  */
 public class MemReferenceImpl implements Reference {
 
@@ -31,7 +31,7 @@ public class MemReferenceImpl implements Reference {
 	protected SourceType sourceType;
 	protected long symbolID;
 	protected boolean isPrimary;
-	
+
 	/**
  	 * Constructs a MemReferenceImpl.
 	 * @param fromAddr reference from address
@@ -41,11 +41,11 @@ public class MemReferenceImpl implements Reference {
 	 * @param opIndex the operand index of the from location
 	 * @param isPrimary true if this reference should substitue the operand
 	 */
-	public MemReferenceImpl(Address fromAddr, 
-							Address toAddr, 
+	public MemReferenceImpl(Address fromAddr,
+							Address toAddr,
 							RefType refType,
-							SourceType sourceType, 
-							int opIndex, 
+							SourceType sourceType,
+							int opIndex,
 							boolean isPrimary) {
 		this.fromAddr = fromAddr;
 		this.toAddr = toAddr;
@@ -125,7 +125,7 @@ public class MemReferenceImpl implements Reference {
 		}
 		return result;
 	}
-	
+
 	/**
      * @see java.lang.Object#equals(Object)
      */
@@ -151,7 +151,7 @@ public class MemReferenceImpl implements Reference {
 				refType == ref.getReferenceType() &&
 				isShiftedReference() == ref.isShiftedReference() &&
 				isOffsetReference() == ref.isOffsetReference();
-    } 
+    }
 
 	/**
 	 * @see ghidra.program.model.symbol.Reference#isExternalReference()

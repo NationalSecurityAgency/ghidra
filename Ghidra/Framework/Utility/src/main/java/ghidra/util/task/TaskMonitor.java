@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,20 +20,20 @@ import ghidra.util.exception.CancelledException;
 /**
  * <CODE>TaskMonitor</CODE> provides an interface by means of which a
  * potentially long running task can show its progress and also check if the user
- * has cancelled the operation. 
+ * has cancelled the operation.
  * <p>
  * Operations that support a task monitor should periodically
- * check to see if the operation has been cancelled and abort. If possible, the 
- * operation should also provide periodic progress information. If it can estimate a 
- * percentage done, then it should use the <code>setProgress(int)</code> method, 
- * otherwise it should just call the <code>setMessage(String)</code> method. 
+ * check to see if the operation has been cancelled and abort. If possible, the
+ * operation should also provide periodic progress information. If it can estimate a
+ * percentage done, then it should use the <code>setProgress(int)</code> method,
+ * otherwise it should just call the <code>setMessage(String)</code> method.
  */
 public interface TaskMonitor {
 
 	public static final TaskMonitor DUMMY = new StubTaskMonitor();
 
 	/**
-	 * Returns the given task monitor if it is not {@code null}.  Otherwise, a {@link #DUMMY} 
+	 * Returns the given task monitor if it is not {@code null}.  Otherwise, a {@link #DUMMY}
 	 * monitor is returned.
 	 * @param tm the monitor to check for {@code null}
 	 * @return a non-null task monitor
@@ -47,21 +47,21 @@ public interface TaskMonitor {
 
 	/**
 	 * Returns true if the user has cancelled the operation
-	 * 
+	 *
 	 * @return true if the user has cancelled the operation
 	 */
 	public boolean isCancelled();
 
 	/**
 	 * True (the default) signals to paint the progress information inside of the progress bar
-	 * 
+	 *
 	 * @param showProgressValue true to paint the progress value; false to not
 	 */
 	public void setShowProgressValue(boolean showProgressValue);
 
 	/**
 	 * Sets the message displayed on the task monitor
-	 * 
+	 *
 	 * @param message the message to display
 	 */
 	public void setMessage(String message);
@@ -81,7 +81,7 @@ public interface TaskMonitor {
 	/**
 	 * Initialized this TaskMonitor to the given max values.  The current value of this monitor
 	 * will be set to zero.
-	 * 
+	 *
 	 * @param max maximum value for progress
 	 */
 	public void initialize(long max);
@@ -95,14 +95,14 @@ public interface TaskMonitor {
 	 */
 	public void setMaximum(long max);
 
-	/** 
+	/**
 	 * Returns the current maximum value for progress
 	 * @return the maximum progress value
 	 */
 	public long getMaximum();
 
 	/**
-	 * An indeterminate task monitor may choose to show an animation instead of updating progress 
+	 * An indeterminate task monitor may choose to show an animation instead of updating progress
 	 * @param indeterminate true if indeterminate
 	 */
 	public void setIndeterminate(boolean indeterminate);

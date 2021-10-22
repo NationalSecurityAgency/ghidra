@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ import ghidra.util.task.TaskMonitorComponent;
 /**
  * Plugin allowing users to construct search criteria based on a set of selected
  * instructions.
- * 
+ *
  * Note: There's a bug here that is supposed to be fixed under JIRA ticket
  * #2024. When a user switches programs we need to clear out the current
  * instructions in the GUI; this works fine. However, if the user then hits the
@@ -84,7 +84,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param tool the plugin tool
 	 */
 	public InstructionSearchPlugin(PluginTool tool) {
@@ -159,7 +159,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 
 	/**
 	 * Returns the number of instructions (and data) in the selection.
-	 * 
+	 *
 	 * @param program the current program
 	 * @param selection the program selection
 	 * @return number of instructions in the selection
@@ -169,7 +169,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 		// First get the addresses in the selection;
 		AddressRangeIterator addressRanges = selection.getAddressRanges();
 
-		// Keep track of the number of instructions we find.  
+		// Keep track of the number of instructions we find.
 		int numInstructions = 0;
 
 		// Loop over all the addresses, getting all code units and checking to see which ones
@@ -193,7 +193,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 	/**
 	 * Returns true if the number of instructions selected is less or equal to
 	 * MAX_SELECTION_SIZE.
-	 * 
+	 *
 	 * @param selection the program selection
 	 * @return true if the selection size is valid
 	 */
@@ -207,14 +207,14 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 	/**
 	 * Returns true if the user has selected one and only one range of
 	 * instructions.
-	 * 
+	 *
 	 * If there are multiple ranges, this could be for two reasons: 1) the user
 	 * has (via the mouse) selected more than one set of address ranges, or 2)
 	 * the user selects a single region but that region spans memory blocks;
 	 * this would be interpreted by the program as being 2 distinct selection
 	 * ranges. In both of these cases, we throw an exception with a message that
 	 * the caller can log if desired.
-	 * 
+	 *
 	 * @param selection the program selection
 	 * @return true if the selection range is valid
 	 * @throws InvalidInputException
@@ -257,7 +257,7 @@ public class InstructionSearchPlugin extends ProgramPlugin {
 	/**
 	 * Creates a new instruction search dialog and displays it, loading any
 	 * instructions that have been selected.
-	 * 
+	 *
 	 * @param context the navigatable context
 	 */
 	private void showSearchDialog(NavigatableActionContext context) {

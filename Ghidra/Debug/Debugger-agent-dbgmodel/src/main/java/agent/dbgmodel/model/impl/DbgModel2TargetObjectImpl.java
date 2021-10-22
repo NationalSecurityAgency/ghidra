@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -349,7 +349,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 	public CompletableFuture<?> fetchChild(final String key) {
 		/* Would like to do this, but has some very bad effects
 		return getModel().gateFuture(doFetchChild(key));
-		}	
+		}
 		public CompletableFuture<?> doFetchChild(final String key) {
 		*/
 		synchronized (elements) {
@@ -488,7 +488,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 		TargetFocusScope.class, //
 		TargetExecutionStateful.class //
 	);
-	
+
 	private CompletableFuture<Void> findDependencies(TargetObjectListener l) {
 		System.err.println("findDependencies " + this);
 		Map<String, TargetObject> resultAttrs = new HashMap<>();
@@ -533,7 +533,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			listeners.fire.elementsChanged(this, List.of(), resultElems);
 		});
 	}
-	
+
 	public boolean isDependency(TargetObject object) {
 		String name = object.getName();
 		if (name != null) {
@@ -542,7 +542,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 			if (name.equals("Stack"))
 				return true;
 		}
-	
+
 		Set<Class<? extends TargetObject>> interfaces = object.getSchema().getInterfaces();
 		for (Class<? extends TargetObject> ifc : interfaces) {
 			if (dependencySet.contains(ifc)) {
@@ -551,7 +551,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 		}
 		return false;
 	}
-	
+
 	@Override
 	public void addListener(TargetObjectListener l) {
 		listeners.add(l);

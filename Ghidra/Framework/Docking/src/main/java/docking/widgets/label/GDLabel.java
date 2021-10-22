@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +65,7 @@ public class GDLabel extends JLabel implements GComponent {
 	}
 
 	/**
-	 * Creates a label with the specified text and horizontal alignment, 
+	 * Creates a label with the specified text and horizontal alignment,
 	 * with HTML rendering disabled.
 	 * <p>
 	 * See {@link JLabel#JLabel(String, int)}.
@@ -84,7 +84,7 @@ public class GDLabel extends JLabel implements GComponent {
 	}
 
 	/**
-	 * Creates a label with the specified text, image and horizontal alignment, 
+	 * Creates a label with the specified text, image and horizontal alignment,
 	 * with HTML rendering disabled.
 	 * <p>
 	 * See {@link JLabel#JLabel(String, Icon, int)}.
@@ -97,7 +97,7 @@ public class GDLabel extends JLabel implements GComponent {
 	 *           {@link SwingConstants#CENTER},
 	 *           {@link SwingConstants#RIGHT},
 	 *           {@link SwingConstants#LEADING},
-	 *           {@link SwingConstants#TRAILING} 
+	 *           {@link SwingConstants#TRAILING}
 	 */
 	public GDLabel(String text, Icon icon, int horizontalAlignment) {
 		super(text, icon, horizontalAlignment);

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,7 +57,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 	private ExternalNamesTableModel tableModel;
 	private GhidraTable table;
 	private Program program;
-	private String rowToHighlightDuringNextReload; // hack to reselect a renamed row during the next reload.	
+	private String rowToHighlightDuringNextReload; // hack to reselect a renamed row during the next reload.
 
 	private DomainObjectListener domainObjectListener = ev -> {
 		if (isVisible()) {
@@ -448,7 +448,7 @@ public class ExternalReferencesProvider extends ComponentProviderAdapter {
 				// force the path column to have a secondary compare using the name column
 				// to ensure a 'stable' sort.  Without this during analysis
 				// the constant updates cause the table to sort randomly when
-				// there are lots of empty path values. 
+				// there are lots of empty path values.
 				Comparator<ExternalNamesRow> c1 =
 					(r1, r2) -> Objects.requireNonNullElse(r1.getPath(), "")
 							.compareTo(Objects.requireNonNullElse(r2.getPath(), ""));

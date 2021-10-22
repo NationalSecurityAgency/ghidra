@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,11 +64,11 @@ public class ComponentPlaceholder {
 
 	/**
 	 * XML Constructor!!!!!
-	 * 
+	 *
 	 * @param name the name of the component
 	 * @param owner the owner of the component
 	 * @param group the window group
-	 * @param title the title 
+	 * @param title the title
 	 * @param show whether or not the component is showing
 	 * @param node componentNode that has this placeholder
 	 * @param instanceID the instance ID
@@ -116,7 +116,7 @@ public class ComponentPlaceholder {
 		if (node != null && disposed) {
 			//
 			// TODO Hack Alert!  (When this is removed, also update ComponentNode)
-			// 
+			//
 			// This should not happen!  We have seen this bug recently
 			Msg.debug(this, "Found disposed component that was not removed from the hierarchy " +
 				"list: " + this, ReflectionUtilities.createJavaFilteredThrowable());

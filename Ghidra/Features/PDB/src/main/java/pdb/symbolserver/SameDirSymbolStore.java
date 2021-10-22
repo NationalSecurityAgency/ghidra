@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,10 +21,10 @@ import java.util.*;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * A Pdb symbol server / symbol store, similar to the {@link LocalSymbolStore}, 
+ * A Pdb symbol server / symbol store, similar to the {@link LocalSymbolStore},
  * but limited to searching just the single directory that the original executable is located in.
  * <p>
- * 
+ *
  */
 public class SameDirSymbolStore implements SymbolStore {
 
@@ -36,7 +36,7 @@ public class SameDirSymbolStore implements SymbolStore {
 	/**
 	 * Factory helper, indicates if the specified location is the special
 	 * magic string that indicates the location is the "same dir" symbol store.
-	 *  
+	 *
 	 * @param locationString Symbol server location string
 	 * @return boolean true if the location string is the special magic "same dir" string (".")
 	 */
@@ -48,7 +48,7 @@ public class SameDirSymbolStore implements SymbolStore {
 	 * Reuse / abuse the {@link SameDirSymbolStore} to be the container/wrapper for an already known
 	 * symbol file.  Useful to wrap a file that was picked by the user in an
 	 * {@link SymbolFileLocation}.
-	 * 
+	 *
 	 * @param symbolFile symbol file
 	 * @param symbolFileInfo symbol file information
 	 * @return a new {@link SymbolFileLocation} with a {@link SameDirSymbolStore} parent
@@ -65,7 +65,7 @@ public class SameDirSymbolStore implements SymbolStore {
 
 	/**
 	 * Create a new instance, based on the directory where the program was originally imported from.
-	 * 
+	 *
 	 * @param rootDir directory path where the program was originally imported from, or null if not
 	 * bound to an actual Program
 	 */

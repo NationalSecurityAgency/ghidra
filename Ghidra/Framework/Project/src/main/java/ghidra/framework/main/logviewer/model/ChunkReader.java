@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,9 +22,9 @@ import ghidra.framework.main.logviewer.ui.FVTable;
 
 /**
  * This class handles reading data from the input file, in the form of {@link Chunk} objects.  Each
- * chunk is stored in the {@link ChunkModel} and represents a single block of text that is 
+ * chunk is stored in the {@link ChunkModel} and represents a single block of text that is
  * displayed in the {@link FVTable}.
- * 
+ *
  */
 public class ChunkReader {
 
@@ -32,7 +32,7 @@ public class ChunkReader {
 	private RandomAccessFile raf;
 
 	// Responsible for reading lines from the file in reverse. This is required when we need
-	// to retrieve a previous chunk (ie: when scrolling up).  
+	// to retrieve a previous chunk (ie: when scrolling up).
 	private ReverseLineReader reverser;
 
 	// Stores all chunks currently being viewed.
@@ -42,7 +42,7 @@ public class ChunkReader {
 	private File file;
 
 	/**
-	 * 
+	 *
 	 * @param file
 	 * @param model
 	 * @throws IOException
@@ -55,9 +55,9 @@ public class ChunkReader {
 
 	/**
 	 * Returns the number of bytes in the input file.
-	 * 
+	 *
 	 * @return number of bytes
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public long getFileSize() throws IOException {
 		return raf == null ? 0 : raf.length();
@@ -65,7 +65,7 @@ public class ChunkReader {
 
 	/**
 	 * Returns the file being read.
-	 * 
+	 *
 	 * @return
 	 */
 	public File getFile() {
@@ -73,7 +73,7 @@ public class ChunkReader {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public void reload() throws IOException {
 		raf = new RandomAccessFile(file, "r");
@@ -83,7 +83,7 @@ public class ChunkReader {
 	/**
 	 * Reads one chunk from the end of the file. This is useful when scrolling to the bottom of
 	 * the viewport.
-	 * 
+	 *
 	 * @return the last chunk, or an empty list
 	 * @throws IOException
 	 */
@@ -99,7 +99,7 @@ public class ChunkReader {
 
 	/**
 	 * Reads the chunk immediately before the first visible one.
-	 * 
+	 *
 	 * @return the previous chunk, or an empty list
 	 * @throws IOException
 	 */
@@ -121,7 +121,7 @@ public class ChunkReader {
 	 * Reads a chunk of data from the given location in the file.  To ensure we're always reading
 	 * full lines, take the given start position and move forward to the next full line before
 	 * reading.
-	 * 
+	 *
 	 * @param startByte the position to start reading from
 	 * @return the lines of text read
 	 * @throws IOException
@@ -131,39 +131,39 @@ public class ChunkReader {
 		if (raf == null) {
 			return Collections.<String> emptyList();
 		}
-		
+
 		// move the pointer to the beginning of the line this byte position is in.
 		long lineStart = getStartOfNextLine(startByte);
 		raf.seek(lineStart);
-			
+
 		return readChunk(raf.getFilePointer());
 	}
-	
+
 	/**
 	 * Reads all bytes from the given byte to the end byte. If the amount of bytes to be read is
 	 * greater than the size of an INT, we will have to read this in several chunks, hence the
 	 * need to return a list of arrays, and not just a single byte array.
-	 * 
+	 *
 	 * @param startByte
 	 * @param endByte
 	 * @return a map of all the bytes read in (index 0 is first chunk, 1 is next, etc...).
-	 * 
-	 * @throws IOException 
+	 *
+	 * @throws IOException
 	 */
 	public List<byte[]> readBytes(long startByte, long endByte) throws IOException {
-		
+
 		if (raf == null) {
 			return Collections.<byte[]> emptyList();
 		}
-		
+
 		// The list to return.
 		List<byte[]> byteArrayList = new ArrayList<>();
-		
+
 		// Move the file pointer to the start.
 		raf.seek(startByte);
-		
+
 		// Figure out how many bytes we need to read.  If the size is greater than MAX_INT, then
-		// we have to chunk this up into several reads, as java doesn't support creating byte 
+		// we have to chunk this up into several reads, as java doesn't support creating byte
 		// arrays with size > MAX_INT.
 		long bytesToRead = endByte - startByte + 1;
 		while(bytesToRead > 0) {
@@ -176,13 +176,13 @@ public class ChunkReader {
 				bytesToRead -= bytesRead;
 			}
 		}
-				
+
 		return byteArrayList;
 	}
 
 	/**
-	 * Reads the next chunk in the file past the last one specified in the {@link ChunkModel}. 
-	 * 
+	 * Reads the next chunk in the file past the last one specified in the {@link ChunkModel}.
+	 *
 	 * @return the lines of text read
 	 * @throws FileNotFoundException
 	 * @throws IOException
@@ -216,11 +216,11 @@ public class ChunkReader {
 	/*************************************************************************************
 	 * PRIVATE METHODS
 	 *************************************************************************************/
-	
+
 	/**
 	 * Reads a single chunk of data from the input file. The start point of the read is wherever
 	 * the {@link #raf} is currently pointing.
-	 * 
+	 *
 	 * @param startByte the byte in the file at which to start reading.
 	 * @return the lines of text read
 	 * @throws IOException
@@ -240,7 +240,7 @@ public class ChunkReader {
 		// to make sure we read a full line and not a partial one.
 		long lineStart = getStartOfNextLine(startByte);
 		raf.seek(lineStart);
-		
+
 		// And now start reading in lines.
 		for (int i = 0; i < model.NUM_LINES; i++) {
 			lineStart = raf.getFilePointer();
@@ -259,7 +259,7 @@ public class ChunkReader {
 
 	/**
 	 * Reads in a chunk from the current file pointer location, backwards.
-	 * 
+	 *
 	 * @param startByte the start byte from which to read
 	 * @return the lines of text read
 	 * @throws IOException
@@ -308,7 +308,7 @@ public class ChunkReader {
 		// If we have a valid chunk, store some metadata and add it to the model.
 		addChunkToModel(chunk, lines, raf.getFilePointer(), endPos-1, true);
 
-		// The lines have been read-in in reverse order, so we have to flip them before 
+		// The lines have been read-in in reverse order, so we have to flip them before
 		// returning.
 		Collections.reverse(lines);
 		return lines;
@@ -316,7 +316,7 @@ public class ChunkReader {
 
 	/**
 	 * Adds the given chunk to the model.
-	 * 
+	 *
 	 * @param chunk the chunk to add
 	 * @param lines the lines included in the chunk
 	 * @param startByte the start byte within the file this chunk represents
@@ -339,31 +339,31 @@ public class ChunkReader {
 			}
 		}
 	}
-	
+
 	/**
-	 * Returns the start of the next line after the given byte. To do this, simply read 
+	 * Returns the start of the next line after the given byte. To do this, simply read
 	 * backwards from the given point until a newline or carriage return is found.
-	 * 
+	 *
 	 * @param startByte
 	 * @return
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public synchronized long getStartOfNextLine(long startByte) throws IOException {
-				
+
 		// If the start byte is 0 (or less), just start from here - no need to track forward.
 		if (startByte <= 0) {
 			return 0;
 		}
-		
+
 		final int BUFFER_SIZE = 8192;
-				
+
 		// Now create a byte array to hold the line we'll read.
 		byte[] linePlus = new byte[BUFFER_SIZE];
 
 		// Move the file pointer to our start location and read.
 		raf.seek(startByte);
 		raf.read(linePlus);
-		
+
 		// Move forward through the line until we hit a line feed. When we do, just return
 		// the file position immediately past it.
 		for (int i = 0; i < linePlus.length; i++) {
@@ -372,8 +372,8 @@ public class ChunkReader {
 				return startByte + i + 1;
 			}
 		}
-		
-		// If we haven't found a line feed, then we most likely (definitely) started reading 
+
+		// If we haven't found a line feed, then we most likely (definitely) started reading
 		// somewhere in the last line of the file, so just return the original byte given.
 		return startByte;
 	}

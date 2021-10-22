@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ package ghidra.app.decompiler;
 import ghidra.program.model.pcode.*;
 import ghidra.xml.*;
 /**
- * 
+ *
  *
  * To change the template for this generated type comment go to
  *{@literal Window>Preferences>Java>Code Generation>Code and Comments}
@@ -48,7 +48,7 @@ public abstract class ClangXML {			// Placeholder for CLANG XML identifiers
 	public static final String COMMENT = "comment";
 	public static final String LABEL = "label";
 
-// Attributes	
+// Attributes
 	public static final String INDENT="indent";
 	public static final String COLOR="color";
 	public static final String OPREF = "opref";
@@ -69,7 +69,7 @@ public abstract class ClangXML {			// Placeholder for CLANG XML identifiers
    public static final String CONST_COLOR = "const";
    public static final String PARAMETER_COLOR = "param";
    public static final String GLOBAL_COLOR = "global";
-   
+
    public static ClangTokenGroup buildClangTree(XmlPullParser parser,HighFunction hfunc) {
 		ClangTokenGroup docroot;
 		if (parser.peek().getName().equals("function"))

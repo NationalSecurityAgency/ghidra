@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,9 +25,9 @@ import docking.ActionContext;
 import docking.menu.*;
 import docking.widgets.EventTrigger;
 
-/** 
+/**
  * Builder for {@link MultiStateDockingAction}
- * 
+ *
  * @param <T> The action state type
  */
 public class MultiStateActionBuilder<T> extends
@@ -55,9 +55,9 @@ public class MultiStateActionBuilder<T> extends
 
 	/**
 	 * Sets the primary callback to be executed when this action changes its action state.
-	 * This builder will throw an {@link IllegalStateException} if one of the build methods is 
+	 * This builder will throw an {@link IllegalStateException} if one of the build methods is
 	 * called without providing this callback
-	 * 
+	 *
 	 * @param biConsumer the callback to execute when the selected action state is changed.
 	 * @return this builder (for chaining)
 	 */
@@ -69,9 +69,9 @@ public class MultiStateActionBuilder<T> extends
 	}
 
 	/**
-	 * Configure whether to perform actions on a button click. 
+	 * Configure whether to perform actions on a button click.
 	 * See {@link MultiActionDockingAction#setPerformActionOnButtonClick(boolean)}
-	 * 
+	 *
 	 * @param b true if the main action is invokable
 	 * @return this MultiActionDockingActionBuilder (for chaining)
 	 */
@@ -83,9 +83,9 @@ public class MultiStateActionBuilder<T> extends
 	/**
 	 * Overrides the default icons for actions shown in popup menu of the multi-state action.  By
 	 * default, the popup menu items will use the icons as provided by the {@link ActionState}.
-	 * By passing true to this method, icons will not be used in the popup menu.  Instead, a 
+	 * By passing true to this method, icons will not be used in the popup menu.  Instead, a
 	 * checkbox icon will be used to show the active action state.
-	 * 
+	 *
 	 * @param b true to use a checkbox
 	 * @return this MultiActionDockingActionBuilder (for chaining)
 	 */
@@ -95,8 +95,8 @@ public class MultiStateActionBuilder<T> extends
 	}
 
 	/**
-	 * Add an action state 
-	 * 
+	 * Add an action state
+	 *
 	 * @param displayName the name to appear in the action menu
 	 * @param icon the icon to appear in the action menu
 	 * @param userData the data associated with this state
@@ -108,8 +108,8 @@ public class MultiStateActionBuilder<T> extends
 	}
 
 	/**
-	 * Add an action state 
-	 * 
+	 * Add an action state
+	 *
 	 * @param actionState the action state to add
 	 * @return this MultiActionDockingActionBuilder (for chaining)
 	 */
@@ -119,8 +119,8 @@ public class MultiStateActionBuilder<T> extends
 	}
 
 	/**
-	 * Add a list of action states 
-	 * 
+	 * Add a list of action states
+	 *
 	 * @param list a list of ActionStates;
 	 * @return this MultiActionDockingActionBuilder (for chaining)
 	 */

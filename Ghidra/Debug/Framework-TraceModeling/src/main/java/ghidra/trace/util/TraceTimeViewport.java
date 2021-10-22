@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -108,19 +108,19 @@ public interface TraceTimeViewport {
 
 	/**
 	 * Check if this view is forked
-	 * 
+	 *
 	 * <p>
 	 * The view is considered forked if any snap previous to this has a schedule with an initial
 	 * snap other than the immediately-preceding one. Such forks "break" the linearity of the
 	 * trace's usual time line.
-	 * 
+	 *
 	 * @return true if forked, false otherwise
 	 */
 	boolean isForked();
 
 	/**
 	 * Check if the given lifespan contains any upper snap among the involved spans
-	 * 
+	 *
 	 * @param lifespan the lifespan to consider
 	 * @return true if it contains any upper snap, false otherwise.
 	 */
@@ -128,7 +128,7 @@ public interface TraceTimeViewport {
 
 	/**
 	 * Check if any part of the given object is occluded by more-recent objects
-	 * 
+	 *
 	 * @param <T> the type of the object
 	 * @param range the address range of the object
 	 * @param lifespan the lifespan of the object
@@ -141,7 +141,7 @@ public interface TraceTimeViewport {
 
 	/**
 	 * Compute the parts of a given object that are visible past more-recent objects
-	 * 
+	 *
 	 * @param <T> the type of the object
 	 * @param set the addresses comprising the object
 	 * @param lifespan the lifespan of the object
@@ -154,28 +154,28 @@ public interface TraceTimeViewport {
 
 	/**
 	 * Get the snaps involved in the view in most-recent-first order
-	 * 
+	 *
 	 * <p>
 	 * The first is always this view's snap. Following are the source snaps of each previous
 	 * snapshot's schedule where applicable.
-	 * 
+	 *
 	 * @return the list of snaps
 	 */
 	List<Long> getOrderedSnaps();
 
 	/**
 	 * Get the snaps involved in the view in least-recent-first order
-	 * 
+	 *
 	 * @return the list of snaps
 	 */
 	List<Long> getReversedSnaps();
 
 	/**
 	 * Get the first non-null result of the function, applied to the most-recent snaps first
-	 * 
+	 *
 	 * <p>
 	 * Typically, func both retrieves an object and tests for its suitability.
-	 * 
+	 *
 	 * @param <T> the type of object to retrieve
 	 * @param func the function on a snap to retrieve an object
 	 * @return the first non-null result
@@ -184,11 +184,11 @@ public interface TraceTimeViewport {
 
 	/**
 	 * Merge iterators from each involved snap into a single iterator
-	 * 
+	 *
 	 * <p>
 	 * Typically, the resulting iterator is passed through a filter to test each objects
 	 * suitability.
-	 * 
+	 *
 	 * @param <T> the type of objects in each iterator
 	 * @param iterFunc a function on a snap to retrieve each iterator
 	 * @param comparator the comparator for merging, which must yield the same order as each
@@ -200,10 +200,10 @@ public interface TraceTimeViewport {
 
 	/**
 	 * Union address sets from each involved snap
-	 * 
+	 *
 	 * <p>
 	 * The returned union is computed lazily.
-	 * 
+	 *
 	 * @param setFunc a function on a snap to retrieve the address set
 	 * @return the union
 	 */

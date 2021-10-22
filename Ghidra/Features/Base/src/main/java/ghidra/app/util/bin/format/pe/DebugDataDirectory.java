@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ public class DebugDataDirectory extends DataDirectory {
 		if (ptr < 0) {
 			return false;
 		}
-		
+
     	parser = DebugDirectoryParser.createDebugDirectoryParser(reader, ptr, size, ntHeader);
     	return true;
     }
@@ -187,14 +187,14 @@ public class DebugDataDirectory extends DataDirectory {
 	 * @see ghidra.app.util.bin.format.pe.DataDirectory#writeBytes(java.io.RandomAccessFile, ghidra.util.DataConverter, ghidra.app.util.bin.format.pe.PortableExecutable)
 	 */
 	@Override
-    public void writeBytes(RandomAccessFile raf, DataConverter dc, PortableExecutable template) 
+    public void writeBytes(RandomAccessFile raf, DataConverter dc, PortableExecutable template)
 		throws IOException {
 		OptionalHeader optionalHeader = template.getNTHeader().getOptionalHeader();
 		DataDirectory [] originalDataDirs = optionalHeader.getDataDirectories();
 		if (optionalHeader.getNumberOfRvaAndSizes() <= OptionalHeader.IMAGE_DIRECTORY_ENTRY_DEBUG) {
 			return;
 		}
-		if (originalDataDirs[OptionalHeader.IMAGE_DIRECTORY_ENTRY_DEBUG] == null || 
+		if (originalDataDirs[OptionalHeader.IMAGE_DIRECTORY_ENTRY_DEBUG] == null ||
 			originalDataDirs[OptionalHeader.IMAGE_DIRECTORY_ENTRY_DEBUG].getSize() == 0) {
 			return;
 		}
@@ -215,9 +215,9 @@ public class DebugDataDirectory extends DataDirectory {
 	        }
 			raf.seek(ptr);
 			raf.write(templateDD[i].toBytes(dc));
-		}	
+		}
 	}
-	
+
 	void updatePointers(int offset, int postOffset) {
 		DebugDirectory [] debugDirs = parser.getDebugDirectories();
 		for (DebugDirectory debugDir : debugDirs) {

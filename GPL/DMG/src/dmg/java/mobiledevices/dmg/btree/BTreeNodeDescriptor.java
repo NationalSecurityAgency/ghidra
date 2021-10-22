@@ -11,8 +11,8 @@ import mobiledevices.dmg.ghidra.GBinaryReader;
 
 /**
  * Represents a BTNodeDescriptor structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-792/bsd/hfs/hfs_format.h.auto.html">hfs/hfs_format.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-792/bsd/hfs/hfs_format.h.auto.html">hfs/hfs_format.h</a>
  */
 public class BTreeNodeDescriptor /*implements StructConverter*/ {
 

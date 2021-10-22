@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import ghidra.util.xml.*;
 import ghidra.xml.*;
 
 /**
- * 
+ *
  *
  * Basically a unique address for a PcodeOp
  * It is unique, maintains original assembly instruction address, and is comparable
@@ -32,11 +32,11 @@ public class SequenceNumber implements Comparable<SequenceNumber> {
 										// instruction address. Does not change over lifetime of PcodeOp
 	private int order;					// Contains relative position information of PcodeOps within
 										// a basic block, may change as basic block is edited.
-	
+
 	/**
 	 * Construct a sequence number for an instruction at an address and sequence of pcode op within
 	 * that instructions set of pcode.
-	 * 
+	 *
 	 * @param instrAddr address of instruction
 	 * @param sequenceNum sequence of pcode op with an instructions pcode ops
 	 */
@@ -44,19 +44,19 @@ public class SequenceNumber implements Comparable<SequenceNumber> {
 		pc = instrAddr;
 		uniq = sequenceNum;
 	}
-	
+
 	/**
 	 * @return get address of instruction this sequence belongs to
 	 */
 	public Address getTarget() {
 		return pc;
 	}
-	
+
 	/**
 	 * Get unique Sub-address for distinguishing multiple PcodeOps at one
 	 * instruction address.
 	 * Does not change over lifetime of PcodeOp
-	 * 
+	 *
 	 * @return unique id for a pcode op within a given instruction
 	 */
 	public int getTime() {
@@ -67,33 +67,33 @@ public class SequenceNumber implements Comparable<SequenceNumber> {
 	 * Set unique Sub-address for distinguishing multiple PcodeOps at one
 	 * instruction address.
 	 * Does not change over lifetime of PcodeOp
-	 * 
+	 *
 	 * @param t unique id
 	 */
 	public void setTime(int t) {
-		uniq = t;	
+		uniq = t;
 	}
-	
+
 	/**
 	 * Get relative position information of PcodeOps within
 	 * a basic block, may change as basic block is edited.
-	 * 
+	 *
 	 * @return relative position of pcode in a basic block
 	 */
 	public int getOrder() {
 		return order;
 	}
-	
+
 	/**
 	 * Set relative position information of PcodeOps within
 	 * a basic block, may change as basic block is edited.
-	 * 
+	 *
 	 * @param o relative position of pcodeOp within a basic block
 	 */
 	public void setOrder(int o) {
 		order = o;
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
@@ -103,7 +103,7 @@ public class SequenceNumber implements Comparable<SequenceNumber> {
 		SequenceNumber sq = (SequenceNumber) o;
 		return (pc.equals(sq.pc)&&(uniq==sq.uniq));
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
@@ -127,15 +127,15 @@ public class SequenceNumber implements Comparable<SequenceNumber> {
 		if (uniq != -1)
 			SpecXmlUtils.encodeUnsignedIntegerAttribute(resBuf, "uniq", uniq);
 		resBuf.append("/>");
-		return resBuf;		
+		return resBuf;
 	}
-	
+
 	/**
 	 * Create a new Sequence number from XML SAX tree element.
-	 * 
+	 *
 	 * @param parser the xml parser
 	 * @param factory pcode factory used to create new pcode
-	 * 
+	 *
 	 * @return new sequence number
 	 */
 	public static SequenceNumber readXML(XmlPullParser parser,AddressFactory factory) {
@@ -146,13 +146,13 @@ public class SequenceNumber implements Comparable<SequenceNumber> {
 			uniq = SpecXmlUtils.decodeInt(attrstring);
 		else
 			uniq = -1;				// Should fill in with something from factory
-		String space = el.getAttribute("space");	
+		String space = el.getAttribute("space");
 		AddressSpace spc = factory.getAddressSpace(space);
 		long offset = SpecXmlUtils.decodeLong(el.getAttribute("offset"));
 		parser.end(el);
 		return new SequenceNumber(spc.getAddress(offset),uniq);
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
@@ -168,7 +168,7 @@ public class SequenceNumber implements Comparable<SequenceNumber> {
 			+ order
 			+ ")");
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */

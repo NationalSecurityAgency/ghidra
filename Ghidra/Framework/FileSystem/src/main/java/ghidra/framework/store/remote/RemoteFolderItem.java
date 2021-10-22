@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.framework.store.*;
 
 /**
  * <code>RemoteFolderItem</code> provides an abstract FolderItem implementation
- * for an item contained within a remote Repository.  
+ * for an item contained within a remote Repository.
  */
 public abstract class RemoteFolderItem implements FolderItem {
 
@@ -76,7 +76,7 @@ public abstract class RemoteFolderItem implements FolderItem {
 	}
 
 	/**
-	 * @throws IOException 
+	 * @throws IOException
 	 * @see ghidra.framework.store.FolderItem#getFileID()
 	 */
 	public String getFileID() throws IOException {

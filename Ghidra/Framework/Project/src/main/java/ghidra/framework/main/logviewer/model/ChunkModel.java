@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,13 +38,13 @@ public class ChunkModel implements Iterable<Chunk> {
 	// The maximum number of lines that should be read into a chunk.
 	public final int NUM_LINES = 250;
 
-	// The maximum number of chunks to display. This should not change, although it can be 
+	// The maximum number of chunks to display. This should not change, although it can be
 	// safely increased. It is not recommended to set this less than 3.
 	public final int MAX_VISIBLE_CHUNKS = 3;
 
 	/**
 	 * Adds the given chunk to the model.
-	 * 
+	 *
 	 * @param chunk
 	 */
 	public void add(Chunk chunk) {
@@ -53,7 +53,7 @@ public class ChunkModel implements Iterable<Chunk> {
 
 	/**
 	 * Adds a chunk at the given index to the model.
-	 * 
+	 *
 	 * @param index
 	 * @param chunk
 	 */
@@ -63,7 +63,7 @@ public class ChunkModel implements Iterable<Chunk> {
 
 	/**
 	 * Removes the chunk at the given index from the model.
-	 * 
+	 *
 	 * @param index
 	 */
 	public Chunk remove(int index) {
@@ -83,7 +83,7 @@ public class ChunkModel implements Iterable<Chunk> {
 
 	/**
 	 * Returns the number of chunks in the model.
-	 * 
+	 *
 	 * @return
 	 */
 	public int getSize() {
@@ -92,7 +92,7 @@ public class ChunkModel implements Iterable<Chunk> {
 
 	/**
 	 * Returns the chunk at the given index.
-	 * 
+	 *
 	 * @param index
 	 * @return
 	 */
@@ -109,9 +109,9 @@ public class ChunkModel implements Iterable<Chunk> {
 		Iterator<Chunk> iterator = chunks.iterator();
 		return iterator;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	public int getNumChunks() {
@@ -120,11 +120,11 @@ public class ChunkModel implements Iterable<Chunk> {
 
 	/**
 	 * Returns the start/end byte positions within the input file for the given row.
-	 * 
-	 * To do this we have to loop over all chunks in the {@link ChunkModel} and count the number 
-	 * of lines in each chunk until we get to the line (row) we're looking for. We then grab the 
+	 *
+	 * To do this we have to loop over all chunks in the {@link ChunkModel} and count the number
+	 * of lines in each chunk until we get to the line (row) we're looking for. We then grab the
 	 * correct value from the byteMap for that chunk line, which is the starting byte for it.
-	 * 
+	 *
 	 * @param row
 	 * @return the byte position in the file this row corresponds to
 	 */
@@ -149,7 +149,7 @@ public class ChunkModel implements Iterable<Chunk> {
 	/**
 	 * Searches the visible chunks to see if any of them contain the given byte. If so, returns
 	 * the row in the table where it resides. Returns -1 otherwise.
-	 * 
+	 *
 	 * @param selectedByte
 	 * @return
 	 */
@@ -160,10 +160,10 @@ public class ChunkModel implements Iterable<Chunk> {
 		Iterator<Chunk> iter = this.iterator();
 		while (iter.hasNext()) {
 			Chunk chunk = iter.next();
-			
+
 			// See if this byte is in this chunk before doing anything.
-			if (selectedByte >= chunk.start && selectedByte <= chunk.end) {	
-				
+			if (selectedByte >= chunk.start && selectedByte <= chunk.end) {
+
 				// We know our byte is in this chunk, so now find out exactly which row it's in.
 				for (Map.Entry<Integer, Pair> entry : chunk.rowToFilePositionMap.entrySet()) {
 					Integer key = entry.getKey();

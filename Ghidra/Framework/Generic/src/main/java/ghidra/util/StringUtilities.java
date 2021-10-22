@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,7 +84,7 @@ public class StringUtilities {
 	public static final int UNICODE_LE16_BYTE_ORDER_MARK = 0x0____FFFE;
 	public static final int UNICODE_LE32_BYTE_ORDER_MARK = 0xFFFE_0000;
 
-	// This is Java's default rendered size of a tab (in spaces) 
+	// This is Java's default rendered size of a tab (in spaces)
 	public static final int DEFAULT_TAB_SIZE = 8;
 
 	private StringUtilities() {
@@ -118,7 +118,7 @@ public class StringUtilities {
 
 	/**
 	 * Determines if a string is enclosed in double quotes (ASCII 34 (0x22))
-	 * 
+	 *
 	 * @param str String to test for double-quote enclosure
 	 * @return True if the first and last characters are the double-quote character, false otherwise
 	 */
@@ -130,7 +130,7 @@ public class StringUtilities {
 	/**
 	 * If the given string is enclosed in double quotes, extract the inner text. Otherwise, return
 	 * the given string unmodified.
-	 * 
+	 *
 	 * @param str String to match and extract from
 	 * @return The inner text of a doubly-quoted string, or the original string if not
 	 *         double-quoted.
@@ -145,7 +145,7 @@ public class StringUtilities {
 
 	/**
 	 * Returns true if the character is in displayable character range
-	 * 
+	 *
 	 * @param c the character
 	 * @return true if the character is in displayable character range
 	 */
@@ -179,7 +179,7 @@ public class StringUtilities {
 	/**
 	 * Converts the character into a string. If the character is special, it will actually render
 	 * the character. For example, given '\n' the output would be "\\n".
-	 * 
+	 *
 	 * @param c the character to convert into a string
 	 * @return the converted character
 	 */
@@ -193,7 +193,7 @@ public class StringUtilities {
 
 	/**
 	 * Returns a count of how many times the 'occur' char appears in the strings.
-	 * 
+	 *
 	 * @param string the string to look inside
 	 * @param occur the character to look for/
 	 * @return a count of how many times the 'occur' char appears in the strings
@@ -319,7 +319,7 @@ public class StringUtilities {
 	 * Returns true if the given string starts with <code>prefix</code> ignoring case.
 	 * <p>
 	 * Note: This method is equivalent to calling:
-	 * 
+	 *
 	 * <pre>
 	 * string.regionMatches(true, 0, prefix, 0, prefix.length());
 	 * </pre>
@@ -339,7 +339,7 @@ public class StringUtilities {
 	 * Returns true if the given string ends with <code>postfix</code>, ignoring case.
 	 * <p>
 	 * Note: This method is equivalent to calling:
-	 * 
+	 *
 	 * <pre>
 	 * int startIndex = string.length() - postfix.length();
 	 * string.regionMatches(true, startOffset, postfix, 0, postfix.length());
@@ -423,7 +423,7 @@ public class StringUtilities {
 	 * Returns the index of the first whole word occurrence of the search word within the given
 	 * text. A whole word is defined as the character before and after the occurrence must not be a
 	 * JavaIdentifierPart.
-	 * 
+	 *
 	 * @param text the text to be searched.
 	 * @param searchWord the word to search for.
 	 * @return the index of the first whole word occurrence of the search word within the given
@@ -448,7 +448,7 @@ public class StringUtilities {
 	 * Returns true if the substring within the text string starting at startIndex and having the
 	 * given length is a whole word. A whole word is defined as the character before and after the
 	 * occurrence must not be a JavaIdentifierPart.
-	 * 
+	 *
 	 * @param text the text containing the potential word.
 	 * @param startIndex the start index of the potential word within the text.
 	 * @param length the length of the potential word
@@ -776,7 +776,7 @@ public class StringUtilities {
 	/**
 	 * Converts an integer into a string. For example, given an integer 0x41424344, the returned
 	 * string would be "ABCD".
-	 * 
+	 *
 	 * @param value the integer value
 	 * @return the converted string
 	 */
@@ -794,10 +794,10 @@ public class StringUtilities {
 	/**
 	 * Creates a JSON string for the given object using all of its fields. To control the fields
 	 * that are in the result string, see {@link Json}.
-	 * 
+	 *
 	 * <P>
 	 * This is here as a marker to point users to the real {@link Json} String utility.
-	 * 
+	 *
 	 * @param o the object for which to create a string
 	 * @return the string
 	 */
@@ -820,7 +820,7 @@ public class StringUtilities {
 	 * If both strings are null then null is returned. If both strings are empty, the empty string
 	 * is returned. If the original two strings differ, this adds the second string to the first
 	 * separated by a newline.
-	 * 
+	 *
 	 * @param string1 the first string
 	 * @param string2 the second string
 	 * @return the merged string
@@ -1195,11 +1195,11 @@ public class StringUtilities {
 
 	/**
 	 * Wrap the given string at whitespace to best fit within the given line width
-	 * 
+	 *
 	 * <p>
 	 * If it is not possible to fit a word in the given width, it will be put on a line by itself,
 	 * and that line will be allowed to exceed the given width.
-	 * 
+	 *
 	 * @param str the string to wrap
 	 * @param width the max width of each line, unless a single word exceeds it
 	 * @return

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,23 +27,23 @@ import ghidra.util.datastruct.FixedSizeStack;
 /**
  * An object meant to track items with the ability to go back and forth within the list of
  * items.
- * 
+ *
  * <p>By default, duplicate entries are not allowed.  This allows for a simplified history of
  * unique items.  If the client prefers to have an accurate history, then call
  * {@link #setAllowDuplicates(boolean)} in order to keep all history entries.
- * 
+ *
  * <p>By default, null values are not allowed.  If the client allows null/empty values, then
  * they should call {@link #setAllowNulls(boolean)} with a value of true.  This allows the
- * backward navigation to work correctly when the client's active item is cleared.  When that 
- * item is cleared, then client is expected to call {@link #add(Object)} with value of 
+ * backward navigation to work correctly when the client's active item is cleared.  When that
+ * item is cleared, then client is expected to call {@link #add(Object)} with value of
  * null.  (This is safe to do, regardless of whether null are allowed).  When nulls are allowed
- * and a null value is received, then current item is placed onto the history stack as the 
- * previous item.  This way, when the user presses the back button, the last visible item 
- * will be activated.  
- * 
- * <p>Note: when nulls are allowed, only a single null value will be stored.  Further, 
- * if new, non-null items are added, then the null value is dropped.  
- * 
+ * and a null value is received, then current item is placed onto the history stack as the
+ * previous item.  This way, when the user presses the back button, the last visible item
+ * will be activated.
+ *
+ * <p>Note: when nulls are allowed, only a single null value will be stored.  Further,
+ * if new, non-null items are added, then the null value is dropped.
+ *
  *
  * @param <T> the type of items in the list
  */
@@ -59,11 +59,11 @@ public class HistoryList<T> {
 
 	/**
 	 * The sized passed here limits the size of the list, with the oldest items being dropped
-	 * as the list grows.  The given callback will be called when {@link #goBack()} or 
+	 * as the list grows.  The given callback will be called when {@link #goBack()} or
 	 * {@link #goForward()} are called.
-	 * 
+	 *
 	 * @param size the max number of items to keep in the list
-	 * @param itemSelectedCallback the function to call when the client selects an item by 
+	 * @param itemSelectedCallback the function to call when the client selects an item by
 	 *        going back or forward
 	 */
 	public HistoryList(int size, Consumer<T> itemSelectedCallback) {
@@ -72,12 +72,12 @@ public class HistoryList<T> {
 
 	/**
 	 * The sized passed here limits the size of the list, with the oldest items being dropped
-	 * as the list grows.  The given callback will be called when {@link #goBack()} or 
+	 * as the list grows.  The given callback will be called when {@link #goBack()} or
 	 * {@link #goForward()} are called.
-	 * 
+	 *
 	 * @param size the max number of items to keep in the list
-	 * @param itemSelectedCallback the function to call when the client selects an item by 
-	 *        going back or forward.  This callback will be passed the newly selected item as 
+	 * @param itemSelectedCallback the function to call when the client selects an item by
+	 *        going back or forward.  This callback will be passed the newly selected item as
 	 *        the first argument and the previously selected item as the second argument.
 	 */
 	public HistoryList(int size, BiConsumer<T, T> itemSelectedCallback) {
@@ -97,19 +97,19 @@ public class HistoryList<T> {
 
 //==================================================================================================
 // Interface Methods
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * True signals that this list will allow duplicate entries.  False signals to not only not
-	 * allow duplicates, but to also move the position of an item if it is re-added to the 
+	 * allow duplicates, but to also move the position of an item if it is re-added to the
 	 * list.
-	 *   
-	 * <p>For correct behavior when not allowing duplicates, ensure you have defined an 
+	 *
+	 * <p>For correct behavior when not allowing duplicates, ensure you have defined an
 	 * <code>equals</code> method to work as you expect.  If two different items are considered
 	 * equal, then this class will only remove the duplicate if the equals method returns true.
-	 * 
+	 *
 	 * <p>The default is false
-	 * 
+	 *
 	 * @param allowDuplicates true to allow duplicates
 	 */
 	public void setAllowDuplicates(boolean allowDuplicates) {
@@ -118,9 +118,9 @@ public class HistoryList<T> {
 
 	/**
 	 * True signals that the client allows null items to be used.  When this is true, a null
-	 * value will be stored in this list <b>only as the last item</b>.  See the javadoc for 
+	 * value will be stored in this list <b>only as the last item</b>.  See the javadoc for
 	 * more info.
-	 * 
+	 *
 	 * @param allowNulls true to allow nulls; the default is false
 	 */
 	public void setAllowNulls(boolean allowNulls) {
@@ -129,11 +129,11 @@ public class HistoryList<T> {
 
 	/**
 	 * Adds an item to this history list.  <code>null</code> values are ignored.
-	 * 
+	 *
 	 * <p>Calls to this method during selection notification will have no effect.  If you need
 	 * to update the history during a notification, then you must do so at a later time, perhaps
 	 * by using  {@link SystemUtilities#runSwingLater(Runnable)}.
-	 * 
+	 *
 	 * @param t the item to add.
 	 */
 	public void add(T t) {
@@ -162,7 +162,7 @@ public class HistoryList<T> {
 
 	/**
 	 * Returns true if this history list's current item pointer is not at the end of the list.
-	 * 
+	 *
 	 * @return true if this history list's current item pointer is not at the end of the list.
 	 */
 	public boolean hasNext() {
@@ -172,7 +172,7 @@ public class HistoryList<T> {
 
 	/**
 	 * Returns true if this history list's current item pointer is not at the beginning of the list.
-	 * 
+	 *
 	 * @return true if this history list's current item pointer is not at the beginning of the list.
 	 */
 	public boolean hasPrevious() {
@@ -183,7 +183,7 @@ public class HistoryList<T> {
 	/**
 	 * Moves this history list's current item pointer back one and then calls the user-provided
 	 * callback to signal the newly selected item.
-	 * 
+	 *
 	 * <p>No action is taken if the current pointer is already at the beginning of the list.
 	 */
 	public void goBack() {
@@ -198,9 +198,9 @@ public class HistoryList<T> {
 	}
 
 	/**
-	 * Performs a {@link #goBack()} until the given item becomes the current item.  This is 
+	 * Performs a {@link #goBack()} until the given item becomes the current item.  This is
 	 * useful if you wish to go backward to a specific item in the list.
-	 * 
+	 *
 	 * @param t the item
 	 */
 	public void goBackTo(T t) {
@@ -212,7 +212,7 @@ public class HistoryList<T> {
 	/**
 	 * Moves this history list's current item pointer forward one and then calls the user-provided
 	 * callback to signal the newly selected item.
-	 * 
+	 *
 	 * <p>No action is taken if the current pointer is already at the end of the list.
 	 */
 	public void goForward() {
@@ -226,9 +226,9 @@ public class HistoryList<T> {
 	}
 
 	/**
-	 * Performs a {@link #goForward()} until the given item becomes the current item.  This is 
+	 * Performs a {@link #goForward()} until the given item becomes the current item.  This is
 	 * useful if you wish to go forward to a specific item in the list.
-	 * 
+	 *
 	 * @param t the item
 	 */
 	public void goForwardTo(T t) {
@@ -238,9 +238,9 @@ public class HistoryList<T> {
 	}
 
 	/**
-	 * Returns the item currently pointed to within the list of items.  When an item is 
+	 * Returns the item currently pointed to within the list of items.  When an item is
 	 * added, this will be that item.  Otherwise, it will be the last item navigated.
-	 * 
+	 *
 	 * @return the item currently pointed to within the list of items.
 	 */
 	public T getCurrentHistoryItem() {
@@ -251,9 +251,9 @@ public class HistoryList<T> {
 	}
 
 	/**
-	 * Get all items in the history that come before the current history item.  They are 
+	 * Get all items in the history that come before the current history item.  They are
 	 * returned in navigation order, as traversed if {@link #goBack()} is called.
-	 * 
+	 *
 	 * @return the items
 	 */
 	public List<T> getPreviousHistoryItems() {
@@ -266,9 +266,9 @@ public class HistoryList<T> {
 	}
 
 	/**
-	 * Get all items in the history that come after the current history item.  They are 
+	 * Get all items in the history that come after the current history item.  They are
 	 * returned in navigation order, as traversed if {@link #goForward()} is called.
-	 * 
+	 *
 	 * @return the items
 	 */
 	public List<T> getNextHistoryItems() {
@@ -291,7 +291,7 @@ public class HistoryList<T> {
 
 	/**
 	 * Returns the number of items in this history list
-	 * 
+	 *
 	 * @return the number of items in this history list
 	 */
 	public int size() {
@@ -300,7 +300,7 @@ public class HistoryList<T> {
 
 //==================================================================================================
 // Non-interface Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private boolean ignoreItem(T t) {
 		if (ignoreNull(t)) {
@@ -409,8 +409,8 @@ public class HistoryList<T> {
 
 		//@formatter:off
 		return "{\n" +
-			key + buffy.toString() + "\n" + 
+			key + buffy.toString() + "\n" +
 		"}";
-		//@formatter:on				
+		//@formatter:on
 	}
 }

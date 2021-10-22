@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 	 * OMF usually stores a string describing the compiler that produced it in a
 	 * translator comment.  This routine maps this string to official
 	 * "secondary constraint" used by the Ghidra opinion service to pick a
-	 * language module for the program 
+	 * language module for the program
 	 * @param record is the translator comment string
 	 * @return the "secondary constraint"
 	 */
@@ -512,7 +512,7 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 	}
 
 	/**
-	 * If necessary, create an external block to hold external symbols for this file 
+	 * If necessary, create an external block to hold external symbols for this file
 	 * @param program is the program representing the file
 	 * @param log for error messages
 	 * @param externalAddress is the address of the first byte of the external block

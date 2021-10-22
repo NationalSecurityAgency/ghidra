@@ -6,9 +6,9 @@
 			value="ghidra.program.emulation.TRICOREEmulateInstructionStateModifier"/>
   </properties>
 
-  <programcounter register="PC"/> 
+  <programcounter register="PC"/>
   <data_space space="ram"/>
-  
+
   <default_memory_blocks>
         <memory_block name="LDRAM.13" start_address="0xd0000000" length="0x1e000" mode="rwv" initialized="false"/>
 	<memory_block name="SPRAM.13" start_address="0xd4000000" length="0x6000" mode="rwv" initialized="false"/>

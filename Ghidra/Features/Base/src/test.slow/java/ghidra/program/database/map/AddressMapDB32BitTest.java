@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.test.TestProcessorConstants;
 
 public class AddressMapDB32BitTest extends AbstractAddressMapDBTestClass {
-	
+
 	/**
 	 * Constructor for AddressMapTest.
 	 * @param arg0
@@ -37,7 +37,7 @@ public class AddressMapDB32BitTest extends AbstractAddressMapDBTestClass {
 	public AddressMapDB32BitTest() {
 		super();
 	}
-	
+
 	@Override
     protected Program createTestProgram() throws Exception {
 		Program p = createProgram(TestProcessorConstants.PROCESSOR_X86, 32);
@@ -47,10 +47,10 @@ public class AddressMapDB32BitTest extends AbstractAddressMapDBTestClass {
 			AddressSpace space = p.getAddressFactory().getDefaultAddressSpace();
 			p.setImageBase(space.getAddress(0x100000), true);
 			Memory mem = p.getMemory();
-			
+
 			// Block1 is located within first chunk following image base
 			mem.createUninitializedBlock("Block1", space.getAddress(0x200000), 0x100000, false);
-			
+
 			try {
 				mem.createUninitializedBlock("Block2", space.getAddress(0xfff00), 0x1000, false);
 				Assert.fail("Expected MemoryConflictException");
@@ -58,7 +58,7 @@ public class AddressMapDB32BitTest extends AbstractAddressMapDBTestClass {
 			catch (MemoryConflictException e) {
 				// Expected
 			}
-			
+
 			try {
 				space.getAddress(0x100000000L);
 				Assert.fail("Expected AddressOutOfBoundsException");
@@ -66,7 +66,7 @@ public class AddressMapDB32BitTest extends AbstractAddressMapDBTestClass {
 			catch (AddressOutOfBoundsException e) {
 				// Expected
 			}
-			
+
 			try {
 				mem.createUninitializedBlock("Block2", space.getAddress(0xfff00000), 0x100001, false);
 				Assert.fail("Expected AddressOverflowException");
@@ -74,10 +74,10 @@ public class AddressMapDB32BitTest extends AbstractAddressMapDBTestClass {
 			catch (AddressOverflowException e) {
 				// Expected
 			}
-			
+
 			// Block2 is at absolute end of space
 			mem.createUninitializedBlock("Block2", space.getAddress(0xfff00000), 0x100000, false);
-			
+
 			success = true;
 		}
 		finally {
@@ -91,7 +91,7 @@ public class AddressMapDB32BitTest extends AbstractAddressMapDBTestClass {
 
 @Test
     public void testKeyRanges() {
-		
+
 		List<KeyRange> keyRanges = addrMap.getKeyRanges(addr(0), addr(0xffffffffffffffffL), false);
 
 		assertEquals(2, keyRanges.size()); // split due to image base
@@ -102,14 +102,14 @@ public class AddressMapDB32BitTest extends AbstractAddressMapDBTestClass {
 		kr = keyRanges.get(1);
 		assertEquals(addr(0x100000L), addrMap.decodeAddress(kr.minKey));
 		assertEquals(addr(0x0ffffffffL), addrMap.decodeAddress(kr.maxKey));
-		
+
 		try {
 			program.setImageBase(addr(0), false);
 		} catch (Exception e) {
 			e.printStackTrace();
 			Assert.fail(e.toString());
 		}
-		
+
 		keyRanges = addrMap.getKeyRanges(addr(0), addr(0xffffffffffffffffL), false);
 
 		assertEquals(1, keyRanges.size());
@@ -119,27 +119,27 @@ public class AddressMapDB32BitTest extends AbstractAddressMapDBTestClass {
 		assertEquals(addr(0x0ffffffffL), addrMap.decodeAddress(kr.maxKey));
 
 	}
-	
+
 @Test
     public void testRelocatableAddress() {
 		Address addr = addr(0x100000);
 		long key = addrMap.getKey(addr, false);
 		assertEquals(0x2000000000000000L + 0x0, key);
 		assertEquals(addr, addrMap.decodeAddress(key));
-		
+
 		addr = addr(0x120000);
 		key = addrMap.getKey(addr, false);
 		assertEquals(0x2000000000000000L + 0x20000, key);
 		assertEquals(addr, addrMap.decodeAddress(key));
 	}
-	
+
 @Test
     public void testAbsoluteAddress() {
 		Address addr = addr(0x100000);
 		long key = addrMap.getAbsoluteEncoding(addr, false);
 		assertEquals(0x1000000000000000L + 0x100000, key);
 		assertEquals(addr, addrMap.decodeAddress(key));
-		
+
 		addr = addr(0x120000);
 		key = addrMap.getAbsoluteEncoding(addr, false);
 		assertEquals(0x1000000000000000L + 0x120000, key);

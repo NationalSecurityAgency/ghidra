@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ public class SelectionScopeWidget extends ControlPanelWidget {
 	private InstructionSearchPlugin plugin;
 
 	/**
-	 * 
+	 *
 	 * @param plugin
 	 * @param title
 	 * @param dialog
@@ -152,7 +152,7 @@ public class SelectionScopeWidget extends ControlPanelWidget {
 	 ********************************************************************************************/
 
 	/**
-	 * Invoked when the user clicks the radio button that allows them to select a 
+	 * Invoked when the user clicks the radio button that allows them to select a
 	 * custom search range.
 	 */
 	private class SearchSelectionAction extends AbstractAction {
@@ -177,7 +177,7 @@ public class SelectionScopeWidget extends ControlPanelWidget {
 
 	/**
 	 * Creates a radio button with the given attributes.
-	 * 
+	 *
 	 * @param action
 	 * @param name
 	 * @param tooltip

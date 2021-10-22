@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.util.Msg;
  */
 public class SelectionModeWidget extends ControlPanelWidget {
 
-	// Radio buttons that the user can set to specify the input type. 
+	// Radio buttons that the user can set to specify the input type.
 	public JRadioButton hexRB, binaryRB;
 
 	public static enum InputMode {
@@ -44,7 +44,7 @@ public class SelectionModeWidget extends ControlPanelWidget {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param plugin
 	 * @param title
 	 * @param parent
@@ -55,7 +55,7 @@ public class SelectionModeWidget extends ControlPanelWidget {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	@Override
@@ -97,7 +97,7 @@ public class SelectionModeWidget extends ControlPanelWidget {
 					groups = InstructionSearchUtils.getGroupSizes(parent.getInputString().trim(),
 						InputMode.BINARY);
 
-					// Now convert whatever is in the input box to hex.				
+					// Now convert whatever is in the input box to hex.
 					String hexStr =
 						InstructionSearchUtils.toHex(parent.getInputString().trim(), true);
 
@@ -143,7 +143,7 @@ public class SelectionModeWidget extends ControlPanelWidget {
 					groups = InstructionSearchUtils.getGroupSizes(parent.getInputString().trim(),
 						InputMode.HEX);
 
-					// Now convert whatever is in the input box to binary.				
+					// Now convert whatever is in the input box to binary.
 					String binaryStr =
 						InstructionSearchUtils.toBinary(parent.getInputString().trim());
 
@@ -169,7 +169,7 @@ public class SelectionModeWidget extends ControlPanelWidget {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	public InputMode getInputMode() {
@@ -184,7 +184,7 @@ public class SelectionModeWidget extends ControlPanelWidget {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param mode
 	 */
 	public void setInputMode(InputMode mode) {
@@ -204,15 +204,15 @@ public class SelectionModeWidget extends ControlPanelWidget {
 
 	/**
 	 * Takes the given string and puts spaces on the boundaries defined by the groups passed
-	 * in. 
-	 * 
+	 * in.
+	 *
 	 * eg: if the source is "AA BBBB CC DDDDDD" and the groups are {2, 1, 4}, and the
 	 * whitespace list is {5, 1} the returned string will be "AABB     BB CCDDDDDD".
-	 * 
+	 *
 	 * Note that the mode passed in determines how we interpret group sizes. If the mode is HEX
 	 * then a group size of '2' will mean 4 characters (2 bytes), but if the mode is BINARY then
 	 * we'll grab 16 characters for that group of 2.
-	 *     
+	 *
 	 * @param source the input string
 	 * @param groups the list of group sizes
 	 * @param whitespace the list of whitespace strings

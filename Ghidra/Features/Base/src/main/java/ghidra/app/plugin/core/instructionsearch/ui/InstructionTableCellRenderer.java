@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import ghidra.util.table.GhidraTableCellRenderer;
 public class InstructionTableCellRenderer extends GhidraTableCellRenderer {
 
 	/**
-	 * 
+	 *
 	 * @param font
 	 */
 	public InstructionTableCellRenderer(Font font) {
@@ -53,7 +53,7 @@ public class InstructionTableCellRenderer extends GhidraTableCellRenderer {
 		boolean isSelected = data.isSelected();
 		boolean hasFocus = data.hasFocus();
 
-		// Do a null check on the input here to protect ourselves.  This value can be null 
+		// Do a null check on the input here to protect ourselves.  This value can be null
 		// in certain cases (eg: change resolution on the screen  [ctrl-+ on mac], then move the
 		// instruction window to a different monitor, then click on a cell).
 		if (value == null) {
@@ -81,7 +81,7 @@ public class InstructionTableCellRenderer extends GhidraTableCellRenderer {
 	 ********************************************************************************************/
 
 	/**
-	 * 
+	 *
 	 * @param dataObject
 	 * @param theRenderer
 	 */
@@ -90,13 +90,13 @@ public class InstructionTableCellRenderer extends GhidraTableCellRenderer {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param dataObject
 	 * @param theRenderer
 	 */
 	private void setForegroundAttributes(InstructionTableDataObject dataObject,
 			JLabel theRenderer) {
-		// Change the foreground to use a font of our choosing.  The main reason is that we 
+		// Change the foreground to use a font of our choosing.  The main reason is that we
 		// want to use a monospaced font for binary rendering.
 		theRenderer.setForeground(dataObject.getForegroundColor());
 		Font newFont = theRenderer.getFont().deriveFont(dataObject.getFontStyle());
@@ -104,14 +104,14 @@ public class InstructionTableCellRenderer extends GhidraTableCellRenderer {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param isSelected
 	 * @param hasFocus
 	 * @param dataObject
 	 */
 	private void setBackgroundAttributes(boolean isSelected, boolean hasFocus,
 			InstructionTableDataObject dataObject) {
-		// Set the background color based on what the cell says.  If it's selected, make it a 
+		// Set the background color based on what the cell says.  If it's selected, make it a
 		// bit darker.
 		Color backgroundColor = dataObject.getBackgroundColor();
 		if (backgroundColor != null) {
@@ -125,7 +125,7 @@ public class InstructionTableCellRenderer extends GhidraTableCellRenderer {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param table
 	 * @param value
 	 * @param col

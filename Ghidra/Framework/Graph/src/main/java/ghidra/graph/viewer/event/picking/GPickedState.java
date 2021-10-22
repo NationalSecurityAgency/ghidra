@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,12 +75,12 @@ public class GPickedState<V> implements PickedState<V> {
 	}
 
 	/**
-	 * Picks the given vertex, but signals that the pick is really just to make sure that the 
-	 * vertex is picked in order to match the graph's notion of the current location.  To pick a 
-	 * vertex and signal that the location has changed, call {@link #pick(Object, boolean)}. 
-	 * Calling this method is the same as calling 
+	 * Picks the given vertex, but signals that the pick is really just to make sure that the
+	 * vertex is picked in order to match the graph's notion of the current location.  To pick a
+	 * vertex and signal that the location has changed, call {@link #pick(Object, boolean)}.
+	 * Calling this method is the same as calling
 	 * <pre>pickToSync(vertex, false);</pre>
-	 * 
+	 *
 	 * @param vertex the vertex to pick
 	 */
 	public void pickToSync(V vertex) {
@@ -88,12 +88,12 @@ public class GPickedState<V> implements PickedState<V> {
 	}
 
 	/**
-	 * Picks the given vertex, but signals that the pick is really just to make sure that the 
-	 * vertex is picked in order to match the graph's notion of the current location.  To pick a 
+	 * Picks the given vertex, but signals that the pick is really just to make sure that the
+	 * vertex is picked in order to match the graph's notion of the current location.  To pick a
 	 * vertex and signal that the location has changed, call {@link #pick(Object, boolean)}
-	 * 
+	 *
 	 * @param vertex the vertex to pick
-	 * @param addToSelection true signals that the given vertex should be picked, but not to 
+	 * @param addToSelection true signals that the given vertex should be picked, but not to
 	 *                       remove any other picked vertices; false signals to pick the given
 	 *                       vertex and to clear any other picked vertices
 	 */
@@ -108,7 +108,7 @@ public class GPickedState<V> implements PickedState<V> {
 
 	/**
 	 * A convenience method to clear the current selected vertices and select the given vertex
-	 * 
+	 *
 	 * @param vertex the vertex to pick
 	 */
 	public void pickToActivate(V vertex) {

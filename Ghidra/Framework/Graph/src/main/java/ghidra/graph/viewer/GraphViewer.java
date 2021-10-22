@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,19 +42,19 @@ import ghidra.util.layout.PairLayout;
 /**
  * The base viewer for the Graph module.   This viewer provides methods for manipulating
  * the graph using the mouse.
- * 
- * <P>The viewer is currently an extension of the {@link VisualizationViewer} and as such it 
- * is accessed by much of the event handling subsystem, such as the mouse plugins, as well as 
+ *
+ * <P>The viewer is currently an extension of the {@link VisualizationViewer} and as such it
+ * is accessed by much of the event handling subsystem, such as the mouse plugins, as well as
  * the rendering system.
- * 
+ *
  * <P>Also, tooltips/popups for edges and vertices are handled by this class.
- * 
- * <P>This class creates a {@link VisualGraphViewUpdater} that perform graph transformations, 
+ *
+ * <P>This class creates a {@link VisualGraphViewUpdater} that perform graph transformations,
  * such as panning the graph, with and without animation, as requested.
- * 
+ *
  * @param <V> the vertex type
  * @param <E> the edge type
- * 
+ *
  */
 public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 		extends VisualizationViewer<V, E> {
@@ -215,9 +215,9 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 	}
 
 	/**
-	 * When true (the default), the zoom will center wherever the mouse is positioned.  False 
+	 * When true (the default), the zoom will center wherever the mouse is positioned.  False
 	 * will zoom at the center of the view.
-	 * 
+	 *
 	 * @return true if using mouse-relative zoom
 	 */
 	public boolean useMouseRelativeZoom() {
@@ -228,7 +228,7 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 	 *                       !!Super Hacky Override!!
 	 * The code we are overriding blindly calls add(), without first checking to see if it has
 	 * already been added.  Java 6 added a method, removeNotify(), that is called when components
-	 * are removed.  When add is called in the overridden method, it triggers a call to remove, 
+	 * are removed.  When add is called in the overridden method, it triggers a call to remove,
 	 * which triggers removeNotify().  This call is made during the painting process.  The problem
 	 * therein is that out buttons borders get reset (see AbstractButton.removeNotify()) when
 	 * we repaint, which means that mouse hovers do not work correctly (SCR 6819).
@@ -275,7 +275,7 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 
 //==================================================================================================
 // Popups and Tooltips
-//==================================================================================================	
+//==================================================================================================
 
 	/*package*/ void setPopupDelay(int delayMs) {
 		popupRegulator.setPopupDelay(delayMs);
@@ -298,8 +298,8 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 		Layout<V, E> viewerLayout = getGraphLayout();
 		Point p = event.getPoint();
 
-		// check for a vertex hit first, otherwise, we get edge hits when we are hovering 
-		// over a vertex, due to how edges are interpreted as existing all the way to the 
+		// check for a vertex hit first, otherwise, we get edge hits when we are hovering
+		// over a vertex, due to how edges are interpreted as existing all the way to the
 		// center point of a vertex
 		V vertex = getPickSupport().getVertex(viewerLayout, p.getX(), p.getY());
 		if (vertex != null) {
@@ -336,7 +336,7 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================     
+//==================================================================================================
 
 	private class GraphViewerPopupSource implements PopupSource<V, E> {
 
@@ -412,7 +412,7 @@ public class GraphViewer<V extends VisualVertex, E extends VisualEdge<V>>
 			}
 
 			// only add a tooltip emphasis when we are scaled to a small size (this prevents
-			// odd vertex sizing behavior while the user is attempting to interact with the 
+			// odd vertex sizing behavior while the user is attempting to interact with the
 			// vertex)
 			if (GraphViewerUtils.isScaledPastVertexInteractionThreshold(GraphViewer.this)) {
 				graphObject.setEmphasis(.25);

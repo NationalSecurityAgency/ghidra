@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,9 +31,9 @@ public class DecompilerFindReferencesToActionTest
 	public void testActionEnablement() throws Exception {
 
 		/*
-		 
+
 		 Decomp of 'init_string':
-		 
+
 		 	1|
 			2| void init_string(mystring *ptr)
 			3|
@@ -42,17 +42,17 @@ public class DecompilerFindReferencesToActionTest
 			6|   return;
 			7| }
 			8|
-		 
+
 		 Note: there are two places in this function we can search for data type references:
 		 		1) the parameter (line 2, cols 17-25, 26-30)
 		 		2) the usage of the parameter: (line 5 at cols 2-5 for the type and cols 7-12 for the field)
-		 
+
 		 */
 		decompile(INIT_STRING_ADDR);
 
 		//
 		// Action should not enabled unless on the data type
-		// 
+		//
 		// Empty line
 		int line = 1;
 		int charPosition = 0;
@@ -99,9 +99,9 @@ public class DecompilerFindReferencesToActionTest
 	@Test
 	public void testFindDataTypeReferences_ToEntireDataType_FromParameter() throws Exception {
 		/*
-		 
+
 		 Decomp of 'init_string':
-		 
+
 		 	1|
 			2| void init_string(mystring *ptr)
 			3|
@@ -110,11 +110,11 @@ public class DecompilerFindReferencesToActionTest
 			6|   return;
 			7| }
 			8|
-		 
+
 		 Note: there are two places in this function we can search for data type references:
 		 		1) the parameter (line 2, cols 17-25, 26-30)
 		 		2) the usage of the parameter: (line 5 at cols 2-5 for the type and cols 7-12 for the field)
-		 
+
 		 */
 
 		decompile(INIT_STRING_ADDR);
@@ -130,9 +130,9 @@ public class DecompilerFindReferencesToActionTest
 	@Test
 	public void testFindDataTypeReferences_ToEntireDataType_FromVariable() throws Exception {
 		/*
-		 
+
 		 Decomp of 'init_string':
-		 
+
 		 	1|
 			2| void init_string(mystring *ptr)
 			3|
@@ -141,11 +141,11 @@ public class DecompilerFindReferencesToActionTest
 			6|   return;
 			7| }
 			8|
-		 
+
 		 Note: there are two places in this function we can search for data type references:
 		 		1) the parameter (line 2, cols 17-25, 26-30)
 		 		2) the usage of the parameter: (line 5 at cols 2-5 for the type and cols 7-12 for the field)
-		 
+
 		 */
 
 		decompile(INIT_STRING_ADDR);
@@ -161,9 +161,9 @@ public class DecompilerFindReferencesToActionTest
 	@Test
 	public void testFindDataTypeReferences_ToFieldOfDataType() throws Exception {
 		/*
-		 
+
 		 Decomp of 'init_string':
-		 
+
 		 	1|
 			2| void init_string(mystring *ptr)
 			3|
@@ -172,11 +172,11 @@ public class DecompilerFindReferencesToActionTest
 			6|   return;
 			7| }
 			8|
-		 
+
 		 Note: there are two places in this function we can search for data type references:
 		 		1) the parameter (line 2, cols 17-25, 26-30)
 		 		2) the usage of the parameter: (line 5 at cols 2-5 for the type and cols 7-12 for the field)
-		 
+
 		 */
 
 		decompile(INIT_STRING_ADDR);
@@ -209,9 +209,9 @@ public class DecompilerFindReferencesToActionTest
 	public void testFindDataTypeReferences_ToCurrentAddress() throws Exception {
 
 		/*
-		 
+
 		 Decomp of 'init_string':
-		 
+
 		 	1|
 			2| void init_string(mystring *ptr)
 			3|
@@ -247,6 +247,6 @@ public class DecompilerFindReferencesToActionTest
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 }

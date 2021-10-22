@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.SystemUtilities;
 /**
  * <code>VariableOffset</code> can be used as an operand or sub-operand representation
  * object.  The toString() method should be used to obtain the displayable representation
- * string.  This object is intended to correspond to a explicit or implicit register/stack 
+ * string.  This object is intended to correspond to a explicit or implicit register/stack
  * variable reference.  If an offset other than 0 is specified, the original Scalar should
  * be specified.
  */
@@ -45,7 +45,7 @@ public class VariableOffset {
 	 * Constructor for an implied variable reference.
 	 * @param variable function variable
 	 * @param offset offset into variable
-	 * @param indirect if true and variable data-type is a pointer, the offset 
+	 * @param indirect if true and variable data-type is a pointer, the offset
 	 * is relative to underlying data-type of the pointer-type.  This should generally be
 	 * true for register use which would contain a structure pointer not a structure instance,
 	 * whereas it would be false for stack-references.
@@ -84,7 +84,7 @@ public class VariableOffset {
 	/**
 	 * Sets the original replaced sub-operand Scalar.
 	 * @param s scalar
-	 * @param includeScalarAdjustment if true scalar adjustment will be included 
+	 * @param includeScalarAdjustment if true scalar adjustment will be included
 	 * with object list or string representation
 	 */
 	public void setReplacedElement(Scalar s, boolean includeScalarAdjustment) {

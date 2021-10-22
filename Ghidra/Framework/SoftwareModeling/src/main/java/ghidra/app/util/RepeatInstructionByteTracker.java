@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,9 +31,9 @@ public class RepeatInstructionByteTracker {
 
 	/**
 	 * Constructor.
-	 * @param repeatPatternLimit maximum number of instructions containing the same repeated 
+	 * @param repeatPatternLimit maximum number of instructions containing the same repeated
 	 * byte values.  A value less than or equal to 0 will disable counting.
-	 * @param repeatPatternLimitIgnoredRegion optional set of addresses where check is not 
+	 * @param repeatPatternLimitIgnoredRegion optional set of addresses where check is not
 	 * performed or null for check to be performed everywhere.
 	 */
 	public RepeatInstructionByteTracker(int repeatPatternLimit,
@@ -53,7 +53,7 @@ public class RepeatInstructionByteTracker {
 	/**
 	 * Check the next instruction within a block of instructions.
 	 * @param inst next instruction
-	 * @return true if repeat limit has been exceeded, else false.  
+	 * @return true if repeat limit has been exceeded, else false.
 	 * If the repeat limit has been set &lt;= 0 false will be returned.
 	 */
 	public boolean exceedsRepeatBytePattern(PseudoInstruction inst) {
@@ -86,10 +86,10 @@ public class RepeatInstructionByteTracker {
 
 	/**
 	 * Set the maximum number of instructions in a single run which contain the same byte values.
-	 * @param maxInstructions limit on the number of consecutive instructions with the same 
-	 * byte values.  A non-positive value (&lt;= 0) will disable the 
+	 * @param maxInstructions limit on the number of consecutive instructions with the same
+	 * byte values.  A non-positive value (&lt;= 0) will disable the
 	 * {@link #exceedsRepeatBytePattern(PseudoInstruction)} checking.
-	 * 
+	 *
 	 */
 	public void setRepeatPatternLimit(int maxInstructions) {
 		this.repeatPatternLimit = maxInstructions;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -119,7 +119,7 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 
 	/**
 	 * Compute the left-hand-side value given that the result and the right are known
-	 * 
+	 *
 	 * @param rval the right-hand-side value
 	 * @param goal the result
 	 * @return the left-hand-side value solution
@@ -129,7 +129,7 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 
 	/**
 	 * Compute the right-hand-side value given that the result and the left are known
-	 * 
+	 *
 	 * NOTE: Assumes commutativity by default
 	 * @param lval the left-hand-side value
 	 * @param goal the result
@@ -142,7 +142,7 @@ public abstract class AbstractBinaryExpressionSolver<T extends BinaryExpression>
 
 	/**
 	 * Compute the result of applying the operator to the two given values
-	 * 
+	 *
 	 * @param lval the left-hand-side value
 	 * @param rval the right-hand-side value
 	 * @return the result

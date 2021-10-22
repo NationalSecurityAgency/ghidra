@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.util.HashMap;
 import ghidra.program.model.address.Address;
 
 /**
- * 
+ *
  */
 public class ConstantTemplate implements Serializable {
 	public static final int REAL = 1;
@@ -36,18 +36,18 @@ public class ConstantTemplate implements Serializable {
 	private Operand op;
 	private long realValue;
 	private int select1, select2;
-	
+
 	public ConstantTemplate(long val) {
 		type = REAL;
 		realValue = val;
 		hashCode = (int) val;
 	}
-	
+
 	public ConstantTemplate(int t) {
 		type = t;
 		hashCode = t;
 	}
-	
+
 	public ConstantTemplate(Operand o, int sel1, int sel2) {
 		type = HANDLE;
 		op = o;
@@ -55,7 +55,7 @@ public class ConstantTemplate implements Serializable {
 		select2 = sel2;
 		hashCode = op.hashCode() + select1 + 10*select2;
 	}
-	
+
 
 	/**
 	 * Constructor ConstantTemplate.
@@ -80,7 +80,7 @@ public class ConstantTemplate implements Serializable {
 	public int type() {return type;}
 	public int select1() {return select1;}
 	public int select2() {return select2;}
-	
+
 	/**
 	 * Method resolve.
 	 * @param position the position of the constant to resolve
@@ -96,13 +96,13 @@ public class ConstantTemplate implements Serializable {
 
 		// return the address of the beginning of this instruction.
 		case JUMP_START: return position.startAddr().getOffset();
-		
+
 		case JUMP_NEXT: return position.nextAddr().getOffset();
-		
+
 		case JUMP_CODESPACE:
 			Address addr =  position.buffer().getAddress();
 				return addr.getAddressSpace().getSpaceID();
-		
+
 		default:			// Should never reach here
 			return 0;
 		}
@@ -121,10 +121,10 @@ public class ConstantTemplate implements Serializable {
 	}
 
 	public Operand operand() { return op; }
-	
+
 	@Override
     public int hashCode() { return hashCode; }
-	
+
 	@Override
     public boolean equals(Object o) {
 		if (o.getClass() != ConstantTemplate.class) {

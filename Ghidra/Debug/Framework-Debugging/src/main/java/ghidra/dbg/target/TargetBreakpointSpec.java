@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
 
 /**
  * The specification of a breakpoint applied to a target object
- * 
+ *
  * <p>
  * Note that a single specification could result in several locations, or no locations at all. For
  * example, a breakpoint placed on a function within a module which has not been loaded ("pending"
@@ -35,7 +35,7 @@ import ghidra.dbg.target.schema.TargetAttributeType;
  * object include the resolved {@link TargetBreakpointLocation}s. If the debugger does not share
  * this same concept, then its breakpoints should implement both the specification and the location;
  * the specification need not have any children.
- * 
+ *
  * <p>
  * This object extends {@link TargetTogglable} for a transitional period only. Implementations whose
  * breakpoint specifications can be toggled should declare this interface explicitly. When the
@@ -72,12 +72,12 @@ public interface TargetBreakpointSpec extends TargetObject, /*@Transitional*/ Ta
 
 	/**
 	 * Get the container of this breakpoint.
-	 * 
+	 *
 	 * <p>
 	 * While it is most common for a breakpoint specification to be an immediate child of its
 	 * container, that is not necessarily the case. This method is a reliable and type-safe means of
 	 * obtaining that container.
-	 * 
+	 *
 	 * @return a reference to the container
 	 */
 	@TargetAttributeType(name = CONTAINER_ATTRIBUTE_NAME, required = true, hidden = true)
@@ -89,11 +89,11 @@ public interface TargetBreakpointSpec extends TargetObject, /*@Transitional*/ Ta
 
 	/**
 	 * Get the user-specified expression describing the breakpoint
-	 * 
+	 *
 	 * <p>
 	 * Depending on the underlying debugger, this could be a variety of forms, e.g., source file and
 	 * line number, module and symbol, address.
-	 * 
+	 *
 	 * @return the expression
 	 */
 	@TargetAttributeType(name = EXPRESSION_ATTRIBUTE_NAME, required = true, hidden = true)
@@ -103,7 +103,7 @@ public interface TargetBreakpointSpec extends TargetObject, /*@Transitional*/ Ta
 
 	/**
 	 * Get the kinds of breakpoint
-	 * 
+	 *
 	 * @return the kinds
 	 */
 	@TargetAttributeType(name = KINDS_ATTRIBUTE_NAME, required = true, hidden = true)
@@ -114,20 +114,20 @@ public interface TargetBreakpointSpec extends TargetObject, /*@Transitional*/ Ta
 
 	/**
 	 * Add an action to execute locally when this breakpoint traps execution
-	 * 
+	 *
 	 * <p>
 	 * Note that unlike other parts of this API, the breakpoint specification implementation must
 	 * keep a strong reference to its actions. Adding the same action a second time may cause
 	 * undefined behavior. Ideally, the implementation would at least detect this condition and log
 	 * a warning.
-	 * 
+	 *
 	 * @param action the action to execute
 	 */
 	public void addAction(TargetBreakpointAction action);
 
 	/**
 	 * Remove an action from this breakpoint
-	 * 
+	 *
 	 * @param action the action to remove
 	 */
 	public void removeAction(TargetBreakpointAction action);
@@ -135,7 +135,7 @@ public interface TargetBreakpointSpec extends TargetObject, /*@Transitional*/ Ta
 	public interface TargetBreakpointAction {
 		/**
 		 * An effective breakpoint from this specification trapped execution
-		 * 
+		 *
 		 * @param spec the breakpoint specification
 		 * @param trapped the object whose execution was trapped
 		 * @param frame the innermost stack frame, if available, of the trapped object
@@ -147,11 +147,11 @@ public interface TargetBreakpointSpec extends TargetObject, /*@Transitional*/ Ta
 
 	/**
 	 * Get the locations created by this specification.
-	 * 
+	 *
 	 * <p>
 	 * While it is most common for locations to be immediate children of the specification, that is
 	 * not necessarily the case.
-	 * 
+	 *
 	 * @implNote By default, this method collects all successor locations ordered by path.
 	 *           Overriding that behavior is not yet supported.
 	 * @return the effective breakpoints

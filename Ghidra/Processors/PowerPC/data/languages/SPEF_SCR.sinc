@@ -4,13 +4,13 @@
 # version 1.0
 
 define register offset=0x600 size=1 [
-	spef_sovh spef_ovh spef_fgh spef_fxh spef_finvh spef_fdbzh spef_funfh spef_fovfh 
+	spef_sovh spef_ovh spef_fgh spef_fxh spef_finvh spef_fdbzh spef_funfh spef_fovfh
 	spef_reserved1 spef_reserved2
 	spef_finxs spef_finvs spef_fdbzs spef_funfs spef_fovfs
 	spef_reserved3
 	spef_sov spef_ov spef_fg spef_fx spef_finv spef_fdbz spef_funf spef_fovf
 	spef_reserved4
-	spef_finxe spef_finve spef_fdbze spef_funfe spef_fovfe spef_frmc0 spef_frmc1 
+	spef_finxe spef_finve spef_fdbze spef_funfe spef_fovfe spef_frmc0 spef_frmc1
 ];
 
 
@@ -107,7 +107,7 @@ macro setSPEFSCRSubFlags_H(op1, op2, result) {
 
 macro packSPEFSCR(tmp) {
 	packbits(tmp,
-		spef_sovh, spef_ovh, spef_fgh, spef_fxh, spef_finvh, spef_fdbzh, spef_funfh, spef_fovfh, 
+		spef_sovh, spef_ovh, spef_fgh, spef_fxh, spef_finvh, spef_fdbzh, spef_funfh, spef_fovfh,
 		spef_reserved1, spef_reserved2,
 		spef_finxs, spef_finvs, spef_fdbzs, spef_funfs, spef_fovfs,
 		spef_reserved3,
@@ -119,7 +119,7 @@ macro packSPEFSCR(tmp) {
 
 macro unpackSPEFSCR(tmp) {
 	unpackbits(tmp,
-		spef_sovh, spef_ovh, spef_fgh, spef_fxh, spef_finvh, spef_fdbzh, spef_funfh, spef_fovfh, 
+		spef_sovh, spef_ovh, spef_fgh, spef_fxh, spef_finvh, spef_fdbzh, spef_funfh, spef_fovfh,
 		spef_reserved1, spef_reserved2,
 		spef_finxs, spef_finvs, spef_fdbzs, spef_funfs, spef_fovfs,
 		spef_reserved3,

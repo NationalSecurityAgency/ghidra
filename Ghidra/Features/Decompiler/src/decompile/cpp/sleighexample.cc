@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,7 +95,7 @@ void MyLoadImage::loadFill(uint1 *ptr,int4 size,const Address &addr)
 
 // -------------------------------
 //
-// These are the classes/routines relevant to doing disassembly 
+// These are the classes/routines relevant to doing disassembly
 
 // Here is a simple class for emitting assembly.  In this case, we send the strings straight
 // to standard out.
@@ -202,7 +202,7 @@ bool PutsCallBack::addressCallback(const Address &addr)
   uint4 returnaddr = mem->getValue(ram,esp,4);
   mem->setValue("ESP",esp+8);
   emulate->setExecuteAddress(Address(ram,returnaddr));
-  
+
   return true;			// This replaces the indicated instruction
 }
 

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,10 +59,10 @@ public abstract class PCodeTestAbstractControlBlock {
 	private HashMap<String, FunctionInfo> functionMap = new HashMap<>();
 
 	/**
-	 * Construct test control block instance for the specified program.  
+	 * Construct test control block instance for the specified program.
 	 * @param program program containing control block structure
 	 * @param infoStructAddr program address where structure resides
-	 * @param infoStruct appropriate Info structure definition which will have array 
+	 * @param infoStruct appropriate Info structure definition which will have array
 	 * of FunctionInfo immediately following.
 	 */
 	PCodeTestAbstractControlBlock(Program program, Address infoStructAddr, Structure infoStruct) {
@@ -97,7 +97,7 @@ public abstract class PCodeTestAbstractControlBlock {
 	/**
 	 * Force an existing reference to refer to the code space.  Pointers
 	 * created in the data space refer to the data space by default, this method
-	 * is used to change these pointers in the data space to refer to 
+	 * is used to change these pointers in the data space to refer to
 	 * code.
 	 * @param addr location with data space which contains code reference
 	 */

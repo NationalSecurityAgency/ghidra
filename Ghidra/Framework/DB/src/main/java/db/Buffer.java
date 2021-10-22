@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ public interface Buffer {
 
 	/**
 	 * Get the byte data located at the specified offset and store into the
-	 * bytes array provided. 
+	 * bytes array provided.
 	 * @param offset byte offset from start of buffer.
 	 * @param bytes byte array to store data
 	 * @throws ArrayIndexOutOfBoundsException is thrown if an invalid offset is
@@ -155,7 +155,7 @@ public interface Buffer {
 	public int put(int offset, byte[] bytes) throws IOException;
 
 	/**
-	 * Put the 8-bit byte value into the buffer at the specified offset. 
+	 * Put the 8-bit byte value into the buffer at the specified offset.
 	 * @param offset byte offset from start of buffer.
 	 * @param b the byte value to be stored.
 	 * @return the next available offset into the buffer, or -1 if the buffer is
@@ -167,7 +167,7 @@ public interface Buffer {
 	public int putByte(int offset, byte b) throws IOException;
 
 	/**
-	 * Put the 32-bit integer value into the buffer at the specified offset. 
+	 * Put the 32-bit integer value into the buffer at the specified offset.
 	 * @param offset byte offset from start of buffer.
 	 * @param v the integer value to be stored.
 	 * @return the next available offset into the buffer, or -1 if the buffer is
@@ -180,7 +180,7 @@ public interface Buffer {
 	public int putInt(int offset, int v) throws IOException;
 
 	/**
-	 * Put the 16-bit short value into the buffer at the specified offset. 
+	 * Put the 16-bit short value into the buffer at the specified offset.
 	 * @param offset byte offset from start of buffer.
 	 * @param v the short value to be stored.
 	 * @return the next available offset into the buffer, or -1 if the buffer is
@@ -193,7 +193,7 @@ public interface Buffer {
 	public int putShort(int offset, short v) throws IOException;
 
 	/**
-	 * Put the 64-bit long value into the buffer at the specified offset. 
+	 * Put the 64-bit long value into the buffer at the specified offset.
 	 * @param offset byte offset from start of buffer.
 	 * @param v the long value to be stored.
 	 * @return the next available offset into the buffer, or -1 if the buffer is

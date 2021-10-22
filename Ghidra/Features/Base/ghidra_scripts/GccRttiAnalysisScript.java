@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Script to create gcc RTTI vtables and structures 
+// Script to create gcc RTTI vtables and structures
 //@category C++
 
 import java.util.*;
@@ -89,7 +89,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 	 * Create data type manager path that will be used when data types are created to place them in the correct folder
 	 * @param parent parent CategoryPath
 	 * @param categoryName name of the new category in the parent path
-	 * @return CategoryPath for new categoryName 
+	 * @return CategoryPath for new categoryName
 	 * @throws CancelledException if cancelled
 	 */
 	private CategoryPath createDataTypeCategoryPath(CategoryPath parent, String categoryName)
@@ -103,13 +103,13 @@ public class GccRttiAnalysisScript extends GhidraScript {
 			return dataTypePath;
 		}
 
-		// if category name contains :: but not valid template info then just 
+		// if category name contains :: but not valid template info then just
 		// replace ::'s with /'s to form multi level path
 		if (!containsTemplate(categoryName)) {
 			categoryName = categoryName.replace("::", "/");
 		}
 
-		// if category name contains both :: and matched template brackets then only replace the 
+		// if category name contains both :: and matched template brackets then only replace the
 		// :: that are not contained inside template brackets
 		else {
 			boolean insideBrackets = false;
@@ -198,7 +198,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 
 	private void createGccRttiData() throws CancelledException, Exception {
 
-		// find the three special vtables and replace the incorrectly made array with 
+		// find the three special vtables and replace the incorrectly made array with
 		// data types found in vtable
 		boolean continueProcessing = createSpecialVtables();
 		if (!continueProcessing) {
@@ -297,7 +297,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 			return null;
 		}
 
-		// try demangling all the symbols at this address	
+		// try demangling all the symbols at this address
 		Symbol[] vtableSymbols = symbolTable.getSymbols(addressContainingBothStrings);
 		for (Symbol vtableSymbol : vtableSymbols) {
 			DemanglerCmd cmd =
@@ -324,7 +324,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 	}
 
 	/**
-	 * Method to replace the array incorrectly placed at special vftable with longs followed by 
+	 * Method to replace the array incorrectly placed at special vftable with longs followed by
 	 * typeinfo label
 	 * @param vtableAddress the given special vtable address
 	 * @return the address of the typeinfo in the vtable if replace was successful, null otherwise
@@ -378,7 +378,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 
 			Address address = vtableAddress.add(offset);
 
-			// Except for the first one which should have a symbol, if there is a symbol at the 
+			// Except for the first one which should have a symbol, if there is a symbol at the
 			// address, stop making longs because it there are no references into the vtable longs
 			if (offset > 0 && symbolTable.getPrimarySymbol(address) != null) {
 				return numLongs;
@@ -524,7 +524,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 			Symbol typeinfoSymbol = typeinfoIterator.next();
 			Address typeinfoAddress = typeinfoSymbol.getAddress();
 
-			// skip the typeinfo symbols from the three special typeinfos 
+			// skip the typeinfo symbols from the three special typeinfos
 			if (isSpecialTypeinfo(typeinfoAddress)) {
 				continue;
 			}
@@ -711,7 +711,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 	private void processVtable(Address vtableAddress, Namespace vtableNamespace, boolean isPrimary)
 			throws CancelledException {
 
-		// skip the special tables			
+		// skip the special tables
 		if (vtableAddress.equals(class_type_info_vtable) ||
 			vtableAddress.equals(si_class_type_info_vtable) ||
 			vtableAddress.equals(vmi_class_type_info_vtable)) {
@@ -1100,7 +1100,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 
 	/**
 	 * Method to determine if there are enough zeros to make a null poihnter and no references into
-	 * or out of the middle 
+	 * or out of the middle
 	 * @param address the given address
 	 * @return true if the given address could be a valid null pointer, false if not
 	 */
@@ -1171,13 +1171,13 @@ public class GccRttiAnalysisScript extends GhidraScript {
 
 		while (address != null && currentMemoryBlock.contains(address)) {
 
-			//TODO: consider just returning once any symbol is found since I have 
-			// never seen a ref to the longs or the typeinfo -- that way if there 
-			// ever is a case where there is no typeinfo ref in primary vtable but there is in 
+			//TODO: consider just returning once any symbol is found since I have
+			// never seen a ref to the longs or the typeinfo -- that way if there
+			// ever is a case where there is no typeinfo ref in primary vtable but there is in
 			// a secondary - don't think that is ever supposed to happen though -- it will get
 			// stopped by the symbols at vftable or internal vtable or next primary vtable
 			Symbol symbol = symbolTable.getPrimarySymbol(address);
-			// if the symbol we find is not a default symbol 
+			// if the symbol we find is not a default symbol
 			// because we have reached the end of the item we are searching
 			if (!address.equals(startAddress) && symbol != null &&
 				symbol.getSource() != SourceType.DEFAULT) {
@@ -1234,7 +1234,7 @@ public class GccRttiAnalysisScript extends GhidraScript {
 	}
 
 	/**
-	 * Method to create a series of long data types from the given start address to the given end 
+	 * Method to create a series of long data types from the given start address to the given end
 	 * address
 	 * @param start the starting address
 	 * @param end the ending address

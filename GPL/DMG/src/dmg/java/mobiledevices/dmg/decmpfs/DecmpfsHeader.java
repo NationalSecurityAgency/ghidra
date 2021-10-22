@@ -75,5 +75,5 @@ else if ( nElements < 0 ) {//TODO
 //		}
 //		return struct;
 //	}
-	
+
 }

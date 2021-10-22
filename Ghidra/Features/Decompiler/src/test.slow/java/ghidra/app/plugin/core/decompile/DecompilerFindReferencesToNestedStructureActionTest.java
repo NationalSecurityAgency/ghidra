@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,12 +23,12 @@ import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.util.OptionsService;
 
 /**
- * This test is very similar in concept to {@link DecompilerFindReferencesToActionTest}, 
+ * This test is very similar in concept to {@link DecompilerFindReferencesToActionTest},
  * except that it uses input test data that has more than one level of dereferencing, such as:
  * <pre>
  * 	_printf("call_structure_A: %s\n",(a->b).name);
  * </pre>
- * 
+ *
  */
 public class DecompilerFindReferencesToNestedStructureActionTest
 		extends AbstractDecompilerFindReferencesActionTest {
@@ -53,10 +53,10 @@ public class DecompilerFindReferencesToNestedStructureActionTest
 	@Test
 	public void testActionEnablementOnNestedStructureField() throws Exception {
 
-		/*		 
+		/*
 			1|
 			2| void _call_structure_A(A *a)
-			3| 
+			3|
 			4| {
 			5|   _printf("call_structure_A: %s\n",a->name);
 			6|   _printf("call_structure_A: %s\n",(a->b).name);
@@ -66,14 +66,14 @@ public class DecompilerFindReferencesToNestedStructureActionTest
 		   10|  _call_structure_B(&a->b);
 		   11|  return;
 		   12| }
-		   13| 
-		
+		   13|
+
 		 */
 		decompile(CALL_STRUCTURE_A_ADDRESS);
 
 		//
 		// Action should not enabled unless on the data type
-		// 
+		//
 		// _printf("call_structure_A: %s\n",(a->b).name);
 		//    b is char 37
 		//    name is char 40
@@ -110,10 +110,10 @@ public class DecompilerFindReferencesToNestedStructureActionTest
 	@Test
 	public void testFindDataTypeReferences_ToNestedFieldOfDataType() throws Exception {
 
-		/*		 
+		/*
 			1|
 			2| void _call_structure_A(A *a)
-			3| 
+			3|
 			4| {
 			5|   _printf("call_structure_A: %s\n",a->name);
 			6|   _printf("call_structure_A: %s\n",(a->b).name);
@@ -123,8 +123,8 @@ public class DecompilerFindReferencesToNestedStructureActionTest
 			10|  _call_structure_B(&a->b);
 			11|  return;
 			12| }
-			13| 
-		
+			13|
+
 		 */
 		decompile(CALL_STRUCTURE_A_ADDRESS);
 

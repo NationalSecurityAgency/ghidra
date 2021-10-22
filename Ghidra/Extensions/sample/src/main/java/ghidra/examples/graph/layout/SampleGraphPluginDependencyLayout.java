@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,7 @@ public class SampleGraphPluginDependencyLayout
 		GridLocationMap<SampleVertex, SampleEdge> results = new GridLocationMap<>();
 		Collection<SampleVertex> vertices = g.getVertices();
 
-		// 
+		//
 		// Organize vertices by layer, where they are stratified by the number of incoming
 		// connections
 		//
@@ -77,9 +77,9 @@ public class SampleGraphPluginDependencyLayout
 		}
 
 		//
-		// Organize each row alphabetically.  Deal with the last row in a special manner.  
+		// Organize each row alphabetically.  Deal with the last row in a special manner.
 		// (There are so many plugins with no incoming or outgoing dependencies that the row
-		// would very long).  
+		// would very long).
 		//
 		int rows = verticesByRow.size();
 		VertexNameComparator comparator = new VertexNameComparator();
@@ -133,7 +133,7 @@ public class SampleGraphPluginDependencyLayout
 
 			col++;
 
-			// reset for the 
+			// reset for the
 			if ((col - start) == limit) {
 				// reset for next row
 				col = start;

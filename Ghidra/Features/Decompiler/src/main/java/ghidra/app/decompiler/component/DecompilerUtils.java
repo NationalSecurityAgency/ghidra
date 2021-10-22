@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public class DecompilerUtils {
 
 	/**
 	 * If the token refers to an individual Varnode, return it. Otherwise return null
-	 * 
+	 *
 	 * @param token the token to check
 	 * @return the Varnode or null otherwise
 	 */
@@ -215,9 +215,9 @@ public class DecompilerUtils {
 	}
 
 	/**
-	 * Returns the function represented by the given token.  This will be either the 
+	 * Returns the function represented by the given token.  This will be either the
 	 * decompiled function or a function referenced within the decompiled function.
-	 * 
+	 *
 	 * @param program the program
 	 * @param token the token
 	 * @return the function
@@ -270,10 +270,10 @@ public class DecompilerUtils {
 
 	/**
 	 * Similar to {@link #getTokens(ClangNode, AddressSetView)}, but uses the tokens from
-	 * the given view fields.  Sometimes the tokens in the model (represented by the 
-	 * {@link ClangNode}) are different than the fields in the view (such as when a list of 
+	 * the given view fields.  Sometimes the tokens in the model (represented by the
+	 * {@link ClangNode}) are different than the fields in the view (such as when a list of
 	 * comment tokens are condensed into a single comment token).
-	 * 
+	 *
 	 * @param fields the fields to check
 	 * @param address the address each returned token must match
 	 * @return the matching tokens
@@ -637,7 +637,7 @@ public class DecompilerUtils {
 	 * sequence of tokens that are part of the comment and group them into a single
 	 * ClangCommentToken.  This makes post processing on the full comment string easier.
 	 * A single comment string can contain white space that manifests as ClangSyntaxTokens
-	 * with white space as text. 
+	 * with white space as text.
 	 * @param alltoks is the token stream
 	 * @param i is the position of the initial comment token
 	 * @param first is the initial comment token
@@ -736,7 +736,7 @@ public class DecompilerUtils {
 
 	/**
 	 * Returns the data type for the given context if the context pertains to a data type
-	 * 
+	 *
 	 * @param context the context
 	 * @return the data type or null
 	 */

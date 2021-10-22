@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,12 +21,12 @@ public interface RequiresLaunchSpecimen {
 
 	/**
 	 * Get the specimen to use for launch tests
-	 * 
+	 *
 	 * <p>
 	 * This specimen should live for only a short period of time. When left to execute freely, it
 	 * should immediately terminate on its own without error. A good example on UNIX is
 	 * "{@code echo Hello, World!}"
-	 * 
+	 *
 	 * @return the specimen
 	 */
 	DebuggerTestSpecimen getLaunchSpecimen();

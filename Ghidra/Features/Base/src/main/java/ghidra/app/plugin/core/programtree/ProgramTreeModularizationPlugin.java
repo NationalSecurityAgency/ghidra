@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,15 +33,15 @@ import docking.action.MenuData;
  *
  * Provides actions for organizing the program tree based on various algorithms.  Currently, there
  * are two algorithms:
- * 
+ *
  * Dominance: organizes the functions in a program such that a function is in a subtree of another
  * function if all call paths to that function must past through the parent funciton.
- * 
+ *
  * Complexity Depth: organizes the functions into "levels" from the bottom up.  All leaf functions are
  * in the same lowest level (highest number, call it level N).  All functions that only call leaf functions
  * are in the next higher level, N-1.  Functions in the highest level (labeled level 0) are those furthest
- * from the leaves. 
- * 
+ * from the leaves.
+ *
  */
 //@formatter:off
 @PluginInfo(

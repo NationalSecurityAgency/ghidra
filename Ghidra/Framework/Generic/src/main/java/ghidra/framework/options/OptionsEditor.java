@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public interface OptionsEditor {
 	public void cancel();
 
 	/**
-	 * A signal to reload the GUI widgets in the component created by this editor.  This will 
+	 * A signal to reload the GUI widgets in the component created by this editor.  This will
 	 * happen when the options change out from under the editor, such as when the user restores
 	 * the default options values.
 	 */
@@ -53,7 +53,7 @@ public interface OptionsEditor {
 
 	/**
 	 * Get the editor component.
-	 * 
+	 *
 	 * @param options The editable options that for which a GUI component will be created
 	 * @param editorStateFactory The factory that will provide state objects this options editor
 	 */

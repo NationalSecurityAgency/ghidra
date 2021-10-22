@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import docking.widgets.fieldpanel.support.FieldLocation;
 
 /**
  * An event related to component layout over a {@link FieldPanel}.
- * 
+ *
  * @see FieldPanelOverLayoutManager
  */
 public class FieldPanelOverLayoutEvent {
@@ -71,7 +71,7 @@ public class FieldPanelOverLayoutEvent {
 
 	/**
 	 * Prevent this event from being further processed.
-	 * 
+	 *
 	 * The actual layout will still occur, though.
 	 */
 	public void consume() {
@@ -88,7 +88,7 @@ public class FieldPanelOverLayoutEvent {
 
 	/**
 	 * Prevent the actual layout from taking place.
-	 * 
+	 *
 	 * Further listeners may still process this event, though.
 	 */
 	public void cancel() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,12 +38,12 @@ import resources.ResourceManager;
  * The user is asked to provide a file to save the image to.
  * <p>
  * This class uses the ImageIO library to write the image to a file;
- * the image format is determined by filename extension -- PNG, GIF and JPG extensions are 
- * recognized and honored, other extensions are ignored, and the file is written in PNG 
+ * the image format is determined by filename extension -- PNG, GIF and JPG extensions are
+ * recognized and honored, other extensions are ignored, and the file is written in PNG
  * format. Image transparency is honored when possible.
- * 
+ *
  * @see javax.imageio.ImageIO
- * 
+ *
  */
 public class SaveImageAction extends ImagePanelDockingAction {
 

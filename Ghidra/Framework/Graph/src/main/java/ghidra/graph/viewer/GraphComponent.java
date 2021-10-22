@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,11 +71,11 @@ import util.CollectionUtils;
  * and {@link #createSatelliteGraphViewer(GraphViewer, Dimension)} as needed.   This allows
  * them to customize renderers and other viewer attributes.  To use the subclass, see the
  * {@link VisualGraphView} and its <code>installGraphViewer()</code> method.
- * 
+ *
  * @param <V> the vertex type
  * @param <E> the edge type
  * @param <G> the graph type
- * 
+ *
  * @see GraphViewer
  */
 public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G extends VisualGraph<V, E>> {
@@ -251,7 +251,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	/**
 	 * This is called to configure the primary viewer's rendering settings.  Subclasses can
 	 * override this method to change, as needed.
-	 * 
+	 *
 	 * @param viewer the new satellite viewer
 	 * @param layout the viewer's layout
 	 */
@@ -308,7 +308,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	/**
 	 * This is called to configure the satellite viewer's rendering settings.  Subclasses can
 	 * override this method to change, as needed.
-	 * 
+	 *
 	 * @param viewer the new satellite viewer
 	 * @param layout the viewer's layout
 	 */
@@ -433,9 +433,9 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		button.setToolTipText(tooltip);
 
 		/*
-		 
+
 		 TODO fix when the Generic Visual Graph help module is created
-		 
+
 		HelpService helpService = DockingWindowManager.getHelpService();
 		helpService.registerHelp(button,
 			new HelpLocation("GraphTopic", "Satellite_View_Dock"));
@@ -508,7 +508,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	/**
 	 * This method is used to determine caching strategy.  For example, large graph will
 	 * trigger the us of a cached satellite view, for performance reasons.
-	 * 
+	 *
 	 * @return true if the data is considered 'really big'
 	 */
 	protected boolean isReallyBigData() {
@@ -563,7 +563,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 	/**
 	 * Sets a message to be painted on the viewer.  This is useful to show a text message to the
 	 * user.  Passing null will clear the message.
-	 * 
+	 *
 	 * @param message the message
 	 */
 	public void setStatusMessage(String message) {
@@ -665,7 +665,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 
 	/**
 	 * Sets the given vertex to be the focused vertex.  This will be the only focused vertex.
-	 * 
+	 *
 	 * @param vertex the vertex
 	 */
 	public void setVertexFocused(V vertex) {

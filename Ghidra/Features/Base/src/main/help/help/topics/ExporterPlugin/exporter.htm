@@ -268,33 +268,33 @@
             <LI><B>Create C File (.c)</B> - Select to create a .c file.</LI>
 
             <LI><B>Use C++ Style Comments (//)</B> - Select to use // or /* style comments.</LI>
-            
+
             <LI><B>Emit Data-type Definitions</B> - Select to export a C/C++ definition for each data-type.</LI>
-            
-            <LI><B>Function Tags to Filter</B> - Optional list of function tags to filter which 
+
+            <LI><B>Function Tags to Filter</B> - Optional list of function tags to filter which
             functions are exported. Multiple tags must be comma separated.   Any tags listed will
             be considered a match for purposes of filtering.  The result of filtering, to include
             or exclude, depends on the <B>Function Tags Excluded/Included</B> setting.
             <U>If this list is empty, than all functions will be exported</U>.
             </LI>
-            
-            <LI><B>Function Tags Excluded/Included</B> - Select to exclude from export all 
-            functions with a tag that matches any in the <B>Function Tags to Filter</B> list.   
+
+            <LI><B>Function Tags Excluded/Included</B> - Select to exclude from export all
+            functions with a tag that matches any in the <B>Function Tags to Filter</B> list.
             Deselect to include in export only functions with a tag that matches any in the list.
             </LI>
           </UL>
         </BLOCKQUOTE>
-        
+
         <H3><A name="elf"></A>ELF</H3>
 
         <BLOCKQUOTE>
-          <P>Writes an ELF program that was imported with the ELF loader back to its original file 
-          layout. Any file-backed bytes that were modified by the user in the program database will 
+          <P>Writes an ELF program that was imported with the ELF loader back to its original file
+          layout. Any file-backed bytes that were modified by the user in the program database will
           be reflected in the new file.</P>
 
-          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory 
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory
           Map is not supported. </I></P>
-          
+
           <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Relocation bytes are always
           restored to their original values, even if the user modifies them.</I></P>
         </BLOCKQUOTE>
@@ -344,17 +344,17 @@
             2 bytes will be dropped.</LI>
           </UL>
         </BLOCKQUOTE>
-        
+
         <H3><A name="pe"></A>PE</H3>
 
         <BLOCKQUOTE>
-          <P>Writes a PE program that was imported with the PE loader back to its original file 
-          layout. Any file-backed bytes that were modified by the user in the program database will 
+          <P>Writes a PE program that was imported with the PE loader back to its original file
+          layout. Any file-backed bytes that were modified by the user in the program database will
           be reflected in the new file.</P>
 
-          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory 
+          <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Writing back a modified Memory
           Map is not supported. </I></P>
-          
+
           <P><IMG alt="" border="0" src="../../shared/note.png"> <I>Relocation bytes are always
           restored to their original values, even if the user modifies them.</I></P>
         </BLOCKQUOTE>

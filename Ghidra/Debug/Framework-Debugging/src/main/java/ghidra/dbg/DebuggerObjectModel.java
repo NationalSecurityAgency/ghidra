@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,31 +34,31 @@ import ghidra.util.Msg;
 
 /**
  * A debugger model, often a connection to an external debugger
- * 
+ *
  * <p>
  * This is an abstraction of debugger operations and attempts to limit assumptions to those that
  * generalize to most platforms. Debuggers and the target processes may be temperamental, so an
  * asynchronous pattern is employed to prevent deadlocks on dropped connections, slow connections,
  * buggy daemons, etc.
- * 
+ *
  * <p>
  * For methods returning a {@link CompletableFuture}, the documentation describes its return value
  * assuming successful completion. Any of the futures may complete exceptionally.
- * 
+ *
  * <p>
  * The completion of any future returned by a method does not imply any state change in the
  * debugger. It merely acknowledges that the request was received by the debugger. Only listener
  * callbacks confirm or otherwise communicate actual state changes. If, in the underlying protocol,
  * confirmation of a request implies a state change, then the implementation must make the
  * appropriate callbacks.
- * 
+ *
  * <p>
  * The model object only exposes the connection state and a root object. The model comprises an
  * arbitrary tree of {@link TargetObject}s each supporting zero or more discoverable interfaces. The
  * debugging framework provides a number of "stock" interfaces which should be sufficient to model
  * most debuggers. The tree is how the client accesses objects, e.g., processes and threads, on the
  * target.
- * 
+ *
  * <p>
  * Users and implementors of this interface may find {@link AsyncUtils} useful. An implementation of
  * this interface should never block the calling thread to wait on an external event, otherwise, you
@@ -71,13 +71,13 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Check that a given {@link TargetObject} interface has a name
-	 * 
+	 *
 	 * <p>
 	 * Names are assigned using the {@link DebuggerTargetObjectIface} annotation.
-	 * 
+	 *
 	 * @implNote To be language agnostic, we never use the name of the Java implementation of the
 	 *           interface.
-	 * 
+	 *
 	 * @param iface the class of the interface
 	 * @return the name of the interface
 	 * @throws IllegalArgumentException if the interface is not annotated
@@ -93,7 +93,7 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Check that the given value is not null
-	 * 
+	 *
 	 * @param <T> the type of the value
 	 * @param val the value
 	 * @param path the path where the value was expected
@@ -109,13 +109,13 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Check that the given object is non-null and supports a required interface
-	 * 
+	 *
 	 * <p>
 	 * Because most of the {@link TargetObject} interfaces have a (self-referential) type parameter,
 	 * this call will most likely be on its own line, assigned to a variable of the interface type
 	 * using a wildcard {@code <?>} parameter. Otherwise, raw types get involved, making things
 	 * rather messy.
-	 * 
+	 *
 	 * @param <T> the type of the interface
 	 * @param iface the class for the interface
 	 * @param obj the object to check
@@ -136,7 +136,7 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Get a brief description of the client, suitable for display in lists
-	 * 
+	 *
 	 * @return the description
 	 */
 	public default String getBrief() {
@@ -145,7 +145,7 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Add a listener for model events
-	 * 
+	 *
 	 * <p>
 	 * If requested, the listener is notified of existing objects via an event replay. It will first
 	 * replay all the created events in the same order they were originally emitted. Any objects
@@ -153,7 +153,7 @@ public interface DebuggerObjectModel {
 	 * all. Next it will replay the attribute- and element-added events in post order. This is an
 	 * attempt to ensure an object's dependencies are met by the time the client receives its added
 	 * event. This isn't always possible due to cycles, but such cycles are usually informational.
-	 * 
+	 *
 	 * @param listener the listener
 	 * @param replay true to replay object tree events (doesn't include register or memory caches)
 	 */
@@ -161,7 +161,7 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Add a listener for model events, without replay
-	 * 
+	 *
 	 * @param listener the listener
 	 */
 	public default void addModelListener(DebuggerModelListener listener) {
@@ -170,31 +170,31 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Remove a model event listener
-	 * 
+	 *
 	 * @param listener the listener
 	 */
 	public void removeModelListener(DebuggerModelListener listener);
 
 	/**
 	 * Check if the model believes it is alive
-	 * 
+	 *
 	 * <p>
 	 * Basically, this should be true if the model has started, but not yet terminated. To test
 	 * whether the model is actually responsive, use {@link #ping(String)}.
-	 * 
+	 *
 	 * @return true if alive
 	 */
 	public boolean isAlive();
 
 	/**
 	 * Get the schema of this model, i.e., the schema of its root object.
-	 * 
+	 *
 	 * <p>
 	 * The schema may not be known until the model has been successfully opened. Some factories will
 	 * ensure success before providing the model, but this may not always be the case. Callers
 	 * should listen for {@link DebuggerModelListener#modelOpened()} or retrieve the root object
 	 * first.
-	 * 
+	 *
 	 * @return the root schema
 	 */
 	public default TargetObjectSchema getRootSchema() {
@@ -203,12 +203,12 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Check if the debugger agent is alive (optional operation)
-	 * 
+	 *
 	 * <p>
 	 * For models providing such a mechanism, check if the debugger is alive and able to process
 	 * commands. Even if an explicit "ping" command is not available, an implementor is encouraged
 	 * to use some sort of NOP or echo command to test for responsiveness.
-	 * 
+	 *
 	 * @param content some content to optionally incorporate into the test
 	 * @return a future that completes when the daemon is verified to be alive
 	 */
@@ -216,12 +216,12 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Check that a given reference (or object) belongs to this model
-	 * 
+	 *
 	 * <p>
 	 * As a convenience, this method takes an expected class and casts -ref- to it. This is meant
 	 * only to cast to an implementation-specific type, not for checking that an object supports a
 	 * given interface. Use {@link #requireIface(Class, TargetObject, List)} for interface checking.
-	 * 
+	 *
 	 * @param <T> the required implementation-specific type
 	 * @param cls the class for the required type
 	 * @param obj the object to check
@@ -238,11 +238,11 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Fetch the attributes of a given model path
-	 * 
+	 *
 	 * <p>
 	 * Giving an empty path will retrieve the attributes of the root object. If the path does not
 	 * exist, the future completes with {@code null}.
-	 * 
+	 *
 	 * @param path the path
 	 * @param refresh true to invalidate caches involved in handling this request
 	 * @return a future map of attributes
@@ -252,7 +252,7 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Fetch the attributes of the given model path, without refreshing
-	 * 
+	 *
 	 * @see #fetchObjectAttributes(List, boolean)
 	 */
 	public default CompletableFuture<? extends Map<String, ?>> fetchObjectAttributes(
@@ -270,11 +270,11 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Fetch the elements of a given model path
-	 * 
+	 *
 	 * <p>
 	 * Giving an empty path will retrieve all the top-level objects, i.e., elements of the root. If
 	 * the path does not exist, the future completes with {@code null}.
-	 * 
+	 *
 	 * @param path the path
 	 * @param refresh true to invalidate caches involved in handling this request
 	 * @return a future map of elements
@@ -284,7 +284,7 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Fetch the elements of the given model path, without refreshing
-	 * 
+	 *
 	 * @see #fetchObjectElements(List, boolean)
 	 */
 	public default CompletableFuture<? extends Map<String, ? extends TargetObject>> fetchObjectElements(
@@ -302,28 +302,28 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Fetch the root object of the model
-	 * 
+	 *
 	 * <p>
 	 * The root is a virtual object to contain all the top-level objects of the model tree. This
 	 * object represents the debugger itself. Note in most cases {@link #getModelRoot()} is
 	 * sufficient; however, if you've just created the model, it is prudent to wait for it to create
 	 * its root. For asynchronous cases, just listen for the root-creation and -added events. This
 	 * method returns a future which completes after the root-added event.
-	 * 
+	 *
 	 * @return a future which completes with the root
 	 */
 	public CompletableFuture<? extends TargetObject> fetchModelRoot();
 
 	/**
 	 * Get the root object of the model
-	 * 
+	 *
 	 * @return the root or {@code null} if it hasn't been created, yet
 	 */
 	public TargetObject getModelRoot();
 
 	/**
 	 * Fetch the value at the given path
-	 * 
+	 *
 	 * @param path the path of the value
 	 * @return a future completing with the value or with {@code null} if the path does not exist
 	 */
@@ -331,17 +331,17 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Fetch a model value, optionally refreshing caches along the path
-	 * 
+	 *
 	 * <p>
 	 * By convention, no attribute nor element may have a {@code null} value. Thus, a {@code null}
 	 * return value always indicates the path does not exist.
-	 * 
+	 *
 	 * <p>
 	 * When refresh is true, only the applicable cache at each successor is refreshed. For example,
 	 * when the path is {@code A.B[1].C[2]}, then only {@code B}'s and {@code C}'s element caches
 	 * are refreshed; and {@code A}'s, {@code B[1]}'s, and {@code C[2]}'s attribute caches are
 	 * refreshed.
-	 * 
+	 *
 	 * @param path the path
 	 * @param refresh true to refresh caches
 	 * @return the found value, or {@code null} if it does not exist
@@ -357,12 +357,12 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Get the value at a given path
-	 * 
+	 *
 	 * <p>
 	 * If the path does not exist, null is returned. Note that an attempt to access the child of a
 	 * primitive is the same as accessing a path that does not exist; however, an error will be
 	 * logged, since this typically indicates a programming error.
-	 * 
+	 *
 	 * @param path the path
 	 * @return the value
 	 */
@@ -389,10 +389,10 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Fetch the object with the given path
-	 * 
+	 *
 	 * <p>
 	 * If the value at the path is a link, this will attempt to fetch it.
-	 * 
+	 *
 	 * @param path the path of the object
 	 * @param refresh ignore the cache
 	 * @return a future completing with the object or with {@code null} if it does not exist
@@ -413,13 +413,13 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Get an object from the model, resyncing according to the schema
-	 * 
+	 *
 	 * <p>
 	 * This is necessary when an object in the path has a resync mode other than
 	 * {@link ResyncMode#NEVER} for the child being retrieved. Please note that some synchronization
 	 * may still be required on the client side, since accessing the object before it is created
 	 * will cause a {@code null} completion.
-	 * 
+	 *
 	 * @return a future that completes with the object or with {@code null} if it doesn't exist
 	 */
 	@Deprecated
@@ -429,12 +429,12 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Get an object from the model
-	 * 
+	 *
 	 * <p>
 	 * Note this may return an object which is still being constructed, i.e., between being created
 	 * and being added to the model. This differs from {@link #getModelValue(List)}, which will only
 	 * return an object after it has been added. This method also never follows links.
-	 * 
+	 *
 	 * @param path the path of the object
 	 * @return the object or {@code null} if it doesn't exist
 	 */
@@ -442,11 +442,11 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Get all created objects matching a given predicate
-	 * 
+	 *
 	 * <p>
 	 * Note the predicate is executed while holding an internal model-wide lock. Be careful and keep
 	 * it simple.
-	 * 
+	 *
 	 * @param predicate the predicate
 	 * @return the set of matching objects
 	 */
@@ -469,10 +469,10 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Fetch the attribute with the given path
-	 * 
+	 *
 	 * Note that model implementations should avoid nullable attributes, since a null-valued
 	 * attribute cannot easily be distinguished from a non-existent attribute.
-	 * 
+	 *
 	 * @param path the path of the attribute
 	 * @return a future that completes with the value or with {@code null} if it does not exist
 	 */
@@ -490,21 +490,21 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Get a factory for target addresses
-	 * 
+	 *
 	 * <p>
 	 * Technically, putting this here instead of just {@link TargetMemory} imposes a subtle
 	 * limitation: All targets in the model have to have the same factory. I'm not certain that's a
 	 * huge concern at this point. The alternative is that the memory mapper has to accept and
 	 * compose new address factories, or we need a separate mapper per factory encountered along
 	 * with a mechanism to choose the correct one.
-	 * 
+	 *
 	 * @return the factory
 	 */
 	public AddressFactory getAddressFactory();
 
 	/**
 	 * TODO Document me
-	 * 
+	 *
 	 * @param name
 	 * @return
 	 */
@@ -514,7 +514,7 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * TODO Document me
-	 * 
+	 *
 	 * @param space
 	 * @param offset
 	 * @return
@@ -528,7 +528,7 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Invalidate the caches for every object known locally.
-	 * 
+	 *
 	 * <p>
 	 * Unlike, {@link TargetObject#invalidateCaches()}, this does not push the request to a remote
 	 * object. If the objects are proxies, just the proxies' caches are cleared. Again, this does
@@ -538,21 +538,21 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Close the session and dispose the model
-	 * 
+	 *
 	 * <p>
 	 * For local sessions, terminate the debugger. For client sessions, disconnect.
-	 * 
+	 *
 	 * @return a future which completes when the session is closed
 	 */
 	public CompletableFuture<Void> close();
 
 	/**
 	 * A convenience for reporting errors conditionally
-	 * 
+	 *
 	 * <p>
 	 * If the message is ignorable, e.g., a {@link DebuggerModelTerminatingException}, then the
 	 * report will be reduced to a stack-free warning.
-	 * 
+	 *
 	 * @param origin the object producing the error
 	 * @param message the error message
 	 * @param ex the exception
@@ -571,12 +571,12 @@ public interface DebuggerObjectModel {
 
 	/**
 	 * Permit all callbacks to be invoked before proceeding
-	 * 
+	 *
 	 * <p>
 	 * This operates by placing the request into the queue itself, so that any event callbacks
 	 * queued <em>at the time of the flush invocation</em> are completed first. There are no
 	 * guarantees with respect to events which get queued <em>after the flush invocation</em>.
-	 * 
+	 *
 	 * @return a future which completes when all queued callbacks have been invoked
 	 */
 	CompletableFuture<Void> flushEvents();

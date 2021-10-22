@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,17 +27,17 @@ import ghidra.util.exception.DuplicateNameException;
  * <p>
  * The BootstrapMethods attribute is a variable-length attribute in the attributes
  * table of a ClassFile structure.
- *  
- * The BootstrapMethods attribute records bootstrap method specifiers 
+ *
+ * The BootstrapMethods attribute records bootstrap method specifiers
  * referenced by invokedynamic instructions.
- * 
+ *
  * There must be exactly one BootstrapMethods attribute in the attributes table of
  * a given ClassFile structure if the constant_pool table of the ClassFile structure
- * has at least one CONSTANT_InvokeDynamic_info entry. 
- * 
+ * has at least one CONSTANT_InvokeDynamic_info entry.
+ *
  * There can be no more than one BootstrapMethods attribute in the attributes table of a given
  * ClassFile structure.
- * 
+ *
  * The BootstrapMethods attribute has the following format:
  * <pre>
  * 		BootstrapMethods_attribute {

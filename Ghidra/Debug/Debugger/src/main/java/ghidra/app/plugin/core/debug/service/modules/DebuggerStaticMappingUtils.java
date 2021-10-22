@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,12 +43,12 @@ public enum DebuggerStaticMappingUtils {
 
 	/**
 	 * Add a static mapping (relocation) from the given trace to the given program
-	 * 
+	 *
 	 * <p>
 	 * Note if the trace is backed by a Ghidra database, the caller must already have started a
 	 * transaction on the relevant domain object.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param from the source trace location, including lifespan
 	 * @param to the destination program location
 	 * @param length the length of the mapped region
@@ -98,11 +98,11 @@ public enum DebuggerStaticMappingUtils {
 
 	/**
 	 * Add a static mapping (relocation) from the given module to the given program
-	 * 
+	 *
 	 * <p>
 	 * This is simply a shortcut and does not mean to imply that all mappings must represent module
 	 * relocations. The lifespan is that of the module's.
-	 * 
+	 *
 	 * @param from the source module
 	 * @param length the "size" of the module -- {@code max-min+1} as loaded/mapped in memory
 	 * @param toProgram the destination program
@@ -118,13 +118,13 @@ public enum DebuggerStaticMappingUtils {
 
 	/**
 	 * Add a static mapping (relocation) from the given section to the given program memory block
-	 * 
+	 *
 	 * <p>
 	 * This is simply a shortcut and does not mean to imply that all mappings must represent section
 	 * relocations. In most cases the lengths of the from and to objects match exactly, but this may
 	 * not be the case. Whatever the case, the minimum length is computed, and the start addresses
 	 * are used as the location. The lifespan is that of the section's containing module.
-	 * 
+	 *
 	 * @param from the source section
 	 * @param toProgram the destination program
 	 * @param to the destination memory block

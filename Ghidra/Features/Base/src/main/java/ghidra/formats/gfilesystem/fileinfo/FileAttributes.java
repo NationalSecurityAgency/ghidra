@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * A collection of {@link FileAttribute} values that describe a file. 
+ * A collection of {@link FileAttribute} values that describe a file.
  */
 public class FileAttributes {
 	/**
@@ -29,7 +29,7 @@ public class FileAttributes {
 
 	/**
 	 * Creates a {@link FileAttributes} instance containing the specified attribute values.
-	 * 
+	 *
 	 * @param attribs var-arg list of {@link FileAttribute} values, null values are ignored and
 	 * skipped
 	 * @return a new {@link FileAttributes} instance
@@ -66,8 +66,8 @@ public class FileAttributes {
 	 * Adds a custom named file attribute.
 	 * <p>
 	 * The value class should have a reasonable toString() that converts the value to something
-	 * that is presentable to the user. 
-	 *  
+	 * that is presentable to the user.
+	 *
 	 * @param name name of the attribute
 	 * @param attributeValue value of the attribute
 	 */
@@ -79,7 +79,7 @@ public class FileAttributes {
 	 * Adds a typed file attribute value.
 	 * <p>
 	 * The value class needs to match {@link FileAttributeType#getValueType()}.
-	 * 
+	 *
 	 * @param attributeType {@link FileAttributeType} type of this value
 	 * @param attributeValue value of attribute
 	 */
@@ -91,11 +91,11 @@ public class FileAttributes {
 	 * Adds a typed file attribute value.
 	 * <p>
 	 * The value class needs to match {@link FileAttributeType#getValueType()}.
-	 * 
+	 *
 	 * @param attributeType {@link FileAttributeType} type of this value
-	 * @param displayName string used to label the value when displayed to the user 
+	 * @param displayName string used to label the value when displayed to the user
 	 * @param attributeValue value of attribute
-	 * @throws IllegalArgumentException if attributeValue does not match attributeType's 
+	 * @throws IllegalArgumentException if attributeValue does not match attributeType's
 	 * {@link FileAttributeType#getValueType()}.
 	 */
 	public void add(FileAttributeType attributeType, String displayName, Object attributeValue) {
@@ -106,7 +106,7 @@ public class FileAttributes {
 
 	/**
 	 * Gets the value of the specified attribute.
-	 * 
+	 *
 	 * @param <T> expected class of the attribute value
 	 * @param attributeType {@link FileAttributeType} enum type of attribute to search for
 	 * @param valueClass java class of the value
@@ -128,7 +128,7 @@ public class FileAttributes {
 
 	/**
 	 * Return a list of all the attributes added to this instance.
-	 *  
+	 *
 	 * @return list of {@link FileAttribute}
 	 */
 	public List<FileAttribute<?>> getAttributes() {
@@ -137,7 +137,7 @@ public class FileAttributes {
 
 	/**
 	 * Returns true if the specified attribute is present.
-	 * 
+	 *
 	 * @param attributeType attribute to query
 	 * @return boolean true if present
 	 */

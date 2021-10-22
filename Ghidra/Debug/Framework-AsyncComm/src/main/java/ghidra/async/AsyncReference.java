@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,14 +27,14 @@ import ghidra.util.TriConsumer;
 
 /**
  * An observable reference useful for asynchronous computations
- * 
+ *
  * <p>
  * The reference supports the usual set and get operations. The set operation accepts an optional
  * "cause" argument which is forwarded to some observers. The set operation may also be intercepted
  * by an optional filter. The filter function is provided a copy of the current value, proposed
  * value, and cause. The value it returns becomes the new value. If that value is different than the
  * current value, the observers are notified. The default filter returns the new value, always.
- * 
+ *
  * <p>
  * The reference provides three types of observation callbacks. The first is to listen for all
  * changes. This follows the listener pattern. When the value changes, i.e., is set to a value
@@ -67,7 +67,7 @@ public class AsyncReference<T, C> {
 	public interface FilterFunction<T, C> {
 		/**
 		 * Filter an incoming update, i.e., call to {@link AsyncReference#set(Object, Object)}
-		 * 
+		 *
 		 * @param cur the current value of the reference
 		 * @param set the incoming value from the update
 		 * @param cause the cause of the update
@@ -78,7 +78,7 @@ public class AsyncReference<T, C> {
 
 	/**
 	 * For {@link AsyncReference#waitUntil}
-	 * 
+	 *
 	 * @param <T> the type of the associated reference
 	 */
 	private static class WaitUntilFuture<T> extends CompletableFuture<T> {
@@ -98,7 +98,7 @@ public class AsyncReference<T, C> {
 
 	/**
 	 * Construct a new reference initialized to the given value
-	 * 
+	 *
 	 * @param t the initial value
 	 */
 	public AsyncReference(T t) {
@@ -107,10 +107,10 @@ public class AsyncReference<T, C> {
 
 	/**
 	 * Apply a filter function to all subsequent updates
-	 * 
+	 *
 	 * <p>
 	 * The given function replaces the current function.
-	 * 
+	 *
 	 * @param newFilter the filter
 	 */
 	public synchronized void filter(FilterFunction<T, ? super C> newFilter) {
@@ -122,7 +122,7 @@ public class AsyncReference<T, C> {
 
 	/**
 	 * Get the current value of this reference
-	 * 
+	 *
 	 * @return the current value
 	 */
 	public synchronized T get() {
@@ -195,7 +195,7 @@ public class AsyncReference<T, C> {
 
 	/**
 	 * Update this reference to the given value because of the given cause
-	 * 
+	 *
 	 * @param newVal the proposed value (subject to the filter)
 	 * @param cause the cause, often {@code null}
 	 * @return true if the value of this reference changed (post filter)
@@ -229,7 +229,7 @@ public class AsyncReference<T, C> {
 
 	/**
 	 * Update this reference using the given function because of the given cause
-	 * 
+	 *
 	 * @param func the function taking the current value and returning the proposed value (subject
 	 *            to the filter)
 	 * @param cause the cause, often {@code null}
@@ -266,10 +266,10 @@ public class AsyncReference<T, C> {
 
 	/**
 	 * Add a listener for any change to this reference's value
-	 * 
+	 *
 	 * <p>
 	 * Updates that get "filtered out" do not cause a change listener to fire.
-	 * 
+	 *
 	 * @param listener the listener, which is passed the new value (post-filter) and cause
 	 */
 	public void addChangeListener(TriConsumer<? super T, ? super T, ? super C> listener) {
@@ -282,7 +282,7 @@ public class AsyncReference<T, C> {
 
 	/**
 	 * Remove a change listener
-	 * 
+	 *
 	 * @param listener the listener to remove
 	 */
 	public synchronized void removeChangeListener(TriConsumer<T, T, C> listener) {
@@ -295,10 +295,10 @@ public class AsyncReference<T, C> {
 
 	/**
 	 * Wait for the next change and capture the new value
-	 * 
+	 *
 	 * The returned future completes with the value of the very next change, at the time of that
 	 * change. Subsequent changes to the value of the reference do not affect the returned future.
-	 * 
+	 *
 	 * @return the future value at the next change
 	 */
 	public synchronized CompletableFuture<T> waitChanged() {
@@ -313,10 +313,10 @@ public class AsyncReference<T, C> {
 
 	/**
 	 * Wait for this reference to accept a particular value (post-filter)
-	 * 
+	 *
 	 * <p>
 	 * If the reference already has the given value, a completed future is returned.
-	 * 
+	 *
 	 * @param t the expected value to wait on
 	 * @return a future that completes the next time the reference accepts the given value
 	 */
@@ -337,10 +337,10 @@ public class AsyncReference<T, C> {
 
 	/**
 	 * Wait for this reference to accept the first value meeting the given condition (post-filter)
-	 * 
+	 *
 	 * <p>
 	 * If the current value already meets the condition, a completed future is returned.
-	 * 
+	 *
 	 * @param predicate the condition to meet
 	 * @return a future that completes the next time the reference accepts a passing value
 	 */
@@ -358,7 +358,7 @@ public class AsyncReference<T, C> {
 
 	/**
 	 * Clear out the queues of future, completing each exceptionally
-	 * 
+	 *
 	 * @param reason the reason for disposal
 	 */
 	public void dispose(Throwable reason) {
@@ -448,28 +448,28 @@ public class AsyncReference<T, C> {
 
 	/**
 	 * Obtain a new {@link AsyncReference} whose value is updated after this reference has settled
-	 * 
+	 *
 	 * <p>
 	 * The original {@link AsyncReference} continues to behave as usual, except that is has an
 	 * additional listener on it. When this reference is updated, the update is passed through an
 	 * {@link AsyncDebouncer} configured with the given timer and window. When the debouncer
 	 * settles, the debounced reference is updated.
-	 * 
+	 *
 	 * <p>
 	 * Directly updating, i.e., calling {@link #set(Object, Object)} on, the debounced reference
 	 * subverts the debouncing mechanism, and will result in an exception. Only the original
 	 * reference should be updated directly.
-	 * 
+	 *
 	 * <p>
 	 * Setting a filter on the debounced reference may have undefined behavior.
-	 * 
+	 *
 	 * <p>
 	 * If the original reference changes value rapidly, settling on the debounced reference's
 	 * current value, no update event is produced by the debounced reference. If the original
 	 * reference changes value rapidly, settling on a value different from the debounced reference's
 	 * current value, an update event is produced, using the cause of the final update, even if an
 	 * earlier cause was associated with the same final value.
-	 * 
+	 *
 	 * @param timer a timer for measuring the window
 	 * @param windowMillis the period of inactive time to consider this reference settled
 	 * @return the new {@link AsyncReference}

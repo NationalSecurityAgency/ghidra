@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -121,7 +121,7 @@ public abstract class VTMarkupType {
 			if ((markupItem.getMarkupType() == this) && markupItem.canUnapply()) {
 				Address itemDestination = markupItem.getDestinationAddress();
 				if (destinationAddress.equals(itemDestination)) {
-					// Return the original destination value for the first applied 
+					// Return the original destination value for the first applied
 					// markup item we find of this type at this address.
 					return markupItem.getOriginalDestinationValue();
 				}
@@ -142,7 +142,7 @@ public abstract class VTMarkupType {
 
 //==================================================================================================
 // Program Object Convenience Methods
-//==================================================================================================    
+//==================================================================================================
 
 	public Program getDestinationProgram(VTAssociation association) {
 		VTSession session = association.getSession();
@@ -206,10 +206,10 @@ public abstract class VTMarkupType {
 	}
 
 	/**
-	 * Creates a new options object from the options that are passed to this method. The options 
+	 * Creates a new options object from the options that are passed to this method. The options
 	 * will be modified so that the specified apply action will occur for this markup type if
 	 * it is a valid action for this markup.
-	 * @param applyAction the desired apply action (ADD, ADD_AS_PRIMARY, REPLACE_DEFAULT_ONLY, 
+	 * @param applyAction the desired apply action (ADD, ADD_AS_PRIMARY, REPLACE_DEFAULT_ONLY,
 	 * and REPLACE) for the markup type.
 	 * @param applyOptions the original options settings that are to be modified.
 	 * @return a new Options object that has been changed to result in the action for this markup type.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 /**
- * 
+ *
  *
  * The primary sleigh concept representing a semantic action
  * taking operands (semantic values) as input
@@ -135,10 +135,10 @@ public class Constructor implements Comparable<Constructor> {
 
 		// Separator is all chars to the left of the corresponding operand
 		// The mnemonic (first sequence of contiguous non-space print-pieces)
-		// is ignored when identifying the first separator (index 0) and the 
+		// is ignored when identifying the first separator (index 0) and the
 		// operand which immediately follows.
-		// NOTE: sleigh "operands" may appear as part of mnemonic so the 
-		// separator cache may be slightly over-allocated.  
+		// NOTE: sleigh "operands" may appear as part of mnemonic so the
+		// separator cache may be slightly over-allocated.
 		if (separatorIndex < 0 || separatorIndex > operands.length) {
 			return null;
 		}

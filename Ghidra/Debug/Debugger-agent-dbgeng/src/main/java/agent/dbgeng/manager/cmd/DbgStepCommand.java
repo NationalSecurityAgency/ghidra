@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -66,7 +66,7 @@ public class DbgStepCommand extends AbstractDbgCommand<Void> {
 	// NB:  Would really prefer to do this through the API, but the API does
 	//  not appear to support freeze/unfreeze and suspend/resume thread.  These appear
 	//  to be applied via the kernel32 API.  Worse, the Windbg/KD API appears to lack
-	//  commands to query the freeze/suspend count for a given thread.  Rather than 
+	//  commands to query the freeze/suspend count for a given thread.  Rather than
 	//  wrestle with the underlying API, we're going to just use the WIndbg commands.
 	//  Note that the thread-restricted form is used iff we're stepping a thread other
 	//  then the event thread.

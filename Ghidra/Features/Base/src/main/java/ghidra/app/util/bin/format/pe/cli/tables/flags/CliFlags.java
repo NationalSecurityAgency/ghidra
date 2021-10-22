@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,13 @@ import ghidra.program.model.data.EnumDataType;
 
 public class CliFlags {
 	public static final String PATH = "/PE/CLI/Flags";
-	
+
 	public static class CliEnumAssemblyFlags extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumAssemblyFlags dataType = new CliEnumAssemblyFlags();
-		
+
 		public CliEnumAssemblyFlags() {
 			super(new CategoryPath(PATH), "AssemblyFlags", 4);
 			// TODO: specify CategoryPath, etc.
@@ -37,13 +37,13 @@ public class CliFlags {
 			add(prefix+"EnableJITcompileTracking", 0x00008000);
 		}
 	}
-	
+
 	public static class CliEnumAssemblyHashAlgorithm extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumAssemblyHashAlgorithm dataType = new CliEnumAssemblyHashAlgorithm();
-		
+
 		public CliEnumAssemblyHashAlgorithm() {
 			super(new CategoryPath(PATH), "AssemblyHash", 4);
 			// TODO: specify CategoryPath, etc.
@@ -53,13 +53,13 @@ public class CliFlags {
 			add(prefix+"SHA1", 0x00008004);
 		}
 	}
-	
+
 	public static class CliEnumEventAttributes extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumEventAttributes dataType = new CliEnumEventAttributes();
-		
+
 		public CliEnumEventAttributes() {
 			super(new CategoryPath(PATH), "EventAttributes", 2);
 			// TODO: specify CategoryPath, etc.
@@ -68,13 +68,13 @@ public class CliFlags {
 			add(prefix+"RTSpecialName", 0x0400);
 		}
 	}
-	
+
 	public static class CliEnumFieldAttributes extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumFieldAttributes dataType = new CliEnumFieldAttributes();
-		
+
 		public CliEnumFieldAttributes() {
 			super(new CategoryPath(PATH), "FieldAttributes", 2);
 			// TODO: specify CategoryPath, etc.
@@ -98,13 +98,13 @@ public class CliFlags {
 			add(prefix+"HasFieldRVA", 0x0100);
 		}
 	}
-	
+
 	public static class CliEnumFileAttributes extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumFileAttributes dataType = new CliEnumFileAttributes();
-		
+
 		public CliEnumFileAttributes() {
 			super(new CategoryPath(PATH), "FileAttributes", 4);
 			// TODO: specify CategoryPath, etc.
@@ -113,13 +113,13 @@ public class CliFlags {
 			add(prefix+"ContainsNoMetaData", 0x0001);
 		}
 	}
-	
+
 	public static class CliEnumGenericParamAttributes extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumGenericParamAttributes dataType = new CliEnumGenericParamAttributes();
-		
+
 		public CliEnumGenericParamAttributes() {
 			super(new CategoryPath(PATH), "GenericParamAttributes", 2);
 			// TODO: specify CategoryPath, etc.
@@ -132,13 +132,13 @@ public class CliFlags {
 			add(prefix+"DefaultConstructorContstraint", 0x0010);
 		}
 	}
-	
+
 	public static class CliEnumPInvokeAttributes extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumPInvokeAttributes dataType = new CliEnumPInvokeAttributes();
-		
+
 		public CliEnumPInvokeAttributes() {
 			super(new CategoryPath(PATH), "PInvokeAttributes", 2);
 			// TODO: specify CategoryPath, etc.
@@ -149,9 +149,9 @@ public class CliFlags {
 			add(prefix+"CharSetAnsi", 0x0002);
 			add(prefix+"CharSetUnicode", 0x0004);
 			add(prefix+"CharSetAuto", 0x0006);
-			
+
 			add(prefix+"SupportsLastError", 0x0040);
-			
+
 			add(prefix+"CallConvPlatformapi", 0x0100);
 			add(prefix+"CallConvCdecl", 0x0200);
 			add(prefix+"CallConvStdcall", 0x0300);
@@ -159,13 +159,13 @@ public class CliFlags {
 			add(prefix+"CallConvFastcall", 0x0500);
 		}
 	}
-	
+
 	public static class CliEnumManifestResourceAttributes extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumManifestResourceAttributes dataType = new CliEnumManifestResourceAttributes();
-		
+
 		public CliEnumManifestResourceAttributes() {
 			super(new CategoryPath(PATH), "ManifestResourceAttributes", 4);
 			// TODO: specify CategoryPath, etc.
@@ -177,10 +177,10 @@ public class CliFlags {
 
 	public static class CliEnumMethodAttributes extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumMethodAttributes dataType = new CliEnumMethodAttributes();
-		
+
 		public CliEnumMethodAttributes() {
 			super(new CategoryPath(PATH), "MethodAttributes", 2);
 			// TODO: specify CategoryPath, etc.
@@ -192,13 +192,13 @@ public class CliFlags {
 			add(prefix+"Family", 0x0004);
 			add(prefix+"FamORAssem", 0x0005);
 			add(prefix+"Public", 0x0006);
-			
+
 			prefix = "";
 			add(prefix+"Static", 0x0010);
 			add(prefix+"Final", 0x0020);
 			add(prefix+"Virtual", 0x0040);
 			add(prefix+"HideBySig", 0x0080);
-			
+
 			prefix = "VtableLayout_";
 //			add(prefix+"ReuseSlot", 0x0000); // TODO: this will not work (it will conflict with CompilerControlled)
 			add(prefix+"NewSlot", 0x0100);
@@ -207,7 +207,7 @@ public class CliFlags {
 			add(prefix+"Strict", 0x0200);
 			add(prefix+"Abstract", 0x0400);
 			add(prefix+"SpecialName", 0x0800);
-			
+
 			add(prefix+"PInvokeImpl", 0x2000);
 			add(prefix+"UnmanagedExport", 0x0008);
 
@@ -219,10 +219,10 @@ public class CliFlags {
 
 	public static class CliEnumMethodImplAttributes extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumMethodImplAttributes dataType = new CliEnumMethodImplAttributes();
-		
+
 		public CliEnumMethodImplAttributes() {
 			super(new CategoryPath(PATH), "MethodImplAttributes", 2);
 			// TODO: specify CategoryPath, etc.
@@ -231,11 +231,11 @@ public class CliFlags {
 			add(prefix+"Native", 0x0001);
 			add(prefix+"OPTIL", 0x0002);
 			add(prefix+"Runtime", 0x0003);
-			
+
 			prefix = "";
 			add(prefix+"Unmanaged", 0x0004);
 //			add(prefix+"Managed", 0x0000); // TODO: This will not work (Will conflict with IL)
-			
+
 			add(prefix+"ForwardRef", 0x0010);
 			add(prefix+"PreserveSig", 0x0080);
 			add(prefix+"InternalCall", 0x1000);
@@ -248,10 +248,10 @@ public class CliFlags {
 
 	public static class CliEnumMethodSemanticsAttributes extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumMethodSemanticsAttributes dataType = new CliEnumMethodSemanticsAttributes();
-		
+
 		public CliEnumMethodSemanticsAttributes() {
 			super(new CategoryPath(PATH), "MethodSemanticsAttributes", 2);
 			// TODO: specify CategoryPath, etc.
@@ -267,10 +267,10 @@ public class CliFlags {
 
 	public static class CliEnumParamAttributes extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumParamAttributes dataType = new CliEnumParamAttributes();
-		
+
 		public CliEnumParamAttributes() {
 			super(new CategoryPath(PATH), "ParamAttributes", 2);
 			// TODO: specify CategoryPath, etc.
@@ -286,10 +286,10 @@ public class CliFlags {
 
 	public static class CliEnumPropertyAttributes extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumPropertyAttributes dataType = new CliEnumPropertyAttributes();
-		
+
 		public CliEnumPropertyAttributes() {
 			super(new CategoryPath(PATH), "PropertyAttributes", 2);
 			// TODO: specify CategoryPath, etc.
@@ -303,10 +303,10 @@ public class CliFlags {
 
 	public static class CliEnumTypeAttributes extends EnumDataType {
 		private static final long serialVersionUID = 1L;
-		
+
 		/** A statically defined instance.*/
 	    public final static CliEnumTypeAttributes dataType = new CliEnumTypeAttributes();
-		
+
 		public CliEnumTypeAttributes() {
 			super(new CategoryPath(PATH), "TypeAttributes", 4);
 			// TODO: specify CategoryPath, etc.
@@ -350,5 +350,5 @@ public class CliFlags {
 
 		}
 	}
-	
+
 }

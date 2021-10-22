@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,9 +21,9 @@ import db.buffers.DataBuffer;
 import ghidra.util.exception.AssertException;
 
 /**
- * <code>IndexField</code> provides a index table primary key {@link Field} 
- * implementation which wraps both the index field value (fixed or varaible length) 
- * and its' corresponding primary key (fixed or variable length). 
+ * <code>IndexField</code> provides a index table primary key {@link Field}
+ * implementation which wraps both the index field value (fixed or varaible length)
+ * and its' corresponding primary key (fixed or variable length).
  */
 class IndexField extends Field {
 
@@ -66,7 +66,7 @@ class IndexField extends Field {
 	}
 
 	/**
-	 * Get the indexed field value.  If the original value exceeded 
+	 * Get the indexed field value.  If the original value exceeded
 	 * {@link #MAX_INDEX_FIELD_LENGTH} in length the returned value will
 	 * be truncated.
 	 * @return indexed field value
@@ -90,7 +90,7 @@ class IndexField extends Field {
 	 * Determine if the index field value has been truncated from its' original
 	 * value.
 	 * @return true if truncated else false
-	 * @deprecated this method serves no real purpose since the truncation 
+	 * @deprecated this method serves no real purpose since the truncation
 	 * status is not retained within the index table.
 	 */
 	@Deprecated
@@ -140,8 +140,8 @@ class IndexField extends Field {
 	}
 
 	/**
-	 * Construct a new {@link IndexField} instance for the given indexValue and 
-	 * associated primary key.  These fields are verified against this instance to 
+	 * Construct a new {@link IndexField} instance for the given indexValue and
+	 * associated primary key.  These fields are verified against this instance to
 	 * ensure that they are of the correct type.
 	 * @param indexValue column field value to be indexed
 	 * @param key primary key associated with indexValue

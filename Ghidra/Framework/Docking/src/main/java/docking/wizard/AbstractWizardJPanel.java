@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,11 +24,11 @@ import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
-/** 
+/**
  * Base class that implements some methods of the WizardPanel, but not
  * all. This class handles the notification of the listeners.
- * 
- * 
+ *
+ *
  */
 public abstract class AbstractWizardJPanel extends JPanel implements WizardPanel {
 
@@ -40,7 +40,7 @@ public abstract class AbstractWizardJPanel extends JPanel implements WizardPanel
     public AbstractWizardJPanel() {
         super();
     }
-    
+
     /**
      * @see javax.swing.JPanel#JPanel(boolean)
      */
@@ -72,7 +72,7 @@ public abstract class AbstractWizardJPanel extends JPanel implements WizardPanel
 	public Component getDefaultFocusComponent() {
 	    return null; // no preferred focus component by default
 	}
-	
+
 	/**
 	 * @see docking.wizard.WizardPanel#getHelpLocation()
 	 */

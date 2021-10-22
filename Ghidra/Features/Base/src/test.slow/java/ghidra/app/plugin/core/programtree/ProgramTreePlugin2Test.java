@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import ghidra.program.model.listing.*;
 import resources.ResourceManager;
 
 /**
- * Tests for cut/copy/paste in the Program tree. 
+ * Tests for cut/copy/paste in the Program tree.
  */
 public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
@@ -182,7 +182,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		node = (ProgramNode) root.getChildAt(6);// Functions
 		ProgramNode fnode = (ProgramNode) node.getChildAt(3);
 
-		// select USER32.DLL 
+		// select USER32.DLL
 		setSelectionPath(fnode.getTreePath());
 		performAction(copyAction, true);
 		// select DLLs
@@ -605,7 +605,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 	public void testCutFolderExpanded() throws Exception {
 		// cut a folder that has descendants expanded,
 		// expand the destination and paste.
-		// The pasted folder should retain its expansion state.	
+		// The pasted folder should retain its expansion state.
 		ProgramNode stringsNode = root.getChild("Strings");
 		visitNode(stringsNode);
 		ProgramNode lnode = stringsNode.getChild("L");
@@ -637,7 +637,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 	public void testCutFolderExpanded2() throws Exception {
 		// cut a folder that has descendants expanded,
 		// collapse the destination folder and paste.
-		// The destination folder should remain collapsed.		
+		// The destination folder should remain collapsed.
 		ProgramNode stringsNode = root.getChild("Strings");
 		visitNode(stringsNode);
 		ProgramNode lnode = stringsNode.getChild("L");
@@ -666,9 +666,9 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 	@Test
 	public void testCutFolderCollapsed() throws Exception {
-		// cut a folder that is collapsed; 
+		// cut a folder that is collapsed;
 		// expand the destination and paste.
-		// The pasted folder should be collapsed.	
+		// The pasted folder should be collapsed.
 		ProgramNode stringsNode = root.getChild("Strings");
 		visitNode(stringsNode);
 		collapsePath(stringsNode.getTreePath());
@@ -693,7 +693,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 	@Test
 	public void testCutFolderCollapsed2() throws Exception {
-		// cut folder is collapsed, 
+		// cut folder is collapsed,
 		// destination folder is collapsed.
 		// Paste the the folder; the destination folder
 		// remains collapsed
@@ -852,13 +852,13 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 	@Test
 	public void testCutFolderToFragment() throws Exception {
-		// select a folder that has fragments and subfolders that have 
+		// select a folder that has fragments and subfolders that have
 		// fragments, and cut.
 		// select a fragment not in the hierarchy of the cut folder
 		// and paste.
 		// verify that the destination fragment contains all code units
 		// from the cut folder's descendants;
-		// verify that the cut folder and all of its descendants are 
+		// verify that the cut folder and all of its descendants are
 		// removed from the program.
 
 		AddressSet set = new AddressSet();
@@ -967,8 +967,8 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 		program.flushEvents();
 		// cut a fragment in the view and paste onto a collapsed folder
-		// not in the view	
-		// the first occurrence of the folder should indicate that one of 
+		// not in the view
+		// the first occurrence of the folder should indicate that one of
 		// its descendants is in the view
 
 		ProgramNode dataNode = root.getChild(".data");
@@ -1050,7 +1050,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 
 	@Test
 	public void testCutFrag2FragInView() throws Exception {
-		// cut a fragment that is not in the view and paste it onto a 
+		// cut a fragment that is not in the view and paste it onto a
 		// fragment that is in the view.
 		// The pasted fragment's code units should show up in the view
 
@@ -1064,7 +1064,7 @@ public class ProgramTreePlugin2Test extends AbstractProgramTreePluginTest {
 		AddressSet set = new AddressSet();
 		set.add(node.getFragment());
 
-		// cut 	first frag in Subroutines	
+		// cut 	first frag in Subroutines
 		setSelectionPath(node.getTreePath());
 		runSwing(() -> cutAction.actionPerformed(new ActionContext()));
 

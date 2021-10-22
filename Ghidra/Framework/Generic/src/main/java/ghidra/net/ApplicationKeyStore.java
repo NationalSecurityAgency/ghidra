@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,9 +28,9 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import ghidra.util.Msg;
 
 /**
- * <code>ApplicationKeyStore</code> provides the ability to read X.509 certificates and 
+ * <code>ApplicationKeyStore</code> provides the ability to read X.509 certificates and
  * keystores in various formats. Certificate files (e.g., cacerts) may be in a standard
- * X.509 form (*.pem, *.crt, *.cer, *.der) or Java JKS (*.jks) form, while keystores 
+ * X.509 form (*.pem, *.crt, *.cer, *.der) or Java JKS (*.jks) form, while keystores
  * for client/server may be in a PKCS12 form (*.p12, *.pks, *.pfx) or Java JKS (*.jks) form.
  */
 class ApplicationKeyStore {
@@ -92,14 +92,14 @@ class ApplicationKeyStore {
 		}
 		if (certCount == 0) {
 			// Processing JKS files above produce "Empty input", if no certs read
-			// try reading as keystore without password 
+			// try reading as keystore without password
 			return getKeyStoreInstance(cacertsPath, null);
 		}
 		return store;
 	}
 
 	/**
-	 * Attempt to load a client/server keystore in a PKCS12 form (*.p12, *.pks, *.pfx) or 
+	 * Attempt to load a client/server keystore in a PKCS12 form (*.p12, *.pks, *.pfx) or
 	 * Java JKS (*.jks) form.
 	 * @param path keystore file path
 	 * @param pwd keystore password

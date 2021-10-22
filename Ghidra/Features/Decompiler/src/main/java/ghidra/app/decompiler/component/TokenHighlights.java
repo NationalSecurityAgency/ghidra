@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.program.model.pcode.HighFunction;
 
 /**
  * A simple class to manage {@link HighlightToken}s used to create highlights in the Decompiler.
- * This class allows clients to access highlights either by a {@link ClangToken} or a 
+ * This class allows clients to access highlights either by a {@link ClangToken} or a
  * {@link HighlightToken}.
  */
 public class TokenHighlights implements Iterable<HighlightToken> {
@@ -100,7 +100,7 @@ public class TokenHighlights implements Iterable<HighlightToken> {
 
 	/**
 	 * Returns all highlights for the given function
-	 * 
+	 *
 	 * @param f the function
 	 * @return the highlights
 	 */
@@ -141,7 +141,7 @@ public class TokenHighlights implements Iterable<HighlightToken> {
 
 	/**
 	 * Removes all highlights associated with the given function
-	 * 
+	 *
 	 * @param function the function
 	 * @return the removed highlights; empty if no highlights existed
 	 */
@@ -184,7 +184,7 @@ public class TokenHighlights implements Iterable<HighlightToken> {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	// a key that allows us to equate tokens that are not the same instance
 	private class TokenKey {

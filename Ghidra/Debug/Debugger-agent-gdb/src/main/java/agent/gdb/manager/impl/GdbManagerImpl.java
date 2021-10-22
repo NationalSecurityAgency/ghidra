@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,14 +55,14 @@ import sun.misc.SignalHandler;
 
 /**
  * Implementation of {@link GdbManager}
- * 
+ *
  * <p>
  * This is implemented using the asynchronous chaining library and executors. A single-threaded
  * executor handles issuing GDB command and processing events. Another thread handles reading GDB's
  * output and parsing events. Those events are then scheduled for processing on the executor. The
  * executor guarantees that commands are executed serially while reducing the risk of deadlock since
  * the asynchronous calls return futures immediately.
- * 
+ *
  * <p>
  * A {@link PrefixMap} aids in parsing GDB events. The event details are then parsed with the
  * {@link GdbMiParser} and passed around for processing. If a command is currently executed, that
@@ -229,7 +229,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Instantiate a new manager
-	 * 
+	 *
 	 * @param ptyFactory a factory for creating Pty's for child GDBs
 	 */
 	public GdbManagerImpl(PtyFactory ptyFactory) {
@@ -404,7 +404,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Use {@link GdbThreadImpl#add()} instead
-	 * 
+	 *
 	 * @param thread the thread to add
 	 */
 	public void addThread(GdbThreadImpl thread) {
@@ -430,7 +430,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Use {@link GdbThreadImpl#remove()} instead
-	 * 
+	 *
 	 * @param tid the thread ID to remove
 	 */
 	public void removeThread(int tid) {
@@ -441,7 +441,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Use {@link GdbInferiorImpl#add(GdbCause)} instead
-	 * 
+	 *
 	 * @param inferior the inferior to add
 	 * @param cause the cause of the new inferior
 	 */
@@ -457,7 +457,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Use {@link GdbInferiorImpl#remove(GdbCause)} instead
-	 * 
+	 *
 	 * @param iid the inferior ID to remove
 	 * @param cause the cause of removal
 	 */
@@ -471,7 +471,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Update the selected inferior
-	 * 
+	 *
 	 * @param inferior the inferior that now has focus
 	 * @param cause the cause of the focus change
 	 */
@@ -686,7 +686,7 @@ public class GdbManagerImpl implements GdbManager {
 			dialog.result.thenAccept(choice -> {
 				if (choice == JOptionPane.CANCEL_OPTION) {
 					mi2Thread.hasWriter.cancel(false);
-					// This will cause 
+					// This will cause
 				}
 			});
 
@@ -712,7 +712,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Execute commands upon GDB startup
-	 * 
+	 *
 	 * @return a future which completes when the rc commands are complete
 	 */
 	protected CompletableFuture<Void> rc() {
@@ -800,13 +800,13 @@ public class GdbManagerImpl implements GdbManager {
 	}
 
 	protected <T> CompletableFuture<T> execute(GdbCommand<? extends T> cmd) {
-		// NB. curCmd::finish is passed to eventThread already 
+		// NB. curCmd::finish is passed to eventThread already
 		return doExecute(cmd);//.thenApplyAsync(t -> t, eventThread);
 	}
 
 	/**
 	 * Schedule a command for execution
-	 * 
+	 *
 	 * @param cmd the command to execute
 	 * @return the pending command, which acts as a future for later completion
 	 */
@@ -947,11 +947,11 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Schedule a line of GDB output for processing
-	 * 
+	 *
 	 * <p>
 	 * Before the implementation started using a PTY, the channel was used to distinguish whether
 	 * the line was read from stdout or stderr. Now, all output is assumed to be from stdout.
-	 * 
+	 *
 	 * @param line the line
 	 * @param channel the channel producing the line (stdout)
 	 */
@@ -1008,7 +1008,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Called for lines starting with "-", which are just commands echoed back by the PTY
-	 * 
+	 *
 	 * @param evt the "event"
 	 * @param v nothing
 	 */
@@ -1018,7 +1018,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Called for lines starting with "~", which are lines GDB would like printed to stdout
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1038,7 +1038,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Called for lines starting with "@", which are lines printed by the target (limited support)
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1048,7 +1048,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Called for lines starting with "&", which are lines GDB would like printed to stderr
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1062,7 +1062,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=thread-group-added" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1087,7 +1087,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=thread-group-removed" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1116,7 +1116,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=thread-group-started" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1133,7 +1133,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=thread-group-exited" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1146,7 +1146,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=thread-created" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1161,7 +1161,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=thread-exited" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1176,7 +1176,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=thread-selected" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1189,7 +1189,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Fire thread (and frame) selection event
-	 * 
+	 *
 	 * @param thread the new thread
 	 * @param frame the new frame
 	 * @param cause the cause of the selection change
@@ -1201,7 +1201,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=library-loaded" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1225,7 +1225,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=library-unloaded" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1249,7 +1249,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Fire breakpoint created event
-	 * 
+	 *
 	 * @param newInfo the new information
 	 * @param cause the cause of the creation
 	 */
@@ -1261,7 +1261,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=breakpoint-created" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1271,7 +1271,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Fire breakpoint modified event
-	 * 
+	 *
 	 * @param newInfo the new information
 	 * @param cause the cause of the modification
 	 */
@@ -1284,7 +1284,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=breakpoint-modified" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1294,7 +1294,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Fire breakpoint deleted event
-	 * 
+	 *
 	 * @param number the deleted breakpoint number
 	 * @param cause the cause of the deletion
 	 */
@@ -1341,7 +1341,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=breakpoint-deleted" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1351,7 +1351,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=memory-changed" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1364,7 +1364,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "=cmd-param-changed" events
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1375,11 +1375,11 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Check that a command completion event was claimed
-	 * 
+	 *
 	 * Except under certain error conditions, GDB should never issue a command completed event that
 	 * is not associated with a command. A command implementation in the manager must claim the
 	 * completion event. This is an assertion to ensure no implementation forgets to do that.
-	 * 
+	 *
 	 * @param evt the event
 	 */
 	protected void checkClaimed(GdbEvent<?> evt) {
@@ -1402,7 +1402,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "^done"
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1412,7 +1412,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "^running"
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1423,7 +1423,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "^connected"
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1434,7 +1434,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "^exit"
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1445,7 +1445,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "^error"
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1455,7 +1455,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "*running"
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1487,7 +1487,7 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Handler for "*stopped"
-	 * 
+	 *
 	 * @param evt the event
 	 * @param v nothing
 	 */
@@ -1528,10 +1528,10 @@ public class GdbManagerImpl implements GdbManager {
 	private static class JythonConsole {
 		/**
 		 * Launch a Jython interpreter
-		 * 
+		 *
 		 * The interpreter the variable "{@code mgr}" bound to the manager. This method does not
 		 * return until the user exits the interpreter.
-		 * 
+		 *
 		 * @param manager the manager
 		 */
 		static void interact(GdbManagerImpl manager) {
@@ -1714,10 +1714,10 @@ public class GdbManagerImpl implements GdbManager {
 
 	/**
 	 * Select the given inferior
-	 * 
+	 *
 	 * <p>
 	 * This issues a command to GDB to change its focus. It is not just a manager concept.
-	 * 
+	 *
 	 * @param inferior the inferior to select
 	 * @param internal true to prevent announcement of the change
 	 * @return a future that completes when GDB has executed the command

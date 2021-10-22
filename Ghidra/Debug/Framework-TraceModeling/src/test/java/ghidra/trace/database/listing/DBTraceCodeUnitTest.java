@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -508,7 +508,7 @@ public class DBTraceCodeUnitTest extends AbstractGhidraHeadlessIntegrationTest
 		try (UndoableTransaction tid = b.startTransaction()) {
 			i4004.setEndSnap(9);
 			i4006.setEndSnap(9);
-			// TODO: Decide whether or not to shrink the comment lifespan with the unit lifespan 
+			// TODO: Decide whether or not to shrink the comment lifespan with the unit lifespan
 			assertEquals(Range.atLeast(0L), c4004.getLifespan());
 
 			i4004_10 = b.addInstruction(10, b.addr(0x4004), b.language);

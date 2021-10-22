@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,8 +85,8 @@ public class PluginConfigurationModel {
 	}
 
 	/**
-	 * Gets the loaded plugins from the tool and populates the loadedPluginMap and the 
-	 * pluginsWithDependenciesSet. 
+	 * Gets the loaded plugins from the tool and populates the loadedPluginMap and the
+	 * pluginsWithDependenciesSet.
 	 */
 	private void initLoadedPlugins() {
 		loadedPluginMap.clear();
@@ -208,7 +208,7 @@ public class PluginConfigurationModel {
 
 	/**
 	 * Returns all of the actions loaded by the Plugin represented by the given PluginDescription.
-	 * An empty list will be returned if no actions are loaded or if the plugin has not been 
+	 * An empty list will be returned if no actions are loaded or if the plugin has not been
 	 * loaded.
 	 * @param pluginDescription The description for which to find loaded actions.
 	 * @return all of the actions loaded by the Plugin represented by the given PluginDescription.

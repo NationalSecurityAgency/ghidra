@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -74,7 +74,7 @@ PcodeOp::PcodeOp(int4 s,const SeqNum &sq) : start(sq),inrefs(s)
   flags = 0;			// Start out life as dead
   addlflags = 0;
   parent = (BlockBasic *)0; // No parent yet
-  
+
   output = (Varnode *) 0;
   opcode = (TypeOp *)0;
   for(int4 i=0;i<inrefs.size();++i)
@@ -134,7 +134,7 @@ uintm PcodeOp::getCseHash(void) const
   uintm hash;
   if ((getEvalType()&(PcodeOp::unary|PcodeOp::binary))==0) return ((uintm)0);
   if (code()==CPUI_COPY) return ((uintm)0); // Let copy propagation deal with this
-  
+
   hash = (output->getSize()<<8) | (uintm)code();
   for(int4 i=0;i<inrefs.size();++i) {
     const Varnode *vn = getIn(i);
@@ -316,7 +316,7 @@ void PcodeOp::insertInput(int4 slot)
     inrefs[i] = inrefs[i-1];
   inrefs[slot] = (Varnode *)0;
 }
-  
+
 // Find the next op in sequence from this op.  This is usually in the same basic block, but this
 // routine will follow flow into successive blocks during its search, so long as there is only one path
 // \return the next PcodeOp or \e null
@@ -351,7 +351,7 @@ PcodeOp *PcodeOp::previousOp(void) const
   iter--;
   return *iter;
 }
-  
+
 /// Scan backward within the basic block containing this op and find the first op marked as the
 /// start of an instruction.  This also works if basic blocks haven't been calculated yet, and all
 /// the ops are still in the dead list.  The starting op may be from a different instruction if
@@ -453,7 +453,7 @@ uintb PcodeOp::collapse(bool &markedInput) const {
     }
     return opcode->evaluateBinary(output->getSize(),vn0->getSize(),
 				  vn0->getOffset(),vn1->getOffset());
-  default: 
+  default:
     break;
   }
   throw LowlevelError("Invalid constant collapse");

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,7 @@ public class FunctionCallGraph extends FilteringVisualGraph<FcgVertex, FcgEdge> 
 
 	/**
 	 * Returns the vertex mapped to the given function; null if there is no matching vertex
-	 * 
+	 *
 	 * @param f the function
 	 * @return the vertex
 	 */
@@ -71,8 +71,8 @@ public class FunctionCallGraph extends FilteringVisualGraph<FcgVertex, FcgEdge> 
 
 	/**
 	 * Returns true if this graph contains a vertex for the given function
-	 * 
-	 * @param f the function 
+	 *
+	 * @param f the function
 	 * @return true if this graph contains a vertex for the given function
 	 */
 	public boolean containsFunction(Function f) {
@@ -81,7 +81,7 @@ public class FunctionCallGraph extends FilteringVisualGraph<FcgVertex, FcgEdge> 
 
 	/**
 	 * Returns all vertices in the given level.  The result will be non-null.
-	 * 
+	 *
 	 * @param level the level of the vertices to retrieve
 	 * @return all vertices in the given level
 	 */
@@ -90,9 +90,9 @@ public class FunctionCallGraph extends FilteringVisualGraph<FcgVertex, FcgEdge> 
 	}
 
 	/**
-	 * Returns the largest level (the furthest level from the source node) in the given 
-	 * direction 
-	 * 
+	 * Returns the largest level (the furthest level from the source node) in the given
+	 * direction
+	 *
 	 * @param direction the direction to search
 	 * @return the largest level
 	 */

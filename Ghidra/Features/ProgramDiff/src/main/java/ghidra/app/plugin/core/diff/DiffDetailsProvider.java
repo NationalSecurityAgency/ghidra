@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -269,7 +269,7 @@ public class DiffDetailsProvider extends ComponentProviderAdapter {
 	 * indicated address. An address set is returned since the indicated address may be in different
 	 * sized code units in each of the two programs.
 	 * @param p1Location the program location in program1 where details are desired.
-	 * @return the address set for code units containing that address within the programs being 
+	 * @return the address set for code units containing that address within the programs being
 	 * compared to determine differences.
 	 * Otherwise null if a diff of two programs isn't being performed.
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public interface TraceBasedDataTypeManager extends ProgramBasedDataTypeManager {
 
 	/**
 	 * Get the trace of which this data type manager is a part
-	 * 
+	 *
 	 * @return the trace
 	 */
 	Trace getTrace();
@@ -39,7 +39,7 @@ public interface TraceBasedDataTypeManager extends ProgramBasedDataTypeManager {
 	/**
 	 * TODO: Petition to have this replace
 	 * {@link TraceBasedDataTypeManager#resolve(DataType, DataTypeConflictHandler)}
-	 * 
+	 *
 	 * <p>
 	 * TODO: What happens if handler keeps existing? Does it return existing or null? If it returns
 	 * the existing, then can we still cast to T? If not, then we have to be careful with this
@@ -49,7 +49,7 @@ public interface TraceBasedDataTypeManager extends ProgramBasedDataTypeManager {
 	@SuppressWarnings("unchecked")
 	default <T extends DataType> T resolveType(T dataType, DataTypeConflictHandler handler) {
 		/**
-		 * 
+		 *
 		 */
 		return (T) resolve(dataType, handler);
 	}
@@ -57,7 +57,7 @@ public interface TraceBasedDataTypeManager extends ProgramBasedDataTypeManager {
 	/**
 	 * TODO: Petition to have this replace
 	 * {@link TraceBasedDataTypeManager#addDataType(DataType, DataTypeConflictHandler)}
-	 * 
+	 *
 	 * <p>
 	 * TODO: What happens if handler keeps existing? Does it return existing or null? If it returns
 	 * the existing, then can we still cast to T? If not, then we have to be careful with this

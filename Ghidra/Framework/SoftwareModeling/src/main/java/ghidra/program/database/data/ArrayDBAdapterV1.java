@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,8 @@ import ghidra.util.exception.VersionException;
  *
  * To change the template for this generated type comment go to
  * {@literal Window>Preferences>Java>Code Generation>Code and Comments}
- * 
- * 
+ *
+ *
  */
 class ArrayDBAdapterV1 extends ArrayDBAdapter {
 	static final int VERSION = 1;
@@ -45,7 +45,7 @@ class ArrayDBAdapterV1 extends ArrayDBAdapter {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 */
 	public ArrayDBAdapterV1(DBHandle handle, boolean create) throws VersionException, IOException {
 

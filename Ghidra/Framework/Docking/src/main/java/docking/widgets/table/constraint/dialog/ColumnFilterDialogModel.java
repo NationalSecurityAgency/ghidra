@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -103,7 +103,7 @@ public class ColumnFilterDialogModel<R> {
 
 	/**
 	 * Creates a new filter row (a new major row in the dialog filter panel)
-	 * @param logicOperation the logical operation for how this row interacts with preceding rows 
+	 * @param logicOperation the logical operation for how this row interacts with preceding rows
 	 * @return the new filter row that represents a major row in the dialog filter panel
 	 */
 	public DialogFilterRow createFilterRow(LogicOperation logicOperation) {
@@ -188,9 +188,9 @@ public class ColumnFilterDialogModel<R> {
 	}
 
 	/**
-	 * Gets the table's DataSource (if it has one. Only table models that extends 
+	 * Gets the table's DataSource (if it has one. Only table models that extends
 	 * {@link GDynamicColumnTableModel} can have a data source
-	 * 
+	 *
 	 * @return the data source
 	 */
 	Object getDataSource() {

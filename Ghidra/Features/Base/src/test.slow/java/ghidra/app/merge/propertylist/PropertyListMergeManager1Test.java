@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,7 +83,7 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 	@Test
 	public void testPropertyDeleted() throws Exception {
 		// test case #4: Property name exists, no value changed in latest version;
-		//               property name was deleted in private version	
+		//               property name was deleted in private version
 		//			     (was in the original)
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
@@ -332,7 +332,7 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 
 	@Test
 	public void testMyValueChanged() throws Exception {
-		// test case #7: no change to the latest version, 
+		// test case #7: no change to the latest version,
 		//               value changed in the private version
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
@@ -369,7 +369,7 @@ public class PropertyListMergeManager1Test extends AbstractMergeTest {
 	@Test
 	public void testNoChange() throws Exception {
 		// test case #8: value changed in the latest version,
-		//               no change in private version	
+		//               no change in private version
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
 			 * @see ghidra.framework.data.ProgramModifierListener#modifyLatest(ghidra.program.database.ProgramDB)

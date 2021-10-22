@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -382,7 +382,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 	private void createOptions() {
 		ToolOptions options = tool.getOptions("Console");
 
-// TODO: change help anchor name		
+// TODO: change help anchor name
 		HelpLocation help = new HelpLocation(getName(), "ConsolePlugin");
 		options.setOptionsHelpLocation(help);
 
@@ -397,7 +397,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		completionWindowTrigger =
 			options.getEnum(COMPLETION_WINDOW_TRIGGER_LABEL, CompletionWindowTrigger.TAB);
 
-// TODO		
+// TODO
 //		highlightCompletion =
 //			options.getBoolean(HIGHLIGHT_COMPLETION_OPTION_LABEL, DEFAULT_HIGHLIGHT_COMPLETION);
 //		options.setDescription(HIGHLIGHT_COMPLETION_OPTION_LABEL, HIGHLIGHT_COMPLETION_DESCRIPTION);
@@ -416,7 +416,7 @@ public class InterpreterPanel extends JPanel implements OptionsChangeListener {
 		else if (optionName.equals(COMPLETION_WINDOW_TRIGGER_LABEL)) {
 			completionWindowTrigger = (CompletionWindowTrigger) newValue;
 		}
-// TODO		
+// TODO
 //		else if (optionName.equals(HIGHLIGHT_COMPLETION_OPTION_LABEL)) {
 //			highlightCompletion = ((Boolean) newValue).booleanValue();
 //		}

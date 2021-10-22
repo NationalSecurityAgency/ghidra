@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -175,10 +175,10 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Parse the path string <b>with path element placeholders</b>, such as 
+	 * Parse the path string <b>with path element placeholders</b>, such as
 	 * {@link #GHIDRA_HOME}.
 	 * @param path the path
-	 * 
+	 *
 	 * @return the path as a ResourceFile.
 	 */
 	public static ResourceFile fromPathString(String path) {
@@ -203,9 +203,9 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Returns the path as a string <b>with path element placeholders</b>, such as 
+	 * Returns the path as a string <b>with path element placeholders</b>, such as
 	 * {@link #GHIDRA_HOME}.
-	 * 
+	 *
 	 * @param file the file to translate
 	 * @return the path as a string .
 	 */
@@ -233,16 +233,16 @@ public class Path implements Comparable<Path> {
 	}
 
 	/**
-	 * Returns the path as a string <b>with path element placeholders</b>, such as 
+	 * Returns the path as a string <b>with path element placeholders</b>, such as
 	 * {@link #GHIDRA_HOME}.
-	 * 
+	 *
 	 * @return the path as a string .
 	 */
 	public String getPathAsString() {
 		return toPathString(file);
 	}
 
-	/** 
+	/**
 	 * Returns true if the given path is a file inside of the current Ghidra application.
 	 * @return true if the given path is a file inside of the current Ghidra application.
 	 */

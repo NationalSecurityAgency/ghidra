@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,8 +38,8 @@ import log.LogPanelAppender;
 import resources.ResourceManager;
 
 /**
- * A JPanel that contains a label to show the last message displayed. It also has a button to 
- * show the Console. 
+ * A JPanel that contains a label to show the last message displayed. It also has a button to
+ * show the Console.
  */
 public class LogPanel extends JPanel implements LogListener {
 
@@ -83,7 +83,7 @@ public class LogPanel extends JPanel implements LogListener {
 	/**
 	 * Set the help location for the components in the LogPanel.
 	 * @param helpLocation help location for this LogPanel
-	 * 
+	 *
 	 */
 	public void setHelpLocation(HelpLocation helpLocation) {
 		HelpService help = Help.getHelpService();
@@ -104,7 +104,7 @@ public class LogPanel extends JPanel implements LogListener {
 
 	/**
 	 * Extracts the {@link LogPanelAppender} from the root logger configuration
-	 * and hands an instance of this panel to it. 
+	 * and hands an instance of this panel to it.
 	 */
 	private void addLogAppender() {
 		LoggerContext ctx = (LoggerContext) LogManager.getContext(false);

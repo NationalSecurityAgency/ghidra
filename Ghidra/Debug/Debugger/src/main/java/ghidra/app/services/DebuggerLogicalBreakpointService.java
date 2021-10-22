@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,17 +37,17 @@ import ghidra.trace.model.program.TraceProgramView;
 public interface DebuggerLogicalBreakpointService {
 	/**
 	 * Get all logical breakpoints known to the tool.
-	 * 
+	 *
 	 * @return the set of all logical breakpoints
 	 */
 	Set<LogicalBreakpoint> getAllBreakpoints();
 
 	/**
 	 * Get a map of addresses to collected logical breakpoints for a given program.
-	 * 
+	 *
 	 * <p>
 	 * The program ought to be a program database, not a view of a trace.
-	 * 
+	 *
 	 * @param program the program database
 	 * @return the map of logical breakpoints
 	 */
@@ -55,11 +55,11 @@ public interface DebuggerLogicalBreakpointService {
 
 	/**
 	 * Get a map of addresses to collected logical breakpoints (at present) for a given trace.
-	 * 
+	 *
 	 * <p>
 	 * The trace must be associated with a live target. The returned map collects live breakpoints
 	 * in the recorded target, using trace breakpoints from the recorder's current snapshot.
-	 * 
+	 *
 	 * @param trace the trace database
 	 * @return the map of logical breakpoints
 	 */
@@ -67,10 +67,10 @@ public interface DebuggerLogicalBreakpointService {
 
 	/**
 	 * Get the collected logical breakpoints at the given program location.
-	 * 
+	 *
 	 * <p>
 	 * The program ought to be a program database, not a view of a trace.
-	 * 
+	 *
 	 * @param program the program database
 	 * @param address the address
 	 * @return the set of logical breakpoints
@@ -79,12 +79,12 @@ public interface DebuggerLogicalBreakpointService {
 
 	/**
 	 * Get the collected logical breakpoints (at present) at the given trace location.
-	 * 
+	 *
 	 * <p>
 	 * The trace must be associated with a live target. The returned collection includes live
 	 * breakpoints in the recorded target, using trace breakpoints from the recorders' current
 	 * snapshot.
-	 * 
+	 *
 	 * @param trace the trace database
 	 * @param address the address
 	 * @return the set of logical breakpoints
@@ -93,17 +93,17 @@ public interface DebuggerLogicalBreakpointService {
 
 	/**
 	 * Get the collected logical breakpoints (at present) at the given location.
-	 * 
+	 *
 	 * <p>
 	 * The {@code program} field for the location may be either a program database (static image) or
 	 * a view for a trace associated with a live target. If it is the latter, the view's current
 	 * snapshot is ignored, in favor of the associated recorder's current snapshot.
-	 * 
+	 *
 	 * <p>
 	 * If {@code program} is a static image, this is equivalent to using
 	 * {@link #getBreakpointsAt(Program, Address)}. If {@code program} is a trace view, this is
 	 * equivalent to using {@link #getBreakpointsAt(Trace, Address)}.
-	 * 
+	 *
 	 * @param loc the location
 	 * @return the set of logical breakpoints
 	 */
@@ -111,26 +111,26 @@ public interface DebuggerLogicalBreakpointService {
 
 	/**
 	 * Add a listener for logical breakpoint changes.
-	 * 
+	 *
 	 * <p>
 	 * Logical breakpoints may change from time to time for a variety of reasons: A new trace is
 	 * started; a static image is opened; the user adds or removes breakpoints; mappings change;
 	 * etc. The service reacts to these events, reconciles the breakpoints, and invokes callbacks
 	 * for the changes, allowing other UI components and services to update accordingly.
-	 * 
+	 *
 	 * <p>
 	 * The listening component must maintain a strong reference to the listener, otherwise it will
 	 * be removed and garbage collected. Automatic removal is merely a resource-management
 	 * protection; the listening component should politely remove its listener (see
 	 * {@link #removeChangeListener(LogicalBreakpointsChangeListener)} when no longer needed.
-	 * 
+	 *
 	 * @param l the listener
 	 */
 	void addChangeListener(LogicalBreakpointsChangeListener l);
 
 	/**
 	 * Remove a listener for logical breakpoint changes.
-	 * 
+	 *
 	 * @see #addChangeListener(LogicalBreakpointsChangeListener)
 	 * @param l the listener to remove
 	 */
@@ -206,12 +206,12 @@ public interface DebuggerLogicalBreakpointService {
 	/**
 	 * Create an enabled breakpoint at the given program location and each mapped live trace
 	 * location.
-	 * 
+	 *
 	 * <p>
 	 * The implementation should take care not to create the same breakpoint multiple times. The
 	 * risk of this happening derives from the possibility of one module mapped to multiple targets
 	 * which are all managed by the same debugger, having a single breakpoint container.
-	 * 
+	 *
 	 * @param program the static module image
 	 * @param address the address in the image
 	 * @param length size of the breakpoint, may be ignored by debugger
@@ -223,17 +223,17 @@ public interface DebuggerLogicalBreakpointService {
 
 	/**
 	 * Create an enabled breakpoint at the given trace location only.
-	 * 
+	 *
 	 * <p>
 	 * If the given location is mapped to a static module, this still only creates the breakpoint in
 	 * the given trace. However, a logical breakpoint mark will appear at all mapped locations.
-	 * 
+	 *
 	 * <p>
 	 * Note, the debugger ultimately determines the placement behavior. If it is managing multiple
 	 * targets, it is possible the breakpoint will be effective in another trace. This fact should
 	 * be reflected correctly in the resulting logical markings once all resulting events have been
 	 * processed.
-	 * 
+	 *
 	 * @param trace the given trace, which must be live
 	 * @param address the address in the trace (as viewed in the present)
 	 * @param length size of the breakpoint, may be ignored by debugger
@@ -245,13 +245,13 @@ public interface DebuggerLogicalBreakpointService {
 
 	/**
 	 * Create an enabled breakpoint at the given location.
-	 * 
+	 *
 	 * <p>
 	 * If the given location refers to a static image, this behaves as in
 	 * {@link #placeBreakpointAt(Program, Address, TraceBreakpointKind)}. If it refers to a trace
 	 * view, this behaves as in {@link #placeBreakpointAt(Trace, Address, TraceBreakpointKind)},
 	 * ignoring the view's current snapshot in favor of the present.
-	 * 
+	 *
 	 * @param loc the location
 	 * @param length size of the breakpoint, may be ignored by debugger
 	 * @param kinds the kinds of breakpoint
@@ -262,7 +262,7 @@ public interface DebuggerLogicalBreakpointService {
 
 	/**
 	 * Enable a collection of logical breakpoints on target, if applicable
-	 * 
+	 *
 	 * <p>
 	 * This method is preferable to calling {@link LogicalBreakpoint#enable()} on each logical
 	 * breakpoint, because depending on the debugger, a single breakpoint specification may produce
@@ -270,7 +270,7 @@ public interface DebuggerLogicalBreakpointService {
 	 * critical, this method will prevent multiple requests (which a debugger may consider
 	 * erroneous) to enable the same specification, if that specification happens to be involved in
 	 * more than one logical breakpoint in the given collection.
-	 * 
+	 *
 	 * @param col the collection
 	 * @param trace a trace, if the command should be limited to the given trace
 	 * @return a future which completes when all associated specifications have been enabled
@@ -279,7 +279,7 @@ public interface DebuggerLogicalBreakpointService {
 
 	/**
 	 * Disable a collection of logical breakpoints on target, if applicable
-	 * 
+	 *
 	 * @see #enableAll(Collection)
 	 * @param col the collection
 	 * @param trace a trace, if the command should be limited to the given trace
@@ -289,7 +289,7 @@ public interface DebuggerLogicalBreakpointService {
 
 	/**
 	 * Delete, if possible, a collection of logical breakpoints on target, if applicable
-	 * 
+	 *
 	 * @see #enableAll(Collection)
 	 * @param col the collection
 	 * @param trace a trace, if the command should be limited to the given trace
@@ -299,7 +299,7 @@ public interface DebuggerLogicalBreakpointService {
 
 	/**
 	 * Presuming the given locations are live, enable them
-	 * 
+	 *
 	 * @param col the trace breakpoints
 	 * @return a future which completes when the command has been processed
 	 */
@@ -307,7 +307,7 @@ public interface DebuggerLogicalBreakpointService {
 
 	/**
 	 * Presuming the given locations are live, disable them
-	 * 
+	 *
 	 * @param col the trace breakpoints
 	 * @return a future which completes when the command has been processed
 	 */
@@ -315,7 +315,7 @@ public interface DebuggerLogicalBreakpointService {
 
 	/**
 	 * Presuming the given locations are live, delete them
-	 * 
+	 *
 	 * @param col the trace breakpoints
 	 * @return a future which completes when the command has been processed
 	 */

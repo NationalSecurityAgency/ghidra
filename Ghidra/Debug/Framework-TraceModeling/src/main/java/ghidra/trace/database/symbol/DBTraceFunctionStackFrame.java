@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -234,23 +234,23 @@ public class DBTraceFunctionStackFrame implements StackFrame, Unfinished {
 
 			/**
 			 * TODO: The original implementation tries to implicitly enable custom storage if:
-			 * 
+			 *
 			 * 1) We're inserting a parameter,
-			 * 
+			 *
 			 * 2) Custom storage is not already enabled, and
-			 * 
+			 *
 			 * 3) The variable would not be stored where specified without custom storage
-			 * 
+			 *
 			 * Unless it is required or jarring to the user, I'm going to forego this rule. Let the
 			 * user manually enable custom storage if precise parameter placement via this method is
 			 * desired.
-			 * 
+			 *
 			 * The issue in the original implementation is: It detects (3) by inserting the variable
 			 * and then checking where it was assigned storage. By this time, the function will have
 			 * already re-assigned the other variables' storage. Despite that, the method re-assigns
 			 * the new variable to the desired storage. This may leave the others in an unexpected
 			 * or bad state.
-			 * 
+			 *
 			 * Perhaps it can be fixed: Instead of re-assigning the storage, deleting the new
 			 * parameter, enable custom storage, and then re-insert the desired parameter.
 			 */
@@ -265,11 +265,11 @@ public class DBTraceFunctionStackFrame implements StackFrame, Unfinished {
 			Variable var = getVariableContaining(offset);
 			/**
 			 * TODO: The original implementation implicitly enables custom storage if:
-			 * 
+			 *
 			 * 1) A variable exists at the given offset, and
-			 * 
+			 *
 			 * 2) Custom storage is not already enabled
-			 * 
+			 *
 			 * Unless it is required or jarring to the user, I'm going to forego this rule. Let the
 			 * user manually enable custom storage if precise parameter placement via this method is
 			 * desired.

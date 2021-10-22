@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -137,7 +137,7 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 		gbc.gridwidth = GridBagConstraints.REMAINDER;
 		gbc.gridheight = 1;
 //superHolder.add( recentLabelHolder, gbc );
-//superHolder.add( recentSwatchPanel, gbc );  
+//superHolder.add( recentSwatchPanel, gbc );
 
 		// GHIDRA
 		historySwatchPanel = new HistorySwatchPanel(recentColors);
@@ -152,7 +152,7 @@ public class SettableColorSwatchChooserPanel extends AbstractColorChooserPanel {
 		gbc.gridwidth = GridBagConstraints.REMAINDER;
 		gbc.gridheight = 1;
 //superHolder.add( historyLabelHolder, gbc );
-//superHolder.add( historySwatchPanel, gbc );          
+//superHolder.add( historySwatchPanel, gbc );
 
 		JPanel recentAndHistoryPanel = new JPanel(new VerticalLayout(1));
 		recentAndHistoryPanel.add(recentLabelHolder);
@@ -391,7 +391,7 @@ class MainSwatchPanel extends SwatchPanel {
 	// @formatter:off
     private int[] initRawValues() {
 
-        int[] rawValues = {     
+        int[] rawValues = {
             255, 255, 255, // first row.
             204, 255, 255,
             204, 204, 255,
@@ -577,7 +577,7 @@ class MainSwatchPanel extends SwatchPanel {
             0, 204, 51,
             0, 204, 102,
             0, 204, 153,
-            0, 204, 204, 
+            0, 204, 204,
             102, 102, 102, // seventh row
             0, 153, 153,
             0, 153, 153,

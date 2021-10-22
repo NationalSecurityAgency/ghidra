@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,12 @@ package ghidra.util.graph;
 
 import java.util.*;
 
-/** 
- * Provides a depth first search service to directed graphs. 
- * Once a search has finished information about the search 
+/**
+ * Provides a depth first search service to directed graphs.
+ * Once a search has finished information about the search
  * can be obtained.
- * 
- * 
+ *
+ *
  */
 public class DepthFirstSearch
 {
@@ -36,9 +36,9 @@ public class DepthFirstSearch
   private List<Edge>  treeEdges;
   //private List  forwardAndCrossEdges;
 
-  /** 
+  /**
    * Upon creation a depth first search of the given graph is performed.
-   * 
+   *
    * @param graph The graph to search
    * @param initialSeeds The vertices used to start the search
    * @param getAdditionalSeedsIfNeeded If true, when searching from the initial
@@ -46,7 +46,7 @@ public class DepthFirstSearch
    * be selected until every vertex is the graph has been found.
    * @param goForward Follow edges in their specifed direction
    * @param goBackward Follow edges in the opposite of their specified direction.
-   */ 
+   */
   public DepthFirstSearch( DirectedGraph graph,
                            Vertex[]       initialSeeds,
                            boolean        getAdditionalSeedsIfNeeded,
@@ -328,7 +328,7 @@ public class DepthFirstSearch
     }
   }
 
-  /** 
+  /**
    * Return true if the vertex has not yet been discovered in the depth first
    * search.
    */
@@ -337,7 +337,7 @@ public class DepthFirstSearch
       return unseen.contains( v );
   }
 
-  /** 
+  /**
    * Return true if the vertex has completed its role in the depth first
    * search.
    */
@@ -346,25 +346,25 @@ public class DepthFirstSearch
       return finished.contains( v );
   }
 
-  /** 
-   * Return the back edges found in this depth first search. 
+  /**
+   * Return the back edges found in this depth first search.
    */
   public Edge[] backEdges()
   {
       return backEdges.toArray(new Edge[backEdges.size()]);
   }
 
-  /** 
-   * Return the tree edges in this depth first search. 
+  /**
+   * Return the tree edges in this depth first search.
    */
   public Edge[] treeEdges()
   {
       return treeEdges.toArray(new Edge[treeEdges.size()]);
   }
 
-  /** 
-   * Return true iff no back edges were found. 
-   * 
+  /**
+   * Return true iff no back edges were found.
+   *
    * Note that if the graph
    * is not completely explored the answer is only for the portion
    * of the graph expored.
@@ -374,7 +374,7 @@ public class DepthFirstSearch
       return backEdges.isEmpty();
   }
 
-  /** 
+  /**
    * Return true iff the every edge is a tree edge. Will always be false
    * if the entire graph is not explored.
    */
@@ -383,8 +383,8 @@ public class DepthFirstSearch
       return (treeEdges.size() == graph.numEdges() );
   }
 
-  /** Returns a topological sort of the directed graph. 
-   * Return the vertices in the explored 
+  /** Returns a topological sort of the directed graph.
+   * Return the vertices in the explored
    * portion of the graph with the following
    * property:
    * <ol>
@@ -392,24 +392,24 @@ public class DepthFirstSearch
    * <li>If the graph contains cycles, then the above is true except when
    *     (v[i],v[j]) is a back edge.</li>
    * </ol>
-   * 
+   *
    */
   public Vertex[] topologicalSort()
   {
       return finishListInReverseOrder.toArray(new Vertex[finishListInReverseOrder.size()]);
   }
 
-  /** 
-   * Return the seeds used in the depth first search. 
+  /**
+   * Return the seeds used in the depth first search.
    **/
   List<Vertex> seedsUsed()
   {
       return seedsUsed;
   }
 
-  /** 
-   * Returns a spanning tree (in the form of a DirectedGraph). 
-   * No claims that the spanning tree returned has any special 
+  /**
+   * Returns a spanning tree (in the form of a DirectedGraph).
+   * No claims that the spanning tree returned has any special
    * properties.
    */
   public DirectedGraph spanningTree()

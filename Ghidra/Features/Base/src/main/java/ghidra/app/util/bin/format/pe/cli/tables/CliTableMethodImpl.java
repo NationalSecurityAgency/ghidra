@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public class CliTableMethodImpl extends CliAbstractTable {
 		public int classIndex;
 		public int methodBodyIndex;
 		public int methodDeclarationIndex;
-		
+
 		public CliMethodImplRow(int classIndex, int methodBodyIndex, int methodDeclarationIndex) {
 			super();
 			this.classIndex = classIndex;
@@ -59,7 +59,7 @@ public class CliTableMethodImpl extends CliAbstractTable {
 			return String.format("Class %s MethodBody %s MethodDeclaration %s", getRowRepresentationSafe(CliTypeTable.TypeDef, classIndex), methodBodyRep, methodDeclarationRep);
 		}
 	}
-	
+
 	public CliTableMethodImpl(BinaryReader reader, CliStreamMetadata stream, CliTypeTable tableId) throws IOException {
 		super(reader, stream, tableId);
 		for (int i = 0; i < this.numRows; i++) {
@@ -67,7 +67,7 @@ public class CliTableMethodImpl extends CliAbstractTable {
 		}
 		reader.setPointerIndex(this.readerOffset);
 	}
-	
+
 	@Override
 	public StructureDataType getRowDataType() {
 		StructureDataType rowDt = new StructureDataType(new CategoryPath(PATH), "MethodImpl Row", 0);

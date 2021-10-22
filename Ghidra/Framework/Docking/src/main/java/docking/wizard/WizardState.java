@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,7 +45,7 @@ public class WizardState<T> implements Cloneable {
 	public Object get(T key) {
 		return map.get( key );
 	}
-	
+
 	/**
 	 * Sets the property value for a given property key.  Also clears out the property values for
 	 * any properties that depend on this property.
@@ -65,7 +65,7 @@ public class WizardState<T> implements Cloneable {
 		map.put( key, value );
 		clearDependents(key);
 	}
-	
+
 	/**
 	 * Removes the property key,value pair from this wizard state.
 	 * @param key the property key of the property to be cleared.
@@ -79,7 +79,7 @@ public class WizardState<T> implements Cloneable {
 
 	/**
 	 * Defines a dependency from one property to another.  A property dependency has the effect of
-	 * clear the dependent's property value whenever the predecessor property is changed or cleared. 
+	 * clear the dependent's property value whenever the predecessor property is changed or cleared.
 	 * @param dependent the property whose value is to be cleared when the predecessor property is
 	 * changed or cleared.
 	 * @param predecessor the property that, when changed or cleared, will cause the dependent property

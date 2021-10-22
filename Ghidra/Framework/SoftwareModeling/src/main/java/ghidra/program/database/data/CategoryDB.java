@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -668,7 +668,7 @@ class CategoryDB extends DatabaseObject implements Category {
 
 		/**
 		 * Creates a map of all data types whose name has a .conflict suffix where the key
-		 * is the base name and {@link LazyLoadingCachingMap} the value is a map of actual name 
+		 * is the base name and {@link LazyLoadingCachingMap} the value is a map of actual name
 		 * to data type. This mapping is
 		 * maintained as a lazy cache map. This is only called by the super class when the
 		 * cached needs to be populated and we are depending on it to acquire the necessary
@@ -711,7 +711,7 @@ class CategoryDB extends DatabaseObject implements Category {
 		}
 
 		/**
-		 * Removes the data type with the given name from the conflict mapping structure. If the 
+		 * Removes the data type with the given name from the conflict mapping structure. If the
 		 * mapping is currently not loaded then this method can safely do nothing. This method is
 		 * synchronized to provide thread safe access/manipulate of the map.
 		 * @param dataTypeName the name of the data type  to remove from this mapping

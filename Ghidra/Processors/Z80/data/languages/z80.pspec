@@ -2,7 +2,7 @@
 
 <processor_spec>
   <programcounter register="PC"/>
-  
+
   <segmentop space="ram" userop="segment" farpointer="yes">
     <pcode>
       <input name="base" size="2"/>
@@ -21,7 +21,7 @@
       <set name="DECOMPILE_MODE" val="1"/>
     </tracked_set>
   </context_data>
-  
+
   <register_data>
     <register name="AF_" group="Alt"/>
     <register name="BC_" group="Alt"/>

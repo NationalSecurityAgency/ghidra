@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -237,12 +237,12 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 	}
 
 	/**
-	 * Verifies that changing the analyzers to be run affects the task list for 
+	 * Verifies that changing the analyzers to be run affects the task list for
 	 * all open programs.
 	 * <p>
 	 * For this test we'll verify that a specific analyzer is enabled, then turn off all
 	 * analyzers and check again to verify that the analyzer is no longer enabled.
-	 * 
+	 *
 	 * @throws Exception if there is a problem building the test programs
 	 */
 	@Test
@@ -277,7 +277,7 @@ public class AnalyzeAllOpenProgramsTaskTest extends AbstractGhidraHeadedIntegrat
 
 	/**
 	 * Returns true if the given analyzer is enabled.
-	 * 
+	 *
 	 * @param name the name of the analyzer
 	 * @param program the program to check
 	 * @return true if the analyzer is enabled; false otherwise

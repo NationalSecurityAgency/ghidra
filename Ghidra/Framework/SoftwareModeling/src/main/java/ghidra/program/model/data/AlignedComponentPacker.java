@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@ package ghidra.program.model.data;
 import ghidra.util.exception.AssertException;
 
 /**
- * <code>AlignedComponentPacker</code> provides component packing support to the 
+ * <code>AlignedComponentPacker</code> provides component packing support to the
  * {@link AlignedStructurePacker}.
  */
 class AlignedComponentPacker {
@@ -30,14 +30,14 @@ class AlignedComponentPacker {
 	private int nextOrdinal;
 
 	// We hang onto the imposed alignment and resulting offset for the last component
-	// since the update of a zero-length bitfield must be deferred since it can be influenced 
+	// since the update of a zero-length bitfield must be deferred since it can be influenced
 	// by the next component and we only want to update it once.
 	private int zeroAlignment; // imposed alignment on next component by zero bitfield
 
 	private int lastAlignment; // identifies last component alignment
 
 	// The groupOffset is used to identify start of zero-length bitfield as well
-	// as fixed-length groups when groupSameSizeOnly is true.  Under other situations 
+	// as fixed-length groups when groupSameSizeOnly is true.  Under other situations
 	// its value can not be relied upon.  -1 value indicates no active group.
 	private int groupOffset = -1;
 
@@ -162,7 +162,7 @@ class AlignedComponentPacker {
 
 		int pack = packValue;
 		if (!bitFieldPacking.useMSConvention() && !isLastComponent) {
-			// GCC ignores pack value for :0 bitfield alignment but considers it when 
+			// GCC ignores pack value for :0 bitfield alignment but considers it when
 			// passing alignment along to structure
 			pack = CompositeInternal.NO_PACKING;
 		}

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ import ghidra.util.task.TaskLauncher;
 
 /**
  * AutoAnalysisPlugin
- * 
+ *
  * Provides support for auto analysis tasks. Manages a pipeline or priority of
  * tasks to run given some event has occurred.
  */
@@ -107,7 +107,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	 */
 	private void createActions() {
 
-		// use this index to make sure that the following actions are ordered in the way that 
+		// use this index to make sure that the following actions are ordered in the way that
 		// they are inserted
 		int subGroupIndex = 0;
 
@@ -281,7 +281,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 			"Cumulative analysis task times", new StoredAnalyzerTimesPropertyEditor());
 
 		// invokeLater() to ensure that all other plugins have been notified of the program
-		// activated.  This makes sure plugins like the Listing have opened and painted the 
+		// activated.  This makes sure plugins like the Listing have opened and painted the
 		// program.
 		//
 		// If the user decided to instantly close the code browser before we get to run anything,
@@ -300,7 +300,7 @@ public class AutoAnalysisPlugin extends Plugin implements AutoAnalysisManagerLis
 	}
 
 	/**
-	 * Show the options panel for the auto analysis options. 
+	 * Show the options panel for the auto analysis options.
 	 */
 	private boolean showOptionsDialog(Program program) {
 		tool.clearStatusInfo();

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -222,7 +222,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 		//
 		// The string at this address is 14 bytes; 6 characters and a null character
-		// 
+		//
 		// This tests a bug when we pointed to the null character in the string
 		//
 
@@ -297,7 +297,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testOffcutIntoStringWhenOffcutIndexIsGreaterThanTheOptionsLength()
 			throws Exception {
 		//
-		// This tests the odd condition when the offcut index into the string is greater than 
+		// This tests the odd condition when the offcut index into the string is greater than
 		// the options have specified for the length of the label.  The bug did not display any
 		// of the string and instead only displayed the prefix and the address (like s_12345678).
 		//
@@ -376,8 +376,8 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 
 //==================================================================================================
 // Tests designed to exercise various code paths in the CodeUnitFormat and BrowserCodeUnitFormat
-// classes.	
-//==================================================================================================	
+// classes.
+//==================================================================================================
 
 	public void testOffcutIntoNonString_NoPrimarySymbol() {
 		// ?
@@ -388,7 +388,7 @@ public class LabelFieldFactoryTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	public void testOffcutIntoStructure_AtStructureMember() {
-		// 
+		//
 	}
 
 	public void testOffcutIntoStructure_NotAtStructureMember() {

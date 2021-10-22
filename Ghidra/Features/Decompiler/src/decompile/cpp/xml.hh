@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ class Attributes {
   vector<string *> value;		///< List of values for each formal XML attribute
 public:
   Attributes(string *el) { elementname = el; }	///< Construct from element name string
-  ~Attributes(void) { 
+  ~Attributes(void) {
     for(uint4 i=0;i<name.size();++i) { delete name[i]; delete value[i]; }
     delete elementname;
   }	///< Destructor
@@ -165,7 +165,7 @@ public:
   /// \param str is an array of character data
   /// \param start is the index of the first character to append
   /// \param length is the number of characters to append
-  void addContent(const char *str,int4 start,int4 length) { 
+  void addContent(const char *str,int4 start,int4 length) {
     //    for(int4 i=0;i<length;++i) content += str[start+i]; }
     content.append(str+start,length); }
 

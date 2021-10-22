@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,8 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Represents a linker_option_command structure
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a>
  */
 public class LinkerOptionCommand extends LoadCommand {
 
@@ -66,11 +66,11 @@ public class LinkerOptionCommand extends LoadCommand {
 			readerIndex += str.length() + 1;
 		}
 	}
-	
+
 	/**
 	 * Gets this {@link LinkerOptionCommand}'s linker options
-	 * 
-	 * @return This {@link LinkerOptionCommand}'s linker options 
+	 *
+	 * @return This {@link LinkerOptionCommand}'s linker options
 	 */
 	public List<String> getLinkerOptions() {
 		return linkerOptions;

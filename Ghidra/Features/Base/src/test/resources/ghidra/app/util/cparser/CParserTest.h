@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,34 +31,34 @@ typedef long unsigned long int LULI_size_t;
 typedef unsigned long long int ULLI_size_t;
 typedef long long unsigned int LLUI_size_t;
 typedef unsigned int  UI_size_t;
- 
+
 /**
  ** pragma usage
  **/
 int (__stdcall * GetSectionBlock) (
-        int section, 
-        long len, 
-        long align=1, 
+        int section,
+        long len,
+        long align=1,
         void **ppBytes=0) ;
- 
+
  #pragma region Input compatibility macros
- 
+
    #pragma warning(disable)
-   
+
   #pragma warning(disable:4035 4793)               // re-enable below
-  
+
    #pragma section(".CRTMP$XCA",long,read)
-  
-  
+
+
 /**
  ** Packing tests
  **/
  #pragma pack(push,2)
-        
+
  #pragma pack(push, PlaceHolder)
- 
+
  #pragma pack(push, 4)
- 
+
  __pragma(pack(push, MyName, 8))
 struct packed8 {
     char a;
@@ -159,15 +159,15 @@ union wait
   int w_status;
   struct
   {
-	unsigned int t:7; 
-	unsigned int c:1; 
-	unsigned int r:8; 
+	unsigned int t:7;
+	unsigned int c:1;
+	unsigned int r:8;
 	unsigned int:16;
   } __wait_terminated;
   struct
   {
-	unsigned int v:8; 
-	unsigned int s:8; 
+	unsigned int v:8;
+	unsigned int s:8;
 	unsigned int:0;
 	unsigned int:8;
 	unsigned int:8;
@@ -237,7 +237,7 @@ typedef enum {} EmptyEnum;
 
 
 typedef struct fstruct;
- 
+
 typedef int (*fnptr)(struct fstruct);
 
 
@@ -582,7 +582,7 @@ typedef struct _arraysInStruct
         unsigned int num;
         unsigned long flexTwo[0];
 } ArraysInStruct;
- 
+
 struct EmptyBuffer {
 	int x;
 	char buf[];
@@ -591,7 +591,7 @@ struct EmptyBuffer {
 
 /**
  ** Array Size allocation with expression
- **/ 
+ **/
 struct ivd {
         char type[(1-1+1)];
         char id[(6-2+1)];
@@ -624,19 +624,19 @@ enum options_enum {
 	PLUS_SET   =    4 + 12,
 
 	MINUS_SET   =    12 - 1,
-	
+
 	SHIFTED1 = 1 << 1 >> 1,
-	
+
 	SHIFTED3 = 7 >> 3 << 3,
-	
+
 	SHIFTED4 = 15 >> 3 << 3,
-	
+
 	ISONE = 1 - 1 + 1,
-	
+
 	ISNEGATIVE = -5-1,
-	
+
 	BIGNUM = 64 * 16 + 16,
-	
+
 	TRINARY =  (0 ? 10 : 11),
 };
 
@@ -650,7 +650,7 @@ char * retInitedStorage(int i)
 
   return  (char *) (void) { 'a', 'b', 'c'};
 }
- 
+
 typedef float __m128 __attribute__ ((__vector_size__ (16), __may_alias__));
 
 
@@ -665,11 +665,11 @@ _mm_set1_ps (float __F)
 
 /**
  ** Structure Initializers / casting
- **/ 
+ **/
 struct { int a[3], b; } w[] =
 {
    { { 1, 0, 0 }, 0 },
-   { { 2, 0, 0 }, 0 } 
+   { { 2, 0, 0 }, 0 }
 };
 
 int *ptr = (int *){ 10, 20, 30, 40 };
@@ -719,9 +719,9 @@ typedef unsigned int __uint32_t;
  **/
 struct arm_exception_state
 {
-	__uint32_t	exception; 
-	__uint32_t	fsr; 
-	__uint32_t  far; 
+	__uint32_t	exception;
+	__uint32_t	fsr;
+	__uint32_t  far;
 };
 
 
@@ -856,9 +856,9 @@ typedef struct mystruct {
 char lineInFunc(int i) {
  #line 1 "first/line.h"
  int j;
- 
+
  #line 2 "second/line.h"
      return 'a';
  #line 3 "third/line.h"
  }
- 
+

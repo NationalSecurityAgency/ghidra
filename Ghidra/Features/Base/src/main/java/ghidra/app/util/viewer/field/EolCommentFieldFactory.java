@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,7 +81,7 @@ public class EolCommentFieldFactory extends FieldFactory {
 	private int refRepeatableCommentStyle;
 
 	// The codeUnitFormatOptions is used to monitor "follow pointer..." option to avoid
-	// duplication of data within auto-comment.  We don't bother adding a listener 
+	// duplication of data within auto-comment.  We don't bother adding a listener
 	// to kick the model since this is done by the operand field.
 	private BrowserCodeUnitFormatOptions codeUnitFormatOptions;
 

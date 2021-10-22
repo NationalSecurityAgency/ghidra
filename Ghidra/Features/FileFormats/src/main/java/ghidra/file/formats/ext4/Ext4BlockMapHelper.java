@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,11 +32,11 @@ public class Ext4BlockMapHelper {
 	/**
 	 * Creates a {@link RangeMappedByteProvider} from the old-style block map data found in the
 	 * inode's i_block field.
-	 *   
+	 *
 	 * @param rawIBlockBytes raw bytes from the inode's i_block
 	 * @param provider the file system volume provider
 	 * @param expectedLength the length the file should be (from the inode)
-	 * @param blockSize file system blockSize 
+	 * @param blockSize file system blockSize
 	 * @param fsrl {@link FSRL} to assign to the new ByteProvider
 	 * @return new {@link ByteProvider} containing the blocks of the volume that were specified
 	 * by the blockmap data
@@ -50,7 +50,7 @@ public class Ext4BlockMapHelper {
 
 		RangeMappedByteProvider bp = new RangeMappedByteProvider(provider, fsrl);
 
-		// the location of the first 12 blocks of the file are held in [0..11] 
+		// the location of the first 12 blocks of the file are held in [0..11]
 		addFromArray(blockNumbers, 0, INDIRECT_BLOCK_INDEX, 0, bp, blockSize, expectedLength,
 			provider);
 
@@ -59,12 +59,12 @@ public class Ext4BlockMapHelper {
 		addFromArray(blockNumbers, INDIRECT_BLOCK_INDEX, DOUBLE_INDIRECT_BLOCK_INDEX, 1, bp,
 			blockSize, expectedLength, provider);
 
-		// the location of the next blocks of the file are held in an array that is 
+		// the location of the next blocks of the file are held in an array that is
 		// double-ly indirectly pointed to by [13]
 		addFromArray(blockNumbers, DOUBLE_INDIRECT_BLOCK_INDEX, TRIPLE_INDIRECT_BLOCK_INDEX, 2, bp,
 			blockSize, expectedLength, provider);
 
-		// the location of the next blocks of the file are held in an array that is 
+		// the location of the next blocks of the file are held in an array that is
 		// triply indirectly pointed to by [14]
 		addFromArray(blockNumbers, TRIPLE_INDIRECT_BLOCK_INDEX, INODE_BLOCKMAP_COUNT, 3, bp,
 			blockSize, expectedLength, provider);

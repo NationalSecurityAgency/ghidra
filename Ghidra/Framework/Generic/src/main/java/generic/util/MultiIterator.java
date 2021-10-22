@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,14 +20,14 @@ import java.util.*;
 import ghidra.util.exception.AssertException;
 
 /**
- * An iterator that is comprised of one or more {@link PeekableIterator}s.  The type <code>T</code> of the 
- * the iterators must either implement {@link Comparable} directly or you must provide a 
+ * An iterator that is comprised of one or more {@link PeekableIterator}s.  The type <code>T</code> of the
+ * the iterators must either implement {@link Comparable} directly or you must provide a
  * {@link Comparator} for comparing the types.  Further, it is assumed that the iterators return
- * values in sorted order.  If the sorted order is reversed, then that must be indicated in 
+ * values in sorted order.  If the sorted order is reversed, then that must be indicated in
  * the constructor of this class.
  * <p>
- * This class allows duplicate items in the iterators.  Thus, if you do not wish to process 
- * duplicate values, then you need to de-dup the data returned from {@link #next()}.  
+ * This class allows duplicate items in the iterators.  Thus, if you do not wish to process
+ * duplicate values, then you need to de-dup the data returned from {@link #next()}.
  * Alternatively, you could subclass this iterator and de-dup the returned values.
  * <p>
  * This class also does not handle null items returned during the iteration process.
@@ -40,9 +40,9 @@ public class MultiIterator<T> implements Iterator<T> {
 	private Comparator<T> comparator;
 
 	/**
-	 * Use this constructor when the items of the iterators are naturally comparable (i.e., 
+	 * Use this constructor when the items of the iterators are naturally comparable (i.e.,
 	 * they implement {@link Comparable}).
-	 * 
+	 *
 	 * @param iterators the iterators that provide the data
 	 * @param forward true if the iterators provide data sorted ascending; false for descending
 	 */
@@ -51,9 +51,9 @@ public class MultiIterator<T> implements Iterator<T> {
 	}
 
 	/**
-	 * Use this constructor when the items of the iterators are not naturally comparable (i.e., 
+	 * Use this constructor when the items of the iterators are not naturally comparable (i.e.,
 	 * they do not implement {@link Comparable}).
-	 * 
+	 *
 	 * @param iterators the iterators that provide the data
 	 * @param comparator the comparator used to find the next item
 	 * @param forward true if the iterators provide data sorted ascending; false for descending

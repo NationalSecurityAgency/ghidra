@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.classfinder.ExtensionPoint;
 
 /**
  * A configuration inject for automatic disassembly at the program counter
- * 
+ *
  * <p>
  * Ghidra uses a "context register" to control the modes of disassembly for certain processor
  * languages. Debuggers don't have such a context register, but may have access to the various
@@ -44,7 +44,7 @@ import ghidra.util.classfinder.ExtensionPoint;
 public interface DisassemblyInject extends ExtensionPoint {
 	/**
 	 * If present, get the information annotation on this inject
-	 * 
+	 *
 	 * @return the info
 	 */
 	default DisassemblyInjectInfo getInfo() {
@@ -59,7 +59,7 @@ public interface DisassemblyInject extends ExtensionPoint {
 
 	/**
 	 * Check if this inject applies to the given trace
-	 * 
+	 *
 	 * @param trace the trace to check
 	 * @return true if applicable, false otherwise
 	 */
@@ -70,7 +70,7 @@ public interface DisassemblyInject extends ExtensionPoint {
 
 	/**
 	 * Get this injects position in the invocation order
-	 * 
+	 *
 	 * @return the priority
 	 */
 	default int getPriority() {
@@ -79,12 +79,12 @@ public interface DisassemblyInject extends ExtensionPoint {
 
 	/**
 	 * A pre-auto disassembly hook
-	 * 
+	 *
 	 * <p>
 	 * This hook is invoked by the {@link DisassembleAtPcDebuggerBot} before disassembly actually
 	 * begins. The callback occurs within the command's background thread. In general, the inject
 	 * should limit its operation to inspecting the trace database and configuring the command.
-	 * 
+	 *
 	 * @param tool the tool that will execute the command
 	 * @param command the command to be configured, which is about to execute
 	 * @param view the view (trace, snap) which is about to be disassembled
@@ -98,11 +98,11 @@ public interface DisassemblyInject extends ExtensionPoint {
 
 	/**
 	 * A post-auto disassembly hook
-	 * 
+	 *
 	 * <p>
 	 * This hook is invoked by the {@link DisassembleAtPcDebuggerBot} after disassembly completes.
 	 * The callback occurs within the command's background thread.
-	 * 
+	 *
 	 * @param tool the tool that just executed the disassembly command
 	 * @param view the view (trace, snap) which was just disassembled
 	 * @param disassembled the addresses that were actually disassembled

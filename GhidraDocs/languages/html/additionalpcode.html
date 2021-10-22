@@ -296,7 +296,7 @@ pointer to the subcomponent and stores it in output.
 <p>
 A <span class="bold"><strong>CAST</strong></span> performs identically to the <span class="bold"><strong>COPY</strong></span>
 operator but also indicates that there is a forced change in the data-types associated with the varnodes
-at this point in the code. The value input0 is strictly copied into output; it is not a conversion cast. 
+at this point in the code. The value input0 is strictly copied into output; it is not a conversion cast.
 This operator is intended specifically for when the value doesn't change but its
 interpretation as a data-type changes at this point.
 </p>
@@ -360,7 +360,7 @@ but leaving any other bits in input0 unchanged. The least significant bit of the
 range is given by <span class="emphasis"><em>position</em></span>, where bits in index0 are labeled from least significant
 to most significant, starting at 0. The value obtained after this overwriting is returned
 as output.
-Varnodes input0 and output must be the same size and are intended to be the same varnode. 
+Varnodes input0 and output must be the same size and are intended to be the same varnode.
 The value <span class="emphasis"><em>size</em></span> must be not be bigger than the varnode input1, and
 <span class="emphasis"><em>size</em></span> + <span class="emphasis"><em>position</em></span> must not be bigger than the varnode input0.
 </p>

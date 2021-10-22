@@ -2,26 +2,26 @@
 
 <processor_spec>
 
-  <programcounter register="PC"/> 
+  <programcounter register="PC"/>
   <data_space space="mem"/>
 
-  <!-- 
-     - NOTE: The settings within this file may be specific to a particular 
-     - processor variant and will likely need to be changed to reflect 
+  <!--
+     - NOTE: The settings within this file may be specific to a particular
+     - processor variant and will likely need to be changed to reflect
      - the specific target processor.
      The RAMPx, EIND, SREG registers are not marked volatile, even though they could be changed
      indirectly with memory references.  If they are made volatile, then the addressing
      won't work in decompiler or reference recovery.
 	 Some registers only appear in newer avr8's, or with large memory spaces
-    --> 
-    
+    -->
+
   <volatile outputop="write_volatile" inputop="read_volatile">
     <range space="mem" first="0x20" last="0x57"/>
     <range space="mem" first="0x60" last="0xff"/>
   </volatile>
-  
+
   <default_symbols>
-  
+
     <symbol name="RESET" address="code:0x0000" entry="true"/>
     <symbol name="INT0" address="code:0x0002" entry="true"/>
     <symbol name="INT1" address="code:0x0004" entry="true"/>
@@ -339,12 +339,12 @@
     <symbol name="DPDS1" address="mem:0x137"/>
     <symbol name="PARCR" address="mem:0x138"/>
     <symbol name="TRXPR" address="mem:0x139"/>
-    
+
     <symbol name="AES_CTRL" address="mem:0x13c"/>
     <symbol name="AES_STATUS" address="mem:0x13d"/>
     <symbol name="AES_STATE" address="mem:0x13e"/>
     <symbol name="AES_KEY" address="mem:0x13f"/>
-    
+
     <symbol name="TRX_STATUS" address="mem:0x141"/>
     <symbol name="TRX_STATE" address="mem:0x142"/>
     <symbol name="TRX_CTRL_0" address="mem:0x143"/>
@@ -394,15 +394,15 @@
     <symbol name="CSMA_BE" address="mem:0x16f"/>
 
     <symbol name="TST_CTRL_DIGI" address="mem:0x176"/>
-    
+
     <symbol name="TST_RX_LENGTH" address="mem:0x17b"/>
     <symbol name="TST_AGC" address="mem:0x17c"/>
     <symbol name="TST_SDM" address="mem:0x17d"/>
-    
+
     <symbol name="TRXFBST" address="mem:0x180"/>
-    
+
     <symbol name="TRXFBEND" address="mem:0x1ff"/>
-        
+
   </default_symbols>
 
   <default_memory_blocks>

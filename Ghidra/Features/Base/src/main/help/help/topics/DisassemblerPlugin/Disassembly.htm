@@ -18,13 +18,13 @@
 
     <UL>
       <LI><A href="#Disassemble">Disassembly</A></LI>
-      
+
       <LI><A href="#Disassembler_Options">Disassembler Options</A></LI>
 
       <LI><A href="#Disassemble_Static">Static Disassembly</A></LI>
 
       <LI><A href="#Disassemble_Restricted">Restricted Disassembly</A></LI>
-      
+
     </UL>
 
     <H2><A name="Disassemble"></A>Disassembly</H2>
@@ -59,46 +59,46 @@
       <P><I><IMG src="../../shared/tip.png"> Selecting <A href=
       "help/topics/Tool/Undo_Redo.htm">Undo</A> will return the disassembled instructions to
       undefined bytes.</I></P>
-      
+
       <P><I><IMG src="../../shared/note.png"> Be aware that some processors may allow for
       disassembly in different modes (eg: ARM vs. THUMB). Specific commands may be provided for
       these and are not discussed here.</I></P>
     </BLOCKQUOTE>
-    
+
     <H2><A name="Disassembler_Options"></A>Disassembler Options</H2>
 
     <BLOCKQUOTE>
       <P>The following <I>Disassembler</I> options exist which control certain behaviors during
       <I>Disassembly</I>:</P>
-      
+
       <ul>
-      
-      <li><b><i>Mark Bad Disassembly</i></b> - places an error bookmark on any instruction or 
+
+      <li><b><i>Mark Bad Disassembly</i></b> - places an error bookmark on any instruction or
       instruction flow which fails to disassemble due to parse error or instruction conflict
       (Enabled by default). </li>
-      
+
       <li><b><i>Mark Unimplemented Pcode</i></b> - places a warning bookmark on any instruction
-      which has <i>unimplemented</i> pcode/semantics at the time disassembly was performed 
+      which has <i>unimplemented</i> pcode/semantics at the time disassembly was performed
       (Enabled by default).  The <i>MarkUnimplementedPcode</i> script may be run to update
       these warnings since processor language updates may implement previously unimplemented
       instruction pcode.</li>
-      
+
       <li><b><i>Restrict Disassembly to Executable Memory</i></b> - If enabled will restrict
       disassembly to those memory blocks marked as executable (Not restricted by default).  </li>
-      
+
       </ul>
-      
-      <P>The above <i>Options</i> may be changed via the program Options dialog which allows various 
+
+      <P>The above <i>Options</i> may be changed via the program Options dialog which allows various
       program properties to be examined or modified.  This dialog may be accessed via the menu action <B>Edit<IMG
           src="../../shared/arrow.gif">Options for ...</B> for the currently active program.  These
           options are program specific and stored within the program database.  The above program
-          properties can be accessed by clicking the <I>Disassembler</I> node within the 
-          <i>Properties</i> tree.  Any changes to these options will be stored when the <B>OK</B> or 
+          properties can be accessed by clicking the <I>Disassembler</I> node within the
+          <i>Properties</i> tree.  Any changes to these options will be stored when the <B>OK</B> or
           <B>Apply</B> button is clicked within the dialog. </P>
-          
-      <P>These option settings will be utilized for both forced disassembly and during 
+
+      <P>These option settings will be utilized for both forced disassembly and during
       auto-analysis.</P>
-      
+
     </BLOCKQUOTE>
 
     <H2><A name="Disassemble_Static"></A>Static Disassembly</H2>
@@ -206,18 +206,18 @@
       "help/topics/Tool/Undo_Redo.htm">Undo</A> will return the disassembled instruction to
       undefined bytes.</I></P>
     </BLOCKQUOTE>
-    
+
     <H2><A name="Modify_Instruction_Flow"></A>Modify Instruction Flow</H2>
-    
+
     <BLOCKQUOTE>
-    	<P>With certain processors and situations it may be desirable to modify the default 
-    	flow of an instruction to better reflect the nature of its flow.  For example a jump may 
-    	actually be performing a call type operation, a call may be performing a long-jump.  
-    	This distinction primarily affects the subroutine models and flow analysis performed 
+    	<P>With certain processors and situations it may be desirable to modify the default
+    	flow of an instruction to better reflect the nature of its flow.  For example a jump may
+    	actually be performing a call type operation, a call may be performing a long-jump.
+    	This distinction primarily affects the subroutine models and flow analysis performed
     	within Ghidra.</P>
     	<P>The following basic flow types may be imposed upon the default flow of an instruction:</P>
     	<UL>
-    		<LI>BRANCH</LI> 
+    		<LI>BRANCH</LI>
     		<LI>CALL</LI>
     		<LI>CALL_RETURN</LI>
     		<LI>RETURN</LI>
@@ -235,9 +235,9 @@
     	</OL>
     	<P align="left"><I><IMG src="../../shared/tip.png">An instruction whose flow has been
     	modified will have its' mnemonic color modified.</I></P>
-    	
+
     </BLOCKQUOTE>
-    
+
 
     <H2><A name="ProcessorOptions"></A>Processor Options</H2>
 
@@ -252,7 +252,7 @@
       <DIV align="center">
         <IMG src="images/ProcessorOptions.png"><BR>
         <BR>
-         
+
 
         <DIV align="left">
           <BR>

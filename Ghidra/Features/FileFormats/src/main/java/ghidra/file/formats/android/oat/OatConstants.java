@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,8 +51,8 @@ public final class OatConstants {
 	// NOTE: we plan to only support RELEASE versions...
 	// Upper case indicates supported version.
 
-	public final static String VERSION_KITKAT_RELEASE             = "007"; 
-	public final static String version_kitkat_dev                 = "008"; 
+	public final static String VERSION_KITKAT_RELEASE             = "007";
+	public final static String version_kitkat_dev                 = "008";
 	public final static String VERSION_LOLLIPOP_RELEASE           = "039";
 	public final static String VERSION_LOLLIPOP_MR1_FI_RELEASE    = "045";
 	public final static String VERSION_LOLLIPOP_WEAR_RELEASE      = "051";
@@ -82,7 +82,7 @@ public final class OatConstants {
 
 	// * * * * * * * * * * * * * * * * * * * * * * * *
 
-	
+
 	/**
 	 * This array contains version that have been actively tested and verified.
 	 * All other version will be considered unsupported until tested on exemplar firmware.

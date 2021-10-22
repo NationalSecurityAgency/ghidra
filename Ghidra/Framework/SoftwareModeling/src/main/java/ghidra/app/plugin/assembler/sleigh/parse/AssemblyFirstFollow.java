@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.generic.util.datastruct.TreeSetValuedTreeMap;
 
 /**
  * A class to compute the first and follow of every non-terminal in a grammar
- * 
+ *
  * See Alfred V. Aho, Monica S. Lam, Ravi Sethi, Jeffrey D. Ullman, <i>Compilers: Principles,
  * Techniques, &amp; Tools</i>. Bostom, MA: Pearson, 2007, pp. 220-2.
  */
@@ -148,7 +148,7 @@ public class AssemblyFirstFollow {
 
 	/**
 	 * Get the nullable set
-	 * 
+	 *
 	 * That is the set of all non-terminals, which through some derivation, can produce epsilon.
 	 * @return the set
 	 */
@@ -158,7 +158,7 @@ public class AssemblyFirstFollow {
 
 	/**
 	 * Get the first set for a given non-terminal
-	 * 
+	 *
 	 * That is the set of all terminals, which through some derivation from the given non-terminal,
 	 * can appear first in a sentential form.
 	 * @param nt the non-terminal
@@ -170,7 +170,7 @@ public class AssemblyFirstFollow {
 
 	/**
 	 * Get the follow set for a given non-terminal
-	 * 
+	 *
 	 * That is the set of all terminals, which through some derivation from the start symbol, can
 	 * appear immediately after the given non-terminal in a sentential form.
 	 * @param nt the non-terminal

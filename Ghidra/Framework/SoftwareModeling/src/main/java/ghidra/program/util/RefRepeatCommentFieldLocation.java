@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,14 +30,14 @@ public class RefRepeatCommentFieldLocation extends CommentFieldLocation {
 
 	/**
 	 * Construct a new RefRepeatCommentFieldLocation.
-	 * 
+	 *
 	 * @param program the program of the location
 	 * @param addr the address of the codeunit.
 	 * @param componentPath the componentPath of the codeUnit
 	 * @param comment comment text for the particular comment indicated by the address, subtype, and reference address.
 	 * @param row the line within the Eol comment.
 	 * @param charOffset the character position on the line within the comment line.
-	 * @param currentCommentRow the row index relative to the beginning of the particular 
+	 * @param currentCommentRow the row index relative to the beginning of the particular
 	 * referenced repeatable comment that is displayed at this location in the Eol comment field.
 	 * @param refRepeatAddress the referred to address for the referenced repeatable comment that
 	 * is being displayed at this location.

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Represents a dyld_cache_mapping_info structure.
- * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a>
  */
 @SuppressWarnings("unused")
 public class DyldCacheMappingInfo implements StructConverter {
@@ -40,7 +40,7 @@ public class DyldCacheMappingInfo implements StructConverter {
 
 	/**
 	 * Create a new {@link DyldCacheImageInfo}.
-	 * 
+	 *
 	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD mapping info
 	 * @throws IOException if there was an IO-related problem creating the DYLD mapping info
 	 */
@@ -54,7 +54,7 @@ public class DyldCacheMappingInfo implements StructConverter {
 
 	/**
 	 * Gets the address of the start of the mapping.
-	 * 
+	 *
 	 * @return The address of the start of the mapping
 	 */
 	public long getAddress() {
@@ -63,7 +63,7 @@ public class DyldCacheMappingInfo implements StructConverter {
 
 	/**
 	 * Gets the size of the mapping.
-	 * 
+	 *
 	 * @return The size of the mapping
 	 */
 	public long getSize() {
@@ -72,7 +72,7 @@ public class DyldCacheMappingInfo implements StructConverter {
 
 	/**
 	 * Gets the file offset of the start of the mapping.
-	 * 
+	 *
 	 * @return The file offset of the start of the mapping
 	 */
 	public long getFileOffset() {
@@ -81,7 +81,7 @@ public class DyldCacheMappingInfo implements StructConverter {
 
 	/**
 	 * Returns true if the initial protections include READ.
-	 * 
+	 *
 	 * @return true if the initial protections include READ
 	 */
 	public boolean isRead() {
@@ -90,7 +90,7 @@ public class DyldCacheMappingInfo implements StructConverter {
 
 	/**
 	 * Returns true if the initial protections include WRITE.
-	 * 
+	 *
 	 * @return true if the initial protections include WRITE
 	 */
 	public boolean isWrite() {
@@ -99,7 +99,7 @@ public class DyldCacheMappingInfo implements StructConverter {
 
 	/**
 	 * Returns true if the initial protections include EXECUTE.
-	 * 
+	 *
 	 * @return true if the initial protections include EXECUTE
 	 */
 	public boolean isExecute() {

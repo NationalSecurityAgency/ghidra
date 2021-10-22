@@ -68,7 +68,7 @@ others.  However, there are two differences between these macros and
 those provided by @file{ctype.h}:
 
 @itemize @bullet
-@item These macros are guaranteed to have well-defined behavior for all 
+@item These macros are guaranteed to have well-defined behavior for all
 values representable by @code{signed char} and @code{unsigned char}, and
 for @code{EOF}.
 

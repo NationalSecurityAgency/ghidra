@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -655,7 +655,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 
 	/**
 	 * Get's the source tool from the VT session.
-	 * 
+	 *
 	 * @return The source tool from the VT session.
 	 */
 	PluginTool getSourceTool() {
@@ -664,7 +664,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 
 	/**
 	 * Get's the destination tool from the VT session.
-	 * 
+	 *
 	 * @return The destination tool from the VT session.
 	 */
 	PluginTool getDestinationTool() {
@@ -674,7 +674,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 	/**
 	 * Checks whether or not the given tool is currently executing a background
 	 * task.
-	 * 
+	 *
 	 * @param tool
 	 *            The tool to check.
 	 * @return True is the given tool is currently executing a background task;
@@ -768,7 +768,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 
 	/**
 	 * Gets the address set for the current selection in the tool.
-	 * 
+	 *
 	 * @param tool
 	 *            the tool
 	 * @return the current selection or null.
@@ -786,7 +786,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 
 	/**
 	 * Sets the address set to be the selection in the tool.
-	 * 
+	 *
 	 * @param tool
 	 *            the tool
 	 * @param set
@@ -803,7 +803,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 
 	/**
 	 * Gets the address set for the current selection in the Source Tool.
-	 * 
+	 *
 	 * @return the current selection or null.
 	 */
 	AddressSetView getSelectionInSourceTool() {
@@ -812,7 +812,7 @@ public class VTSubToolManager implements VTControllerListener, OptionsChangeList
 
 	/**
 	 * Gets the address set for the current selection in the Destination Tool.
-	 * 
+	 *
 	 * @return the current selection or null.
 	 */
 	AddressSetView getSelectionInDestinationTool() {

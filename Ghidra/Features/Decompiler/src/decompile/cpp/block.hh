@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -477,7 +477,7 @@ public:
   void addEdge(FlowBlock *bl) { gotoedges.push_back(bl); }	///< Mark the edge from \b this to the given FlowBlock as unstructured
   int4 numGotos(void) const { return gotoedges.size(); }	///< Get the number of unstructured edges
   FlowBlock *getGoto(int4 i) const { return gotoedges[i]; }	///< Get the target FlowBlock along the i-th unstructured edge
-  
+
   virtual block_type getType(void) const { return t_multigoto; }
   virtual void scopeBreak(int4 curexit,int4 curloopexit);
   virtual void printHeader(ostream &s) const;
@@ -570,7 +570,7 @@ public:
   virtual PcodeOp *lastOp(void) const;
   virtual FlowBlock *nextFlowAfter(const FlowBlock *bl) const;
   virtual void saveXmlBody(ostream &s) const;
-};  
+};
 
 /// \brief A loop structure where the condition is checked at the top.
 ///

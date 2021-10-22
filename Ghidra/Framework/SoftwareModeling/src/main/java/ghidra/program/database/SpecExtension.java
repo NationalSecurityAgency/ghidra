@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,11 +36,11 @@ import ghidra.xml.*;
  * Utility class for installing/removing "specification extensions" to a Program.
  * A specification extension is a program specific version of either a:
  *   - Prototype Model
- *   - Call Fixup or 
+ *   - Call Fixup or
  *   - Callother Fixup
  * Normally these objects are provided by the language specific configuration files (.cspec or .pspec),
  * but this class allows additional objects to be added that are specific to the program.
- * 
+ *
  * Internally, each spec extension is stored as an XML document as a formal Program Option. Each type of
  * extension is described by a specific XML tag and is parsed as it would be in a .cspec or .pspec file.
  * The XML tags are:
@@ -48,19 +48,19 @@ import ghidra.xml.*;
  *   - \<callotherfixup>   - describing a Callother Fixup
  *   - \<prototype>        - describing a typical Prototype Model
  *   - \<resolveprototype> - describing a Prototype Model merged from other models
- *   
+ *
  * Each type of object has a unique name or target, which must be specified as part of the XML tag,
  * which is referred to in this class as the extension's "formal name".  In the \<callotherfixup> tag,
  * the formal name is given by the "targetop" attribute; for all the other tags, the formal name is
  * given by the "name" attribute".
- * 
+ *
  * The parent option for all extensions is given by the static field SPEC_EXTENSION. Under the parent
  * option, each extension is stored as a string with an option name, constructed by
  * concatenating the extension's formal name with a prefix corresponding to the extension's XML tag name.
  *
  * testExtensionDocument() is used independently to extensively test whether a document
  * describes a valid extension.
- * 
+ *
  * Extensions are installed on a program via addReplaceCompilerSpecExtension().
  * Extensions are removed from a program via removeCompilerSpecExtension().
  */
@@ -367,7 +367,7 @@ public class SpecExtension {
 	 * Generate an XML error handler suitable for parsing a specification document.
 	 *   - Warnings are logged.
 	 *   - Errors cause a SAXParseException
-	 * 
+	 *
 	 * @param docTitle is the title of the document
 	 * @return the error handler object
 	 */
@@ -396,7 +396,7 @@ public class SpecExtension {
 	 * Currently this can either be a
 	 *    - PrototypeModel or
 	 *    - InjectPayload
-	 * 
+	 *
 	 * For InjectPayloadCallfixup or InjectPayloadCallother, the p-code \<body> tag
 	 * is also parsed, and the caller can control whether any parse errors
 	 * cause an exception or whether a dummy payload is provided instead.

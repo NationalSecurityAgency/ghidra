@@ -13,12 +13,12 @@
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter">
 <div class="titlepage"><div><div><h1 class="title">
 <a name="DecompilerConcepts"></a>Decompiler Concepts</h1></div></div></div>
-  
-  
+
+
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="ConceptPcode"></a>P-code</h2></div></div></div>
-  
+
   <p>
     P-code is Ghidra's Intermediate Representation (IR) language. When analyzing a function,
     the Decompiler translates every machine instruction into p-code first and performs its
@@ -29,7 +29,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ConceptAddressSpace"></a>Address Space</h3></div></div></div>
-    
+
     <p>
       P-code defines all data in terms of an address space. An <span class="bold"><strong>address space</strong></span>
       is defined simply as an indexed sequence of bytes that can be read and written by p-code operations.
@@ -116,7 +116,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ConceptVarnode"></a>Varnodes</h3></div></div></div>
-    
+
     <p>
       A <span class="bold"><strong>varnode</strong></span> is defined as a sequence of bytes in
       an address space.  It represents the storage for a single value (variable) being
@@ -166,7 +166,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ConceptPcodeOps"></a>P-code Operations</h3></div></div></div>
-    
+
     <p>
       A <span class="bold"><strong>p-code operation</strong></span> is defined as a formal operator,
       labeled by its <span class="emphasis"><em>opcode</em></span>, acting on 1 or more varnodes as input and
@@ -184,7 +184,7 @@
       <div class="table">
 <a name="ops.htmltable"></a><p class="title"><b>Table . P-code Operations</b></p>
 <div class="table-contents"><table width="90%" frame="box" rules="all" id="ops.htmltable">
-        
+
         <col width="40%">
         <col width="60%">
       <thead>
@@ -200,7 +200,7 @@
 	</tr>
 	<tr>
 	  <td>Integer Arithmetic</td>
-	  <td><code class="code">INT_ADD, INT_SUB, 
+	  <td><code class="code">INT_ADD, INT_SUB,
 	  INT_2COMP, INT_MULT, INT_DIV, INT_SDIV, INT_REM, INT_SREM</code></td>
 	</tr>
 	<tr>
@@ -255,11 +255,11 @@
       </div>
 <p>
     </p>
-    
+
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="ConceptOperatorTokens"></a>Operator Tokens</h4></div></div></div>
-      
+
     <p>
       Most opcodes naturally correspond to a particular C operator token,
       and in Decompiler output, many of the operator tokens displayed correspond
@@ -667,7 +667,7 @@
   <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="ConceptControlFlow"></a>P-code Control Flow</h4></div></div></div>
-    
+
     <p>
       P-code has natural <span class="bold"><strong>control flow</strong></span>, with the subtlety that flow
       happens both within and across machine instructions.  Most p-code operators have
@@ -726,7 +726,7 @@
   <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="ConceptCallother"></a>User-defined P-code Operations - CALLOTHER</h4></div></div></div>
-    
+
     <p>
       P-code allows for additional, processor specific, operations referred to
       as <span class="emphasis"><em>user-defined</em></span> or CALLOTHER operations.
@@ -755,7 +755,7 @@
   <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="ConceptInternalFunctions"></a>Internal Decompiler Functions</h4></div></div></div>
-    
+
     <p>
       Certain p-code operations can show up in Decompiler output that cannot be represented
       as either an operator token, a cast operation, or other depiction that is natural to
@@ -807,7 +807,7 @@
 <li class="listitem" style="list-style-type: disc">The parameters 'x' and 'y' hold the values being concatenated.</li>
 </ul></div>
 	  <pre class="programlisting">
-	    CONCAT31(0xaabbcc,0xdd) = 0xaabbccdd 
+	    CONCAT31(0xaabbcc,0xdd) = 0xaabbccdd
 	  </pre>
 	  <p>
 	    Concatenate the bytes in 'x' with the bytes in 'y'.  'x' becomes the most significant
@@ -875,7 +875,7 @@
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="ConceptHighFunction"></a>The HighFunction</h2></div></div></div>
-  
+
   <p>
     A <span class="bold"><strong>HighFunction</strong></span> is the collection of specific information
     produced by the Decompiler about a function, referring to the root class in the Ghidra
@@ -910,7 +910,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ConceptHighSymbol"></a>HighSymbol</h3></div></div></div>
-    
+
     <p>
 	A <span class="bold"><strong>HighSymbol</strong></span> is one of the explicit symbols recovered by the
 	Decompiler.  It is made up of a name and data-type and can describe either:
@@ -921,7 +921,7 @@
 	      a formal <span class="bold"><strong>parameter</strong></span> of the function,
 	    </li>
 <li class="listitem" style="list-style-type: none">
-	      a <span class="bold"><strong>local variable</strong></span> of the function, or 
+	      a <span class="bold"><strong>local variable</strong></span> of the function, or
 	    </li>
 <li class="listitem" style="list-style-type: none">
 	      a <span class="bold"><strong>global variable</strong></span> accessed by the function.
@@ -931,7 +931,7 @@
 <p>
     </p>
     <p>
-	An important aspect of HighSymbols is that they are distinct from 
+	An important aspect of HighSymbols is that they are distinct from
 	the standard Ghidra symbols stored in the Program database and are part of
 	the Decompiler's separate view of the function. When the Decompiler displays
 	declarations for symbols in its output for instance, it is displaying
@@ -939,7 +939,7 @@
 	The Decompiler is generally
 	<span class="emphasis"><em>informed</em></span> by annotations in the database and may
 	copy specific symbols from the database into its view, but it is
-	generally free to invent new symbols discovered during its analysis. 
+	generally free to invent new symbols discovered during its analysis.
     </p>
     <p>
 	Various actions within Ghidra allow the user to <span class="emphasis"><em>commit</em></span>
@@ -951,7 +951,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ConceptVarnodeSSA"></a>Varnodes in the Decompiler</h3></div></div></div>
-    
+
   <p>
     Varnodes are the central <span class="emphasis"><em>variable</em></span> concept for the Decompiler.
     They form the individual nodes in the Decompiler's data-flow representation
@@ -1000,11 +1000,11 @@
     in the function.
   </p>
   </div>
-  
+
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ConceptHighVariable"></a>HighVariable</h3></div></div></div>
-    
+
     <p>
 	A <span class="bold"><strong>HighVariable</strong></span> is a set varnodes that, taken
 	together, represent the storage of an entire variable in the high-level language
@@ -1035,7 +1035,7 @@
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="ConceptMerging"></a>Merging</h4></div></div></div>
-	
+
 	<p>
 	  <span class="bold"><strong>Merging</strong></span> is the part of the analysis process where
 	  the Decompiler decides what varnodes get grouped together to create the final
@@ -1065,7 +1065,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ConceptPrototypeModel"></a>Prototype Model</h3></div></div></div>
-    
+
     <p>
       Functions in high-level languages manipulate symbols like parameters and return values that
       are implicitly stored in a way that doesn't collide with other functions and variables.  To
@@ -1092,7 +1092,7 @@
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="ConceptPrototypeStorage"></a>Incoming and Outgoing Storage Locations</h4></div></div></div>
-      
+
       <p>
 	A formal input parameter is always assigned a specific memory location to hold its value coming into the function.
 	The storage location can be a register, a stack location, or other memory location.  The storage
@@ -1116,7 +1116,7 @@
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="ConceptAutoParameters"></a>Auto-Parameters</h4></div></div></div>
-      
+
       <p>
 	Compiled binaries may pass values as parameters between functions that aren't in the formal
 	list of parameters as defined by the original source code for the program. These are referred to
@@ -1126,7 +1126,7 @@
 	See <a class="ulink" href="help/topics/FunctionPlugin/Variables.htm#Edit_Function" target="_top">Function Editor Dialog</a>.
 	Because reverse engineers need to see them, the
 	Decompiler will generally display auto-parameters explicitly in function prototypes as part of its output, even though
-	they would not be present in the original source. 
+	they would not be present in the original source.
 	Ghidra explicitly defines two auto-parameters:
 	</p>
 <div class="informalexample">
@@ -1162,10 +1162,10 @@
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="ConceptPrototypeUnaffected"></a>Unaffected</h4></div></div></div>
-      
+
       <p>
 	Prototype models can specify a set of <span class="bold"><strong>unaffected</strong></span> memory locations,
-	whose value must be <span class="emphasis"><em>preserved</em></span> across the function. I.e. each location 
+	whose value must be <span class="emphasis"><em>preserved</em></span> across the function. I.e. each location
 	must hold the same value at a function's exit that it held coming into the function.
 	These encompass a calling convention's <span class="emphasis"><em>saved registers</em></span>, where a calling function
         can store values it doesn't want to change unexpectedly, but also may include other registers that are
@@ -1177,7 +1177,7 @@
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="ConceptPrototypeKilledByCall"></a>Killed by Call</h4></div></div></div>
-      
+
       <p>
 	In contrast to <span class="emphasis"><em>unaffected</em></span> memory locations, a prototype model may specify
 	<span class="bold"><strong>killed by call</strong></span> locations that are guaranteed <span class="emphasis"><em>not</em></span>
@@ -1190,7 +1190,7 @@
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="ConceptSpecification"></a>SLEIGH Specification Files</h2></div></div></div>
-  
+
   <p>
     SLEIGH is Ghidra's specification language for describing processor instructions.
     Specification files are read in for a Program, and once configured, Ghidra's SLEIGH engine can:
@@ -1302,7 +1302,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ConceptModifySpec"></a>Modifying Specification Files</h3></div></div></div>
-    
+
     <p>
       Changing any of the specification files described here is not recommended.
       To make additions to either the <span class="emphasis"><em>compiler specification</em></span>

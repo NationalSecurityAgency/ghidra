@@ -1,12 +1,12 @@
 ## ###
 #  IP: GHIDRA
-# 
+#
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
 #  You may obtain a copy of the License at
-#  
+#
 #       http://www.apache.org/licenses/LICENSE-2.0
-#  
+#
 #  Unless required by applicable law or agreed to in writing, software
 #  distributed under the License is distributed on an "AS IS" BASIS,
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ class XmlExporterPlugin(idaapi.plugin_t):
     def init(self):
         """
         init function for XML Exporter plugin.
-        
+
         Returns:
             Constant PLUGIN_OK if this IDA version supports the plugin,
             else returns PLUGIN_SKIP if this IDA is older than the supported
@@ -64,7 +64,7 @@ class XmlExporterPlugin(idaapi.plugin_t):
     def run(self, arg):
         """
         run function for XML Exporter plugin.
-        
+
         Args:
             arg: Integer, non-zero value enables auto-run feature for
                 IDA batch (no gui) processing mode. Default is 0.
@@ -131,7 +131,7 @@ class XmlExporter:
         self.elements = {}
         self.counters = []
         self.tags = []
-        
+
         # initialize class variables from database
         self.inf = idaapi.get_inf_structure()
         self.min_ea = self.inf.minEA
@@ -148,76 +148,76 @@ class XmlExporter:
         self.check_and_load_decompiler()
         self.display_xml_exporter_version()
         self.display_database_info()
-        
+
         self.get_options()
-    
+
         if (self.autorun == True):
             (self.filename, ext) = os.path.splitext(idaapi.cvar.database_idb)
             self.filename += ".xml"
         else:
             self.filename=idaapi.askfile_c(1, "*.xml",
                                            "Enter name of export xml file:")
-            
+
         if self.filename == None or len(self.filename) == 0:
             raise Cancelled
         self.xmlfile = self.open_file(self.filename, "w")
-        
+
         idaapi.show_wait_box("Exporting XML <PROGRAM> document ....")
         idaapi.msg("\n------------------------------------------------" +
                    "-----------")
         idaapi.msg("\nExporting XML <PROGRAM> document ....")
         begin = time.clock()
-        
+
         self.write_xml_declaration()
         self.export_program()
-        
+
         # export database items based on options
         if (self.options.DataTypes.checked         == True or
-            self.options.DataDefinitions.checked   == True or 
+            self.options.DataDefinitions.checked   == True or
             self.options.Functions.checked         == True):
             self.export_datatypes()
         if (self.options.MemorySections.checked    == True or
             self.options.MemoryContent.checked     == True):
             self.export_memory_map()
         if (self.options.RegisterValues.checked    == True):
-            self.export_register_values()   
+            self.export_register_values()
         if (self.options.CodeBlocks.checked        == True):
-            self.export_code()  
+            self.export_code()
         if (self.options.DataDefinitions.checked   == True):
-            self.export_data()  
+            self.export_data()
         if (self.options.Comments.checked          == True):
             self.export_comments()
-            self.export_bookmarks()     
+            self.export_bookmarks()
         if (self.options.EntryPoints.checked       == True):
-            self.export_program_entry_points()  
+            self.export_program_entry_points()
         if (self.options.Symbols.checked           == True):
-            self.export_symbol_table()  
+            self.export_symbol_table()
         if (self.options.Functions.checked         == True):
-            self.export_functions() 
-        if (self.options.MemoryReferences.checked  == True or 
+            self.export_functions()
+        if (self.options.MemoryReferences.checked  == True or
             self.options.StackReferences.checked   == True or
             self.options.Manual.checked            == True or
             self.options.DataTypes.checked         == True):
-            self.export_markup()    
+            self.export_markup()
         self.end_element(PROGRAM)
-        
+
         idaapi.msg('\n%35s' % 'Total ')
         self.display_cpu_time(begin)
-        idaapi.hide_wait_box()  
+        idaapi.hide_wait_box()
         self.display_summary()
 
 
     def check_and_load_decompiler(self):
         """
         Checks for the presence of a decompiler plugin for the database.
-        
+
         Note: The decompiler must be loaded by the XML Exporter plugin
             if it is running in batch mode. IDA will load the decompiler
             plugin automatically if not in batch mode.
-        
+
         Note: There was no support for decompiler plugins in IDAPython until
             IDA 6.6, so skip if this is an older version.
-        
+
         Note: Currently the 4 decompiler plugins for the  x86, x64,
             ARM32, and ARM64 are supported.
         """
@@ -240,15 +240,15 @@ class XmlExporter:
                 self.hexrays = idaapi.init_hexrays_plugin()
             except:
                 return
-    
+
 
     def check_char(self, ch):
         """
         Replaces a special XML character with an entity string.
-        
+
         Args:
             ch: String containing the character to check.
-            
+
         Returns:
             String containing either the character or the entity
             substition string.
@@ -263,15 +263,15 @@ class XmlExporter:
         elif ch == '\x7F': return ''
         elif ord(ch) > 0x7F: return '&#x' + format(ord(ch),"x") + ";"
         return ch
-    
+
 
     def check_for_entities(self, text):
         """
         Checks all characters in a string for special XML characters.
-        
+
         Args:
             text: String to check for special XML characters.
-            
+
         Returns:
             String containing original string with substitutions for
                 any special XML characters.
@@ -280,15 +280,15 @@ class XmlExporter:
         for c in text:
             new += self.check_char(c)
         return new
-    
+
 
     def check_if_seg_contents(self, seg):
         """
         Determines if any address in a segment contains a value.
-        
+
         Args:
             seg: IDA segment object
-            
+
         Returns:
             True if any address in a segment contains a value.
             False if no address in a segment contains a value.
@@ -302,10 +302,10 @@ class XmlExporter:
     def check_stack_frame(self, sframe):
         """
         Determines if stack frame contains any parameters or local variables.
-        
+
         Args:
             sframe: IDA stack frame for a function.
-            
+
         Returns:
             True if stack frame has parameters or local variables.
             False if stack frame has no parameters or local variables.
@@ -316,7 +316,7 @@ class XmlExporter:
             if member == None:
                 continue
             mname = idaapi.get_member_name(member.id)
-            if mname != None and len(mname) > 0: 
+            if mname != None and len(mname) > 0:
                 if mname != " s" and mname != " r":
                     return True
         return False
@@ -344,7 +344,7 @@ class XmlExporter:
     def close_tag(self, has_contents=False):
         """
         Closes the start tag for an XML element.
-        
+
         Args:
             has_contents: Boolean indicating if the element has
             sub-elements or text.
@@ -368,7 +368,7 @@ class XmlExporter:
     def dbg(self, message):
         """
         Outputs debug message if debug flag is enabled.
-        
+
         Args:
             message: String containing the debug message.
         """
@@ -379,12 +379,12 @@ class XmlExporter:
     def display_cpu_time(self, start):
         """
         Displays the elapsed CPU time since the start time.
-        
+
         Args:
             start: Floating-point value representing start time in seconds.
         """
         idaapi.msg('CPU time: %6.4f' % (time.clock() - start))
-        
+
 
     def display_database_info(self):
         """
@@ -396,13 +396,13 @@ class XmlExporter:
     def display_message(self, message):
         """
         Displays an indented message to IDA output window.
-        
+
         Args:
             message: String containing message to display.
         """
         line = "    " + message
         idaapi.msg('\n%-35s' % line)
-        
+
 
     def display_summary(self):
         """
@@ -442,12 +442,12 @@ class XmlExporter:
         version += " : SDK " + str(IDA_SDK_VERSION)
         version += " : Python : "+ ts + '\n'
         idaapi.msg(version)
-    
+
 
     def end_element(self, tag, newline=True):
         """
         Writes the element end tag to the XML file.
-        
+
         Args:
             tag: String containing the element name.
             newline: Boolean indicating if end tag should go on new line.
@@ -465,7 +465,7 @@ class XmlExporter:
     def export_bitmask(self, eid, mask):
         """
         Exports an enum bitmask member as BIT_MASK element.
-        
+
         Args:
             eid: Integer representing the IDA enum id
             mask: Integer representing the IDA enum mask value
@@ -613,7 +613,7 @@ class XmlExporter:
         """
         Exports a <COMMENT> element with ADDRESS and TYPE attributes.
         The comment is exported as the element text (parsed character data).
-        
+
         Args:
             addr: Integers representing address of comment.
             cmt_type: String indicating the comment type.
@@ -731,7 +731,7 @@ class XmlExporter:
             addr = idaapi.nextthat(addr, self.max_ea, idaapi.isData)
         self.end_element(DATA)
         self.display_cpu_time(timer)
-        
+
 
     def export_datatypes(self):
         """
@@ -752,14 +752,14 @@ class XmlExporter:
         """
         Exports a member of an enum.
 
-        This function can only be called by IDA versions newer than 6.3 
-        
+        This function can only be called by IDA versions newer than 6.3
+
         Args:
             cid: Integer representing id of enum member
             bf: Boolean indicates if a bitfield
             mask: Integer representing bitmask if bitfield
             radix: Integer representing numeric display format
-            signness: Boolean indicating if signed value 
+            signness: Boolean indicating if signed value
         """
         if IDA_SDK_VERSION < 640:
             return
@@ -788,15 +788,15 @@ class XmlExporter:
     def export_enum_member_legacy(self, cid, bf, mask, radix, signness):
         """
         Exports a member of an enum.
-        
-        This function can only be called by IDA versions older than 6.3 
+
+        This function can only be called by IDA versions older than 6.3
 
         Args:
             cid: Integer representing id of enum member
             bf: Boolean indicates if a bitfield
             mask: Integer representing bitmask if bitfield
             radix: Integer representing numeric display format
-            signness: Boolean indicating if signed value 
+            signness: Boolean indicating if signed value
         """
         if IDA_SDK_VERSION > 630:
             return
@@ -826,8 +826,8 @@ class XmlExporter:
         """
         Exports the members of an enum.
 
-        This function can only be called by IDA versions newer than 6.3 
-        
+        This function can only be called by IDA versions newer than 6.3
+
         Args:
             eid: Integer representing id of enum
             bf: Boolean indicates if a bitfield
@@ -863,9 +863,9 @@ class XmlExporter:
     def export_enum_members_legacy(self, eid, bf, eflags):
         """
         Exports the members of an enum.
-        
-        This function can only be called by IDA versions older than 6.3 
-        
+
+        This function can only be called by IDA versions older than 6.3
+
         Args:
             eid: Integer representing id of enum
             bf: Boolean indicates if a bitfield
@@ -901,7 +901,7 @@ class XmlExporter:
     def export_enum_reference(self, addr, op):
         """
         Exports the enum reference for an operand at an address.
-        
+
         Args:
             addr: Integer representing the instruction address.
             op: Integer representing the operand index (0-based)
@@ -944,12 +944,12 @@ class XmlExporter:
         #if idaapi.is_bf(eid) == True:
         #    self.write_numeric_attribute("BIT_MASK", mask);
         self.close_tag()
-        
+
 
     def export_enum_references(self, addr):
         """
         Finds and exports enum references at an address.
-        
+
         Args:
             addr: Integer representing the instruction address.
         """
@@ -957,7 +957,7 @@ class XmlExporter:
         for op in range(2):
             if idaapi.isEnum(f, op) == True:
                 self.export_enum_reference(addr, op)
-                
+
 
     def export_enums(self):
         """
@@ -1011,7 +1011,7 @@ class XmlExporter:
     def export_extra_comment(self, addr, cmt_type, extra):
         """
         Exports pre- and post- comments for an address.
-        
+
         Args:
             addr: Integer representing the instruction address.
             cmt_type: String indicating comment type
@@ -1031,13 +1031,13 @@ class XmlExporter:
             else:
                 nextline = idaapi.get_extra_cmt(addr, extra)
             if (nextline != None):
-                cmt += '\n' 
+                cmt += '\n'
         self.export_comment(addr, cmt_type, cmt)
 
 
     def export_functions(self):
         """
-        Exports information about all functions. 
+        Exports information about all functions.
         """
         functions = idautils.Functions()
         if functions == None:
@@ -1095,7 +1095,7 @@ class XmlExporter:
     def export_manual_instruction(self, addr):
         """
         Exports user-entered "manual instruction" at an address.
-        
+
         Args:
             addr: Integer representing instruction address.
         """
@@ -1107,12 +1107,12 @@ class XmlExporter:
         self.close_tag(True)
         self.write_text(text)
         self.end_element(MANUAL_INSTRUCTION, False)
-        
+
 
     def export_manual_operand(self, addr):
         """
         Exports user-entered "manual operands" at an address.
-        
+
         Args:
             addr: Integer representing instruction address.
         """
@@ -1164,7 +1164,7 @@ class XmlExporter:
     def export_members(self, s):
         """
         Exports the members of a structure or union.
-        
+
         Args:
             s: IDA structure/union instance
         """
@@ -1215,7 +1215,7 @@ class XmlExporter:
     def export_memory_contents(self, binfilename, binfile, start, end):
         """
         Exports the binary memory contents in the database.
-        
+
         A MEMORY_CONTENTS element is generated for each contiguous address
         range where each address in the range contains a value.
         The binary values are store in a separate file (not the XML file),
@@ -1256,7 +1256,7 @@ class XmlExporter:
     def export_memory_map(self):
         """
         Exports information about all memory blocks in the database.
-        
+
         A MEMORY_SECTION is generated for each block (segment). If the
         memory block is initialized (has values), the contents are exported
         using the MEMORY_CONTENTS element.
@@ -1284,14 +1284,14 @@ class XmlExporter:
     def export_memory_reference(self, addr, op):
         """
         Exports the memory reference for operand at the address.
-        
+
         Args:
             addr: Integer representing the instruction address.
             op: Integer representing the operand index (0-based)
         """
         f = idaapi.getFlags(addr)
         ri = idaapi.refinfo_t()
-        if idaapi.get_refinfo(addr, op, ri) == 1: 
+        if idaapi.get_refinfo(addr, op, ri) == 1:
             if ri.target != BADADDR:
                 target = ri.target
             elif idaapi.isCode(f) == True:
@@ -1311,12 +1311,12 @@ class XmlExporter:
         self.write_address_attribute(TO_ADDRESS, target)
         self.write_attribute(PRIMARY, "y")
         self.close_tag()
-        
+
 
     def export_memory_references(self, addr):
         """
         Exports the memory references for any operands at the address.
-        
+
         Args:
             addr: Integer representing the instruction address.
         """
@@ -1326,12 +1326,12 @@ class XmlExporter:
                     (idaapi.isCode(f) == True and
                     self.is_imm_op(addr, op) == True)):
                 self.export_memory_reference(addr, op)
-    
+
 
     def export_memory_section(self, seg, binfilename):
         """
         Exports segment information as a MEMORY_SECTIONS element.
-        
+
         Args:
             seg: IDA segment instance
             binfilename: String containing absolute filepath for binary file.
@@ -1347,7 +1347,7 @@ class XmlExporter:
             if (seg.perm & idaapi.SEGPERM_READ  != 0):
                 perms += 'r'
             if (seg.perm & idaapi.SEGPERM_WRITE != 0):
-                perms += 'w' 
+                perms += 'w'
             if (seg.perm & idaapi.SEGPERM_EXEC  != 0):
                 perms += 'x'
             if (len(perms) > 0):
@@ -1384,7 +1384,7 @@ class XmlExporter:
         if input_md5 != None:
             self.write_attribute(INPUT_MD5,input_md5)
         self.close_tag(True)
-    
+
         # output the INFO_SOURCE element
         self.start_element(INFO_SOURCE)
         if IDA_SDK_VERSION < 670:
@@ -1402,7 +1402,7 @@ class XmlExporter:
         ts = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
         self.write_attribute(TIMESTAMP, ts)
         self.close_tag()
-    
+
         # output the PROCESSOR element
         self.start_element(PROCESSOR)
         self.write_attribute(NAME, self.inf.procName)
@@ -1437,7 +1437,7 @@ class XmlExporter:
             self.seg_addr = True
         # find any overlayed memory before processing addressable items
         self.find_overlay_memory()
-    
+
         # output compiler info
         self.start_element(COMPILER)
         self.write_attribute(NAME, idaapi.get_compiler_name(self.inf.cc.id))
@@ -1570,28 +1570,28 @@ class XmlExporter:
     def export_regular_cmt(self, cmt):
         """
         Exports the regular comment for an item.
-        
+
         Args:
             cmt: String containing the regular comment.
         """
         self.write_comment_element(REGULAR_CMT, cmt)
-    
+
 
     def export_repeatable_cmt(self, cmt):
         """
         Exports the repeatable comment for an item.
-        
+
         Args:
             cmt: String containing the repeatable comment.
         """
         self.write_comment_element(REPEATABLE_CMT, cmt)
-    
+
 
     def export_stack_frame(self, function):
         """
         Export information about a function stack frame including
         variables allocated on the stack.
-        
+
         Args:
             function: IDA function instance
         """
@@ -1613,7 +1613,7 @@ class XmlExporter:
     def export_stack_reference(self, addr):
         """
         Exports references to stack variables at the address.
-        
+
         Args:
             addr: Integer containing instruction address.
         """
@@ -1651,7 +1651,7 @@ class XmlExporter:
     def export_stack_vars(self, function, sframe):
         """
         Exports the stack variables (parameters and locals) in a stack frame.
-        
+
         Args:
             function: IDA function instance.
             sframe: IDA stack frame instance.
@@ -1742,13 +1742,13 @@ class XmlExporter:
                 if s.memqty > 0:
                     self.export_members(s)
                 self.end_element(stype)
-    
+
 
     def export_symbol(self, addr, name, stype=""):
         """
         Exports name for an address as a SYMBOL element. If the name is a
         demangled name, add the mangled name as the MANGLED attribute.
-        
+
         Args:
             addr: Integer representing the symbol address.
             name: String containing the symbol name.
@@ -1762,7 +1762,7 @@ class XmlExporter:
         if name != None and mangled != name:
             self.write_attribute("MANGLED", mangled)
         self.close_tag()
-        
+
 
     def export_symbol_table(self):
         """
@@ -1800,12 +1800,12 @@ class XmlExporter:
                                    idaapi.has_any_name)
         self.end_element(SYMBOL_TABLE)
         self.display_cpu_time(timer)
-        
+
 
     def export_typeinfo_cmt(self, cmt):
         """
         Exports comment containing type information for data and functions.
-        
+
         Args:
             cmt: String containing type info.
         """
@@ -1813,12 +1813,12 @@ class XmlExporter:
         if cmt[-1] == '\n':
             cmt = cmt[0:-1]
         self.write_comment_element(TYPEINFO_CMT, cmt)
-        
+
 
     def export_user_memory_reference(self, addr):
         """
         Exports a user-specified memory reference at the address.
-        
+
         Args:
             addr: Integer representing the instruction address.
         """
@@ -1834,7 +1834,7 @@ class XmlExporter:
     def find_overlay_memory(self):
         """
         Determines if any memory blocks (segments) are overlays.
-        
+
         A segment is an overlay if it translates to the same logical
         address as another segment. This is rare, but may occur, for
         example when a processor has a small logical address space
@@ -1861,7 +1861,7 @@ class XmlExporter:
                 if space == space2:
                     start = self.translate_address(s2.startEA)
                     end   = self.translate_address(s2.endEA-1)
-                    if ((saddr >= start and saddr <= end) or 
+                    if ((saddr >= start and saddr <= end) or
                         (eaddr >= start and eaddr <= end)):
                         is_overlay = True
                         self.has_overlays = True
@@ -1872,11 +1872,11 @@ class XmlExporter:
     def get_address_string(self, addr):
         """
         Returns a string representing the address.
-        
+
         The representation is typically a hex string of the address,
         but may include a segment or space name prefixe based on the
         processor or architecture.
-        
+
         Args:
             addr: Integer representing a program address.
         """
@@ -1902,7 +1902,7 @@ class XmlExporter:
     def get_data_value(self, addr):
         """
         Returns the data item value at an address based on its size.
-        
+
         Args:
             addr: Integer representing a program address.
         """
@@ -1912,15 +1912,15 @@ class XmlExporter:
         if size == 4:   return idaapi.get_32bit(addr)
         if size == 8:   return idaapi.get_64bit(addr)
         return 0
-    
+
 
     def get_datatype(self, addr):
         """
         Returns the datatype at an address.
-        
+
         The type could be a basic type (byte, word, dword, etc.),
         a structure, an array, a pointer, or a string type.
-        
+
         Args:
             addr: Integer representing a program address.
         """
@@ -1947,10 +1947,10 @@ class XmlExporter:
     def get_format(self, flags):
         """
         Returns the display format of a data item based on its flags.
-        
+
         Args:
             flags: Integer representing IDA item flags
-            
+
         Returns:
             String representing IDA display format.
         """
@@ -1960,15 +1960,15 @@ class XmlExporter:
         if radix == 8:  return "octal"
         if radix == 10: return "decimal"
         return "hex" # default
-    
+
 
     def get_member_type(self, m):
         """
         Returns the datatype of a structure member.
-        
+
         Args:
             m: IDA member instance.
-            
+
         Returns:
             String representing member datatype.
         """
@@ -1989,7 +1989,7 @@ class XmlExporter:
 
     def get_options(self):
         """
-        Displays the options menu and retrieves the option settings. 
+        Displays the options menu and retrieves the option settings.
         """
         fmt =  "HELP\n"
         fmt += "XML plugin (Python)\n"
@@ -2015,7 +2015,7 @@ class XmlExporter:
         fmt += "\n <Stack References:{StackReferences}>"
         fmt += "\n <Manual Instructions/Operands:{Manual}>{cGroup1}>"
         fmt += "\n\n"
-        
+
         Opts = { 'cGroup1': idaapi.Form.ChkGroupControl
             (
                 (
@@ -2035,10 +2035,10 @@ class XmlExporter:
                 )
             )
         }
-        
+
         self.options = idaapi.Form(fmt, Opts)
         self.options.Compile()
-        
+
         self.options.MemorySections.checked   = True
         self.options.MemoryContent.checked    = True
         self.options.DataTypes.checked        = True
@@ -2052,7 +2052,7 @@ class XmlExporter:
         self.options.MemoryReferences.checked = True
         self.options.StackReferences.checked  = False
         self.options.Manual.checked           = True
-    
+
         if (self.autorun == False):
             ok = self.options.Execute()
             if (ok == 0):
@@ -2062,16 +2062,16 @@ class XmlExporter:
     def get_space_name(self, addr):
         """
         Returns the memory space name associated with an address.
-        
+
         Args:
             addr: Integer representing a program address.
-            
+
         Returns:
             String containg the memory space name.
             None if single address space architecture.
 
         Used for Harvard architectures (Intel 8051 and TMS, add others
-        as needed). 
+        as needed).
         """
         pid = idaapi.ph_get_id()
         stype = idaapi.segtype(addr)
@@ -2098,13 +2098,13 @@ class XmlExporter:
     def get_symbol_name(self, ea):
         """
         Returns the symbol name for the address.
-        
+
         Args:
             ea: Integer representing the symbol address.
-            
+
         Returns:
             String containing the symbol name.
-        
+
         The demangled name will be returned if it exists, otherwise the
         displayed name is returned. Spaces (' ') will be replaced with '_'.
         """
@@ -2121,10 +2121,10 @@ class XmlExporter:
     def get_type(self, flags):
         """
         Returns a datatype string based on the item flags.
-        
+
         Args:
             flags: IDA item flags.
-            
+
         Returns:
             String representing item datatype.
         """
@@ -2149,11 +2149,11 @@ class XmlExporter:
     def is_imm_op(self, addr, op):
         """
         Returns true if instruction operand at address is an immediate value.
-        
+
         Args:
             addr: Integer representing instruction address.
             op: Integer representing operand index (0-based).
-            
+
         Returns:
             True if instruction operand at address is an immediate value.
             False otherwise.
@@ -2162,15 +2162,15 @@ class XmlExporter:
         if (idaapi.cmd.Operands[op].type == idaapi.o_imm):
             return True
         return False
-        
+
 
     def is_overlay(self, addr):
         """
         Checks if memory block (segment) is an overlay.
-        
+
         Args:
             addr: Integer representing a program address.
-            
+
         Returns:
             True if memory block (segment) is an overlay.
         """
@@ -2180,7 +2180,7 @@ class XmlExporter:
         if s.startEA in self.overlay:
             return self.overlay[s.startEA]
         return False
-    
+
     def is_signed_data(self, flags):
         return (flags & idaapi.FF_SIGN) != 0
 
@@ -2188,14 +2188,14 @@ class XmlExporter:
     def open_file(self, filename, mode):
         """
         Opens filename to specified mode.
-        
+
         Args:
             filename: String representing absolute filepath.
             mode: String representing mode for open.
-            
+
         Returns
             File handle.
-        
+
         Exceptions:
             Displays a warning and raises FileError exception
             if open fails.
@@ -2216,7 +2216,7 @@ class XmlExporter:
     def start_element(self, tag, close=False):
         """
         Outputs the start of a new element on a new indented line.
-        
+
         Args:
             tag: String representing the element tag
             close: Boolean indicating if tag is should be closed.
@@ -2233,7 +2233,7 @@ class XmlExporter:
             self.tags.append(tag)
         else:
             self.counters[self.elements[tag]] += 1
-        
+
 
     def translate_address(self, addr):
         """
@@ -2241,10 +2241,10 @@ class XmlExporter:
 
         The logical address is adjusted for the segment base address.
         For 16-bit segmented memory, return the 20-bit address.
-        
+
         Args:
             addr: Integer representing a program address.
-            
+
         Returns:
             Integer representing the logical address.
         """
@@ -2252,12 +2252,12 @@ class XmlExporter:
             return addr - idaapi.get_segm_base(idaapi.getseg(addr))
         base = idaapi.get_segm_para(idaapi.getseg(addr))
         return (base << 16) + (addr - (base << 4))
-    
+
 
     def update_status(self, tag):
         """
         Displays the processing status in the IDA window.
-        
+
         Args:
             tag: String representing XML element tag
         """
@@ -2270,18 +2270,18 @@ class XmlExporter:
     def write_address_attribute(self, name, addr):
         """
         Outputs an address attribute for an element.
-        
+
         Args:
             name: String representing attribute name.
             addr: Integer representing a program address.
         """
         self.write_attribute(name, self.get_address_string(addr))
-    
+
 
     def write_attribute(self, name, value):
         """
         Outputs an attribute (name and value) for an element.
-        
+
         Args:
             name: String representing attribute name.
             value: String representing attribute value.
@@ -2292,13 +2292,13 @@ class XmlExporter:
             return
         attr = " " + name + '="' + self.check_for_entities(value) + '"'
         self.write_to_xmlfile(attr)
-        
+
 
     def write_comment_element(self, name, cmt):
         """
         Outputs the tag and text for a comment element.
         Comment elements can be REGULAR_CMT, REPEATABLE_CMT, or TYPEINFO_CMT.
-        
+
         Args:
             name: String representing the comment element name.
             cmt: String containing the comment.
@@ -2306,12 +2306,12 @@ class XmlExporter:
         self.start_element(name, True)
         self.write_text(cmt)
         self.end_element(name, False)
-        
+
 
     def write_numeric_attribute(self, name, value, base=16, signedhex=False):
         """
         Outputs a numeric value attribute (name and value) for an element.
-        
+
         Args:
             name: String representing the attribute name.
             value: Integer representing the attribute value.
@@ -2333,23 +2333,23 @@ class XmlExporter:
         """
         Outputs the parsed character text for an element.
         The text is checked for special characters.
-        
+
         Args:
             text: String representing the element text.
         """
         self.write_to_xmlfile(self.check_for_entities(text))
-    
+
 
     def write_to_xmlfile(self, buf):
         """
         Writes the buffer to the XML file.
-        
+
         Args:
             buf: String containg data to write to XML file.
         """
         self.xmlfile.write(buf)
         self.dbg(buf)
-    
+
 
     def write_xml_declaration(self):
         """

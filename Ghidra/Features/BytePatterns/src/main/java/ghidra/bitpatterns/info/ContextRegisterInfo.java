@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.math.BigInteger;
 import org.jdom.Element;
 
 /**
- * class for representing the values a specific context register assumes within a function body. 
+ * class for representing the values a specific context register assumes within a function body.
  */
 public class ContextRegisterInfo {
 
@@ -69,7 +69,7 @@ public class ContextRegisterInfo {
 	}
 
 	/**
-	 * Returns the value associated with this {@link ContextRegisterInfo} object as a 
+	 * Returns the value associated with this {@link ContextRegisterInfo} object as a
 	 * {@link String}.
 	 * @return
 	 */
@@ -121,7 +121,7 @@ public class ContextRegisterInfo {
 
 	/**
 	 * Creates a {@link ContextRegisterInfo} object using data in the supplied XML node.
-	 * 
+	 *
 	 * @param ele xml Element
 	 * @return new {@link ContextRegisterInfo} object, never null
 	 */
@@ -139,7 +139,7 @@ public class ContextRegisterInfo {
 
 	/**
 	 * Converts this object into XML
-	 * 
+	 *
 	 * @return new jdom Element
 	 */
 	public Element toXml() {

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.program.util.DiffUtility;
 
 /**
- * This is a class with static methods for obtaining information about a code unit and its 
+ * This is a class with static methods for obtaining information about a code unit and its
  * references. The information is provided as a String.
  */
 public abstract class CodeUnitDetails {

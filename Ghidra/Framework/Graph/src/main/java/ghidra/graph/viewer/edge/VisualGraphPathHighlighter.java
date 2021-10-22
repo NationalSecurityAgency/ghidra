@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,37 +38,37 @@ import utility.function.Callback;
 /**
  * A class that calculates flow between vertices and then triggers that flow to be painted
  * in the UI.
- * 
+ *
  * <P><B><U>Threading Policy:</U></B>  Some operations use algorithms that slow down, depending
  * upon the graph size.  Further, some of these algorithms may not even complete.  To keep the
- * graph responsive, this class will perform its work <I>in the future</I>.   The work we 
+ * graph responsive, this class will perform its work <I>in the future</I>.   The work we
  * wish to do is further complicated by these requirements:
  * <UL>
  * 	<LI>Some data should be calculated only as needed, to avoid excessive work</LI>
  * 	<LI>Many tasks depend on data to be calculated before they can perform their algorithm</LI>
  * 	<LI>Results must be cached for speed, but may cleared as the graph is mutated</LI>
  *  <LI>Algorithms must not block the UI thread</LI>
- *  <LI>Related actions (i.e., hover vs. selection) should cancel any pending action, but not 
+ *  <LI>Related actions (i.e., hover vs. selection) should cancel any pending action, but not
  *      unrelated actions (e.g., a new hover request should cancel a pending hover update)
  * </UL>
- * 
+ *
  * Based on these requirements, we need to use multi-threading.  Further complicating the need
- * for multi-threading is that some operations depending on lazy-loaded data.  Finally, we 
- * have different types of actions, hovering vs. selecting a vertex, which should override 
+ * for multi-threading is that some operations depending on lazy-loaded data.  Finally, we
+ * have different types of actions, hovering vs. selecting a vertex, which should override
  * previous related requests.   To accomplish this we use:
  * <UL>
  * 	<LI>{@link CompletableFuture} - to lazy-load and cache required algorithm data</LI>
- * 	<LI>{@link RunManager}s - to queue requests so that new requests cancel old ones.  A 
+ * 	<LI>{@link RunManager}s - to queue requests so that new requests cancel old ones.  A
  *      different Run Manager is used for each type of request.</LI>
  * </UL>
- * 		
- * <P><B><U>Naming Conventions:</U></B>  There are many methods in this class, called from 
- * different threads.   For simplicity, we use the following conventions: 
+ *
+ * <P><B><U>Naming Conventions:</U></B>  There are many methods in this class, called from
+ * different threads.   For simplicity, we use the following conventions:
  * <UL>
- * 	<LI><CODE>fooAsync</CODE> - methods ending in <B>Async</B> indicate that they are to be 
+ * 	<LI><CODE>fooAsync</CODE> - methods ending in <B>Async</B> indicate that they are to be
  *                              called from a background thread.</LI>
- *  <LI><CODE>fooSwing</CODE> - methods ending in <B>Swing</B> indicate that they are to be 
- *                              called from the Swing thread.</LI>                             
+ *  <LI><CODE>fooSwing</CODE> - methods ending in <B>Swing</B> indicate that they are to be
+ *                              called from the Swing thread.</LI>
  * 	<LI>*All public methods are assumed to be called on the Swing thread</LI>
  * </UL>
  *
@@ -118,7 +118,7 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 	/**
 	 * Sets the callback that signals when this path highlighter should not be performing any
 	 * work
-	 * 
+	 *
 	 * @param pauser the callback that returns a boolean of true when this class should pause
 	 *        its work.
 	 */
@@ -395,7 +395,7 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 
 	public void clearEdgeCache() {
 		//
-		// This call to clear the cache happens due to graph vertex mutations.  The client does 
+		// This call to clear the cache happens due to graph vertex mutations.  The client does
 		// not want outdated edge information that points to removed vertices hanging around.
 		// However, the loop information is calculated not on-the-fly, but when the graph is
 		// first loaded.  Thus, clearing that will trigger the graph to lose all loop info.  To
@@ -510,7 +510,7 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 		disposeSwing(dominanceFuture, ChkDominanceAlgorithm::clear);
 		disposeSwing(postDominanceFuture, ChkDominanceAlgorithm::clear);
 
-		// reset these to compensate for new or removed vertices (but not the circuits, 
+		// reset these to compensate for new or removed vertices (but not the circuits,
 		// as they are slow and we can recalculate them)
 		dominanceFuture = null;
 		postDominanceFuture = null;
@@ -660,7 +660,7 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 
 //==================================================================================================
 // Asynchronous Methods (expected to be called in the background)
-//==================================================================================================	
+//==================================================================================================
 
 	private Set<E> getForwardScopedFlowEdgesForVertexAsync(V v) {
 		if (v == null) {
@@ -869,10 +869,10 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 			GraphAlgorithms.findPaths(graph, v1, v2, accumulator, timeoutMonitor);
 		}
 		catch (ConcurrentModificationException e) {
-			// TODO temp fix for 8.0.   
-			// This exception can happen when the current graph is being mutated off of the 
-			// Swing thread, such as when grouping and ungrouping.  For now, squash the 
-			// problem, as it is only a UI feature.   Post-"big graph branch merge", update 
+			// TODO temp fix for 8.0.
+			// This exception can happen when the current graph is being mutated off of the
+			// Swing thread, such as when grouping and ungrouping.  For now, squash the
+			// problem, as it is only a UI feature.   Post-"big graph branch merge", update
 			// how we schedule this task in relation to background graph jobs (maybe just make
 			// this task a job)
 		}
@@ -885,7 +885,7 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 	}
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	/**
 	 * A simple class to hold loops and success status
@@ -904,7 +904,7 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 		@Override
 		public String toString() {
 			//@formatter:off
-			return "{\n" + 
+			return "{\n" +
 				"\tall circuits: " + allCircuits + "\n" +
 				"\tby vertex: " + circuitsByVertex + "\n" +
 			"}";
@@ -946,7 +946,7 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 	}
 
 	/**
-	 * A class to handle off-loading the calculation of edges to be focused.  
+	 * A class to handle off-loading the calculation of edges to be focused.
 	 * The results will then be used to update the UI.
 	 */
 	private class SetFocusedEdgesRunnable implements SwingRunnable {
@@ -980,7 +980,7 @@ public class VisualGraphPathHighlighter<V extends VisualVertex, E extends Visual
 
 	/**
 	 * A class meant to run in the hover RunManager that is slow or open-ended.  Work will
-	 * be performed as long as possible, updating results along the way.  
+	 * be performed as long as possible, updating results along the way.
 	 */
 	private class SlowSetHoveredEdgesRunnable implements MonitoredRunnable {
 

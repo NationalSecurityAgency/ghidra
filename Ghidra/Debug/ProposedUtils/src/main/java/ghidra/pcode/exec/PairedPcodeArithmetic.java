@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,12 +26,12 @@ import ghidra.pcode.opbehavior.UnaryOpBehavior;
 
 /**
  * Compose an arithmetic from two.
- * 
+ *
  * <p>
  * The new arithmetic operates on tuples where each is subject to its respective arithmetic. One
  * exception is {@link #isTrue(Entry)}, which is typically used to control branches. This arithmetic
  * defers to "left" arithmetic.
- * 
+ *
  * @param <L> the type of the left element
  * @param <R> the type of the right element
  */

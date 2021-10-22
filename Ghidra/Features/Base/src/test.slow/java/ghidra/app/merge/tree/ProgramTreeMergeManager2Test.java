@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -716,7 +716,7 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 					ProgramFragment textFrag = listing.getFragment("Main Tree", ".text");
 					// create a module
 					m = m.createModule("my new module");
-					// create a fragment under "my new module" 
+					// create a fragment under "my new module"
 					ProgramFragment frag = m.createFragment("my fragment");
 					try {
 						frag.move(textFrag.getMinAddress(), textFrag.getMaxAddress());
@@ -800,7 +800,7 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 					ProgramFragment textFrag = listing.getFragment("Main Tree", ".text");
 					// create a module
 					m = m.createModule("my new module");
-					// create a fragment under "my new module" 
+					// create a fragment under "my new module"
 					ProgramFragment frag = m.createFragment("my fragment");
 					try {
 						frag.move(textFrag.getMinAddress(), textFrag.getMaxAddress());
@@ -834,7 +834,7 @@ public class ProgramTreeMergeManager2Test extends AbstractProgramTreeMergeManage
 		// MY TREE 3 should not exist
 		assertNull(listing.getRootModule("MY TREE 3"));
 
-		// Tree Three should not exist 
+		// Tree Three should not exist
 		assertNull(listing.getRootModule("Tree Three"));
 
 		// "Main Tree" should exist

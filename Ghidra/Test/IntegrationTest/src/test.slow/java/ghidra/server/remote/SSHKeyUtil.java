@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ public class SSHKeyUtil {
 
 	/**
 	 * Generate private/public SSH keys for test purposes using RSA algorithm.
-	 * @return kay pair array suitable for writing to SSH private and public 
+	 * @return kay pair array suitable for writing to SSH private and public
 	 * key files ([0] corresponds to private key, [1] corresponds to public key)
 	 * @throws NoSuchAlgorithmException
 	 */

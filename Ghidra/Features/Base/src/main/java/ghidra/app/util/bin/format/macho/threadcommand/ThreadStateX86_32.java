@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,8 +25,8 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Represents a _STRUCT_X86_THREAD_STATE32 structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/osfmk/mach/i386/_structs.h.auto.html">mach/i386/_structs.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/osfmk/mach/i386/_structs.h.auto.html">mach/i386/_structs.h</a>
  */
 public class ThreadStateX86_32 extends ThreadStateX86 {
 	public int eax;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ public final class AccessFlags {
 	 */
 	public final static int ACC_PUBLIC = 0x1;
 	/**
-	 * private: only visible to defining class 
+	 * private: only visible to defining class
 	 */
 	public final static int ACC_PRIVATE = 0x2;
 	/**
@@ -42,7 +42,7 @@ public final class AccessFlags {
 	 */
 	public final static int ACC_FINAL = 0x10;
 	/**
-	 * synchronized: associated lock automatically acquired around call to this method. 
+	 * synchronized: associated lock automatically acquired around call to this method.
 	 * Note: This is only valid to set when ACC_NATIVE is also set.
 	 */
 	public final static int ACC_SYNCHRONIZED = 0x20;
@@ -97,7 +97,7 @@ public final class AccessFlags {
 	 */
 	public final static int ACC_CONSTRUCTOR = 0x10000;
 	/**
-	 * declared synchronized. 
+	 * declared synchronized.
 	 * Note: This has no effect on execution (other than in reflection of this flag, per se).
 	 */
 	public final static int ACC_DECLARED_SYNCHRONIZED = 0x20000;

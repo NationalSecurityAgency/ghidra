@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -251,7 +251,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	 * Normally the analyzer would locate the PDB file on its own, but if a
 	 * headless script wishes to override the analyzer's behaivor, it can
 	 * use this method to specify a file.
-	 * 
+	 *
 	 * @param program {@link Program}
 	 * @param pdbFile the pdb file
 	 */
@@ -266,7 +266,7 @@ public class PdbUniversalAnalyzer extends AbstractAnalyzer {
 	 * Normally when the analyzer attempts to locate a matching PDB file it
 	 * will default to NOT searching remote symbol servers.  A headless script could
 	 * use this method to allow the analyzer to search remote symbol servers.
-	 * 
+	 *
 	 * @param program {@link Program}
 	 * @param allowRemote boolean flag, true means analyzer can search remote symbol
 	 * servers

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -198,8 +198,8 @@ class ServerConnectTask extends Task {
 	 * Attempts server connection and completes any necessary authentication.
 	 * @param defaultUserID
 	 * @return server handle or null if authentication was cancelled by user
-	 * @throws IOException 
-	 * @throws LoginException 
+	 * @throws IOException
+	 * @throws LoginException
 	 */
 	private RemoteRepositoryServerHandle getRepositoryServerHandle(String defaultUserID)
 			throws IOException, LoginException {
@@ -234,7 +234,7 @@ class ServerConnectTask extends Task {
 				try {
 					if (callbacks != null) {
 						if (onlyAnonymousCb != null) {
-							// First try using no-authentication must have failed - 
+							// First try using no-authentication must have failed -
 							// go ahead and request anonymous access without asking
 							onlyAnonymousCb.setAnonymousAccessRequested(true);
 							loopOK = false; // final try
@@ -327,7 +327,7 @@ class ServerConnectTask extends Task {
 
 		try (SSLSocket socket = (SSLSocket) factory.createSocket(serverName, sslRmiPort)) {
 			// Complete SSL handshake to trigger client keystore access if required
-			// which will give user ability to cancel without involving RMI which 
+			// which will give user ability to cancel without involving RMI which
 			// will avoid RMI reconnect attempts
 			socket.startHandshake();
 		}

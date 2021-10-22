@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,10 +71,10 @@ public class GhidraScriptInfoManager {
 	/**
 	 * Returns the script info object for the specified script file,
 	 * construct a new one if necessary.
-	 * 
+	 *
 	 * <p>Only call this method if you expect to be creating ScriptInfo objects.
-	 * Prefer getExistingScriptInfo instead. 
-	 * 
+	 * Prefer getExistingScriptInfo instead.
+	 *
 	 * @param scriptFile the script file
 	 * @return the script info object for the specified script file
 	 */
@@ -108,7 +108,7 @@ public class GhidraScriptInfoManager {
 
 	/**
 	 * Get {@link ScriptInfo} for {@code script} under the assumption that it's already managed.
-	 * 
+	 *
 	 * @param script the script
 	 * @return info or null if the assumption was wrong. If null is returned, an error dialog is shown
 	 */
@@ -126,10 +126,10 @@ public class GhidraScriptInfoManager {
 	}
 
 	/**
-	 * Returns the existing script info for the given name.  The script environment limits 
-	 * scripts such that names are unique.  If this method returns a non-null value, then the 
+	 * Returns the existing script info for the given name.  The script environment limits
+	 * scripts such that names are unique.  If this method returns a non-null value, then the
 	 * name given name is taken.
-	 * 
+	 *
 	 * @param scriptName the name of the script for which to get a ScriptInfo
 	 * @return a ScriptInfo matching the given name; null if no script by that name is known to
 	 *         the script manager
@@ -143,7 +143,7 @@ public class GhidraScriptInfoManager {
 	}
 
 	/**
-	 * Looks through all of the current {@link ScriptInfo}s to see if one already exists with 
+	 * Looks through all of the current {@link ScriptInfo}s to see if one already exists with
 	 * the given name.
 	 * @param scriptName The name to check
 	 * @return true if the name is not taken by an existing {@link ScriptInfo}.
@@ -158,7 +158,7 @@ public class GhidraScriptInfoManager {
 	}
 
 	/**
-	 * Updates every known script's duplicate value. 
+	 * Updates every known script's duplicate value.
 	 */
 	public void refreshDuplicates() {
 		scriptNameToFilesMap.values().forEach(files -> {
@@ -171,7 +171,7 @@ public class GhidraScriptInfoManager {
 	 * Uses the given name to find a matching script.  This method only works because of the
 	 * limitation that all script names in Ghidra must be unique.  If the given name has multiple
 	 * script matches, then a warning will be logged.
-	 * 
+	 *
 	 * @param scriptName The name for which to find a script
 	 * @return The ScriptInfo that has the given name
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -503,7 +503,7 @@ void Architecture::addSpacebase(AddrSpace *basespace,const string &nm,const Varn
 
 {
   int4 ind = numSpaces();
-  
+
   SpacebaseSpace *spc = new SpacebaseSpace(this,translate,nm,ind,truncSize,basespace,ptrdata.space->getDelay()+1);
   if (isreversejustified)
     setReverseJustified(spc);
@@ -759,7 +759,7 @@ ProtoModel *Architecture::parseProto(const Element *el)
     throw LowlevelError("Expecting <prototype> or <resolveprototype> tag");
 
   res->restoreXml(el);
-  
+
   ProtoModel *other = protoModels[res->getName()];
   if (other != (ProtoModel *)0) {
     delete res;
@@ -864,7 +864,7 @@ void Architecture::parseReadOnly(const Element *el)
 {
   const List &list(el->getChildren());
   List::const_iterator iter;
-  
+
   for(iter=list.begin();iter!=list.end();++iter) {
     Range range;
     range.restoreXml(*iter,this);
@@ -881,7 +881,7 @@ void Architecture::parseVolatile(const Element *el)
   userops.parseVolatile(el,this);
   const List &list(el->getChildren());
   List::const_iterator iter;
-  
+
   for(iter=list.begin();iter!=list.end();++iter) {
     Range range;
     range.restoreXml(*iter,this); // Tag itself is range
@@ -1022,7 +1022,7 @@ void Architecture::parseFuncPtrAlign(const Element *el)
   istringstream s(el->getAttributeValue("align"));
   s.unsetf(ios::dec | ios::hex | ios::oct);
   s >> align;
-  
+
   if (align == 0) {
     funcptr_align = 0;		// No alignment
     return;
@@ -1057,7 +1057,7 @@ void Architecture::parseNoHighPtr(const Element *el)
 {
   const List &list(el->getChildren());
   List::const_iterator iter;
-  
+
   for(iter=list.begin();iter!=list.end();++iter) { // Iterate over every range tag in the list
     Range range;
     range.restoreXml(*iter,this);
@@ -1111,7 +1111,7 @@ void Architecture::parseProcessorConfig(DocumentStorage &store)
     throw LowlevelError("No processor configuration tag found");
   const List &list(el->getChildren());
   List::const_iterator iter;
-  
+
   for(iter=list.begin();iter!=list.end();++iter) {
     const string &elname( (*iter)->getName() );
     if (elname == "programcounter") {
@@ -1243,7 +1243,7 @@ void Architecture::parseCompilerConfig(DocumentStorage &store)
     parseGlobal(globaltags[i]);
 
   addOtherSpace();
-      
+
   if (defaultfp == (ProtoModel *)0) {
     if (protoModels.size() == 1)
       defaultfp = (*protoModels.begin()).second;
@@ -1271,7 +1271,7 @@ void Architecture::parseExtraRules(DocumentStorage &store)
   if (expertag != (const Element *)0) {
     const List &list(expertag->getChildren());
     List::const_iterator iter;
-    
+
     for(iter=list.begin();iter!=list.end();++iter)
       parseDynamicRule( *iter );
   }
@@ -1412,7 +1412,7 @@ Statistics::~Statistics(void)
 //     Cover *cover = vn->getCover();
 //     if (cover == (Cover *)0) continue;
 //     numvar += 1;
-    
+
 //     int4 size = cover->getSize();
 //     int4 count = 0;
 //     for(int4 i=0;i<size;++i) {

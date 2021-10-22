@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import docking.widgets.GComponent;
  * <p>
  * HTML rendering is disabled by default.
  * <p>
- * 
+ *
  * @param <T> the row type of the list
  */
 public class GList<T> extends JList<T> implements GComponent {
@@ -72,7 +72,7 @@ public class GList<T> extends JList<T> implements GComponent {
 
 	/**
 	 * Constructs a <code>GhidraList</code> that displays the elements in the
-	 * specified, non-<code>null</code> model. 
+	 * specified, non-<code>null</code> model.
 	 * All <code>GhidraList</code> constructors delegate to this one.
 	 * @param dataModel   the data model for this list
 	 * @exception IllegalArgumentException   if <code>dataModel</code> is <code>null</code>
@@ -108,14 +108,14 @@ public class GList<T> extends JList<T> implements GComponent {
 
 	@Override
 	public int getNextMatch(String prefix, int startIndex, Bias bias) {
-		// disable the default lookup algorithm, as it does not use the renderer, but 
+		// disable the default lookup algorithm, as it does not use the renderer, but
 		// only the object's toString(), which will not always match what the user sees on screen
 		return -1;
 	}
 
 	/**
 	 * Allows subclasses to change the type of {@link AutoLookup} created by this list
-	 * @return the auto lookup 
+	 * @return the auto lookup
 	 */
 	protected AutoLookup createAutoLookup() {
 		return new GListAutoLookup<>(this);

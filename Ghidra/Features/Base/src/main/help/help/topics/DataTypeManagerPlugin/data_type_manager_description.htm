@@ -26,11 +26,11 @@
     </P>
 
 	<BLOCKQUOTE>
-	
+
 	<H2>Topics</H2>
 
 	<BLOCKQUOTE>
-	
+
 		<UL>
 			<LI>
 				<A HREF="#Basic_Concepts">Basic Concepts</A>
@@ -45,13 +45,13 @@
 				<A HREF="#Category">Working With Categories</A>
 			</LI>
 			<LI>
-				<A HREF="#Data_Types">Working With Data Types</A>				
+				<A HREF="#Data_Types">Working With Data Types</A>
 			</LI>
 			<LI>
-				<A HREF="data_type_manager_archives.html">Managing Archives</A>				
+				<A HREF="data_type_manager_archives.html">Managing Archives</A>
 			</LI>
 		</U>
-	
+
 	</BLOCKQUOTE>
 
     <H2><A NAME="Basic_Concepts"></A>Basic Concepts</H2>
@@ -97,7 +97,7 @@
     <BLOCKQUOTE>
       <P>Data type archives are used to bundle and share data types between programs, projects, and
       users. There are two different types of user created archives: File data type archives and
-      Project data type archives. Data type archives can be accessed within the 
+      Project data type archives. Data type archives can be accessed within the
       <I>Data Type Manager</I> window. When a data type archive is open, it
       is displayed as a node in the <I>Data Type Manager</I>
       tree. Archives can be opened by the user or automatically when a program is opened which
@@ -110,11 +110,11 @@
     </H3>
 
     <BLOCKQUOTE>
-      <P>The "Built-in" archive is a special archive that is always available in the 
+      <P>The "Built-in" archive is a special archive that is always available in the
       <I>Data Type Manager</I> window. It provides access to all of Ghidra's
       "Built-in" data types. "Built-in" types are discovered by searching through Ghidra's class
       path.</P>
-    
+
 	<BLOCKQUOTE>
     <P><IMG src="../../shared/note.png" alt="">In the unlikely event that new data type class files
     or jar files are added while Ghidra is running, there is a refresh action which will find and
@@ -257,7 +257,7 @@
         cases these old archives may be replaced with a differently named archive. When this
         happens, this popup action can be used on a client archive to update the old source archive
         references. This popup action is only available when such an archive name change has
-        occurred. Any programs or other client archives which reference the old archive will have 
+        occurred. Any programs or other client archives which reference the old archive will have
         this popup action available to update the source archive name reference.</P>
       </BLOCKQUOTE>
 
@@ -506,7 +506,7 @@
           src="images/smallLeftArrow.png"> or the <IMG alt="" src="images/doubleArrow.png">
           icon.</P>
 
-          <P>To update the datatypes, right-click on the node that needs updating and select 
+          <P>To update the datatypes, right-click on the node that needs updating and select
           <B>Update Datatypes From</B> <I><B><IMG src=
           "../../shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
           Name&gt;.</B></I> The Update Data Types dialog will be shown allowing you to select
@@ -589,12 +589,12 @@
           <P>Datatypes that are associated with a source archive may have a commit, update, or
           conflict icon indicating they are out of sync with the data type in the source archive,
           when the data type actually matches the source datatype. This can happen if a data type
-          is changed, but changed to match its source. Invoke the <B>Refresh</B> 
+          is changed, but changed to match its source. Invoke the <B>Refresh</B>
           action to refresh all the sync indicators for that
           source archive.</P>
 
           <P>To refresh sync indicators for datatypes associated with a particular source archive,
-          right-click on the node that contains the datatypes and select 
+          right-click on the node that contains the datatypes and select
           <B>Refresh Sync Indicators For</B> <I><B><IMG src=
           "../../shared/arrow.gif" alt=""></B> <B>&lt;Source Archive
           Name&gt;.</B></I> &lt;
@@ -808,7 +808,7 @@
             </BLOCKQUOTE>
             <BR>
             <BR>
-             
+
 
             <P>To create a <B>pointer</B>, you can click <I><B>New<IMG src="../../shared/arrow.gif"
             alt=""> Pointer to XYZ</B></I>. A new pointer will be created to the <I>XYZ</I> data
@@ -959,7 +959,7 @@
         <P>If changes are made to a data type that has an association with a source archive, that
         data type is now different from its source data type. Those changes can be thrown away and
         the data type can be <I>reverted</I> back to its original
-        state. Right-click on the data type to be reverted and select the 
+        state. Right-click on the data type to be reverted and select the
         <B>Revert</B> action and the changes will be removed.</P>
       </BLOCKQUOTE>
 
@@ -967,7 +967,7 @@
 
       <BLOCKQUOTE>
         <P>To remove a data type association with a source archive, right-click on the data type in
-        the client archive (another archive or the program) and select the 
+        the client archive (another archive or the program) and select the
         <B>Disassociate From Archive</B> action. The data type will become a
         local data type within the client archive and any changes to it will not affect the
         original data type in the source archive.</P>
@@ -986,7 +986,7 @@
         yes, an association is created, but the archive will become the source and the program's
         data type is the one that gets the association. In other words, it appears as if the data
         type were created in the archive and copied to the program.</P>
-        
+
              </BLOCKQUOTE>
 
         <H3><A name="DataTypeConflicts"></A>Handling Data Type Conflicts</H3>

@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//Attempts to demangle the symbol at the current location using Ghidra's DemanglerCmd and replace 
+//Attempts to demangle the symbol at the current location using Ghidra's DemanglerCmd and replace
 //the default symbol and function signature (if applicable) with the demangled symbol
 //Works for both Microsoft and Gnu mangled symbols
 //@category Symbol

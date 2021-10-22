@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,7 +113,7 @@ public class JTreeMouseListenerDelegate extends MouseAdapter {
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		if (!handlePopupTrigger(e)) {
-			// Potentially clear any residue of where we may have 
+			// Potentially clear any residue of where we may have
 			// clicked a multi-selection, but did not actually perform a drag
 			maybeResetSelectionPath(e);
 		}
@@ -180,7 +180,7 @@ public class JTreeMouseListenerDelegate extends MouseAdapter {
 				return false;
 			}
 
-			// don't let other process the event if we are 'pressing' the mouse button on an 
+			// don't let other process the event if we are 'pressing' the mouse button on an
 			// already selected node (to prevent de-selecting a multi-selection)
 			if (tree.isPathSelected(selectionPath)) {
 				return true;

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,12 +22,12 @@ import ghidra.program.model.address.AddressSpace;
 
 /**
  * An subclass of {@link MemoryBank} intended for modeling the "unique" memory
- * space.  The space is byte-addressable and paging is not supported.  
+ * space.  The space is byte-addressable and paging is not supported.
  */
 public class UniqueMemoryBank extends MemoryBank {
 
 	/**A map from {@link Long} offsets to byte values would require many lookups.
-	 * As an optimization, this map is defined from {@link Long} values to 
+	 * As an optimization, this map is defined from {@link Long} values to
 	 * {@link WordInfo} objects, each of which represents an eight-byte word
 	 * of memory.  Each key in this map must be 0 mod 8.
 	 */
@@ -36,7 +36,7 @@ public class UniqueMemoryBank extends MemoryBank {
 	private static final long ALIGNMENT_MASK = 0xfffffffffffffff8L;
 
 	//note that WordInfo use the bits in a byte to record whether
-	//or not a given byte has been written to, so you can't just 
+	//or not a given byte has been written to, so you can't just
 	//change WORD_SIZE to another value and without also changing
 	//the implementation of WordInfo
 	private static final int WORD_SIZE = 8;
@@ -99,7 +99,7 @@ public class UniqueMemoryBank extends MemoryBank {
 					bytesRead += bytesToRead;
 					continue;
 				}
-				//not entirely initialized, copy one byte at a time until 
+				//not entirely initialized, copy one byte at a time until
 				//all requested bytes read (or word.getByte throws an exception)
 				int base = bytesRead;
 				for (int i = 0; i < bytesToRead; ++i) {
@@ -178,9 +178,9 @@ public class UniqueMemoryBank extends MemoryBank {
 		}
 
 		/**
-		 * Initializes the byte at {@code index} and sets its value to 
+		 * Initializes the byte at {@code index} and sets its value to
 		 * {@code val}
-		 * @param val new value 
+		 * @param val new value
 		 * @param index index
 		 * @throws LowlevelError if the index is invalid
 		 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ class CommentHistoryPanel extends JPanel {
 	private int commentType;
 
 	/**
-	 * Construct a new CommentHistoryPanel 
+	 * Construct a new CommentHistoryPanel
 	 * @param commentType comment type
 	 */
 	CommentHistoryPanel(int commentType) {
@@ -60,7 +60,7 @@ class CommentHistoryPanel extends JPanel {
 
 	/**
 	 * Show the comment history
-	 * @param program program 
+	 * @param program program
 	 * @param addr address of comment history
 	 */
 	void showCommentHistory(Program program, Address addr) {

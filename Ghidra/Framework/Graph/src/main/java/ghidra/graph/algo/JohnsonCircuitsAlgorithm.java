@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,8 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Finds all circuits (loops) in the given graph.
- * 
- * <P><B><U>Warning:</U></B> This is a recursive algorithm.  As such, it is limited in how deep 
+ *
+ * <P><B><U>Warning:</U></B> This is a recursive algorithm.  As such, it is limited in how deep
  * it can recurse.   Any path that exceeds the {@link #JAVA_STACK_DEPTH_LIMIT} will not be found.
  *
  * @param <V> the vertex type
@@ -50,8 +50,8 @@ public class JohnsonCircuitsAlgorithm<V, E extends GEdge<V>> {
 
 	/**
 	 * Finds the circuits in the graph passed at construction time.
-	 * 
-	 * @param uniqueCircuits true signals to return only unique circuits, where no two 
+	 *
+	 * @param uniqueCircuits true signals to return only unique circuits, where no two
 	 *        circuits will contain the same vertex
 	 * @param monitor the task monitor
 	 * @throws CancelledException if the monitor is cancelled
@@ -90,7 +90,7 @@ public class JohnsonCircuitsAlgorithm<V, E extends GEdge<V>> {
 		monitor.checkCanceled();
 
 		// TODO
-		// Sigh.  We are greatly limited in the size of paths we can processes due to the 
+		// Sigh.  We are greatly limited in the size of paths we can processes due to the
 		// recursive nature of this algorithm.  This should be changed to be non-recursive.
 		if (depth > JAVA_STACK_DEPTH_LIMIT) {
 			return false;

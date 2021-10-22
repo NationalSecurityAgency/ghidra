@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -49,7 +49,7 @@ public class ItemSerializer {
 	}
 
 	/**
-	 * Read and compress data from the specified content stream and write to 
+	 * Read and compress data from the specified content stream and write to
 	 * a packed file along with additional meta-data.
 	 * @param itemName item name
 	 * @param contentType content type
@@ -129,8 +129,8 @@ public class ItemSerializer {
 	}
 
 	/**
-	 * A simple utility method to determine if the given file is a packed file as created by 
-	 * this class. 
+	 * A simple utility method to determine if the given file is a packed file as created by
+	 * this class.
 	 * @param file The file to check
 	 * @return True if it is a packed file
 	 * @throws IOException If there is a problem reading the given file
@@ -154,8 +154,8 @@ public class ItemSerializer {
 	}
 
 	/**
-	 * A convenience method for checking if the file denoted by the given inputStream is a 
-	 * packed file.  
+	 * A convenience method for checking if the file denoted by the given inputStream is a
+	 * packed file.
 	 * <p>
 	 * <b>Note: </b> This method will NOT close the given inputStream.
 	 * @param inputStream a stream for accessing bytes of what may be a packed file

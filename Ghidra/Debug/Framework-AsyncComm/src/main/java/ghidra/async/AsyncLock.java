@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,16 +30,16 @@ import ghidra.util.Msg;
 
 /**
  * An optionally-reentrant lock for managing a contentious resource
- * 
+ *
  * <p>
  * Typically, a resource has a queue of actions that it executes in order, or it may only permit a
  * single pending action at any given time. If a task composed of many actions needs to ensure no
  * other actions are queued in between, it must use a lock. This is analogous to thread
  * synchronization. This can also be described as a queue to enter other queues.
- * 
+ *
  * <p>
  * Example:
- * 
+ *
  * <pre>
  * public CompletableFuture<Void> exampleLock1() {
  * 	AtomicReference<AsyncLock.Hold> hold = new AtomicReference<>();
@@ -58,10 +58,10 @@ import ghidra.util.Msg;
  * 	});
  * }
  * </pre>
- * 
+ *
  * <p>
  * Or more succinctly:
- * 
+ *
  * <pre>
  * public CompletableFuture<Void> exampleLock2() {
  * 	return lock.with(TypeSpec.VOID, null).then((hold, seq) -> {
@@ -71,7 +71,7 @@ import ghidra.util.Msg;
  * 	}).asCompletableFuture();
  * }
  * </pre>
- * 
+ *
  * <p>
  * Re-entry is supported via a {@link Hold}. A method that offers re-enter into a critical section
  * must accept a {@link Hold} parameter. Generally, the caller indicates the callee should reenter
@@ -80,14 +80,14 @@ import ghidra.util.Msg;
  * from another lock cannot be used for re-entry. If it is null, normal behavior is applied and the
  * queue is served in FIFO order. If it is a reference to the current hold, the callback is executed
  * immediately. Reentrant holds must be released in the reverse order of acquisition.
- * 
+ *
  * <pre>
  * public CompletableFuture<Void> canReenter(Hold reenter) {
  * 	return lock.with(TypeSpec.VOID, reenter).then((hold, seq) -> {
  * 		doCriticalStuff();
  * 	}).asCompletableFuture();
  * }
- * 
+ *
  * public CompletableFuture<Void> exampleLock3() {
  * 	return lock.with(TypeSpec.VOID, null).then((hold, seq) -> {
  * 		canReenter(hold).handle(seq::next);
@@ -96,7 +96,7 @@ import ghidra.util.Msg;
  * 	}).asCompletableFuture();
  * }
  * </pre>
- * 
+ *
  * <p>
  * The implementation is based on a queue a queue of futures. The {@link #acquire(Hold)} task
  * completes when the lock is available or if re-entry is possible. {@link Hold#release()} is not a
@@ -106,7 +106,7 @@ import ghidra.util.Msg;
  * {@link IllegalStateException}. Deadlock detection is a debugging feature. A programmer cannot
  * rely on it for error recovery. If the exception is thrown, it indicates a serious flaw in the
  * program which cannot be corrected at runtime.
- * 
+ *
  * <p>
  * The above examples demonstrate two critical actions, because in general, a single action is
  * atomic. This lock <em>does not</em> protect against the usual multi-threaded hazards. Because any
@@ -115,7 +115,7 @@ import ghidra.util.Msg;
  * methods provide futures are better protected using this lock, because a standard {@link Lock}
  * will block the calling thread -- perhaps stalling a queue's executor -- whereas this lock permits
  * the thread to execute other actions.
- * 
+ *
  * @note This implementation offers little protection against double locking, or gratuitous
  *       releasing.
  * @note As an asynchronous task, {@link #acquire()} returns immediately, but the future does not
@@ -208,11 +208,11 @@ public class AsyncLock {
 
 	/**
 	 * Construct a lock with debug printing
-	 * 
+	 *
 	 * <p>
 	 * This lock will print calls to {@link #acquire(Hold)} and {@link Hold#release()}. It will also
 	 * note when the lock is acquired or re-entered, printing the current hold.
-	 * 
+	 *
 	 * @param debugName a name to prefix to debug messages
 	 */
 	public AsyncLock(String debugName) {
@@ -227,12 +227,12 @@ public class AsyncLock {
 
 	/**
 	 * Queue a future on this lock, possibly re-entering
-	 * 
+	 *
 	 * <p>
 	 * If reentry is {@code null}, then this will acquire the lock without reentry. Otherwise, the
 	 * lock checks the provided hold. If it is valid, the lock is immediately acquired via re-entry.
 	 * If it is not valid, an exception is thrown.
-	 * 
+	 *
 	 * @param reentry a hold to prove current lock ownership for reentry
 	 * @return a future that completes when the lock is held
 	 * @throws IllegalStateException if the given reentry hold is not the current hold on this lock
@@ -276,13 +276,13 @@ public class AsyncLock {
 
 	/**
 	 * Queue a sequence of actions on this lock
-	 * 
+	 *
 	 * The lock will be acquired before executing the first action of the sequence, and the hold
 	 * will be automatically released upon completion, whether normal or exceptional. The first
 	 * action receives a reference to the hold, which may be used to re-enter the lock.
-	 * 
+	 *
 	 * If the sequence stalls, i.e., an action never completes, it will cause deadlock.
-	 * 
+	 *
 	 * @param type the type "returned" by the sequence
 	 * @param hold an optional handle to prove current ownership for re-entry
 	 * @return a sequence of actions wrapped by lock acquisition and release
@@ -296,10 +296,10 @@ public class AsyncLock {
 
 	/**
 	 * Queue a sequence of actions on this lock
-	 * 
+	 *
 	 * Identical to {@link #with(TypeSpec, Hold)} except that the acquired hold is stored into an
 	 * atomic reference rather than passed to the first action.
-	 * 
+	 *
 	 * @param type the type "returned" by the sequence
 	 * @param hold an optional hold to prove current ownership for re-entry
 	 * @param handle an atomic reference to store the hold

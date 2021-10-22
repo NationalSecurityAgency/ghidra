@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.dbg.target.TargetObject;
 
 /**
  * A collection of utilities for examining and manipulating debug object paths
- * 
+ *
  * <p>
  * Paths are merely lists of strings where each part indicates an attribute name or element index.
  * Element indices are enclosed in brackets {@code []}, may be multidimensional, and may be any type
@@ -49,7 +49,7 @@ public enum PathUtils {
 		},
 		/**
 		 * Sort keys by element index.
-		 * 
+		 *
 		 * <p>
 		 * Element indices may be multidimensional, in which case the dimensions are separated by
 		 * commas, and sorting prioritizes the left-most dimensions. Where indices (or dimensions
@@ -57,7 +57,7 @@ public enum PathUtils {
 		 * lexicographically. Numeric types can be encoded in hexadecimal. While decimal is typical
 		 * you may run into difficulties if those numbers are too large, as the implementation must
 		 * assume numeric types are hexadecimal.
-		 * 
+		 *
 		 * @implNote The only way I can think to resolve the numeric encoding issue is to examine
 		 *           all keys before even selecting a comparator. As is, a comparator can only see
 		 *           two keys at a time, and has no context to what it's actually sorting.
@@ -79,7 +79,7 @@ public enum PathUtils {
 		},
 		/**
 		 * Sort keys by element index, allowing only one dimension.
-		 * 
+		 *
 		 * <p>
 		 * Please use {@link #ELEMENT}, unless you really know you need this instead.
 		 */
@@ -139,7 +139,7 @@ public enum PathUtils {
 	public enum PathComparator implements Comparator<List<String>> {
 		/**
 		 * Sort paths by key, prioritizing the left-most, i.e., top-most, keys.
-		 * 
+		 *
 		 * <p>
 		 * If one path is a prefix to the other, the prefix is "less than" the other.
 		 */
@@ -293,7 +293,7 @@ public enum PathUtils {
 
 	/**
 	 * Extend a path with a given key, usually attribute name
-	 * 
+	 *
 	 * @param path the parent path
 	 * @param key the key to append
 	 * @return the resulting extended path
@@ -307,7 +307,7 @@ public enum PathUtils {
 
 	/**
 	 * Extend a path with another sub-path
-	 * 
+	 *
 	 * @param path the parent path
 	 * @param sub the sub-path to the successor
 	 * @return the resulting extended path
@@ -321,7 +321,7 @@ public enum PathUtils {
 
 	/**
 	 * Encode the given index in decimal, without brackets
-	 * 
+	 *
 	 * @param i the numeric index
 	 * @return the encoded index
 	 */
@@ -331,7 +331,7 @@ public enum PathUtils {
 
 	/**
 	 * Encode the given index in decimal, without brackets
-	 * 
+	 *
 	 * @param i the numeric index
 	 * @return the encoded index
 	 */
@@ -341,11 +341,11 @@ public enum PathUtils {
 
 	/**
 	 * Encode the given index as a key
-	 * 
+	 *
 	 * <p>
 	 * When indexing elements, no brackets are needed. The brackets become necessary when used as a
 	 * key, e.g., when specifying an index within a path, or as keys in a map of all children.
-	 * 
+	 *
 	 * @param index the index
 	 * @return the key, specifying an element.
 	 */
@@ -355,10 +355,10 @@ public enum PathUtils {
 
 	/**
 	 * Extend a path with a given index
-	 * 
+	 *
 	 * <p>
 	 * This is equivalent to calling {@code extend(path, makeKey(index))}.
-	 * 
+	 *
 	 * @param path the parent path
 	 * @param index the index to append
 	 * @return the resulting extended path
@@ -369,11 +369,11 @@ public enum PathUtils {
 
 	/**
 	 * Obtain the parent path of this path
-	 * 
+	 *
 	 * <p>
 	 * This merely removes the last element of the path. If the given path refers to the root,
 	 * {@code null} is returned.
-	 * 
+	 *
 	 * @param path the child path
 	 * @return the parent path or {@code null}
 	 */
@@ -386,11 +386,11 @@ public enum PathUtils {
 
 	/**
 	 * Obtain the key of the object to which the given path refers
-	 * 
+	 *
 	 * <p>
 	 * This is merely the final right-most key in the path. If the given path refers to the root,
 	 * {@code null} is returned.
-	 * 
+	 *
 	 * @param path the object's path
 	 * @return the key of the object
 	 */
@@ -403,10 +403,10 @@ public enum PathUtils {
 
 	/**
 	 * Parse an index value from a key
-	 * 
+	 *
 	 * <p>
 	 * Where key is the form {@code [index]}, this merely returns {@code index}.
-	 * 
+	 *
 	 * @param key the key
 	 * @return the index
 	 * @throws IllegalArgumentException if key is not of the required form
@@ -420,11 +420,11 @@ public enum PathUtils {
 
 	/**
 	 * Obtain the index of the object to which the given path refers
-	 * 
+	 *
 	 * <p>
 	 * This merely parses the index from the final right-most key in the path. It is roughly
 	 * equivalent to calling {@code parseIndex(getKey(path))}.
-	 * 
+	 *
 	 * @see #getKey(List)
 	 * @see #parseIndex(String)
 	 * @see #index(List, String)
@@ -439,7 +439,7 @@ public enum PathUtils {
 
 	/**
 	 * Check if the given key is a bracketed index
-	 * 
+	 *
 	 * @param key the key to check
 	 * @return true if it is an index
 	 */
@@ -449,7 +449,7 @@ public enum PathUtils {
 
 	/**
 	 * Check if the final right-most key of the given path is a bracketed index
-	 * 
+	 *
 	 * @param path the path to check
 	 * @return true if the final key is an index
 	 */
@@ -459,7 +459,7 @@ public enum PathUtils {
 
 	/**
 	 * Check if the given key is an attribute name, i.e., not an index
-	 * 
+	 *
 	 * @param key the key to check
 	 * @return true if it is an attribute name
 	 */
@@ -469,7 +469,7 @@ public enum PathUtils {
 
 	/**
 	 * Check if the final right-most key of the given path is an attribute name
-	 * 
+	 *
 	 * @param path the path to check
 	 * @return true if the final key is an attribute name
 	 */
@@ -479,15 +479,15 @@ public enum PathUtils {
 
 	/**
 	 * Check if the first path refers to an ancestor of the second path
-	 * 
+	 *
 	 * <p>
 	 * Equivalently, check if the second path refers to a successor of the second path
-	 * 
+	 *
 	 * <p>
 	 * This effectively checks that ancestor is a prefix of successor. By this definition, every
 	 * path is technically an ancestor and successor of itself. If you do not desire that behavior,
 	 * check that the two paths are not equal first.
-	 * 
+	 *
 	 * @param ancestor the first path
 	 * @param successor the second path
 	 * @return true if ancestor is, in fact, an ancestor of successor
@@ -501,12 +501,12 @@ public enum PathUtils {
 
 	/**
 	 * Check whether a given object-valued attribute is a link.
-	 * 
+	 *
 	 * <p>
 	 * Consider an object {@code O} with an object-valued attribute {@code a}. {@code a}'s value is
 	 * a link, iff its path does <em>not</em> match that generated by extending {@code O}'s path
 	 * with {@code a}'s name.
-	 * 
+	 *
 	 * @param parentPath the path of the parent object of the given attribute
 	 * @param name the name of the given attribute
 	 * @param attributePath the canonical path of the attribute's object value
@@ -518,12 +518,12 @@ public enum PathUtils {
 
 	/**
 	 * Check whether a given element is a link.
-	 * 
+	 *
 	 * <p>
 	 * Consider an object {@code O} with an element {@code [1]}. {@code [1]}'s value is a link, iff
 	 * its path does <em>not</em> match that generated by extending {@code O}'s path with
 	 * {@code [1]}'s key.
-	 * 
+	 *
 	 * @param parentPath the path of the parent object of the given element
 	 * @param index the index of the given element
 	 * @param elementPath the canonical path of the element
@@ -536,7 +536,7 @@ public enum PathUtils {
 
 	/**
 	 * Check whether a given attribute should be displayed.
-	 * 
+	 *
 	 * @param key the key of the given attribute
 	 */
 	public static boolean isHidden(String key) {
@@ -545,10 +545,10 @@ public enum PathUtils {
 
 	/**
 	 * Check whether a given path key represents a method invocation.
-	 * 
+	 *
 	 * <p>
 	 * This really just checks if the key ends in {@code )}.
-	 * 
+	 *
 	 * @param key the key
 	 * @return true if an invocation, false if not
 	 */
@@ -558,11 +558,11 @@ public enum PathUtils {
 
 	/**
 	 * Get the name and parameters expression of the method from an invocation.
-	 * 
+	 *
 	 * <p>
 	 * TODO: We need a more formal model for method invocation in paths. Probably shouldn't return a
 	 * map entry once we have that specified, either.
-	 * 
+	 *
 	 * @param name the name, which must be in the form {@code method(params)}
 	 * @return the method name
 	 */

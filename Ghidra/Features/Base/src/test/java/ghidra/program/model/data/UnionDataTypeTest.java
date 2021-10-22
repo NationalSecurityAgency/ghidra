@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -149,12 +149,12 @@ public class UnionDataTypeTest extends AbstractGTest {
 		union.insert(0, ShortDataType.dataType);
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
-			"pack(disabled)\n" + 
-			"Union TestUnion {\n" + 
-			"   0   short   2   null   \"\"\n" + 
-			"   0   int:2(0)   1   bf1   \"bf1Comment\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" +
+			"pack(disabled)\n" +
+			"Union TestUnion {\n" +
+			"   0   short   2   null   \"\"\n" +
+			"   0   int:2(0)   1   bf1   \"bf1Comment\"\n" +
+			"}\n" +
 			"Size = 2   Actual Alignment = 1", union);
 		//@formatter:on
 	}
@@ -171,12 +171,12 @@ public class UnionDataTypeTest extends AbstractGTest {
 		union.setPackingEnabled(true);
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
-			"pack()\n" + 
-			"Union TestUnion {\n" + 
-			"   0   short   2   null   \"\"\n" + 
-			"   0   int:2(0)   1   bf1   \"bf1Comment\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" +
+			"pack()\n" +
+			"Union TestUnion {\n" +
+			"   0   short   2   null   \"\"\n" +
+			"   0   int:2(0)   1   bf1   \"bf1Comment\"\n" +
+			"}\n" +
 			"Size = 4   Actual Alignment = 4", union);
 		//@formatter:on
 	}
@@ -188,16 +188,16 @@ public class UnionDataTypeTest extends AbstractGTest {
 		union.insertBitField(3, ByteDataType.dataType, 4, "bf2", "bf2Comment");
 
 	//@formatter:off
-	CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
-		"pack(disabled)\n" + 
-		"Union TestUnion {\n" + 
-		"   0   byte   1   field1   \"Comment1\"\n" + 
-		"   0   word   2   null   \"Comment2\"\n" + 
-		"   0   int:4(0)   1   bf1   \"bf1Comment\"\n" + 
-		"   0   byte:4(0)   1   bf2   \"bf2Comment\"\n" + 
-		"   0   dword   4   field3   \"\"\n" + 
-		"   0   byte   1   field4   \"Comment4\"\n" + 
-		"}\n" + 
+	CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" +
+		"pack(disabled)\n" +
+		"Union TestUnion {\n" +
+		"   0   byte   1   field1   \"Comment1\"\n" +
+		"   0   word   2   null   \"Comment2\"\n" +
+		"   0   int:4(0)   1   bf1   \"bf1Comment\"\n" +
+		"   0   byte:4(0)   1   bf2   \"bf2Comment\"\n" +
+		"   0   dword   4   field3   \"\"\n" +
+		"   0   byte   1   field4   \"Comment4\"\n" +
+		"}\n" +
 		"Size = 4   Actual Alignment = 1", union);
 	//@formatter:on
 	}
@@ -211,16 +211,16 @@ public class UnionDataTypeTest extends AbstractGTest {
 		union.insertBitField(3, ByteDataType.dataType, 4, "bf2", "bf2Comment");
 
 	//@formatter:off
-	CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
-		"pack(disabled)\n" + 
-		"Union TestUnion {\n" + 
-		"   0   byte   1   field1   \"Comment1\"\n" + 
-		"   0   word   2   null   \"Comment2\"\n" + 
-		"   0   int:4(4)   1   bf1   \"bf1Comment\"\n" + 
-		"   0   byte:4(4)   1   bf2   \"bf2Comment\"\n" + 
-		"   0   dword   4   field3   \"\"\n" + 
-		"   0   byte   1   field4   \"Comment4\"\n" + 
-		"}\n" + 
+	CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" +
+		"pack(disabled)\n" +
+		"Union TestUnion {\n" +
+		"   0   byte   1   field1   \"Comment1\"\n" +
+		"   0   word   2   null   \"Comment2\"\n" +
+		"   0   int:4(4)   1   bf1   \"bf1Comment\"\n" +
+		"   0   byte:4(4)   1   bf2   \"bf2Comment\"\n" +
+		"   0   dword   4   field3   \"\"\n" +
+		"   0   byte   1   field4   \"Comment4\"\n" +
+		"}\n" +
 		"Size = 4   Actual Alignment = 1", union);
 	//@formatter:on
 	}
@@ -268,15 +268,15 @@ public class UnionDataTypeTest extends AbstractGTest {
 		assertEquals(11, union.getLength());
 
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
-			"pack(disabled)\n" + 
-			"Union TestUnion {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   0   word   2   null   \"Comment2\"\n" + 
-			"   0   dword   4   field3   \"\"\n" + 
-			"   0   byte   1   field4   \"Comment4\"\n" + 
-			"   0   struct_1   11   null   \"\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" +
+			"pack(disabled)\n" +
+			"Union TestUnion {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+			"   0   word   2   null   \"Comment2\"\n" +
+			"   0   dword   4   field3   \"\"\n" +
+			"   0   byte   1   field4   \"Comment4\"\n" +
+			"   0   struct_1   11   null   \"\"\n" +
+			"}\n" +
 			"Size = 11   Actual Alignment = 1", union);
 		//@formatter:on
 
@@ -284,13 +284,13 @@ public class UnionDataTypeTest extends AbstractGTest {
 
 		assertEquals(2, union.getLength());
 		//@formatter:off
-		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" + 
-			"pack(disabled)\n" + 
-			"Union TestUnion {\n" + 
-			"   0   byte   1   field1   \"Comment1\"\n" + 
-			"   0   word   2   null   \"Comment2\"\n" + 
-			"   0   byte   1   field4   \"Comment4\"\n" + 
-			"}\n" + 
+		CompositeTestUtils.assertExpectedComposite(this, "/TestUnion\n" +
+			"pack(disabled)\n" +
+			"Union TestUnion {\n" +
+			"   0   byte   1   field1   \"Comment1\"\n" +
+			"   0   word   2   null   \"Comment2\"\n" +
+			"   0   byte   1   field4   \"Comment4\"\n" +
+			"}\n" +
 			"Size = 2   Actual Alignment = 1", union);
 		//@formatter:on
 	}

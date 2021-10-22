@@ -48,7 +48,7 @@
 </sect2>
 
 <sect2 id="TriggerDecompilation">
-  <title>Decompiling a Function</title>    
+  <title>Decompiling a Function</title>
   <para>
     From the Code Browser, to open a Decompiler window, either:
     <informalexample>
@@ -180,7 +180,7 @@
 
 <chapter id="DecompilerConcepts">
   <title>Decompiler Concepts</title>
-  
+
 <section id="ConceptPcode">
   <title>P-code</title>
   <para>
@@ -358,7 +358,7 @@
 	</tr>
 	<tr>
 	  <td>Integer Arithmetic</td>
-	  <td><code>INT_ADD, INT_SUB, 
+	  <td><code>INT_ADD, INT_SUB,
 	  INT_2COMP, INT_MULT, INT_DIV, INT_SDIV, INT_REM, INT_SREM</code></td>
 	</tr>
 	<tr>
@@ -410,7 +410,7 @@
       </table>
       </informalexample>
     </para>
-    
+
     <sect3 id="ConceptOperatorTokens">
       <title>Operator Tokens</title>
     <para>
@@ -920,7 +920,7 @@
 	    <listitem>The parameters 'x' and 'y' hold the values being concatenated.</listitem>
 	  </itemizedlist>
 	  <programlisting>
-	    CONCAT31(0xaabbcc,0xdd) = 0xaabbccdd 
+	    CONCAT31(0xaabbcc,0xdd) = 0xaabbccdd
 	  </programlisting>
 	  <para>
 	    Concatenate the bytes in 'x' with the bytes in 'y'.  'x' becomes the most significant
@@ -1044,7 +1044,7 @@
 	      a formal <emphasis role="bold">parameter</emphasis> of the function,
 	    </listitem>
 	    <listitem>
-	      a <emphasis role="bold">local variable</emphasis> of the function, or 
+	      a <emphasis role="bold">local variable</emphasis> of the function, or
 	    </listitem>
 	    <listitem>
 	      a <emphasis role="bold">global variable</emphasis> accessed by the function.
@@ -1053,7 +1053,7 @@
 	</informalexample>
     </para>
     <para>
-	An important aspect of HighSymbols is that they are distinct from 
+	An important aspect of HighSymbols is that they are distinct from
 	the standard Ghidra symbols stored in the Program database and are part of
 	the Decompiler's separate view of the function. When the Decompiler displays
 	declarations for symbols in its output for instance, it is displaying
@@ -1061,7 +1061,7 @@
 	The Decompiler is generally
 	<emphasis>informed</emphasis> by annotations in the database and may
 	copy specific symbols from the database into its view, but it is
-	generally free to invent new symbols discovered during its analysis. 
+	generally free to invent new symbols discovered during its analysis.
     </para>
     <para>
 	Various actions within Ghidra allow the user to <emphasis>commit</emphasis>
@@ -1118,7 +1118,7 @@
     in the function.
   </para>
   </sect2>
-  
+
   <sect2 id="ConceptHighVariable">
     <title>HighVariable</title>
     <para>
@@ -1234,7 +1234,7 @@
 	See <link xlink:href="help/topics/FunctionPlugin/Variables.htm#Edit_Function">Function Editor Dialog</link>.
 	Because reverse engineers need to see them, the
 	Decompiler will generally display auto-parameters explicitly in function prototypes as part of its output, even though
-	they would not be present in the original source. 
+	they would not be present in the original source.
 	Ghidra explicitly defines two auto-parameters:
 	<informalexample>
 	  <variablelist>
@@ -1274,7 +1274,7 @@
       <title>Unaffected</title>
       <para>
 	Prototype models can specify a set of <emphasis role="bold">unaffected</emphasis> memory locations,
-	whose value must be <emphasis>preserved</emphasis> across the function. I.e. each location 
+	whose value must be <emphasis>preserved</emphasis> across the function. I.e. each location
 	must hold the same value at a function's exit that it held coming into the function.
 	These encompass a calling convention's <emphasis>saved registers</emphasis>, where a calling function
         can store values it doesn't want to change unexpectedly, but also may include other registers that are
@@ -1721,7 +1721,7 @@
       </itemizedlist>
     </informalexample>
   </para>
-  
+
   <sect2 id="VariableCreate">
     <title>Creating Variable Annotations</title>
   <para>
@@ -1780,7 +1780,7 @@
     </informalexample>
   </para>
   </sect2>
-  
+
   <sect2 id="VariableSymbol">
     <title>Variable Symbols</title>
     <para>
@@ -1802,7 +1802,7 @@
 	      a space in a symbol name; punctuation and keywords can be incorporated.
 	    </para>
 	  </listitem>
-	</varlistentry>	
+	</varlistentry>
 	<varlistentry>
 	  <term>Duplicate Symbols</term>
 	  <listitem>
@@ -1818,7 +1818,7 @@
 	</variablelist>
       </informalexample>
     </para>
-    
+
     <sect3 id="SymbolScope">
       <title>Variable Scope</title>
     <para>
@@ -1851,7 +1851,7 @@
     <para>
     </para>
     </sect3>
-    
+
   </sect2>
 
   <sect2 id="AnnoteDatatype">
@@ -1917,7 +1917,7 @@
       <sect4 id="TypeBoolean">
 	<title>Boolean</title>
 	<para>
-	  A 1-byte boolean data-type is supported. 
+	  A 1-byte boolean data-type is supported.
 	</para>
       </sect4>
       <sect4 id="TypeFloat">
@@ -2013,7 +2013,7 @@
 	  annotated sources throughout a function onto constants, which are then displayed with the
 	  appropriate label from the definition of the enumeration.  If the constant does not match a
 	  single value in the enumeration definition, the Decompiler attempts to build a matching
-	  value by <emphasis>or</emphasis>-ing together multiple labels.  
+	  value by <emphasis>or</emphasis>-ing together multiple labels.
 	  The Decompiler can be made to break out constants representing packed <emphasis>flags</emphasis>,
 	  for instance, by labeling individual bit values within an enumeration.
 	</para>
@@ -2022,7 +2022,7 @@
 	<title>Function Definition</title>
 	<para>
 	  A <emphasis role="bold">Function Definition</emphasis> in Ghidra is a data-type that encodes
-	  information about the parameters and return value for a generic/unspecified function. 
+	  information about the parameters and return value for a generic/unspecified function.
 	  A formal <emphasis role="bold">function pointer</emphasis> is supported by the Decompiler as a pointer
 	  data-type that points to a Function Definition. A Function Definition specifically encodes:
 	  <informalexample>
@@ -2079,7 +2079,7 @@
 	The Decompiler performs <emphasis role="bold">type propagation</emphasis> as part of its analysis
 	on functions. Data-type information is collected from variable annotations and other sources,
 	which is then propagated via data flow throughout the function to other variables and
-	constants where the data-type may not be immediately apparent.  
+	constants where the data-type may not be immediately apparent.
       </para>
       <para>
 	With few exceptions, a variable annotation is <emphasis>forcing</emphasis> on the Decompiler in the sense
@@ -2114,7 +2114,7 @@
 	using type propagation from other sources.
       </para>
       <para>
-	For annotations that specifically label a function's formal parameters or return value, 
+	For annotations that specifically label a function's formal parameters or return value,
 	the <link linkend="PrototypeSignatureSource">Signature Source</link> also affects how they're treated by the Decompiler.
 	If the Signature Source is set to anything other than <emphasis>DEFAULT</emphasis>, there is a forced
 	one-to-one correspondence between variable annotations and actual parameters in the Decompiler's
@@ -2141,7 +2141,7 @@
 	data-type is appropriate.
       </note>
     </sect3>
-    
+
   </sect2>
 
   <sect2 id="AnnoteStorage">
@@ -2188,7 +2188,7 @@
 	<emphasis role="bold">stack</emphasis> address space associated with the function. See the discussion
 	in <xref linkend="ConceptAddressSpace"/>. A <emphasis role="bold">stack annotation</emphasis> then is a variable annotation
 	with a stack address as its storage location. It exists only in the scope of a
-	single function and the variable must be <emphasis>local</emphasis> to that function. 
+	single function and the variable must be <emphasis>local</emphasis> to that function.
       </para>
       <para>
 	Within a <emphasis>Listing</emphasis> window, a stack annotation is displayed as part of the function header
@@ -2478,7 +2478,7 @@
       <listitem>Normal</listitem>
       <listitem>Constant - (read-only)</listitem>
       <listitem>Volatile</listitem>
-    </itemizedlist>	
+    </itemizedlist>
     </informalexample>
     Mutability affects Decompiler analysis and can have a large impact on the output.
   </para>
@@ -2654,7 +2654,7 @@
       established at the time of disassembly. From Ghidra's more static view of execution, a context register holds
       only a single value at any point in the code, but the same context register can hold different values for
       different regions of code. Setting a new value on a region of the Program will affect any subsequent disassembly
-      of code within that region.  
+      of code within that region.
     </para>
     <para>
       If a context register value is changed for a region that has already been disassembled, in order to see
@@ -2931,7 +2931,7 @@
 	   Users can actively set whether specific memory regions are considered read-only through the
 	  <emphasis>Memory Manager</emphasis>, and individual data elements can be marked
 	  as <emphasis>constant</emphasis> via the <emphasis role="bold">Mutability</emphasis> setting
-	  (see <xref linkend="AnnoteMutability"/>). 
+	  (see <xref linkend="AnnoteMutability"/>).
 	</para>
       </listitem>
     </varlistentry>
@@ -3071,8 +3071,8 @@
       <term><emphasis role="bold">Display &lt;kind-of&gt; Comments</emphasis></term>
       <listitem>
 	<para>
-	  Set whether a specific type of comment should be incorporated into Decompiler output. 
-	  Each type has its own toggle and can be individually included or excluded from Decompiler output. 
+	  Set whether a specific type of comment should be incorporated into Decompiler output.
+	  Each type has its own toggle and can be individually included or excluded from Decompiler output.
 	  <informalexample>
 	    <itemizedlist mark='bullet'>
 	      <listitem>
@@ -3102,7 +3102,7 @@
 	  Toggle whether the Decompiler emits comments at the head (before the beginning) of a function.
 	  The header is built from Plate comments placed at the <emphasis>entry point</emphasis> of the
 	  function (see the discussion in <xref linkend="AnnoteComments"/>).
-	  The inclusion of other Plate comments is controlled by the <emphasis role="bold">Display PLATE comments</emphasis> toggle, described above. 
+	  The inclusion of other Plate comments is controlled by the <emphasis role="bold">Display PLATE comments</emphasis> toggle, described above.
 	</para>
       </listitem>
     </varlistentry>
@@ -3127,7 +3127,7 @@
 	  <informalexample>
 	    <itemizedlist mark='bullet'>
 	      <listitem>
-		<emphasis role="bold">Minimally</emphasis> - Display the minimal path that distinguishes the symbol 
+		<emphasis role="bold">Minimally</emphasis> - Display the minimal path that distinguishes the symbol
 	      </listitem>
 	      <listitem>
 		<emphasis role="bold">Always</emphasis> - Always display the entire namespace path
@@ -3155,7 +3155,7 @@
 	<para>
 	  Toggle whether Decompiler generated <emphasis>WARNING</emphasis> comments are displayed as part
 	  of the output. The Decompiler generates these comments, independent of those laid down by users, to
-	  indicate unusual conditions or possible errors (see <xref linkend="CommentWarnings"/>). 
+	  indicate unusual conditions or possible errors (see <xref linkend="CommentWarnings"/>).
 	</para>
       </listitem>
     </varlistentry>
@@ -3261,7 +3261,7 @@
 	  Sets the calling convention (prototype model) used when decompiling a function where
 	  the convention is not known; i.e., marked as <emphasis role="bold">unknown</emphasis>.  Many architectures have multiple
 	  calling conventions, <emphasis role="bold">__stdcall</emphasis>, <emphasis role="bold">__thiscall</emphasis>, etc.
-	  (see the discussion in <xref linkend="ConceptPrototypeModel"/>).  
+	  (see the discussion in <xref linkend="ConceptPrototypeModel"/>).
 	</para>
       </listitem>
     </varlistentry>
@@ -3287,7 +3287,7 @@
   <para>
     Users can change or reimport an extension if new information points to a better definition.
     Users have full control over an extension, and unlike a core element, can tailor it specifically
-    to the Program.  
+    to the Program.
   </para>
   <para>
     This options entry presents a table of all specification elements.
@@ -4024,7 +4024,7 @@
     when right-clicking on a token within the Decompiler window. The pop-up menu is context sensitive and
     the type of token in particular (see <xref linkend="DecompilerDisplay"/>) determines what actions are available.
     The token clicked provides a local context for the action and may be used to pinpoint the exact
-    variable or operation affected. 
+    variable or operation affected.
   </para>
 
 <sect2 id="ActionAutoStructure">
@@ -4051,7 +4051,7 @@
   <informalexample>
     <variablelist>
     <?dbfo list-presentation="blocks"?>
-    <varlistentry>  
+    <varlistentry>
       <term><emphasis role="bold">Auto Fill in Structure</emphasis></term>
       <listitem><para>
 	If the selected variable is already a pointer to a <emphasis>structure</emphasis>,
@@ -4562,7 +4562,7 @@
   </para>
   <para>
     A label can be removed by triggering this action while the corresponding label token is
-    under the cursor.   For more on removing labels, see 
+    under the cursor.   For more on removing labels, see
     <link xlink:href="help/topics/LabelMgrPlugin/Labels.htm#Remove_Label">Removing a Label</link>.
   </para>
   <para>
@@ -4579,7 +4579,7 @@
   <para>
     The current function can be renamed by selecting the name token within the function's
     declaration at the top of the Decompiler window, or individual called functions
-    can be renamed by selecting their name token within a call expression.  
+    can be renamed by selecting their name token within a call expression.
     This action brings up a dialog containing a text field prepopulated with the
     name to be changed. The current namespace (and any parent namespaces) is
     presented in a drop-down menu.  Editing the text field changes the <emphasis>base</emphasis>
@@ -4665,7 +4665,7 @@
   </para>
   <para>
     A label can be renamed by triggering this action while the corresponding label token is
-    under the cursor.   This action brings up the 
+    under the cursor.   This action brings up the
     <link xlink:href="help/topics/LabelMgrPlugin/Labels.htm#AddEditDialog">Edit Label Dialog</link>.
   </para>
   <para>

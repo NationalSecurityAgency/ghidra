@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -89,11 +89,11 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 
 	/**
 	 * Generate the default launcher arguments
-	 * 
+	 *
 	 * <p>
 	 * It is not sufficient to simply take the defaults specified in the parameters. This must
 	 * populate the arguments necessary to launch the requested program.
-	 * 
+	 *
 	 * @param params the parameters
 	 * @return the default arguments
 	 */
@@ -102,7 +102,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 
 	/**
 	 * Prompt the user for arguments, showing those last used or defaults
-	 * 
+	 *
 	 * @param params the parameters of the model's launcher
 	 * @return the arguments given by the user
 	 */
@@ -124,7 +124,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 
 	/**
 	 * Load the arguments last used for this offer, or give the defaults
-	 * 
+	 *
 	 * <p>
 	 * If there are no saved "last used" arguments, then this will return the defaults. If there are
 	 * saved arguments, but they cannot be loaded, then this will behave differently depending on
@@ -132,7 +132,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	 * then this method must throw an exception in order to avoid launching with defaults, when the
 	 * user may be expecting a customized launch. If there will be a prompt, then this may safely
 	 * return the defaults, since the user will be given a chance to correct them.
-	 * 
+	 *
 	 * @param params the parameters of the model's launcher
 	 * @param forPrompt true if the user will be confirming the arguments
 	 * @return the loaded arguments, or defaults
@@ -180,12 +180,12 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 
 	/**
 	 * Obtain the launcher args
-	 * 
+	 *
 	 * <p>
 	 * This should either call {@link #promptLauncherArgs(Map))} or
 	 * {@link #loadLastLauncherArgs(Map, boolean))}. Note if choosing the latter, the user will not
 	 * be prompted to confirm.
-	 * 
+	 *
 	 * @param params the parameters of the model's launcher
 	 * @return the chosen arguments
 	 */
@@ -198,7 +198,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 
 	/**
 	 * Get the model factory, as last configured by the user, for this launcher
-	 * 
+	 *
 	 * @return the factory
 	 */
 	protected DebuggerModelFactory getModelFactory() {

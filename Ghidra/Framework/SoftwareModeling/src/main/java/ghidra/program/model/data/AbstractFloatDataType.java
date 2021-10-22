@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.data.DataType#getMnemonic(Settings)
 	 */
 	@Override
@@ -48,7 +48,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.data.DataType#getDescription()
 	 */
 	@Override
@@ -57,7 +57,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.data.DataType#getValue(ghidra.program.model.mem.MemBuffer,
 	 *      ghidra.docking.settings.Settings, int)
 	 */
@@ -133,7 +133,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.program.model.data.DataType#getRepresentation(MemBuffer, Settings, int)
 	 */
 	@Override
@@ -207,7 +207,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 
 	/**
 	 * Get a Float data-type instance of the requested size
-	 * 
+	 *
 	 * @param size data type size, unsupported sizes will cause an undefined type to be returned.
 	 * @param dtm optional program data-type manager, if specified a generic data-type will be
 	 *            returned if possible (i.e., float, double, long double).
@@ -240,7 +240,7 @@ public abstract class AbstractFloatDataType extends BuiltIn {
 
 	/**
 	 * Returns all built-in float data-types
-	 * 
+	 *
 	 * @param dtm optional program data-type manager, if specified generic data-types will be
 	 *            returned in place of fixed-sized data-types.
 	 */

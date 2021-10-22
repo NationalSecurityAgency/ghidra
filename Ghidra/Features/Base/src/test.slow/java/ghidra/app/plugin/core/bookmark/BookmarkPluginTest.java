@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -172,7 +172,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		FilterDialog fd = waitForDialogComponent(FilterDialog.class);
 		runSwing(() -> {
-			// turn off all types 
+			// turn off all types
 			for (BookmarkType type : types) {
 				fd.setFilter(type.getTypeString(), false);
 			}
@@ -203,7 +203,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// load
 		showBookmarkProvider();
 
-		// make sure the filters match the saved setting        
+		// make sure the filters match the saved setting
 		BookmarkType[] reloadedTypes = bmMgr.getBookmarkTypes();
 		for (BookmarkType type : reloadedTypes) {
 			boolean isTestType = type.getTypeString().equals(testTypeName);
@@ -233,7 +233,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		final FilterDialog fd = waitForDialogComponent(FilterDialog.class);
 		runSwing(() -> {
-			// turn off all types 
+			// turn off all types
 			for (BookmarkType type : types) {
 				fd.setFilter(type.getTypeString(), false);
 			}
@@ -453,7 +453,7 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		// This test catches a bug with removing a deleted bookmark from the table.   The bug was
 		// triggered by a failure in the binary search.  Specifically, if the binary search does
 		// not touch the item to be deleted, then the item would not get removed from the table.
-		// 
+		//
 
 		showBookmarkProvider();
 
@@ -680,12 +680,12 @@ public class BookmarkPluginTest extends AbstractGhidraHeadedIntegrationTest {
 	private void loadDefaultTool() throws Exception {
 		program = buildProgram();
 
-		// UNUSUAL CODE ALERT!: 
-		// Instead of calling env.launchDefaultTool(), we call this version, passing in the 
-		// default tool's name.  The former method now *always load the tool from Ghidra's 
+		// UNUSUAL CODE ALERT!:
+		// Instead of calling env.launchDefaultTool(), we call this version, passing in the
+		// default tool's name.  The former method now *always load the tool from Ghidra's
 		// resources and not from the user's area*.  This is a test feature.  We use this other
 		// call here because sometimes this method (loadDefaultTool()) is called to reload the
-		// tool after the test saved some changes.  Calling the other method will not get the 
+		// tool after the test saved some changes.  Calling the other method will not get the
 		// changes, but this one will.
 		tool = env.launchTool("TestCodeBrowser", program.getDomainFile());
 

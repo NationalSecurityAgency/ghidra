@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import resources.Icons;
 /**
  * A convenience component designed specifically for rendering threaded table models.
  * This panel will automatically create a threaded table and a task monitor component.
- * 
+ *
  * @param <T> the type
  */
 public class GThreadedTablePanel<T> extends JPanel {
@@ -276,14 +276,14 @@ public class GThreadedTablePanel<T> extends JPanel {
 //==================================================================================================
 
 	/**
-	 * A task monitor component that will pass message onto the task monitor that it has been 
-	 * given.  This monitor will be used in one of two different ways: 1) if not loading 
-	 * incrementally, then this model will appear in the GUI and will be used by the threaded 
-	 * model while loading for incrementing progress; and 2)  when loading incrementally, this 
+	 * A task monitor component that will pass message onto the task monitor that it has been
+	 * given.  This monitor will be used in one of two different ways: 1) if not loading
+	 * incrementally, then this model will appear in the GUI and will be used by the threaded
+	 * model while loading for incrementing progress; and 2)  when loading incrementally, this
 	 * monitor will not appear in the GUI, but is still used internally by the threaded model
-	 * to allow cancelling and to report progress.    
+	 * to allow cancelling and to report progress.
 	 * <p>
-	 * This class is useful when we are loading incrementally and are displaying the 
+	 * This class is useful when we are loading incrementally and are displaying the
 	 * {@link IncrementalLoadingTaskMonitor}, but would like messages to this monitor to appear
 	 * in the GUI.
 	 */

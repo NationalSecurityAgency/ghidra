@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,16 +18,16 @@ package ghidra.feature.vt.api.main;
 
 public enum VTAssociationStatus {
 
-	/** 
+	/**
 	 * An association with this status is available for accepting (applying).  Also,
 	 * no competing associations are currently {@link #ACCEPTED}.
 	 */
 	AVAILABLE("Available"),
 
-	/** 
+	/**
 	 * An association with this status means no other competing associations can add markup
-	 * items.  Any competing associations cannot have markup items applied while 
-	 * one of them has this status. In this status, not all markup items have been applied, as 
+	 * items.  Any competing associations cannot have markup items applied while
+	 * one of them has this status. In this status, not all markup items have been applied, as
 	 * the status would then be {@link #FULLY_APPLIED}.
 	 */
 	ACCEPTED("Accepted"),

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,7 +34,7 @@ import resources.Icons;
 import resources.ResourceManager;
 
 /**
- * A label that displays an icon that, when clicked, will clear the contents of the 
+ * A label that displays an icon that, when clicked, will clear the contents of the
  * associated filter.
  */
 public class ClearFilterLabel extends GIconLabel {
@@ -188,7 +188,7 @@ public class ClearFilterLabel extends GIconLabel {
 
 	private void doResetBounds() {
 		// My bounds are tied to that of the text field passed in the constructor.  I'd like
-		// to live at the end of the textField, away from the text, which is dependent upon 
+		// to live at the end of the textField, away from the text, which is dependent upon
 		// the text alignment
 		Container myParent = getParent();
 		if (myParent == null) {

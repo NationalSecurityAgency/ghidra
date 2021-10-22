@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public interface GraphDisplayProvider extends ExtensionPoint {
 
 	/**
 	 * Returns a GraphDisplay that can be used to "display" a graph
-	 * 
+	 *
 	 * @param reuseGraph if true, this provider will attempt to re-use an existing GraphDisplay
 	 * @param monitor the {@link TaskMonitor} that can be used to monitor and cancel the operation
 	 * @return A GraphDisplay that can be used to display (or otherwise consume - e.g. export) the graph
@@ -46,7 +46,7 @@ public interface GraphDisplayProvider extends ExtensionPoint {
 
 	/**
 	 * Provides an opportunity for this provider to register and read tool options
-	 * 
+	 *
 	 * @param tool the tool hosting this display
 	 * @param options the tool options for graphing
 	 */
@@ -54,7 +54,7 @@ public interface GraphDisplayProvider extends ExtensionPoint {
 
 	/**
 	 * Called if the graph options change
-	 * 
+	 *
 	 * @param options the current tool options
 	 */
 	public void optionsChanged(Options options);

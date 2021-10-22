@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -85,14 +85,14 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		chooseOption(DataTypeMergeManager.OPTION_MY);// 
+		chooseOption(DataTypeMergeManager.OPTION_MY);//
 
 		waitForCompletion();
 	}
 
 	@Test
 	public void testCategoryDeleteMoveConflicts() throws Exception {
-		// move category in Latest program; delete same category in My Program 
+		// move category in Latest program; delete same category in My Program
 
 		mtf.initialize("notepad", new ProgramModifierListener() {
 			/* (non-Javadoc)
@@ -126,7 +126,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 			public void modifyPrivate(ProgramDB program) {
 				boolean commit = false;
 				DataTypeManager dtm = program.getDataTypeManager();
-				// delete MISC 
+				// delete MISC
 				int transactionID = program.startTransaction("test");
 				Category root = dtm.getCategory(CategoryPath.ROOT);
 				try {
@@ -141,7 +141,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 		});
 		executeMerge();
 
-		chooseOption(DataTypeMergeManager.OPTION_MY);// 
+		chooseOption(DataTypeMergeManager.OPTION_MY);//
 
 		waitForCompletion();
 
@@ -219,7 +219,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 		});
 		executeMerge();
 
-		chooseOption(DataTypeMergeManager.OPTION_MY);// 
+		chooseOption(DataTypeMergeManager.OPTION_MY);//
 
 		waitForCompletion();
 
@@ -285,7 +285,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		chooseOption(DataTypeMergeManager.OPTION_MY);// 
+		chooseOption(DataTypeMergeManager.OPTION_MY);//
 
 		waitForCompletion();
 
@@ -349,7 +349,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 			}
 		});
 		executeMerge();
-		chooseOption(DataTypeMergeManager.OPTION_LATEST);// 
+		chooseOption(DataTypeMergeManager.OPTION_LATEST);//
 
 		waitForCompletion();
 
@@ -414,7 +414,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 		});
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		chooseOption(DataTypeMergeManager.OPTION_MY);// 
+		chooseOption(DataTypeMergeManager.OPTION_MY);//
 
 		waitForCompletion();
 
@@ -477,7 +477,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 		});
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		chooseOption(DataTypeMergeManager.OPTION_LATEST);// 
+		chooseOption(DataTypeMergeManager.OPTION_LATEST);//
 
 		waitForCompletion();
 
@@ -540,7 +540,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 		});
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// 
+		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);//
 
 		waitForCompletion();
 
@@ -645,7 +645,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 
 		chooseOption(DataTypeMergeManager.OPTION_MY);// choose My Bar
 
-		chooseOption(DataTypeMergeManager.OPTION_LATEST);// choose Latest Foo 
+		chooseOption(DataTypeMergeManager.OPTION_LATEST);// choose Latest Foo
 
 		chooseOption(DataTypeMergeManager.OPTION_ORIGINAL);// choose original FooTypedef
 
@@ -729,7 +729,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 		});
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
-		chooseOption(DataTypeMergeManager.OPTION_MY);// 
+		chooseOption(DataTypeMergeManager.OPTION_MY);//
 
 		waitForCompletion();
 
@@ -841,10 +841,10 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 	@Test
 	public void testMoveCategory3() throws Exception {
 
-		// Latest: rename /Category1/Category2 to myCategory2; 
+		// Latest: rename /Category1/Category2 to myCategory2;
 		// move data types in /Category1/myCategory2/Category4 to
-		// /Category1/myCategory2; 
-		// MY: move data types in /Category1/Category2/Category4 to 
+		// /Category1/myCategory2;
+		// MY: move data types in /Category1/Category2/Category4 to
 		// /Category1/Category2
 
 		mtf.initialize("notepad2", new ProgramModifierListener() {
@@ -993,7 +993,7 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
-		chooseOption(DataTypeMergeManager.OPTION_LATEST);// latest Category3 
+		chooseOption(DataTypeMergeManager.OPTION_LATEST);// latest Category3
 
 		waitForCompletion();
 
@@ -1063,8 +1063,8 @@ public class CategoryMerge3Test extends AbstractDataTypeMergeTest {
 		executeMerge();
 		DataTypeManager dtm = resultProgram.getDataTypeManager();
 
-		chooseOption(DataTypeMergeManager.OPTION_MY);// my Category3 
-		chooseOption(DataTypeMergeManager.OPTION_LATEST);// latest MISC 
+		chooseOption(DataTypeMergeManager.OPTION_MY);// my Category3
+		chooseOption(DataTypeMergeManager.OPTION_LATEST);// latest MISC
 
 		waitForCompletion();
 

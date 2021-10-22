@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,12 +29,12 @@ import ghidra.program.model.pcode.Varnode;
 
 public class TRICOREEmulateInstructionStateModifier extends EmulateInstructionStateModifier {
 	 Register FCX,PCXI,LCX,PSW,a10,a11,d8,a12,d12;
-	
+
 	public TRICOREEmulateInstructionStateModifier(Emulate emu) {
 		super(emu);
-		
+
 			registerPcodeOpBehavior("saveCallerState", new tricore_SaveCallerState());
-			registerPcodeOpBehavior("restoreCallerState", new tricore_RestoreCallerState());			
+			registerPcodeOpBehavior("restoreCallerState", new tricore_RestoreCallerState());
 			cacheRegisters(emu);
 	}
 
@@ -47,18 +47,18 @@ public class TRICOREEmulateInstructionStateModifier extends EmulateInstructionSt
 			if (numArgs != 3) throw new LowlevelError(this.getClass().getName() + ": requires 3 inputs (FCX, LCX, PCXI), got " + numArgs);
 
 			MemoryState memoryState = emu.getMemoryState();
-			
+
 			// compute new EA
 			BigInteger FCXvalue = memoryState.getBigInteger(FCX);
 			// read the value at FCX, if get nothing, then assume just increment the FCX to get to new node.
-			
+
 			// EA = {FCX.FCXS, 6'b0, FCX.FCXO, 6'b0};
 			long ea = FCXvalue.longValue();
 			ea = ((ea & 0xffff0000) << 12) | ((ea & 0xffff) << 6);
-			
+
 			Address EA_addr = emu.getExecuteAddress().getNewAddress(ea);
 			AddressSpace addressSpace = emu.getExecuteAddress().getAddressSpace();
-			
+
 			// new_FCX = M(EA, word);
 			BigInteger new_FCXvalue = memoryState.getBigInteger(addressSpace, ea, 4, false);
 			// if new_FCX == 0, or not-initialized, then just increment FCX again
@@ -74,24 +74,24 @@ public class TRICOREEmulateInstructionStateModifier extends EmulateInstructionSt
 			index += copyRegisterToArray(a10, 2 * a10.getBitLength()/8, memoryState, outBytes, index);
 			index += copyRegisterToArray(d8, 4 * d8.getBitLength()/8, memoryState, outBytes, index);
 			index += copyRegisterToArray(a12, 4 * a12.getBitLength()/8, memoryState, outBytes, index);
-			index += copyRegisterToArray(d12, 4 * d12.getBitLength()/8, memoryState, outBytes, index);	
+			index += copyRegisterToArray(d12, 4 * d12.getBitLength()/8, memoryState, outBytes, index);
 			// write the bytes
 			memoryState.setChunk(outBytes, EA_addr.getAddressSpace(), EA_addr.getOffset(), 4*16);
-				
+
 			BigInteger PCXIvalue = memoryState.getBigInteger(PCXI);
 			//	PCXI[19:0] = FCX[19:0];
 			//			PCXI.PCPN = ICR.CCPN;
 			//			PCXI.PIE = ICR.IE;
-			//			PCXI.UL = 1;	
+			//			PCXI.UL = 1;
 			PCXIvalue = PCXIvalue.andNot(BigInteger.valueOf(0x000fffff)).or(FCXvalue.and(BigInteger.valueOf(0x000fffff)));
 			memoryState.setValue(PCXI, PCXIvalue);
-			
-			// FCX[19:0] = new_FCX[19:0];	
+
+			// FCX[19:0] = new_FCX[19:0];
 			FCXvalue = FCXvalue.andNot(BigInteger.valueOf(0x000fffff)).or(new_FCXvalue.and(BigInteger.valueOf(0x000fffff)));
 			memoryState.setValue(FCX, FCXvalue);
-			
+
 			// write to memory
-			
+
 			BigInteger LCXvalue = memoryState.getBigInteger(LCX);
 		}
 	}
@@ -108,16 +108,16 @@ public class TRICOREEmulateInstructionStateModifier extends EmulateInstructionSt
 			// compute new EA
 			BigInteger FCXvalue = memoryState.getBigInteger(FCX);
 			BigInteger PCXIvalue = memoryState.getBigInteger(PCXI);
-			
+
 			// read the value at FCX, if get nothing, then assume just increment the FCX to get to new node.
-			
+
 			// EA = {FCX.FCXS, 6'b0, FCX.FCXO, 6'b0};
 			long ea = PCXIvalue.longValue();
 			ea = ((ea & 0xffff0000) << 12) | ((ea & 0xffff) << 6);
-			
+
 			Address EA_addr = emu.getExecuteAddress().getNewAddress(ea);
 			AddressSpace addressSpace = emu.getExecuteAddress().getAddressSpace();
-			
+
 			// read the bytes
 			byte[] inBytes = new byte[4*16];
 			memoryState.getChunk(inBytes, addressSpace, EA_addr.getOffset(), 4*16, true);
@@ -128,8 +128,8 @@ public class TRICOREEmulateInstructionStateModifier extends EmulateInstructionSt
 			index += copyArrayToRegister(a10, 2 * a10.getBitLength()/8, memoryState, inBytes, index);
 			index += copyArrayToRegister(d8, 4 * d8.getBitLength()/8, memoryState, inBytes, index);
 			index += copyArrayToRegister(a12, 4 * a12.getBitLength()/8, memoryState, inBytes, index);
-			index += copyArrayToRegister(d12, 4 * d12.getBitLength()/8, memoryState, inBytes, index);	
-				
+			index += copyArrayToRegister(d12, 4 * d12.getBitLength()/8, memoryState, inBytes, index);
+
 			// M(EA, word) = FCX;
 			memoryState.setValue(EA_addr.getAddressSpace(), EA_addr.getOffset(), 4, FCXvalue);
 
@@ -138,7 +138,7 @@ public class TRICOREEmulateInstructionStateModifier extends EmulateInstructionSt
 			memoryState.setValue(FCX, FCXvalue);
 		}
 	}
-	
+
 	// Helper functions
 	private int copyRegisterToArray(Register reg, int len, MemoryState memoryState, byte[] outBytes, int i) {
 		byte vBytes[] = new byte[len];
@@ -146,7 +146,7 @@ public class TRICOREEmulateInstructionStateModifier extends EmulateInstructionSt
 		System.arraycopy(vBytes, 0, outBytes, i, len);
 		return nread;
 	}
-	
+
 	private int copyArrayToRegister(Register reg, int len, MemoryState memoryState, byte[] inBytes, int i) {
 		byte[] vBytes = new byte[len];
 		AddressSpace spc = reg.getAddressSpace();
@@ -154,7 +154,7 @@ public class TRICOREEmulateInstructionStateModifier extends EmulateInstructionSt
 		memoryState.setChunk(vBytes, spc, reg.getOffset(), vBytes.length);
 		return len;
 	}
-	
+
 	private void cacheRegisters(Emulate emu) {
 		FCX = emu.getLanguage().getRegister("FCX");
 		LCX = emu.getLanguage().getRegister("LCX");

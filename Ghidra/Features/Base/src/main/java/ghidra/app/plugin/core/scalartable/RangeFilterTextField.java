@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import docking.widgets.textfield.IntegerTextField;
 import ghidra.program.model.listing.Program;
 
 /**
- * Extends {@link IntegerTextField} to allow use as a range filter in the {@link ScalarSearchPlugin}. 
+ * Extends {@link IntegerTextField} to allow use as a range filter in the {@link ScalarSearchPlugin}.
  * <p>
  * Specifically this provides the following:
  * <ul>
@@ -38,7 +38,7 @@ public class RangeFilterTextField extends IntegerTextField {
 	private Program program;
 	private FilterType filterType;
 
-	// Specifies the maximum value this filter should allow. In the case of a 
+	// Specifies the maximum value this filter should allow. In the case of a
 	// MIN filter, this value will be negative.
 	private int maxValue;
 
@@ -80,7 +80,7 @@ public class RangeFilterTextField extends IntegerTextField {
 		}
 
 		catch (NumberFormatException e) {
-			// This situation is not expected because the user is 
+			// This situation is not expected because the user is
 			// restricted to only entering digits.
 			return maxValue;
 		}
@@ -91,14 +91,14 @@ public class RangeFilterTextField extends IntegerTextField {
 	/**
 	 * Returns the maximum value a scalar can have for the current program. This is
 	 * used to bound the min/max filters.
-	 * 
+	 *
 	 * @return the max scalar value
 	 */
 	private int getMaxScalarValue() {
 
-		// TODO this code is odd--why calculate the pointer size just to truncate at 
+		// TODO this code is odd--why calculate the pointer size just to truncate at
 		//      Integer min/max value?  This code should default to no value in the field, letting
-		//      the user input min and max values themselves.  Then, just use those values 
+		//      the user input min and max values themselves.  Then, just use those values
 		//      directly.
 
 		int defaultPointerSize = program.getDefaultPointerSize();

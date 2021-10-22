@@ -19,7 +19,7 @@
         shifted:4 = (RS0A >> eoff5_5);
         mask:4 = (0xffffffff >> (32 - elen0_5));
         isolated:4 = shifted & mask;
-        
+
         # Technically, elen0_5 can be 0, but result is undefined
         # if that's the case so we're ok here.
         signmask:4 = (0xffffffff << (elen0_5 - 1));
@@ -68,7 +68,7 @@
 {
         lowmask:4 = (0xffffffff >> (32 - elen0_5));
         destmask:4 = ~(lowmask << eoff5_5);
-        rd9 = (rd9 & destmask) | ((RS0A & lowmask) << elen0_5);   
+        rd9 = (rd9 & destmask) | ((RS0A & lowmask) << elen0_5);
         NZSTATUS(rd9);
         C = rd9 s< 0;
         CZNVTOSR();
@@ -136,7 +136,7 @@
 {
         destbit:4 = (1 << eoff0_5);
         cbool:4 = zext(C != 0);
-        rd0 = (rd0 & ~destbit) | (cbool * destbit);   
+        rd0 = (rd0 & ~destbit) | (cbool * destbit);
 }
 
 #---------------------------------------------------------------------
@@ -161,7 +161,7 @@
 
 :CASTS.B rd0 is op4_12=0x5c6 & rd0
 {
-        rd0 = sext(rd0:1);    
+        rd0 = sext(rd0:1);
 }
 
 #---------------------------------------------------------------------
@@ -211,7 +211,7 @@ CSBRH: off is bp9_4 & bp4_1
 {
         destbit:4 = (1 << CSBRH);
         rd0 = (rd0 & ~destbit);
-        ZSTATUS(rd0);   
+        ZSTATUS(rd0);
 }
 
 #---------------------------------------------------------------------
@@ -433,8 +433,8 @@ MEMSH: val				  is simm0_15 [ val = simm0_15 << 2; ] {export *[const]:4 val; }
 {
         destbit:4 = (1 << CSBRH);
         rd0 = (rd0 | destbit);
-        Z = 0; 
-        CZNVTOSR();  
+        Z = 0;
+        CZNVTOSR();
 }
 
 #---------------------------------------------------------------------

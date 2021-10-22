@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ public class CommentFieldLocation extends CodeUnitLocation {
 	 * to a specific data type inside of another data type
 	 * @param comment   The array of strings that make up the comment
 	 * @param type      The type of this comment.
-	 *                  Can be either CodeUnit.PRE_COMMENT, CodeUnit.POST_COMMENT, 
+	 *                  Can be either CodeUnit.PRE_COMMENT, CodeUnit.POST_COMMENT,
 	 *                  CodeUnit.PLATE_COMMENT, CodeUnit.EOL_COMMENT, or CodeUnit.REPEATABLE_COMMENT.
 	 * @param row       The index of the string that contains the exact location.
 	 * @param charOffset       The position within the string that specifies the exact location.

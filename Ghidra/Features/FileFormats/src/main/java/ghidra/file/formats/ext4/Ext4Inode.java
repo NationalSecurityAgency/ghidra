@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,7 +55,7 @@ public class Ext4Inode implements StructConverter {
 	private int i_crtime_extra;         // 94           4
 	private int i_version_hi;           // 98           4
 	private int i_projid;               // 9C           4
-	//unknown_fields                    // A0           i_extra_isize-32           
+	//unknown_fields                    // A0           i_extra_isize-32
 	//extended_attributes               // 80+i_extra_size, inodeSize-0x80-i_extra_isize
 	//@formatter:on
 
@@ -64,7 +64,7 @@ public class Ext4Inode implements StructConverter {
 	public Ext4Inode(BinaryReader reader) throws IOException {
 		this(reader, MINIMAL_SIZEOF_INODE);
 	}
-	
+
 	public Ext4Inode(BinaryReader reader, int inodeSize) throws IOException {
 		if (inodeSize < INODE_BASE_SIZE) {
 			throw new IOException("Bad inodeSize: " + inodeSize);
@@ -107,7 +107,7 @@ public class Ext4Inode implements StructConverter {
 		}
 	}
 
-	
+
 	public short getI_mode() {
 		return i_mode;
 	}
@@ -127,7 +127,7 @@ public class Ext4Inode implements StructConverter {
 	public int getI_ctime() {
 		return i_ctime;
 	}
-	
+
 	public int getI_mtime() {
 		return i_mtime;
 	}
@@ -218,7 +218,7 @@ public class Ext4Inode implements StructConverter {
 
 	/**
 	 * Returns the size of this file.
-	 * 
+	 *
 	 * @return size of this file
 	 */
 	public long getSize() {
@@ -227,7 +227,7 @@ public class Ext4Inode implements StructConverter {
 
 	/**
 	 * Returns true if the inode appears to be unused.
-	 *  
+	 *
 	 * @return boolean true if the inode appears to be unused
 	 */
 	public boolean isUnused() {
@@ -261,7 +261,7 @@ public class Ext4Inode implements StructConverter {
 	/**
 	 * Returns the bytes in this inode's i_block and the "system.data"
 	 * extended attribute.
-	 * 
+	 *
 	 * @return bytes of this file that were stored inline in the inode
 	 * @throws IOException if not able to assemble enough bytes to match
 	 * the file size

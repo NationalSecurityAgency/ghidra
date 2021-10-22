@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,10 +24,10 @@ import ghidra.util.Msg;
 import utilities.util.reflection.ReflectionUtilities;
 
 /**
- * A simple class to handle logging messages and exceptions.  A maximum message count size 
+ * A simple class to handle logging messages and exceptions.  A maximum message count size
  * constraint can be set to clip messages after a certain number, but still keep incrementing
  * a running total.
- * 
+ *
  * <p>In addition to logging messages, clients can also set a status message.  This message may
  * later used as the primary error message when reporting to the user.
  */
@@ -63,7 +63,7 @@ public class MessageLog {
 	/**
 	 * Appends the message to the log
 	 *
-	 * @param originator the originator of the message 
+	 * @param originator the originator of the message
 	 * @param message the message
 	 */
 	public void appendMsg(String originator, String message) {
@@ -99,7 +99,7 @@ public class MessageLog {
 	 * <p>Currently does nothing different than {@link #appendMsg(String, String)}.
 	 *
 	 *
-	 * @param originator the originator of the message 
+	 * @param originator the originator of the message
 	 * @param message the message
 	 * @deprecated use {@link #appendMsg(String)}
 	 */

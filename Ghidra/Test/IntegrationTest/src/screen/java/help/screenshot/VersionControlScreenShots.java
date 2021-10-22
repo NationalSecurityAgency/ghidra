@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -117,11 +117,11 @@ public class VersionControlScreenShots extends GhidraScreenShotGenerator {
 		DomainFile df = createDomainFile();
 
 		//@formatter:off
-		ItemCheckoutStatus[] checkouts = new ItemCheckoutStatus[] { 
-			new ItemCheckoutStatus(1, CheckoutType.NORMAL, "User-1", 1, System.currentTimeMillis(), 
+		ItemCheckoutStatus[] checkouts = new ItemCheckoutStatus[] {
+			new ItemCheckoutStatus(1, CheckoutType.NORMAL, "User-1", 1, System.currentTimeMillis(),
 							       "host1::/path1/TestRepo"),
-			new ItemCheckoutStatus(1, CheckoutType.EXCLUSIVE, "User-1", 1, System.currentTimeMillis(), 
-				       "host1::/path2/TestRepo"), 
+			new ItemCheckoutStatus(1, CheckoutType.EXCLUSIVE, "User-1", 1, System.currentTimeMillis(),
+				       "host1::/path2/TestRepo"),
 		};
 		//@formatter:on
 		CheckoutsDialog dialog = new CheckoutsDialog(tool, user, df, checkouts);
@@ -146,7 +146,7 @@ public class VersionControlScreenShots extends GhidraScreenShotGenerator {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private DomainFile createDomainFile() {
 		TestDummyDomainFolder root = new TestDummyDomainFolder(null, "Project");

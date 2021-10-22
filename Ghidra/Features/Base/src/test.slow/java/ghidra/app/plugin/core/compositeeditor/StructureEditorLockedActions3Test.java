@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import ghidra.program.model.data.*;
 public class StructureEditorLockedActions3Test extends AbstractStructureEditorLockedActionsTest {
 
 	/**
-	 * Edit an existing structure and create a structure from a selection. Use the conflicting 
+	 * Edit an existing structure and create a structure from a selection. Use the conflicting
 	 * names followed by a good non-default name.
 	 * @throws Exception if the test throws an exception
 	 */
@@ -209,7 +209,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 	//		getActions();
 	//		NumberInputDialog dialog;
 	//		int num = getModel().getNumComponents();
-	//		
+	//
 	//		setSelection(new int[] {1});
 	//		DataType dt1 = getDataType(1);
 	//		assertTrue(getDataType(1).isEquivalent(new WordDataType()));
@@ -231,7 +231,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 	//		getActions();
 	//		NumberInputDialog dialog;
 	//		int num = getModel().getNumComponents();
-	//		
+	//
 	//		setSelection(new int[] {2});
 	//		DataType dt2 = getDataType(2);
 	//		assertTrue(getDataType(2).isEquivalent(new PointerDataType()));
@@ -248,13 +248,13 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 	//		emptyStructure.add(new ByteDataType());
 	//		emptyStructure.add(new StringDataType(), 5);
 	//		emptyStructure.add(new WordDataType());
-	//		
+	//
 	//		provider = new StructureEditorProvider(plugin, program, emptyStructure,  pgmTestCat, dtmService);
 	//		model = (StructureEditorModel)provider.getModel();
 	//		getActions();
 	//		NumberInputDialog dialog;
 	//		int num = getModel().getNumComponents();
-	//		
+	//
 	//		setSelection(new int[] {1});
 	//		DataType dt1 = getDataType(1);
 	//		assertTrue(getDataType(1).isEquivalent(new StringDataType()));
@@ -278,7 +278,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 	//		getActions();
 	//		NumberInputDialog dialog;
 	//		int num = getModel().getNumComponents();
-	//		
+	//
 	//		setSelection(new int[] {5});
 	//		DataType dt5 = getDataType(5);
 	//		assertEquals(4, getModel().getComponent(5).getLength());
@@ -296,7 +296,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 	//		getActions();
 	//		NumberInputDialog dialog;
 	//		int num = getModel().getNumComponents();
-	//		
+	//
 	//		setSelection(new int[] {10});
 	//		DataType dt10 = getDataType(10);
 	//		invoke(pointerAction, false);
@@ -318,7 +318,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 	//		getActions();
 	//		NumberInputDialog dialog;
 	//		int num = getModel().getNumComponents();
-	//		
+	//
 	//		setSelection(new int[] {15});
 	//		DataType dt15 = getDataType(15);
 	//		invoke(pointerAction, false);
@@ -341,7 +341,7 @@ public class StructureEditorLockedActions3Test extends AbstractStructureEditorLo
 	//		setSelection(new int[] {3,4});
 	//		getModel().deleteSelectedComponents();
 	//		DataType viewCopy = getModel().viewComposite.copy();
-	//		
+	//
 	//		assertTrue(!complexStructure.isEquivalent(getModel().viewComposite));
 	//		assertTrue(viewCopy.isEquivalent(getModel().viewComposite));
 	//		invoke(applyAction);

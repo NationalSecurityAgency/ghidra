@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import docking.widgets.label.GDHtmlLabel;
 import ghidra.util.HTMLUtilities;
 
 /**
- * Abstract class that defines a panel for displaying name/value pairs with html-formatting. 
+ * Abstract class that defines a panel for displaying name/value pairs with html-formatting.
  * <p>
  * This is used with the {@link ExtensionDetailsPanel} and the {@link PluginDetailsPanel}
  */
@@ -44,15 +44,15 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	protected JScrollPane sp;
 
 	/**
-	 * Sets attributes for the different pieces of information being displayed in this 
+	 * Sets attributes for the different pieces of information being displayed in this
 	 * panel.
 	 */
 	protected abstract void createFieldAttributes();
 
 	/**
-	 * Returns a new {@link SimpleAttributeSet} with all attributes set by the caller. 
-	 * 
-	 * @param fontFamily the font to use 
+	 * Returns a new {@link SimpleAttributeSet} with all attributes set by the caller.
+	 *
+	 * @param fontFamily the font to use
 	 * @param fontSize the font size
 	 * @param bold if true, render text bold
 	 * @param color the foreground text color
@@ -77,7 +77,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	 * <li>FontSize: 11</li>
 	 * <li>Bold: True</li>
 	 * </ul>
-	 * 
+	 *
 	 * @param color the foreground text color
 	 * @return a new attribute set
 	 */
@@ -128,7 +128,7 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	/**
 	 * Inserts an html-formatted string into the given buffer. This is meant to be used
 	 * for inserting the name of each row in the description text.
-	 * 
+	 *
 	 * @param buffer the string buffer to add to
 	 * @param rowName the name of the row to add
 	 */
@@ -142,10 +142,10 @@ public abstract class AbstractDetailsPanel extends JPanel {
 	/**
 	 * Inserts an html-formatted string into the given buffer. This is meant to be used
 	 * for inserting the value of each row in the description text.
-	 * 
+	 *
 	 * @param buffer the string buffer to add to
 	 * @param value the text to add
-	 * @param attributes the structure containing formatting information 
+	 * @param attributes the structure containing formatting information
 	 */
 	protected void insertRowValue(StringBuilder buffer, String value,
 			SimpleAttributeSet attributes) {

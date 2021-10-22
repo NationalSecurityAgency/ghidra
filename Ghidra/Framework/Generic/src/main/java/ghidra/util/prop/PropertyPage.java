@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ import java.io.Serializable;
 
 /**
  * Manages property values of type int, String, Object, and
- * "void"  for a page of possible addresses. Void serves as a marker 
+ * "void"  for a page of possible addresses. Void serves as a marker
  * for whether an address has a property. The derived class for each type holds
  * the actual value of the property, and overrides the
  * appropriate add() and get() methods.
@@ -41,7 +41,7 @@ class PropertyPage implements Serializable {
 	private ShortKeySet keySet;	// set of offsets on page having property
 	private DataTable table;
 	private short pageSize; // valid offsets in range [0,pageSize-1]
-    private int switchSize;                                 
+    private int switchSize;
     private Class<?> objectClass;
     private NoValueException noValueException;
     private final int threshold; // after number of entries reaches this many,
@@ -58,23 +58,23 @@ class PropertyPage implements Serializable {
         this.objectClass = objectClass;
         table = new DataTable();
         indexer = new ShortKeyIndexer();
-        
-		threshold = pageSize/(RedBlackKeySet.NODESIZE * 4); 
+
+		threshold = pageSize/(RedBlackKeySet.NODESIZE * 4);
         // 4 is used because a bitTree
 		// requires 1/4 the pageSize in bytes.  NODESIZE
 		// is the number of bytes in a RedBlackKeySet node.
 		// Therefore, to minimize the space used, we should
 		// switch to a BitTree when the number of keys exceeds
 		// the threshold.
-          
+
         switchSize = (valueSize * pageSize) / (12+valueSize);
         // valueSize * pageSize is the space needed to store a full page
         // of values. 12 is the approximate overhead in a sparce storage
         // structure per entry, make (12 + valueSize) the amount needed per
-        // entry.  So when the number of entries is greater than the 
+        // entry.  So when the number of entries is greater than the
         // switchSize, it is more efficient to just allocate space for
         // the entire page.
-        
+
         noValueException = new NoValueException();
     }
 	/**
@@ -174,7 +174,7 @@ class PropertyPage implements Serializable {
 	boolean hasProperty(short offset) {
 		return keySet.containsKey(offset);
 	}
-    
+
     private int getRow(short offset, boolean forceRow) {
         if (indexer != null) {
             if (forceRow) {
@@ -194,10 +194,10 @@ class PropertyPage implements Serializable {
 	Saveable getSaveableObject(short offset) {
 		if (keySet.containsKey(offset)) {
 	        int row = getRow(offset,false);
-	
+
 			try {
 		        Saveable so = (Saveable)objectClass.newInstance();
-		        so.restore(new ObjectStorageAdapter(table, row));  
+		        so.restore(new ObjectStorageAdapter(table, row));
 		        return so;
 			}catch(IllegalAccessException e) {
 			}catch(InstantiationException e) {
@@ -226,7 +226,7 @@ class PropertyPage implements Serializable {
 	Object getObject(short offset) {
 		if (keySet.containsKey(offset)) {
 	        int row = getRow(offset,false);
-			return table.getObject(row, 0);	
+			return table.getObject(row, 0);
 		}
         return null;
     }
@@ -292,9 +292,9 @@ class PropertyPage implements Serializable {
         addKey(offset);
         int row = getRow(offset,true);
         table.putInt(row,0,value);
-        
+
     }
-//////////////////////////////////////////////////////////////    
+//////////////////////////////////////////////////////////////
 	/**
 	 * Get the long property at the given offset.
 	 * @param offset offset into the page
@@ -318,10 +318,10 @@ class PropertyPage implements Serializable {
         addKey(offset);
         int row = getRow(offset,true);
         table.putLong(row,0,value);
-        
+
     }
-    
-//////////////////////////////////////////////////////////////    
+
+//////////////////////////////////////////////////////////////
 	/**
 	 * Get the short property at the given offset.
 	 * @param offset offset into the page
@@ -345,10 +345,10 @@ class PropertyPage implements Serializable {
         addKey(offset);
         int row = getRow(offset,true);
         table.putShort(row,0,value);
-        
+
     }
-    
-//////////////////////////////////////////////////////////////    
+
+//////////////////////////////////////////////////////////////
 	/**
 	 * Get the long property at the given offset.
 	 * @param offset offset into the page
@@ -372,10 +372,10 @@ class PropertyPage implements Serializable {
         addKey(offset);
         int row = getRow(offset,true);
         table.putByte(row,0,value);
-        
+
     }
-    
-    
+
+
 ///////////////////////////////////////////////////////////////
 	/**
 	 * Mark the given offset as having a property.
@@ -435,7 +435,7 @@ class PropertyPage implements Serializable {
             }
             table = newTable;
         }
-            
+
         return result;
 	}
 }

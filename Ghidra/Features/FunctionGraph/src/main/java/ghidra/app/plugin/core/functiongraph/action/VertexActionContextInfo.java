@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.program.model.address.AddressSet;
 
 /**
  * A container object use by the graph's context system to give actions the state of the graph.
- * 
+ *
  * <P>This class has a vertex which is considered the active vertex, which may be the vertex
  * under the mouse (for mouse driven data)  or the focused vertex (for key event driven data).
  */

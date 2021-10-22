@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ public class AttributedVertex extends Attributed {
 
 	/**
 	 * Constructs a new GhidraVertex with the given id and name
-	 * 
+	 *
 	 * @param id the unique id for the vertex
 	 * @param name the name for the vertex
 	 */
@@ -41,7 +41,7 @@ public class AttributedVertex extends Attributed {
 
 	/**
 	 * Sets the name on the vertex
-	 * 
+	 *
 	 * @param name the new name for the vertex
 	 */
 	public void setName(String name) {
@@ -58,7 +58,7 @@ public class AttributedVertex extends Attributed {
 
 	/**
 	 * returns the name of the vertex
-	 * 
+	 *
 	 * @return  the name of the vertex
 	 */
 	public String getName() {

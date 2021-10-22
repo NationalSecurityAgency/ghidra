@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ class FunctionTableModel extends AddressBasedTableModel<Function> {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param title the title of the model
 	 * @param serviceProvider the service provider
 	 * @param program the current program
@@ -113,7 +113,7 @@ class FunctionTableModel extends AddressBasedTableModel<Function> {
 	/**
 	 * Sets the tags associated with this model. This causes a reload of
 	 * the function table
-	 * 
+	 *
 	 * @param tags the selected tags
 	 */
 	public void setTags(Set<FunctionTag> tags) {
@@ -131,7 +131,7 @@ class FunctionTableModel extends AddressBasedTableModel<Function> {
 
 	/**
 	 * Returns the list of functions in the table
-	 * 
+	 *
 	 * @return the contents of the table
 	 */
 	public List<Function> getFunctions() {

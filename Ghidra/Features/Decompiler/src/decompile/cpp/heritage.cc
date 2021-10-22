@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -94,7 +94,7 @@ int4 LocationMap::findPass(const Address &addr) const
 /// Any basic blocks currently in \b this queue are removed. Space is
 /// reserved for a new set of prioritized stacks.
 /// \param maxdepth is the number of stacks to allocate
-void PriorityQueue::reset(int4 maxdepth) 
+void PriorityQueue::reset(int4 maxdepth)
 
 {
   if ((curdepth==-1)&&(maxdepth==queue.size()-1)) return; // Already reset
@@ -1569,7 +1569,7 @@ void Heritage::remove13Refinement(vector<int4> &refine)
       pos += lastsize;
     }
   }
-  
+
 }
 
 /// \brief Find the common refinement of all reads and writes in the address range
@@ -1806,7 +1806,7 @@ void Heritage::splitJoinRead(Varnode *vn,JoinRecord *joinrec)
 
 {
   PcodeOp *op = vn->loneDescend(); // vn isFree, so loneDescend must be non-null
-  
+
   vector<Varnode *> lastcombo;
   vector<Varnode *> nextlev;
   lastcombo.push_back(vn);
@@ -1872,7 +1872,7 @@ void Heritage::splitJoinWrite(Varnode *vn,JoinRecord *joinrec)
       fd->opSetOutput(split,mosthalf);
       fd->opSetInput(split,curvn,0);
       fd->opSetInput(split,fd->newConstant(4,leasthalf->getSize()),1);
-      if (op == (PcodeOp *)0) 
+      if (op == (PcodeOp *)0)
 	fd->opInsertBegin(split,bb);
       else
 	fd->opInsertAfter(split,op);
@@ -1959,7 +1959,7 @@ void Heritage::processJoins(void)
 
   iter = fd->beginLoc(joinspace);
   enditer = fd->endLoc(joinspace);
-  
+
   while(iter != enditer) {
     Varnode *vn = *iter++;
     if (vn->getSpace() != joinspace) break;	// New varnodes may get inserted before enditer
@@ -1977,7 +1977,7 @@ void Heritage::processJoins(void)
 
     HeritageInfo *info = getInfo(piecespace);
     if (pass != info->delay) continue; // It is too soon to heritage this space
-    
+
     if (joinrec->isFloatExtension())
       floatExtensionWrite(vn,joinrec);
     else
@@ -2070,7 +2070,7 @@ void Heritage::visitIncr(FlowBlock *qnode,FlowBlock *vnode)
   int4 i,j,k;
   FlowBlock *v,*child;
   vector<FlowBlock *>::iterator iter,enditer;
-  
+
   i = vnode->getIndex();
   j = qnode->getIndex();
   iter = augment[i].begin();
@@ -2283,7 +2283,7 @@ void Heritage::placeMultiequals(void)
   BlockBasic *bl;
   int4 max;
 
-  for(iter=disjoint.begin();iter!=disjoint.end();++iter) { 
+  for(iter=disjoint.begin();iter!=disjoint.end();++iter) {
     Address addr = (*iter).first;
     int4 size = (*iter).second.size;
     readvars.clear();
@@ -2391,7 +2391,7 @@ void Heritage::heritage(void)
       if (prev == 0)		// All new location being heritaged, or intersecting with something new
 	disjoint.add((*liter).first,(*liter).second.size,pass,prev);
       else if (prev==2) { // If completely contained in range from previous pass
-	if (vn->isHeritageKnown()) continue; // Don't heritage if we don't have to 
+	if (vn->isHeritageKnown()) continue; // Don't heritage if we don't have to
 	if (vn->hasNoDescend()) continue;
 	if ((!needwarning)&&(info->deadremoved>0)) {
 	  needwarning = true;

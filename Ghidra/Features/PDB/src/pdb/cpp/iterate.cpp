@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -232,14 +232,14 @@ void dumpFunctionStackVariables(IDiaSymbol* symbol, IDiaSession& session )
 		while (pEnum != NULL && pEnum->Next(1, &pSymbol, &celt) == S_OK && celt == 1) {
 			pSymbol->get_symTag( &tag );
 			if ( tag == SymTagData ) {
-				printf("%S<stack_variable name=\"%S\" kind=\"%S\" offset=\"0x%x\" datatype=\"%S\" length=\"0x%I64x\" />\n", 
+				printf("%S<stack_variable name=\"%S\" kind=\"%S\" offset=\"0x%x\" datatype=\"%S\" length=\"0x%I64x\" />\n",
 							indent(12).c_str(),
 							getName(*pSymbol).c_str(),
-							getKindAsString(*pSymbol).c_str(), 
+							getKindAsString(*pSymbol).c_str(),
 							getOffset(*pSymbol),
 							getTypeAsString(*pSymbol).c_str(),
 							getLength(*pSymbol));
-			} 
+			}
 			else if ( tag == SymTagAnnotation ) {
 				/*
 				IDiaEnumSymbols * pValues;
@@ -262,7 +262,7 @@ void dumpFunctionStackVariables(IDiaSymbol* symbol, IDiaSession& session )
 			}
 			pSymbol = NULL;
 		}
-		pBlock->get_symTag( &tag ); 
+		pBlock->get_symTag( &tag );
 		if ( tag == SymTagFunction ) {  // Stop at function scope.
 			break;
 		}
@@ -270,7 +270,7 @@ void dumpFunctionStackVariables(IDiaSymbol* symbol, IDiaSession& session )
 		CComPtr<IDiaSymbol> pParent;
 		if ( pBlock->get_lexicalParent( &pParent ) == S_OK ) {
 			pBlock = pParent;
-		} 
+		}
 		else {
 			break;
 			//fatal( "Finding lexical parent failed." );
@@ -409,10 +409,10 @@ void iterateSourceFiles(IDiaEnumSourceFiles * pSourceFiles) {
 }
 
 /*
- * Maps data from the section number to segments of 
- * address space. Because DIA performs translations 
- * from the section offset to relative virtual addresses, 
- * most applications will not make use of the 
+ * Maps data from the section number to segments of
+ * address space. Because DIA performs translations
+ * from the section offset to relative virtual addresses,
+ * most applications will not make use of the
  * information in the segment map.
  */
 void iterateSegments(IDiaEnumSegments * pSegments) {
@@ -429,8 +429,8 @@ void iterateSegments(IDiaEnumSegments * pSegments) {
 }
 
 /*
- * Retrieves data describing a section contribution, 
- * that is, a contiguous block of memory contributed 
+ * Retrieves data describing a section contribution,
+ * that is, a contiguous block of memory contributed
  * to the image by a compiland.
  */
 void iterateSections(PDBApiContext& ctx, IDiaEnumSectionContribs& secContribs) {
@@ -451,7 +451,7 @@ void iterateSections(PDBApiContext& ctx, IDiaEnumSectionContribs& secContribs) {
 			if (ctx.Session().findSymbolByRVA( rva, SymTagNull, &pSym ) != S_OK ) {
 				pSym = NULL;
 			}
-		} 
+		}
 		else {
 			DWORD isect = 0;
 			DWORD offset = 0;
@@ -469,7 +469,7 @@ void iterateSections(PDBApiContext& ctx, IDiaEnumSectionContribs& secContribs) {
 			std::wstring name = getName(*pSym);
 			std::wstring tag  = getTagAsString(*pSym);
 
-			printf("%S<section_contrib address=\"0x%x\" name=\"%S\" tag=\"%S\" /> \n", 
+			printf("%S<section_contrib address=\"0x%x\" name=\"%S\" tag=\"%S\" /> \n",
 						indent(12).c_str(), rva, name.c_str(), tag.c_str());
 		}
 	}
@@ -516,8 +516,8 @@ void iterateInjectedSource(IDiaEnumInjectedSources * pInjectedSrcs) {
 }
 
 /*
- * Exposes the details of a stack frame for execution points 
- * within the address range indicated by the 
+ * Exposes the details of a stack frame for execution points
+ * within the address range indicated by the
  * address and block length.
  */
 void iterateFrameData(IDiaEnumFrameData * pEnumFrameData) {
@@ -568,15 +568,15 @@ void iterateTables(PDBApiContext& ctx, bool printAll) {
 
 		if ( pTable->QueryInterface(IID_PPV_ARGS(&pSymbols) ) == S_OK ) {
 			iterateSymbolTable(pSymbols);
-		} 
+		}
 		else if ( pTable->QueryInterface(IID_PPV_ARGS(&pSourceFiles) ) == S_OK ) {
 			iterateSourceFiles(pSourceFiles);
-		} 
+		}
 		else if ( pTable->QueryInterface(IID_PPV_ARGS(&pSegments)) == S_OK ) {
 			iterateSegments(pSegments);
-		} 
+		}
 		else if ( pTable->QueryInterface(IID_PPV_ARGS(&pSecContribs) ) == S_OK ) {
-			if (printAll) {		
+			if (printAll) {
 				iterateSections(ctx, *pSecContribs);
 			}
 		}

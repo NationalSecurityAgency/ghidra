@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,11 +23,11 @@ import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 
 /**
- * A panel with a component-containing border. Use a checkbox as the component, for example, 
+ * A panel with a component-containing border. Use a checkbox as the component, for example,
  * to control the enablement of child widgets.
- * <p> 
- *  Users should modify the contents of this panel via the JPanel from <code>getContentPane()</code> 
- *  -- <code>add()</code> and <code>remove()</code> methods have been overridden to modify the 
+ * <p>
+ *  Users should modify the contents of this panel via the JPanel from <code>getContentPane()</code>
+ *  -- <code>add()</code> and <code>remove()</code> methods have been overridden to modify the
  *  content pane; other calls to this panel should <code>getContentPane()</code> first.
  *  <p>
  *  Example:
@@ -38,7 +38,7 @@ import javax.swing.border.TitledBorder;
  *      super(new JCheckBox("Enable"), BorderFactory.createEtchedBorder());
  *      enableCheckbox = (JCheckBox) getTitleComponent();
  *      enableCheckbox.addActionListener(...);
- *      
+ *
  *      JPanel content = getContentPane();
  *      content.setLayout(new BorderLayout());
  *      add(new JButton("Click me"));
@@ -46,7 +46,7 @@ import javax.swing.border.TitledBorder;
  *    }
  *    ...
  *  }</pre>
- *    
+ *
  */
 public class InlineComponentTitledPanel extends JPanel {
 
@@ -161,10 +161,10 @@ public class InlineComponentTitledPanel extends JPanel {
 
 	/**
 	 * Sets the secondary border.
-	 * 
-	 * NOTE: Rendering conflicts may occur with co-located sub-borders; a TitledBorder that 
+	 *
+	 * NOTE: Rendering conflicts may occur with co-located sub-borders; a TitledBorder that
 	 * renders in the same position (top, bottom, etc.) will cause the component to shift, and
-	 * will be rendered-over if the new title resides in the same position and justification 
+	 * will be rendered-over if the new title resides in the same position and justification
 	 * (left-to-right alignment) as the component.
 	 * @param otherBorder
 	 * @see setOtherBorder(Border)

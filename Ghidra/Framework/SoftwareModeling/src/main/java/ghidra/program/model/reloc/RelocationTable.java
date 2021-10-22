@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,13 +29,13 @@ public interface RelocationTable {
 
 	/**
 	 * Creates and adds a new relocation with the specified
-	 * address, type, and value. 
-	 * 
+	 * address, type, and value.
+	 *
 	 * @param addr the address where the relocation is required
 	 * @param type the type of relocation to perform
 	 * @param values the values needed when performing the relocation
 	 * @param bytes original instruction bytes affected by relocation
-	 * @param symbolName the name of the symbol being relocated; may be null 
+	 * @param symbolName the name of the symbol being relocated; may be null
 	 * @return the newly added relocation object
 	 */
 	public Relocation add(Address addr, int type, long[] values, byte[] bytes, String symbolName);
@@ -54,14 +54,14 @@ public interface RelocationTable {
 	public Relocation getRelocation(Address addr);
 
 	/**
-	 * Returns an iterator over all relocation points (in ascending address order) located 
+	 * Returns an iterator over all relocation points (in ascending address order) located
 	 * within the program.
 	 * @return relocation iterator
 	 */
 	public Iterator<Relocation> getRelocations();
 
 	/**
-	 * Returns an iterator over all the relocation points (in ascending address order) located 
+	 * Returns an iterator over all the relocation points (in ascending address order) located
 	 * within the specified address set.
 	 * @param set address set
 	 * @return relocation iterator

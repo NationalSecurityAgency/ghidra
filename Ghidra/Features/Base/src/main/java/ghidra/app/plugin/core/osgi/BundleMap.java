@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class BundleMap {
 
 	/**
 	 * Maps associations between a bundle, its file, and its bundle location.
-	 * 
+	 *
 	 * @param bundle a GhidraBundle object
 	 */
 	public void add(GhidraBundle bundle) {
@@ -51,9 +51,9 @@ public class BundleMap {
 
 	/**
 	 * Maps bundles in a collection.
-	 * 
+	 *
 	 * <p>This is the same as calling {@link BundleMap#add(GhidraBundle)} for each bundle in {@code bundles}.
-	 * 
+	 *
 	 * @param bundles a collection of GhidraBundle objects
 	 */
 	public void addAll(Collection<GhidraBundle> bundles) {
@@ -70,8 +70,8 @@ public class BundleMap {
 	}
 
 	/**
-	 * Removes the mappings of a bundle. 
-	 * 
+	 * Removes the mappings of a bundle.
+	 *
 	 * @param bundle a GhidraBundle object
 	 */
 	public void remove(GhidraBundle bundle) {
@@ -87,9 +87,9 @@ public class BundleMap {
 
 	/**
 	 * Removes all mappings of each bundle from a collection.
-	 * 
+	 *
 	 * This is the same as calling {@link #remove(GhidraBundle)} for each bundle in {@code bundles}.
-	 * 
+	 *
 	 * @param bundles a collection of GhidraBundle objects
 	 */
 	public void removeAll(Collection<GhidraBundle> bundles) {
@@ -107,7 +107,7 @@ public class BundleMap {
 
 	/**
 	 * Removes the mapping for a bundle with a given bundle location.
-	 * 
+	 *
 	 * @param bundleLocation a bundle location
 	 * @return the bundle removed
 	 */
@@ -125,7 +125,7 @@ public class BundleMap {
 
 	/**
 	 * Removes the mapping for a bundle with a given file.
-	
+
 	 * @param bundleFile a bundle file
 	 * @return the bundle removed
 	 */
@@ -143,7 +143,7 @@ public class BundleMap {
 
 	/**
 	 * Creates and maps bundles from files in a collection that aren't already mapped.
-	 * 
+	 *
 	 * @param bundleFiles a collection of bundle files
 	 * @param ctor a constructor for a GhidraBundle given a bundle file
 	 * @return the newly created GhidraBundle objects
@@ -166,7 +166,7 @@ public class BundleMap {
 
 	/**
 	 * Returns the bundle with the given location.
-	 * 
+	 *
 	 * @param location a bundle location
 	 * @return the bundle found or null
 	 */
@@ -182,7 +182,7 @@ public class BundleMap {
 
 	/**
 	 * Returns the bundle with the given file.
-	 * 
+	 *
 	 * @param bundleFile a bundle file
 	 * @return the bundle found or null
 	 */

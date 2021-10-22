@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,14 +62,14 @@ public interface CompositeEditorModelListener extends CompositeViewerModelListen
 //     * @param dt the data type that has changed.
 //     */
 //    public abstract void componentDataTypeChanged(DataType dt);
-    
+
     /**
      * Called when the model wants to end cell editing that is in progress.
      * This is due to an attempt to modify the composite data type in the
      * editor while the model's field edit state indicates a field is being
-     * edited. It is up to the application to determine whether to cancel or 
+     * edited. It is up to the application to determine whether to cancel or
      * apply the field edits.
      */
 	public abstract void endFieldEditing();
-	
+
 }

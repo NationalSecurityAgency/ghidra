@@ -13,12 +13,12 @@
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="chapter">
 <div class="titlepage"><div><div><h1 class="title">
 <a name="DecompilerAnnotations"></a>Program Annotations Affecting the Decompiler</h1></div></div></div>
-  
+
 
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="AnnoteFunctionBody"></a>Machine Instructions</h2></div></div></div>
-  
+
   <p>
     Individual <span class="bold"><strong>machine instructions</strong></span>
     make up the biggest source of information when the
@@ -55,7 +55,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="AnnoteEntryPoint"></a>Entry Point</h3></div></div></div>
-    
+
     <p>
       The <span class="emphasis"><em>entry point</em></span> address for a function plays a pivotal role for
       analysis using the Decompiler. Ghidra generally associates
@@ -78,7 +78,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="AnnoteFormalFunctionBody"></a>Formal Function Body</h3></div></div></div>
-    
+
     <p>
       When a function is created, Ghidra stores its function body as a set of addresses in the
       Program database. This <span class="emphasis"><em>formal</em></span> function body delineates the function
@@ -106,7 +106,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="AnnoteFlowOverride"></a>Flow Overrides</h3></div></div></div>
-    
+
     <p>
       Control-flow behavior for a machine instruction is generally determined by its underlying
       p-code (see <a class="xref" href="DecompilerConcepts.html#ConceptControlFlow" title="P-code Control Flow">P-code Control Flow</a>), but this can be changed by applying a Flow Override.
@@ -180,7 +180,7 @@
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="AnnoteComments"></a>Comments</h2></div></div></div>
-  
+
   <p>
     The Decompiler automatically incorporates comments from the Program database into its
     output.  Comments in Ghidra are centralized and can be created and displayed by multiple
@@ -227,7 +227,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="CommentDisplay"></a>Display</h3></div></div></div>
-    
+
   <p>
     The Decompiler collects and displays comments associated with any address in the
     formal <span class="emphasis"><em>function body</em></span> currently decompiling.
@@ -275,7 +275,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="CommentUnreachable"></a>Unreachable Blocks</h3></div></div></div>
-    
+
     <p>
       The Decompiler may decide as part of its analysis that individual
       <span class="emphasis"><em>basic blocks</em></span> are unreachable and not display them in the output.
@@ -287,7 +287,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="CommentWarnings"></a>Warning Comments</h3></div></div></div>
-    
+
     <p>
       The Decompiler can generate internal warnings during its analysis and will incorporate
       them into the output as comments in the same way as the user-defined
@@ -306,7 +306,7 @@
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="AnnoteVariables"></a>Variable Annotations</h2></div></div></div>
-  
+
   <p>
     Variable annotations are the most important way to get names and data-types
     that are meaningful to the user incorporated into the Decompiler's output.
@@ -333,11 +333,11 @@
     </div>
 <p>
   </p>
-  
+
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="VariableCreate"></a>Creating Variable Annotations</h3></div></div></div>
-    
+
   <p>
     Ghidra provides various ways that a name and other attributes can be ascribed
     to a variable.  These break up roughly into <span class="emphasis"><em>global</em></span> variables,
@@ -398,11 +398,11 @@
 <p>
   </p>
   </div>
-  
+
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="VariableSymbol"></a>Variable Symbols</h3></div></div></div>
-    
+
     <p>
       Ghidra maintains its own symbol table that supports namespaces and function
       scopes, and variable names are automatically incorporated into this.
@@ -435,11 +435,11 @@
       </div>
 <p>
     </p>
-    
+
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="SymbolScope"></a>Variable Scope</h4></div></div></div>
-      
+
     <p>
       All variables belong to either a <span class="emphasis"><em>global</em></span> or <span class="emphasis"><em>local</em></span>
       scope, which directly affects how the variable is treated in the Decompiler's data-flow
@@ -470,13 +470,13 @@
     <p>
     </p>
     </div>
-    
+
   </div>
 
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="AnnoteDatatype"></a>Variable Data-types</h3></div></div></div>
-    
+
     <p>
       Ghidra provides extensive support for naming and describing
       <span class="bold"><strong>data-types</strong></span> that are tailored for the Program
@@ -487,7 +487,7 @@
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="DecompilerDataTypes"></a>Data-types Supported by the Decompiler</h4></div></div></div>
-      
+
       <p>
 	The Decompiler understands traditional primitive data-types in all their various sizes,
 	like integers, floating-point numbers, booleans, and characters. It also understands
@@ -502,7 +502,7 @@
       <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
 <a name="TypeUndefined"></a>Undefined</h5></div></div></div>
-	
+
 	<p>
 	  The <span class="emphasis"><em>undefined</em></span> data-types are supported in their various sizes:
 	  <span class="bold"><strong>undefined1</strong></span>, <span class="bold"><strong>undefined2</strong></span>,
@@ -519,7 +519,7 @@
       <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
 <a name="TypeVoid"></a>Void</h5></div></div></div>
-	
+
 	<p>
 	  The <span class="bold"><strong>void</strong></span> data-type is supported but treated specially by
 	  the Decompiler, as does Ghidra in general.  A <span class="bold"><strong>void</strong></span> can be
@@ -531,7 +531,7 @@
       <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
 <a name="TypeInteger"></a>Integer</h5></div></div></div>
-	
+
 	<p>
 	  Integer data-types, both signed and unsigned, are supported up to a size of 8 bytes. Larger
 	  sizes are supported internally but are generally represented as an array of bytes in
@@ -546,15 +546,15 @@
       <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
 <a name="TypeBoolean"></a>Boolean</h5></div></div></div>
-	
+
 	<p>
-	  A 1-byte boolean data-type is supported. 
+	  A 1-byte boolean data-type is supported.
 	</p>
       </div>
       <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
 <a name="TypeFloat"></a>Floating-point</h5></div></div></div>
-	
+
 	<p>
 	  Floating-point sizes of 4, 8, 10, and 16 are supported, mapping in all cases currently to the
 	  <span class="bold"><strong>float</strong></span>, <span class="bold"><strong>double</strong></span>,
@@ -566,7 +566,7 @@
       <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
 <a name="TypeChar"></a>Character</h5></div></div></div>
-	
+
 	<p>
 	  ASCII- and Unicode-encoded character data-types are supported for sizes of 1, 2, and 4.  The size effectively
 	  chooses between the UTF8, UTF16, and UTF32 character encodings, respectively. The standard
@@ -578,7 +578,7 @@
       <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
 <a name="TypeString"></a>String</h5></div></div></div>
-	
+
 	<p>
 	  Terminated strings, encoded either in ASCII or Unicode, are supported.  The Decompiler converts
 	  Ghidra's dedicated string data-types like <span class="bold"><strong>string</strong></span> to
@@ -609,7 +609,7 @@
       <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
 <a name="TypePointer"></a>Pointer</h5></div></div></div>
-	
+
 	<p>
 	  Pointer data-types are fully supported.  A pointer to any other supported data-type is
 	  possible.  The data-type being pointed to, whether it is a primitive, structure, or another pointer,
@@ -634,7 +634,7 @@
       <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
 <a name="TypeArray"></a>Array</h5></div></div></div>
-	
+
 	<p>
 	  Array data-types are fully supported. The array element can be any other supported data-type
 	  with a fixed size.
@@ -643,7 +643,7 @@
       <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
 <a name="TypeStructure"></a>Structure</h5></div></div></div>
-	
+
 	<p>
 	  Structure data-types are fully supported. The Decompiler does not automatically infer structures
 	  when analyzing a function; it propagates them into the function from explicitly
@@ -654,13 +654,13 @@
       <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
 <a name="TypeEnum"></a>Enumeration</h5></div></div></div>
-	
+
 	<p>
 	  Enumerations are fully supported. The Decompiler can propagate enumerations from explicitly
 	  annotated sources throughout a function onto constants, which are then displayed with the
 	  appropriate label from the definition of the enumeration.  If the constant does not match a
 	  single value in the enumeration definition, the Decompiler attempts to build a matching
-	  value by <span class="emphasis"><em>or</em></span>-ing together multiple labels.  
+	  value by <span class="emphasis"><em>or</em></span>-ing together multiple labels.
 	  The Decompiler can be made to break out constants representing packed <span class="emphasis"><em>flags</em></span>,
 	  for instance, by labeling individual bit values within an enumeration.
 	</p>
@@ -668,10 +668,10 @@
       <div class="sect4">
 <div class="titlepage"><div><div><h5 class="title">
 <a name="TypeFunction"></a>Function Definition</h5></div></div></div>
-	
+
 	<p>
 	  A <span class="bold"><strong>Function Definition</strong></span> in Ghidra is a data-type that encodes
-	  information about the parameters and return value for a generic/unspecified function. 
+	  information about the parameters and return value for a generic/unspecified function.
 	  A formal <span class="bold"><strong>function pointer</strong></span> is supported by the Decompiler as a pointer
 	  data-type that points to a Function Definition. A Function Definition specifically encodes:
 	  </p>
@@ -729,12 +729,12 @@
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="AnnoteForcing"></a>Forcing Data-types</h4></div></div></div>
-      
+
       <p>
 	The Decompiler performs <span class="bold"><strong>type propagation</strong></span> as part of its analysis
 	on functions. Data-type information is collected from variable annotations and other sources,
 	which is then propagated via data flow throughout the function to other variables and
-	constants where the data-type may not be immediately apparent.  
+	constants where the data-type may not be immediately apparent.
       </p>
       <p>
 	With few exceptions, a variable annotation is <span class="emphasis"><em>forcing</em></span> on the Decompiler in the sense
@@ -777,7 +777,7 @@
 	using type propagation from other sources.
       </p>
       <p>
-	For annotations that specifically label a function's formal parameters or return value, 
+	For annotations that specifically label a function's formal parameters or return value,
 	the <a class="link" href="DecompilerAnnotations.html#PrototypeSignatureSource" title="Signature Source">Signature Source</a> also affects how they're treated by the Decompiler.
 	If the Signature Source is set to anything other than <span class="emphasis"><em>DEFAULT</em></span>, there is a forced
 	one-to-one correspondence between variable annotations and actual parameters in the Decompiler's
@@ -810,13 +810,13 @@
       </td></tr>
 </table></div>
     </div>
-    
+
   </div>
 
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="AnnoteStorage"></a>Variable Storage</h3></div></div></div>
-    
+
     <p>
       Every variable annotation is associated with a single <span class="emphasis"><em>storage location</em></span>, where the
       value of the variable is stored during execution: generally a register, stack location, or an address
@@ -830,7 +830,7 @@
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="VariableStorageImage"></a>Load-image Address</h4></div></div></div>
-      
+
       <p>
 	A <span class="bold"><strong>load-image address</strong></span> is a concrete address in the load image of the Program,
 	typically in the <span class="bold"><strong>ram</strong></span> address space. This kind of
@@ -855,7 +855,7 @@
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="VariableStorageStack"></a>Stack Address</h4></div></div></div>
-      
+
       <p>
 	A <span class="bold"><strong>stack address</strong></span> is an address in the <span class="emphasis"><em>stack frame</em></span>
 	of a particular function in the Program.  Formally, a stack address is defined as an offset relative to the
@@ -863,7 +863,7 @@
 	<span class="bold"><strong>stack</strong></span> address space associated with the function. See the discussion
 	in <a class="xref" href="DecompilerConcepts.html#ConceptAddressSpace" title="Address Space">Address Space</a>. A <span class="bold"><strong>stack annotation</strong></span> then is a variable annotation
 	with a stack address as its storage location. It exists only in the scope of a
-	single function and the variable must be <span class="emphasis"><em>local</em></span> to that function. 
+	single function and the variable must be <span class="emphasis"><em>local</em></span> to that function.
       </p>
       <p>
 	Within a <span class="emphasis"><em>Listing</em></span> window, a stack annotation is displayed as part of the function header
@@ -893,7 +893,7 @@
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="VariableStorageRegister"></a>Register</h4></div></div></div>
-      
+
       <p>
 	A variable annotation can refer to a specific <span class="emphasis"><em>register</em></span> for the processor associated
 	with the Program. In general, such an annotation will be for a variable local to a particular function.
@@ -922,7 +922,7 @@
     <div class="sect3">
 <div class="titlepage"><div><div><h4 class="title">
 <a name="VariableStorageTemp"></a>Temporary Register</h4></div></div></div>
-      
+
       <p>
 	Variable annotations can have a <span class="emphasis"><em>temporary register</em></span> as a storage location.
 	A temporary register is not specific to a processor but is produced at various stages of
@@ -951,7 +951,7 @@
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="AnnotePrototype"></a>Function Prototypes</h2></div></div></div>
-  
+
   <p>
     Every formal Function in Ghidra is associated with a set of variable annotations and other properties that
     make up the <span class="bold"><strong>function prototype</strong></span>. Due to the nature of reverse engineering,
@@ -1071,7 +1071,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="PrototypeSignatureSource"></a>Signature Source</h3></div></div></div>
-    
+
     <p>
       Ghidra records a <span class="bold"><strong>Signature Source</strong></span> for every function,
       indicating the origin of its prototype information.  This is
@@ -1114,7 +1114,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="PrototypeDiscover"></a>Discovering Parameters</h3></div></div></div>
-    
+
     <p>
       The input parameter and return value annotations of the function prototype, like
       any variable annotations, can be forcing on the Decompiler
@@ -1141,7 +1141,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="PrototypeCustom"></a>Custom Storage</h3></div></div></div>
-    
+
     <p>
       If there are parameter or return value annotations that do not agree with the calling convention that
       has been set, the function prototype is said to be using <span class="bold"><strong>custom storage</strong></span>.
@@ -1160,7 +1160,7 @@
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="AnnoteMutability"></a>Data Mutability</h2></div></div></div>
-  
+
   <p>
     <span class="bold"><strong>Mutability</strong></span> is a description of how values in a specific memory region,
     either a single variable or a larger block, can change during Program execution based either on
@@ -1171,7 +1171,7 @@
 <li class="listitem" style="list-style-type: disc">Normal</li>
 <li class="listitem" style="list-style-type: disc">Constant - (read-only)</li>
 <li class="listitem" style="list-style-type: disc">Volatile</li>
-</ul></div>	
+</ul></div>
     </div>
 <p>
     Mutability affects Decompiler analysis and can have a large impact on the output.
@@ -1190,7 +1190,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="MutabilityReadOnly"></a>Read-only</h3></div></div></div>
-    
+
     <p>
       The <span class="bold"><strong>constant</strong></span> mutability setting indicates that values within
       the memory region are read-only and don't change during Program execution.  If a read-only variable is
@@ -1203,7 +1203,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="MutabilityVolatile"></a>Volatile</h3></div></div></div>
-    
+
     <p>
       The <span class="bold"><strong>volatile</strong></span> mutability setting indicates that values within
       the memory region may change unexpectedly, even if the code currently executing does not directly
@@ -1229,7 +1229,7 @@
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="AnnoteConstants"></a>Constant Annotations</h2></div></div></div>
-  
+
   <p>
     Ghidra provides numerous actions to control how a specific constant is formatted or displayed.
     An annotation can be applied directly to a constant in a Decompiler window, which always affects
@@ -1253,7 +1253,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ConstantEquates"></a>Equates</h3></div></div></div>
-    
+
     <p>
       Ghidra can create an association between a name and a constant, called an <span class="bold"><strong>equate</strong></span>.
       An equate is a descriptive string that is intended to replace the numeric form of the constant, and equates
@@ -1277,7 +1277,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="ConstantConversions"></a>Format Conversions</h3></div></div></div>
-    
+
     <p>
       Ghidra can apply a <span class="bold"><strong>format conversion</strong></span> to any integer constant that is displayed
       in Decompiler output.
@@ -1317,7 +1317,7 @@
 <div class="section">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
 <a name="AnnoteRegister"></a>Register Values</h2></div></div></div>
-  
+
   <p>
     A <span class="bold"><strong>register value</strong></span> in this context is a region of code in the Program
     where a specific register holds a known constant value.  Ghidra maintains an explicit list of these values for
@@ -1346,7 +1346,7 @@
   <div class="sect2">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="AnnoteContextRegister"></a>Context Registers</h3></div></div></div>
-    
+
     <p>
       There is a special class of registers called <span class="bold"><strong>context registers</strong></span> whose
       values have a different affect on analysis and decompilation than described above.
@@ -1374,7 +1374,7 @@
       established at the time of disassembly. From Ghidra's more static view of execution, a context register holds
       only a single value at any point in the code, but the same context register can hold different values for
       different regions of code. Setting a new value on a region of the Program will affect any subsequent disassembly
-      of code within that region.  
+      of code within that region.
     </p>
     <p>
       If a context register value is changed for a region that has already been disassembled, in order to see

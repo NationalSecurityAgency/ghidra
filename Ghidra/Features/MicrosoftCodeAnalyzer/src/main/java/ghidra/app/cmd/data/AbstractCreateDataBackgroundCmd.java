@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This is the abstract command to extend when creating a specific data type or related data type. 
+ * This is the abstract command to extend when creating a specific data type or related data type.
  */
 public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDataTypeModel>
 		extends BackgroundCommand {
@@ -50,7 +50,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	 * at the address indicated by the model.
 	 * @param model the model for the data type
 	 * @param applyOptions the options for creating the new data structure and its associated
-	 * markup in the program as well as whether to follow other data references and create their 
+	 * markup in the program as well as whether to follow other data references and create their
 	 * data too.
 	 */
 	protected AbstractCreateDataBackgroundCmd(T model, DataApplyOptions applyOptions) {
@@ -64,7 +64,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	}
 
 	/**
-	 * Constructs a command for applying a specific dataType at an address using the default 
+	 * Constructs a command for applying a specific dataType at an address using the default
 	 * data validation options and default data apply options.
 	 * @param name the name indicating the data type being created.
 	 * @param address the address where the data should be created using the data type.
@@ -82,10 +82,10 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	 * @param address the address where the data should be created using the data type.
 	 * @param count the number of the indicated data type to create. If more than 1, then an array
 	 * of the data type will be created where count indicates the number of elements.
-	 * @param validationOptions the options for controlling how validation is performed when 
+	 * @param validationOptions the options for controlling how validation is performed when
 	 * determining whether or not to create the data structure at the indicated address.
 	 * @param applyOptions the options for creating the new data structure and its associated
-	 * markup in the program as well as whether to follow other data references and create their 
+	 * markup in the program as well as whether to follow other data references and create their
 	 * data too.
 	 */
 	protected AbstractCreateDataBackgroundCmd(String name, Address address, int count,
@@ -133,10 +133,10 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	}
 
 	/**
-	 * Creates the data type for this command and may also create referred to data types. 
+	 * Creates the data type for this command and may also create referred to data types.
 	 * Also creates references, symbols, and functions as indicated by the options.
 	 * @param program the program where this command will create the data type.
-	 * @param taskMonitor a task monitor for cancelling or providing status information while 
+	 * @param taskMonitor a task monitor for cancelling or providing status information while
 	 * creating the data type.
 	 * @return true if the data type creation completes successfully.
 	 * @throws CancelledException if the user cancels this task.
@@ -176,7 +176,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 				createMarkup();
 			}
 			catch (InvalidInputException e) {
-				// Catch the exception and output the error, but still should create 
+				// Catch the exception and output the error, but still should create
 				// associated data if possible, even though markup failed.
 				handleErrorMessage(program, name, address, address, e);
 				success = false;
@@ -249,7 +249,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	 * @param dt the desired data type for the data
 	 * @param program the program to be checked
 	 * @param startAddress the address to check for the data
-	 * @return true if data with the desired data type exists at the indicated address in the 
+	 * @return true if data with the desired data type exists at the indicated address in the
 	 * specified program.
 	 */
 	protected boolean matchingDataExists(DataType dt, Program program, Address startAddress) {
@@ -276,7 +276,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 			throws CancelledException, InvalidInputException, InvalidDataTypeException;
 
 	/**
-	 * Creates the associated data that is indicated by the model's data type components. 
+	 * Creates the associated data that is indicated by the model's data type components.
 	 * Also creates references, symbols, and functions as indicated by the options.
 	 * @return true if all associated data was created that was desired.
 	 * throws CancelledException is thrown if the user cancels this command.
@@ -284,8 +284,8 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	protected abstract boolean createAssociatedData() throws CancelledException;
 
 	/**
-	 * Creates an error message that the named type of data structure couldn't be created at the 
-	 * indicated address and outputs the error message to the log and also as a status message for 
+	 * Creates an error message that the named type of data structure couldn't be created at the
+	 * indicated address and outputs the error message to the log and also as a status message for
 	 * this command. This also creates a bookmark with the error message at the indicated address.
 	 * @param program the program where the error bookmark should be created.
 	 * @param dataName the data type name of the data that couldn't be created.
@@ -298,8 +298,8 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	}
 
 	/**
-	 * Creates an error message that the named type of data structure couldn't be created at the 
-	 * indicated address and outputs the error message to the log and also as a status message for 
+	 * Creates an error message that the named type of data structure couldn't be created at the
+	 * indicated address and outputs the error message to the log and also as a status message for
 	 * this command. This also creates a bookmark with the error message at the indicated address.
 	 * @param program the program where the error bookmark should be created.
 	 * @param dataName the data type name of the data that couldn't be created.
@@ -328,7 +328,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	}
 
 	/**
-	 * Output the error message to the log and output a possibly shorter status message for this 
+	 * Output the error message to the log and output a possibly shorter status message for this
 	 * command. This also creates a bookmark with the error message at the indicated address.
 	 * @param program the program where the error bookmark should be created.
 	 * @param bookmarkAddress the address where an error bookmark should be created.
@@ -362,7 +362,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	/**
 	 * Get the address for the data item to be processed by the base implementation.
 	 * In general this is the initial model address set when the command was created.
-	 * 
+	 *
 	 * @return the address of the data item being created.
 	 */
 	final protected Address getDataAddress() {
@@ -372,7 +372,7 @@ public abstract class AbstractCreateDataBackgroundCmd<T extends AbstractCreateDa
 	/**
 	 * Set the address of the data item to be applied.
 	 * Can be used for sub classes that need to apply multiple data items.
-	 * 
+	 *
 	 * @param addr set the current data address
 	 */
 	final protected void setDataAddress(Address addr) {

@@ -18,7 +18,7 @@ define space register type=register_space size=2;
 
 define register offset=0 size=2 [
   R0   R1   R2   R3   R4    R5    R6    R7
-  R8   R9   R10  R11  R12_L R12_H R13_L R13_H  
+  R8   R9   R10  R11  R12_L R12_H R13_L R13_H
   RA_L RA_H SP_L _
 ];
 
@@ -53,7 +53,7 @@ define token instr(16)
 
 # Attach variables =====================================================
 
-# attach normal registers 
+# attach normal registers
 #attach variables [ N_0 M_0 ] [
 #  r0  r1  r2  r3  r4  r5  r6  r7  r8  r9  r10  r11  r12  r13  r14  r15
 #];

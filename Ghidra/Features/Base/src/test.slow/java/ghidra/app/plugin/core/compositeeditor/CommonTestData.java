@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,24 +25,24 @@ import ghidra.util.InvalidNameException;
 public class CommonTestData {
 
     public static CycleGroup byteCycleGroup = new CycleGroup(
-                    "Cycle: byte,word,dword,qword", 
+                    "Cycle: byte,word,dword,qword",
                     new DataType[] {new ByteDataType(),
                                     new WordDataType(),
                                     new DWordDataType(),
-                                    new QWordDataType()}, 
+                                    new QWordDataType()},
                     KeyStroke.getKeyStroke(KeyEvent.VK_B, 0));
     public static CycleGroup floatCycleGroup = new CycleGroup(
-                    "Cycle: float,double", 
+                    "Cycle: float,double",
                     new DataType[] {new FloatDataType(),
-                                    new DoubleDataType()}, 
+                                    new DoubleDataType()},
                     KeyStroke.getKeyStroke(KeyEvent.VK_F, 0));
     public static CycleGroup asciiCycleGroup = new CycleGroup(
-                    "Cycle: char, string, unicode", 
+                    "Cycle: char, string, unicode",
                     new DataType[] {new CharDataType(),
                                     new StringDataType(),
-                                    new UnicodeDataType()}, 
+                                    new UnicodeDataType()},
                     KeyStroke.getKeyStroke(KeyEvent.VK_QUOTE, 0));
-    
+
     public static StandAloneDataTypeManager dataTypeManager;
     public static Category rootCat;
     public static Category category;
@@ -57,9 +57,9 @@ public class CommonTestData {
 	public static Union complexUnion;
 	public static Union refUnion;
 	public static TypeDef simpleStructureTypedef;
-	public static DataType arrayDt; 
+	public static DataType arrayDt;
 	public static int transactionID;
-	
+
 	public static void cleanUp() {
 		dataTypeManager.endTransaction(transactionID, true);
 		dataTypeManager.close();
@@ -75,9 +75,9 @@ public class CommonTestData {
 			complexUnion = new UnionDataType("complexUnion");
 			refUnion = new UnionDataType("refUnion");
 			simpleStructureTypedef = new TypedefDataType("simpleStructureTypedef", simpleStructure);
-			arrayDt = new ArrayDataType(new Pointer32DataType(new Pointer32DataType(simpleStructureTypedef)),3,4); 
+			arrayDt = new ArrayDataType(new Pointer32DataType(new Pointer32DataType(simpleStructureTypedef)),3,4);
 			dataTypeManager = new StandAloneDataTypeManager("test");
-			transactionID = dataTypeManager.startTransaction("");						
+			transactionID = dataTypeManager.startTransaction("");
 			rootCat = dataTypeManager.getRootCategory();
             category = rootCat.createCategory("testCat");
             aaCategory = rootCat.createCategory("aa");
@@ -171,5 +171,5 @@ public class CommonTestData {
         complexUnion.add(simpleStructure);
         complexUnion.setDescription("A complex union.");
     }
-    
+
 }

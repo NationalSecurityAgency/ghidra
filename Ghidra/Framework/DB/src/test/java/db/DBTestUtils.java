@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,19 +47,19 @@ public class DBTestUtils {
 	static final int MAX_SCHEMA_TYPE = 10;
 
 	//@formatter:off
-	private static final Field[][] schemaFields = { 
+	private static final Field[][] schemaFields = {
 		{}, // no columns
 		{ BooleanField.INSTANCE },
-		{ ByteField.INSTANCE }, 
-		{ IntField.INSTANCE }, 
+		{ ByteField.INSTANCE },
+		{ IntField.INSTANCE },
 		{ ShortField.INSTANCE },
-		{ LongField.INSTANCE }, 
-		{ StringField.INSTANCE }, 
+		{ LongField.INSTANCE },
+		{ StringField.INSTANCE },
 		{ BinaryField.INSTANCE },
 		{ FixedField10.INSTANCE },
-		{ BooleanField.INSTANCE, ByteField.INSTANCE, IntField.INSTANCE, ShortField.INSTANCE, 
+		{ BooleanField.INSTANCE, ByteField.INSTANCE, IntField.INSTANCE, ShortField.INSTANCE,
 			LongField.INSTANCE, FixedField10.INSTANCE },
-		{ BooleanField.INSTANCE, ByteField.INSTANCE, IntField.INSTANCE, ShortField.INSTANCE, 
+		{ BooleanField.INSTANCE, ByteField.INSTANCE, IntField.INSTANCE, ShortField.INSTANCE,
 			LongField.INSTANCE, StringField.INSTANCE, BinaryField.INSTANCE, FixedField10.INSTANCE } };
 	//@formatter:on
 
@@ -68,12 +68,12 @@ public class DBTestUtils {
 			{ 2, 3, 4, 5, 6, 7 } };
 
 	//@formatter:off
-	private static final String[][] schemaFieldNames = { 
+	private static final String[][] schemaFieldNames = {
 		{}, // no columns
-		{ "Boolean" }, { "Byte" }, { "Int" }, { "Short" }, { "Long" }, 
+		{ "Boolean" }, { "Byte" }, { "Int" }, { "Short" }, { "Long" },
 		{ "String" }, { "Binary" }, { "Fixed" },
 		{ "Boolean", "Byte", "Int", "Short", "Long", "Fixed" },
-		{ "Boolean", "Byte", "Int", "Short", "Long", "String", "Binary", "Fixed" } 
+		{ "Boolean", "Byte", "Int", "Short", "Long", "String", "Binary", "Fixed" }
 	};
 	//@formatter:on
 

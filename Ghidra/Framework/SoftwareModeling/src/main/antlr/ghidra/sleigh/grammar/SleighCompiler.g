@@ -98,7 +98,7 @@ scope Block {
 	private Location find(Tree t) {
 	    return env.getLocator().getLocation(t.getLine());
 	}
-	
+
 	private SubtableSymbol findOrNewTable(Location loc, String name) {
 		SleighSymbol sym = sc.findSymbol(name);
 		if (sym == null) {
@@ -611,7 +611,7 @@ withblock
 			if ($s.value != null) {
 				ss = findOrNewTable(find($s.tree), $s.value);
 				if (ss == null) bail("With block with invalid subtable identifier");
-			}	
+			}
 			sc.pushWith(ss, e, b);
 		}
 		constructorlikelist
@@ -929,7 +929,7 @@ cstatement[VectorSTL<ContextChange> r]
 				sc.defineOperand(find(id), t, e);
 			} else {
 				wrongSymbolTypeError(sym, find(id), "context or operand", "context block lvalue");
-			}	
+			}
 		}
 	|	^(OP_APPLY ^(OP_IDENTIFIER id=.) ^(OP_IDENTIFIER arg1=.) ^(OP_IDENTIFIER arg2=.)) {
 			if (!"globalset".equals(id.getText())) {
@@ -977,7 +977,7 @@ semantic[ParsingEnvironment pe, Location containerLoc, PcodeCompile pcode, Tree 
 		sc = null; // TODO: force failure with improper use of sc instead of pcode
 		this.env = pe;
 		this.pcode = pcode;
-		
+
 		$semantic::sections = null;
 		$semantic::containsMultipleSections = false;
 		$semantic::nextStatementMustBeSectionLabel = false;
@@ -1159,7 +1159,7 @@ assignment returns [VectorSTL<OpTpl> value]
 		$code_block::stmtLocation = find(t);
 	}
 	:	^(t=OP_ASSIGN ^(OP_BITRANGE ss=specific_symbol["bit range assignment"] a=integer b=integer) e=expr) {
-			$value = pcode.assignBitRange(find(t), ss.getVarnode(), $a.value.intValue(), $b.value.intValue(), e);	
+			$value = pcode.assignBitRange(find(t), ss.getVarnode(), $a.value.intValue(), $b.value.intValue(), e);
 		}
 	|	^(t=OP_ASSIGN ^(OP_DECLARATIVE_SIZE n=unbound_identifier["variable declaration/assignment"] i=integer) e=expr) {
 			$value = pcode.newOutput(find(n), true, e, n.getText(), $i.value.intValue());
@@ -1173,7 +1173,7 @@ assignment returns [VectorSTL<OpTpl> value]
 	|	^(t=OP_ASSIGN ^(OP_IDENTIFIER id=.) e=expr) {
 			SleighSymbol sym = pcode.findSymbol($id.getText());
 			if (sym == null) {
-				$value = pcode.newOutput(find(id), false, e, $id.getText());	
+				$value = pcode.newOutput(find(id), false, e, $id.getText());
 			} else if(sym.getType() != symbol_type.start_symbol
 					&& sym.getType() != symbol_type.end_symbol
 					&& sym.getType() != symbol_type.operand_symbol
@@ -1184,7 +1184,7 @@ assignment returns [VectorSTL<OpTpl> value]
 				VarnodeTpl v = ((SpecificSymbol) sym).getVarnode();
 				e.setOutput(find(t), v);
 				$value = ExprTree.toVector(e);
-			}	
+			}
 		}
 	|	^(OP_ASSIGN t=OP_WILDCARD e=expr) {
 			wildcardError($t, "assignment");

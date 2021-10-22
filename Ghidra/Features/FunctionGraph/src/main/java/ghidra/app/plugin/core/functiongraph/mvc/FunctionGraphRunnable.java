@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -130,8 +130,8 @@ public class FunctionGraphRunnable implements SwingRunnable {
 				return null;
 			}
 
-			// function may not contain currentAddress in its body. 
-			// This will cause provider to re-decompile when 
+			// function may not contain currentAddress in its body.
+			// This will cause provider to re-decompile when
 			// clicking around the currentAddress :(
 			Address entry = codeBlock.getFirstStartAddress();
 			Function newFunction = program.getFunctionManager().getFunctionAt(entry);

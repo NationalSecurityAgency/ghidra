@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,16 +55,16 @@ import ghidra.util.task.TaskMonitor;
 import utilities.util.FileUtilities;
 
 /**
- * The class used kick-off and interact with headless processing.  All headless options have been 
- * broken out into their own class: {@link HeadlessOptions}.  This class is intended to be used 
+ * The class used kick-off and interact with headless processing.  All headless options have been
+ * broken out into their own class: {@link HeadlessOptions}.  This class is intended to be used
  * one of two ways:
  * <ul>
- *   <li>Used by {@link AnalyzeHeadless} to perform headless analysis based on arguments specified 
+ *   <li>Used by {@link AnalyzeHeadless} to perform headless analysis based on arguments specified
  *   on the command line.</li>
  *   <li>Used by another tool as a library to perform headless analysis.</li>
  * </ul>
  * <p>
- * Note: This class is not thread safe.  
+ * Note: This class is not thread safe.
  */
 public class HeadlessAnalyzer {
 
@@ -79,14 +79,14 @@ public class HeadlessAnalyzer {
 	private URLClassLoader classLoaderForDotClassScripts;
 
 	/**
-	 * Gets a headless analyzer, initializing the application if necessary with the specified 
-	 * logging parameters.  An {@link IllegalStateException} will be thrown if the application has 
+	 * Gets a headless analyzer, initializing the application if necessary with the specified
+	 * logging parameters.  An {@link IllegalStateException} will be thrown if the application has
 	 * already been initialized or a headless analyzer has already been retrieved.  In these cases,
 	 * the headless analyzer should be gotten with {@link HeadlessAnalyzer#getInstance()}.
-	 * 
+	 *
 	 * @param logFile The desired application log file.  If null, no application logging will take place.
 	 * @param scriptLogFile The desired scripting log file.  If null, no script logging will take place.
-	 * @param useLog4j true if log4j is to be used; otherwise, false.  If this class is being used by 
+	 * @param useLog4j true if log4j is to be used; otherwise, false.  If this class is being used by
 	 *     another tool as a library, using log4j might interfere with that tool.
 	 * @return An instance of a new headless analyzer.
 	 * @throws IllegalStateException if an application or headless analyzer instance has already been initialized.
@@ -96,7 +96,7 @@ public class HeadlessAnalyzer {
 			boolean useLog4j) throws IllegalStateException, IOException {
 
 		// Prevent more than one headless analyzer from being instantiated.  Too much about it
-		// messes with global system settings, so under the current design of Ghidra, allowing 
+		// messes with global system settings, so under the current design of Ghidra, allowing
 		// more than one to exist could result in unpredictable behavior.
 		if (instance != null) {
 			throw new IllegalStateException(
@@ -134,9 +134,9 @@ public class HeadlessAnalyzer {
 
 	/**
 	 * Gets a headless analyzer instance, with the assumption that the application has already been
-	 * initialized.  If this is called before the application has been initialized, it will 
+	 * initialized.  If this is called before the application has been initialized, it will
 	 * initialize the application with no logging.
-	 * 
+	 *
 	 * @return An instance of a new headless analyzer.
 	 * @throws IOException if there was a problem reading the application.properties file (only possible
 	 *     if the application had not be initialized).
@@ -144,7 +144,7 @@ public class HeadlessAnalyzer {
 	public static HeadlessAnalyzer getInstance() throws IOException {
 
 		// Prevent more than one headless analyzer from being instantiated.  Too much about it
-		// messes with global system settings, so under the current design of Ghidra, allowing 
+		// messes with global system settings, so under the current design of Ghidra, allowing
 		// more than one to exist could result in unpredictable behavior.
 		if (instance != null) {
 			return instance;
@@ -168,7 +168,7 @@ public class HeadlessAnalyzer {
 	 * <p>
 	 * The headless analyzer can be used in both "normal" mode and single jar mode, so
 	 * we need to use the appropriate layout for either case.
-	 * 
+	 *
 	 * @return The appropriate Ghidra application layout for this headless analyzer.
 	 * @throws IOException if there was a problem getting an appropriate application layout.
 	 */
@@ -194,7 +194,7 @@ public class HeadlessAnalyzer {
 		// Ghidra URL handler registration.  There's no harm in doing this more than once.
 		Handler.registerHandler();
 
-		// Ensure that we are running in "headless mode",  preventing Swing-based methods from 
+		// Ensure that we are running in "headless mode",  preventing Swing-based methods from
 		// running (causing headless operation to lose focus).
 		System.setProperty("java.awt.headless", "true");
 		System.setProperty(SystemUtilities.HEADLESS_PROPERTY, Boolean.TRUE.toString());
@@ -220,7 +220,7 @@ public class HeadlessAnalyzer {
 
 	/**
 	 * Gets the headless analyzer's options.
-	 * 
+	 *
 	 * @return The headless analyer's options.
 	 */
 	public HeadlessOptions getOptions() {
@@ -234,12 +234,12 @@ public class HeadlessAnalyzer {
 	 * <li>perform auto-analysis if not disabled</li>
 	 * <li>execute ordered list of post-scripts</li>
 	 * </ol>
-	 * If no import files or directories have been specified the ordered list 
+	 * If no import files or directories have been specified the ordered list
 	 * of pre/post scripts will be executed once.
-	 * 
+	 *
 	 * @param ghidraURL ghidra URL for existing server repository and optional
 	 *                  folder path
-	 * @param filesToImport directories and files to be imported (null or empty 
+	 * @param filesToImport directories and files to be imported (null or empty
 	 *                      is acceptable if we are in -process mode)
 	 * @throws IOException if there was an IO-related problem
 	 * @throws MalformedURLException specified URL is invalid
@@ -360,10 +360,10 @@ public class HeadlessAnalyzer {
 	 * <li>perform auto-analysis if not disabled</li>
 	 * <li>execute ordered list of post-scripts</li>
 	 * </ol>
-	 * If no import files or directories have been specified the ordered list 
+	 * If no import files or directories have been specified the ordered list
 	 * of pre/post scripts will be executed once.
-	 * 
-	 * @param projectLocation directory path of project 
+	 *
+	 * @param projectLocation directory path of project
 	 * 						  If project exists it will be opened, otherwise it will be created.
 	 * @param projectName project name
 	 * @param rootFolderPath root folder for imports
@@ -460,8 +460,8 @@ public class HeadlessAnalyzer {
 
 	/**
 	 * Checks to see if the most recent analysis timed out.
-	 * 
-	 * @return true if the most recent analysis timed out; otherwise, false. 
+	 *
+	 * @return true if the most recent analysis timed out; otherwise, false.
 	 */
 	public boolean checkAnalysisTimedOut() {
 		return analysisTimedOut;
@@ -499,7 +499,7 @@ public class HeadlessAnalyzer {
 
 	/**
 	 * Get/Create specified folder path within project
-	 * 
+	 *
 	 * @param folderPath the folder path within the project
 	 * @param create if true, folder will be created if it does not exist
 	 * @return DomainFolder for specified path
@@ -555,7 +555,7 @@ public class HeadlessAnalyzer {
 
 	/**
 	 * Runs the specified script with the specified state.
-	 * 
+	 *
 	 * @param scriptState State representing environment variables that the script is able
 	 * 					  to access.
 	 * @param script Script to be run.
@@ -714,14 +714,14 @@ public class HeadlessAnalyzer {
 	/**
 	 * Checks the script name to ensure it exists. If the script type has a GhidraScriptProvider
 	 * (any type of script but .class), then return the ResourceFile that represents that script.
-	 * 
+	 *
 	 * If the script is a class file, return null (one class loader is stored to allow the
 	 * Headless Analyzer to find all the class files).
-	 * 
+	 *
 	 * GhidraScript is not instantiated here, because it is important that each script be
 	 * instantiated at the time it's used. If a GhidraScript object is re-used, this causes
 	 * problems where GhidraScript variables aren't being re-initialized at each use of the script.
-	 * 
+	 *
 	 * @param scriptName The name of the script to check
 	 * @return ResourceFile representing the source file, or null (if script is a .class file)
 	 */
@@ -755,7 +755,7 @@ public class HeadlessAnalyzer {
 				Class<?> c = Class.forName(className, true, classLoaderForDotClassScripts);
 
 				if (GhidraScript.class.isAssignableFrom(c)) {
-					// No issues, but return null, which signifies we don't actually have a 
+					// No issues, but return null, which signifies we don't actually have a
 					// ResourceFile to associate with the script name
 					return null;
 				}
@@ -790,7 +790,7 @@ public class HeadlessAnalyzer {
 
 	/**
 	 * Creates mapping from script name to actual Script object
-	 * 
+	 *
 	 * @param scriptsList  List of scripts
 	 * @return  mapping of script name to its associated Script object
 	 */
@@ -838,7 +838,7 @@ public class HeadlessAnalyzer {
 
 	/**
 	 * Run a list of scripts
-	 * 
+	 *
 	 * @param scriptsList  list of script names to run
 	 * @param scriptFileMap    mapping of script names to Script objects
 	 * @param scriptState  the GhidraState to be passed into each script
@@ -951,9 +951,9 @@ public class HeadlessAnalyzer {
 	 * @param fileAbsolutePath Path of the file to analyze.
 	 * @param program The program to analyze.
 	 * @return true if the program file should be kept.  If analysis or scripts have marked
-	 * 			the program as temporary changes should not be saved.  Returns false in 
+	 * 			the program as temporary changes should not be saved.  Returns false in
 	 * 			these cases:
-	 * 		- One of the scripts sets the Headless Continuation Option to "ABORT_AND_DELETE" or 
+	 * 		- One of the scripts sets the Headless Continuation Option to "ABORT_AND_DELETE" or
 	 * 			"CONTINUE_THEN_DELETE".
 	 */
 	private boolean analyzeProgram(String fileAbsolutePath, Program program) {
@@ -1141,7 +1141,7 @@ public class HeadlessAnalyzer {
 
 			Msg.info(this, "REPORT: Processing project file: " + domFile.getPathname());
 
-			// This method already takes into account whether the user has set the "noanalysis" 
+			// This method already takes into account whether the user has set the "noanalysis"
 			// flag or not
 			keepFile = analyzeProgram(domFile.getPathname(), program) || readOnlyFile;
 
@@ -1224,7 +1224,7 @@ public class HeadlessAnalyzer {
 
 			if (!readOnlyFile) { // can't change anything if read-only file
 
-				// Undo checkout of it is still checked-out and either the file is to be 
+				// Undo checkout of it is still checked-out and either the file is to be
 				// deleted, or we just checked it out and file changes have been committed
 				if (domFile.isCheckedOut()) {
 					if (!keepFile ||
@@ -1524,7 +1524,7 @@ public class HeadlessAnalyzer {
 					return false;
 				}
 
-				// Check if there are defined memory blocks; abort if not (there is nothing 
+				// Check if there are defined memory blocks; abort if not (there is nothing
 				// to work with!)
 				if (program.getMemory().getAllInitializedAddressSet().isEmpty()) {
 					Msg.error(this, "REPORT: Error: No memory blocks were defined for file '" +
@@ -1553,7 +1553,7 @@ public class HeadlessAnalyzer {
 					program.setTemporary(true);
 				}
 
-				// The act of marking the program as temporary by a script will signal 
+				// The act of marking the program as temporary by a script will signal
 				// us to discard any program changes.
 				if (program.isTemporary()) {
 					if (options.readOnly) {
@@ -1615,7 +1615,7 @@ public class HeadlessAnalyzer {
 			return true;
 		}
 		finally {
-			// Program must be released here, since the AutoAnalysisManager uses program to 
+			// Program must be released here, since the AutoAnalysisManager uses program to
 			// call dispose() in the finally() block above.
 			if (program != null) {
 				program.release(this);
@@ -1631,7 +1631,7 @@ public class HeadlessAnalyzer {
 		Program program = null;
 
 		// NOTE: we must pass a null DomainFolder to the AutoImporter so as not to
-		// allow the DomainFile to be saved at this point.  DomainFile should be 
+		// allow the DomainFile to be saved at this point.  DomainFile should be
 		// saved after all applicable analysis/scripts are run.
 
 		if (options.loaderClass == null) {
@@ -1772,7 +1772,7 @@ public class HeadlessAnalyzer {
 					return;
 
 				default:
-					// Just continue					
+					// Just continue
 			}
 
 			runScriptsList(options.postScripts, options.postScriptFileMap, scriptState,
@@ -1805,7 +1805,7 @@ public class HeadlessAnalyzer {
 
 	/**
 	 * Checks to make sure the given file contains only valid characters in its name.
-	 * 
+	 *
 	 * @param currFile The file to check.
 	 * @throws InvalidInputException if the given file contains invalid characters in it.
 	 */
@@ -1839,7 +1839,7 @@ public class HeadlessAnalyzer {
 	}
 
 	/**
-	 * Ghidra project class required to gain access to specialized project constructor 
+	 * Ghidra project class required to gain access to specialized project constructor
 	 * for URL connection.
 	 */
 	private static class HeadlessProject extends DefaultProject {

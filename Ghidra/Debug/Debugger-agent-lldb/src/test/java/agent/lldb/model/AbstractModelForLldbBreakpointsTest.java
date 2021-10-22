@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -128,15 +128,15 @@ public abstract class AbstractModelForLldbBreakpointsTest
 			val.fetchElements();
 		}
 	}
-	
+
 	private String getTypeFromSpec(TargetObject t) {
 		boolean isExecute = t instanceof LldbModelTargetBreakpointSpec;
 		return isExecute ? "breakpoint" : "watchpoint";
-		
+
 	}
 	private String getTypeFromKind(TargetBreakpointKind kind) {
 		boolean isExecute = kind.equals(TargetBreakpointKind.SW_EXECUTE) || kind.equals(TargetBreakpointKind.HW_EXECUTE);
-		return isExecute ? "breakpoint" : "watchpoint";		
+		return isExecute ? "breakpoint" : "watchpoint";
 	}
 	private String getCommand(String cmd, String type, String bpId) {
 		return type + " " + cmd + " " + bpId.substring(1);
@@ -174,8 +174,8 @@ public abstract class AbstractModelForLldbBreakpointsTest
 		String type = getTypeFromKind(kind);
 		String line = waitOn(interpreter.executeCapture(getCommand("list", type, bpId))).trim();
 		if (type.equals("breakpoint"))
-			assertTrue(line.startsWith(bpId.substring(1)));			
-		else 
+			assertTrue(line.startsWith(bpId.substring(1)));
+		else
 			assertTrue(line.contains("Watchpoint " + bpId.substring(1)));
 	}
 

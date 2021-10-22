@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -297,7 +297,7 @@ void FlowBlock::setGotoBranch(int4 i)
   else
     throw LowlevelError("Could not find block edge to mark unstructured");
   flags |= f_interior_gotoout; // Mark that there is a goto out of this block
-  
+
   outofthis[i].point->flags |= f_interior_gotoin;
 }
 
@@ -849,7 +849,7 @@ void BlockGraph::selfIdentify(void)
       else {
 	for(int4 j=0;j<otherbl->intothis.size();++j)
 	  if (otherbl->intothis[j].point == mybl)
-	    otherbl->replaceInEdge(j,this); 
+	    otherbl->replaceInEdge(j,this);
 	if (mybl->isSwitchOut())	// Check for indirect branch out
 	  setFlag(f_switch_out);
       }
@@ -993,13 +993,13 @@ void BlockGraph::findSpanningTree(vector<FlowBlock *> &preorder,vector<FlowBlock
 	rootlist.push_back(startbl); // We have to treat this block as another root
 	rootindex += 1;		// Update root traversal state
       }
-      
+
       state.push_back(startbl);
       istate.push_back(0);
       startbl->visitcount = preorder.size();
       preorder.push_back(startbl);
       startbl->numdesc = 1;
-      
+
       while(!state.empty()) {
 	FlowBlock *curbl = state.back();
 	if (curbl->sizeOut() <= istate.back()) { // We've visited all children of this node
@@ -1016,7 +1016,7 @@ void BlockGraph::findSpanningTree(vector<FlowBlock *> &preorder,vector<FlowBlock
 	  istate.back() += 1;	// Next visit to this state should try next child
 	  if (curbl->isIrreducibleOut(edgenum)) continue;	// Pretend irreducible edges don't exist
 	  FlowBlock *childbl = curbl->getOut(edgenum); // New child to try
-	  
+
 	  if (childbl->visitcount == -1) {	// If we haven't visited this node before
 	    curbl->setOutEdgeFlag(edgenum,f_tree_edge);
 	    state.push_back(childbl);
@@ -1053,13 +1053,13 @@ void BlockGraph::findSpanningTree(vector<FlowBlock *> &preorder,vector<FlowBlock
     state.clear();
     istate.clear();
   }
-    
+
   if (rootlist.size() > 1) {	// Make sure orighead is at the front of the rootlist as well
     tmpbl = rootlist[rootlist.size()-1];
     rootlist[rootlist.size()-1] = rootlist[0];
     rootlist[0] = tmpbl;
   }
-  
+
   list = rpostorder;
 }
 
@@ -1096,7 +1096,7 @@ bool BlockGraph::findIrreducible(const vector<FlowBlock *> &preorder,int4 &irred
       int4 sizein_t = t->sizeIn();
       for(int4 i=0;i<sizein_t;++i) {
 	if (t->isIrreducibleIn(i)) continue; // Pretend irreducible edges don't exist
-	// All back-edges into t have already been collapsed, so this is 
+	// All back-edges into t have already been collapsed, so this is
 	FlowBlock *y = t->getIn(i); // For each forward, tree, or cross edge
 	FlowBlock *yprime = y->copymap;	// y' = FIND(y)
 	if ((x->visitcount > yprime->visitcount)||( x->visitcount + x->numdesc <= yprime->visitcount)) {
@@ -1182,7 +1182,7 @@ void BlockGraph::markUnstructured(void)
   for(iter=list.begin();iter!=list.end();++iter)
     (*iter)->markUnstructured(); // Recurse
 }
-  
+
 void BlockGraph::markLabelBumpUp(bool bump)
 
 {
@@ -1214,7 +1214,7 @@ void BlockGraph::scopeBreak(int4 curexit,int4 curloopexit)
     curbl->scopeBreak(ind,curloopexit);
   }
 }
-  
+
 void BlockGraph::printTree(ostream &s,int4 level) const
 
 {
@@ -1833,7 +1833,7 @@ void BlockGraph::buildCopy(const BlockGraph &graph)
   BlockCopy *copyblock;
   int4 startsize = list.size();
   vector<FlowBlock *>::const_iterator iter;
-  
+
   for(iter=graph.list.begin();iter!=graph.list.end();++iter) {
     copyblock = newBlockCopy(*iter);
     (*iter)->copymap = copyblock; // Store map basic->copy
@@ -2309,7 +2309,7 @@ bool BlockBasic::isComplex(void) const
       statement += 1;
     }
     else {			// If the operation is a calculation with output
-				// This is a conservative version of 
+				// This is a conservative version of
 				// Varnode::calc_explicit
       bool yesstatement = false;
       if (vn->hasNoDescend())
@@ -2318,7 +2318,7 @@ bool BlockBasic::isComplex(void) const
 	yesstatement = true;
       else {
 	int4 totalref = 0;	// Number of references to this variable
-	
+
 	for(iter2=vn->beginDescend();iter2!=vn->endDescend();++iter2) {
 	  d_op = *iter2;
 	  if (d_op->isMarker()||(d_op->getParent() != this)) { // Variable used outside of block
@@ -2444,7 +2444,7 @@ bool BlockBasic::unblockedMulti(int4 outslot) const
   PcodeOp *multiop,*othermulti;
   list<PcodeOp *>::const_iterator iter;
   Varnode *vnremove,*vnredund;
-  
+
 				// First we build list of blocks which would have
 				// redundant branches into blout
   vector<const FlowBlock *> redundlist;
@@ -2569,7 +2569,7 @@ void BlockBasic::printHeader(ostream &s) const
 }
 
 void BlockBasic::printRaw(ostream &s) const
-  
+
 {
   list<PcodeOp *>::const_iterator iter;
   PcodeOp *inst;
@@ -2711,7 +2711,7 @@ FlowBlock *BlockMultiGoto::nextFlowAfter(const FlowBlock *bl) const
 {
   // The child of this can never be a BlockGoto
   return (FlowBlock *)0;
-} 
+}
 
 void BlockMultiGoto::saveXmlBody(ostream &s) const
 
@@ -3308,7 +3308,7 @@ void BlockSwitch::grabCaseBasic(FlowBlock *switchbl,const vector<FlowBlock *> &c
     FlowBlock *casebl = cs[i];
     addCase(switchbl,casebl,0);
     casemap[caseblocks[i-1].outindex] = i-1; // Build map from outindex to caseblocks index
-    
+
   }
   // Fillin fallthru chaining
   for(int4 i=0;i<caseblocks.size();++i) {
@@ -3424,7 +3424,7 @@ FlowBlock *BlockSwitch::nextFlowAfter(const FlowBlock *bl) const
   for(i=0;i<caseblocks.size();++i)
     if (caseblocks[i].block == bl) break;
   if (i==caseblocks.size()) return (FlowBlock *)0; // Didn't find block
-  
+
   i = i + 1;                  // Blocks are printed in fallthru order, "flow" is to next block in this order
   if (i < caseblocks.size())
     return caseblocks[i].block->getFrontLeaf();

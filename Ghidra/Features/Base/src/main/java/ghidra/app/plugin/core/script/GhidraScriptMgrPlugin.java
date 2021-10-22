@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScript
 
 	/**
 	 * {@link GhidraScriptMgrPlugin} is the entry point for all {@link GhidraScript} capabilities.
-	 * 
+	 *
 	 * @param tool the tool this plugin is added to
 	 */
 	public GhidraScriptMgrPlugin(PluginTool tool) {
@@ -63,7 +63,7 @@ public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScript
 		// Each tool starts a new script manager plugin, but we only ever want one bundle host.
 		// GhidraScriptUtil (creates and) manages one instance.
 		bundleHost = GhidraScriptUtil.acquireBundleHostReference();
-		
+
 		provider = new GhidraScriptComponentProvider(this, bundleHost);
 	}
 
@@ -107,8 +107,8 @@ public class GhidraScriptMgrPlugin extends ProgramPlugin implements GhidraScript
 	}
 
 	/**
-	 * Attempts to run a script in a {@link RunScriptTask}. 
-	 * 
+	 * Attempts to run a script in a {@link RunScriptTask}.
+	 *
 	 * @param scriptFile the script's source file
 	 */
 	public void runScript(ResourceFile scriptFile) {

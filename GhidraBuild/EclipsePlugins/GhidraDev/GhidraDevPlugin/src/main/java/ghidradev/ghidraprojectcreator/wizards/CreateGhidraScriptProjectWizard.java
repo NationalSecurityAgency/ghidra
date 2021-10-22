@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -102,7 +102,7 @@ public class CreateGhidraScriptProjectWizard extends Wizard implements INewWizar
 
 	/**
 	 * Creates a Ghidra script project.
-	 *  
+	 *
 	 * @param ghidraInstallDir The Ghidra installation directory to use.
 	 * @param projectName The name of the project to create.
 	 * @param projectDir The project's directory.
@@ -144,7 +144,7 @@ public class CreateGhidraScriptProjectWizard extends Wizard implements INewWizar
 	/**
 	 * Validates the wizard pages.  If they are invalid, an error popup will be displayed which
 	 * will indicate the problem.
-	 * 
+	 *
 	 * @return True if the data returned from the wizard pages are valid; otherwise, false
 	 */
 	private boolean validate() {

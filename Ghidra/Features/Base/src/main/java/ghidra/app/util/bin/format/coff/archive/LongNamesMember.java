@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,19 +25,19 @@ import java.util.List;
 
 /**
  * A string table that contains the full filenames of COFF archive members who's actual
- * filenames can not fit in the fixed-length name 
+ * filenames can not fit in the fixed-length name
  * {@link CoffArchiveMemberHeader#getName() field}.
  * <p>
  * This string table is held in a special archive member named "//" and is usually one of
  * the first members of the archive.
  * <p>
- * With MS libs, this will typically be the 3rd member in the archive, right after 
+ * With MS libs, this will typically be the 3rd member in the archive, right after
  * the first and second "/" special members.
  */
 public final class LongNamesMember implements StructConverter {
 
 	/**
-	 * 
+	 *
 	 * Entries in the long file names string table are terminated either with
 	 * \0 (mslib) or \n (linux ar).
 	 * MINOR TODO: figure out which kind of archive file this is and use the exact

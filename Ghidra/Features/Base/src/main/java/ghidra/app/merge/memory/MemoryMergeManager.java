@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,8 +34,8 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * Merge memory blocks that have changes to the name, permissions or comments.
- * 
- * 
+ *
+ *
  */
 public class MemoryMergeManager implements MergeResolver {
 
@@ -45,9 +45,9 @@ public class MemoryMergeManager implements MergeResolver {
 	private static final int LATEST = MergeConstants.LATEST;
 	private static final int MY = MergeConstants.MY;
 	static final int CANCELED = -2; // user canceled the merge operation
-	static final int ASK_USER = -1;// prompt the user to choose resolution 
-	static final int OPTION_LATEST = 0; // Latest 
-	static final int OPTION_MY = 1; // My change 
+	static final int ASK_USER = -1;// prompt the user to choose resolution
+	static final int OPTION_LATEST = 0; // Latest
+	static final int OPTION_MY = 1; // My change
 	static final int OPTION_ORIGINAL = 2; // Original
 
 	private Program[] programs = new Program[4];
@@ -116,7 +116,7 @@ public class MemoryMergeManager implements MergeResolver {
 	public void apply() {
 		conflictOption = mergePanel.getSelectedOption();
 
-		// If the "Use For All" check box is selected 
+		// If the "Use For All" check box is selected
 		// then save the option chosen for this conflict type.
 		if (mergePanel.getUseForAll()) {
 			memoryDetailChoice = conflictOption;
@@ -214,8 +214,8 @@ public class MemoryMergeManager implements MergeResolver {
 //		Address latestBaseAddr = programs[LATEST].getImageBase();
 //		Address myBaseAddr = programs[MY].getImageBase();
 //		Address origBaseAddr = programs[ORIGINAL].getImageBase();
-//		
-//		if (!myBaseAddr.equals(origBaseAddr) && 
+//
+//		if (!myBaseAddr.equals(origBaseAddr) &&
 //				!latestBaseAddr.equals(origBaseAddr) &&
 //				!(myBaseAddr.equals(latestBaseAddr))) {
 //			return true;
@@ -240,7 +240,7 @@ public class MemoryMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Return whether the permissions on a block are in conflict between 
+	 * Return whether the permissions on a block are in conflict between
 	 * LATEST and MY programs.
 	 * @param index block index
 	 */
@@ -257,7 +257,7 @@ public class MemoryMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Return whether the comments on a block are in conflict between 
+	 * Return whether the comments on a block are in conflict between
 	 * LATEST and MY programs.
 	 * @param index block index
 	 */
@@ -284,16 +284,16 @@ public class MemoryMergeManager implements MergeResolver {
 //	private void handleImageBaseConflict() throws CancelledException {
 //
 //		monitor.setProgress(++progressIndex);
-//		
+//
 //		Address latestAddr = programs[LATEST].getImageBase();
 //		Address myAddr = programs[MY].getImageBase();
 //		Address origAddr = programs[ORIGINAL].getImageBase();
-//		
-//		String latestStr = "Use Image Base '" + latestAddr + 
+//
+//		String latestStr = "Use Image Base '" + latestAddr +
 //					"'  (" + MergeConstants.LATEST_TITLE + ")";
-//		String myStr = "Use Image Base '" + myAddr + 
+//		String myStr = "Use Image Base '" + myAddr +
 //					"'  (" + MergeConstants.MY_TITLE + ")";
-//		String origStr = "Use Image Base '" + origAddr + 
+//		String origStr = "Use Image Base '" + origAddr +
 //					"'  (" + MergeConstants.ORIGINAL_TITLE + ")";
 //		++currentConflictIndex;
 //		if (conflictOption == ASK_USER && mergeManager != null) {

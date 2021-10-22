@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * A class to represent the 
+ * A class to represent the
  * <code>IMAGE_BOUND_FORWARDER_REF</code>
  * data structure defined in <b><code>winnt.h</code></b>.
  * <p>
@@ -53,7 +53,7 @@ public class BoundImportForwarderRef implements StructConverter, ByteArrayConver
     private String moduleName;
 
 	/**
-	 * 
+	 *
 	 * @param reader      the binary reader
 	 * @param readerIndex the index into the binary reader
 	 * @param biddIndex   the index where the bound import data directory begins

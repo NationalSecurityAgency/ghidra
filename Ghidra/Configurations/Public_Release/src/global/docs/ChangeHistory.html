@@ -554,7 +554,7 @@
 <ul>
     <li><I>Analysis</I>. Function start patterns found at 0x0, function signatures applied from the Data Type Manager at 0x0, and DWARF debug symbols applied at 0x0 will no longer cause stack traces.  In addition, DWARF symbols with zero length address range no longer stack trace. (GT-2817, Issue #386, #1560)</li>
     <li><I>Analysis</I>. Constant propagation will treat an OR with zero (0) as a simple copy. (GT-3548, Issue #1531)</li>
-    <li><I>Analysis</I>. Corrected <B>Create Structure from Selection</B>, which failed to use proper data organization during the construction process.  This could result in improperly sized components such as pointers and primitive types. (GT-3587)</li>    
+    <li><I>Analysis</I>. Corrected <B>Create Structure from Selection</B>, which failed to use proper data organization during the construction process.  This could result in improperly sized components such as pointers and primitive types. (GT-3587)</li>
     <li><I>Analysis</I>. Fixed an issue where stored context is initializing the set of registers constantly. (GP-25)</li>
     <li><I>Analysis</I>. Fixed an RTTI Analyzer regression when analyzing RTTI0 structures with no RTTI4 references to them. (GP-62, Issue #2153)</li>
     <li><I>Analysis</I>. Fixed an issue where the RTTI analyzer was not filling out RTTI3 structures in some cases. (GP-111)</li>
@@ -950,7 +950,7 @@
     <li><I>Decompiler</I>. Fixed dynamic variables and equates in 16-bit x86 programs. (GT-2745, Issue #336)</li>
     <li><I>Decompiler:Java</I>. Fixed DEX decompilation regression issue. (GT-2743, Issue #350)</li>
     <li><I>Eclipse Integration</I>. Fixed exception in Eclipse GhidraDev plugin that occurred when performing certain actions on a Ghidra project that was imported from a previously exported Archive File. (GT-2721, Issues #283, #383)</li>
-    <li><I>GUI</I>. Improved documentation on how to deal with HiDPI monitor issues in Linux. In the <I>&lt;ghidra_installation&gt;</I>/support/launch.properties file, change VMARGS=-Dsun.java2d.xrender from false to true.</li> 
+    <li><I>GUI</I>. Improved documentation on how to deal with HiDPI monitor issues in Linux. In the <I>&lt;ghidra_installation&gt;</I>/support/launch.properties file, change VMARGS=-Dsun.java2d.xrender from false to true.</li>
     <li><I>Importer</I>. Fixed an exception that occurred when batch importing APK files. (GT-2767, Issue #426)</li>
     <li><I>Multi-User:Ghidra Server</I>. Restored ability to execute svrAdmin script in development mode. (GT-2740) </li>
     <li><I>Processors</I>. The 6502 Zero page indexed addressing has been corrected to only access the Zero page. (GT-2759, Issue #201)</li>

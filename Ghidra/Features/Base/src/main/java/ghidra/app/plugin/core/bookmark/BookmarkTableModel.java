@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -136,7 +136,7 @@ class BookmarkTableModel extends AddressBasedTableModel<BookmarkRowObject> {
 			types = defaultTypesSet;
 		}
 		else {
-			// only show those that are already enabled; if they are not in 'types', then they 
+			// only show those that are already enabled; if they are not in 'types', then they
 			// will be disabled
 			types.retainAll(defaultTypesSet);
 		}
@@ -197,7 +197,7 @@ class BookmarkTableModel extends AddressBasedTableModel<BookmarkRowObject> {
 		if (newProgram == null) {
 			bookmarkMgr = null;
 
-			// keep the types around between programs; they represent all known, visible 
+			// keep the types around between programs; they represent all known, visible
 			// bookmarks, which we want to use as the user toggles between open programs
 			// types = new HashSet<>();
 			return;

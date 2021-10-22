@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -99,7 +99,7 @@ public class SymbolicPropogator {
 
 	/**
 	 * set up a pointer mask to be used when creating pointers into this memory
-	 * 
+	 *
 	 */
 	private void setPointerMask(Program program) {
 		int ptrSize = program.getDefaultPointerSize();
@@ -124,7 +124,7 @@ public class SymbolicPropogator {
 	/**
 	 * Process a subroutine using the processor function.
 	 * The process function can control what flows are followed and when to stop.
-	 * 
+	 *
 	 * @param startAddr start address
 	 * @param restrictSet the address set to restrict the constant flow to
 	 * @param eval the context evaluator to use
@@ -203,7 +203,7 @@ public class SymbolicPropogator {
 	/**
 	 * Save off the current context and set the current context to a copy
 	 * This is done so that the values in the context are not changed, but can be used for computation.
-	 * 
+	 *
 	 * @param startAddr
 	 * @return
 	 */
@@ -280,7 +280,7 @@ public class SymbolicPropogator {
 	}
 
 	/**
-	 * Get constant or register relative value assigned to the 
+	 * Get constant or register relative value assigned to the
 	 * specified register at the specified address
 	 * @param toAddr address
 	 * @param reg register
@@ -313,7 +313,7 @@ public class SymbolicPropogator {
 	/**
 	 * Do not depend on this method!  For display debugging purposes only.
 	 * This will change.
-	 * 
+	 *
 	 * @param addr
 	 * @param reg
 	 * @return
@@ -913,7 +913,7 @@ public class SymbolicPropogator {
 							// CALL will always provide address
 							target = val1.getAddress();
 
-							// TODO: If address not contained within memory we should 
+							// TODO: If address not contained within memory we should
 							//       try to locate corresponding external function
 						}
 
@@ -1664,11 +1664,11 @@ public class SymbolicPropogator {
 	/**
 	 * Get/Compute the Purge size from the stack for the function starting at
 	 * entryPoint.
-	 * 
+	 *
 	 * @param prog -
 	 *            program containing the function to analyze
 	 * @param function -
-	 * 
+	 *
 	 * @return size in bytes that is removed from the stack after the function
 	 *         is called.
 	 */
@@ -1699,7 +1699,7 @@ public class SymbolicPropogator {
 
 	/**
 	 * Get the default/assumed stack depth change for this language
-	 * 
+	 *
 	 * @param depth stack depth to return if the default is unknown for the language
 	 * @return
 	 */
@@ -1719,7 +1719,7 @@ public class SymbolicPropogator {
 
 	/**
 	 * Modify the function purge by any stack depth override
-	 * 
+	 *
 	 * @param prog program
 	 * @param addr addr of instruction that could have an override of the stack depth
 	 * @param purge current purge depth.
@@ -1871,7 +1871,7 @@ public class SymbolicPropogator {
 
 	/**
 	 * Find the operand that is assigning to the varnode with contains the load or store reference offset
-	 * 
+	 *
 	 * @param instruction
 	 * @param assigningVarnode
 	 * @return operand index if found or -1 if not
@@ -2015,7 +2015,7 @@ public class SymbolicPropogator {
 
 	/**
 	 * get the return variable storage location for this function
-	 * 
+	 *
 	 */
 	private VariableStorage getReturnLocationStorage(Function func) {
 		// get the function containing the instruction if can
@@ -2044,7 +2044,7 @@ public class SymbolicPropogator {
 
 	/**
 	 * Find the best address space to use for the reference if the space was unknown.
-	 * 
+	 *
 	 * @param instruction - reference is to be placed on (used for address)
 	 * @param offset - offset into the address space. (word addressing based)
 	 * @return
@@ -2133,7 +2133,7 @@ public class SymbolicPropogator {
 
 	/**
 	 * Make from the instruction to the reference based on the varnode passed in.
-	 * 
+	 *
 	 * @param varnodeContext - context to use for any other infomation needed
 	 * @param instruction - instruction to place the reference on.
 	 * @param pcodeop - pcode op that caused the reference
@@ -2163,7 +2163,7 @@ public class SymbolicPropogator {
 	 *   spaceID is a constant space.
 	 *  The target could be an external Address carried along and then finally used.
 	 *  External addresses are OK as long as nothing is done to the offset.
-	 *  
+	 *
 	 * @param vContext - context to use for any other infomation needed
 	 * @param instruction - instruction to place the reference on.
 	 * @param opIndex - operand it should be placed on, or -1 if unknown
@@ -2342,12 +2342,12 @@ public class SymbolicPropogator {
 
 	/**
 	 * Evaluate reference type for a pure data reference for valid reference to instructions
-	 * 
+	 *
 	 * @param instruction that reference is from
 	 * @param target of reference
 	 * @param wordOffset target address word offset
 	 * @param refType type of reference
-	 * 
+	 *
 	 * @return true if not a pure data ref, or the reference is OK to make
 	 */
 	private boolean evaluatePureDataRef(Instruction instruction, long wordOffset, RefType refType,
@@ -2527,7 +2527,7 @@ public class SymbolicPropogator {
 
 	/**
 	 * check if the current Register value and wordOffset are off by just the low-bit.
-	 * 
+	 *
 	 * @param reg - register to get a current value for
 	 * @param wordOffset - word offset for the reference
 	 * @return True if the two values are off by just the one bit.
@@ -2560,7 +2560,7 @@ public class SymbolicPropogator {
 
 	/**
 	 * enable/disable checking parameters for constant references
-	 * 
+	 *
 	 * @param checkParamRefsOption true to enable
 	 */
 	public void setParamRefCheck(boolean checkParamRefsOption) {
@@ -2569,7 +2569,7 @@ public class SymbolicPropogator {
 
 	/**
 	 * enable/disable checking return for constant references
-	 * 
+	 *
 	 * @param checkReturnRefsOption
 	 */
 	public void setReturnRefCheck(boolean checkReturnRefsOption) {
@@ -2578,7 +2578,7 @@ public class SymbolicPropogator {
 
 	/**
 	 * enable/disable checking stored values for constant references
-	 * 
+	 *
 	 * @param checkStoredRefsOption
 	 */
 	public void setStoredRefCheck(boolean checkStoredRefsOption) {

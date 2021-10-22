@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,14 +22,14 @@ import agent.lldb.manager.LldbCommand;
  */
 public class LldbCommandError extends RuntimeException {
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -812711163503400398L;
 	private final Object info;
 
 	/**
 	 * Construct an error with the given details
-	 * 
+	 *
 	 * @param info the detail information
 	 * @param cmd source of error
 	 */
@@ -40,7 +40,7 @@ public class LldbCommandError extends RuntimeException {
 
 	/**
 	 * Construct an error with the given message
-	 * 
+	 *
 	 * @param message the message
 	 */
 	public LldbCommandError(String message) {
@@ -50,7 +50,7 @@ public class LldbCommandError extends RuntimeException {
 
 	/**
 	 * Get the details, if present
-	 * 
+	 *
 	 * @return the details, or null
 	 */
 	public Object getInfo() {

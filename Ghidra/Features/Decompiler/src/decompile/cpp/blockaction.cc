@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,7 +68,7 @@ void LoopBody::extendToContainer(const LoopBody &container,vector<FlowBlock *> &
       body.push_back(bl);
     }
   }
-  
+
   while(i < body.size()) {
     FlowBlock *curblock = body[i++];
     int4 sizein = curblock->sizeIn();
@@ -211,7 +211,7 @@ void LoopBody::findExit(const vector<FlowBlock *> &body)
       }
     }
   }
-  
+
   exitblock = (FlowBlock *)0; // Default exit is null, if no block meeting condition can be found
   if (trialexit.empty())
     return;
@@ -675,7 +675,7 @@ void TraceDAG::removeTrace(BlockTrace *trace)
     parentbp->paths[i-1] = movedtrace;
   }
   parentbp->paths.pop_back();	// Remove the vacated slot
-  
+
   delete trace;			// Delete the record
 }
 
@@ -738,7 +738,7 @@ TraceDAG::BlockTrace *TraceDAG::selectBadEdge(void)
     score.terminal = (score.trace->destnode->sizeOut()==0) ? 1 : 0;
   }
   badedgelist.sort();
-  
+
   list<BadEdgeScore>::iterator iter=badedgelist.begin();
   list<BadEdgeScore>::iterator startiter = iter;
   FlowBlock *curbl = (*iter).exitproto;
@@ -1418,7 +1418,7 @@ bool CollapseStructure::ruleBlockIfElse(FlowBlock *bl)
   if (fc->isSwitchOut()) return false;
   if (tc->isGotoOut(0)) return false;
   if (fc->isGotoOut(0)) return false;
-  
+
   graph.newBlockIfElse(bl,tc,fc);
   return true;
 }
@@ -1588,7 +1588,7 @@ bool CollapseStructure::checkSwitchSkips(FlowBlock *switchbl,FlowBlock *exitbloc
 
 {
   if (exitblock == (FlowBlock *)0) return true;
-  
+
   // Is there a "default" edge that goes straight to the exitblock
   int4 sizeout,edgenum;
   sizeout = switchbl->sizeOut();
@@ -1613,7 +1613,7 @@ bool CollapseStructure::checkSwitchSkips(FlowBlock *switchbl,FlowBlock *exitbloc
       defaultnottoexit = true;
   }
   if (!defaultnottoexit) return true;
-  
+
   for(edgenum=0;edgenum<sizeout;++edgenum) {
     if (switchbl->getOut(edgenum) == exitblock) {
       if (!switchbl->isDefaultBranch(edgenum))
@@ -1649,7 +1649,7 @@ bool CollapseStructure::ruleBlockSwitch(FlowBlock *bl)
       break;
     }
   }
-  if (exitblock == (FlowBlock *)0) { 
+  if (exitblock == (FlowBlock *)0) {
     // If we reach here, every immediate block out of switch must have sizeIn==1 and sizeOut<=1
     // Any immediate block that was an "exitblock" would have no cases exiting to it (because sizeIn==1)
     // If that block had an output, that output can also viably be an output.
@@ -1713,7 +1713,7 @@ bool CollapseStructure::ruleCaseFallthru(FlowBlock *bl)
   int4 sizeout = bl->sizeOut();
   int4 nonfallthru = 0;		// Count of exits that are not fallthru
   vector<FlowBlock *> fallthru;
-  
+
   for(int4 i=0;i<sizeout;++i) {
     FlowBlock *curbl = bl->getOut(i);
     if (curbl == bl) return false; // Cannot exit to itself
@@ -2129,12 +2129,12 @@ int4 ActionPreferComplement::apply(Funcdata &data)
 
 {
   BlockGraph &graph(data.getStructure());
-  
+
   if (graph.getSize() == 0) return 0;
   vector<BlockGraph *> vec;
   vec.push_back(&graph);
   int4 pos = 0;
-  
+
   while(pos < vec.size()) {
     BlockGraph *curbl = vec[pos];
     FlowBlock::block_type bt;
@@ -2346,7 +2346,7 @@ int4 ActionNodeJoin::apply(Funcdata &data)
 	break;
       }
     }
-    
+
   }
   return 0;
 }

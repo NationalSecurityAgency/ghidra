@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.dbg.DebuggerTargetObjectIface;
 
 /**
  * A container of symbols
- * 
+ *
  * <p>
  * The debugger should present these in as granular of units as possible. Consider a desktop
  * application, for example. The debugger should present each module as a namespace rather than the
@@ -34,11 +34,11 @@ public interface TargetSymbolNamespace extends TargetObject {
 
 	/**
 	 * Get the symbols in this namespace.
-	 * 
+	 *
 	 * <p>
 	 * While it is most common for symbols to be immediate children of the namespace, that is not
 	 * necessarily the case.
-	 * 
+	 *
 	 * @implNote By default, this method collects all successor symbols ordered by path. Overriding
 	 *           that behavior is not yet supported.
 	 * @return the types

@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -113,14 +113,14 @@ public class DynamicLibraryModule implements StructConverter {
 		return nextrel;
 	}
 	/**
-	 * low 16 bits are the index into the init section, 
+	 * low 16 bits are the index into the init section,
 	 * high 16 bits are the index into the term section
 	 */
 	public int getInitTermIndex() {
 		return iinit_iterm;
 	}
 	/**
-	 * low 16 bits are the number of init section entries, 
+	 * low 16 bits are the number of init section entries,
 	 * high 16 bits are the number of term section entries
 	 * @return
 	 */

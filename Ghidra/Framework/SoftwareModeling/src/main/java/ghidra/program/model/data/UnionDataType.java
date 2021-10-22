@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 
 	/**
 	 * Construct a new empty union with the given name within the
-	 * specified categry path.  An empty union will report its length as 1 and 
+	 * specified categry path.  An empty union will report its length as 1 and
 	 * {@link #isNotYetDefined()} will return true.
 	 * @param path the category path indicating where this data type is located.
 	 * @param name the name of the new union
@@ -46,11 +46,11 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 
 	/**
 	 * Construct a new empty union with the given name and datatype manager
-	 * within the specified categry path.  An empty union will report its 
+	 * within the specified categry path.  An empty union will report its
 	 * length as 1 and {@link #isNotYetDefined()} will return true.
 	 * @param path the category path indicating where this data type is located.
 	 * @param name the name of the new union
-	 * @param dtm the data type manager associated with this data type. This can be null. 
+	 * @param dtm the data type manager associated with this data type. This can be null.
 	 * Also, the data type manager may not yet contain this actual data type.
 	 */
 	public UnionDataType(CategoryPath path, String name, DataTypeManager dtm) {
@@ -60,7 +60,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 
 	/**
 	 * Construct a new empty union with the given name within the specified categry path.
-	 * An empty union will report its length as 1 and {@link #isNotYetDefined()} 
+	 * An empty union will report its length as 1 and {@link #isNotYetDefined()}
 	 * will return true.
 	 * @param path the category path indicating where this data type is located.
 	 * @param name the name of the new structure
@@ -69,7 +69,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 	 * @param lastChangeTime the last time this data type was changed
 	 * @param lastChangeTimeInSourceArchive the last time this data type was changed in
 	 * its source archive.
-	 * @param dtm the data type manager associated with this data type. This can be null. 
+	 * @param dtm the data type manager associated with this data type. This can be null.
 	 * Also, the data type manager may not contain this actual data type.
 	 */
 	public UnionDataType(CategoryPath path, String name, UniversalID universalID,
@@ -334,7 +334,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 		baseDataType = baseDataType.clone(dataMgr);
 
 		// Both aligned and non-packed bitfields use same adjustment
-		// non-packed must force bitfield placement at byte offset 0 
+		// non-packed must force bitfield placement at byte offset 0
 		int bitSize = bitfieldDt.getDeclaredBitSize();
 		int effectiveBitSize =
 			BitFieldDataType.getEffectiveBitSize(bitSize, baseDataType.getLength());
@@ -396,7 +396,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 			}
 			unionLength = Math.max(length, unionLength);
 		}
-		
+
 		unionAlignment = -1; // force recompute of unionAlignment
 		getAlignment();
 
@@ -430,7 +430,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 			UnionInternal union = (UnionInternal) dt;
 			if (packing != union.getStoredPackingValue() ||
 				minimumAlignment != union.getStoredMinimumAlignment()) {
-				// rely on component match instead of checking length 
+				// rely on component match instead of checking length
 				// since dynamic component sizes could affect length
 				return false;
 			}
@@ -548,7 +548,7 @@ public class UnionDataType extends CompositeDataTypeImpl implements UnionInterna
 					}
 					oldDt.removeParent(this);
 					dtc.setLength(len);
-					dtc.setDataType(replacementDt); 
+					dtc.setDataType(replacementDt);
 					replacementDt.addParent(this);
 					changed = true;
 				}

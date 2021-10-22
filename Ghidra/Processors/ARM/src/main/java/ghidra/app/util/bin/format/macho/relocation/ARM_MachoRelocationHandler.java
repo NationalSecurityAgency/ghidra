@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,10 +22,10 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.util.exception.NotFoundException;
 
-/** 
+/**
  * A {@link MachoRelocationHandler} for ARM
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/arm/reloc.h.auto.html">mach-o/arm/reloc.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/arm/reloc.h.auto.html">mach-o/arm/reloc.h</a>
  */
 public class ARM_MachoRelocationHandler extends MachoRelocationHandler {
 
@@ -41,15 +41,15 @@ public class ARM_MachoRelocationHandler extends MachoRelocationHandler {
 			relocation.getType() == ARM_RELOC_HALF ||
 			relocation.getType() == ARM_RELOC_HALF_SECTDIFF;
 	}
-	
+
 	@Override
 	public void relocate(MachoRelocation relocation)
 			throws MemoryAccessException, NotFoundException {
-		
+
 		if (!relocation.requiresRelocation()) {
 			return;
 		}
-		
+
 		RelocationInfo relocationInfo = relocation.getRelocationInfo();
 		Address targetAddr = relocation.getTargetAddress();
 		long orig = read(relocation);
@@ -89,7 +89,7 @@ public class ARM_MachoRelocationHandler extends MachoRelocationHandler {
 				write(relocation, instr);
 				break;
 			}
-			
+
 			case ARM_RELOC_PAIR:           // should never see on its own here
 			case ARM_RELOC_SECTDIFF:       // relocation not required (scattered)
 			case ARM_RELOC_LOCAL_SECTDIFF: // relocation not required (scattered)

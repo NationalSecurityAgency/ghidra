@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import java.io.Serializable;
  * an associated int value (initially 0). Users can paint (set) ranges of
  * indexes to a given integer value, overwriting any value that currently exists
  * in that range.
- * 
+ *
  * This class is implemented using an IntPropertyMap.  The first index
  * (0) will always contain a value.  The value at any other given
  * index will either be the value stored at that index, or if no
@@ -36,17 +36,17 @@ import java.io.Serializable;
  */
 public class RangeMap implements Serializable {
     private final static long serialVersionUID = 1;
-	
+
 	IntPropertySet map;
 	int defaultValue;
-	
+
 	/**
 	 * Constructor for RangeMap with a default value of 0.
 	 */
 	public RangeMap() {
 		this(0);
 	}
-	
+
 	/**
 	 * Creates a new range map with spcified default value.
 	 * @param defaultValue the default value
@@ -54,9 +54,9 @@ public class RangeMap implements Serializable {
 	public RangeMap(int defaultValue) {
 		map = new IntPropertySet("RangeMap");
 		this.defaultValue = defaultValue;
-		map.putInt(0, defaultValue);		
+		map.putInt(0, defaultValue);
 	}
-	
+
 	/**
 	 * Clears all current values from the range map and resets the default value.
 	 */
@@ -64,7 +64,7 @@ public class RangeMap implements Serializable {
 		map.removeRange(0, Long.MAX_VALUE);
 		map.putInt(0,defaultValue);
 	}
-	
+
 	/**
 	 * Associates the given value with every index from start to end (inclusive)
 	 * Any previous associates are overwritten.
@@ -85,7 +85,7 @@ public class RangeMap implements Serializable {
 			}
 		}
 
-		
+
 		// now remove any values stored from start to end
 		LongIterator it = map.getPropertyIterator(start);
 		while(it.hasNext()) {
@@ -97,13 +97,13 @@ public class RangeMap implements Serializable {
 
 		if (start == 0) {
 			map.putInt(0,value);
-		} 
+		}
 		else {
 			int startValue = getValue(start);
 			if (startValue != value) {
 				map.putInt(start, value);
 			}
-		}			
+		}
 	}
 
 	/**
@@ -116,17 +116,17 @@ public class RangeMap implements Serializable {
 		}
 		catch(NoValueException e) {
 			try {
-				index = map.getPreviousPropertyIndex(index);	
+				index = map.getPreviousPropertyIndex(index);
 				return map.getInt(index);
 			}
 			catch(NoSuchIndexException ex) {
 			}
 			catch(NoValueException ex) {
 			}
-		}		
+		}
 		return 0;
 	}
-	
+
 	/**
 	 * Returns the value range containing the given index. The value range indicates
 	 * the int value and the start and end index for the range.
@@ -156,7 +156,7 @@ public class RangeMap implements Serializable {
 		} catch (NoValueException e1) {}
 		return new ValueRange(start, end, value);
 	}
-	
+
 	/**
 	 * Returns an iterator over all occupied ranges in the map.
 	 * @param index the index to start the iterator
@@ -173,7 +173,7 @@ public class RangeMap implements Serializable {
 	 * @return an iterator over all indexes where the value changes.
 	 */
 	public LongIterator getChangePointIterator(long start, long end) {
-		return map.getPropertyIterator(start, end);	
+		return map.getPropertyIterator(start, end);
 	}
 
 

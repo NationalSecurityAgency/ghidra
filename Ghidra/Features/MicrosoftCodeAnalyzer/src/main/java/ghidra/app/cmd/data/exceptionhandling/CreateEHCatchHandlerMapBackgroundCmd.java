@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.util.exception.*;
 
 /**
- * This command will create a HandlerType exception handler data type or an array of them. 
+ * This command will create a HandlerType exception handler data type or an array of them.
  * If there are any existing instructions in the area to be made into data, the command will fail.
  * Any data in the area will be replaced with the new dataType.
  */
@@ -33,7 +33,7 @@ public class CreateEHCatchHandlerMapBackgroundCmd
 		extends AbstractCreateDataBackgroundCmd<EHCatchHandlerModel> {
 
 	/**
-	 * Constructs a command for applying a HandlerType exception handling data type at an 
+	 * Constructs a command for applying a HandlerType exception handling data type at an
 	 * address.
 	 * @param address the address where the data should be created using the data type.
 	 * @param count the number of the indicated data type to create.
@@ -43,14 +43,14 @@ public class CreateEHCatchHandlerMapBackgroundCmd
 	}
 
 	/**
-	 * Constructs a command for applying a HandlerType exception handling data type at an 
+	 * Constructs a command for applying a HandlerType exception handling data type at an
 	 * address.
 	 * @param address the address where the data should be created using the data type.
 	 * @param count the number of the indicated data type to create.
-	 * @param validationOptions the options for controlling how validation is performed when 
+	 * @param validationOptions the options for controlling how validation is performed when
 	 * determining whether or not to create the data structure at the indicated address.
 	 * @param applyOptions the options for creating the new data structure and its associated
-	 * markup in the program as well as whether to follow other data references and create their 
+	 * markup in the program as well as whether to follow other data references and create their
 	 * data too.
 	 */
 	public CreateEHCatchHandlerMapBackgroundCmd(Address address, int count,
@@ -59,11 +59,11 @@ public class CreateEHCatchHandlerMapBackgroundCmd
 	}
 
 	/**
-	 * Constructs a command for applying a HandlerType exception handling data type at the 
+	 * Constructs a command for applying a HandlerType exception handling data type at the
 	 * address indicated by the model.
 	 * @param catchHandlerModel the model for the data type
 	 * @param applyOptions the options for creating the new data structure and its associated
-	 * markup in the program as well as whether to follow other data references and create their 
+	 * markup in the program as well as whether to follow other data references and create their
 	 * data too.
 	 */
 	CreateEHCatchHandlerMapBackgroundCmd(EHCatchHandlerModel catchHandlerModel,
@@ -147,7 +147,7 @@ public class CreateEHCatchHandlerMapBackgroundCmd
 	}
 
 	/**
-	 * Creates data references to the catch handler function and based on options it creates a 
+	 * Creates data references to the catch handler function and based on options it creates a
 	 * label for the catch handler function, disassembles it, and creates the function.
 	 * @param program the program where this command is creating references and symbols.
 	 * @param monitor the task monitor for cancelling creation of the catch handler reference,

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,7 @@ public class RandomAccessByteProvider implements ByteProvider {
 
 	/**
 	 * Constructs a {@link ByteProvider} using the specified {@link File}.
-	 * 
+	 *
 	 * @param file the {@link File} to open for random access
 	 * @throws IOException if the {@link File} does not exist or other error
 	 */
@@ -62,7 +62,7 @@ public class RandomAccessByteProvider implements ByteProvider {
 
 	/**
 	 * Constructs a {@link ByteProvider} using the specified {@link File} and permissions
-	 * 
+	 *
 	 * @param file the {@link File} to open for random access
 	 * @param permissions indicating permissions used for open
 	 * @throws IOException if the {@link File} does not exist or other error
@@ -154,10 +154,10 @@ public class RandomAccessByteProvider implements ByteProvider {
 		}
 		return b;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "RandomAccessByteProvider [\n  file=" + file + ",\n  fsrl=" + fsrl +
 			",\n  fileLength=" + fileLength + "\n]";
-	}	
+	}
 }

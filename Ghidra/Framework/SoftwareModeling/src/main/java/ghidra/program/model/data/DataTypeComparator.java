@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ public class DataTypeComparator implements Comparator<Object> {
 			String name1 = dt1.getName();
 			String name2 = dt2.getName();
 
-			// if the names are the same, then sort by the path            
+			// if the names are the same, then sort by the path
 			int nameResult = name1.compareToIgnoreCase(name2);
 			if (nameResult != 0) {
 				return nameResult;
@@ -46,7 +46,7 @@ public class DataTypeComparator implements Comparator<Object> {
 
 			return dt1.getPathName().compareToIgnoreCase(dt2.getPathName());
 		}
-		// these cases are for lookups by string keys        
+		// these cases are for lookups by string keys
 		else if (o1 instanceof String && o2 instanceof DataType) {
 
 			DataType dt2 = (DataType) o2;

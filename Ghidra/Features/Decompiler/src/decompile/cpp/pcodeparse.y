@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -187,7 +187,7 @@ expr: varnode { $$ = new ExprTree($1); }
   | specificsymbol ':' INTEGER	{ $$ = pcode->createBitRange($1,0,(uint4)(*$3 * 8)); delete $3; }
   | specificsymbol '[' INTEGER ',' INTEGER ']' { $$ = pcode->createBitRange($1,(uint4)*$3,(uint4)*$5); delete $3, delete $5; }
   | USEROPSYM '(' paramlist ')' { $$ = pcode->createUserOp($1,$3); }
-  ;  
+  ;
 sizedstar: '*' '[' SPACESYM ']' ':' INTEGER { $$ = new StarQuality; $$->size = *$6; delete $6; $$->id=ConstTpl($3->getSpace()); }
   | '*' '[' SPACESYM ']'	{ $$ = new StarQuality; $$->size = 0; $$->id=ConstTpl($3->getSpace()); }
   | '*' ':' INTEGER		{ $$ = new StarQuality; $$->size = *$3; delete $3; $$->id=ConstTpl(pcode->getDefaultSpace()); }

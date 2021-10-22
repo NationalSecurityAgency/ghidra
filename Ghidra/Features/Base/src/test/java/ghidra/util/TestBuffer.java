@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,7 @@ import java.nio.ByteBuffer;
 import java.util.Date;
 
 /**
- * 
+ *
  *
  * To change this generated comment edit the template variable "typecomment":
  * Window>Preferences>Java>Templates.
@@ -31,13 +31,13 @@ public class TestBuffer {
 	private static final int SIZE = 1000000;
 	private static final int LOOPS = 100;
 	byte[] data;
-	
+
 	public TestBuffer(int size) {
-		data = new byte[size*4];	
+		data = new byte[size*4];
 	}
 	public void put(int index, int value) {
 		byte a = (byte)(value >> 24);
-		byte b = (byte)(value >> 16);	
+		byte b = (byte)(value >> 16);
 		byte c = (byte)(value >> 8);
 		byte d = (byte)value;
 		int i = index*4;
@@ -54,8 +54,8 @@ public class TestBuffer {
 		int d = data[i+3] & 0x000000ff;
 		return a | b | c | d;
 	}
-		
-	
+
+
 	public static void main(String[] args) {
 		long t = new Date().getTime();
 		System.out.println("start");
@@ -70,7 +70,7 @@ public class TestBuffer {
 				}
 			}
 		}
-		
+
 		System.out.println("done");
 		System.out.println("time = "+(new Date().getTime() - t));
 		t = new Date().getTime();
@@ -89,7 +89,7 @@ public class TestBuffer {
 		System.out.println("done 2");
 		System.out.println("time = "+(new Date().getTime() - t));
 		t = new Date().getTime();
-		
+
 		ByteBuffer bb = ByteBuffer.allocate(SIZE*4);
 
 		for(int j = 0;j<LOOPS;j++) {
@@ -104,7 +104,7 @@ public class TestBuffer {
 		}
 		System.out.println("done 3");
 		System.out.println("time = "+(new Date().getTime() - t));
-		
+
 	}
 
 }

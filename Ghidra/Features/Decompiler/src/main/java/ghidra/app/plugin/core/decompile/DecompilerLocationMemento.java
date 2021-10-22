@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import docking.widgets.fieldpanel.support.ViewerPosition;
 public class DecompilerLocationMemento extends LocationMemento {
 
 	private final ViewerPosition viewerPosition;
-	
+
 	public DecompilerLocationMemento(Program program, ProgramLocation location,
 			ViewerPosition viewerPosition) {
 		super(program, location);
@@ -42,7 +42,7 @@ public class DecompilerLocationMemento extends LocationMemento {
 	public ViewerPosition getViewerPosition() {
 		return viewerPosition;
 	}
-	
+
 	@Override
 	public void saveState(SaveState saveState) {
 		super.saveState( saveState );

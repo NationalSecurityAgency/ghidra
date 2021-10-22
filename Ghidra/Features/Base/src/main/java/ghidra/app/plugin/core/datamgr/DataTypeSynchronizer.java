@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,9 +48,9 @@ public class DataTypeSynchronizer {
 	private int localTransactionID;
 
 	/**
-	 * Creates a DataTypeSynchronizer to be used for synchronizing data types between a program 
+	 * Creates a DataTypeSynchronizer to be used for synchronizing data types between a program
 	 * and an archive.
-	 * @param dataTypeManagerHandler the handler that manages all the open data type managers 
+	 * @param dataTypeManagerHandler the handler that manages all the open data type managers
 	 * whether built-in, program, project data type archive or file data type archive.
 	 * @param dataTypeManager the program data type manager.
 	 * @param source the data type source archive information indicating the associated archive for
@@ -216,7 +216,7 @@ public class DataTypeSynchronizer {
 	}
 
 	/**
-	 * If the indicated data type is associated with a source archive, this will remove the 
+	 * If the indicated data type is associated with a source archive, this will remove the
 	 * association.
 	 * @param dataType the data type to be disassociated from a source archive.
 	 */
@@ -321,7 +321,7 @@ public class DataTypeSynchronizer {
 		String htmlContent = diffs[0].getHTMLContentString();
 		String otherContent = diffs[1].getHTMLContentString();
 
-		// this string allows us to force both tables to be the same width, which is 
+		// this string allows us to force both tables to be the same width, which is
 		// aesthetically pleasing
 		String spacerString = createHTMLSpacerString(htmlContent, otherContent);
 		StringBuilder buffy = new StringBuilder();
@@ -369,12 +369,12 @@ public class DataTypeSynchronizer {
 		return ToolTipUtils.getHTMLRepresentation(sourceDT);
 	}
 
-	/** 
+	/**
 	 * Compares the two HTML strings to find the widest *rendered* text and then creates
 	 * an HTML string of spaces that is wide enough to represent that width.
 	 */
 	private static String createHTMLSpacerString(String htmlContent, String otherHTMLContent) {
-		// unfortunately, to get the displayed widths, we have to have rendered content, which 
+		// unfortunately, to get the displayed widths, we have to have rendered content, which
 		// is what the JLabels below are doing for us
 		JLabel label1 = new GDHtmlLabel("<HTML>" + htmlContent);
 		JLabel label2 = new GDHtmlLabel("<HTML>" + otherHTMLContent);
@@ -424,9 +424,9 @@ public class DataTypeSynchronizer {
 	}
 
 	/**
-	 * Adjusts the data type and source archive info for an associated source archive if its sync 
-	 * state is incorrect. It makes sure that a data type that is the same as the associated 
-	 * archive one is in-sync. It also makes sure that a data type that differs from the archive 
+	 * Adjusts the data type and source archive info for an associated source archive if its sync
+	 * state is incorrect. It makes sure that a data type that is the same as the associated
+	 * archive one is in-sync. It also makes sure that a data type that differs from the archive
 	 * one can be committed or updated.
 	 */
 	public void reSyncDataTypes() {
@@ -476,7 +476,7 @@ public class DataTypeSynchronizer {
 	/**
 	 * This method is to correct a problem where a data type ends up differing from its associated
 	 * data type in the archive, but its timestamp information indicates that it is in sync.
-	 * It changes the timestamp info on the data type and the info about the source archive so 
+	 * It changes the timestamp info on the data type and the info about the source archive so
 	 * the user will be able to commit/update the data type to correctly put it back in sync.
 	 */
 	private void fixSyncForDifferingDataTypes() {

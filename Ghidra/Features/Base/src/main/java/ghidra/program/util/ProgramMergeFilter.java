@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,14 +18,14 @@ package ghidra.program.util;
 import ghidra.util.Msg;
 
 /**
- * The <CODE>ProgramMergeFilter</CODE> is used to specify which portions of a 
+ * The <CODE>ProgramMergeFilter</CODE> is used to specify which portions of a
  * program should be merged into another program.
- * It indicates the types of program differences to merge. 
+ * It indicates the types of program differences to merge.
  * Each merge type can have its filter set to <CODE>IGNORE</CODE> or <CODE>REPLACE</CODE>.
  * <CODE>IGNORE</CODE> indicates no interest in replacing or merging that type of difference.
- * <CODE>REPLACE</CODE> indicates to replace differences in program1 with differences of 
+ * <CODE>REPLACE</CODE> indicates to replace differences in program1 with differences of
  * that type from program2.
- * Some merge types (for example, COMMENTS and SYMBOLS) allow the filter to be 
+ * Some merge types (for example, COMMENTS and SYMBOLS) allow the filter to be
  * set to <CODE>MERGE</CODE>.
  * <CODE>MERGE</CODE> indicates that the type should
  * be taken from Program2 and merged into Program1 with whatever is alreaady there.
@@ -41,7 +41,7 @@ public class ProgramMergeFilter {
 	 * should be replaced with the difference from program2.
 	 */
 	public static final int REPLACE = 1;
-	/** MERGE is a <B>filter value</B> indicating that the type of difference should be merged 
+	/** MERGE is a <B>filter value</B> indicating that the type of difference should be merged
 	 * from program2 with what is already in program1 (the property type should be taken
 	 * from both program1 and program2.)
 	 */
@@ -176,7 +176,7 @@ public class ProgramMergeFilter {
 	/** Creates new ProgramMergeFilter with the specified merge types selected.
 	 *
 	 * @param type the type of difference to look for between the programs.
-	 * @param filter IGNORE, REPLACE, or MERGE. Indicates 
+	 * @param filter IGNORE, REPLACE, or MERGE. Indicates
 	 * which program difference to include of the specified type.
 	 * If a particular type cannot be set to MERGE then it will be set to REPLACE.
 	 */
@@ -187,11 +187,11 @@ public class ProgramMergeFilter {
 	/** getFilter determines whether or not the specified type of filter is set.
 	 * Valid types are: BYTES, INSTRUCTIONS, DATA,
 	 * SYMBOLS, PRIMARY_SYMBOL, COMMENTS, PROGRAM_CONTEXT, PROPERTIES, BOOKMARKS, FUNCTIONS.
-	 * INVALID is returned if combinations of merge types (e.g. ALL) are 
+	 * INVALID is returned if combinations of merge types (e.g. ALL) are
 	 * passed in.
 	 *
 	 * @param type the merge type.
-	 * @return IGNORE, REPLACE, or MERGE. INVALID if parameter is a combination of 
+	 * @return IGNORE, REPLACE, or MERGE. INVALID if parameter is a combination of
 	 * types or not a predefined primary type.
 	 */
 	public int getFilter(int type) {
@@ -320,7 +320,7 @@ public class ProgramMergeFilter {
 	 *
 	 * @param type the type of difference to merge between the programs.
 	 * @return true if <CODE>MERGE</CODE> is valid for the merge type.
-	 * @throws IllegalArgumentException if type isn't a predefined individual 
+	 * @throws IllegalArgumentException if type isn't a predefined individual
 	 * merge type.
 	 */
 	private boolean isMergeValidForFilter(int type) throws IllegalArgumentException {
@@ -353,16 +353,16 @@ public class ProgramMergeFilter {
 	}
 
 	/** setFilter specifies whether or not the indicated type of item will
-	 * not be included by the filter (IGNORE), replaced in the first program using the type of 
+	 * not be included by the filter (IGNORE), replaced in the first program using the type of
 	 * item in the second program (REPLACE), or included from both programs (MERGE).
 	 * Valid types are: BYTES, INSTRUCTIONS, DATA, REFERENCES,
 	 * SYMBOLS, PRIMARY_SYMBOL, COMMENTS, PROPERTIES, BOOKMARKS, FUNCTIONS, ALL, or combinations of
 	 * these "OR"ed together.
-	 * if <CODE>MERGE</CODE> is not valid for an included primary type, then it 
+	 * if <CODE>MERGE</CODE> is not valid for an included primary type, then it
 	 * will be set to <CODE>REPLACE</CODE> instead for that primary type.
 	 *
 	 * @param type the type(s) of difference(s) to include.
-	 * @param filter IGNORE, REPLACE, or MERGE. Indicates whether to include none, 
+	 * @param filter IGNORE, REPLACE, or MERGE. Indicates whether to include none,
 	 * one, or both programs' differences of the specified type.
 	 */
 	synchronized public void setFilter(int type, int filter) {
@@ -407,7 +407,7 @@ public class ProgramMergeFilter {
 
 	/**
 	 * Gets all the valid individual types of differences for this filter.
-	 * @return an array containing all the currently defined primary difference 
+	 * @return an array containing all the currently defined primary difference
 	 * types.
 	 */
 	public static int[] getPrimaryTypes() {
@@ -419,12 +419,12 @@ public class ProgramMergeFilter {
 	}
 
 	/** <CODE>typeToName()</CODE> returns the name of a predefined merge type.
-	 *  Only predefined types, as specified in <CODE>ProgramMergeFilter</CODE>, 
+	 *  Only predefined types, as specified in <CODE>ProgramMergeFilter</CODE>,
 	 *  will return a name. Otherwise, an empty string is returned.
 	 * @param type the type of merge difference whose name is wanted.
 	 * Valid types are: BYTES, INSTRUCTIONS, DATA, REFERENCES,
 	 * SYMBOLS, PRIMARY_SYMBOL, COMMENTS, PROGRAM_CONTEXT, PROPERTIES, BOOKMARKS, FUNCTIONS, ALL.
-	 * @return the name of the predefined merge difference type. 
+	 * @return the name of the predefined merge difference type.
 	 * Otherwise, the empty string.
 	 */
 	public static String typeToName(int type) {

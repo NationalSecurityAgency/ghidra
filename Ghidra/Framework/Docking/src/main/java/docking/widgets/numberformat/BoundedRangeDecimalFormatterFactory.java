@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public class BoundedRangeDecimalFormatterFactory extends DefaultFormatterFactory
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param numberFormat a format string compatible with {@link DecimalFormat}
 	 */
 	public BoundedRangeDecimalFormatterFactory(String numberFormat) {
@@ -39,7 +39,7 @@ public class BoundedRangeDecimalFormatterFactory extends DefaultFormatterFactory
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param upperRangeValue the max value allowed
 	 * @param lowerRangeValue the min value allowed
 	 * @param numberFormat a format string compatible with {@link DecimalFormat}

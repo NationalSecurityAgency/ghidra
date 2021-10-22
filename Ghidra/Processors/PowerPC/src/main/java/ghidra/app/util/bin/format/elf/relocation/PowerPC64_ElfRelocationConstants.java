@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,7 +17,7 @@ package ghidra.app.util.bin.format.elf.relocation;
 
 public class PowerPC64_ElfRelocationConstants {
 
-	public static final int R_PPC64_NONE = 0; 
+	public static final int R_PPC64_NONE = 0;
 	public static final int R_PPC64_ADDR32 = 1; 			// word32*       S + A
 	public static final int R_PPC64_ADDR24 = 2; 			// low24*        (S + A) >> 2
 	public static final int R_PPC64_ADDR16 = 3; 			// half16*       S + A
@@ -81,7 +81,7 @@ public class PowerPC64_ElfRelocationConstants {
 	public static final int R_PPC64_TOC16_LO_DS = 64; 	// half16ds      #lo(S + A - .TOC.) >> 2
 	public static final int R_PPC64_PLTGOT16_DS = 65; 	// half16ds*     M >> 2
 	public static final int R_PPC64_PLTGOT16_LO_DS = 66; // half16ds     #lo(M) >> 2
-	public static final int R_PPC64_TLS = 67; 
+	public static final int R_PPC64_TLS = 67;
 	public static final int R_PPC64_DTPMOD64 = 68; 		// doubleword64  @dtpmod
 	public static final int R_PPC64_TPREL16 = 69; 		// half16*       @tprel
 	public static final int R_PPC64_TPREL16_LO = 60; 	// half16        #lo(@tprel)
@@ -128,7 +128,7 @@ public class PowerPC64_ElfRelocationConstants {
 	public static final int PPC64_LOW24 = 0x03FFFFFC;
 	public static final int PPC64_LOW14 = 0x0020FFFC;
 	public static final int PPC64_HALF16 = 0xFFFF;
-		
+
 	private PowerPC64_ElfRelocationConstants() {
 		// no construct
 	}

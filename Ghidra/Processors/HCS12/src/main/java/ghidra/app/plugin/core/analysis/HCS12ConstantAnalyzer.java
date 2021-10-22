@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,38 +48,38 @@ public class HCS12ConstantAnalyzer extends ConstantPropagationAnalyzer {
 
 		return true;
 	}
-	
+
 	private long hcs12TranslatePagedAddress(long addrWordOffset) {
-		
+
 		long page = (addrWordOffset >> 16) & 0xff;
-		
+
 		long addr = addrWordOffset & 0xffff;
 
 		// Register address
 		if ( (addr  & 0xfC00) == 0x0) {
 			return addr;
 		}
-		
+
 		// EPage address
 		if ((addr & 0xfc00) ==0x800) {
 			return 0x100000 | ((page << 10)  | (addr & 0x3ff));
 		}
-		
+
 		// EPage FF fixed address
 		if ((addr & 0xfc00) ==0xC00) {
 			return (0x4FF << 10) | (addr & 0x3ff);
 		}
-		
+
 		// RPage address
 		if ((addr & 0xf000) ==0x1000) {
 			return (page << 12) | (addr & 0xfff);
 		}
-		
+
 		// RPage FE fixed address
 		if ((addr & 0xf000) ==0x2000) {
 			return (0xFE << 12) | (addr & 0xfff);
 		}
-		
+
 		// RPage FF fixed address
 		if ((addr & 0xf000) ==0x3000) {
 			return (0xFF << 12) | (addr & 0xfff);
@@ -89,17 +89,17 @@ public class HCS12ConstantAnalyzer extends ConstantPropagationAnalyzer {
 		if ((addr & 0xc000) ==0x4000) {
 			return 0x400000 | (0xFD << 14) | (addr & 0x3fff);
 		}
-		
+
 		// PPage address
 		if ((addr & 0xc000) ==0x8000) {
 			return 0x400000 | (page << 14) | (addr & 0x3fff);
 		}
-		
+
 		// PPage FF fixed address
 		if ((addr & 0xc000) ==0xC000) {
 			return 0x400000 | (0xFF << 14) | (addr & 0x3fff);
 		}
-		
+
 		return addr;
 	}
 
@@ -108,7 +108,7 @@ public class HCS12ConstantAnalyzer extends ConstantPropagationAnalyzer {
 			final SymbolicPropogator symEval, final TaskMonitor monitor) throws CancelledException {
 
 		// follow all flows building up context
-		// use context to fill out addresses on certain instructions 
+		// use context to fill out addresses on certain instructions
 		ContextEvaluator eval = new ConstantPropagationContextEvaluator(trustWriteMemOption) {
 
 			@Override

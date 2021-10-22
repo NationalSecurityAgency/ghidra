@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ public class RISCV_ElfRelocationConstants {
 	 * S	Value of the symbol in the symbol table
 	 * GP	Global Pointer register (x3)
 	 */
-    public static final int R_RISCV_NONE = 0; // None 
+    public static final int R_RISCV_NONE = 0; // None
     public static final int R_RISCV_32 = 1; // Runtime relocation word32 = S + A
     public static final int R_RISCV_64 = 2; // Runtime relocation word64 = S + A
     public static final int R_RISCV_RELATIVE = 3; // Runtime relocation word32,64 = B + A
@@ -62,9 +62,9 @@ public class RISCV_ElfRelocationConstants {
     public static final int R_RISCV_SUB16 = 38; // 16-bit label subtraction word16 = old - S - A
     public static final int R_RISCV_SUB32 = 39; // 32-bit label subtraction word32 = old - S - A
     public static final int R_RISCV_SUB64 = 40; // 64-bit label subtraction word64 = old - S - A
-    public static final int R_RISCV_GNU_VTINHERIT = 41; // GNU C++ vtable hierarchy 
-    public static final int R_RISCV_GNU_VTENTRY = 42; // GNU C++ vtable member usage 
-    public static final int R_RISCV_ALIGN = 43; // Alignment statement 
+    public static final int R_RISCV_GNU_VTINHERIT = 41; // GNU C++ vtable hierarchy
+    public static final int R_RISCV_GNU_VTENTRY = 42; // GNU C++ vtable member usage
+    public static final int R_RISCV_ALIGN = 43; // Alignment statement
     public static final int R_RISCV_RVC_BRANCH = 44; // PC-relative branch offset (CB-Type)
     public static final int R_RISCV_RVC_JUMP = 45; // PC-relative jump offset (CJ-Type)
     public static final int R_RISCV_RVC_LUI = 46; // Absolute address (CI-Type)
@@ -72,13 +72,13 @@ public class RISCV_ElfRelocationConstants {
     public static final int R_RISCV_GPREL_S = 48; // GP-relative reference (S-Type)
     public static final int R_RISCV_TPREL_I = 49; // TP-relative TLS LE load (I-Type)
     public static final int R_RISCV_TPREL_S = 50; // TP-relative TLS LE store (S-Type)
-    public static final int R_RISCV_RELAX = 51; // Instruction pair can be relaxed 
-    public static final int R_RISCV_SUB6 = 52; // Local label subtraction 
-    public static final int R_RISCV_SET6 = 53; // Local label subtraction 
-    public static final int R_RISCV_SET8 = 54; // Local label subtraction 
-    public static final int R_RISCV_SET16 = 55; // Local label subtraction 
+    public static final int R_RISCV_RELAX = 51; // Instruction pair can be relaxed
+    public static final int R_RISCV_SUB6 = 52; // Local label subtraction
+    public static final int R_RISCV_SET6 = 53; // Local label subtraction
+    public static final int R_RISCV_SET8 = 54; // Local label subtraction
+    public static final int R_RISCV_SET16 = 55; // Local label subtraction
     public static final int R_RISCV_SET32 = 56; // Local label subtraction
     public static final int R_RISCV_32_PCREL = 57; // 32-bit PC relative
-    // 58-191 Reserved Reserved for future standard use 
-    // 192-255 Reserved Reserved for nonstandard ABI extensions 
+    // 58-191 Reserved Reserved for future standard use
+    // 192-255 Reserved Reserved for nonstandard ABI extensions
 }

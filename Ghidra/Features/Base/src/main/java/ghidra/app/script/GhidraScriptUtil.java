@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +65,7 @@ public class GhidraScriptUtil {
 
 	/**
 	 * set the bundle host and start the framework
-	 * 
+	 *
 	 * @param aBundleHost the bundle host
 	 */
 	private static void setBundleHost(BundleHost aBundleHost) {
@@ -84,10 +84,10 @@ public class GhidraScriptUtil {
 
 	/**
 	 * initialize state of GhidraScriptUtil with user, system paths, and optional extra system paths.
-	 * 
-	 * @param aBundleHost the host to use 
-	 * @param extraSystemPaths additional system paths for this run, can be null 
-	 * 
+	 *
+	 * @param aBundleHost the host to use
+	 * @param extraSystemPaths additional system paths for this run, can be null
+	 *
 	 */
 	public static void initialize(BundleHost aBundleHost, List<String> extraSystemPaths) {
 		setBundleHost(aBundleHost);
@@ -125,7 +125,7 @@ public class GhidraScriptUtil {
 
 	/**
 	 * Search the currently managed source directories for the given script file.
-	 * 
+	 *
 	 * @param sourceFile the source file
 	 * @return the source directory if found, or null if not
 	 */
@@ -142,7 +142,7 @@ public class GhidraScriptUtil {
 
 	/**
 	 * Search the currently managed scripts for one with the given name.
-	 * 
+	 *
 	 * @param scriptName the name
 	 * @return the first file found or null if none are found
 	 */
@@ -151,7 +151,7 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * User's home scripts directory. Some tests may override the default using the 
+	 * User's home scripts directory. Some tests may override the default using the
 	 * SystemUtilities.USER_SCRIPTS_DIR system property.
 	 * @return the path to the default user scripts directory
 	 */
@@ -208,7 +208,7 @@ public class GhidraScriptUtil {
 		try {
 			String filePath = file.getCanonicalPath().replace('\\', '/');
 			if (filePath.startsWith(USER_SCRIPTS_DIR)) {
-				// a script inside of the user scripts dir is not a 'system' script 
+				// a script inside of the user scripts dir is not a 'system' script
 				return false;
 			}
 
@@ -231,8 +231,8 @@ public class GhidraScriptUtil {
 	/**
 	 * Returns the list of exploded bundle directories
 	 * @return the list
-	 * 
-	 * @deprecated accessing class file directly precludes OSGi wiring according to requirements and capabilities 
+	 *
+	 * @deprecated accessing class file directly precludes OSGi wiring according to requirements and capabilities
 	 */
 	@Deprecated
 	public static List<ResourceFile> getExplodedCompiledSourceBundlePaths() {
@@ -267,7 +267,7 @@ public class GhidraScriptUtil {
 
 	/**
 	 * Returns a list of all Ghidra script providers
-	 * 
+	 *
 	 * @return a list of all Ghidra script providers
 	 */
 	// Note: this method is synchronized so that two threads do not try to create the list when null
@@ -293,7 +293,7 @@ public class GhidraScriptUtil {
 
 	/**
 	 * Returns true if a provider exists that can process the specified file.
-	 * 
+	 *
 	 * @param scriptFile the script file
 	 * @return true if a provider exists that can process the specified file
 	 */
@@ -303,7 +303,7 @@ public class GhidraScriptUtil {
 
 	/**
 	 * Find the provider whose extension matches the given filename extension.
-	 * 
+	 *
 	 * @param fileName name of script file
 	 * @return the first matching provider or null if no provider matches
 	 */
@@ -318,11 +318,11 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * Creates a new script with a unique name using the specified provider in the 
+	 * Creates a new script with a unique name using the specified provider in the
 	 * specified directory.
 	 * @param provider   the Ghidra script provider
 	 * @param parentDirectory  the directory where the new script will be created.
-	 * @param scriptDirectories The list of directories containing scripts (used to find a 
+	 * @param scriptDirectories The list of directories containing scripts (used to find a
 	 *        unique name).
 	 * @return the newly created script file
 	 * @throws IOException if an i/o error occurs
@@ -362,15 +362,15 @@ public class GhidraScriptUtil {
 	/**
 	 * Fix script name issues for searching in script directories.
 	 * If no provider can be identified, Java is assumed.
-	 * 
+	 *
 	 * <p>This method is part of a poorly specified behavior that is due for future amendment.
-	 * 
-	 * <p>It is used by {@link GhidraScript#runScript(String)} methods, 
-	 * {@link #createNewScript(String, String, ResourceFile, List)}, and by {@link HeadlessAnalyzer} for 
+	 *
+	 * <p>It is used by {@link GhidraScript#runScript(String)} methods,
+	 * {@link #createNewScript(String, String, ResourceFile, List)}, and by {@link HeadlessAnalyzer} for
 	 * {@code preScript} and {@code postScript}.  The intent was to allow some freedom in how a user specifies
 	 * a script in two ways: 1) if the extension is omitted ".java" is assumed and 2) if a Java class name is
 	 * given it's converted to a relative path.
-	 *  
+	 *
 	 * @param name the name of the script
 	 * @return the name as a file path
 	 */
@@ -403,7 +403,7 @@ public class GhidraScriptUtil {
 
 	/**
 	 * When running the GUI, {@link GhidraScriptUtil} manages a single {@link BundleHost} instance.
-	 * 
+	 *
 	 * @return the BundleHost singleton
 	 */
 	public static BundleHost acquireBundleHostReference() {
@@ -414,8 +414,8 @@ public class GhidraScriptUtil {
 	}
 
 	/**
-	 * release the reference the BundleHost reference.  When no references remain, 
-	 * {@link #dispose()} is called. 
+	 * release the reference the BundleHost reference.  When no references remain,
+	 * {@link #dispose()} is called.
 	 */
 	public static void releaseBundleHostReference() {
 		if (referenceCount.getAndDecrement() == 1) {

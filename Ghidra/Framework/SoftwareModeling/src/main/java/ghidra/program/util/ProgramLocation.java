@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -95,7 +95,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	 * Construct a new ProgramLocation for the given address. The address will be adjusted to the
 	 * beginning of the {@link CodeUnit code unit} containing that address (if it exists). The
 	 * original address can be retrieved using the {@link #getByteAddress()}" method.
-	 * 
+	 *
 	 * @param program the program associated with this program location (also used to obtain a
 	 *            code-unit-aligned address)
 	 * @param addr address of the location; cannot be null
@@ -118,7 +118,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	 * Construct a new ProgramLocation for the given address. The address will be adjusted to the
 	 * beginning of the {@link CodeUnit code unit} containing that address (if it exists). The
 	 * original address can be retrieved using the {@link #getByteAddress()} method.
-	 * 
+	 *
 	 * @param program the program associated with this program location (also used to obtain a
 	 *            code-unit-aligned address)
 	 * @param addr address for the location
@@ -132,7 +132,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	 * Construct a new ProgramLocation for the given address. The address will be adjusted to the
 	 * beginning of the {@link CodeUnit code unit} containing that address (if it exists). The
 	 * original address can be retrieved using the {@link #getByteAddress()} method.
-	 * 
+	 *
 	 * @param program the program associated with this program location (also used to obtain a
 	 *            code-unit-aligned address)
 	 * @param addr address for the location
@@ -150,7 +150,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 	 * Construct a new ProgramLocation for the given address. The address will be adjusted to the
 	 * beginning of the {@link CodeUnit code unit} containing that address (if it exists). The
 	 * original address can be retrieved using the {@link #getByteAddress()} method.
-	 * 
+	 *
 	 * @param program the program associated with this program location (also used to obtain a
 	 *            code-unit-aligned address)
 	 * @param addr address for the location
@@ -184,7 +184,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Returns the address associated with this location.
-	 * 
+	 *
 	 * <p>
 	 * Note: this may not be the same as the byte address. For example, in a {@link CodeUnit code
 	 * unit} location this may be the minimum address of the code unit that contains the byte
@@ -210,7 +210,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Save this program location to the given save state object.
-	 * 
+	 *
 	 * @param obj the save state object for saving the location
 	 */
 	public void saveState(SaveState obj) {
@@ -231,7 +231,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Restore this program location using the given program and save state object.
-	 * 
+	 *
 	 * @param program1 program to restore from
 	 * @param obj the save state to restore from
 	 */
@@ -254,7 +254,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Get the program location for the given program and save state object.
-	 * 
+	 *
 	 * @param program the program for the location
 	 * @param saveState the state to restore
 	 * @return the restored program location
@@ -438,7 +438,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Returns true if this location represents a valid location in the given program
-	 * 
+	 *
 	 * @param testProgram the program to test if this location is valid.
 	 * @return true if this location represents a valid location in the given program
 	 */
@@ -448,7 +448,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Returns the row within the program location.
-	 * 
+	 *
 	 * @return the row within the program location.
 	 */
 	public int getRow() {
@@ -457,7 +457,7 @@ public class ProgramLocation implements Comparable<ProgramLocation> {
 
 	/**
 	 * Returns the character offset in the display item at the (row,col)
-	 * 
+	 *
 	 * @return the character offset in the display item at the (row,col)
 	 */
 	public int getCharOffset() {

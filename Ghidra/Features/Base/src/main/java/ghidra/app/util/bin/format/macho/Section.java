@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +28,8 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * Represents a section and section_64 structure.
- * 
- * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ *
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-4570.71.2/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a>
  */
 public class Section implements StructConverter {
 
@@ -105,10 +105,10 @@ public class Section implements StructConverter {
 	/**
 	 * Returns true if this section has READ permission.
 	 * <p>
-	 * NOTE: On a real system, sections don't have their own permissions, only the segments they 
-	 * live in do.  However, Ghidra needs finer-grained control for analysis to work correctly, so 
+	 * NOTE: On a real system, sections don't have their own permissions, only the segments they
+	 * live in do.  However, Ghidra needs finer-grained control for analysis to work correctly, so
 	 * we take control over section permissions to fit our needs.
-	 * 
+	 *
 	 * @return true if this section has READ permission
 	 */
 	public boolean isRead() {
@@ -118,10 +118,10 @@ public class Section implements StructConverter {
 	/**
 	 * Returns true if this section has WRITE permission.
 	 * <p>
-	 * NOTE: On a real system, sections don't have their own permissions, only the segments they 
-	 * live in do.  However, Ghidra needs finer-grained control for analysis to work correctly, so 
+	 * NOTE: On a real system, sections don't have their own permissions, only the segments they
+	 * live in do.  However, Ghidra needs finer-grained control for analysis to work correctly, so
 	 * we take control over section permissions to fit our needs.
-	 * 
+	 *
 	 * @return true if this section has WRITE permission
 	 */
 	public boolean isWrite() {
@@ -141,10 +141,10 @@ public class Section implements StructConverter {
 	/**
 	 * Returns true if this section has EXECUTE permission.
 	 * <p>
-	 * NOTE: On a real system, sections don't have their own permissions, only the segments they 
-	 * live in do.  However, Ghidra needs finer-grained control for analysis to work correctly, so 
+	 * NOTE: On a real system, sections don't have their own permissions, only the segments they
+	 * live in do.  However, Ghidra needs finer-grained control for analysis to work correctly, so
 	 * we take control over section permissions to fit our needs.
-	 * 
+	 *
 	 * @return true if this section has EXECUTE permission
 	 */
 	public boolean isExecute() {

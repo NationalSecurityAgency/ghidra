@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,9 +27,9 @@ import ghidra.util.exception.AssertException;
 import resources.ResourceManager;
 
 /**
- * An interface to allow clients to provide a mechanism for filtering objects and to notify 
+ * An interface to allow clients to provide a mechanism for filtering objects and to notify
  * listeners when the state of the filter changes
- * 
+ *
  * @param <T> the type of item passed to the filter
  */
 public abstract class Filter<T> {
@@ -102,11 +102,11 @@ public abstract class Filter<T> {
 	public enum FilterShortcutState {
 		//@formatter:off
 		/** Any item passed to a filter in this state will pass the filter */
-		ALWAYS_PASSES, 
-		
+		ALWAYS_PASSES,
+
 		/** Any item passed to a filter in this state must be checked to see if it passes the filter */
 		REQUIRES_CHECK,
-		
+
 		/** Any item passed to a filter in this state will fail the filter */
 		NEVER_PASSES
 		//@formatter:on
@@ -115,7 +115,7 @@ public abstract class Filter<T> {
 	/**
 	 * Creates a copy of this filter.  This is useful for creating a disconnected snapshot of
 	 * this filter.
-	 * 
+	 *
 	 * @return the copy
 	 */
 	public Filter<T> createCopy() {
@@ -127,18 +127,18 @@ public abstract class Filter<T> {
 	}
 
 	/**
-	 * Creates an empty copy of this filter object. 
-	 * 
-	 * <P>Note: for this code to work, each subclass must have a no-arg, public constructor.  
+	 * Creates an empty copy of this filter object.
+	 *
+	 * <P>Note: for this code to work, each subclass must have a no-arg, public constructor.
 	 *          If not, then the differing subclass needs to override this method.
-	 * 
+	 *
 	 * @return the new uninitialized instance
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected Filter<T> createEmptyCopy() {
 
 		//
-		// Note: for this code to work, each subclass must have a no-arg, public constructor.  
+		// Note: for this code to work, each subclass must have a no-arg, public constructor.
 		//       If not, then the differing subclass needs to override this method.
 		//
 

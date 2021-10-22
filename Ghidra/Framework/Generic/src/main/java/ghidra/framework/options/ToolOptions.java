@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,16 +32,16 @@ import ghidra.util.exception.AssertException;
 
 /**
  * Class to manage a set of option name/value pairs for a category.
- * 
+ *
  * <p>The values may be primitives or {@link WrappedOption}s that are containers for primitive
  * components.
- * 
+ *
  * <p>The name/value pair has an owner so that the option name can be removed from the Options
  * object when it is no longer being used.
- * 
+ *
  * <p>Note: Property Names can have {@link Options#DELIMITER} characters to create a hierarchy.
  * So too can sub-options accessed via {@link #getOptions(String)}.
- * 
+ *
  * <p>The Options Dialog shows the delimited hierarchy in tree format.
  */
 public class ToolOptions extends AbstractOptions {
@@ -148,7 +148,7 @@ public class ToolOptions extends AbstractOptions {
 	 * Return an XML element for the option names and values.
 	 * Note: only those options which have been explicitly set
 	 * will be included.
-	 * 
+	 *
 	 * @param includeDefaultBindings true to include default key binding values in the xml
 	 * @return the xml root element
 	 */

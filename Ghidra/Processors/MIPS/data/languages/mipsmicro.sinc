@@ -9,29 +9,29 @@ define token micinstr (16)
   mic_base0=(0,4)
   mic_base4=(4,6)
   mic_index=(5,9)
-  
+
   mic_rd7=(7,9)
   mic_rd7lo=(7,9)
   mic_rd1=(1,3)
   mic_rd1lo=(7,9)
 
   mic_rs0=(0,2)
-  mic_rs0lo=(0,2)  
+  mic_rs0lo=(0,2)
   mic_rs1=(1,3)
   mic_rs1lo=(1,3)
   mic_rs4=(4,6)
   mic_rs4lo=(4,6)
   mic_rs7=(7,9)
   mic_rs7lo=(7,9)
-  
+
   mic_rt3=(3,5)
   mic_rt3lo=(3,5)
   mic_rt4=(4,6)
   mic_rt4lo=(4,6)
   mic_rt7=(7,9)
   mic_rt7lo=(7,9)
-  
-  
+
+
 
   mic_rd32_5=(5,9)
   mic_rd32_5lo=(5,9)
@@ -48,7 +48,7 @@ define token micinstr (16)
   mic_rt32_5=(5,9)
   mic_rt32_5a=(5,9)
   mic_rt32_5lo=(5,9)
-  
+
   mic_fd=(0,4)
   mic_fdD=(0,4)
   mic_fs=(0,4)
@@ -57,7 +57,7 @@ define token micinstr (16)
   mic_fsD_5=(5,9)
   mic_ft_0=(0,4)
   mic_ft_5=(5,9)
-  mic_ftD_5=(5,9)  
+  mic_ftD_5=(5,9)
   mic_ct=(0,4)
 
   mic_stype=(0,4)
@@ -144,17 +144,17 @@ define token micinstrb (16)
   micb_bit12=(12,12)
   micb_bit15=(15,15)
   micb_cc=(13,15)
-  
+
   micb_rd32=(11,15)
   micb_rd32lo=(11,15)
   micb_rs32=(6,10)
-  
+
   micb_fd=(11,15)
   micb_fdD=(11,15)
-  
+
   micb_fr=(6,10)
   micb_frD=(6,10)
-  
+
   micb_rx=(6,10)
   micb_pos=(6,10)
   micb_size=(11,15)
@@ -191,47 +191,47 @@ attach variables [ mic_rd7 mic_rd1 mic_rt4 mic_rs1 mic_rs7 mic_rs0 mic_rs4 mic_r
 attach variables [ mic_rd7lo mic_rd1lo mic_rt4lo mic_rs1lo mic_rs7lo mic_rs0lo mic_rs4lo mic_rt3lo mic_rt7lo ]
 				 [ s0_lo s1_lo v0_lo v1_lo a0_lo a1_lo a2_lo a3_lo ];
 
-attach variables [ mic_rs32_0lo mic_rt32_5lo micb_rd32lo mic_rd32_5lo ext_32_rs1lo] [ 
+attach variables [ mic_rs32_0lo mic_rt32_5lo micb_rd32lo mic_rd32_5lo ext_32_rs1lo] [
     zero_lo  at_lo  v0_lo  v1_lo  a0_lo  a1_lo  a2_lo  a3_lo
     t0_lo    t1_lo  t2_lo  t3_lo  t4_lo  t5_lo  t6_lo  t7_lo
     s0_lo    s1_lo  s2_lo  s3_lo  s4_lo  s5_lo  s6_lo  s7_lo
-    t8_lo    t9_lo  k0_lo  k1_lo  gp_lo  sp_lo  s8_lo  ra_lo 
+    t8_lo    t9_lo  k0_lo  k1_lo  gp_lo  sp_lo  s8_lo  ra_lo
 ];
 @else
 attach variables [ mic_rd7lo mic_rd1lo mic_rt4lo mic_rs1lo mic_rs7lo mic_rs0lo mic_rs4lo mic_rt3lo mic_rt7lo ]
 				 [ s0 s1 v0 v1 a0 a1 a2 a3 ];
 
-attach variables [ mic_rs32_0lo mic_rt32_5lo micb_rd32lo mic_rd32_5lo ext_32_rs1lo] [ 
+attach variables [ mic_rs32_0lo mic_rt32_5lo micb_rd32lo mic_rd32_5lo ext_32_rs1lo] [
     zero  at  v0  v1  a0  a1  a2  a3
     t0    t1  t2  t3  t4  t5  t6  t7
     s0    s1  s2  s3  s4  s5  s6  s7
-    t8    t9  k0  k1  gp  sp  s8  ra 
+    t8    t9  k0  k1  gp  sp  s8  ra
 ];
 @endif
 
 
 attach variables [ mic_encrs mic_encrt ext_16_rs]
 				 [ zero s1 v0 v1 s0 s2 s3 s4 ];
-				 
+
 attach variables [ mic_encrt2]
 				 [ zero s1 v0 v1 a0 a1 a2 a3 ];
-				 
+
 attach variables [ mic_encrd]
 				 [ a1 a1 a2 a0 a0 a0 a0 a0 ];
-				 
+
 attach variables [ mic_encre]
 				 [ a2 a3 a3 s5 s6 a1 a2 a3 ];
 
-attach variables [ mic_rd32_5 mic_rs32_0 mic_rs32_5 mic_rt32_5 mic_rd32_11 mic_rd32_0 ext_32_base micb_rd32 ext_32_rd micb_rs32 mic_base0 ext_32_rs1 mic_index] [ 
+attach variables [ mic_rd32_5 mic_rs32_0 mic_rs32_5 mic_rt32_5 mic_rd32_11 mic_rd32_0 ext_32_base micb_rd32 ext_32_rd micb_rs32 mic_base0 ext_32_rs1 mic_index] [
     zero  at  v0  v1  a0  a1  a2  a3
     t0    t1  t2  t3  t4  t5  t6  t7
     s0    s1  s2  s3  s4  s5  s6  s7
-    t8    t9  k0  k1  gp  sp  s8  ra 
+    t8    t9  k0  k1  gp  sp  s8  ra
 ];
 
-attach variables [ mic_fs mic_ft_5 micb_fd micb_fr mic_fs_5 mic_fd] [ 
+attach variables [ mic_fs mic_ft_5 micb_fd micb_fr mic_fs_5 mic_fd] [
     f0  f1  f2  f3  f4  f5  f6  f7  f8  f9  f10 f11 f12 f13 f14 f15
-    f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 f27 f28 f29 f30 f31 
+    f16 f17 f18 f19 f20 f21 f22 f23 f24 f25 f26 f27 f28 f29 f30 f31
 ];
 
 @if FREGSIZE == "4"
@@ -250,8 +250,8 @@ attach variables [ mic_fsD mic_ftD_5 micb_fdD micb_frD mic_fsD_5 mic_fdD] [
 @endif
 
 attach names [ ext_t4_name][
-	_		"s0"    "s0-s1" "s0-s2" 
-	"s0-s3"	"s0-s4"	"s0-s5" "s0-s6" 
+	_		"s0"    "s0-s1" "s0-s2"
+	"s0-s3"	"s0-s4"	"s0-s5" "s0-s6"
 	"s0-s7"	"s0-s8" _		_
 	_		_		_		_
 ];
@@ -267,8 +267,8 @@ RS4L: mic_rs4		is mic_rs4 & mic_rs4lo 			{ export mic_rs4lo; }
 
 RS0R4: mic_rs0		is mic_rs0 & REL6=0 			{ export mic_rs0; }
 RS0R4: mic_rs4		is mic_rs4 & REL6=1 			{ export mic_rs4; }
-RS0R5: mic_rs32_0	is mic_rs32_0 & REL6=0			{ export mic_rs32_0; } 
-RS0R5: mic_rs32_5	is mic_rs32_5 & REL6=1			{ export mic_rs32_5; } 
+RS0R5: mic_rs32_0	is mic_rs32_0 & REL6=0			{ export mic_rs32_0; }
+RS0R5: mic_rs32_5	is mic_rs32_5 & REL6=1			{ export mic_rs32_5; }
 
 RS1R7L: mic_rs1		is mic_rs1 & mic_rs1lo & REL6=0 { export mic_rs1lo; }
 RS1R7L: mic_rs7		is mic_rs7 & mic_rs7lo & REL6=1 { export mic_rs7lo; }
@@ -282,7 +282,7 @@ RT3R7: mic_rt7		is mic_rt7 & REL6=1				{ export mic_rt7; }
 RST7R5: mic_rs7		is mic_rs7 & REL6=0 			{ export mic_rs7; }
 RST7R5: mic_rt32_5	is mic_rt32_5 & REL6=1 			{ export mic_rt32_5; }
 
-RT5RD5: ext_32_rd	is ext_32_rd & REL6=0			{ export ext_32_rd; } 
+RT5RD5: ext_32_rd	is ext_32_rd & REL6=0			{ export ext_32_rd; }
 RT5RD5: micb_rd32	is micb_rd32 & REL6=1			{ export micb_rd32; }
 
 RS0RT5: mic_rs32_0	is mic_rs32_0 & REL6=0			{ export mic_rs32_0; }
@@ -291,12 +291,12 @@ RS0RT5: mic_rt32_5	is mic_rt32_5 & REL6=1			{ export mic_rt32_5; }
 ENCRS: mic_encrs	is mic_encrs & REL6=0			{ export mic_encrs; }
 ENCRS: ext_16_rs	is ext_16_rs & REL6=1			{ export ext_16_rs; }
 
-Abs26_mic1: reloc            	is ext_32_code & micb_imm16 [ reloc=((inst_start+4) $and 0xfffffffff8000000)+2*(micb_imm16 | (ext_32_code << 16)); ]   { export *:$(ADDRSIZE) reloc; }                 
-Abs26_mic2: reloc            	is ext_32_code & micb_imm16 [ reloc=((inst_start+4) $and 0xfffffffff0000000)+4*(micb_imm16 | (ext_32_code << 16)); ]   { export *:$(ADDRSIZE) reloc; } 
-Rel26_mic: reloc				is micb_imm16 [ reloc=inst_start+4+2*((ext_32_codes << 16) | micb_imm16); ] { export *:$(ADDRSIZE) reloc; }               
-Rel21_mic: reloc				is micb_imm16 [ reloc=inst_start+4+2*((ext_32_imm5s << 16) | micb_imm16); ] { export *:$(ADDRSIZE) reloc; }               
-Rel16_mic: reloc            	is micb_simm16 [ reloc=inst_start+4+2*micb_simm16; ] { export *:$(ADDRSIZE) reloc; }                 
-Rel10_mic: reloc            	is mic_soff10 [ reloc=inst_start+2+2*mic_soff10; ] { export *:$(ADDRSIZE) reloc; }                 
+Abs26_mic1: reloc            	is ext_32_code & micb_imm16 [ reloc=((inst_start+4) $and 0xfffffffff8000000)+2*(micb_imm16 | (ext_32_code << 16)); ]   { export *:$(ADDRSIZE) reloc; }
+Abs26_mic2: reloc            	is ext_32_code & micb_imm16 [ reloc=((inst_start+4) $and 0xfffffffff0000000)+4*(micb_imm16 | (ext_32_code << 16)); ]   { export *:$(ADDRSIZE) reloc; }
+Rel26_mic: reloc				is micb_imm16 [ reloc=inst_start+4+2*((ext_32_codes << 16) | micb_imm16); ] { export *:$(ADDRSIZE) reloc; }
+Rel21_mic: reloc				is micb_imm16 [ reloc=inst_start+4+2*((ext_32_imm5s << 16) | micb_imm16); ] { export *:$(ADDRSIZE) reloc; }
+Rel16_mic: reloc            	is micb_simm16 [ reloc=inst_start+4+2*micb_simm16; ] { export *:$(ADDRSIZE) reloc; }
+Rel10_mic: reloc            	is mic_soff10 [ reloc=inst_start+2+2*mic_soff10; ] { export *:$(ADDRSIZE) reloc; }
 Rel7_mic: reloc            		is mic_soff7  [ reloc=inst_start+2+2*mic_soff7; ] { export *:$(ADDRSIZE) reloc; }
 
 EXT_CODE3: val					is mic_imm3=0 [ext_off16_s = 0x0001; val = ext_off16_s; ] { export *[const]:2 val; }
@@ -433,10 +433,10 @@ LOAD_RA: "ra,"					is ext_tra=1 { MemSrcCast(ra,tsp); tsp = tsp+$(REGSIZE); }
 
 LOAD_TOP: LOAD_SREG^LOAD_RA EXT_CODE12(ext_32_base)	is LOAD_SREG & LOAD_RA & ext_32_base & ext_32_rlist & EXT_CODE12 [ext_t4 = ext_32_rlist $and 0xf; ext_tra = ext_32_rlist >> 4; ] {
 	build EXT_CODE12;
-	
+
 	tmp:$(REGSIZE) = sext(EXT_CODE12);
 	tsp = ext_32_base + tmp;
-	
+
 	build LOAD_SREG;
 	build LOAD_RA;
 }
@@ -445,7 +445,7 @@ LOAD_TOP16: LOAD_SREG^ra,EXT_CODE4E(sp) is mic_list & REL6=0 & LOAD_SREG & EXT_C
 
 	tmp:$(REGSIZE) = zext(EXT_CODE4E);
 	tsp = sp + tmp;
-	
+
 	build LOAD_SREG;
 	MemSrcCast(ra,tsp);
 }
@@ -454,7 +454,7 @@ LOAD_TOP16: LOAD_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & LOAD_SREG & EXT
 
 	tmp:$(REGSIZE) = zext(EXT_CODE4E);
 	tsp = sp + tmp;
-	
+
 	build LOAD_SREG;
 	MemSrcCast(ra,tsp);
 }
@@ -495,10 +495,10 @@ STORE_RA: "ra,"					is ext_tra=1 { MemDestCast(tsp,ra); tsp = tsp+$(REGSIZE); }
 
 STORE_TOP: STORE_SREG^STORE_RA EXT_CODE12(ext_32_base)	is STORE_SREG & STORE_RA & ext_32_base & ext_32_rlist & EXT_CODE12 [ext_t4 = ext_32_rlist $and 0xf; ext_tra = ext_32_rlist >> 4; ] {
 	build EXT_CODE12;
-	
+
 	tmp:$(REGSIZE) = sext(EXT_CODE12);
 	tsp = ext_32_base + tmp;
-	
+
 	build STORE_SREG;
 	build STORE_RA;
 }
@@ -507,7 +507,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_list & REL6=0 & STORE_SREG & EX
 
 	tmp:$(REGSIZE) = zext(EXT_CODE4E);
 	tsp = sp + tmp;
-	
+
 	build STORE_SREG;
 	MemDestCast(tsp,ra);
 }
@@ -516,7 +516,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 
 	tmp:$(REGSIZE) = zext(EXT_CODE4E);
 	tsp = sp + tmp;
-	
+
 	build STORE_SREG;
 	MemDestCast(tsp,ra);
 }
@@ -544,7 +544,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmpt = tmps >> 32;
 	if (tmpt != 0) goto <done>;
 	micb_rd32 = sext(tmps:4);
-	<done>	
+	<done>
 }
 
 :add.S micb_fd, mic_fs, mic_ft_5			is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_fd & micb_bit10=0 & micb_fmt8=0 & micb_fxf3=0b00110000 {
@@ -637,24 +637,24 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :ceil.l.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b01001100 {
-    fd_tmp:4 = ceil(mic_fs:4); 
-    mic_ftD_5 = trunc(fd_tmp); 
+    fd_tmp:4 = ceil(mic_fs:4);
+    mic_ftD_5 = trunc(fd_tmp);
 }
 
 :ceil.l.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b01001100 {
-    fsD_tmp:8 = ceil(mic_fsD); 
-    mic_ftD_5 = trunc(fsD_tmp); 
+    fsD_tmp:8 = ceil(mic_fsD);
+    mic_ftD_5 = trunc(fsD_tmp);
 }
 
 :ceil.w.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b01101100 {
-    fs_ceil_tmp:4 = ceil(mic_fs:4); 
+    fs_ceil_tmp:4 = ceil(mic_fs:4);
     fd_tmp:4 = trunc(fs_ceil_tmp);
     mic_ft_5 = zext(fd_tmp);
 }
 
 :ceil.w.D mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_fsD; micb_bit15=0 & micb_fmt14=1 & micb_poolfx=0b111011 & micb_fxf4=0b01101100 {
-    fs_tmp:8 = ceil(mic_fsD); 
-    fd_tmp:4 = trunc(fs_tmp); 
+    fs_tmp:8 = ceil(mic_fsD);
+    fd_tmp:4 = trunc(fs_tmp);
     mic_ft_5 = zext(fd_tmp);
 }
 
@@ -688,7 +688,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 :ctc2 mic_rt32_5, mic_impl					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & mic_impl ; micb_poolax=0b111100 & micb_axf=0b1101110100 {
 	tmpa:1 = 2;
 	tmpb:1 = mic_impl;
-	setCopControlWord(tmpa,tmpb,mic_rt32_5);	
+	setCopControlWord(tmpa,tmpb,mic_rt32_5);
 }
 
 :cvt.d.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_ftD_5 ; micb_bit15=0 & micb_fmt=0 & micb_poolfx=0b111011 & micb_flt6=0b1001101 {
@@ -706,7 +706,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :cvt.l.S mic_ft_5, mic_fs					is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & mic_ft_5 & mic_fs & mic_ftD_5 ; micb_bit15=0 & micb_fmt14=0 & micb_poolfx=0b111011 & micb_fxf4=0b00000100 {
-    rm_tmp:1 = fcsr[0,2]; 
+    rm_tmp:1 = fcsr[0,2];
     fs_tmp:4 = mic_fs:4;
     fs_cvt_tmp:4 = 0;
     if (rm_tmp == 0) goto <do_round>;
@@ -847,7 +847,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt32_5 = sext(*[ram]:1 tmpa);  
+    mic_rt32_5 = sext(*[ram]:1 tmpa);
 }
 
 :lbe mic_rt32_5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b100 & EXT_CODE9E {
@@ -855,7 +855,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt32_5 = sext(*[ram]:1 tmpa);  
+    mic_rt32_5 = sext(*[ram]:1 tmpa);
 }
 
 :lbu mic_rt32_5, EXT_MS16(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b000101 & mic_rt32_5 & mic_base0 ; EXT_MS16 {
@@ -863,7 +863,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt32_5 = zext(*[ram]:1 tmpa);  
+    mic_rt32_5 = zext(*[ram]:1 tmpa);
 }
 
 :lbue mic_rt32_5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b000 & EXT_CODE9E {
@@ -871,7 +871,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt32_5 = zext(*[ram]:1 tmpa);  
+    mic_rt32_5 = zext(*[ram]:1 tmpa);
 }
 
 :lbu16 mic_rt7, EXT_CODE4B(mic_base4)		is ISA_MODE=1 & RELP=0 & mic_op=0b000010 & mic_rt7 & mic_base4 & EXT_CODE4B {
@@ -879,7 +879,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base4;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt7 = zext(*[ram]:1 tmpa);  
+    mic_rt7 = zext(*[ram]:1 tmpa);
 }
 
 :ldc1 mic_ft_5, EXT_MS16(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b101111 & mic_base0 & mic_ft_5 & mic_ftD_5; EXT_MS16 {
@@ -903,7 +903,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt32_5 = sext(*[ram]:2 tmpa);  
+    mic_rt32_5 = sext(*[ram]:2 tmpa);
 }
 
 :lhe mic_rt32_5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b101 & EXT_CODE9E {
@@ -911,7 +911,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt32_5 = sext(*[ram]:2 tmpa);  
+    mic_rt32_5 = sext(*[ram]:2 tmpa);
 }
 
 :lhu mic_rt32_5, EXT_MS16(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b001101 & mic_rt32_5 & mic_base0 ; EXT_MS16 {
@@ -919,7 +919,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt32_5 = zext(*[ram]:2 tmpa);  
+    mic_rt32_5 = zext(*[ram]:2 tmpa);
 }
 
 :lhue mic_rt32_5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b001 & EXT_CODE9E {
@@ -927,7 +927,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt32_5 = zext(*[ram]:2 tmpa);  
+    mic_rt32_5 = zext(*[ram]:2 tmpa);
 }
 
 :lhu16 mic_rt7, EXT_CODE4C(mic_base4)		is ISA_MODE=1 & RELP=0 & mic_op=0b001010 & mic_rt7 & mic_base4 & EXT_CODE4C {
@@ -935,7 +935,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base4;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt7 = zext(*[ram]:2 tmpa);  
+    mic_rt7 = zext(*[ram]:2 tmpa);
 }
 
 :li16 mic_rd7, EXT_CODE7					is ISA_MODE=1 & RELP=0 & mic_op=0b111011 & mic_rd7 & EXT_CODE7 {
@@ -971,7 +971,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt32_5 = sext(*[ram]:4 tmpa);  
+    mic_rt32_5 = sext(*[ram]:4 tmpa);
 }
 
 :lwe mic_rt32_5, EXT_CODE9E(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b111 & EXT_CODE9E {
@@ -979,7 +979,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt32_5 = sext(*[ram]:4 tmpa);  
+    mic_rt32_5 = sext(*[ram]:4 tmpa);
 }
 
 :lw16 mic_rt7, EXT_CODE4D(mic_base4) 		is ISA_MODE=1 & RELP=0 & mic_op=0b011010 & mic_rt7 & mic_base4 & EXT_CODE4D {
@@ -987,15 +987,15 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base4;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt7 = sext(*[ram]:4 tmpa);  
+    mic_rt7 = sext(*[ram]:4 tmpa);
 }
 
-:lwm16 LOAD_TOP16							is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & LOAD_TOP16 & ((mic_csub=0b0100 & REL6=0) | (mic_csubr6=0b0010 & REL6=1)) { 
-	build LOAD_TOP16; 
+:lwm16 LOAD_TOP16							is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & LOAD_TOP16 & ((mic_csub=0b0100 & REL6=0) | (mic_csubr6=0b0010 & REL6=1)) {
+	build LOAD_TOP16;
 }
 
-:lwm32 LOAD_TOP								is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & mic_base0 & mic_rlist ; micb_func12=0b0101 & LOAD_TOP [ ext_32_basea=mic_base0; ext_32_rlist=mic_rlist; ] { 
-	build LOAD_TOP; 
+:lwm32 LOAD_TOP								is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & mic_base0 & mic_rlist ; micb_func12=0b0101 & LOAD_TOP [ ext_32_basea=mic_base0; ext_32_rlist=mic_rlist; ] {
+	build LOAD_TOP;
 }
 
 :lwc1 mic_ft_5, EXT_MS16(mic_base0)			is ISA_MODE=1 & RELP=0 & mic_op=0b100111 & mic_base0 & mic_ft_5 ; EXT_MS16 {
@@ -1144,7 +1144,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :nor micb_rd32, mic_rs32_0, mic_rt32_5		is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b1011010000 & micb_bit10=0 & micb_rd32 {
-    micb_rd32 = ~(mic_rs32_0 | mic_rt32_5); 
+    micb_rd32 = ~(mic_rs32_0 | mic_rt32_5);
 }
 
 :not16 RT3R7, RS0R4							is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & RT3R7 & RS0R4 & ((mic_csub=0b0000 & REL6=0) | (mic_csubr6=0b0000 & REL6=1)) {
@@ -1302,7 +1302,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-	*[ram]:8 tmpa = getCopReg(2:1,mic_rt32_5); 
+	*[ram]:8 tmpa = getCopReg(2:1,mic_rt32_5);
 }
 
 :seb mic_rt32_5, RS0L   					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_rt32_5 & RS0L ; micb_poolax=0b111100 & micb_axf=0b0010101100 {
@@ -1461,7 +1461,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    *[ram]:4 tmpa = mic_ft_5:4; 
+    *[ram]:4 tmpa = mic_ft_5:4;
 }
 
 :swc2 mic_rt32_5, micb_offset11s(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & mic_rt32_5 & mic_base0 ; micb_func12=0b1000 & micb_bit11=0 & micb_offset11s {
@@ -1469,7 +1469,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-	*[ram]:4 tmpa = getCopReg(2:1,mic_rt32_5); 
+	*[ram]:4 tmpa = getCopReg(2:1,mic_rt32_5);
 }
 
 :swsp RT5L, EXT_CODE5(sp)					is ISA_MODE=1 & RELP=0 & mic_op=0b110010 & RT5L & sp & EXT_CODE5 {
@@ -1491,12 +1491,12 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	*[ram]:4 tmpa = RSEXTL;
 }
 
-:swm16 STORE_TOP16							is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & STORE_TOP16 & ((mic_csub=0b0101 & REL6=0) | (mic_csubr6=0b1010 & REL6=1)) { 
-	build STORE_TOP16; 
+:swm16 STORE_TOP16							is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & STORE_TOP16 & ((mic_csub=0b0101 & REL6=0) | (mic_csubr6=0b1010 & REL6=1)) {
+	build STORE_TOP16;
 }
 
-:swm32 STORE_TOP							is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & mic_base0 & mic_rlist ; micb_func12=0b1101 & STORE_TOP [ ext_32_basea=mic_base0; ext_32_rlist=mic_rlist; ] { 
-	build STORE_TOP; 
+:swm32 STORE_TOP							is ISA_MODE=1 & RELP=0 & mic_op=0b001000 & mic_base0 & mic_rlist ; micb_func12=0b1101 & STORE_TOP [ ext_32_basea=mic_base0; ext_32_rlist=mic_rlist; ] {
+	build STORE_TOP;
 }
 
 :sync STYPE   								is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & mic_funci=0 & STYPE ; micb_poolax=0b111100 & micb_axf=0b0110101101 {
@@ -1836,7 +1836,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt32_5 = *[ram]:8 tmpa;  
+    mic_rt32_5 = *[ram]:8 tmpa;
 }
 
 :lld mic_rt32_5, EXT_CODE12(mic_base0)		is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & mic_rt32_5 & mic_base0 ; micb_func12=0b0111 & EXT_CODE12 {
@@ -1872,7 +1872,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    *[ram]:8 tmpa = mic_rt32_5;  
+    *[ram]:8 tmpa = mic_rt32_5;
 }
 
 @endif
@@ -1912,8 +1912,8 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :bal Rel16_mic							is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00011 & mic_rs32_0=0 ; Rel16_mic {
-    ra = inst_next | 0x1; 
-    delayslot( 1 ); 
+    ra = inst_next | 0x1;
+    delayslot( 1 );
     call Rel16_mic;
 }
 
@@ -1934,27 +1934,27 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :bc2f COP2CC^Rel16_mic					is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b10100 & mic_cp2z=0 & COP2CC ; Rel16_mic {
-    tmp:1 = getCopCondition(2:1, COP2CC); 
-    delayslot(1); 
-    if (tmp != 0) goto inst_next; 
-    goto Rel16_mic; 
+    tmp:1 = getCopCondition(2:1, COP2CC);
+    delayslot(1);
+    if (tmp != 0) goto inst_next;
+    goto Rel16_mic;
 }
 
 :bc2t COP2CC^Rel16_mic					is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b10101 & mic_cp2z=0 & COP2CC ; Rel16_mic {
-    tmp:1 = getCopCondition(2:1, COP2CC); 
-    delayslot(1); 
-    if (tmp == 0) goto inst_next; 
-    goto Rel16_mic; 
+    tmp:1 = getCopCondition(2:1, COP2CC);
+    delayslot(1);
+    if (tmp == 0) goto inst_next;
+    goto Rel16_mic;
 }
 
 :beq mic_rs32_0, mic_rt32_5, Rel16_mic	is ISA_MODE=1 & RELP=0 & mic_op=0b100101 & REL6=0 & mic_rs32_0 & mic_rt32_5; Rel16_mic {
-    delayflag:1 = ( mic_rs32_0 == mic_rt32_5 ); 
+    delayflag:1 = ( mic_rs32_0 == mic_rt32_5 );
     delayslot( 1 );
     if (delayflag) goto Rel16_mic;
 }
 
 :beqz16 mic_rs7, Rel7_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b100011 & REL6=0 & mic_rs7 & Rel7_mic {
-    delayflag:1 = ( mic_rs7 == 0 ); 
+    delayflag:1 = ( mic_rs7 == 0 );
     delayslot( 1 );
     if (delayflag) goto Rel7_mic;
 }
@@ -1964,65 +1964,65 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :bgez mic_rs32_0, Rel16_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00010 & mic_rs32_0 ; Rel16_mic {
-    delayflag:1 = (mic_rs32_0 s>= 0); 
+    delayflag:1 = (mic_rs32_0 s>= 0);
     delayslot( 1 );
     if (delayflag) goto Rel16_mic;
 }
 
 :bgezal mic_rs32_0, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00011 & mic_rs32_0 ; Rel16_mic {
-    delayflag:1 = (mic_rs32_0 s>= 0); 
-    ra = inst_next | 0x1; 
+    delayflag:1 = (mic_rs32_0 s>= 0);
+    ra = inst_next | 0x1;
     delayslot( 1 );
     if (delayflag) goto Rel16_mic;
 }
 
 :bgezals mic_rs32_0, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b10011 & mic_rs32_0 ; Rel16_mic {
-    delayflag:1 = (mic_rs32_0 s>= 0); 
-    ra = inst_next | 0x1; 
+    delayflag:1 = (mic_rs32_0 s>= 0);
+    ra = inst_next | 0x1;
     delayslot( 1 );
     if (delayflag) goto Rel16_mic;
 }
 
 :bgtz mic_rs32_0, Rel16_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00110 & mic_rs32_0 ; Rel16_mic {
-    delayflag:1 = (mic_rs32_0 s> 0); 
+    delayflag:1 = (mic_rs32_0 s> 0);
     delayslot( 1 );
     if (delayflag) goto Rel16_mic;
 }
 
 :blez mic_rs32_0, Rel16_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00100 & mic_rs32_0 ; Rel16_mic {
-    delayflag:1 = (mic_rs32_0 s<= 0); 
+    delayflag:1 = (mic_rs32_0 s<= 0);
     delayslot( 1 );
     if (delayflag) goto Rel16_mic;
 }
 
 :bltz mic_rs32_0, Rel16_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00000 & mic_rs32_0 ; Rel16_mic {
-    delayflag:1 = (mic_rs32_0 s< 0); 
+    delayflag:1 = (mic_rs32_0 s< 0);
     delayslot( 1 );
     if (delayflag) goto Rel16_mic;
 }
 
 :bltzal mic_rs32_0, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b00001 & mic_rs32_0 ; Rel16_mic {
-    delayflag:1 = (mic_rs32_0 s< 0); 
-    ra = inst_next | 0x1; 
+    delayflag:1 = (mic_rs32_0 s< 0);
+    ra = inst_next | 0x1;
     delayslot( 1 );
     if (delayflag) goto Rel16_mic;
 }
 
 :bltzals mic_rs32_0, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_sub2=0b10001 & mic_rs32_0 ; Rel16_mic {
-    delayflag:1 = (mic_rs32_0 s< 0); 
-    ra = inst_next | 0x1; 
+    delayflag:1 = (mic_rs32_0 s< 0);
+    ra = inst_next | 0x1;
     delayslot( 1 );
     if (delayflag) goto Rel16_mic;
 }
 
 :bne mic_rs32_0, mic_rt32_5, Rel16_mic	is ISA_MODE=1 & RELP=0 & mic_op=0b101101 & REL6=0 & mic_rs32_0 & mic_rt32_5 ; Rel16_mic {
-    delayflag:1 = (mic_rs32_0 != mic_rt32_5); 
+    delayflag:1 = (mic_rs32_0 != mic_rt32_5);
     delayslot( 1 );
     if (delayflag) goto Rel16_mic;
 }
 
 :bnez16 mic_rs7, Rel7_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b101011 & REL6=0 & mic_rs7 & Rel7_mic {
-    delayflag:1 = (mic_rs7 != 0); 
+    delayflag:1 = (mic_rs7 != 0);
     delayslot( 1 );
     if (delayflag) goto Rel7_mic;
 }
@@ -2270,13 +2270,13 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :div RT5L, RS0L  						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & RS0L & RT5L ; micb_poolax=0b111100 & micb_axf=0b1010101100 {
-    lo = sext(RS0L s/ RT5L); 
-    hi = sext(RS0L s% RT5L); 
+    lo = sext(RS0L s/ RT5L);
+    hi = sext(RS0L s% RT5L);
 }
 
 :divu RS0L, RT5L   						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & RS0L & RT5L ; micb_poolax=0b111100 & micb_axf=0b1011101100 {
-    lo = sext(RS0L / RT5L); 
-    hi = sext(RS0L % RT5L); 
+    lo = sext(RS0L / RT5L);
+    hi = sext(RS0L % RT5L);
 }
 
 :j Abs26_mic1							is ISA_MODE=1 & RELP=0 & mic_op=0b110101 & REL6=0 & mic_code ; Abs26_mic1 [ ext_32_code = mic_code; ] {
@@ -2285,87 +2285,87 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :jal Abs26_mic1							is ISA_MODE=1 & RELP=0 & mic_op=0b111101 & REL6=0 & mic_code ; Abs26_mic1 [ ext_32_code = mic_code; ] {
-    ra = inst_next | 0x1; 
-    delayslot( 1 ); 
+    ra = inst_next | 0x1;
+    delayslot( 1 );
     call Abs26_mic1;
 }
 
 :jalr RTIMP^mic_rs32_0					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5 & RTIMP ; micb_axf=0b0000111100 & micb_poolax=0b111100 {
-	JXWritePC(mic_rs32_0); 
-    mic_rt32_5 = inst_next | 0x1; 
-    delayslot( 1 ); 
+	JXWritePC(mic_rs32_0);
+    mic_rt32_5 = inst_next | 0x1;
+    delayslot( 1 );
     call [pc];
 }
 
 :jalr.hb RTIMP^mic_rs32_0				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5 & RTIMP ; micb_axf=0b0001111100 & micb_poolax=0b111100 {
-	JXWritePC(mic_rs32_0); 
-    mic_rt32_5 = inst_next | 0x1; 
-    delayslot( 1 ); 
+	JXWritePC(mic_rs32_0);
+    mic_rt32_5 = inst_next | 0x1;
+    delayslot( 1 );
     call [pc];
 }
 
 :jalr16 mic_rs32_0						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_jalr=0b01110 & mic_rs32_0 {
-	JXWritePC(mic_rs32_0); 
-    ra = inst_next | 0x1; 
-    delayslot( 1 ); 
+	JXWritePC(mic_rs32_0);
+    ra = inst_next | 0x1;
+    delayslot( 1 );
     call [pc];
 }
 
 :jalrs16 mic_rs32_0						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_jalr=0b01111 & mic_rs32_0 {
-	JXWritePC(mic_rs32_0); 
-    ra = inst_next | 0x1; 
-    delayslot( 1 ); 
+	JXWritePC(mic_rs32_0);
+    ra = inst_next | 0x1;
+    delayslot( 1 );
     call [pc];
 }
 
 :jalrs RTIMP^mic_rs32_0					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5 & RTIMP ; micb_axf=0b0100111100 & micb_poolax=0b111100 {
-	JXWritePC(mic_rs32_0); 
-    mic_rt32_5 = inst_next | 0x1; 
-    delayslot( 1 ); 
+	JXWritePC(mic_rs32_0);
+    mic_rt32_5 = inst_next | 0x1;
+    delayslot( 1 );
     call [pc];
 }
 
 :jalrs.hb RTIMP^mic_rs32_0				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5 & RTIMP ; micb_axf=0b0101111100 & micb_poolax=0b111100 {
-	JXWritePC(mic_rs32_0); 
-    mic_rt32_5 = inst_next | 0x1; 
-    delayslot( 1 ); 
+	JXWritePC(mic_rs32_0);
+    mic_rt32_5 = inst_next | 0x1;
+    delayslot( 1 );
     call [pc];
 }
 
 :jals Abs26_mic1						is ISA_MODE=1 & RELP=0 & mic_op=0b011101 & REL6=0 & mic_code ; Abs26_mic1 [ ext_32_code = mic_code; ] {
-    ra = inst_next | 0x1; 
-    delayslot( 1 ); 
+    ra = inst_next | 0x1;
+    delayslot( 1 );
     call Abs26_mic1;
 }
 
 :jalx Abs26_mic2						is ISA_MODE=1 & RELP=0 & mic_op=0b111100 & REL6=0 & mic_code ; Abs26_mic2 [ ext_32_code = mic_code; ISA_MODE = 0; globalset(Abs26_mic2, ISA_MODE);] {
-    ra = inst_next | 0x1; 
+    ra = inst_next | 0x1;
     delayslot( 1 );
-    ISAModeSwitch = 0; 
+    ISAModeSwitch = 0;
     call Abs26_mic2;
 }
 
 :jr mic_rs32_0							is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5=0 ; micb_axf=0b0000111100 & micb_poolax=0b111100 {
-	JXWritePC(mic_rs32_0); 
-    delayslot( 1 ); 
+	JXWritePC(mic_rs32_0);
+    delayslot( 1 );
     goto [pc];
 }
 
 :jr.hb mic_rs32_0						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rs32_0 & mic_rt32_5=0 ; micb_axf=0b0001111100 & micb_poolax=0b111100 {
-	JXWritePC(mic_rs32_0); 
-    delayslot( 1 ); 
+	JXWritePC(mic_rs32_0);
+    delayslot( 1 );
     goto [pc];
 }
 
 :jr16 mic_rs32_0						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_jalr=0b01100 & mic_rs32_0 {
-	JXWritePC(mic_rs32_0); 
-    delayslot( 1 ); 
+	JXWritePC(mic_rs32_0);
+    delayslot( 1 );
     goto [pc];
 }
 
 :jr16 ra								is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_jalr=0b01100 & mic_rs32_0=31 & ra {
-	JXWritePC(ra); 
-    delayslot( 1 ); 
+	JXWritePC(ra);
+    delayslot( 1 );
     return [pc];
 }
 
@@ -2377,17 +2377,17 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	sp_lo = sp_lo + tmp;
 	sp = sext(sp_lo);
 @endif
-	JXWritePC(ra); 
+	JXWritePC(ra);
     return [pc];
 }
 
 :jrc mic_rs32_0							is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_jalr=0b01101 & mic_rs32_0 {
-	JXWritePC(mic_rs32_0); 
+	JXWritePC(mic_rs32_0);
     goto [pc];
 }
 
 :jrc	 ra								is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_jalr=0b01101 & mic_rs32_0=31 & ra {
-	JXWritePC(ra); 
+	JXWritePC(ra);
     return [pc];
 }
 
@@ -2396,32 +2396,32 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 :lwl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0000 & EXT_CODE12 {
 	tmp:$(REGSIZE) = sext(EXT_CODE12);
 	tmp = tmp + mic_base0;
-    shft:$(REGSIZE) = tmp & 0x3; 
-    addr:$(REGSIZE) = tmp - shft; 
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff >> ((4-shft) * 8));
     valLoad:4 = 0;
     MemSrcCast(valLoad,addr);
-    valLoad = valLoad << (shft * 8);     
-    mic_rt32_5 = sext( valLoad | valOrig );            
+    valLoad = valLoad << (shft * 8);
+    mic_rt32_5 = sext( valLoad | valOrig );
 }
 
 :lwle mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b010 & EXT_CODE9E {
 	tmp:$(REGSIZE) = sext(EXT_CODE9E);
 	tmp = tmp + mic_base0;
-    shft:$(REGSIZE) = tmp & 0x3; 
-    addr:$(REGSIZE) = tmp - shft; 
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff >> ((4-shft) * 8));
     valLoad:4 = 0;
     MemSrcCast(valLoad,addr);
-    valLoad = valLoad << (shft * 8);     
-    mic_rt32_5 = sext( valLoad | valOrig );            
+    valLoad = valLoad << (shft * 8);
+    mic_rt32_5 = sext( valLoad | valOrig );
 }
 
 :lwr mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0001 & EXT_CODE12 {
 	tmp:$(REGSIZE) = sext(EXT_CODE12);
 	tmp = tmp + mic_base0;
-    shft:$(REGSIZE) = tmp & 0x3; 
-    addr:$(REGSIZE) = tmp - shft; 
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff << ((shft+1) * 8));
     valLoad:4 = 0;
     MemSrcCast(valLoad,addr);
@@ -2432,8 +2432,8 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 :lwre mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b011 & EXT_CODE9E {
 	tmp:$(REGSIZE) = sext(EXT_CODE9E);
 	tmp = tmp + mic_base0;
-    shft:$(REGSIZE) = tmp & 0x3; 
-    addr:$(REGSIZE) = tmp - shft; 
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff << ((shft+1) * 8));
     valLoad:4 = 0;
     MemSrcCast(valLoad,addr);
@@ -2446,32 +2446,32 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 :lwl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0000 & EXT_CODE12 {
 	tmp:$(REGSIZE) = sext(EXT_CODE12);
 	tmp = tmp + mic_base0;
-    shft:$(REGSIZE) = tmp & 0x3; 
-    addr:$(REGSIZE) = tmp - shft; 
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff >> ((shft+1)* 8));
     valLoad:4 = 0;
     MemSrcCast(valLoad,addr);
-    valLoad = valLoad << ((3-shft) * 8);     
-    mic_rt32_5 = sext( valLoad | valOrig );            
+    valLoad = valLoad << ((3-shft) * 8);
+    mic_rt32_5 = sext( valLoad | valOrig );
 }
 
 :lwle mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b010 & EXT_CODE9E {
 	tmp:$(REGSIZE) = sext(EXT_CODE9E);
 	tmp = tmp + mic_base0;
-    shft:$(REGSIZE) = tmp & 0x3; 
-    addr:$(REGSIZE) = tmp - shft; 
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff >> ((shft+1)* 8));
     valLoad:4 = 0;
     MemSrcCast(valLoad,addr);
-    valLoad = valLoad << ((3-shft) * 8);     
-    mic_rt32_5 = sext( valLoad | valOrig );            
+    valLoad = valLoad << ((3-shft) * 8);
+    mic_rt32_5 = sext( valLoad | valOrig );
 }
 
 :lwr mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0001 & EXT_CODE12 {
 	tmp:$(REGSIZE) = sext(EXT_CODE12);
 	tmp = tmp + mic_base0;
-    shft:$(REGSIZE) = tmp & 0x3; 
-    addr:$(REGSIZE) = tmp - shft; 
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff << ((4-shft)* 8));
     valLoad:4 = 0;
     MemSrcCast(valLoad,addr);
@@ -2482,8 +2482,8 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 :lwre mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b0110 & micb_sub9=0b011 & EXT_CODE9E {
 	tmp:$(REGSIZE) = sext(EXT_CODE9E);
 	tmp = tmp + mic_base0;
-    shft:$(REGSIZE) = tmp & 0x3; 
-    addr:$(REGSIZE) = tmp - shft; 
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = mic_rt32_5:$(SIZETO4) & (0xffffffff << ((4-shft)* 8));
     valLoad:4 = 0;
     MemSrcCast(valLoad,addr);
@@ -2492,8 +2492,8 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 @endif
-# lwl and lwr almost always come in pairs. 
-# When the analyzer does finds a matching lwl/lwr pair, the pcode is simplified so that 
+# lwl and lwr almost always come in pairs.
+# When the analyzer does finds a matching lwl/lwr pair, the pcode is simplified so that
 # lwl does all the loading while lwr is a no-op
 @if ENDIAN == "big"
 :lwl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 & PAIR_INSTRUCTION_FLAG=1 ; micb_func12=0b0000 & EXT_CODE12 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {
@@ -2501,7 +2501,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt32_5 = sext( *[ram]:4 tmpa );    
+    mic_rt32_5 = sext( *[ram]:4 tmpa );
 }
 :lwr mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 & PAIR_INSTRUCTION_FLAG=1 ; micb_func12=0b0001 & EXT_CODE12 [ PAIR_INSTRUCTION_FLAG = 0; ] {
 }
@@ -2513,7 +2513,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp = tmp + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    mic_rt32_5 = sext( *[ram]:4 tmpa );    
+    mic_rt32_5 = sext( *[ram]:4 tmpa );
 }
 @endif
 
@@ -2533,9 +2533,9 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	prod:8 = tmp1 * tmp2;
     lo = lo & 0xffffffff;       # Make sure any upper bits of lo don't contribute to sum
 	sum:8 = (zext(hi) << 32) + zext(lo) + prod;
-    lo = sext(sum:4);    
+    lo = sext(sum:4);
     sum = sum >> 32;
-    hi = sext(sum:4);    
+    hi = sext(sum:4);
 }
 
 :madd.S micb_fd, micb_fr, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 ; micb_fd & micb_fr & micb_poolfx=0b000001 {
@@ -2559,7 +2559,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	sum:8 = (zext(hi) << 32) + zext(lo) + prod;
     lo = sext(sum:4);
     sum = sum >> 32;
-    hi = sext(sum:4); 
+    hi = sext(sum:4);
 }
 
 :mfhi mic_rs32_0   						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rt32_5=0 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0000110101 {
@@ -2567,7 +2567,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :mfhi16 mic_rd32_0						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_sub2=0b10000 & mic_rd32_0 {
-	mic_rd32_0 = hi;	
+	mic_rd32_0 = hi;
 }
 
 :mflo mic_rs32_0   						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rt32_5=0 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0001110101 {
@@ -2575,7 +2575,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :mflo16 mic_rd32_0						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=0 & mic_sub2=0b10010 & mic_rd32_0 {
-	mic_rd32_0 = lo;	
+	mic_rd32_0 = lo;
 }
 
 :mov.PS mic_ft_5, mic_fs				is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_ft_5 & mic_fs & mic_ftD_5 & mic_fsD ; micb_bit15=0 & micb_fmt=2 & micb_poolfx=0b111011 & micb_flt6=0b0000001 {
@@ -2687,9 +2687,9 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	prod:8 = tmp1 * tmp2;
         lo = lo & 0xffffffff;       # Make sure any upper bits of lo don't contribute to sum
        	sum:8 = (zext(hi) << 32) + zext(lo) - prod;
-    lo = sext(sum:4);    
+    lo = sext(sum:4);
     sum = sum >> 32;
-    hi = sext(sum:4);    
+    hi = sext(sum:4);
 }
 
 :msub.S micb_fd, micb_fr, mic_fs, mic_ft_5	is ISA_MODE=1 & RELP=0 & mic_op=0b010101 & REL6=0 & mic_fs & mic_ft_5 ; micb_fd & micb_fr & micb_poolfx=0b100001 {
@@ -2711,9 +2711,9 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	prod:8 = tmp1 * tmp2;
         lo = lo & 0xffffffff;       # Make sure any upper bits of lo don't contribute to sum
 	sum:8 = (zext(hi) << 32) + zext(lo) - prod;
-    lo = sext(sum:4);    
+    lo = sext(sum:4);
     sum = sum >> 32;
-    hi = sext(sum:4);    
+    hi = sext(sum:4);
 }
 
 :mthi mic_rs32_0   						is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=0 & mic_rt32_5=0 & mic_rs32_0 ; micb_poolax=0b111100 & micb_axf=0b0010110101 {
@@ -2782,8 +2782,8 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 :swl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b1000 & EXT_CODE12 {
 	tmp:$(REGSIZE) = sext(EXT_CODE12);
 	tmp = tmp + mic_base0;
-    tmpRT:4 = mic_rt32_5:$(SIZETO4);  
-    shft:$(REGSIZE) = tmp & 0x3; 
+    tmpRT:4 = mic_rt32_5:$(SIZETO4);
+    shft:$(REGSIZE) = tmp & 0x3;
     addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = 0;
     MemSrcCast(valOrig,addr);
@@ -2795,9 +2795,9 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 :swle mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b1010 & micb_sub9=0b000 & EXT_CODE9E {
 	tmp:$(REGSIZE) = sext(EXT_CODE9E);
 	tmp = tmp + mic_base0;
-    tmpRT:4 = mic_rt32_5:$(SIZETO4);  
-    shft:$(REGSIZE) = tmp & 0x3; 
-    addr:$(REGSIZE) = tmp - shft; 
+    tmpRT:4 = mic_rt32_5:$(SIZETO4);
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = 0;
     MemSrcCast(valOrig,addr);
     valOrig = valOrig & (0xffffffff << ((4-shft) * 8));
@@ -2809,8 +2809,8 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp:$(REGSIZE) = sext(EXT_CODE12);
 	tmp = tmp + mic_base0;
     tmpRT:4 = mic_rt32_5:$(SIZETO4);
-    shft:$(REGSIZE) = tmp & 0x3;      
-    addr:$(REGSIZE) = tmp - shft; 
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = 0;
     MemSrcCast(valOrig,addr);
     valOrig = valOrig & (0xffffffff >> ((shft+1) * 8));
@@ -2822,8 +2822,8 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp:$(REGSIZE) = sext(EXT_CODE9E);
 	tmp = tmp + mic_base0;
     tmpRT:4 = mic_rt32_5:$(SIZETO4);
-    shft:$(REGSIZE) = tmp & 0x3;      
-    addr:$(REGSIZE) = tmp - shft; 
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = 0;
     MemSrcCast(valOrig,addr);
     valOrig = valOrig & (0xffffffff >> ((shft+1) * 8));
@@ -2836,9 +2836,9 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 :swl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b1000 & EXT_CODE12 {
 	tmp:$(REGSIZE) = sext(EXT_CODE12);
 	tmp = tmp + mic_base0;
-    tmpRT:4 = mic_rt32_5:$(SIZETO4);  
-    shft:$(REGSIZE) = tmp & 0x3; 
-    addr:$(REGSIZE) = tmp - shft; 
+    tmpRT:4 = mic_rt32_5:$(SIZETO4);
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = 0;
     MemSrcCast(valOrig,addr);
     valOrig = valOrig & (0xffffffff << ((shft+1) * 8));
@@ -2849,9 +2849,9 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 :swle mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 ; micb_func12=0b1010 & micb_sub9=0b000 & EXT_CODE9E {
 	tmp:$(REGSIZE) = sext(EXT_CODE9E);
 	tmp = tmp + mic_base0;
-    tmpRT:4 = mic_rt32_5:$(SIZETO4);  
-    shft:$(REGSIZE) = tmp & 0x3; 
-    addr:$(REGSIZE) = tmp - shft; 
+    tmpRT:4 = mic_rt32_5:$(SIZETO4);
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = 0;
     MemSrcCast(valOrig,addr);
     valOrig = valOrig & (0xffffffff << ((shft+1) * 8));
@@ -2863,8 +2863,8 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp:$(REGSIZE) = sext(EXT_CODE12);
 	tmp = tmp + mic_base0;
     tmpRT:4 = mic_rt32_5:$(SIZETO4);
-    shft:$(REGSIZE) = tmp & 0x3;      
-    addr:$(REGSIZE) = tmp - shft; 
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = 0;
     MemSrcCast(valOrig,addr);
     valOrig = valOrig & (0xffffffff >> ((4-shft) * 8));
@@ -2876,8 +2876,8 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp:$(REGSIZE) = sext(EXT_CODE9E);
 	tmp = tmp + mic_base0;
     tmpRT:4 = mic_rt32_5:$(SIZETO4);
-    shft:$(REGSIZE) = tmp & 0x3;      
-    addr:$(REGSIZE) = tmp - shft; 
+    shft:$(REGSIZE) = tmp & 0x3;
+    addr:$(REGSIZE) = tmp - shft;
     valOrig:4 = 0;
     MemSrcCast(valOrig,addr);
     valOrig = valOrig & (0xffffffff >> ((4-shft) * 8));
@@ -2886,7 +2886,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 @endif
-# When the analyzer finds a matching swl/swr pair, the pcode is simplified so that 
+# When the analyzer finds a matching swl/swr pair, the pcode is simplified so that
 # swl does all the storing while swr is a no-op
 @if ENDIAN == "big"
 :swl mic_rt32_5, EXT_CODE12(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=0 & mic_rt32_5 & mic_base0 & PAIR_INSTRUCTION_FLAG=1 ; micb_func12=0b1000 & EXT_CODE12 [ PAIR_INSTRUCTION_FLAG = 1; globalset(inst_next, PAIR_INSTRUCTION_FLAG);] {
@@ -2921,7 +2921,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp:$(REGSIZE) = mic_index + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    *[ram]:4 tmpa = micb_fd:4;    
+    *[ram]:4 tmpa = micb_fd:4;
 }
 
 :teqi mic_rs32_0, EXT_MS16				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=0 & mic_funci=0b01110 & mic_rs32_0 ; EXT_MS16 {
@@ -2981,7 +2981,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 	tmp:$(REGSIZE) = mic_index + mic_base0;
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-    ptr:$(ADDRSIZE) = tmpa;          
+    ptr:$(ADDRSIZE) = tmpa;
     micb_fd = *[ram]:8 ptr;
 }
 
@@ -3020,7 +3020,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 # Check this. Says left shift by 1 bit, but then says 4 byte alligned.  BC instruction is simlar though it says left shift by 2 bits.
 # Either way, there is a mistake in the documentation
 :balc Rel26_mic							is ISA_MODE=1 & RELP=0 & mic_op=0b101101 & REL6=1 ; Rel26_mic {
-    ra = inst_next | 0x1; 
+    ra = inst_next | 0x1;
     call Rel26_mic;
 }
 
@@ -3043,15 +3043,15 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :bc2eqzc mic_ct, Rel16_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=1 & mic_funci=0b01010 & mic_ct; Rel16_mic {
-    tmp:1 = getCopCondition(2:1, mic_ct:1); 
-    if (tmp == 0) goto inst_next; 
-    goto Rel16_mic; 
+    tmp:1 = getCopCondition(2:1, mic_ct:1);
+    if (tmp == 0) goto inst_next;
+    goto Rel16_mic;
 }
 
 :bc2nezc mic_ct, Rel16_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b010000 & REL6=1 & mic_funci=0b01011 & mic_ct; Rel16_mic {
-    tmp:1 = getCopCondition(2:1, mic_ct:1); 
-    if (tmp == 1) goto inst_next; 
-    goto Rel16_mic; 
+    tmp:1 = getCopCondition(2:1, mic_ct:1);
+    if (tmp == 1) goto inst_next;
+    goto Rel16_mic;
 }
 
 :beqzc16 mic_rs7, Rel7_mic				is ISA_MODE=1 & RELP=0 & mic_op=0b100011 & REL6=1 & mic_rs7 & Rel7_mic {
@@ -3068,13 +3068,13 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 :bad1									is ISA_MODE=1 & RELP=0 & mic_op=0b110000 & REL6=1 & mic_code=0; Rel16_mic unimpl
 :blezalc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b110000 & REL6=1 & mic_rs32_0=0 & mic_rt32_5; Rel16_mic {
 	if (mic_rt32_5 s> 0) goto inst_next;
-    ra = inst_next | 0x1; 
+    ra = inst_next | 0x1;
 	call Rel16_mic;
 }
 
 :bgezalc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b110000 & REL6=1 & mic_rt32_5 & mic_rt32_5=mic_rs32_0 & mic_rt32_5a!=0; Rel16_mic {
 	if (mic_rt32_5 s< 0) goto inst_next;
-    ra = inst_next | 0x1; 
+    ra = inst_next | 0x1;
 	call Rel16_mic;
 }
 
@@ -3085,23 +3085,23 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 :bad2									is ISA_MODE=1 & RELP=0 & mic_op=0b111000 & REL6=1 & mic_code=0; Rel16_mic unimpl
 :bgtzalc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b111000 & REL6=1 & mic_rs32_0=0 & mic_rt32_5; Rel16_mic {
 	if (mic_rt32_5 s<= 0) goto inst_next;
-    ra = inst_next | 0x1; 
+    ra = inst_next | 0x1;
 	call Rel16_mic;
 }
 
 :bltzalc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b111000 & REL6=1 & mic_rt32_5 & mic_rt32_5=mic_rs32_0 & mic_rt32_5a!=0; Rel16_mic {
 	if (mic_rt32_5 s>= 0) goto inst_next;
-    ra = inst_next | 0x1; 
+    ra = inst_next | 0x1;
 	call Rel16_mic;
 }
 :bltuc mic_rs32_0,mic_rt32_5,Rel16_mic	is ISA_MODE=1 & RELP=0 & mic_op=0b111000 & REL6=1 & mic_rt32_5 & mic_rs32_0; Rel16_mic {
 	if (mic_rs32_0 < mic_rt32_5) goto Rel16_mic;
 }
 
-# for this case, bovc is the catch-all. 
+# for this case, bovc is the catch-all.
 :beqzalc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b011101 & REL6=1 & mic_rs32_0=0 & mic_rt32_5 & mic_rt32_5a!=0; Rel16_mic {
 	if (mic_rt32_5 != 0) goto inst_next;
-    ra = inst_next | 0x1; 
+    ra = inst_next | 0x1;
 	call Rel16_mic;
 }
 
@@ -3123,7 +3123,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 # for this case, bnvc is the catch-all.
 :bnezalc mic_rt32_5, Rel16_mic			is ISA_MODE=1 & RELP=0 & mic_op=0b011111 & REL6=1 & mic_rs32_0=0 & mic_rt32_5 & mic_rt32_5a!=0; Rel16_mic {
 	if (mic_rt32_5 == 0) goto inst_next;
-    ra = inst_next | 0x1; 
+    ra = inst_next | 0x1;
 	call Rel16_mic;
 }
 
@@ -3193,7 +3193,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
     tmp_sign:4 = zext(tmp_fs[31,1]);
     tmp_b1:4 = zext(tmp_fs[22,1]); # High order bit of fraction, used for NaN
 
-    tmp_SNaN:4 = zext((tmp_exponent == 0x0ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x0)); 
+    tmp_SNaN:4 = zext((tmp_exponent == 0x0ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x0));
     tmp_QNaN:4 = zext((tmp_exponent == 0x0ff) && (tmp_fraction != 0x0) && (tmp_b1 == 0x01));
     tmp_Neg_Infinity:4 = zext((tmp_sign == 0x01) && (tmp_exponent == 0x0ff)  && (tmp_fraction == 0x0));
     tmp_Neg_Normal:4 = zext((tmp_sign == 0x01) && (tmp_exponent != 0x0) && (tmp_exponent != 0x0ff));
@@ -3480,27 +3480,27 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 :jalrc RTIMP^mic_rs32_0					is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & mic_rt32_5 & mic_rs32_0 & RTIMP ; micb_axf=0b0000111100 & micb_poolax=0b111100 {
-	JXWritePC(mic_rs32_0); 
-    mic_rt32_5 = inst_next | 0x1; 
+	JXWritePC(mic_rs32_0);
+    mic_rt32_5 = inst_next | 0x1;
     call [pc];
 }
 
 :jalrc.hb RTIMP^mic_rs32_0				is ISA_MODE=1 & RELP=0 & mic_op=0b000000 & REL6=1 & mic_rt32_5 & mic_rs32_0 & RTIMP ; micb_axf=0b0001111100 & micb_poolax=0b111100 {
-	JXWritePC(mic_rs32_0); 
-    mic_rt32_5 = inst_next | 0x1; 
+	JXWritePC(mic_rs32_0);
+    mic_rt32_5 = inst_next | 0x1;
     call [pc];
 }
 
 :jalrc16 mic_rs32_5						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=1 & mic_jalrr6=0b01110 & mic_rs32_5 {
-	JXWritePC(mic_rs32_5); 
-    ra = inst_next | 0x1; 
+	JXWritePC(mic_rs32_5);
+    ra = inst_next | 0x1;
     call [pc];
 }
 
 :jialc mic_rt32_0, EXT_MS16				is ISA_MODE=1 & RELP=0 & mic_op=0b101000 & REL6=1 & mic_index=0 & mic_rt32_0 ; EXT_MS16 {
 	tmp:$(REGSIZE) = mic_rt32_0 + sext(EXT_MS16);
 	JXWritePC(tmp);
-    ra = inst_next | 0x1; 
+    ra = inst_next | 0x1;
 	goto [pc];
 }
 
@@ -3513,17 +3513,17 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 :jrcaddiusp EXT_CODE5R6					is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=1 & mic_jalrr6=0b10011 & EXT_CODE5R6 {
 	tmp:$(REGSIZE) = zext(EXT_CODE5R6);
 	sp = sp + tmp;
-	JXWritePC(ra); 
+	JXWritePC(ra);
     goto [pc];
 }
 
 :jrc16 mic_rs32_5						is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=1 & mic_jalrr6=0b01100 & mic_rs32_5 {
-	JXWritePC(mic_rs32_5); 
+	JXWritePC(mic_rs32_5);
     goto [pc];
 }
 
 :jrc16 ra								is ISA_MODE=1 & RELP=0 & mic_op=0b010001 & REL6=1 & mic_jalrr6=0b01100 & mic_rs32_5=31 & ra {
-	JXWritePC(ra); 
+	JXWritePC(ra);
     return [pc];
 }
 
@@ -3807,7 +3807,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 
 :dmuh micb_rd32, mic_rs32_0, mic_rt32_5 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0001011000 & micb_bit10=0 & micb_rd32 {
 	tmp:16 = sext(mic_rs32_0) * sext(mic_rt32_5);
-    micb_rd32 = tmp(8); 
+    micb_rd32 = tmp(8);
 }
 
 :dmulu micb_rd32, mic_rs32_0, mic_rt32_5 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0010011000 & micb_bit10=0 & micb_rd32 {
@@ -3816,14 +3816,14 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 
 :dmuhu micb_rd32, mic_rs32_0, mic_rt32_5 	is ISA_MODE=1 & RELP=0 & mic_op=0b010110 & REL6=1 & mic_rs32_0 & mic_rt32_5 ; micb_axf2=0b0011011000 & micb_bit10=0 & micb_rd32 {
 	tmp:16 = zext(mic_rs32_0) * zext(mic_rt32_5);
-    micb_rd32 = tmp(8); 
+    micb_rd32 = tmp(8);
 }
 
 :ldpc mic_rt32_5, EXT_MS18				is ISA_MODE=1 & RELP=0 & mic_op=0b011110 & REL6=1 & mic_pcf2=0b110 & mic_rt32_5 & mic_imm01 ; EXT_MS18 [ ext_32_imm2=mic_imm01; ] {
 	tmp:8 = inst_start + sext(EXT_MS18);
 	tmpa:$(ADDRSIZE) = 0;
 	ValCast(tmpa,tmp);
-	mic_rt32_5 = *[ram]:8 tmpa; 
+	mic_rt32_5 = *[ram]:8 tmpa;
 }
 
 :lldx mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=1 & mic_rt32_5 & mic_base0 ; micb_func12=0b0101 & micb_sub9=0b000 & EXT_CODE9E {
@@ -3836,7 +3836,7 @@ STORE_TOP16: STORE_SREG^ra,EXT_CODE4E(sp) is mic_listr6 & REL6=1 & STORE_SREG & 
 }
 
 # The documentation is partly wrong for this instruction and generates a conflict (same pattern) as lldx instruction. The op-code map section of the document
-# does have the difference between this and the lldx so I went with that. 
+# does have the difference between this and the lldx so I went with that.
 :scdx mic_rt32_5, EXT_CODE9E(mic_base0)	is ISA_MODE=1 & RELP=0 & mic_op=0b011000 & REL6=1 & mic_rt32_5 & mic_base0 ; micb_func12=0b1101 & micb_sub9=0b000 & EXT_CODE9E {
 	tmp:$(REGSIZE) = sext(EXT_CODE9E);
 	tmp = tmp + mic_base0;

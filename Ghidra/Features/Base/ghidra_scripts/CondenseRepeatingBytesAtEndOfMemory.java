@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,16 +26,16 @@ import ghidra.program.model.mem.MemoryBlock;
 
 
 /**
- * 
+ *
  *
  * Script to condense all undefined repeating bytes (ie all 0's or ff's) at the end of the current
  * memory block
  */
 public class CondenseRepeatingBytesAtEndOfMemory extends GhidraScript {
-	
+
 	@Override
-    public void run() throws Exception {		
-			
+    public void run() throws Exception {
+
 		if (currentAddress == null) {
 			println("No Location.");
 		    return;
@@ -46,23 +46,23 @@ public class CondenseRepeatingBytesAtEndOfMemory extends GhidraScript {
 			return;
 		}
 		Listing listing = currentProgram.getListing();
-		
 
-		Address currentAddr = currentAddress;        
-		
+
+		Address currentAddr = currentAddress;
+
 		boolean isInitializedBlock = memoryBlock.isInitialized();
 		if(isInitializedBlock){
 			currentAddr = memoryBlock.getEnd();
 			println("end of byte addr is " + currentAddr);
 			byte repeatingByte = currentProgram.getMemory().getByte(currentAddr);
-			
-		
-			MemoryBlock currentMemoryBlock = null;		
-		
-			
+
+
+			MemoryBlock currentMemoryBlock = null;
+
+
 			// search for next repeatedByte from the end of memory
-			// until it hits defined area or different byte		
-						
+			// until it hits defined area or different byte
+
 			byte prevByte = repeatingByte;
 			int repeatLen = 0;
 			boolean noCollisions = listing.isUndefined(currentAddr,currentAddr);
@@ -75,15 +75,15 @@ public class CondenseRepeatingBytesAtEndOfMemory extends GhidraScript {
 				prevByte = currentProgram.getMemory().getByte(currentAddr);
 				noCollisions = listing.isUndefined(currentAddr,currentAddr);
 				hasLabels = currentProgram.getSymbolTable().hasSymbol(currentAddr);
-				currentMemoryBlock = currentProgram.getMemory().getBlock(currentAddr);					
+				currentMemoryBlock = currentProgram.getMemory().getBlock(currentAddr);
 			}
 			if(repeatLen > 0){
 			// this takes care of the last one tested that failed
-			currentAddr = currentAddr.addNoWrap(1);												
-			listing.createData(currentAddr, new AlignmentDataType(), repeatLen);				
-			
-			println("Applied Alignment datatype at " + currentAddr.toString());												
-			 
+			currentAddr = currentAddr.addNoWrap(1);
+			listing.createData(currentAddr, new AlignmentDataType(), repeatLen);
+
+			println("Applied Alignment datatype at " + currentAddr.toString());
+
 			}
 			else{
 				println("No repeating bytes OR data already defined at end of " + memoryBlock);
@@ -91,7 +91,7 @@ public class CondenseRepeatingBytesAtEndOfMemory extends GhidraScript {
 		}
 		else{
 			println("Cannot condense uninitialized memory.");
-		}		
-	}	
+		}
+	}
 }
 

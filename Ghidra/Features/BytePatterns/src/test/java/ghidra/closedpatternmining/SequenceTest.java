@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +65,7 @@ public class SequenceTest extends AbstractGenericTest {
 
 	@Test
 	public void prefixTestTwo() {
-		//prefix with an item that does not occur and one that does 
+		//prefix with an item that does not occur and one that does
 		prefixSequence.add(new SequenceItem("B", 1));
 		prefixSequence.add(new SequenceItem("A", 2));
 		prefixIndex = testSequence.getIndexAfterFirstInstance(prefixSequence);

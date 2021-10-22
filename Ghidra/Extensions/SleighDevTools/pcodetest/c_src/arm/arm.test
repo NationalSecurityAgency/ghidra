@@ -1,5 +1,5 @@
 #include "pcode_test.h"
- 
+
 /* This test checks the correct carry flag handling for adc instructions */
 TEST arm_adc_Main()
 {
@@ -30,7 +30,7 @@ TEST arm_sbc_Main()
 	ASSERTU1(u4_sbc_carry(-1, 1, 1), 1);
 	ASSERTU1(u4_sbc_carry(1, 1, 1), 1);
 	ASSERTU1(u4_sbc_carry(-1, 1, 1), 1);
-	
+
 	extern i4 i4_sbc(i4 a, i4 b, u1 carry);
 	ASSERTU1(i4_sbc(0, 0, 0), -1);
 	ASSERTU1(i4_sbc(-1, 0, 0), -2);

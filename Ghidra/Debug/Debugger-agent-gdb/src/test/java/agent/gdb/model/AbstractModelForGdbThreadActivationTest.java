@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ public abstract class AbstractModelForGdbThreadActivationTest
 		/**
 		 * TODO: GDB should really use the 1.1 and 2.1 numbering instead of the GId, but I don't
 		 * know a good way via GDB/MI to obtain the thread's per-inferior Id.
-		 * 
+		 *
 		 * NB: A lot of the test takes advantage of the iid and tid being the same. Don't try to
 		 * apply the pattern matching used here in other contexts.
 		 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,11 +24,11 @@ import ghidra.framework.client.RepositoryAdapter;
 import ghidra.framework.options.SaveState;
 
 /**
- * 
+ *
  * Interface to define methods to manage data and tools for users working on a
  * particular effort. Project represents the container object for users, data,
  * and tools to work together.
- * 
+ *
  */
 public interface Project {
 
@@ -80,7 +80,7 @@ public interface Project {
 	 */
 	public RepositoryAdapter getRepository();
 
-	/** 
+	/**
 	 * Add the given project URL to this project's list project views.
 	 * The project view allows users to look at data files from another
 	 * project.
@@ -93,7 +93,7 @@ public interface Project {
 
 	/**
 	 * Remove the project view from this project.
-	 * @param projectURL identifier for the project 
+	 * @param projectURL identifier for the project
 	 */
 	public void removeProjectView(URL projectURL);
 
@@ -113,8 +113,8 @@ public interface Project {
 	public void save();
 
 	/**
-	 * Saves any tools that are associated with the opened project when the project is closed. 
-	 * 
+	 * Saves any tools that are associated with the opened project when the project is closed.
+	 *
 	 * @return True if the save was not cancelled.
 	 */
 	public boolean saveSessionTools();

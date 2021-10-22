@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,9 +27,9 @@ import ghidra.util.task.TaskMonitor;
  * <code>LongKeyInteriorNode</code> stores a BTree node for use as an interior
  * node when searching for Table records within the database.  This type of node
  * has the following layout within a single DataBuffer (field size in bytes):
- * 
- *   | NodeType(1) | KeyType(1) | KeyCount(4) | KeyOffset0(4) | ID0(4) | ... | KeyOffsetN(4) | IDN(4) | 
- *     ...&lt;FreeSpace&gt;... | KeyN | ... | Key0 |  
+ *
+ *   | NodeType(1) | KeyType(1) | KeyCount(4) | KeyOffset0(4) | ID0(4) | ... | KeyOffsetN(4) | IDN(4) |
+ *     ...&lt;FreeSpace&gt;... | KeyN | ... | Key0 |
  */
 class VarKeyInteriorNode extends VarKeyNode implements FieldKeyInteriorNode {
 
@@ -181,7 +181,7 @@ class VarKeyInteriorNode extends VarKeyNode implements FieldKeyInteriorNode {
 	/**
 	 * Perform a binary search to locate the specified key and derive an index
 	 * into the Buffer ID storage.  This method is intended to locate the child
-	 * node which contains the specified key.  The returned index corresponds 
+	 * node which contains the specified key.  The returned index corresponds
 	 * to a child's stored buffer/node ID and may correspond to another interior
 	 * node or a leaf record node.  Each stored key within this interior node
 	 * effectively identifies the maximum key contained within the corresponding
@@ -237,7 +237,7 @@ class VarKeyInteriorNode extends VarKeyNode implements FieldKeyInteriorNode {
 	/**
 	 * Perform a binary search across the stored key offsets to find the
 	 * key index which corresponds to the specified key offset.  This facilitates
-	 * finding the key which utilizes the buffer storage at the specified 
+	 * finding the key which utilizes the buffer storage at the specified
 	 * offset.
 	 * @return key index.
 	 */
@@ -342,7 +342,7 @@ class VarKeyInteriorNode extends VarKeyNode implements FieldKeyInteriorNode {
 
 	/**
 	 * Update the child key associated with the specified key index.
-	 * Other entries are shifted as necessary to accommodate the new key length for 
+	 * Other entries are shifted as necessary to accommodate the new key length for
 	 * the updated entry.
 	 * @param index child key index
 	 * @param updateKey updated child node key
@@ -384,7 +384,7 @@ class VarKeyInteriorNode extends VarKeyNode implements FieldKeyInteriorNode {
 	 * Move all keys from index to the end by the specified offset.
 	 * @param index the smaller key index (0 &lt;= index1)
 	 * @param offset movement offset in bytes
-	 * @return insertion offset immediately following moved block. 
+	 * @return insertion offset immediately following moved block.
 	 */
 	private int moveKeys(int index, int offset) {
 
@@ -546,9 +546,9 @@ class VarKeyInteriorNode extends VarKeyNode implements FieldKeyInteriorNode {
 	}
 
 	/**
-	 * Split this interior node and insert new child entry (key and buffer ID).  
+	 * Split this interior node and insert new child entry (key and buffer ID).
 	 * Assumes 3 or more child keys exist in this node.
-	 * @param newKey new child key 
+	 * @param newKey new child key
 	 * @param newId new child node's buffer ID
 	 * @param node child node instance (corresponds to newKey and newId)
 	 * @return root node.
@@ -612,7 +612,7 @@ class VarKeyInteriorNode extends VarKeyNode implements FieldKeyInteriorNode {
 
 	/**
 	 * Callback method allowing child node to remove itself from parent.
-	 * Rebalancing of the tree is performed if the interior node falls 
+	 * Rebalancing of the tree is performed if the interior node falls
 	 * below the half-full point.
 	 * @param key child node key
 	 * @return root node
@@ -644,8 +644,8 @@ class VarKeyInteriorNode extends VarKeyNode implements FieldKeyInteriorNode {
 	}
 
 	/**
-	 * Callback method allowing a child interior node to request balancing of its 
-	 * content with its sibling nodes.  Balancing is only done if the specified node 
+	 * Callback method allowing a child interior node to request balancing of its
+	 * content with its sibling nodes.  Balancing is only done if the specified node
 	 * is half-full or less.
 	 * @param node child interior node
 	 * @return root node
@@ -657,7 +657,7 @@ class VarKeyInteriorNode extends VarKeyNode implements FieldKeyInteriorNode {
 			return getRoot();
 		}
 
-		// balance with right sibling except if node corresponds to the right-most 
+		// balance with right sibling except if node corresponds to the right-most
 		// key within this interior node - in that case balance with left sibling.
 		int index = getIdIndex(node.getKeyField(0));
 		if (index == (keyCount - 1)) {

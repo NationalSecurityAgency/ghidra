@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,20 +36,20 @@ class EquatesXmlMgr {
 	private EquateTable equateTable;
 
 	EquatesXmlMgr(Program program, MessageLog log) {
-		this.log = log;	
+		this.log = log;
 		this.equateTable = program.getEquateTable();
 	}
-	
+
 	/**
 	 * Process the entry point section of the XML file.
 	 * @param parser xml reader
 	 * @param monitor monitor that can be canceled
 	 */
-	void read(XmlPullParser parser, TaskMonitor monitor) throws CancelledException { 
+	void read(XmlPullParser parser, TaskMonitor monitor) throws CancelledException {
 		XmlElement element = parser.next();
 		while (true) {
 			if (monitor.isCancelled()) {
-				throw new CancelledException();	
+				throw new CancelledException();
 			}
 			element = parser.peek();
 			if (element == null || !element.getName().equals("EQUATE_GROUP")) {
@@ -58,8 +58,8 @@ class EquatesXmlMgr {
 			processEquateGroup(parser, monitor);
 		}
 		element = parser.next();//consume last EQUATES tag
-	} 
-	
+	}
+
 	/**
 	 * Write out the XML for the Equates.
 	 * @param writer writer for XML
@@ -76,24 +76,24 @@ class EquatesXmlMgr {
 		Iterator<Equate> iter = equateTable.getEquates();
 		while (iter.hasNext()) {
 			if (monitor.isCancelled()) {
-				throw new CancelledException();	
+				throw new CancelledException();
 			}
 			Equate equate = iter.next();
 			writeEquate(writer, equate, set);
-		}	
+		}
 		writer.endElement("EQUATE_GROUP");
-		
+
 		writer.endElement("EQUATES");
 	}
-			
+
 	private void processEquateGroup(XmlPullParser parser, TaskMonitor monitor) {
 		XmlElement element = parser.next();
 		while (!monitor.isCancelled()) {
 			element = parser.peek();
 
 			if (element.getName().equals("DISPLAY_SETTINGS") ||
-				element.getName().equals("REGULAR_CMT") || 
-				element.getName().equals("REPEATABLE_CMT") || 
+				element.getName().equals("REGULAR_CMT") ||
+				element.getName().equals("REPEATABLE_CMT") ||
 				element.getName().equals("BIT_MASK")) {
 
 				element = parser.next();
@@ -148,7 +148,7 @@ class EquatesXmlMgr {
 		element = parser.next();//consume EQUATE end tag...
 	}
 
-	private void writeEquate(XmlWriter writer, Equate equate, 
+	private void writeEquate(XmlWriter writer, Equate equate,
 							 AddressSetView set) {
 		boolean okToWrite=false;
 		if (set == null) {
@@ -171,5 +171,5 @@ class EquatesXmlMgr {
 			writer.endElement("EQUATE");
 		}
 	}
-	
+
 }

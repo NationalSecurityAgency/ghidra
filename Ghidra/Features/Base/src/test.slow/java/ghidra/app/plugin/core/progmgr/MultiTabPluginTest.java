@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -206,7 +206,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		JList<?> list = findComponent(listPanel, JList.class);
 
 		// the first item is expected to be 'login', since the current program is
-		// 'TestGhidraSearches' and that only fits with 'notepad', the rest our put into the 
+		// 'TestGhidraSearches' and that only fits with 'notepad', the rest our put into the
 		// list in order.
 		list.setSelectedIndex(0);
 		waitForSwing();
@@ -261,7 +261,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._TOY);
 		builder.createMemory("test", "0x0", 100);
 		Program p = doOpenProgram(builder.getProgram(), true);
-		p.setTemporary(false); // we need to be notified of changes 
+		p.setTemporary(false); // we need to be notified of changes
 
 		// select notepad
 		panel.setSelectedProgram(p);
@@ -388,13 +388,13 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 	@Test
 	public void testKeyboardTabNavigation() throws Exception {
-		// 
+		//
 		// Test forward and backward from middle, with no hidden programs
-		// 
+		//
 
 		//@formatter:off
-		programNames = new String[] { 
-				"notepad", "login", "tms",       // visible 
+		programNames = new String[] {
+				"notepad", "login", "tms",       // visible
 				"taskman", "TestGhidraSearches"  // hidden
 		};
 		//@formatter:on
@@ -409,11 +409,11 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		performPreviousAction();
 		assertProgramSelected(programs[1]);
 
-		// 
+		//
 		// test forward and backward from each end, with hidden programs
 		//
 
-		// by trial-and-error, we know that 'tms' is the last visible program tab 
+		// by trial-and-error, we know that 'tms' is the last visible program tab
 		// after resizing
 		setFrameSize(500, 500);
 		assertShowing(programs[2]);
@@ -442,14 +442,14 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 
 		//@formatter:off
-		programNames = new String[] { 
-				"notepad", "login", "tms",       // visible 
+		programNames = new String[] {
+				"notepad", "login", "tms",       // visible
 				"taskman", "TestGhidraSearches"  // hidden
 		};
 		//@formatter:on
 		openPrograms_HideLastOpened();
 
-		// by trial-and-error, we know that 'tms' is the last visible program tab 
+		// by trial-and-error, we know that 'tms' is the last visible program tab
 		// after resizing
 		setFrameSize(500, 500);
 		assertShowing(programs[2]);
@@ -460,7 +460,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		performNextAction();
 		assertListWindowShowing();
 
-		// the newly selected program should the first program, as the selection 
+		// the newly selected program should the first program, as the selection
 		// should have left the window and wrapped around 'notepad'
 		performNextAction();
 		assertProgramSelected(programs[0]);
@@ -469,8 +469,8 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		//
 		// Now try the other direction, which should wrap back around the other direction,
 		// showing the list, with another action to keep on moving.
-		//		
-		selectTab(programs[0]);// start off at the first tab	
+		//
+		selectTab(programs[0]);// start off at the first tab
 		performPreviousAction();
 		assertListWindowShowing();
 
@@ -481,7 +481,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private void assertProgramSelected(Program p) {
 		Program selectedProgram = panel.getSelectedProgram();
@@ -567,7 +567,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		DockingAction goToPreviousProgramAction =
 			(DockingAction) TestUtils.getInstanceField("goToPreviousProgramAction", plugin);
 		performAction(goToPreviousProgramAction, true);
-		Thread.sleep(100);// wait for the selection timer to execute 
+		Thread.sleep(100);// wait for the selection timer to execute
 		waitForSwing();
 	}
 
@@ -578,7 +578,7 @@ public class MultiTabPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		assertTrue(goToNextProgramAction.isEnabled());
 
 		performAction(goToNextProgramAction, true);
-		Thread.sleep(100);// wait for the selection timer to execute 
+		Thread.sleep(100);// wait for the selection timer to execute
 		waitForSwing();
 	}
 

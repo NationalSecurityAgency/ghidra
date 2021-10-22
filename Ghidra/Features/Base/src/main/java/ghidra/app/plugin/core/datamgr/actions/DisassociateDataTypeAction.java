@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -127,11 +127,11 @@ public class DisassociateDataTypeAction extends DockingAction {
 		}
 
 		//@formatter:off
-		MonitoredRunnable r = 
+		MonitoredRunnable r =
 			monitor -> doDisassociate(nodes, monitor);
 		new TaskBuilder("Disassociate From Archive", r)
 			.setStatusTextAlignment(SwingConstants.LEADING)
-			.launchModal();		
+			.launchModal();
 		//@formatter:on
 	}
 
@@ -159,10 +159,10 @@ public class DisassociateDataTypeAction extends DockingAction {
 			nodes.stream().map(node -> node.getDataType()).collect(Collectors.toList());
 
 		//
-		// Note: we collapse the node before performing this work because there is a 
+		// Note: we collapse the node before performing this work because there is a
 		//       potential for a large number of events to be generated.  Further, if the
 		//       given archive node has many children (like 10s of thousands), then the
-		//       copious events generated herein could lock the UI.  By closing the node, 
+		//       copious events generated herein could lock the UI.  By closing the node,
 		//       the tree is not invalidating/validating its cache as a result of these
 		//       events.
 		//
@@ -189,7 +189,7 @@ public class DisassociateDataTypeAction extends DockingAction {
 		monitor.initialize(dataTypes.size());
 
 		//@formatter:off
-		Map<DataTypeManager, List<DataType>> managersToTypes = 
+		Map<DataTypeManager, List<DataType>> managersToTypes =
 			dataTypes.stream()
 				     .collect(
 				    	     Collectors.groupingBy(dt -> dt.getDataTypeManager()))
@@ -209,7 +209,7 @@ public class DisassociateDataTypeAction extends DockingAction {
 		// we must process these by their source
 
 		//@formatter:off
-		Map<SourceArchive, List<DataType>> sourceToTypes = 
+		Map<SourceArchive, List<DataType>> sourceToTypes =
 			dataTypes.stream()
 					 .collect(
 					     Collectors.groupingBy(dt -> dt.getSourceArchive()))

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,21 +26,21 @@ import ghidra.util.exception.NotFoundException;
 
 /**
  * Interface for methods to create, open, and delete projects; maintains a
- * list of known project views that the user opened. 
+ * list of known project views that the user opened.
  * It has a handle to the currently opened project. A project can be
  * opened by one user at a time.
- *  
+ *
  */
 public interface ProjectManager {
 
 	public static final String APPLICATION_TOOL_EXTENSION = ".tcd";// default extension for tools
-	public static final String APPLICATION_TOOLS_DIR_NAME = "tools";//tools directory name 
+	public static final String APPLICATION_TOOLS_DIR_NAME = "tools";//tools directory name
 
 	/**
 	 * Create a project on the local filesystem.
-	 * 
+	 *
 	 * @param projectLocator location for where the project should be created
-	 * @param repAdapter repository adapter if this project is to be a 
+	 * @param repAdapter repository adapter if this project is to be a
 	 *        shared project; may be null if the project is not shared.
 	 * @param remember if false the new project should not be remembered (i.e., recently opened, etc.)
 	 * @return the new project
@@ -51,13 +51,13 @@ public interface ProjectManager {
 
 	/**
 	 * Get list of projects that user most recently opened.
-	 * @return list of project URLs 
+	 * @return list of project URLs
 	 */
 	public ProjectLocator[] getRecentProjects();
 
 	/**
 	 * Get list of projects that user most recently viewed.
-	 * @return list of project URLs 
+	 * @return list of project URLs
 	 */
 	public URL[] getRecentViewedProjects();
 
@@ -117,7 +117,7 @@ public interface ProjectManager {
 
 	/**
 	 * Delete the project in the given location.
-	 * 
+	 *
 	 * @param projectLocator project location
 	 * @return false if no project was deleted.
 	 */
@@ -130,7 +130,7 @@ public interface ProjectManager {
 	public boolean projectExists(ProjectLocator projectLocator);
 
 	/**
-	 * Establish a connection to the given host and port number. 
+	 * Establish a connection to the given host and port number.
 	 * @param host server name or IP address
 	 * @param portNumber server port or 0 for default
 	 * @param forceConnect if true and currently not connected, an attempt will be be to connect

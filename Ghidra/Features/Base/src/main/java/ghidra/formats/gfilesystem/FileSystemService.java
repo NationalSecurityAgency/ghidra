@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,9 +48,9 @@ import ghidra.util.timer.GTimer;
  * {@link FileSystemRef fs ref} that you are using to pin the filesystem.
  * <p>
  * Files written to the {@code fscache} directory are obfuscated to prevent interference from
- * virus scanners.  See {@link ObfuscatedInputStream} or {@link ObfuscatedOutputStream} or 
+ * virus scanners.  See {@link ObfuscatedInputStream} or {@link ObfuscatedOutputStream} or
  * {@link ObfuscatedFileByteProvider}.
- * <p> 
+ * <p>
  * Thread-safe.
  * <p>
  */
@@ -83,14 +83,14 @@ public class FileSystemService {
 	 * Example:
 	 * <p>
 	 * <pre>fsService.getDerivedByteProvider(
-	 *     containerFSRL, 
+	 *     containerFSRL,
 	 *     null,
 	 *     "the_derived_file",
 	 *     -1,
 	 *     () -> new MySpecialtyInputstream(),
 	 *     monitor);</pre>
 	 * <p>
-	 * See {@link #produceDerivedStream()}.   
+	 * See {@link #produceDerivedStream()}.
 	 */
 	public interface DerivedStreamProducer {
 
@@ -117,15 +117,15 @@ public class FileSystemService {
 	 * Example:
 	 * <p>
 	 * <pre>fsService.getDerivedByteProviderPush(
-	 *     containerFSRL, 
+	 *     containerFSRL,
 	 *     null,
 	 *     "the_derived_file",
 	 *     -1,
 	 *     os -> FileUtilities.copyStream(my_input_stream, os),
 	 *     monitor);</pre>
 	 * <p>
-	 * See {@link #push(OutputStream)}.   
-	 * 
+	 * See {@link #push(OutputStream)}.
+	 *
 	 */
 	public interface DerivedStreamPushProducer {
 		/**
@@ -198,9 +198,9 @@ public class FileSystemService {
 	}
 
 	/**
-	 * Releases the specified {@link FileSystemRef}, and if no other references remain, removes 
+	 * Releases the specified {@link FileSystemRef}, and if no other references remain, removes
 	 * it from the shared cache of file system instances.
-	 * 
+	 *
 	 * @param fsRef the ref to release
 	 */
 	public void releaseFileSystemImmediate(FileSystemRef fsRef) {
@@ -388,14 +388,14 @@ public class FileSystemService {
 	 * Returns a {@link ByteProvider} that contains the
 	 * derived (ie. decompressed or decrypted) contents of the requested file.
 	 * <p>
-	 * The resulting ByteProvider will be a cached file, either written to a 
+	 * The resulting ByteProvider will be a cached file, either written to a
 	 * temporary file, or a in-memory buffer if small enough (see {@link FileCache#MAX_INMEM_FILESIZE}).
-	 * <p> 
+	 * <p>
 	 * If the file was not present in the cache, the {@link DerivedStreamProducer producer}
 	 * will be called and it will be responsible for returning an {@link InputStream}
 	 * which has the derived contents, which will be added to the file cache for next time.
 	 * <p>
-	 * @param containerFSRL {@link FSRL} w/hash of the source (or container) file that this 
+	 * @param containerFSRL {@link FSRL} w/hash of the source (or container) file that this
 	 * derived file is based on
 	 * @param derivedFSRL (optional) {@link FSRL} to assign to the resulting ByteProvider
 	 * @param derivedName a unique string identifying the derived file inside the source (or container) file
@@ -403,7 +403,7 @@ public class FileSystemService {
 	 * @param producer supplies an InputStream if needed.  See {@link DerivedStreamProducer}
 	 * @param monitor {@link TaskMonitor} that will be monitor for cancel requests and updated
 	 * with file io progress
-	 * @return a {@link ByteProvider} containing the bytes of the requested file, that has the 
+	 * @return a {@link ByteProvider} containing the bytes of the requested file, that has the
 	 * specified derivedFSRL, or a pseudo FSRL if not specified.  Never null
 	 * @throws CancelledException if the user cancels
 	 * @throws IOException if there was an io error
@@ -444,14 +444,14 @@ public class FileSystemService {
 	 * Returns a {@link ByteProvider} that contains the
 	 * derived (ie. decompressed or decrypted) contents of the requested file.
 	 * <p>
-	 * The resulting ByteProvider will be a cached file, either written to a 
+	 * The resulting ByteProvider will be a cached file, either written to a
 	 * temporary file, or a in-memory buffer if small enough (see {@link FileCache#MAX_INMEM_FILESIZE}).
-	 * <p> 
+	 * <p>
 	 * If the file was not present in the cache, the {@link DerivedStreamPushProducer pusher}
 	 * will be called and it will be responsible for producing and writing the derived
 	 * file's bytes to a {@link OutputStream}, which will be added to the file cache for next time.
 	 * <p>
-	 * @param containerFSRL {@link FSRL} w/hash of the source (or container) file that this 
+	 * @param containerFSRL {@link FSRL} w/hash of the source (or container) file that this
 	 * derived file is based on
 	 * @param derivedFSRL (optional) {@link FSRL} to assign to the resulting ByteProvider
 	 * @param derivedName a unique string identifying the derived file inside the source (or container) file
@@ -459,7 +459,7 @@ public class FileSystemService {
 	 * @param pusher writes bytes to the supplied OutputStream.  See {@link DerivedStreamPushProducer}
 	 * @param monitor {@link TaskMonitor} that will be monitor for cancel requests and updated
 	 * with file io progress
-	 * @return a {@link ByteProvider} containing the bytes of the requested file, that has the 
+	 * @return a {@link ByteProvider} containing the bytes of the requested file, that has the
 	 * specified derivedFSRL, or a pseudo FSRL if not specified.  Never null
 	 * @throws CancelledException if the user cancels
 	 * @throws IOException if there was an io error
@@ -507,12 +507,12 @@ public class FileSystemService {
 	 * {@link ByteProvider}.
 	 * <p>
 	 * Temporary files that are written to disk are obfuscated to avoid interference from
-	 * overzealous virus scanners.  See {@link ObfuscatedInputStream} / 
+	 * overzealous virus scanners.  See {@link ObfuscatedInputStream} /
 	 * {@link ObfuscatedOutputStream}.
 	 * <p>
 	 * @param sizeHint the expected size of the file, or -1 if unknown
-	 * @return {@link FileCacheEntryBuilder} that must be finalized by calling 
-	 * {@link FileCacheEntryBuilder#finish() finish()} 
+	 * @return {@link FileCacheEntryBuilder} that must be finalized by calling
+	 * {@link FileCacheEntryBuilder#finish() finish()}
 	 * @throws IOException if error
 	 */
 	public FileCacheEntryBuilder createTempFile(long sizeHint) throws IOException {
@@ -525,7 +525,7 @@ public class FileSystemService {
 	 * <p>
 	 * The returned ByteProvider's FSRL will be decorative and does not allow returning to
 	 * the same ByteProvider at a later time.
-	 *  
+	 *
 	 * @param tempFileCacheEntry {@link FileCacheEntry} (returned by {@link #createTempFile(long)})
 	 * @param name desired name
 	 * @return new {@link ByteProvider} with decorative {@link FSRL}
@@ -540,8 +540,8 @@ public class FileSystemService {
 
 	/**
 	 * Allows the resources used by caching the specified file to be released.
-	 * 
-	 * @param fsrl {@link FSRL} file to release cache resources for 
+	 *
+	 * @param fsrl {@link FSRL} file to release cache resources for
 	 */
 	public void releaseFileCache(FSRL fsrl) {
 		if (fsrl.getMD5() != null) {
@@ -555,7 +555,7 @@ public class FileSystemService {
 	 * <p>
 	 * NOTE: only use this if you have no other choice and are forced to deal with already
 	 * existing files in the local filesystem.
-	 * 
+	 *
 	 * @param file {@link File} to add
 	 * @param fsrl {@link FSRL} of the file that is being added
 	 * @param monitor {@link TaskMonitor}
@@ -572,7 +572,7 @@ public class FileSystemService {
 
 	/**
 	 * Returns true if the specified derived file exists in the file cache.
-	 * 
+	 *
 	 * @param containerFSRL {@link FSRL} w/hash of the container
 	 * @param derivedName name of the derived file inside of the container
 	 * @param monitor {@link TaskMonitor}
@@ -894,13 +894,13 @@ public class FileSystemService {
 	 * passwords and such.  Caller is responsible for closing the instance when done.
 	 * <p>
 	 * Later callers to this method will receive a nested CryptoSession that shares it's
-	 * state with the initial CryptoSession, until the initial CryptoSession is closed(). 
-	 * 
+	 * state with the initial CryptoSession, until the initial CryptoSession is closed().
+	 *
 	 * @return new {@link CryptoSession} instance, never null
 	 */
 	public synchronized CryptoSession newCryptoSession() {
 		if (currentCryptoSession == null || currentCryptoSession.isClosed()) {
-			// If no this no current open cryptosession, return a new full/independent 
+			// If no this no current open cryptosession, return a new full/independent
 			// cryptosession, and use it as the parent for any subsequent sessions
 			currentCryptoSession = CryptoProviders.getInstance().newSession();
 			return currentCryptoSession;

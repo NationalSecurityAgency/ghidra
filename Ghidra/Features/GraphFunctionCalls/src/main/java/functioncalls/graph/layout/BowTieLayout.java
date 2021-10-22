@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * A layout that will arrange vertices around a single vertex, with the incoming and outgoing
  * vertices above and below the source vertex, respectively.
- * 
+ *
  * <p>The result will look loosely like this:
  * <pre>
  *                   In1    In2   In3
@@ -39,7 +39,7 @@ import ghidra.util.task.TaskMonitor;
  *                         / |  \
  *                        /  |   \
  *                  Out1    Out2  Out3
- * 
+ *
  * </pre>
  */
 public class BowTieLayout extends AbstractVisualGraphLayout<FcgVertex, FcgEdge> {
@@ -70,10 +70,10 @@ public class BowTieLayout extends AbstractVisualGraphLayout<FcgVertex, FcgEdge> 
 
 	@Override
 	public boolean isCondensedLayout() {
-		// TODO revisit; condensing looks odd with only one column, as it is not centered; 
-		//      try some real data and maybe set condensed based upon how many columns are 
+		// TODO revisit; condensing looks odd with only one column, as it is not centered;
+		//      try some real data and maybe set condensed based upon how many columns are
 		//      present?  When not condensed, the width of each cell will be that of the largest
-		//      column, which means a really long name could cause normally-sized names to 
+		//      column, which means a really long name could cause normally-sized names to
 		//      consume way more space than is needed
 //		return false;
 		return true; // not sure about this
@@ -103,8 +103,8 @@ public class BowTieLayout extends AbstractVisualGraphLayout<FcgVertex, FcgEdge> 
 		LayoutPositions<FcgVertex, FcgEdge> locs = super.calculateLocations(g, taskMonitor);
 
 		// TODO put x offset manipulation here...
-		//          -if the number of vertices in each row is not the same odd/even as the 
-		//           largest row, then slide the x values for each vertex in the row left or 
+		//          -if the number of vertices in each row is not the same odd/even as the
+		//           largest row, then slide the x values for each vertex in the row left or
 		//           right as needed
 
 		return locs;
@@ -138,7 +138,7 @@ public class BowTieLayout extends AbstractVisualGraphLayout<FcgVertex, FcgEdge> 
 
 		// Outgoing nodes on the bottom
 		// 	-sorted by address
-		// 
+		//
 		List<FcgEdge> outEdges = new ArrayList<>(g.getOutEdges(source));
 		List<FcgVertex> outVertices =
 			outEdges.stream().map(e -> e.getEnd()).collect(Collectors.toList());

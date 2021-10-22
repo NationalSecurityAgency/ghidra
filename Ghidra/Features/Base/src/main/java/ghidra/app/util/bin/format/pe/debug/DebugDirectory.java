@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -72,7 +72,7 @@ public class DebugDirectory implements StructConverter, ByteArrayConverter {
 	 * Constuctor.
 	 * @param reader the binary reader
 	 * @param index the index where this debug directory begins
-	 * @param ntHeader 
+	 * @param ntHeader
 	 */
 	static DebugDirectory createDebugDirectory(FactoryBundledWithBinaryReader reader, long index,
 			OffsetValidator validator) throws IOException {
@@ -131,7 +131,7 @@ public class DebugDirectory implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Returns the time and date the debugging information was created. 
+	 * Returns the time and date the debugging information was created.
 	 * @return the time and date the debugging information was created
 	 */
 	public int getTimeDateStamp() {
@@ -163,7 +163,7 @@ public class DebugDirectory implements StructConverter, ByteArrayConverter {
 	}
 
 	/**
-	 * Returns the size of the debugging information, in bytes. 
+	 * Returns the size of the debugging information, in bytes.
 	 * This value does not include the debug directory itself.
 	 * @return the size of the debugging information, in bytes
 	 */

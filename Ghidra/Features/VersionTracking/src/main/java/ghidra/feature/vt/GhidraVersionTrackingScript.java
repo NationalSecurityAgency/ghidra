@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -205,20 +205,20 @@ public abstract class GhidraVersionTrackingScript extends GhidraScript {
 
 //==================================================================================================
 // Potential Methods
-//==================================================================================================	
+//==================================================================================================
 
-// to not correlate the entire program	
+// to not correlate the entire program
 //	public void runCorrelator(String name, AddressSet addresSet)
 
 	// TODO
-	// -a way to allow users to apply markup of matches, given some filtering criteria 
+	// -a way to allow users to apply markup of matches, given some filtering criteria
 	// (maybe via a callback)
 	// -a way to allow users to specify the **options** for applying, since this is how
-	// we perform applying now 
+	// we perform applying now
 
 //==================================================================================================
 // Private Methods
-//==================================================================================================	
+//==================================================================================================
 
 	private VTProgramCorrelatorFactory getCorrelatorFactory(String name) {
 		List<VTProgramCorrelatorFactory> generateList = getVTProgramCorrelatorFactory();

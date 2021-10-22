@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,10 +28,10 @@ import docking.action.MenuData;
 import ghidra.util.HelpLocation;
 
 /**
- * The DataTypeSyncDialog displays a table with the data types that need to be synchronized 
- * between a program and an associated archive that was used as a source of data types for 
- * the program. Synchronizing data types means either Committing changes made to program 
- * data types back to the associated source archive data types or Updating program data types 
+ * The DataTypeSyncDialog displays a table with the data types that need to be synchronized
+ * between a program and an associated archive that was used as a source of data types for
+ * the program. Synchronizing data types means either Committing changes made to program
+ * data types back to the associated source archive data types or Updating program data types
  * with changes that were made to the associated source data type in the archive.
  */
 public class DataTypeSyncDialog extends DialogComponentProvider implements DataTypeSyncListener {

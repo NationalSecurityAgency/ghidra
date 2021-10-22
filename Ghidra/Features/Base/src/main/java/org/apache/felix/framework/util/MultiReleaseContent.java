@@ -3,14 +3,14 @@
  */
 /***
  * This is fix for a bug found in the Felix Framework:
- * 
+ *
  *   https://issues.apache.org/jira/browse/FELIX-6297
  *
  *  Because of its place on the classpath, this class overrides felix's.
- *  
+ *
  *  THIS FILE SHOULD BE REMOVED WHEN THE ISSUE IS ADDRESSED.
- *  
- *** 
+ *
+ ***
  *
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file

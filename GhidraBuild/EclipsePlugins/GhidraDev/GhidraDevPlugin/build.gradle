@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,8 @@
  */
 apply plugin: 'java-library'
 
-//This project requires the eclpse PDE plugin. To create eclipse files for this project, run 
-//	"gradle eclipse -PeclipsePDE" 
+//This project requires the eclpse PDE plugin. To create eclipse files for this project, run
+//	"gradle eclipse -PeclipsePDE"
 if (hasProperty("eclipsePDE")) {
 	apply plugin: 'eclipse'
 	eclipse {
@@ -72,14 +72,14 @@ task launchSupportJar(type:Copy) {
 task pyDevUnpack(type:Copy) {
 	description "Unpack PyDev plugin archive for development use"
 	group "Development Preparation"
-	
+
 	File pyDevDestDir = file("build/data/buildDependencies/pydev")
 
 	// Without this, the copyTask will unzip the file to check for "up to date"
 	onlyIf {
 		!pyDevDestDir.exists()
 	}
-	
+
 	File depsFile = file("${DEPS_DIR}/GhidraDev/PyDev 6.3.1.zip")
 	File binRepoFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/PyDev 6.3.1.zip")
 
@@ -95,14 +95,14 @@ task pyDevUnpack(type:Copy) {
 task cdtUnpack(type:Copy) {
 	description "Unpack CDT plugin archive for development use"
 	group "Development Preparation"
-	
+
 	File cdtDestDir = file("build/data/buildDependencies/cdt")
 
 	// Without this, the copyTask will unzip the file to check for "up to date"
 	onlyIf {
 		!cdtDestDir.exists()
 	}
-	
+
 	File depsFile = file("${DEPS_DIR}/GhidraDev/cdt-8.6.0.zip")
 	File binRepoFile = file("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev/buildDependencies/cdt-8.6.0.zip")
 
@@ -114,7 +114,7 @@ task cdtUnpack(type:Copy) {
 	destinationDir cdtDestDir
 }
 
-// We do not currently build GhidraDev plugin at Ghidra build time so we must 
+// We do not currently build GhidraDev plugin at Ghidra build time so we must
 // copy the prebuilt zip file from the BIN_REPO
 rootProject.assembleDistribution {
 	from ("${BIN_REPO}/GhidraBuild/EclipsePlugins/GhidraDev") {
@@ -124,7 +124,7 @@ rootProject.assembleDistribution {
 	from ("${this.projectDir}/GhidraDev_README.html") {
 		into "Extensions/Eclipse/GhidraDev/"
 	}
-} 
+}
 
 // PrepDev dependencies
 rootProject.prepDev.dependsOn utilityJar

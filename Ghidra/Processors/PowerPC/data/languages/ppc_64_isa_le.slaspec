@@ -1,4 +1,4 @@
-# SLA specification file for Power ISA Version 2.06 Revision B (July 23, 2010) 
+# SLA specification file for Power ISA Version 2.06 Revision B (July 23, 2010)
 # ISA (Instruction Set Architecture) a trademarked name for PowerPC specifications from IBM.
 
 @define ENDIAN "little"

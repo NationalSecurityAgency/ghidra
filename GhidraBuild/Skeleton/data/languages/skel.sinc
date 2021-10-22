@@ -3,7 +3,7 @@
 define token opbyte (8)
    op0_8     = (0,7)
    op6_2     = (6,7)
-   
+
    dRegPair4_2    = (4,5)
    pRegPair4_2    = (4,5)
    sRegPair4_2    = (4,5)
@@ -14,9 +14,9 @@ define token opbyte (8)
 
    reg3_3 = (3,5)
    bits3_3   = (3,5)
-   
+
    bits0_4   = (0,3)
-   
+
    reg0_3 = (0,2)
    bits0_3   = (0,2)
 ;
@@ -73,24 +73,24 @@ macro setSubtractFlags(op1,op2) {
 
 macro push16(val16) {
 	SP = SP - 2;
-	*:2 SP = val16; 
+	*:2 SP = val16;
 }
 
 macro pop16(ret16) {
 	ret16 = *:2 SP;
-	SP = SP + 2; 
+	SP = SP + 2;
 }
 
 macro push8(val8) {
 	SP = SP - 1;
 	ptr:2 = SP;
-	*:1 ptr = val8; 
+	*:1 ptr = val8;
 }
 
 macro pop8(ret8) {
     ptr:2 = SP;
 	ret8 = *:1 ptr;
-	SP = SP + 1; 
+	SP = SP + 1;
 }
 
 ################################################################
@@ -168,7 +168,7 @@ cc2: "C"             is bits3_3=0x7                              { c:1 = $(C_fla
 }
 
 :JP Addr16  is op0_8=0xc3; Addr16 {
-	goto Addr16;	
+	goto Addr16;
 }
 
 :JP cc,Addr16  is op6_2=0x3 & cc & bits0_3=0x2; Addr16 {
@@ -217,4 +217,4 @@ cc2: "C"             is bits3_3=0x7                              { c:1 = $(C_fla
 	pop16(PC);
 	ptr:2 = zext(PC);
 	return [ptr];
-}	
+}

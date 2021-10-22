@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -60,7 +60,7 @@ public class DockableHeader extends GenericHeader
 
 	/**
 	 * Constructs a new DockableHeader for the given dockableComponent.
-	 * 
+	 *
 	 * @param dockableComp the dockableComponent that this header is for.
 	 * @param isDocking true means this widget can be dragged and docked by the user
 	 */
@@ -307,11 +307,11 @@ public class DockableHeader extends GenericHeader
 
 	/**
 	 * Sets the drag/drop cursor based on the current drop code.
-	 * 
+	 *
 	 * @param event the event containing the drag source context on which to set the cursor.
 	 */
 	private void setCursor(DragSourceEvent event) {
-		// TODO not sure why we needed this mechanic.  It is wrong on the Mac.  What is the use case?		
+		// TODO not sure why we needed this mechanic.  It is wrong on the Mac.  What is the use case?
 //		if (!DockableComponent.DROP_CODE_SET) {
 //			return;
 //		}
@@ -368,7 +368,7 @@ public class DockableHeader extends GenericHeader
 
 			Component mousedComponent = null;
 			if (placeholder == null) {
-				// Must not be over any component; This can happen when over a split pane 
+				// Must not be over any component; This can happen when over a split pane
 				// resize area or outside of the window
 				super.setCursor(event, dragCursor);
 				return;
@@ -554,8 +554,8 @@ public class DockableHeader extends GenericHeader
 			}
 
 			if (othersBounds == null) {
-				// No other components in this window.  In this case, use the bounds of the 
-				// active component.  This has the effect of showing the image behind the 
+				// No other components in this window.  In this case, use the bounds of the
+				// active component.  This has the effect of showing the image behind the
 				// active component.
 				Rectangle componentBounds = component.getBounds();
 				componentBounds = SwingUtilities.convertRectangle(component.getParent(),

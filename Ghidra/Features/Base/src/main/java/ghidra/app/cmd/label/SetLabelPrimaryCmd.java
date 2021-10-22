@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ public class SetLabelPrimaryCmd implements Command {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see ghidra.framework.cmd.Command#applyTo(ghidra.framework.model.DomainObject)
 	 */
 	@Override
@@ -72,7 +72,7 @@ public class SetLabelPrimaryCmd implements Command {
 		if (symbol == null) {
 			// no new symbol - not an error condition if the previous symbol was dynamic.  The
 			// assumption here is that the user has performed an operation that did not actually
-			// change the state of the symbol, like changing the namespace of a default symbol, 
+			// change the state of the symbol, like changing the namespace of a default symbol,
 			// which has no effect
 			if (!oldSymbol.isDynamic()) {
 				errorMsg =

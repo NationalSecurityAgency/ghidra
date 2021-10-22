@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,7 @@ class FunctionAdapterV3 extends FunctionAdapter {
 	//
 	// This version introduces the Return Storage column which will be upgraded by the
 	// {@link FunctionManagerDB#programReady(int, int, ghidra.util.task.TaskMonitor)}
-	// process. The parameter-offset column has been dropped in favor of using the 
+	// process. The parameter-offset column has been dropped in favor of using the
 	// calling convention to determine this value.  The following function flags
 	// were added:  customer storage flag, signature source type
 	//
@@ -39,7 +39,7 @@ class FunctionAdapterV3 extends FunctionAdapter {
 	private Table table;
 
 	/**
-	 * 
+	 *
 	 * @param dbHandle
 	 * @param addrMap
 	 * @param create

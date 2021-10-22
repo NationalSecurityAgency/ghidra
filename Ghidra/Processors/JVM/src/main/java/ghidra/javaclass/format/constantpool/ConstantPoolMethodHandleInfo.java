@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,47 +54,47 @@ public class ConstantPoolMethodHandleInfo extends AbstractConstantPoolInfoJava {
 		return referenceKind;
 	}
 
-	/** 
+	/**
 	 * The value of the reference_index item must be a valid index into the
 	 * constant_pool table.
 	 * <p>
-	 * If the value of the reference_kind item is 
-	 * 		1 (REF_getField), 
-	 * 		2 (REF_getStatic), 
-	 * 		3 (REF_putField), or 
-	 * 		4 (REF_putStatic), 
+	 * If the value of the reference_kind item is
+	 * 		1 (REF_getField),
+	 * 		2 (REF_getStatic),
+	 * 		3 (REF_putField), or
+	 * 		4 (REF_putStatic),
 	 * then the constant_pool entry at that index must be a CONSTANT_Fieldref_info
 	 * structure representing a field for which a method handle is to be
 	 * created.
 	 * <p>
-	 * If the value of the reference_kind item is 
-	 * 		5 (REF_invokeVirtual), 
-	 * 		6 (REF_invokeStatic), 
-	 * 		7 (REF_invokeSpecial), or 
-	 * 		8 (REF_newInvokeSpecial), 
+	 * If the value of the reference_kind item is
+	 * 		5 (REF_invokeVirtual),
+	 * 		6 (REF_invokeStatic),
+	 * 		7 (REF_invokeSpecial), or
+	 * 		8 (REF_newInvokeSpecial),
 	 * then the constant_pool entry at that index must be
 	 * a CONSTANT_Methodref_info structure representing a class's method
 	 * or constructor for which a method handle is to be created.
 	 * <p>
-	 * If the value of the reference_kind item is 
+	 * If the value of the reference_kind item is
 	 * 		9 (REF_invokeInterface),
 	 * then the constant_pool entry at that index must be a
 	 * CONSTANT_InterfaceMethodref_info structure representing an
 	 * interface's method for which a method handle is to be created.
 	 * <p>
-	 * If the value of the reference_kind item is 
+	 * If the value of the reference_kind item is
 	 * 		5 (REF_invokeVirtual),
-	 * 		6 (REF_invokeStatic), 
-	 * 		7 (REF_invokeSpecial), or 
+	 * 		6 (REF_invokeStatic),
+	 * 		7 (REF_invokeSpecial), or
 	 * 		9 (REF_invokeInterface),
 	 * the name of the method represented by a CONSTANT_Methodref_info structure
 	 * must not be <init> or <clinit>.
 	 * <p>
-	 * If the value is 
-	 * 		8 (REF_newInvokeSpecial), 
-	 * the name of the method represented by a 
+	 * If the value is
+	 * 		8 (REF_newInvokeSpecial),
+	 * the name of the method represented by a
 	 * CONSTANT_Methodref_info structure must be <init>.
-	 * 
+	 *
 	 * @return a valid index into the constant_pool table
 	 */
 	public int getReferenceIndex() {

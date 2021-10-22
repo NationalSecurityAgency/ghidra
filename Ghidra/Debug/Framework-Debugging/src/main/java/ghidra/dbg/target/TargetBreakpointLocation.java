@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ public interface TargetBreakpointLocation extends TargetObject {
 
 	/**
 	 * The minimum address of this location
-	 * 
+	 *
 	 * @return the address
 	 */
 	@TargetAttributeType(name = ADDRESS_ATTRIBUTE_NAME, required = true, hidden = true)
@@ -49,13 +49,13 @@ public interface TargetBreakpointLocation extends TargetObject {
 
 	/**
 	 * If available, get the length in bytes, of the range covered by the breakpoint.
-	 * 
+	 *
 	 * <p>
 	 * In most cases, where the length is not available, a length of 1 should be presumed.
-	 * 
+	 *
 	 * <p>
 	 * TODO: Should this be Long?
-	 * 
+	 *
 	 * @return the length, or {@code null} if not known
 	 */
 	@TargetAttributeType(name = LENGTH_ATTRIBUTE_NAME, hidden = true)
@@ -69,11 +69,11 @@ public interface TargetBreakpointLocation extends TargetObject {
 
 	/**
 	 * Get a reference to the specification which generated this breakpoint.
-	 * 
+	 *
 	 * <p>
 	 * If the debugger does not separate specifications from actual breakpoints, then the
 	 * "specification" is this breakpoint. Otherwise, the specification is the parent.
-	 * 
+	 *
 	 * @return the reference to the specification
 	 */
 	@TargetAttributeType(name = SPEC_ATTRIBUTE_NAME, required = true, hidden = true)

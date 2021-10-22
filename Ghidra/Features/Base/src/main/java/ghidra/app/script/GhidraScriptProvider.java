@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -123,7 +123,7 @@ public abstract class GhidraScriptProvider
 	public abstract String getCommentCharacter();
 
 	/**
-	 * Writes the script header. 
+	 * Writes the script header.
 	 * Include a place holder for each meta-data item.
 	 * @param writer the print writer
 	 * @param category the default category
@@ -159,9 +159,9 @@ public abstract class GhidraScriptProvider
 	/**
 	 * Fixup a script name for searching in script directories.
 	 *
-	 * <p>This method is part of a poorly specified behavior that is due for future amendment, 
+	 * <p>This method is part of a poorly specified behavior that is due for future amendment,
 	 * see {@link GhidraScriptUtil#fixupName(String)}.
-	 * 
+	 *
 	 * @param scriptName the name of the script, must end with this provider's extension
 	 * @return a (relative) file path to the corresponding script
 	 */
@@ -179,7 +179,7 @@ public abstract class GhidraScriptProvider
 	}
 
 	/**
-	 * Return the prefix for each certification header body line if this file is subject to 
+	 * Return the prefix for each certification header body line if this file is subject to
 	 * certification.
 	 * @return certification header body prefix or null if not supported
 	 */

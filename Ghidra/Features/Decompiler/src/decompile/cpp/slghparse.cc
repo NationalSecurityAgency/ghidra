@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -2848,8 +2848,8 @@ yyreduce:
 
   case 122:
 #line 322 "src/decompile/cpp/slghparse.y" /* yacc.c:1646  */
-    { (yyval.pateq) = slgh->constrainOperand((yyvsp[-2].operandsym),(yyvsp[0].patexp)); 
-                                          if ((yyval.pateq) == (PatternEquation *)0) 
+    { (yyval.pateq) = slgh->constrainOperand((yyvsp[-2].operandsym),(yyvsp[0].patexp));
+                                          if ((yyval.pateq) == (PatternEquation *)0)
                                             { string errmsg="Constraining currently undefined operand "+(yyvsp[-2].operandsym)->getName(); yyerror(errmsg.c_str()); } }
 #line 2840 "src/decompile/cpp/slghparse.cc" /* yacc.c:1646  */
     break;

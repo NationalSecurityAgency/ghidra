@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import ghidra.util.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.*;
 
-/** 
+/**
  * Top level object that manages each step of the merge/resolve conflicts
  * process.
  */
@@ -115,11 +115,11 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	/*
 	 *  (non-Javadoc)
 	 * @see ghidra.framework.data.DomainObjectMergeManager#merge()
-	 * 
+	 *
 	 * Begin the merge process by displaying a modal tool.
-	 * The dialog's component is updated for each part of the 
+	 * The dialog's component is updated for each part of the
 	 * merge process that requires user input.
-	 * 
+	 *
 	 *
 	 */
 	@Override
@@ -281,11 +281,11 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	/**
 	 * Show the component that is used to resolve conflicts. This method
 	 * is called by the MergeResolvers when user input is required. If the
-	 * component is not null, this method blocks until the user either 
+	 * component is not null, this method blocks until the user either
 	 * cancels the merge process or resolves a conflict. If comp is null,
 	 * then the default component is displayed, and the method does not
 	 * wait for user input.
-	 * @param comp component to show; if component is null, show the 
+	 * @param comp component to show; if component is null, show the
 	 * default component and do not block
 	 * @param componentID id or name for the component
 	 */
@@ -322,8 +322,8 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	/**
 	 * Removes the component that is used to resolve conflicts. This method
 	 * is called by the MergeResolvers when user input is no longer required
-	 * using the specified component. 
-	 * @param comp component to show; if component is null, show the 
+	 * using the specified component.
+	 * @param comp component to show; if component is null, show the
 	 * default component and do not block
 	 */
 	public void removeComponent(final JComponent comp) {
@@ -378,7 +378,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	}
 
 	/**
-	 * Called from the dialog when the "Apply" button is hit; call the 
+	 * Called from the dialog when the "Apply" button is hit; call the
 	 * current MergeResolver's apply() method, and wake up the merge
 	 * thread waiting on user input.
 	 *
@@ -391,7 +391,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	}
 
 	/**
-	 * Called from the dialog when the "Cancel" button is hit; call the 
+	 * Called from the dialog when the "Cancel" button is hit; call the
 	 * current MergeResolver's cancel() method, and wake up the merge
 	 * thread waiting on user input.
 	 *
@@ -470,7 +470,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	}
 
 	/**
-	 * Block until the user completes the current merge operation, or 
+	 * Block until the user completes the current merge operation, or
 	 * cancels the merge process.
 	 *
 	 */
@@ -542,7 +542,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	 * Gets the resolve information object for the indicated standardized name.
 	 * This is how information is passed between merge managers.
 	 * <br>For example:
-	 * <br>the data type merger knows what data type in the result is equivalent 
+	 * <br>the data type merger knows what data type in the result is equivalent
 	 * to a given data type from my checked out program. The code unit and
 	 * function mergers need to be able to get this information so they
 	 * don't unknowingly re-introduce a data type that was already eliminated

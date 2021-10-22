@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import ghidra.util.exception.DuplicateNameException;
 import java.io.IOException;
 
 /**
- * Parent class used for all other types of volume descriptors 
+ * Parent class used for all other types of volume descriptors
  */
 public class ISO9660BaseVolume implements StructConverter {
 
@@ -53,7 +53,7 @@ public class ISO9660BaseVolume implements StructConverter {
 
 	/**
 	 * Creates a string representation of this class filling in field specifics
-	 * when applicable. 
+	 * when applicable.
 	 * @return the string representation of this class
 	 */
 	@Override

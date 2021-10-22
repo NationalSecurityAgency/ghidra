@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ class DomainObjectChangeSupport {
 	 * @param timeInterval The time (in milliseconds) this object will wait before
 	 * 		  flushing its event buffer.  If a new event comes in before the time expires,
 	 * 		  the timer is reset.
-	 * @param lock the lock used to verify that calls to {@link #flush()} are not performed 
+	 * @param lock the lock used to verify that calls to {@link #flush()} are not performed
 	 *        while a lock is held; this is the lock to guard the DB
 	 */
 	DomainObjectChangeSupport(DomainObject src, int timeInterval, int bufsize, Lock lock) {
@@ -131,8 +131,8 @@ class DomainObjectChangeSupport {
 
 			/*
 			 * We have decided that flushing events with a lock can lead to deadlocks.  There
-			 * should be no reason to flush events while holding a lock.   This is the 
-			 * potential deadlock:			
+			 * should be no reason to flush events while holding a lock.   This is the
+			 * potential deadlock:
 			 * 	   Thread1 has Domain Lock -> wants AWT lock
 			 *     Swing has AWT lock -> wants Domain lock
 			 */
@@ -170,7 +170,7 @@ class DomainObjectChangeSupport {
 					l.domainObjectChanged(ev);
 				}
 				catch (Throwable t2) {
-					// I guess we don't care (probably because some other fatal error has 
+					// I guess we don't care (probably because some other fatal error has
 					// already happened)
 				}
 			}

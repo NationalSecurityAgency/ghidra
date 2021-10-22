@@ -12,10 +12,10 @@
       <set name="DECOMPILE_MODE" val="1"/>
     </tracked_set>
   </context_data>
-  
+
   <default_symbols>
     <symbol name="Reset" address="ram:0x0" entry="true"/>
   </default_symbols>
-  
+
   <programcounter register="PC"/>
 </processor_spec>

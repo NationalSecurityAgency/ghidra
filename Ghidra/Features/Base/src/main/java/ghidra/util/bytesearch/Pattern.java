@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.xml.*;
  * Pattern is an association of a DittedBitSequence to match,
  * a set of post rules after a match is found that must be satisfied,
  * and a set of actions to be taken if the pattern matches.
- * 
+ *
  * These patterns can be restored from an XML file.
  */
 public class Pattern extends DittedBitSequence {
@@ -50,7 +50,7 @@ public class Pattern extends DittedBitSequence {
 	/**
 	 * Construct the pattern based on a DittedByteSequence a match offset, post matching rules,
 	 * and a set of actions to take when the match occurs.
-	 * 
+	 *
 	 * @param seq DittedByteSequence
 	 * @param offset offset from the actual match location to report a match
 	 * @param postArray post set of rules to check for the match
@@ -139,7 +139,7 @@ public class Pattern extends DittedBitSequence {
 	 * Read patterns from specified file
 	 * @param file pattern file
 	 * @param patlist list for patterns to be added to
-	 * @param pfactory optional factory for use in parsing PostRule and MatchAction elements.  
+	 * @param pfactory optional factory for use in parsing PostRule and MatchAction elements.
 	 * If null such elements may not be present.
 	 * @throws SAXException
 	 * @throws IOException
@@ -189,8 +189,8 @@ public class Pattern extends DittedBitSequence {
 	 * @param file is the file to read from
 	 * @param patternList collects the resulting Pattern objects
 	 * @param pfactory is the factory for constructing postrules and matchactions
-	 * @throws IOException 
-	 * @throws SAXException 
+	 * @throws IOException
+	 * @throws SAXException
 	 */
 	public static void readPostPatterns(File file, ArrayList<Pattern> patternList,
 			PatternFactory pfactory) throws SAXException, IOException {

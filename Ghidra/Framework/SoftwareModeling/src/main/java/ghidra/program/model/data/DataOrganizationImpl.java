@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 /**
- * DataOrganization provides a single place for determining size and alignment information 
+ * DataOrganization provides a single place for determining size and alignment information
  * for data types within an archive or a program.
  */
 public class DataOrganizationImpl implements DataOrganization {
@@ -323,10 +323,10 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Gets the default alignment to be used for any data type that isn't a 
-	 * structure, union, array, pointer, type definition, and whose size isn't in the 
+	 * Gets the default alignment to be used for any data type that isn't a
+	 * structure, union, array, pointer, type definition, and whose size isn't in the
 	 * size/alignment map.
-	 * @return the default alignment to be used if no other alignment can be 
+	 * @return the default alignment to be used if no other alignment can be
 	 * determined for a data type.
 	 */
 	@Override
@@ -362,10 +362,10 @@ public class DataOrganizationImpl implements DataOrganization {
 	}
 
 	/**
-	 * Sets the default alignment to be used for any data type that isn't a 
-	 * structure, union, array, pointer, type definition, and whose size isn't in the 
+	 * Sets the default alignment to be used for any data type that isn't a
+	 * structure, union, array, pointer, type definition, and whose size isn't in the
 	 * size/alignment map.
-	 * @param defaultAlignment the default alignment to be used if no other alignment can be 
+	 * @param defaultAlignment the default alignment to be used if no other alignment can be
 	 * determined for a data type.
 	 */
 	public void setDefaultAlignment(int defaultAlignment) {
@@ -509,9 +509,9 @@ public class DataOrganizationImpl implements DataOrganization {
 		// Otherwise just assume the default alignment.
 		return getDefaultAlignment();
 	}
-	
+
 	/**
-	 * Determines the first offset that is equal to or greater than the minimum offset which 
+	 * Determines the first offset that is equal to or greater than the minimum offset which
 	 * has the specified alignment.  If a non-positive alignment is specified the origina
 	 * minimumOffset will be return.
 	 * @param alignment the desired alignment (positive value)

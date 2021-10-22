@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ public class GhidraSymbolLookupPreferences {
 	static final String GHIDRA_SYMBOL_LOOKUP_ENABLED = "ghidradev.symbolLookupEnabled";
 
 	/**
-	 * Name of CDT project that will be used for symbol lookup. 
+	 * Name of CDT project that will be used for symbol lookup.
 	 */
 	static final String GHIDRA_SYMBOL_LOOKUP_PROJECT_NAME = "ghidradev.symbolLookupProjectName";
 
@@ -41,7 +41,7 @@ public class GhidraSymbolLookupPreferences {
 
 	/**
 	 * Gets whether or not the symbol lookup feature is enabled.
-	 * 
+	 *
 	 * @return True if the symbol lookup feature is enabled; otherwise, false.
 	 */
 	public static boolean isSymbolLookupEnabled() {
@@ -51,7 +51,7 @@ public class GhidraSymbolLookupPreferences {
 
 	/**
 	 * Sets whether or not the symbol lookup feature is enabled.
-	 * 
+	 *
 	 * @param enabled True to enable the symbol lookup feature; false to disable it.
 	 */
 	public static void setSymbolLookupEnabled(boolean enabled) {
@@ -61,7 +61,7 @@ public class GhidraSymbolLookupPreferences {
 
 	/**
 	 * Gets the name of the CDT project that used for symbol lookup.
-	 * 
+	 *
 	 * @return The name of the CDT project used for symbol lookup, or null
 	 *   if one hasn't been set.
 	 */
@@ -76,7 +76,7 @@ public class GhidraSymbolLookupPreferences {
 
 	/**
 	 * Gets the port used for symbol lookup.
-	 * 
+	 *
 	 * @return The port used for symbol lookup.  Will return -1 if the port is not set.
 	 */
 	public static int getSymbolLookupPort() {

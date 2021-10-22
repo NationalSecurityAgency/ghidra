@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +65,7 @@ class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 
 	/**
 	 * Returns true if src can overwrite the target composite based on size
-	 * 
+	 *
 	 * @param src
 	 * @param target
 	 * @return
@@ -77,7 +77,7 @@ class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 	/**
 	 * Determines if the given composite is either empty or filled with default
 	 * values (no defined components).
-	 * 
+	 *
 	 * @param composite composite to check
 	 * @return true if empty or default and false otherwise
 	 */
@@ -231,7 +231,7 @@ class DWARFDataTypeConflictHandler extends DataTypeConflictHandler {
 		if (fullDTC == null) {
 			return null;
 		}
-		
+
 		int fullNumComp = full.getNumComponents();
 		for(int fullOrdinal = fullDTC.getOrdinal(); fullOrdinal < fullNumComp; fullOrdinal++) {
 			fullDTC = full.getComponent(fullOrdinal);

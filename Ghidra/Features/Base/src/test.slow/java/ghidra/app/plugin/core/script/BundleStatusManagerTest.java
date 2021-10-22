@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -116,9 +116,9 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 		final String TEST_SCRIPT_NAME = testName.getMethodName();
 
 		//@formatter:off
-		final String EXPECTED_OUTPUT = 
-				TEST_SCRIPT_NAME+".java> Running...\n" + 
-				TEST_SCRIPT_NAME+".java> Hello from pack2.Klass2\n" + 
+		final String EXPECTED_OUTPUT =
+				TEST_SCRIPT_NAME+".java> Running...\n" +
+				TEST_SCRIPT_NAME+".java> Hello from pack2.Klass2\n" +
 				TEST_SCRIPT_NAME+".java> Finished!\n";
 		//@formatter:on
 		final File dir1 = new File(getTestDirectoryPath() + "/test_scripts1");
@@ -127,54 +127,54 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 			dir1.mkdirs();
 			//@formatter:off
 			Files.writeString(new File(dir1, TEST_SCRIPT_NAME+".java").toPath(),
-				"//@importpackage pack2\n" + 
-				"\n" + 
-				"import pack1.Klass1;\n" + 
-				"import ghidra.app.script.GhidraScript;\n" + 
-				"public class "+TEST_SCRIPT_NAME+" extends GhidraScript {\n" + 
-				"  @Override\n" + 
-				"  protected void run() throws Exception {\n" + 
-				"    new Klass1(this).hello();\n" + 
-				"  }\n" + 
-				"}\n" 
+				"//@importpackage pack2\n" +
+				"\n" +
+				"import pack1.Klass1;\n" +
+				"import ghidra.app.script.GhidraScript;\n" +
+				"public class "+TEST_SCRIPT_NAME+" extends GhidraScript {\n" +
+				"  @Override\n" +
+				"  protected void run() throws Exception {\n" +
+				"    new Klass1(this).hello();\n" +
+				"  }\n" +
+				"}\n"
 			);
 			File pack1 = new File(dir1,"pack1");
 			pack1.mkdirs();
 			Files.writeString(new File(pack1, "Klass1.java").toPath(),
-				"package pack1;\n" + 
-				"\n" + 
-				"import ghidra.app.script.GhidraScript;\n" + 
-				"import pack2.Klass2;\n" + 
-				"\n" + 
-				"public class Klass1 {\n" + 
-				"  GhidraScript script;\n" + 
-				"  public Klass1(GhidraScript script) {\n" + 
-				"    this.script = script;\n" + 
-				"  }\n" + 
-				"\n" + 
-				"  public void hello() {\n" + 
-				"    new Klass2(script).hello();\n" + 
-				"  }\n" + 
+				"package pack1;\n" +
+				"\n" +
+				"import ghidra.app.script.GhidraScript;\n" +
+				"import pack2.Klass2;\n" +
+				"\n" +
+				"public class Klass1 {\n" +
+				"  GhidraScript script;\n" +
+				"  public Klass1(GhidraScript script) {\n" +
+				"    this.script = script;\n" +
+				"  }\n" +
+				"\n" +
+				"  public void hello() {\n" +
+				"    new Klass2(script).hello();\n" +
+				"  }\n" +
 				"}\n"
 			);
 			dir2.mkdirs();
 			File pack2 = new File(dir2,"pack2");
 			pack2.mkdirs();
 			Files.writeString(new File(pack2, "Klass2.java").toPath(),
-				"package pack2;\n" + 
-				"\n" + 
-				"import ghidra.app.script.GhidraScript;\n" + 
-				"import pack2.Klass2;\n" + 
-				"\n" + 
-				"public class Klass2 {\n" + 
-				"  GhidraScript script;\n" + 
-				"  public Klass2(GhidraScript script) {\n" + 
-				"    this.script = script;\n" + 
-				"  }\n" + 
-				"\n" + 
-				"  public void hello() {\n" + 
-				"    script.println(\"Hello from pack2.Klass2\");\n" + 
-				"  }\n" + 
+				"package pack2;\n" +
+				"\n" +
+				"import ghidra.app.script.GhidraScript;\n" +
+				"import pack2.Klass2;\n" +
+				"\n" +
+				"public class Klass2 {\n" +
+				"  GhidraScript script;\n" +
+				"  public Klass2(GhidraScript script) {\n" +
+				"    this.script = script;\n" +
+				"  }\n" +
+				"\n" +
+				"  public void hello() {\n" +
+				"    script.println(\"Hello from pack2.Klass2\");\n" +
+				"  }\n" +
 				"}\n"
 			);
 			//@formatter:on
@@ -321,8 +321,8 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 
 	/**
 	 * Find the view row index in the BundleStatusTableModel of the status with the given bundle path, or
-	 * -1 if it's not found. 
-	 * 
+	 * -1 if it's not found.
+	 *
 	 * @param bundlePath bundle path to find
 	 * @return view row index or -1 if not found
 	 */
@@ -355,9 +355,9 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 
 	/**
 	 * Add a list of bundles with the addBundles dialogue.
-	 * 
+	 *
 	 * <p>All bundles should reside in a common directory.
-	 * 
+	 *
 	 * @param bundleFiles the bundle files
 	 * @throws Exception if waitForUpdateOnChooser fails
 	 */
@@ -401,7 +401,7 @@ public class BundleStatusManagerTest extends AbstractGhidraScriptMgrPluginTest {
 	}
 
 	/**
-	 * A {@link BundleHostListener} to help serialize bundle operations. 
+	 * A {@link BundleHostListener} to help serialize bundle operations.
 	 */
 	private class TestBundleHostListener implements BundleHostListener {
 		CountDownLatch activationLatch;

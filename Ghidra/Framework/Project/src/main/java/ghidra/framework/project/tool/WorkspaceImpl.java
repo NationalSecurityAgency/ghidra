@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,9 +26,9 @@ import ghidra.util.exception.DuplicateNameException;
 
 /**
  * WorkspaceImpl
- * 
+ *
  * Implementation of a Workspace.
- * 
+ *
  */
 class WorkspaceImpl implements Workspace {
 	private final static int TYPICAL_NUM_RUNNING_TOOLS = 5;
@@ -122,7 +122,7 @@ class WorkspaceImpl implements Workspace {
 
 	/**
 	 * saves the object to an XML element
-	 * 
+	 *
 	 * @return an XML element containing the saved state
 	 */
 	public Element saveToXml() {
@@ -144,7 +144,7 @@ class WorkspaceImpl implements Workspace {
 
 	/**
 	 * restores the object from an XML element
-	 * 
+	 *
 	 * @param root an XML element to restore from
 	 */
 	public void restoreFromXml(Element root) {
@@ -199,7 +199,7 @@ class WorkspaceImpl implements Workspace {
 
 //==================================================================================================
 // Package Methods
-//==================================================================================================	
+//==================================================================================================
 
 	void setVisible(boolean state) {
 		isActive = state;

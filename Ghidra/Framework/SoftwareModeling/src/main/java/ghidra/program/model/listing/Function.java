@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,17 +55,17 @@ public interface Function extends Namespace {
 		CUSTOM_STORAGE,
 		/**
 		 * The formal signature parameters and return have been specified without storage.
-		 * Storage will be computed.  Any use of the reserved names 'this' and 
+		 * Storage will be computed.  Any use of the reserved names 'this' and
 		 * '__return_storage_ptr__' will be stripped before considering the injection
 		 * of these parameters.
 		 */
 		DYNAMIC_STORAGE_FORMAL_PARAMS,
 		/**
-		 * 
+		 *
 		 */
 		/**
 		 * All parameters and return have been specified without storage.
-		 * Storage will be computed.  Any use of the reserved names 'this' and 
+		 * Storage will be computed.  Any use of the reserved names 'this' and
 		 * '__return_storage_ptr__' will be stripped before considering the injection
 		 * of these parameters.  In addition, if the calling convention is '__thiscall'
 		 * if the 'this' parameter was not identified by name, the first parameter will
@@ -89,7 +89,7 @@ public interface Function extends Namespace {
 	@Override
 	public String getName();
 
-	/**  
+	/**
 	 * Set the name of this function.
 	 * @param name the new name of the function
 	 * @param source the source of this function name
@@ -183,7 +183,7 @@ public interface Function extends Namespace {
 	public void setReturnType(DataType type, SourceType source) throws InvalidInputException;
 
 	/**
-	 * Get the Function's return type/storage represented by a Parameter 
+	 * Get the Function's return type/storage represented by a Parameter
 	 * object.  The parameter's ordinal value will be equal to
 	 * Parameter.RETURN_ORIDINAL.
 	 * @return return data-type/storage
@@ -192,14 +192,14 @@ public interface Function extends Namespace {
 
 	/**
 	 * Set the return data-type and storage.
-	 * 
-	 * <p>NOTE: The storage and source are ignored if the function does not have custom storage 
+	 *
+	 * <p>NOTE: The storage and source are ignored if the function does not have custom storage
 	 * enabled.
-	 * 
+	 *
 	 * @param type the data type
 	 * @param storage the storage
-	 * @param source source to be combined with the overall signature source. 
-	 * @throws InvalidInputException if data type is not a fixed length or storage is improperly 
+	 * @param source source to be combined with the overall signature source.
+	 * @throws InvalidInputException if data type is not a fixed length or storage is improperly
 	 *         sized
 	 */
 	public void setReturn(DataType type, VariableStorage storage, SourceType source)
@@ -207,10 +207,10 @@ public interface Function extends Namespace {
 
 	/**
 	 * Get the function's effective signature.
-	 * This is equivalent to invoking <code>getSignature(false)</code> where auto-params and 
+	 * This is equivalent to invoking <code>getSignature(false)</code> where auto-params and
 	 * forced-indirect types will be reflected in the signature if present.
-	 * <br><br>WARNING! It is important to note that the calling convention may not be properly retained 
-	 * by the returned signature object if a non-generic calling convention is used by this function as 
+	 * <br><br>WARNING! It is important to note that the calling convention may not be properly retained
+	 * by the returned signature object if a non-generic calling convention is used by this function as
 	 * defined by the program's compiler specification.
 	 * @return the function's signature
 	 */
@@ -218,14 +218,14 @@ public interface Function extends Namespace {
 
 	/**
 	 * Get the function's signature.
-	 * <br><br>WARNING! It is important to note that the calling convention may not be properly 
-	 * retained by the returned signature object if a non-generic calling convention is used by 
+	 * <br><br>WARNING! It is important to note that the calling convention may not be properly
+	 * retained by the returned signature object if a non-generic calling convention is used by
 	 * this function as defined by the program's compiler specification.
-	 * 
-	 * @param formalSignature if true only original raw types will be retained and 
-	 * auto-params discarded (e.g., this, __return_storage_ptr__, etc.) within the returned 
-	 * signature.  If false, the effective signature will be returned where forced indirect 
-	 * and auto-params are reflected in the signature.  This option has no affect if the specified 
+	 *
+	 * @param formalSignature if true only original raw types will be retained and
+	 * auto-params discarded (e.g., this, __return_storage_ptr__, etc.) within the returned
+	 * signature.  If false, the effective signature will be returned where forced indirect
+	 * and auto-params are reflected in the signature.  This option has no affect if the specified
 	 * function has custom storage enabled.
 	 * @return the function's signature
 	 */
@@ -233,11 +233,11 @@ public interface Function extends Namespace {
 
 	/**
 	 * Return a string representation of the function signature
-	 * 
-	 * @param formalSignature if true only original raw return/parameter types will be retained and 
-	 * auto-params discarded (e.g., this, __return_storage_ptr__, etc.) within the returned 
-	 * signature.  If false, the effective signature will be returned where forced indirect 
-	 * and auto-params are reflected in the signature.  This option has no affect if the specified 
+	 *
+	 * @param formalSignature if true only original raw return/parameter types will be retained and
+	 * auto-params discarded (e.g., this, __return_storage_ptr__, etc.) within the returned
+	 * signature.  If false, the effective signature will be returned where forced indirect
+	 * and auto-params are reflected in the signature.  This option has no affect if the specified
 	 * function has custom storage enabled.
 	 * @param includeCallingConvention if true prototype will include call convention
 	 * declaration if known.
@@ -246,14 +246,14 @@ public interface Function extends Namespace {
 	public String getPrototypeString(boolean formalSignature, boolean includeCallingConvention);
 
 	/**
-	 * Returns the source type for the overall signature excluding function name and parameter names 
+	 * Returns the source type for the overall signature excluding function name and parameter names
 	 * whose source is carried by the corresponding symbol.
 	 * @return the overall SourceType of the function signature;
 	 */
 	public SourceType getSignatureSource();
 
 	/**
-	 * Set the source type for the overall signature excluding function name and parameter names 
+	 * Set the source type for the overall signature excluding function name and parameter names
 	 * whose source is carried by the corresponding symbol.
 	 * @param signatureSource function signature source type
 	 */
@@ -270,14 +270,14 @@ public interface Function extends Namespace {
 	/**
 	 * Get the change in the stack pointer resulting from calling
 	 *  this function.
-	 * 
+	 *
 	 * @return int the change in bytes to the stack pointer
 	 */
 	public int getStackPurgeSize();
 
 	/**
 	 * Return all {@link FunctionTag} objects associated with this function.
-	 * 
+	 *
 	 * @return set of tag names
 	 */
 	public Set<FunctionTag> getTags();
@@ -285,7 +285,7 @@ public interface Function extends Namespace {
 	/**
 	 * Adds the tag with the given name to this function; if one does
 	 * not exist, one is created.
-	 * 
+	 *
 	 * @param name the tag name to add
 	 * @return true if the tag was successfully added
 	 */
@@ -293,7 +293,7 @@ public interface Function extends Namespace {
 
 	/**
 	 * Removes the given tag from this function.
-	 * 
+	 *
 	 * @param name the tag name to be removed.
 	 */
 	public void removeTag(String name);
@@ -301,14 +301,14 @@ public interface Function extends Namespace {
 	/**
 	 * Set the change in the stack pointer resulting from calling
 	 * this function.
-	 * 
+	 *
 	 * @param purgeSize the change in bytes to the stack pointer
 	 */
 	public void setStackPurgeSize(int purgeSize);
 
 	/**
 	 * check if stack purge size is valid.
-	 * 
+	 *
 	 * @return true if the stack depth is valid
 	 */
 	public boolean isStackPurgeSizeValid();
@@ -316,10 +316,10 @@ public interface Function extends Namespace {
 	/**
 	 * Adds the given variable to the end of the parameters list.  The variable storage specified
 	 * for the new parameter will be ignored if custom storage mode is not enabled.
-	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)} 
+	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)}
 	 * method may be used to check and remove conflicting variables which already exist in the function.
 	 * @param var the variable to add as a new parameter.
-	 * @param source the source of this parameter which will be applied to the parameter symbol and 
+	 * @param source the source of this parameter which will be applied to the parameter symbol and
 	 * overall function signature source.  If parameter has a null or default name a SourceType of DEFAULT
 	 * will be applied to the parameter symbol.
 	 * @return the Parameter object created.
@@ -328,7 +328,7 @@ public interface Function extends Namespace {
 	 * @throws InvalidInputException if data type is not a fixed length or variable name is invalid.
 	 * @throws VariableSizeException if data type size is too large based upon storage constraints.
 	 * @deprecated The use of this method is discouraged due to the potential injection of auto-parameters
-	 * which are easily overlooked when considering parameter ordinal.  The function signature should generally be 
+	 * which are easily overlooked when considering parameter ordinal.  The function signature should generally be
 	 * adjusted with a single call to {@link #updateFunction(String, Variable, List, FunctionUpdateType, boolean, SourceType)}
 	 */
 	@Deprecated
@@ -338,13 +338,13 @@ public interface Function extends Namespace {
 	/**
 	 * Inserts the given variable into the parameters list.  The variable storage specified
 	 * for the new parameter will be ignored if custom storage mode is not enabled.
-	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)} 
+	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)}
 	 * method may be used to check and remove conflicting variables which already exist in the function.
 	 * @param ordinal the position with the parameters to insert to.  This ordinal must factor in the
 	 * presence of auto-parameters which may be injected dynamically based upon calling convention and
 	 * return data type.  Parameters may not be inserted befor an auto-parameter.
 	 * @param var the variable to add as a new parameter.
-	 * @param source the source of this parameter which will be applied to the parameter symbol and 
+	 * @param source the source of this parameter which will be applied to the parameter symbol and
 	 * overall function signature source.  If parameter has a null or default name a SourceType of DEFAULT
 	 * will be applied to the parameter symbol.
 	 * @return the Parameter object created.
@@ -353,7 +353,7 @@ public interface Function extends Namespace {
 	 * @throws InvalidInputException if data type is not a fixed length or variable name is invalid.
 	 * @throws VariableSizeException if data type size is too large based upon storage constraints.
 	 * @deprecated The use of this method is discouraged due to the potential injection of auto-parameters
-	 * which are easily overlooked when considering parameter ordinal.  The function signature should generally be 
+	 * which are easily overlooked when considering parameter ordinal.  The function signature should generally be
 	 * adjusted with a single call to {@link #updateFunction(String, Variable, List, FunctionUpdateType, boolean, SourceType)}
 	 */
 	@Deprecated
@@ -362,12 +362,12 @@ public interface Function extends Namespace {
 
 	/**
 	 * Replace all current parameters with the given list of parameters.
-	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)} 
+	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)}
 	 * method may be used to check and remove conflicting variables which already exist in the function.
 	 * @param params the new set of parameters for the function.
 	 * @param updateType function update type
 	 * @param force if true any conflicting local parameters will be removed
-	 * @param source the source of these parameters which will be applied to the parameter symbols and 
+	 * @param source the source of these parameters which will be applied to the parameter symbols and
 	 * overall function signature source.  If parameter names are null or a default name a SourceType of DEFAULT
 	 * will be applied to the corresponding parameter symbol.
 	 * @throws DuplicateNameException if another variable(parameter or local) already
@@ -381,11 +381,11 @@ public interface Function extends Namespace {
 
 	/**
 	 * Replace all current parameters with the given list of parameters.
-	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)} 
+	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)}
 	 * method may be used to check and remove conflicting variables which already exist in the function.
 	 * @param updateType function update type
 	 * @param force if true any conflicting local parameters will be removed
-	 * @param source the source of these parameters which will be applied to the parameter symbols and 
+	 * @param source the source of these parameters which will be applied to the parameter symbols and
 	 * overall function signature source.  If parameter names are null or a default name a SourceType of DEFAULT
 	 * will be applied to the corresponding parameter symbol.
 	 * @param params the new parameters for the function.
@@ -401,13 +401,13 @@ public interface Function extends Namespace {
 	/**
 	 * Replace all current parameters with the given list of parameters and optionally change the calling convention
 	 * and function return.
-	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)} 
+	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)}
 	 * method may be used to check and remove conflicting variables which already exist in the function.
 	 * @param callingConvention updated calling convention name or null if no change is required
 	 * @param returnValue return variable or null if no change required
 	 * @param updateType function update type
 	 * @param force if true any conflicting local parameters will be removed
-	 * @param source the source of these parameters which will be applied to the parameter symbols and 
+	 * @param source the source of these parameters which will be applied to the parameter symbols and
 	 * overall function signature source.  If parameter names are null or a default name a SourceType of DEFAULT
 	 * will be applied to the corresponding parameter symbol.
 	 * @param newParams a variable number of parameters for the function.
@@ -424,13 +424,13 @@ public interface Function extends Namespace {
 	/**
 	 * Replace all current parameters with the given list of parameters and optionally change the calling convention
 	 * and function return.
-	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)} 
+	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)}
 	 * method may be used to check and remove conflicting variables which already exist in the function.
 	 * @param callingConvention updated calling convention name or null if no change is required
 	 * @param returnVar return variable or null if no change required
 	 * @param updateType function update type
 	 * @param force if true any conflicting local parameters will be removed
-	 * @param source the source of these parameters which will be applied to the parameter symbols and 
+	 * @param source the source of these parameters which will be applied to the parameter symbols and
 	 * overall function signature source.  If parameter names are null or a default name a SourceType of DEFAULT
 	 * will be applied to the corresponding parameter symbol.
 	 * @param newParams the list of new parameters for the function (required).
@@ -452,10 +452,10 @@ public interface Function extends Namespace {
 	public Parameter getParameter(int ordinal);
 
 	/**
-	 * Remove the specified parameter.  Auto-parameters may not be removed but must be accounted 
+	 * Remove the specified parameter.  Auto-parameters may not be removed but must be accounted
 	 * for in the specified ordinal.
 	 * @param ordinal the index of the parameter to be removed.
-	 * @deprecated The use of this method is discouraged.  The function signature should generally be 
+	 * @deprecated The use of this method is discouraged.  The function signature should generally be
 	 * adjusted with a single call to {@link #updateFunction(String, Variable, List, FunctionUpdateType, boolean, SourceType)}
 	 */
 	@Deprecated
@@ -463,13 +463,13 @@ public interface Function extends Namespace {
 
 	/**
 	 * Move the parameter which occupies the fromOrdinal position to the toOrdinal position.
-	 * Parameters will be renumbered to reflect the new ordering.  Auto-parameters may not be 
+	 * Parameters will be renumbered to reflect the new ordering.  Auto-parameters may not be
 	 * moved but must be accounted for in the specified ordinals.
 	 * @param fromOrdinal from ordinal position using the current numbering
 	 * @param toOrdinal the final position of the specified parameter
 	 * @return parameter which was moved
 	 * @throws InvalidInputException if either ordinal is invalid
-	 * @deprecated The use of this method is discouraged.  The function signature should generally be 
+	 * @deprecated The use of this method is discouraged.  The function signature should generally be
 	 * adjusted with a single call to {@link #updateFunction(String, Variable, List, FunctionUpdateType, boolean, SourceType)}
 	 */
 	@Deprecated
@@ -477,7 +477,7 @@ public interface Function extends Namespace {
 
 	/**
 	 * Gets the total number of parameters for this function.  This number also includes any
-	 * auto-parameters which may have been injected when dynamic parameter storage is used. 
+	 * auto-parameters which may have been injected when dynamic parameter storage is used.
 	 * @return the total number of parameters
 	 */
 	public int getParameterCount();
@@ -531,14 +531,14 @@ public interface Function extends Namespace {
 
 	/**
 	 * Adds a local variable to the function.
-	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)} 
+	 * The {@link VariableUtilities#checkVariableConflict(Function, Variable, VariableStorage, boolean)}
 	 * method may be used to check and remove conflicting variables which already exist in the function.
 	 * @param var the variable to add.
 	 * @param source the source of this local variable
 	 * @return the Variable added to the program.
 	 * @throws DuplicateNameException if another local variable or parameter already
 	 * has that name.
-	 * @throws InvalidInputException if there is an error or conflict when resolving the variable 
+	 * @throws InvalidInputException if there is an error or conflict when resolving the variable
 	 */
 	public Variable addLocalVariable(Variable var, SourceType source)
 			throws DuplicateNameException, InvalidInputException;
@@ -566,8 +566,8 @@ public interface Function extends Namespace {
 
 	/**
 	 * Set whether parameters can be passed as a VarArg (variable argument list)
-	 * 
-	 * @param hasVarArgs true if this function has a variable argument list 
+	 *
+	 * @param hasVarArgs true if this function has a variable argument list
 	 *        (e.g.,  printf(fmt, ...)).
 	 */
 	public void setVarArgs(boolean hasVarArgs);
@@ -579,7 +579,7 @@ public interface Function extends Namespace {
 
 	/**
 	 * Sets whether or not this function is inline.
-	 * 
+	 *
 	 * @param isInline true if this is an inline function.
 	 */
 	public void setInline(boolean isInline);
@@ -591,7 +591,7 @@ public interface Function extends Namespace {
 
 	/**
 	 * Set whether or not this function has a return.
-	 * 
+	 *
 	 * @param hasNoReturn true if this function does not return.
 	 */
 	public void setNoReturn(boolean hasNoReturn);
@@ -609,18 +609,18 @@ public interface Function extends Namespace {
 
 	/**
 	 * Gets the calling convention prototype model for this function.
-	 * 
+	 *
 	 * @return the prototype model of the function's current calling convention or null.
 	 */
 	public PrototypeModel getCallingConvention();
 
 	/**
 	 * Gets the calling convention's name for this function.
-	 * 
-	 * @return the name of the calling convention 
-	 * or Function.DEFAULT_CALLING_CONVENTION_STRING 
+	 *
+	 * @return the name of the calling convention
+	 * or Function.DEFAULT_CALLING_CONVENTION_STRING
 	 * (i.e. "default", if the calling convention has been set to the default for this function)
-	 * or Function.UNKNOWN_CALLING_CONVENTION_STRING 
+	 * or Function.UNKNOWN_CALLING_CONVENTION_STRING
 	 * (i.e. "unknown", if no calling convention is specified for this function).
 	 */
 	public String getCallingConventionName();
@@ -628,7 +628,7 @@ public interface Function extends Namespace {
 	/**
 	 * Gets the name of the default calling convention.
 	 * <br>Note: The name in the PrototypeModel of the default calling convention may be null.
-	 * 
+	 *
 	 * @return the name of the default calling convention.
 	 */
 	public String getDefaultCallingConventionName();
@@ -636,10 +636,10 @@ public interface Function extends Namespace {
 	/**
 	 * Sets the calling convention for this function to the named calling convention.
 	 * @param name the name of the calling convention. "unknown" and "default" are reserved names
-	 * that can also be used here. 
-	 * <br>Null or Function.UNKNOWN_CALLING_CONVENTION_STRING sets this function to not have a 
+	 * that can also be used here.
+	 * <br>Null or Function.UNKNOWN_CALLING_CONVENTION_STRING sets this function to not have a
 	 * calling convention (i.e. unknown).
-	 * <br>Function.DEFAULT_CALLING_CONVENTION_STRING sets this function to use the default calling 
+	 * <br>Function.DEFAULT_CALLING_CONVENTION_STRING sets this function to use the default calling
 	 * convention. (i.e. default)
 	 * @throws InvalidInputException if the specified name is not a recognized calling convention name.
 	 */
@@ -653,7 +653,7 @@ public interface Function extends Namespace {
 
 	/**
 	 * If this function is a Thunk, this method returns the referenced function.
-	 * @param recursive if true and the thunked-function is a thunk itself, the returned 
+	 * @param recursive if true and the thunked-function is a thunk itself, the returned
 	 * thunked-function will be the final thunked-function which will never be a thunk.
 	 * @return function referenced by this Thunk Function or null if this is not a Thunk
 	 * function
@@ -668,7 +668,7 @@ public interface Function extends Namespace {
 
 	/**
 	 * Set the currently Thunked Function or null to convert to a normal function
-	 * @param thunkedFunction the thunked function or null to convert this thunked function to a 
+	 * @param thunkedFunction the thunked function or null to convert this thunked function to a
 	 * normal function.
 	 * @throws IllegalArgumentException if an attempt is made to thunk a function or another
 	 * thunk which would result in a loop back to this function or if this function is an external
@@ -689,8 +689,8 @@ public interface Function extends Namespace {
 
 	/**
 	 * Returns a set of functions that call this function.
-	 * 
-	 * @param monitor The monitor that is used to report progress and allow for canceling of 
+	 *
+	 * @param monitor The monitor that is used to report progress and allow for canceling of
 	 *                the search.  May be null.
 	 * @return a set of functions that call this function.
 	 */
@@ -698,8 +698,8 @@ public interface Function extends Namespace {
 
 	/**
 	 * Returns a set of functions that this function calls.
-	 * 
-	 * @param monitor The monitor that is used to report progress and allow for canceling of 
+	 *
+	 * @param monitor The monitor that is used to report progress and allow for canceling of
 	 *                the search.  May be null.
 	 * @return a set of functions that this function calls.
 	 */
@@ -708,13 +708,13 @@ public interface Function extends Namespace {
 	/**
 	 * Changes all local user-defined labels for this function to global symbols. If a
 	 * global code symbol already exists with the same name at the symbols address the
-	 * symbol will be removed. 
+	 * symbol will be removed.
 	 */
 	public void promoteLocalUserLabelsToGlobal();
 
 	/**
 	 * Determine if this function object has been deleted.  NOTE: the function could be
-	 * deleted at anytime due to asynchronous activity.  
+	 * deleted at anytime due to asynchronous activity.
 	 * @return true if function has been deleted, false if not.
 	 */
 	public boolean isDeleted();

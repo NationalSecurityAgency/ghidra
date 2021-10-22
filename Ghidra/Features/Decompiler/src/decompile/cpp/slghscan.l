@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,7 +54,7 @@ void check_to_endofline(istream &s)
   s >> ws;
   if (!s.eof())
     if (s.peek() != '#')
-      preproc_error("Extra characters in preprocessor directive"); 
+      preproc_error("Extra characters in preprocessor directive");
 }
 
 string read_identifier(istream &s)
@@ -78,7 +78,7 @@ void preprocess_string(istream &s,string &res)
 
 {  // Grab string surrounded by double quotes from stream or call preprocess_error
   int4 val;
-  
+
   s >> ws;   // Skip any whitespace
   val = s.get();
   if (val != '\"')
@@ -100,7 +100,7 @@ int4 read_defined_operator(istream &s)
    // Read macro name used as input, return 1 if it is defined
   char tok = ' ';
   string macroname;
-  
+
   s >> ws >> tok;
   if (tok != '(')
     preproc_error("Badly formed \"defined\" operator");
@@ -144,7 +144,7 @@ int4 read_boolean_clause(istream &s)
   comp += tok;
   s >> tok;
   comp += tok;
-    
+
   s >> ws;
   if (s.peek()=='\"')            // Read right-hand side string
     preprocess_string(s,rhs);
@@ -662,7 +662,7 @@ with   { BEGIN(pattern); withsection = 1; slgh->calcContextLayout(); return WITH
 
 <<EOF>> { yy_delete_buffer( YY_CURRENT_BUFFER );
           if (filebuffers.empty())
-            yyterminate(); 
+            yyterminate();
           yy_switch_to_buffer( filebuffers.back().lastbuffer );
 	  FILE *curfile = filebuffers.back().file;
 	  if (curfile != (FILE *)0)

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,7 +35,7 @@ public abstract class AbstractPatternTextFilter implements TextFilter {
 
 	/**
 	 * Subclasses implement this method for their usage of the given pattern (find vs. matches)
-	 * 
+	 *
 	 * @param text the text to check against the pattern
 	 * @param pattern the pattern used to match the text
 	 * @return true if there is a match
@@ -121,7 +121,7 @@ public abstract class AbstractPatternTextFilter implements TextFilter {
 	@Override
 	public String toString() {
 		//@formatter:off
-		return "{\n" + 
+		return "{\n" +
 			"\tfilter: " + filterText + ",\n" +
 			"\tpattern: " + getFilterPattern() + ",\n" +
 		"}";

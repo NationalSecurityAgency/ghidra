@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,13 +28,13 @@ import ghidra.graph.viewer.GraphViewer;
 import util.CollectionUtils;
 
 /**
- * A container to house all newly added vertices (those being arranged) and the sources, or 
+ * A container to house all newly added vertices (those being arranged) and the sources, or
  * 'from' vertices, of the new vertices.
- *   
+ *
  * <P>This offers exiting vertices and new vertices pre-sorted by position in the graph in
- * order to minimize edge crossings.  Specifically, the new vertices will be sorted 
+ * order to minimize edge crossings.  Specifically, the new vertices will be sorted
  * by the level of the parent and then the x-value of the parent so that the
- * immediate parent level will be preferred, with the x-value dictating where to place 
+ * immediate parent level will be preferred, with the x-value dictating where to place
  * the child so that we can minimize edge crossings.
  */
 public class FcgExpandingVertexCollection {
@@ -57,16 +57,16 @@ public class FcgExpandingVertexCollection {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param sources all vertices that are the source of the expansion.  This will be either a
 	 *        single vertex, clicked by the user, or all vertices of a source level being expanded
-	 * @param parentLevel a.k.a, the source vertex level for the vertex that is the source of the 
+	 * @param parentLevel a.k.a, the source vertex level for the vertex that is the source of the
 	 * 		  new vertices
 	 * @param expandingLevel the level of the new vertices
 	 * @param newVertices the expanding vertices; those that are emanating from the parent
 	 * @param newEdges the new edges being added as a result of adding the new vertices
 	 * @param allParentLevelEdges all edges from all siblings of the parent vertex
-	 * @param isIncoming true if the newly added vertices are callers of the source vertex; 
+	 * @param isIncoming true if the newly added vertices are callers of the source vertex;
 	 * 		  false if the newly added vertices are called by the source vertex
 	 * @param viewer the viewer that is painting the graph.  This is needed to sort by layout
 	 *        position
@@ -85,7 +85,7 @@ public class FcgExpandingVertexCollection {
 		this.expandingLevel = expandingLevel;
 
 		// we need to use the parent edges to generate the siblings of the newly
-		// added vertices, as well as to sort the new vertices amongst their siblings		
+		// added vertices, as well as to sort the new vertices amongst their siblings
 		for (FcgEdge e : allParentLevelEdges) {
 
 			FcgVertex start = e.getStart();
@@ -136,7 +136,7 @@ public class FcgExpandingVertexCollection {
 
 	/**
 	 * Returns all vertices at the given level
-	 * 
+	 *
 	 * @param level the level to filter on
 	 * @return the vertices
 	 */
@@ -145,12 +145,12 @@ public class FcgExpandingVertexCollection {
 		// note: these are sorted, since they are housed in a TreeMap
 		Set<FcgVertex> existingVertices = newVerticesBySource.keySet();
 
-		//@formatter:off		
+		//@formatter:off
 		List<FcgVertex> verticesAtLevel = existingVertices
 			.stream()
 			.filter(v -> v.getLevel().equals(level))
 			.collect(Collectors.toList())
-			;					
+			;
 		//@formatter:on
 
 		return verticesAtLevel;
@@ -158,15 +158,15 @@ public class FcgExpandingVertexCollection {
 
 	/**
 	 * Returns all vertices that have just been added to the graph; those now being arranged
-	 * 
-	 * @return all vertices that have just been added to the graph; those now being arranged 
+	 *
+	 * @return all vertices that have just been added to the graph; those now being arranged
 	 */
 	public List<FcgVertex> getAllVerticesAtNewLevel() {
 
 		// note: these are sorted, since they are housed in a TreeMap
 		Set<FcgVertex> existingVertices = newVerticesBySource.keySet();
 
-		//@formatter:off		
+		//@formatter:off
 		LinkedHashSet<FcgVertex> sortedVertices = existingVertices
 			.stream()
 			.map(v -> newVerticesBySource.get(v))
@@ -212,7 +212,7 @@ public class FcgExpandingVertexCollection {
 	}
 
 	/**
-	 * Sets indirect edges--those edges that are not a direct link between the source 
+	 * Sets indirect edges--those edges that are not a direct link between the source
 	 * vertices and the newly added vertices
 	 * @param indirectEdges the edges
 	 */
@@ -247,7 +247,7 @@ public class FcgExpandingVertexCollection {
 	/**
 	 * Returns true if the newly added vertices are callers of the source vertex; false if
 	 * the newly added vertices are called by the source vertex
-	 * 
+	 *
 	 * @return true if the new vertices are incoming calls
 	 */
 	public boolean isIncoming() {

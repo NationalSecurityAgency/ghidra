@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -105,7 +105,7 @@ public class FunctionReachabilityTableModel
 					       should be used to generate calling information instead
 					 TODO
 					 TODO
-		 
+
 		 */
 
 		GDirectedGraph<FRVertex, FREdge> graph = GraphFactory.createDirectedGraph();
@@ -217,7 +217,7 @@ public class FunctionReachabilityTableModel
 
 	@Override
 	public ProgramSelection getProgramSelection(int[] rows) {
-		// TODO I don't think this makes sense for a table with multiple address columns 
+		// TODO I don't think this makes sense for a table with multiple address columns
 		return null;
 	}
 

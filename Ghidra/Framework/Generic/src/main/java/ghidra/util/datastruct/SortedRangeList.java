@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +19,8 @@ package ghidra.util.datastruct;
 import java.util.*;
 
 /**
- * Provides a list of integer ranges that are maintained in sorted order. 
- * When a range is added any ranges that overlap or are adjacent to one another 
+ * Provides a list of integer ranges that are maintained in sorted order.
+ * When a range is added any ranges that overlap or are adjacent to one another
  * will coalesce into a single range.
  */
 public class SortedRangeList implements Iterable<Range> {
@@ -34,7 +34,7 @@ public class SortedRangeList implements Iterable<Range> {
 	}
 
 	/**
-	 * Creates a new sorted range list with ranges equivalent to those in the 
+	 * Creates a new sorted range list with ranges equivalent to those in the
 	 * specified list.
 	 * @param list the sorted range list to make an equivalent copy of.
 	 */
@@ -90,7 +90,7 @@ public class SortedRangeList implements Iterable<Range> {
 
 	/**
 	 * Returns an iterator over all the ranges in this list that iterates in the direction specified.
-	 * @param forward true indicates to iterate forward from minimum to maximum range. 
+	 * @param forward true indicates to iterate forward from minimum to maximum range.
 	 * false indicates backward iteration form maximum to minimum.
 	 */
 	public Iterator<Range> getRanges(boolean forward) {
@@ -131,7 +131,7 @@ public class SortedRangeList implements Iterable<Range> {
 	}
 
 	/**
-	 * Removes the indicated range of values from the list. This will remove 
+	 * Removes the indicated range of values from the list. This will remove
 	 * any ranges or portion of ranges that overlap the indicated range.
 	 * @param min the minimum value for the range to remove.
 	 * @param max the maximum value for the range to remove.

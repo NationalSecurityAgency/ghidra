@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,7 +112,7 @@ public abstract class Task implements MonitoredRunnable {
 	 * When an object implementing interface <code>Runnable</code> is used to create a thread,
 	 * starting the thread causes the object's <code>run</code> method to be called in that
 	 * separately executing thread.
-	 * 
+	 *
 	 * @param monitor the task monitor
 	*/
 	@Override
@@ -176,13 +176,13 @@ public abstract class Task implements MonitoredRunnable {
 
 	/**
 	 * This is the method that will be called to do the work
-	 * 
+	 *
 	 * <P>Note: The run(TaskMonitor) method should not make any calls directly
 	 * on Swing components, as these calls are not thread safe. Place Swing
 	 * calls in a Runnable, then call {@link Swing#runLater(Runnable)} or
 	 * {@link Swing#runNow(Runnable)}to schedule the Runnable inside of
 	 * the AWT Event Thread.
-	 * 
+	 *
 	 * @param monitor The TaskMonitor that will monitor the executing Task
 	 * @throws CancelledException if the task is cancelled.  Subclasses can trigger this exception
 	 *                            by calling {@link TaskMonitor#checkCanceled()}.  This allows

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ import jdk.javadoc.doclet.*;
 /**
  * Doclet that outputs javadoc in JSON format (instead of HTML).  Things like Python can then
  * read in the JSON and easily access all of the javadoc elements.
- * 
+ *
  * To run: gradle zipJavadocs
  */
 public class JsonDoclet implements Doclet {
@@ -133,7 +133,7 @@ public class JsonDoclet implements Doclet {
 
 	/**
 	 * Converts a class {@link TypeElement} to a {@link JsonObject}.
-	 * 
+	 *
 	 * @param classElement the class {@link TypeElement} to convert
 	 * @return A json object that represents the class.
 	 */
@@ -145,8 +145,8 @@ public class JsonDoclet implements Doclet {
 	}
 
 	/**
-	 * Adds the high-level class attributes to the given json object. 
-	
+	 * Adds the high-level class attributes to the given json object.
+
 	 * @param classElement the class element to parse
 	 * @param classObj the json object to populate
 	 */
@@ -162,7 +162,7 @@ public class JsonDoclet implements Doclet {
 	/**
 	 * Parses the given {@link TypeElement} for any declared interfaces and adds them to the
 	 * json object.
-	 * 
+	 *
 	 * @param typeElement the {@link TypeElement} to parse
 	 * @param obj the json object to populate
 	 */
@@ -186,7 +186,7 @@ public class JsonDoclet implements Doclet {
 	/**
 	 * Parses the given {@link TypeElement} for any declared <i>extends</i> relationship and
 	 * adds it to the json object
-	 * 
+	 *
 	 * @param typeElement the {@link TypeElement} to parse
 	 * @param obj the json object to populate
 	 */
@@ -202,7 +202,7 @@ public class JsonDoclet implements Doclet {
 
 	/**
 	 * Extracts javadoc information for all fields and methods in the given class.
-	 * 
+	 *
 	 * @param classElement the class to parse
 	 * @param classObj the json object to populate
 	 */
@@ -264,9 +264,9 @@ public class JsonDoclet implements Doclet {
 	}
 
 	/**
-	 * Parses the given {@link ExecutableElement} for any associated parameters and adds them to 
+	 * Parses the given {@link ExecutableElement} for any associated parameters and adds them to
 	 * the json object.
-	 * 
+	 *
 	 * @param execElement the element to parse
 	 * @param obj the json object
 	 */
@@ -300,7 +300,7 @@ public class JsonDoclet implements Doclet {
 	/**
 	 * Parses the given {@link ExecutableElement} for any <code>return</code> information
 	 * and adds it to the json object.
-	 * 
+	 *
 	 * @param execElement the element to parse
 	 * @param obj the json object
 	 */
@@ -325,7 +325,7 @@ public class JsonDoclet implements Doclet {
 	/**
 	 * Parses the given {@link ExecutableElement} for thrown exceptions and adds them to
 	 * the json object.
-	 * 
+	 *
 	 * @param execElement the element to parse
 	 * @param obj the json object
 	 */
@@ -358,7 +358,7 @@ public class JsonDoclet implements Doclet {
 
 	/**
 	 * Gets the long type name of the given {@link TypeMirror type}.
-	 * 
+	 *
 	 * @param type The type to get the long type name of.
 	 * @return The long type name of the given {@link TypeMirror type}.
 	 */
@@ -368,7 +368,7 @@ public class JsonDoclet implements Doclet {
 
 	/**
 	 * Gets the short type name of the given {@link TypeMirror type}.
-	 * 
+	 *
 	 * @param type The type to get the short type name of.
 	 * @return The short type name of the given {@link TypeMirror type}.
 	 */
@@ -383,7 +383,7 @@ public class JsonDoclet implements Doclet {
 
 	/**
 	 * Gets the comment from the given {@link DocTree}.
-	 * 
+	 *
 	 * @param docTree The {@link DocTree} to get the comment from.
 	 * @return The comment from the given {@link DocTree}.
 	 */
@@ -407,9 +407,9 @@ public class JsonDoclet implements Doclet {
 	}
 
 	/**
-	 * Gets the comment from the given {@link List} of  {@link DocTree}s. Each list element 
+	 * Gets the comment from the given {@link List} of  {@link DocTree}s. Each list element
 	 * represents a line.  The final comment is simply all the lines concatenated.
-	 * 
+	 *
 	 * @param docTreeList The {@link DocTree} {@link List} to get the comment from.
 	 * @return The comment from the given {@link DocTree} {@link List}.
 	 */
@@ -419,7 +419,7 @@ public class JsonDoclet implements Doclet {
 
 	/**
 	 * Gets the comment from the given {@link DocCommentTree}.
-	 * 
+	 *
 	 * @param docCommentTree The {@link DocCommentTree} to get the comment from.
 	 * @return The comment from the given {DocCommentTree DocTree}.
 	 */
@@ -432,7 +432,7 @@ public class JsonDoclet implements Doclet {
 
 	/**
 	 * Gets the full unprocessed javadoc from the given {@link DocCommentTree}.
-	 * 
+	 *
 	 * @param docCommentTree The {@link DocCommentTree} to get the javadoc from.
 	 * @return the full unprocessed javadoc from the given {@link DocCommentTree}.
 	 */
@@ -445,7 +445,7 @@ public class JsonDoclet implements Doclet {
 
 	/**
 	 * Writes the given json to a filename based on the given qualified class name.
-	 * 
+	 *
 	 * @param json The json to write.
 	 * @param qualifiedName The qualified class name.  This name will get converted into a directory
 	 *   structure.

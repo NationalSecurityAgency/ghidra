@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -194,7 +194,7 @@ public class FileSystemFactoryMgr {
 	/**
 	 * Returns true if the specified file contains a supported {@link GFileSystem}.
 	 * <p>
-	 * @param byteProvider 
+	 * @param byteProvider
 	 * @param fsService reference to the {@link FileSystemService} instance.
 	 * @param monitor {@link TaskMonitor} to use for canceling and updating progress.
 	 * @return {@code true} if the file seems to contain a filesystem, {@code false} if it does not.

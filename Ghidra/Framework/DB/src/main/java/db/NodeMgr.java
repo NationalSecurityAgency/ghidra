@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,29 +23,29 @@ import db.buffers.DataBuffer;
 import ghidra.util.exception.AssertException;
 
 /**
- * The <code>NodeMgr</code> manages all database nodes associated with 
+ * The <code>NodeMgr</code> manages all database nodes associated with
  * a table.  Each table should use a separate instance of a NodeMgr.
- * The NodeMgr is resposible for interacting with the BufferMgr performing 
+ * The NodeMgr is resposible for interacting with the BufferMgr performing
  * buffer allocations, retrievals and releases as required.   The NodeMgr
  * also performs hard caching of all buffers until the releaseNodes
- * method is invoked. 
- * 
+ * method is invoked.
+ *
  * Legacy Issues (prior to Ghidra 9.2):
  * <ul>
- * <li>Legacy {@link Table} implementation incorrectly employed {@link VarKeyNode} 
- *   storage with primitive fixed-length primary keys other than {@link LongField} 
+ * <li>Legacy {@link Table} implementation incorrectly employed {@link VarKeyNode}
+ *   storage with primitive fixed-length primary keys other than {@link LongField}
  *   (e.g., {@link ByteField}).  With improved support for fixed-length keys
- *   legacy data poses a backward capatibility issue.  This has been 
+ *   legacy data poses a backward capatibility issue.  This has been
  *   addressed through the use of a hack whereby a {@link Schema} is forced to
- *   treat the primary key as variable length 
+ *   treat the primary key as variable length
  *   (see {@link Schema#forceUseOfVariableLengthKeyNodes()}.  The detection
  *   for this rare condition is provided by {@link TableRecord} during
  *   schema instantiation.</li>
- *   
- * <li>Legacy {@link Table} implementation incorrectly employed variable 
- *   length storage when both primary key and indexed fields were 
- *   LongField types.  This issue has been addressed by treating the 
- *   {@link Field#LEGACY_INDEX_LONG_TYPE} (0x8) as variable-length (see 
+ *
+ * <li>Legacy {@link Table} implementation incorrectly employed variable
+ *   length storage when both primary key and indexed fields were
+ *   LongField types.  This issue has been addressed by treating the
+ *   {@link Field#LEGACY_INDEX_LONG_TYPE} (0x8) as variable-length (see
  *   implementation {@link LegacyIndexField}).</li>
  * </ul>
  */

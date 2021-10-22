@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -323,7 +323,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	/**
 	 * Check if this is the main dynamic listing.
-	 * 
+	 *
 	 * <p>
 	 * The method {@link #isConnected()} is not quite the same as this, although the concepts are a
 	 * little conflated, since before the debugger, no one else presented a listing that could claim
@@ -333,7 +333,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	 * listing presented by this plugin, and so it has certain unique features. Calling
 	 * {@link DebuggerListingPlugin#getConnectedProvider()} will return the main dynamic listing,
 	 * despite it not really being "connected."
-	 * 
+	 *
 	 * @return true if this is the main listing for the plugin.
 	 */
 	public boolean isMainListing() {
@@ -665,7 +665,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 
 	/**
 	 * {@inheritDoc}
-	 * 
+	 *
 	 * <p>
 	 * The name isn't descriptive because this overrides a callback for {@link ChangeListener},
 	 * which applies to many things in general. This one is for changes in the listing model's

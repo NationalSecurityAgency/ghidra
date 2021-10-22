@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,26 +26,26 @@ import ghidra.program.util.ProgramLocation;
  * This table field displays the FromAddress for the reference or possible reference address pair
  * associated with a row in the table.
  */
-public class ReferenceFromAddressTableColumn 
+public class ReferenceFromAddressTableColumn
         extends ProgramLocationTableColumnExtensionPoint<ReferenceAddressPair, Address> {
-	
+
 	@Override
     public String getColumnDisplayName(Settings settings) {
         return getColumnName();
     }
-	
+
 	@Override
     public String getColumnName() {
 		return "From Location";
 	}
-	
+
 	@Override
-    public Address getValue(ReferenceAddressPair rowObject, Settings settings, Program pgm, 
+    public Address getValue(ReferenceAddressPair rowObject, Settings settings, Program pgm,
 	        ServiceProvider serviceProvider) throws IllegalArgumentException {
 		return rowObject.getSource();
 	}
-	
-	public ProgramLocation getProgramLocation(ReferenceAddressPair rowObject, Settings settings, 
+
+	public ProgramLocation getProgramLocation(ReferenceAddressPair rowObject, Settings settings,
 	        Program program, ServiceProvider serviceProvider) {
 		Address address = getValue(rowObject, null, program, serviceProvider);
 		return new ProgramLocation(program, address);

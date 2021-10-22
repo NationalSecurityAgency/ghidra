@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,12 +25,12 @@ public class PdbNamespaceUtils {
 
 	/**
 	 * Fixes {@link SymbolPath} name, eliminating invalid characters and making the terminal
-	 *  name of the namespace unique by the index number when necessary.  For example, 
+	 *  name of the namespace unique by the index number when necessary.  For example,
 	 *  anonymous and unnamed components such as {@code <unnamed-tag>} and {@code <unnamed-type>}
 	 *  are fixed up. Example:
 	 * <pre>
 	 *   {@code _SYSTEM_INFO::<unnamed-tag>}
-	 * </pre> 
+	 * </pre>
 	 * @param symbolPath the source {@link SymbolPath}
 	 * @param index the index number used be used as part of a unique tag name.
 	 * @return the resulting {@link SymbolPath}
@@ -56,7 +56,7 @@ public class PdbNamespaceUtils {
 	 * NOTE: This could be an issue when there are multiple unnamed items, such as in, for example:
 	 * <pre>
 	 *   {@code _SYSTEM_INFO::<unnamed-tag>::<unnamed-tag>}
-	 * </pre> 
+	 * </pre>
 	 * @param symbolPath the source {@link SymbolPath}
 	 * @param index the index number used be used as part of a unique tag name.
 	 * @return the resulting {@link SymbolPath}

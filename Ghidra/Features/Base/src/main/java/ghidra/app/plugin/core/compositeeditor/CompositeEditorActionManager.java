@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ public class CompositeEditorActionManager {
 
 	/**
 	 * Constructor
-	 * <BR> NOTE: After constructing a manager, you must call setEditorModel() 
+	 * <BR> NOTE: After constructing a manager, you must call setEditorModel()
 	 * and setParentComponent() for the actions to work.
 	 * @param provider the provider that owns this composite editor action manager
 	 * favorites and cycle groups.
@@ -93,8 +93,8 @@ public class CompositeEditorActionManager {
 	}
 
 	/**
-	 * Gets the composite editor actions that are currently added to this 
-	 * action manager. The favorites and cycle groups actions that the 
+	 * Gets the composite editor actions that are currently added to this
+	 * action manager. The favorites and cycle groups actions that the
 	 * manager created by default are not part of the actions returned.
 	 * @return the composite editor actions
 	 */
@@ -119,7 +119,7 @@ public class CompositeEditorActionManager {
 	}
 
 	/**
-	 * Gets all composite editor actions that are currently added to this 
+	 * Gets all composite editor actions that are currently added to this
 	 * action manager. This includes the favorites and cycle groups actions.
 	 * @return all composite editor actions
 	 */
@@ -181,7 +181,7 @@ public class CompositeEditorActionManager {
 	/**
 	 * Sets the composite editor actions to those in the array.
 	 * The manager will still also manage the favorites and cycle group actions.
-	 * Any previously set composite editor actions are removed before 
+	 * Any previously set composite editor actions are removed before
 	 * setting the new actions.
 	 * @param actions the composite editor actions.
 	 */

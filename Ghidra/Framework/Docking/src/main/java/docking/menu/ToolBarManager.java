@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -145,7 +145,7 @@ public class ToolBarManager {
 	}
 
 	private void insertSeparator(JComponent toolBarComponent) {
-		toolBarComponent.add(Box.createHorizontalStrut(5));  // add space before separator                      
+		toolBarComponent.add(Box.createHorizontalStrut(5));  // add space before separator
 		toolBarComponent.add(DockingUtils.createToolbarSeparator());
 		toolBarComponent.add(Box.createHorizontalStrut(5));  // add space after separator
 	}
@@ -217,7 +217,7 @@ public class ToolBarManager {
 				return result;
 			}
 
-			// when the group is the same, sort by the owner (this results in 
+			// when the group is the same, sort by the owner (this results in
 			// insertion-based sorting for actions that come from the same owner)
 			String name1 = action1.getOwner();
 			String name2 = action2.getOwner();

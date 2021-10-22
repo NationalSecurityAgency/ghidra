@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,7 +40,7 @@ package ghidra.util.task;
  *
  * <P> This class is safe to use in a multi-threaded environment.   State variables are guarded
  * via synchronization on this object.   The Swing thread is used to perform updates, which
- * guarantees that only one update will happen at a time.  
+ * guarantees that only one update will happen at a time.
  */
 public class SwingUpdateManager extends AbstractSwingUpdateManager {
 
@@ -59,7 +59,7 @@ public class SwingUpdateManager extends AbstractSwingUpdateManager {
 	/**
 	 * Constructs a new SwingUpdateManager
 	 * <p>
-	 * <b>Note: </b>The <code>minDelay</code> will always be at least {@link #MIN_DELAY_FLOOR}, 
+	 * <b>Note: </b>The <code>minDelay</code> will always be at least {@link #MIN_DELAY_FLOOR},
 	 * regardless of the given value.
 	 *
 	 * @param minDelay the minimum number of milliseconds to wait once the event stream stops
@@ -73,7 +73,7 @@ public class SwingUpdateManager extends AbstractSwingUpdateManager {
 	/**
 	 * Constructs a new SwingUpdateManager
 	 * <p>
-	 * <b>Note: </b>The <code>minDelay</code> will always be at least {@link #MIN_DELAY_FLOOR}, 
+	 * <b>Note: </b>The <code>minDelay</code> will always be at least {@link #MIN_DELAY_FLOOR},
 	 * regardless of the given value.
 	 *
 	 * @param minDelay the minimum number of milliseconds to wait once the event stream stops

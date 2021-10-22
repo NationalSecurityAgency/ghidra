@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,7 @@
  */
 /*
  * OperandReferenceAnalyzer.java
- * 
+ *
  * Created on Aug 5, 2003
  */
 package ghidra.app.plugin.core.analysis;
@@ -339,7 +339,7 @@ public class ScalarOperandAnalyzer extends AbstractAnalyzer {
 
 	/** Check if an address that is a possible reference falls within a
 	 *    defined function, pointing at a symbol
-	 * 
+	 *
 	 * @param program
 	 * @param addr
 	 */

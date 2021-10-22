@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,7 @@ import ghidra.framework.model.DomainFile;
 import ghidra.framework.model.DomainFolder;
 
 /**
- * Common methods appropriate for both the {@link FrontEndProjectTreeContext} and the 
+ * Common methods appropriate for both the {@link FrontEndProjectTreeContext} and the
  * {@link DialogProjectTreeContext}.  The project tree actions require that the contexts be
  * separate even though they need many of the same methods. By extracting the methods to this
  * interface, the contexts can be kept separate, but can share action code.

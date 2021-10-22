@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -144,7 +144,7 @@ public class NumericUtilitiesTest {
 
 	/*
 	 * HELPER ROUTINE:
-	 * Get the result object of formatting a given number in a given radix as either 
+	 * Get the result object of formatting a given number in a given radix as either
 	 * signed or unsigned
 	 */
 	private static FormatNumberResult formatNumber(long number, int radix,
@@ -179,17 +179,17 @@ public class NumericUtilitiesTest {
 
 	/*
 	 * HELPER ROUTINE:
-	 * For the given number value, compute the signed and unsigned renderings in the supported 
-	 * integer bases, and compare against the supplied values. 
+	 * For the given number value, compute the signed and unsigned renderings in the supported
+	 * integer bases, and compare against the supplied values.
 	 */
 	private void computeAndCheckNumberRenderings(long number, String[] expectedSignedResults,
 			String[] expectedUnsignedResults) {
 		assertEquals(expectedSignedResults.length, expectedUnsignedResults.length);
 
-		/* 
+		/*
 		 * 1) Get the renderings of the number (signed and unsigned, in various radixes) as a list
 		 * 2) Group the results by Signed/Unsigned into a map of mode::result-list
-		 * 3) Sort the result-list of each group by the rendered radix 
+		 * 3) Sort the result-list of each group by the rendered radix
 		 */
 		Map<SignednessFormatMode, List<FormatNumberResult>> results =
 			formatNumberAsSignedAndUnsignedInRadixes(number).stream().collect(

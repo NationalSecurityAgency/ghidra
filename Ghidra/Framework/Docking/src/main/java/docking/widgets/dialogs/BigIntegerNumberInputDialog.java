@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.math.BigInteger;
  * <P>DialogComponentProvider that provides information to create a modal dialog
  * to prompt for a number larger than an {@code int} or {@code long} to be input by the user.</P>
  *
- * <P>Note: if you intend to only work with number values less than {@link Integer#MAX_VALUE}, 
+ * <P>Note: if you intend to only work with number values less than {@link Integer#MAX_VALUE},
  * then you should use the {@link NumberInputDialog}.
  *
  * <P>If an initial value is specified it is not in the range of min,max, it will be set to the min.</P>
@@ -41,7 +41,7 @@ import java.math.BigInteger;
  *     BigInteger min = BigInteger.valueOf(1);     // minimum valid value in text field
  *     BigInteger max = BigInteger.valueOf(10);    // maximum valid value in text field
  *
- *     BigIntegerNumberInputDialog provider = 
+ *     BigIntegerNumberInputDialog provider =
  *     	new BigIntegerNumberInputDialog("Title", entryType, initial, min, max);
  *     if (numInputProvider.show()) {
  *     	   // not cancelled

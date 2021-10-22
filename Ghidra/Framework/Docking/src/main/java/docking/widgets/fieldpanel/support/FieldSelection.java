@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -279,7 +279,7 @@ public class FieldSelection implements Iterable<FieldRange> {
 
 	/**
 	* Compute the intersection of this field selection and another one.
-	* The intersection of two field selections is all fields existing in 
+	* The intersection of two field selections is all fields existing in
 	* both selections.
 	* <P>Note: This field selection becomes the intersection.
 	*
@@ -323,7 +323,7 @@ public class FieldSelection implements Iterable<FieldRange> {
 
 	/**
 	 * Delete all fields in the ranges in the given field selection from this one.
-	 * @param selection the field selection fields to remove from this 
+	 * @param selection the field selection fields to remove from this
 	 * field selection.
 	 */
 	public final void delete(FieldSelection selection) {
@@ -340,7 +340,7 @@ public class FieldSelection implements Iterable<FieldRange> {
 
 	/**
 	 * Insert all fields in the ranges in the given field selection from this one.
-	 * @param selection the field selection fields to add to this 
+	 * @param selection the field selection fields to add to this
 	 * field selection.
 	 */
 	public final void insert(FieldSelection selection) {
@@ -376,7 +376,7 @@ public class FieldSelection implements Iterable<FieldRange> {
 	}
 
 	/**
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override

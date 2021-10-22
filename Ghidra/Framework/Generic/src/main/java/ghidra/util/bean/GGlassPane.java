@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,7 +64,7 @@ public class GGlassPane extends JComponent {
 	}
 
 	/**
-	 * Adds a painter that will be called when this pane's {@link #paintComponent(Graphics)} 
+	 * Adds a painter that will be called when this pane's {@link #paintComponent(Graphics)}
 	 * method is called.
 	 * @param painter the painter to add
 	 */
@@ -79,9 +79,9 @@ public class GGlassPane extends JComponent {
 	}
 
 	/**
-	 * When set busy is called, a busy cursor will be displayed <b>and</b> all user mouse and 
+	 * When set busy is called, a busy cursor will be displayed <b>and</b> all user mouse and
 	 * keyboard events will be blocked.
-	 * 
+	 *
 	 * @param isBusy True to block events and show the busy cursor; false to restore events and
 	 *               to restore the default cursor.
 	 */
@@ -140,7 +140,7 @@ public class GGlassPane extends JComponent {
 
 //        WindowUtilities.bringModalestDialogToFront();
 
-// easy debug indicator        
+// easy debug indicator
 //        Rectangle bounds = getBounds();
 //        Graphics2D g2 = (Graphics2D) g;
 //        g2.setComposite( AlphaComposite.getInstance( AlphaComposite.SrcOver.getRule(), 0.5f ) );

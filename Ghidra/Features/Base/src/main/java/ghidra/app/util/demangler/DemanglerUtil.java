@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import ghidra.util.classfinder.ClassSearcher;
 public class DemanglerUtil {
 
 	//
-	// Patterns used to remove superfluous spaces within parameter list. 
+	// Patterns used to remove superfluous spaces within parameter list.
 	//
 	private static final Pattern LEADING_PARAMETER_SPACE_PATTERN =
 		Pattern.compile(" ([\\*\\&\\)])");
@@ -33,13 +33,13 @@ public class DemanglerUtil {
 
 	/**
 	 * Locates all available demanglers, then it attempts to demangle.  This method will
-	 * query all demanglers regardless of architecture.  
-	 * 
-	 * <p>This method will use only the default options for demangling.  If you need to 
+	 * query all demanglers regardless of architecture.
+	 *
+	 * <p>This method will use only the default options for demangling.  If you need to
 	 * specify options, then you will have to call each specific demangler directly, creating
-	 * the options specifically needed for each demangler.   See 
+	 * the options specifically needed for each demangler.   See
 	 * {@link Demangler#createDefaultOptions()}.
-	 * 
+	 *
 	 * @param mangled the mangled name
 	 * @return the demangled object or null
 	 */
@@ -60,14 +60,14 @@ public class DemanglerUtil {
 	}
 
 	/**
-	 * Locates all available demanglers and checks to see if the supplied program is 
+	 * Locates all available demanglers and checks to see if the supplied program is
 	 * supported, then it attempts to demangle.
-	 * 
-	 * <p>This method will use only the default options for demangling.  If you need to 
+	 *
+	 * <p>This method will use only the default options for demangling.  If you need to
 	 * specify options, then you will have to call each specific demangler directly, creating
-	 * the options specifically needed for each demangler.   See 
+	 * the options specifically needed for each demangler.   See
 	 * {@link Demangler#createDefaultOptions()}.
-	 * 
+	 *
 	 * @param program the program containing the mangled name
 	 * @param mangled the mangled name
 	 * @return the demangled object or null
@@ -94,7 +94,7 @@ public class DemanglerUtil {
 
 	/**
 	 * Dynamically locates all available demangler implementations.
-	 * 
+	 *
 	 * @return a list of all demanglers
 	 */
 	private static List<Demangler> getDemanglers() {

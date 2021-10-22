@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -71,7 +71,7 @@ public class AssemblyParseBranch extends AssemblyParseTreeNode
 	/**
 	 * Prepend a child to this branch
 	 * @param child the child
-	 * 
+	 *
 	 * Because LR parsers produce rightmost derivations, they necessarily populate the branches
 	 * right to left. During reduction, each child is popped from the stack, traversing them in
 	 * reverse order. This method prepends children so that when reduction is complete, the
@@ -85,7 +85,7 @@ public class AssemblyParseBranch extends AssemblyParseTreeNode
 
 	/**
 	 * See what symbol is expected next
-	 * 
+	 *
 	 * The child added next must be associated with the token expected next.
 	 * @return the symbol
 	 */

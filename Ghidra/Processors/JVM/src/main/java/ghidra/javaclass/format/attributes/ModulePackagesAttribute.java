@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
 /**
  * Note: text in this file based on/taken from jvms12.pdf
  * <p>
- * The {@code ModulePackages} attribute indicates all the packages of a module that are 
+ * The {@code ModulePackages} attribute indicates all the packages of a module that are
  * exported or opened by the {@code Module} attribute, as well as all the package of the service
  * implementations recorded in the {@code Module} attribute.
  */
@@ -55,7 +55,7 @@ public class ModulePackagesAttribute extends AbstractAttributeInfo {
 
 	/**
 	 * The value of each entry in the {@code package_index} table must be a valid index
-	 * into the constant pool. The entry at that index must be a {@link ConstantPoolPackageInfo} 
+	 * into the constant pool. The entry at that index must be a {@link ConstantPoolPackageInfo}
 	 * structure representing a package in the current module.
 	 * @param i entry
 	 * @return package index

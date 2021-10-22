@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,10 +51,10 @@ public class EncodedCatchHandler implements StructConverter {
 
 	/**
 	 * <pre>
-	 * Number of catch types in this list. If non-positive, then this is the 
-	 * negative of the number of catch types, and the catches are followed by a catch-all handler. 
-	 * For example: A size of 0 means that there is a catch-all but no explicitly typed catches. 
-	 * A size of 2 means that there are two explicitly typed catches and no catch-all. 
+	 * Number of catch types in this list. If non-positive, then this is the
+	 * negative of the number of catch types, and the catches are followed by a catch-all handler.
+	 * For example: A size of 0 means that there is a catch-all but no explicitly typed catches.
+	 * A size of 2 means that there are two explicitly typed catches and no catch-all.
 	 * And a size of -1 means that there is one typed catch along with a catch-all.
 	 * </pre>
 	 */

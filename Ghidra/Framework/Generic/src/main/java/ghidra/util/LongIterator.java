@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,9 +18,9 @@ package ghidra.util;
 
 /**
  * Iterator over a set of Java-type long values.
- * 
+ *
  */
-public interface LongIterator { 
+public interface LongIterator {
 	/**
 	 * A default implementation of LongIterator that has no values.
 	 */
@@ -47,7 +47,7 @@ public interface LongIterator {
 	 * Get the next long value in this iterator.
 	 */
     public long next();
-    
+
     /**
      * Return true if there a previous long in this iterator.
      */

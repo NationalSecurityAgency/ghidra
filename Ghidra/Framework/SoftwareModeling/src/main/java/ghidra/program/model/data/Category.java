@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,7 +55,7 @@ public interface Category extends Comparable<Category> {
 	 * The base name of a name is the first part of the string up to where the first ".conflict"
 	 * occurs. In other words, finds all data types whose name matches the given name once
 	 * any conflict suffixes have been removed from both the given name and the data types
-	 * that are being scanned. 
+	 * that are being scanned.
 	 * @param name the name for which to get conflict related data types in this category. Note: the
 	 * name that is passed in will be normalized to its base name, so you may pass in names with .conflict
 	 * appended as a convenience.

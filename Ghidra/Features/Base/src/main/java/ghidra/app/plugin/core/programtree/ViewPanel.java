@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -65,7 +65,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 	/**
 	 * Add a view component to the tabbed pane and make this view active; set
 	 * other views to be inactive.
-	 * 
+	 *
 	 * @param vp view provider
 	 */
 	void addView(ViewProviderService vp) {
@@ -152,7 +152,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Set the current view to be the component with the given name.
-	 * 
+	 *
 	 * @param viewName name of view to be current
 	 * @return true if the viewName was found in the provider map
 	 */
@@ -201,9 +201,9 @@ class ViewPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Add the location to the selection in the view.
-	 * 
+	 *
 	 * @param loc location to add
-	 * 
+	 *
 	 * @return ViewMap new view map
 	 */
 	AddressSetView addToView(ProgramLocation loc) {
@@ -216,7 +216,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 
 	/**
 	 * Get the current view provider.
-	 * 
+	 *
 	 * @return ViewProviderService null if there is no view provider.
 	 */
 	ViewProviderService getCurrentViewProvider() {
@@ -460,7 +460,7 @@ class ViewPanel extends JPanel implements ChangeListener {
 
 //==================================================================================================
 // Inner Classes
-//==================================================================================================	
+//==================================================================================================
 
 	private class RenameListener implements EditListener {
 

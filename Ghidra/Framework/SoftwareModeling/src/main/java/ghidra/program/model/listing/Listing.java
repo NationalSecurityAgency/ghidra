@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -127,7 +127,7 @@ public interface Listing {
 	/**
 	 * Get a forward code unit iterator over code units that have the specified
 	 * comment type.
-	 * 
+	 *
 	 * @param commentType type defined in CodeUnit
 	 * @param addrSet address set
 	 * @return a CodeUnitIterator that returns all code units from the indicated
@@ -138,7 +138,7 @@ public interface Listing {
 	/**
 	 * Get a forward iterator over addresses that have the specified comment
 	 * type.
-	 * 
+	 *
 	 * @param commentType type defined in CodeUnit
 	 * @param addrSet address set
 	 * @param forward true to iterator from lowest address to highest, false
@@ -151,7 +151,7 @@ public interface Listing {
 
 	/**
 	 * Get a forward iterator over addresses that have any type of comment.
-	 * 
+	 *
 	 * @param addrSet address set
 	 * @param forward true to iterator from lowest address to highest, false
 	 *            highest to lowest
@@ -187,7 +187,7 @@ public interface Listing {
 
 	/**
 	 * get a CodeUnit iterator that will iterate over the entire address space.
-	 * 
+	 *
 	 * @param forward true means get iterator in forward direction
 	 * @return a CodeUnitIterator in forward direction
 	 */
@@ -609,7 +609,7 @@ public interface Listing {
 	 * Creates a complete set of instructions. A preliminary pass will be made
 	 * checking for code unit conflicts which will be marked within the
 	 * instructionSet causing dependent blocks to get pruned.
-	 * 
+	 *
 	 * @param instructionSet the set of instructions to be added. All code unit
 	 *            conflicts will be marked within the instructionSet and
 	 *            associated blocks.
@@ -686,7 +686,7 @@ public interface Listing {
 
 	/**
 	 * Checks if the given ranges consists entirely of undefined data.
-	 * 
+	 *
 	 * @param start The start address of the range to check.
 	 * @param end The end address of the range to check.
 	 * @return boolean true if the given range is in memory and has no
@@ -696,7 +696,7 @@ public interface Listing {
 
 	/**
 	 * Clears the comments in the given range.
-	 * 
+	 *
 	 * @param startAddr the start address of the range to be cleared
 	 * @param endAddr the end address of the range to be cleard
 	 */
@@ -704,7 +704,7 @@ public interface Listing {
 
 	/**
 	 * Clears the properties in the given range.
-	 * 
+	 *
 	 * @param startAddr the start address of the range to be cleared
 	 * @param endAddr the end address of the range to be cleard
 	 * @param monitor task monitor for cancelling operation.
@@ -716,7 +716,7 @@ public interface Listing {
 	/**
 	 * Removes all CodeUnits, comments, properties, and references from the
 	 * listing.
-	 * 
+	 *
 	 * @param clearContext if true, also clear any instruction context that has
 	 *            been laid down from previous disassembly.
 	 * @param monitor used for tracking progress and cancelling the clear
@@ -727,7 +727,7 @@ public interface Listing {
 	/**
 	 * Returns the fragment containing the given address.
 	 * <P>
-	 * 
+	 *
 	 * @param treeName name of the tree to search
 	 * @param addr the address that is contained within a fragment.
 	 *
@@ -738,7 +738,7 @@ public interface Listing {
 	/**
 	 * Returns the module with the given name.
 	 * <P>
-	 * 
+	 *
 	 * @param treeName name of the tree to search
 	 * @param name the name of the module to find.
 	 *
@@ -749,7 +749,7 @@ public interface Listing {
 	/**
 	 * Returns the fragment with the given name.
 	 * <P>
-	 * 
+	 *
 	 * @param treeName name of the tree to search
 	 * @param name the name of the fragment to find.
 	 *
@@ -762,7 +762,7 @@ public interface Listing {
 	 * the new root module is populated with fragments based on memory blocks.
 	 * Note that the root module's name is not the same as its tree name. The
 	 * root module name defaults to the name of the program.
-	 * 
+	 *
 	 * @param treeName name of the tree to search
 	 * @return root module
 	 * @throws DuplicateNameException if a tree with the given name already
@@ -772,7 +772,7 @@ public interface Listing {
 
 	/**
 	 * Gets the root module for a tree in this listing.
-	 * 
+	 *
 	 * @param treeName name of tree
 	 *
 	 * @return the root module for the listing; returns null if there is no tree
@@ -782,7 +782,7 @@ public interface Listing {
 
 	/**
 	 * Returns the root module of the program tree with the given name;
-	 * 
+	 *
 	 * @param treeID id of the program tree
 	 * @return the root module of the specified tree.
 	 */
@@ -805,7 +805,7 @@ public interface Listing {
 
 	/**
 	 * Remove the tree rooted at the given name.
-	 * 
+	 *
 	 * @param treeName the name of the tree to remove.
 	 * @return true if the tree was removed; return false if this is the last
 	 *         tree for the program; cannot delete the last tree.
@@ -815,7 +815,7 @@ public interface Listing {
 	/**
 	 * Rename the tree. This method does not change the root module's name only
 	 * the identifier for the tree.
-	 * 
+	 *
 	 * @param oldName old name of the tree
 	 * @param newName new name of the tree.
 	 * @throws DuplicateNameException if newName already exists for a root
@@ -847,14 +847,14 @@ public interface Listing {
 
 	/**
 	 * Get the data type manager for the program.
-	 * 
+	 *
 	 * @return the datatype manager for the program.
 	 */
 	public DataTypeManager getDataTypeManager();
 
 	/**
 	 * Create a function with an entry point and a body of addresses.
-	 * 
+	 *
 	 * @param name the name of the function to create
 	 * @param entryPoint the entry point for the function
 	 * @param body the address set that makes up the functions body
@@ -870,7 +870,7 @@ public interface Listing {
 	/**
 	 * Create a function in the specified namespace with an entry point and a
 	 * body of addresses.
-	 * 
+	 *
 	 * @param name the name of the function to create
 	 * @param nameSpace the namespace in which to create the function
 	 * @param entryPoint the entry point for the function
@@ -902,7 +902,7 @@ public interface Listing {
 
 	/**
 	 * Returns a list of all global functions with the given name.
-	 * 
+	 *
 	 * @param name the name of the functions to retrieve.
 	 * @return a list of all global functions with the given name.
 	 */
@@ -911,7 +911,7 @@ public interface Listing {
 	/**
 	 * Returns a list of all functions with the given name in the given
 	 * namespace.
-	 * 
+	 *
 	 * @param namespace the namespace to search for functions of the given name.
 	 *            Can be null, in which case it will search the global
 	 *            namespace.
@@ -922,7 +922,7 @@ public interface Listing {
 
 	/**
 	 * Get a function containing an address.
-	 * 
+	 *
 	 * @param addr the address to search.
 	 * @return function containing this address, null otherwise
 	 */
@@ -930,14 +930,14 @@ public interface Listing {
 
 	/**
 	 * Get an iterator over all external functions
-	 * 
+	 *
 	 * @return an iterator over all currently defined external functions.
 	 */
 	public FunctionIterator getExternalFunctions();
 
 	/**
 	 * Get an iterator over all functions
-	 * 
+	 *
 	 * @param forward if true functions are return in address order, otherwise
 	 *            backwards address order
 	 * @return an iterator over all currently defined functions.
@@ -946,7 +946,7 @@ public interface Listing {
 
 	/**
 	 * Get an iterator over all functions starting at address
-	 * 
+	 *
 	 * @param start the address to start iterating at.
 	 * @param forward if true functions are return in address order, otherwise
 	 *            backwards address order
@@ -956,7 +956,7 @@ public interface Listing {
 
 	/**
 	 * Get an iterator over all functions with entry points in the address set.
-	 * 
+	 *
 	 * @param asv the set of addresses to iterator function entry points over.
 	 * @param forward if true functions are return in address order, otherwise
 	 *            backwards address order
@@ -974,7 +974,7 @@ public interface Listing {
 
 	/**
 	 * Get the comment history for comments at the given address.
-	 * 
+	 *
 	 * @param addr address for comments
 	 * @param commentType comment type defined in CodeUnit
 	 * @return array of comment history records

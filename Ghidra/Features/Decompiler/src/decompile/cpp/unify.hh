@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -462,7 +462,7 @@ class ConstraintOtherInput : public UnifyConstraint {
   int4 varindex_in;		// Given one of its input varnodes
   int4 varindex_out;		// Label the other input to op
 public:
-  ConstraintOtherInput(int4 oind,int4 v_in,int4 v_out) { maxnum = opindex = oind; varindex_in = v_in; varindex_out = v_out; 
+  ConstraintOtherInput(int4 oind,int4 v_in,int4 v_out) { maxnum = opindex = oind; varindex_in = v_in; varindex_out = v_out;
     if (varindex_in > maxnum) maxnum = varindex_in; if (varindex_out > maxnum) maxnum = varindex_out; }
   virtual UnifyConstraint *clone(void) const { return (new ConstraintOtherInput(opindex,varindex_in,varindex_out))->copyid(this); }
   virtual int4 getBaseIndex(void) const { return varindex_out; }
@@ -650,7 +650,7 @@ public:
   void addNames(const map<string,int4> &nmmap);
   void printVarDecls(ostream &s) const;
   void print(ostream &s);
-	     
+
 };
 
 // Rule language

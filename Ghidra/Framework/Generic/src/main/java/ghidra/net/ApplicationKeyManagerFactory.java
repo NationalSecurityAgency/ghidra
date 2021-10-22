@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -164,8 +164,8 @@ public class ApplicationKeyManagerFactory {
 	}
 
 	/**
-	 * If the system property <i>ghidra.keystore</i> takes precedence in establishing 
-	 * the ketsore.  If using a GUI and the system property has not been set, the 
+	 * If the system property <i>ghidra.keystore</i> takes precedence in establishing
+	 * the ketsore.  If using a GUI and the system property has not been set, the
 	 * user preference with the same name will be used.
 	 * @return active keystore path or null if currently not running with a keystore or
 	 * one has not been set.
@@ -344,7 +344,7 @@ public class ApplicationKeyManagerFactory {
 				Exception ioException = getIOException(e);
 				if (ioException != null) {
 					// Assume all IOExceptions are the result of improperly decrypted keystore
-					// since arbitrary and inconsistent errors are produced when attempting to 
+					// since arbitrary and inconsistent errors are produced when attempting to
 					// load an encrypted keystore without a password or with the wrong password.
 					continue;
 				}

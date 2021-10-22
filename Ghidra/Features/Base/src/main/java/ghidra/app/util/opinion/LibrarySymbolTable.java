@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -86,7 +86,7 @@ class LibrarySymbolTable {
 	}
 
 	/**
-	 * Construct a library symbol table based upon a specified library in the 
+	 * Construct a library symbol table based upon a specified library in the
 	 * form of a {@link Program} object.
 	 * @param library library program
 	 * @param monitor task monitor
@@ -245,7 +245,7 @@ class LibrarySymbolTable {
 	 * Each ordinal mapping line is expected to have the format, starting with ordinal number and
 	 * ending with symbol name:
 	 *   &lt;ordinal&gt; &lt;other-column-data&gt; &lt;name&gt;
-	 * The name column contains the symbol name followed by an optional demangled form.  If the name starts with 
+	 * The name column contains the symbol name followed by an optional demangled form.  If the name starts with
 	 * [NONAME] this will be stripped.
 	 * @param ordinalExportsFile file path to ordinal mapping file produced by DUMPBIN /EXPORTS
 	 * @param addMissingOrdinals if true new entries will be created for ordinal mappings
@@ -264,7 +264,7 @@ class LibrarySymbolTable {
 			while ((inString = in.readLine()) != null) {
 
 				if (mode == NONE && inString.trim().startsWith("ordinal")) {
-					// rely on column header labels to establish ordinal and name column start/end 
+					// rely on column header labels to establish ordinal and name column start/end
 					int ordinalColumnStartIndex = inString.indexOf("ordinal");
 					if (ordinalColumnStartIndex < 0) {
 						continue;
@@ -352,7 +352,7 @@ class LibrarySymbolTable {
 
 	/**
 	 * Returns the symbol for the specified ordinal.
-	 * 
+	 *
 	 * @param ordinal the ordinal value of the desired symbol
 	 * @return the symbol for the specified ordinal, or null if one does not
 	 *         exist.
@@ -363,7 +363,7 @@ class LibrarySymbolTable {
 
 	/**
 	 * Returns the symbol for the specified name
-	 * 
+	 *
 	 * @param symbol the name of the desired symbol
 	 * @return symbol map entry or null if not found
 	 */
@@ -374,7 +374,7 @@ class LibrarySymbolTable {
 	/**
 	 * Returns a string describing the version of this library. For example,
 	 * "5.100.2566".
-	 * 
+	 *
 	 * @return a string describing the version of this library
 	 */
 	String getVersion() {
@@ -547,7 +547,7 @@ class LibrarySymbolTable {
 	/**
 	 * Check an existing exports file to verify that it corresponds to the
 	 * specified libraryFile.
-	 * 
+	 *
 	 * @param exportsFile existing exports file
 	 * @param libraryFile library file
 	 * @return true if exports file corresponds to library file

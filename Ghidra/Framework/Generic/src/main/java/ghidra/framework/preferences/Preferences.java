@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -125,9 +125,9 @@ public class Preferences {
 			}
 		}
 
-		// Try to load a previous installation's preferences so that they are usable as a 
-		// reference point for those clients that wish to maintain previous values.  Note that 
-		// not all previous values should be used in a new application, as that may 
+		// Try to load a previous installation's preferences so that they are usable as a
+		// reference point for those clients that wish to maintain previous values.  Note that
+		// not all previous values should be used in a new application, as that may
 		// cause issues when running; for example, path preferences can cause compile issues.
 		loadPreviousInstallationPreferences();
 	}
@@ -151,11 +151,11 @@ public class Preferences {
 	}
 
 	/**
-	 * Gets an input stream to a file that is the same named file within a different 
-	 * application version directory for this user. This method will search for an 
-	 * alternate file based on the application version directories modification times 
-	 * and will use the first matching file it finds.  
-	 * 
+	 * Gets an input stream to a file that is the same named file within a different
+	 * application version directory for this user. This method will search for an
+	 * alternate file based on the application version directories modification times
+	 * and will use the first matching file it finds.
+	 *
 	 * @return a file input stream for an alternate file or null.
 	 */
 	private static FileInputStream getAlternateFileInputStream() {
@@ -179,7 +179,7 @@ public class Preferences {
 
 	/**
 	 * Removes the given preference from this preferences object.
-	 * 
+	 *
 	 * @param name the name of the preference key to remove.
 	 * @return the value that was stored with the given key.
 	 */
@@ -213,7 +213,7 @@ public class Preferences {
 	 * @param name the property name
 	 * @param defaultValue the default value
 	 * @return the property value; default value if not set
-	 * 
+	 *
 	 * @see #getProperty(String, String, boolean)
 	 */
 	public static String getProperty(String name, String defaultValue) {
@@ -234,10 +234,10 @@ public class Preferences {
 	 * <p>
 	 * Note: all <code>getProperty(...)</code> methods will first check {@link System#getProperty(String)}
 	 * for a value first.  This allows users to override preferences from the command-line.
-	 * 
+	 *
 	 * @param name The name of the property for which to get a value
 	 * @param defaultValue The value to use if there is no value yet set for the given name
-	 * @param useHistoricalValue True signals to check the last used application installation for a 
+	 * @param useHistoricalValue True signals to check the last used application installation for a
 	 *        value for the given name <b>if that value has not yet been set</b>.
 	 * @return the property with the given name; if there is no property,
 	 *         return the defaultValue.
@@ -264,9 +264,9 @@ public class Preferences {
 	}
 
 	/**
-	 * Set the property value.  If a null value is passed, then the property is removed from 
+	 * Set the property value.  If a null value is passed, then the property is removed from
 	 * this collection of preferences.
-	 * 
+	 *
 	 * @param name property name
 	 * @param value value for property
 	 */

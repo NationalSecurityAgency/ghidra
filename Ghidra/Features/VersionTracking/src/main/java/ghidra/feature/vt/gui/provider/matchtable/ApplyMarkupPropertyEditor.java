@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,7 +44,7 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.layout.*;
 
 /**
- * The ApplyMarkupPropertyEditor provides a custom GUI layout for the options that are used when 
+ * The ApplyMarkupPropertyEditor provides a custom GUI layout for the options that are used when
  * applying version tracking markup.
  */
 public class ApplyMarkupPropertyEditor implements OptionsEditor {

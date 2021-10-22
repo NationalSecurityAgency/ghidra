@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ public class CodeUnitPropertyChangeRecord extends DomainObjectChangeRecord {
     private Address addr;
 	private Address startAddr;
 	private Address endAddr;
-	
+
     /**
      * Constructor
      * @param propertyName name of the property
@@ -42,7 +42,7 @@ public class CodeUnitPropertyChangeRecord extends DomainObjectChangeRecord {
     public CodeUnitPropertyChangeRecord(String propertyName,
                                         Address codeUnitAddr,
                                         Object oldValue,
-                                        Object newValue) { 
+                                        Object newValue) {
         super(ChangeManager.DOCR_CODE_UNIT_PROPERTY_CHANGED);
         this.propertyName = propertyName;
         addr = codeUnitAddr;
@@ -62,7 +62,7 @@ public class CodeUnitPropertyChangeRecord extends DomainObjectChangeRecord {
 		startAddr = start;
 		endAddr = end;
 	}
-		
+
     /**
      * Get the name of the property being changed.
      */
@@ -92,10 +92,10 @@ public class CodeUnitPropertyChangeRecord extends DomainObjectChangeRecord {
     public Object getNewValue() {
         return newValue;
     }
-    
+
     /**
      * Get the start address of the range of properties that were removed.
-     * @return null if the event type is not 
+     * @return null if the event type is not
      * ChangeManager.DOCR_CODE_UNIT_PROPERTY_RANGE_REMOVED
      */
     public Address getStartAddress() {
@@ -103,7 +103,7 @@ public class CodeUnitPropertyChangeRecord extends DomainObjectChangeRecord {
     }
     /**
      * Get the end address of the range of properties that were removed.
-     * @return null if the event type is not 
+     * @return null if the event type is not
      * ChangeManager.DOCR_CODE_UNIT_PROPERTY_RANGE_REMOVED
      */
     public Address getEndAddress() {

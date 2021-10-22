@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,7 +67,7 @@ import utility.application.ApplicationLayout;
  * for processor-specific test cases.  All test cases which extend this class must have a
  * class name which ends with 'EmulatorTest' and starts with the processor designator which
  * will be used to identify associated test binaries within either the processor module's
- * data/pcodetests/ directory or the Ghidra/Test/TestResources/data/pcodetests/ directory generally 
+ * data/pcodetests/ directory or the Ghidra/Test/TestResources/data/pcodetests/ directory generally
  * contained within the binary repository (e.g., ghidra.bin).
  * <p>
  * Within the pcodetests directory all files and folders which start with the prefix
@@ -95,7 +95,7 @@ import utility.application.ApplicationLayout;
  * instead of a test resource binary if that binary's md5 checksum has not changed since its cached
  * gzf was created.  This use of cache files will allow the tests to run quickly on subsequent
  * executions.  If re-analysis is required, the cache will need to be cleared manually.
- * 
+ *
  * NOTES:
  * 1. Dummy Test Methods must be added for all known test groups.  See bottom of this file.  This
  *    all allows for the single test trace mode execution to work within Eclipse.
@@ -106,7 +106,7 @@ import utility.application.ApplicationLayout;
  *    and field naming consistent with use in PCodeTestControlBlock.java
  * 4. The {@link #initializeState(EmulatorTestRunner, Program)} may be overriden to initialize the
  *    register values if needed.  This should be based upon symbols or other program information
- *    if possible since hardcoded constants may not track future builds of a test binaries.  
+ *    if possible since hardcoded constants may not track future builds of a test binaries.
  *    An attempt is made to initialize the stack pointer automatically based upon well known
  *    stack initialization symbols.
  */
@@ -1456,7 +1456,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 	/**
 	 * Invoked for each program immediately prior to executing a test group.
-	 * By default this method will initialize the register states based upon the 
+	 * By default this method will initialize the register states based upon the
 	 * specific register values/context stored at the test group function entry point.
 	 * Such register values may have been established via the processor specification,
 	 * loader or analyzers.  A specific test may override or extend

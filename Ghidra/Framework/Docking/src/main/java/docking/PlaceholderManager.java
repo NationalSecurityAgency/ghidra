@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -240,8 +240,8 @@ class PlaceholderManager {
 		// 1) share the same owner (plugin), and
 		// 2) are in the same group, or related groups
 		//
-		// If there are not other providers that share the same owner as the one we are given, 
-		// then we will search all providers.  This allows different plugins to share 
+		// If there are not other providers that share the same owner as the one we are given,
+		// then we will search all providers.  This allows different plugins to share
 		// window arrangement.
 		//
 		Set<ComponentPlaceholder> buddies = activePlaceholders;
@@ -275,7 +275,7 @@ class PlaceholderManager {
 	 * provider.
 	 * @param activePlaceholders the set of currently showing placeholders.
 	 * @param newInfo the placeholder for the new provider to be shown.
-	 * @return an existing matching placeholder or null. 
+	 * @return an existing matching placeholder or null.
 	 */
 	private ComponentPlaceholder findBestPlaceholderToStackUpon(
 			Set<ComponentPlaceholder> activePlaceholders, ComponentPlaceholder newInfo) {

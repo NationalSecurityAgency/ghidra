@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,10 +26,10 @@ public enum PluginToolUtils {
 
 	/**
 	 * Attempts the given action in all running tools, starting with the active one, if applicable
-	 * 
+	 *
 	 * <p>
 	 * This will stop once the given action returns a non-null result, and return that result.
-	 * 
+	 *
 	 * @param <T> the type of result
 	 * @param tool the front-end tool, whose running plugin tools to try
 	 * @param action the action to apply to each plugin tool
@@ -57,11 +57,11 @@ public enum PluginToolUtils {
 	/**
 	 * Opens the given domain file in the most recent tool which can accept it, or it launches a new
 	 * tool to accept it
-	 * 
+	 *
 	 * <p>
 	 * TODO: This currently fails in the "most-recent" aspect if a non-compatible tool has focus. In
 	 * that case, it'll pick any compatible tool, no matter how recently it had focus.
-	 * 
+	 *
 	 * @param tool the front-end tool
 	 * @param domainFile the domain file to open
 	 * @return the (possibly new) plugin tool which accepted the domain file
@@ -80,11 +80,11 @@ public enum PluginToolUtils {
 
 	/**
 	 * Get the service for the given class from the most recent tool having it
-	 * 
+	 *
 	 * <p>
 	 * TODO: This currently fails in the "most-recent" aspect if a non-compatible tool has focus. In
 	 * that case, it'll pick any compatible tool, no matter how recently it had focus.
-	 * 
+	 *
 	 * @param <T> the type of the service
 	 * @param tool the front-end tool
 	 * @param serviceClass the class of the service

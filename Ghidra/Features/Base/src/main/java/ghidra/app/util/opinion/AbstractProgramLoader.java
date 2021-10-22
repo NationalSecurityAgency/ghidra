@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -351,7 +351,7 @@ public abstract class AbstractProgramLoader implements Loader {
 	 * Mark this address as a function by creating a one byte function.  The single byte body
 	 * function is picked up by the function analyzer, disassembled, and the body fixed.
 	 * Marking the function this way keeps disassembly and follow on analysis out of the loaders.
-	 * 
+	 *
 	 * @param program the program
 	 * @param name name of function, null if name not known
 	 * @param funcStart starting address of the function

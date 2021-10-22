@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,10 +31,10 @@ import utilities.util.reflection.ReflectionUtilities;
  * row object.
  *
  * Implementations of this interface must provide a public default constructor.
- * 
+ *
  * @param <ROW_TYPE> The row object class supported by this column
  * @param <COLUMN_TYPE> The column object class supported by this column
- * @param <DATA_SOURCE> The object class type that will be passed to 
+ * @param <DATA_SOURCE> The object class type that will be passed to
  * 						see <code>getValue(ROW_TYPE, Settings, DATA_SOURCE, ServiceProvider)</code>
  */
 public abstract class AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOURCE>
@@ -184,7 +184,7 @@ public abstract class AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOU
 		return getIdentifier().hashCode();
 	}
 
-	// Note: this method is here because the default 'identifier' must be lazy loaded, as 
+	// Note: this method is here because the default 'identifier' must be lazy loaded, as
 	//       at construction time not all the variables needed are available.
 	private String getIdentifier() {
 		/*
@@ -193,7 +193,7 @@ public abstract class AbstractDynamicTableColumn<ROW_TYPE, COLUMN_TYPE, DATA_SOU
 		 		-The case where 2 different column classes share the same column header value
 		 		-The case where a single column class is used repeatedly, with a different
 		 		 column header value each time
-		
+
 		 	Thus, to be unique, we need to combine both the class name and the column header
 		 	value.  The only time this may be an issue is if the column header value changes
 		 	dynamically--not sure if this actually happens anywhere in our system.  If it did,

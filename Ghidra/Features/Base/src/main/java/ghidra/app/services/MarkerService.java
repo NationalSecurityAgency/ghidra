@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -43,7 +43,7 @@ import ghidra.program.model.listing.Program;
  * service has been changed to associate created markers with individual programs.  Thus, it is
  * up to the clients of this class perform lifecycle management of markers created by this
  * service.  For example, a client that creates a marker from
- * {@link #createAreaMarker(String, String, Program, int, boolean, boolean, boolean, Color)} should 
+ * {@link #createAreaMarker(String, String, Program, int, boolean, boolean, boolean, Color)} should
  * call {@link #removeMarker(MarkerSet, Program)} when the markers are no longer used, such as when
  * a program has become deactivated.  In this example usage markers are added and removed as the
  * user tabs through open programs.
@@ -234,10 +234,10 @@ public interface MarkerService {
 	 * Returns the background color associated with the given program and address. Each markerSet
 	 * that supports background coloring is checked in priority order to see if it wants to specify
 	 * a background color for the given address.
-	 * 
+	 *
 	 * If {@code program} is the current program, this is equivalent to
 	 *  {@link #getBackgroundColor(Address)}.
-	 * 
+	 *
 	 * @param program the program to check for a background color.
 	 * @param address the address to check for a background color.
 	 * @return the background color to use for that address or null if no markers contain that
@@ -248,14 +248,14 @@ public interface MarkerService {
 	/**
 	 * Adds a change listener to be notified when markers are added/removed or the addresses in any
 	 * current markerSets are changed
-	 * 
+	 *
 	 * @param listener the listener
 	 */
 	public void addChangeListener(ChangeListener listener);
 
 	/**
 	 * Removes the given change listener from the list of listeners to be notified of changes
-	 * 
+	 *
 	 * @param listener the listener
 	 */
 	public void removeChangeListener(ChangeListener listener);
@@ -264,7 +264,7 @@ public interface MarkerService {
 	 * Sets the listener to be notified when the user double-clicks in the Marker Margin area. Note
 	 * that only one listener is allowed to be set at a time. If an attempt to set a second listener
 	 * occurs, then an IllegalStateException is thrown.
-	 * 
+	 *
 	 * @param listener the listener to be notified or null to remove the current listener
 	 * @throws IllegalStateException if a listener is already set.
 	 */

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import ghidra.program.model.symbol.Symbol;
 import ghidra.util.exception.InvalidInputException;
 
 /**
- * <code>ElfLoadHelper</code> exposes loader methods useful to ElfExtension 
+ * <code>ElfLoadHelper</code> exposes loader methods useful to ElfExtension
  * implementations.
  */
 public interface ElfLoadHelper {
@@ -80,7 +80,7 @@ public interface ElfLoadHelper {
 	Function createOneByteFunction(String name, Address address, boolean isEntry);
 
 	/**
-	 * Create an external function within the UNKNOWN space and a corresponding thunk at 
+	 * Create an external function within the UNKNOWN space and a corresponding thunk at
 	 * the internalFunctionAddr.  If the functionAddr and/or indirectPointerAddr has a symbol with
 	 * {@code <name>} it will be removed so as not to replicate the external function name.
 	 * @param name external function name
@@ -127,7 +127,7 @@ public interface ElfLoadHelper {
 	 * @param addr program address
 	 * @param name symbol/label name
 	 * @param isPrimary true if is symbol should be made primary (certain name patterns excluded)
-	 * @param pinAbsolute true if address is absolute and should not change 
+	 * @param pinAbsolute true if address is absolute and should not change
 	 * @param namespace symbol namespace (should generally be null for global namespace)
 	 * @return program symbol
 	 * @throws InvalidInputException
@@ -144,11 +144,11 @@ public interface ElfLoadHelper {
 	Address findLoadAddress(MemoryLoadable section, long byteOffsetWithinSection);
 
 	/**
-	 * Get the program address for an addressableWordOffset within the default address space.  
-	 * This method is responsible for applying any program image base change imposed during 
+	 * Get the program address for an addressableWordOffset within the default address space.
+	 * This method is responsible for applying any program image base change imposed during
 	 * the import (see {@link #getImageBaseWordAdjustmentOffset()}.
 	 * @param addressableWordOffset absolute word offset.  The offset should already include
-	 * default image base and pre-link adjustment (see {@link ElfHeader#adjustAddressForPrelink(long)}).  
+	 * default image base and pre-link adjustment (see {@link ElfHeader#adjustAddressForPrelink(long)}).
 	 * @return memory address in default code space
 	 */
 	Address getDefaultAddress(long addressableWordOffset);
@@ -173,7 +173,7 @@ public interface ElfLoadHelper {
 	public Long getGOTValue();
 
 	/**
-	 * <p>Get a free aligned address range within the program's memory block structure to facilitate 
+	 * <p>Get a free aligned address range within the program's memory block structure to facilitate
 	 * dynamic memory block allocation requirements to support relocation processing (e.g., fake EXTERNAL memory block,
 	 * generated GOT for object modules, etc.).  The range returned for the EXTERNAL memory block may be very large
 	 * but only that portion used should be committed the program's memory map.  The EXTERNAL memory block
@@ -193,7 +193,7 @@ public interface ElfLoadHelper {
 	 * <p>Get the original memory value at the specified address if a relocation was applied at the
 	 * specified address (not containing).  Current memory value will be returned if no relocation
 	 * has been applied at specified address.  The value size is either 8-bytes if {@link ElfHeader#is64Bit()},
-	 * otherwise it will be 4-bytes.  This is primarily intended to inspect original bytes within 
+	 * otherwise it will be 4-bytes.  This is primarily intended to inspect original bytes within
 	 * the GOT which may have had relocations applied to them.
 	 * @param addr memory address
 	 * @param signExtend if true sign-extend to long, else treat as unsigned

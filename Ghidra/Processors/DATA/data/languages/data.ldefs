@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <language_definitions>
-  
+
    <language processor="DATA"
              endian="little"
              size="64"
@@ -15,7 +15,7 @@
 		<compiler name="pointer32" spec="data-ptr32.cspec" id="pointer32"/>
 		<compiler name="pointer16" spec="data-ptr16.cspec" id="pointer16"/>
 	</language>
-	
+
 	<language processor="DATA"
              endian="big"
              size="64"
@@ -29,5 +29,5 @@
 		<compiler name="pointer32" spec="data-ptr32.cspec" id="pointer32"/>
 		<compiler name="pointer16" spec="data-ptr16.cspec" id="pointer16"/>
 	</language>
-	
+
 </language_definitions>

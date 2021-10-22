@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -42,7 +42,7 @@ import java.io.IOException;
  *   Elf64_Word	vna_name;		//Dependency name string offset
  *   Elf64_Word	vna_next;		//Offset in bytes to next vernaux entry
  * } Elf64_Vernaux;
- *  
+ *
  * </pre>
  */
 public class GnuVernaux implements StructConverter {

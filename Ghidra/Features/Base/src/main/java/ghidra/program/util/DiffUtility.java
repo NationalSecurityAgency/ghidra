@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ import ghidra.util.exception.*;
 public class DiffUtility extends SimpleDiffUtility {
 
 	/**
-	 * Determines the memory address in the other program that is compatible with the 
+	 * Determines the memory address in the other program that is compatible with the
 	 * specified address.
 	 * @param memoryAddress the memory address to be converted
 	 * @param otherProgram target program which corresponds to the returned address.
@@ -43,8 +43,8 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * Convert an address-set from one program to a compatible address-set in the 
-	 * specified otherProgram.  Those regions which can not be mapped will be eliminated 
+	 * Convert an address-set from one program to a compatible address-set in the
+	 * specified otherProgram.  Those regions which can not be mapped will be eliminated
 	 * from the new address-set.  Only memory addresses will be considered.
 	 * @param set address-set corresponding to program
 	 * @param otherProgram target program which corresponds to the returned address set.
@@ -84,12 +84,12 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * Convert an address range from one program to a compatible address range in the 
+	 * Convert an address range from one program to a compatible address range in the
 	 * specified otherProgram.  Only memory addresses will be considered.
 	 * If the entire range cannot be converted then null is returned.
 	 * @param range address range to convert
 	 * @param otherProgram target program which corresponds to the returned address range.
-	 * @return translated address range or null if a compatible range could not be 
+	 * @return translated address range or null if a compatible range could not be
 	 * determined in the other program.
 	 */
 	public static AddressRange getCompatibleAddressRange(AddressRange range, Program otherProgram) {
@@ -154,7 +154,7 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * Given a namespace, get the corresponding namespace from the 
+	 * Given a namespace, get the corresponding namespace from the
 	 * specified otherProgram.  The return namespace body may be different.
 	 * @param namespace namespace to look for
 	 * @param otherProgram other program
@@ -166,7 +166,7 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * Given a namespace, create the corresponding namespace in the 
+	 * Given a namespace, create the corresponding namespace in the
 	 * specified otherProgram. If a corresponding namespace already exists, it is returned.
 	 * The return namespace body may be different.
 	 * @param program program which contains the specified namespace instance
@@ -201,7 +201,7 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 //	/**
-//	 * Given a symbol for a specified program, get the corresponding symbol from the 
+//	 * Given a symbol for a specified program, get the corresponding symbol from the
 //	 * specified otherProgram.
 //	 * @param program program which contains the specified symbol instance
 //	 * @param p2Symbol symbol to look for
@@ -209,7 +209,7 @@ public class DiffUtility extends SimpleDiffUtility {
 //	 * @return corresponding symbol for otherProgram or null if no such symbol exists.
 //	 */
 //	public static Symbol getSymbol(AddressTranslator p2ToP1Translator, Symbol p2Symbol) {
-//		
+//
 //		if (p2Symbol == null) {
 //			return null;
 //		}
@@ -227,7 +227,7 @@ public class DiffUtility extends SimpleDiffUtility {
 //			func = otherProgram.getFunctionManager().getFunctionAt(p1Entry);
 //			return func != null ? func.getSymbol() : null;
 //		}
-//		
+//
 //		SymbolTable otherSymTable = otherProgram.getSymbolTable();
 //		Address addr2 = p2Symbol.getAddress();
 //		if (addr2.isVariableAddress()) {
@@ -236,14 +236,14 @@ public class DiffUtility extends SimpleDiffUtility {
 //			Address storeAddr = p2ToP1Translator.getAddress(var2.getStorageAddress());
 //			return getVariableSymbol(otherSymTable, var2, otherFuncSym,	storeAddr);
 //		}
-//		
+//
 //		Symbol parent1 = getSymbol(p2ToP1Translator, p2Symbol.getParentSymbol());
 //		if (parent1 == null) {
 //			return null;
 //		}
 //		Namespace namespace = (Namespace)parent1.getObject();
 //		String name2 = p2Symbol.getName();
-//		
+//
 //		AddressSpace addrSpace = addr2.getAddressSpace();
 //		if (addrSpace.getType() == AddressSpace.TYPE_NONE || addr2.isExternalAddress()) {
 //			Symbol s = otherSymTable.getSymbol(name2, namespace);
@@ -261,7 +261,7 @@ public class DiffUtility extends SimpleDiffUtility {
 	/**
 	 * Determine if the specified variables have overlapping storage.
 	 * Variable storage check includes dynamically mapped storage for parameters.  This method
-	 * should not be used with caution if both arguments are parameters which use dynamically 
+	 * should not be used with caution if both arguments are parameters which use dynamically
 	 * mapped storage.
 	 * @param var1
 	 * @param var2
@@ -280,7 +280,7 @@ public class DiffUtility extends SimpleDiffUtility {
 
 	/**
 	 * Determine if the specified variables have exactly the same storage.  This method
-	 * should not be used with caution if both arguments are parameters which use dynamically 
+	 * should not be used with caution if both arguments are parameters which use dynamically
 	 * mapped storage.
 	 * @param var1
 	 * @param var2
@@ -298,8 +298,8 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * Given a function, get the corresponding function from the 
-	 * specified otherProgram.  Function matchup is done based upon 
+	 * Given a function, get the corresponding function from the
+	 * specified otherProgram.  Function matchup is done based upon
 	 * function entry point only.  The function bodies may be different.
 	 * @param function function to look for
 	 * @param otherProgram other program
@@ -310,10 +310,10 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * Given a reference for a specified program, get the corresponding reference from the 
+	 * Given a reference for a specified program, get the corresponding reference from the
 	 * specified otherProgram.  A Non-memory reference is considered a suitable reference
-	 * for returning if its destination address is from the same address space (i.e., stack, 
-	 * register, etc.) 
+	 * for returning if its destination address is from the same address space (i.e., stack,
+	 * register, etc.)
 	 * @param program program which contains the specified reference instance
 	 * @param ref reference to look for
 	 * @param otherProgram other program
@@ -341,7 +341,7 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param p2ToP1Translator
 	 * @param p2Ref
 	 * @return
@@ -391,7 +391,7 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * Given a reference for a specified program, create a comparable reference in the 
+	 * Given a reference for a specified program, create a comparable reference in the
 	 * specified otherProgram if possible. An open transaction on otherProgram must exist.
 	 * @param program program which contains the specified reference instance
 	 * @param ref reference to be added
@@ -488,7 +488,7 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * Given a variable for a specified program, get the corresponding variable from the 
+	 * Given a variable for a specified program, get the corresponding variable from the
 	 * specified otherProgram.
 	 * @param program program which contains the specified variable instance
 	 * @param var variable to look for
@@ -501,7 +501,7 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * Given a variable, get the corresponding variable from the 
+	 * Given a variable, get the corresponding variable from the
 	 * specified otherFunction.
 	 * @param var variable to look for
 	 * @param otherFunction other function
@@ -513,13 +513,13 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * Given a variable for a specified program, create a comparable variable in the 
+	 * Given a variable for a specified program, create a comparable variable in the
 	 * specified otherProgram if possible. An open transaction on otherProgram must exist.
 	 * @param program program which contains the specified variable instance
 	 * @param var variable to be added from program to otherProgram.
 	 * @param otherProgram other program
 	 * @return new variable for otherProgram or null if unable to create variable.
-	 * @throws DuplicateNameException if another variable already exists with 
+	 * @throws DuplicateNameException if another variable already exists with
 	 * the same name as var in the resulting function.
 	 * @throws InvalidInputException if data type is not a fixed length or variable name is invalid, etc.
 	 * @throws VariableSizeException if data type size is too large based upon storage constraints.
@@ -588,7 +588,7 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * Returns the signed hex string representing the int value. 
+	 * Returns the signed hex string representing the int value.
 	 * Positive values are represented beginning with 0x. (i.e. value of 12 would be 0xc)
 	 * Negative values are represented beginning with -0x. (i.e. value of -12 would be -0xc)
 	 * @param value the value
@@ -600,7 +600,7 @@ public class DiffUtility extends SimpleDiffUtility {
 	}
 
 	/**
-	 * Returns the signed hex string representing the long value. 
+	 * Returns the signed hex string representing the long value.
 	 * Positive values are represented beginning with 0x. (i.e. value of 12 would be 0xc)
 	 * Negative values are represented beginning with -0x. (i.e. value of -12 would be -0xc)
 	 * @param value the value
@@ -686,8 +686,8 @@ public class DiffUtility extends SimpleDiffUtility {
 	 * Returns the string representation of the specified reference's "to" symbol.
 	 * @param program the program containing the reference
 	 * @param ref the reference
-	 * @return the "to" symbol for the reference as a meaningful string for the user. 
-	 * The empty string, "", is returned if the reference isn't to a symbol. 
+	 * @return the "to" symbol for the reference as a meaningful string for the user.
+	 * The empty string, "", is returned if the reference isn't to a symbol.
 	 */
 	public static String getUserToSymbolString(Program program, Reference ref) {
 

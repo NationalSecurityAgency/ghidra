@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -114,7 +114,7 @@ public class Stack<E> implements Iterable<E> {
 	/**
 	 * Returns the element at the specified depth in this stack.
 	 * 0 indicates the bottom of the stack.
-	 * size()-1 indicates the top of the stack. 
+	 * size()-1 indicates the top of the stack.
 	 * @param depth the depth in the stack.
 	 * @return the element at the specified depth in this stack
 	 */
@@ -149,7 +149,7 @@ public class Stack<E> implements Iterable<E> {
 
 	/**
 	 * Returns a stream over this collection.
-	 * 
+	 *
 	 * @return a stream over this collection.
 	 */
 	public Stream<E> stream() {

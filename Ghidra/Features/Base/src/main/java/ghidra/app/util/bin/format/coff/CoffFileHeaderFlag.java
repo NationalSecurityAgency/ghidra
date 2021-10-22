@@ -5,9 +5,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ public final class CoffFileHeaderFlag {
 	public final static int F_RELFLG  = 0x0001;
 
 	/**
-	 * If set, all unresolved symbols have been resolved 
+	 * If set, all unresolved symbols have been resolved
 	 * and the file may be considered executable.
 	 */
 	public final static int F_EXEC    = 0x0002;
@@ -38,7 +38,7 @@ public final class CoffFileHeaderFlag {
 	public final static int F_LNNO    = 0x0004;
 
 	/**
-	 * If set, all local symbols have been removed from 
+	 * If set, all local symbols have been removed from
 	 * the file (or were never added in the first place).
 	 */
 	public final static int F_LSYMS   = 0x0008;

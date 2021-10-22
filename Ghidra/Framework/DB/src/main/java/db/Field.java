@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,18 +21,18 @@ import db.buffers.DataBuffer;
 
 /**
  * <p><code>Field</code> is an abstract data wrapper for use with Records.
- * Note that when comparing two Field instances both must be of the same 
+ * Note that when comparing two Field instances both must be of the same
  * class.</p>
- * 
+ *
  * <p>Fields may take on a null state.  In the case of {@link FixedField}
  * and {@link PrimitiveField} this state is distinct from value and only
  * applies when used for a sparse column within a {@link SparseRecord}.
- * In this sparse column situation the {@link SparseRecord#setField(int, Field)} 
- * method may be passed a null Field argument.  Sparse columns with a 
+ * In this sparse column situation the {@link SparseRecord#setField(int, Field)}
+ * method may be passed a null Field argument.  Sparse columns with a
  * null value/state will not be indexed within a {@link Table}.
- * 
+ *
  * <p>Stored Schema Field Type Encoding:</p>
- * 
+ *
  * <p><U>8-bit Legacy Field Type Encoding (I....FFF)</U></p>
  * Supported encodings: 0x00..0x06 and 0x80..0x86,
  * where:
@@ -40,7 +40,7 @@ import db.buffers.DataBuffer;
  *     FFF  - indexed field type (0..6)
  *     I    - index field indicator (only long primary keys were supported)
  * </pre>
- *   
+ *
  * <p><U>8-bit Field Type Encoding (PPPPFFFF)</U></p>
  * (Reserved for future field extensions: 0x88 and 0xf0..0xff)
  * <pre>
@@ -49,8 +49,8 @@ import db.buffers.DataBuffer;
  * where:
  * <pre>
  *     FFFF - normal/indexed field type
- *     PPPP - indexed table primary key type (1000b: LegacyIndexField)  
- * </pre> 
+ *     PPPP - indexed table primary key type (1000b: LegacyIndexField)
+ * </pre>
  */
 public abstract class Field implements Comparable<Field> {
 
@@ -106,8 +106,8 @@ public abstract class Field implements Comparable<Field> {
 
 	/**
 	 * Legacy Index Primary Key Field type for LongField
-	 * which was previously a boolean indicator for an index 
-	 * field with assumed long primary key.  Applies only 
+	 * which was previously a boolean indicator for an index
+	 * field with assumed long primary key.  Applies only
 	 * to upper-nibble.  This value in the lower-nibble
 	 * is reserved for use in the special-purpose byte value 0x88.
 	 * (see {@link LegacyIndexField})
@@ -117,7 +117,7 @@ public abstract class Field implements Comparable<Field> {
 	// Available field types (6): 0x9..0xE
 
 	/**
-	 * Reserved field encoding.  Intended for special purpose 
+	 * Reserved field encoding.  Intended for special purpose
 	 * schema used (e.g.
 	 */
 	static final byte FIELD_RESERVED_15_TYPE = 0xf;
@@ -133,7 +133,7 @@ public abstract class Field implements Comparable<Field> {
 	static final byte INDEX_PRIMARY_KEY_TYPE_MASK = (byte) ~FIELD_TYPE_MASK;
 
 	/**
-	 * Index Primary Key Field Type Shift 
+	 * Index Primary Key Field Type Shift
 	 */
 	static final int INDEX_FIELD_TYPE_SHIFT = 4;
 
@@ -273,7 +273,7 @@ public abstract class Field implements Comparable<Field> {
 	 * All variable-length fields must implement this method.
 	 * @param bytes field data
 	 * @throws IllegalFieldAccessException if error occurs while reading bytes
-	 * into field which will generally be caused by the incorrect number of 
+	 * into field which will generally be caused by the incorrect number of
 	 * bytes provided to a fixed-length field.
 	 */
 	abstract public void setBinaryData(byte[] bytes);
@@ -342,8 +342,8 @@ public abstract class Field implements Comparable<Field> {
 	abstract byte getFieldType();
 
 	/**
-	 * Write the field to buf at the specified offset.  When writing variable length 
-	 * fields, the length preceeds the actual data. 
+	 * Write the field to buf at the specified offset.  When writing variable length
+	 * fields, the length preceeds the actual data.
 	 * @param buf data buffer
 	 * @param offset data offset
 	 * @return next available Field offset within buffer, or -1 if end of buffer reached.
@@ -352,8 +352,8 @@ public abstract class Field implements Comparable<Field> {
 	abstract int write(Buffer buf, int offset) throws IOException;
 
 	/**
-	 * Read the field value from buf at the specified offset. When reading variable length 
-	 * fields, the length preceeds the actual data. 
+	 * Read the field value from buf at the specified offset. When reading variable length
+	 * fields, the length preceeds the actual data.
 	 * @param buf data buffer
 	 * @param offset data offset
 	 * @return next Field offset within buffer, or -1 if end of buffer reached.
@@ -363,9 +363,9 @@ public abstract class Field implements Comparable<Field> {
 
 	/**
 	 * Get the total number of bytes which will be read from the buffer
-	 * for this field.  For variable-length fields, only the length 
+	 * for this field.  For variable-length fields, only the length
 	 * portion of the data is examined within the buffer.  This method is intended
-	 * to be used instead of the read method when only interested in the data 
+	 * to be used instead of the read method when only interested in the data
 	 * length.
 	 * @param buf data buffer
 	 * @param offset data offset
@@ -377,14 +377,14 @@ public abstract class Field implements Comparable<Field> {
 	/**
 	 * Get the number of bytes required to store this field value.
 	 * For a variable length fields, this value also accounts for a 4-byte
-	 * length prefix.  Additionally, this method should not be invoked when 
+	 * length prefix.  Additionally, this method should not be invoked when
 	 * working with stored data until after the read method has been invoked.
 	 * @return total storage length
 	 */
 	abstract int length();
 
 	/**
-	 * Determine if the specified Object is another Field which has the same 
+	 * Determine if the specified Object is another Field which has the same
 	 * type and value as this Field.  When comparing a {@link PrimitiveField},
 	 * with a null state, a value of zero (0) is used.
 	 * @param obj another object
@@ -404,7 +404,7 @@ public abstract class Field implements Comparable<Field> {
 
 	/**
 	 * Get minimum field value.
-	 * 
+	 *
 	 * Supported for fixed-length fields only.
 	 * @return minimum value
 	 * @throws UnsupportedOperationException if field is not fixed-length
@@ -413,7 +413,7 @@ public abstract class Field implements Comparable<Field> {
 
 	/**
 	 * Get maximum field value.
-	 * 
+	 *
 	 * Supported for fixed-length fields only.
 	 * @return maximum value
 	 * @throws UnsupportedOperationException if field is not fixed-length
@@ -421,13 +421,13 @@ public abstract class Field implements Comparable<Field> {
 	abstract Field getMaxValue();
 
 	/**
-	 * Determine if the field has been set to a null-state or value.  
+	 * Determine if the field has been set to a null-state or value.
 	 * @return true if field has been set to a null state or value, else false
 	 */
 	public abstract boolean isNull();
 
 	/**
-	 * Set this field to its null-state.  For variable-length field this will 
+	 * Set this field to its null-state.  For variable-length field this will
 	 * generally correspond to a null value, while primitive and fixed-length
 	 * fields will be set to a zero (0) value.  This method may only be invoked
 	 * on a sparse column field.
@@ -442,8 +442,8 @@ public abstract class Field implements Comparable<Field> {
 	 * to support such use.
 	 * @param buffer data buffer
 	 * @param offset field value offset within buffer
-	 * @return comparison value, zero if equal, -1 if this field has a value 
-	 * less than the stored field, or +1 if this field has a value greater than 
+	 * @return comparison value, zero if equal, -1 if this field has a value
+	 * less than the stored field, or +1 if this field has a value greater than
 	 * the stored field located at keyIndex.
 	 */
 	abstract int compareTo(DataBuffer buffer, int offset);
@@ -451,15 +451,15 @@ public abstract class Field implements Comparable<Field> {
 	/**
 	 * Compares this Field with another Field for order.  Returns a
 	 * negative integer, zero, or a positive integer as this object is less
-	 * than, equal to, or greater than the specified Field.  
+	 * than, equal to, or greater than the specified Field.
 	 * <br>
 	 * NOTE: Field objects do not fully comply with the Comparable interface.
-	 * Only the same Field implementations may be compared.  In addition, the 
-	 * null state is not considered when comparing {@link PrimitiveField}s which have a 
+	 * Only the same Field implementations may be compared.  In addition, the
+	 * null state is not considered when comparing {@link PrimitiveField}s which have a
 	 * zero (0) value.
 	 * @param otherField another Field which is the same type as this Field
 	 * @return field comparison result (see {@link Comparable#compareTo(Object)}).
-	 * @throws ClassCastException if an attempt to compare dissimilar Fields (e.g., 
+	 * @throws ClassCastException if an attempt to compare dissimilar Fields (e.g.,
 	 * an IntField may not be compared with a ShortField).
 	 */
 	@Override

@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ import ghidra.program.model.data.DataTypeComponent;
 
 /**
  * Database implementation for settings.
- * 
- * 
+ *
+ *
  */
 class SettingsDBManager implements Settings {
 
@@ -39,7 +39,7 @@ class SettingsDBManager implements Settings {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 */
 	public SettingsDBManager(DataTypeManagerDB dataMgr, DataType dataType, long dataTypeID) {
 
@@ -51,7 +51,7 @@ class SettingsDBManager implements Settings {
 
 	/**
 	 * Constructor
-	 * 
+	 *
 	 */
 	public SettingsDBManager(DataTypeManagerDB dataMgr, DataTypeComponent dtc, long dataTypeID) {
 
@@ -250,7 +250,7 @@ class SettingsDBManager implements Settings {
 	}
 
 	/**
-	 * Following settings value change compare old and new values and return 
+	 * Following settings value change compare old and new values and return
 	 * true if old and new values are different.
 	 * @param oldStrValue old settings string value
 	 * @param newStrValue new settings string value
