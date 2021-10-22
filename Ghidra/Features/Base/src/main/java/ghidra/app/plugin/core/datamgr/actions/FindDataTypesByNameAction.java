@@ -47,7 +47,7 @@ public class FindDataTypesByNameAction extends DockingAction {
 	public void actionPerformed(ActionContext context) {
 
 		InputDialog inputDialog =
-			new InputDialog("Find Data Types", "Please enter the search string: ");
+			new InputDialog(NAME, "Please enter the search string: ");
 		PluginTool tool = plugin.getTool();
 		tool.showDialog(inputDialog);
 		if (inputDialog.isCanceled()) {
