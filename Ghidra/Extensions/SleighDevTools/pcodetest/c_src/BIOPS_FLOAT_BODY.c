@@ -16,145 +16,43 @@
 #include "pcode_test.h"
 
 #ifdef HAS_FLOAT
-f4 f4_compareLogic(f4 lhs, f4 rhs)
-{
-	if (lhs < 0)
-		lhs += 2;
-	if (lhs > 0)
-		lhs += 4;
-	if (lhs == 0)
-		lhs += 8;
-	if (lhs != rhs)
-		lhs += 16;
-	return lhs;
-}
 
-f8 f8_compareLogic(f8 lhs, f8 rhs)
-{
-	if (lhs < 0)
-		lhs += 2;
-	if (lhs > 0)
-		lhs += 4;
-	if (lhs == 0)
-		lhs += 8;
-	if (lhs != rhs)
-		lhs += 16;
-	return lhs;
-}
+PCODE_COMPARE_LOGIC(f4)
 
-/* Comparison operators */
-f4 f4_greaterThan(f4 lhs, f4 rhs)
-{
-	f4 z;
+PCODE_GREATERTHAN_FLOAT(f4)
 
-	z = lhs > rhs;
-	return z;
-}
+PCODE_GREATERTHANEQUALS_FLOAT(f4)
 
-f4 f4_greaterThanEquals(f4 lhs, f4 rhs)
-{
-	f4 z;
+PCODE_LESSTHAN_FLOAT(f4)
 
-	z = lhs >= rhs;
-	return z;
-}
+PCODE_LESSTHANEQUALS_FLOAT(f4)
 
-f4 f4_lessThan(f4 lhs, f4 rhs)
-{
-	f4 z;
+PCODE_EQUALS_FLOAT(f4)
 
-	z = lhs < rhs;
-	return z;
-}
+PCODE_NOTEQUALS_FLOAT(f4)
 
-f4 f4_lessThanEquals(f4 lhs, f4 rhs)
-{
-	f4 z;
+PCODE_LOGICAL_AND_FLOAT(f4)
 
-	z = lhs <= rhs;
-	return z;
-}
+PCODE_LOGICAL_OR_FLOAT(f4)
 
-f4 f4_equals(f4 lhs, f4 rhs)
-{
-	f4 z;
+PCODE_LOGICAL_NOT_FLOAT(f4)
 
-	z = lhs == rhs;
-	return z;
-}
+PCODE_UNARY_PLUS_FLOAT(f4)
 
-f4 f4_notEquals(f4 lhs, f4 rhs)
-{
-	f4 z;
+PCODE_UNARY_MINUS_FLOAT(f4)
 
-	z = lhs != rhs;
-	return z;
-}
+PCODE_ADDITION_FLOAT(f4)
 
-/* Logical operators */
-f4 f4_logicalAnd(f4 lhs, f4 rhs)
-{
-	f4 z;
+PCODE_SUBTRACT_FLOAT(f4)
 
-	z = lhs && rhs;
-	return z;
-}
+#ifdef HAS_MULTIPLY
 
-f4 f4_logicalOr(f4 lhs, f4 rhs)
-{
-	f4 z;
+PCODE_MUL_FLOAT(f4)
 
-	z = lhs || rhs;
-	return z;
-}
+#endif /* #ifdef HAS_MULTIPLY */
+#ifdef HAS_DIVIDE
 
-f4 f4_logicalNot(f4 lhs)
-{
-	f4 z;
+PCODE_DIV_FLOAT(f4)
 
-	z = !lhs;
-	return z;
-}
-
-/* Arithmetic operators */
-f4 f4_unaryMinus(f4 lhs)
-{
-	f4 z;
-
-	z = -lhs;
-	return z;
-}
-
-f4 f4_unaryPlus(f4 lhs)
-{
-	f4 z;
-
-	z = +lhs;
-	return z;
-}
-
-f4 f4_addition(f4 lhs, f4 rhs)
-{
-	f4 z;
-
-	z = lhs + rhs;
-	return z;
-}
-
-f4 f4_subtract(f4 lhs, f4 rhs)
-{
-	f4 z;
-
-	z = lhs - rhs;
-	return z;
-}
-
-f4 f4_multiply(f4 lhs, f4 rhs)
-{
-	f4 z;
-
-	z = lhs * rhs;
-	return z;
-}
-
+#endif /* #ifdef HAS_DIVIDE */
 #endif /* #ifdef HAS_FLOAT */

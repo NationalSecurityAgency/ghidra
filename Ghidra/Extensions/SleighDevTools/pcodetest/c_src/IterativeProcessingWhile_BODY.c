@@ -15,7 +15,7 @@
  */
 #include "pcode_test.h"
 
-i4 pcode_StandardPostIncWhileLoop()
+i4 pcode_StandardPostIncWhileLoop(void)
 {
 	i4 ii = 0;
 	i4 accum = 0;
@@ -26,7 +26,7 @@ i4 pcode_StandardPostIncWhileLoop()
 	return accum;
 }
 
-i4 pcode_StandardPreIncWhileLoop()
+i4 pcode_StandardPreIncWhileLoop(void)
 {
 	i4 ii = 0;
 	i4 accum = 0;
@@ -37,7 +37,7 @@ i4 pcode_StandardPreIncWhileLoop()
 	return accum;
 }
 
-i4 pcode_StandardPostDecWhileLoop()
+i4 pcode_StandardPostDecWhileLoop(void)
 {
 	i4 ii = 5;
 	i4 accum = 0;
@@ -48,7 +48,7 @@ i4 pcode_StandardPostDecWhileLoop()
 	return accum;
 }
 
-i4 pcode_StandardPreDecWhileLoop()
+i4 pcode_StandardPreDecWhileLoop(void)
 {
 	i4 ii = 5;
 	i4 accum = 0;

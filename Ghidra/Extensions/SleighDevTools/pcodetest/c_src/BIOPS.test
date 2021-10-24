@@ -22,20 +22,26 @@ TEST i1_complexLogic_Main()
 TEST u1_compareLogic_Main()
 {
 	extern u1 u1_compareLogic(u1 lhs, u1 rhs);
-	ASSERTU1(u1_compareLogic(0x1, 0x1), 1);
-	ASSERTU1(u1_compareLogic(0x1, 0x2), 23);
-	ASSERTU1(u1_compareLogic(0x2, 0x1), 22);
+	ASSERTU1(u1_compareLogic(0x0, 0x1), 17);
+	ASSERTU1(u1_compareLogic(0x1, 0x0), 13);
+	ASSERTU1(u1_compareLogic(0x1, 0x1), 17);
+	ASSERTU1(u1_compareLogic(0x1, 0x2), 15);
+	ASSERTU1(u1_compareLogic(0x2, 0x1), 14);
 }
 
 TEST i1_compareLogic_Main()
 {
 	extern i1 i1_compareLogic(i1 lhs, i1 rhs);
-	ASSERTI1(i1_compareLogic(0x1, 0x1), 21);
-	ASSERTI1(i1_compareLogic(0x1, 0x2), 21);
-	ASSERTI1(i1_compareLogic(0x2, 0x1), 22);
-	ASSERTI1(i1_compareLogic(-0x1, -0x1), 21);
-	ASSERTI1(i1_compareLogic(-0x1, -0x2), 21);
-	ASSERTI1(i1_compareLogic(-0x2, -0x1), 24);
+	ASSERTI1(i1_compareLogic(0x0, 0x1), 17);
+	ASSERTI1(i1_compareLogic(0x1, 0x0), 13);
+	ASSERTI1(i1_compareLogic(0x1, 0x1), 17);
+	ASSERTI1(i1_compareLogic(0x1, 0x2), 15);
+	ASSERTI1(i1_compareLogic(0x2, 0x1), 14);
+	ASSERTI1(i1_compareLogic(0x0, -0x1), 13);
+	ASSERTI1(i1_compareLogic(-0x1, 0x0), 13);
+	ASSERTI1(i1_compareLogic(-0x1, -0x1), 15);
+	ASSERTI1(i1_compareLogic(-0x1, -0x2), 11);
+	ASSERTI1(i1_compareLogic(-0x2, -0x1), 12);
 }
 
 /* Comparison operators */
@@ -331,10 +337,10 @@ TEST u1_multiply_Main()
 
 TEST u1_divide_Main()
 {
-	extern i1 u1_divide(u1 lhs, u1 rhs);
-	ASSERTI1(u1_divide(0x01, 0x01), 1);
-	ASSERTI1(u1_divide(U1_MAX, U1_MAX), 1);
-	ASSERTI1(u1_divide(U1_MAX, 1), U1_MAX);
+	extern u1 u1_divide(u1 lhs, u1 rhs);
+	ASSERTU1(u1_divide(0x01, 0x01), 1);
+	ASSERTU1(u1_divide(U1_MAX, U1_MAX), 1);
+	ASSERTU1(u1_divide(U1_MAX, 1), U1_MAX);
 }
 
 TEST u1_remainder_Main()

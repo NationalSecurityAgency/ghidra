@@ -21,20 +21,26 @@ TEST i2_complexLogic_Main()
 TEST u2_compareLogic_Main()
 {
 	extern u2 u2_compareLogic(u2 lhs, u2 rhs);
-	ASSERTU2(u2_compareLogic(0x1, 0x1), 1);
-	ASSERTU2(u2_compareLogic(0x1, 0x2), 23);
-	ASSERTU2(u2_compareLogic(0x2, 0x1), 22);
+	ASSERTU2(u2_compareLogic(0x0, 0x1), 17);
+	ASSERTU2(u2_compareLogic(0x1, 0x0), 13);
+	ASSERTU2(u2_compareLogic(0x1, 0x1), 17);
+	ASSERTU2(u2_compareLogic(0x1, 0x2), 15);
+	ASSERTU2(u2_compareLogic(0x2, 0x1), 14);
 }
 
 TEST i2_compareLogic_Main()
 {
 	extern i2 i2_compareLogic(i2 lhs, i2 rhs);
-	ASSERTI2(i2_compareLogic(0x1, 0x1), 21);
-	ASSERTI2(i2_compareLogic(0x1, 0x2), 21);
-	ASSERTI2(i2_compareLogic(0x2, 0x1), 22);
-	ASSERTI2(i2_compareLogic(-0x1, -0x1), 21);
-	ASSERTI2(i2_compareLogic(-0x1, -0x2), 21);
-	ASSERTI2(i2_compareLogic(-0x2, -0x1), 24);
+	ASSERTI2(i2_compareLogic(0x0, 0x1), 17);
+	ASSERTI2(i2_compareLogic(0x1, 0x0), 13);
+	ASSERTI2(i2_compareLogic(0x1, 0x1), 17);
+	ASSERTI2(i2_compareLogic(0x1, 0x2), 15);
+	ASSERTI2(i2_compareLogic(0x2, 0x1), 14);
+	ASSERTI2(i2_compareLogic(0x0, -0x1), 13);
+	ASSERTI2(i2_compareLogic(-0x1, 0x0), 13);
+	ASSERTI2(i2_compareLogic(-0x1, -0x1), 15);
+	ASSERTI2(i2_compareLogic(-0x1, -0x2), 11);
+	ASSERTI2(i2_compareLogic(-0x2, -0x1), 12);
 }
 
 /* Comparison operators */
@@ -245,12 +251,10 @@ TEST u2_logicalOr_Main()
 {
 	extern u2 u2_logicalOr(u2 lhs, u2 rhs);
 	ASSERTU2(u2_logicalOr(2, 1), 1);
-	ASSERTU2(u2_logicalOr(2, 1), 1);
 	ASSERTU2(u2_logicalOr(U2_MAX, U2_MAX), 1);
 	ASSERTU2(u2_logicalOr(U2_MIN, U2_MIN), 0);
 	ASSERTU2(u2_logicalOr(U2_MAX, U2_MIN), 1);
 	ASSERTU2(u2_logicalOr(U2_MAX, 0), 1);
-	ASSERTU2(u2_logicalOr(0, 0), 0);
 }
 
 TEST u2_logicalNot_Main()

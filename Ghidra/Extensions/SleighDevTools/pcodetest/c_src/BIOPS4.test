@@ -21,20 +21,26 @@ TEST i4_complexLogic_Main()
 TEST u4_compareLogic_Main()
 {
 	extern u4 u4_compareLogic(u4 lhs, u4 rhs);
-	ASSERTU4(u4_compareLogic(0x1, 0x1), 1);
-	ASSERTU4(u4_compareLogic(0x1, 0x2), 23);
-	ASSERTU4(u4_compareLogic(0x2, 0x1), 22);
+	ASSERTU4(u4_compareLogic(0x0, 0x1), 17);
+	ASSERTU4(u4_compareLogic(0x1, 0x0), 13);
+	ASSERTU4(u4_compareLogic(0x1, 0x1), 17);
+	ASSERTU4(u4_compareLogic(0x1, 0x2), 15);
+	ASSERTU4(u4_compareLogic(0x2, 0x1), 14);
 }
 
 TEST i4_compareLogic_Main()
 {
 	extern i4 i4_compareLogic(i4 lhs, i4 rhs);
-	ASSERTI4(i4_compareLogic(0x1, 0x1), 21);
-	ASSERTI4(i4_compareLogic(0x1, 0x2), 21);
-	ASSERTI4(i4_compareLogic(0x2, 0x1), 22);
-	ASSERTI4(i4_compareLogic(-0x1, -0x1), 21);
-	ASSERTI4(i4_compareLogic(-0x1, -0x2), 21);
-	ASSERTI4(i4_compareLogic(-0x2, -0x1), 24);
+	ASSERTI4(i4_compareLogic(0x0, 0x1), 17);
+	ASSERTI4(i4_compareLogic(0x1, 0x0), 13);
+	ASSERTI4(i4_compareLogic(0x1, 0x1), 17);
+	ASSERTI4(i4_compareLogic(0x1, 0x2), 15);
+	ASSERTI4(i4_compareLogic(0x2, 0x1), 14);
+	ASSERTI4(i4_compareLogic(0x0, -0x1), 13);
+	ASSERTI4(i4_compareLogic(-0x1, 0x0), 13);
+	ASSERTI4(i4_compareLogic(-0x1, -0x1), 15);
+	ASSERTI4(i4_compareLogic(-0x1, -0x2), 11);
+	ASSERTI4(i4_compareLogic(-0x2, -0x1), 12);
 }
 
 /* Comparison operators */
@@ -242,6 +248,7 @@ TEST u4_logicalOr_Main()
 	extern u4 u4_logicalOr(u4 lhs, u4 rhs);
 	ASSERTU4(u4_logicalOr(0x01010101, 0x01010101), 1);
 	ASSERTU4(u4_logicalOr(2, 1), 1);
+	ASSERTU4(u4_logicalOr(U4_MIN, U4_MIN), 0);
 	ASSERTU4(u4_logicalOr(U4_MAX, U4_MAX), 1);
 	ASSERTU4(u4_logicalOr(U4_MAX, U4_MIN), 1);
 }

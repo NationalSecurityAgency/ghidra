@@ -15,399 +15,78 @@
  */
 #include "pcode_test.h"
 
-u4 u4_complexLogic(u4 a, u4 b, u4 c, u4 d, u4 e, u4 f)
-{
-	u4 ret = 0;
-
-	if (a > b && b > c || d < e && f < e) {
-		ret += 1;
-	}
-	if (a != b || a != c && d != e || f != e) {
-		ret += 2;
-	}
-	if (a && b && c || d && e && f) {
-		ret += 4;
-	}
-	if (a || b || c && d || e || f) {
-		ret += 8;
-	}
-	return ret;
-}
-
-i4 i4_complexLogic(i4 a, i4 b, i4 c, i4 d, i4 e, i4 f)
-{
-	i4 ret = 0;
-
-	if (a > b && b > c || d < e && f < e) {
-		ret += 1;
-	}
-	if (a != b || a != c && d != e || f != e) {
-		ret += 2;
-	}
-	if (a && b && c || d && e && f) {
-		ret += 4;
-	}
-	if (a || b || c && d || e || f) {
-		ret += 8;
-	}
-	return ret;
-}
-
-u4 u4_compareLogic(u4 lhs, u4 rhs)
-{
-	if (lhs < rhs)
-		lhs += 2;
-	if (lhs > rhs)
-		lhs += 4;
-	if (lhs == 0)
-		lhs += 8;
-	if (lhs != rhs)
-		lhs += 16;
-	return lhs;
-}
-
-i4 i4_compareLogic(i4 lhs, i4 rhs)
-{
-	if (lhs < 0)
-		lhs += 2;
-	if (lhs > 0)
-		lhs += 4;
-	if (lhs == 0)
-		lhs += 8;
-	if (lhs != rhs)
-		lhs += 16;
-	return lhs;
-}
-/* Comparison operators */
-u4 u4_greaterThan(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs > rhs;
-	return z;
-}
-
-u4 u4_greaterThanEquals(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs >= rhs;
-	return z;
-}
-
-u4 u4_lessThan(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs < rhs;
-	return z;
-}
-
-u4 u4_lessThanEquals(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs <= rhs;
-	return z;
-}
-
-u4 u4_equals(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs == rhs;
-	return z;
-}
-
-u4 u4_notEquals(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs != rhs;
-	return z;
-}
-
-i4 i4_greaterThan(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs > rhs;
-	return z;
-}
-
-i4 i4_greaterThanEquals(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs >= rhs;
-	return z;
-}
-
-i4 i4_lessThan(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs < rhs;
-	return z;
-}
-
-i4 i4_lessThanEquals(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs <= rhs;
-	return z;
-}
-
-i4 i4_equals(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs == rhs;
-	return z;
-}
-
-i4 i4_notEquals(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs != rhs;
-	return z;
-}
-
-/* Bitwise operators */
-u4 u4_bitwiseAnd(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs & rhs;
-	return z;
-}
-
-u4 u4_bitwiseOr(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs | rhs;
-	return z;
-}
-
-u4 u4_bitwiseXor(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs ^ rhs;
-	return z;
-}
-
-i4 i4_bitwiseAnd(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs & rhs;
-	return z;
-}
-
-i4 i4_bitwiseOr(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs | rhs;
-	return z;
-}
-
-i4 i4_bitwiseXor(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs ^ rhs;
-	return z;
-}
-
-/* Logical operators */
-u4 u4_logicalAnd(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs && rhs;
-	return z;
-}
-
-u4 u4_logicalOr(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs || rhs;
-	return z;
-}
-
-u4 u4_logicalNot(u4 lhs)
-{
-	u4 z;
-
-	z = !lhs;
-	return z;
-}
-
-i4 i4_logicalAnd(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs && rhs;
-	return z;
-}
-
-i4 i4_logicalOr(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs || rhs;
-	return z;
-}
-
-i4 i4_logicalNot(i4 lhs)
-{
-	i4 z;
-
-	z = !lhs;
-	return z;
-}
-
-/* Shift operators */
-u4 u4_shiftLeft(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs << rhs;
-	return z;
-}
-
-u4 u4_shiftRight(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs >> rhs;
-	return z;
-}
-
-i4 i4_shiftLeft(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs << rhs;
-	return z;
-}
-
-i4 i4_shiftRight(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs >> rhs;
-	return z;
-}
-
-/* Arithmetic operators */
-u4 u4_unaryPlus(u4 lhs)
-{
-	u4 z;
-
-	z = +lhs;
-	return z;
-}
-
-u4 u4_addition(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs + rhs;
-	return z;
-}
-
-u4 u4_subtract(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs - rhs;
-	return z;
-}
-
-u4 u4_multiply(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs * rhs;
-	return z;
-}
-
-u4 u4_divide(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs / rhs;
-	return z;
-}
-
-u4 u4_remainder(u4 lhs, u4 rhs)
-{
-	u4 z;
-
-	z = lhs % rhs;
-	return z;
-}
-
-i4 i4_unaryMinus(i4 lhs)
-{
-	i4 z;
-
-	z = -lhs;
-	return z;
-}
-
-i4 i4_unaryPlus(i4 lhs)
-{
-	i4 z;
-
-	z = +lhs;
-	return z;
-}
-
-i4 i4_addition(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs + rhs;
-	return z;
-}
-
-i4 i4_subtract(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs - rhs;
-	return z;
-}
-
-i4 i4_multiply(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs * rhs;
-	return z;
-}
-
-i4 i4_divide(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs / rhs;
-	return z;
-}
-
-i4 i4_remainder(i4 lhs, i4 rhs)
-{
-	i4 z;
-
-	z = lhs % rhs;
-	return z;
-}
+PCODE_COMPLEX_LOGIC(u4)
+PCODE_COMPLEX_LOGIC(i4)
 
+PCODE_COMPARE_LOGIC(u4)
+PCODE_COMPARE_LOGIC(i4)
+
+PCODE_GREATERTHAN(u4)
+PCODE_GREATERTHAN(i4)
+
+PCODE_GREATERTHANEQUALS(u4)
+PCODE_GREATERTHANEQUALS(i4)
+
+PCODE_LESSTHAN(u4)
+PCODE_LESSTHAN(i4)
+
+PCODE_LESSTHANEQUALS(u4)
+PCODE_LESSTHANEQUALS(i4)
+
+PCODE_EQUALS(u4)
+PCODE_EQUALS(i4)
+
+PCODE_NOTEQUALS(u4)
+PCODE_NOTEQUALS(i4)
+
+PCODE_BITWISE_AND(u4)
+PCODE_BITWISE_AND(i4)
+
+PCODE_BITWISE_OR(u4)
+PCODE_BITWISE_OR(i4)
+
+PCODE_LOGICAL_AND(u4)
+PCODE_LOGICAL_AND(i4)
+
+PCODE_LOGICAL_OR(u4)
+PCODE_LOGICAL_OR(i4)
+
+PCODE_LOGICAL_NOT(u4)
+PCODE_LOGICAL_NOT(i4)
+
+PCODE_XOR(u4)
+PCODE_XOR(i4)
+
+PCODE_SHIFTLEFT(u4)
+PCODE_SHIFTLEFT(i4)
+
+PCODE_SHIFTRIGHT(u4)
+PCODE_SHIFTRIGHT(i4)
+
+PCODE_UNARY_PLUS(u4)
+PCODE_UNARY_PLUS(i4)
+
+PCODE_UNARY_MINUS(u4)
+PCODE_UNARY_MINUS(i4)
+
+PCODE_ADDITION(u4)
+PCODE_ADDITION(i4)
+
+PCODE_SUBTRACT(u4)
+PCODE_SUBTRACT(i4)
+
+#ifdef HAS_MULTIPLY
+
+PCODE_MUL(u4)
+PCODE_MUL(i4)
+
+#endif /* #ifdef HAS_MULTIPLY */
+#ifdef HAS_DIVIDE
+
+PCODE_DIV(u4)
+PCODE_DIV(i4)
+
+PCODE_REM(u4)
+PCODE_REM(i4)
+
+#endif /* #ifdef HAS_DIVIDE */

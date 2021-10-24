@@ -26,12 +26,16 @@ TEST u8_complexLogic_Main()
 TEST i8_compareLogic_Main()
 {
 	extern i8 i8_compareLogic(i8 lhs, i8 rhs);
-	ASSERTI8(i8_compareLogic(0x1, 0x1), 21);
-	ASSERTI8(i8_compareLogic(0x1, 0x2), 21);
-	ASSERTI8(i8_compareLogic(0x2, 0x1), 22);
-	ASSERTI8(i8_compareLogic(-0x1, -0x1), 21);
-	ASSERTI8(i8_compareLogic(-0x1, -0x2), 21);
-	ASSERTI8(i8_compareLogic(-0x2, -0x1), 24);
+	ASSERTI8(i8_compareLogic(0x0, 0x1), 17);
+	ASSERTI8(i8_compareLogic(0x1, 0x0), 13);
+	ASSERTI8(i8_compareLogic(0x1, 0x1), 17);
+	ASSERTI8(i8_compareLogic(0x1, 0x2), 15);
+	ASSERTI8(i8_compareLogic(0x2, 0x1), 14);
+	ASSERTI8(i8_compareLogic(0x0, -0x1), 13);
+	ASSERTI8(i8_compareLogic(-0x1, 0x0), 13);
+	ASSERTI8(i8_compareLogic(-0x1, -0x1), 15);
+	ASSERTI8(i8_compareLogic(-0x1, -0x2), 11);
+	ASSERTI8(i8_compareLogic(-0x2, -0x1), 12);
 }
 #endif
 
@@ -39,9 +43,11 @@ TEST i8_compareLogic_Main()
 TEST u8_compareLogic_Main()
 {
 	extern u8 u8_compareLogic(u8 lhs, u8 rhs);
-	ASSERTU8(u8_compareLogic(0x1, 0x1), 1);
-	ASSERTU8(u8_compareLogic(0x1, 0x2), 23);
-	ASSERTU8(u8_compareLogic(0x2, 0x1), 22);
+	ASSERTU8(u8_compareLogic(0x0, 0x1), 17);
+	ASSERTU8(u8_compareLogic(0x1, 0x0), 13);
+	ASSERTU8(u8_compareLogic(0x1, 0x1), 17);
+	ASSERTU8(u8_compareLogic(0x1, 0x2), 15);
+	ASSERTU8(u8_compareLogic(0x2, 0x1), 14);
 }
 #endif
 /* Comparison operators */
@@ -309,6 +315,7 @@ TEST i8_logicalAnd_Main()
 TEST i8_logicalOr_Main()
 {
 	extern i8 i8_logicalOr(i8 lhs, i8 rhs);
+	ASSERTI8(i8_logicalOr(0, 0), 0);
 	ASSERTI8(i8_logicalOr(2, 1), 1);
 	ASSERTI8(i8_logicalOr(0x0101010101010101LL, 0x0101010101010101LL), 1);
 	ASSERTI8(i8_logicalOr(I8_MAX, I8_MAX), 1);

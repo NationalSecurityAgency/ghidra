@@ -1,0 +1,742 @@
+#include "pcode_test.h"
+
+
+TEST pcode_swap_u2_Main()
+{
+	extern u2 pcode_bswap_u2(u2);
+	ASSERTU2(pcode_bswap_u2(U2_MIN), U2_MIN);
+	ASSERTU2(pcode_bswap_u2(U2_MAX), U2_MAX);
+	ASSERTU2(pcode_bswap_u2(0x1234), 0x3412);
+	ASSERTU2(pcode_bswap_u2(0x8000), 0x0080);
+	ASSERTU2(pcode_bswap_u2(0x0080), 0x8000);
+}
+
+TEST pcode_swap_i2_Main()
+{
+	extern i2 pcode_bswap_i2(i2);
+	ASSERTI2(pcode_bswap_i2(0), 0);
+	ASSERTI2(pcode_bswap_i2(-1), -1);
+	ASSERTI2(pcode_bswap_i2(I2_MIN), 128);
+	ASSERTI2(pcode_bswap_i2(I2_MAX), -129);
+	ASSERTI2(pcode_bswap_i2(0x1234), 0x3412);
+	ASSERTI2(pcode_bswap_i2(0x0080), I2_MIN);
+}
+
+
+TEST pcode_swap_u4_Main()
+{
+	extern u4 pcode_bswap_u4(u4);
+	ASSERTU4(pcode_bswap_u4(U4_MIN), U4_MIN);
+	ASSERTU4(pcode_bswap_u4(U4_MAX), U4_MAX);
+	ASSERTU4(pcode_bswap_u4(0x12345678), 0x78563412);
+	ASSERTU4(pcode_bswap_u4(0x80000000), 0x00000080);
+	ASSERTU4(pcode_bswap_u4(0x00000080), 0x80000000);
+}
+
+TEST pcode_swap_i4_Main()
+{
+	extern i4 pcode_bswap_i4(i4);
+	ASSERTI4(pcode_bswap_i4(0), 0);
+	ASSERTI4(pcode_bswap_i4(-1), -1);
+	ASSERTI4(pcode_bswap_i4(I4_MIN), 128);
+	ASSERTI4(pcode_bswap_i4(I4_MAX), -129);
+	ASSERTI4(pcode_bswap_i4(0x12345678), 0x78563412);
+	ASSERTI4(pcode_bswap_i4(0x00000080), I4_MIN);
+}
+
+
+#ifdef HAS_LONGLONG
+TEST pcode_swap_u8_Main()
+{
+	extern u8 pcode_bswap_u8(u8);
+	ASSERTU8(pcode_bswap_u8(U8_MIN), U8_MIN);
+	ASSERTU8(pcode_bswap_u8(U8_MAX), U8_MAX);
+	ASSERTU8(pcode_bswap_u8(0x1234567890abcdefULL), 0xefcdab9078563412ULL);
+	ASSERTU8(pcode_bswap_u8(0x8000000000000000ULL), 0x0000000000000080ULL);
+	ASSERTU8(pcode_bswap_u8(0x0000000000000080ULL), 0x8000000000000000ULL);
+}
+
+TEST pcode_swap_i8_Main()
+{
+	extern i8 pcode_bswap_i8(i8);
+	ASSERTI8(pcode_bswap_i8(0), 0);
+	ASSERTI8(pcode_bswap_i8(-1), -1);
+	ASSERTI8(pcode_bswap_i8(I8_MIN), 128);
+	ASSERTI8(pcode_bswap_i8(I8_MAX), -129);
+	ASSERTI8(pcode_bswap_i8(0x1234567890abcdefLL), 0xefcdab9078563412LL);
+	ASSERTI8(pcode_bswap_i8(0x0000000000000080LL), I8_MIN);
+}
+#endif
+
+
+TEST pcode_atomic_load_store_u1_Main()
+{
+	extern u1 pcode_atomic_load_store_u1(u1);
+	ASSERTU1(pcode_atomic_load_store_u1(U1_MIN), U1_MIN);
+	ASSERTU1(pcode_atomic_load_store_u1(U1_MAX), U1_MAX);
+	ASSERTU1(pcode_atomic_load_store_u1(0x55), 0x55);	
+}
+
+TEST pcode_atomic_load_store_i1_Main()
+{
+	extern i1 pcode_atomic_load_store_i1(i1);
+	ASSERTI1(pcode_atomic_load_store_i1(0), 0);
+	ASSERTI1(pcode_atomic_load_store_i1(-1), -1);
+	ASSERTI1(pcode_atomic_load_store_i1(I1_MIN), I1_MIN);
+	ASSERTI1(pcode_atomic_load_store_i1(I1_MAX), I1_MAX);
+	ASSERTI1(pcode_atomic_load_store_i1(0x55), 0x55);	
+}
+
+
+TEST pcode_atomic_load_store_u2_Main()
+{
+	extern u2 pcode_atomic_load_store_u2(u2);
+	ASSERTU2(pcode_atomic_load_store_u2(U2_MIN), U2_MIN);
+	ASSERTU2(pcode_atomic_load_store_u2(U2_MAX), U2_MAX);
+	ASSERTU2(pcode_atomic_load_store_u2(0x5555), 0x5555);	
+}
+
+TEST pcode_atomic_load_store_i2_Main()
+{
+	extern i2 pcode_atomic_load_store_i2(i2);
+	ASSERTI2(pcode_atomic_load_store_i2(0), 0);
+	ASSERTI2(pcode_atomic_load_store_i2(-1), -1);
+	ASSERTI2(pcode_atomic_load_store_i2(I2_MIN), I2_MIN);
+	ASSERTI2(pcode_atomic_load_store_i2(I2_MAX), I2_MAX);
+	ASSERTI2(pcode_atomic_load_store_i2(0x5555), 0x5555);	
+}
+
+
+TEST pcode_atomic_load_store_u4_Main()
+{
+	extern u4 pcode_atomic_load_store_u4(u4);
+	ASSERTU4(pcode_atomic_load_store_u4(U4_MIN), U4_MIN);
+	ASSERTU4(pcode_atomic_load_store_u4(U4_MAX), U4_MAX);
+	ASSERTU4(pcode_atomic_load_store_u4(0x55555555), 0x55555555);	
+}
+
+TEST pcode_atomic_load_store_i4_Main()
+{
+	extern i4 pcode_atomic_load_store_i4(i4);
+	ASSERTI4(pcode_atomic_load_store_i4(0), 0);
+	ASSERTI4(pcode_atomic_load_store_i4(-1), -1);
+	ASSERTI4(pcode_atomic_load_store_i4(I4_MIN), I4_MIN);
+	ASSERTI4(pcode_atomic_load_store_i4(I4_MAX), I4_MAX);
+	ASSERTI4(pcode_atomic_load_store_i4(0x55555555), 0x55555555);	
+}
+
+
+#ifdef HAS_LONGLONG
+TEST pcode_atomic_load_store_u8_Main()
+{
+	extern u8 pcode_atomic_load_store_u8(u8);
+	ASSERTU8(pcode_atomic_load_store_u8(U8_MIN), U8_MIN);
+	ASSERTU8(pcode_atomic_load_store_u8(U8_MAX), U8_MAX);
+	ASSERTU8(pcode_atomic_load_store_u8(0x5555555555555555ULL), 0x5555555555555555ULL);	
+}
+
+TEST pcode_atomic_load_store_i8_Main()
+{
+	extern i8 pcode_atomic_load_store_i8(i8);
+	ASSERTI8(pcode_atomic_load_store_i8(0), 0);
+	ASSERTI8(pcode_atomic_load_store_i8(-1), -1);
+	ASSERTI8(pcode_atomic_load_store_i8(I8_MIN), I8_MIN);
+	ASSERTI8(pcode_atomic_load_store_i8(I8_MAX), I8_MAX);
+	ASSERTI8(pcode_atomic_load_store_i8(0x5555555555555555LL), 0x5555555555555555LL);	
+}
+#endif
+
+
+TEST pcode_atomic_exchange_u4_Main()
+{
+	extern u4 pcode_atomic_exchange_u4(u4, u4);
+	ASSERTU4(pcode_atomic_exchange_u4(1, U4_MIN), U4_MIN);
+	ASSERTU4(pcode_atomic_exchange_u4(1, U4_MAX), U4_MAX);
+	ASSERTU4(pcode_atomic_exchange_u4(1, 0x55555555), 0x55555555);	
+}
+
+TEST pcode_atomic_exchange_i4_Main()
+{
+	extern i4 pcode_atomic_exchange_i4(i4, i4);
+	ASSERTI4(pcode_atomic_exchange_i4(1, 0), 0);
+	ASSERTI4(pcode_atomic_exchange_i4(1, -1), -1);
+	ASSERTI4(pcode_atomic_exchange_i4(1, I4_MIN), I4_MIN);
+	ASSERTI4(pcode_atomic_exchange_i4(1, I4_MAX), I4_MAX);
+	ASSERTI4(pcode_atomic_exchange_i4(1, 0x55555555), 0x55555555);	
+}
+
+
+#ifdef HAS_LONGLONG
+TEST pcode_atomic_exchange_u8_Main()
+{
+	extern u8 pcode_atomic_exchange_u8(u8, u8);
+	ASSERTU8(pcode_atomic_exchange_u8(1, U8_MIN), U8_MIN);
+	ASSERTU8(pcode_atomic_exchange_u8(1, U8_MAX), U8_MAX);
+	ASSERTU8(pcode_atomic_exchange_u8(1, 0x5555555555555555ULL), 0x5555555555555555ULL);	
+}
+
+TEST pcode_atomic_exchange_i8_Main()
+{
+	extern i8 pcode_atomic_exchange_i8(i8, i8);
+	ASSERTI8(pcode_atomic_exchange_i8(1, 0), 0);
+	ASSERTI8(pcode_atomic_exchange_i8(1, -1), -1);
+	ASSERTI8(pcode_atomic_exchange_i8(1, I8_MIN), I8_MIN);
+	ASSERTI8(pcode_atomic_exchange_i8(1, I8_MAX), I8_MAX);
+	ASSERTI8(pcode_atomic_exchange_i8(1, 0x5555555555555555LL), 0x5555555555555555LL);
+}
+#endif
+
+
+TEST pcode_atomic_compare_exchange_u4_Main()
+{
+	extern u4 pcode_atomic_compare_exchange_u4(u4, u4, u4);
+	ASSERTU4(pcode_atomic_compare_exchange_u4(1, 1, U4_MIN), U4_MIN);
+	ASSERTU4(pcode_atomic_compare_exchange_u4(1, 1, U4_MAX), U4_MAX);
+	ASSERTU4(pcode_atomic_compare_exchange_u4(U4_MAX, 1, 2), U4_MIN);
+	ASSERTU4(pcode_atomic_compare_exchange_u4(1, U4_MAX, 2), 1);
+}
+
+TEST pcode_atomic_compare_exchange_i4_Main()
+{
+	extern i4 pcode_atomic_compare_exchange_i4(i4, i4, i4);
+	ASSERTI4(pcode_atomic_compare_exchange_i4(1, 1, I4_MIN), I4_MIN);
+	ASSERTI4(pcode_atomic_compare_exchange_i4(1, 1, I4_MAX), I4_MAX);
+	ASSERTI4(pcode_atomic_compare_exchange_i4(I4_MAX, 1, 2), I4_MAX);
+	ASSERTI4(pcode_atomic_compare_exchange_i4(1, I4_MAX, 2), 1);
+}
+
+
+#ifdef HAS_LONGLONG
+TEST pcode_atomic_compare_exchange_u8_Main()
+{
+	extern u8 pcode_atomic_compare_exchange_u8(u8, u8, u8);
+	ASSERTU8(pcode_atomic_compare_exchange_u8(1, 1, U8_MIN), U8_MIN);
+	ASSERTU8(pcode_atomic_compare_exchange_u8(1, 1, U8_MAX), U8_MAX);
+	ASSERTU8(pcode_atomic_compare_exchange_u8(U8_MAX, 1, 2), U8_MIN);
+	ASSERTU8(pcode_atomic_compare_exchange_u8(1, U8_MAX, 2), 1);
+}
+
+TEST pcode_atomic_compare_exchange_i8_Main()
+{
+	extern i8 pcode_atomic_compare_exchange_i8(i8, i8, i8);
+	ASSERTI8(pcode_atomic_compare_exchange_i8(1, 1, I8_MIN), I8_MIN);
+	ASSERTI8(pcode_atomic_compare_exchange_i8(1, 1, I8_MAX), I8_MAX);
+	ASSERTI8(pcode_atomic_compare_exchange_i8(I8_MAX, 1, 2), I8_MAX);
+	ASSERTI8(pcode_atomic_compare_exchange_i8(1, I8_MAX, 2), 1);
+}
+#endif
+
+
+TEST pcode_atomic_add_fetch_u4_Main()
+{
+	extern u4 pcode_atomic_add_fetch_u4(u4, u4);
+	extern u4 pcode_atomic_fetch_add_u4(u4, u4);
+	ASSERTU4(pcode_atomic_add_fetch_u4(0x01010101, 0x01010101), 33686018);
+	ASSERTU4(pcode_atomic_add_fetch_u4(2, 1), 3);
+	ASSERTU4(pcode_atomic_add_fetch_u4(~2, ~1), 4294967291);
+	ASSERTU4(pcode_atomic_add_fetch_u4(U4_MAX, U4_MAX), -2);
+	ASSERTU4(pcode_atomic_add_fetch_u4(U4_MAX, 0), -1);
+	ASSERTU4(pcode_atomic_add_fetch_u4(0, 0), 0);
+	ASSERTU4(pcode_atomic_fetch_add_u4(0x01010101, 0x01010101), 33686018);
+	ASSERTU4(pcode_atomic_fetch_add_u4(2, 1), 3);
+	ASSERTU4(pcode_atomic_fetch_add_u4(~2, ~1), 4294967291);
+	ASSERTU4(pcode_atomic_fetch_add_u4(U4_MAX, U4_MAX), -2);
+	ASSERTU4(pcode_atomic_fetch_add_u4(U4_MAX, 0), -1);
+	ASSERTU4(pcode_atomic_fetch_add_u4(0, 0), 0);
+}
+
+TEST pcode_atomic_sub_fetch_u4_Main()
+{
+	extern u4 pcode_atomic_sub_fetch_u4(u4, u4);
+	extern u4 pcode_atomic_fetch_sub_u4(u4, u4);
+	ASSERTU4(pcode_atomic_sub_fetch_u4(0x01010101, 0x01010101), 0);
+	ASSERTU4(pcode_atomic_sub_fetch_u4(2, 1), 1);
+	ASSERTU4(pcode_atomic_sub_fetch_u4(~2, ~1), 4294967295);
+	ASSERTU4(pcode_atomic_sub_fetch_u4(U4_MAX, U4_MAX), 0);
+	ASSERTU4(pcode_atomic_sub_fetch_u4(U4_MAX, 0), U4_MAX);
+	ASSERTU4(pcode_atomic_sub_fetch_u4(0, U4_MAX), 1);
+	ASSERTU4(pcode_atomic_fetch_sub_u4(0x01010101, 0x01010101), 0);
+	ASSERTU4(pcode_atomic_fetch_sub_u4(2, 1), 1);
+	ASSERTU4(pcode_atomic_fetch_sub_u4(~2, ~1), 4294967295);
+	ASSERTU4(pcode_atomic_fetch_sub_u4(U4_MAX, U4_MAX), 0);
+	ASSERTU4(pcode_atomic_fetch_sub_u4(U4_MAX, 0), U4_MAX);
+	ASSERTU4(pcode_atomic_fetch_sub_u4(0, U4_MAX), 1);
+}
+
+TEST pcode_atomic_and_fetch_u4_Main()
+{
+	extern u4 pcode_atomic_and_fetch_u4(u4, u4);
+	extern u4 pcode_atomic_fetch_and_u4(u4, u4);
+	ASSERTU4(pcode_atomic_and_fetch_u4(0x01010101, 0x01010101), 0x01010101);
+	ASSERTU4(pcode_atomic_and_fetch_u4(2, 1), 0);
+	ASSERTU4(pcode_atomic_and_fetch_u4(U4_MAX, U4_MAX), -1);
+	ASSERTU4(pcode_atomic_and_fetch_u4(U4_MAX, U4_MIN), 0);
+	ASSERTU4(pcode_atomic_and_fetch_u4(U4_MAX, 0), 0);
+	ASSERTU4(pcode_atomic_fetch_and_u4(0x01010101, 0x01010101), 0x01010101);
+	ASSERTU4(pcode_atomic_fetch_and_u4(2, 1), 0);
+	ASSERTU4(pcode_atomic_fetch_and_u4(U4_MAX, U4_MAX), -1);
+	ASSERTU4(pcode_atomic_fetch_and_u4(U4_MAX, U4_MIN), 0);
+	ASSERTU4(pcode_atomic_fetch_and_u4(U4_MAX, 0), 0);
+}
+
+TEST pcode_atomic_or_fetch_u4_Main()
+{
+	extern u4 pcode_atomic_or_fetch_u4(u4, u4);
+	extern u4 pcode_atomic_fetch_or_u4(u4, u4);
+	ASSERTU4(pcode_atomic_or_fetch_u4(0x01010101, 0x01010101), 0x01010101);
+	ASSERTU4(pcode_atomic_or_fetch_u4(2, 1), 3);
+	ASSERTU4(pcode_atomic_or_fetch_u4(U4_MAX, U4_MAX), U4_MAX);
+	ASSERTU4(pcode_atomic_or_fetch_u4(U4_MAX, 0), U4_MAX);
+	ASSERTU4(pcode_atomic_fetch_or_u4(0x01010101, 0x01010101), 0x01010101);
+	ASSERTU4(pcode_atomic_fetch_or_u4(2, 1), 3);
+	ASSERTU4(pcode_atomic_fetch_or_u4(U4_MAX, U4_MAX), U4_MAX);
+	ASSERTU4(pcode_atomic_fetch_or_u4(U4_MAX, 0), U4_MAX);
+}
+
+TEST pcode_atomic_xor_fetch_u4_Main()
+{
+	extern u4 pcode_atomic_xor_fetch_u4(u4, u4);
+	extern u4 pcode_atomic_fetch_xor_u4(u4, u4);
+	ASSERTU4(pcode_atomic_xor_fetch_u4(0x01010101, 0x01010101), 0);
+	ASSERTU4(pcode_atomic_xor_fetch_u4(2, 1), 3);
+	ASSERTU4(pcode_atomic_xor_fetch_u4(U4_MAX, U4_MAX), 0);
+	ASSERTU4(pcode_atomic_xor_fetch_u4(U4_MAX, U4_MIN), -1);
+	ASSERTU4(pcode_atomic_xor_fetch_u4(U4_MAX, 0), -1);
+	ASSERTU4(pcode_atomic_fetch_xor_u4(0x01010101, 0x01010101), 0);
+	ASSERTU4(pcode_atomic_fetch_xor_u4(2, 1), 3);
+	ASSERTU4(pcode_atomic_fetch_xor_u4(U4_MAX, U4_MAX), 0);
+	ASSERTU4(pcode_atomic_fetch_xor_u4(U4_MAX, U4_MIN), -1);
+	ASSERTU4(pcode_atomic_fetch_xor_u4(U4_MAX, 0), -1);
+}
+
+TEST pcode_atomic_nand_fetch_u4_Main()
+{
+	extern u4 pcode_atomic_nand_fetch_u4(u4, u4);
+	extern u4 pcode_atomic_fetch_nand_u4(u4, u4);
+	ASSERTU4(pcode_atomic_nand_fetch_u4(U4_MAX, 0), U4_MAX);
+	ASSERTU4(pcode_atomic_nand_fetch_u4(U4_MAX, U4_MAX), 0);
+	ASSERTU4(pcode_atomic_fetch_nand_u4(U4_MAX, 0), U4_MAX);
+	ASSERTU4(pcode_atomic_fetch_nand_u4(U4_MAX, U4_MAX), 0);
+}
+
+TEST pcode_atomic_add_fetch_i4_Main()
+{
+	extern i4 pcode_atomic_add_fetch_i4(i4, i4);
+	extern i4 pcode_atomic_fetch_add_i4(i4, i4);
+	ASSERTI4(pcode_atomic_add_fetch_i4(2, 1), 3);
+	ASSERTI4(pcode_atomic_add_fetch_i4(0x01010101, 0x01010101), 33686018);
+	ASSERTI4(pcode_atomic_add_fetch_i4(0x01010101, -0x01010101), 0);
+	ASSERTI4(pcode_atomic_add_fetch_i4(I4_MAX, I4_MAX), -2);
+	ASSERTI4(pcode_atomic_add_fetch_i4(I4_MAX, I4_MIN), -1);
+	ASSERTI4(pcode_atomic_add_fetch_i4(I4_MAX, 0), 2147483647);
+	ASSERTI4(pcode_atomic_add_fetch_i4(I4_MIN, I4_MIN), 0);
+	ASSERTI4(pcode_atomic_fetch_add_i4(2, 1), 3);
+	ASSERTI4(pcode_atomic_fetch_add_i4(0x01010101, 0x01010101), 33686018);
+	ASSERTI4(pcode_atomic_fetch_add_i4(0x01010101, -0x01010101), 0);
+	ASSERTI4(pcode_atomic_fetch_add_i4(I4_MAX, I4_MAX), -2);
+	ASSERTI4(pcode_atomic_fetch_add_i4(I4_MAX, I4_MIN), -1);
+	ASSERTI4(pcode_atomic_fetch_add_i4(I4_MAX, 0), 2147483647);
+	ASSERTI4(pcode_atomic_fetch_add_i4(I4_MIN, I4_MIN), 0);
+}
+
+TEST pcode_atomic_sub_fetch_i4_Main()
+{
+	extern i4 pcode_atomic_sub_fetch_i4(i4, i4);
+	extern i4 pcode_atomic_fetch_sub_i4(i4, i4);
+	ASSERTI4(pcode_atomic_sub_fetch_i4(2, 1), 1);
+	ASSERTI4(pcode_atomic_sub_fetch_i4(0x01010101, 0x01010101), 0);
+	ASSERTI4(pcode_atomic_sub_fetch_i4(0x01010101, 0x01000100), 0x00010001);
+	ASSERTI4(pcode_atomic_sub_fetch_i4(0x01000100, 0x01010101), -0x00010001);
+	ASSERTI4(pcode_atomic_sub_fetch_i4(I4_MAX, I4_MAX), 0);
+	ASSERTI4(pcode_atomic_sub_fetch_i4(I4_MAX, I4_MIN), -1);
+	ASSERTI4(pcode_atomic_sub_fetch_i4(I4_MAX, 0), 2147483647);
+	ASSERTI4(pcode_atomic_sub_fetch_i4(0, I4_MAX), -2147483647);
+	ASSERTI4(pcode_atomic_fetch_sub_i4(2, 1), 1);
+	ASSERTI4(pcode_atomic_fetch_sub_i4(0x01010101, 0x01010101), 0);
+	ASSERTI4(pcode_atomic_fetch_sub_i4(0x01010101, 0x01000100), 0x00010001);
+	ASSERTI4(pcode_atomic_fetch_sub_i4(0x01000100, 0x01010101), -0x00010001);
+	ASSERTI4(pcode_atomic_fetch_sub_i4(I4_MAX, I4_MAX), 0);
+	ASSERTI4(pcode_atomic_fetch_sub_i4(I4_MAX, I4_MIN), -1);
+	ASSERTI4(pcode_atomic_fetch_sub_i4(I4_MAX, 0), 2147483647);
+	ASSERTI4(pcode_atomic_fetch_sub_i4(0, I4_MAX), -2147483647);
+}
+
+TEST pcode_atomic_and_fetch_i4_Main()
+{
+	extern i4 pcode_atomic_and_fetch_i4(i4, i4);
+	extern i4 pcode_atomic_fetch_and_i4(i4, i4);
+	ASSERTI4(pcode_atomic_and_fetch_i4(0x01010101, 0x01010101), 0x01010101);
+	ASSERTI4(pcode_atomic_and_fetch_i4(2, 1), 0);
+	ASSERTI4(/*val*/ pcode_atomic_and_fetch_i4(I4_MAX, I4_MAX), 2147483647)
+	ASSERTI4(/*val*/ pcode_atomic_and_fetch_i4(0, 0), 0)
+	ASSERTI4(/*val*/ pcode_atomic_and_fetch_i4(I4_MIN, I4_MIN), -2147483648)
+	ASSERTI4(pcode_atomic_fetch_and_i4(0x01010101, 0x01010101), 0x01010101);
+	ASSERTI4(pcode_atomic_fetch_and_i4(2, 1), 0);
+	ASSERTI4(/*val*/ pcode_atomic_fetch_and_i4(I4_MAX, I4_MAX), 2147483647)
+	ASSERTI4(/*val*/ pcode_atomic_fetch_and_i4(0, 0), 0)
+	ASSERTI4(/*val*/ pcode_atomic_fetch_and_i4(I4_MIN, I4_MIN), -2147483648)
+}
+
+TEST pcode_atomic_or_fetch_i4_Main()
+{
+	extern i4 pcode_atomic_or_fetch_i4(i4, i4);
+	extern i4 pcode_atomic_fetch_or_i4(i4, i4);
+	ASSERTI4(pcode_atomic_or_fetch_i4(0x01010101, 0x01010101), 0x01010101);
+	ASSERTI4(pcode_atomic_or_fetch_i4(0x01010101, 0x0), 0x01010101);
+	ASSERTI4(pcode_atomic_or_fetch_i4(2, 1), 3);
+	ASSERTI4(pcode_atomic_or_fetch_i4(I4_MAX, I4_MAX), 2147483647);
+	ASSERTI4(pcode_atomic_or_fetch_i4(0, 0), 0);
+	ASSERTI4(pcode_atomic_fetch_or_i4(0x01010101, 0x01010101), 0x01010101);
+	ASSERTI4(pcode_atomic_fetch_or_i4(0x01010101, 0x0), 0x01010101);
+	ASSERTI4(pcode_atomic_fetch_or_i4(2, 1), 3);
+	ASSERTI4(pcode_atomic_fetch_or_i4(I4_MAX, I4_MAX), 2147483647);
+	ASSERTI4(pcode_atomic_fetch_or_i4(0, 0), 0);
+}
+
+TEST pcode_atomic_xor_fetch_i4_Main()
+{
+	extern i4 pcode_atomic_xor_fetch_i4(i4, i4);
+	extern i4 pcode_atomic_fetch_xor_i4(i4, i4);
+	ASSERTI4(pcode_atomic_xor_fetch_i4(0x01010101, 0x01010101), 0);
+	ASSERTI4(pcode_atomic_xor_fetch_i4(0x01010101, 0x01000101), 0x10000);
+	ASSERTI4(pcode_atomic_xor_fetch_i4(2, 1), 3);
+	ASSERTI4(pcode_atomic_xor_fetch_i4(I4_MAX, I4_MAX), 0);
+	ASSERTI4(pcode_atomic_xor_fetch_i4(I4_MAX, 0), 2147483647);
+	ASSERTI4(pcode_atomic_xor_fetch_i4(0, 0), 0);
+	ASSERTI4(pcode_atomic_fetch_xor_i4(0x01010101, 0x01010101), 0);
+	ASSERTI4(pcode_atomic_fetch_xor_i4(0x01010101, 0x01000101), 0x10000);
+	ASSERTI4(pcode_atomic_fetch_xor_i4(2, 1), 3);
+	ASSERTI4(pcode_atomic_fetch_xor_i4(I4_MAX, I4_MAX), 0);
+	ASSERTI4(pcode_atomic_fetch_xor_i4(I4_MAX, 0), 2147483647);
+	ASSERTI4(pcode_atomic_fetch_xor_i4(0, 0), 0);
+}
+
+TEST pcode_atomic_nand_fetch_i4_Main()
+{
+	extern i4 pcode_atomic_nand_fetch_i4(i4, i4);
+	extern i4 pcode_atomic_fetch_nand_i4(i4, i4);
+	ASSERTI4(pcode_atomic_nand_fetch_i4(I4_MAX, 0), I4_MAX);
+	ASSERTI4(pcode_atomic_nand_fetch_i4(I4_MAX, I4_MAX), 0);
+	ASSERTI4(pcode_atomic_fetch_nand_i4(I4_MAX, 0), I4_MAX);
+	ASSERTI4(pcode_atomic_fetch_nand_i4(I4_MAX, I4_MAX), 0);
+}
+
+#ifdef HAS_LONGLONG
+TEST pcode_atomic_add_fetch_u8_Main()
+{
+	extern u8 pcode_atomic_add_fetch_u8(u8, u8);
+	extern u8 pcode_atomic_fetch_add_u8(u8, u8);
+	ASSERTU8(pcode_atomic_add_fetch_u8(2, 1), 3);
+	ASSERTU8(pcode_atomic_add_fetch_u8(U8_MAX, U8_MAX), 18446744073709551614ULL);
+	ASSERTU8(pcode_atomic_add_fetch_u8(U8_MAX, 0), U8_MAX);
+	ASSERTU8(pcode_atomic_fetch_add_u8(2, 1), 3);
+	ASSERTU8(pcode_atomic_fetch_add_u8(U8_MAX, U8_MAX), 18446744073709551614ULL);
+	ASSERTU8(pcode_atomic_fetch_add_u8(U8_MAX, 0), U8_MAX);
+}
+
+TEST pcode_atomic_sub_fetch_u8_Main()
+{
+	extern u8 pcode_atomic_sub_fetch_u8(u8, u8);
+	extern u8 pcode_atomic_fetch_sub_u8(u8, u8);
+	ASSERTU8(pcode_atomic_sub_fetch_u8(2, 1), 1);
+	ASSERTU8(pcode_atomic_sub_fetch_u8(U8_MAX, U8_MAX), 0);
+	ASSERTU8(pcode_atomic_sub_fetch_u8(U8_MAX, 0), U8_MAX);
+	ASSERTU8(pcode_atomic_sub_fetch_u8(0, U8_MAX), 1);
+	ASSERTU8(pcode_atomic_fetch_sub_u8(2, 1), 1);
+	ASSERTU8(pcode_atomic_fetch_sub_u8(U8_MAX, U8_MAX), 0);
+	ASSERTU8(pcode_atomic_fetch_sub_u8(U8_MAX, 0), U8_MAX);
+	ASSERTU8(pcode_atomic_fetch_sub_u8(0, U8_MAX), 1);
+}
+
+TEST pcode_atomic_and_fetch_u8_Main()
+{
+	extern u8 pcode_atomic_and_fetch_u8(u8, u8);
+	extern u8 pcode_atomic_fetch_and_u8(u8, u8);
+	ASSERTU8(pcode_atomic_and_fetch_u8(2, 1), 0);
+	ASSERTU8(pcode_atomic_and_fetch_u8(U8_MAX, U8_MAX), U8_MAX);
+	ASSERTU8(pcode_atomic_and_fetch_u8(U8_MAX, 0), 0);
+	ASSERTU8(pcode_atomic_and_fetch_u8(U8_MAX, 1), 1);
+	ASSERTU8(pcode_atomic_fetch_and_u8(2, 1), 0);
+	ASSERTU8(pcode_atomic_fetch_and_u8(U8_MAX, U8_MAX), U8_MAX);
+	ASSERTU8(pcode_atomic_fetch_and_u8(U8_MAX, 0), 0);
+	ASSERTU8(pcode_atomic_fetch_and_u8(U8_MAX, 1), 1);
+}
+
+TEST pcode_atomic_or_fetch_u8_Main()
+{
+	extern u8 pcode_atomic_or_fetch_u8(u8, u8);
+	extern u8 pcode_atomic_fetch_or_u8(u8, u8);
+	ASSERTU8(pcode_atomic_or_fetch_u8(2, 1), 3);
+	ASSERTU8(pcode_atomic_or_fetch_u8(U8_MAX, U8_MAX), U8_MAX);
+	ASSERTU8(pcode_atomic_or_fetch_u8(U8_MAX, U8_MIN), 18446744073709551615ULL);
+	ASSERTU8(pcode_atomic_or_fetch_u8(U8_MAX, 0), 18446744073709551615ULL);
+	ASSERTU8(pcode_atomic_fetch_or_u8(2, 1), 3);
+	ASSERTU8(pcode_atomic_fetch_or_u8(U8_MAX, U8_MAX), U8_MAX);
+	ASSERTU8(pcode_atomic_fetch_or_u8(U8_MAX, U8_MIN), 18446744073709551615ULL);
+	ASSERTU8(pcode_atomic_fetch_or_u8(U8_MAX, 0), 18446744073709551615ULL);
+}
+
+TEST pcode_atomic_xor_fetch_u8_Main()
+{
+	extern u8 pcode_atomic_xor_fetch_u8(u8, u8);
+	extern u8 pcode_atomic_fetch_xor_u8(u8, u8);
+	ASSERTU8(pcode_atomic_xor_fetch_u8(2, 1), 3);
+	ASSERTU8(pcode_atomic_xor_fetch_u8(U8_MAX, U8_MAX), 0);
+	ASSERTU8(pcode_atomic_xor_fetch_u8(U8_MAX, 0), U8_MAX);
+	ASSERTU8(pcode_atomic_xor_fetch_u8(U8_MAX, 2), 18446744073709551613ULL);
+	ASSERTU8(pcode_atomic_fetch_xor_u8(2, 1), 3);
+	ASSERTU8(pcode_atomic_fetch_xor_u8(U8_MAX, U8_MAX), 0);
+	ASSERTU8(pcode_atomic_fetch_xor_u8(U8_MAX, 0), U8_MAX);
+	ASSERTU8(pcode_atomic_fetch_xor_u8(U8_MAX, 2), 18446744073709551613ULL);
+}
+
+TEST pcode_atomic_add_fetch_i8_Main()
+{
+	extern i8 pcode_atomic_add_fetch_i8(i8, i8);
+	extern i8 pcode_atomic_fetch_add_i8(i8, i8);
+	ASSERTI8(pcode_atomic_add_fetch_i8(0x0101010101010101LL, 0x0101010101010101LL), 0x202020202020202LL);
+	ASSERTI8(pcode_atomic_add_fetch_i8(2, 1), 3);
+	ASSERTI8(pcode_atomic_add_fetch_i8(I8_MAX, I8_MAX), -2);
+	ASSERTI8(pcode_atomic_add_fetch_i8(I8_MAX, I8_MIN), -1);
+	ASSERTI8(pcode_atomic_add_fetch_i8(I8_MAX, 0), I8_MAX);
+	ASSERTI8(pcode_atomic_fetch_add_i8(0x0101010101010101LL, 0x0101010101010101LL), 0x202020202020202LL);
+	ASSERTI8(pcode_atomic_fetch_add_i8(2, 1), 3);
+	ASSERTI8(pcode_atomic_fetch_add_i8(I8_MAX, I8_MAX), -2);
+	ASSERTI8(pcode_atomic_fetch_add_i8(I8_MAX, I8_MIN), -1);
+	ASSERTI8(pcode_atomic_fetch_add_i8(I8_MAX, 0), I8_MAX);
+}
+
+TEST pcode_atomic_sub_fetch_i8_Main()
+{
+	extern i8 pcode_atomic_sub_fetch_i8(i8, i8);
+	extern i8 pcode_atomic_fetch_sub_i8(i8, i8);
+	ASSERTI8(pcode_atomic_sub_fetch_i8(0x0101010101010101LL, 0x0101010101010100LL), 0x1);
+	ASSERTI8(pcode_atomic_sub_fetch_i8(0x0001010101010100LL, 0x0101010101010101LL), -72057594037927937LL);
+	ASSERTI8(pcode_atomic_sub_fetch_i8(2, 1), 1);
+	ASSERTI8(pcode_atomic_sub_fetch_i8(0x0101010101010101LL, 0x0101010101010101LL), 0);
+	ASSERTI8(pcode_atomic_sub_fetch_i8(I8_MAX, I8_MAX), 0);
+	ASSERTI8(pcode_atomic_sub_fetch_i8(I8_MAX, I8_MIN), -1);
+	ASSERTI8(pcode_atomic_sub_fetch_i8(I8_MAX, 0), I8_MAX);
+	ASSERTI8(pcode_atomic_sub_fetch_i8(0, I8_MAX), -I8_MAX);
+	ASSERTI8(pcode_atomic_fetch_sub_i8(0x0101010101010101LL, 0x0101010101010100LL), 0x1);
+	ASSERTI8(pcode_atomic_fetch_sub_i8(0x0001010101010100LL, 0x0101010101010101LL), -72057594037927937LL);
+	ASSERTI8(pcode_atomic_fetch_sub_i8(2, 1), 1);
+	ASSERTI8(pcode_atomic_fetch_sub_i8(0x0101010101010101LL, 0x0101010101010101LL), 0);
+	ASSERTI8(pcode_atomic_fetch_sub_i8(I8_MAX, I8_MAX), 0);
+	ASSERTI8(pcode_atomic_fetch_sub_i8(I8_MAX, I8_MIN), -1);
+	ASSERTI8(pcode_atomic_fetch_sub_i8(I8_MAX, 0), I8_MAX);
+	ASSERTI8(pcode_atomic_fetch_sub_i8(0, I8_MAX), -I8_MAX);
+}
+
+TEST pcode_atomic_and_fetch_i8_Main()
+{
+	extern i8 pcode_atomic_and_fetch_i8(i8, i8);
+	extern i8 pcode_atomic_fetch_and_i8(i8, i8);
+	ASSERTI8(pcode_atomic_and_fetch_i8(2, 1), 0);
+	ASSERTI8(pcode_atomic_and_fetch_i8(0x0101010101010101LL, 0x0101010101010101LL), 0x0101010101010101);
+	ASSERTI8(pcode_atomic_and_fetch_i8(I8_MAX, I8_MAX), I8_MAX);
+	ASSERTI8(pcode_atomic_and_fetch_i8(I8_MAX, I8_MIN), 0);
+	ASSERTI8(pcode_atomic_and_fetch_i8(I8_MAX, 0), 0);
+	ASSERTI8(pcode_atomic_fetch_and_i8(2, 1), 0);
+	ASSERTI8(pcode_atomic_fetch_and_i8(0x0101010101010101LL, 0x0101010101010101LL), 0x0101010101010101);
+	ASSERTI8(pcode_atomic_fetch_and_i8(I8_MAX, I8_MAX), I8_MAX);
+	ASSERTI8(pcode_atomic_fetch_and_i8(I8_MAX, I8_MIN), 0);
+	ASSERTI8(pcode_atomic_fetch_and_i8(I8_MAX, 0), 0);
+}
+
+TEST pcode_atomic_or_fetch_i8_Main()
+{
+	extern i8 pcode_atomic_or_fetch_i8(i8, i8);
+	extern i8 pcode_atomic_fetch_or_i8(i8, i8);
+	ASSERTI8(pcode_atomic_or_fetch_i8(2, 1), 3);
+	ASSERTI8(pcode_atomic_or_fetch_i8(0x0101010101010101LL, 0x0101010101010101LL), 0x0101010101010101LL);
+	ASSERTI8(pcode_atomic_or_fetch_i8(0x0101010101010101LL, 0x0), 0x0101010101010101LL);
+	ASSERTI8(pcode_atomic_or_fetch_i8(U8_MAX, U8_MAX), -1);
+	ASSERTI8(pcode_atomic_or_fetch_i8(U8_MAX, U8_MIN), -1);
+	ASSERTI8(pcode_atomic_or_fetch_i8(U8_MAX, 0), -1);
+	ASSERTI8(pcode_atomic_or_fetch_i8(U8_MAX, 4), -1);
+	ASSERTI8(pcode_atomic_fetch_or_i8(2, 1), 3);
+	ASSERTI8(pcode_atomic_fetch_or_i8(0x0101010101010101LL, 0x0101010101010101LL), 0x0101010101010101LL);
+	ASSERTI8(pcode_atomic_fetch_or_i8(0x0101010101010101LL, 0x0), 0x0101010101010101LL);
+	ASSERTI8(pcode_atomic_fetch_or_i8(U8_MAX, U8_MAX), -1);
+	ASSERTI8(pcode_atomic_fetch_or_i8(U8_MAX, U8_MIN), -1);
+	ASSERTI8(pcode_atomic_fetch_or_i8(U8_MAX, 0), -1);
+	ASSERTI8(pcode_atomic_fetch_or_i8(U8_MAX, 4), -1);
+}
+
+TEST pcode_atomic_xor_fetch_i8_Main()
+{
+	extern i8 pcode_atomic_xor_fetch_i8(i8, i8);
+	extern i8 pcode_atomic_fetch_xor_i8(i8, i8);
+	ASSERTI8(pcode_atomic_xor_fetch_i8(2, 1), 3);
+	ASSERTI8(pcode_atomic_xor_fetch_i8(0x0101010101010101LL, 0x0101010101010101LL), 0);
+	ASSERTI8(pcode_atomic_xor_fetch_i8(0x0101010101010101LL, 0x0101010101010101LL), 0x0);
+	ASSERTI8(pcode_atomic_xor_fetch_i8(U8_MAX, U8_MAX), 0x0);
+	ASSERTI8(pcode_atomic_xor_fetch_i8(U8_MAX, U8_MIN), -1);
+	ASSERTI8(pcode_atomic_xor_fetch_i8(U8_MAX, 0), -1);
+	ASSERTI8(pcode_atomic_xor_fetch_i8(U8_MAX, 5), -6);
+	ASSERTI8(pcode_atomic_fetch_xor_i8(2, 1), 3);
+	ASSERTI8(pcode_atomic_fetch_xor_i8(0x0101010101010101LL, 0x0101010101010101LL), 0);
+	ASSERTI8(pcode_atomic_fetch_xor_i8(0x0101010101010101LL, 0x0101010101010101LL), 0x0);
+	ASSERTI8(pcode_atomic_fetch_xor_i8(U8_MAX, U8_MAX), 0x0);
+	ASSERTI8(pcode_atomic_fetch_xor_i8(U8_MAX, U8_MIN), -1);
+	ASSERTI8(pcode_atomic_fetch_xor_i8(U8_MAX, 0), -1);
+	ASSERTI8(pcode_atomic_fetch_xor_i8(U8_MAX, 5), -6);
+}
+
+TEST pcode_atomic_nand_fetch_u8_Main()
+{
+	extern u8 pcode_atomic_nand_fetch_u8(u8, u8);
+	extern u8 pcode_atomic_fetch_nand_u8(u8, u8);
+	ASSERTU8(pcode_atomic_nand_fetch_u8(U8_MAX, 0), U8_MAX);
+	ASSERTU8(pcode_atomic_nand_fetch_u8(U8_MAX, U8_MAX), 0);
+	ASSERTU8(pcode_atomic_fetch_nand_u8(U8_MAX, 0), U8_MAX);
+	ASSERTU8(pcode_atomic_fetch_nand_u8(U8_MAX, U8_MAX), 0);
+}
+
+TEST pcode_atomic_nand_fetch_i8_Main()
+{
+	extern i8 pcode_atomic_nand_fetch_i8(i8, i8);
+	extern i8 pcode_atomic_fetch_nand_i8(i8, i8);
+	ASSERTI8(pcode_atomic_nand_fetch_i8(I8_MAX, 0), I8_MAX);
+	ASSERTI8(pcode_atomic_nand_fetch_i8(I8_MAX, I8_MAX), 0);
+	ASSERTI8(pcode_atomic_fetch_nand_i8(I8_MAX, 0), I8_MAX);
+	ASSERTI8(pcode_atomic_fetch_nand_i8(I8_MAX, I8_MAX), 0);
+}
+
+TEST pcode_overflow_u8_Main()
+{
+	extern u8 pcode_add_overflow_u8(u8 x, u8 y);
+	extern u8 pcode_sub_overflow_u8(u8 x, u8 y);
+	extern u8 pcode_mul_overflow_u8(u8 x, u8 y);
+	ASSERTU8(pcode_add_overflow_u8(1, 1), 0);
+	ASSERTU8(pcode_sub_overflow_u8(1, 1), 0);
+	ASSERTU8(pcode_mul_overflow_u8(1, 1), 0);
+	ASSERTU8(pcode_add_overflow_u8(U8_MAX, 1), 1);
+	ASSERTU8(pcode_sub_overflow_u8(U8_MAX, 1), 0);
+	ASSERTU8(pcode_mul_overflow_u8(U8_MAX, 2), 1);
+	ASSERTU8(pcode_add_overflow_u8(1, U8_MAX), 1);
+	ASSERTU8(pcode_sub_overflow_u8(1, U8_MAX), 1);
+	ASSERTU8(pcode_mul_overflow_u8(2, U8_MAX), 1);
+}
+
+TEST pcode_overflow_i8_Main()
+{
+	extern i8 pcode_add_overflow_i8(i8 x, i8 y);
+	extern i8 pcode_sub_overflow_i8(i8 x, i8 y);
+	extern i8 pcode_mul_overflow_i8(i8 x, i8 y);
+	ASSERTI8(pcode_add_overflow_i8(1, 1), 0);
+	ASSERTI8(pcode_sub_overflow_i8(1, 1), 0);
+	ASSERTI8(pcode_mul_overflow_i8(1, 1), 0);
+	ASSERTI8(pcode_add_overflow_i8(I8_MAX, 1), 1);
+	ASSERTI8(pcode_sub_overflow_i8(I8_MAX, 1), 0);
+	ASSERTI8(pcode_mul_overflow_i8(I8_MAX, 2), 1);
+	ASSERTI8(pcode_add_overflow_i8(1, I8_MAX), 1);
+	ASSERTI8(pcode_sub_overflow_i8(1, I8_MAX), 0);
+	ASSERTI8(pcode_mul_overflow_i8(2, I8_MAX), 1);
+}
+
+#endif
+
+
+TEST pcode_overflow_u1_Main()
+{
+	extern u1 pcode_add_overflow_u1(u1 x, u1 y);
+	extern u1 pcode_sub_overflow_u1(u1 x, u1 y);
+	extern u1 pcode_mul_overflow_u1(u1 x, u1 y);
+	ASSERTU1(pcode_add_overflow_u1(1, 1), 0);
+	ASSERTU1(pcode_sub_overflow_u1(1, 1), 0);
+	ASSERTU1(pcode_mul_overflow_u1(1, 1), 0);
+	ASSERTU1(pcode_add_overflow_u1(U1_MAX, 1), 1);
+	ASSERTU1(pcode_sub_overflow_u1(U1_MAX, 1), 0);
+	ASSERTU1(pcode_mul_overflow_u1(U1_MAX, 2), 1);
+	ASSERTU1(pcode_add_overflow_u1(1, U1_MAX), 1);
+	ASSERTU1(pcode_sub_overflow_u1(1, U1_MAX), 1);
+	ASSERTU1(pcode_mul_overflow_u1(2, U1_MAX), 1);
+}
+
+TEST pcode_overflow_i1_Main()
+{
+	extern i1 pcode_add_overflow_i1(i1 x, i1 y);
+	extern i1 pcode_sub_overflow_i1(i1 x, i1 y);
+	extern i1 pcode_mul_overflow_i1(i1 x, i1 y);
+	ASSERTI1(pcode_add_overflow_i1(1, 1), 0);
+	ASSERTI1(pcode_sub_overflow_i1(1, 1), 0);
+	ASSERTI1(pcode_mul_overflow_i1(1, 1), 0);
+	ASSERTI1(pcode_add_overflow_i1(I1_MAX, 1), 1);
+	ASSERTI1(pcode_sub_overflow_i1(I1_MAX, 1), 0);
+	ASSERTI1(pcode_mul_overflow_i1(I1_MAX, 2), 1);
+	ASSERTI1(pcode_add_overflow_i1(1, I1_MAX), 1);
+	ASSERTI1(pcode_sub_overflow_i1(1, I1_MAX), 0);
+	ASSERTI1(pcode_mul_overflow_i1(2, I1_MAX), 1);
+}
+
+
+TEST pcode_overflow_u2_Main()
+{
+	extern u2 pcode_add_overflow_u2(u2 x, u2 y);
+	extern u2 pcode_sub_overflow_u2(u2 x, u2 y);
+	extern u2 pcode_mul_overflow_u2(u2 x, u2 y);
+	ASSERTU2(pcode_add_overflow_u2(1, 1), 0);
+	ASSERTU2(pcode_sub_overflow_u2(1, 1), 0);
+	ASSERTU2(pcode_mul_overflow_u2(1, 1), 0);
+	ASSERTU2(pcode_add_overflow_u2(U2_MAX, 1), 1);
+	ASSERTU2(pcode_sub_overflow_u2(U2_MAX, 1), 0);
+	ASSERTU2(pcode_mul_overflow_u2(U2_MAX, 2), 1);
+	ASSERTU2(pcode_add_overflow_u2(1, U2_MAX), 1);
+	ASSERTU2(pcode_sub_overflow_u2(1, U2_MAX), 1);
+	ASSERTU2(pcode_mul_overflow_u2(2, U2_MAX), 1);
+}
+
+TEST pcode_overflow_i2_Main()
+{
+	extern i2 pcode_add_overflow_i2(i2 x, i2 y);
+	extern i2 pcode_sub_overflow_i2(i2 x, i2 y);
+	extern i2 pcode_mul_overflow_i2(i2 x, i2 y);
+	ASSERTI2(pcode_add_overflow_i2(1, 1), 0);
+	ASSERTI2(pcode_sub_overflow_i2(1, 1), 0);
+	ASSERTI2(pcode_mul_overflow_i2(1, 1), 0);
+	ASSERTI2(pcode_add_overflow_i2(I2_MAX, 1), 1);
+	ASSERTI2(pcode_sub_overflow_i2(I2_MAX, 1), 0);
+	ASSERTI2(pcode_mul_overflow_i2(I2_MAX, 2), 1);
+	ASSERTI2(pcode_add_overflow_i2(1, I2_MAX), 1);
+	ASSERTI2(pcode_sub_overflow_i2(1, I2_MAX), 0);
+	ASSERTI2(pcode_mul_overflow_i2(2, I2_MAX), 1);
+}
+
+
+TEST pcode_overflow_u4_Main()
+{
+	extern u4 pcode_add_overflow_u4(u4 x, u4 y);
+	extern u4 pcode_sub_overflow_u4(u4 x, u4 y);
+	extern u4 pcode_mul_overflow_u4(u4 x, u4 y);
+	ASSERTU4(pcode_add_overflow_u4(1, 1), 0);
+	ASSERTU4(pcode_sub_overflow_u4(1, 1), 0);
+	ASSERTU4(pcode_mul_overflow_u4(1, 1), 0);
+	ASSERTU4(pcode_add_overflow_u4(U4_MAX, 1), 1);
+	ASSERTU4(pcode_sub_overflow_u4(U4_MAX, 1), 0);
+	ASSERTU4(pcode_mul_overflow_u4(U4_MAX, 2), 1);
+	ASSERTU4(pcode_add_overflow_u4(1, U4_MAX), 1);
+	ASSERTU4(pcode_sub_overflow_u4(1, U4_MAX), 1);
+	ASSERTU4(pcode_mul_overflow_u4(2, U4_MAX), 1);
+}
+
+TEST pcode_overflow_i4_Main()
+{
+	extern i4 pcode_add_overflow_i4(i4 x, i4 y);
+	extern i4 pcode_sub_overflow_i4(i4 x, i4 y);
+	extern i4 pcode_mul_overflow_i4(i4 x, i4 y);
+	ASSERTI4(pcode_add_overflow_i4(1, 1), 0);
+	ASSERTI4(pcode_sub_overflow_i4(1, 1), 0);
+	ASSERTI4(pcode_mul_overflow_i4(1, 1), 0);
+	ASSERTI4(pcode_add_overflow_i4(I4_MAX, 1), 1);
+	ASSERTI4(pcode_sub_overflow_i4(I4_MAX, 1), 0);
+	ASSERTI4(pcode_mul_overflow_i4(I4_MAX, 2), 1);
+	ASSERTI4(pcode_add_overflow_i4(1, I4_MAX), 1);
+	ASSERTI4(pcode_sub_overflow_i4(1, I4_MAX), 0);
+	ASSERTI4(pcode_mul_overflow_i4(2, I4_MAX), 1);
+}
+
+
+
+MAIN BUILTIN_main() { }

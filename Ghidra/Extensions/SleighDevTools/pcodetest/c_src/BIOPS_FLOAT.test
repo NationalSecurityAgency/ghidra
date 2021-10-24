@@ -4,25 +4,16 @@
 TEST f4_compareLogic_Main()
 {
 	extern f4 f4_compareLogic(f4 lhs, f4 rhs);
-	ASSERTF4(f4_compareLogic(0x1, 0x1), 21);
-	ASSERTF4(f4_compareLogic(0x1, 0x2), 21);
-	ASSERTF4(f4_compareLogic(0x2, 0x1), 22);
-	ASSERTF4(f4_compareLogic(-0x1, -0x1), 21);
-	ASSERTF4(f4_compareLogic(-0x1, -0x2), 21);
-	ASSERTF4(f4_compareLogic(-0x2, -0x1), 24);
-}
-#endif
-
-#ifdef HAS_DOUBLE
-TEST f8_compareLogic_Main()
-{
-	extern f8 f8_compareLogic(f8 lhs, f8 rhs);
-	ASSERTF8(f8_compareLogic(0x1, 0x1), 21);
-	ASSERTF8(f8_compareLogic(0x1, 0x2), 21);
-	ASSERTF8(f8_compareLogic(0x2, 0x1), 22);
-	ASSERTF8(f8_compareLogic(-0x1, -0x1), 21);
-	ASSERTF8(f8_compareLogic(-0x1, -0x2), 21);
-	ASSERTF8(f8_compareLogic(-0x2, -0x1), 24);
+	ASSERTF4(f4_compareLogic(0x0, 0x1), 17);
+	ASSERTF4(f4_compareLogic(0x1, 0x0), 13);
+	ASSERTF4(f4_compareLogic(0x1, 0x1), 17);
+	ASSERTF4(f4_compareLogic(0x1, 0x2), 15);
+	ASSERTF4(f4_compareLogic(0x2, 0x1), 14);
+	ASSERTF4(f4_compareLogic(0x0, -0x1), 13);
+	ASSERTF4(f4_compareLogic(-0x1, 0x0), 13);
+	ASSERTF4(f4_compareLogic(-0x1, -0x1), 15);
+	ASSERTF4(f4_compareLogic(-0x1, -0x2), 11);
+	ASSERTF4(f4_compareLogic(-0x2, -0x1), 12);
 }
 #endif
 
