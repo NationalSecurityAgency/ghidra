@@ -1,6 +1,14 @@
 # RV64A  Standard Extension (in addition to RV32A)
 
 # amoadd.d d,t,0(s) 0000302f fe00707f QWORD|DREF (64, 8) 
+:amoadd.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x0 & aqrl & op0711=0
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2L;
+	local tmp:8 = *[ram]:8 tmprs1;
+	tmp = tmp + tmprs2;
+	*[ram]:8 tmprs1 = tmp;
+}
 :amoadd.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x0 & aqrl
 {
 	local tmprs1 = rs1;
@@ -13,6 +21,14 @@
 
 
 # amoand.d d,t,0(s) 6000302f fe00707f QWORD|DREF (64, 8) 
+:amoand.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0xc & aqrl & op0711=0
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2L;
+	local tmp:8 = *[ram]:8 tmprs1;
+	tmp = tmp & tmprs2;
+	*[ram]:8 tmprs1 = tmp;
+}
 :amoand.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0xc & aqrl
 {
 	local tmprs1 = rs1;
@@ -25,6 +41,14 @@
 
 
 # amomax.d d,t,0(s) a000302f fe00707f QWORD|DREF (64, 8) 
+:amomax.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x14 & aqrl & op0711=0
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2L;
+	local tmp:8 = *[ram]:8 tmprs1;
+	if (tmprs2 s<= tmp) goto inst_next;
+	*[ram]:8 tmprs1 = tmprs2;
+}
 :amomax.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x14 & aqrl
 {
 	local tmprs1 = rs1;
@@ -37,6 +61,14 @@
 
 
 # amomaxu.d d,t,0(s) e000302f fe00707f QWORD|DREF (64, 8) 
+:amomaxu.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x1c & aqrl & op0711=0
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2L;
+	local tmp:8 = *[ram]:8 tmprs1;
+	if (tmprs2 <= tmp) goto inst_next;
+	*[ram]:8 tmprs1 = tmprs2;
+}
 :amomaxu.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x1c & aqrl
 {
 	local tmprs1 = rs1;
@@ -49,6 +81,14 @@
 
 
 # amomin.d d,t,0(s) 8000302f fe00707f QWORD|DREF (64, 8) 
+:amomin.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x10 & aqrl & op0711=0
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2L;
+	local tmp:8 = *[ram]:8 tmprs1;
+	if (tmprs2 s>= tmp) goto inst_next;
+	*[ram]:8 tmprs1 = tmprs2;
+}
 :amomin.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x10 & aqrl
 {
 	local tmprs1 = rs1;
@@ -61,6 +101,14 @@
 
 
 # amominu.d d,t,0(s) c000302f fe00707f QWORD|DREF (64, 8) 
+:amominu.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x18 & aqrl & op0711=0
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2L;
+	local tmp:8 = *[ram]:8 tmprs1;
+	if (tmprs2 >= tmp) goto inst_next;
+	*[ram]:8 tmprs1 = tmprs2;
+}
 :amominu.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x18 & aqrl
 {
 	local tmprs1 = rs1;
@@ -73,6 +121,14 @@
 
 
 # amoor.d d,t,0(s) 4000302f fe00707f QWORD|DREF (64, 8) 
+:amoor.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x8 & aqrl & op0711=0
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2L;
+	local tmp:8 = *[ram]:8 tmprs1;
+	tmp = tmp | tmprs2;
+	*[ram]:8 tmprs1 = tmp;
+}
 :amoor.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x8 & aqrl
 {
 	local tmprs1 = rs1;
@@ -85,6 +141,13 @@
 
 
 # amoswap.d d,t,0(s) 0800302f fe00707f QWORD|DREF (64, 8) 
+:amoswap.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x1 & aqrl & op0711=0
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2L;
+	local tmp:8 = *[ram]:8 tmprs1;
+	*[ram]:8 tmprs1 = tmprs2;
+}
 :amoswap.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x1 & aqrl
 {
 	local tmprs1 = rs1;
@@ -96,6 +159,14 @@
 
 
 # amoxor.d d,t,0(s) 2000302f fe00707f QWORD|DREF (64, 8) 
+:amoxor.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x4 & aqrl & op0711=0
+{
+	local tmprs1 = rs1;
+	local tmprs2 = rs2L;
+	local tmp:8 = *[ram]:8 tmprs1;
+	tmp = tmp ^ tmprs2;
+	*[ram]:8 tmprs1 = tmp;
+}
 :amoxor.d^aqrl rdL,rs2L,(rs1) is rs1 & rs2L & rdL & op0001=0x3 & op0204=0x3 & op0506=0x1 & funct3=0x3 & op2731=0x4 & aqrl
 {
 	local tmprs1 = rs1;
