@@ -117,6 +117,24 @@ public class AARCH64_ElfRelocationHandler extends ElfRelocationHandler {
 				memory.setShort(relocationAddress, (short) (newValue & 0xffff));
 				break;
 			}
+			
+			// MOV[ZK]:   ((S+A) >>  shift) & 0xffff
+			case AARCH64_ElfRelocationConstants.R_AARCH64_MOVW_UABS_G0:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_MOVW_UABS_G0_NC:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_MOVW_UABS_G1:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_MOVW_UABS_G1_NC:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_MOVW_UABS_G2:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_MOVW_UABS_G2_NC:
+			case AARCH64_ElfRelocationConstants.R_AARCH64_MOVW_UABS_G3: {
+				int oldValue = memory.getInt(relocationAddress, isBigEndianInstructions);
+				long result = symbolValue + addend;
+				int shift = (oldValue >> 21) & 0x3;  // Shift amount is in bits 22:21
+				
+				newValue = (oldValue & 0xffe0001f) | (((result >> shift * 16) & 0xffff) << 5);
+				
+				memory.setInt(relocationAddress, (int) newValue, isBigEndianInstructions);
+				break;
+			}
 
 			// ADRH: ((PG(S+A)-PG(P)) >> 12) & 0x1fffff
 			case AARCH64_ElfRelocationConstants.R_AARCH64_ADR_PREL_PG_HI21: {
