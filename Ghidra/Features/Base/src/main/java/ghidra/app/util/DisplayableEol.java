@@ -27,6 +27,7 @@ import ghidra.program.model.mem.*;
 import ghidra.program.model.scalar.Scalar;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.*;
+import ghidra.util.StringUtilities;
 
 /**
  * Utility class with methods to get comment information that can be displayed in the
@@ -520,26 +521,7 @@ public class DisplayableEol {
 			}
 
 			Address address = memRefs[i].getToAddress();
-			String repeatableComment = listing.getComment(CodeUnit.REPEATABLE_COMMENT, address);
-			if (repeatableComment != null) {
-				set.add(new RefRepeatComment(address, new String[] { repeatableComment }));
-			}
-
-			CodeUnit cu = listing.getCodeUnitAt(address);
-			if (cu == null) {
-				continue;
-			}
-
-			String[] comment = new String[0];
-			Function func = listing.getFunctionAt(address);
-			if (func != null) {
-				comment = func.getRepeatableCommentAsArray();
-			}
-
-			if (comment.length == 0) {
-				comment = cu.getCommentAsArray(CodeUnit.REPEATABLE_COMMENT);
-			}
-
+			String[] comment = getComment(listing, address);
 			if (comment != null && comment.length > 0) {
 				set.add(new RefRepeatComment(address, comment));
 				totalCommentsFound++;
@@ -547,6 +529,27 @@ public class DisplayableEol {
 		}
 
 		return set.toArray(new RefRepeatComment[set.size()]);
+	}
+
+	private String[] getComment(Listing listing, Address address) {
+
+		// prefer listing comments first since there may not be a code unit at this address
+		String repeatableComment = listing.getComment(CodeUnit.REPEATABLE_COMMENT, address);
+		if (repeatableComment != null) {
+			return StringUtilities.toLines(repeatableComment);
+		}
+
+		CodeUnit cu = listing.getCodeUnitAt(address);
+		if (cu == null) {
+			return null;
+		}
+
+		Function func = listing.getFunctionAt(address);
+		if (func != null) {
+			return func.getRepeatableCommentAsArray();
+		}
+
+		return cu.getCommentAsArray(CodeUnit.REPEATABLE_COMMENT);
 	}
 
 	/**
