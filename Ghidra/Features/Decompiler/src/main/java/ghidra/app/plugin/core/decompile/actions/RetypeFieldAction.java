@@ -102,7 +102,7 @@ public class RetypeFieldAction extends AbstractDecompilerAction {
 		}
 
 		DataType dataType = chooseDataType(tool, program, originalDataType);
-		if (dataType == null) {
+		if (dataType == null || dataType.isEquivalent(originalDataType)) {
 			return; // cancelled
 		}
 
