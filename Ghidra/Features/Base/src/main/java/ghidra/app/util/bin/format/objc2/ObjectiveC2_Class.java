@@ -19,11 +19,14 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.StructConverter;
+import ghidra.app.util.bin.format.macho.SectionNames;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Constants;
 import ghidra.app.util.bin.format.objectiveC.ObjectiveC1_Utilities;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.*;
 import ghidra.program.model.symbol.Namespace;
+import ghidra.program.model.symbol.Symbol;
 import ghidra.util.exception.DuplicateNameException;
 
 public class ObjectiveC2_Class implements StructConverter {
@@ -43,6 +46,15 @@ public class ObjectiveC2_Class implements StructConverter {
 		this._index = reader.getPointerIndex();
 
 		state.classIndexMap.put(_index, this);
+		
+		// Some class references point to a GOT entry. These aren't real class structures, so don't 
+		// parse them.
+		AddressSpace space = _state.program.getAddressFactory().getDefaultAddressSpace();
+		Address addr = space.getAddress(_index);
+		Symbol symbol = _state.program.getSymbolTable().getPrimarySymbol(addr);
+		if (symbol.getParentNamespace().getName().equals(SectionNames.SECT_GOT)) {
+			return;
+		}
 
 		try {
 			readISA(reader);
