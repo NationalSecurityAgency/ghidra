@@ -626,11 +626,12 @@ cc: "gt" is cond=12         { tmp:1 = (!ZR) && (NG==OV); export tmp; }
 cc: "le" is cond=13         { tmp:1 = ZR || (NG!=OV); export tmp; }
 
 COND: cc is $(AMODE) &  cc		      { if (!cc) goto inst_next; }   # Execute conditionally
-COND:    is $(AMODE) &  cond=14	  { }			     # Always execute
-COND:    is $(AMODE) &  cond=15	  { }			     # Always execute - some A32 instructions that can only be executed unconditionally
+COND:    is $(AMODE) &  cond=14	  { }		# Always execute
+#COND:    is $(AMODE) &  cond=15	  { }	# Always execute - deprecated, should not be used.
+
 @if defined(INCLUDE_NEON) # Unconditional Neon Thumb instructions share many Conditional Neon ARM constructors 
 COND: ItCond is TMode=1 & thv_c2831=14 & cond & ItCond    	  { }			     # ItCond execute
-COND: ItCond is TMode=1 & thv_c2831=15 & cond & ItCond    	  { }			     # ItCond execute
+#COND: ItCond is TMode=1 & thv_c2831=15 & cond & ItCond    	  { }			     # ItCond execute
 @endif
 
 SBIT_CZNO:     is S20=0	    { }   # Do nothing to the flag bits
