@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.gui.breakpoint;
+package agent.gdb.model.ssh;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static org.junit.Assume.assumeFalse;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.Before;
 
-@Ignore
-public class DebuggerBreakpointHistoryProviderTest {
-	@Test
-	public void testSomething() {
-		TODO();
+import agent.gdb.model.AbstractModelForGdbFactoryTest;
+import ghidra.util.SystemUtilities;
+
+public class SshJoinModelForGdbFactoryTest extends AbstractModelForGdbFactoryTest {
+
+	@Before
+	public void checkInteractive() {
+		assumeFalse(SystemUtilities.isInTestingBatchMode());
+	}
+
+	@Override
+	public ModelHost modelHost() throws Throwable {
+		return new SshJoinGdbModelHost();
 	}
 }

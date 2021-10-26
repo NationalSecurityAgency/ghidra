@@ -64,7 +64,7 @@ task nodepJar(type: Jar) {
 	dependsOn(configureNodepJar)
 	dependsOn(jar)
 
-	appendix = 'nodep'
+	archiveAppendix = 'nodep'
 	manifest {
 		attributes['Main-Class'] = 'agent.dbgmodel.gadp.DbgModelGadpServer'
 	}

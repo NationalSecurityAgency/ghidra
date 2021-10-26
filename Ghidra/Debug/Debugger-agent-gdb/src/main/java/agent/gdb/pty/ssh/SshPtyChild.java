@@ -16,23 +16,26 @@
 package agent.gdb.pty.ssh;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.help.UnsupportedOperationException;
 
+import com.jcraft.jsch.*;
+
 import agent.gdb.pty.PtyChild;
-import ch.ethz.ssh2.Session;
+import ghidra.dbg.util.ShellUtils;
 import ghidra.util.Msg;
 
 public class SshPtyChild extends SshPtyEndpoint implements PtyChild {
-	private String name;
-	private final Session session;
+	private final ChannelExec channel;
 
-	public SshPtyChild(Session session) {
-		super(null, null);
-		this.session = session;
+	private String name;
+
+	public SshPtyChild(ChannelExec channel, OutputStream outputStream, InputStream inputStream) {
+		super(outputStream, inputStream);
+		this.channel = channel;
 	}
 
 	@Override
@@ -48,34 +51,37 @@ public class SshPtyChild extends SshPtyEndpoint implements PtyChild {
 						.map(e -> e.getKey() + "=" + e.getValue())
 						.collect(Collectors.joining(" ")) +
 					" ";
-		String cmdStr = Stream.of(args).collect(Collectors.joining(" "));
+		String cmdStr = ShellUtils.generateLine(Arrays.asList(args));
+		channel.setCommand(envStr + cmdStr);
 		try {
-			session.execCommand(envStr + cmdStr);
+			channel.connect();
 		}
-		catch (Throwable t) {
-			Msg.error(this, "Could not execute remote command: " + envStr + cmdStr, t);
-			throw t;
+		catch (JSchException e) {
+			throw new IOException("SSH error", e);
 		}
-		return new SshPtySession(session);
+		return new SshPtySession(channel);
 	}
 
 	private String getTtyNameAndStartNullSession() throws IOException {
-		// NB. Using [InputStream/Buffered]Reader will close my stream. Cannot do that.
-		InputStream stdout = session.getStdout();
 		// NB. UNIX sleep is only required to support integer durations
-		session.execCommand(
-			"sh -c 'tty && cltrc() { echo; } && trap ctrlc INT && while true; do sleep " +
-				Integer.MAX_VALUE + "; done'",
-			"UTF-8");
+		channel.setCommand(
+			("sh -c 'tty && ctrlc() { echo; } && trap ctrlc INT && while true; do sleep " +
+				Integer.MAX_VALUE + "; done'"));
+		try {
+			channel.connect();
+		}
+		catch (JSchException e) {
+			throw new IOException("SSH error", e);
+		}
 		byte[] buf = new byte[1024]; // Should be plenty
 		for (int i = 0; i < 1024; i++) {
-			int chr = stdout.read();
+			int chr = inputStream.read();
 			if (chr == '\n' || chr == -1) {
-				return new String(buf, 0, i + 1).trim();
+				return new String(buf, 0, i + 1, "UTF-8").trim();
 			}
 			buf[i] = (byte) chr;
 		}
-		throw new IOException("Remote tty name exceeds 1024 bytes?");
+		throw new IOException("Expected pty name. Got " + new String(buf, 0, 1024, "UTF-8"));
 	}
 
 	@Override

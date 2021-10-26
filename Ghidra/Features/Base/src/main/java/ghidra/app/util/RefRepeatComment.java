@@ -75,4 +75,9 @@ public class RefRepeatComment {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return Arrays.toString(commentLines);
+	}
+
 }

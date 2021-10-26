@@ -15,32 +15,36 @@
  */
 package agent.gdb.pty.ssh;
 
-import java.io.IOException;
+import java.io.*;
+
+import com.jcraft.jsch.*;
 
 import agent.gdb.pty.*;
-import ch.ethz.ssh2.Session;
 
 public class SshPty implements Pty {
-	private final Session session;
+	private final ChannelExec channel;
+	private final OutputStream out;
+	private final InputStream in;
 
-	public SshPty(Session session) throws IOException {
-		this.session = session;
-		session.requestDumbPTY();
+	public SshPty(ChannelExec channel) throws JSchException, IOException {
+		this.channel = channel;
+
+		out = channel.getOutputStream();
+		in = channel.getInputStream();
 	}
 
 	@Override
 	public PtyParent getParent() {
-		// TODO: Need I worry about stderr? I thought both pointed to the same tty....
-		return new SshPtyParent(session.getStdin(), session.getStdout());
+		return new SshPtyParent(out, in);
 	}
 
 	@Override
 	public PtyChild getChild() {
-		return new SshPtyChild(session);
+		return new SshPtyChild(channel, out, in);
 	}
 
 	@Override
 	public void close() throws IOException {
-		session.close();
+		channel.disconnect();
 	}
 }

@@ -21,13 +21,12 @@ import java.io.OutputStream;
 import agent.gdb.pty.PtyEndpoint;
 
 public class SshPtyEndpoint implements PtyEndpoint {
-	private final OutputStream outputStream;
-	private final InputStream inputStream;
+	protected final OutputStream outputStream;
+	protected final InputStream inputStream;
 
 	public SshPtyEndpoint(OutputStream outputStream, InputStream inputStream) {
 		this.outputStream = outputStream;
 		this.inputStream = inputStream;
-
 	}
 
 	@Override

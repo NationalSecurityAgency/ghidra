@@ -29,7 +29,7 @@ public class GhidraScriptUtilTest extends AbstractGenericTest {
 
 	@Before
 	public void setup() throws CancelledException {
-		ClassSearcher.search(false, new ConsoleTaskMonitor());
+		ClassSearcher.search(new ConsoleTaskMonitor());
 	}
 
 	@Test

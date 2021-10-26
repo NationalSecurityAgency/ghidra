@@ -82,7 +82,7 @@ public class ClassSearcher {
 	}
 
 	/**
-	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes that implement or 
+	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes that implement or
 	 * derive from the given class
 	 * 
 	 * @param c the filter class
@@ -93,14 +93,14 @@ public class ClassSearcher {
 	}
 
 	/**
-	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes that 
+	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes that
 	 * implement or derive from the given class
 	 * 
 	 * @param c the filter class
 	 * @param classFilter A Predicate that tests class objects (that are already of type T)
 	 * 			for further filtering, <code>null</code> is equivalent to "return true"
-	 * @return {@link ExtensionPointProperties#priority() priority-sorted} list of 
-	 * 			classes that implement or extend T and pass the filtering test performed by the 
+	 * @return {@link ExtensionPointProperties#priority() priority-sorted} list of
+	 * 			classes that implement or extend T and pass the filtering test performed by the
 	 * 			predicate
 	 */
 	@SuppressWarnings("unchecked") // we checked the type of each use so we know the casts are safe
@@ -130,14 +130,14 @@ public class ClassSearcher {
 	}
 
 	/**
-	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes 
+	 * Get {@link ExtensionPointProperties#priority() priority-sorted} classes
 	 * instances that implement or derive from the given class
 	 * 
 	 * @param c the filter class
 	 * @param filter A Predicate that tests class objects (that are already of type T)
 	 * 			for further filtering, <code>null</code> is equivalent to "return true"
-	 * @return {@link ExtensionPointProperties#priority() priority-sorted} list of 
-	 * 			classes instances that implement or extend T and pass the filtering test performed by 
+	 * @return {@link ExtensionPointProperties#priority() priority-sorted} list of
+	 * 			classes instances that implement or extend T and pass the filtering test performed by
 	 *          the predicate
 	 */
 	public static <T> List<T> getInstances(Class<T> c, ClassFilter filter) {
@@ -211,19 +211,31 @@ public class ClassSearcher {
 	}
 
 	/**
+	 * This deprecated method is now simply a pass-through for {@link #search(TaskMonitor)}.
+	 * 
+	 * @param forceRefresh ignored
+	 * @param monitor the task monitor
+	 * @throws CancelledException if cancelled
+	 * @deprecated use {@link #search(TaskMonitor)} instead
+	 */
+	@Deprecated(forRemoval = true, since = "10.1") // remove 2 releases after 10.1
+	public static void search(boolean forceRefresh, TaskMonitor monitor)
+			throws CancelledException {
+		search(monitor);
+	}
+
+	/**
 	 * Searches the classpath and updates the list of available classes which
 	 * satisfy the class filter.  Classes which
 	 * data types, and language providers. When the search completes and was
 	 * not cancelled, the change listeners are notified.
 	 *
-	 * @param forceRefresh if true the class cache is ignored and the search is performed
-	 * 		  from scratch.
 	 * @param monitor the progress monitor for the search.
 	 * @throws CancelledException if the operation is cancelled
 	 */
-	public static void search(boolean forceRefresh, TaskMonitor monitor) throws CancelledException {
+	public static void search(TaskMonitor monitor) throws CancelledException {
 
-		if (hasSearched && !forceRefresh) {
+		if (hasSearched) {
 			log.trace("Already searched for classes: using cached results");
 			return;
 		}

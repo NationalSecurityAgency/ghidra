@@ -37,6 +37,7 @@ import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.services.*;
 import ghidra.app.services.LogicalBreakpoint.Enablement;
+import ghidra.app.util.viewer.listingpanel.MarkerClickedListener;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.framework.options.AutoOptions;
@@ -480,6 +481,15 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		}
 	}
 
+	private class ToggleBreakpointsMarkerClickedListener implements MarkerClickedListener {
+		@Override
+		public void markerDoubleClicked(MarkerLocation location) {
+			doToggleBreakpointsAt(ToggleBreakpointAction.NAME,
+				new ProgramLocationActionContext(null, location.getProgram(),
+					new ProgramLocation(location.getProgram(), location.getAddr()), null, null));
+		}
+	}
+
 	protected static Enablement computeEnablement(LogicalBreakpoint breakpoint,
 			Program programOrView) {
 		if (programOrView instanceof TraceProgramView) {
@@ -524,47 +534,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 
 		@Override
 		public void actionPerformed(ActionContext context) {
-			if (breakpointService == null) {
-				return;
-			}
-			ProgramLocation loc = getLocationFromContext(context);
-			if (loc == null) {
-				return;
-			}
-			Set<LogicalBreakpoint> bs = breakpointService.getBreakpointsAt(loc);
-			if (bs == null || bs.isEmpty()) {
-				Set<TraceBreakpointKind> supported = getSupportedKindsFromContext(context);
-				if (supported.isEmpty()) {
-					breakpointError(NAME,
-						"It seems this target does not support breakpoints.");
-					return;
-				}
-				Set<TraceBreakpointKind> kinds = computeDefaultKinds(context, supported);
-				long length = computeDefaultLength(context, kinds);
-				placeBreakpointDialog.prompt(tool, breakpointService, NAME, loc, length, kinds);
-				return;
-			}
-			Enablement en = breakpointService.computeEnablement(bs, loc);
-			/**
-			 * If we're in the static listing, this will return null, indicating we should use the
-			 * program's perspective. The methods taking trace should accept a null trace and behave
-			 * accordingly. If in the dynamic listing, we act in the context of the returned trace.
-			 */
-			Trace trace = getTraceFromContext(context);
-			boolean mapped = breakpointService.anyMapped(bs, trace);
-			Enablement toggled = en = en.getToggled(mapped);
-			if (toggled.enabled) {
-				breakpointService.enableAll(bs, trace).exceptionally(ex -> {
-					breakpointError(NAME, "Could not enable breakpoints", ex);
-					return null;
-				});
-			}
-			else {
-				breakpointService.disableAll(bs, trace).exceptionally(ex -> {
-					breakpointError(NAME, "Could not disable breakpoints", ex);
-					return null;
-				});
-			}
+			doToggleBreakpointsAt(NAME, context);
 		}
 
 		@Override
@@ -733,7 +703,7 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 		}
 	}
 
-	@AutoServiceConsumed
+	// @AutoServiceConsumed via method
 	private MarkerService markerService;
 	// @AutoServiceConsumed via method
 	private DebuggerLogicalBreakpointService breakpointService;
@@ -811,6 +781,8 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 
 	private final LogicalBreakpointsChangeListener updateMarksListener =
 		new UpdateMarksBreakpointRecordChangeListener();
+	private final MarkerClickedListener markerClickedListener =
+		new ToggleBreakpointsMarkerClickedListener();
 
 	private final AsyncDebouncer<Void> updateDebouncer =
 		new AsyncDebouncer<>(AsyncTimer.DEFAULT_TIMER, 100);
@@ -964,6 +936,50 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 				.collect(Collectors.toSet());
 	}
 
+	protected void doToggleBreakpointsAt(String title, ActionContext context) {
+		// TODO: Seems like this should be in logical breakpoint service?
+		if (breakpointService == null) {
+			return;
+		}
+		ProgramLocation loc = getLocationFromContext(context);
+		if (loc == null) {
+			return;
+		}
+		Set<LogicalBreakpoint> bs = breakpointService.getBreakpointsAt(loc);
+		if (bs == null || bs.isEmpty()) {
+			Set<TraceBreakpointKind> supported = getSupportedKindsFromContext(context);
+			if (supported.isEmpty()) {
+				breakpointError(title, "It seems this target does not support breakpoints.");
+				return;
+			}
+			Set<TraceBreakpointKind> kinds = computeDefaultKinds(context, supported);
+			long length = computeDefaultLength(context, kinds);
+			placeBreakpointDialog.prompt(tool, breakpointService, title, loc, length, kinds);
+			return;
+		}
+		Enablement en = breakpointService.computeEnablement(bs, loc);
+		/**
+		 * If we're in the static listing, this will return null, indicating we should use the
+		 * program's perspective. The methods taking trace should accept a null trace and behave
+		 * accordingly. If in the dynamic listing, we act in the context of the returned trace.
+		 */
+		Trace trace = getTraceFromContext(context);
+		boolean mapped = breakpointService.anyMapped(bs, trace);
+		Enablement toggled = en.getToggled(mapped);
+		if (toggled.enabled) {
+			breakpointService.enableAll(bs, trace).exceptionally(ex -> {
+				breakpointError(title, "Could not enable breakpoints", ex);
+				return null;
+			});
+		}
+		else {
+			breakpointService.disableAll(bs, trace).exceptionally(ex -> {
+				breakpointError(title, "Could not disable breakpoints", ex);
+				return null;
+			});
+		}
+	}
+
 	/**
 	 * Instantiate a marker set for the given program or trace view
 	 * 
@@ -1028,6 +1044,17 @@ public class DebuggerBreakpointMarkerPlugin extends Plugin
 						lb -> lb.computeEnablementForProgram(program));
 				}
 			}
+		}
+	}
+
+	@AutoServiceConsumed
+	private void setMarkerService(MarkerService markerService) {
+		if (this.markerService != null) {
+			this.markerService.setMarkerClickedListener(null);
+		}
+		this.markerService = markerService;
+		if (this.markerService != null) {
+			this.markerService.setMarkerClickedListener(markerClickedListener);
 		}
 	}
 

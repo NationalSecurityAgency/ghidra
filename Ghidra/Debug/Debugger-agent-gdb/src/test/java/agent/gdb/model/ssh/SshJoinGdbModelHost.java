@@ -13,29 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.util.classfinder;
+package agent.gdb.model.ssh;
 
+import java.util.Map;
+
+import agent.gdb.GdbOverSshDebuggerModelFactory;
+import agent.gdb.pty.ssh.SshPtyTest;
+import ghidra.dbg.DebuggerModelFactory;
+import ghidra.dbg.test.AbstractModelHost;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.Task;
-import ghidra.util.task.TaskMonitor;
 
-/**
- * Task for searching for classes.  This allows for a runtime refresh of scanned classes.
- */
-public class ClassSearchTask extends Task {
+public class SshJoinGdbModelHost extends AbstractModelHost {
 
-	public ClassSearchTask() {
-		super("Refreshing List of Ghidra Class Files", true, false, true);
+	@Override
+	public DebuggerModelFactory getModelFactory() {
+		return new GdbOverSshDebuggerModelFactory();
 	}
 
 	@Override
-	public void run(final TaskMonitor taskMonitor) {
-
+	public Map<String, Object> getFactoryOptions() {
 		try {
-			ClassSearcher.search(true, taskMonitor);
+			return Map.ofEntries(
+				Map.entry("SSH username", SshPtyTest.promptUser()),
+				Map.entry("Use existing session via new-ui", true));
 		}
 		catch (CancelledException e) {
-			// user cancelled
+			throw new AssertionError("Cancelled", e);
 		}
 	}
 }
