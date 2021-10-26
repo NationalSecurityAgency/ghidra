@@ -2910,7 +2910,7 @@ SC: [a10]const0815Z10zz is PCPMode=0 & a10 & const0815Z10zz & op0003=8 & op0404=
 {
 	#TODO  is this just a call w/o context switching?
 	a11 = inst_start + 4;
-	call [off24pc];
+	call off24pc;
 }
 
 # JLA disp24 (B)
