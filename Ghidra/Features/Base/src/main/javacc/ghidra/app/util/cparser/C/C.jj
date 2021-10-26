@@ -1012,9 +1012,11 @@ TOKEN :
 	|
 	<GOTO : "goto"> 
 	|
-	<NEAR : "__near"> 
+	<NEAR : ( [ "_" ] )* "near"> 
 	|
-	<FAR : "__far">
+	<FAR : ( [ "_" ] )* "far">
+	| 
+	<HUGE : ( [ "_" ] )* "huge">
 	|
 	<FOR : "for"> 
 	|
