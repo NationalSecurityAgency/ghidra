@@ -174,13 +174,13 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		showTool(tool);
 		assertEquals(addr("0x1001000"), cb.getCurrentAddress());
 		performAction(nextData, cb.getProvider(), true);
-		assertEquals(addr("0x10010e0"), cb.getCurrentAddress());
+		assertEquals(addr("0x1001058"), cb.getCurrentAddress());
 		performAction(nextData, cb.getProvider(), true);
-		assertEquals(addr("0x1001128"), cb.getCurrentAddress());
+		assertEquals(addr("0x1001080"), cb.getCurrentAddress());
 
 		performAction(direction, cb.getProvider(), true);
 		performAction(nextData, cb.getProvider(), true);
-		assertEquals(addr("0x10010e0"), cb.getCurrentAddress());
+		assertEquals(addr("0x1001058"), cb.getCurrentAddress());
 		performAction(nextData, cb.getProvider(), true);
 
 	}
@@ -193,15 +193,15 @@ public class NextPrevCodeUnitPluginTest extends AbstractGhidraHeadedIntegrationT
 		performAction(nextUndef, cb.getProvider(), true);
 		assertEquals(addr("0x100100c"), cb.getCurrentAddress());
 		performAction(nextUndef, cb.getProvider(), true);
-		assertEquals(addr("0x10010e4"), cb.getCurrentAddress());
+		assertEquals(addr("0x100105c"), cb.getCurrentAddress());
 
 		performAction(direction, cb.getProvider(), true);
 		performAction(nextUndef, cb.getProvider(), true);
-		assertEquals(addr("0x10010df"), cb.getCurrentAddress());
+		assertEquals(addr("0x1001057"), cb.getCurrentAddress());
 		performAction(nextUndef, cb.getProvider(), true);
 
 		// no more undefined data, this is the last range
-		assertEquals(addr("0x10010df"), cb.getCurrentAddress());
+		assertEquals(addr("0x1001057"), cb.getCurrentAddress());
 	}
 
 	@Test
