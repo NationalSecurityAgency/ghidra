@@ -287,8 +287,8 @@ public class VersionedDatabase extends Database {
 	/**
 	 * Open a specific version of this database for non-update use.
 	 * @param version database version or LATEST_VERSION for current version
-	 * @param minChangeDataVer the minimum database version whoose change data
-	 * should be associated with the returned buffer file.  A value of -1 indicates that 
+	 * @param minChangeDataVer the minimum database version whose change data
+	 * should be associated with the returned buffer file.  A value of -1 indicates that
 	 * change data is not required.
 	 * @return buffer file for non-update use.
 	 * @throws IOException
@@ -455,7 +455,7 @@ public class VersionedDatabase extends Database {
 	}
 
 	/**
-	 * <code>VerDBBufferFileManager</code> provides buffer file management 
+	 * <code>VerDBBufferFileManager</code> provides buffer file management
 	 * for this versioned database instead of the DBBufferFileManager.
 	 */
 	private class VerDBBufferFileManager implements BufferFileManager {
@@ -484,7 +484,7 @@ public class VersionedDatabase extends Database {
 			return new File(dbDir,
 				CHANGE_FILE_PREFIX + version + LocalBufferFile.BUFFER_FILE_EXTENSION);
 		}
-		
+
 		@Override
 		public File getChangeMapFile() {
 			return null;
