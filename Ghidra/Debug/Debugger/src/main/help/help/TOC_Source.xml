@@ -102,6 +102,10 @@
 	        		sortgroup="h" 
 	                target="help/topics/DebuggerRegistersPlugin/DebuggerRegistersPlugin.html" />
 
+	        <tocdef id="DebuggerMemoryBytesPlugin" text="Memory" 
+	        		sortgroup="h1" 
+	                target="help/topics/DebuggerMemoryBytesPlugin/DebuggerMemoryBytesPlugin.html" />
+
 	        <tocdef id="DebuggerListingPlugin" text="Dynamic Listing" 
 	        		sortgroup="i" 
 	                target="help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html" />
