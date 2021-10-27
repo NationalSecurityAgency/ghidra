@@ -68,10 +68,6 @@ public abstract class RefType {
 	static final byte __WRITE_IND = 105;
 	static final byte __READ_WRITE_IND = 106;
 	static final byte __UNKNOWNPARAM = 107;
-	@Deprecated
-	static final byte __STACK_READ = 110; // Use __READ instead
-	@Deprecated
-	static final byte __STACK_WRITE = 111; // Use __WRITE instead
 	static final byte __EXTERNAL_REF = 113;
 	static final byte __UNKNOWNDATA_IND = 114;
 
@@ -247,23 +243,8 @@ public abstract class RefType {
 		DataRefType.READX | DataRefType.WRITEX | DataRefType.INDX);
 
 	/**
-	 * Reference type assigned for stack variable being read.
-	 * @deprecated use {@link RefType#READ} instead
-	 */
-	@Deprecated
-	public static final RefType STACK_READ =
-		new DataRefType(__STACK_READ, "STACK_READ", DataRefType.READX);
-
-	/**
-	 * Reference type assigned for stack variable being written.
-	 * @deprecated use {@link RefType#WRITE} instead
-	 */
-	@Deprecated
-	public static final RefType STACK_WRITE =
-		new DataRefType(__STACK_WRITE, "STACK_WRITE", DataRefType.WRITEX);
-	/**
-	 * Reference type used internally to identify external entry points.  
-	 * The use of this RefType for references to external library data or functions 
+	 * Reference type used internally to identify external entry points.
+	 * The use of this RefType for references to external library data or functions
 	 * is deprecated and should not be used for that purpose.
 	 */
 	public static final RefType EXTERNAL_REF = new DataRefType(__EXTERNAL_REF, "EXTERNAL", 0);

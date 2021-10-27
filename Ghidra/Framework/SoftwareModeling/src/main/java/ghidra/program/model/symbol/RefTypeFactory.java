@@ -31,7 +31,6 @@ import ghidra.util.datastruct.IntObjectHashtable;
 /**
  * Factory class to create RefType objects.
  */
-@SuppressWarnings("deprecation")
 public class RefTypeFactory {
 
 	private static final IntObjectHashtable<RefType> REFTYPE_LOOKUP_BY_TYPE_MAP =
@@ -74,8 +73,6 @@ public class RefTypeFactory {
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.READ_IND.getValue(), RefType.READ_IND);
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.WRITE_IND.getValue(), RefType.WRITE_IND);
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.READ_WRITE_IND.getValue(), RefType.READ_WRITE_IND);
-		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.STACK_READ.getValue(), RefType.STACK_READ);
-		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.STACK_WRITE.getValue(), RefType.STACK_WRITE);
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.EXTERNAL_REF.getValue(), RefType.EXTERNAL_REF);
 		REFTYPE_LOOKUP_BY_TYPE_MAP.put(RefType.__CALL_OVERRIDE_UNCONDITIONAL,
 			RefType.CALL_OVERRIDE_UNCONDITIONAL);
@@ -148,10 +145,10 @@ public class RefTypeFactory {
 	}
 
 	/**
-	 * Get the default statck data RefType for the specified code-unit/opIndex and register
-	 * @param cu
-	 * @param reg
-	 * @param opIndex
+	 * Get the default stack data RefType for the specified code-unit/opIndex and register
+	 * @param cu the code unit
+	 * @param reg the register
+	 * @param opIndex the op index
 	 * @return default RefType
 	 */
 	public static RefType getDefaultRegisterRefType(CodeUnit cu, Register reg, int opIndex) {
@@ -307,7 +304,7 @@ public class RefTypeFactory {
 		boolean simpleFlow =
 			(instr.getFlowType() != RefType.INVALID && instr.getDefaultFlows().length <= 1);
 		if (simpleFlow) {
-			// only use default if simple flow 
+			// only use default if simple flow
 			flowType = getDefaultJumpOrCallFlowType(instr);
 		}
 
@@ -321,7 +318,7 @@ public class RefTypeFactory {
 		}
 
 		// Assumption - it is assumed that any complex flow type is due to the presence of
-		// multiple conditional flows.  Does not handle use of constant offsets since 
+		// multiple conditional flows.  Does not handle use of constant offsets since
 		// language should be using Address locations for all flow pcode!
 
 		// TODO: Verify that above assumption is valid !!
@@ -348,7 +345,7 @@ public class RefTypeFactory {
 	}
 
 	/**
-	 * Determine default computed FlowType for a specified instruction.  It is assumed 
+	 * Determine default computed FlowType for a specified instruction.  It is assumed
 	 * that all computed flows utilize a register in its destination specification/computation.
 	 * @param instr instruction
 	 * @return FlowType or null if unable to determine
@@ -361,7 +358,7 @@ public class RefTypeFactory {
 		}
 
 		// Assumption - it is assumed that any complex flow type is due to the presence of
-		// multiple conditional flows.  
+		// multiple conditional flows.
 
 		// TODO: Verify that above assumption is valid !!
 
@@ -388,9 +385,9 @@ public class RefTypeFactory {
 
 	/**
 	 * Get the default memory flow/data RefType for the specified code unit and opIndex.
-	 * @param cu
-	 * @param opIndex
-	 * @param toAddr reference destination 
+	 * @param cu the code unit
+	 * @param opIndex the op index
+	 * @param toAddr reference destination
 	 * @param ignoreExistingReferences if true existing references will not influence default
 	 * reference type returned.
 	 * @return default RefType
@@ -453,8 +450,10 @@ public class RefTypeFactory {
 		}
 
 		if (!ignoreExistingReferences) {
-			Reference[] refs = cu.getProgram().getReferenceManager().getReferencesFrom(
-				cu.getMinAddress(), opIndex);
+			Reference[] refs = cu.getProgram()
+					.getReferenceManager()
+					.getReferencesFrom(
+						cu.getMinAddress(), opIndex);
 			for (Reference ref : refs) {
 				if (ref.getToAddress().equals(toAddr)) {
 					return ref.getReferenceType();
@@ -486,7 +485,7 @@ public class RefTypeFactory {
 
 	/**
 	 * Return default flow-type without terminator
-	 * @param inst
+	 * @param inst the instruction
 	 * @return call/jump flow type or null
 	 */
 	private static FlowType getDefaultJumpOrCallFlowType(Instruction inst) {
