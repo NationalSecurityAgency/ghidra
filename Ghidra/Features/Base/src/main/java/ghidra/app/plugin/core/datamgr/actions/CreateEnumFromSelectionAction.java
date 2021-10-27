@@ -81,7 +81,7 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 		for (DataTypeManager dataTypeManager : dataTypeManagers) {
 			if (dataTypeManager instanceof ProgramDataTypeManager) {
 				myDataTypeManager = dataTypeManager;
-				category = myDataTypeManager.getCategory(new CategoryPath("/"));
+				category = myDataTypeManager.getCategory(CategoryPath.ROOT);
 				if (category == null) {
 					Msg.error(this, "Could not find program data type manager");
 					return;

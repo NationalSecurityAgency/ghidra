@@ -30,9 +30,6 @@ public class NamespacePathTest {
 
 		Assert.assertEquals("ROOT::sub1", nsp.asNamespaceString());
 		Assert.assertEquals("ROOT::sub1::sub1_1", nsp1_1.asNamespaceString());
-		Assert.assertEquals("/sub1", nsp.asCategoryPathString());
-		Assert.assertEquals("/sub1/sub1_1", nsp1_1.asCategoryPathString());
-
 	}
 
 	@Test
@@ -41,8 +38,12 @@ public class NamespacePathTest {
 		NamespacePath nsSpaceA = NamespacePath.create(null, "ns A", SymbolType.NAMESPACE);
 		NamespacePath nsColonA = NamespacePath.create(null, "ns:A", SymbolType.NAMESPACE);
 
-		Assert.assertEquals("ROOT::ns-fwdslash-A", nsSlashA.asNamespaceString());
+		Assert.assertEquals("ROOT::ns/A", nsSlashA.asNamespaceString());
 		Assert.assertEquals("ROOT::nsA", nsSpaceA.asNamespaceString());
-		Assert.assertEquals("ROOT::ns-A", nsColonA.asNamespaceString());
+		Assert.assertEquals("ROOT::ns:A", nsColonA.asNamespaceString());
+
+		Assert.assertEquals("ns/A", nsSlashA.getName());
+		Assert.assertEquals("nsA", nsSpaceA.getName());
+		Assert.assertEquals("ns:A", nsColonA.getName());
 	}
 }

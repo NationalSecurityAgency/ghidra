@@ -894,6 +894,71 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 		return results;
 	}
 
+	@Test
+	public void testStructNamespaceReservedChar_Colon()
+			throws CancelledException, IOException, DWARFException {
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry floatDIE = addFloat(cu);
+
+		//-----------------------
+		DebugInfoEntry struct1DIE = newStruct("mystruct::with::colons", 100).create(cu);
+		DebugInfoEntry nestedStructDIE =
+			newStruct("nested_struct", 10).setParent(struct1DIE).create(cu);
+		newMember(nestedStructDIE, "blah1", intDIE, 0).create(cu);
+		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
+		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
+		newMember(struct1DIE, "f3", nestedStructDIE, 20).create(cu);
+		//----------------------
+
+		importAllDataTypes();
+
+		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct::with::colons");
+		assertEquals(3, structdt.getNumDefinedComponents());
+		Structure nestedStructDt = (Structure) structdt.getDefinedComponents()[2].getDataType();
+		assertEquals("mystruct::with::colons", nestedStructDt.getCategoryPath().getName());
+	}
+
+	@Test
+	public void testStructNamespaceReservedChar_FwdSlash()
+			throws CancelledException, IOException, DWARFException {
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry floatDIE = addFloat(cu);
+
+		//-----------------------
+		DebugInfoEntry struct1DIE = newStruct("mystruct::operator/()", 100).create(cu);
+		DebugInfoEntry nestedStructDIE =
+			newStruct("nested_struct", 10).setParent(struct1DIE).create(cu);
+		newMember(nestedStructDIE, "blah1", intDIE, 0).create(cu);
+		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
+		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
+		newMember(struct1DIE, "f3", nestedStructDIE, 20).create(cu);
+		//----------------------
+
+		importAllDataTypes();
+
+		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct::operator/()");
+		assertEquals(3, structdt.getNumDefinedComponents());
+		Structure nestedStructDt = (Structure) structdt.getDefinedComponents()[2].getDataType();
+		assertEquals("mystruct::operator/()", nestedStructDt.getCategoryPath().getName());
+	}
+
+	@Test
+	public void testStructNamespaceReservedChar_Spaces()
+			throws CancelledException, IOException, DWARFException {
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry floatDIE = addFloat(cu);
+
+		//-----------------------
+		DebugInfoEntry struct1DIE = newStruct("mystruct<int, float>", 100).create(cu);
+		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
+		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
+		//----------------------
+
+		importAllDataTypes();
+
+		Structure structdt = (Structure) dataMgr.getDataType(rootCP, "mystruct<int,_float>");
+		assertEquals(2, structdt.getNumDefinedComponents());
+	}
 	//----------------------------------------------------------------------------------------------------
 
 	@Test

@@ -537,4 +537,22 @@ public class NamespaceUtils {
 		SymbolTable symbolTable = namespaceSymbol.getProgram().getSymbolTable();
 		return symbolTable.convertNamespaceToClass(namespace);
 	}
+
+	/**
+	 * Returns a list of namespaces, where each element is a component of the original specified
+	 * namespace, excluding the global root namespace.
+	 * <p>
+	 * Namespace "ns1::ns2::ns3" returns [ "ns1", "ns1::ns2", "ns1::ns2::ns3" ]
+	 * 
+	 * @param namespace namespace to process
+	 * @return list of namespaces
+	 */
+	public static List<Namespace> getNameSpaceParts(Namespace namespace) {
+		List<Namespace> result = new ArrayList<>();
+		while (!namespace.isGlobal()) {
+			result.add(0, namespace);
+			namespace = namespace.getParentNamespace();
+		}
+		return result;
+	}
 }

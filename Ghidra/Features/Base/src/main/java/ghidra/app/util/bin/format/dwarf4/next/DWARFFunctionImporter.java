@@ -689,7 +689,7 @@ public class DWARFFunctionImporter {
 
 		DWARFNameInfo dni = prog.getName(diea);
 
-		String name = SymbolUtilities.replaceInvalidChars(dni.getName(), false);
+		String name = dni.getName();
 		Number lowPC = null;
 		boolean disjoint = false;
 
