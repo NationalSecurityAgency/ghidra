@@ -25,19 +25,16 @@ import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a dylib_reference structure.
+ * Represents a dyld_chained_import array.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-832.7.3/include/mach-o/fixup-chains.h.auto.html">mach-o/fixup-chains.h/a> 
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/include/mach-o/fixup-chains.h.auto.html">mach-o/fixup-chains.h</a> 
  */
 public class DyldChainedImports implements StructConverter {
-	private static final int DYLD_CHAINED_IMPORT = 1;
-	private static final int DYLD_CHAINED_IMPORT_ADDEND = 2;
-	private static final int DYLD_CHAINED_IMPORT_ADDEND64 = 3;
 
 	private int imports_count;
 	private int imports_format;
 	private long imports_offset;
-	private DyldChainImport chainImports[];
+	private DyldChainedImport chainedImports[];
 
 	static DyldChainedImports createDyldChainedImports(FactoryBundledWithBinaryReader reader,
 			DyldChainedFixupHeader cfh) throws IOException {
@@ -62,17 +59,18 @@ public class DyldChainedImports implements StructConverter {
 		this.imports_count = cfh.getImports_count();
 		this.imports_format = cfh.getImports_format();
 
-		ArrayList<DyldChainImport> starts = new ArrayList<>();
+		ArrayList<DyldChainedImport> starts = new ArrayList<>();
 		for (int i = 0; i < imports_count; i++) {
-			starts.add(DyldChainImport.createDyldChainImport(reader, cfh, imports_format));
+			starts.add(DyldChainedImport.createDyldChainedImport(reader, cfh, imports_format));
 		}
-		chainImports = starts.toArray(DyldChainImport[]::new);
+		chainedImports = starts.toArray(DyldChainedImport[]::new);
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		DataType chainImportDt = chainImports[0].toDataType();
-		DataType dt = new ArrayDataType(chainImportDt, imports_count, chainImportDt.getLength());
+		DataType chainedImportDt = chainedImports[0].toDataType();
+		DataType dt =
+			new ArrayDataType(chainedImportDt, imports_count, chainedImportDt.getLength());
 
 		return dt;
 	}
@@ -85,24 +83,24 @@ public class DyldChainedImports implements StructConverter {
 		return imports_offset;
 	}
 
-	public DyldChainImport[] getChainedImports() {
-		return chainImports;
+	public DyldChainedImport[] getChainedImports() {
+		return chainedImports;
 	}
 
-	public DyldChainImport getChainImport(int ordinal) {
+	public DyldChainedImport getChainedImport(int ordinal) {
 		if (ordinal < 0 || ordinal >= imports_count) {
 			return null;
 		}
-		return chainImports[ordinal];
+		return chainedImports[ordinal];
 	}
 
 	public void initSymbols(FactoryBundledWithBinaryReader reader,
 			DyldChainedFixupHeader dyldChainedFixupHeader) throws IOException {
 		long ptrIndex = reader.getPointerIndex();
 
-		for (DyldChainImport dyldChainImport : chainImports) {
-			reader.setPointerIndex(ptrIndex + dyldChainImport.getNameOffset());
-			dyldChainImport.initString(reader);
+		for (DyldChainedImport dyldChainedImport : chainedImports) {
+			reader.setPointerIndex(ptrIndex + dyldChainedImport.getNameOffset());
+			dyldChainedImport.initString(reader);
 		}
 	}
 }

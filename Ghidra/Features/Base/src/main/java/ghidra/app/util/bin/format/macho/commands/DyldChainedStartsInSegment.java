@@ -24,9 +24,9 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a dylib_reference structure.
+ * Represents a dyld_chained_starts_in_segment structure.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-832.7.3/include/mach-o/fixup-chains.h.auto.html">mach-o/fixup-chains.h/a> 
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/include/mach-o/fixup-chains.h.auto.html">mach-o/fixup-chains.h</a> 
  */
 public class DyldChainedStartsInSegment implements StructConverter {
 
@@ -85,23 +85,23 @@ public class DyldChainedStartsInSegment implements StructConverter {
 		return size;
 	}
 
-	public short getPage_size() {
+	public short getPageSize() {
 		return page_size;
 	}
 
-	public short getPointer_format() {
+	public short getPointerFormat() {
 		return pointer_format;
 	}
 
-	public long getSegment_offset() {
+	public long getSegmentOffset() {
 		return segment_offset;
 	}
 
-	public int getMax_valid_pointer() {
+	public int getMaxValidPointer() {
 		return max_valid_pointer;
 	}
 
-	public short getPage_count() {
+	public short getPageCount() {
 		return page_count;
 	}
 

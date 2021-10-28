@@ -109,7 +109,6 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		markupHeaders();
 		markupBranchIslands();
 		createSymbols();
-
 		processDylibs();
 	}
 
@@ -238,7 +237,6 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			log.appendMsg("Fixing page chains version: " + version);
 			info.fixPageChains(program, dyldCacheHeader, shouldAddRelocationEntries, log, monitor);
 		}
-		return;
 	}
 
 	/**

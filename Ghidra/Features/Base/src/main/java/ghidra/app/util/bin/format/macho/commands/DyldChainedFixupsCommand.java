@@ -29,6 +29,11 @@ import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
+/**
+ * Represents a LC_DYLD_CHAINED_FIXUPS command.
+ * 
+ * @see <a href="https://opensource.apple.com/source/xnu/xnu-7195.81.3/EXTERNAL_HEADERS/mach-o/loader.h.auto.html">mach-o/loader.h</a> 
+ */
 public class DyldChainedFixupsCommand extends LinkEditDataCommand {
 
 	private DyldChainedFixupHeader chainHeader;

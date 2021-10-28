@@ -23,7 +23,12 @@ import ghidra.app.util.bin.format.macho.MachConstants;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
-public class DyldChainImport implements StructConverter {
+/**
+ * Represents a dyld_chained_import structure.
+ * 
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/include/mach-o/fixup-chains.h.auto.html">mach-o/fixup-chains.h</a> 
+ */
+public class DyldChainedImport implements StructConverter {
 	private static final int DYLD_CHAINED_IMPORT = 1;
 	private static final int DYLD_CHAINED_IMPORT_ADDEND = 2;
 	private static final int DYLD_CHAINED_IMPORT_ADDEND64 = 3;
@@ -35,25 +40,25 @@ public class DyldChainImport implements StructConverter {
 	private long addend;
 	private String symbolName;
 
-	static DyldChainImport createDyldChainImport(FactoryBundledWithBinaryReader reader,
+	static DyldChainedImport createDyldChainedImport(FactoryBundledWithBinaryReader reader,
 			DyldChainedFixupHeader cfh, int imports_format) throws IOException {
-		DyldChainImport dyldChainImport =
-			(DyldChainImport) reader.getFactory().create(DyldChainImport.class);
-		dyldChainImport.initDyldChainImport(reader, cfh, imports_format);
-		return dyldChainImport;
+		DyldChainedImport dyldChainedImport =
+			(DyldChainedImport) reader.getFactory().create(DyldChainedImport.class);
+		dyldChainedImport.initDyldChainedImport(reader, cfh, imports_format);
+		return dyldChainedImport;
 	}
 
 	/**
 	 * DO NOT USE THIS CONSTRUCTOR, USE create*(GenericFactory ...) FACTORY METHODS INSTEAD.
 	 */
-	public DyldChainImport() {
+	public DyldChainedImport() {
 	}
 
-	private void initDyldChainImport(FactoryBundledWithBinaryReader reader,
-			DyldChainedFixupHeader cfh, int imports_format) throws IOException {
+	private void initDyldChainedImport(FactoryBundledWithBinaryReader reader,
+			DyldChainedFixupHeader cfh, int format) throws IOException {
 
-		this.imports_format = imports_format;
-		switch (imports_format) {
+		this.imports_format = format;
+		switch (format) {
 			case DYLD_CHAINED_IMPORT: {
 				int ival = reader.readNextInt();
 				lib_ordinal = ival & 0xff;
@@ -78,13 +83,13 @@ public class DyldChainImport implements StructConverter {
 				break;
 			}
 			default:
-				throw new IOException("Bad Chained import format: " + imports_format);
+				throw new IOException("Bad Chained import format: " + format);
 		}
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		StructureDataType dt = new StructureDataType("dyld_chain_import", 0);
+		StructureDataType dt = new StructureDataType("dyld_chained_import", 0);
 
 		try {
 			switch (imports_format) {

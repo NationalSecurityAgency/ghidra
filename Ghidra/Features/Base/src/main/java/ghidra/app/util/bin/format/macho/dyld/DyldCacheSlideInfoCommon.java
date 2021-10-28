@@ -36,7 +36,7 @@ import ghidra.util.task.TaskMonitor;
  * The intent is for the the full dyld_cache_slide_info structures to extend this and add their
  * specific parts.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/dyld3/shared-cache/dyld_cache_format.h.auto.html">dyld3/shared-cache/dyld_cache_format.h</a> 
  */
 public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 
@@ -44,8 +44,17 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 	public static final int BYTES_PER_CHAIN_OFFSET = 4;
 	public static final int CHAIN_OFFSET_MASK = 0x3fff;
 
+	/**
+	 * Parses the slide info
+	 * 
+	 * @param reader A {@link BinaryReader} positioned at the start of a DYLD slide info
+	 * @param slideInfoOffset The offset of the slide info to parse
+	 * @param log The log
+	 * @param monitor A cancelable task monitor
+	 * @return The slide info object
+	 */
 	public static DyldCacheSlideInfoCommon parseSlideInfo(BinaryReader reader, long slideInfoOffset,
-			MessageLog log, TaskMonitor monitor) throws CancelledException {
+			MessageLog log, TaskMonitor monitor) {
 		if (slideInfoOffset == 0) {
 			return null;
 		}
@@ -109,7 +118,7 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 	/**
 	 * Return the original slide info offset
 	 * 
-	 * @return
+	 * @return the original slide info offset
 	 */
 	public long getSlideInfoOffset() {
 		return slideInfoOffset;
@@ -130,7 +139,9 @@ public abstract class DyldCacheSlideInfoCommon implements StructConverter {
 	/**
 	 * Create pointers at each fixed chain location.
 	 * 
-	 * @param unchainedLocList address list of fixed pointer locations
+	 * @param program The program
+	 * @param unchainedLocList Address list of fixed pointer locations
+	 * @param monitor A cancelable task monitor 
 	 * 
 	 * @throws CancelledException if the user cancels
 	 */

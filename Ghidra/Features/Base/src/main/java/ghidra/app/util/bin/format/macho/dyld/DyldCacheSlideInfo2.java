@@ -34,7 +34,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Represents a dyld_cache_slide_info2 structure.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/dyld3/shared-cache/dyld_cache_format.h.auto.html">dyld3/shared-cache/dyld_cache_format.h</a> 
  */
 public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 
@@ -52,23 +52,23 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 	private short page_extras_entries[];
 
 	public long getPageSize() {
-		return ((long) page_size) & 0xffffffff;
+		return Integer.toUnsignedLong(page_size);
 	}
 
 	public long getPageStartsOffset() {
-		return ((long) page_starts_offset) & 0xffffffff;
+		return Integer.toUnsignedLong(page_starts_offset);
 	}
 
 	public long getPageStartsCount() {
-		return ((long) page_starts_count) & 0xffffffff;
+		return Integer.toUnsignedLong(page_starts_count);
 	}
 
 	public long getPageExtrasOffset() {
-		return ((long) page_extras_offset) & 0xffffffff;
+		return Integer.toUnsignedLong(page_extras_offset);
 	}
 
 	public long getPageExtrasCount() {
-		return ((long) page_extras_count) & 0xffffffff;
+		return Integer.toUnsignedLong(page_extras_count);
 	}
 
 	public long getDeltaMask() {
@@ -192,7 +192,7 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 	/**
 	 * Fixes up any chained pointers, starting at the given address.
 	 * 
-	 * @param unchainedLocList list of locations that were unchained
+	 * @param program the program
 	 * @param page within data pages that has pointers to be unchained
 	 * @param nextOff offset within the page that is the chain start
 	 * @param deltaMask delta offset mask for each value

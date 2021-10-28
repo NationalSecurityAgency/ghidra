@@ -19,6 +19,9 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
 
+/**
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/include/mach-o/fixup-chains.h.auto.html">mach-o/fixup-chains.h</a> 
+ */
 public class DyldChainedPtr {
 
 	public enum DyldChainType {

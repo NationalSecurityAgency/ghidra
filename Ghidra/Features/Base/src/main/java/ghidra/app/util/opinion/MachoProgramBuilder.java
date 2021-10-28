@@ -433,19 +433,6 @@ public class MachoProgramBuilder {
 	}
 
 	/**
-	 * Gets the NList symbol from the symbol table
-	 * @param index ordinal entry of the symbol in symbol table
-	 * @return The {@link NList}. Null if no symbols parsed
-	 */
-	public NList getSymbol(int ordinal) {
-		List<SymbolTableCommand> commands = machoHeader.getLoadCommands(SymbolTableCommand.class);
-		for (SymbolTableCommand symbolTableCommand : commands) {
-			return symbolTableCommand.getSymbolAt(ordinal);
-		}
-		return null;
-	}
-
-	/**
 	 * The indirect symbols need to be applied across the IMPORT segment. The
 	 * individual section do not really matter except the number of bytes
 	 * between each symbol varies based on section.

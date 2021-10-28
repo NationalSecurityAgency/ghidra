@@ -274,20 +274,20 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		List<Address> fixedAddresses = new ArrayList<Address>();
 		long fixedAddressCount = 0;
 
-		if (chainStart.getPointer_format() == 0) {
+		if (chainStart.getPointerFormat() == 0) {
 			return fixedAddresses;
 		}
 
-		long dataPageStart = chainStart.getSegment_offset();
+		long dataPageStart = chainStart.getSegmentOffset();
 		dataPageStart = dataPageStart + program.getImageBase().getOffset();
-		long pageSize = chainStart.getPage_size();
-		long pageStartsCount = chainStart.getPage_count();
+		long pageSize = chainStart.getPageSize();
+		long pageStartsCount = chainStart.getPageCount();
 
 		long authValueAdd = 0;
 
 		short[] pageStarts = chainStart.getPage_starts();
 
-		short ptrFormatValue = chainStart.getPointer_format();
+		short ptrFormatValue = chainStart.getPointerFormat();
 		DyldChainType ptrFormat = DyldChainType.lookupChainPtr(ptrFormatValue);
 
 		monitor.setMessage("Fixing " + ptrFormat.getName() + " chained pointers...");
@@ -387,19 +387,19 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 			if (isAuthenticated && !isBound) {
 				long offsetFromSharedCacheBase =
 					DyldChainedPtr.getTarget(pointerFormat, chainValue);
-				long diversityData = DyldChainedPtr.getDiversity(pointerFormat, chainValue);
-				boolean hasAddressDiversity =
-					DyldChainedPtr.hasAddrDiversity(pointerFormat, chainValue);
-				long key = DyldChainedPtr.getKey(pointerFormat, chainValue);
+				//long diversityData = DyldChainedPtr.getDiversity(pointerFormat, chainValue);
+				//boolean hasAddressDiversity =
+				//	DyldChainedPtr.hasAddrDiversity(pointerFormat, chainValue);
+				//long key = DyldChainedPtr.getKey(pointerFormat, chainValue);
 				newChainValue = imageBaseOffset + offsetFromSharedCacheBase + auth_value_add;
 			}
 			else if (!isAuthenticated && isBound) {
 				int chainOrdinal = (int) DyldChainedPtr.getOrdinal(pointerFormat, chainValue);
 				long addend = DyldChainedPtr.getAddend(pointerFormat, chainValue);
 				DyldChainedImports chainedImports = chainHeader.getChainedImports();
-				DyldChainImport chainImport = chainedImports.getChainImport(chainOrdinal);
-				int libOrdinal = chainImport.getLibOrdinal();
-				symName = chainImport.getName();
+				DyldChainedImport chainedImport = chainedImports.getChainedImport(chainOrdinal);
+				//int libOrdinal = chainedImport.getLibOrdinal();
+				symName = chainedImport.getName();
 				// lookup the symbol, and then add addend
 				List<Symbol> globalSymbols = program.getSymbolTable().getGlobalSymbols(symName);
 				if (globalSymbols.size() == 1) {
@@ -409,16 +409,15 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 			}
 			else if (isAuthenticated && isBound) {
 				int chainOrdinal = (int) DyldChainedPtr.getOrdinal(pointerFormat, chainValue);
-				long addend = DyldChainedPtr.getAddend(pointerFormat, chainValue);
-
-				long diversityData = DyldChainedPtr.getDiversity(pointerFormat, chainValue);
-				boolean hasAddressDiversity =
-					DyldChainedPtr.hasAddrDiversity(pointerFormat, chainValue);
-				long key = DyldChainedPtr.getKey(pointerFormat, chainValue);
+				//long addend = DyldChainedPtr.getAddend(pointerFormat, chainValue);
+				//long diversityData = DyldChainedPtr.getDiversity(pointerFormat, chainValue);
+				//boolean hasAddressDiversity =
+				//	DyldChainedPtr.hasAddrDiversity(pointerFormat, chainValue);
+				//long key = DyldChainedPtr.getKey(pointerFormat, chainValue);
 
 				DyldChainedImports chainedImports = chainHeader.getChainedImports();
-				DyldChainImport chainImport = chainedImports.getChainImport(chainOrdinal);
-				symName = chainImport.getName();
+				DyldChainedImport chainedImport = chainedImports.getChainedImport(chainOrdinal);
+				symName = chainedImport.getName();
 
 				// lookup the symbol, and then add addend
 				List<Symbol> globalSymbols = program.getSymbolTable().getGlobalSymbols(symName);

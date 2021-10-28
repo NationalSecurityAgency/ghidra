@@ -34,7 +34,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Represents a dyld_cache_slide_info3 structure.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-625.13/launch-cache/dyld_cache_format.h.auto.html">launch-cache/dyld_cache_format.h</a> 
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/dyld3/shared-cache/dyld_cache_format.h.auto.html">dyld3/shared-cache/dyld_cache_format.h</a> 
  */
 public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 
@@ -147,7 +147,7 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 	/**
 	 * Fixes up any chained pointers, starting at the given address.
 	 * 
-	 * @param unchainedLocList 
+	 * @param program the program 
 	 * @param page within data pages that has pointers to be unchained
 	 * @param nextOff offset within the page that is the chain start
 	 * @param auth_value_add value to be added to each chain pointer
@@ -182,9 +182,9 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 
 			if (isAuthenticated) {
 				long offsetFromSharedCacheBase = chainValue & 0xFFFFFFFFL;
-				long diversityData = (chainValue >> 32L) & 0xFFFFL;
-				long hasAddressDiversity = (chainValue >> 48L) & 0x1L;
-				long key = (chainValue >> 49L) & 0x3L;
+				//long diversityData = (chainValue >> 32L) & 0xFFFFL;
+				//long hasAddressDiversity = (chainValue >> 48L) & 0x1L;
+				//long key = (chainValue >> 49L) & 0x3L;
 				chainValue = offsetFromSharedCacheBase + auth_value_add;
 			}
 			else {

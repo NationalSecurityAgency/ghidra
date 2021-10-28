@@ -25,9 +25,9 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
- * Represents a dylib_reference structure.
+ * Represents a dyld_chained_starts_in_image structure.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-832.7.3/include/mach-o/fixup-chains.h.auto.html">mach-o/fixup-chains.h/a> 
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/include/mach-o/fixup-chains.h.auto.html">mach-o/fixup-chains.h</a> 
  */
 public class DyldChainedStartsInImage implements StructConverter {
 

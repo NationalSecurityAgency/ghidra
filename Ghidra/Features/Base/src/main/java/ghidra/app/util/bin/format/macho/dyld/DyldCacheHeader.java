@@ -21,7 +21,6 @@ import java.util.List;
 
 import ghidra.app.util.bin.*;
 import ghidra.app.util.bin.format.macho.MachConstants;
-import ghidra.app.util.bin.format.macho.commands.NList;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
@@ -34,7 +33,7 @@ import ghidra.util.task.TaskMonitor;
 /**
  * Represents a dyld_cache_header structure.
  * 
- * @see <a href="https://opensource.apple.com/source/dyld/dyld-832.7.3/dyld3/shared-cache/dyld_cache_format.h.auto.html</a> 
+ * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/dyld3/shared-cache/dyld_cache_format.h.auto.html">dyld3/shared-cache/dyld_cache_format.h</a> 
  */
 @SuppressWarnings("unused")
 public class DyldCacheHeader implements StructConverter {
@@ -59,7 +58,6 @@ public class DyldCacheHeader implements StructConverter {
 	private long accelerateInfoSize;
 	private long imagesTextOffset;
 	private long imagesTextCount;
-
 	private long patchInfoAddr;
 	private long patchInfoSize;
 	private long otherImageGroupAddrUnused;    // unused
@@ -70,12 +68,12 @@ public class DyldCacheHeader implements StructConverter {
 	private long progClosuresTrieSize;
 	private int platform;
 	private int dyld_info;
-	private int formatVersion;             // Extracted from dyld_info
-	private boolean dylibsExpectedOnDisk;  // Extracted from dyld_info
-	private boolean simulator;             // Extracted from dyld_info
-	private boolean locallyBuiltCache;     // Extracted from dyld_info
-	private boolean builtFromChainedFixups;// Extracted from dyld_info
-	private int padding;                   // Extracted from dyld_info
+	private int formatVersion;                 // Extracted from dyld_info
+	private boolean dylibsExpectedOnDisk;      // Extracted from dyld_info
+	private boolean simulator;                 // Extracted from dyld_info
+	private boolean locallyBuiltCache;         // Extracted from dyld_info
+	private boolean builtFromChainedFixups;    // Extracted from dyld_info
+	private int padding;                       // Extracted from dyld_info
 	private long sharedRegionStart;
 	private long sharedRegionSize;
 	private long maxSlide;
@@ -114,8 +112,8 @@ public class DyldCacheHeader implements StructConverter {
 		this.reader = reader;
 		long startIndex = reader.getPointerIndex();
 
-		// ------ HEADER 1 ---------
-		headerType = 1; // https://opensource.apple.com/source/dyld/dyld-95.3/launch-cache/dyld_cache_format.h.auto.html
+		// HEADER 1: https://opensource.apple.com/source/dyld/dyld-95.3/launch-cache/dyld_cache_format.h.auto.html
+		headerType = 1;
 		magic = reader.readNextByteArray(16);
 		mappingOffset = reader.readNextInt();
 		mappingCount = reader.readNextInt();
@@ -123,9 +121,9 @@ public class DyldCacheHeader implements StructConverter {
 		imagesCount = reader.readNextInt();
 		dyldBaseAddress = reader.readNextLong();
 
-		// ------ HEADER 2 ---------
+		// HEADER 2: https://opensource.apple.com/source/dyld/dyld-195.5/launch-cache/dyld_cache_format.h.auto.html
 		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 2; // https://opensource.apple.com/source/dyld/dyld-195.5/launch-cache/dyld_cache_format.h.auto.html
+			headerType = 2;
 			codeSignatureOffset = reader.readNextLong();
 			codeSignatureSize = reader.readNextLong();
 		}
@@ -134,28 +132,28 @@ public class DyldCacheHeader implements StructConverter {
 			slideInfoSize = reader.readNextLong();
 		}
 
-		// ------ HEADER 3 ---------
+		// HEADER 3:  No header file for this version (without the following UUID), but there are images of this version
 		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 3; // No header file for this version (without the following UUID), but there are images of this version
+			headerType = 3;
 			localSymbolsOffset = reader.readNextLong();
 			localSymbolsSize = reader.readNextLong();
 		}
 
-		// ------ HEADER 4 ---------
+		// HEADER 4: https://opensource.apple.com/source/dyld/dyld-239.3/launch-cache/dyld_cache_format.h.auto.html
 		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 4; // https://opensource.apple.com/source/dyld/dyld-239.3/launch-cache/dyld_cache_format.h.auto.html
+			headerType = 4;
 			uuid = reader.readNextByteArray(16);
 		}
 
-		// ------ HEADER 5 ---------
+		// HEADER 5: https://opensource.apple.com/source/dyld/dyld-360.14/launch-cache/dyld_cache_format.h.auto.html
 		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 5; // https://opensource.apple.com/source/dyld/dyld-360.14/launch-cache/dyld_cache_format.h.auto.html
+			headerType = 5;
 			cacheType = reader.readNextLong();
 		}
 
-		// ------ HEADER 6 ---------
+		// HEADER 6: https://opensource.apple.com/source/dyld/dyld-421.1/launch-cache/dyld_cache_format.h.auto.html
 		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 6; // https://opensource.apple.com/source/dyld/dyld-421.1/launch-cache/dyld_cache_format.h.auto.html
+			headerType = 6;
 			branchPoolsOffset = reader.readNextInt();
 			branchPoolsCount = reader.readNextInt();
 			accelerateInfoAddr = reader.readNextLong();
@@ -164,9 +162,9 @@ public class DyldCacheHeader implements StructConverter {
 			imagesTextCount = reader.readNextLong();
 		}
 
-		// ------ HEADER 7 ---------
+		// HEADER 7: https://opensource.apple.com/source/dyld/dyld-832.7.1/dyld3/shared-cache/dyld_cache_format.h.auto.html
 		if (reader.getPointerIndex() < mappingOffset) {
-			headerType = 7; // https://opensource.apple.com/source/dyld/dyld-832.7.3/dyld3/shared-cache/dyld_cache_format.h.auto.html
+			headerType = 7;
 		}
 		if (reader.getPointerIndex() < mappingOffset) {
 			patchInfoAddr = reader.readNextLong();          // (unslid) address of dyld_cache_patch_info
@@ -455,38 +453,12 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
-	 * Gets the NList symbol from the symbol table
-	 * @param index ordinal entry of the symbol in symbol table
-	 * @return The {@link NList}. Null if no symbols parsed
-	 */
-	public NList getSymbol(int ordinal) {
-		if (localSymbolsInfo == null) {
-			return null;
-		}
-		return localSymbolsInfo.getNList().get(ordinal);
-	}
-
-	/**
-	 * Gets the {@link DyldCacheSlideInfoCommon}.
+	 * Gets the {@link List} of {@link DyldCacheSlideInfoCommon}s.
 	 * 
-	 * @return the {@link DyldCacheSlideInfoCommon}.  Common, or particular version
+	 * @return the {@link List} of {@link DyldCacheSlideInfoCommon}s.
 	 */
 	public List<DyldCacheSlideInfoCommon> getSlideInfos() {
 		return slideInfoList;
-	}
-
-	/**
-	 * @return slideInfoOffset
-	 */
-	public long getSlideInfoOffset() {
-		return slideInfoOffset;
-	}
-
-	/**
-	 * @return slideInfoSize
-	 */
-	public long getSlideInfoSize() {
-		return slideInfoSize;
 	}
 
 	/**
@@ -583,7 +555,7 @@ public class DyldCacheHeader implements StructConverter {
 		return struct;
 	}
 
-	protected void addHeaderField(StructureDataType struct, DataType dt, String fieldname,
+	private void addHeaderField(StructureDataType struct, DataType dt, String fieldname,
 			String comment) {
 		if (headerSize > struct.getLength()) {
 			struct.add(dt, fieldname, comment);
@@ -627,10 +599,10 @@ public class DyldCacheHeader implements StructConverter {
 		}
 	}
 
-	private DyldCacheSlideInfoCommon parseSlideInfo(long slideInfoOffset, MessageLog log,
+	private DyldCacheSlideInfoCommon parseSlideInfo(long offset, MessageLog log,
 			TaskMonitor monitor) throws CancelledException {
 		DyldCacheSlideInfoCommon slideInfo =
-			DyldCacheSlideInfoCommon.parseSlideInfo(reader, slideInfoOffset, log, monitor);
+			DyldCacheSlideInfoCommon.parseSlideInfo(reader, offset, log, monitor);
 		return slideInfo;
 	}
 
@@ -944,7 +916,9 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
-	 * @return true if any slide info exists.
+	 * Checks to see if any slide info exists
+	 * 
+	 * @return True if any slide info exists; otherwise, false
 	 */
 	public boolean haSlideInfo() {
 		if (slideInfoSize != 0) {
@@ -962,10 +936,9 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
-	 * Get the original unslid load address
-	 * This is found in the first mapping infos.
+	 * Get the original unslid load address.  This is found in the first mapping infos.
 	 * 
-	 * @return unlslid load address
+	 * @return the original unslid load address
 	 */
 	public long unslidLoadAddress() {
 		return mappingInfoList.get(0).getAddress();

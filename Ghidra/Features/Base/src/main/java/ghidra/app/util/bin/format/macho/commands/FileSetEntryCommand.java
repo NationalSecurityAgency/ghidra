@@ -62,9 +62,9 @@ public class FileSetEntryCommand extends LoadCommand {
 		this.is32bit = is32bit;
 
 		if (is32bit) {
-			vmaddr = reader.readNextInt() & 0xffffffffL;
-			fileoff = reader.readNextInt() & 0xffffffffL;
-			unknown = reader.readNextInt() & 0xffffffffL;
+			vmaddr = reader.readNextUnsignedInt();
+			fileoff = reader.readNextUnsignedInt();
+			unknown = reader.readNextUnsignedInt();
 		}
 		else {
 			vmaddr = reader.readNextLong();
