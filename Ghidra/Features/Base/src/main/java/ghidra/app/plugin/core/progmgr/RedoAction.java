@@ -21,8 +21,6 @@ import javax.swing.Icon;
 
 import docking.action.*;
 import docking.tool.ToolConstants;
-import ghidra.app.context.ProgramActionContext;
-import ghidra.app.context.ProgramContextAction;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.NavigationHistoryService;
 import ghidra.framework.plugintool.PluginTool;
@@ -30,11 +28,14 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import resources.ResourceManager;
 
-public class RedoAction extends ProgramContextAction {
+/**
+ * Action class for the "redo" action
+ */
+public class RedoAction extends AbstractProgramNameSwitchingAction {
 	private final PluginTool tool;
 
-	public RedoAction(PluginTool tool, String owner) {
-		super("Redo", owner);
+	public RedoAction(ProgramManagerPlugin plugin, PluginTool tool) {
+		super(plugin, "Redo", true);
 		this.tool = tool;
 		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Redo"));
 		String[] menuPath = { ToolConstants.MENU_EDIT, "&Redo" };
@@ -46,15 +47,10 @@ public class RedoAction extends ProgramContextAction {
 		setToolBarData(new ToolBarData(icon, group));
 		setKeyBindingData(new KeyBindingData("ctrl shift Z"));
 		setDescription("Redo");
-		setSupportsDefaultToolContext(true);
-
-		// we want this action to appear in all windows that can produce a program context
-		addToWindowWhen(ProgramActionContext.class);
 	}
 
 	@Override
-	protected void actionPerformed(ProgramActionContext programContext) {
-		Program program = programContext.getProgram();
+	protected void actionPerformed(Program program) {
 		try {
 			saveCurrentLocationToHistory();
 			program.redo();
@@ -64,41 +60,30 @@ public class RedoAction extends ProgramContextAction {
 		}
 	}
 
-	/**
-	 * updates the menu name of the action as the undo stack changes
-	 * <P>
-	 * NOTE: currently, we must manage the enablement explicitly
-	 * because contextChanged is not called for data changes. Ideally, the enablement
-	 * would be handled by the context, but for now it doesn't work
-	 *
-	 * @param program the program
-	 */
-	public void update(Program program) {
+	void updateActionMenuName() {
+		updateActionMenuName(lastContextProgram);
+	}
 
-		if (program == null) {
-			getMenuBarData().setMenuItemName("Redo ");
-			setDescription("");
-			setEnabled(false);
-		}
-		else if (program.canRedo()) {
-			String programName = program.getDomainFile().getName();
-			getMenuBarData().setMenuItemName("Redo " + programName);
-			String tip = HTMLUtilities.toWrappedHTML(
-				"Redo " + HTMLUtilities.escapeHTML(program.getRedoName()));
-			setDescription(tip);
-			setEnabled(true);
-		}
-		else {
-			setDescription("Redo");
-			setEnabled(false);
+	void updateActionMenuName(Program program) {
+		String actionName = "Redo " + (program == null ? "" : program.getDomainFile().getName());
+		String description = actionName;
+
+		if (program != null && program.canRedo()) {
+			description = HTMLUtilities
+					.toWrappedHTML("Redo " + HTMLUtilities.escapeHTML(program.getRedoName()));
 		}
 
+		getMenuBarData().setMenuItemName(actionName);
+		setDescription(description);
+	}
+
+	protected void programChanged(Program program) {
+		updateActionMenuName(program);
 	}
 
 	@Override
-	protected boolean isEnabledForContext(ProgramActionContext context) {
-		Program program = context.getProgram();
-		return program.canRedo();
+	protected boolean isEnabledForContext(Program program) {
+		return program != null && program.canRedo();
 	}
 
 	private void saveCurrentLocationToHistory() {
@@ -108,5 +93,4 @@ public class RedoAction extends ProgramContextAction {
 			historyService.addNewLocation(goToService.getDefaultNavigatable());
 		}
 	}
-
 }

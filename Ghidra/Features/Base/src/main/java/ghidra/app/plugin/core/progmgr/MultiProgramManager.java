@@ -64,7 +64,7 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 			if (tool == null) {
 				return; // we have been disposed
 			}
-			plugin.updateProgramActions();
+			plugin.undoStackChanged();
 		};
 	}
 
@@ -500,5 +500,33 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 
 		int openVersion = openFile.isReadOnly() ? openFile.getVersion() : -1;
 		return version == openVersion;
+	}
+
+	/**
+	 * Returns true if this ProgramManager is managing the given program
+	 * @param program the program to check
+	 * @return true if this ProgramManager is managing the given programs
+	 */
+	public boolean hasProgram(Program program) {
+		return programMap.containsKey(program);
+	}
+
+	/**
+	 * Returns true if there is at least one program that has unsaved changes.
+	 * @return true if there is at least one program that has unsaved changes.
+	 */
+	public boolean hasUnsavedPrograms() {
+		// first check the current program as that is the one most likely to have changes
+		Program currentProgram = getCurrentProgram();
+		if (currentProgram != null && currentProgram.isChanged()) {
+			return true;
+		}
+		// look at all the open programs to see if any have changes
+		for (ProgramInfo programInfo : openProgramList) {
+			if (programInfo.program.isChanged()) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
