@@ -164,7 +164,7 @@ task sleighCompile (type: JavaExec) {
 	 
 	// define standard parameters for JavaExec
 	classpath configurations.sleighConfig
-	main = 'ghidra.pcodeCPort.slgh_compile.SleighCompile'
+	mainClass = 'ghidra.pcodeCPort.slgh_compile.SleighCompile'
 	
 	// Delay adding the directory argument until the first part of the execution phase, so
 	// that any extra args added by a project override will be added to the arg list before

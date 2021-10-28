@@ -228,6 +228,7 @@ src/main/help/help/topics/DataTypeManagerPlugin/images/DisassociateDialog.png||G
 src/main/help/help/topics/DataTypeManagerPlugin/images/EditPaths.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/FavoriteDts.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/FindDataTypes.png||GHIDRA||||END|
+src/main/help/help/topics/DataTypeManagerPlugin/images/FindDataTypesBySize.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/PreviewWindow.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/RevertDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DataTypeManagerPlugin/images/SearchResults.png||GHIDRA||||END|

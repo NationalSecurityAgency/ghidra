@@ -81,7 +81,7 @@ task indexHelp(type: JavaExec) {
 	
 	classpath = sourceSets.helpIndex.runtimeClasspath
 	
-	main = 'com.sun.java.help.search.Indexer'		
+	mainClass = 'com.sun.java.help.search.Indexer'
 
 	// tell the indexer where send its output	
 	args '-db', outputFile.absolutePath
@@ -131,7 +131,7 @@ task buildHelp(type: JavaExec, dependsOn: indexHelp) {
 	inputs.dir helpRootDir
 	outputs.dir outputDir
 
-	main = 'help.GHelpBuilder'		
+	mainClass = 'help.GHelpBuilder'
 	
 	args '-n', "${project.name}"	 		// use the module's name for the help file name
 	
@@ -169,7 +169,7 @@ task findUnusedHelp(type: JavaExec) {
 
 	inputs.dir helpRootDir
 
-	main = 'help.validator.UnusedHelpImageFileFinder'		
+	mainClass = 'help.validator.UnusedHelpImageFileFinder'
 
 	// args '-debug' // print debug info
 

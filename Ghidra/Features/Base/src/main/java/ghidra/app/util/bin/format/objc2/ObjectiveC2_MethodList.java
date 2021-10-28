@@ -26,7 +26,7 @@ import ghidra.util.exception.DuplicateNameException;
 public class ObjectiveC2_MethodList extends ObjectiveC_MethodList {
 	public final static String NAME = "method_list_t";
 
-	private int entsize;
+	private int entsizeAndFlags;
 	private int count;
 
 	public ObjectiveC2_MethodList(ObjectiveC2_State state, BinaryReader reader, ObjectiveC_MethodType methodType) throws IOException {
@@ -36,16 +36,18 @@ public class ObjectiveC2_MethodList extends ObjectiveC_MethodList {
 			return;
 		}
 
-		entsize = reader.readNextInt();
+		entsizeAndFlags = reader.readNextInt();
 		count   = reader.readNextInt();
 
+		boolean isSmallList = (entsizeAndFlags & 0x80000000) != 0;
+
 		for (int i = 0 ; i < count ; ++i) {
-			methods.add( new ObjectiveC2_Method(state, reader, methodType) );
+			methods.add( new ObjectiveC2_Method(state, reader, methodType, isSmallList) );
 		}
 	}
 
-	public long getEntsize() {
-		return entsize;
+	public long getEntsizeAndFlags() {
+		return entsizeAndFlags;
 	}
 
 	public long getCount() {
@@ -54,7 +56,7 @@ public class ObjectiveC2_MethodList extends ObjectiveC_MethodList {
 
 	public static DataType toGenericDataType() throws DuplicateNameException {
 		Structure struct = new StructureDataType(NAME, 0);
-		struct.add(DWORD, "entsize", null);
+		struct.add(DWORD, "entsizeAndFlags", null);
 		struct.add(DWORD,   "count", null);
 		struct.setCategoryPath(ObjectiveC2_Constants.CATEGORY_PATH);
 		return struct;
@@ -63,7 +65,7 @@ public class ObjectiveC2_MethodList extends ObjectiveC_MethodList {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure struct = new StructureDataType(NAME+'_'+count+'_', 0);
 
-		struct.add(DWORD, "entsize", null);
+		struct.add(DWORD, "entsizeAndFlags", null);
 		struct.add(DWORD,   "count", null);
 
 		for (int i = 0 ; i < methods.size() ; ++i) {

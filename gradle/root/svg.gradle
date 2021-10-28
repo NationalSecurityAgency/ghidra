@@ -62,7 +62,7 @@ task rasterizeSvg(type: JavaExec) {
 			files.push(file.toString())
 		}
 						
-		main = MAIN_CLASS
+		mainClass = MAIN_CLASS
 			
 		// Set up the entire arg list, minus the input files.
 		def argsList = ["-scriptSecurityOff",

@@ -650,7 +650,7 @@
             types to another program.</P>
           </BLOCKQUOTE>
 
-          <H3><A name="Find_Data_Types"></A> <A name="FindDataTypesDialog"></A>Find Data Types by
+          <H3><A name="Find_Data_Types_By_Name"></A> <A name="FindDataTypesDialog"></A>Find Data Types by
           Name</H3>
 
           <BLOCKQUOTE>
@@ -667,8 +667,8 @@
             <P align="center"><IMG src="images/FindDataTypes.png" alt="" border="0"><BR>
             </P>
 
-            <P>Enter a value in the "Please enter the search string: " field, or choose a
-            previously entered value from the combo box. Either press the &lt;Enter&gt; key or
+            <P>Enter a value in the "Please enter the search string: " field.  
+            Either press the &lt;Enter&gt; key or
             select the <B>OK</B> button. A new <I>Find Data Type</I> window will appear with 
             the filter set to the entered search text.</P>
 
@@ -681,9 +681,37 @@
           <H3><A name="Find_Data_Types_By_Size"></A>Find Data Types by Size</H3>
 
           <BLOCKQUOTE>
-            <P>This is similar to the <B>Find Data Types by Name</B> action (show above) except
-            that it lets you specify a size that will be used to show only those data types with
-            the same length.</P>
+          
+     	    <P align="center"><IMG src="images/FindDataTypesBySize.png" alt="" border="0"><BR>
+            </P>
+          	
+          
+            <P>This is similar to the <A HREF="#Find_Data_Types_By_Name">
+            <B>Find Data Types by Name</B></A> action (show above) except that it lets you specify 
+            one or more sizes that will be used to show only those data types with the same length.            
+            </P>
+            <P>
+            This dialog accepts a single integer value or multiple values separated by a ','.   
+            You may also enter ranges in this dialog using ':' as the range separator.   Values 
+            with a leading '0x' will be treated as hex.
+            </P>
+          </BLOCKQUOTE>
+          
+           <H3><A name="Find_Structures_By_Size"></A>Find Structures by Size</H3>
+
+          <BLOCKQUOTE>
+          
+            <P>This is similar to the <B>Find Data Types by Size</B> action (show above) except
+            that it filters results to show only Structures.</P>
+          </BLOCKQUOTE>
+          
+           <H3><A name="Find_Structures_By_Offset"></A>Find Structures by Offset</H3>
+
+          <BLOCKQUOTE>          
+          
+            <P>This is similar to the <B>Find Structures by Size</B> action (show above) except
+            that it lets you specify one or more offset values that will be used to show only those 
+            structures that contain any of the specified offsets.</P>
           </BLOCKQUOTE>
 
           <H3><A name="Export_Data_Types"></A>Export Data Type(s)</H3>
