@@ -120,7 +120,7 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 	public void testNamespace_with_reserved_chars()
 			throws CancelledException, IOException, DWARFException {
 		// simulate what happens when a C++ operator/ or a templated classname
-		// that contains a namespaced template argument (templateclass<ns1::ns2::argclass>)
+		// that contains a namespace template argument (templateclass<ns1::ns2::argclass>)
 		// is encountered and a Ghidra namespace is created
 
 		DebugInfoEntry intDIE = addInt(cu);
@@ -142,7 +142,7 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 		importFunctions();
 
 		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
-		List<Namespace> nsParts = NamespaceUtils.getNameSpaceParts(fooFunc.getParentNamespace());
+		List<Namespace> nsParts = NamespaceUtils.getNamespaceParts(fooFunc.getParentNamespace());
 
 		assertEquals("foo", fooFunc.getName());
 		assertEquals("nested_struct",

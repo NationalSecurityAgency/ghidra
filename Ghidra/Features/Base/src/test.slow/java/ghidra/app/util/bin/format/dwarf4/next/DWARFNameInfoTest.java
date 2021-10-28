@@ -210,7 +210,8 @@ public class DWARFNameInfoTest extends DWARFTestBase {
 
 		DataType dt = dwarfDTM.getDataType(funcDIE.getOffset(), null);
 
-		assertEquals("operator<", dt.getName());
+		// note: for now we are adding an underscore to the name; we hope to fix this in the future
+		assertEquals("operator_<", dt.getName());
 	}
 
 	@Test

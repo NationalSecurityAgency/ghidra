@@ -533,7 +533,7 @@ public class NamespaceUtils {
 	 * @param namespace namespace to process
 	 * @return list of namespaces
 	 */
-	public static List<Namespace> getNameSpaceParts(Namespace namespace) {
+	public static List<Namespace> getNamespaceParts(Namespace namespace) {
 		List<Namespace> result = new ArrayList<>();
 		while (!namespace.isGlobal()) {
 			result.add(0, namespace);

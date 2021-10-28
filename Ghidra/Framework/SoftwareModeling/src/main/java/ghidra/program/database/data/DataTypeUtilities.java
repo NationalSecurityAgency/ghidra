@@ -302,7 +302,7 @@ public class DataTypeUtilities {
 	}
 
 	public static String getName(Array arrayDt, boolean showBaseSizeForDynamics) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append(getArrayBaseDataType(arrayDt).getName());
 		if (showBaseSizeForDynamics) {
 			buf.append(getArrayElementLengthForDynamic(arrayDt));
@@ -312,7 +312,7 @@ public class DataTypeUtilities {
 	}
 
 	public static String getDisplayName(Array arrayDt, boolean showBaseSizeForDynamics) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append(getArrayBaseDataType(arrayDt).getDisplayName());
 		if (showBaseSizeForDynamics) {
 			buf.append(getArrayElementLengthForDynamic(arrayDt));
@@ -323,7 +323,7 @@ public class DataTypeUtilities {
 
 	public static String getMnemonic(Array arrayDt, boolean showBaseSizeForDynamics,
 			Settings settings) {
-		StringBuffer buf = new StringBuffer();
+		StringBuilder buf = new StringBuilder();
 		buf.append(getArrayBaseDataType(arrayDt).getMnemonic(settings));
 		if (showBaseSizeForDynamics) {
 			buf.append(getArrayElementLengthForDynamic(arrayDt));
@@ -343,10 +343,11 @@ public class DataTypeUtilities {
 	public static CategoryPath getDataTypeCategoryPath(CategoryPath baseCategory,
 			Namespace namespace) {
 		List<String> categoryPathParts = new ArrayList<>();
-		for (Namespace ns : NamespaceUtils.getNameSpaceParts(namespace)) {
-			if (!(ns instanceof Library)) {
-				categoryPathParts.add(ns.getName());
+		for (Namespace ns : NamespaceUtils.getNamespaceParts(namespace)) {
+			if (ns instanceof Library) {
+				break; // assume the Library is a root and no other categories are above it
 			}
+			categoryPathParts.add(ns.getName());
 		}
 		return categoryPathParts.isEmpty()
 				? baseCategory

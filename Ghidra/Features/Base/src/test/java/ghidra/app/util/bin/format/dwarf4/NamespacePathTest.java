@@ -15,7 +15,8 @@
  */
 package ghidra.app.util.bin.format.dwarf4;
 
-import org.junit.Assert;
+import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 import ghidra.app.util.bin.format.dwarf4.next.NamespacePath;
@@ -24,26 +25,26 @@ import ghidra.program.model.symbol.SymbolType;
 public class NamespacePathTest {
 
 	@Test
-	public void test() {
+	public void testCreate() {
 		NamespacePath nsp = NamespacePath.create(null, "sub1", SymbolType.NAMESPACE);
 		NamespacePath nsp1_1 = NamespacePath.create(nsp, "sub1_1", SymbolType.NAMESPACE);
 
-		Assert.assertEquals("ROOT::sub1", nsp.asNamespaceString());
-		Assert.assertEquals("ROOT::sub1::sub1_1", nsp1_1.asNamespaceString());
+		assertEquals("ROOT::sub1", nsp.asNamespaceString());
+		assertEquals("ROOT::sub1::sub1_1", nsp1_1.asNamespaceString());
 	}
 
 	@Test
-	public void testMangle() {
+	public void testMangling() {
 		NamespacePath nsSlashA = NamespacePath.create(null, "ns/A", SymbolType.NAMESPACE);
 		NamespacePath nsSpaceA = NamespacePath.create(null, "ns A", SymbolType.NAMESPACE);
 		NamespacePath nsColonA = NamespacePath.create(null, "ns:A", SymbolType.NAMESPACE);
 
-		Assert.assertEquals("ROOT::ns/A", nsSlashA.asNamespaceString());
-		Assert.assertEquals("ROOT::nsA", nsSpaceA.asNamespaceString());
-		Assert.assertEquals("ROOT::ns:A", nsColonA.asNamespaceString());
+		assertEquals("ROOT::ns/A", nsSlashA.asNamespaceString());
+		assertEquals("ROOT::ns_A", nsSpaceA.asNamespaceString());
+		assertEquals("ROOT::ns:A", nsColonA.asNamespaceString());
 
-		Assert.assertEquals("ns/A", nsSlashA.getName());
-		Assert.assertEquals("nsA", nsSpaceA.getName());
-		Assert.assertEquals("ns:A", nsColonA.getName());
+		assertEquals("ns/A", nsSlashA.getName());
+		assertEquals("ns_A", nsSpaceA.getName());
+		assertEquals("ns:A", nsColonA.getName());
 	}
 }
