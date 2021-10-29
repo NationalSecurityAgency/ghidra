@@ -21,8 +21,6 @@ import javax.swing.Icon;
 
 import docking.action.*;
 import docking.tool.ToolConstants;
-import ghidra.app.context.ProgramActionContext;
-import ghidra.app.context.ProgramContextAction;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.NavigationHistoryService;
 import ghidra.framework.plugintool.PluginTool;
@@ -30,11 +28,14 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.*;
 import resources.ResourceManager;
 
-public class UndoAction extends ProgramContextAction {
+/**
+ * Action class for the "Undo" action
+ */
+public class UndoAction extends AbstractProgramNameSwitchingAction {
 	private final PluginTool tool;
 
-	public UndoAction(PluginTool tool, String owner) {
-		super("Undo", owner);
+	public UndoAction(ProgramManagerPlugin plugin, PluginTool tool) {
+		super(plugin, "Undo", true);
 		this.tool = tool;
 		setHelpLocation(new HelpLocation(ToolConstants.TOOL_HELP_TOPIC, "Undo"));
 		String[] menuPath = { ToolConstants.MENU_EDIT, "&Undo" };
@@ -45,15 +46,10 @@ public class UndoAction extends ProgramContextAction {
 		setToolBarData(new ToolBarData(icon, "Undo"));
 		setDescription("Undo");
 		setKeyBindingData(new KeyBindingData("ctrl Z"));
-		setSupportsDefaultToolContext(true);
-
-		// we want this action to appear in all windows that can produce a program context
-		addToWindowWhen(ProgramActionContext.class);
 	}
 
 	@Override
-	protected void actionPerformed(ProgramActionContext programContext) {
-		Program program = programContext.getProgram();
+	protected void actionPerformed(Program program) {
 		try {
 			saveCurrentLocationToHistory();
 			program.undo();
@@ -71,39 +67,30 @@ public class UndoAction extends ProgramContextAction {
 		}
 	}
 
-	/**
-	 * updates the menu name of the action as the undo stack changes
-	 * <P>
-	 * NOTE: currently, we must manage the enablement explicitly
-	 * because contextChanged is not called for data changes. Ideally, the enablement
-	 * would be handled by the context, but for now it doesn't work
-	 *
-	 * @param program the program
-	 */
-	public void update(Program program) {
+	@Override
+	protected void programChanged(Program program) {
+		updateActionMenuName(program);
+	}
 
-		if (program == null) {
-			getMenuBarData().setMenuItemName("Undo ");
-			setDescription("");
-			setEnabled(false);
-		}
+	void updateActionMenuName() {
+		updateActionMenuName(lastContextProgram);
+	}
+
+	void updateActionMenuName(Program program) {
+		String actionName = "Undo " + (program == null ? "" : program.getDomainFile().getName());
+		String description = actionName;
+
 		if (program != null && program.canUndo()) {
-			String programName = program.getDomainFile().getName();
-			getMenuBarData().setMenuItemName("Undo " + programName);
-			String tip = HTMLUtilities.toWrappedHTML(
-				"Undo " + HTMLUtilities.escapeHTML(program.getUndoName()));
-			setDescription(tip);
-			setEnabled(true);
+			description = HTMLUtilities
+					.toWrappedHTML("Undo " + HTMLUtilities.escapeHTML(program.getUndoName()));
 		}
-		else {
-			setDescription("Undo");
-			setEnabled(false);
-		}
+
+		getMenuBarData().setMenuItemName(actionName);
+		setDescription(description);
 	}
 
 	@Override
-	protected boolean isEnabledForContext(ProgramActionContext context) {
-		Program program = context.getProgram();
-		return program.canUndo();
+	protected boolean isEnabledForContext(Program program) {
+		return program != null && program.canUndo();
 	}
 }

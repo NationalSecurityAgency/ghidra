@@ -81,17 +81,9 @@ import ghidra.util.task.TaskLauncher;
 public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 	private static final String SAVE_GROUP = "DomainObjectSave";
-	private static final String OPEN_GROUP = "DomainObjectOpen";
+	static final String OPEN_GROUP = "DomainObjectOpen";
 	private MultiProgramManager programMgr;
 	private ProgramSaveManager programSaveMgr;
-	private DockingAction openAction;
-	private DockingAction saveAllAction;
-	private DockingAction closeAction;
-	private DockingAction saveAction;
-	private DockingAction saveAsAction;
-	private DockingAction optionsAction;
-	private DockingAction closeOthersAction;
-	private DockingAction closeAllAction;
 	private int transactionID = -1;
 	private OpenVersionedFileDialog openDialog;
 	private boolean locked = false;
@@ -174,11 +166,11 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		Program openProgram = programMgr.getOpenProgram(ghidraURL);
 		if (openProgram != null) {
 			programMgr.addProgram(openProgram, GhidraURL.getNormalizedURL(ghidraURL), openState);
-			updateActions();
 			if (openState == ProgramManager.OPEN_CURRENT) {
 				gotoProgramRef(openProgram, ghidraURL.getRef());
 				programMgr.saveLocation();
 			}
+			contextChanged();
 			return openProgram;
 		}
 
@@ -215,7 +207,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			}
 
 			programMgr.addProgram(openProgram, GhidraURL.getNormalizedURL(ghidraURL), openState);
-			updateActions();
+			contextChanged();
 			openProgram.release(this);
 			if (openState == ProgramManager.OPEN_CURRENT) {
 				gotoProgramRef(openProgram, ghidraURL.getRef());
@@ -310,7 +302,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 		Program program = Swing.runNow(() -> {
 			Program p = doOpenProgram(domainFile, version, state);
-			updateActions();
+			contextChanged();
 			return p;
 		});
 
@@ -347,16 +339,16 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	}
 
 	@Override
-	public boolean closeOtherPrograms(final boolean ignoreChanges) {
-		final Program[] otherPrograms = programMgr.getOtherPrograms();
+	public boolean closeOtherPrograms(boolean ignoreChanges) {
+		Program[] otherPrograms = programMgr.getOtherPrograms();
 		Runnable r = () -> doCloseAllPrograms(otherPrograms, ignoreChanges);
 		SystemUtilities.runSwingNow(r);
 		return programMgr.isEmpty();
 	}
 
 	@Override
-	public boolean closeAllPrograms(final boolean ignoreChanges) {
-		final Program[] openPrograms = programMgr.getAllPrograms();
+	public boolean closeAllPrograms(boolean ignoreChanges) {
+		Program[] openPrograms = programMgr.getAllPrograms();
 		Runnable r = () -> doCloseAllPrograms(openPrograms, ignoreChanges);
 		SystemUtilities.runSwingNow(r);
 		return programMgr.isEmpty();
@@ -396,11 +388,11 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		for (Program program : toRemove) {
 			programMgr.removeProgram(program);
 		}
-		updateActions();
+		contextChanged();
 	}
 
 	@Override
-	public boolean closeProgram(final Program program, final boolean ignoreChanges) {
+	public boolean closeProgram(Program program, boolean ignoreChanges) {
 		if (program == null) {
 			return false;
 		}
@@ -411,7 +403,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			if (ignoreChanges || program.isClosed() || programMgr.isPersistent(program) ||
 				(tool.canCloseDomainObject(program) && programSaveMgr.canClose(program))) {
 				programMgr.removeProgram(program);
-				updateActions();
+				contextChanged();
 			}
 		};
 		SystemUtilities.runSwingNow(r);
@@ -434,16 +426,16 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		if (currentProgram != null) {
 			programMgr.removeProgram(currentProgram);
 		}
-		updateActions();
+		contextChanged();
 		tool.setSubTitle("");
 		tool.clearLastEvents();
 	}
 
 	@Override
-	public void setCurrentProgram(final Program p) {
+	public void setCurrentProgram(Program p) {
 		Runnable r = () -> {
 			programMgr.setCurrentProgram(p);
-			updateActions();
+			contextChanged();
 		};
 		SystemUtilities.runSwingNow(r);
 	}
@@ -483,7 +475,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			if (state == ProgramManager.OPEN_CURRENT) {
 				programMgr.saveLocation();
 			}
-			updateActions();
+			contextChanged();
 		};
 		SystemUtilities.runSwingNow(r);
 	}
@@ -496,7 +488,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	@Override
 	protected boolean saveData() {
 		boolean result = programSaveMgr.canCloseAll();
-		updateActions();
+		contextChanged();
 		return result;
 	}
 
@@ -513,100 +505,57 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 
 	private void createActions() {
 
-		int subMenuGroupOrder = 1;
+		int subMenuGroup = 1;
 
-		openAction = new ActionBuilder("Open File", getName())
+		DockingAction openAction = new ActionBuilder("Open File", getName())
 				.menuPath(ToolConstants.MENU_FILE, "&Open...")
-				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
+				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroup++))
 				.keyBinding("ctrl O")
+				.enabledWhen(c -> !locked)
 				.onAction(c -> open())
 				.buildAndInstall(tool);
-
-		//		.withContext(ProgramActionContext.class)
-		//		.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-		// openAction doesn't really use a context, but we want it to be in windows that
-		// have providers that use programs. 
 		openAction.addToWindowWhen(ProgramActionContext.class);
 
-		closeAction = new ActionBuilder("Close File", getName())
-				.menuPath(ToolConstants.MENU_FILE, "&Close")
-				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
-				.withContext(ProgramActionContext.class)
-				.supportsDefaultToolContext(true)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.onAction(c -> closeProgram(c.getProgram(), false))
-				.keyBinding("ctrl W")
-				.buildAndInstall(tool);
-
-		closeOthersAction = new ActionBuilder("Close Others", getName())
+		tool.addAction(new CloseProgramAction(this, OPEN_GROUP, subMenuGroup++));
+		new ActionBuilder("Close Others", getName())
 				.menuPath(ToolConstants.MENU_FILE, "Close &Others")
-				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
+				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroup++))
 				.enabled(false)
 				.withContext(ProgramActionContext.class)
 				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+				.enabledWhen(c -> programMgr.hasProgram(c.getProgram()))
 				.onAction(c -> closeOtherPrograms(false))
 				.buildAndInstall(tool);
 
-		closeAllAction = new ActionBuilder("Close All", getName())
+		DockingAction closeAllAction = new ActionBuilder("Close All", getName())
 				.menuPath(ToolConstants.MENU_FILE, "Close &All")
-				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroupOrder++))
-				.withContext(ProgramActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+				.menuGroup(OPEN_GROUP, Integer.toString(subMenuGroup++))
+				.enabledWhen(c -> !programMgr.isEmpty())
 				.onAction(c -> closeAllPrograms(false))
-				.enabled(false)
 				.buildAndInstall(tool);
+		closeAllAction.addToWindowWhen(ProgramActionContext.class);
 
-		saveAction = new ActionBuilder("Save File", getName())
-				.menuPath(ToolConstants.MENU_FILE, "Save File")
-				.description("Save Program")
-				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroupOrder++))
-				.menuIcon(null)
-				.toolBarIcon("images/disk.png")
-				.toolBarGroup(ToolConstants.TOOLBAR_GROUP_ONE)
-				.keyBinding("ctrl S")
-				.withContext(ProgramActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.supportsDefaultToolContext(true)
-				.enabledWhen(c -> c.getProgram() != null && c.getProgram().isChanged())
-				.onAction(c -> programSaveMgr.saveProgram(c.getProgram()))
-				.buildAndInstall(tool);
+		tool.addAction(new SaveProgramAction(this, SAVE_GROUP, subMenuGroup));
+		tool.addAction(new SaveAsProgramAction(this, SAVE_GROUP, subMenuGroup));
 
-		saveAsAction = new ActionBuilder("Save As File", getName())
-				.menuPath(ToolConstants.MENU_FILE, "Save &As...")
-				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroupOrder++))
-				.withContext(ProgramActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.supportsDefaultToolContext(true)
-				.onAction(c -> programSaveMgr.saveAs(c.getProgram()))
-				.buildAndInstall(tool);
-
-		saveAllAction = new ActionBuilder("Save All Files", getName())
+		DockingAction saveAllAction = new ActionBuilder("Save All Files", getName())
 				.menuPath(ToolConstants.MENU_FILE, "Save All")
 				.description("Save All Programs")
-				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroupOrder++))
-				.withContext(ProgramActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
+				.menuGroup(SAVE_GROUP, Integer.toString(subMenuGroup++))
+				.enabledWhen(c -> programMgr.hasUnsavedPrograms())
 				.onAction(c -> programSaveMgr.saveChangedPrograms())
 				.buildAndInstall(tool);
+		saveAllAction.addToWindowWhen(ProgramActionContext.class);
 
-		optionsAction = new ActionBuilder("Program Options", getName())
-				.menuPath(ToolConstants.MENU_EDIT, "P&rogram Options...")
-				.description("Edit Options for current program")
-				.menuGroup(ToolConstants.TOOL_OPTIONS_MENU_GROUP,
-					ToolConstants.TOOL_OPTIONS_MENU_GROUP + "b")
-				.withContext(ProgramActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.supportsDefaultToolContext(true)
-				.onAction(c -> showProgramOptions(c.getProgram()))
-				.buildAndInstall(tool);
+		tool.addAction(new ProgramOptionsAction(this));
 
-		undoAction = new UndoAction(tool, getName());
-		redoAction = new RedoAction(tool, getName());
+		undoAction = new UndoAction(this, tool);
+		redoAction = new RedoAction(this, tool);
 		tool.addAction(undoAction);
 		tool.addAction(redoAction);
 	}
 
-	private void showProgramOptions(final Program currentProgram) {
+	void showProgramOptions(final Program currentProgram) {
 		List<String> names = currentProgram.getOptionsNames();
 		Options[] options = new Options[names.size()];
 		for (int i = 0; i < names.size(); i++) {
@@ -664,64 +613,14 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		}
 	}
 
-	private void updateActions() {
-		Program p = programMgr.getCurrentProgram();
-		updateCloseAction(p);
-		updateProgramOptionsAction(p);
-		updateProgramActions();
-		closeAllAction.setEnabled(p != null);
-		optionsAction.setEnabled(p != null);
-		Program[] programList = programMgr.getAllPrograms();
-		closeOthersAction.setEnabled(programList.length > 1);
+	void undoStackChanged() {
+		undoAction.updateActionMenuName();
+		redoAction.updateActionMenuName();
 		tool.contextChanged(null);
 	}
 
-	private void updateSaveAction(Program p) {
-		if (p == null) {
-			saveAction.getMenuBarData().setMenuItemName("&Save");
-			saveAction.setDescription("Save Program");
-			saveAction.setEnabled(false);
-		}
-		else {
-			String programName = "'" + p.getDomainFile().getName() + "'";
-			saveAction.getMenuBarData().setMenuItemName("&Save " + programName);
-			saveAction.setDescription("Save " + programName);
-			saveAction.setEnabled(p.isChanged());
-		}
-	}
-
-	private void updateSaveAsAction(Program p) {
-		if (p == null) {
-			saveAsAction.getMenuBarData().setMenuItemName("Save &As...");
-		}
-		else {
-			String programName = "'" + p.getDomainFile().getName() + "'";
-			saveAsAction.getMenuBarData().setMenuItemName("Save " + programName + " &As...");
-		}
-	}
-
-	private void updateProgramOptionsAction(Program p) {
-		if (p == null) {
-			optionsAction.getMenuBarData().setMenuItemName("Program Options");
-		}
-		else {
-			String programName = "'" + p.getDomainFile().getName() + "'";
-			optionsAction.getMenuBarData().setMenuItemName("Options for " + programName + "...");
-		}
-		optionsAction.setEnabled(p != null);
-	}
-
-	private void updateCloseAction(Program p) {
-		if (p == null) {
-			closeAction.getMenuBarData().setMenuItemName("&Close");
-			closeAction.setDescription("Close Program");
-		}
-		else {
-			String programName = "'" + p.getDomainFile().getName() + "'";
-			closeAction.getMenuBarData().setMenuItemName("&Close " + programName);
-			closeAction.setDescription("<html>Close " + HTMLUtilities.escapeHTML(programName));
-		}
-		closeAction.setEnabled(p != null);
+	void contextChanged() {
+		tool.contextChanged(null);
 	}
 
 	private void open() {
@@ -746,7 +645,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			openDialog.addOkActionListener(listener);
 		}
 		tool.showDialog(openDialog);
-		updateActions();
+		contextChanged();
 	}
 
 	public void openPrograms(List<DomainFile> filesToOpen) {
@@ -790,27 +689,6 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			openProgram.release(this);
 		}
 		return openProgram;
-	}
-
-	void updateProgramActions() {
-		updateSaveAllAction();
-		Program p = getCurrentProgram();
-		updateSaveAction(getCurrentProgram());
-		updateSaveAsAction(getCurrentProgram());
-		undoAction.update(p);
-		redoAction.update(p);
-	}
-
-	private void updateSaveAllAction() {
-		boolean saveAllEnable = false;
-		Program[] programList = programMgr.getAllPrograms();
-		for (Program element : programList) {
-			if (element.isChanged()) {
-				saveAllEnable = true;
-				break;
-			}
-		}
-		saveAllAction.setEnabled(saveAllEnable);
 	}
 
 	/**
@@ -870,7 +748,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 				programMgr.setCurrentProgram(programs[0]);
 			}
 		}
-		updateActions();
+		contextChanged();
 	}
 
 	@Override
@@ -1162,7 +1040,19 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	@Override
 	public void lockDown(boolean state) {
 		locked = state;
-		openAction.setEnabled(!state);
+		contextChanged();
+	}
+
+	public boolean isManaged(Program program) {
+		return programMgr.contains(program);
+	}
+
+	public void saveProgram(Program program) {
+		programSaveMgr.saveProgram(program);
+	}
+
+	public void saveProgramAs(Program program) {
+		programSaveMgr.saveAs(program);
 	}
 
 }
