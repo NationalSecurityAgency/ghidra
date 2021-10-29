@@ -31,6 +31,7 @@ import ghidra.program.model.pcode.*;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 import ghidra.program.util.ProgramLocation;
+import ghidra.util.UndefinedFunction;
 import ghidra.util.data.DataTypeParser.AllowedDataTypes;
 
 /**
@@ -216,7 +217,7 @@ public abstract class AbstractDecompilerAction extends DockingAction {
 
 		// prefer the decompiler's function reference over the program location's address
 		Function function = getFunction(context);
-		if (function != null) {
+		if (function != null && !(function instanceof UndefinedFunction)) {
 			return function.getSymbol();
 		}
 
