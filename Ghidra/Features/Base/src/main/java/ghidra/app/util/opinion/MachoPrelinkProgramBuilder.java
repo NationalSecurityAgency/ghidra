@@ -550,7 +550,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		 */
 		public PrelinkMachoInfo(ByteProvider provider, long offset, Address headerAddr,
 				PrelinkMap prelink) throws Exception {
-			this(provider, offset, headerAddr, (String) null);
+			this(provider, offset, headerAddr, "");
 
 			if (prelink != null) {
 				String path = prelink.getPrelinkBundlePath();
