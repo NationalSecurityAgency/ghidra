@@ -134,6 +134,8 @@ def Map<String, List<String>> getIpForModule(Project p) {
 		exclude "**/data/build.xml" // language build file (generated for dev only)
 		exclude "**/.vs/**"
 		exclude "**/*.vcxproj.user"
+		exclude "**/*.o"
+		exclude "**/depend"
 	}
 	tree.each { file ->
 			String ip = getIp(p.projectDir, file)
