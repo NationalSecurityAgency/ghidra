@@ -20,7 +20,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 
 /**
- * https://android.googlesource.com/platform/art/+/master/runtime/image.cc
+ * https://android.googlesource.com/platform/art/+/master/runtime/image.cc#31
  */
 public final class ArtConstants {
 
@@ -42,6 +42,7 @@ public final class ArtConstants {
 	public final static String VERSION_PIE_RELEASE = "056";
 	public final static String VERSION_10_RELEASE = "074";//Q
 	public final static String VERSION_11_RELEASE = "085";//R
+	public final static String VERSION_12_RELEASE = "099";//S
 
 	//	"005",// kitkat-release
 	//	"009",// lollipop-release
@@ -75,6 +76,7 @@ public final class ArtConstants {
 		VERSION_PIE_RELEASE, 
 		VERSION_10_RELEASE,
 		VERSION_11_RELEASE,
+		VERSION_12_RELEASE,
 		//@formatter:on 
 	};
 

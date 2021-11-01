@@ -18,7 +18,6 @@ package ghidra.file.formats.android.art.pie;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverterUtil;
 import ghidra.file.formats.android.art.*;
 import ghidra.file.formats.android.util.DecompressionManager;
 import ghidra.program.model.data.DataType;
@@ -82,7 +81,7 @@ public class ArtHeader_Pie extends ArtHeader implements ArtCompression {
 		compile_pic_ = reader.readNextInt();
 		is_pic_ = reader.readNextInt();
 
-		sections = new ImageSections_Pie(reader, this);
+		sections = ArtImageSectionsFactory.getArtImageSections(reader, this);
 		sections.parseSections(reader);
 		parseImageMethods(reader);
 
@@ -205,9 +204,8 @@ public class ArtHeader_Pie extends ArtHeader implements ArtCompression {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = (Structure) super.toDataType();
 
-		String className = StructConverterUtil.parseName(ArtHeader_Pie.class);
 		try {
-			structure.setName(className);
+			structure.setName(ArtHeader_Pie.class.getSimpleName());
 		}
 		catch (InvalidNameException e) {
 			//ignore

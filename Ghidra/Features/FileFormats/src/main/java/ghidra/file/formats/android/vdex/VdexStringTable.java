@@ -54,8 +54,8 @@ public class VdexStringTable implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String className = StructConverterUtil.parseName(VdexStringTable.class);
-		Structure structure = new StructureDataType(className + "_" + stringCount, 0);
+		Structure structure =
+			new StructureDataType(VdexStringTable.class.getSimpleName() + "_" + stringCount, 0);
 		structure.add(BYTE, "stringCount", null);
 		for (int i = 0; i < stringCount; ++i) {
 			String string = strings.get(i);

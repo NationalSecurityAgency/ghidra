@@ -17,7 +17,8 @@ package ghidra.file.formats.android.art;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -58,8 +59,7 @@ public class ArtField implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String name = StructConverterUtil.parseName(ArtField.class);
-		Structure structure = new StructureDataType(name, 0);
+		Structure structure = new StructureDataType(ArtField.class.getSimpleName(), 0);
 		structure.setCategoryPath(new CategoryPath("/art"));
 		structure.add(new Pointer32DataType(), "declaring_class_", null);
 		structure.add(DWORD, "access_flags_", null);

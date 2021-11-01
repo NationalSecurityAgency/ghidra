@@ -18,7 +18,6 @@ package ghidra.file.formats.android.vdex;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverterUtil;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -32,8 +31,7 @@ public class VdexHeader_11 extends VdexHeader_10 {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		DataType dataType = super.toDataType();
 		try {
-			String className = StructConverterUtil.parseName(VdexHeader_11.class);
-			dataType.setName(className);
+			dataType.setName(VdexHeader_11.class.getSimpleName());
 		}
 		catch (Exception e) {
 			//ignore...

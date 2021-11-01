@@ -19,8 +19,8 @@ import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.file.formats.android.vdex.VdexFactory;
-import ghidra.file.formats.android.vdex.VdexHeader;
+import ghidra.file.formats.android.oat.bundle.OatBundle;
+import ghidra.file.formats.android.oat.bundle.OatBundleFactory;
 import ghidra.program.model.listing.Program;
 import ghidra.util.task.TaskMonitor;
 
@@ -62,35 +62,21 @@ public final class OatHeaderFactory {
 						return new OatHeader_10(reader);
 					case OatConstants.VERSION_11_RELEASE:
 						return new OatHeader_11(reader);
+					case OatConstants.VERSION_12_RELEASE:
+						return new OatHeader_12(reader);
 				}
 			}
 		}
 		throw new UnsupportedOatVersionException(magic, version);
 	}
 
-	public final static void parseOatHeader(OatHeader oatHeader, BinaryReader reader,
-			TaskMonitor monitor) throws UnsupportedOatVersionException, IOException {
-
-		parseOatHeader(oatHeader, null, reader, monitor, new MessageLog());
-	}
-
 	public final static void parseOatHeader(OatHeader oatHeader, Program oatProgram,
 			BinaryReader reader, TaskMonitor monitor, MessageLog log)
 			throws UnsupportedOatVersionException, IOException {
 
-		if (oatHeader.getVersion().equals(OatConstants.VERSION_OREO_RELEASE) ||
-			oatHeader.getVersion().equals(OatConstants.VERSION_OREO_M2_RELEASE) ||
-			oatHeader.getVersion().equals(OatConstants.VERSION_PIE_RELEASE) ||
-			oatHeader.getVersion().equals(OatConstants.VERSION_10_RELEASE) ||
-			oatHeader.getVersion().equals(OatConstants.VERSION_11_RELEASE)) {
-
-			//TODO move instantiation into parse method (will need program?)
-			VdexHeader vdexHeader = VdexFactory.loadVdexHeader(oatProgram, monitor, log);
-			oatHeader.parse(reader, vdexHeader);
-		}
-		else {
-			oatHeader.parse(reader, null);
-		}
+		OatBundle bundle = OatBundleFactory.getOatBundle(oatProgram, oatHeader, monitor, log);
+		oatHeader.parse(reader, bundle);
+		bundle.close();
 	}
 
 }

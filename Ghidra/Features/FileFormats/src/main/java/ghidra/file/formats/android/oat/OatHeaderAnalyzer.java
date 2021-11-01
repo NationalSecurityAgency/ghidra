@@ -22,6 +22,7 @@ import ghidra.app.util.bin.format.elf.ElfSectionHeaderConstants;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
 import ghidra.file.formats.android.dex.format.DexHeader;
+import ghidra.file.formats.android.oat.oatdexfile.OatDexFile;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.*;
@@ -57,7 +58,7 @@ public class OatHeaderAnalyzer extends FileFormatAnalyzer {
 
 	@Override
 	public boolean isPrototype() {
-		return true;
+		return false;
 	}
 
 	@Override

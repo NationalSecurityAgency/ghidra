@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.ByteProviderWrapper;
 import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.DexHeader;
 import ghidra.program.model.data.*;
@@ -79,7 +80,7 @@ public class VdexHeader_10 extends VdexHeader {
 			}
 		}
 		else if (VdexConstants.kDexSectionVersionEmpty.equals(dex_section_version_)) {
-			stringTable = new VdexStringTable( reader );
+			stringTable = new VdexStringTable(reader);
 		}
 		else {
 			throw new UnsupportedVdexVersionException(
@@ -136,8 +137,8 @@ public class VdexHeader_10 extends VdexHeader {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String className = StructConverterUtil.parseName(VdexHeader_10.class);
-		Structure structure = new StructureDataType(className + "_" + number_of_dex_files_, 0);
+		Structure structure = new StructureDataType(
+			VdexHeader_10.class.getSimpleName() + "_" + number_of_dex_files_, 0);
 		structure.add(STRING, 4, "magic_", null);
 		structure.add(STRING, 4, "verifier_deps_version_", null);
 		structure.add(STRING, 4, "dex_section_version_", null);

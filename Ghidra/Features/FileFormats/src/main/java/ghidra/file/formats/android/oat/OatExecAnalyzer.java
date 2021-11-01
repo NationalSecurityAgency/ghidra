@@ -18,6 +18,8 @@ package ghidra.file.formats.android.oat;
 import ghidra.app.util.bin.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.analyzers.FileFormatAnalyzer;
+import ghidra.file.formats.android.oat.quickmethod.OatQuickMethodHeader;
+import ghidra.file.formats.android.oat.quickmethod.OatQuickMethodHeaderFactory;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.data.DataType;

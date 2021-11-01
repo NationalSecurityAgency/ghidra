@@ -67,7 +67,7 @@ public class BootImageHeaderV3 extends BootImageHeader {
 	 */
 	@Override
 	public int getKernelPageCount() {
-		return (int)(pageAlign(kernel_size) / BootImageConstants.V3_PAGE_SIZE);
+		return (int) (pageAlign(kernel_size) / BootImageConstants.V3_PAGE_SIZE);
 	}
 
 	@Override

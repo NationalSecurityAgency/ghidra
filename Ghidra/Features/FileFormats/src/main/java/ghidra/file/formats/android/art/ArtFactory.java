@@ -20,6 +20,7 @@ import java.io.IOException;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.file.formats.android.art.android10.ArtHeader_10;
 import ghidra.file.formats.android.art.android11.ArtHeader_11;
+import ghidra.file.formats.android.art.android12.ArtHeader_12;
 import ghidra.file.formats.android.art.kitkat.ArtHeader_KitKat;
 import ghidra.file.formats.android.art.lollipop.ArtHeader_Lollipop;
 import ghidra.file.formats.android.art.lollipop.ArtHeader_LollipopMR1WFC;
@@ -45,7 +46,7 @@ public final class ArtFactory {
 		String version = reader.readAsciiString(4, 4);
 		if (magic.equals(ArtConstants.MAGIC)) {
 			if (ArtConstants.isSupportedVersion(version)) {
-				switch (version ) {
+				switch (version) {
 					case ArtConstants.VERSION_KITKAT_RELEASE:
 						return new ArtHeader_KitKat(reader);
 					case ArtConstants.VERSION_LOLLIPOP_RELEASE:
@@ -70,6 +71,8 @@ public final class ArtFactory {
 						return new ArtHeader_10(reader);
 					case ArtConstants.VERSION_11_RELEASE:
 						return new ArtHeader_11(reader);
+					case ArtConstants.VERSION_12_RELEASE:
+						return new ArtHeader_12(reader);
 				}
 			}
 		}

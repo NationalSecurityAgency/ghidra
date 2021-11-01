@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverterUtil;
+import ghidra.file.formats.android.oat.oatdexfile.OatDexFile;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -46,11 +46,6 @@ class OatHeader_Oreo_M2 extends OatHeader {
 	protected int image_file_location_oat_data_begin_;
 	protected int key_value_store_size_;
 
-	protected List<String> orderedKeyList = new ArrayList<String>();//ordered as defined
-	protected Map<String, String> key_value_store_ = new HashMap<String, String>();
-
-	protected List<OatDexFile> oatDexFileList = new ArrayList<OatDexFile>();
-
 	OatHeader_Oreo_M2(BinaryReader reader) throws IOException {
 		super(reader);
 
@@ -74,24 +69,8 @@ class OatHeader_Oreo_M2 extends OatHeader {
 	}
 
 	@Override
-	public void parse(BinaryReader reader, Object additionalData)
-			throws IOException, UnsupportedOatVersionException {
-		int count = 0;
-		while (count < key_value_store_size_) {
-			String key = reader.readNextAsciiString();
-			String value = reader.readNextAsciiString();
-			count += key.length() + 1;
-			count += value.length() + 1;
-			key_value_store_.put(key, value);
-			orderedKeyList.add(key);
-		}
-
-		reader.setPointerIndex(oat_dex_files_offset_);
-
-		for (int i = 0; i < dex_file_count_; ++i) {
-			oatDexFileList
-					.add(OatDexFileFactory.getOatDexFile(reader, getVersion(), additionalData));
-		}
+	public int getOatDexFilesOffset(BinaryReader reader) {
+		return oat_dex_files_offset_;
 	}
 
 	@Override
@@ -152,14 +131,9 @@ class OatHeader_Oreo_M2 extends OatHeader {
 		return adler32_checksum_;
 	}
 
-	public int getOatDexFilesOffset() {
-		return oat_dex_files_offset_;
-	}
-
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String className = StructConverterUtil.parseName(OatHeader_Oreo_M2.class);
-		Structure structure = new StructureDataType(className, 0);
+		Structure structure = new StructureDataType(OatHeader_Oreo_M2.class.getSimpleName(), 0);
 		structure.add(STRING, 4, "magic_", null);
 		structure.add(STRING, 4, "version_", null);
 		structure.add(DWORD, "adler32_checksum_", null);
