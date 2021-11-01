@@ -18,8 +18,6 @@ package ghidra.file.formats.android.art.oreo;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverterUtil;
-import ghidra.file.formats.android.art.ArtImageSections;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
 import ghidra.util.InvalidNameException;
@@ -34,10 +32,6 @@ public class ArtHeader_OreoMR1 extends ArtHeader_Oreo {
 		super(reader);
 	}
 
-	protected ArtImageSections getImageSections(BinaryReader reader) {
-		return new ImageSections_OreoMR1(reader, this);
-	}
-
 	@Override
 	public int getArtMethodCountForVersion() {
 		return ImageMethod_Oreo.kImageMethodsCount.ordinal();
@@ -46,9 +40,8 @@ public class ArtHeader_OreoMR1 extends ArtHeader_Oreo {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = (Structure) super.toDataType();
-		String className = StructConverterUtil.parseName(ArtHeader_OreoMR1.class);
 		try {
-			structure.setName(className);
+			structure.setName(ArtHeader_OreoMR1.class.getSimpleName());
 		}
 		catch (InvalidNameException e) {
 			//ignore

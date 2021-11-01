@@ -37,7 +37,7 @@ public class DexLoader extends AbstractLibrarySupportLoader {
 	}
 
 	@Override
-	public String getName( ) {
+	public String getName() {
 		return "Dalvik Executable (DEX)";
 	}
 
@@ -70,83 +70,106 @@ public class DexLoader extends AbstractLibrarySupportLoader {
 	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
 
-		monitor.setMessage( "DEX Loader: creating dex memory" );
+		monitor.setMessage(getMonitorMessagePrimary());
 		try {
-			Address start = program.getAddressFactory().getDefaultAddressSpace().getAddress( 0x0 );
+			Address start = program.getAddressFactory().getDefaultAddressSpace().getAddress(0x0);
 			long length = provider.length();
 
 			try (InputStream inputStream = provider.getInputStream(0)) {
-				program.getMemory().createInitializedBlock(".dex", start, inputStream, length,
-					monitor, false);
+				program.getMemory()
+						.createInitializedBlock(getMemoryBlockName(), start, inputStream, length,
+							monitor, false);
 			}
 
-			BinaryReader reader = new BinaryReader( provider, true );
-			DexHeader header = DexHeaderFactory.getDexHeader( reader );
+			BinaryReader reader = new BinaryReader(provider, true);
+			DexHeader header = DexHeaderFactory.getDexHeader(reader);
 
-			monitor.setMessage( "DEX Loader: creating method byte code" );
+			monitor.setMessage(getMonitorMessageSecondary());
 
-			createMethodLookupMemoryBlock( program, monitor );
-			createMethodByteCodeBlock( program, length, monitor);
+			createMethodLookupMemoryBlock(program, monitor);
+			createMethodByteCodeBlock(program, length, monitor);
 
-			for ( ClassDefItem item : header.getClassDefs( ) ) {
-				monitor.checkCanceled( );
+			for (ClassDefItem item : header.getClassDefs()) {
+				monitor.checkCanceled();
 
-				ClassDataItem classDataItem = item.getClassDataItem( );
-				if ( classDataItem == null ) {
+				ClassDataItem classDataItem = item.getClassDataItem();
+				if (classDataItem == null) {
 					continue;
 				}
 
-				createMethods( program, header, item, classDataItem.getDirectMethods( ), monitor, log );
-				createMethods( program, header, item, classDataItem.getVirtualMethods( ), monitor, log );
+				createMethods(program, header, item, classDataItem.getDirectMethods(), monitor,
+					log);
+				createMethods(program, header, item, classDataItem.getVirtualMethods(), monitor,
+					log);
 			}
 		}
-		catch ( Exception e) {
-			log.appendException( e );
+		catch (Exception e) {
+			log.appendException(e);
 		}
 	}
 
-	private void createMethodByteCodeBlock(Program program, long length, TaskMonitor monitor) throws Exception {
-		Address address = toAddr( program, DexUtil.METHOD_ADDRESS );
-		MemoryBlock block = program.getMemory( ).createInitializedBlock( "method_bytecode", address, length, (byte) 0xff, monitor, false );
-		block.setRead( true );
-		block.setWrite( false );
-		block.setExecute( true );
+	protected void createMethodByteCodeBlock(Program program, long length, TaskMonitor monitor)
+			throws Exception {
+		Address address = toAddr(program, DexUtil.METHOD_ADDRESS);
+		MemoryBlock block = program.getMemory()
+				.createInitializedBlock("method_bytecode", address, length, (byte) 0xff, monitor,
+					false);
+		block.setRead(true);
+		block.setWrite(false);
+		block.setExecute(true);
 	}
 
-	private void createMethodLookupMemoryBlock(Program program, TaskMonitor monitor) throws Exception {
-		Address address = toAddr( program, DexUtil.LOOKUP_ADDRESS );
-		MemoryBlock block = program.getMemory( ).createInitializedBlock( "method_lookup", address, DexUtil.MAX_METHOD_LENGTH, (byte) 0xff, monitor, false );
-		block.setRead( true );
-		block.setWrite( false );
-		block.setExecute( false );
+	protected void createMethodLookupMemoryBlock(Program program, TaskMonitor monitor)
+			throws Exception {
+		Address address = toAddr(program, DexUtil.LOOKUP_ADDRESS);
+		MemoryBlock block = program.getMemory()
+				.createInitializedBlock("method_lookup", address, DexUtil.MAX_METHOD_LENGTH,
+					(byte) 0xff, monitor, false);
+		block.setRead(true);
+		block.setWrite(false);
+		block.setExecute(false);
 	}
 
-	private void createMethods( Program program, DexHeader header, ClassDefItem item, List< EncodedMethod > methods, TaskMonitor monitor, MessageLog log ) throws Exception {
-		for ( int i = 0 ; i < methods.size( ) ; ++i ) {
-			monitor.checkCanceled( );
+	protected void createMethods(Program program, DexHeader header, ClassDefItem item,
+			List<EncodedMethod> methods, TaskMonitor monitor, MessageLog log) throws Exception {
+		for (int i = 0; i < methods.size(); ++i) {
+			monitor.checkCanceled();
 
-			EncodedMethod encodedMethod = methods.get( i );
+			EncodedMethod encodedMethod = methods.get(i);
 
-			CodeItem codeItem = encodedMethod.getCodeItem( );
+			CodeItem codeItem = encodedMethod.getCodeItem();
 
-			Address methodIndexAddress = DexUtil.toLookupAddress( program, encodedMethod.getMethodIndex( ) );
+			Address methodIndexAddress =
+				DexUtil.toLookupAddress(program, encodedMethod.getMethodIndex());
 
-			if ( codeItem == null ) {//external method
-				//TODO
+			if (codeItem == null) {
+				//external method
 			}
 			else {
-				Address methodAddress = toAddr( program, DexUtil.METHOD_ADDRESS + encodedMethod.getCodeOffset( ) );
+				Address methodAddress =
+					toAddr(program, DexUtil.METHOD_ADDRESS + encodedMethod.getCodeOffset());
 
-				byte [] instructionBytes = codeItem.getInstructionBytes( );
-				program.getMemory( ).setBytes( methodAddress, instructionBytes );
+				byte[] instructionBytes = codeItem.getInstructionBytes();
+				program.getMemory().setBytes(methodAddress, instructionBytes);
 
-				program.getMemory( ).setInt( methodIndexAddress, (int) methodAddress.getOffset( ) );
+				program.getMemory().setInt(methodIndexAddress, (int) methodAddress.getOffset());
 			}
 		}
 	}
 
-	private Address toAddr( Program program, long offset ) {
-		return program.getAddressFactory( ).getDefaultAddressSpace( ).getAddress( offset );
+	protected Address toAddr(Program program, long offset) {
+		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
+	}
+
+	protected String getMemoryBlockName() {
+		return ".dex";
+	}
+
+	protected String getMonitorMessagePrimary() {
+		return "DEX Loader: creating dex memory";
+	}
+
+	protected String getMonitorMessageSecondary() {
+		return "DEX Loader: creating method byte code";
 	}
 }
-

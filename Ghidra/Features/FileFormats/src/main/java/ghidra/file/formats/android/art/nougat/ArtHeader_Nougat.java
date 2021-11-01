@@ -18,7 +18,6 @@ package ghidra.file.formats.android.art.nougat;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverterUtil;
 import ghidra.file.formats.android.art.*;
 import ghidra.file.formats.android.util.DecompressionManager;
 import ghidra.program.model.data.DataType;
@@ -62,10 +61,6 @@ public class ArtHeader_Nougat extends ArtHeader implements ArtCompression {
 		parse(reader);
 	}
 
-	protected ArtImageSections getImageSections(BinaryReader reader) {
-		return new ImageSections_Nougat(reader, this);
-	}
-
 	@Override
 	protected void parse(BinaryReader reader) throws IOException {
 		image_begin_ = reader.readNextInt();
@@ -85,7 +80,7 @@ public class ArtHeader_Nougat extends ArtHeader implements ArtCompression {
 		compile_pic_ = reader.readNextInt();
 		is_pic_ = reader.readNextInt();
 
-		sections = getImageSections(reader);
+		sections = ArtImageSectionsFactory.getArtImageSections(reader, this);
 
 		sections.parseSections(reader);
 		parseImageMethods(reader);
@@ -212,9 +207,8 @@ public class ArtHeader_Nougat extends ArtHeader implements ArtCompression {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = (Structure) super.toDataType();
 
-		String className = StructConverterUtil.parseName(ArtHeader_Nougat.class);
 		try {
-			structure.setName(className);
+			structure.setName(ArtHeader_Nougat.class.getSimpleName());
 		}
 		catch (InvalidNameException e) {
 			//ignore, just use original name should this fail

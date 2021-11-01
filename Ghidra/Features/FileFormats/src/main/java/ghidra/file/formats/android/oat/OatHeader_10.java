@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverterUtil;
+import ghidra.file.formats.android.oat.oatdexfile.OatDexFile;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -36,10 +36,6 @@ public class OatHeader_10 extends OatHeader {
 	protected int quick_resolution_trampoline_offset_;
 	protected int quick_to_interpreter_bridge_offset_;
 	protected int key_value_store_size_;
-	protected Map<String, String> key_value_store_ = new HashMap<String, String>();
-	protected List<String> orderedKeyList = new ArrayList<String>();//ordered as defined
-
-	protected List<OatDexFile> oatDexFileList = new ArrayList<OatDexFile>();
 
 	OatHeader_10(BinaryReader reader) throws IOException {
 		super(reader);
@@ -59,23 +55,8 @@ public class OatHeader_10 extends OatHeader {
 	}
 
 	@Override
-	public void parse(BinaryReader reader, Object additionalData)
-			throws IOException, UnsupportedOatVersionException {
-		int count = 0;
-		while (count < key_value_store_size_) {
-			String key = reader.readNextAsciiString();
-			String value = reader.readNextAsciiString();
-			count += key.length() + 1;
-			count += value.length() + 1;
-			orderedKeyList.add(key);
-			key_value_store_.put(key, value);
-		}
-
-		reader.setPointerIndex(oat_dex_files_offset_);
-		for (int i = 0; i < dex_file_count_; ++i) {
-			oatDexFileList
-					.add(OatDexFileFactory.getOatDexFile(reader, getVersion(), additionalData));
-		}
+	public int getOatDexFilesOffset(BinaryReader reader) {
+		return oat_dex_files_offset_;
 	}
 
 	@Override
@@ -110,8 +91,7 @@ public class OatHeader_10 extends OatHeader {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String className = StructConverterUtil.parseName(OatHeader_10.class);
-		Structure structure = new StructureDataType(className, 0);
+		Structure structure = new StructureDataType(OatHeader_10.class.getSimpleName(), 0);
 		structure.add(STRING, 4, "magic_", null);
 		structure.add(STRING, 4, "version_", null);
 		structure.add(DWORD, "oat_checksum_", null);
@@ -134,6 +114,7 @@ public class OatHeader_10 extends OatHeader {
 			structure.add(STRING, value.length() + 1, "key_value_store_[" + i + "].value", null);
 		}
 
+		structure.setCategoryPath(new CategoryPath("/oat"));
 		return structure;
 	}
 

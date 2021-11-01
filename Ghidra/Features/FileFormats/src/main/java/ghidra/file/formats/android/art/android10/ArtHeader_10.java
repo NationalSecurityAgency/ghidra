@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverterUtil;
 import ghidra.file.formats.android.art.*;
 import ghidra.file.formats.android.util.DecompressionManager;
 import ghidra.program.model.data.DataType;
@@ -79,7 +78,7 @@ public class ArtHeader_10 extends ArtHeader {
 		image_roots_ = reader.readNextInt();
 		pointer_size_ = reader.readNextInt();
 
-		sections = new ImageSections_10(reader, this);
+		sections = ArtImageSectionsFactory.getArtImageSections(reader, this);
 		sections.parseSections(reader);
 
 		parseImageMethods(reader);
@@ -157,8 +156,9 @@ public class ArtHeader_10 extends ArtHeader {
 	}
 
 	/**
-	 * App images currently require a boot image, 
-	 * if the size is non zero then it is an app image header.
+	 * App images currently require a boot image, if the size is non zero then it is
+	 * an app image header.
+	 * 
 	 * @return true if this header represents an app image
 	 */
 	public boolean isAppImage() {
@@ -196,12 +196,11 @@ public class ArtHeader_10 extends ArtHeader {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = (Structure) super.toDataType();
 
-		String className = StructConverterUtil.parseName(ArtHeader_10.class);
 		try {
-			structure.setName(className);
+			structure.setName(ArtHeader_10.class.getSimpleName());
 		}
 		catch (InvalidNameException e) {
-			//ignore, just use original name should this fail
+			// ignore, just use original name should this fail
 		}
 
 		structure.add(DWORD, "image_reservation_size_", null);

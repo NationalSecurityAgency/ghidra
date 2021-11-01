@@ -17,7 +17,8 @@ package ghidra.file.formats.android.art;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -259,8 +260,7 @@ public class ArtMethod implements StructConverter {
 		DataType ptr32 = new Pointer32DataType();
 		DataType ptr64 = new Pointer64DataType();
 
-		String name = StructConverterUtil.parseName(ArtMethod.class);
-		Structure struct = new StructureDataType(name, 0);
+		Structure struct = new StructureDataType(ArtMethod.class.getSimpleName(), 0);
 		struct.setCategoryPath(new CategoryPath("/art"));
 
 		if (ArtConstants.VERSION_MARSHMALLOW_RELEASE.equals(artVersion)) {

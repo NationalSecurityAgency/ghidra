@@ -48,8 +48,7 @@ public final class VdexConstants {
 	public final static String VERSION_PIE_RELEASE = "019";
 	public final static String VERSION_10_RELEASE = "021";
 	public final static String VERSION_11_RELEASE = "021";
-
-	public final static String version_master = "021";
+	public final static String VERSION_12_RELEASE = "027";
 
 	/**
 	 * The format version of the dex section header and the dex section, 
@@ -74,8 +73,16 @@ public final class VdexConstants {
 	/**
 	 * NOTE: only going to support RELEASE versions
 	 */
-	public final static String[] SUPPORTED_VERSIONS = new String[] { VERSION_OREO_RELEASE,
-		VERSION_OREO_M2_RELEASE, VERSION_PIE_RELEASE, VERSION_10_RELEASE, VERSION_11_RELEASE, };
+	//@formatter:off
+	public final static String[] SUPPORTED_VERSIONS = new String[] {
+		VERSION_OREO_RELEASE,
+		VERSION_OREO_M2_RELEASE, 
+		VERSION_PIE_RELEASE, 
+		VERSION_10_RELEASE, 
+		VERSION_11_RELEASE, 
+		VERSION_12_RELEASE,
+	};
+	//@formatter:on
 
 	public final static boolean isSupportedVersion(String version) {
 		for (String supportedVersion : SUPPORTED_VERSIONS) {

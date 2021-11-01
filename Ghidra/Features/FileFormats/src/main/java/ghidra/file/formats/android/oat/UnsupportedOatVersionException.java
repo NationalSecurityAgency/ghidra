@@ -18,6 +18,10 @@ package ghidra.file.formats.android.oat;
 public final class UnsupportedOatVersionException extends Exception {
 
 	public UnsupportedOatVersionException(String magic, String version) {
-		super("Unsupported OAT (" + magic + ") for version: " + version);
+		super("Unsupported OAT (" + magic.trim() + ") for version: " + version);
+	}
+
+	public UnsupportedOatVersionException(String message) {
+		super(message);
 	}
 }

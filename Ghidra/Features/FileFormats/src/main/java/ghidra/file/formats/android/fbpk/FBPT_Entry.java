@@ -17,7 +17,8 @@ package ghidra.file.formats.android.fbpk;
 
 import java.io.IOException;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.InvalidNameException;
 import ghidra.util.exception.DuplicateNameException;
@@ -78,15 +79,14 @@ public class FBPT_Entry implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String className = StructConverterUtil.parseName(FBPT_Entry.class);
-		Structure struct = new StructureDataType(className, 0);
+		Structure struct = new StructureDataType(FBPT_Entry.class.getSimpleName(), 0);
 		struct.add(STRING, FBPK_Constants.NAME_MAX_LENGTH, "name", null);
 		struct.add(STRING, FBPK_Constants.NAME_MAX_LENGTH + 1, "guid1", null);
 		struct.add(STRING, FBPK_Constants.NAME_MAX_LENGTH + 1, "guid2", null);
 		struct.add(STRING, 2, "padding", null);
 		if (FBPK_Constants.LAST_PARTITION_ENTRY.equals(name) || isLast) {
 			try {
-				struct.setName(className + "_last");
+				struct.setName(FBPT_Entry.class.getSimpleName() + "_last");
 			}
 			catch (InvalidNameException e) {
 				//ignore

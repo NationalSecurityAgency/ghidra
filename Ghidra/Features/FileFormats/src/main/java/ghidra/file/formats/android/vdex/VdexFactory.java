@@ -15,17 +15,10 @@
  */
 package ghidra.file.formats.android.vdex;
 
-import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.io.FilenameUtils;
-
-import ghidra.app.util.bin.*;
-import ghidra.app.util.importer.MessageLog;
-import ghidra.framework.model.DomainFile;
-import ghidra.framework.model.DomainFolder;
-import ghidra.program.model.listing.Program;
-import ghidra.util.task.TaskMonitor;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.file.formats.android.vdex.android12.VdexHeader_12;
 
 public final class VdexFactory {
 
@@ -55,82 +48,12 @@ public final class VdexFactory {
 				if (version.equals(VdexConstants.VERSION_11_RELEASE)) {
 					return new VdexHeader_11(reader);
 				}
+				if (version.equals(VdexConstants.VERSION_12_RELEASE)) {
+					return new VdexHeader_12(reader);
+				}
 			}
 		}
 		throw new UnsupportedVdexVersionException(magic, version);
-	}
-
-	public static VdexHeader loadVdexHeader(Program program, TaskMonitor monitor, MessageLog log) {
-
-		if (program == null) {
-			return null;
-		}
-
-		String vdexProgramName = FilenameUtils.removeExtension(program.getName());
-
-		//first, look in current project for VDEX file....
-
-		DomainFile domainFile = program.getDomainFile();
-		DomainFolder parentFolder = domainFile.getParent();
-		VdexHeader vdexHeader =
-			scanProjectFolder(parentFolder, vdexProgramName, program, monitor, log);
-		if (vdexHeader == null) {
-			vdexHeader =
-				scanProjectFolder(parentFolder.getParent(), vdexProgramName, program, monitor, log);
-		}
-		if (vdexHeader != null) {
-			return vdexHeader;
-		}
-
-		//then, try to locate the VDEX on disk, in same folder where binary was imported....
-
-		String oatFilePath = program.getExecutablePath();
-
-		if (oatFilePath.endsWith(".odex") || oatFilePath.endsWith(".oat")) {
-			String vdexFilePath = FilenameUtils.removeExtension(oatFilePath);
-			File vdexFile = new File(vdexFilePath);
-			try (ByteProvider vdexProvider = new RandomAccessByteProvider(vdexFile)) {
-				BinaryReader vdexReader =
-					new BinaryReader(vdexProvider, !program.getLanguage().isBigEndian());
-				vdexHeader = getVdexHeader(vdexReader);
-				vdexHeader.parse(vdexReader, monitor);
-				return vdexHeader;
-			}
-			catch (Exception e) {
-				log.appendMsg("Unable to locate matching VDEX.");
-			}
-		}
-
-		return null;
-	}
-
-	private static VdexHeader scanProjectFolder(DomainFolder parentFolder, String vdexProgramName,
-			Program program, TaskMonitor monitor, MessageLog log) {
-
-		DomainFile child = parentFolder.getFile(vdexProgramName);
-		if (child != null) {
-			try {
-				Object consumer = new Object();
-				Program vdexProgram =
-					(Program) child.getDomainObject(consumer, true, true, monitor);
-				try {
-					ByteProvider vdexProvider = new MemoryByteProvider(vdexProgram.getMemory(),
-						vdexProgram.getMinAddress());
-					BinaryReader vdexReader =
-						new BinaryReader(vdexProvider, !program.getLanguage().isBigEndian());
-					VdexHeader vdexHeader = getVdexHeader(vdexReader);
-					vdexHeader.parse(vdexReader, monitor);
-					return vdexHeader;
-				}
-				finally {
-					vdexProgram.release(consumer);
-				}
-			}
-			catch (Exception e) {
-				log.appendMsg("Unable to locate matching VDEX.");
-			}
-		}
-		return null;
 	}
 
 }

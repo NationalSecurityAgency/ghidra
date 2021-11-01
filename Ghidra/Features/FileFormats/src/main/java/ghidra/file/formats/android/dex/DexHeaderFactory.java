@@ -74,16 +74,34 @@ public final class DexHeaderFactory {
 	 * @throws IOException should an error occur reading DEX bytes
 	 */
 	public final static DexHeader getDexHeader(BinaryReader reader) throws IOException {
+		return getDexHeader(reader, true);
+	}
+
+	/**
+	 * Attempts to create DEX header using the specified Byte Provider.
+	 * NOTE: Use a new binary reader instance, where the underlying ByteProvider is
+	 * based to start of DEX/CDEX.  Reading CDEX format requires lots of re-indexing.
+	 * @param reader the binary reader to use to create DEX header
+	 * @param fullParse true if parse method should be invoked
+	 * @return the DEX header
+	 * @throws IOException should an error occur reading DEX bytes
+	 */
+	public final static DexHeader getDexHeader(BinaryReader reader, boolean fullParse)
+			throws IOException {
 		long index = reader.getPointerIndex();
 		String magic = new String(reader.readByteArray(index, 4));
 		if (DexConstants.DEX_MAGIC_BASE.equals(magic)) {
 			DexHeader header = new DexHeader(reader);
-			header.parse(reader);
+			if (fullParse) {
+				header.parse(reader);
+			}
 			return header;
 		}
 		if (CDexConstants.MAGIC.equals(magic)) {
 			CDexHeader header = new CDexHeader(reader);
-			header.parse(reader);
+			if (fullParse) {
+				header.parse(reader);
+			}
 			return header;
 		}
 		throw new IOException("Not a recognized DEX/CDEX variant: " + magic);
