@@ -507,12 +507,9 @@ public class BinaryReader {
 	 * @exception IOException if an I/O error occurs
 	 */
 	public String readAsciiString(long index, int length) throws IOException {
-		StringBuilder buffer = new StringBuilder();
-		for (int i = 0; i < length; ++i) {
-			byte b = provider.readByte(index++);
-			buffer.append((char) (b & 0x00FF));
-		}
-		return buffer.toString().trim();
+		byte[] readBytes = provider.readBytes(index, length);
+		String str = new String(readBytes);
+		return str.trim();
 	}
 
 	/**

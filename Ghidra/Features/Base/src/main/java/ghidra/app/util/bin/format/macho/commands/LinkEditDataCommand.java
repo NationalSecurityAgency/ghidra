@@ -51,7 +51,8 @@ public class LinkEditDataCommand extends LoadCommand {
 	public LinkEditDataCommand() {
 	}
 
-	private void initLinkEditDataCommand(FactoryBundledWithBinaryReader reader) throws IOException {
+	protected void initLinkEditDataCommand(FactoryBundledWithBinaryReader reader)
+			throws IOException {
 		initLoadCommand(reader);
 		dataoff = reader.readNextInt();
 		datasize = reader.readNextInt();

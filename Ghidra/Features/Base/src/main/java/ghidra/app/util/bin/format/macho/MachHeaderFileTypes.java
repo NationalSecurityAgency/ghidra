@@ -45,6 +45,8 @@ public final class MachHeaderFileTypes {
 	public final static int MH_DSYM        = 0xa;
 	/** x86_64 kexts */
 	public final static int MH_KEXT_BUNDLE = 0xb;
+	/** kernel cache fileset **/
+	public final static int MH_FILESET = 0xc;
 
 	public final static String getFileTypeName(int fileType) {
 		Field [] fields = MachHeaderFileTypes.class.getDeclaredFields();
@@ -77,6 +79,7 @@ public final class MachHeaderFileTypes {
 			case MH_DYLIB_STUB:   return "Shared Library Stub for Static Linking Only";
 			case MH_DSYM:         return "Companion file with only debug sections";
 			case MH_KEXT_BUNDLE:  return "x86 64 Kernel Extension";
+			case MH_FILESET:      return "Kernel Cache Fileset";
 		}
 		return "Unrecognized file type: 0x"+Integer.toHexString(fileType);
 	}
