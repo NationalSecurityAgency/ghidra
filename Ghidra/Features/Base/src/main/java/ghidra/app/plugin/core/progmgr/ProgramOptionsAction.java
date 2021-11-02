@@ -25,7 +25,7 @@ import ghidra.program.model.listing.Program;
 public class ProgramOptionsAction extends AbstractProgramNameSwitchingAction {
 
 	public ProgramOptionsAction(ProgramManagerPlugin plugin) {
-		super(plugin, "Program Options", true);
+		super(plugin, "Program Options");
 		MenuData menuData =
 			new MenuData(new String[] { ToolConstants.MENU_EDIT, "P&rogram Options..." });
 		menuData.setMenuGroup(ToolConstants.TOOL_OPTIONS_MENU_GROUP);

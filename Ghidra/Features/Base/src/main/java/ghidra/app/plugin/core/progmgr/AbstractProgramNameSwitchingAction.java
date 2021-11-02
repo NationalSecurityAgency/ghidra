@@ -22,28 +22,25 @@ import ghidra.program.model.listing.Program;
 
 /**
  * Abstract base class for program actions that change their menu name depending on the the active
- * program. There are two types of actions that extend this class; those that only work
- * on programs that are managed by Ghidra, and those that can work on any program even those
- * whose life cycles are managed by individual plugins.
+ * program. Note that actions that derived from this class only work on programs that are
+ * globally managed by Ghidra and not opened and managed by individual plugins. If the action 
+ * context should happen to contain a non-global managed program, the tool's concept of the 
+ * current active program will be used as target of this action instead.
  */
 public abstract class AbstractProgramNameSwitchingAction extends DockingAction {
 
 	protected ProgramManagerPlugin plugin;
 	protected Program lastContextProgram;
-	private boolean requiresManagedProgram;
 
 	/**
 	 * Constructor
 	 * @param plugin the ProgramManagerPlugin (i.e. the global Ghidra manager for programs)
 	 * @param name the name of the action
-	 * @param requiresManagedProgram true if the action is only used on globally managed
 	 * programs
 	 */
-	public AbstractProgramNameSwitchingAction(ProgramManagerPlugin plugin, String name,
-			boolean requiresManagedProgram) {
+	public AbstractProgramNameSwitchingAction(ProgramManagerPlugin plugin, String name) {
 		super(name, plugin.getName());
 		this.plugin = plugin;
-		this.requiresManagedProgram = requiresManagedProgram;
 		addToWindowWhen(ProgramActionContext.class);
 	}
 
@@ -80,16 +77,16 @@ public abstract class AbstractProgramNameSwitchingAction extends DockingAction {
 	protected abstract void programChanged(Program program);
 
 	/**
-	 * Gets the program for the given context. If this actions requires the program
-	 * to be globally managed, then it will only use the context program if it is 
-	 * managed; otherwise it will return the global current program.
+	 * Gets the program for the given context. The actions that derive from this class only
+	 * work on programs that are globally managed by Ghidra. So if the program from the context
+	 * is not managed by Ghidra, then just use the current program that is managed.
 	 * @param context the action context from which to get the program
 	 * @return the appropriate program to use for this action.
 	 */
 	protected Program getProgram(ActionContext context) {
 		if (context instanceof ProgramActionContext) {
 			Program program = ((ProgramActionContext) context).getProgram();
-			if (plugin.isManaged(program) || !requiresManagedProgram) {
+			if (plugin.isManaged(program)) {
 				return program;
 			}
 			// otherwise, just return the global current program.

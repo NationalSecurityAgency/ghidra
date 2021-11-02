@@ -49,6 +49,8 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 	private MyFolderListener folderListener;
 	private Runnable programChangedRunnable;
 
+	private boolean hasUnsavedPrograms;
+
 	MultiProgramManager(ProgramManagerPlugin programManagerPlugin) {
 		this.plugin = programManagerPlugin;
 		this.tool = programManagerPlugin.getTool();
@@ -64,7 +66,8 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 			if (tool == null) {
 				return; // we have been disposed
 			}
-			plugin.undoStackChanged();
+			hasUnsavedPrograms = checkForUnsavedPrograms();
+			plugin.contextChanged();
 		};
 	}
 
@@ -516,6 +519,10 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 	 * @return true if there is at least one program that has unsaved changes.
 	 */
 	public boolean hasUnsavedPrograms() {
+		return hasUnsavedPrograms;
+	}
+
+	private boolean checkForUnsavedPrograms() {
 		// first check the current program as that is the one most likely to have changes
 		Program currentProgram = getCurrentProgram();
 		if (currentProgram != null && currentProgram.isChanged()) {
@@ -528,5 +535,6 @@ class MultiProgramManager implements DomainObjectListener, TransactionListener {
 			}
 		}
 		return false;
+
 	}
 }

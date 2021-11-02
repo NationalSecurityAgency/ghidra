@@ -28,7 +28,7 @@ import resources.ResourceManager;
 public class SaveProgramAction extends AbstractProgramNameSwitchingAction {
 
 	public SaveProgramAction(ProgramManagerPlugin plugin, String group, int subGroup) {
-		super(plugin, "Save File", true);
+		super(plugin, "Save File");
 		MenuData menuData = new MenuData(new String[] { ToolConstants.MENU_FILE, "Save File" });
 		menuData.setMenuGroup(group);
 		menuData.setMenuSubGroup(Integer.toString(subGroup));

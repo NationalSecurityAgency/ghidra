@@ -27,7 +27,7 @@ import ghidra.util.HTMLUtilities;
 public class CloseProgramAction extends AbstractProgramNameSwitchingAction {
 
 	public CloseProgramAction(ProgramManagerPlugin plugin, String group, int subGroup) {
-		super(plugin, "Close File", true);
+		super(plugin, "Close File");
 		MenuData menuData = new MenuData(new String[] { ToolConstants.MENU_FILE, "&Close" });
 		menuData.setMenuGroup(group);
 		menuData.setMenuSubGroup(Integer.toString(subGroup));
