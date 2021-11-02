@@ -62,8 +62,8 @@ import ghidra.program.database.ProgramBuilder;
 import ghidra.program.database.ProgramDB;
 import ghidra.program.database.data.ProgramDataTypeManager;
 import ghidra.program.model.data.*;
-import ghidra.test.*;
-import ghidra.util.task.TaskMonitor;
+import ghidra.test.AbstractGhidraHeadedIntegrationTest;
+import ghidra.test.TestEnv;
 import util.CollectionUtils;
 import utilities.util.FileUtilities;
 
@@ -1088,18 +1088,6 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		waitForTree();
 	}
 
-	private void waitForActionToBeEnabled(DockingActionIf action) {
-		int numWaits = 0;
-		while (!action.isEnabled() && ++numWaits < 50) {
-			try {
-				Thread.sleep(100);
-			}
-			catch (InterruptedException e) {
-				// don't care; will try again
-			}
-		}
-	}
-
 	private void undo() throws Exception {
 		runSwing(() -> {
 			try {
@@ -1201,33 +1189,6 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 		}
 		catch (FileNotFoundException e) {
 			System.err.println("Unable to delete test dir?: " + e.getMessage());
-		}
-	}
-
-	private void compileJavaDataType() throws Exception {
-
-		boolean success = false;
-		try {
-			File file = getTestDataTypeFile();
-			File binDir = getClassesDirectory();
-			if (!binDir.exists()) {
-				if (!binDir.mkdir()) {
-					Assert.fail("Could not create directory " + binDir.getAbsolutePath());
-				}
-			}
-
-			File javaFile = new File(binDir, "TestDataType.java");
-			FileUtilities.copyFile(file, javaFile, false, TaskMonitor.DUMMY);
-			assertTrue(javaFile.exists());
-
-			JavaCompiler j = new JavaCompiler();
-			j.compile(javaFile);
-			success = true;
-		}
-		finally {
-			if (!success) {
-				removeBinTestDir();
-			}
 		}
 	}
 

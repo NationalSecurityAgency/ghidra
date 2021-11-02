@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +16,20 @@
 package ghidra.program.model.symbol;
 
 /**
- * <code>ShiftedReference</code> is a memory reference whoose "to" address is
+ * <code>ShiftedReference</code> is a memory reference whose "to" address is
  * computed from a base value left shifted by a shift amount.
  */
 public interface ShiftedReference extends Reference {
 
 	/**
 	 * Returns the left shift amount.
+	 * @return the shift
 	 */
 	public int getShift();
-	
+
 	/**
 	 * Returns the base value.
+	 * @return the value
 	 */
 	public long getValue();
 }

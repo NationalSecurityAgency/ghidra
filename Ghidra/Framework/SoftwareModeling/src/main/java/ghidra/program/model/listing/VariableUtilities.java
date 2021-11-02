@@ -194,7 +194,7 @@ public class VariableUtilities {
 
 	/**
 	 * Perform variable storage checks using the specified datatype.
-	 * @param storage variable storage whoose size must match the specified data type size
+	 * @param storage variable storage whose size must match the specified data type size
 	 * @param dataType a datatype checked using {@link #checkDataType(DataType, boolean, int, Program)}
 	 * @param allowSizeMismatch if true size mismatch will be ignore
 	 * @throws InvalidInputException
@@ -258,7 +258,7 @@ public class VariableUtilities {
 	 * <ul>
 	 * <li>Function definition datatype</li>
 	 * <li>An unsized/zero-element array</li>
-	 * </ul>  
+	 * </ul>
 	 * @param dataType datatype to be checked
 	 * @param voidOK true if checking return datatype and void is allow, else false.
 	 * @param defaultSize Undefined datatype size to be used if specified datatype is null.  A value less than 1
@@ -312,7 +312,7 @@ public class VariableUtilities {
 		}
 
 		if (dataType.getLength() <= 0) {
-			// Unexpected condition - only dynamic types are expected to have negative length and 
+			// Unexpected condition - only dynamic types are expected to have negative length and
 			// none should report 0 has a length.
 			throw new IllegalArgumentException("Unsupported data type length (" +
 				dataType.getLength() + "): " + dataType.getName());
@@ -326,7 +326,7 @@ public class VariableUtilities {
 	 * <ul>
 	 * <li>Function definition datatype</li>
 	 * <li>An unsized/zero-element array</li>
-	 * </ul>  
+	 * </ul>
 	 * @param dataType datatype to be checked
 	 * @param voidOK true if checking return datatype and void is allow, else false.
 	 * @param defaultSize Undefined datatype size to be used if specified datatype is null.  A value less than 1
@@ -346,7 +346,7 @@ public class VariableUtilities {
 	 * <ul>
 	 * <li>Function definition datatype</li>
 	 * <li>An unsized/zero-element array</li>
-	 * </ul>  
+	 * </ul>
 	 * @param dataType datatype to be checked.  If null is specified the DEFAULT datatype will be
 	 * returned.
 	 * @param voidOK true if checking return datatype and void is allow, else false.
@@ -474,7 +474,7 @@ public class VariableUtilities {
 						" bytes: " + curStorage.toString());
 				}
 			}
-			
+
 			vnAddr = newReg.getAddress();
 			if (bigEndian) {
 				vnAddr = vnAddr.add(newReg.getMinimumByteSize() - size);
@@ -746,7 +746,7 @@ public class VariableUtilities {
 	}
 
 	/**
-	 * Create an empty placeholder class structure whose category is derived from 
+	 * Create an empty placeholder class structure whose category is derived from
 	 * the function's class namespace.  NOTE: The structure will not be added to the data
 	 * type manager.
 	 * @param classNamespace class namespace
@@ -768,14 +768,14 @@ public class VariableUtilities {
 
 	/**
 	 * Find the structure data type which corresponds to the specified class namespace
-	 * within the specified data type manager.  
-	 * The preferred structure will utilize a namespace-based category path, however, 
+	 * within the specified data type manager.
+	 * The preferred structure will utilize a namespace-based category path, however,
 	 * the match criteria can be fuzzy and relies primarily on the class name.
 	 * While a new empty structure may be returned, it will not be added to the program's data type
 	 * manager.
 	 * @param classNamespace class namespace
-	 * @param dataTypeManager data type manager which should be searched and whose 
-	 * data organization should be used.  
+	 * @param dataTypeManager data type manager which should be searched and whose
+	 * data organization should be used.
 	 * @return new or existing structure whose name matches the specified class namespace
 	 */
 	public static Structure findOrCreateClassStruct(GhidraClass classNamespace,
@@ -789,8 +789,8 @@ public class VariableUtilities {
 
 	/**
 	 * Find the structure data type which corresponds to the specified function's class namespace
-	 * within the function's program.  One will be instantiated if not found.  
-	 * The preferred structure will utilize a namespace-based category path, however, 
+	 * within the function's program.  One will be instantiated if not found.
+	 * The preferred structure will utilize a namespace-based category path, however,
 	 * the match criteria can be fuzzy and relies primarily on the class name.
 	 * @param function function's whose class namespace is the basis for the structure
 	 * @return new or existing structure whose name matches the function's class namespace or
@@ -807,8 +807,8 @@ public class VariableUtilities {
 
 	/**
 	 * Find the structure data type which corresponds to the specified class namespace
-	 * within the specified data type manager. .  
-	 * The preferred structure will utilize a namespace-based category path, however, 
+	 * within the specified data type manager. .
+	 * The preferred structure will utilize a namespace-based category path, however,
 	 * the match criteria can be fuzzy and relies primarily on the class name.
 	 * @param classNamespace class namespace
 	 * @param dataTypeManager data type manager which should be searched.
@@ -823,8 +823,8 @@ public class VariableUtilities {
 
 	/**
 	 * Find the structure data type which corresponds to the specified function's class namespace
-	 * within the function's program.  
-	 * The preferred structure will utilize a namespace-based category path, however, 
+	 * within the function's program.
+	 * The preferred structure will utilize a namespace-based category path, however,
 	 * the match criteria can be fuzzy and relies primarily on the class name.
 	 * @param func the function.
 	 * @return existing structure whose name matches the specified function's class namespace

@@ -47,7 +47,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	// Each of the following is a choice or possible resolution when merging data types.
 	static final int CANCELED = -2; // user canceled the merge operation
-	static final int ASK_USER = -1;// prompt the user to choose resolution 
+	static final int ASK_USER = -1;// prompt the user to choose resolution
 	static final int OPTION_LATEST = 0; // Latest 
 	static final int OPTION_MY = 1; // My change 
 	static final int OPTION_ORIGINAL = 2; // Original
@@ -96,7 +96,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * @param myDomainObject the program requesting to be checked in.
 	 * @param originalDomainObject the program that was checked out.
 	 * @param latestDomainObject the latest checked-in version of the program.
-	 * @param latestChanges the address set of changes between original and latest versioned program.  
+	 * @param latestChanges the address set of changes between original and latest versioned program.
 	 * @param myChanges the address set of changes between original and my modified program.
 	 */
 	public DataTypeMergeManager(DomainObjectMergeManager mergeManager,
@@ -132,7 +132,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	public void apply() {
 		if (catMergePanel != null && catMergePanel.isVisible()) {
 			conflictOption = catMergePanel.getSelectedOption();
-			// If the "Use For All" check box is selected 
+			// If the "Use For All" check box is selected
 			// then save the option chosen for this conflict type.
 			if (catMergePanel.getUseForAll()) {
 				categoryChoice = conflictOption;
@@ -140,7 +140,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		}
 		else if (dtMergePanel != null && dtMergePanel.isVisible()) {
 			conflictOption = dtMergePanel.getSelectedOption();
-			// If the "Use For All" check box is selected 
+			// If the "Use For All" check box is selected
 			// then save the option chosen for this conflict type.
 			if (dtMergePanel.getUseForAll()) {
 				dataTypeChoice = conflictOption;
@@ -148,7 +148,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		}
 		else {
 			conflictOption = archiveMergePanel.getSelectedOption();
-			// If the "Use For All" check box is selected 
+			// If the "Use For All" check box is selected
 			// then save the option chosen for this conflict type.
 			if (archiveMergePanel.getUseForAll()) {
 				sourceArchiveChoice = conflictOption;
@@ -259,7 +259,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	/**
 	 * For JUnit testing only, set the option for resolving a conflict.
-	 * @param option forced conflict resolution option 
+	 * @param option forced conflict resolution option
 	 */
 	void setConflictResolution(int option) {
 		conflictOption = option;
@@ -548,7 +548,7 @@ public class DataTypeMergeManager implements MergeResolver {
 				changeSourceArchive(id);
 			}
 
-			// Make sure the change time is updated (even if keeping the Latest version) 
+			// Make sure the change time is updated (even if keeping the Latest version)
 			// since a conflict was resolved for the data type.
 			DataType resultDt = dtms[RESULT].getDataType(id);
 			if (resultDt != null) {
@@ -687,7 +687,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Update the data type name/category path in RESULT if it exists. 
+	 * Update the data type name/category path in RESULT if it exists.
 	 * If it does not exist, add it to RESULT.
 	 * @param id id of data type
 	 * @param dt data type to use as the source name and category path
@@ -751,7 +751,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	/**
 	 * Set category path.  If name conflict occurs within new category
 	 * the specified dt will remain within its current category
-	 * @param dt datatype whoose category is to changed
+	 * @param dt datatype whose category is to changed
 	 * @param newPath new category path
 	 */
 	private void setCategoryPath(DataType dt, CategoryPath newPath) {
@@ -842,7 +842,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	 * 
 	 * @param dataTypeID the ID (key) of the data type to be added.
 	 * @param dataType the data type to be added.
-	 * @param resolvedDataTypes table which maps the dataTypeID to the resulting data type within 
+	 * @param resolvedDataTypes table which maps the dataTypeID to the resulting data type within
 	 * this data type manager.
 	 * @return the resulting data type in this data type manager.
 	 */
@@ -888,7 +888,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Get the resolved data type from the given table; 
+	 * Get the resolved data type from the given table;
 	 * If the data type has not been resolved yet, then use the one from
 	 * the results if the id was not added in MY program.
 	 * @param id id of data type
@@ -906,12 +906,12 @@ public class DataTypeMergeManager implements MergeResolver {
 		DataType resolvedDt = resolvedDataTypes.get(baseID);
 		if (resolvedDt == null) {
 			// Haven't resolved this yet.
-			// use dt from results 
+			// use dt from results
 			if (!myDtAddedList.contains(Long.valueOf(baseID))) {
 				resolvedDt = dtms[RESULT].getDataType(baseID);
 				if (resolvedDt == null) {
 					if (origDtConflictList.contains(Long.valueOf(baseID))) {
-						// was deleted, but add it back so we can create 
+						// was deleted, but add it back so we can create
 						// data types depending on it; will get resolved later
 						resolvedDt = addDataType(baseID, baseDt, resolvedDataTypes);
 					}
@@ -1156,7 +1156,7 @@ public class DataTypeMergeManager implements MergeResolver {
 					else {
 						// must have been deleted in LATEST
 						// put an entry in the fixup list if this is a conflict.
-						// NOTE: This may also be caused by a replaced datatype but 
+						// NOTE: This may also be caused by a replaced datatype but
 						// we have no indication as to what the replacment was
 						deletedInLatest = true;
 					}
@@ -1583,7 +1583,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Process categories that were moved in MY program, but are not 
+	 * Process categories that were moved in MY program, but are not
 	 * conflicts, i.e., not renamed, moved, or deleted in LATEST.
 	 * @param id category ID
 	 */
@@ -1608,7 +1608,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Process categories that were deleted in MY program, but are not 
+	 * Process categories that were deleted in MY program, but are not
 	 * conflicts, i.e., not renamed, moved, or deleted in LATEST.
 	 * @param id category ID
 	 */
@@ -1617,7 +1617,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		if (myCat == null) {
 			Category resultCat = dtms[RESULT].getCategory(id);
 			if (resultCat != null) {
-				// check added data types that have this category path as 
+				// check added data types that have this category path as
 				// the parent
 				if (!isParent(resultCat.getCategoryPath())) {
 					resultCat.getParent().removeCategory(resultCat.getName(), currentMonitor);
@@ -1662,7 +1662,7 @@ public class DataTypeMergeManager implements MergeResolver {
 				throw new AssertException("Got DuplicateNameException");
 			}
 			catch (IllegalArgumentException e) {
-				// cannot move category 
+				// cannot move category
 				return;
 			}
 		}
@@ -2040,7 +2040,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	private void deleteLatestCategory(Category latestCat) {
 		// delete the category from results program if the
 		// paths on the data types in LATEST are different
-		// from path on the data types in MY; 
+		// from path on the data types in MY;
 		DataType[] dts = latestCat.getDataTypes();
 		boolean doDelete = true;
 		if (dts.length > 0) {
@@ -2204,11 +2204,11 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	/**
 	 * See if there is a data type in the result file that matches My data type based on
-	 * name, path and contents. 
+	 * name, path and contents.
 	 * If there is a data type that is the same then return true.
 	 * @param myDtID the database ID (key) for My data type.
 	 * @param myDt My data type.
-	 * @return true if the same named and equivalent data type is found in the result 
+	 * @return true if the same named and equivalent data type is found in the result
 	 * data type manager.
 	 */
 	private boolean equivalentDataTypeFound(long myDtID, DataType myDt) {
@@ -2222,8 +2222,9 @@ public class DataTypeMergeManager implements MergeResolver {
 			UniversalID resultDtUniversalID = resultDt.getUniversalID();
 			UniversalID myDtUniversalID = myDt.getUniversalID();
 			// UniversalID can be null if data type is BuiltIn.
-			if (!resultSourceArchive.getSourceArchiveID().equals(
-				mySourceArchive.getSourceArchiveID()) ||
+			if (!resultSourceArchive.getSourceArchiveID()
+					.equals(
+						mySourceArchive.getSourceArchiveID()) ||
 				!Objects.equals(resultDtUniversalID, myDtUniversalID)) {
 				return false;
 			}
@@ -2237,7 +2238,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 	private void cleanUpDataTypes() {
 		// clean up data types
-		List<Long> keys = new ArrayList<Long>(cleanupPlaceHolderList.keySet());
+		List<Long> keys = new ArrayList<>(cleanupPlaceHolderList.keySet());
 		for (long key : keys) {
 			CleanUpInfo cleanUpInfo = cleanupPlaceHolderList.get(key);
 			cleanUpInfo.cleanUp();
@@ -2506,7 +2507,7 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Determines the number of contiguous undefined bytes in this structure starting 
+	 * Determines the number of contiguous undefined bytes in this structure starting
 	 * at the indicated component ordinal.
 	 * @param struct the structure to check.
 	 * @param ordinal the ordinal of the component where checking for undefined bytes should begin.
@@ -2649,11 +2650,6 @@ public class DataTypeMergeManager implements MergeResolver {
 		}
 	}
 
-	/**
-	 * @param compID
-	 * @param dataTypeManager
-	 * @return
-	 */
 	private DataType resolve(long id, DataTypeManager dtm,
 			Map<Long, DataType> resolvedDataTypes) {
 		DataType dt = getResolvedComponent(id, resolvedDataTypes);
@@ -2943,9 +2939,9 @@ public class DataTypeMergeManager implements MergeResolver {
 	}
 
 	/**
-	 * Processes my data types that were added and determines whether each is actually a 
-	 * conflict, an added data type, or a changed data type relative to the Latest check in. 
-	 * @param myDtAdds
+	 * Processes my data types that were added and determines whether each is actually a
+	 * conflict, an added data type, or a changed data type relative to the Latest check in.
+	 * @param myDtAdds the data type IDs
 	 */
 	private void processAddIDs(long[] myDtAdds) {
 		myDtAddedList = new ArrayList<>();
@@ -3219,7 +3215,7 @@ public class DataTypeMergeManager implements MergeResolver {
 		 * or components were resolved.
 		 * @param id id of data type needed to be fixed up
 		 * @param compID id of either component or base type
-		 * @param index offset into non-packed structure, or ordinal into union or packed 
+		 * @param index offset into non-packed structure, or ordinal into union or packed
 		 * structure; or parameter/return ordinal; for other data types index is not used (specify -1).
 		 * @param resolvedDataTypes hashtable used for resolving the data type
 		 */
@@ -3329,7 +3325,7 @@ public class DataTypeMergeManager implements MergeResolver {
 
 		/**
 		 * 
-		 * @param index offset into non-packed structure, or ordinal into union or packed 
+		 * @param index offset into non-packed structure, or ordinal into union or packed
 		 * structure; for other data types, offset is not used (specify -1)
 		 * @param resolvedDataTypes hashtable used for resolving the data type
 		 */

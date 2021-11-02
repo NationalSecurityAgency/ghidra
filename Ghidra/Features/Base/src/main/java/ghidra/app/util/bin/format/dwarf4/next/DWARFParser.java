@@ -170,21 +170,13 @@ public class DWARFParser {
 		if (origRoot.equals(cp)) {
 			return newRoot;
 		}
-
-		String origRootPath = origRoot.getPath();
-		if (!CategoryPath.ROOT.equals(origRoot)) {
-			origRootPath += "/";
+		List<String> origRootParts = origRoot.asList();
+		List<String> cpParts = cp.asList();
+		if (cpParts.size() < origRootParts.size() ||
+			!origRootParts.equals(cpParts.subList(0, origRootParts.size()))) {
+			return null;
 		}
-		String newRootPath = newRoot.getPath();
-		if (!CategoryPath.ROOT.equals(newRoot)) {
-			newRootPath += "/";
-		}
-		String cpPath = cp.getPath();
-		if (cpPath.startsWith(origRootPath)) {
-			String newPath = newRootPath + cpPath.substring(origRootPath.length());
-			return new CategoryPath(newPath);
-		}
-		return null;
+		return new CategoryPath(newRoot, cpParts.subList(origRootParts.size(), cpParts.size()));
 	}
 
 	/**

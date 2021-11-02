@@ -364,7 +364,7 @@ public class SymbolUtilities {
 			return null;
 		}
 		int len = str.length();
-		StringBuffer buf = new StringBuffer(len);
+		StringBuilder buf = new StringBuilder(len);
 		for (int i = 0; i < len; ++i) {
 			char c = str.charAt(i);
 			if (isInvalidChar(c)) {
