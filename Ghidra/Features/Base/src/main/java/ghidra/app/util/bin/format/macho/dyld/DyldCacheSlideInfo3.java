@@ -97,6 +97,11 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 
 		List<DyldCacheMappingAndSlideInfo> mappingInfos =
 			dyldCacheHeader.getCacheMappingAndSlideInfos();
+		
+		if (mappingInfos.size() <= DATA_PAGE_MAP_ENTRY) {
+			return;
+		}
+		
 		DyldCacheMappingAndSlideInfo dyldCacheMappingInfo = mappingInfos.get(DATA_PAGE_MAP_ENTRY); // default
 		for (DyldCacheMappingAndSlideInfo cacheSlideInfo : mappingInfos) {
 			if (cacheSlideInfo.getSlideInfoFileOffset() == getSlideInfoOffset()) {
