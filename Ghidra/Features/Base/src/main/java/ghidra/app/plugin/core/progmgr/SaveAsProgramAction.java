@@ -25,7 +25,7 @@ import ghidra.program.model.listing.Program;
 public class SaveAsProgramAction extends AbstractProgramNameSwitchingAction {
 
 	public SaveAsProgramAction(ProgramManagerPlugin plugin, String group, int subGroup) {
-		super(plugin, "Save As File", true);
+		super(plugin, "Save As File");
 		MenuData menuData = new MenuData(new String[] { ToolConstants.MENU_FILE, "Save &As..." });
 		menuData.setMenuGroup(group);
 		menuData.setMenuSubGroup(Integer.toString(subGroup));
