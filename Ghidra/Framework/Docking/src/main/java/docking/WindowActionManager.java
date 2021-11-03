@@ -21,7 +21,6 @@ import javax.swing.JMenuBar;
 
 import docking.action.DockingActionIf;
 import docking.menu.*;
-import ghidra.util.task.SwingUpdateManager;
 
 public class WindowActionManager {
 	private Map<DockingActionIf, DockingActionProxy> actionToProxyMap;
@@ -29,25 +28,18 @@ public class WindowActionManager {
 	private ToolBarManager toolBarMgr;
 	private final WindowNode node;
 
-	private final DockingWindowManager winMgr;
 	private boolean disposed;
 
-	private ComponentPlaceholder placeHolderForScheduledActionUpdate;
-	private Runnable updateActionsRunnable = () -> processContextChanged();
-	private SwingUpdateManager updateManager =
-		new SwingUpdateManager(500, 500, "Context Update Manager", updateActionsRunnable);
-
-	public WindowActionManager(WindowNode node, MenuHandler menuBarHandler,
+	WindowActionManager(WindowNode node, MenuHandler menuBarHandler,
 			DockingWindowManager winMgr, MenuGroupMap menuGroupMap) {
 
 		this.node = node;
-		this.winMgr = winMgr;
 		actionToProxyMap = new HashMap<>();
 		menuBarMgr = new MenuBarManager(menuBarHandler, menuGroupMap);
 		toolBarMgr = new ToolBarManager(winMgr);
 	}
 
-	public void setActions(List<DockingActionIf> actionList) {
+	void setActions(List<DockingActionIf> actionList) {
 		menuBarMgr.clearActions();
 		toolBarMgr.clearActions();
 		actionToProxyMap.clear();
@@ -56,7 +48,7 @@ public class WindowActionManager {
 		}
 	}
 
-	public void addAction(DockingActionIf action) {
+	void addAction(DockingActionIf action) {
 		if (action.getMenuBarData() != null || action.getToolBarData() != null) {
 			DockingActionProxy proxyAction = new DockingActionProxy(action);
 			actionToProxyMap.put(action, proxyAction);
@@ -65,7 +57,7 @@ public class WindowActionManager {
 		}
 	}
 
-	public void removeAction(DockingActionIf action) {
+	void removeAction(DockingActionIf action) {
 		DockingActionProxy proxyAction = actionToProxyMap.remove(action);
 		if (proxyAction != null) {
 			menuBarMgr.removeAction(proxyAction);
@@ -73,11 +65,11 @@ public class WindowActionManager {
 		}
 	}
 
-	public DockingActionIf getToolbarAction(String actionName) {
+	DockingActionIf getToolbarAction(String actionName) {
 		return toolBarMgr.getAction(actionName);
 	}
 
-	public void update() {
+	void update() {
 		JMenuBar menuBar = menuBarMgr.getMenuBar();
 		if (menuBar.getMenuCount() > 0) {
 			node.setMenuBar(menuBar);
@@ -87,9 +79,8 @@ public class WindowActionManager {
 		node.validate();
 	}
 
-	public synchronized void dispose() {
+	void dispose() {
 		disposed = true;
-		updateManager.dispose();
 		node.setToolBar(null);
 		node.setMenuBar(null);
 		actionToProxyMap.clear();
@@ -97,48 +88,32 @@ public class WindowActionManager {
 		toolBarMgr.dispose();
 	}
 
-	synchronized void contextChanged(ComponentPlaceholder placeHolder) {
+	void contextChanged(ActionContext globalContext, ActionContext localContext,
+			Set<DockingActionIf> excluded) {
 
-		if (!node.isVisible()) {
+		if (!node.isVisible() || disposed) {
 			return;
 		}
 
-		placeHolderForScheduledActionUpdate = placeHolder;
-
-		// Typically, when we get one contextChanged, we get a flurry of contextChanged calls.
-		// In order to make the action updating be as responsive as possible and still be complete,
-		// we have chosen a policy that will reduce a flurry of contextChanged call into two
-		// actual calls - one that occurs immediately and one when the flurry times out.
-		updateManager.update();
-	}
-
-	private synchronized void processContextChanged() {
-		//
-		// This method is called from an invokeLater(), which means that we may be 
-		// disposed while before this Swing call executes.
-		//
-		if (disposed) {
-			return;
-		}
-
-		ActionContext localContext = getContext();
-		ActionContext globalContext = winMgr.getDefaultToolContext();
-
-		// Update actions - make a copy so that we don't get concurrent modification exceptions
-		List<DockingActionIf> list = new ArrayList<>(actionToProxyMap.values());
+		// Update actions - make a copy so that we don't get concurrent modification
+		// exceptions during reentrant operations
+		List<DockingActionIf> list = new ArrayList<>(actionToProxyMap.keySet());
 		for (DockingActionIf action : list) {
-			if (action.isValidContext(localContext)) {
-				action.setEnabled(action.isEnabledForContext(localContext));
+			if (excluded.contains(action)) {
+				continue;
 			}
-			else if (isValidDefaultToolContext(action, globalContext)) {
-				action.setEnabled(action.isEnabledForContext(globalContext));
+
+			DockingActionIf proxyAction = actionToProxyMap.get(action);
+			if (proxyAction.isValidContext(localContext)) {
+				proxyAction.setEnabled(proxyAction.isEnabledForContext(localContext));
+			}
+			else if (isValidDefaultToolContext(proxyAction, globalContext)) {
+				proxyAction.setEnabled(proxyAction.isEnabledForContext(globalContext));
 			}
 			else {
-				action.setEnabled(false);
+				proxyAction.setEnabled(false);
 			}
 		}
-		// Notify listeners if the context provider is the focused provider
-		winMgr.notifyContextListeners(placeHolderForScheduledActionUpdate, localContext);
 	}
 
 	private boolean isValidDefaultToolContext(DockingActionIf action, ActionContext toolContext) {
@@ -146,15 +121,15 @@ public class WindowActionManager {
 			action.isValidContext(toolContext);
 	}
 
-	private ActionContext getContext() {
-		ComponentProvider provider = placeHolderForScheduledActionUpdate == null ? null
-				: placeHolderForScheduledActionUpdate.getProvider();
-
-		ActionContext context = provider == null ? null : provider.getActionContext(null);
-
-		if (context == null) {
-			context = new ActionContext();
-		}
-		return context;
+	/**
+	 * Returns the set of actions for this window.
+	 * 
+	 * <p>Note this returns the the original passed-in actions and not the proxy actions that the
+	 * window uses.
+	 * 
+	 * @return the set of actions for this window
+	 */
+	Set<DockingActionIf> getOriginalActions() {
+		return new HashSet<>(actionToProxyMap.keySet());
 	}
 }
