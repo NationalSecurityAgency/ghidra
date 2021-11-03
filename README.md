@@ -24,7 +24,7 @@ cybersecurity tools for NSA to help protect our nation and its allies, consider 
 ## Install
 To install an official pre-built multi-platform Ghidra release:  
 * Install [JDK 11 64-bit][jdk11]
-* Download a Ghidra release file from [ghidra-sre.org][project]
+* Download a Ghidra [release file][releases]
 * Extract the Ghidra release file
 * Launch Ghidra: `./ghidraRun` (or `ghidraRun.bat` for Windows)
 
@@ -106,7 +106,7 @@ source project.
 [contrib]: CONTRIBUTING.md
 [devguide]: DevGuide.md
 [career]: https://www.intelligencecareers.gov/nsa
-[project]: https://www.ghidra-sre.org/
+[releases]: https://github.com/NationalSecurityAgency/ghidra/releases
 [jdk11]: https://adoptium.net/releases.html?variant=openjdk11&jvmVariant=hotspot
 [gradle]: https://gradle.org/releases/
 [vs]: https://visualstudio.microsoft.com/vs/community/
