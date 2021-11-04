@@ -16,6 +16,7 @@
 package ghidra.app.util.bin;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import ghidra.util.*;
 
@@ -508,7 +509,7 @@ public class BinaryReader {
 	 */
 	public String readAsciiString(long index, int length) throws IOException {
 		byte[] readBytes = provider.readBytes(index, length);
-		String str = new String(readBytes);
+		String str = new String(readBytes, StandardCharsets.US_ASCII);
 		return str.trim();
 	}
 
@@ -572,7 +573,7 @@ public class BinaryReader {
 	 */
 	public String readFixedLenAsciiString(long index, int len) throws IOException {
 		byte[] bytes = readByteArray(index, len);
-		return new String(bytes);
+		return new String(bytes, StandardCharsets.US_ASCII);
 	}
 
 	/**
