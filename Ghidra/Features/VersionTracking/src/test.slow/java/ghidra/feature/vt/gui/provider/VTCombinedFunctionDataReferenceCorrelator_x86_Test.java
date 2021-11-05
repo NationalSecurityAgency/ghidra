@@ -15,8 +15,8 @@
  */
 package ghidra.feature.vt.gui.provider;
 
-import static ghidra.feature.vt.api.main.VTAssociationType.DATA;
-import static org.junit.Assert.assertTrue;
+import static ghidra.feature.vt.api.main.VTAssociationType.*;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -133,7 +133,9 @@ public class VTCombinedFunctionDataReferenceCorrelator_x86_Test extends Abstract
 		expectedMatchPairs.add(associate(addr(srcProg, "00411bb0"), addr(destProg, "00411b90")));  // src:@_RTC_CheckStackVars@8 dst: @_RTC_CheckStackVars@8
 		expectedMatchPairs.add(associate(addr(srcProg, "00411c70"), addr(destProg, "00411c50")));  // src:@_RTC_CheckStackVars2@12 dst: @_RTC_CheckStackVars2@12		
 		expectedMatchPairs.add(associate(addr(srcProg, "00411dc0"), addr(destProg, "00411da0")));  // src:FUN_00411dc0 dst: FUN_00411da0		
-//		expectedMatchPairs.add(associate(addr(srcProg, "00411e70"), addr(destProg, "00411e50")));  // src:FUN_00411e70 dst: FUN_00411e50 -- similarity score < 0.5	
+
+		//expectedMatchPairs.add(associate(addr(srcProg, "00411e70"), addr(destProg, "00411e50")));  // src:FUN_00411e70 dst: FUN_00411e50 -- similarity score < 0.5	
+
 		expectedMatchPairs.add(associate(addr(srcProg, "00411ee0"), addr(destProg, "00411ec0")));  // src:_mainCRTStartup dst: _mainCRTStartup
 
 //		expectedMatchPairs.add(associate(addr(srcProg, "00411f00"), addr(destProg, "00411ee0")));  // src:___tmainCRTStartup dst: ___tmainCRTStartup -- similarity score < 0.5		
@@ -152,7 +154,6 @@ public class VTCombinedFunctionDataReferenceCorrelator_x86_Test extends Abstract
 		expectedMatchPairs.add(associate(addr(srcProg, "004130d0"), addr(destProg, "004130b0")));  // src:_atexit dst: _atexit
 		expectedMatchPairs.add(associate(addr(srcProg, "00413370"), addr(destProg, "00413350")));  // src:__IsNonwritableInCurrentImage dst: __IsNonwritableInCurrentImage
 		expectedMatchPairs.add(associate(addr(srcProg, "004134e0"), addr(destProg, "004134c0")));  // src: FUN_004134e0 dst: FUN_004134c0
-		expectedMatchPairs.add(associate(addr(srcProg, "00413520"), addr(destProg, "00413500")));  // src:_RTC_GetSrcLine dst: _RTC_GetSrcLine
 		expectedMatchPairs.add(associate(addr(srcProg, "00413890"), addr(destProg, "00413870")));  // src:GetPdbDll dst: GetPdbDll
 
 		assertMatchPairs(expectedMatchPairs, testMatchPairs);
