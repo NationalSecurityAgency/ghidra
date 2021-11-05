@@ -31,7 +31,7 @@ rs3: r2731 is r2731 { export r2731; }
 rs3: zero is zero & op2731=0 { export 0:$(XLEN); }
 
 rd: r0711 is r0711 { export r0711; }
-rd: zero is r0711 & zero & op0711=0 { export 0:$(XLEN); }
+rd: zero is r0711 & zero & op0711=0 { local tempZero:$(XLEN) = 0; export tempZero; }
 rdDst: r0711 is r0711 { export r0711; }
 
 
