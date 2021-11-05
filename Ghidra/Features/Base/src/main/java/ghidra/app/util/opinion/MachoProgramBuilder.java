@@ -112,6 +112,7 @@ public class MachoProgramBuilder {
 		monitor.setCancelEnabled(true);
 
 		setImageBase();
+		processEncryption();
 		processEntryPoint();
 		processMemoryBlocks(machoHeader, provider.getName(), true, true);
 		processUnsupportedLoadCommands();
@@ -153,6 +154,17 @@ public class MachoProgramBuilder {
 		}
 		else {
 			program.setImageBase(space.getAddress(0), true);
+		}
+	}
+	
+	private void processEncryption() throws Exception {
+		monitor.setMessage("Processing encryption...");
+		for (EncryptedInformationCommand cmd : machoHeader
+				.getLoadCommands(EncryptedInformationCommand.class)) {
+			if (cmd.getCryptID() != 0) {
+				log.appendMsg(String.format("ENCRYPTION DETECTED: (file offset 0x%x, size 0x%x)",
+					cmd.getCryptOffset(), cmd.getCryptSize()));
+			}
 		}
 	}
 
