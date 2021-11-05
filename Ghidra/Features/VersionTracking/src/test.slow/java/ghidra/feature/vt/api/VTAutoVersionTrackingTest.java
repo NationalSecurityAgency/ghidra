@@ -15,7 +15,7 @@
  */
 package ghidra.feature.vt.api;
 
-import static ghidra.feature.vt.db.VTTestUtils.addr;
+import static ghidra.feature.vt.db.VTTestUtils.*;
 import static org.junit.Assert.*;
 
 import java.util.*;
@@ -47,7 +47,8 @@ import ghidra.util.task.TaskMonitor;
 public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTest {
 
 	private static final String TEST_SOURCE_PROGRAM_NAME = "VersionTracking/WallaceSrc";
-	private static final String TEST_DESTINATION_PROGRAM_NAME = "VersionTracking/WallaceVersion2";
+	private static final String TEST_DESTINATION_PROGRAM_NAME =
+		"VersionTracking/WallaceVersion2";
 
 	private VTTestEnv env;
 	private VTController controller;
@@ -87,13 +88,13 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		env.showTool();
 		controller = env.getVTController();
 
-		// Score 1.0 and confidence 10.0 (log10 confidence 2.0) and up
-		boolean success = runAutoVTCommand(1.0, 10.0);
+		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
+		boolean success = runAutoVTCommand(0.999999999, 10.0);
 		assertTrue("Auto Version Tracking Command failed to run", success);
 
 		// verify that the default options are what we expect
 		// if this assert fails then the follow-on tests will probably fail 
-		assertCorrectOptionValues(session, "1.0", "10.0");
+		assertCorrectOptionValues(session, "0.999999999", "10.0");
 
 		// verify that given the above verified conditions the 
 		// exact unique correlators (which have their own tests to verify which matches are
@@ -121,14 +122,15 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		// because when a 10.0 is passed into the combined correlator as the confidence value, all
 		// the confidences are returned as log10 values which would be 2.0 or less
 		assertCorrectScoreAndConfidenceValues(session, "Combined Function and Data Reference Match",
-			1.0, 2.0);
-		// Keep these numbers so I can do more testing later
+			0.999999999, 2.0);
+
 		// With the higher score/confidence thresholds, there are less accepted matches
+		// if this fails after previous check passes it means more are accepted than expected
 		assertCorrectMatchCountAndAcceptedMatchCount(session,
-			"Combined Function and Data Reference Match", 13, 13);
+			"Combined Function and Data Reference Match", 21, 21);
+
 		// Check that all the matches have the correct statuses
 		assertCombinedReferenceMatchStatusesHigherScoreAndConfidence(session);
-
 	}
 
 	/*
@@ -992,24 +994,33 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		assertBlockedMatch(vtSession, correlator, "0x412330", "0x4122e0");
 	}
 
-	// These are the matches when score is 1.0 and log 10 conf threshold is 2.0 
+	// These are the matches when score is .999999999 and log 10 conf threshold is 2.0 
 	private void assertCombinedReferenceMatchStatusesHigherScoreAndConfidence(VTSession vtSession) {
 
 		String correlator = "Combined Function and Data Reference Match";
 
 		assertAcceptedMatch(vtSession, correlator, "0x00411700", "0x004116f0");
 		assertAcceptedMatch(vtSession, correlator, "0x00411860", "0x00411830");
+		assertAcceptedMatch(vtSession, correlator, "0x004118f0", "0x004118c0");
 		assertAcceptedMatch(vtSession, correlator, "0x00411ab0", "0x00411a90");
 		assertAcceptedMatch(vtSession, correlator, "0x00411b80", "0x00411b60");
 		assertAcceptedMatch(vtSession, correlator, "0x00411bb0", "0x00411b90");
 		assertAcceptedMatch(vtSession, correlator, "0x00411c70", "0x00411c50");
+		assertAcceptedMatch(vtSession, correlator, "0x00411dc0", "0x00411da0");
 		assertAcceptedMatch(vtSession, correlator, "0x00411ee0", "0x00411ec0");
-		assertAcceptedMatch(vtSession, correlator, "0x0412380", "0x00412360");
-		assertAcceptedMatch(vtSession, correlator, "0x04123f0", "0x004123d0");
-		assertAcceptedMatch(vtSession, correlator, "0x0412950", "0x00412930");
-		assertAcceptedMatch(vtSession, correlator, "0x04130d0", "0x004130b0");
-		assertAcceptedMatch(vtSession, correlator, "0x04134e0", "0x004134c0");
-		assertAcceptedMatch(vtSession, correlator, "0x0413520", "0x00413500");
+		assertAcceptedMatch(vtSession, correlator, "0x004122b0", "0x00412290");
+		assertAcceptedMatch(vtSession, correlator, "0x00412380", "0x00412360");
+		assertAcceptedMatch(vtSession, correlator, "0x004123f0", "0x004123d0");
+		assertAcceptedMatch(vtSession, correlator, "0x00412950", "0x00412930");
+		assertAcceptedMatch(vtSession, correlator, "0x00412ad0", "0x00412ab0");
+		assertAcceptedMatch(vtSession, correlator, "0x00412df0", "0x00412dd0");
+		assertAcceptedMatch(vtSession, correlator, "0x00412e90", "0x00412e70");
+		assertAcceptedMatch(vtSession, correlator, "0x00412ee0", "0x00412ec0");
+		assertAcceptedMatch(vtSession, correlator, "0x00413073", "0x00413053");
+		assertAcceptedMatch(vtSession, correlator, "0x004130d0", "0x004130b0");
+		assertAcceptedMatch(vtSession, correlator, "0x00413370", "0x00413350");
+		assertAcceptedMatch(vtSession, correlator, "0x004134e0", "0x004134c0");
+
 	}
 
 	// These are the matches when score is 0.5 and conf is 1.0

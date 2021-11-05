@@ -66,7 +66,7 @@ public class VTImpliedMatchCorrelatorTest extends AbstractVTCorrelatorTest {
 		 */
 
 		// first test the number of implied matches
-		assertEquals(17, testMatchSet.getMatchCount());
+		assertEquals(18, testMatchSet.getMatchCount());
 
 		// now test the expected matches which are real functions or data, not thunks
 		// if all are in set and we tested the size then no thunks are in the set
@@ -104,6 +104,9 @@ public class VTImpliedMatchCorrelatorTest extends AbstractVTCorrelatorTest {
 			isMatchInMatchSet(addr(srcProg, "00418168"), addr(destProg, "00418168"), testMatchSet));
 		assertTrue(
 			isMatchInMatchSet(addr(srcProg, "0041816c"), addr(destProg, "0041816c"), testMatchSet));
+
+		assertTrue(
+			isMatchInMatchSet(addr(srcProg, "00418174"), addr(destProg, "00418174"), testMatchSet));
 	}
 
 	/*
