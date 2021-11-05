@@ -150,6 +150,11 @@ class DataDB extends CodeUnitDB implements Data {
 			}
 		}
 
+		// no need to do all that follow on checking when length == 1
+		if (length == 1) {
+			return;
+		}
+
 		// FIXME Trying to get Data to display for External.
 		if (address.isExternalAddress()) { // FIXME
 			return; // FIXME
