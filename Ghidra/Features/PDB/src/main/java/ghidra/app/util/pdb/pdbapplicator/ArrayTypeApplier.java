@@ -120,6 +120,15 @@ public class ArrayTypeApplier extends MsTypeApplier {
 			PdbApplicator.bigIntegerToLong(applicator, underlyingTypeApplier.getSize());
 		DataType underlyingDataType = underlyingTypeApplier.getDataType();
 
+		if (underlyingDataType == null) {
+			Long v = longUnderlyingSize;
+			underlyingDataType = Undefined.getUndefinedDataType(v.intValue());
+			String msg = "PDB Type index " + index + ":\n   Null underlying data type for " +
+				underlyingTypeApplier.getClass().getSimpleName() + ":\n      " +
+				underlyingTypeApplier + "\n   Using " + underlyingDataType;
+			Msg.warn(this, msg);
+		}
+
 		if (longUnderlyingSize > Integer.MAX_VALUE) {
 			String msg = "PDB " + type.getClass().getSimpleName() + ": Underlying type too large " +
 				underlyingDataType.getName();
