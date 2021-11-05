@@ -49,8 +49,8 @@ public final class LoadCommandTypes {
 			}
 			case LC_LOADFVMLIB:
 			case LC_IDFVMLIB: {
-				return FixedVirtualMemorySharedLibraryCommand.createFixedVirtualMemorySharedLibraryCommand(
-					reader);
+				return FixedVirtualMemorySharedLibraryCommand
+						.createFixedVirtualMemorySharedLibraryCommand(reader);
 			}
 			case LC_IDENT: {
 				return IdentCommand.createIdentCommand(reader);
@@ -163,7 +163,7 @@ public final class LoadCommandTypes {
 				return FileSetEntryCommand.createFileSetEntryCommand(reader, header.is32bit());
 
 			default: {
-				Msg.warn(header, "Unsupported load command" + Integer.toHexString(type));
+				Msg.warn(header, "Unsupported load command " + Integer.toHexString(type));
 				return UnsupportedLoadCommand.createUnsupportedLoadCommand(reader, type);
 			}
 		}

@@ -307,7 +307,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 
 			List<Address> unchainedLocList = new ArrayList<>(1024);
 
-			long pageOffset = (pageEntry / 8) * DyldChainedPtr.getStride(ptrFormat); // first entry byte based
+			long pageOffset = pageEntry; // first entry is byte based
 
 			switch (ptrFormat) {
 				case DYLD_CHAINED_PTR_ARM64E:

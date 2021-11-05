@@ -209,7 +209,7 @@ public class DyldChainedPtr {
 			return 0;
 		}
 
-		long diversityData = (chainValue >> 32L) & 0xFFFFL;
+		long diversityData = (chainValue >>> 32) & 0xFFFF;
 
 		return diversityData;
 	}
@@ -219,7 +219,7 @@ public class DyldChainedPtr {
 			return false;
 		}
 
-		return ((chainValue >> 48L) & 0x1L) == 1;
+		return ((chainValue >>> 48) & 1) == 1;
 	}
 
 	public static long getKey(DyldChainType ptrFormat, long chainValue) {
@@ -227,7 +227,7 @@ public class DyldChainedPtr {
 			return 0;
 		}
 
-		return (chainValue >> 49L) & 0x3L;
+		return (chainValue >>> 49L) & 0x3;
 	}
 
 	public static long getTarget(DyldChainType ptrFormat, long chainValue) {
@@ -278,20 +278,20 @@ public class DyldChainedPtr {
 				break;
 
 			case DYLD_CHAINED_PTR_32:
-				target = (chainValue & 0x3FFFFFL); // 26 bits
+				target = (chainValue & 0x3FFFFF); // 26 bits
 				break;
 
 			case DYLD_CHAINED_PTR_32_CACHE:
-				target = (chainValue & 0x3FFFFFFFL); // 30 bits
+				target = (chainValue & 0x3FFFFFFF); // 30 bits
 				break;
 
 			case DYLD_CHAINED_PTR_32_FIRMWARE:
-				target = (chainValue & 0x3FFFFFL); // 26 bits
+				target = (chainValue & 0x3FFFFF); // 26 bits
 				break;
 
 			case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
 			case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
-				target = (chainValue & 0x3FFFFFFFL); // 30 bits
+				target = (chainValue & 0x3FFFFFFF); // 30 bits
 				break;
 			default:
 				return 0;
@@ -310,16 +310,16 @@ public class DyldChainedPtr {
 			case DYLD_CHAINED_PTR_ARM64E:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
-				long addend = (chainValue >> 32L) & 0x7FFFFL;
+				long addend = (chainValue >>> 32) & 0x7FFFF;
 				addend = ((addend & 0x40000) != 0 ? (addend | 0xFFFFFFFFFFFC0000L) : addend);
 				return addend;
 
 			case DYLD_CHAINED_PTR_64:
 			case DYLD_CHAINED_PTR_64_OFFSET:
-				return (chainValue >> 24) & 0xFFL;
+				return (chainValue >>> 24) & 0xFF;
 
 			case DYLD_CHAINED_PTR_32:
-				return (chainValue >> 20) & 0x3FL;  // 6 bits
+				return (chainValue >>> 20) & 0x3F;  // 6 bits
 			default:
 				return 0;
 		}
@@ -335,17 +335,17 @@ public class DyldChainedPtr {
 		switch (ptrFormat) {
 			case DYLD_CHAINED_PTR_ARM64E:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
-				ordinal = (int) (chainValue & 0xFFFFL);
+				ordinal = chainValue & 0xFFFF;
 				break;
 
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
 			case DYLD_CHAINED_PTR_64:
 			case DYLD_CHAINED_PTR_64_OFFSET:
-				ordinal = (int) (chainValue & 0xFFFFFFL);
+				ordinal = chainValue & 0xFFFFFF;
 				break;
 
 			case DYLD_CHAINED_PTR_32:
-				ordinal = (int) (chainValue & 0xFFFFFL);
+				ordinal = chainValue & 0xFFFFF;
 				break;
 
 			// Never Ordinal
@@ -372,30 +372,33 @@ public class DyldChainedPtr {
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND:
 			case DYLD_CHAINED_PTR_ARM64E_USERLAND24:
 			case DYLD_CHAINED_PTR_ARM64E_KERNEL:
-				next = (chainValue & (0x7FFL << 51L)) >> 51L;   // 11-bits
+				next = (chainValue >>> 51) & 0x7FF;   // 11-bits
 				break;
+
 			case DYLD_CHAINED_PTR_64:
 			case DYLD_CHAINED_PTR_64_OFFSET:
 			case DYLD_CHAINED_PTR_X86_64_KERNEL_CACHE:
 			case DYLD_CHAINED_PTR_64_KERNEL_CACHE:
-				next = (chainValue & (0xFFFL << 52L)) >> 52L;  // 12 bits
+				next = (chainValue >>> 51) & 0xFFF;  // 12 bits
 				break;
 
 			case DYLD_CHAINED_PTR_32:
-				next = (chainValue & (0x1FL << 26L)) >> 26L;  // 5 bits
+				next = (chainValue >>> 26) & 0x1F;  // 5 bits
 				break;
 
 			// Never bound
 			case DYLD_CHAINED_PTR_ARM64E_FIRMWARE:
 				next = 0;
+				break;
 
 			case DYLD_CHAINED_PTR_32_CACHE:
-				next = (chainValue & (0x3L << 30L)) >> 30L;  // 2 bits
+				next = (chainValue >>> 30) & 0x3;  // 2 bits
 				break;
 
 			case DYLD_CHAINED_PTR_32_FIRMWARE:
-				next = (chainValue & (0x3FL << 26L)) >> 26L;  // 6 bits
+				next = (chainValue >>> 26) & 0x3F;  // 6 bits
 				break;
+
 			default:
 				break;
 		}
