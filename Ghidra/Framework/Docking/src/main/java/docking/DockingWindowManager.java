@@ -630,7 +630,7 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 		placeholder.update();
 		scheduleUpdate();
 
-		DetachedWindowNode wNode = placeholder.getWindowNode();
+		DetachedWindowNode wNode = placeholder.getDetachedWindowNode();
 		if (wNode != null) {
 			wNode.updateTitle();
 		}
@@ -2225,19 +2225,16 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 	}
 
 	public void contextChanged(ComponentProvider provider) {
-
-		if (provider == null) {
-			actionToGuiMapper.contextChangedAll(); // this updates the actions for all windows
-			return;
+		// if provider is specified, update its local menu and tool bar actions
+		if (provider != null) {
+			ComponentPlaceholder placeholder = getActivePlaceholder(provider);
+			if (placeholder != null) {
+				placeholder.contextChanged();
+			}
 		}
 
-		ComponentPlaceholder placeholder = getActivePlaceholder(provider);
-		if (placeholder == null) {
-			return;
-		}
-
-		placeholder.contextChanged();
-		actionToGuiMapper.contextChanged(placeholder);
+		// always update the global tool menu and tool bar actions
+		actionToGuiMapper.contextChanged();
 	}
 
 	/**
@@ -2326,12 +2323,16 @@ public class DockingWindowManager implements PropertyChangeListener, Placeholder
 
 	}
 
-	void notifyContextListeners(ComponentPlaceholder placeHolder, ActionContext actionContext) {
-
-		if (placeHolder == focusedPlaceholder) {
-			for (DockingContextListener listener : contextListeners) {
-				listener.contextChanged(actionContext);
-			}
+	/**
+	 * This call will notify any context listeners that the context has changed.
+	 * 
+	 * <p>Our {@link #contextChanged(ComponentProvider)} method will eventually call back into this
+	 * method after any buffering has taken place.
+	 * @param context the context
+	 */
+	void doContextChanged(ActionContext context) {
+		for (DockingContextListener listener : contextListeners) {
+			listener.contextChanged(context);
 		}
 	}
 
