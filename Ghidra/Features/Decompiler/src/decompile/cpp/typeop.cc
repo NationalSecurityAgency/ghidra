@@ -1572,7 +1572,7 @@ Datatype *TypeOpPiece::getOutputToken(const PcodeOp *op,CastStrategy *castStrate
 
 {
   const Varnode *vn = op->getOut();
-  Datatype *dt = vn->getType();
+  Datatype *dt = vn->getHigh()->getType();
   type_metatype meta = dt->getMetatype();
   if ((meta == TYPE_INT)||(meta == TYPE_UINT))		// PIECE casts to uint or int, based on output
     return dt;
@@ -1599,7 +1599,7 @@ Datatype *TypeOpSubpiece::getOutputToken(const PcodeOp *op,CastStrategy *castStr
 
 {
   const Varnode *vn = op->getOut();
-  Datatype *dt = vn->getType();			// SUBPIECE prints as cast to whatever its output is
+  Datatype *dt = vn->getHigh()->getType();	// SUBPIECE prints as cast to whatever its output is
   if (dt->getMetatype() != TYPE_UNKNOWN)
     return dt;
   return tlst->getBase(vn->getSize(),TYPE_INT);	// If output is unknown, treat as cast to int
@@ -1711,7 +1711,9 @@ Datatype *TypeOpPtrsub::getOutputToken(const PcodeOp *op,CastStrategy *castStrat
   TypePointer *ptype = (TypePointer *)op->getIn(0)->getHigh()->getType();
   if (ptype->getMetatype() == TYPE_PTR) {
     uintb offset = AddrSpace::addressToByte(op->getIn(1)->getOffset(),ptype->getWordSize());
-    Datatype *rettype = ptype->downChain(offset,false,*tlst);
+    uintb unusedOffset;
+    TypePointer *unusedParent;
+    Datatype *rettype = ptype->downChain(offset,unusedParent,unusedOffset,false,*tlst);
     if ((offset==0)&&(rettype != (Datatype *)0))
       return rettype;
     rettype = tlst->getBase(1, TYPE_UNKNOWN);

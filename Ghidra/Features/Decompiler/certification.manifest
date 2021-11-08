@@ -30,6 +30,8 @@ src/decompile/datatests/noforloop_alias.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_globcall.xml||GHIDRA||||END|
 src/decompile/datatests/noforloop_iterused.xml||GHIDRA||||END|
 src/decompile/datatests/offsetarray.xml||GHIDRA||||END|
+src/decompile/datatests/pointercmp.xml||GHIDRA||||END|
+src/decompile/datatests/pointerrel.xml||GHIDRA||||END|
 src/decompile/datatests/promotecompare.xml||GHIDRA||||END|
 src/decompile/datatests/readvolatile.xml||GHIDRA||||END|
 src/decompile/datatests/sbyte.xml||GHIDRA||||END|

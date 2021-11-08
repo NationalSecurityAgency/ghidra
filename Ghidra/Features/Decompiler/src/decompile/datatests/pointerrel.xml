@@ -1,0 +1,50 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+  <!--
+      A function that uses a "relative pointer" that knows it points to the
+      interior of a structure.  We should see the initialization of the pointer
+      based on a particular field, and we should see accesses into the structure
+      from the pointer using the special functional syntax. The are accesses
+      of different types occuring both before and after the original pointer.
+  -->
+<bytechunk space="ram" offset="0x1006fa" readonly="true">
+                    554889e54889
+7dd88975d4c745ec00000000f30f1005
+a0010000f30f1145f0488b45d84883c0
+08488945f8c745f400000000eb39488b
+45f88b000145ec488b45f84883c0048b
+000145ec488b45f84883e804f30f1000
+f30f104df0f30f58c1f30f1145f04883
+45f8508345f4018b45f43b45d47cbff3
+0f1045f00f2e053d01000076048345ec
+058b45ec5dc3
+</bytechunk>
+<bytechunk space="ram" offset="0x1008b4" readonly="true">
+        000020410000a841
+</bytechunk>
+<symbol name="process_array" space="ram" offset="0x1006fa"/>
+</binaryimage>
+<script>
+<com>option readonly on</com>
+<com>parse line struct mystruct { int4 a; float4 b; int4 c; int4 d; int4 arr[16]; };</com>
+<com>pointer setting myptroff mystruct offset 8</com>
+<com>parse line extern int4 process_array(mystruct *ptr,int4 count);</com>
+<com>lo fu process_array</com>
+<com>dec</com>
+<com>retype piStack16 myptroff ptrrel</com>
+<com>rename iStack20 i</com>
+<com>rename fStack24 fSum</com>
+<com>rename iStack28 iSum</com>
+<com>dec</com>
+<com>print C</com>
+<com>quit</com>
+</script>
+<stringmatch name="Relative pointers #1" min="2" max="2">ADJ</stringmatch>
+<stringmatch name="Relative pointers #2" min="1" max="1">iSum = iSum \+ ADJ\(ptrrel\)-&gt;c \+ ADJ\(ptrrel\)-&gt;d;</stringmatch>
+<stringmatch name="Relative pointers #3" min="1" max="1">fSum = ADJ\(ptrrel\)-&gt;b \+ fSum;</stringmatch>
+<stringmatch name="Relative pointers #4" min="1" max="1">ptrrel = &amp;ptr-&gt;c;</stringmatch>
+<stringmatch name="Relative pointers #5" min="1" max="1">myptroff ptrrel;</stringmatch>
+<stringmatch name="Relative pointers #6" min="1" max="1">ptrrel = ptrrel \+ 0x14;</stringmatch>
+<stringmatch name="Relative pointers #7" min="1" max="1">if \(21.0 &lt; fSum\)</stringmatch>
+<stringmatch name="Relative pointers #8" min="1" max="1">for \(i = 0; i &lt; count; i = i \+ 1\)</stringmatch>
+</decompilertest>
