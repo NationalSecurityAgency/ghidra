@@ -31,7 +31,17 @@
 /*********************************************************************************
  * Defines the main ip task for each subproject
  *********************************************************************************/
-task ip { 
+task ip {
+
+    inputs.file(file("certification.manifest"))
+			.withPropertyName("ipCertificationFile")
+			.withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(file("Module.manifest"))
+			.withPropertyName("ipModuleManifest")
+			.withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.cacheIf { true}
+    outputs.file file("$buildDir/LICENSE.txt")
+
 	doLast {
 		
 		// scans all the files in the module, reads ip from header, verifies ip, and creates mapping

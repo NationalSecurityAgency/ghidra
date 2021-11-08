@@ -63,9 +63,34 @@ dependencies {
 	helpIndexImplementation project(':Help')
 }
 
+// CommandLineArgumentProvider that supplies indexHelp task with relative help file paths
+// This allows build cache artifacts to be relocate-able across workspaces and machines.
+class HelpFilesPathProvider implements CommandLineArgumentProvider {
+    @InputDirectory
+    @PathSensitive(PathSensitivity.RELATIVE)
+    File helpFilePath
+
+    @Override
+    Iterable<String> asArguments() {
+        [helpFilePath.absolutePath]
+    }
+}
+
+// CommandLineArgumentProvider that supplies indexHelp task with the absolute path to the help output directory
+// This allows build cache artifacts to be relocate-able across workspaces and machines.
+class HelpOutputPathProvider implements CommandLineArgumentProvider {
+    @OutputDirectory
+    File helpOutputPath
+
+    @Override
+    Iterable<String> asArguments() {
+        ["-db ${helpOutputPath.absolutePath}".toString()]
+    }
+}
+
 // Task for calling the java help indexer, which creates a searchable index of the 
 // help contents.
-task indexHelp(type: JavaExec) {	
+task indexHelp(type: JavaExec) {
 
 	group "private"
 	description "indexes the helps files for this module.  [gradle/helpProject.gradle]"
@@ -76,15 +101,18 @@ task indexHelp(type: JavaExec) {
 
 	dependsOn configurations.helpPath
 
-	inputs.dir helpRootDir
+	inputs.dir(helpRootDir)
+			.withPropertyName('helpRootDir')
+			.withPathSensitivity(PathSensitivity.RELATIVE)
 	outputs.dir outputFile
+    outputs.cacheIf { true }
 	
 	classpath = sourceSets.helpIndex.runtimeClasspath
 	
 	mainClass = 'com.sun.java.help.search.Indexer'
 
 	// tell the indexer where send its output	
-	args '-db', outputFile.absolutePath
+    argumentProviders.add(new HelpOutputPathProvider(helpOutputPath: outputFile))
 
 	// The index has a config file parameter.  The only thing we use in the config file
 	// is a root directory path that should be stripped off all the help references to
@@ -114,7 +142,7 @@ task indexHelp(type: JavaExec) {
 		
 		// for each help file that was found, add it as an argument to the indexer
 		helpFiles.each { File file ->
-			args "${file.absolutePath}"
+            argumentProviders.add(new HelpFilesPathProvider(helpFilePath: file))
 		}	
 	}
 }

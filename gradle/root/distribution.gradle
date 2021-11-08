@@ -468,6 +468,16 @@ def updateSlaFilesTimestamp(String distributionDirectoryPath, int timeOffsetMinu
 	println "updateSlaFilesTimestamp: Updated timestamps to $numFilesAdded .sla files."
 }
 
+String ghidraExtensionsDirPath = DISTRIBUTION_DIR.getPath() + "/" + ZIP_DIR_PREFIX + "/Ghidra/Extensions"
+task createGhidraExtensionsDir {
+    outputs.dir ghidraExtensionsDirPath
+    doLast {
+        // We always want the extensions directory to exist in the zip, even if there's nothing
+        // installed there.
+        new File(ghidraExtensionsDirPath).mkdirs()
+    }
+}
+
 /*********************************************************************************
  * 
  * Creates the local installation zip.
@@ -481,6 +491,7 @@ task createInstallationZip(type: Zip) { t ->
 	dependsOn assembleDistribution
 	dependsOn assembleSource
 	dependsOn "assembleDistribution_$currentPlatform"
+    dependsOn createGhidraExtensionsDir
 	
 	if (project.hasProperty("allPlatforms")) {
 		project.PLATFORMS.each { platform ->
@@ -504,11 +515,6 @@ task createInstallationZip(type: Zip) { t ->
 	}
 		
 	doFirst {
-		// We always want the extensions directory to exist in the zip, even if there's nothing
-		// installed there.
-		new File( DISTRIBUTION_DIR.getPath() + "/" + ZIP_DIR_PREFIX + "/Ghidra/Extensions").mkdirs()
-
-
 		// The dependent tasks copy the sla and slaspec files into "extractTo/<release name>/ghidra/"
 		// and then later to "extractTo/<release name>/dist/", which this zip task compresses. The copy 
 		// tasks do not preserve the file modification times. If slaspec timestamp > sla timestamp, 
@@ -516,10 +522,6 @@ task createInstallationZip(type: Zip) { t ->
 		// will ensure the zip archive has sla files newer than slaspec. Give new timestamp of now plus 
 		// two minutes.
 		updateSlaFilesTimestamp(DISTRIBUTION_DIR.getPath(), 2)
-	}
-	
-	doLast {
-		delete file(DISTRIBUTION_DIR.getPath() + "/" + ZIP_DIR_PREFIX)
 	}
 }
 

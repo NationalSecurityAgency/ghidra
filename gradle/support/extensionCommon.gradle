@@ -110,8 +110,8 @@ task zipExtensions (type: Zip) {
 	from (p.projectDir.toString() + "/build/data") {
 		into { getBaseProjectName(p) + "/data" }
 	}
-	
-	from (p.projectDir.toString() + "/build/LICENSE.txt") {
+
+	from (ip) {
 		into { getBaseProjectName(p) }
 	}
 	

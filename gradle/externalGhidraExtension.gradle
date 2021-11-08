@@ -18,10 +18,5 @@ apply from: "$rootProject.projectDir/gradle/support/extensionCommon.gradle"
 
 rootProject.createExternalExtensions {
 	from (this.project.zipExtensions)
-	doLast {
-		this.project.zipExtensions.outputs.each {
-			delete it
-		}
-	}
 }
 

@@ -122,10 +122,5 @@ rootProject.createInstallationZip {
 			ZIP_DIR_PREFIX + "/Extensions/Ghidra"
 		}
 	}
-	doLast {
-		this.project.zipExtensions.outputs.each {
-			delete it
-		}
-	}
 }
 
