@@ -119,25 +119,26 @@ class DataDB extends CodeUnitDB implements Data {
 		baseDataType = getBaseDataType(dataType);
 		defaultSettings = dataType.getDefaultSettings();
 		length = -1; // set to compute lazily later
+		bytes = null;
 		return false;
 	}
 
 	@Override
 	public int getLength() {
 		if (length == -1) {
-			lock.acquire();
-			try {
-				computeLength();
-			}
-			finally {
-				lock.release();
-			}
+			computeLength();
 		}
 		return length;
 	}
 
 	private void computeLength() {
 		length = dataType.getLength();
+
+		// undefined will never change their size
+		if (dataType instanceof Undefined) {
+			return;
+		}
+
 		if (length < 1) {
 			length = codeMgr.getLength(address);
 		}
@@ -181,14 +182,17 @@ class DataDB extends CodeUnitDB implements Data {
 			}
 		}
 
-		bytes = null;
-
 		// if this is not a component where the size could change and
 		// the length restricted by the following instruction/data item, assume
 		// the createData method stopped fixed code units that won't fit from being added
-		if (!(baseDataType instanceof Composite || baseDataType instanceof ArrayDataType)) {
-			return;
-		}
+		//
+		// TODO: If the data organization for a program changes, for example a long was 32-bits
+		//       and is changed to 64-bits, that could cause an issue.
+		//       If the data organization changing could be detected, this could be done.
+		//
+		// if (!(baseDataType instanceof Composite || baseDataType instanceof ArrayDataType)) {
+		//	return;
+		// }
 
 		// This is potentially expensive! So only do if necessary
 		// see if the datatype length is restricted by a following codeunit
@@ -196,7 +200,6 @@ class DataDB extends CodeUnitDB implements Data {
 		if ((nextAddr != null) && nextAddr.compareTo(endAddress) <= 0) {
 			length = (int) nextAddr.subtract(address);
 		}
-		bytes = null;
 	}
 
 	@Override
