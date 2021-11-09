@@ -8,6 +8,7 @@ data/languages/Dalvik_Base.sinc||GHIDRA||||END|
 data/languages/Dalvik_Base.slaspec||GHIDRA||||END|
 data/languages/Dalvik_DEX_Android10.slaspec||GHIDRA||||END|
 data/languages/Dalvik_DEX_Android11.slaspec||GHIDRA||||END|
+data/languages/Dalvik_DEX_Android12.slaspec||GHIDRA||||END|
 data/languages/Dalvik_DEX_KitKat.slaspec||GHIDRA||||END|
 data/languages/Dalvik_DEX_Lollipop.slaspec||GHIDRA||||END|
 data/languages/Dalvik_DEX_Marshmallow.slaspec||GHIDRA||||END|
@@ -22,6 +23,7 @@ data/languages/Dalvik_OpCode_73_unused.sinc||GHIDRA||||END|
 data/languages/Dalvik_OpCode_79_unused.sinc||GHIDRA||||END|
 data/languages/Dalvik_OpCode_7A_unused.sinc||GHIDRA||||END|
 data/languages/Dalvik_OpCode_E3_EA_dex.sinc||GHIDRA||||END|
+data/languages/Dalvik_OpCode_E3_EA_unused.sinc||GHIDRA||||END|
 data/languages/Dalvik_OpCode_EB_F2_iput_iget.sinc||GHIDRA||||END|
 data/languages/Dalvik_OpCode_EB_F2_unused.sinc||GHIDRA||||END|
 data/languages/Dalvik_OpCode_F3_unused.sinc||GHIDRA||||END|

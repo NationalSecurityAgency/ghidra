@@ -16,21 +16,14 @@
 package ghidra.file.formats.android.cdex;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
-import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.*;
 import ghidra.file.formats.android.dex.DexHeaderFactory;
-import ghidra.file.formats.android.dex.format.*;
-import ghidra.file.formats.android.dex.util.DexUtil;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.mem.MemoryBlock;
-import ghidra.util.task.TaskMonitor;
+import ghidra.file.formats.android.dex.format.DexConstants;
+import ghidra.file.formats.android.dex.format.DexHeader;
 
 public class CDexLoader extends DexLoader {
 
@@ -82,98 +75,18 @@ public class CDexLoader extends DexLoader {
 	}
 
 	@Override
-	public void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log) throws IOException {
-
-		monitor.setMessage("CDEX Loader: creating cdex memory");
-		try {
-			Address start = program.getAddressFactory().getDefaultAddressSpace().getAddress(0x0);
-			long length = provider.length();
-
-			try (InputStream inputStream = provider.getInputStream(0)) {
-				program.getMemory()
-						.createInitializedBlock(".cdex", start, inputStream, length, monitor,
-							false);
-			}
-
-			BinaryReader reader = new BinaryReader(provider, true);
-			DexHeader header = DexHeaderFactory.getDexHeader(reader);
-
-			monitor.setMessage("CDEX Loader: creating method byte code");
-
-			createMethodLookupMemoryBlock(program, monitor);
-			createMethodByteCodeBlock(program, length, monitor);
-
-			for (ClassDefItem item : header.getClassDefs()) {
-				monitor.checkCanceled();
-
-				ClassDataItem classDataItem = item.getClassDataItem();
-				if (classDataItem == null) {
-					continue;
-				}
-
-				createMethods(program, header, item, classDataItem.getDirectMethods(), monitor,
-					log);
-				createMethods(program, header, item, classDataItem.getVirtualMethods(), monitor,
-					log);
-			}
-		}
-		catch (Exception e) {
-			log.appendException(e);
-		}
+	protected String getMemoryBlockName() {
+		return ".cdex";
 	}
 
-	private void createMethodByteCodeBlock(Program program, long length, TaskMonitor monitor)
-			throws Exception {
-		Address address = toAddr(program, DexUtil.METHOD_ADDRESS);
-		MemoryBlock block = program.getMemory()
-				.createInitializedBlock("method_bytecode", address, length, (byte) 0xff, monitor,
-					false);
-		block.setRead(true);
-		block.setWrite(false);
-		block.setExecute(true);
+	@Override
+	protected String getMonitorMessagePrimary() {
+		return "CDEX Loader: creating cdex memory";
 	}
 
-	private void createMethodLookupMemoryBlock(Program program, TaskMonitor monitor)
-			throws Exception {
-		Address address = toAddr(program, DexUtil.LOOKUP_ADDRESS);
-		MemoryBlock block = program.getMemory()
-				.createInitializedBlock("method_lookup", address, DexUtil.MAX_METHOD_LENGTH,
-					(byte) 0xff, monitor, false);
-		block.setRead(true);
-		block.setWrite(false);
-		block.setExecute(false);
-	}
-
-	private void createMethods(Program program, DexHeader header, ClassDefItem item,
-			List<EncodedMethod> methods, TaskMonitor monitor, MessageLog log) throws Exception {
-		for (int i = 0; i < methods.size(); ++i) {
-			monitor.checkCanceled();
-
-			EncodedMethod encodedMethod = methods.get(i);
-
-			CodeItem codeItem = encodedMethod.getCodeItem();
-
-			Address methodIndexAddress =
-				DexUtil.toLookupAddress(program, encodedMethod.getMethodIndex());
-
-			if (codeItem == null) {
-				//external method, ignore
-			}
-			else {
-				Address methodAddress =
-					toAddr(program, DexUtil.METHOD_ADDRESS + encodedMethod.getCodeOffset());
-
-				byte[] instructionBytes = codeItem.getInstructionBytes();
-				program.getMemory().setBytes(methodAddress, instructionBytes);
-
-				program.getMemory().setInt(methodIndexAddress, (int) methodAddress.getOffset());
-			}
-		}
-	}
-
-	private Address toAddr(Program program, long offset) {
-		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
+	@Override
+	protected String getMonitorMessageSecondary() {
+		return "CDEX Loader: creating method byte code";
 	}
 
 }

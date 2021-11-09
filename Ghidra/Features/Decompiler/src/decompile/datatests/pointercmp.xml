@@ -1,0 +1,23 @@
+<decompilertest>
+<binaryimage arch="x86:LE:64:default:gcc">
+<bytechunk space="ram" offset="0x10066a" readonly="true">
+                    554889e54889
+7de8488b45e84883c008488945f8eb0c
+488b45f8c60061488345f801488b45e8
+4883c018483945f872e6905dc3
+</bytechunk>
+<symbol name="myinit" space="ram" offset="0x10066a"/>
+</binaryimage>
+<script>
+  <com>parse line struct mystruct { int8 val; char arr[16]; float4 fval; };</com>
+  <com>parse line extern void myinit(mystruct *ptr);</com>
+  <com>lo fu myinit</com>
+  <com>map addr s0xfffffffffffffff0 xunknown8 pchar</com>
+  <com>dec</com>
+  <com>print C</com>
+  <com>quit</com>
+</script>
+<stringmatch name="Pointer Compare #1" min="1" max="1">for \(pchar = ptr-&gt;arr; pchar &lt; \&amp;ptr-&gt;fval; pchar = pchar \+ 1\)</stringmatch>
+<stringmatch name="Pointer Compare #2" min="1" max="1">char \*pchar;</stringmatch>
+<stringmatch name="Pointer Compare #3" min="1" max="1">\*pchar = 'a';</stringmatch>
+</decompilertest>

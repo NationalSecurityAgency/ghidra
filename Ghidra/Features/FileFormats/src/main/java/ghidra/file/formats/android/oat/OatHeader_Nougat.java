@@ -18,7 +18,6 @@ package ghidra.file.formats.android.oat;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverterUtil;
 import ghidra.program.model.data.DataType;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -32,8 +31,7 @@ public class OatHeader_Nougat extends OatHeader_Marshmallow {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		DataType dataType = super.toDataType();
 		try {
-			String className = StructConverterUtil.parseName(OatHeader_Nougat.class);
-			dataType.setName(className);
+			dataType.setName(OatHeader_Nougat.class.getSimpleName());
 		}
 		catch (Exception e) {
 			//ignore

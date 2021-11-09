@@ -61,7 +61,7 @@ public class NList implements StructConverter {
 		n_sect = reader.readNextByte();
 		n_desc = reader.readNextShort();
 		if (is32bit) {
-			n_value = reader.readNextInt() & 0xffffffffL;
+			n_value = reader.readNextUnsignedInt();
 		}
 		else {
 			n_value = reader.readNextLong();

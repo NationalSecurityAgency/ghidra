@@ -18,8 +18,6 @@ package ghidra.file.formats.android.art.nougat;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverterUtil;
-import ghidra.file.formats.android.art.ArtImageSections;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
 import ghidra.util.InvalidNameException;
@@ -34,10 +32,6 @@ public class ArtHeader_NougatMR2Pixel extends ArtHeader_Nougat {
 		super(reader);
 	}
 
-	protected ArtImageSections getImageSections(BinaryReader reader) {
-		return new ImageSections_NougatMR2Pixel(reader, this);
-	}
-
 	@Override
 	public int getArtMethodCountForVersion() {
 		return ImageMethod_Nougat.kImageMethodsCount.ordinal();
@@ -46,9 +40,8 @@ public class ArtHeader_NougatMR2Pixel extends ArtHeader_Nougat {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = (Structure) super.toDataType();
-		String className = StructConverterUtil.parseName(ArtHeader_NougatMR2Pixel.class);
 		try {
-			structure.setName(className);
+			structure.setName(ArtHeader_NougatMR2Pixel.class.getSimpleName());
 		}
 		catch (InvalidNameException e) {
 			//ignore

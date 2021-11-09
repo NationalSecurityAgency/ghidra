@@ -153,6 +153,9 @@ void HighVariable::updateType(void) const
   vn = getTypeRepresentative();
 
   type = vn->getType();
+  if (type->hasStripped())
+    type = type->getStripped();
+
 				// Update lock flags
   flags &= ~Varnode::typelock;
   if (vn->isTypeLock())

@@ -111,8 +111,8 @@ public class VdexHeader_Oreo extends VdexHeader {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String className = StructConverterUtil.parseName(VdexHeader_Oreo.class);
-		Structure structure = new StructureDataType(className + "_" + number_of_dex_files_, 0);
+		Structure structure = new StructureDataType(
+			VdexHeader_Oreo.class.getSimpleName() + "_" + number_of_dex_files_, 0);
 		structure.add(STRING, 4, "magic_", null);
 		structure.add(STRING, 4, "version_", null);
 		structure.add(DWORD, "number_of_dex_files_", null);

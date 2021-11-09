@@ -62,14 +62,14 @@ public class RoutinesCommand extends LoadCommand {
 		initLoadCommand(reader);
 		this.is32bit = is32bit;
 		if (is32bit) {
-			init_address = reader.readNextInt() & 0xffffffffL;
-			init_module  = reader.readNextInt() & 0xffffffffL;
-			reserved1    = reader.readNextInt() & 0xffffffffL;
-			reserved2    = reader.readNextInt() & 0xffffffffL;
-			reserved3    = reader.readNextInt() & 0xffffffffL;
-			reserved4    = reader.readNextInt() & 0xffffffffL;
-			reserved5    = reader.readNextInt() & 0xffffffffL;
-			reserved6    = reader.readNextInt() & 0xffffffffL;
+			init_address = reader.readNextUnsignedInt();
+			init_module  = reader.readNextUnsignedInt();
+			reserved1    = reader.readNextUnsignedInt();
+			reserved2    = reader.readNextUnsignedInt();
+			reserved3    = reader.readNextUnsignedInt();
+			reserved4    = reader.readNextUnsignedInt();
+			reserved5    = reader.readNextUnsignedInt();
+			reserved6    = reader.readNextUnsignedInt();
 		}
 		else {
 			init_address = reader.readNextLong();

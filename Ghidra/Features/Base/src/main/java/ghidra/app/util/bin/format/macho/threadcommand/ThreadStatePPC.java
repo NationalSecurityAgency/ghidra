@@ -140,7 +140,7 @@ public class ThreadStatePPC extends ThreadState {
 
 	private long read(FactoryBundledWithBinaryReader reader, boolean is32bit) throws IOException {
 		if (is32bit) {
-			return reader.readNextInt() & 0xffffffffL;
+			return reader.readNextUnsignedInt();
 		}
 		return reader.readNextLong();
 	}

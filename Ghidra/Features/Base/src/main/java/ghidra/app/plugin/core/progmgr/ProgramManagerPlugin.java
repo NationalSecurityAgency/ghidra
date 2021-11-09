@@ -613,12 +613,6 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 		}
 	}
 
-	void undoStackChanged() {
-		undoAction.updateActionMenuName();
-		redoAction.updateActionMenuName();
-		tool.contextChanged(null);
-	}
-
 	void contextChanged() {
 		tool.contextChanged(null);
 	}

@@ -31,25 +31,18 @@ import ghidra.app.util.importer.MessageLogContinuesFactory;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
-import ghidra.program.model.data.Pointer64DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.program.model.symbol.SymbolUtilities;
-import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * Builds up a DYLD Cache {@link Program} by parsing the DYLD Cache headers.
  */
 public class DyldCacheProgramBuilder extends MachoProgramBuilder {
-
-	private static final int DATA_PAGE_MAP_ENTRY = 1;
-	private static final int BYTES_PER_CHAIN_OFFSET = 4;
-	private static final int CHAIN_OFFSET_MASK = 0x3fff;
-	private static final int DYLD_CACHE_SLIDE_PAGE_ATTR_NO_REBASE = 0x4000;
-	private static final int DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA = 0x8000;
 
 	protected DyldCacheHeader dyldCacheHeader;
 	private boolean shouldProcessSymbols;
@@ -116,7 +109,6 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		markupHeaders();
 		markupBranchIslands();
 		createSymbols();
-
 		processDylibs();
 	}
 
@@ -215,9 +207,10 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			for (NList nlist : localSymbolsInfo.getNList()) {
 				if (!nlist.getString().trim().isEmpty()) {
 					try {
-						program.getSymbolTable().createLabel(space.getAddress(nlist.getValue()),
-							SymbolUtilities.replaceInvalidChars(nlist.getString(), true),
-							program.getGlobalNamespace(), SourceType.IMPORTED);
+						program.getSymbolTable()
+								.createLabel(space.getAddress(nlist.getValue()),
+									SymbolUtilities.replaceInvalidChars(nlist.getString(), true),
+									program.getGlobalNamespace(), SourceType.IMPORTED);
 					}
 					catch (Exception e) {
 						log.appendMsg(e.getMessage() + " " + nlist.getString());
@@ -236,135 +229,13 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @throws CancelledException if user cancels
 	 */
 	private void fixPageChains() throws MemoryAccessException, CancelledException {
-		long fixedAddressCount = 0;
-
 		// locate slide Info
-		DyldCacheSlideInfoCommon slideInfo = dyldCacheHeader.getSlideInfo();
-		if (slideInfo == null || !(slideInfo instanceof DyldCacheSlideInfo2)) {
-			log.appendMsg("No compatible slide info version");
-			return;
-		}
-		DyldCacheSlideInfo2 slideInfo2 = (DyldCacheSlideInfo2) slideInfo;
+		List<DyldCacheSlideInfoCommon> slideInfos = dyldCacheHeader.getSlideInfos();
+		for (DyldCacheSlideInfoCommon info : slideInfos) {
+			int version = info.getVersion();
 
-		List<DyldCacheMappingInfo> mappingInfos = dyldCacheHeader.getMappingInfos();
-		DyldCacheMappingInfo dyldCacheMappingInfo = mappingInfos.get(DATA_PAGE_MAP_ENTRY);
-		long dataPageStart = dyldCacheMappingInfo.getAddress();
-		long pageSize = slideInfo2.getPageSize();
-		long pageStartsCount = slideInfo2.getPageStartsCount();
-
-		long deltaMask = slideInfo2.getDeltaMask();
-		long deltaShift = Long.numberOfTrailingZeros(deltaMask);
-		long valueAdd = slideInfo2.getValueAdd();
-
-		short[] pageEntries = slideInfo2.getPageStartsEntries();
-		short[] extraEntries = slideInfo2.getPageExtrasEntries();
-
-		monitor.setMessage("Fixing chained data page pointers...");
-
-		monitor.setMaximum(pageStartsCount);
-		for (int index = 0; index < pageStartsCount; index++) {
-			monitor.checkCanceled();
-
-			long page = dataPageStart + (pageSize * index);
-
-			monitor.setProgress(index);
-
-			int pageEntry = pageEntries[index] & 0xffff;
-			if (pageEntry == DYLD_CACHE_SLIDE_PAGE_ATTR_NO_REBASE) {
-				continue;
-			}
-
-			List<Address> unchainedLocList = new ArrayList<>(1024);
-
-			if ((pageEntry & DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA) != 0) {
-				// go into extras and process list of chain entries for the same page
-				int extraIndex = (pageEntry & CHAIN_OFFSET_MASK);
-				do {
-					pageEntry = extraEntries[extraIndex] & 0xffff;
-					long pageOffset = (pageEntry & CHAIN_OFFSET_MASK) * BYTES_PER_CHAIN_OFFSET;
-
-					processPointerChain(unchainedLocList, page, pageOffset, deltaMask, deltaShift,
-						valueAdd);
-					extraIndex++;
-				}
-				while ((pageEntry & DYLD_CACHE_SLIDE_PAGE_ATTR_EXTRA) == 0);
-			}
-			else {
-				long pageOffset = pageEntry * BYTES_PER_CHAIN_OFFSET;
-
-				processPointerChain(unchainedLocList, page, pageOffset, deltaMask, deltaShift,
-					valueAdd);
-			}
-
-			fixedAddressCount += unchainedLocList.size();
-			unchainedLocList.forEach(entry -> {
-				// create a pointer at the fixed up chain pointer location
-				try {
-					// don't use data utilities. does too much extra checking work
-					listing.createData(entry, Pointer64DataType.dataType);
-				}
-				catch (CodeUnitInsertionException e) {
-					// No worries, something presumably more important was there already
-				}
-			});
-		}
-
-		log.appendMsg("Fixed " + fixedAddressCount + " chained pointers.  Creating Pointers");
-
-		monitor.setMessage("Created " + fixedAddressCount + " chained pointers");
-	}
-
-	/**
-	 * Fixes up any chained pointers, starting at the given address.
-	 * 
-	 * @param unchainedLocList list of locations that were unchained
-	 * @param page within data pages that has pointers to be unchained
-	 * @param nextOff offset within the page that is the chain start
-	 * @param deltaMask delta offset mask for each value
-	 * @param deltaShift shift needed for the deltaMask to extract the next offset
-	 * @param valueAdd value to be added to each chain pointer
-	 * 
-	 * @throws MemoryAccessException IO problem reading file
-	 * @throws CancelledException user cancels
-	 */
-	private void processPointerChain(List<Address> unchainedLocList, long page, long nextOff,
-			long deltaMask, long deltaShift, long valueAdd)
-			throws MemoryAccessException, CancelledException {
-
-		// TODO: should the image base be used to perform the ASLR slide on the pointers.
-		//        currently image is kept at it's initial location with no ASLR.
-		Address chainStart = memory.getProgram().getLanguage().getDefaultSpace().getAddress(page);
-
-		byte origBytes[] = new byte[8];
-
-		long valueMask = 0xffffffffffffffffL >>> (64 - deltaShift);
-
-		long delta = -1;
-		while (delta != 0) {
-			monitor.checkCanceled();
-
-			Address chainLoc = chainStart.add(nextOff);
-			long chainValue = memory.getLong(chainLoc);
-
-			delta = (chainValue & deltaMask) >> deltaShift;
-			chainValue = chainValue & valueMask;
-			if (chainValue != 0) {
-				chainValue += valueAdd;
-			}
-
-			if (shouldAddRelocationEntries) {
-				// Add entry to relocation table for the pointer fixup
-				memory.getBytes(chainLoc, origBytes);
-				program.getRelocationTable().add(chainLoc, 1, new long[] { chainValue }, origBytes,
-					null);
-			}
-
-			memory.setLong(chainLoc, chainValue);
-
-			// delay creating data until after memory has been changed
-			unchainedLocList.add(chainLoc);
-
-			nextOff += (delta * 4);
+			log.appendMsg("Fixing page chains version: " + version);
+			info.fixPageChains(program, dyldCacheHeader, shouldAddRelocationEntries, log, monitor);
 		}
 	}
 
@@ -406,7 +277,12 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			DyldCacheMachoInfo curr = iter.next();
 			do {
 				DyldCacheMachoInfo next = iter.hasNext() ? iter.next() : null;
-				curr.addToProgramTree(next);
+				try {
+					curr.addToProgramTree(next);
+				}
+				catch (DuplicateNameException exc) {
+					log.appendException(exc);
+				}
 				curr = next;
 				monitor.checkCanceled();
 				monitor.incrementProgress(1);

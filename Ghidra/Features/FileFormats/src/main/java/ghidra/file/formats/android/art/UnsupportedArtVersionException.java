@@ -15,9 +15,9 @@
  */
 package ghidra.file.formats.android.art;
 
-final class UnsupportedArtVersionException extends Exception {
+public final class UnsupportedArtVersionException extends Exception {
 
 	UnsupportedArtVersionException(String magic, String version) {
-		super("Unsupported ART version: " + version);
+		super("Unsupported ART (" + magic.trim() + ") for version: " + version);
 	}
 }

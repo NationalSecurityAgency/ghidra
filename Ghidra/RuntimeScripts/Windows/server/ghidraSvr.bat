@@ -75,21 +75,23 @@ if exist "%SERVER_DIR%\..\Ghidra\" goto normal
 
 rem NOTE: If adjusting JAVA command assignment - do not attempt to add parameters (e.g., -d64, -version:1.7, etc.)
 
+rem NOTE: Variables that get accessed in server.conf must be lowercase
+
 rem Development Environment
-set "GHIDRA_HOME=%SERVER_DIR%\..\..\..\.."
+set "ghidra_home=%SERVER_DIR%\..\..\..\.."
 set "WRAPPER_CONF=%SERVER_DIR%\..\..\Common\server\server.conf"
-set "DATA_DIR=%GHIDRA_HOME%\%MODULE_DIR%\build\data"
-set "CLASSPATH_FRAG=%GHIDRA_HOME%\%MODULE_DIR%\build\dev-meta\classpath.frag"
-set "LS_CPATH=%GHIDRA_HOME%\GhidraBuild\LaunchSupport\bin\main"
+set "DATA_DIR=%ghidra_home%\%MODULE_DIR%\build\data"
+set "classpath_frag=%ghidra_home%\%MODULE_DIR%\build\dev-meta\classpath.frag"
+set "LS_CPATH=%ghidra_home%\GhidraBuild\LaunchSupport\bin\main"
 
 goto lab1
 
 :normal
-set "GHIDRA_HOME=%SERVER_DIR%\.."
+set "ghidra_home=%SERVER_DIR%\.."
 set "WRAPPER_CONF=%SERVER_DIR%\server.conf"
-set "DATA_DIR=%GHIDRA_HOME%\%MODULE_DIR%\data"
-set "CLASSPATH_FRAG=%GHIDRA_HOME%\%MODULE_DIR%\data\classpath.frag"
-set "LS_CPATH=%GHIDRA_HOME%\support\LaunchSupport.jar"
+set "DATA_DIR=%ghidra_home%\%MODULE_DIR%\data"
+set "classpath_frag=%ghidra_home%\%MODULE_DIR%\data\classpath.frag"
+set "LS_CPATH=%ghidra_home%\support\LaunchSupport.jar"
 
 :lab1
 
@@ -109,16 +111,16 @@ echo Using service wrapper: %WRAPPER_DIRNAME%
 rem Find java.exe
 if defined JAVA_HOME goto findJavaFromJavaHome
 
-set JAVA=java.exe
-%JAVA% -version >NUL 2>&1
+set java=java.exe
+%java% -version >NUL 2>&1
 if "%ERRORLEVEL%" == "0" goto lab2
 set ERROR=ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH.
 goto reportError
 
 :findJavaFromJavaHome
-set "JAVA=%JAVA_HOME%\bin\java.exe"
+set "java=%JAVA_HOME%\bin\java.exe"
 
-if exist "%JAVA%" goto lab2
+if exist "%java%" goto lab2
 set ERROR=ERROR: JAVA_HOME is set to an invalid directory: %JAVA_HOME%
 goto reportError
 
@@ -126,40 +128,40 @@ goto reportError
 
 :: Get the java that will be used to launch GhidraServer
 set JAVA_HOME=
-for /f "delims=*" %%i in ('call "%JAVA%" -cp "%LS_CPATH%" LaunchSupport "%GHIDRA_HOME%" -java_home') do set JAVA_HOME=%%i
+for /f "delims=*" %%i in ('call "%java%" -cp "%LS_CPATH%" LaunchSupport "%ghidra_home%" -java_home') do set JAVA_HOME=%%i
 if "%JAVA_HOME%" == "" (
 	set ERROR=Failed to find a supported Java runtime.  Please refer to the Ghidra Installation Guide's Troubleshooting section.
 	goto reportError
 )
 
 rem reestablish JAVA path based upon final JAVA_HOME
-set "JAVA=%JAVA_HOME%\bin\java.exe"
+set "java=%JAVA_HOME%\bin\java.exe"
 
 :: set DEBUG=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:18888
 
 if "%OPTION%"=="console" (
-	start "%APP_LONG_NAME%" "%JAVA%" %DEBUG% -jar "%WRAPPER_HOME%/wrapper.jar" -c "%WRAPPER_CONF%"
+	start "%APP_LONG_NAME%" "%java%" %DEBUG% -jar "%WRAPPER_HOME%/wrapper.jar" -c "%WRAPPER_CONF%"
 	echo Use Ctrl-C in Ghidra Console to terminate...
 	
 ) else if "%OPTION%"=="status" (
-	"%JAVA%" -jar "%WRAPPER_HOME%/wrapper.jar" -q "%WRAPPER_CONF%"
+	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -q "%WRAPPER_CONF%"
 
 ) else if "%OPTION%"=="start" (
-	"%JAVA%" %DEBUG% -jar "%WRAPPER_HOME%/wrapper.jar" -t "%WRAPPER_CONF%"
+	"%java%" %DEBUG% -jar "%WRAPPER_HOME%/wrapper.jar" -t "%WRAPPER_CONF%"
 
 ) else if "%OPTION%"=="stop" (
-	"%JAVA%" -jar "%WRAPPER_HOME%/wrapper.jar" -p "%WRAPPER_CONF%"
+	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -p "%WRAPPER_CONF%"
 
 ) else if "%OPTION%"=="restart" (
-	"%JAVA%" -jar "%WRAPPER_HOME%/wrapper.jar" -p "%WRAPPER_CONF%"
-	"%JAVA%" -jar "%WRAPPER_HOME%/wrapper.jar" -t "%WRAPPER_CONF%"
+	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -p "%WRAPPER_CONF%"
+	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -t "%WRAPPER_CONF%"
 
 ) else if "%OPTION%"=="install" (
-	"%JAVA%" -jar "%WRAPPER_HOME%/wrapper.jar" -i "%WRAPPER_CONF%"
-	"%JAVA%" -jar "%WRAPPER_HOME%/wrapper.jar" -t "%WRAPPER_CONF%"
+	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -i "%WRAPPER_CONF%"
+	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -t "%WRAPPER_CONF%"
 	
 ) else if "%OPTION%"=="uninstall" (
-	"%JAVA%" -jar "%WRAPPER_HOME%/wrapper.jar" -r "%WRAPPER_CONF%"
+	"%java%" -jar "%WRAPPER_HOME%/wrapper.jar" -r "%WRAPPER_CONF%"
 
 ) else (
 	goto usage
@@ -177,7 +179,7 @@ goto eof
 	echo.
 	echo %ERROR%
 	echo.
-	echo %ERROR% >> %GHIDRA_HOME%\wrapper.log
+	echo %ERROR% >> %ghidra_home%\wrapper.log
 	exit /B 1
 
 :eof

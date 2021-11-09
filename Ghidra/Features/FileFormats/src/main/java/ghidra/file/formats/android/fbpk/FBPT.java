@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -147,8 +148,7 @@ public class FBPT implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String className = StructConverterUtil.parseName(FBPT.class);
-		Structure struct = new StructureDataType(className, 0);
+		Structure struct = new StructureDataType(FBPT.class.getSimpleName(), 0);
 		struct.add(STRING, FBPK_Constants.FBPT.length(), "magic", null);
 		struct.add(DWORD, "unknown1", null);
 		struct.add(DWORD, "unknown2", null);

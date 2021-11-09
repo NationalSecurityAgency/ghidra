@@ -180,7 +180,7 @@ EOF
 
 checkInstall() {
 	# capture status text
-	RESULT=$(java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" os_dir="${OS_DIR}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -q "${WRAPPER_CONF}" | grep "Installed   :" | sed -E "s/Installed   : //")
+	RESULT=$(java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -q "${WRAPPER_CONF}" | grep "Installed   :" | sed -E "s/Installed   : //")
 	if [ "${RESULT}" = "true" ]; then
 		return 0
 	fi
@@ -190,31 +190,31 @@ checkInstall() {
 
 console() {
     echo "Running ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" os_dir="${OS_DIR}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -c "${WRAPPER_CONF}"
+    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -c "${WRAPPER_CONF}"
 }
 
 start() {
     echo "Starting ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" os_dir="${OS_DIR}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -t "${WRAPPER_CONF}"
+    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -t "${WRAPPER_CONF}"
 }
  
 stopit() {
     echo "Stopping ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" os_dir="${OS_DIR}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -p "${WRAPPER_CONF}"
+    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -p "${WRAPPER_CONF}"
 }
 
 install() {
     echo "Installing ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" os_dir="${OS_DIR}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -i "${WRAPPER_CONF}"
+    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -i "${WRAPPER_CONF}"
 }
 
 uninstall() {
     echo "Uninstalling ${APP_LONG_NAME}..."
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" os_dir="${OS_DIR}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -r "${WRAPPER_CONF}"
+    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -r "${WRAPPER_CONF}"
 }
 
 status() {
-    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" os_dir="${OS_DIR}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -q "${WRAPPER_CONF}"
+    java="${JAVA_CMD}" ghidra_home="${GHIDRA_HOME}" classpath_frag="${CLASSPATH_FRAG}" "${JAVA_CMD}" -jar "${WRAPPER_HOME}/wrapper.jar" -q "${WRAPPER_CONF}"
 }
 
 case "$1" in

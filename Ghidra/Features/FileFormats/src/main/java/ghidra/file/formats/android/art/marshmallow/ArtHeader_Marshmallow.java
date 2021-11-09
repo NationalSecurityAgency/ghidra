@@ -18,9 +18,7 @@ package ghidra.file.formats.android.art.marshmallow;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverterUtil;
-import ghidra.file.formats.android.art.ArtHeader;
-import ghidra.file.formats.android.art.ArtImageSections;
+import ghidra.file.formats.android.art.*;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.listing.Program;
@@ -69,7 +67,7 @@ public class ArtHeader_Marshmallow extends ArtHeader {
 		pointer_size_ = reader.readNextInt();
 		compile_pic_ = reader.readNextInt();
 
-		sections = new ImageSections_Marshmallow(reader, this);
+		sections = ArtImageSectionsFactory.getArtImageSections(reader, this);
 		sections.parseSections(reader);
 
 		for (int i = 0; i < image_methods_.length; ++i) {
@@ -144,9 +142,8 @@ public class ArtHeader_Marshmallow extends ArtHeader {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = (Structure) super.toDataType();
 
-		String className = StructConverterUtil.parseName(ArtHeader_Marshmallow.class);
 		try {
-			structure.setName(className);
+			structure.setName(ArtHeader_Marshmallow.class.getSimpleName());
 		}
 		catch (InvalidNameException e) {
 		}

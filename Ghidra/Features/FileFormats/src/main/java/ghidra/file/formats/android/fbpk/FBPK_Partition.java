@@ -92,8 +92,7 @@ public class FBPK_Partition implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String className = StructConverterUtil.parseName(FBPK_Partition.class);
-		Structure struct = new StructureDataType(className, 0);
+		Structure struct = new StructureDataType(FBPK_Partition.class.getSimpleName(), 0);
 		struct.add(DWORD, "type", null);
 		struct.add(STRING, FBPK_Constants.NAME_MAX_LENGTH, "name", null);
 		struct.add(DWORD, "dataSize", null);

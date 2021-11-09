@@ -554,6 +554,11 @@ public:
   virtual void execute(istream &s);
 };
 
+class IfcPointerSetting : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
 class IfcPreferSplit : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);

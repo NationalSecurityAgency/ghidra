@@ -71,10 +71,10 @@ public class SegmentCommand extends LoadCommand {
 
 		segname = reader.readNextAsciiString(MachConstants.NAME_LENGTH);
 		if (is32bit) {
-			vmaddr = reader.readNextInt() & 0xffffffffL;
-			vmsize = reader.readNextInt() & 0xffffffffL;
-			fileoff = reader.readNextInt() & 0xffffffffL;
-			filesize = reader.readNextInt() & 0xffffffffL;
+			vmaddr = reader.readNextUnsignedInt();
+			vmsize = reader.readNextUnsignedInt();
+			fileoff = reader.readNextUnsignedInt();
+			filesize = reader.readNextUnsignedInt();
 		}
 		else {
 			vmaddr = reader.readNextLong();

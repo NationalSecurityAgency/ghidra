@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -65,8 +66,8 @@ public class ArtMethodGroup implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String name = StructConverterUtil.parseName(ArtMethodGroup.class);
-		Structure structure = new StructureDataType(name + "_" + methodCount, 0);
+		Structure structure = new StructureDataType(
+			ArtMethodGroup.class.getSimpleName() + "_" + methodCount, 0);
 		structure.setCategoryPath(new CategoryPath("/art"));
 		if (pointerSize == 8) {
 			structure.add(QWORD, "methodCount", null);

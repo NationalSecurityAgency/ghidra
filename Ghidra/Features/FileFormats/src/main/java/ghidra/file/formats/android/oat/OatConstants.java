@@ -77,6 +77,7 @@ public final class OatConstants {
 	public final static String version_q_preview_1                = "166";
 	public final static String VERSION_10_RELEASE                 = "170";
 	public final static String VERSION_11_RELEASE                 = "183";
+	public final static String VERSION_12_RELEASE                 = "195";
 
 	public final static int VERSION_LENGTH = 3;//3 bytes in length
 
@@ -101,6 +102,7 @@ public final class OatConstants {
 		VERSION_PIE_RELEASE,
 		VERSION_10_RELEASE,
 		VERSION_11_RELEASE,
+		VERSION_12_RELEASE,
 	};
 
 	/** Keys from the OAT header "key/value" store. */

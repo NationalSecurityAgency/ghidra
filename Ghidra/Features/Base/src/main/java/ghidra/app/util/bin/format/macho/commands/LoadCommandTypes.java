@@ -23,13 +23,15 @@ import ghidra.app.util.bin.format.FactoryBundledWithBinaryReader;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
 import ghidra.app.util.bin.format.macho.threadcommand.ThreadCommand;
+import ghidra.util.Msg;
 
 /**
  * Constants for the cmd field of all load commands, the type
  */
 public final class LoadCommandTypes {
 
-	public static LoadCommand getLoadCommand(FactoryBundledWithBinaryReader reader, MachHeader header) throws IOException, MachException {
+	public static LoadCommand getLoadCommand(FactoryBundledWithBinaryReader reader,
+			MachHeader header) throws IOException, MachException {
 		int type = reader.peekNextInt();
 		switch (type) {
 			case LC_SEGMENT: {
@@ -47,7 +49,8 @@ public final class LoadCommandTypes {
 			}
 			case LC_LOADFVMLIB:
 			case LC_IDFVMLIB: {
-				return FixedVirtualMemorySharedLibraryCommand.createFixedVirtualMemorySharedLibraryCommand(reader);
+				return FixedVirtualMemorySharedLibraryCommand
+						.createFixedVirtualMemorySharedLibraryCommand(reader);
 			}
 			case LC_IDENT: {
 				return IdentCommand.createIdentCommand(reader);
@@ -62,9 +65,9 @@ public final class LoadCommandTypes {
 				return DynamicSymbolTableCommand.createDynamicSymbolTableCommand(reader, header);
 			}
 			case LC_LOAD_DYLIB:
-			case LC_ID_DYLIB: 
+			case LC_ID_DYLIB:
 			case LC_LOAD_UPWARD_DYLIB:
-			case LC_DYLD_ENVIRONMENT:{
+			case LC_DYLD_ENVIRONMENT: {
 				return DynamicLibraryCommand.createDynamicLibraryCommand(reader);
 			}
 			case LC_LOAD_DYLINKER:
@@ -112,7 +115,7 @@ public final class LoadCommandTypes {
 			}
 			case LC_CODE_SIGNATURE:
 			case LC_SEGMENT_SPLIT_INFO:
-			case LC_FUNCTION_STARTS: 
+			case LC_FUNCTION_STARTS:
 			case LC_DATA_IN_CODE:
 			case LC_OPTIMIZATION_HINT:
 			case LC_DYLIB_CODE_SIGN_DRS: {
@@ -121,8 +124,10 @@ public final class LoadCommandTypes {
 			case LC_REEXPORT_DYLIB: {
 				return DynamicLibraryCommand.createDynamicLibraryCommand(reader);
 			}
-			case LC_ENCRYPTION_INFO: {
-				return EncryptedInformationCommand.createEncryptedInformationCommand(reader);
+			case LC_ENCRYPTION_INFO: 
+			case LC_ENCRYPTION_INFO_64: {
+				return EncryptedInformationCommand.createEncryptedInformationCommand(reader,
+					header.is32bit());
 			}
 			case LC_DYLD_INFO:
 			case LC_DYLD_INFO_ONLY: {
@@ -149,7 +154,18 @@ public final class LoadCommandTypes {
 			case LC_LINKER_OPTIONS: {
 				return LinkerOptionCommand.createLinkerOptionCommand(reader);
 			}
+
+			case LC_DYLD_EXPORTS_TRIE:
+				return LinkEditDataCommand.createLinkEditDataCommand(reader);
+
+			case LC_DYLD_CHAINED_FIXUPS:
+				return DyldChainedFixupsCommand.createDyldChainedFixupsCommand(reader);
+
+			case LC_FILESET_ENTRY:
+				return FileSetEntryCommand.createFileSetEntryCommand(reader, header.is32bit());
+
 			default: {
+				Msg.warn(header, "Unsupported load command " + Integer.toHexString(type));
 				return UnsupportedLoadCommand.createUnsupportedLoadCommand(reader, type);
 			}
 		}
@@ -261,6 +277,12 @@ public final class LoadCommandTypes {
 	public final static int LC_NOTE                   = 0x31;
 	/** Build for platform min OS version */
 	public final static int LC_BUILD_VERSION          = 0x32;
+	/** used with LinkeditDataCommand, payload is trie **/
+	public final static int LC_DYLD_EXPORTS_TRIE      = 0x33 | LC_REQ_DYLD;
+	/** used with LinkeditDataCommand **/
+	public final static int LC_DYLD_CHAINED_FIXUPS    = 0x34 | LC_REQ_DYLD;
+	/** used with fileset_entry_command **/
+	public final static int LC_FILESET_ENTRY          = 0x35 | LC_REQ_DYLD;
 	//@formatter:on
 
 	/**
@@ -268,22 +290,22 @@ public final class LoadCommandTypes {
 	 * @param type the load command type
 	 * @return a string for the given load command type
 	 */
-	public final static String getLoadCommentTypeName( int type ) {
-		Field [] fields = LoadCommandTypes.class.getDeclaredFields();
-		for ( Field field : fields ) {
-			if ( field.getName().startsWith( "LC_" ) ) {
+	public final static String getLoadCommentTypeName(int type) {
+		Field[] fields = LoadCommandTypes.class.getDeclaredFields();
+		for (Field field : fields) {
+			if (field.getName().startsWith("LC_")) {
 				try {
-					Integer value = (Integer)field.get( null );
-					if ( type == value ) {
+					Integer value = (Integer) field.get(null);
+					if (type == value) {
 						return field.getName();
 					}
 				}
-				catch ( Exception e ) {
+				catch (Exception e) {
 					break;
 				}
 			}
 		}
-		return "Unknown load command type: " + Integer.toHexString( type );
+		return "Unknown load command type: " + Integer.toHexString(type);
 	}
 
 }

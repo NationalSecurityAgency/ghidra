@@ -15,11 +15,12 @@
  */
 package ghidra.plugin.importer;
 
+import java.util.*;
+
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 
 import docking.ActionContext;
 import docking.action.*;
@@ -252,8 +253,8 @@ public class ImporterPlugin extends Plugin
 			@Override
 			public void actionPerformed(ActionContext context) {
 				if (context instanceof ListingActionContext) {
-					doImportSelectionAction(
-						((ListingActionContext) context).getNavigatable().getSelection());
+					ListingActionContext lac = (ListingActionContext) context;
+					doImportSelectionAction(lac.getProgram(), lac.getSelection());
 				}
 			}
 
@@ -373,21 +374,15 @@ public class ImporterPlugin extends Plugin
 
 	}
 
-	protected void doImportSelectionAction(ProgramSelection selection) {
+	protected void doImportSelectionAction(Program program, ProgramSelection selection) {
 		if (selection == null || selection.getNumAddressRanges() != 1) {
 			return;
 		}
 
 		AddressRange range = selection.getFirstRange();// should only be 1
-		if (range.getLength() >= (Integer.MAX_VALUE & 0xffffffffL)) {
+		if (range.getLength() >= Integer.MAX_VALUE) {
 			Msg.showInfo(getClass(), tool.getActiveWindow(), "Selection Too Large",
 				"The selection is too large to extract.");
-			return;
-		}
-
-		ProgramManager programManager = tool.getService(ProgramManager.class);
-		Program program = programManager.getCurrentProgram();
-		if (program == null) {
 			return;
 		}
 
@@ -412,8 +407,8 @@ public class ImporterPlugin extends Plugin
 				fsService.getNamedTempFile(tmpFile, program.getName() + " " + rangeName);
 			LoaderMap loaderMap = LoaderService.getAllSupportedLoadSpecs(bp);
 
-			ImporterDialog importerDialog =
-				new ImporterDialog(tool, programManager, loaderMap, bp, null);
+			ImporterDialog importerDialog = new ImporterDialog(tool,
+				tool.getService(ProgramManager.class), loaderMap, bp, null);
 			tool.showDialog(importerDialog);
 		}
 		catch (IOException e) {
