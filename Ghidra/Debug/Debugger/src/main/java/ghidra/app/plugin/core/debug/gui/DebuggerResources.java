@@ -34,6 +34,7 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.breakpoint.DebuggerBreakpointsPlugin;
 import ghidra.app.plugin.core.debug.gui.console.DebuggerConsolePlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
+import ghidra.app.plugin.core.debug.gui.memory.DebuggerMemoryBytesPlugin;
 import ghidra.app.plugin.core.debug.gui.memory.DebuggerRegionsPlugin;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModulesPlugin;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerStaticMappingPlugin;
@@ -118,6 +119,7 @@ public interface DebuggerResources {
 
 	// TODO: Some overlay to indicate dynamic, or new icon altogether
 	ImageIcon ICON_LISTING = ResourceManager.loadImage("images/Browser.gif");
+	ImageIcon ICON_MEMORY_BYTES = ResourceManager.loadImage("images/binaryData.gif");
 	ImageIcon ICON_CONSOLE = ResourceManager.loadImage("images/console.png");
 	ImageIcon ICON_REGISTERS = ResourceManager.loadImage("images/registers.png");
 	ImageIcon ICON_STACK = ResourceManager.loadImage("images/stack.png");
@@ -196,6 +198,11 @@ public interface DebuggerResources {
 	ImageIcon ICON_PROVIDER_MAPPINGS = ICON_MAPPINGS;
 	HelpLocation HELP_PROVIDER_MAPPINGS = new HelpLocation(
 		PluginUtils.getPluginNameFromClass(DebuggerStaticMappingPlugin.class), HELP_ANCHOR_PLUGIN);
+
+	String TITLE_PROVIDER_MEMORY_BYTES = "Memory";
+	ImageIcon ICON_PROVIDER_MEMORY_BYTES = ICON_MEMORY_BYTES;
+	HelpLocation HELP_PROVIDER_MEMORY_BYTES = new HelpLocation(
+		PluginUtils.getPluginNameFromClass(DebuggerMemoryBytesPlugin.class), HELP_ANCHOR_PLUGIN);
 
 	String TITLE_PROVIDER_MODULES = "Modules";
 	ImageIcon ICON_PROVIDER_MODULES = ICON_MODULES;
