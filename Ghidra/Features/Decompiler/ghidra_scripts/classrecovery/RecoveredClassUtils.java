@@ -2941,7 +2941,6 @@ public class RecoveredClassUtils {
 
 		// if there is already a structure created there and it is
 		// contained in the ClassDataTypes folder then it has already been processed so skip it
-		// TODO: can this be checked using the folderpath not the folder name?
 		if (vftableData.isStructure()) {
 			String[] pathElements = vftableData.getDataType().getCategoryPath().getPathElements();
 			if ((pathElements.length > 0) && (pathElements[0].equals(DTM_CLASS_DATA_FOLDER_NAME))) {
@@ -4498,7 +4497,6 @@ public class RecoveredClassUtils {
 
 					// this is null when there is a class from somewhere other than RTTI so it is
 					// not stored in the map. Just use the parent namespace name in this case
-					// TODO: can check against other program namespace names to see if it can be shortened
 					if (vfunctionClass == null) {
 						classCommentPrefix = parentNamespace.getName();
 					}
@@ -4787,7 +4785,8 @@ public class RecoveredClassUtils {
 	private PointerDataType createFunctionSignaturePointerDataType(Function vfunction,
 			CategoryPath classPath) throws DuplicateNameException {
 
-		FunctionDefinition functionDataType = (FunctionDefinitionDataType) vfunction.getSignature();
+		FunctionDefinition functionDataType =
+			(FunctionDefinitionDataType) vfunction.getSignature();
 
 		DataType returnType = vfunction.getReturnType();
 
@@ -5289,12 +5288,36 @@ public class RecoveredClassUtils {
 				return structureDataType;
 			}
 
-			// This is to distinguish between class items and parent items in classes that 
-			// have individual components of the parent split out and added to them and not just 
-			// the whole parent structure added to them 
-			// TODO: add method to get class obj using from the name of the structure
-			// so i can get the shortened class name if a template and put that here instead
-			String fieldname = structureToAdd.getName() + "_" + dataTypeComponent.getFieldName();
+			String fieldname = dataTypeComponent.getFieldName();
+
+			structureDataType = structUtils.addDataTypeToStructure(structureDataType,
+				startOffset + dataComponentOffset, dataTypeComponent.getDataType(), fieldname,
+				monitor);
+		}
+		return structureDataType;
+	}
+
+	/**
+	 * Method to add the given structcure component to the given structure at the given offset 
+	 * @param structureDataType the structure to add to
+	 * @param structureToAdd the structure to add
+	 * @param startOffset the starting offset where to add 
+	 * @return the updated structure
+	 * @throws CancelledException if cancelled
+	 */
+	public Structure addIndividualComponentsToStructure(Structure structureDataType,
+			Structure structureToAdd, int startOffset) throws CancelledException {
+
+		DataTypeComponent[] definedComponents = structureToAdd.getDefinedComponents();
+		for (int ii = 0; ii < definedComponents.length; ii++) {
+
+			monitor.checkCanceled();
+
+			DataTypeComponent dataTypeComponent = structureToAdd.getComponent(ii);
+
+			int dataComponentOffset = dataTypeComponent.getOffset();
+
+			String fieldname = dataTypeComponent.getFieldName();
 
 			structureDataType = structUtils.addDataTypeToStructure(structureDataType,
 				startOffset + dataComponentOffset, dataTypeComponent.getDataType(), fieldname,
@@ -5343,6 +5366,113 @@ public class RecoveredClassUtils {
 	}
 
 	/**
+	 * Method to retrieve the offset of the virtual parent of the given class in the given structure
+	 * @param recoveredClass the given class
+	 * @param structure the given structure
+	 * @return the offset of the virtual parent of the given class in the given structure
+	 * @throws CancelledException if cancelled
+	 */
+	public int getEndOfInternalDataOffset(RecoveredClass recoveredClass, Structure structure)
+			throws CancelledException {
+
+		List<Structure> virtualParentClassStructures =
+			getVirtualParentClassStructures(recoveredClass);
+
+		// if there are no virtual parents there will be no internal data		
+		if (virtualParentClassStructures.size() == 0) {
+			return NONE;
+		}
+
+
+
+		DataTypeComponent[] definedComponents = structure.getDefinedComponents();
+
+		if (definedComponents.length == 0) {
+			return NONE;
+		}
+
+		List<Integer> definedOffsets = new ArrayList<Integer>();
+
+		for (DataTypeComponent dataTypeComponent : definedComponents) {
+
+			monitor.checkCanceled();
+			definedOffsets.add(dataTypeComponent.getOffset());
+		}
+		Collections.sort(definedOffsets);
+
+		boolean firstDefined = true;
+		int nextOffset = 0;
+
+		// structures that contain virtual parents have data in the middle of the structure
+		// between non-virtual and virtual parents
+		// loop to find the first defined offset after the segment of undefineds
+		for (Integer currentOffset : definedOffsets) {
+
+			monitor.checkCanceled();
+
+			DataTypeComponent dataTypeComponent = structure.getComponentAt(currentOffset);
+
+			if (firstDefined) {
+				firstDefined = false;
+				nextOffset = currentOffset + dataTypeComponent.getLength();
+				continue;
+			}
+
+			// if the current offset is differnet than the next offset then it is after the gap
+			// of undefineds and we have found the offset we need to return	
+			if (currentOffset != nextOffset) {
+				return currentOffset;
+			}
+
+			// if the currentOffset equals what we calculated as the next offset then the 
+			// current data is contiguous to the last data so no undefineds between them and 
+			// can continue looking for the gap of undefines
+
+			nextOffset = currentOffset + dataTypeComponent.getLength();
+
+		}
+		return NONE;
+
+	}
+
+	private boolean isDataAtOffsetEquivalentToStructure(Structure outerStructure,
+			Structure innerStructure, int offset) {
+
+		DataTypeComponent[] innerStructComponents = innerStructure.getDefinedComponents();
+		for (DataTypeComponent innerComponent : innerStructComponents) {
+			int innerOffset = innerComponent.getOffset();
+
+			DataTypeComponent outerComponent = outerStructure.getComponentAt(offset + innerOffset);
+			if (outerComponent == null) {
+				return false;
+			}
+
+			if (innerComponent.getFieldName().equals("vftablePtr")) {
+
+				// if one is vftablePtr and other isn't - return false
+				if (!outerComponent.getFieldName().equals("vftablePtr")) {
+					return false;
+				}
+
+				// if both are vftablePtrs they should both contain the innerStructure name (ie the class name) in 
+				// the vftablePtr data type name (either <some_class_name>_vftable_for_<innerStruct name> or <innerStruct name>_vftable *
+				if (outerComponent.getDataType().getDisplayName().contains(
+					innerStructure.getName()) &&
+					!innerComponent.getDataType().getDisplayName().contains(
+						innerStructure.getName())) {
+					return false;
+				}
+				continue;
+			}
+
+			if (!innerComponent.getDataType().equals(outerComponent.getDataType())) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * Method to determine if the given data type is the virtual parent class structure for the given class
 	 * @param recoveredClass the given class
 	 * @param dataType the given data type
@@ -5376,6 +5506,71 @@ public class RecoveredClassUtils {
 
 		}
 		return false;
+
+	}
+
+	/**
+	 * Method to determine if the given data type is the virtual parent class structure for the given class
+	 * @param recoveredClass the given class
+	 * @return true if the given data type is the virtual parent class structure for the given class
+	 * @throws CancelledException if cancelled
+	 */
+	private List<Structure> getVirtualParentClassStructures(RecoveredClass recoveredClass)
+			throws CancelledException {
+
+		Map<RecoveredClass, Boolean> parentToBaseTypeMap = recoveredClass.getParentToBaseTypeMap();
+		List<Structure> virtualParentStructures = new ArrayList<Structure>();
+
+		Set<RecoveredClass> parentClasses = parentToBaseTypeMap.keySet();
+
+		// if no parents, return empty list
+		if (parentClasses.isEmpty()) {
+			return virtualParentStructures;
+		}
+
+		for (RecoveredClass parentClass : parentClasses) {
+
+			monitor.checkCanceled();
+
+			Boolean isVirtualParent = parentToBaseTypeMap.get(parentClass);
+			if (isVirtualParent) {
+				Structure parentStructure = getClassStructureFromDataTypeManager(parentClass);
+				if (parentStructure != null) {
+					virtualParentStructures.add(parentStructure);
+				}
+			}
+		}
+
+		return virtualParentStructures;
+
+	}
+
+	/**
+	 * Method to determine if the given data type is the virtual parent class structure for the given class
+	 * @param recoveredClass the given class
+	 * @return true if the given data type is the virtual parent class structure for the given class
+	 * @throws CancelledException if cancelled
+	 */
+	protected List<RecoveredClass> getVirtualParentClasses(RecoveredClass recoveredClass)
+			throws CancelledException {
+
+		Map<RecoveredClass, Boolean> parentToBaseTypeMap = recoveredClass.getParentToBaseTypeMap();
+		List<RecoveredClass> virtualParents = new ArrayList<RecoveredClass>();
+
+		Set<RecoveredClass> parentClasses = parentToBaseTypeMap.keySet();
+		Iterator<RecoveredClass> parentClassIterator = parentClasses.iterator();
+		while (parentClassIterator.hasNext()) {
+
+			monitor.checkCanceled();
+			RecoveredClass parentClass = parentClassIterator.next();
+
+			Boolean isVirtualParent = parentToBaseTypeMap.get(parentClass);
+			if (isVirtualParent) {
+				virtualParents.add(parentClass);
+			}
+		}
+
+		return virtualParents;
 
 	}
 
@@ -5834,6 +6029,7 @@ public class RecoveredClassUtils {
 		}
 	}
 
+
 	/**
 	 * Method to retrieve the offset of the class data in the given structure
 	 * @param recoveredClass the given class
@@ -5844,15 +6040,15 @@ public class RecoveredClassUtils {
 	public int getDataOffset(RecoveredClass recoveredClass, Structure structure)
 			throws CancelledException {
 
-		int offsetOfVirtualParent = getOffsetOfVirtualParent(recoveredClass, structure);
+		int endOfInternalDataOffset = getEndOfInternalDataOffset(recoveredClass, structure);
 
 		int endOfData;
-		if (offsetOfVirtualParent == NONE) {
+		if (endOfInternalDataOffset == NONE) {
 			endOfData = structure.getLength();
 		}
 		else {
 			// end of data is beginning of virt parent
-			endOfData = offsetOfVirtualParent;
+			endOfData = endOfInternalDataOffset;
 		}
 
 		int dataLength =
@@ -6982,8 +7178,7 @@ public class RecoveredClassUtils {
 		return componentFunctionDefinition;
 	}
 
-	//TODO: use the below to find the dt's I need in the other methods
-	//dataTypeManager.findDataTypes(name, list, caseSensitive, monitor);
+
 	private Address getVftableAddress(Structure vftableStructure) throws CancelledException {
 
 		SymbolIterator symbolIterator =
@@ -7339,24 +7534,24 @@ public class RecoveredClassUtils {
 			return null;
 		}
 
-		// parse the description to get class parent names
-		List<String> parentNames =
-			getParentNamesFromClassStructureDescription(classStructure.getDescription());
-		if (parentNames.isEmpty()) {
-			return null;
-		}
+		String parentName = "";
 
-		String parentName = new String();
-		if (parentNames.size() == 1) {
-			parentName = parentNames.get(0);
+		// If the vftable structure has a _for_<parent name> use that to get the parent name (actually
+		// ancestor name because sometimes it is for a higher ancestor)
+		String vftableSuffix = getForClassSuffix(vftableStructure.getName());
+		if (!vftableSuffix.isEmpty()) {
+			parentName = getParentClassNameFromForClassSuffix(vftableSuffix);
 		}
 		else {
-			// otherwise, use the name of the vftableStructure to get the correct parent
-			String vftableSuffix = getForClassSuffix(vftableStructure.getName());
-			String possibleParentName = getParentClassNameFromForClassSuffix(vftableSuffix);
-			if (parentNames.contains(possibleParentName)) {
-				parentName = possibleParentName;
+			// parse the description to get class parent names
+			List<String> parentNames =
+				getParentNamesFromClassStructureDescription(classStructure.getDescription());
+
+			if (parentNames.size() == 1) {
+				parentName = parentNames.get(0);
 			}
+			// else we don't know the parent if it didn't get through either the _for<parent>
+			// check or the single parent check
 		}
 
 		if (parentName.isEmpty()) {
@@ -7367,16 +7562,20 @@ public class RecoveredClassUtils {
 
 		CategoryPath parentCategoryPath = parentStructure.getCategoryPath();
 
+		// return null if no vftable in this class
 		List<Structure> parentVftableStructs = getVftableStructuresInClass(parentCategoryPath);
-		if (parentVftableStructs.size() != 1) {
-			// either no vftable so can't get a component or more than one and we can't determine
-			// which is the correct vftable
-			// TODO: investigate how to determine correct vftable if parent has more than one
+		if (parentVftableStructs.isEmpty()) {
 			return null;
 		}
 
-		if (parentVftableStructs.get(0).getNumComponents() - 1 >= component.getOrdinal()) {
-			return parentVftableStructs.get(0).getComponent(component.getOrdinal());
+		// use name of vftable struct to get correct parent struct
+		for (Structure parentVftableStruct : parentVftableStructs) {
+
+			if (parentVftableStruct.getName().endsWith(parentName)) {
+				if (parentVftableStruct.getNumComponents() - 1 >= component.getOrdinal()) {
+					return parentVftableStruct.getComponent(component.getOrdinal());
+				}
+			}
 		}
 		return null;
 
@@ -7415,18 +7614,96 @@ public class RecoveredClassUtils {
 		return parentNames;
 	}
 
+	// TODO: pulled from prototype api dev branch - either update api to use the utils or utils to use the api
 	private Structure getParentClassStructure(Structure childClassStructure, String nameOfParent)
 			throws CancelledException {
 
+		// get the data type folder of the component and then see if there is 
+		// a struct in it with parent name and return that parent struct if so
 		DataTypeComponent[] components = childClassStructure.getComponents();
 		for (DataTypeComponent component : components) {
 			monitor.checkCanceled();
 			DataType componentDataType = component.getDataType();
-			if (componentDataType.getName().equals(nameOfParent)) {
-				return (Structure) componentDataType;
+
+			CategoryPath componentPath = componentDataType.getCategoryPath();
+			DataType possibleParentDT = dataTypeManager.getDataType(componentPath, nameOfParent);
+			if (possibleParentDT != null) {
+				return (Structure) possibleParentDT;
 			}
 		}
+
+		// otherwise, use the dtman to find a singular match in the class data types folder
+		// or null if none found
+		return getParentStructureFromClassStructures(nameOfParent);
+	}
+
+	/**
+	 * Attempts to get the parent structure from the list of class structures
+	 * @param parentName the name of the parent
+	 * @return the parent structure if there is only one with the given name, else returns null
+	 * @throws CancelledException if cancelled
+	 */
+	private Structure getParentStructureFromClassStructures(String parentName)
+			throws CancelledException {
+
+		List<Structure> classStructures = getClassStructures();
+
+		List<Structure> parentStructures = new ArrayList<Structure>();
+		for (Structure classStructure : classStructures) {
+			monitor.checkCanceled();
+
+			if (classStructure.getName().equals(parentName)) {
+				parentStructures.add(classStructure);
+			}
+
+		}
+		if (parentStructures.size() == 1) {
+			return parentStructures.get(0);
+		}
 		return null;
+
+	}
+
+	public List<Structure> getClassStructures() throws CancelledException {
+
+		Category category = program.getDataTypeManager().getCategory(classDataTypesCategoryPath);
+		if (category == null) {
+			return null;
+		}
+
+		Category[] subCategories = category.getCategories();
+		return getClassStructures(subCategories);
+	}
+
+	private List<Structure> getClassStructures(Category[] categories) throws CancelledException {
+
+		List<Structure> classStructures = new ArrayList<Structure>();
+
+		for (Category category : categories) {
+			monitor.checkCanceled();
+			DataType[] dataTypes = category.getDataTypes();
+			for (DataType dataType : dataTypes) {
+				monitor.checkCanceled();
+				if (dataType.getName().equals(category.getName()) &&
+					dataType instanceof Structure) {
+
+					// if the data type name is the same as the folder name then
+					// it is the main class structure
+					Structure classStructure = (Structure) dataType;
+					if (!classStructures.contains(classStructure)) {
+						classStructures.add(classStructure);
+					}
+
+				}
+			}
+
+			Category[] subcategories = category.getCategories();
+
+			if (subcategories.length > 0) {
+				classStructures.addAll(getClassStructures(subcategories));
+			}
+		}
+		return classStructures;
 	}
 
 	private List<Object> updateList(List<Object> mainList, List<Object> itemsToAdd)
