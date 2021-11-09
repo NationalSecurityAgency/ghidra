@@ -37,15 +37,13 @@ import ghidra.util.Msg;
 import ghidra.util.bean.opteditor.OptionsVetoException;
 
 /**
- * <CODE>NavigationHistoryPlugin</CODE> is used in conjunction with other
- * plugins to cause program viewer plugins to change their focus to a certain
- * address. As viewer plugins are directed to one or more addresses it maintains
- * information about where the viewers have been to support ability for the
- * viewers to go back to a previous "focus" point.
+ * <CODE>NavigationHistoryPlugin</CODE> is used in conjunction with other plugins to cause program
+ * viewer plugins to change their focus to a certain address. As viewer plugins are directed to one
+ * or more addresses it maintains information about where the viewers have been to support ability
+ * for the viewers to go back to a previous "focus" point.
  * 
- * Services Provided: NavigationHistoryService
- * Events Consumed: ProgramLocationPluginEvent, ProgramPluginEvent 
- * Event Produced: HistoryChangePluginEvent Actions: None.
+ * Services Provided: NavigationHistoryService Events Consumed: ProgramLocationPluginEvent,
+ * ProgramPluginEvent Event Produced: HistoryChangePluginEvent Actions: None.
  */
 //@formatter:off
 @PluginInfo(
@@ -367,7 +365,15 @@ public class NavigationHistoryPlugin extends Plugin
 	}
 
 	private void notifyHistoryChange() {
-		tool.contextChanged(null);
+		/*
+		 * During tool disposal, Plugins having providers that extend
+		 * NavigatableComponentProviderAdapter may get disposed after we do. Those providers remove
+		 * themselves from us via NavigatableRemovalListener, which eventually calls into here. If
+		 * that is the case, our tool will already be set to null, so we'll just ignore the event.
+		 */
+		if (tool != null) {
+			tool.contextChanged(null);
+		}
 	}
 
 	@Override
@@ -543,12 +549,12 @@ public class NavigationHistoryPlugin extends Plugin
 		}
 
 		/**
-		 * Find the next history LocationMemento that contains a different function.  If no such
+		 * Find the next history LocationMemento that contains a different function. If no such
 		 * LocationMemento is found, null is returned.
 		 * 
 		 * @param navigatable the navigatable being navigated
-		 * @param moveTo true means after finding, get current location to it. false to just find 
-		 * 			and do nothing
+		 * @param moveTo true means after finding, get current location to it. false to just find
+		 *            and do nothing
 		 * @return next LocationMemento, or null if no next function
 		 */
 		private LocationMemento nextFunction(Navigatable navigatable, boolean moveTo) {
@@ -591,8 +597,8 @@ public class NavigationHistoryPlugin extends Plugin
 		 * LocationMemento is found, null is returned.
 		 * 
 		 * @param navigatable the navigatable being navigated
-		 * @param moveTo true means after finding, get current location to it. false to just find 
-		 * 		   and do nothing
+		 * @param moveTo true means after finding, get current location to it. false to just find
+		 *            and do nothing
 		 * @return previous LocationMemento, or null if no previous function found
 		 */
 		private LocationMemento previousFunction(Navigatable navigatable, boolean moveTo) {
