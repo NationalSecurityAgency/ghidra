@@ -196,6 +196,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			createAndApplyClassStructures(recoveredClasses);
 
 			if (!isPDBLoaded) {
+				// create better vftable labels for multi vftable classes
+				updateMultiVftableLabels(recoveredClasses);
 				//println("Removing erroneous FID namespaces and corresponding class data types");
 				removeEmptyClassesAndStructures();
 			}
@@ -2596,6 +2598,58 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		api.setPlateComment(vbtableAddress,
 			recoveredClass.getClassNamespace().getName(true) + "::vbtable");
+	}
+
+	/**
+	 * Method to update the labels of vftables that belong to classes with multiple vftables in 
+	 * order to distinguish which base class the vftable is for.
+	 * @param recoveredClasses the list of RecoveredClass objects
+	 * @throws CancelledException if cancelled
+	 */
+	private void updateMultiVftableLabels(List<RecoveredClass> recoveredClasses)
+			throws CancelledException {
+
+		if (recoveredClasses.isEmpty()) {
+			return;
+		}
+		for (RecoveredClass recoveredClass : recoveredClasses) {
+			monitor.checkCanceled();
+
+			// if there are no vftables or only one vftable in this class then there is no need to 
+			// distinguish with a new label and can keep the generic one 
+			List<Address> vftableAddresses = recoveredClass.getVftableAddresses();
+			if (vftableAddresses.size() < 2) {
+				continue;
+			}
+
+			for (Address vftableAddress : vftableAddresses) {
+				RecoveredClass vftableBaseClass =
+					recoveredClass.getVftableBaseClass(vftableAddress);
+				if (vftableBaseClass != null) {
+					Symbol primarySymbol = symbolTable.getPrimarySymbol(vftableAddress);
+
+					String baseClassName = vftableBaseClass.getName();
+					// get simplified name by removing template 
+					String shortenedTemplateName = vftableBaseClass.getShortenedTemplateName();
+					if (!shortenedTemplateName.isBlank()) {
+						baseClassName = shortenedTemplateName;
+					}
+					try {
+						primarySymbol.setName("vftable_for_" + baseClassName,
+							primarySymbol.getSource());
+					}
+					catch (DuplicateNameException e) {
+						// skip if it's already the correct name
+					}
+					catch (InvalidInputException e) {
+						Msg.debug(this,
+							"Could not create vftable_for_" + baseClassName +
+								" due to invalid input exeption at address " +
+								vftableAddress.toString());
+					}
+				}
+			}
+		}
 	}
 
 }
