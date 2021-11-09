@@ -43,8 +43,8 @@ rootProject.assembleDistribution {
 	from (BIN_REPO + '/' + getGhidraRelativePath(p) + "/data") {
 		into { zipPath + "/data" }
 	}
-	
-	from (p.projectDir.toString() + "/build/LICENSE.txt") {
+
+	from (ip) {
 		into { zipPath }
 	}
 

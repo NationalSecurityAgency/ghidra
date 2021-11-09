@@ -21,6 +21,18 @@ apply from: "${rootProject.projectDir}/gradle/distributableGhidraModule.gradle"
 apply plugin: 'eclipse'
 eclipse.project.name = 'Debug Framework-TraceModeling'
 
+// The generation timestamp included in these help files
+// makes them different on every build which causes all consuming tasks to be re-executed every time
+// By excluding these files from crucial inputs using runtime classpath normalization, 
+// we are able to re-use build artifacts of this project on incremental builds
+normalization {
+    runtimeClasspath {
+        ignore '**/help/*_HelpSet.hs'
+        ignore '**/help/*_map.xml'
+        ignore '**/help/*_TOC.xml'
+    }
+}
+
 dependencies {
 	api project(':Generic')
 	api project(':SoftwareModeling')

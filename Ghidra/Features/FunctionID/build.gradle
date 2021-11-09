@@ -40,6 +40,16 @@ def fidDbFiles = fileTree(depsDir.exists() ? depsDir : binRepoDir) {
 }
 
 task unpackFidDatabases {
+    inputs.files(fidDbFiles.getFiles())
+			.withPropertyName("fidDbFiles")
+			.withPathSensitivity(PathSensitivity.RELATIVE)
+	// Adding task output to make use of Gradle's up-to-date check
+	// However, outputs in form of file trees are not supported by Gradle's build cache
+	// We would need to write these files to a separate folder if we'd like to enable caching 
+    outputs.files fileTree("$buildDir/data").matching {
+        include "*.fidbf"
+    }
+
 	doLast {
 		fidDbFiles.each { file ->
 		
