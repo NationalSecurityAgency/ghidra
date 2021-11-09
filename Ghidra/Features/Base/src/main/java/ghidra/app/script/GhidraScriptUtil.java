@@ -156,16 +156,27 @@ public class GhidraScriptUtil {
 	 * @return the path to the default user scripts directory
 	 */
 	private static String buildUserScriptsDirectory() {
+            String root, osName, userHome;
 
-		String root = System.getProperty("user.home");
-		String override = System.getProperty(GhidraScriptConstants.USER_SCRIPTS_DIR_PROPERTY);
-		if (override != null) {
-			Msg.debug(GhidraScriptUtil.class, "Using Ghidra script source directory: " + root);
-			root = override;
-		}
+            osName = System.getProperty("os.name");
+            userHome = System.getProperty("user.home");
 
-		String sourcePath = root + File.separator + SCRIPTS_SUBDIR_NAME;
-		return sourcePath;
+            /* Conforming to XDG specification in a Linux system */
+            if (osName.equals("Linux")) {
+                String xdgHome = System.getenv("XDG_DATA_HOME");
+                root = (xdgHome != null) ? xdgHome : userHome + "/.local/share";
+            } else {
+                root = userHome;
+            }
+
+            String override = System.getProperty(GhidraScriptConstants.USER_SCRIPTS_DIR_PROPERTY);
+            if (override != null) {
+                Msg.debug(GhidraScriptUtil.class, "Using Ghidra script source directory: " + root);
+                root = override;
+            }
+
+            String sourcePath = root + File.separator + SCRIPTS_SUBDIR_NAME;
+            return sourcePath;
 	}
 
 	/**
