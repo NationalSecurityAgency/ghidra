@@ -21,7 +21,3 @@ apply from: "$rootProject.projectDir/gradle/javadoc.gradle"
 apply plugin: 'eclipse'
 
 eclipse.project.name = 'Framework Utility'
-
-// Restrict to Java 1.8 for compatibility with the GhidraDev Eclipse plugin.
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
