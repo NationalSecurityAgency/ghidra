@@ -18,9 +18,11 @@ package ghidra.app.plugin.core.debug.service.model;
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedStackRecorder;
 import ghidra.app.plugin.core.debug.service.model.interfaces.ManagedThreadRecorder;
+import ghidra.async.AsyncUtils;
 import ghidra.dbg.*;
 import ghidra.dbg.error.DebuggerMemoryAccessException;
 import ghidra.dbg.target.*;
@@ -63,9 +65,10 @@ public class TraceEventListener extends AnnotatedDebuggerAttributeListener {
 		this.memoryManager = trace.getMemoryManager();
 	}
 
-	public void init() {
+	public CompletableFuture<Void> init() {
 		DebuggerObjectModel model = target.getModel();
 		model.addModelListener(queue.in, true);
+		return AsyncUtils.NIL;
 	}
 
 	private boolean successor(TargetObject ref) {
