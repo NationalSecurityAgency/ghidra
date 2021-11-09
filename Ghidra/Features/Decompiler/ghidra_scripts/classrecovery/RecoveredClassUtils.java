@@ -4529,14 +4529,40 @@ public class RecoveredClassUtils {
 				// of using the function name of "purecall" and prepend "pure" to the comment so
 				// they know it is pure virtual function, ie not actually implemented in the parent class
 				String nameField = vfunction.getName();
+
+				FunctionDefinition functionDataType =
+					new FunctionDefinitionDataType(vfunction, true);
+
+				functionDataType.setReturnType(vfunction.getReturnType());
+
+				// if the function is a purecall need to create the function definition using
+				// the equivalent child virtual function signature
 				if (nameField.contains("purecall")) {
+
 					nameField = DEFAULT_VFUNCTION_PREFIX + vfunctionNumber;
+
+					// get function sig from child class
+					Function childVirtualFunction =
+						getChildVirtualFunction(recoveredClass, vftableAddress, vfunctionNumber);
+					if (childVirtualFunction != null) {
+						functionDataType =
+							new FunctionDefinitionDataType(childVirtualFunction, true);
+						functionDataType.setReturnType(childVirtualFunction.getReturnType());
+						Symbol childFunctionSymbol =
+							symbolTable.getPrimarySymbol(childVirtualFunction.getEntryPoint());
+
+						// if the child function has a default name, rename the function definition
+						// data type to the "vfunction<vfunctionNumber>" name
+						if (childFunctionSymbol.getSource() == SourceType.DEFAULT) {
+							functionDataType.setName(nameField);
+						}
+					}
 					comment = recoveredClass.getName() + " pure " + comment;
 
 				}
 
 				PointerDataType functionPointerDataType =
-					createFunctionSignaturePointerDataType(vfunction, classPath);
+					createFunctionSignaturePointerDataType(functionDataType, classPath);
 
 				vftableStruct.add(functionPointerDataType, nameField,
 					classCommentPrefix + " " + comment);
@@ -4556,6 +4582,47 @@ public class RecoveredClassUtils {
 			api.createData(vftableAddress, vftableStruct);
 
 		}
+	}
+
+	/**
+	 * Method to get a child class virtual function at the given offset into the correct virtual function table
+	 * @param recoveredClass the given class
+	 * @param virtualFunctionNumber the virtual function offset into the table
+	 * @return a child class virtual function at the given offset
+	 */
+	private Function getChildVirtualFunction(RecoveredClass recoveredClass, Address vftableAddress,
+			int virtualFunctionNumber) {
+
+		List<RecoveredClass> childClasses = recoveredClass.getChildClasses();
+		if (childClasses.isEmpty()) {
+			return null;
+		}
+
+		// The child functions should all have the same function signature so just get any one of them
+		// if for some reason they don't, still have to pick one and let user decide how to update
+		RecoveredClass childClass = childClasses.get(0);
+
+		List<Address> childVftableAddresses = childClass.getVftableAddresses();
+		if (childVftableAddresses.isEmpty()) {
+			return null;
+		}
+
+		// get the correct child vftable for the given parent class
+		for (Address childVftableAddress : childVftableAddresses) {
+			RecoveredClass parentForVftable = childClass.getVftableBaseClass(childVftableAddress);
+			if (parentForVftable == null) {
+				continue;
+			}
+			if (parentForVftable.equals(recoveredClass)) {
+				List<Function> childVirtualFunctionsForGivenParent =
+					childClass.getVirtualFunctions(childVftableAddress);
+				if (childVirtualFunctionsForGivenParent.size() < virtualFunctionNumber) {
+					return null;
+				}
+				return childVirtualFunctionsForGivenParent.get(virtualFunctionNumber - 1);
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -4764,14 +4831,22 @@ public class RecoveredClassUtils {
 			classHierarchyIterator = classHierarchy.iterator();
 		}
 
+		FunctionDefinition functionDataType = new FunctionDefinitionDataType(vfunction, true);
+
+		functionDataType.setReturnType(vfunction.getReturnType());
+
 		while (classHierarchyIterator.hasNext()) {
 			monitor.checkCanceled();
 
 			RecoveredClass currentClass = classHierarchyIterator.next();
-			List<Function> virtualFunctions = currentClass.getAllVirtualFunctions();
-			if (virtualFunctions.contains(vfunction)) {
-				classPath = currentClass.getClassPath();
+
+			CategoryPath currentClassPath = currentClass.getClassPath();
+			DataType existingDataType =
+				dataTypeManager.getDataType(currentClassPath, functionDataType.getName());
+			if (existingDataType != null) {
+				return currentClassPath;
 			}
+
 		}
 		return classPath;
 
@@ -4779,40 +4854,33 @@ public class RecoveredClassUtils {
 
 	/**
 	 * 
-	 * @param vfunction the given function
+	 * @param functionDefDataType the function definition
 	 * @param classPath the given data type manager classPath
 	 * @return pointer to function signature data type
 	 * @throws DuplicateNameException if try to create same symbol name already in namespace
 	 */
-	private PointerDataType createFunctionSignaturePointerDataType(Function vfunction,
-			CategoryPath classPath) throws DuplicateNameException {
+	private PointerDataType createFunctionSignaturePointerDataType(
+			FunctionDefinition functionDefDataType, CategoryPath classPath)
+			throws DuplicateNameException {
 
-		FunctionDefinition functionDataType = (FunctionDefinitionDataType) vfunction.getSignature();
-
-		DataType returnType = vfunction.getReturnType();
-
-		functionDataType.setReturnType(returnType);
-
-		// If this data type doesn't exist in this folder make a new one
-		// otherwise use the existing one
 		DataType existingDataType =
-			dataTypeManager.getDataType(classPath, functionDataType.getName());
+			dataTypeManager.getDataType(classPath, functionDefDataType.getName());
 
 		PointerDataType functionPointerDataType;
 
+		// If the given function definition doesn't exist in this folder make a new one and 
+		// make a pointer to it
 		if (existingDataType == null) {
-			functionDataType.setCategoryPath(classPath);
-			functionDataType = (FunctionDefinition) dataTypeManager.addDataType(functionDataType,
-				DataTypeConflictHandler.DEFAULT_HANDLER);
-			functionPointerDataType = new PointerDataType(functionDataType);
+			functionDefDataType.setCategoryPath(classPath);
+			functionPointerDataType = new PointerDataType(functionDefDataType, dataTypeManager);
 		}
+		// otherwise return a pointer to the existing one
 		else {
 			functionPointerDataType = new PointerDataType(existingDataType);
 		}
 		return functionPointerDataType;
 
 	}
-
 	/**
 	 * Method to add precomment inside functions containing inlined constructors at approximate
 	 * address of start of inlined function
@@ -6868,7 +6936,7 @@ public class RecoveredClassUtils {
 				vfunction = thunkedFunction;
 			}
 
-			FunctionSignature listingFunctionSignature = vfunction.getSignature();
+			FunctionSignature listingFunctionSignature = vfunction.getSignature(true);
 
 			DataTypeComponent structureComponent = vfunctionStructure.getComponent(vfunctionIndex);
 
@@ -7584,7 +7652,7 @@ public class RecoveredClassUtils {
 			vfunction = vfunction.getThunkedFunction(true);
 		}
 
-		FunctionSignature listingFunctionSignature = vfunction.getSignature();
+		FunctionSignature listingFunctionSignature = vfunction.getSignature(true);
 
 		DataType componentDataType = structureComponent.getDataType();
 		if (!(componentDataType instanceof Pointer)) {
