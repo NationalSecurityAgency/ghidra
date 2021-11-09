@@ -171,25 +171,29 @@ public class DebuggerConnectDialog extends DialogComponentProvider
 		}
 	}
 
+	@Override
 	public void dispose() {
 		modelService.removeFactoriesChangedListener(listener);
 		clearFactories();
+		super.dispose();
 	}
 
 	protected void populateComponents() {
 		JPanel panel = new JPanel(new BorderLayout());
-
 		panel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
 		Box topBox = Box.createVerticalBox();
-		panel.add(topBox, BorderLayout.NORTH);
-
 		dropdown = new JComboBox<>(dropdownModel);
 		topBox.add(dropdown);
 
+		// Avoid Swing's automatic indentation
+		JPanel inner = new JPanel(new BorderLayout());
 		description = new JLabel(HTML_BOLD_DESCRIPTION + "</html>");
 		description.setBorder(new EmptyBorder(10, 0, 10, 0));
-		topBox.add(description);
+		inner.add(description);
+		topBox.add(inner);
+
+		panel.add(topBox, BorderLayout.NORTH);
 
 		layout = new PairLayout(5, 5);
 		pairPanel = new JPanel(layout);
