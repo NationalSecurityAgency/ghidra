@@ -3506,6 +3506,61 @@ public class RecoveredClassUtils {
 	}
 
 	/**
+	 * Method to remove existing class structures from the data type manager that were replaced by 
+	 * newly created class structures and that have the "_REPLACED" suffix on them
+	 * @param recoveredClasses list of given recovered classes
+	 * @param removeNonEmpty if true, remove not only the empty replaced class structures but
+	 * also the non-empty ones.
+	 * @throws CancelledException if cancelled
+	 */
+	public void removeReplacedClassStructures(List<RecoveredClass> recoveredClasses,
+			boolean removeNonEmpty) throws CancelledException {
+
+		if (recoveredClasses.isEmpty()) {
+			return;
+		}
+
+		for (RecoveredClass recoveredClass : recoveredClasses) {
+			monitor.checkCanceled();
+
+			// first get the new class structure and verify it exists - don't remove others if 
+			// new one doesn't exist
+			DataType classStructureDataType = dataTypeManager.getDataType(
+				recoveredClass.getClassPath(), recoveredClass.getName());
+			if (classStructureDataType == null) {
+				continue;
+			}
+			// then find all class structures with name "<className>_REPLACED"
+			List<DataType> replacedClassDataTypes = new ArrayList<DataType>();
+			dataTypeManager.findDataTypes(recoveredClass.getName() + "_REPLACED",
+				replacedClassDataTypes);
+
+			if (replacedClassDataTypes.isEmpty()) {
+				continue;
+			}
+
+			for (DataType replacedClassDataType : replacedClassDataTypes) {
+				monitor.checkCanceled();
+
+				if (!(replacedClassDataType instanceof Structure)) {
+					continue;
+				}
+
+				if (removeNonEmpty) {
+					dataTypeManager.remove(replacedClassDataType, monitor);
+				}
+				else {
+					Structure replacedStructure = (Structure) replacedClassDataType;
+					if (replacedStructure.isNotYetDefined()) {
+						dataTypeManager.remove(replacedClassDataType, monitor);
+					}
+				}
+			}
+
+		}
+	}
+
+	/**
 	 * Method to create a new symbol at the given function
 	 * @param function the given function
 	 * @param name the name for the new symbol
