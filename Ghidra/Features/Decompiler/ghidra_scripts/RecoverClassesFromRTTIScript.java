@@ -134,6 +134,24 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 	private static final String INDETERMINATE_BOOKMARK = "INDETERMINATE";
 
+	// If replacedClassStructuresOption is set to the following, no replaced structures will be removed
+	// from the data type manager
+	private static final int DO_NOT_REMOVE_REPLACED_CLASS_STRUCTURES = 0;
+
+	// If replacedClassStructuresOption is set to the following, only empty existing class structures 
+	// that were replaced by this script will be removed from the data type manager 
+	private static final int REMOVE_EMPTY_REPLACED_CLASS_STRUCTURES = 1;
+
+	// If replacedClassStructuresOption is set to the following, all existing class structures that 
+	// were replaced by this script, including non-emtpy ones, will be removed from the data type 
+	// manager 
+	private static final int REMOVE_ALL_REPLACED_CLASS_STRUCTURES = 2;
+
+	// NEW OPTION - 
+	// This option allows the user to decide whether and how to remove replaced existing class structures
+	// using one of the above three flags
+	int replacedClassStructuresOption = DO_NOT_REMOVE_REPLACED_CLASS_STRUCTURES;
+
 	boolean programHasRTTIApplied = false;
 	boolean hasDebugSymbols;
 	boolean isGcc = false;
@@ -281,6 +299,17 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		if (GRAPH_CLASS_HIERARCHIES) {
 			AttributedGraph graph = createGraph(recoveredClasses);
 			showGraph(graph);
+		}
+
+		if (replacedClassStructuresOption == REMOVE_EMPTY_REPLACED_CLASS_STRUCTURES) {
+			println("Removing all empty replaced class structures from the data type manager");
+			recoverClassesFromRTTI.removeReplacedClassStructures(recoveredClasses, false);
+		}
+
+		if (replacedClassStructuresOption == REMOVE_ALL_REPLACED_CLASS_STRUCTURES) {
+			println(
+				"Removing all replaced class structures from the data type manager, including non-empty ones");
+			recoverClassesFromRTTI.removeReplacedClassStructures(recoveredClasses, true);
 		}
 
 
