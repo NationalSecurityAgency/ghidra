@@ -430,8 +430,7 @@ public class ClearTest extends AbstractGhidraHeadedIntegrationTest {
 
 		Symbol[] symbols = program.getSymbolTable().getSymbols(addr("0x10022bf"));
 		Symbol s = symbols[0];
-		RenameLabelCmd cmd = new RenameLabelCmd(s.getAddress(), s.getName(), "Fred",
-			s.getParentNamespace(), SourceType.USER_DEFINED);
+		RenameLabelCmd cmd = new RenameLabelCmd(s, "Fred", SourceType.USER_DEFINED);
 		applyCmd(program, cmd);
 
 		makeSelection(tool, program, addr("0x10022bf"), addr("0x10022c4"));
