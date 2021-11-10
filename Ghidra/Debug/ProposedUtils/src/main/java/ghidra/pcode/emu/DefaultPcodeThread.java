@@ -192,7 +192,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 		assignContext(context);
 		state.setVar(contextreg, arithmetic.fromConst(
 			this.context.getUnsignedValueIgnoreMask(),
-			contextreg.getMinimumByteSize()));
+			contextreg.getMinimumByteSize(), true));
 	}
 
 	@Override
@@ -215,7 +215,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 
 		if (contextreg != Register.NO_CONTEXT) {
 			try {
-				BigInteger ctx = arithmetic.toConcrete(state.getVar(contextreg));
+				BigInteger ctx = arithmetic.toConcrete(state.getVar(contextreg), true);
 				assignContext(new RegisterValue(contextreg, ctx));
 			}
 			catch (AccessPcodeExecutionException e) {

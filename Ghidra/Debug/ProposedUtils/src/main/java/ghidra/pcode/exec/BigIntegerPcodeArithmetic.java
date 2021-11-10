@@ -20,6 +20,7 @@ import java.math.BigInteger;
 import ghidra.pcode.opbehavior.BinaryOpBehavior;
 import ghidra.pcode.opbehavior.UnaryOpBehavior;
 
+@Deprecated(forRemoval = true) // TODO: Not getting used
 public enum BigIntegerPcodeArithmetic implements PcodeArithmetic<BigInteger> {
 	INSTANCE;
 
@@ -40,7 +41,7 @@ public enum BigIntegerPcodeArithmetic implements PcodeArithmetic<BigInteger> {
 	}
 
 	@Override
-	public BigInteger fromConst(BigInteger value, int size) {
+	public BigInteger fromConst(BigInteger value, int size, boolean isContextreg) {
 		return value;
 	}
 
@@ -50,7 +51,7 @@ public enum BigIntegerPcodeArithmetic implements PcodeArithmetic<BigInteger> {
 	}
 
 	@Override
-	public BigInteger toConcrete(BigInteger value) {
+	public BigInteger toConcrete(BigInteger value, boolean isContextreg) {
 		return value;
 	}
 }
