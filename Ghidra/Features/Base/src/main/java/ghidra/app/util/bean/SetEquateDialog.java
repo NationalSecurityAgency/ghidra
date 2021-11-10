@@ -210,11 +210,8 @@ public class SetEquateDialog extends DialogComponentProvider {
 			.stream()
 			.filter(dt -> dt instanceof Enum)
 			.map(Enum.class::cast)
-			.filter(enoom -> enoom.getName(scalar.getValue()) != null)
-			.forEach(enoom -> {
-				String name = enoom.getName(scalar.getValue());
-				entries.add(new EquateRowObject(name, enoom));
-			});
+			.flatMap(enoom -> Arrays.stream(enoom.getNames(scalar.getValue())).map(name -> new EquateRowObject(name, enoom)))
+			.forEach(entries::add);
 		//@formatter:on
 
 		return entries;
