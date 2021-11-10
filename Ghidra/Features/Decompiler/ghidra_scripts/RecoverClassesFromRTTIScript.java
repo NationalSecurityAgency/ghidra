@@ -121,6 +121,12 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	// show shortened class template names in class structure field names
 	private static final boolean USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS = true;
 
+	// replace defined existing class structures (ie pdb, fid, demangler, or other)with ones created by 
+	// this script and rename the existing ones with a _REPLACED suffix
+	// NOTE: currently does not replace DWARF
+	// NEW OPTION:
+	private static final boolean REPLACE_EXISTING_CLASS_STRUCTURES = true;
+
 	private static final String CLASS_DATA_STRUCT_NAME = "_data";
 
 	private static final String CONSTRUCTOR_BOOKMARK = "CONSTRUCTOR";
@@ -162,6 +168,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			recoverClassesFromRTTI = new RTTIWindowsClassRecoverer(currentProgram,
 				currentLocation, state.getTool(), this, BOOKMARK_FOUND_FUNCTIONS,
 				USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS, nameVfunctions, hasDebugSymbols,
+				REPLACE_EXISTING_CLASS_STRUCTURES,
 				monitor);
 		}
 		else if (isGcc()) {
@@ -182,6 +189,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, currentLocation,
 				state.getTool(), this, BOOKMARK_FOUND_FUNCTIONS,
 				USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS, nameVfunctions, hasDebugSymbols,
+				REPLACE_EXISTING_CLASS_STRUCTURES,
 				monitor);
 		}
 		else {
