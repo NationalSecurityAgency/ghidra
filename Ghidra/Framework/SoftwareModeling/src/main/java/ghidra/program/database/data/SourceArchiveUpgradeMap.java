@@ -15,8 +15,7 @@
  */
 package ghidra.program.database.data;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import ghidra.program.model.data.*;
 import ghidra.program.model.lang.CompilerSpec;
@@ -48,13 +47,13 @@ public class SourceArchiveUpgradeMap {
 			new SourceArchiveImpl(NEW_DEFAULT_CLIB_ARCHIVE_ID, NEW_DEFAULT_CLIB_ARCHIVE_NAME);
 
 		// create mapping for WINDOWS
-		windowsMap = new HashMap<UniversalID, SourceArchive>();
+		windowsMap = new HashMap<>();
 		windowsMap.put(new UniversalID(OLD_CLIB_ARCHIVE_ID), newWindowsArchive);
 		windowsMap.put(new UniversalID(OLD_WINDOWS_ARCHIVE_ID), newWindowsArchive);
 		windowsMap.put(new UniversalID(OLD_NTDDK_ARCHIVE_ID), newWindowsArchive);
 
 		// create defaultMap
-		defaultMap = new HashMap<UniversalID, SourceArchive>();
+		defaultMap = new HashMap<>();
 		defaultMap.put(new UniversalID(OLD_CLIB_ARCHIVE_ID), newDefaultClibArchive);
 		SourceArchive removedSourceArchive = new SourceArchiveImpl();
 		defaultMap.put(new UniversalID(OLD_WINDOWS_ARCHIVE_ID), removedSourceArchive);
@@ -107,37 +106,71 @@ class SourceArchiveImpl implements SourceArchive {
 		archiveName = "";
 	}
 
+	@Override
 	public ArchiveType getArchiveType() {
 		return ArchiveType.FILE;
 	}
 
+	@Override
 	public String getDomainFileID() {
 		return null;
 	}
 
+	@Override
 	public long getLastSyncTime() {
 		return 0;
 	}
 
+	@Override
 	public String getName() {
 		return archiveName;
 	}
 
+	@Override
 	public UniversalID getSourceArchiveID() {
 		return id;
 	}
 
+	@Override
 	public boolean isDirty() {
 		return false;
 	}
 
+	@Override
 	public void setDirtyFlag(boolean dirty) {
+		// stub
 	}
 
+	@Override
 	public void setLastSyncTime(long time) {
+		// stub
 	}
 
+	@Override
 	public void setName(String name) {
+		// stub
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		SourceArchiveImpl other = (SourceArchiveImpl) obj;
+		return Objects.equals(id, other.id);
+	}
 }

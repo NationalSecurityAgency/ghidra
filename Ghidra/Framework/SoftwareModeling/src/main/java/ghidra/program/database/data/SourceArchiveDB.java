@@ -16,6 +16,7 @@
 package ghidra.program.database.data;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import db.DBRecord;
 import ghidra.program.database.DBObjectCache;
@@ -46,12 +47,13 @@ public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 	 * Gets the ID that the program has associated with the data type archive.
 	 * @return the data type archive ID
 	 */
+	@Override
 	public UniversalID getSourceArchiveID() {
 		if (isLocal()) {
 			// if this sourceArchive represents the local archive (id == LOCAL_ARCHIVE_KEY)
 			// the sourceArchiveID is this dataTypeManager's universal ID;
 			UniversalID universalID = dtMgr.getUniversalID();
-			// if the universalID == null, then this is from an non-upgraded archve, return the sourceID
+			// if the universalID == null, this is from an non-upgraded archive, return the sourceID
 			if (universalID != null) {
 				return universalID;
 			}
@@ -67,6 +69,7 @@ public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 	 * Gets the ID used to uniquely identify the domain file for the data type archive.
 	 * @return the domain file identifier
 	 */
+	@Override
 	public String getDomainFileID() {
 		if (isLocal()) {
 			return dtMgr.getDomainFileID();
@@ -79,6 +82,7 @@ public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 	 * (PROGRAM_TYPE, PROJECT_TYPE, FILE_TYPE)
 	 * @return the type
 	 */
+	@Override
 	public ArchiveType getArchiveType() {
 		if (isLocal()) {
 			return dtMgr.getType();
@@ -87,6 +91,7 @@ public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 		return ArchiveType.values()[byteValue];
 	}
 
+	@Override
 	public String getName() {
 		if (isLocal()) {
 			return dtMgr.getName();
@@ -109,14 +114,17 @@ public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 		return false;
 	}
 
+	@Override
 	public long getLastSyncTime() {
 		return record.getLongValue(SourceArchiveAdapter.ARCHIVE_ID_LAST_SYNC_TIME_COL);
 	}
 
+	@Override
 	public boolean isDirty() {
 		return record.getBooleanValue(SourceArchiveAdapter.ARCHIVE_ID_DIRTY_FLAG_COL);
 	}
 
+	@Override
 	public void setLastSyncTime(long syncTime) {
 		lock.acquire();
 		try {
@@ -133,6 +141,7 @@ public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 		}
 	}
 
+	@Override
 	public void setDirtyFlag(boolean isDirty) {
 		lock.acquire();
 		try {
@@ -149,6 +158,7 @@ public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 		}
 	}
 
+	@Override
 	public void setName(String newName) {
 		if (getName().equals(newName)) {
 			return;
@@ -171,5 +181,28 @@ public class SourceArchiveDB extends DatabaseObject implements SourceArchive {
 	@Override
 	public String toString() {
 		return getName();
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((sourceID == null) ? 0 : sourceID.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		SourceArchiveDB other = (SourceArchiveDB) obj;
+		return Objects.equals(sourceID, other.sourceID);
 	}
 }
