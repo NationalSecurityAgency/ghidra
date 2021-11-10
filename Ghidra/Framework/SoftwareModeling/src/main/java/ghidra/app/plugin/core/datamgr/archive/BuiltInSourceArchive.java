@@ -22,9 +22,9 @@ public class BuiltInSourceArchive implements SourceArchive {
 	public static final SourceArchive INSTANCE = new BuiltInSourceArchive();
 
 	private BuiltInSourceArchive() {
-		// not public
+		
 	}
-
+	
 	@Override
 	public ArchiveType getArchiveType() {
 		return ArchiveType.BUILT_IN;
@@ -58,27 +58,19 @@ public class BuiltInSourceArchive implements SourceArchive {
 	public boolean isDirty() {
 		return false;
 	}
-
 	@Override
-	public void setDirtyFlag(boolean b) {
-		// unsupported
+	public void setDirtyFlag( boolean b ) {
 	}
 
 	@Override
-	public void setLastSyncTime(long time) {
-		// unsupported
+	public void setLastSyncTime( long time ) {
 	}
 
 	@Override
-	public void setName(String name) {
-		// unsupported
+	public void setName( String name ) {
 	}
 
-	public void setPathname(String name) {
-		// unsupported
+	public void setPathname( String name ) {
 	}
 
-	// We do not need to override equals since there is only one instance of the this class in use.
-	// The loaded instance will only be equal to itself.
-	// public boolean equals()
 }
