@@ -29,7 +29,7 @@ public interface PtySession {
 	 * @return the status code, if applicable and implemented
 	 * @throws InterruptedException if the wait is interrupted
 	 */
-	Integer waitExited() throws InterruptedException;
+	int waitExited() throws InterruptedException;
 
 	/**
 	 * Take the greatest efforts to terminate the session (leader and descendants)

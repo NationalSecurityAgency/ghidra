@@ -65,7 +65,7 @@ public class LinuxPtyTest {
 			PtySession bash =
 				pty.getChild().session(new String[] { DummyProc.which("bash") }, null);
 			pty.getParent().getOutputStream().write("exit\n".getBytes());
-			assertEquals(0, bash.waitExited().intValue());
+			assertEquals(0, bash.waitExited());
 		}
 	}
 
@@ -78,7 +78,7 @@ public class LinuxPtyTest {
 			 * NOTE: Java subprocess dies with code 1 on unhandled exception. TODO: Is there a nice
 			 * way to distinguish whether the code is from java or the execed image?
 			 */
-			assertEquals(1, dies.waitExited().intValue());
+			assertEquals(1, dies.waitExited());
 		}
 	}
 
@@ -117,7 +117,7 @@ public class LinuxPtyTest {
 			while (true) {
 				try {
 					assertEquals("Early exit with wrong code", expected,
-						session.waitExited().intValue());
+						session.waitExited());
 					return;
 				}
 				catch (InterruptedException e) {
@@ -159,7 +159,7 @@ public class LinuxPtyTest {
 			assertTrue("Not 'exit 3' or 'BASH:exit 3': '" + line + "'",
 				Set.of("BASH:exit 3", "exit 3").contains(line));
 
-			assertEquals(3, bash.waitExited().intValue());
+			assertEquals(3, bash.waitExited());
 		}
 	}
 
@@ -214,7 +214,7 @@ public class LinuxPtyTest {
 			writer.flush();
 			assertTrue(Set.of("BASH:exit 3", "exit 3").contains(reader.readLine()));
 
-			assertEquals(3, bash.waitExited().intValue());
+			assertEquals(3, bash.waitExited());
 		}
 	}
 }
