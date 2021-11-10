@@ -163,6 +163,23 @@ class EnumDB extends DataTypeDB implements Enum {
 	}
 
 	@Override
+	public String[] getNames(long value) {
+		lock.acquire();
+		try {
+			checkIsValid();
+			initializeIfNeeded();
+			List<String> list = valueMap.get(value);
+			if (list == null) {
+				return new String[0];
+			}
+			return list.toArray(new String[0]);
+		}
+		finally {
+			lock.release();
+		}
+	}
+
+	@Override
 	public boolean hasLanguageDependantLength() {
 		return false;
 	}
