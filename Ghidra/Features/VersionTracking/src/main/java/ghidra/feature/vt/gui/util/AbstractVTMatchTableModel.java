@@ -16,8 +16,7 @@
  */
 package ghidra.feature.vt.gui.util;
 
-import static ghidra.feature.vt.gui.provider.matchtable.MultipleLabelsRenderer.MultipleLabelsRendererType.DESTINATION;
-import static ghidra.feature.vt.gui.provider.matchtable.MultipleLabelsRenderer.MultipleLabelsRendererType.SOURCE;
+import static ghidra.feature.vt.gui.provider.matchtable.MultipleLabelsRenderer.MultipleLabelsRendererType.*;
 import static ghidra.feature.vt.gui.util.MungedAssocationAndMarkupItemStatus.*;
 
 import java.awt.Color;
@@ -102,7 +101,7 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 			FilterShortcutState state = filter.getFilterShortcutState();
 			if (state == FilterShortcutState.NEVER_PASSES) {
 				// we have found a filter that will never pass; signal that all filtering will
-				// fail by returning null (the client of this code must know that: null is a 
+				// fail by returning null (the client of this code must know that: null is a
 				// special case and that no filtering is required; all items will fail the filter)
 				return null;
 			}
@@ -212,8 +211,8 @@ public abstract class AbstractVTMatchTableModel extends AddressBasedTableModel<V
 
 		@Override
 		public boolean equals(Object obj) {
-			// For now we don't support equals(); if this filter gets re-created, 
-			// then the table must be re-filtered.  If we decide to implement this method, then 
+			// For now we don't support equals(); if this filter gets re-created,
+			// then the table must be re-filtered.  If we decide to implement this method, then
 			// we must also implement equals() on the filters used by this filter.
 			return this == obj;
 		}

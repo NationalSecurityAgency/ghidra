@@ -73,8 +73,10 @@ public class VTControllerImpl
 		vtOptions = plugin.getTool().getOptions(VERSION_TRACKING_OPTIONS_NAME);
 		vtOptions.addOptionsChangeListener(this);
 		folderListener = new MyFolderListener();
-		plugin.getTool().getProject().getProjectData().addDomainFolderChangeListener(
-			folderListener);
+		plugin.getTool()
+				.getProject()
+				.getProjectData()
+				.addDomainFolderChangeListener(folderListener);
 	}
 
 	@Override
@@ -98,8 +100,8 @@ public class VTControllerImpl
 			return;
 		}
 		try {
-			VTSessionDB newSession = (VTSessionDB) domainFile.getDomainObject(this, true, true,
-				TaskMonitorAdapter.DUMMY_MONITOR);
+			VTSessionDB newSession =
+				(VTSessionDB) domainFile.getDomainObject(this, true, true, TaskMonitor.DUMMY);
 			doOpenSession(newSession);
 		}
 		catch (VersionException e) {
@@ -476,9 +478,11 @@ public class VTControllerImpl
 			return;
 		}
 
+		WrapperTask wrappedTask = new WrapperTask(task);
+
 		int matchSetTransactionID = session.startTransaction(task.getTaskTitle());
 		try {
-			new TaskLauncher(task, getParentComponent());
+			new TaskLauncher(wrappedTask, getParentComponent());
 		}
 		finally {
 			session.endTransaction(matchSetTransactionID, task.wasSuccessfull());
@@ -486,7 +490,6 @@ public class VTControllerImpl
 		if (task.hasErrors()) {
 			task.showErrors();
 		}
-
 	}
 
 	private boolean hasTransactionsOpen(Program program, VtTask task) {
@@ -527,9 +530,45 @@ public class VTControllerImpl
 		plugin.setSelectionInDestinationTool(destinationSet);
 	}
 
-//==================================================================================================
-// Inner Classes
-//==================================================================================================
+	@Override
+	public Symbol getDestinationSymbol(VTAssociation association) {
+		if (session == null) {
+			return null;
+		}
+		Address address = association.getDestinationAddress();
+		Symbol symbol = destinationSymbolCache.get(address);
+		if (symbol == null) {
+			Program program = session.getDestinationProgram();
+			symbol = program.getSymbolTable().getPrimarySymbol(address);
+			destinationSymbolCache.put(address, symbol);
+		}
+		return symbol;
+	}
+
+	@Override
+	public Symbol getSourceSymbol(VTAssociation association) {
+		if (session == null) {
+			return null;
+		}
+		Address address = association.getSourceAddress();
+		Symbol symbol = sourceSymbolCache.get(address);
+		if (symbol == null) {
+			Program program = session.getSourceProgram();
+			symbol = program.getSymbolTable().getPrimarySymbol(address);
+			sourceSymbolCache.put(address, symbol);
+		}
+		return symbol;
+	}
+
+	@Override
+	public ColorizingService getSourceColorizingService() {
+		return plugin.getSourceColorizingService();
+	}
+
+	@Override
+	public ColorizingService getDestinationColorizingService() {
+		return plugin.getDestinationColorizingService();
+	}
 
 	@Override
 	public void transactionEnded(DomainObjectAdapterDB domainObj) {
@@ -552,6 +591,10 @@ public class VTControllerImpl
 		// don't care
 	}
 
+//==================================================================================================
+// Inner Classes
+//==================================================================================================
+
 	private class MyFolderListener extends DomainFolderListenerAdapter {
 
 		@Override
@@ -571,8 +614,7 @@ public class VTControllerImpl
 			}
 			Program newProgram;
 			try {
-				newProgram = (Program) file.getDomainObject(this, false, false,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+				newProgram = (Program) file.getDomainObject(this, false, false, TaskMonitor.DUMMY);
 			}
 			catch (Exception e) {
 				Msg.showError(this, getParentComponent(), "Error opening program " + file, e);
@@ -630,43 +672,31 @@ public class VTControllerImpl
 		}
 	}
 
-	@Override
-	public Symbol getDestinationSymbol(VTAssociation association) {
-		if (session == null) {
-			return null;
-		}
-		Address address = association.getDestinationAddress();
-		Symbol symbol = destinationSymbolCache.get(address);
-		if (symbol == null) {
-			Program program = session.getDestinationProgram();
-			symbol = program.getSymbolTable().getPrimarySymbol(address);
-			destinationSymbolCache.put(address, symbol);
-		}
-		return symbol;
-	}
+	/**
+	 * A task wrapper that allows us to set the currently in-use task monitor for VT APIs to use
+	 * when they are not explicitly passed a task monitor.
+	 */
+	private class WrapperTask extends Task {
 
-	@Override
-	public Symbol getSourceSymbol(VTAssociation association) {
-		if (session == null) {
-			return null;
-		}
-		Address address = association.getSourceAddress();
-		Symbol symbol = sourceSymbolCache.get(address);
-		if (symbol == null) {
-			Program program = session.getSourceProgram();
-			symbol = program.getSymbolTable().getPrimarySymbol(address);
-			sourceSymbolCache.put(address, symbol);
-		}
-		return symbol;
-	}
+		private final Task delegate;
 
-	@Override
-	public ColorizingService getSourceColorizingService() {
-		return plugin.getSourceColorizingService();
-	}
+		WrapperTask(Task t) {
+			super(t.getTaskTitle(), t.canCancel(), t.hasProgress(), t.isModal(),
+				t.getWaitForTaskCompleted());
+			this.delegate = t;
+		}
 
-	@Override
-	public ColorizingService getDestinationColorizingService() {
-		return plugin.getDestinationColorizingService();
+		@Override
+		public void run(TaskMonitor monitor) throws CancelledException {
+
+			VTTaskMonitor.setTaskMonitor(monitor);
+			try {
+				delegate.run(monitor);
+			}
+			finally {
+				VTTaskMonitor.setTaskMonitor(null);
+			}
+		}
+
 	}
 }

@@ -32,3 +32,9 @@ dependencies {
 	testImplementation "org.jmockit:jmockit:1.44"
 	testImplementation project(path: ':Project', configuration: 'testArtifacts')
 }
+integrationTest {
+	// tests to slow to run during automated testing
+	excludes = [
+		'**/VTAutoVersionTrackingTest*',
+	]
+}
