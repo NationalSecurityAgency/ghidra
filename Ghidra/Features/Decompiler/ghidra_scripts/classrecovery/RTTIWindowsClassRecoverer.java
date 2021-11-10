@@ -69,11 +69,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 	public RTTIWindowsClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVFunctions, boolean isPDBLoaded,
+			boolean nameVFunctions, boolean isPDBLoaded, boolean replaceClassStructures,
 			TaskMonitor monitor) throws CancelledException {
 
 		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVFunctions,
-			isPDBLoaded, monitor);
+			isPDBLoaded, replaceClassStructures, monitor);
 
 		this.isPDBLoaded = isPDBLoaded;
 
@@ -2245,32 +2245,35 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		applyVbtableStructure(recoveredClass);
 
-		// pdb already has good names so only name if no pdb
-		if (!isPDBLoaded) {
 
-			// Now that we have a class data type
-			// name constructor and destructor functions and put into the class namespace
-			addConstructorsToClassNamespace(recoveredClass, classStruct);
-			addDestructorsToClassNamespace(recoveredClass);
+		// Now that we have a class data type
+		// name constructor and destructor functions and put into the class namespace
+		// checks are internal for hasDebugSymbols since there
+		// are also replace methods that need to be called either way
+		addConstructorsToClassNamespace(recoveredClass, classStruct);
+		addDestructorsToClassNamespace(recoveredClass, classStruct);
+		addVbaseDestructorsToClassNamespace(recoveredClass, classStruct);
+
+		if (!hasDebugSymbols) {
 			addNonThisDestructorsToClassNamespace(recoveredClass);
-			addVbaseDestructorsToClassNamespace(recoveredClass);
+
 			addVbtableToClassNamespace(recoveredClass);
 
 			// add secondary label on functions with inlined constructors or destructors
 			createInlinedConstructorComments(recoveredClass);
 			createInlinedDestructorComments(recoveredClass);
 			createIndeterminateInlineComments(recoveredClass);
-
-			// add label on constructor destructor functions that could not be determined which were which
-			createIndeterminateLabels(recoveredClass);
 		}
+
+		// add label on constructor destructor functions that could not be determined which were which
+		createIndeterminateLabels(recoveredClass, classStruct);
 
 		// This is done after the class structure is created and added to the dtmanager
 		// because if done before the class structures are created 
 		// then empty classes will get auto-created in the wrong place
 		// when the vfunctions are put in the class
-
-		fillInAndApplyVftableStructAndNameVfunctions(recoveredClass, vfPointerDataTypes);
+		fillInAndApplyVftableStructAndNameVfunctions(recoveredClass, vfPointerDataTypes,
+			classStruct);
 
 	}
 
