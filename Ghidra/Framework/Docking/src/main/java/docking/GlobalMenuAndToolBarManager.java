@@ -21,13 +21,24 @@ import docking.action.DockingActionIf;
 import docking.menu.MenuGroupMap;
 import docking.menu.MenuHandler;
 import ghidra.util.Swing;
+import ghidra.util.task.AbstractSwingUpdateManager;
+import ghidra.util.task.SwingUpdateManager;
 
+/**
+ * Class to manage all the global actions that show up on the main tool menubar or toolbar
+ */
 public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 
 	private Map<WindowNode, WindowActionManager> windowToActionManagerMap;
 	private final MenuHandler menuHandler;
 	private final MenuGroupMap menuGroupMap;
 	private final DockingWindowManager windowManager;
+
+	// set the max delay low enough so that users can't interact with out-of-date actions before
+	// they get updated
+	private SwingUpdateManager updateManager =
+		new SwingUpdateManager(AbstractSwingUpdateManager.DEFAULT_MIN_DELAY, 500,
+			"Context Update Manager", () -> updateActions());
 
 	public GlobalMenuAndToolBarManager(DockingWindowManager windowManager, MenuHandler menuHandler,
 			MenuGroupMap menuGroupMap) {
@@ -77,11 +88,15 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 	}
 
 	public void dispose() {
-		for (WindowActionManager actionManager : windowToActionManagerMap.values()) {
-			actionManager.dispose();
-		}
-		windowToActionManagerMap.clear();
-
+		// make sure this is on the swing thread to avoid clearing stuff while the swing update
+		// manager is firing its processContextChanged() call
+		Swing.runIfSwingOrRunLater(() -> {
+			updateManager.dispose();
+			for (WindowActionManager actionManager : windowToActionManagerMap.values()) {
+				actionManager.dispose();
+			}
+			windowToActionManagerMap.clear();
+		});
 	}
 
 	@Override
@@ -113,13 +128,7 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 
 	@Override
 	public void dockingWindowFocusChanged(WindowNode windowNode) {
-		//update global menus and toolbars for this window
-		ComponentPlaceholder lastFocused = windowNode.getLastFocusedProviderInWindow();
-		WindowActionManager windowActionManager = windowToActionManagerMap.get(windowNode);
-		if (windowActionManager == null) {
-			return;
-		}
-		windowActionManager.contextChanged(lastFocused);
+		updateManager.updateLater();
 	}
 
 	private void removeWindowActionManager(WindowNode windowNode) {
@@ -135,8 +144,7 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 			new WindowActionManager(windowNode, menuHandler, windowManager, menuGroupMap);
 		windowToActionManagerMap.put(windowNode, newActionManager);
 		newActionManager.setActions(actionsForWindow);
-		ComponentPlaceholder lastFocused = windowNode.getLastFocusedProviderInWindow();
-		newActionManager.contextChanged(lastFocused);
+		updateManager.updateLater();
 	}
 
 	private List<DockingActionIf> getActionsForWindow(WindowNode windowNode) {
@@ -152,34 +160,80 @@ public class GlobalMenuAndToolBarManager implements DockingWindowListener {
 		return actionsForWindow;
 	}
 
-	public void contextChangedAll() {
-		Swing.runIfSwingOrRunLater(this::updateAllWindowActions);
+	public void contextChanged() {
+		// schedule an update for all the global actions
+		updateManager.updateLater();
 	}
 
-	private void updateAllWindowActions() {
+	private void updateActions() {
+
+		//
+		// The focused window's actions must be notified after all other windows in order to
+		// prevent incorrect context updates.   We will first update all non-focused windows,
+		// then the focused window and then finally tell the Docking Window Manager to update.
+		//
+		WindowNode focusedWindowNode = getFocusedWindowNode();
+		Set<DockingActionIf> focusedWindowActions = getWindowActions(focusedWindowNode);
+
+		ActionContext globalContext = windowManager.getDefaultToolContext();
 		for (WindowNode windowNode : windowToActionManagerMap.keySet()) {
-			ComponentPlaceholder lastFocused = windowNode.getLastFocusedProviderInWindow();
-			windowToActionManagerMap.get(windowNode).contextChanged(lastFocused);
+			if (windowNode == focusedWindowNode) {
+				continue; // the focused window will be called after this loop later
+			}
+
+			WindowActionManager actionManager = windowToActionManagerMap.get(windowNode);
+			ActionContext localContext = getContext(windowNode);
+			actionManager.contextChanged(globalContext, localContext, focusedWindowActions);
+		}
+
+		// now update the focused window's actions
+		WindowActionManager actionManager = windowToActionManagerMap.get(focusedWindowNode);
+		ActionContext focusedContext = getContext(focusedWindowNode);
+		if (actionManager != null) {
+			actionManager.contextChanged(globalContext, focusedContext, Collections.emptySet());
+		}
+
+		// update the docking window manager ; no focused context when no window is focused
+		if (focusedContext != null) {
+			windowManager.doContextChanged(focusedContext);
 		}
 	}
 
-	public void contextChanged(ComponentPlaceholder placeHolder) {
-		if (placeHolder == null) {
-			return;
+	private ActionContext getContext(WindowNode windowNode) {
+		if (windowNode == null) {
+			return null;
 		}
 
-		WindowNode topLevelNode = placeHolder.getTopLevelNode();
-		if (topLevelNode == null) {
-			return;
+		ActionContext context = null;
+		ComponentPlaceholder placeholder = windowNode.getLastFocusedProviderInWindow();
+		if (placeholder != null) {
+			ComponentProvider provider = placeholder.getProvider();
+			if (provider != null) {
+				context = provider.getActionContext(null);
+			}
 		}
-
-		if (topLevelNode.getLastFocusedProviderInWindow() != placeHolder) {
-			return; // actions in this window are not currently responding to this provider
+		if (context == null) {
+			context = new ActionContext();
 		}
-
-		WindowActionManager windowActionManager = windowToActionManagerMap.get(topLevelNode);
-		if (windowActionManager != null) {
-			windowActionManager.contextChanged(placeHolder);
-		}
+		return context;
 	}
+
+	private Set<DockingActionIf> getWindowActions(WindowNode windowNode) {
+		if (windowNode != null) {
+			WindowActionManager windowActionManager = windowToActionManagerMap.get(windowNode);
+			if (windowActionManager != null) {
+				return windowActionManager.getOriginalActions();
+			}
+		}
+		return Collections.emptySet();
+	}
+
+	private WindowNode getFocusedWindowNode() {
+		ComponentPlaceholder focusedComponent = windowManager.getFocusedComponent();
+		if (focusedComponent == null) {
+			return null;
+		}
+		return focusedComponent.getWindowNode();
+	}
+
 }

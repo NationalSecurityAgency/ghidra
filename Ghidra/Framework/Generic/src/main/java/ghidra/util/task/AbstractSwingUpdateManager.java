@@ -55,7 +55,7 @@ public abstract class AbstractSwingUpdateManager {
 	protected static final long NONE = 0;
 	public static final int DEFAULT_MAX_DELAY = 30000;
 	protected static final int MIN_DELAY_FLOOR = 10;
-	protected static final int DEFAULT_MIN_DELAY = 250;
+	public static final int DEFAULT_MIN_DELAY = 250;
 	protected static final String DEFAULT_NAME = AbstractSwingUpdateManager.class.getSimpleName();
 	private static final WeakSet<AbstractSwingUpdateManager> instances =
 		WeakDataStructureFactory.createCopyOnReadWeakSet();

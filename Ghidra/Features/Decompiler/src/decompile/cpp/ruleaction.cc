@@ -5619,6 +5619,10 @@ void AddTreeState::clear(void)
 {
   multsum = 0;
   nonmultsum = 0;
+  if (pRelType != (const TypePointerRel *)0) {
+    nonmultsum = ((TypePointerRel *)ct)->getPointerOffset();
+    nonmultsum &= ptrmask;
+  }
   multiple.clear();
   coeff.clear();
   nonmult.clear();
@@ -5630,6 +5634,29 @@ void AddTreeState::clear(void)
   distributeOp = (PcodeOp *)0;
 }
 
+/// For some forms of pointer (TypePointerRel), the pointer can be interpreted as having two versions
+/// of the data-type being pointed to.  This method initializes analysis for the second version, assuming
+/// analysis of the first version has failed.
+/// \return \b true if there is a second version that can still be analyzed
+bool AddTreeState::initAlternateForm(void)
+
+{
+  if (pRelType == (const TypePointerRel *)0)
+    return false;
+
+  pRelType = (const TypePointerRel *)0;
+  baseType = ct->getPtrTo();
+  if (baseType->isVariableLength())
+    size = 0;		// Open-ended size being pointed to, there will be no "multiples" component
+  else
+    size = AddrSpace::byteToAddressInt(baseType->getSize(),ct->getWordSize());
+  int4 unitsize = AddrSpace::addressToByteInt(1,ct->getWordSize());
+  isDegenerate = (baseType->getSize() <= unitsize && baseType->getSize() > 0);
+  preventDistribution = false;
+  clear();
+  return true;
+}
+
 AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   : data(d)
 {
@@ -5639,12 +5666,19 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   ptrsize = ptr->getSize();
   ptrmask = calc_mask(ptrsize);
   baseType = ct->getPtrTo();
+  multsum = 0;		// Sums start out as zero
+  nonmultsum = 0;
+  pRelType = (const TypePointerRel *)0;
+  if (ct->isFormalPointerRel()) {
+    pRelType = (const TypePointerRel *)ct;
+    baseType = pRelType->getParent();
+    nonmultsum = pRelType->getPointerOffset();
+    nonmultsum &= ptrmask;
+  }
   if (baseType->isVariableLength())
     size = 0;		// Open-ended size being pointed to, there will be no "multiples" component
   else
     size = AddrSpace::byteToAddressInt(baseType->getSize(),ct->getWordSize());
-  multsum = 0;		// Sums start out as zero
-  nonmultsum = 0;
   correct = 0;
   offset = 0;
   valid = true;		// Valid until proven otherwise
@@ -5652,6 +5686,8 @@ AddTreeState::AddTreeState(Funcdata &d,PcodeOp *op,int4 slot)
   isDistributeUsed = false;
   isSubtype = false;
   distributeOp = (PcodeOp *)0;
+  int4 unitsize = AddrSpace::addressToByteInt(1,ct->getWordSize());
+  isDegenerate = (baseType->getSize() <= unitsize && baseType->getSize() > 0);
 }
 
 /// Even if the current base data-type is not an array, the pointer expression may incorporate
@@ -5815,11 +5851,13 @@ bool AddTreeState::checkTerm(Varnode *vn,uintb treeCoeff)
 	  isDistributeUsed = true;
       }
       nonmultsum += val;
+      nonmultsum &= ptrmask;
       return true;
     }
     if (treeCoeff != 1)
       isDistributeUsed = true;
     multsum += val;		// Add multiples of size into multsum
+    multsum &= ptrmask;
     return false;
   }
   if (vn->isWritten()) {
@@ -5861,6 +5899,12 @@ bool AddTreeState::spanAddTree(PcodeOp *op,uintb treeCoeff)
   two_is_non = checkTerm(op->getIn(1),treeCoeff);
   if (!valid) return false;
 
+  if (pRelType != (const TypePointerRel *)0) {
+    if (multsum != 0 || nonmultsum >= size || !multiple.empty()) {
+      valid = false;
+      return false;
+    }
+  }
   if (one_is_non&&two_is_non) return true;
   if (one_is_non)
     nonmult.push_back(op->getIn(0));
@@ -5874,8 +5918,6 @@ bool AddTreeState::spanAddTree(PcodeOp *op,uintb treeCoeff)
 void AddTreeState::calcSubtype(void)
 
 {
-  nonmultsum &= ptrmask;	// Make sure we are modulo ptr's space
-  multsum &= ptrmask;
   if (size == 0 || nonmultsum < size)
     offset = nonmultsum;
   else {
@@ -6018,10 +6060,34 @@ Varnode *AddTreeState::buildExtra(void)
   return resNode;
 }
 
+/// The base data-type being pointed to is unit sized (or smaller).  Everything is a multiple, so an ADD
+/// is always converted into a PTRADD.
+/// \return \b true if the degenerate transform was applied
+bool AddTreeState::buildDegenerate(void)
+
+{
+  if (baseType->getSize() < ct->getWordSize())
+    // If the size is really less than scale, there is
+    // probably some sort of padding going on
+    return false;	// Don't transform at all
+  if (baseOp->getOut()->getType()->getMetatype() != TYPE_PTR)	// Make sure pointer propagates thru INT_ADD
+    return false;
+  vector<Varnode *> newparams;
+  int4 slot = baseOp->getSlot(ptr);
+  newparams.push_back( ptr );
+  newparams.push_back( baseOp->getIn(1-slot) );
+  newparams.push_back( data.newConstant(ct->getSize(),1));
+  data.opSetAllInput(baseOp,newparams);
+  data.opSetOpcode(baseOp,CPUI_PTRADD);
+  return true;
+}
+
 /// \return \b true if a transform was applied
 bool AddTreeState::apply(void)
 
 {
+  if (isDegenerate)
+    return buildDegenerate();
   spanAddTree(baseOp,1);
   if (!valid) return false;		// Were there any show stoppers
   if (distributeOp != (PcodeOp *)0 && !isDistributeUsed) {
@@ -6060,13 +6126,18 @@ bool AddTreeState::apply(void)
   return true;
 }
 
-/// The original ADD tree has been successfully spit into \e multiple and
+/// The original ADD tree has been successfully split into \e multiple and
 /// \e non-multiple pieces.  Rewrite the tree as a pointer expression, putting
 /// any \e multiple pieces into a PTRADD operation, creating a PTRSUB if a sub
 /// data-type offset has been calculated, and preserving and remaining terms.
 void AddTreeState::buildTree(void)
 
 {
+  if (pRelType != (const TypePointerRel *)0) {
+    int4 ptrOff = ((TypePointerRel *)ct)->getPointerOffset();
+    offset -= ptrOff;
+    offset &= ptrmask;
+  }
   Varnode *multNode = buildMultiples();
   Varnode *extraNode = buildExtra();
   PcodeOp *newop = (PcodeOp *)0;
@@ -6082,6 +6153,8 @@ void AddTreeState::buildTree(void)
   // Create PTRSUB portion of operation
   if (isSubtype) {
     newop = data.newOpBefore(baseOp,CPUI_PTRSUB,multNode,data.newConstant(ptrsize,offset));
+    if (size != 0)
+      newop->setStopPropagation();
     multNode = newop->getOut();
   }
 
@@ -6216,29 +6289,12 @@ int4 RulePtrArith::applyOp(PcodeOp *op,Funcdata &data)
   if (evaluatePointerExpression(op, slot) != 2) return 0;
   if (!verifyPreferredPointer(op, slot)) return 0;
 
-  const TypePointer *tp = (const TypePointer *) ct;
-  ct = tp->getPtrTo();		// Type being pointed to
-  int4 unitsize = AddrSpace::addressToByteInt(1,tp->getWordSize());
-  if (ct->getSize() == unitsize) { // Degenerate case
-    if (op->getOut()->getType()->getMetatype() != TYPE_PTR)	// Make sure pointer propagates thru INT_ADD
-      return 0;
-    vector<Varnode *> newparams;
-    newparams.push_back( op->getIn(slot) );
-    newparams.push_back( op->getIn(1-slot) );
-    newparams.push_back( data.newConstant(tp->getSize(),1));
-    data.opSetAllInput(op,newparams);
-    data.opSetOpcode(op,CPUI_PTRADD);
-    return 1;
-  }
-  if ((ct->getSize() < unitsize)&&(ct->getSize()>0))
-    // If the size is really less than scale, there is
-    // probably some sort of padding going on
-    return 0;
-
   AddTreeState state(data,op,slot);
-  if (!state.apply())
-    return 0;
-  return 1;
+  if (state.apply()) return 1;
+  if (state.initAlternateForm()) {
+    if (state.apply()) return 1;
+  }
+  return 0;
 }
 
 /// \class RuleStructOffset0
@@ -6259,10 +6315,7 @@ void RuleStructOffset0::getOpList(vector<uint4> &oplist) const
 int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
 
 {
-  Datatype *ct,*sub_ct;
-  PcodeOp *newop;
   int4 movesize;			// Number of bytes being moved by load or store
-  uintb offset;
 
   if (!data.isTypeRecoveryOn()) return 0;
   if (op->code()==CPUI_LOAD) {
@@ -6274,25 +6327,37 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
   else
     return 0;
 
-  ct = op->getIn(1)->getType();
+  Datatype *ct = op->getIn(1)->getType();
   if (ct->getMetatype() != TYPE_PTR) return 0;
-  ct = ((TypePointer *)ct)->getPtrTo();
-  if (ct->getMetatype() == TYPE_STRUCT) {
-    if (ct->getSize() < movesize)
+  Datatype *baseType = ((TypePointer *)ct)->getPtrTo();
+  uintb offset = 0;
+  if (ct->isFormalPointerRel()) {
+    TypePointerRel *ptRel = (TypePointerRel *)ct;
+    baseType = ptRel->getParent();
+    if (baseType->getMetatype() != TYPE_STRUCT)
+      return 0;
+    int4 iOff = ptRel->getPointerOffset();
+    iOff = AddrSpace::addressToByteInt(iOff, ptRel->getWordSize());
+    if (iOff >= baseType->getSize())
+      return 0;
+    offset = iOff;
+  }
+  if (baseType->getMetatype() == TYPE_STRUCT) {
+    if (baseType->getSize() < movesize)
       return 0;				// Moving something bigger than entire structure
-    sub_ct = ct->getSubType(0,&offset); // Get field at offset 0
-    if (sub_ct==(Datatype *)0) return 0;
-    if (sub_ct->getSize() < movesize) return 0;	// Subtype is too small to handle LOAD/STORE
-//    if (ct->getSize() == movesize) {
+    Datatype *subType = baseType->getSubType(offset,&offset); // Get field at pointer's offset
+    if (subType==(Datatype *)0) return 0;
+    if (subType->getSize() < movesize) return 0;	// Subtype is too small to handle LOAD/STORE
+//    if (baseType->getSize() == movesize) {
       // If we reach here, move is same size as the structure, which is the same size as
       // the first element.
 //    }
   }
-  else if (ct->getMetatype() == TYPE_ARRAY) {
-    if (ct->getSize() < movesize)
+  else if (baseType->getMetatype() == TYPE_ARRAY) {
+    if (baseType->getSize() < movesize)
       return 0;				// Moving something bigger than entire array
-    if (ct->getSize() == movesize) {	// Moving something the size of entire array
-      if (((TypeArray *)ct)->numElements() != 1)
+    if (baseType->getSize() == movesize) {	// Moving something the size of entire array
+      if (((TypeArray *)baseType)->numElements() != 1)
 	return 0;
       // If we reach here, moving something size of single element. Assume this is normal access.
     }
@@ -6300,7 +6365,8 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
   else
     return 0;
 
-  newop = data.newOpBefore(op,CPUI_PTRSUB,op->getIn(1),data.newConstant(op->getIn(1)->getSize(),0));
+  PcodeOp *newop = data.newOpBefore(op,CPUI_PTRSUB,op->getIn(1),data.newConstant(op->getIn(1)->getSize(),0));
+  newop->setStopPropagation();
   data.opSetInput(op,newop->getOut(),1);
   return 1;
 }
@@ -6499,6 +6565,7 @@ int4 RulePtrsubUndo::applyOp(PcodeOp *op,Funcdata &data)
     return 0;
 
   data.opSetOpcode(op,CPUI_INT_ADD);
+  op->clearStopPropagation();
   return 1;
 }
   
