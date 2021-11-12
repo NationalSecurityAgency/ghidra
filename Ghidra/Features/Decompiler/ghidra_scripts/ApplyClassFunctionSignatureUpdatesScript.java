@@ -45,7 +45,7 @@ public class ApplyClassFunctionSignatureUpdatesScript extends GhidraScript {
 		}
 
 		RecoveredClassUtils classUtils = new RecoveredClassUtils(currentProgram, currentLocation,
-			state.getTool(), this, false, false, false, monitor);
+			state.getTool(), this, false, false, false, false, monitor);
 
 		Namespace classNamespace = classUtils.getClassNamespace(currentAddress);
 		if (classNamespace == null) {
