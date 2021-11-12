@@ -27,6 +27,7 @@ public class AsyncWrappedPcodeArithmetic<T> implements PcodeArithmetic<Completab
 		new AsyncWrappedPcodeArithmetic<>(BytesPcodeArithmetic.BIG_ENDIAN);
 	public static final AsyncWrappedPcodeArithmetic<byte[]> BYTES_LE =
 		new AsyncWrappedPcodeArithmetic<>(BytesPcodeArithmetic.LITTLE_ENDIAN);
+	@Deprecated(forRemoval = true) // TODO: Not getting used
 	public static final AsyncWrappedPcodeArithmetic<BigInteger> BIGINT =
 		new AsyncWrappedPcodeArithmetic<>(BigIntegerPcodeArithmetic.INSTANCE);
 
@@ -63,8 +64,8 @@ public class AsyncWrappedPcodeArithmetic<T> implements PcodeArithmetic<Completab
 	}
 
 	@Override
-	public CompletableFuture<T> fromConst(BigInteger value, int size) {
-		return CompletableFuture.completedFuture(arithmetic.fromConst(value, size));
+	public CompletableFuture<T> fromConst(BigInteger value, int size, boolean isContextreg) {
+		return CompletableFuture.completedFuture(arithmetic.fromConst(value, size, isContextreg));
 	}
 
 	@Override
@@ -76,10 +77,10 @@ public class AsyncWrappedPcodeArithmetic<T> implements PcodeArithmetic<Completab
 	}
 
 	@Override
-	public BigInteger toConcrete(CompletableFuture<T> cond) {
+	public BigInteger toConcrete(CompletableFuture<T> cond, boolean isContextreg) {
 		if (!cond.isDone()) {
 			throw new AssertionError("You need a better 8-ball");
 		}
-		return arithmetic.toConcrete(cond.getNow(null));
+		return arithmetic.toConcrete(cond.getNow(null), isContextreg);
 	}
 }
