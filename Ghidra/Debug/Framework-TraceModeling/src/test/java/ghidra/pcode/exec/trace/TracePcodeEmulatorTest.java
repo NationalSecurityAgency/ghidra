@@ -272,7 +272,7 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				emuThread.getState().getVar(pc));
 			assertEquals(new RegisterValue(ctxreg, BigInteger.valueOf(0x8000_0000_0000_0000L)),
 				emuThread.getContext());
-			assertArrayEquals(tb.arr(0, 0, 0, 0, 0, 0, 0, 0x80),
+			assertArrayEquals(tb.arr(0x80, 0, 0, 0, 0, 0, 0, 0),
 				emuThread.getState().getVar(ctxreg));
 
 			emuThread.stepInstruction();
