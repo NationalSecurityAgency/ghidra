@@ -58,22 +58,23 @@ public class RenameFieldAction extends AbstractDecompilerAction {
 	@Override
 	protected void decompilerActionPerformed(DecompilerActionContext context) {
 		PluginTool tool = context.getTool();
-		final ClangToken tokenAtCursor = context.getTokenAtCursor();
-
+		ClangToken tokenAtCursor = context.getTokenAtCursor();
 		Structure dt = getStructDataType(tokenAtCursor);
 		if (dt == null) {
 			Msg.showError(this, tool.getToolFrame(), "Rename Failed",
 				"Could not find structure datatype");
 			return;
 		}
+
 		int offset = ((ClangFieldToken) tokenAtCursor).getOffset();
 		if (offset < 0 || offset >= dt.getLength()) {
 			Msg.showError(this, tool.getToolFrame(), "Rename Failed",
 				"Could not resolve field within structure");
 			return;
 		}
+
 		RenameStructureFieldTask nameTask =
-			new RenameStructureFieldTask(tool, context.getProgram(), context.getDecompilerPanel(),
+			new RenameStructureFieldTask(tool, context.getProgram(), context.getComponentProvider(),
 				tokenAtCursor, dt, offset);
 		nameTask.runTask(true);
 	}

@@ -15,7 +15,6 @@
  */
 package ghidra.app.plugin.core.decompile;
 
-import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.math.BigInteger;
@@ -55,11 +54,13 @@ import resources.ResourceManager;
 import utility.function.Callback;
 
 public class DecompilerProvider extends NavigatableComponentProviderAdapter
-		implements DomainObjectListener, OptionsChangeListener, DecompilerCallbackHandler {
-	final static String OPTIONS_TITLE = "Decompiler";
+		implements DomainObjectListener, OptionsChangeListener, DecompilerCallbackHandler,
+		DecompilerHighlightService {
 
-	private static Icon REFRESH_ICON = Icons.REFRESH_ICON;
-	static final ImageIcon C_SOURCE_ICON =
+	private static final String OPTIONS_TITLE = "Decompiler";
+
+	private static final Icon REFRESH_ICON = Icons.REFRESH_ICON;
+	private static final ImageIcon C_SOURCE_ICON =
 		ResourceManager.loadImage("images/decompileFunction.gif");
 
 	private DockingAction graphASTControlFlowAction;
@@ -265,6 +266,20 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 	}
 
 //==================================================================================================
+// DecompilerHighlightService interface methods
+//==================================================================================================
+
+	@Override
+	public DecompilerHighlighter createHighlighter(CTokenHighlightMatcher tm) {
+		return getDecompilerPanel().createHighlighter(tm);
+	}
+
+	@Override
+	public DecompilerHighlighter createHighlighter(String id, CTokenHighlightMatcher tm) {
+		return getDecompilerPanel().createHighlighter(id, tm);
+	}
+
+//==================================================================================================
 // DomainObjectListener methods
 //==================================================================================================
 
@@ -360,6 +375,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		if (clipboardService != null) {
 			clipboardService.deRegisterClipboardContentProvider(clipboardProvider);
 		}
+
 		controller.dispose();
 		program = null;
 		currentLocation = null;
@@ -486,7 +502,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		decompilerPanel.setCursorPosition(location);
 	}
 
-	DecompilerController getController() {
+	public DecompilerController getController() {
 		return controller;
 	}
 
@@ -644,6 +660,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		return controller.getDecompilerPanel();
 	}
 
+	// snapshot callback
 	public void cloneWindow() {
 		DecompilerProvider newProvider = plugin.createNewDisconnectedProvider();
 
@@ -656,16 +673,13 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 			// Any change in the HighlightTokens should be delivered to the new panel
 			DecompilerPanel myPanel = getDecompilerPanel();
-			TokenHighlights myHighlights = myPanel.getSecondaryHighlightedTokens();
 			newProvider.setLocation(currentLocation, myPanel.getViewerPosition());
 
 			// transfer any state after the new decompiler is initialized
 			DecompilerPanel newPanel = newProvider.getDecompilerPanel();
-			Map<String, Color> highlightsByName = myHighlights.copyHighlightsByName();
 			newProvider.doWheNotBusy(() -> {
-
 				newPanel.setViewerPosition(myViewPosition);
-				newPanel.applySecondaryHighlights(highlightsByName);
+				newPanel.cloneHighlights(myPanel);
 			});
 		});
 	}
@@ -1072,5 +1086,13 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 
 	public void programClosed(Program closedProgram) {
 		controller.programClosed(closedProgram);
+	}
+
+	public void tokenRenamed(ClangToken tokenAtCursor, String newName) {
+		plugin.handleTokenRenamed(tokenAtCursor, newName);
+	}
+
+	void handleTokenRenamed(ClangToken tokenAtCursor, String newName) {
+		controller.getDecompilerPanel().tokenRenamed(tokenAtCursor, newName);
 	}
 }

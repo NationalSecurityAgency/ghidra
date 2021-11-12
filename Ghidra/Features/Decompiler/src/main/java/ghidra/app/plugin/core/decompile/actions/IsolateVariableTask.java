@@ -16,7 +16,7 @@
 package ghidra.app.plugin.core.decompile.actions;
 
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Function;
@@ -37,9 +37,9 @@ public class IsolateVariableTask extends RenameTask {
 	private boolean nameIsReserved;
 	private boolean instanceIsMapped;
 
-	public IsolateVariableTask(PluginTool tool, Program program, DecompilerPanel panel,
+	public IsolateVariableTask(PluginTool tool, Program program, DecompilerProvider provider,
 			ClangToken token, HighSymbol sym, SourceType st) {
-		super(tool, program, panel, token, "");
+		super(tool, program, provider, token, "");
 		highSymbol = sym;
 		highFunction = highSymbol.getHighFunction();
 		function = highFunction.getFunction();

@@ -16,7 +16,7 @@
 package ghidra.app.plugin.core.decompile.actions;
 
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -35,9 +35,9 @@ public class RenameVariableTask extends RenameTask {
 	private SourceType srctype;		// Desired source type for the variable being renamed
 	private SourceType signatureSrcType;	// Signature source type of the function (which will be preserved)
 
-	public RenameVariableTask(PluginTool tool, Program program, DecompilerPanel panel,
+	public RenameVariableTask(PluginTool tool, Program program, DecompilerProvider provider,
 			ClangToken token, HighSymbol sym, SourceType st) {
-		super(tool, program, panel, token, sym.getName());
+		super(tool, program, provider, token, sym.getName());
 		highSymbol = sym;
 		exactSpot = token.getVarnode();
 		hfunction = sym.getHighFunction();

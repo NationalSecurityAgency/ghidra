@@ -16,7 +16,7 @@
 package ghidra.app.plugin.core.decompile.actions;
 
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
@@ -29,9 +29,9 @@ public class RenameStructureFieldTask extends RenameTask {
 	private Structure structure;
 	public int offset;
 
-	public RenameStructureFieldTask(PluginTool tool, Program program, DecompilerPanel panel,
+	public RenameStructureFieldTask(PluginTool tool, Program program, DecompilerProvider provider,
 			ClangToken token, Structure structure, int offset) {
-		super(tool, program, panel, token, token.getText());
+		super(tool, program, provider, token, token.getText());
 		this.structure = structure;
 		this.offset = offset;
 	}
