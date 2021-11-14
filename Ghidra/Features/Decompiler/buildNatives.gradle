@@ -4,16 +4,16 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 // Native build files are already applied in development mode (indicated by presence of the
 // Generic project).  Only need to apply them if we are in a distribution.
 if (findProject(':Generic') == null) {
@@ -26,17 +26,17 @@ if (findProject(':Generic') == null) {
  * Define the "native build model" for building the decompiler executables.
  */
 model {
-	
+
 	// Define the source files that are compiled and linked to become the decompiler.
 	// The decompiler source is a bit weird in that all the cpp and headers all live in
 	// the same directory with other files that are not used by the decompiler.
 	// That is why we have to list every cpp file that makes up the decomplier.
 	components {
-			
+
 		decompile(NativeExecutableSpec) {
-		
+
 			baseName "decompile"
-									
+
 			// these tell gradle for which platforms to build a decompiler executable.
 			targetPlatform "win_x86_64"
 			targetPlatform "linux_x86_64"
@@ -50,7 +50,7 @@ model {
 					// builtBy yaccDecompiler
 		            source {
 		                srcDir "src/decompile/cpp"
-		                
+
 		                include "space.cc"
 		                include "float.cc"
 		                include "address.cc"
@@ -124,19 +124,19 @@ model {
 		         //       include "ifacedecomp.cc"			// uncomment for debug
 		         //       include "ifaceterm.cc"			// uncomment for debug
 		         //       include "interface.cc"			// uncomment for debug
-		         
+
 		         		// generated source files
-		         		
+
 		         	 	include "xml.cc"
 		         // 	  include "grammar.cc"				// used by diagnostic console mode
 		            }
 					exportedHeaders {
 						srcDir "src/decompile/cpp"
 					}
-				} // end cpp				
+				} // end cpp
 			} // end sources
 		} // end decompile
-		
+
 		sleigh(NativeExecutableSpec) {
 			targetPlatform "win_x86_64"
 			targetPlatform "linux_x86_64"
@@ -150,7 +150,7 @@ model {
 					// builtBy lexSleigh
 					source {
 						srcDir "src/decompile/cpp"
-						
+
 						include "space.cc"
 						include "float.cc"
 						include "address.cc"
@@ -168,9 +168,9 @@ model {
 						include "context.cc"
 						include "filemanage.cc"
 						include "slgh_compile.cc"
-						
+
 						// generated source files
-						
+
 						include "xml.cc"
 						include "pcodeparse.cc"
 						include "slghparse.cc"
@@ -182,9 +182,9 @@ model {
 				} // end cpp
 			} // end sources (sleigh)
 		} // end sleigh
-		
+
 	}  // end components
-	
+
 	binaries {
 		all{ b ->
 			if (b.toolChain in Gcc) {
@@ -203,6 +203,7 @@ model {
 				b.cppCompiler.args "/EHsc"
 				b.cppCompiler.define "_SECURE_SCL=0"
 				b.cppCompiler.define "_HAS_ITERATOR_DEBUGGING=0"
+				b.cppCompiler.define "_HAS_STD_BYTE=0"  // msvc has a byte typedef that conflicts with c++17 std::byte
 				// b.cppCompiler.args "/Zi"		// for DEBUG, uncomment this line
 				// b.cppCompiler.args "/FS"		// for DEBUG, uncomment this line
 				// b.linker.args "/DEBUG"		// for DEBUG, uncomment this line
@@ -214,8 +215,8 @@ model {
 					if (b.targetPlatform.name == "win_x86_64") {
 						b.cppCompiler.define "WIN64"
 						b.cppCompiler.define "_WIN64"
-					}	
-				}	
+					}
+				}
 			}
 			else if (b.toolChain in Clang) {
 				b.cppCompiler.args "-std=c++11"
