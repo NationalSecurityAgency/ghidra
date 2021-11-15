@@ -15,10 +15,11 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next.sectionprovider;
 
-import ghidra.app.util.bin.ByteProvider;
-
 import java.io.Closeable;
 import java.io.IOException;
+
+import ghidra.app.util.bin.ByteProvider;
+import ghidra.program.model.listing.Program;
 
 /**
  * A DWARFSectionProvider is responsible for allowing access to DWARF section data of
@@ -31,7 +32,15 @@ import java.io.IOException;
  * <p>
  */
 public interface DWARFSectionProvider extends Closeable {
-	public boolean hasSection(String... sectionNames);
-	public ByteProvider getSectionAsByteProvider(String sectionName) throws IOException;
-	public void close();
+	boolean hasSection(String... sectionNames);
+
+	ByteProvider getSectionAsByteProvider(String sectionName) throws IOException;
+
+	@Override
+	void close();
+
+	default void updateProgramInfo(Program program) {
+		// do nothing
+	}
+
 }

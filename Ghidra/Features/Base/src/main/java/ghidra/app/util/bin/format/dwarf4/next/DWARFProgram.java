@@ -15,10 +15,9 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next;
 
-import java.util.*;
-
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.*;
 
 import org.apache.commons.collections4.ListValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
@@ -28,6 +27,7 @@ import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.attribs.DWARFAttributeFactory;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
+import ghidra.app.util.bin.format.dwarf4.external.ExternalDebugInfo;
 import ghidra.app.util.bin.format.dwarf4.next.sectionprovider.*;
 import ghidra.app.util.opinion.*;
 import ghidra.program.model.address.Address;
@@ -72,10 +72,8 @@ public class DWARFProgram implements Closeable {
 		switch (format) {
 			case ElfLoader.ELF_NAME:
 			case PeLoader.PE_NAME:
-				try (DWARFSectionProvider dsp =
-					DWARFSectionProviderFactory.createSectionProviderFor(program)) {
-					return dsp != null;
-				}
+				return BaseSectionProvider.hasDWARFSections(program) ||
+					ExternalDebugInfo.fromProgram(program) != null;
 			case MachoLoader.MACH_O_NAME:
 				return DSymSectionProvider.getDSYMForProgram(program) != null;
 		}
