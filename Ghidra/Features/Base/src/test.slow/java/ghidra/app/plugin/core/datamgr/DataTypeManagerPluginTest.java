@@ -378,6 +378,45 @@ public class DataTypeManagerPluginTest extends AbstractGhidraHeadedIntegrationTe
 	}
 
 	@Test
+	public void testRenameDataTypeWithSameNameAsCategory() throws Exception {
+		// select a category
+		expandNode(programNode);
+		String miscNodeName = "MISC";
+		final CategoryNode miscNode = (CategoryNode) programNode.getChild(miscNodeName);
+		assertNotNull(miscNode);
+		StructureDataType struct = new StructureDataType("MISC", 0);
+		struct.add(new DWordDataType());
+		builder.addDataType(struct);
+		waitForTree();
+		DataType resolved = program.getDataTypeManager().resolve(struct, null);
+		DataTypeNode node = programNode.getNode(resolved);
+		selectNode(node);
+
+		final DockingActionIf action = getAction(plugin, "Rename");
+		assertTrue(action.isEnabledForContext(treeContext));
+
+		// select "Rename" action
+		final String newDatatypeName = "ItWorked";
+		DataTypeTestUtils.performAction(action, tree);
+		waitForTree();
+		runSwing(() -> {
+			int rowForPath = jTree.getRowForPath(miscNode.getTreePath());
+
+			DefaultTreeCellEditor cellEditor = (DefaultTreeCellEditor) tree.getCellEditor();
+			Container container = (Container) cellEditor.getTreeCellEditorComponent(jTree, miscNode,
+				true, true, true, rowForPath);
+			JTextField textField = (JTextField) container.getComponent(0);
+
+			textField.setText(newDatatypeName);
+			jTree.stopEditing();
+		});
+		waitForProgram();
+		waitForTree();
+
+		assertEquals("ItWorked", resolved.getName());
+	}
+
+	@Test
 	public void testRenameCategoryDuplicate() throws Exception {
 		expandNode(programNode);
 		String miscNodeName = "MISC";
