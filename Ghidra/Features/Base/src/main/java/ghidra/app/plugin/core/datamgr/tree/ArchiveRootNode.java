@@ -48,14 +48,6 @@ public class ArchiveRootNode extends DataTypeTreeNode {
 		return archiveManager;
 	}
 
-	// override clone to install the needed listeners
-	@Override
-	public GTreeNode clone() throws CloneNotSupportedException {
-		ArchiveRootNode clone = (ArchiveRootNode) super.clone();
-		clone.init();
-		return clone;
-	}
-
 	@Override
 	public void dispose() {
 		archiveManager.removeArchiveManagerListener(archiveListener);
