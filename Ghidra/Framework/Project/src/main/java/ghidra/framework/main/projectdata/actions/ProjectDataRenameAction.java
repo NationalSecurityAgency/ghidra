@@ -66,7 +66,7 @@ public class ProjectDataRenameAction extends FrontendProjectTreeAction {
 			DataTree tree = (DataTree) component;
 			GTreeNode node = (GTreeNode) context.getContextObject();
 			tree.setEditable(true);
-			tree.startEditing(node.getParent(), node.getName());
+			tree.startEditing(node);
 		}
 		else if (component instanceof GTable) {
 			GTable table = (GTable) component;
