@@ -3212,7 +3212,7 @@ void IfcLoadTestFile::execute(istream &s)
   *status->optr << filename << " test successfully loaded: " << dcp->conf->getDescription() << endl;
 }
 
-/// \class IfaceListTestCommands
+/// \class IfcListTestCommands
 /// \brief List all the script commands in the current test: `list test commands`
 void IfcListTestCommands::execute(istream &s)
 
@@ -3224,7 +3224,7 @@ void IfcListTestCommands::execute(istream &s)
   }
 }
 
-/// \class IfcExecuteTestCommands
+/// \class IfcExecuteTestCommand
 /// \brief Execute a specified range of the test script: `execute test command <#>-<#>
 void IfcExecuteTestCommand::execute(istream &s)
 
