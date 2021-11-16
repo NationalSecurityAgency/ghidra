@@ -82,6 +82,14 @@ abstract class CoreGTreeNode implements Cloneable {
 	}
 
 	/**
+	 * Returns true if this is a root node of a GTree
+	 * @return true if this is a root node of a GTree
+	 */
+	public final boolean isRoot() {
+		return parent instanceof GTreeRootParentNode;
+	}
+
+	/**
 	 * Sets the parent of this node.  This method should only be used by a parent
 	 * node when a new child is added to that parent node.
 	 * @param parent the node that this node is being added to.

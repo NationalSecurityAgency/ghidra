@@ -16,12 +16,12 @@
 package ghidra.app.util.bin.format.dwarf4.next.sectionprovider;
 
 import java.io.Closeable;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
 import ghidra.program.model.listing.Program;
 import ghidra.util.Msg;
+import ghidra.util.task.TaskMonitor;
 
 /**
  * Auto-detects which {@link DWARFSectionProvider} matches a Ghidra program.
@@ -39,12 +39,9 @@ public class DWARFSectionProviderFactory {
 	 * The method should not throw anything, instead just return a NULL.
 	 */
 	private static final List<Function<Program, DWARFSectionProvider>> sectionProviderFactoryFuncs =
-		new ArrayList<>();
-
-	static {
-		sectionProviderFactoryFuncs.add(BaseSectionProvider::createSectionProviderFor);
-		sectionProviderFactoryFuncs.add(DSymSectionProvider::createSectionProviderFor);
-	}
+		List.of(
+			BaseSectionProvider::createSectionProviderFor,
+			DSymSectionProvider::createSectionProviderFor);
 
 	/**
 	 * Iterates through the statically registered {@link #sectionProviderFactoryFuncs factory funcs},
@@ -76,6 +73,30 @@ public class DWARFSectionProviderFactory {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Iterates through the statically registered {@link #sectionProviderFactoryFuncs factory funcs},
+	 * trying each factory method until one returns a {@link DWARFSectionProvider} 
+	 * that can successfully retrieve the {@link DWARFSectionNames#MINIMAL_DWARF_SECTIONS minimal} 
+	 * sections we need to do a DWARF import.
+	 * <p>
+	 * The resulting {@link DWARFSectionProvider} is {@link Closeable} and it is the caller's
+	 * responsibility to ensure that the object is closed when done. 
+	 * 
+	 * @param program Ghidra {@link Program}
+	 * @param monitor {@link TaskMonitor}
+	 * @return {@link DWARFSectionProvider} that should be closed by the caller or NULL if no
+	 * section provider types match the specified program.
+	 */
+	public static DWARFSectionProvider createSectionProviderFor(Program program,
+			TaskMonitor monitor) {
+		DWARFSectionProvider result = createSectionProviderFor(program);
+		if (result != null) {
+			return result;
+		}
+		result = ExternalDebugFileSectionProvider.createSectionProviderFor(program, monitor);
+		return result;
 	}
 
 }

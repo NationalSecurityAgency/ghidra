@@ -382,7 +382,12 @@ public class DemangledFunction extends DemangledObject {
 		// Account for register context.  This class may trigger disassembly, so we need to make
 		// sure that the context is correctly set before that happens.  Also, be sure to apply
 		// the function to the correct address.
-		address = PseudoDisassembler.setTargeContextForDisassembly(program, address);
+
+		//TODO revisit this in terms of external block addresses. Also shoul this check
+		// be moved into the PsuedoDisassembler???
+		if (!address.isExternalAddress()) {
+			address = PseudoDisassembler.setTargeContextForDisassembly(program, address);
+		}
 
 		if (!passesPreconditions(program, address)) {
 			return true; // eventually will not return anything 

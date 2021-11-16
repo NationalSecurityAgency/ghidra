@@ -133,9 +133,8 @@ public class StandAloneDataTypeManager extends DataTypeManagerDB {
 
 	@Override
 	public void close() {
-		if (dbHandle != null) {
+		if (!dbHandle.isClosed()) {
 			dbHandle.close();
-			dbHandle = null;
 		}
 		super.close();
 	}

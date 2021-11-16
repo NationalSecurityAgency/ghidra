@@ -17,9 +17,14 @@ package ghidra.app.util.bin.format.elf;
 
 import static ghidra.app.util.bin.StructConverter.*;
 
+import java.io.IOException;
+
+import ghidra.app.util.bin.*;
 import ghidra.docking.settings.SettingsImpl;
 import ghidra.program.model.data.*;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemBuffer;
+import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.NumericUtilities;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -27,6 +32,45 @@ import ghidra.util.exception.DuplicateNameException;
  * Factory data type that marks up a ELF .gnu_debuglink section.
  */
 public class GnuDebugLinkSection extends FactoryStructureDataType {
+	public static final String DEBUG_LINK_SECTION_NAME = ".gnu_debuglink";
+
+	public static GnuDebugLinkSectionValues fromProgram(Program program) {
+		MemoryBlock debugLinkSection = program.getMemory().getBlock(DEBUG_LINK_SECTION_NAME);
+		if (debugLinkSection == null) {
+			return null;
+		}
+		try (ByteProvider bp = MemoryByteProvider.createMemoryBlockByteProvider(program.getMemory(),
+			debugLinkSection)) {
+			BinaryReader br = new BinaryReader(bp, !program.getMemory().isBigEndian());
+			String filename = br.readNextAsciiString();
+			br.setPointerIndex(NumericUtilities.getUnsignedAlignedValue(br.getPointerIndex(), 4));
+			int crc = br.readNextInt();
+			return new GnuDebugLinkSectionValues(filename, crc);
+		}
+		catch (IOException e) {
+			// fall thru and return null
+		}
+		return null;
+	}
+
+	public static class GnuDebugLinkSectionValues {
+		private String filename;
+		private int crc;
+
+		public GnuDebugLinkSectionValues(String filename, int crc) {
+			this.filename = filename;
+			this.crc = crc;
+		}
+
+		public String getFilename() {
+			return filename;
+		}
+
+		public int getCrc() {
+			return crc;
+		}
+	}
+
 	private long sectionSize;
 
 	/**
