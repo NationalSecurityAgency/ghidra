@@ -80,6 +80,9 @@ public class SameDirSearchLocation implements SearchLocation {
 	@Override
 	public FSRL findDebugFile(ExternalDebugInfo debugInfo, TaskMonitor monitor)
 			throws IOException, CancelledException {
+		if (!debugInfo.hasFilename()) {
+			return null;
+		}
 		File file = new File(progDir, debugInfo.getFilename());
 		if (!file.isFile()) {
 			return null;

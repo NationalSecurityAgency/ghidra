@@ -15,9 +15,8 @@
  */
 package ghidra.app.util.bin.format.dwarf4.external;
 
-import java.util.zip.CRC32;
-
 import java.io.*;
+import java.util.zip.CRC32;
 
 import ghidra.formats.gfilesystem.FSRL;
 import ghidra.formats.gfilesystem.FileSystemService;
@@ -81,11 +80,10 @@ public class LocalDirectorySearchLocation implements SearchLocation {
 	@Override
 	public FSRL findDebugFile(ExternalDebugInfo debugInfo, TaskMonitor monitor)
 			throws CancelledException, IOException {
-		String filename = debugInfo.getFilename();
-		if (filename == null || filename.isBlank()) {
+		if (!debugInfo.hasFilename()) {
 			return null;
 		}
-		ensureSafeFilename(filename);
+		ensureSafeFilename(debugInfo.getFilename());
 		return findFile(searchDir, debugInfo, monitor);
 	}
 
@@ -98,6 +96,9 @@ public class LocalDirectorySearchLocation implements SearchLocation {
 
 	FSRL findFile(File dir, ExternalDebugInfo debugInfo, TaskMonitor monitor)
 			throws IOException, CancelledException {
+		if (!debugInfo.hasFilename()) {
+			return null;
+		}
 		File file = new File(dir, debugInfo.getFilename());
 		if (file.isFile()) {
 			int fileCRC = calcCRC(file);
