@@ -59,7 +59,7 @@
           <register name="t3"/>
         </pentry>
         <pentry minsize="1" maxsize="500" align="4">
-          <addr offset="16" space="stack"/>
+          <addr offset="0" space="stack"/>
         </pentry>
       </input>
       <output>
