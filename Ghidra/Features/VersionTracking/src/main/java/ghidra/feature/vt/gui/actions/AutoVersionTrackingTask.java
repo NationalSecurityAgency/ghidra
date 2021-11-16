@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,6 +17,8 @@ package ghidra.feature.vt.gui.actions;
 
 import java.util.*;
 
+import javax.swing.SwingConstants;
+
 import ghidra.feature.vt.api.correlator.program.*;
 import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAssociationStatusException;
@@ -24,8 +26,6 @@ import ghidra.feature.vt.api.util.VTOptions;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.feature.vt.gui.task.ApplyMarkupItemTask;
 import ghidra.feature.vt.gui.util.MatchInfo;
-import ghidra.framework.cmd.BackgroundCommand;
-import ghidra.framework.model.DomainObject;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
@@ -36,12 +36,12 @@ import ghidra.program.util.ListingDiff;
 import ghidra.util.Msg;
 import ghidra.util.exception.AssertException;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.*;
 import util.CollectionUtils;
 
 /**
  *  This command runs all of the <b>exact</b> {@link VTProgramCorrelator}s that return
- *  unique matches (ie only one of each match is found in each program):
+ *  unique matches (i.e., only one of each match is found in each program):
  *  <ol>
  *  <li> Exact Symbol Name correlator </li>
  *  <li> Exact Data correlator </li>
@@ -65,8 +65,9 @@ import util.CollectionUtils;
  *  <P> As more techniques get developed, more automation will be added to this command.
  *
  */
-public class AutoVersionTrackingCommand extends BackgroundCommand {
+public class AutoVersionTrackingTask extends Task {
 
+	private static final String NAME = "Auto Version Tracking Command";
 	private VTSession session;
 	private Program sourceProgram;
 	private Program destinationProgram;
@@ -78,7 +79,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 	private double minCombinedReferenceCorrelatorConfidence;
 	private final ToolOptions applyOptions;
 	private String statusMsg = null;
-	private static int NUM_CORRELATORS = 7;
+	private static int NUM_CORRELATORS = 8;
 
 	/**
 	 * Constructor for AutoVersionTrackingCommand
@@ -92,9 +93,10 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 	 * @param minCombinedReferenceCorrelatorConfidence The minimum confidence used to limit matches
 	 * created by the Combined Reference Correlator.
 	 */
-	public AutoVersionTrackingCommand(VTController controller, VTSession session,
+	public AutoVersionTrackingTask(VTController controller, VTSession session,
 			double minCombinedReferenceCorrelatorScore,
 			double minCombinedReferenceCorrelatorConfidence) {
+		super(NAME, true, true, true);
 		this.session = session;
 		this.sourceProgram = session.getSourceProgram();
 		this.destinationProgram = session.getDestinationProgram();
@@ -103,119 +105,160 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 		this.minCombinedReferenceCorrelatorScore = minCombinedReferenceCorrelatorScore;
 		this.minCombinedReferenceCorrelatorConfidence = minCombinedReferenceCorrelatorConfidence;
 		this.applyOptions = controller.getOptions();
+
 	}
 
 	@Override
-	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
+	public int getStatusTextAlignment() {
+		return SwingConstants.LEADING;
+	}
+
+	@Override
+	public void run(TaskMonitor monitor) throws CancelledException {
+
+		boolean error = true;
+		int id = session.startTransaction(NAME);
+		try {
+			session.setEventsEnabled(false);
+			doRun(monitor);
+			error = false;
+		}
+		catch (CancelledException e) {
+			error = false; // allow work performed so far to be saved
+		}
+		finally {
+			session.setEventsEnabled(true);
+			session.endTransaction(id, !error);
+		}
+	}
+
+	private void doRun(TaskMonitor realMonitor) throws CancelledException {
+
+		SubTaskMonitor monitor = new SubTaskMonitor(realMonitor);
 
 		boolean hasApplyErrors = false;
 		sourceAddressSet = sourceProgram.getMemory().getLoadedAndInitializedAddressSet();
 		destinationAddressSet = destinationProgram.getMemory().getLoadedAndInitializedAddressSet();
-		try {
-			monitor.setMessage("Running Auto Version Tracking");
-			monitor.setCancelEnabled(true);
-			monitor.initialize(NUM_CORRELATORS);
 
-			// Use default options for all of the "exact" correlators and passed in options for
-			// the others.
-			VTOptions options;
+		int count = 0;
+		monitor.doInitialize(NUM_CORRELATORS);
 
-			// Run the correlators in the following order:
-			// Do this one first because we don't want it to find ones that get markup
-			// applied by later correlators
-			VTProgramCorrelatorFactory factory = new SymbolNameProgramCorrelatorFactory();
+		// Use default options for all of the "exact" correlators; passed in options for the others
+		VTOptions options;
+
+		// Run the correlators in the following order:
+		// Do this one first because we don't want it to find ones that get markup applied by later
+		// correlators
+		VTProgramCorrelatorFactory factory = new SymbolNameProgramCorrelatorFactory();
+		options = factory.createDefaultOptions();
+
+		String prefix = "%s correlation (%d of " + NUM_CORRELATORS + ") - ";
+		monitor.setPrefix(String.format(prefix, "Symbol Name", ++count));
+		hasApplyErrors = correlateAndPossiblyApply(factory, options, monitor);
+		monitor.doIncrementProgress();
+
+		factory = new ExactDataMatchProgramCorrelatorFactory();
+		options = factory.createDefaultOptions();
+
+		monitor.setPrefix(String.format(prefix, "Exact Data", ++count));
+		hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
+		monitor.doIncrementProgress();
+
+		factory = new ExactMatchBytesProgramCorrelatorFactory();
+		options = factory.createDefaultOptions();
+
+		monitor.setPrefix(String.format(prefix, "Exact Bytes", ++count));
+		hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
+		monitor.doIncrementProgress();
+
+		factory = new ExactMatchInstructionsProgramCorrelatorFactory();
+		options = factory.createDefaultOptions();
+
+		monitor.setPrefix(String.format(prefix, "Exact Instructions", ++count));
+		hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
+		monitor.doIncrementProgress();
+
+		factory = new ExactMatchMnemonicsProgramCorrelatorFactory();
+		options = factory.createDefaultOptions();
+
+		monitor.setPrefix(String.format(prefix, "Exact Mnemonic", ++count));
+		hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
+		monitor.doIncrementProgress();
+
+		// This is the first of the "speculative" post-correlator match algorithm. The correlator
+		// returns all duplicate function instruction matches so there will always be more
+		// than one possible match for each function. The compare mechanism used by the
+		// function compare window determines matches based on matching operand values.
+		// Given that each function must contains the same instructions to even become a match,
+		// and the compare function mechanism has been very well tested, the mechanism for
+		// finding the correct match is very accurate.
+		factory = new DuplicateFunctionMatchProgramCorrelatorFactory();
+		options = factory.createDefaultOptions();
+
+		monitor.setPrefix(String.format(prefix, "Duplicate Function", ++count));
+		hasApplyErrors |= correlateAndPossiblyApplyDuplicateFunctions(factory, options, monitor);
+		monitor.doIncrementProgress();
+
+		// The rest are mores speculative matching algorithms because they depend on our
+		// choosing the correct score/confidence pair to determine very probable matches. These
+		// values were chosen based on what has been seen so far but this needs to be tested
+		// further on more programs and possibly add options for users to give their own thresholds.
+
+		// Get the names of the confidence and similarity score thresholds that
+		// are used by all of the "reference" correlators
+		String confidenceOption = VTAbstractReferenceProgramCorrelatorFactory.CONFIDENCE_THRESHOLD;
+		String scoreOption = VTAbstractReferenceProgramCorrelatorFactory.SIMILARITY_THRESHOLD;
+
+		// Get the number of data and function matches
+		int numDataMatches = getNumberOfDataMatches(monitor);
+		int numFunctionMatches = getNumberOfFunctionMatches(monitor);
+
+		// Run the DataReferenceCorrelator if there are accepted data matches but no accepted
+		// function matches
+		if (numDataMatches > 0 && numFunctionMatches == 0) {
+			factory = new DataReferenceProgramCorrelatorFactory();
 			options = factory.createDefaultOptions();
-			hasApplyErrors = correlateAndPossiblyApply(factory, options, monitor);
+			options.setDouble(confidenceOption, minCombinedReferenceCorrelatorConfidence);
+			options.setDouble(scoreOption, minCombinedReferenceCorrelatorScore);
 
-			factory = new ExactDataMatchProgramCorrelatorFactory();
-			options = factory.createDefaultOptions();
-			hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
+			monitor.setPrefix(String.format(prefix, "Data Reference", ++count));
+			hasApplyErrors = hasApplyErrors | correlateAndPossiblyApply(factory, options, monitor);
+			monitor.doIncrementProgress();
 
-			factory = new ExactMatchBytesProgramCorrelatorFactory();
-			options = factory.createDefaultOptions();
-			hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
-
-			factory = new ExactMatchInstructionsProgramCorrelatorFactory();
-			options = factory.createDefaultOptions();
-			hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
-
-			factory = new ExactMatchMnemonicsProgramCorrelatorFactory();
-			options = factory.createDefaultOptions();
-			hasApplyErrors |= correlateAndPossiblyApply(factory, options, monitor);
-
-			// This is the first of the "speculative" post-correlator match algorithm. The correlator
-			// returns all duplicate function instruction matches so there will always be more
-			// than one possible match for each function. The compare mechanism used by the
-			// function compare window determines matches based on matching operand values.
-			// Given that each function must contains the same instructions to even become a match,
-			// and the compare function mechanism has been very well tested, the mechanism for
-			// finding the correct match is very accurate.
-			factory = new DuplicateFunctionMatchProgramCorrelatorFactory();
-			options = factory.createDefaultOptions();
-			hasApplyErrors |=
-				correlateAndPossiblyApplyDuplicateFunctions(factory, options, monitor);
-
-			// The rest are mores speculative matching algorithms because they depend on our
-			// choosing the correct score/confidence pair to determine very probable matches. These
-			// values were chosen based on what has been seen so far but this needs to be tested
-			// further on more programs and possibly add options for users to
-			// give their own thresholds.
-
-			// Get the names of the confidence and similarity score thresholds that
-			// are used by all of the "reference" correlators
-			String confidenceOption =
-				VTAbstractReferenceProgramCorrelatorFactory.CONFIDENCE_THRESHOLD;
-			String scoreOption = VTAbstractReferenceProgramCorrelatorFactory.SIMILARITY_THRESHOLD;
-
-			// Get the number of data and function matches
-			int numDataMatches = getNumberOfDataMatches(monitor);
-			int numFunctionMatches = getNumberOfFunctionMatches(monitor);
-
-			// Run the DataReferenceCorrelator if there are accepted data matches but no accepted
-			// function matches
-			if (numDataMatches > 0 && numFunctionMatches == 0) {
-				factory = new DataReferenceProgramCorrelatorFactory();
-				options = factory.createDefaultOptions();
-				options.setDouble(confidenceOption, minCombinedReferenceCorrelatorConfidence);
-				options.setDouble(scoreOption, minCombinedReferenceCorrelatorScore);
-				hasApplyErrors =
-					hasApplyErrors | correlateAndPossiblyApply(factory, options, monitor);
-
-				// Get the number of data and function matches again if this correlator ran
-				numDataMatches = getNumberOfDataMatches(monitor);
-				numFunctionMatches = getNumberOfFunctionMatches(monitor);
-			}
-
-			// Run the FunctionReferenceCorrelator if there are accepted function matches but
-			// no accepted data matches
-			if (numDataMatches > 0 && numFunctionMatches == 0) {
-				factory = new FunctionReferenceProgramCorrelatorFactory();
-				options = factory.createDefaultOptions();
-				options.setDouble(confidenceOption, minCombinedReferenceCorrelatorConfidence);
-				options.setDouble(scoreOption, minCombinedReferenceCorrelatorScore);
-				factory = new FunctionReferenceProgramCorrelatorFactory();
-				hasApplyErrors =
-					hasApplyErrors | correlateAndPossiblyApply(factory, options, monitor);
-
-				// Get the number of data and function matches again if this correlator ran
-				numDataMatches = getNumberOfDataMatches(monitor);
-				numFunctionMatches = getNumberOfFunctionMatches(monitor);
-			}
-
-			// Run the CombinedDataAndFunctionReferenceCorrelator if there are both accepted function matches but
-			// and data matches
-			if (numDataMatches > 0 && numFunctionMatches > 0) {
-				factory = new CombinedFunctionAndDataReferenceProgramCorrelatorFactory();
-				options = factory.createDefaultOptions();
-				options.setDouble(confidenceOption, minCombinedReferenceCorrelatorConfidence);
-				options.setDouble(scoreOption, minCombinedReferenceCorrelatorScore);
-				hasApplyErrors =
-					hasApplyErrors | correlateAndPossiblyApply(factory, options, monitor);
-			}
+			// Get the number of data and function matches again if this correlator ran
+			numDataMatches = getNumberOfDataMatches(monitor);
+			numFunctionMatches = getNumberOfFunctionMatches(monitor);
 		}
-		catch (CancelledException e) {
-			statusMsg = getName() + " was cancelled.";
-			return false;
+
+		// Run the FunctionReferenceCorrelator if there are accepted function matches but no
+		// accepted data matches
+		if (numDataMatches > 0 && numFunctionMatches == 0) {
+			factory = new FunctionReferenceProgramCorrelatorFactory();
+			options = factory.createDefaultOptions();
+			options.setDouble(confidenceOption, minCombinedReferenceCorrelatorConfidence);
+			options.setDouble(scoreOption, minCombinedReferenceCorrelatorScore);
+			factory = new FunctionReferenceProgramCorrelatorFactory();
+
+			monitor.setPrefix(String.format(prefix, "Function Reference", ++count));
+			hasApplyErrors = hasApplyErrors | correlateAndPossiblyApply(factory, options, monitor);
+			monitor.doIncrementProgress();
+
+			// Get the number of data and function matches again if this correlator ran
+			numDataMatches = getNumberOfDataMatches(monitor);
+			numFunctionMatches = getNumberOfFunctionMatches(monitor);
+		}
+
+		// Run the CombinedDataAndFunctionReferenceCorrelator if there are both accepted function
+		// matches but and data matches
+		if (numDataMatches > 0 && numFunctionMatches > 0) {
+			factory = new CombinedFunctionAndDataReferenceProgramCorrelatorFactory();
+			options = factory.createDefaultOptions();
+			options.setDouble(confidenceOption, minCombinedReferenceCorrelatorConfidence);
+			options.setDouble(scoreOption, minCombinedReferenceCorrelatorScore);
+
+			monitor.setPrefix(String.format(prefix, "Function and Data", ++count));
+			hasApplyErrors = hasApplyErrors | correlateAndPossiblyApply(factory, options, monitor);
+			monitor.doIncrementProgress();
 		}
 
 		String applyMarkupStatus = " with no apply markup errors.";
@@ -223,13 +266,9 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 			applyMarkupStatus =
 				" with some apply markup errors. See the log or the markup table for more details";
 		}
-		statusMsg =
-
-			getName() + " completed successfully" + applyMarkupStatus;
+		statusMsg = NAME + " completed successfully" + applyMarkupStatus;
 
 		controller.getTool().setStatusInfo(statusMsg);
-
-		return true;
 	}
 
 	private int getNumberOfDataMatches(TaskMonitor monitor) throws CancelledException {
@@ -288,7 +327,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 			sourceAddressSet, destinationProgram, destinationAddressSet, options);
 
 		VTMatchSet results = correlator.correlate(session, monitor);
-
+		monitor.initialize(results.getMatchCount());
 		boolean hasMarkupErrors = applyMatches(results.getMatches(), correlator.getName(), monitor);
 
 		monitor.incrementProgress(1);
@@ -318,6 +357,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 			sourceAddressSet, destinationProgram, destinationAddressSet, options);
 
 		VTMatchSet results = correlator.correlate(session, monitor);
+		monitor.initialize(results.getMatchCount());
 		boolean hasMarkupErrors = applyDuplicateFunctionMatches(results.getMatches(), monitor);
 
 		monitor.incrementProgress(1);
@@ -363,6 +403,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 
 			ApplyMarkupItemTask markupTask =
 				new ApplyMarkupItemTask(controller.getSession(), markupItems, applyOptions);
+
 			markupTask.run(monitor);
 			boolean currentMatchHasErrors = markupTask.hasErrors();
 			if (currentMatchHasErrors) {
@@ -387,19 +428,19 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 			return true;
 		}
 		catch (VTAssociationStatusException e) {
-			Msg.warn(AutoVersionTrackingCommand.class,
+			Msg.warn(AutoVersionTrackingTask.class,
 				"Could not set match accepted for " + association, e);
 			return false;
 		}
 	}
 
 	/**
-	 * Accept matches and apply markup for duplicate function instruction matches with matching operands
-	 * if they are a unique match within their associated set.
+	 * Accept matches and apply markup for duplicate function instruction matches with matching
+	 * operands if they are a unique match within their associated set.
 	 * @param matches A collection of version tracking matches from the duplicate instruction
-	 * matcher.
+	 * matcher
 	 * @param monitor Allows user to cancel
-	 * @return true if any markup errors, false if no markup errors.
+	 * @return true if any markup errors, false if no markup errors
 	 * @throws CancelledException if cancelled
 	 */
 	private boolean applyDuplicateFunctionMatches(Collection<VTMatch> matches, TaskMonitor monitor)
@@ -409,19 +450,22 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 		boolean someMatchesHaveMarkupErrors = false;
 		Set<VTMatch> copyOfMatches = new HashSet<>(matches);
 
-		// Process matches in related sets of matches
-		for (VTMatch match : matches) {
+		String message = "Processing match %d of %d...";
+		int n = matches.size();
+		Iterator<VTMatch> it = matches.iterator();
+		for (int i = 0; it.hasNext(); i++) {
 			monitor.checkCanceled();
+			monitor.setMessage(String.format(message, i, n));
 
-			// if match has already been removed (ie it was in a set that was already processed)
-			// then skip it
+			VTMatch match = it.next();
+
+			// skip if match has already been removed (it was in a set that was already processed)
 			if (!copyOfMatches.contains(match)) {
 				continue;
 			}
 
-			// get a set of related matches from the set of all matches
-			// ie these all have the same instructions as each other but not necessarily
-			// the same operands.
+			// Get a set of related matches from the set of all matches.  These all have the same
+			// instructions as each other but not necessarily the same operands.
 			Set<VTMatch> relatedMatches = getRelatedMatches(match, matches, monitor);
 
 			// remove related matches from the set of matches to process next time
@@ -440,19 +484,19 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 			Set<Address> uniqueDestFunctionAddresses =
 				dedupMatchingFunctions(destinationProgram, destAddresses, monitor);
 
-			// Keep only matches containing the unique sources and destination functions determined above
+			// Keep only matches containing unique source and destination functions from above
 			Set<VTMatch> dedupedMatches = getMatches(relatedMatches, uniqueSourceFunctionAddresses,
 				uniqueDestFunctionAddresses, monitor);
 
-			// Loop through all the source functions
+			// loop through all the source functions
 			for (Address sourceAddress : uniqueSourceFunctionAddresses) {
 				monitor.checkCanceled();
 
-				// Find all destination functions with equivalent operands to current source function
+				// find all destination functions with equivalent operands to source function
 				Set<VTMatch> matchesWithEquivalentOperands = getMatchesWithEquivalentOperands(
 					dedupedMatches, sourceAddress, uniqueDestFunctionAddresses, monitor);
 
-				// If there is just one equivalent match try to accept the match and apply markup
+				// if there is just one equivalent match try to accept the match and apply markup
 				if (matchesWithEquivalentOperands.size() == 1) {
 					VTMatch theMatch = CollectionUtils.any(matchesWithEquivalentOperands);
 					someMatchesHaveMarkupErrors |=
@@ -814,7 +858,7 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 	 * @return Set of addresses of deduped function bytes
 	 * @throws CancelledException if cancelled
 	 */
-	public Set<Address> dedupMatchingFunctions(Program program, Set<Address> addresses,
+	private Set<Address> dedupMatchingFunctions(Program program, Set<Address> addresses,
 			TaskMonitor monitor) throws CancelledException {
 
 		FunctionManager functionManager = program.getFunctionManager();
@@ -859,13 +903,54 @@ public class AutoVersionTrackingCommand extends BackgroundCommand {
 		return uniqueFunctionAddresses;
 	}
 
-	@Override
 	public String getStatusMsg() {
 		return statusMsg;
 	}
 
-	@Override
-	public String getName() {
-		return "Auto Version Tracking Command";
+	/** A task monitor that allows us to control the message content and the progress */
+	private class SubTaskMonitor extends WrappingTaskMonitor {
+
+		private String prefix;
+
+		SubTaskMonitor(TaskMonitor delegate) {
+			super(delegate);
+		}
+
+		void setPrefix(String prefix) {
+			this.prefix = prefix;
+		}
+
+		void doIncrementProgress() {
+			super.incrementProgress(1);
+		}
+
+		void doInitialize(long max) {
+			super.initialize(max);
+		}
+
+		@Override
+		public void setMessage(String message) {
+			super.setMessage(prefix + message);
+		}
+
+		@Override
+		public void initialize(long max) {
+			// we control the max value
+		}
+
+		@Override
+		public synchronized void setMaximum(long max) {
+			// we control the max value
+		}
+
+		@Override
+		public void setProgress(long value) {
+			// we control the progress
+		}
+
+		@Override
+		public void incrementProgress(long incrementAmount) {
+			// we control progress
+		}
 	}
 }

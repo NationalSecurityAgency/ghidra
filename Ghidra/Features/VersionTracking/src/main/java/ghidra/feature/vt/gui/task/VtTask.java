@@ -41,11 +41,8 @@ public abstract class VtTask extends Task {
 
 	@Override
 	public final void run(TaskMonitor monitor) {
-		boolean restoreEvents = false;
-		if (session != null && shouldSuspendSessionEvents()) {
-			session.setEventsEnabled(false);
-			restoreEvents = true;
-		}
+		boolean restoreEvents = suspendEvents();
+
 		try {
 			success = doWork(monitor);
 		}
@@ -60,6 +57,24 @@ public abstract class VtTask extends Task {
 				session.setEventsEnabled(true);
 			}
 		}
+	}
+
+	private boolean suspendEvents() {
+
+		if (session == null) {
+			return false; // no events to suspend
+		}
+
+		if (!shouldSuspendSessionEvents()) {
+			return false; // this task has chosen not to suspend events
+		}
+
+		if (!session.isSendingEvents()) {
+			return false; // someone external to this task is managing events
+		}
+
+		session.setEventsEnabled(false);
+		return true;
 	}
 
 	/**

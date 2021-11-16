@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@ import static ghidra.feature.vt.db.VTTestUtils.*;
 import static org.junit.Assert.*;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.*;
 
@@ -29,7 +28,7 @@ import ghidra.feature.vt.api.main.*;
 import ghidra.feature.vt.api.util.VTAssociationStatusException;
 import ghidra.feature.vt.db.VTTestUtils;
 import ghidra.feature.vt.gui.VTTestEnv;
-import ghidra.feature.vt.gui.actions.AutoVersionTrackingCommand;
+import ghidra.feature.vt.gui.actions.AutoVersionTrackingTask;
 import ghidra.feature.vt.gui.plugin.VTController;
 import ghidra.framework.options.Options;
 import ghidra.program.database.ProgramDB;
@@ -42,7 +41,7 @@ import ghidra.program.model.symbol.SourceType;
 import ghidra.test.AbstractGhidraHeadedIntegrationTest;
 import ghidra.util.Msg;
 import ghidra.util.exception.InvalidInputException;
-import ghidra.util.task.TaskMonitor;
+import ghidra.util.task.TaskLauncher;
 
 public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTest {
 
@@ -84,8 +83,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		controller = env.getVTController();
 
 		// Score .999999 and confidence 10.0 (log10 confidence 2.0) and up
-		boolean success = runAutoVTCommand(0.999999999, 10.0);
-		assertTrue("Auto Version Tracking Command failed to run", success);
+		runAutoVTCommand(0.999999999, 10.0);
 
 		// verify that the default options are what we expect
 		// if this assert fails then the follow-on tests will probably fail
@@ -146,8 +144,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		// Score 0.5 and conf threshold 1.0 allow similarity scores of higher than 0.5 for combined
 		// reference correlator and 1.0 and higher for the log 10 confidence score
-		boolean success = runAutoVTCommand(0.5, 1.0);
-		assertTrue("Auto Version Tracking Command failed to run", success);
+		runAutoVTCommand(0.5, 1.0);
 
 		// verify that the default options are what we expect
 		// if this assert fails then the follow-on tests will probably fail
@@ -613,8 +610,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		sourceProgram.endTransaction(startTransaction, true);
 
 		// run Auto VT
-		boolean success = runAutoVTCommand(1.0, 10.0);
-		assertTrue("Auto Version Tracking Command failed to run", success);
+		runAutoVTCommand(1.0, 10.0);
 
 		// Check that the match we are interested in got accepted
 		String correlator = "Combined Function and Data Reference Match";
@@ -670,8 +666,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		sourceProgram.endTransaction(startTransaction, true);
 
 		// run Auto VT
-		boolean success = runAutoVTCommand(1.0, 10.0);
-		assertTrue("Auto Version Tracking Command failed to run", success);
+		runAutoVTCommand(1.0, 10.0);
 
 		// Check that the match we are interested in got accepted
 		String correlator = "Duplicate Function Instructions Match";
@@ -735,8 +730,7 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 
 		// Now run the AutoVT command with lower confidence thresholds to allow the match we want to
 		// test in as a match
-		boolean success = runAutoVTCommand(0.5, 1.0);
-		assertTrue("Auto Version Tracking Command failed to run", success);
+		runAutoVTCommand(0.5, 1.0);
 
 		// Check that the match we are interested in got accepted
 		String correlator = "Combined Function and Data Reference Match";
@@ -829,20 +823,18 @@ public class VTAutoVersionTrackingTest extends AbstractGhidraHeadedIntegrationTe
 		assertEquals(expectedAcceptedMatchCount, getNumAcceptedMatches(vtSession, correlatorName));
 	}
 
-	private boolean runAutoVTCommand(double minReferenceCorrelatorScore,
+	private void runAutoVTCommand(double minReferenceCorrelatorScore,
 			double minReferenceCorrelatorConfidence) {
-		AtomicBoolean result = new AtomicBoolean();
-		runSwing(() -> {
-			String transactionName = "Auto Version Tracking Test";
-			int startTransaction = session.startTransaction(transactionName);
 
-			AutoVersionTrackingCommand vtCommand = new AutoVersionTrackingCommand(controller,
-				session, minReferenceCorrelatorScore, minReferenceCorrelatorConfidence);
-			result.set(vtCommand.applyTo(session, TaskMonitor.DUMMY));
+		AutoVersionTrackingTask task = new AutoVersionTrackingTask(controller, session,
+			minReferenceCorrelatorScore, minReferenceCorrelatorConfidence);
+		TaskLauncher.launch(task);
+		waitForSession();
+	}
 
-			session.endTransaction(startTransaction, result.get());
-		});
-		return result.get();
+	private void waitForSession() {
+		session.flushEvents();
+		waitForSwing();
 	}
 
 	private VTMatchSet getVTMatchSet(VTSession vtSession, String correlatorName) {
