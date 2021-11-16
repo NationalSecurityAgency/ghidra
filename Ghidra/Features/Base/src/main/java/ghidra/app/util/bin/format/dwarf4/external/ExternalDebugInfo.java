@@ -37,7 +37,7 @@ public class ExternalDebugInfo {
 		if (buildIdValues != null && !buildIdValues.isValid()) {
 			buildIdValues = null;
 		}
-		if (debugLinkValues == null && buildIdValues == null) {
+		if (debugLinkValues == null || buildIdValues == null) {
 			return null;
 		}
 
