@@ -127,45 +127,9 @@ public abstract class AbstractCodeBrowserPlugin<P extends CodeViewerProvider> ex
 		fieldOptions.addOptionsChangeListener(this);
 		tool.setDefaultComponent(connectedProvider);
 		markerChangeListener = new MarkerChangeListener(connectedProvider);
-		createActions();
 	}
 
 	protected abstract P createProvider(FormatManager formatManager, boolean isConnected);
-
-	private void createActions() {
-		new ActionBuilder("Select All", getName())
-				.menuPath(ToolConstants.MENU_SELECTION, "&All in View")
-				.menuGroup("Select Group", "a")
-				.keyBinding("ctrl A")
-				.supportsDefaultToolContext(true)
-				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select All"))
-				.withContext(CodeViewerActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectAll())
-				.buildAndInstall(tool);
-
-		new ActionBuilder("Clear Selection", getName())
-				.menuPath(ToolConstants.MENU_SELECTION, "&Clear Selection")
-				.menuGroup("Select Group", "b")
-				.supportsDefaultToolContext(true)
-				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Clear Selection"))
-				.withContext(CodeViewerActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider())
-						.setSelection(new ProgramSelection()))
-				.buildAndInstall(tool);
-
-		new ActionBuilder("Select Complement", getName())
-				.menuPath(ToolConstants.MENU_SELECTION, "&Complement")
-				.menuGroup("Select Group", "c")
-				.supportsDefaultToolContext(true)
-				.helpLocation(new HelpLocation(HelpTopics.SELECTION, "Select Complement"))
-				.withContext(CodeViewerActionContext.class)
-				.inWindow(ActionBuilder.When.CONTEXT_MATCHES)
-				.onAction(c -> ((CodeViewerProvider) c.getComponentProvider()).selectComplement())
-				.buildAndInstall(tool);
-
-	}
 
 	protected void viewChanged(AddressSetView addrSet) {
 		ProgramLocation currLoc = getCurrentLocation();
