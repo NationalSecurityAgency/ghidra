@@ -37,11 +37,16 @@ typedef int8_t int1;
 /* uintp is intended to be an unsigned integer that is the same size as a pointer */
 typedef uintptr_t uintp;
 
+#if defined (__x86_64__) || defined (__i386__)
+#define HOST_ENDIAN 0
+
+#else // other platforms (not compatible with g++ 4.8.5)
 class Endian {
 public:
   static constexpr const union { int4 whole; int1 part[4]; } host = { 1 };
 };
 #define HOST_ENDIAN Endian::host.part[3]
+#endif
 
 #if defined(_WINDOWS)
 #pragma warning (disable:4312)
