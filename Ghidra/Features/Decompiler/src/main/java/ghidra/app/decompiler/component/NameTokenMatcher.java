@@ -13,22 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.decompile.actions;
+package ghidra.app.decompiler.component;
 
 import java.awt.Color;
 
+import ghidra.app.decompiler.CTokenHighlightMatcher;
 import ghidra.app.decompiler.ClangToken;
 
 /**
- * Provides highlight color for the given token
+ * Matcher used for secondary highlights in the Decompiler.
  */
-public interface TokenHighlightColorProvider {
+class NameTokenMatcher implements CTokenHighlightMatcher {
 
-	/**
-	 * Returns a color for the given token
-	 * 
-	 * @param token the token
-	 * @return the color
-	 */
-	public Color getColor(ClangToken token);
+	private ColorProvider colorProvider;
+	private String name;
+
+	NameTokenMatcher(String name, ColorProvider colorProvider) {
+		this.name = name;
+		this.colorProvider = colorProvider;
+	}
+
+	@Override
+	public Color getTokenHighlight(ClangToken token) {
+		if (name.equals(token.getText())) {
+			return colorProvider.getColor(token);
+		}
+		return null;
+	}
 }
