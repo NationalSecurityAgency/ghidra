@@ -81,7 +81,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 		cb = env.getPlugin(CodeBrowserPlugin.class);
 		fp = cb.getFieldPanel();
 
-		adjustFieldPanelSize(15);
+		adjustFieldPanelSize(20);
 		env.showTool();
 		cb.updateNow();
 
@@ -158,7 +158,7 @@ public class CodeBrowserTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testTableFromSelection() {
 		ProgramSelection ps = dragToMakeSelection();
 
-		DockingActionIf createTableAction = getAction(cb, "Create Table From Selection");
+		DockingActionIf createTableAction = getAction(tool, "Create Table From Selection");
 		performAction(createTableAction, true);
 
 		TableComponentProvider<?> tableProvider =

@@ -17,7 +17,9 @@ package ghidra.app.plugin.core.navigation.locationreferences;
 
 import java.util.*;
 
+import docking.ActionContext;
 import docking.action.DockingAction;
+import docking.action.builder.ActionBuilder;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.context.ListingActionContext;
 import ghidra.app.events.ProgramClosedPluginEvent;
@@ -26,12 +28,15 @@ import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.navigation.FindAppliedDataTypesService;
 import ghidra.app.services.GoToService;
 import ghidra.app.services.ProgramManager;
+import ghidra.app.util.XReferenceUtils;
+import ghidra.app.util.query.TableService;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
+import ghidra.program.model.symbol.Reference;
 import ghidra.program.util.ProgramLocation;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
@@ -104,6 +109,34 @@ public class LocationReferencesPlugin extends Plugin
 		//               that point.
 		//
 		DeleteTableRowAction.registerDummy(tool, getName());
+
+		// Note: the following action has no access (no menu path, no key binding, etc.) It exists
+		// only so the user can bind a key binding to it if they wish.
+		new ActionBuilder("Show Xrefs", getName())
+				.description("Show the Xrefs to the code unit containing the cursor")
+				.validContextWhen(context -> context instanceof ListingActionContext)
+				.helpLocation(new HelpLocation("CodeBrowserPlugin", "Show_Xrefs"))
+				.onAction(context -> showXrefs(context))
+				.buildAndInstall(tool);
+
+	}
+
+	private void showXrefs(ActionContext context) {
+
+		TableService service = tool.getService(TableService.class);
+		if (service == null) {
+			Msg.showWarn(this, null, "No Table Service", "Please add the TableServicePlugin.");
+			return;
+		}
+
+		ListingActionContext lac = (ListingActionContext) context;
+		ProgramLocation location = lac.getLocation();
+		if (location == null) {
+			return; // not sure if this can happen
+		}
+
+		Set<Reference> refs = XReferenceUtils.getAllXrefs(location);
+		XReferenceUtils.showXrefs(lac.getNavigatable(), tool, service, location, refs);
 	}
 
 	void displayProvider(ListingActionContext context) {
