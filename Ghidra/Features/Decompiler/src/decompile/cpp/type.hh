@@ -27,9 +27,7 @@ extern void print_data(ostream &s,uint1 *buffer,int4 size,const Address &baseadd
 //extern bool print_string(ostream &s,uint1 *buffer,int4 size);
 
 /// The core meta-types supported by the decompiler. These are sizeless templates
-/// for the elements making up the type algebra. Ordering is important: The lower
-/// the number, the more \b specific the type, in calculations involving the generality
-/// of a type.
+/// for the elements making up the type algebra.
 enum type_metatype {
   TYPE_VOID = 12,		///< Standard "void" type, absence of type
   TYPE_SPACEBASE = 11,		///< Placeholder for symbol/type look-up calculations
@@ -41,12 +39,14 @@ enum type_metatype {
   TYPE_FLOAT = 5,		///< Floating-point
 
   TYPE_PTR = 4,			///< Pointer data-type
-  TYPE_PTRSTRUCT = 3,		///< Pointer into a structure data-type (specialization of TYPE_PTR)
+  TYPE_PTRREL = 3,		///< Pointer relative to another data-type (specialization of TYPE_PTR)
   TYPE_ARRAY = 2,		///< Array data-type, made up of a sequence of "element" datatype
   TYPE_PARTIALSTRUCT = 1,	///< Part of a structure, stored separately from the whole
   TYPE_STRUCT = 0		///< Structure data-type, made up of component datatypes
 };
 
+/// Specializations of the core meta-types.  Each enumeration is associated with a specific #type_metatype.
+/// Ordering is important: The lower the number, the more \b specific the data-type, affecting propagation.
 enum sub_metatype {
   SUB_VOID = 20,		///< Compare as a TYPE_VOID
   SUB_SPACEBASE = 19,		///< Compare as a TYPE_SPACEBASE
@@ -104,7 +104,7 @@ protected:
     variable_length = 128,	///< May be other structures with same name different lengths
     has_stripped = 0x100,	///< Datatype has a stripped form for formal declarations
     is_ptrrel = 0x200,		///< Datatype is a TypePointerRel
-    struct_incomplete = 0x400,	///< Set if \b this (recursive) structure has not been fully defined yet
+    type_incomplete = 0x400,	///< Set if \b this (recursive) data-type has not been fully defined yet
   };
   friend class TypeFactory;
   friend struct DatatypeCompare;
@@ -118,7 +118,7 @@ protected:
   void restoreXmlBasic(const Element *el);	///< Recover basic data-type properties
   void saveXmlBasic(type_metatype meta,ostream &s) const;	///< Save basic data-type properties
   void saveXmlTypedef(ostream &s) const;	///< Write \b this as a \e typedef tag to stream
-  virtual void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore data-type from XML
+  void markComplete(void) { flags &= ~(uint4)type_incomplete; }		///< Mark \b this data-type as completely defined
   virtual Datatype *clone(void) const=0;	///< Clone the data-type
   static uint8 hashName(const string &nm);	///< Produce a data-type id by hashing the type name
   static uint8 hashSize(uint8 id,int4 size);	///< Reversibly hash size into id
@@ -128,8 +128,6 @@ public:
     id=op.id; typedefImm=op.typedefImm; }
   /// Construct the base data-type providing size and meta-type
   Datatype(int4 s,type_metatype m) { size=s; metatype=m; submeta=base2sub[m]; flags=0; id=0; typedefImm=(Datatype *)0; }
-  /// Construct the base data-type providing size, meta-type, and name
-  Datatype(int4 s,type_metatype m,const string &n) { name=n; size=s; metatype=m; submeta=base2sub[m]; flags=0; id=0; typedefImm=(Datatype *)0; }
   virtual ~Datatype(void) {}	///< Destructor
   bool isCoreType(void) const { return ((flags&coretype)!=0); }	///< Is this a core data-type
   bool isCharPrint(void) const { return ((flags&(chartype|utf16|utf32|opaque_string))!=0); }	///< Does this print as a 'char'
@@ -144,7 +142,7 @@ public:
   bool isPointerRel(void) const { return ((flags & is_ptrrel)!=0); }	///< Is \b this a TypePointerRel
   bool isFormalPointerRel(void) const { return (flags & (is_ptrrel | has_stripped))==is_ptrrel; }	///< Is \b this a non-ephemeral TypePointerRel
   bool hasStripped(void) const { return (flags & has_stripped)!=0; }	///< Return \b true if \b this has a stripped form
-  bool isIncompleteStruct(void) const { return (flags & struct_incomplete)!=0; }	///< Is \b this an incompletely defined struct
+  bool isIncomplete(void) const { return (flags & type_incomplete)!=0; }	///< Is \b this an incompletely defined data-type
   uint4 getInheritable(void) const { return (flags & coretype); }	///< Get properties pointers inherit
   type_metatype getMetatype(void) const { return metatype; }	///< Get the type \b meta-type
   sub_metatype getSubMeta(void) const { return submeta; }	///< Get the \b sub-metatype
@@ -213,7 +211,7 @@ public:
   /// Construct TypeBase from a size and meta-type
   TypeBase(int4 s,type_metatype m) : Datatype(s,m) {}
   /// Construct TypeBase from a size, meta-type, and name
-  TypeBase(int4 s,type_metatype m,const string &n) : Datatype(s,m,n) {}
+  TypeBase(int4 s,type_metatype m,const string &n) : Datatype(s,m) { name = n; }
   virtual Datatype *clone(void) const { return new TypeBase(*this); }
 };
 
@@ -223,7 +221,7 @@ public:
 class TypeChar : public TypeBase {
 protected:
   friend class TypeFactory;
-  virtual void restoreXml(const Element *el,TypeFactory &typegrp);
+  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this char data-type from an XML element
 public:
   /// Construct TypeChar copying properties from another data-type
   TypeChar(const TypeChar &op) : TypeBase(op) { flags |= Datatype::chartype; }
@@ -240,7 +238,7 @@ class TypeUnicode : public TypeBase { // Unicode character type
   void setflags(void);	///< Set unicode property flags
 protected:
   friend class TypeFactory;
-  virtual void restoreXml(const Element *el,TypeFactory &typegrp);
+  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this unicode data-type from an XML element
 public:
   TypeUnicode(void) : TypeBase(0,TYPE_INT) {} ///< For use with restoreXml
   TypeUnicode(const TypeUnicode &op) : TypeBase(op) {}	///< Construct from another TypeUnicode
@@ -260,7 +258,7 @@ public:
   /// Construct from another TypeVoid
   TypeVoid(const TypeVoid &op) : Datatype(op) { flags |= Datatype::coretype; }
   /// Constructor
-  TypeVoid(void) : Datatype(0,TYPE_VOID,"void") { flags |= Datatype::coretype; }
+  TypeVoid(void) : Datatype(0,TYPE_VOID) { name = "void"; flags |= Datatype::coretype; }
   virtual Datatype *clone(void) const { return new TypeVoid(*this); }
   virtual void saveXml(ostream &s) const;
 };
@@ -271,7 +269,7 @@ protected:
   friend class TypeFactory;
   Datatype *ptrto;		///< Type being pointed to
   uint4 wordsize;               ///< What size unit does the pointer address
-  virtual void restoreXml(const Element *el,TypeFactory &typegrp);
+  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this pointer data-type from an XML element
   void calcSubmeta(void);	///< Calculate specific submeta for \b this pointer
   /// Internal constructor for use with restoreXml
   TypePointer(void) : Datatype(0,TYPE_PTR) { ptrto = (Datatype *)0; wordsize=1; }
@@ -301,7 +299,7 @@ protected:
   friend class TypeFactory;
   Datatype *arrayof;		///< type of which we have an array
   int4 arraysize;		///< Number of elements in the array
-  virtual void restoreXml(const Element *el,TypeFactory &typegrp);
+  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this array from an XML element
   /// Internal constructor for restoreXml
   TypeArray(void) : Datatype(0,TYPE_ARRAY) { arraysize = 0; arrayof = (Datatype *)0; }
 public:
@@ -334,7 +332,7 @@ protected:
   map<uintb,string> namemap;	///< Map from integer to name
   vector<uintb> masklist;	///< Masks for each bitfield within the enum
   void setNameMap(const map<uintb,string> &nmap);	///< Establish the value -> name map
-  virtual void restoreXml(const Element *el,TypeFactory &typegrp);
+  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this enum data-type from an XML element
 public:
   /// Construct from another TypeEnum
   TypeEnum(const TypeEnum &op);
@@ -361,10 +359,10 @@ protected:
   void setFields(const vector<TypeField> &fd);	///< Establish fields for \b this
   int4 getFieldIter(int4 off) const;		///< Get index into field list
   int4 getLowerBoundField(int4 off) const;	///< Get index of last field before or equal to given offset
-  virtual void restoreXml(const Element *el,TypeFactory &typegrp);
+  void restoreFields(const Element *el,TypeFactory &typegrp);	///< Restore fields from XML description
 public:
   TypeStruct(const TypeStruct &op);	///< Construct from another TypeStruct
-  TypeStruct(const string &n) : Datatype(0,TYPE_STRUCT,n) { flags |= struct_incomplete; }	///< Construct incomplete/empty TypeStruct from a name
+  TypeStruct(void) : Datatype(0,TYPE_STRUCT) { flags |= type_incomplete; }	///< Construct incomplete/empty TypeStruct
   vector<TypeField>::const_iterator beginField(void) const { return field.begin(); }	///< Beginning of fields
   vector<TypeField>::const_iterator endField(void) const { return field.end(); }	///< End of fields
   const TypeField *getField(int4 off,int4 sz,int4 *newoff) const;	///< Get field based on offset
@@ -391,7 +389,7 @@ protected:
   Datatype *parent;		///< Parent structure or array which \b this is pointing into
   int4 offset;			///< Byte offset within the parent where \b this points to
   void cacheStrippedType(TypeFactory &typegrp);
-  virtual void restoreXml(const Element *el,TypeFactory &typegrp);
+  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this relative pointer data-type from an XML element
   /// Internal constructor for restoreXml
   TypePointerRel(void) : TypePointer() { offset = 0; parent = (Datatype *)0; stripped = (TypePointer *)0; submeta = SUB_PTRREL; }
 public:
@@ -429,16 +427,17 @@ protected:
   friend class TypeFactory;
   FuncProto *proto;		///< If non-null, this describes the prototype of the underlying function
   TypeFactory *factory;		///< Factory owning \b this
-  void set(TypeFactory *tfact,ProtoModel *model,
-	   Datatype *outtype,const vector<Datatype *> &intypes,
-	   bool dotdotdot,Datatype *voidtype);	///< Establish a function pointer
-  virtual void restoreXml(const Element *el,TypeFactory &typegrp);
+  void setPrototype(TypeFactory *tfact,ProtoModel *model,
+		    Datatype *outtype,const vector<Datatype *> &intypes,
+		    bool dotdotdot,Datatype *voidtype);	///< Establish a function pointer
+  void setPrototype(TypeFactory *typegrp,const FuncProto *fp);	///< Set a particular function prototype on \b this
+  void restoreStub(const Element *el);		///< Restore stub of data-type without the full prototype
+  void restorePrototype(const Element *el,bool isConstructor,bool isDestructor,TypeFactory &typegrp);	///< Restore any prototype description
 public:
   TypeCode(const TypeCode &op);		///< Construct from another TypeCode
-  TypeCode(const string &nm);		///< Construct from a name
+  TypeCode(void);			///< Construct an incomplete TypeCode
   int4 compareBasic(const TypeCode *op) const;	///< Compare surface characteristics of two TypeCodes
   const FuncProto *getPrototype(void) const { return proto; }	///< Get the function prototype
-  void setProperties(bool isConstructor,bool isDestructor);	///< Set additional function properties
   virtual ~TypeCode(void);
   virtual void printRaw(ostream &s) const;
   virtual Datatype *getSubType(uintb off,uintb *newoff) const;
@@ -458,7 +457,7 @@ class TypeSpacebase : public Datatype {
   AddrSpace *spaceid;		///< The address space we are treating as a structure
   Address localframe;		///< Address of function whose symbol table is indexed (or INVALID for "global")
   Architecture *glb;		///< Architecture for accessing symbol table
-  virtual void restoreXml(const Element *el,TypeFactory &typegrp);
+  void restoreXml(const Element *el,TypeFactory &typegrp);	///< Restore \b this spacebase data-type from an XML element
 public:
   /// Construct from another TypeSpacebase
   TypeSpacebase(const TypeSpacebase &op) : Datatype(op) {
@@ -496,6 +495,7 @@ class TypeFactory {
   void orderRecurse(vector<Datatype *> &deporder,DatatypeSet &mark,Datatype *ct) const;	///< Write out dependency list
   Datatype *restoreTypedef(const Element *el);		///< Restore a \<def> XML tag describing a typedef
   Datatype *restoreStruct(const Element *el,bool forcecore);	///< Restore a \<type> XML tag describing a structure
+  Datatype *restoreCode(const Element *el,bool isConstructor,bool isDestructor,bool forcecore);	///< Restore XML tag describing a code object
   Datatype *restoreXmlTypeNoRef(const Element *el,bool forcecore);	///< Restore from an XML tag
   void clearCache(void);		///< Clear the common type cache
   TypeChar *getTypeChar(const string &n);	///< Create a default "char" type
@@ -519,6 +519,7 @@ public:
   Datatype *findByName(const string &n);		///< Return type of given name
   Datatype *setName(Datatype *ct,const string &n); 	///< Set the given types name
   bool setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,uint4 flags);	///< Set fields on a TypeStruct
+  void setPrototype(const FuncProto *fp,TypeCode *newCode,uint4 flags);	///< Set the prototype on a TypeCode
   bool setEnumValues(const vector<string> &namelist,
 		      const vector<uintb> &vallist,
 		      const vector<bool> &assignlist,
