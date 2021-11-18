@@ -116,7 +116,7 @@ class VTFunctionAssociationTableModel extends AddressBasedTableModel<VTFunctionR
 		addObject(new VTFunctionRowObject(getInitializedFunctionInfo(function)));
 
 		// assumption: added functions did not exist and thus could not have been the basis for
-		//             a match.  Thus, we don't have to add the new function to the 
+		//             a match.  Thus, we don't have to add the new function to the
 		//             collection of matched functions.
 	}
 
@@ -129,8 +129,8 @@ class VTFunctionAssociationTableModel extends AddressBasedTableModel<VTFunctionR
 				associationManager.getRelatedAssociationsBySourceAddress(function.getEntryPoint());
 		}
 		else {
-			associations = associationManager.getRelatedAssociationsByDestinationAddress(
-				function.getEntryPoint());
+			associations = associationManager
+					.getRelatedAssociationsByDestinationAddress(function.getEntryPoint());
 
 		}
 		boolean isInAssociation = !associations.isEmpty();
@@ -245,7 +245,6 @@ class VTFunctionAssociationTableModel extends AddressBasedTableModel<VTFunctionR
 	Function getFunction(int row) {
 		VTFunctionRowObject rowObject = getRowObject(row);
 		FunctionAssociationInfo info = rowObject.getInfo();
-		Program program = getProgram();
 		FunctionManager manager = program.getFunctionManager();
 		return manager.getFunction(info.getFunctionID());
 	}
@@ -264,25 +263,23 @@ class VTFunctionAssociationTableModel extends AddressBasedTableModel<VTFunctionR
 	@Override
 	protected void doLoad(Accumulator<VTFunctionRowObject> accumulator, TaskMonitor monitor)
 			throws CancelledException {
-		LongIterator it = LongIterator.EMPTY;
 
-		if (getProgram() != null) {
-			FunctionManager functionManager = getProgram().getFunctionManager();
-			it = new FunctionKeyIterator(functionManager);
-
-			monitor.initialize(getKeyCount());
-			while (it.hasNext()) {
-				monitor.incrementProgress(1);
-				monitor.checkCanceled();
-				long key = it.next();
-
-				Function f = functionManager.getFunction(key);
-				if (!f.isThunk()) {
-					accumulator.add(new VTFunctionRowObject(new FunctionAssociationInfo(key)));
-				}
-			}
+		if (program == null) {
+			return;
 		}
 
+		monitor.initialize(getKeyCount());
+		FunctionManager functionManager = getProgram().getFunctionManager();
+		LongIterator it = new FunctionKeyIterator(functionManager);
+		while (it.hasNext()) {
+			monitor.incrementProgress(1);
+			monitor.checkCanceled();
+			long key = it.next();
+			Function f = functionManager.getFunction(key);
+			if (!f.isThunk()) {
+				accumulator.add(new VTFunctionRowObject(new FunctionAssociationInfo(key)));
+			}
+		}
 	}
 
 	@Override
@@ -377,10 +374,9 @@ class VTFunctionAssociationTableModel extends AddressBasedTableModel<VTFunctionR
 		}
 		monitor.setMessage("Setting filter data...");
 		monitor.initialize(data.size());
-		for (int row = 0; row < data.size(); row++) {
+		for (VTFunctionRowObject rowObject : data) {
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
-			VTFunctionRowObject rowObject = data.get(row);
 			FunctionAssociationInfo info = rowObject.getInfo();
 			Long functionID = info.getFunctionID();
 			info.setFilterData(matchSet.contains(functionID), acceptedSet.contains(functionID));

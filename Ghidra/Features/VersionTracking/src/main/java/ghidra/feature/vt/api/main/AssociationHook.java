@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +16,7 @@
 package ghidra.feature.vt.api.main;
 
 /**
- * Interface used for a callback when associations are accepted or cleared. 
+ * Interface used for a callback when associations are accepted or cleared.
  */
 public interface AssociationHook {
 	/**
@@ -28,7 +27,7 @@ public interface AssociationHook {
 
 	/**
 	 * Called whenever an association has been cleared from the accepted state.
-	 * @param association the association that has been cleared from the accpeted state.
+	 * @param association the association that has been cleared from the accepted state.
 	 */
 	public void associationCleared(VTAssociation association);
 

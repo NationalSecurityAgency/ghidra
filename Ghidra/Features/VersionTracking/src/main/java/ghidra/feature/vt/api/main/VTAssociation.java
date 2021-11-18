@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +15,15 @@
  */
 package ghidra.feature.vt.api.main;
 
+import java.util.Collection;
+
 import ghidra.feature.vt.api.util.VTAssociationStatusException;
 import ghidra.program.model.address.Address;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-import java.util.Collection;
-
 /**
- * A VTAssociation is a possible equivalence between a function or data in one program to 
+ * A VTAssociation is a possible equivalence between a function or data in one program to
  * a function or data in another program.  VTAssociations can be "Accepted" indicating that
  * the user has agreed that the association is correct.
  */
@@ -72,23 +71,24 @@ public interface VTAssociation {
 
 	/**
 	 * Returns a collection of VTAssociations that have either the same source address or the same
-	 * destination address. 
+	 * destination address.
 	 * @return  a collection of VTAssociations that have either the same source address or the same
 	 * destination address.
 	 */
 	public Collection<VTAssociation> getRelatedAssociations();
 
 	/**
-	 * Sets the markup status of this association.  This method is used by the 
+	 * Sets the markup status of this association.  This method is used by the
 	 * {@link VTAssociationManager} to update the association with information about the state
 	 * of its markup items.
+	 * @param markupItemsStatus the markup items
 	 */
 	public void setMarkupStatus(VTAssociationMarkupStatus markupItemsStatus);
 
 	/**
-	 * Returns the status of the markup items for this association.  
+	 * Returns the status of the markup items for this association.
 	 * See {@link VTAssociationMarkupStatus} for details.
-	 * 
+	 *
 	 * @return the status of the markup items for this association.
 	 */
 	public VTAssociationMarkupStatus getMarkupStatus();
@@ -102,25 +102,23 @@ public interface VTAssociation {
 
 	/**
 	 * A convenience method to accept the given association without actually performing an apply.
-	 * 
-	 * @param association the association to accept
-	 * @throws VTAssociationStatusException if the given association is 
+	 *
+	 * @throws VTAssociationStatusException if the given association is
 	 *         {@link VTAssociationStatus#BLOCKED}
 	 */
 	public void setAccepted() throws VTAssociationStatusException;
 
 	/**
 	 * Clears the state of the given association from {@link VTAssociationStatus#ACCEPTED}
-	 * or {@link VTAssociationStatus#REJECTED} to {@link VTAssociationStatus#AVAILABLE}.  
-	 * This method will throw an exception if called while the given assocation's markup items 
-	 * have been applied.  That is, you must first unapply any applied markup items before 
-	 * calling this method. 
-	 * 
-	 * @param association the association whose state will be changed
-	 * @throws VTAssociationStatusException if the given association's status is not 
-	 *         {@link VTAssociationStatus#ACCEPTED}/{@link VTAssociationStatus#REJECTED} 
-	 *         <b>or</b> if the given assocation's
-	 *         {@link VTMarkupItemManager} contains markup items that have been applied. 
+	 * or {@link VTAssociationStatus#REJECTED} to {@link VTAssociationStatus#AVAILABLE}.
+	 * This method will throw an exception if called while the given assocation's markup items
+	 * have been applied.  That is, you must first unapply any applied markup items before
+	 * calling this method.
+	 *
+	 * @throws VTAssociationStatusException if the given association's status is not
+	 *         {@link VTAssociationStatus#ACCEPTED}/{@link VTAssociationStatus#REJECTED}
+	 *         <b>or</b> if the given assocation's markup item manager contains markup items that
+	 *         have been applied.
 	 */
 	public void clearStatus() throws VTAssociationStatusException;
 
@@ -132,9 +130,9 @@ public interface VTAssociation {
 
 	/**
 	 * Returns the current vote count which is an application settable field which should generally
-	 * be used to indicate a number of supporting facts.  For example, other accepted assocations
+	 * be used to indicate a number of supporting facts.  For example, other accepted associations
 	 * may have matching call references to this association, each of those matching calls should
-	 * have incremented the votes.  
+	 * have incremented the votes.
 	 * @return the current number of facts that support this association
 	 */
 	public int getVoteCount();
