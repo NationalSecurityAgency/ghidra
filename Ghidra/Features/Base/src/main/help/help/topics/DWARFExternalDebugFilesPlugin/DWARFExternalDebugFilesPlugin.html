@@ -1,0 +1,43 @@
+<!DOCTYPE doctype PUBLIC "-//W3C//DTD HTML 4.0 Frameset//EN">
+
+<HTML>
+  <HEAD>
+    <TITLE>DWARF External Debug Files</TITLE>
+    <META http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <LINK rel="stylesheet" type="text/css" href="../../shared/Frontpage.css">
+  </HEAD>
+
+  <BODY lang="EN-US">
+    <H1>DWARF External Debug Files</H1>
+
+    <P>These files contain DWARF debug information that has been stripped from the original binary and
+    placed into a separate file (typically to save space).  These external files can be found using
+    information embedded in the original binary's ".gnu_debuglink" section (a filename and crc32) and/or
+    ".note.gnu.build-id" section (a hash value).</P>
+    
+    <P>Use the ExtractELFDebugFilesScript to pull external debug files from pre-packaged install
+    files, typically provided by Linux / BSD distributions, for later consumption by Ghidra.</P>
+    
+    <H2>Menu Actions</H2>
+    
+    <BLOCKQUOTE>
+      <H3 align="left"><A name="DWARF_External_Debug_Config"></A>DWARF External Debug Config</H3>
+
+      <BLOCKQUOTE>
+        <P align="left">Allows the user to pick a directory where Ghidra will search for DWARF external debug files.</P>
+        <P align="left">Ghidra will search for external debug files under the selected directory
+        as ".build-id/NN/hexhash.debug" if build-id information is available, falling back to trying
+        the debuglink filename in any subdirectory, and lastly in the original binary's import location.</P>
+      </BLOCKQUOTE>
+    </BLOCKQUOTE>
+
+
+    <P class="providedbyplugin"><BR>
+     Provided by: <I>DWARF External Debug Files Plugin</I></P>
+
+    <P>&nbsp;</P>
+    <BR>
+    <BR>
+    <BR>
+  </BODY>
+</HTML>
