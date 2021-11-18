@@ -318,23 +318,18 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 
 	/**
 	 * Returns the rootNode for this tree or null if there is no parent path to a
-	 * GTRootNode
-	 * @return the rootNode for this tree
+	 * root node.
+	 * @return the rootNode for a tree of nodes in a {@link GTree}
 	 */
 	public GTreeNode getRoot() {
-		GTreeNode myParent = getParent();
-		if (myParent == null || myParent instanceof GTreeRootParentNode) {
+		if (isRoot()) {
 			return this;
 		}
-		return myParent.getRoot();
-	}
-
-	/**
-	 * Returns true if this is a root node
-	 * @return  true if this is a root node
-	 */
-	public boolean isRoot() {
-		return getRoot() == this;
+		GTreeNode myParent = getParent();
+		if (myParent != null) {
+			return myParent.getRoot();
+		}
+		return null;
 	}
 
 	/**
@@ -367,7 +362,7 @@ public abstract class GTreeNode extends CoreGTreeNode implements Comparable<GTre
 			}
 		}
 
-		if (isRoot() || !list.isEmpty() || filter.acceptsNode(this) || getParent() == null) {
+		if (isRoot() || !list.isEmpty() || filter.acceptsNode(this)) {
 			GTreeNode clone = clone();
 			clone.doSetChildren(list);
 			return clone;

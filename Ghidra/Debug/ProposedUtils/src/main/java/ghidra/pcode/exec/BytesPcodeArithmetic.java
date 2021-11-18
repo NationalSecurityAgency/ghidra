@@ -76,8 +76,8 @@ public enum BytesPcodeArithmetic implements PcodeArithmetic<byte[]> {
 	}
 
 	@Override
-	public byte[] fromConst(BigInteger value, int size) {
-		return Utils.bigIntegerToBytes(value, size, isBigEndian);
+	public byte[] fromConst(BigInteger value, int size, boolean isContextreg) {
+		return Utils.bigIntegerToBytes(value, size, isBigEndian || isContextreg);
 	}
 
 	@Override
@@ -91,7 +91,7 @@ public enum BytesPcodeArithmetic implements PcodeArithmetic<byte[]> {
 	}
 
 	@Override
-	public BigInteger toConcrete(byte[] value) {
-		return Utils.bytesToBigInteger(value, value.length, isBigEndian, false);
+	public BigInteger toConcrete(byte[] value, boolean isContextreg) {
+		return Utils.bytesToBigInteger(value, value.length, isBigEndian || isContextreg, false);
 	}
 }

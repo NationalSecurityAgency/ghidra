@@ -251,7 +251,7 @@ public class ClangToken implements ClangNode {
 	/**
 	 * Get the high-level variable associate with this
 	 * token or null otherwise
-	 * @return HighVariable 
+	 * @return HighVariable
 	 */
 	public HighVariable getHighVariable() {
 		if (Parent() instanceof ClangVariableDecl) {

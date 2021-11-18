@@ -15,10 +15,12 @@
  */
 package ghidra.app.plugin.core.decompile.actions;
 
+import org.apache.commons.lang3.StringUtils;
+
 import docking.widgets.dialogs.InputDialog;
 import docking.widgets.dialogs.InputDialogListener;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.DecompilerPanel;
+import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Program;
@@ -37,37 +39,39 @@ public abstract class RenameTask {
 	protected String errorMsg = null;		// Error to return if isValid returns false
 	protected PluginTool tool;
 	protected Program program;
-	protected DecompilerPanel decompilerPanel;
+	protected DecompilerProvider provider;
 	protected ClangToken tokenAtCursor;
-	
-	public RenameTask(PluginTool tool, Program program, DecompilerPanel panel, ClangToken token,
-			String old) {
+
+	public RenameTask(PluginTool tool, Program program, DecompilerProvider provider,
+			ClangToken token, String old) {
 		this.tool = tool;
 		this.program = program;
-		this.decompilerPanel = panel;
+		this.provider = provider;
 		this.tokenAtCursor = token;
 		oldName = old;
 	}
-	
+
 	public abstract String getTransactionName();
-	
+
 	public abstract boolean isValid(String newNm);
-	
+
 	public abstract void commit() throws DuplicateNameException, InvalidInputException;
-	
-	public String getNewName() { return newName; }
-	
+
+	public String getNewName() {
+		return newName;
+	}
+
 	/**
 	 * Bring up a dialog that is initialized with the old name, and allows the user to select a new name
 	 * @param oldNameIsCancel is true if the user keeping/entering the old name is considered a cancel
 	 * @return true unless the user canceled
 	 */
-	private boolean runDialog(boolean oldNameIsCancel) {
+	private boolean showDialog(boolean oldNameIsCancel) {
 		InputDialogListener listener = new InputDialogListener() {
 			@Override
 			public boolean inputIsValid(InputDialog dialog) {
 				String name = dialog.getValue();
-				if ((name==null)||(name.length()==0)) {
+				if (StringUtils.isBlank(name)) {
 					dialog.setStatusText("Cannot have empty name");
 					return false;
 				}
@@ -82,21 +86,21 @@ public abstract class RenameTask {
 				return res;
 			}
 		};
-		
+
 		String label = "Rename " + oldName + ":";
-        InputDialog renameVarDialog = new InputDialog( getTransactionName(), 
-                new String[]{ label }, new String[]{ oldName }, listener );
-        
-        tool.showDialog(renameVarDialog);
-            
-        if (renameVarDialog.isCanceled()) {
-        	return false;
-        }
+		InputDialog renameVarDialog = new InputDialog(getTransactionName(),
+			new String[] { label }, new String[] { oldName }, listener);
+
+		tool.showDialog(renameVarDialog);
+
+		if (renameVarDialog.isCanceled()) {
+			return false;
+		}
 		if (oldNameIsCancel && newName.equals(oldName)) {
 			return false;
 		}
-        return true;		
-		
+		return true;
+
 	}
 
 	/**
@@ -104,23 +108,28 @@ public abstract class RenameTask {
 	 * @param oldNameIsCancel is true if the user entering/keeping the old name is considered a cancel
 	 */
 	public void runTask(boolean oldNameIsCancel) {
-		boolean dialogres = runDialog(oldNameIsCancel);
-		if (dialogres) {
-			int transaction = program.startTransaction(getTransactionName());
-			boolean commit = false;
-			try {
-				commit();
-				commit = true;
-			}
-			catch (DuplicateNameException e) {
-				Msg.showError(this, tool.getToolFrame(), "Rename Failed", e.getMessage());
-			}
-			catch (InvalidInputException e) {
-				Msg.showError(this, tool.getToolFrame(), "Rename Failed", e.getMessage());
-			}
-			finally {
-				program.endTransaction(transaction, commit);
-				decompilerPanel.tokenRenamed(tokenAtCursor, getNewName());
+		boolean result = showDialog(oldNameIsCancel);
+		if (!result) {
+			return;
+		}
+
+		int tx = program.startTransaction(getTransactionName());
+		boolean commit = false;
+		try {
+			commit();
+			commit = true;
+		}
+		catch (DuplicateNameException e) {
+			Msg.showError(this, tool.getToolFrame(), "Rename Failed", e.getMessage());
+		}
+		catch (InvalidInputException e) {
+			Msg.showError(this, tool.getToolFrame(), "Rename Failed", e.getMessage());
+		}
+		finally {
+			program.endTransaction(tx, commit);
+
+			if (commit) {
+				provider.tokenRenamed(tokenAtCursor, getNewName());
 			}
 		}
 

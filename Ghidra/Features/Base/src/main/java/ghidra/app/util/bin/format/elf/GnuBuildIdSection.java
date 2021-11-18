@@ -17,9 +17,12 @@ package ghidra.app.util.bin.format.elf;
 
 import static ghidra.app.util.bin.StructConverter.*;
 
+import java.io.IOException;
+
+import ghidra.app.util.bin.*;
 import ghidra.program.model.data.*;
-import ghidra.program.model.mem.MemBuffer;
-import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.*;
 import ghidra.util.exception.DuplicateNameException;
 
 /**
@@ -27,7 +30,63 @@ import ghidra.util.exception.DuplicateNameException;
  * ELF .note.gnu.build-id section
  */
 public class GnuBuildIdSection extends FactoryStructureDataType {
+	public static final String BUILD_ID_SECTION_NAME = ".note.gnu.build-id";
 	private static final int MAX_SANE_STR_LENS = 1024;
+
+	public static GnuBuildIdValues fromProgram(Program program) {
+		MemoryBlock buildIdSection = program.getMemory().getBlock(BUILD_ID_SECTION_NAME);
+		if (buildIdSection == null) {
+			return null;
+		}
+		try (ByteProvider bp = MemoryByteProvider.createMemoryBlockByteProvider(program.getMemory(),
+			buildIdSection)) {
+			BinaryReader br = new BinaryReader(bp, !program.getMemory().isBigEndian());
+			long nameLen = br.readNextUnsignedInt();
+			long descLen = br.readNextUnsignedInt();
+			int vendorType = br.readNextInt();
+			if (nameLen > MAX_SANE_STR_LENS || descLen > MAX_SANE_STR_LENS) {
+				return null;
+			}
+			String name = br.readNextAsciiString((int) nameLen);
+			byte[] desc = br.readNextByteArray((int) descLen);
+			return new GnuBuildIdValues(name, desc, vendorType);
+		}
+		catch (IOException e) {
+			// fall thru and return null
+		}
+		return null;
+	}
+
+	public static class GnuBuildIdValues {
+		private static final int SHA1_DESC_LEN = 20; // 160bit SHA1 == 20 bytes
+
+		private String name; // ie. "gnu"
+		private byte[] description; // the hash
+		private int vendorType;
+
+		private GnuBuildIdValues(String name, byte[] description, int vendorType) {
+			this.name = name;
+			this.description = description;
+			this.vendorType = vendorType;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public byte[] getDescription() {
+			return description;
+		}
+
+		public int getVendorType() {
+			return vendorType;
+		}
+
+		public boolean isValid() {
+			return "GNU".equals(name) && description.length == SHA1_DESC_LEN;
+		}
+	}
+
 	private long sectionSize;
 
 	/**

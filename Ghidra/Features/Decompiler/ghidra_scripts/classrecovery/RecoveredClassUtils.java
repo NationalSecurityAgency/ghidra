@@ -3313,6 +3313,23 @@ public class RecoveredClassUtils {
 			// listing has void too, otherwise, leave it as is, probably a void
 			String returnType = getReturnTypeFromDecompiler(constructorFunction);
 
+			// Set error bookmark, add error message, and  get the listing return type if the 
+			// decompiler return type is null
+			if (returnType == null) {
+
+				String msg1 = "Decompiler Error: Failed to decompile function";
+				String msg2 = ", possibly due to the addition of class structure.";
+
+				Msg.debug(this, msg1 + " at " + constructorFunction.getEntryPoint() + msg2);
+
+				program.getBookmarkManager().setBookmark(constructorFunction.getEntryPoint(),
+					BookmarkType.ERROR, "Decompiler Error", msg1 + msg2);
+
+				// get the return type from the listing and in some cases it will
+				// indicate the correct type to help determine the below type to add
+				returnType = constructorFunction.getReturnType().getDisplayName();
+			}
+
 			if (returnType.equals("void")) {
 				DataType voidDataType = new VoidDataType();
 				constructorFunction.setReturnType(voidDataType, SourceType.ANALYSIS);

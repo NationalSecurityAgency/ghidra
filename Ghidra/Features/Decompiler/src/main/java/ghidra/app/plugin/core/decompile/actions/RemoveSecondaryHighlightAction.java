@@ -17,7 +17,8 @@ package ghidra.app.plugin.core.decompile.actions;
 
 import docking.action.MenuData;
 import ghidra.app.decompiler.ClangToken;
-import ghidra.app.decompiler.component.*;
+import ghidra.app.decompiler.component.ClangHighlightController;
+import ghidra.app.decompiler.component.DecompilerPanel;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.util.HelpTopics;
 import ghidra.util.HelpLocation;
@@ -51,8 +52,7 @@ public class RemoveSecondaryHighlightAction extends AbstractDecompilerAction {
 		}
 
 		DecompilerPanel panel = context.getDecompilerPanel();
-		TokenHighlights highlightedTokens = panel.getSecondaryHighlightedTokens();
-		return highlightedTokens.contains(token);
+		return panel.hasSecondaryHighlight(token);
 	}
 
 	@Override

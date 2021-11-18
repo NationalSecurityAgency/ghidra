@@ -57,14 +57,6 @@ public class ArchiveNode extends CategoryNode {
 		nodeChanged(); // notify that this nodes display data has changed
 	}
 
-	// override clone to install the needed listeners
-	@Override
-	public GTreeNode clone() throws CloneNotSupportedException {
-		ArchiveNode clone = (ArchiveNode) super.clone();
-		clone.installDataTypeManagerListener();
-		return clone;
-	}
-
 	protected void installDataTypeManagerListener() {
 		if (dataTypeManager == null) {
 			return; // some nodes do not have DataTypeManagers, like InvalidFileArchives

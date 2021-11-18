@@ -152,10 +152,10 @@ public enum ProgramEmulationUtils {
 				String modName = getModuleName(program);
 
 				// TODO: Do I populate modules, since the mapping will already be done?
+				String path = "Modules[" + modName + "].Sections[" + block.getName() + "-" +
+					block.getStart() + "]";
 				trace.getMemoryManager()
-						.createRegion(
-							"Modules[" + modName + "].Sections[" + block.getName() + "]",
-							snapshot.getKey(), range, getRegionFlags(block));
+						.createRegion(path, snapshot.getKey(), range, getRegionFlags(block));
 			}
 			DebuggerStaticMappingUtils.addMapping(
 				new DefaultTraceLocation(trace, null, Range.atLeast(snapshot.getKey()), min),
