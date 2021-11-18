@@ -220,38 +220,54 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	protected static Set<TraceModule> getSelectedModulesFromModuleContext(
+			DebuggerModuleActionContext context) {
+		return context.getSelectedModules()
+				.stream()
+				.map(r -> r.getModule())
+				.collect(Collectors.toSet());
+	}
+
+	protected static Set<TraceModule> getSelectedModulesFromSectionContext(
+			DebuggerSectionActionContext context) {
+		return context.getSelectedSections()
+				.stream()
+				.map(r -> r.getModule())
+				.collect(Collectors.toSet());
+	}
+
+	protected static Set<TraceSection> getSelectedSectionsFromModuleContext(
+			DebuggerModuleActionContext context) {
+		return context.getSelectedModules()
+				.stream()
+				.flatMap(r -> r.getModule().getSections().stream())
+				.collect(Collectors.toSet());
+	}
+
+	protected static Set<TraceSection> getSelectedSectionsFromSectionContext(
+			DebuggerSectionActionContext context) {
+		return context.getSelectedSections()
+				.stream()
+				.map(r -> r.getSection())
+				.collect(Collectors.toSet());
+	}
+
 	protected static Set<TraceModule> getSelectedModules(ActionContext context) {
 		if (context instanceof DebuggerModuleActionContext) {
-			DebuggerModuleActionContext ctx = (DebuggerModuleActionContext) context;
-			return ctx.getSelectedModules()
-					.stream()
-					.map(r -> r.getModule())
-					.collect(Collectors.toSet());
+			return getSelectedModulesFromModuleContext((DebuggerModuleActionContext) context);
 		}
 		if (context instanceof DebuggerSectionActionContext) {
-			DebuggerSectionActionContext ctx = (DebuggerSectionActionContext) context;
-			return ctx.getSelectedSections()
-					.stream()
-					.map(r -> r.getModule())
-					.collect(Collectors.toSet());
+			return getSelectedModulesFromSectionContext((DebuggerSectionActionContext) context);
 		}
 		return null;
 	}
 
 	protected static Set<TraceSection> getSelectedSections(ActionContext context) {
 		if (context instanceof DebuggerModuleActionContext) {
-			DebuggerModuleActionContext ctx = (DebuggerModuleActionContext) context;
-			return ctx.getSelectedModules()
-					.stream()
-					.flatMap(r -> r.getModule().getSections().stream())
-					.collect(Collectors.toSet());
+			return getSelectedSectionsFromModuleContext((DebuggerModuleActionContext) context);
 		}
 		if (context instanceof DebuggerSectionActionContext) {
-			DebuggerSectionActionContext ctx = (DebuggerSectionActionContext) context;
-			return ctx.getSelectedSections()
-					.stream()
-					.map(r -> r.getSection())
-					.collect(Collectors.toSet());
+			return getSelectedSectionsFromSectionContext((DebuggerSectionActionContext) context);
 		}
 		return null;
 	}
@@ -345,14 +361,24 @@ public class DebuggerModulesProvider extends ComponentProviderAdapter {
 			if (listingService == null) {
 				return;
 			}
-			Set<TraceSection> sections = getSelectedSections(myActionContext);
-			if (sections == null) {
-				return;
-			}
+
 			AddressSet sel = new AddressSet();
-			for (TraceSection s : sections) {
-				sel.add(s.getRange());
+			if (myActionContext instanceof DebuggerModuleActionContext) {
+				DebuggerModuleActionContext mCtx =
+					(DebuggerModuleActionContext) myActionContext;
+				for (TraceModule module : getSelectedModulesFromModuleContext(mCtx)) {
+					sel.add(module.getRange());
+				}
 			}
+			else if (myActionContext instanceof DebuggerSectionActionContext) {
+				DebuggerSectionActionContext sCtx =
+					(DebuggerSectionActionContext) myActionContext;
+				for (TraceSection section : getSelectedSectionsFromSectionContext(sCtx)) {
+					sel.add(section.getRange());
+				}
+			}
+
+			sel = sel.intersect(traceManager.getCurrentView().getMemory());
 			ProgramSelection ps = new ProgramSelection(sel);
 			listingService.setCurrentSelection(ps);
 		}

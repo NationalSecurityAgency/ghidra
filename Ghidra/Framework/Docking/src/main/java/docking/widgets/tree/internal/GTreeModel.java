@@ -15,8 +15,7 @@
  */
 package docking.widgets.tree.internal;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
@@ -125,19 +124,25 @@ public class GTreeModel implements TreeModel {
 			SystemUtilities.assertThisIsTheSwingThread(
 				"GTreeModel.fireNodeStructuredChanged() must be " + "called from the AWT thread");
 
-			GTreeNode node = convertToViewNode(changedNode);
-			if (node == null) {
+			// If the tree is filtered and this is called on the original node, we have to
+			// translate the node to a view node (one the jtree knows). 
+			GTreeNode viewNode = convertToViewNode(changedNode);
+			if (viewNode == null) {
 				return;
 			}
 
-			if (node != changedNode) {
-				// Note: calling setChildren() here triggers another call to this method.  But, 
-				//       the 'isFiringNodeStructureChanged' flag prevents that notification from
-				//       happening.  So, we still have to fire the event below.
-				node.setChildren(null);
+			if (viewNode != changedNode) {
+				// This means we are filtered and since the original node's children are invalid, 
+				// then the filtered children are invalid also. So clear out the children by
+				// setting an empty list as we don't want to trigger the node to regenerate its 
+				// children which happens if you set the children to null. 
+				//
+				// This won't cause a second event to the jtree because we are protected
+				// by the isFiringNodeStructureChanged variable
+				viewNode.setChildren(Collections.emptyList());
 			}
 
-			TreeModelEvent event = new TreeModelEvent(this, node.getTreePath());
+			TreeModelEvent event = new TreeModelEvent(this, viewNode.getTreePath());
 			for (TreeModelListener listener : listeners) {
 				listener.treeStructureChanged(event);
 			}

@@ -443,11 +443,7 @@ public class CodeBrowserClipboardProvider extends ByteCopier
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
 		Symbol symbol = symbolTable.getSymbol(reference);
 		if ((symbol instanceof CodeSymbol) || (symbol instanceof FunctionSymbol)) {
-			String oldName = symbol.getName();
-			Namespace namespace = symbol.getParentNamespace();
-			Address symbolAddress = symbol.getAddress();
-			RenameLabelCmd cmd = new RenameLabelCmd(symbolAddress, oldName, labelName, namespace,
-				SourceType.USER_DEFINED);
+			RenameLabelCmd cmd = new RenameLabelCmd(symbol, labelName, SourceType.USER_DEFINED);
 			return tool.execute(cmd, currentProgram);
 		}
 

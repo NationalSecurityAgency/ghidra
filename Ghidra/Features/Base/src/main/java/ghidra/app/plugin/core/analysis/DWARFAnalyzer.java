@@ -123,9 +123,10 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 
-		DWARFSectionProvider dsp = DWARFSectionProviderFactory.createSectionProviderFor(program);
+		DWARFSectionProvider dsp =
+			DWARFSectionProviderFactory.createSectionProviderFor(program, monitor); // closed by DWARFProgram
 		if (dsp == null) {
-			log.appendMsg("Unable to find DWARF information, skipping DWARF analysis");
+			Msg.info(this, "Unable to find DWARF information, skipping DWARF analysis");
 			return false;
 		}
 
@@ -145,6 +146,7 @@ public class DWARFAnalyzer extends AbstractAnalyzer {
 				parseResults.logSummaryResults();
 			}
 			propList.setBoolean(DWARF_LOADED_OPTION_NAME, true);
+			dsp.updateProgramInfo(program);
 			return true;
 		}
 		catch (CancelledException ce) {

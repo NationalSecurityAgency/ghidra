@@ -30,7 +30,7 @@ public class LocalProcessPtySession implements PtySession {
 	}
 
 	@Override
-	public Integer waitExited() throws InterruptedException {
+	public int waitExited() throws InterruptedException {
 		return process.waitFor();
 	}
 

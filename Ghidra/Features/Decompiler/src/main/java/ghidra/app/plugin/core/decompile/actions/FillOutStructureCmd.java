@@ -508,8 +508,10 @@ public class FillOutStructureCmd extends BackgroundCommand {
 		if (isThisParam) {
 			Namespace rootNamespace = currentProgram.getGlobalNamespace();
 			Namespace newNamespace = createUniqueClassName(rootNamespace);
-			RenameLabelCmd command = new RenameLabelCmd(f.getEntryPoint(), f.getName(), f.getName(),
-				rootNamespace, newNamespace, SourceType.USER_DEFINED);
+			String name = f.getName();
+			Symbol symbol = f.getSymbol();
+			RenameLabelCmd command =
+				new RenameLabelCmd(symbol, name, newNamespace, SourceType.USER_DEFINED);
 			if (!command.applyTo(currentProgram)) {
 				return null;
 			}
@@ -545,12 +547,10 @@ public class FillOutStructureCmd extends BackgroundCommand {
 				symbolTable.createClass(rootNamespace, newClassName, SourceType.USER_DEFINED);
 		}
 		catch (DuplicateNameException e) {
-			// Shouldn't happen
-			e.printStackTrace();
+			Msg.error(this, "Error creating class '" + newClassName + "'", e);
 		}
 		catch (InvalidInputException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			Msg.error(this, "Error creating class '" + newClassName + "'", e);
 		}
 		return newClass;
 	}

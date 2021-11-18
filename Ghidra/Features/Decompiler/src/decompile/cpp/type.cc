@@ -158,8 +158,8 @@ int4 Datatype::compare(const Datatype &op,int4 level) const
 int4 Datatype::compareDependency(const Datatype &op) const
 
 {
-  if (size != op.size) return (op.size-size);
   if (submeta != op.submeta) return (submeta < op.submeta) ? -1 : 1;
+  if (size != op.size) return (op.size-size);
   return 0;
 }
 
@@ -554,13 +554,11 @@ int4 TypePointer::compare(const Datatype &op,int4 level) const
 int4 TypePointer::compareDependency(const Datatype &op) const
 
 {
-  int4 res = Datatype::compareDependency(op);
-  if (res != 0) return res;
-  // Both must be pointers
-  TypePointer *tp = (TypePointer *) &op;
+  if (submeta != op.getSubMeta()) return (submeta < op.getSubMeta()) ? -1 : 1;
+  TypePointer *tp = (TypePointer *) &op;	// Both must be pointers
+  if (ptrto != tp->ptrto) return (ptrto < tp->ptrto) ? -1 : 1;	// Compare absolute pointers
   if (wordsize != tp->wordsize) return (wordsize < tp->wordsize) ? -1 : 1;
-  if (ptrto == tp->ptrto) return 0;
-  return (ptrto < tp->ptrto) ? -1 : 1; // Compare the absolute pointers
+  return (op.getSize()-size);
 }
 
 void TypePointer::saveXml(ostream &s) const
@@ -602,6 +600,8 @@ void TypePointer::calcSubmeta(void)
   if (ptrto->getMetatype() == TYPE_STRUCT) {
     if (ptrto->numDepend() > 1 || ptrto->isIncompleteStruct())
       submeta = SUB_PTR_STRUCT;
+    else
+      submeta = SUB_PTR;
   }
 }
 
@@ -698,11 +698,10 @@ int4 TypeArray::compare(const Datatype &op,int4 level) const
 int4 TypeArray::compareDependency(const Datatype &op) const
 
 {
-  int4 res = Datatype::compareDependency(op);
-  if (res != 0) return res;
+  if (submeta != op.getSubMeta()) return (submeta < op.getSubMeta()) ? -1 : 1;
   TypeArray *ta = (TypeArray *) &op;	// Both must be arrays
-  if (arrayof == ta->arrayof) return 0;
-  return (arrayof < ta->arrayof) ? -1 : 1;
+  if (arrayof != ta->arrayof) return (arrayof < ta->arrayof) ? -1 : 1;	// Compare absolute pointers
+  return (op.getSize()-size);
 }
 
 Datatype *TypeArray::getSubType(uintb off,uintb *newoff) const
@@ -1271,16 +1270,14 @@ void TypePointerRel::printRaw(ostream &s) const
 int4 TypePointerRel::compareDependency(const Datatype &op) const
 
 {
-  int4 res = Datatype::compareDependency(op);	// Note: we go to Datatype, not TypePointer
-  if (res != 0) return res;
-  // Both must be pointers
-  const TypePointerRel *tp = (const TypePointerRel*)&op;
+  if (submeta != op.getSubMeta()) return (submeta < op.getSubMeta()) ? -1 : 1;
+  const TypePointerRel *tp = (const TypePointerRel*)&op;	// Both must be TypePointerRel
+  if (ptrto != tp->ptrto) return (ptrto < tp->ptrto) ? -1 : 1;	// Compare absolute pointers
   if (offset != tp->offset) return (offset < tp->offset) ? -1 : 1;
   if (parent != tp->parent) return (parent < tp->parent) ? -1 : 1;
 
   if (wordsize != tp->wordsize) return (wordsize < tp->wordsize) ? -1 : 1;
-  if (ptrto == tp->ptrto) return 0;
-  return (ptrto < tp->ptrto) ? -1 : 1; // Compare the absolute pointers
+  return (op.getSize()-size);
 }
 
 void TypePointerRel::saveXml(ostream &s) const
@@ -2090,6 +2087,8 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,
       throw LowlevelError("Trying to force too small a size on "+ot->getName());
   }
   tree.insert(ot);
+  recalcPointerSubmeta(ot, SUB_PTR);
+  recalcPointerSubmeta(ot, SUB_PTR_STRUCT);
   return true;
 }
 
@@ -2300,6 +2299,33 @@ TypeCode *TypeFactory::getTypeCode(const string &nm)
   TypeCode tmp(nm);
   tmp.id = Datatype::hashName(nm);
   return (TypeCode *) findAdd(tmp);
+}
+
+/// Search for pointers that match the given \b ptrto and sub-metatype and change it to
+/// the current calculated sub-metatype.
+/// A change in the sub-metatype may involve reinserting the pointer data-type in the functional tree.
+/// \param base is the given base data-type
+/// \param sub is the type of pointer to search for
+void TypeFactory::recalcPointerSubmeta(Datatype *base,sub_metatype sub)
+
+{
+  DatatypeSet::const_iterator iter;
+  TypePointer top(1,base,0);		// This will calculate the current proper sub-meta for pointers to base
+  sub_metatype curSub = top.submeta;
+  if (curSub == sub) return;		// Don't need to search for pointers with correct submeta
+  top.submeta = sub;			// Search on the incorrect submeta
+  iter = tree.lower_bound(&top);
+  while(iter != tree.end()) {
+    TypePointer *ptr = (TypePointer *)*iter;
+    if (ptr->getMetatype() != TYPE_PTR) break;
+    if (ptr->ptrto != base) break;
+    ++iter;
+    if (ptr->submeta == sub) {
+      tree.erase(ptr);
+      ptr->submeta = curSub;		// Change to correct submeta
+      tree.insert(ptr);			// Reinsert
+    }
+  }
 }
 
 /// Find or create a data-type identical to the given data-type except for its name and id.
@@ -2675,6 +2701,57 @@ Datatype *TypeFactory::restoreTypedef(const Element *el)
   return getTypedef(defedType, nm, id);
 }
 
+Datatype* TypeFactory::restoreStruct(const Element *el,bool forcecore)
+
+{
+  string structname = el->getAttributeValue("name");
+  TypeStruct ts(structname);
+  int4 num = el->getNumAttributes();
+  uint8 newid = 0;
+  int4 structsize = 0;
+  bool isVarLength = false;
+  for(int4 i = 0;i < num;++i) {
+    const string &attribName(el->getAttributeName(i));
+    if (attribName == "id") {
+      istringstream s(el->getAttributeValue(i));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> newid;
+    }
+    else if (attribName == "size") {
+      istringstream s(el->getAttributeValue(i));
+      s.unsetf(ios::dec | ios::hex | ios::oct);
+      s >> structsize;
+    }
+    else if (attribName == "varlength") {
+      isVarLength = xml_readbool(el->getAttributeValue(i));
+    }
+  }
+  if (newid == 0)
+    newid = Datatype::hashName(structname);
+  if (isVarLength)
+    newid = Datatype::hashSize(newid,structsize);
+  Datatype *ct = findByIdLocal(structname,newid);
+  if (ct == (Datatype*)0) {
+    ts.id = newid;
+    ts.size = structsize;	// Include size if we have it, so arrays can be defined without knowing struct fields
+    ct = findAdd(ts);	// Create stub to allow recursive definitions
+  }
+  else if (ct->getMetatype() != TYPE_STRUCT)
+    throw LowlevelError("Trying to redefine type: " + structname);
+  ts.restoreXml(el,*this);
+  if (forcecore)
+    ts.flags |= Datatype::coretype;
+  if (!ct->isIncompleteStruct()) {	// Structure of this name was already present
+    if (0 != ct->compareDependency(ts))
+      throw LowlevelError("Redefinition of structure: " + structname);
+  }
+  else {		// If structure is a placeholder stub
+    if (!setFields(ts.field,(TypeStruct*)ct,ts.size,ts.flags)) // Define structure now by copying fields
+      throw LowlevelError("Bad structure definition");
+  }
+  return ct;
+}
+
 /// Restore a Datatype object from an XML \<type> tag. (Don't use for \<typeref> tags)
 /// The new Datatype is added to \b this container
 /// \param el is the XML element
@@ -2715,52 +2792,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
     }
     break;
   case TYPE_STRUCT:
-    {
-      string structname = el->getAttributeValue("name");
-      TypeStruct ts(structname);
-      int4 num = el->getNumAttributes();
-      uint8 newid = 0;
-      int4 structsize = 0;
-      bool isVarLength = false;
-      for(int4 i=0;i<num;++i) {
-	const string &attribName(el->getAttributeName(i));
-	if (attribName == "id") {
-	  istringstream s(el->getAttributeValue(i));
-	  s.unsetf(ios::dec | ios::hex | ios::oct);
-	  s >> newid;
-	}
-	else if (attribName == "size") {
-	  istringstream s(el->getAttributeValue(i));
-	  s.unsetf(ios::dec | ios::hex | ios::oct);
-	  s >> structsize;
-	}
-	else if (attribName == "varlength") {
-	  isVarLength = xml_readbool(el->getAttributeValue(i));
-	}
-      }
-      if (newid == 0)
-	newid = Datatype::hashName(structname);
-      if (isVarLength)
-	newid = Datatype::hashSize(newid, structsize);
-      ct = findByIdLocal(structname,newid);
-      if (ct == (Datatype *)0) {
-	ts.id = newid;
-	ts.size = structsize;	// Include size if we have it, so arrays can be defined without knowing struct fields
-	ct = findAdd(ts);	// Create stub to allow recursive definitions
-      }
-      else if (ct->getMetatype() != TYPE_STRUCT)
-	throw LowlevelError("Trying to redefine type: "+structname);
-      ts.restoreXml(el,*this);
-      if (forcecore)
-	ts.flags |= Datatype::coretype;
-      if (!ct->isIncompleteStruct()) {	// Structure of this name was already present
-	if (0!=ct->compareDependency(ts))
-	  throw LowlevelError("Redefinition of structure: "+structname);
-      }
-      else			// If structure is a placeholder stub
-	if (!setFields(ts.field,(TypeStruct *)ct,ts.size,ts.flags)) // Define structure now by copying fields
-	  throw LowlevelError("Bad structure definition");
-    }
+    ct = restoreStruct(el,forcecore);
     break;
   case TYPE_SPACEBASE:
     {

@@ -245,7 +245,7 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 		clickMouse(navPanel, 1, 0, pixel, 1, 0);
 		assertEquals(addr("0x10032d2"), cb.getCurrentAddress());
 
-		DockingActionIf action = getAction(cb, "Select All");
+		DockingActionIf action = getAction(tool, "Select All");
 		performAction(action, cb.getProvider(), true);
 
 		clickMouse(navPanel, 1, 0, navPanel.getHeight() - MarkerSetImpl.MARKER_HEIGHT, 1, 0);
@@ -533,7 +533,7 @@ public class MarkerTest extends AbstractGhidraHeadedIntegrationTest {
 	}
 
 	private void removeAllBookmarks() {
-		DockingActionIf action = getAction(cb, "Select All");
+		DockingActionIf action = getAction(tool, "Select All");
 		performAction(action, cb.getProvider(), true);
 		performAction(clearWithOptionsAction, cb.getProvider(), false);
 		ClearDialog cd = waitForDialogComponent(ClearDialog.class);

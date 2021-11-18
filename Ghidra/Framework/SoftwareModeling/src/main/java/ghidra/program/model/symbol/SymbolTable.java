@@ -259,7 +259,8 @@ public interface SymbolTable {
 	 * Returns all the symbols with the given name.
 	 * 
 	 * <p>NOTE: The resulting iterator will not return default thunks (i.e.,
-	 * thunk function symbol with default source type).</p>
+	 * thunk function symbol with default source type). It will also not work for default
+	 * local variables and parameters.</p>
 	 * 
 	 * @param name the name of symbols to search for.
 	 *

@@ -42,7 +42,7 @@ public enum AddressOfPcodeArithmetic implements PcodeArithmetic<Address> {
 	}
 
 	@Override
-	public Address fromConst(BigInteger value, int size) {
+	public Address fromConst(BigInteger value, int size, boolean isContextreg) {
 		return null;
 	}
 
@@ -52,7 +52,7 @@ public enum AddressOfPcodeArithmetic implements PcodeArithmetic<Address> {
 	}
 
 	@Override
-	public BigInteger toConcrete(Address value) {
+	public BigInteger toConcrete(Address value, boolean isContextreg) {
 		throw new AssertionError("Should not attempt to concretize 'address of'");
 	}
 }

@@ -168,10 +168,14 @@ public class AddEditDialog extends DialogComponentProvider {
 			cmd.add(new AddLabelCmd(addr, symbolName, parent, SourceType.USER_DEFINED));
 		}
 		else {
-			cmd.add(new RenameLabelCmd(addr, symbol.getName(), symbolName,
-				symbol.getParentNamespace(), parent, SourceType.USER_DEFINED));
+			cmd.add(new RenameLabelCmd(symbol, labelText, namespace, SourceType.USER_DEFINED));
 			isCurrentlyEntryPoint = symbol.isExternalEntryPoint();
 			isCurrentlyPinned = symbol.isPinned();
+		}
+
+		if (!tool.execute(cmd, program)) {
+			setStatusText(cmd.getStatusMsg());
+			return;
 		}
 
 		if (primaryCheckBox.isEnabled() && primaryCheckBox.isSelected()) {
@@ -185,14 +189,12 @@ public class AddEditDialog extends DialogComponentProvider {
 			cmd.add(new PinSymbolCmd(addr, symbolName, !isCurrentlyPinned));
 		}
 
-		if (cmd.size() > 0) {
-
-			if (!tool.execute(cmd, program)) {
-				setStatusText(cmd.getStatusMsg());
-				return;
-			}
-			updateRecentLabels(symbolName);
+		if (!tool.execute(cmd, program)) {
+			setStatusText(cmd.getStatusMsg());
+			return;
 		}
+		updateRecentLabels(symbolName);
+
 		program = null;
 		close();
 	}

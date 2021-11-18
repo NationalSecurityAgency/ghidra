@@ -55,6 +55,8 @@ public class GTreeNodeTest {
 	@Before
 	public void setUp() {
 		root = new TestNode("root");
+		root.setParent(new GTreeRootParentNode(null));
+
 		node0 = new TestNode("Node0");
 		node1 = new TestNode("Node1");
 		node2 = new TestNode("Node2");
@@ -354,7 +356,7 @@ public class GTreeNodeTest {
 		assertEquals(root, node0_1.getRoot());
 		assertEquals(root, root.getRoot());
 		TestNode testNode = new TestNode("test");
-		assertEquals(testNode, testNode.getRoot());
+		assertEquals(null, testNode.getRoot());
 	}
 
 	@Test

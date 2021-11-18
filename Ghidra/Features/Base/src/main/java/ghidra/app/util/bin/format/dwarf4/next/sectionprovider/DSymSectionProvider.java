@@ -15,17 +15,16 @@
  */
 package ghidra.app.util.bin.format.dwarf4.next.sectionprovider;
 
-import ghidra.app.util.bin.*;
-import ghidra.app.util.bin.format.macho.*;
-import ghidra.app.util.opinion.MachoLoader;
-import ghidra.program.model.listing.Program;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import generic.continues.RethrowContinuesFactory;
+import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.format.macho.*;
+import ghidra.app.util.opinion.MachoLoader;
+import ghidra.program.model.listing.Program;
 
 /**
  * Fetches DWARF section data for a MachO program with co-located .dSYM folder. (ie. Mac OSX

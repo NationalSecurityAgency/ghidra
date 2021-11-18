@@ -343,16 +343,24 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 	}
 
 	private void rowActivated(StackFrameRow row) {
+		if (row == null) {
+			return;
+		}
 		TraceStackFrame frame = row.frame;
+		if (frame == null) {
+			return;
+		}
 		TraceThread thread = frame.getStack().getThread();
 		Trace trace = thread.getTrace();
 		TraceRecorder recorder = modelService.getRecorder(trace);
-		if (recorder != null) {
-			TargetStackFrame targetFrame = recorder.getTargetStackFrame(thread, frame.getLevel());
-			if (targetFrame != null && targetFrame.isValid()) {
-				DebugModelConventions.requestActivation(targetFrame);
-			}
+		if (recorder == null) {
+			return;
 		}
+		TargetStackFrame targetFrame = recorder.getTargetStackFrame(thread, frame.getLevel());
+		if (targetFrame == null || !targetFrame.isValid()) {
+			return;
+		}
+		DebugModelConventions.requestActivation(targetFrame);
 	}
 
 	protected void createActions() {

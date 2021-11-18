@@ -28,6 +28,7 @@ import docking.menu.MultiStateDockingAction;
 import ghidra.app.plugin.core.byteviewer.*;
 import ghidra.app.plugin.core.debug.DebuggerCoordinates;
 import ghidra.app.plugin.core.debug.gui.DebuggerLocationLabel;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractFollowsCurrentThreadAction;
 import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec.AutoReadMemorySpecConfigFieldCodec;
@@ -168,7 +169,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 
 	protected DebuggerMemoryBytesProvider(PluginTool tool, DebuggerMemoryBytesPlugin plugin,
 			boolean isConnected) {
-		super(tool, plugin, "Memory", isConnected);
+		super(tool, plugin, DebuggerResources.TITLE_PROVIDER_MEMORY_BYTES, isConnected);
 		this.myPlugin = plugin;
 		this.isMainViewer = isConnected;
 
@@ -181,6 +182,8 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		trackingTrait.goToCoordinates(current);
 		readsMemTrait.goToCoordinates(current);
 		locationLabel.goToCoordinates(current);
+
+		setHelpLocation(DebuggerResources.HELP_PROVIDER_MEMORY_BYTES);
 	}
 
 	/**

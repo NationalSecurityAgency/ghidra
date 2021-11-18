@@ -69,15 +69,19 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		new HashMap<RecoveredClass, Map<RecoveredClass, Long>>();
 
 	boolean isDwarfLoaded;
+	boolean replaceClassStructs;
 
 	public RTTIGccClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVfunctions, boolean isDwarfLoaded, TaskMonitor monitor) {
+			boolean nameVfunctions, boolean isDwarfLoaded, boolean replaceExistingClassStructures,
+			TaskMonitor monitor) {
 
 		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVfunctions,
+			replaceExistingClassStructures,
 			isDwarfLoaded,
 			monitor);
 		this.isDwarfLoaded = isDwarfLoaded;
+		this.replaceClassStructs = replaceExistingClassStructures;
 	}
 
 	@Override
@@ -2898,12 +2902,14 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		Structure classStruct = createSimpleClassStructure(recoveredClass, vfPointerDataTypes);
 
 		// check for DWARF -- if none add c/d/etc to class
+		//TODO: if decide to replace dwarf data types then remove this check so the replaces
+		// in the following methods can replace the dwarf data types
 		if (!isDwarfLoaded) {
 
 			// Now that we have a class data type
 			// name constructor and destructor functions and put into the class namespace
 			addConstructorsToClassNamespace(recoveredClass, classStruct);
-			addDestructorsToClassNamespace(recoveredClass);
+			addDestructorsToClassNamespace(recoveredClass, classStruct);
 //			addNonThisDestructorsToClassNamespace(recoveredClass);
 //			addVbaseDestructorsToClassNamespace(recoveredClass);
 //			addVbtableToClassNamespace(recoveredClass);
@@ -2914,7 +2920,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 //			createIndeterminateInlineComments(recoveredClass);
 
 			// add label on constructor destructor functions that could not be determined which were which
-			createIndeterminateLabels(recoveredClass);
+			createIndeterminateLabels(recoveredClass, classStruct);
 		}
 
 		// This is done after the class structure is created and added to the dtmanager
@@ -2922,7 +2928,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// then empty classes will get auto-created in the wrong place
 		// when the vfunctions are put in the class
 
-		fillInAndApplyVftableStructAndNameVfunctions(recoveredClass, vfPointerDataTypes);
+		fillInAndApplyVftableStructAndNameVfunctions(recoveredClass, vfPointerDataTypes,
+			classStruct);
 
 	}
 

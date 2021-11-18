@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +15,6 @@
  */
 package ghidra.app.plugin.core.datamgr.actions;
 
-import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
-import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
-import ghidra.app.plugin.core.datamgr.tree.*;
-
 import javax.swing.tree.TreePath;
 
 import docking.ActionContext;
@@ -27,6 +22,9 @@ import docking.action.DockingAction;
 import docking.action.MenuData;
 import docking.widgets.tree.GTree;
 import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.datamgr.DataTypeManagerPlugin;
+import ghidra.app.plugin.core.datamgr.DataTypesActionContext;
+import ghidra.app.plugin.core.datamgr.tree.*;
 
 public class RenameAction extends DockingAction {
 
@@ -76,7 +74,7 @@ public class RenameAction extends DockingAction {
 	void rename(final DataTypeArchiveGTree tree) {
 		TreePath path = tree.getSelectionPath();
 		final GTreeNode node = (GTreeNode) path.getLastPathComponent();
-		tree.startEditing(node.getParent(), node.getName());
+		tree.startEditing(node);
 	}
 
 }

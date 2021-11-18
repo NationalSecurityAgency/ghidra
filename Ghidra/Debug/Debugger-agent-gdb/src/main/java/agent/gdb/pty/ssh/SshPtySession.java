@@ -28,7 +28,7 @@ public class SshPtySession implements PtySession {
 	}
 
 	@Override
-	public Integer waitExited() throws InterruptedException {
+	public int waitExited() throws InterruptedException {
 		// Doesn't look like there's a clever way to wait. So do the spin sleep :(
 		while (!channel.isEOF()) {
 			Thread.sleep(1000);

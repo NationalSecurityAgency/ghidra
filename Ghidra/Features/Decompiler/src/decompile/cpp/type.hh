@@ -147,6 +147,7 @@ public:
   bool isIncompleteStruct(void) const { return (flags & struct_incomplete)!=0; }	///< Is \b this an incompletely defined struct
   uint4 getInheritable(void) const { return (flags & coretype); }	///< Get properties pointers inherit
   type_metatype getMetatype(void) const { return metatype; }	///< Get the type \b meta-type
+  sub_metatype getSubMeta(void) const { return submeta; }	///< Get the \b sub-metatype
   uint8 getId(void) const { return id; }			///< Get the type id
   int4 getSize(void) const { return size; }			///< Get the type size
   const string &getName(void) const { return name; }		///< Get the type name
@@ -494,11 +495,13 @@ class TypeFactory {
   Datatype *findAdd(Datatype &ct);	///< Find data-type in this container or add it
   void orderRecurse(vector<Datatype *> &deporder,DatatypeSet &mark,Datatype *ct) const;	///< Write out dependency list
   Datatype *restoreTypedef(const Element *el);		///< Restore a \<def> XML tag describing a typedef
+  Datatype *restoreStruct(const Element *el,bool forcecore);	///< Restore a \<type> XML tag describing a structure
   Datatype *restoreXmlTypeNoRef(const Element *el,bool forcecore);	///< Restore from an XML tag
   void clearCache(void);		///< Clear the common type cache
   TypeChar *getTypeChar(const string &n);	///< Create a default "char" type
   TypeUnicode *getTypeUnicode(const string &nm,int4 sz,type_metatype m);	///< Create a default "unicode" type
   TypeCode *getTypeCode(const string &n);	///< Create a default "code" type
+  void recalcPointerSubmeta(Datatype *base,sub_metatype sub);	///< Recalculate submeta for pointers to given base data-type
 protected:
   Architecture *glb;		///< The Architecture object that owns this TypeFactory
   Datatype *findByIdLocal(const string &nm,uint8 id) const;	///< Search locally by name and id
