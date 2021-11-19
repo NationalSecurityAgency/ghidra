@@ -29,7 +29,7 @@ import ghidra.util.exception.DuplicateNameException;
  * @see <a href="https://opensource.apple.com/source/dyld/dyld-852.2/dyld3/shared-cache/dyld_cache_format.h.auto.html">dyld3/shared-cache/dyld_cache_format.h</a> 
  */
 @SuppressWarnings("unused")
-public class DyldCacheImageInfo implements StructConverter {
+public class DyldCacheImageInfo implements DyldCacheImage, StructConverter {
 
 	private long address;
 	private long modTime;
@@ -55,20 +55,12 @@ public class DyldCacheImageInfo implements StructConverter {
 		path = reader.readAsciiString(pathFileOffset);
 	}
 
-	/**
-	 * Gets the address the start of the image.
-	 * 
-	 * @return The address of the start of the image
-	 */
+	@Override
 	public long getAddress() {
 		return address;
 	}
 
-	/**
-	 * Gets the path of the image.
-	 * 
-	 * @return The path of the image
-	 */
+	@Override
 	public String getPath() {
 		return path;
 	}
