@@ -61,10 +61,9 @@ public abstract class VTAssociationTableDBAdapter {
 
 	abstract void deleteRecord(long sourceAddressID) throws IOException;
 
-	abstract RecordIterator getRecordsForSourceAddress(long sourceAddressID) throws IOException;
+	abstract RecordIterator getRecordsForSourceAddress(long addressID) throws IOException;
 
-	abstract RecordIterator getRecordsForDestinationAddress(long destinationAddressID)
-			throws IOException;
+	abstract RecordIterator getRecordsForDestinationAddress(long addressID) throws IOException;
 
 	abstract int getRecordCount();
 
@@ -78,8 +77,8 @@ public abstract class VTAssociationTableDBAdapter {
 	abstract Set<DBRecord> getRelatedAssociationRecordsBySourceAddress(long sourceAddressID)
 			throws IOException;
 
-	abstract Set<DBRecord> getRelatedAssociationRecordsByDestinationAddress(long destinationAddressID)
-			throws IOException;
+	abstract Set<DBRecord> getRelatedAssociationRecordsByDestinationAddress(
+			long destinationAddressID) throws IOException;
 
 	abstract void updateRecord(DBRecord record) throws IOException;
 

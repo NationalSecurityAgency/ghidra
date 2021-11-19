@@ -1591,7 +1591,7 @@ void PrintC::pushConstant(uintb val,const Datatype *ct,
     clear();
     throw LowlevelError("Cannot have a constant of type void");
   case TYPE_PTR:
-  case TYPE_PTRSTRUCT:
+  case TYPE_PTRREL:
     if (option_NULL&&(val==0)) { // A null pointer
       pushAtom(Atom(nullToken,vartoken,EmitXml::var_color,op,vn));
       return;

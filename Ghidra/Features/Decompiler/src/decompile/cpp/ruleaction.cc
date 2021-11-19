@@ -1859,7 +1859,7 @@ int4 RuleDoubleShift::applyOp(PcodeOp *op,Funcdata &data)
 }
 
 /// \class RuleDoubleArithShift
-/// \brief Simplify two sequential INT_SRIGHT: `(x s>> #c) s>> #d   =>  x s>> saturate(#c + #d)`
+/// \brief Simplify two sequential INT_SRIGHT: `(x s>> c) s>> d   =>  x s>> saturate(c + d)`
 ///
 /// Division optimization in particular can produce a sequence of signed right shifts.
 /// The shift amounts add up to the point where the sign bit has saturated the entire result.
@@ -5300,8 +5300,8 @@ Varnode *RuleSLess2Zero::getHiBit(PcodeOp *op)
 /// Forms include:
 ///  - `0 s< V * -1  =>  V s< 0`
 ///  - `V * -1 s< 0  =>  0 s< V`
-///  - `-1 s< SUB(V,#hi) => -1 s< V`
-///  - `SUB(V,#hi) s< 0  => V s< 0`
+///  - `-1 s< SUB(V,hi) => -1 s< V`
+///  - `SUB(V,hi) s< 0  => V s< 0`
 ///  - `-1 s< ~V     => V s< 0`
 ///  - `~V s< 0      => -1 s< V`
 ///  - `(V & 0xf000) s< 0   =>  V s< 0`
@@ -7171,9 +7171,9 @@ int4 RuleDivTermAdd2::applyOp(PcodeOp *op,Funcdata &data)
 /// \brief Check for INT_(S)RIGHT and/or SUBPIECE followed by INT_MULT
 ///
 /// Look for the forms:
-///  - `sub(ext(X) * #y,#c)`       or
-///  - `sub(ext(X) * #y,#c) >> n`  or
-///  - `(ext(X) * #y) >> n`
+///  - `sub(ext(X) * y,c)`       or
+///  - `sub(ext(X) * y,c) >> n`  or
+///  - `(ext(X) * y) >> n`
 ///
 /// Looks for truncation/multiplication consistent with an optimized division. The
 /// truncation can come as either a SUBPIECE operation and/or right shifts.

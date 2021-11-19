@@ -54,7 +54,7 @@ public class AddressCorrelatorManager {
 	}
 
 	private void initializeAddressCorrelators(VTController controller) {
-		// Put the CodeCompare address correlator that uses match info to handle exact matches 
+		// Put the CodeCompare address correlator that uses match info to handle exact matches
 		// so it is first in the list.
 		correlatorList.add(new ExactMatchAddressCorrelator(controller));
 		correlatorList.addAll(initializeAddressCorrelators());

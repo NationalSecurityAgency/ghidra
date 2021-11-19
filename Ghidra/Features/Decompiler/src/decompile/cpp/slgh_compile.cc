@@ -1512,7 +1512,6 @@ bool ConsistencyChecker::testSizeRestrictions(void)
 
 /// Update truncated Varnodes given complete size information. Print errors
 /// for any invalid truncation constructions.
-/// \param isbigendian is \b true if the SLEIGH spec is big endian
 /// \return \b true if there are no invalid truncations
 bool ConsistencyChecker::testTruncations(void)
 

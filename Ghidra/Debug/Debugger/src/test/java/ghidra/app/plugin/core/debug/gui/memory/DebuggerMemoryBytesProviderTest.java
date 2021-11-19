@@ -15,7 +15,7 @@
  */
 package ghidra.app.plugin.core.debug.gui.memory;
 
-import static ghidra.lifecycle.Unfinished.TODO;
+import static ghidra.lifecycle.Unfinished.*;
 import static org.junit.Assert.*;
 
 import java.awt.*;
@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.junit.*;
+import org.junit.experimental.categories.Category;
 
 import com.google.common.collect.Range;
 
@@ -35,6 +36,7 @@ import docking.action.DockingActionIf;
 import docking.menu.ActionState;
 import docking.menu.MultiStateDockingAction;
 import docking.widgets.EventTrigger;
+import generic.test.category.NightlyCategory;
 import ghidra.GhidraOptions;
 import ghidra.app.plugin.core.byteviewer.ByteViewerComponent;
 import ghidra.app.plugin.core.byteviewer.ByteViewerPanel;
@@ -62,6 +64,7 @@ import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.model.time.TraceSnapshot;
 import ghidra.util.database.UndoableTransaction;
 
+@Category(NightlyCategory.class)
 public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
 	static LocationTrackingSpec getLocationTrackingSpec(String name) {
 		return LocationTrackingSpec.fromConfigName(name);
@@ -78,8 +81,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	final LocationTrackingSpec trackSp =
 		getLocationTrackingSpec(SPLocationTrackingSpec.CONFIG_NAME);
 
-	final AutoReadMemorySpec readNone =
-		getAutoReadMemorySpec(NoneAutoReadMemorySpec.CONFIG_NAME);
+	final AutoReadMemorySpec readNone = getAutoReadMemorySpec(NoneAutoReadMemorySpec.CONFIG_NAME);
 	final AutoReadMemorySpec readVisible =
 		getAutoReadMemorySpec(VisibleAutoReadMemorySpec.CONFIG_NAME);
 	final AutoReadMemorySpec readVisROOnce =
@@ -254,8 +256,9 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		createAndOpenTrace();
 		TraceThread thread1;
 		TraceThread thread2;
-		DebuggerMemoryBytesProvider extraProvider = SwingExecutorService.INSTANCE.submit(
-			() -> memBytesPlugin.createViewerIfMissing(trackPc, true)).get();
+		DebuggerMemoryBytesProvider extraProvider = SwingExecutorService.INSTANCE
+				.submit(() -> memBytesPlugin.createViewerIfMissing(trackPc, true))
+				.get();
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
 			memory.addRegion("exe:.text", Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
@@ -322,8 +325,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testFollowsCurrentTraceOnTraceChangeWithoutRegisterTracking()
-			throws Exception {
+	public void testFollowsCurrentTraceOnTraceChangeWithoutRegisterTracking() throws Exception {
 		memBytesProvider.setTrackingSpec(trackNone);
 		try ( //
 				ToyDBTraceBuilder b1 =
@@ -374,8 +376,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 	}
 
 	@Test
-	public void testFollowsCurrentThreadOnThreadChangeWithoutRegisterTracking()
-			throws Exception {
+	public void testFollowsCurrentThreadOnThreadChangeWithoutRegisterTracking() throws Exception {
 		memBytesProvider.setTrackingSpec(trackNone);
 		try ( //
 				ToyDBTraceBuilder b1 =
@@ -426,8 +427,8 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		}
 	}
 
-	protected void assertViewerBackgroundAt(Color expected, ByteViewerPanel panel,
-			Address addr) throws AWTException, InterruptedException {
+	protected void assertViewerBackgroundAt(Color expected, ByteViewerPanel panel, Address addr)
+			throws AWTException, InterruptedException {
 		goToDyn(addr);
 		waitForPass(() -> {
 			Rectangle r = panel.getBounds();
@@ -577,8 +578,8 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		assertEquals(traceManager.getCurrentView(), memBytesProvider.getProgram());
 		assertEquals("(nowhere)", memBytesProvider.locationLabel.getText());
 
-		DebuggerMemoryBytesProvider extraProvider = runSwing(
-			() -> memBytesPlugin.createViewerIfMissing(trackNone, false));
+		DebuggerMemoryBytesProvider extraProvider =
+			runSwing(() -> memBytesPlugin.createViewerIfMissing(trackNone, false));
 		waitForSwing();
 		assertEquals(traceManager.getCurrentView(), extraProvider.getProgram());
 		assertEquals("(nowhere)", extraProvider.locationLabel.getText());
@@ -716,8 +717,8 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		traceManager.activateThread(thread1);
 
 		// NOTE: Action does not exist for main dynamic listing
-		DebuggerMemoryBytesProvider extraProvider = runSwing(
-			() -> memBytesPlugin.createViewerIfMissing(trackNone, true));
+		DebuggerMemoryBytesProvider extraProvider =
+			runSwing(() -> memBytesPlugin.createViewerIfMissing(trackNone, true));
 		waitForSwing();
 		assertTrue(extraProvider.actionFollowsCurrentThread.isEnabled());
 		assertTrue(extraProvider.actionFollowsCurrentThread.isSelected());
@@ -844,8 +845,7 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		assertEquals(readVisROOnce, memBytesProvider.getAutoReadMemorySpec());
 		assertEquals(readVisROOnce, memBytesProvider.actionAutoReadMemory.getCurrentUserData());
 
-		memBytesProvider.actionAutoReadMemory
-				.setCurrentActionStateByUserData(readNone);
+		memBytesProvider.actionAutoReadMemory.setCurrentActionStateByUserData(readNone);
 		waitForSwing();
 		assertEquals(readNone, memBytesProvider.getAutoReadMemorySpec());
 		assertEquals(readNone, memBytesProvider.actionAutoReadMemory.getCurrentUserData());
@@ -886,8 +886,8 @@ public class DebuggerMemoryBytesProviderTest extends AbstractGhidraHeadedDebugge
 		TraceModule modExe;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			modExe = tb.trace.getModuleManager()
-					.addModule("modExe", "modExe",
-						tb.range(0x55550000, 0x555501ff), Range.atLeast(0L));
+					.addModule("modExe", "modExe", tb.range(0x55550000, 0x555501ff),
+						Range.atLeast(0L));
 		}
 		waitForDomainObject(tb.trace);
 		waitForPass(() -> assertEquals("modExe", memBytesProvider.locationLabel.getText()));
