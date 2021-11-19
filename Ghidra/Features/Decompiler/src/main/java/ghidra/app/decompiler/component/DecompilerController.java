@@ -65,6 +65,7 @@ public class DecompilerController {
 //==================================================================================================
 //  Methods call by the provider
 //==================================================================================================
+
 	/**
 	 * Called by the provider when the provider is disposed.  Once dispose is called, it should
 	 * never be used again.

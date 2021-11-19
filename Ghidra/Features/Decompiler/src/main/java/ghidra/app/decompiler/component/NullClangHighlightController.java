@@ -16,15 +16,13 @@
 package ghidra.app.decompiler.component;
 
 import java.awt.Color;
-import java.util.Collection;
 import java.util.Set;
-import java.util.function.Supplier;
 
 import docking.widgets.EventTrigger;
 import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
-import ghidra.app.decompiler.*;
-import ghidra.app.plugin.core.decompile.actions.TokenHighlightColorProvider;
+import ghidra.app.decompiler.ClangNode;
+import ghidra.app.decompiler.ClangSyntaxToken;
 import ghidra.program.model.pcode.PcodeOp;
 
 /**
@@ -38,13 +36,12 @@ public class NullClangHighlightController extends ClangHighlightController {
 	}
 
 	@Override
-	public String getHighlightedText() {
+	public String getPrimaryHighlightedText() {
 		return null;
 	}
 
 	@Override
-	public void addPrimaryHighlights(ClangNode parentNode,
-			TokenHighlightColorProvider colorProvider) {
+	public void addPrimaryHighlights(ClangNode parentNode, ColorProvider colorProvider) {
 		// stub
 	}
 
@@ -54,18 +51,7 @@ public class NullClangHighlightController extends ClangHighlightController {
 	}
 
 	@Override
-	public void addPrimaryHighlights(Supplier<? extends Collection<ClangToken>> tokens,
-			Color highlightColor) {
-		// stub
-	}
-
-	@Override
-	public void clearAllHighlights() {
-		// stub
-	}
-
-	@Override
-	public void addHighlightBrace(ClangSyntaxToken token, Color highlightColor) {
+	public void addBraceHighlight(ClangSyntaxToken token, Color highlightColor) {
 		// stub
 	}
 
