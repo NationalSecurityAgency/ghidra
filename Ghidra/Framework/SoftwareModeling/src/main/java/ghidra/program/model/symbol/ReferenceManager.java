@@ -174,6 +174,13 @@ public interface ReferenceManager {
 	public void removeAllReferencesFrom(Address fromAddr);
 
 	/**
+	 * Remove all stack, external, and memory references for the given
+	 * to address.
+	 * @param toAddr the address for which all references to should be removed.
+	 */
+	public void removeAllReferencesTo(Address toAddr);
+
+	/**
 	 * Returns all references to the given variable.  Only data references to storage 
 	 * are considered.
 	 * @param var variable to retrieve references to
