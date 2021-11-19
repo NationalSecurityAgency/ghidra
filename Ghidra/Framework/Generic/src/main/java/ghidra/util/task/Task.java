@@ -109,10 +109,18 @@ public abstract class Task implements MonitoredRunnable {
 	}
 
 	/**
+	 * Returns the value of the 'wait for completed task' boolean that was passed into this class
+	 * @return the value
+	 */
+	public boolean getWaitForTaskCompleted() {
+		return waitForTaskCompleted;
+	}
+
+	/**
 	 * When an object implementing interface <code>Runnable</code> is used to create a thread,
 	 * starting the thread causes the object's <code>run</code> method to be called in that
 	 * separately executing thread.
-	 * 
+	 *
 	 * @param monitor the task monitor
 	*/
 	@Override
@@ -176,13 +184,13 @@ public abstract class Task implements MonitoredRunnable {
 
 	/**
 	 * This is the method that will be called to do the work
-	 * 
+	 *
 	 * <P>Note: The run(TaskMonitor) method should not make any calls directly
 	 * on Swing components, as these calls are not thread safe. Place Swing
 	 * calls in a Runnable, then call {@link Swing#runLater(Runnable)} or
 	 * {@link Swing#runNow(Runnable)}to schedule the Runnable inside of
 	 * the AWT Event Thread.
-	 * 
+	 *
 	 * @param monitor The TaskMonitor that will monitor the executing Task
 	 * @throws CancelledException if the task is cancelled.  Subclasses can trigger this exception
 	 *                            by calling {@link TaskMonitor#checkCanceled()}.  This allows

@@ -23,12 +23,13 @@ import java.util.List;
 import ghidra.app.script.GhidraScript;
 import ghidra.feature.vt.api.db.VTSessionDB;
 import ghidra.feature.vt.api.main.VTSession;
-import ghidra.feature.vt.gui.actions.AutoVersionTrackingCommand;
+import ghidra.feature.vt.gui.actions.AutoVersionTrackingTask;
 import ghidra.feature.vt.gui.plugin.*;
 import ghidra.framework.model.DomainFolder;
 import ghidra.framework.plugintool.Plugin;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.listing.Program;
+import ghidra.util.task.TaskLauncher;
 
 public class AutoVersionTrackingScript extends GhidraScript {
 	@Override
@@ -72,15 +73,10 @@ public class AutoVersionTrackingScript extends GhidraScript {
 
 		//String description = "AutoVTScript";
 
-		AutoVersionTrackingCommand autoVTcmd =
-			new AutoVersionTrackingCommand(controller, session, 1.0, 10.0);
+		AutoVersionTrackingTask autoVtTask =
+			new AutoVersionTrackingTask(controller, session, 1.0, 10.0);
 
-		controller.getTool().executeBackgroundCommand(autoVTcmd, session);
-		//destinationProgram.save(description, monitor);
-
-		//session.save(description, monitor);
-		//session.release(this);
-
+		TaskLauncher.launch(autoVtTask);
 	}
 
 	public static <T extends Plugin> T getPlugin(PluginTool tool, Class<T> c) {
