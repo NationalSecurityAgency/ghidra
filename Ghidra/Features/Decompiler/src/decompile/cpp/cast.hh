@@ -61,8 +61,9 @@ public:
   /// \brief Decide on integer promotion by examining just local properties of the given Varnode
   ///
   /// \param vn is the given Varnode
+  /// \param op is the PcodeOp reading the Varnode
   /// \return an IntPromotionCode (excluding NO_PROMOTION)
-  virtual int4 localExtensionType(const Varnode *vn) const=0;
+  virtual int4 localExtensionType(const Varnode *vn,const PcodeOp *op) const=0;
 
   /// \brief Calculate the integer promotion code of a given Varnode
   ///
@@ -157,7 +158,7 @@ public:
 /// \brief Casting strategies that are specific to the C language
 class CastStrategyC : public CastStrategy {
 public:
-  virtual int4 localExtensionType(const Varnode *vn) const;
+  virtual int4 localExtensionType(const Varnode *vn,const PcodeOp *op) const;
   virtual int4 intPromotionType(const Varnode *vn) const;
   virtual bool checkIntPromotionForCompare(const PcodeOp *op,int4 slot) const;
   virtual bool checkIntPromotionForExtension(const PcodeOp *op) const;

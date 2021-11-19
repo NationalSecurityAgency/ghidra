@@ -172,14 +172,14 @@ protected:
   virtual bool pushEquate(uintb val,int4 sz,const EquateSymbol *sym,
 			    const Varnode *vn,const PcodeOp *op);
   virtual void pushAnnotation(const Varnode *vn,const PcodeOp *op);
-  virtual void pushSymbol(const Symbol *sym,const Varnode *vn,
-			  const PcodeOp *op);
+  virtual void pushSymbol(const Symbol *sym,const Varnode *vn,const PcodeOp *op);
   virtual void pushUnnamedLocation(const Address &addr,
 				   const Varnode *vn,const PcodeOp *op);
   virtual void pushPartialSymbol(const Symbol *sym,int4 off,int4 sz,
-				 const Varnode *vn,const PcodeOp *op,Datatype *outtype);
+				 const Varnode *vn,const PcodeOp *op,int4 inslot);
   virtual void pushMismatchSymbol(const Symbol *sym,int4 off,int4 sz,
 				  const Varnode *vn,const PcodeOp *op);
+  virtual void pushImpliedField(const Varnode *vn,const PcodeOp *op);
   virtual void push_integer(uintb val,int4 sz,bool sign,
 			    const Varnode *vn,
 			    const PcodeOp *op);

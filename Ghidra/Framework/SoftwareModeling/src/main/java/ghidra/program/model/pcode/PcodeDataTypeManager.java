@@ -577,6 +577,9 @@ public class PcodeDataTypeManager {
 				resBuf.append("</field>\n");
 			}
 		}
+		else if (type instanceof Union) {
+			buildUnion(resBuf, (Union) type);
+		}
 		else if (type instanceof Enum) {
 			appendNameIdAttributes(resBuf, type);
 			Enum enumDt = (Enum) type;
@@ -746,16 +749,49 @@ public class PcodeDataTypeManager {
 	 * 
 	 * @return XML string document
 	 */
-	public StringBuilder buildStructTypeZeroSizeOveride(DataType type) {
+	public StringBuilder buildCompositeZeroSizePlaceholder(DataType type) {
 		StringBuilder resBuf = new StringBuilder();
-		if (!(type instanceof Structure)) {
+		String metaString;
+		if (type instanceof Structure) {
+			metaString = "struct";
+		}
+		else if (type instanceof Union) {
+			metaString = "union";
+		}
+		else {
 			return resBuf; //empty.  Could throw AssertException.
 		}
 		resBuf.append("<type");
 		SpecXmlUtils.xmlEscapeAttribute(resBuf, "name", type.getDisplayName());
-		resBuf.append(" id=\"0x" + Long.toHexString(progDataTypes.getID(type)) + "\"");
-		resBuf.append(" metatype=\"struct\" size=\"0\"></type>");
+		resBuf.append(" id=\"0x" + Long.toHexString(progDataTypes.getID(type)) + "\" metatype=\"");
+		resBuf.append(metaString);
+		resBuf.append("\" size=\"0\"></type>");
 		return resBuf;
+	}
+
+	public void buildUnion(StringBuilder buffer, Union unionType) {
+		appendNameIdAttributes(buffer, unionType);
+		SpecXmlUtils.encodeStringAttribute(buffer, "metatype", "union");
+		SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "size", unionType.getLength());
+		buffer.append(">\n");
+		DataTypeComponent[] comps = unionType.getDefinedComponents();
+		for (DataTypeComponent comp : comps) {
+			if (comp.getLength() == 0) {
+				continue;
+			}
+			buffer.append("<field");
+			String field_name = comp.getFieldName();
+			if (field_name == null) {
+				field_name = comp.getDefaultFieldName();
+			}
+			SpecXmlUtils.xmlEscapeAttribute(buffer, "name", field_name);
+			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "offset", comp.getOffset());
+			SpecXmlUtils.encodeSignedIntegerAttribute(buffer, "id", comp.getOrdinal());
+			buffer.append('>');
+			DataType fieldtype = comp.getDataType();
+			buildTypeRef(buffer, fieldtype, comp.getLength());
+			buffer.append("</field>\n");
+		}
 	}
 
 	private void generateCoreTypes() {

@@ -127,20 +127,18 @@ bool SymbolEntry::updateType(Varnode *vn) const
 Datatype *SymbolEntry::getSizedType(const Address &inaddr,int4 sz) const
 
 {
-  Datatype *last,*cur;
   uintb off;
 
   if (isDynamic())
     off = offset;
   else
     off = (inaddr.getOffset() - addr.getOffset()) + offset;
-  cur = symbol->getType();
+  Datatype *cur = symbol->getType();
   do {
-    last = cur;
+    if (offset == 0 && cur->getSize() == sz)
+      return cur;
     cur = cur->getSubType(off,&off);
   } while(cur != (Datatype *)0);
-  if (last->getSize() == sz)
-    return last;
   //    else {
   // This case occurs if the varnode is a "partial type" of some sort
   // This PROBABLY means the varnode shouldn't be considered addrtied
@@ -400,7 +398,7 @@ void Symbol::restoreXmlHeader(const Element *el)
 
 {
   name.clear();
-  category = -1;
+  category = no_category;
   symbolId = 0;
   for(int4 i=0;i<el->getNumAttributes();++i) {
     const string &attName(el->getAttributeName(i));
@@ -488,7 +486,7 @@ void Symbol::restoreXmlHeader(const Element *el)
 	break;
     }
   }
-  if (category == 0) {
+  if (category == function_parameter) {
     istringstream s2(el->getAttributeValue("index"));
     s2.unsetf(ios::dec | ios::hex | ios::oct);
     s2 >> catindex;
@@ -649,7 +647,7 @@ EquateSymbol::EquateSymbol(Scope *sc,const string &nm,uint4 format,uintb val)
   : Symbol(sc, nm, (Datatype *)0)
 {
   value = val;
-  category = 1;
+  category = equate;
   type = sc->getArch()->types->getBase(1,TYPE_UNKNOWN);
   dispflags |= format;
 }
@@ -703,6 +701,49 @@ void EquateSymbol::restoreXml(const Element *el)
 
   TypeFactory *types = scope->getArch()->types;
   type = types->getBase(1,TYPE_UNKNOWN);
+}
+
+/// Create a symbol that forces a particular field of a union to propagate
+///
+/// \param sc is the scope owning the new symbol
+/// \param nm is the name of the symbol
+/// \param unionDt is the union data-type being forced
+/// \param fldNum is the particular field to force (-1 indicates the whole union)
+UnionFacetSymbol::UnionFacetSymbol(Scope *sc,const string &nm,Datatype *unionDt,int4 fldNum)
+  : Symbol(sc, nm, unionDt)
+{
+  fieldNum = fldNum;
+  category = union_facet;
+}
+
+void UnionFacetSymbol::saveXml(ostream &s) const
+
+{
+  s << "<facetsymbol";
+  saveXmlHeader(s);
+  a_v_i(s,"field",fieldNum);
+  s << ">\n";
+  saveXmlBody(s);
+  s << "</facetsymbol>\n";
+}
+
+void UnionFacetSymbol::restoreXml(const Element *el)
+
+{
+  restoreXmlHeader(el);
+  istringstream s(el->getAttributeValue("field"));
+  s.unsetf(ios::dec | ios::hex | ios::oct);
+  s >> fieldNum;
+  const List &list(el->getChildren());
+
+  restoreXmlBody(list.begin());
+  Datatype *testType = type;
+  if (testType->getMetatype() == TYPE_PTR)
+    testType = ((TypePointer *)testType)->getPtrTo();
+  if (testType->getMetatype() != TYPE_UNION)
+    throw LowlevelError("<unionfacetsymbol> does not have a union type");
+  if (fieldNum < -1 || fieldNum >= testType->numDepend())
+    throw LowlevelError("<unionfacetsymbol> field attribute is out of bounds");
 }
 
 /// Label symbols don't really have a data-type, so we just put
@@ -1556,6 +1597,8 @@ Symbol *Scope::addMapSym(const Element *el)
     sym = new LabSymbol(owner);
   else if (symname == "externrefsymbol")
     sym = new ExternRefSymbol(owner);
+  else if (symname == "facetsymbol")
+    sym = new UnionFacetSymbol(owner);
   else
     throw LowlevelError("Unknown symbol type: "+symname);
   try {		// Protect against duplicate scope errors
@@ -1711,9 +1754,9 @@ string Scope::buildDefaultName(Symbol *sym,int4 &base,Varnode *vn) const
     if (!vn->isAddrTied() && fd != (Funcdata *)0)
       usepoint = vn->getUsePoint(*fd);
     HighVariable *high = vn->getHigh();
-    if (sym->getCategory() == 0 || high->isInput()) {
+    if (sym->getCategory() == Symbol::function_parameter || high->isInput()) {
       int4 index = -1;
-      if (sym->getCategory()==0)
+      if (sym->getCategory()==Symbol::function_parameter)
 	index = sym->getCategoryIndex()+1;
       return buildVariableName(vn->getAddr(),usepoint,sym->getType(),index,vn->getFlags() | Varnode::input);
     }
@@ -1724,7 +1767,7 @@ string Scope::buildDefaultName(Symbol *sym,int4 &base,Varnode *vn) const
     Address addr = entry->getAddr();
     Address usepoint = entry->getFirstUseAddress();
     uint4 flags = usepoint.isInvalid() ? Varnode::addrtied : 0;
-    if (sym->getCategory() == 0) {	// If this is a parameter
+    if (sym->getCategory() == Symbol::function_parameter) {
 	flags |= Varnode::input;
 	int4 index = sym->getCategoryIndex() + 1;
 	return buildVariableName(addr, usepoint, sym->getType(), index, flags);
@@ -1958,7 +2001,7 @@ void ScopeInternal::categorySanity(void)
       for(int4 j=0;j<list.size();++j) {
 	Symbol *sym = list[j];
 	if (sym == (Symbol *)0) continue;
-	setCategory(sym,-1,0);	// Set symbol to have no category
+	setCategory(sym,Symbol::no_category,0);
       }
     }
   }
@@ -2004,7 +2047,7 @@ void ScopeInternal::clearUnlocked(void)
       if (sym->isSizeTypeLocked())
 	resetSizeLockType(sym);
     }
-    else if (sym->getCategory() == 1) {
+    else if (sym->getCategory() == Symbol::equate) {
       // Note we treat EquateSymbols as locked for purposes of this method
       // as a typelock (which traditionally prevents a symbol from being cleared)
       // does not make sense for an equate
@@ -2579,8 +2622,11 @@ void ScopeInternal::saveXml(ostream &s) const
       int4 symbolType = 0;
       if (!sym->mapentry.empty()) {
 	const SymbolEntry &entry( *sym->mapentry.front() );
-	if (entry.isDynamic())
-	  symbolType = (sym->getCategory() == 1) ? 2 : 1;
+	if (entry.isDynamic()) {
+	  if (sym->getCategory() == Symbol::union_facet)
+	    continue;		// Don't save override
+	  symbolType = (sym->getCategory() == Symbol::equate) ? 2 : 1;
+	}
       }
       s << "<mapsym";
       if (symbolType == 1)

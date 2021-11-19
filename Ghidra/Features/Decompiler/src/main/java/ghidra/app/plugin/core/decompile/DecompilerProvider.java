@@ -809,6 +809,9 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		RenameFieldAction renameFieldAction = new RenameFieldAction();
 		setGroupInfo(renameFieldAction, variableGroup, subGroupPosition++);
 
+		ForceUnionAction forceUnionAction = new ForceUnionAction();
+		setGroupInfo(forceUnionAction, variableGroup, subGroupPosition++);
+
 		RetypeLocalAction retypeLocalAction = new RetypeLocalAction();
 		setGroupInfo(retypeLocalAction, variableGroup, subGroupPosition++);
 
@@ -982,6 +985,7 @@ public class DecompilerProvider extends NavigatableComponentProviderAdapter
 		addLocalAction(renameLocalAction);
 		addLocalAction(renameGlobalAction);
 		addLocalAction(renameFieldAction);
+		addLocalAction(forceUnionAction);
 		addLocalAction(setSecondaryHighlightAction);
 		addLocalAction(setSecondaryHighlightColorChooserAction);
 		addLocalAction(removeSecondaryHighlightAction);

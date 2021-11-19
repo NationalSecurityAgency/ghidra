@@ -48,6 +48,7 @@ class AddTreeState {
   const TypePointerRel *pRelType;	///< A copy of \b ct, if it is a relative pointer
   int4 ptrsize;			///< Size of the pointer
   int4 size;			///< Size of data-type being pointed to (in address units) or 0 for open ended pointer
+  int4 baseSlot;		///< Slot of the ADD tree base that is holding the pointer
   uintb ptrmask;		///< Mask for modulo calculations in ptr space
   uintb offset;			///< Number of bytes we dig into the base data-type
   uintb correct;		///< Number of bytes being double counted

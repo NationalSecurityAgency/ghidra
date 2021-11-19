@@ -82,7 +82,7 @@ CORE=	xml space float address pcoderaw translate opcodes globalcontext
 DECCORE=capability architecture options graph cover block cast typeop database cpool \
 	comment stringmanage fspec action loadimage grammar varnode op \
 	type variable varmap jumptable emulate emulateutil flow userop \
-	funcdata funcdata_block funcdata_op funcdata_varnode pcodeinject \
+	funcdata funcdata_block funcdata_op funcdata_varnode unionresolve pcodeinject \
 	heritage prefersplit rangeutil ruleaction subflow blockaction merge double \
 	transform coreaction condexe override dynamic crc32 prettyprint \
 	printlanguage printc printjava memstate opbehavior paramid $(COREEXT_NAMES)

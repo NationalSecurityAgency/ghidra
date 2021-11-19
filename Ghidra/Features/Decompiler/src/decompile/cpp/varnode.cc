@@ -564,6 +564,58 @@ Varnode::~Varnode(void)
   }
 }
 
+/// This generally just returns the data-type of the Varnode itself unless it is a \e union data-type.
+/// In this case, the data-type of the resolved field of the \e union, associated with writing to the Varnode,
+/// is returned. The Varnode \b must be written to, to call this method.
+/// \return the resolved data-type
+Datatype *Varnode::getTypeDefFacing(void) const
+
+{
+  if (!type->needsResolution())
+    return type;
+  return type->findResolve(def,-1);
+}
+
+/// This generally just returns the data-type of the Varnode itself unless it is a \e union data-type.
+/// In this case, the data-type of the resolved field of the \e union, associated with reading the Varnode,
+/// is returned.
+/// \param op is the PcodeOp reading \b this Varnode
+/// \return the resolved data-type
+Datatype *Varnode::getTypeReadFacing(const PcodeOp *op) const
+
+{
+  if (!type->needsResolution())
+    return type;
+  return type->findResolve(op, op->getSlot(this));
+}
+
+/// This generally just returns the data-type of the HighVariable associated with \b this, unless it is a
+/// \e union data-type. In this case, the data-type of the resolved field of the \e union, associated with
+/// writing to the Varnode, is returned.
+/// \return the resolved data-type
+Datatype *Varnode::getHighTypeDefFacing(void) const
+
+{
+  Datatype *ct = high->getType();
+  if (!ct->needsResolution())
+    return ct;
+  return ct->findResolve(def,-1);
+}
+
+/// This generally just returns the data-type of the HighVariable associated with \b this, unless it is a
+/// \e union data-type. In this case, the data-type of the resolved field of the \e union, associated with
+/// reading the Varnode, is returned.
+/// \param op is the PcodeOp reading \b this Varnode
+/// \return the resolved data-type
+Datatype *Varnode::getHighTypeReadFacing(const PcodeOp *op) const
+
+{
+  Datatype *ct = high->getType();
+  if (!ct->needsResolution())
+    return ct;
+  return ct->findResolve(op, op->getSlot(this));
+}
+
 /// This is a convenience method for quickly finding the unique PcodeOp that reads this Varnode
 /// \return only descendant (if there is 1 and ONLY 1) or \b null otherwise
 PcodeOp *Varnode::loneDescend(void) const

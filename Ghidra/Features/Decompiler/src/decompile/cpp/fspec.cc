@@ -2700,7 +2700,7 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
 
 {
   ParameterSymbol *res = getSymbolBacked(i);
-  res->sym = scope->getCategorySymbol(0,i);
+  res->sym = scope->getCategorySymbol(Symbol::function_parameter,i);
   SymbolEntry *entry;
   Address usepoint;
 
@@ -2717,7 +2717,7 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
     if (scope->discoverScope(pieces.addr,pieces.type->getSize(),usepoint) == (Scope *)0)
       usepoint = restricted_usepoint; 
     res->sym = scope->addSymbol(nm,pieces.type,pieces.addr,usepoint)->getSymbol();
-    scope->setCategory(res->sym,0,i);
+    scope->setCategory(res->sym,Symbol::function_parameter,i);
     if (isindirect || ishidden) {
       uint4 mirror = 0;
       if (isindirect)
@@ -2750,17 +2750,17 @@ ProtoParameter *ProtoStoreSymbol::setInput(int4 i, const string &nm,const Parame
 void ProtoStoreSymbol::clearInput(int4 i)
 
 {
-  Symbol *sym = scope->getCategorySymbol(0,i);
+  Symbol *sym = scope->getCategorySymbol(Symbol::function_parameter,i);
   if (sym != (Symbol *)0) {
-    scope->setCategory(sym,-1,0); // Remove it from category list
+    scope->setCategory(sym,Symbol::no_category,0); // Remove it from category list
     scope->removeSymbol(sym);	// Remove it altogether
   }
   // Renumber any category 0 symbol with index greater than i
-  int4 sz = scope->getCategorySize(0);
+  int4 sz = scope->getCategorySize(Symbol::function_parameter);
   for(int4 j=i+1;j<sz;++j) {
-    sym = scope->getCategorySymbol(0,j);
+    sym = scope->getCategorySymbol(Symbol::function_parameter,j);
     if (sym != (Symbol *)0)
-      scope->setCategory(sym,0,j-1);
+      scope->setCategory(sym,Symbol::function_parameter,j-1);
   }
 }
 
@@ -2773,13 +2773,13 @@ void ProtoStoreSymbol::clearAllInputs(void)
 int4 ProtoStoreSymbol::getNumInputs(void) const
 
 {
-  return scope->getCategorySize(0);
+  return scope->getCategorySize(Symbol::function_parameter);
 }
 
 ProtoParameter *ProtoStoreSymbol::getInput(int4 i)
 
 {
-  Symbol *sym = scope->getCategorySymbol(0,i);
+  Symbol *sym = scope->getCategorySymbol(Symbol::function_parameter,i);
   if (sym == (Symbol *)0)
     return (ProtoParameter *)0;
   ParameterSymbol *res = getSymbolBacked(i);
