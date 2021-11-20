@@ -41,7 +41,8 @@ public class DWARFSectionProviderFactory {
 	private static final List<Function<Program, DWARFSectionProvider>> sectionProviderFactoryFuncs =
 		List.of(
 			BaseSectionProvider::createSectionProviderFor,
-			DSymSectionProvider::createSectionProviderFor);
+			DSymSectionProvider::createSectionProviderFor,
+			CompressedSectionProvider::createSectionProviderFor);
 
 	/**
 	 * Iterates through the statically registered {@link #sectionProviderFactoryFuncs factory funcs},

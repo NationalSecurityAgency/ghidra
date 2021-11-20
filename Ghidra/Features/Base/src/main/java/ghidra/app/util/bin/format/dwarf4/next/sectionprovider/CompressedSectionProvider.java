@@ -17,9 +17,12 @@ package ghidra.app.util.bin.format.dwarf4.next.sectionprovider;
 
 import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.ByteProvider;
+import ghidra.app.util.bin.ByteProviderWrapper;
+import ghidra.program.model.listing.Program;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.DataFormatException;
@@ -39,12 +42,21 @@ import java.util.zip.Inflater;
 public class CompressedSectionProvider implements DWARFSectionProvider {
 
 	private final DWARFSectionProvider sp;
+	private static final byte[] MAGIC = new byte[]{'Z', 'L', 'I', 'B'};
+	private static final int FULL_HEADER_SIZE = 0xc;
 
 	/**
 	 * Cache previously decompressed sections, indexed by their normal 'base' name with no
 	 * 'z' prefix.
 	 */
 	private Map<String, ByteProvider> sectionNameToDecompressedSectionDataMap = new HashMap<>();
+
+	public static CompressedSectionProvider createSectionProviderFor(Program program) {
+		if (DSymSectionProvider.getDSYMForProgram(program) != null) {
+			return new CompressedSectionProvider(DSymSectionProvider.createSectionProviderFor(program));
+		}
+		return new CompressedSectionProvider(BaseSectionProvider.createSectionProviderFor(program));
+	}
 
 	public CompressedSectionProvider(DWARFSectionProvider sp) {
 		this.sp = sp;
@@ -79,6 +91,9 @@ public class CompressedSectionProvider implements DWARFSectionProvider {
 		bp = sp.getSectionAsByteProvider("z" + sectionName);
 		if (bp != null) {
 			ByteArrayOutputStream stream = new ByteArrayOutputStream();
+			if (bp.length() > FULL_HEADER_SIZE && Arrays.equals(MAGIC, bp.readBytes(0, MAGIC.length))) {
+				bp = new ByteProviderWrapper(bp, FULL_HEADER_SIZE, bp.length() - FULL_HEADER_SIZE);
+			}
 			byte[] tempArray = new byte[1024];
 
 			Inflater decompressor = new Inflater();

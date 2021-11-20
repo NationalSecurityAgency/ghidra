@@ -72,10 +72,8 @@ public class DWARFProgram implements Closeable {
 		switch (format) {
 			case ElfLoader.ELF_NAME:
 			case PeLoader.PE_NAME:
-				return BaseSectionProvider.hasDWARFSections(program) ||
-					ExternalDebugInfo.fromProgram(program) != null;
 			case MachoLoader.MACH_O_NAME:
-				return DSymSectionProvider.getDSYMForProgram(program) != null;
+				return DWARFSectionProviderFactory.createSectionProviderFor(program) != null;
 		}
 		return false;
 	}
