@@ -82,7 +82,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	private SelectionOverrideMemento selectionMemento;
 	private boolean filteringFrozen;
 
-	// a selection we may have to set later, after the table has finished loading	
+	// a selection we may have to set later, after the table has finished loading
 	private VTMatch pendingMatchSelection;
 	private SwingUpdateManager selectMatchUpdateManager;
 	private MatchTableSelectionAction tableSelectionStateAction;
@@ -182,8 +182,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			int filteredCount = matchesTableModel.getRowCount();
 			int unfilteredCount = matchesTableModel.getUnfilteredRowCount();
 			int filteredOutCount = unfilteredCount - filteredCount;
-			ancillaryFilterButton.setToolTipText(
-				"More Filters - " + filteredOutCount + " item(s) hidden");
+			ancillaryFilterButton
+					.setToolTipText("More Filters - " + filteredOutCount + " item(s) hidden");
 		}
 		else {
 			ancillaryFilterButton.setToolTipText("More Filters - no active filters");
@@ -233,9 +233,9 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			int unfilteredCount = matchesTableModel.getUnfilteredRowCount();
 
 			String sessionName = controller.getVersionTrackingSessionName();
-			StringBuffer buffy = new StringBuffer();
-			buffy.append("[Session: ").append(sessionName).append("] ");
-			buffy.append('-').append(filteredCount).append(" matches");
+			StringBuilder buffy = new StringBuilder();
+			buffy.append("[Session: ").append(sessionName).append("] - ");
+			buffy.append(filteredCount).append(" matches");
 			if (filteredCount != unfilteredCount) {
 				buffy.append(" (of ").append(unfilteredCount).append(')');
 			}
@@ -289,7 +289,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 					selectMatchUpdateManager.updateLater();
 				}
 				else {
-					// for any selection that is not handled by the match changing we want to 
+					// for any selection that is not handled by the match changing we want to
 					// notify that context has changed so that actions properly update
 					notifyContextChanged();
 				}
@@ -307,14 +307,14 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 
 		int sourceLabelColumnIndex = matchesTableModel.getColumnIndex(SourceLabelTableColumn.class);
 		TableColumn sourceLabelColumn = columnModel.getColumn(sourceLabelColumnIndex);
-		sourceLabelColumn.setCellRenderer(
-			new VTSymbolRenderer(controller.getServiceProvider(), table));
+		sourceLabelColumn
+				.setCellRenderer(new VTSymbolRenderer(controller.getServiceProvider(), table));
 
 		int destinationLabelColumnIndex =
 			matchesTableModel.getColumnIndex(DestinationLabelTableColumn.class);
 		TableColumn destinationLabelColumn = columnModel.getColumn(destinationLabelColumnIndex);
-		destinationLabelColumn.setCellRenderer(
-			new VTSymbolRenderer(controller.getServiceProvider(), table));
+		destinationLabelColumn
+				.setCellRenderer(new VTSymbolRenderer(controller.getServiceProvider(), table));
 
 		int statusColumnIndex = matchesTableModel.getColumnIndex(StatusTableColumn.class);
 		TableColumn statusColumn = columnModel.getColumn(statusColumnIndex);
@@ -352,8 +352,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		innerPanel.add(lengthFilterPanel);
 
 		ancillaryFilterButton = new JButton(UNFILTERED_ICON);
-		ancillaryFilterButton.addActionListener(
-			e -> tool.showDialog(ancillaryFilterDialog, component));
+		ancillaryFilterButton
+				.addActionListener(e -> tool.showDialog(ancillaryFilterDialog, component));
 		ancillaryFilterButton.setToolTipText("Filters Dialog");
 		HelpService helpService = DockingWindowManager.getHelpService();
 		HelpLocation filterHelpLocation =
@@ -405,7 +405,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		int row = matchesTableModel.getRowIndex(match);
 		if (row < 0) {
 			pendingMatchSelection = match;
-			// this happen while reloading. If so, save the match and listen for 
+			// this happen while reloading. If so, save the match and listen for
 			// the table data changed and restore the selection at that point
 			return;
 		}
@@ -517,7 +517,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		}
 
 		if (matchesContextChanged) {
-			// Now that all records have been processed, 
+			// Now that all records have been processed,
 			// since the match table changed perform a reload to apply filters.
 			reload();
 
@@ -695,8 +695,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 				"should become ignored by applying a match.");
 
 		vtOptions.getOptions(APPLY_MARKUP_OPTIONS_NAME)
-				.registerOptionsEditor(
-					new ApplyMarkupPropertyEditor(controller));
+				.registerOptionsEditor(new ApplyMarkupPropertyEditor(controller));
 		vtOptions.getOptions(DISPLAY_APPLY_MARKUP_OPTIONS)
 				.setOptionsHelpLocation(
 					new HelpLocation("VersionTracking", "Apply Markup Options"));
@@ -709,17 +708,15 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		vtOptions.setOptionsHelpLocation(applyOptionsHelpLocation);
 
 		vtOptions.getOptions(ACCEPT_MATCH_OPTIONS_NAME)
-				.setOptionsHelpLocation(
-					applyMatchOptionsHelpLocation);
+				.setOptionsHelpLocation(applyMatchOptionsHelpLocation);
 
 		vtOptions.getOptions(APPLY_MARKUP_OPTIONS_NAME)
-				.setOptionsHelpLocation(
-					applyMatchOptionsHelpLocation);
+				.setOptionsHelpLocation(applyMatchOptionsHelpLocation);
 	}
 
 //==================================================================================================
 // FilterDialogModel Methods
-//==================================================================================================	
+//==================================================================================================
 
 	@Override
 	public void addFilter(Filter<VTMatch> filter) {
@@ -728,7 +725,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		matchesTableModel.addFilter(filter);
 	}
 
-	/** 
+	/**
 	 * Forces a refilter, even though filtering operations may be disabled. The reload
 	 * is necessary since the model contents may have changed
 	 */
@@ -794,11 +791,11 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	/**
 	 * A class meant to override the default table selection behavior <b>in special situations</b>.
 	 * <p>
-	 * <u>Issue 1:</u> Accepting or applying a match can trigger the match to be filtered out 
+	 * <u>Issue 1:</u> Accepting or applying a match can trigger the match to be filtered out
 	 * of the table.  The default SelectionManager does not restore the selection for that item,
 	 * as it knows that the item is gone.
 	 * <p>
-	 * <u>Issue 2:</u> Accepting or applying a match can trigger the match to be moved due to a 
+	 * <u>Issue 2:</u> Accepting or applying a match can trigger the match to be moved due to a
 	 * sort operation after the edit.
 	 * <p>
 	 * <u>Desired Behavior:</u> Have the selection restored to the previous location, even if the
@@ -847,18 +844,18 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 			ListSelectionModel selectionModel = matchesTable.getSelectionModel();
 			int rowToSelect = row;
 			if (row > matchesTableModel.getRowCount()) {
-				// The model has shrunk.  Not sure what the best action is?				
+				// The model has shrunk.  Not sure what the best action is?
 				tryToSelectMatch(selectionModel);// this only works if we are tracking by match and not index
 				return;
 			}
 
-			// At this point the selection model may still believe that its selection is the 
+			// At this point the selection model may still believe that its selection is the
 			// value we are setting.  Calling clearSelection() will kick the model.  Without the
 			// kick, the setSelectionInterval() call we make may ultimately have no effect.
 			selectionModel.clearSelection();
 
 			if (tableSelectionState == MAINTAIN_SELECTED_ROW_INDEX) {
-				// In this state we are tracking row selection, so just select the previously 
+				// In this state we are tracking row selection, so just select the previously
 				// selected row.
 				selectionModel.setSelectionInterval(rowToSelect, rowToSelect);
 				matchesTable.scrollToSelectedRow();
@@ -874,7 +871,7 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 		}
 
 		private void tryToSelectMatch(ListSelectionModel selectionModel) {
-			// In this state we are tracking the value that was selected and we want to 
+			// In this state we are tracking the value that was selected and we want to
 			// reselect that value.
 			int matchRow = matchesTableModel.getRowIndex(match);
 			if (matchRow >= 0 && matchRow < matchesTableModel.getRowCount()) {
@@ -890,8 +887,8 @@ public class VTMatchTableProvider extends ComponentProviderAdapter
 	}
 
 	/**
-	 * Override the built-in SelectionManager so that we can respond to the current table 
-	 * selection mode.  
+	 * Override the built-in SelectionManager so that we can respond to the current table
+	 * selection mode.
 	 */
 	private class VTMatchTableSelectionManager extends RowObjectSelectionManager<VTMatch> {
 		VTMatchTableSelectionManager(JTable table, AbstractSortedTableModel<VTMatch> tableModel) {

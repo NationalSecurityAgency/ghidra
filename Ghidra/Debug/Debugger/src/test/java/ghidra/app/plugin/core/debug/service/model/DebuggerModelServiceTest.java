@@ -27,8 +27,10 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import generic.Unique;
+import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.event.ModelObjectFocusedPluginEvent;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.AbstractConnectAction;
@@ -53,10 +55,11 @@ import mockit.VerificationsInOrder;
 
 /**
  * TODO: Cover the error cases, and cases where {@code null} is expected
- * 
+ *
  * <p>
  * TODO: Cover cases where multiple recorders are present
  */
+@Category(NightlyCategory.class)
 public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITest
 		implements DebuggerModelTestUtils {
 	protected static final long TIMEOUT_MILLIS =
@@ -67,7 +70,7 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 	 * CollectionChangeListener.of() if I try to mock one of those or a subclass directly. I'm
 	 * guessing the version we're using (1.44 as of this writing) is utterly ignorant of static
 	 * interface methods. What was the latest version of Java at the time?
-	 * 
+	 *
 	 * <p>
 	 * TODO: Check if a later version fixes this issue. If so, consider upgrading. If not, submit an
 	 * issue.
@@ -582,8 +585,7 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 	public void testRecordBestOfferUnrecognized() throws Exception {
 		createTestModel();
 		mb.testModel.session.environment.changeAttributes(List.of(),
-			Map.of(TargetEnvironment.ARCH_ATTRIBUTE_NAME, "test-bogus-arch"),
-			"Testing");
+			Map.of(TargetEnvironment.ARCH_ATTRIBUTE_NAME, "test-bogus-arch"), "Testing");
 		mb.createTestProcessesAndThreads();
 
 		modelService.recordTargetBestOffer(mb.testProcess1);
@@ -609,8 +611,7 @@ public class DebuggerModelServiceTest extends AbstractGhidraHeadedDebuggerGUITes
 	public void testRecordPromptOffersUnrecognized() throws Exception {
 		createTestModel();
 		mb.testModel.session.environment.changeAttributes(List.of(),
-			Map.of(TargetEnvironment.ARCH_ATTRIBUTE_NAME, "test-bogus-arch"),
-			"Testing");
+			Map.of(TargetEnvironment.ARCH_ATTRIBUTE_NAME, "test-bogus-arch"), "Testing");
 		mb.createTestProcessesAndThreads();
 
 		runSwingLater(() -> modelService.recordTargetPromptOffers(mb.testProcess1));

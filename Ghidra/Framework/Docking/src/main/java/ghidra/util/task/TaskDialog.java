@@ -35,7 +35,9 @@ import ghidra.util.timer.GTimerMonitor;
 
 /**
  * Dialog that is displayed to show activity for a Task that is running outside of the
- * Swing Thread.
+ * Swing Thread.   This dialog uses a delay before showing in order to give the background task
+ * thread a chance to finish.  This prevents a flashing dialog for tasks that finish before the
+ * delay time period.
  *
  * <p>Implementation note:
  * if this class is constructed with a {@code hasProgress} value of {@code false},
@@ -47,6 +49,16 @@ import ghidra.util.timer.GTimerMonitor;
  *
  * <p>This dialog can be toggled between indeterminate mode and progress mode via calls to
  * {@link #setIndeterminate(boolean)}.
+ * 
+ * <p><b>API Usage Note: </b>If this dialog is used outside of the task API, then the client must
+ * be sure to call {@link #taskProcessed()}<b> from the background thread performing the work</b>.
+ * Otherwise, this dialog will always wait for the {@code delay} amount of time for the background
+ * thread to finish.  This happens since the default completed notification mechanism is performed
+ * on the Swing thread.   If a client has triggered blocking on the Swing thread, then the
+ * notification on the Swing thread must wait, causing the full delay to take place.   Calling
+ * {@link #taskProcessed()} from the background thread allows the dialog to get notified before the
+ * {@code delay} period has expired.  The blocking issue only exists with a non-0 {@code delay}
+ * value.
  */
 public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 
@@ -66,23 +78,23 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	 *  -calls iternalCancel()
 	 *  -triggers taskProcessed()
 	 *  -calls closeDialog runnable
-	 *  
+	 * 
 	 * Cancel Button Pressed:
 	 * 	-(same as Dialog Close Button Pressed)
 	 * 
 	 * Task Monitor Stop Button Pressed:
 	 *  -triggers taskProcessed()
 	 *  -calls closeDialog runnable
-	 *  
+	 * 
 	 * Public API dispose() is Called:
 	 *  -calls iternalCancel()
 	 *  -triggers taskProcessed()
 	 *  -calls closeDialog runnable
-	 *  
+	 * 
 	 * Task Monitor Cancelled by API:
 	 *  -triggers taskProcessed()
 	 *  -calls closeDialog runnable
-	 *  
+	 * 
 	 * Task Finishes Normally:
 	 *  -triggers taskProcessed()
 	 *  -calls closeDialog runnable
@@ -100,7 +112,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	};
 
 	private GTimerMonitor showTimer = GTimerMonitor.DUMMY;
-	private CountDownLatch finished = new CountDownLatch(1);
+	private CountDownLatch finished;
 	private boolean supportsProgress;
 
 	private JPanel mainPanel;
@@ -121,12 +133,11 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	 * @param centerOnComp component to be centered over when shown, otherwise center over parent.
 	 * If both centerOnComp and parent are null, dialog will be centered on screen.
 	 * @param task the Task that this dialog will be associated with
-	 * @param finished overrides the latch used by this dialog to know when the task is finished
+	 * @param finished the finished latch used by the background thread to notify of completion
 	 */
 	TaskDialog(Component centerOnComp, Task task, CountDownLatch finished) {
 		this(centerOnComp, task.getTaskTitle(), task.isModal(), task.canCancel(),
-			task.hasProgress());
-		this.finished = finished;
+			task.hasProgress(), finished);
 	}
 
 	/**
@@ -147,7 +158,21 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	 * @param hasProgress true if the dialog should show a progress bar
 	 */
 	public TaskDialog(String title, boolean canCancel, boolean isModal, boolean hasProgress) {
-		this(null, title, isModal, canCancel, hasProgress);
+		this(title, isModal, canCancel, hasProgress, new CountDownLatch(1));
+	}
+
+	/**
+	 * Constructor
+	 *
+	 * @param title title for the dialog
+	 * @param canCancel true if the task can be canceled
+	 * @param isModal true if the dialog should be modal
+	 * @param hasProgress true if the dialog should show a progress bar
+	 * @param finished the finished latch used by the background thread to notify of completion
+	 */
+	public TaskDialog(String title, boolean canCancel, boolean isModal, boolean hasProgress,
+			CountDownLatch finished) {
+		this(null, title, isModal, canCancel, hasProgress, finished);
 	}
 
 	/**
@@ -159,12 +184,14 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	 * @param isModal true if the dialog should be modal
 	 * @param canCancel true if the task can be canceled
 	 * @param hasProgress true if the dialog should show a progress bar
+	 * @param finished the finished latch used by the background thread to notify of completion
 	 */
 	private TaskDialog(Component centerOnComp, String title, boolean isModal, boolean canCancel,
-			boolean hasProgress) {
+			boolean hasProgress, CountDownLatch finished) {
 		super(title, isModal, true, canCancel, true);
 		this.centerOnComponent = centerOnComp;
 		this.supportsProgress = hasProgress;
+		this.finished = finished;
 		setup(canCancel);
 	}
 
@@ -362,6 +389,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 	/**
 	 * Cancels the task and closes this dialog
 	 */
+	@Override
 	public void dispose() {
 		internalCancel();
 	}
@@ -409,7 +437,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 			setIndeterminate(false);
 		}
 
-		// Note: it is not clear why we only wish to show progress if the monitor is not 
+		// Note: it is not clear why we only wish to show progress if the monitor is not
 		// visible.  This seems wrong.   If someone knows, please update this code.
 		//if (!monitorComponent.isShowing()) {
 		installProgressMonitor();
@@ -431,7 +459,7 @@ public class TaskDialog extends DialogComponentProvider implements TaskMonitor {
 		supportsProgress = !indeterminate;
 		monitorComponent.setIndeterminate(indeterminate);
 
-		// Assumption: if the client calls this method to show progress, then we should honor 
+		// Assumption: if the client calls this method to show progress, then we should honor
 		// that request.  If we find that nested monitor usage causes dialogs to incorrectly
 		// toggle monitors, then we need to update those clients to use a wrapping style
 		// monitor that prevents the behavior.

@@ -74,6 +74,7 @@ public interface DomainObject {
 
 	/**
 	 * Returns whether the object has changed.
+	 * @return whether the object has changed.
 	 */
 	public boolean isChanged();
 
@@ -87,17 +88,19 @@ public interface DomainObject {
 
 	/**
 	 * Returns true if this object has been marked as Temporary.
+	 * @return true if this object has been marked as Temporary.
 	 */
 	public boolean isTemporary();
 
 	/**
 	 * Returns true if changes are permitted.
+	 * @return true if changes are permitted.
 	 */
 	public boolean isChangeable();
 
 	/**
-	 * Returns true if this object can be saved; a read-only file
-	 * cannot be saved.
+	 * Returns true if this object can be saved; a read-only file cannot be saved.
+	 * @return true if this object can be saved
 	 */
 	public boolean canSave();
 
@@ -118,8 +121,8 @@ public interface DomainObject {
 	 * Saves (i.e., serializes) the current content to a packed file.
 	 * @param outputFile packed output file
 	 * @param monitor progress monitor
-	 * @throws IOException
-	 * @throws CancelledException
+	 * @throws IOException if an exception occurs
+	 * @throws CancelledException if the user cancels
 	 * @throws UnsupportedOperationException if not supported by object implementation
 	 */
 	public void saveToPackedFile(File outputFile, TaskMonitor monitor)
@@ -127,9 +130,9 @@ public interface DomainObject {
 
 	/**
 	 * Notify the domain object that the specified consumer is no longer using it.
-	 * When the last consumer invokes this method, the domain object will be closed 
+	 * When the last consumer invokes this method, the domain object will be closed
 	 * and will become invalid.
-	 * @param consumer the consumer (e.g., tool, plugin, etc) of the domain object 
+	 * @param consumer the consumer (e.g., tool, plugin, etc) of the domain object
 	 * previously established with the addConsumer method.
 	 */
 	public void release(Object consumer);
@@ -149,14 +152,14 @@ public interface DomainObject {
 	/**
 	 * Adds a listener that will be notified when this DomainObject is closed.  This is meant
 	 * for clients to have a chance to cleanup, such as reference removal.
-	 * 
+	 *
 	 * @param listener the reference to add
 	 */
 	public void addCloseListener(DomainObjectClosedListener listener);
 
 	/**
 	 * Removes the given close listener.
-	 * 
+	 *
 	 * @param listener the listener to remove.
 	 */
 	public void removeCloseListener(DomainObjectClosedListener listener);
@@ -179,11 +182,13 @@ public interface DomainObject {
 	/**
 	 * Returns a word or short phrase that best describes or categorizes
 	 * the object in terms that a user will understand.
+	 * @return the description
 	 */
 	public String getDescription();
 
 	/**
 	 * Get the name of this domain object.
+	 * @return the name
 	 */
 	public String getName();
 
@@ -195,7 +200,7 @@ public interface DomainObject {
 
 	/**
 	 * Get the domain file for this domain object.
-	 * @return the associated domain file 
+	 * @return the associated domain file
 	 */
 	public DomainFile getDomainFile();
 
@@ -207,13 +212,13 @@ public interface DomainObject {
 	 */
 	public boolean addConsumer(Object consumer);
 
-	/** 
+	/**
 	 * Returns the list of consumers on this domainObject
 	 * @return the list of consumers.
 	 */
 	public ArrayList<Object> getConsumerList();
 
-	/** 
+	/**
 	 * Returns true if the given consumer is using (has open) this domain object.
 	 * @param consumer the object to test to see if it is a consumer of this domain object.
 	 * @return true if the given consumer is using (has open) this domain object;
@@ -229,8 +234,8 @@ public interface DomainObject {
 	 * <p>
 	 * NOTE: when re-enabling events, an event will be sent to the system to signal that
 	 *       every listener should update.
-	 * 
-	 * 
+	 *
+	 *
 	 * @param enabled true means to enable events
 	 */
 	public void setEventsEnabled(boolean enabled);
@@ -238,7 +243,8 @@ public interface DomainObject {
 	/**
 	 * Returns true if this object is sending out events as it is changed.  The default is
 	 * true.  You can change this value by calling {@link #setEventsEnabled(boolean)}.
-	 * 
+	 *
+	 * @return true if sending events
 	 * @see #setEventsEnabled(boolean)
 	 */
 	public boolean isSendingEvents();
@@ -258,26 +264,27 @@ public interface DomainObject {
 	 * Returns true if a modification lock can be obtained on this
 	 * domain object.  Care should be taken with using this method since
 	 * this will not prevent another thread from modifying the domain object.
+	 * @return true if can lock
 	 */
 	public boolean canLock();
 
 	/**
-	 * Returns true if the domain object currenly has a modification lock enabled.
+	 * Returns true if the domain object currently has a modification lock enabled.
+	 * @return true if locked
 	 */
 	public boolean isLocked();
 
 	/**
-	 * Attempt to obtain a modification lock on the domain object.  Multiple locks
-	 * may be granted on this domain object, although all lock owners must release their
-	 * lock in a timely fashion.
+	 * Attempt to obtain a modification lock on the domain object.  Multiple locks may be granted
+	 * on this domain object, although all lock owners must release their lock in a timely fashion.
 	 * @param reason very short reason for requesting lock
-	 * @return true if lock obtained successfully, else false which indicates that a
-	 * modification is in process.
+	 * @return true if lock obtained successfully, else false which indicates that a modification
+	 * is in process.
 	 */
 	public boolean lock(String reason);
 
 	/**
-	 * Cancels any previous lock and aquires it.
+	 * Cancels any previous lock and acquires it.
 	 * @param rollback if true, any changes in made with the previous lock should be discarded.
 	 * @param reason very short reason for requesting lock
 	 */
@@ -290,7 +297,7 @@ public interface DomainObject {
 
 	/**
 	 * Returns all properties lists contained by this domain object.
-	 * 
+	 *
 	 * @return all property lists contained by this domain object.
 	 */
 	public List<String> getOptionsNames();
@@ -298,17 +305,20 @@ public interface DomainObject {
 	/**
 	 * Get the property list for the given name.
 	 * @param propertyListName name of property list
+	 * @return the options
 	 */
 	public Options getOptions(String propertyListName);
 
 	/**
 	 * Returns true if this domain object has been closed as a result of the last release
+	 * @return true if closed
 	 */
 	public boolean isClosed();
 
 	/**
 	 * Returns true if the user has exclusive access to the domain object.  Exclusive access means
 	 * either the object is not shared or the user has an exclusive checkout on the object.
+	 * @return true if has exclusive access
 	 */
 	public boolean hasExclusiveAccess();
 

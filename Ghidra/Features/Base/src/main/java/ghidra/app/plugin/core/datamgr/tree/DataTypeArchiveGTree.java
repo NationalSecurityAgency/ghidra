@@ -115,7 +115,9 @@ public class DataTypeArchiveGTree extends GTree {
 
 		List<GTreeNode> children = node.getChildren();
 		for (GTreeNode child : children) {
-			reclaimClosedNodes(child, monitor);
+			if (child instanceof CategoryNode) {
+				reclaimClosedNodes(child, monitor);
+			}
 		}
 	}
 

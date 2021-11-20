@@ -106,7 +106,7 @@ public:
     warning = 8,		///< Warning has been generated for this op
     incidental_copy = 0x10,	///< Treat this as \e incidental for parameter recovery algorithms
     is_cpool_transformed = 0x20, ///< Have we checked for cpool transforms
-    stop_propagation = 40	///< Stop propagation into output from descendants
+    stop_propagation = 0x40	///< Stop propagation into output from descendants
   };
 private:
   TypeOp *opcode;		///< Pointer to class providing behavioral details of the operation

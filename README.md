@@ -38,7 +38,7 @@ To create the latest development build for your platform from this source reposi
 
 ##### Install build tools:
 * [JDK 11 64-bit][jdk11]
-* [Gradle 6 or 7][gradle]
+* [Gradle 6.4+ or 7.x][gradle]
 * make, gcc, and g++ (Linux/macOS-only)
 * [Microsoft Visual Studio][vs] (Windows-only)
 

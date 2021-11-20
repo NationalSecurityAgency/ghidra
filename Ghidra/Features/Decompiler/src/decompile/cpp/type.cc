@@ -16,6 +16,8 @@
 #include "type.hh"
 #include "funcdata.hh"
 
+/// The base propagation ordering associated with each meta-type.
+/// The array elements correspond to the ordering of #type_metatype.
 sub_metatype Datatype::base2sub[13] = {
     SUB_STRUCT, SUB_PARTIALSTRUCT, SUB_ARRAY, SUB_PTRREL, SUB_PTR, SUB_FLOAT, SUB_CODE, SUB_BOOL,
     SUB_UINT_PLAIN, SUB_INT_PLAIN, SUB_UNKNOWN, SUB_SPACEBASE, SUB_VOID
@@ -176,8 +178,8 @@ void metatype2string(type_metatype metatype,string &res)
   case TYPE_PTR:
     res = "ptr";
     break;
-  case TYPE_PTRSTRUCT:
-    res = "ptrstruct";
+  case TYPE_PTRREL:
+    res = "ptrrel";
     break;
   case TYPE_ARRAY:
     res = "array";
@@ -226,8 +228,8 @@ type_metatype string2metatype(const string &metastring)
       return TYPE_PTR;
     else if (metastring=="part")
       return TYPE_PARTIALSTRUCT;
-    else if (metastring=="ptrstruct")
-      return TYPE_PTRSTRUCT;
+    else if (metastring=="ptrrel")
+      return TYPE_PTRREL;
     break;
   case 'a':
     if (metastring=="array")
@@ -412,15 +414,6 @@ void Datatype::restoreXmlBasic(const Element *el)
   }
 }
 
-/// Restore a Datatype object from an XML element
-/// \param el is the XML element
-/// \param typegrp is the underlying TypeFactory that will hold the new object
-void Datatype::restoreXml(const Element *el,TypeFactory &typegrp)
-
-{
-  restoreXmlBasic(el);
-}
-
 /// If a type id is explicitly provided for a data-type, this routine is used
 /// to produce an id based on a hash of the name.  IDs produced this way will
 /// have their sign-bit set to distinguish it from other IDs.
@@ -456,6 +449,9 @@ uint8 Datatype::hashSize(uint8 id,int4 size)
   return id;
 }
 
+/// Parse a \<type> tag for attributes of the character data-type
+/// \param el is the root XML element
+/// \param typegrp is the factory owning \b this data-type
 void TypeChar::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
@@ -489,6 +485,9 @@ void TypeUnicode::setflags(void)
     flags |= Datatype::chartype; // This ultimately should be UTF8 but we default to basic char
 }
 
+/// Parse a \<type> tag for properties of the data-type
+/// \param el is the root XML element
+/// \param typegrp is the factory owning \b this data-type
 void TypeUnicode::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
@@ -577,6 +576,9 @@ void TypePointer::saveXml(ostream &s) const
   s << "</type>";
 }
 
+/// Parse a \<type> tag with a child describing the data-type being pointed to
+/// \param el is the root XML element
+/// \param typegrp is the factory owning \b this data-type
 void TypePointer::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
@@ -598,7 +600,7 @@ void TypePointer::calcSubmeta(void)
 
 {
   if (ptrto->getMetatype() == TYPE_STRUCT) {
-    if (ptrto->numDepend() > 1 || ptrto->isIncompleteStruct())
+    if (ptrto->numDepend() > 1 || ptrto->isIncomplete())
       submeta = SUB_PTR_STRUCT;
     else
       submeta = SUB_PTR;
@@ -745,6 +747,9 @@ void TypeArray::saveXml(ostream &s) const
   s << "</type>";
 }
 
+/// Parse a \<type> tag with a child describing the array element data-type.
+/// \param el is the root XML element
+/// \param typegrp is the factory owning \b this data-type
 void TypeArray::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
@@ -925,6 +930,9 @@ void TypeEnum::saveXml(ostream &s) const
   s << "</type>";
 }
 
+/// Parse a \<type> tag with children describing each specific enumeration value.
+/// \param el is the root XML element
+/// \param typegrp is the factory owning \b this data-type
 void TypeEnum::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
@@ -1198,10 +1206,12 @@ void TypeStruct::saveXml(ostream &s) const
   s << "</type>";
 }
 
-void TypeStruct::restoreXml(const Element *el,TypeFactory &typegrp)
+/// Children of the structure element describe each field.
+/// \param el is the root structure element
+/// \param typegrp is the factory owning the new structure
+void TypeStruct::restoreFields(const Element *el,TypeFactory &typegrp)
 
 {
-  restoreXmlBasic(el);
   const List &list(el->getChildren());
   List::const_iterator iter;
   int4 maxoffset = 0;
@@ -1224,11 +1234,14 @@ void TypeStruct::restoreXml(const Element *el,TypeFactory &typegrp)
   if (maxoffset > size)
     throw LowlevelError("Size too small for fields of structure "+name);
   if (size == 0)		// We can restore an incomplete structure, indicated by 0 size
-    flags |=  struct_incomplete;
+    flags |=  type_incomplete;
   else
-    flags &= ~(uint4)struct_incomplete;	// Otherwise the structure is complete
+    markComplete();		// Otherwise the structure is complete
 }
 
+/// Parse a \<type> tag with children describing the data-type being pointed to and the parent data-type.
+/// \param el is the root XML element
+/// \param typegrp is the factory owning \b this data-type
 void TypePointerRel::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
@@ -1284,7 +1297,7 @@ void TypePointerRel::saveXml(ostream &s) const
 
 {
   s << "<type";
-  saveXmlBasic(TYPE_PTRSTRUCT,s);	// Override the metatype for XML
+  saveXmlBasic(TYPE_PTRREL,s);	// Override the metatype for XML
   if (wordsize != 1)
     a_v_i(s,"wordsize",wordsize);
   s << ">\n";
@@ -1349,9 +1362,9 @@ Datatype *TypePointerRel::getPtrTo(Datatype *base,int4 off,TypeFactory &typegrp)
 /// \param intypes is the list of input parameters
 /// \param dotdotdot is true if the prototype takes variable arguments
 /// \param voidtype is the reference "void" data-type
-void TypeCode::set(TypeFactory *tfact,ProtoModel *model,
-		    Datatype *outtype,const vector<Datatype *> &intypes,
-		    bool dotdotdot,Datatype *voidtype)
+void TypeCode::setPrototype(TypeFactory *tfact,ProtoModel *model,
+			    Datatype *outtype,const vector<Datatype *> &intypes,
+			    bool dotdotdot,Datatype *voidtype)
 {
   factory = tfact;
   flags |= variable_length;
@@ -1373,6 +1386,24 @@ void TypeCode::set(TypeFactory *tfact,ProtoModel *model,
   proto->setOutputLock(true);
 }
 
+/// The prototype is copied in.
+/// \param typegrp is the factory owning \b this
+/// \param fp is the prototype to set (may be null)
+void TypeCode::setPrototype(TypeFactory *typegrp,const FuncProto *fp)
+
+{
+  if (proto != (FuncProto *)0) {
+    delete proto;
+    proto = (FuncProto *)0;
+    factory = (TypeFactory *)0;
+  }
+  if (fp != (const FuncProto *)0) {
+    factory = typegrp;
+    proto = new FuncProto();
+    proto->copy(*fp);
+  }
+}
+
 TypeCode::TypeCode(const TypeCode &op) : Datatype(op)
 
 {
@@ -1384,11 +1415,12 @@ TypeCode::TypeCode(const TypeCode &op) : Datatype(op)
   }
 }
 
-TypeCode::TypeCode(const string &nm) : Datatype(1,TYPE_CODE,nm)
+TypeCode::TypeCode(void) : Datatype(1,TYPE_CODE)
 
 {
   proto = (FuncProto *)0;
   factory = (TypeFactory *)0;
+  flags |= type_incomplete;
 }
 
 TypeCode::~TypeCode(void)
@@ -1407,17 +1439,6 @@ void TypeCode::printRaw(ostream &s) const
     s << "funcptr";
   s << "()";
 }
-
-/// Assuming \b this has an underlying function prototype, set some of its boolean properties
-/// \param isConstructor toggles whether the function is a constructor
-/// \param isDestructor toggles whether the function is a destructor
-void TypeCode::setProperties(bool isConstructor,bool isDestructor)
-
-{
-  proto->setConstructor(isConstructor);
-  proto->setDestructor(isDestructor);
-}
-
 
 /// Compare basic characteristics of \b this with another TypeCode, not including the prototype
 ///    -  -1 or 1 if -this- and -op- are different in surface characteristics
@@ -1540,27 +1561,38 @@ void TypeCode::saveXml(ostream &s) const
   s << "</type>";
 }
 
-void TypeCode::restoreXml(const Element *el,TypeFactory &typegrp)
+/// \param el is the root XML element describing the code object
+void TypeCode::restoreStub(const Element *el)
+
+{
+  if (!el->getChildren().empty()) {
+    // Traditionally a <prototype> tag implies variable length, without a "varlength" attribute
+    flags |= variable_length;
+  }
+  restoreXmlBasic(el);
+}
+
+/// A single child element indicates a full function prototype.
+/// \param el is the root XML tag describing the code object
+/// \param isConstructor is \b true if the prototype is a constructor
+/// \param isDestructor is \b true if the prototype is a destructor
+/// \param typegrp is the factory owning the code object
+void TypeCode::restorePrototype(const Element *el,bool isConstructor,bool isDestructor,TypeFactory &typegrp)
 
 {
   const List &list(el->getChildren());
   List::const_iterator iter;
   iter = list.begin();
   if (iter != list.end()) {
-    // Traditionally a <prototype> tag implies variable length, without a "varlength" attribute
-    flags |= variable_length;
+    Architecture *glb = typegrp.getArch();
+    factory = &typegrp;
+    proto = new FuncProto();
+    proto->setInternal( glb->defaultfp, typegrp.getTypeVoid() );
+    proto->restoreXml(*iter,glb);
+    proto->setConstructor(isConstructor);
+    proto->setDestructor(isDestructor);
   }
-  restoreXmlBasic(el);
-  if (proto != (FuncProto *)0) {
-    delete proto;
-    proto = (FuncProto *)0;
-  }
-  if (iter == list.end()) return; // No underlying prototype
-  Architecture *glb = typegrp.getArch();
-  factory = &typegrp;
-  proto = new FuncProto();
-  proto->setInternal( glb->defaultfp, typegrp.getTypeVoid() );
-  proto->restoreXml(*iter,glb);
+  markComplete();
 }
 
 /// This data-type can index either a local or the global scope
@@ -1718,6 +1750,9 @@ void TypeSpacebase::saveXml(ostream &s) const
   s << "</type>";
 }
 
+/// Parse the \<type> tag.
+/// \param el is the root XML element
+/// \param typegrp is the factory owning \b this data-type
 void TypeSpacebase::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
@@ -2036,7 +2071,7 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,
 {
   int4 offset,cursize,curalign;
 
-  if (!ot->isIncompleteStruct())
+  if (!ot->isIncomplete())
     throw LowlevelError("Can only set fields on an incomplete structure");
   offset = 0;
   vector<TypeField>::iterator iter;
@@ -2078,8 +2113,8 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,
 
   tree.erase(ot);
   ot->setFields(fd);
-  ot->flags &= ~(uint4)Datatype::struct_incomplete;
-  ot->flags |= (flags & (Datatype::opaque_string | Datatype::variable_length | Datatype::struct_incomplete));
+  ot->flags &= ~(uint4)Datatype::type_incomplete;
+  ot->flags |= (flags & (Datatype::opaque_string | Datatype::variable_length | Datatype::type_incomplete));
   if (fixedsize > 0) {		// If the caller is trying to force a size
     if (fixedsize > ot->size)	// If the forced size is bigger than the size required for fields
       ot->size = fixedsize;	//     Force the bigger size
@@ -2090,6 +2125,23 @@ bool TypeFactory::setFields(vector<TypeField> &fd,TypeStruct *ot,int4 fixedsize,
   recalcPointerSubmeta(ot, SUB_PTR);
   recalcPointerSubmeta(ot, SUB_PTR_STRUCT);
   return true;
+}
+
+/// The given prototype is copied into the given code data-type
+/// This method should only be used on an incomplete TypeCode. It will mark the TypeCode as complete.
+/// \param fp is the given prototype to copy
+/// \param newCode is the given code data-type
+/// \param flags are additional flags to transfer into the code data-type
+void TypeFactory::setPrototype(const FuncProto *fp,TypeCode *newCode,uint4 flags)
+
+{
+  if (!newCode->isIncomplete())
+    throw LowlevelError("Can only set prototype on incomplete data-type");
+  tree.erase(newCode);
+  newCode->setPrototype(this,fp);
+  newCode->flags &= ~(uint4)Datatype::type_incomplete;
+  newCode->flags |= (flags & (Datatype::variable_length | Datatype::type_incomplete));
+  tree.insert(newCode);
 }
 
 /// Set the list of enumeration values and identifiers for a TypeEnum
@@ -2284,7 +2336,8 @@ TypeCode *TypeFactory::getTypeCode(void)
   Datatype *ct = typecache[1][TYPE_CODE-TYPE_FLOAT];
   if (ct != (Datatype *)0)
     return (TypeCode *)ct;
-  TypeCode tmp("");
+  TypeCode tmp;		// A generic code object
+  tmp.markComplete();	// which is considered complete
   return (TypeCode *) findAdd(tmp);
 }
 
@@ -2296,8 +2349,10 @@ TypeCode *TypeFactory::getTypeCode(const string &nm)
 
 {
   if (nm.size()==0) return getTypeCode();
-  TypeCode tmp(nm);
+  TypeCode tmp;					// Generic code data-type
+  tmp.name = nm;				// with a name
   tmp.id = Datatype::hashName(nm);
+  tmp.markComplete();	// considered complete
   return (TypeCode *) findAdd(tmp);
 }
 
@@ -2445,7 +2500,8 @@ TypeStruct *TypeFactory::getTypeStruct(const string &n)
 {
 				// We should probably strip offsets here
 				// But I am currently choosing not to
-  TypeStruct tmp(n);
+  TypeStruct tmp;
+  tmp.name = n;
   tmp.id = Datatype::hashName(n);
   return (TypeStruct *) findAdd(tmp);
 }
@@ -2483,8 +2539,9 @@ TypeCode *TypeFactory::getTypeCode(ProtoModel *model,Datatype *outtype,
 				   const vector<Datatype *> &intypes,
 				   bool dotdotdot)
 {
-  TypeCode tc("");		// getFuncdata type with no name
-  tc.set(this,model,outtype,intypes,dotdotdot,getTypeVoid());
+  TypeCode tc;		// getFuncdata type with no name
+  tc.setPrototype(this,model,outtype,intypes,dotdotdot,getTypeVoid());
+  tc.markComplete();
   return (TypeCode *) findAdd(tc);
 }
 
@@ -2609,10 +2666,7 @@ Datatype *TypeFactory::restoreXmlTypeWithCodeFlags(const Element *el,bool isCons
   const Element *subel = *iter;
   if (subel->getAttributeValue("metatype") != "code")
     throw LowlevelError("Special type restoreXml does not see code");
-  TypeCode tc("");
-  tc.restoreXml(subel,*this);
-  tc.setProperties(isConstructor,isDestructor);		// Add in flags
-  tp.ptrto = findAdd(tc);				// THEN add to container
+  tp.ptrto = restoreCode(subel, isConstructor, isDestructor, false);
   return findAdd(tp);
 }
 
@@ -2701,53 +2755,61 @@ Datatype *TypeFactory::restoreTypedef(const Element *el)
   return getTypedef(defedType, nm, id);
 }
 
+/// If necessary create a stub object before parsing the field descriptions, to deal with recursive definitions
+/// \param el is the XML element describing the structure
+/// \param forcecore is \b true if the data-type is considered core
+/// \return the newly minted structure data-type
 Datatype* TypeFactory::restoreStruct(const Element *el,bool forcecore)
 
 {
-  string structname = el->getAttributeValue("name");
-  TypeStruct ts(structname);
-  int4 num = el->getNumAttributes();
-  uint8 newid = 0;
-  int4 structsize = 0;
-  bool isVarLength = false;
-  for(int4 i = 0;i < num;++i) {
-    const string &attribName(el->getAttributeName(i));
-    if (attribName == "id") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> newid;
-    }
-    else if (attribName == "size") {
-      istringstream s(el->getAttributeValue(i));
-      s.unsetf(ios::dec | ios::hex | ios::oct);
-      s >> structsize;
-    }
-    else if (attribName == "varlength") {
-      isVarLength = xml_readbool(el->getAttributeValue(i));
-    }
-  }
-  if (newid == 0)
-    newid = Datatype::hashName(structname);
-  if (isVarLength)
-    newid = Datatype::hashSize(newid,structsize);
-  Datatype *ct = findByIdLocal(structname,newid);
+  TypeStruct ts;
+  ts.restoreXmlBasic(el);
+  if (forcecore)
+    ts.flags |= Datatype::coretype;
+  Datatype *ct = findByIdLocal(ts.name,ts.id);
   if (ct == (Datatype*)0) {
-    ts.id = newid;
-    ts.size = structsize;	// Include size if we have it, so arrays can be defined without knowing struct fields
     ct = findAdd(ts);	// Create stub to allow recursive definitions
   }
   else if (ct->getMetatype() != TYPE_STRUCT)
-    throw LowlevelError("Trying to redefine type: " + structname);
-  ts.restoreXml(el,*this);
-  if (forcecore)
-    ts.flags |= Datatype::coretype;
-  if (!ct->isIncompleteStruct()) {	// Structure of this name was already present
+    throw LowlevelError("Trying to redefine type: " + ts.name);
+  ts.restoreFields(el,*this);
+  if (!ct->isIncomplete()) {	// Structure of this name was already present
     if (0 != ct->compareDependency(ts))
-      throw LowlevelError("Redefinition of structure: " + structname);
+      throw LowlevelError("Redefinition of structure: " + ts.name);
   }
   else {		// If structure is a placeholder stub
     if (!setFields(ts.field,(TypeStruct*)ct,ts.size,ts.flags)) // Define structure now by copying fields
       throw LowlevelError("Bad structure definition");
+  }
+  return ct;
+}
+
+/// If necessary create a stub object before parsing the prototype description, to deal with recursive definitions
+/// \param el is the XML element describing the code object
+/// \param isConstructor is \b true if any prototype should be treated as a constructor
+/// \param isDestructor is \b true if any prototype should be treated as a destructor
+/// \param forcecore is \b true if the data-type is considered core
+/// \return the newly minted code data-type
+Datatype *TypeFactory::restoreCode(const Element *el,bool isConstructor,bool isDestructor,bool forcecore)
+
+{
+  TypeCode tc;
+  tc.restoreStub(el);
+  if (forcecore)
+    tc.flags |= Datatype::coretype;
+  Datatype *ct = findByIdLocal(tc.name,tc.id);
+  if (ct == (Datatype *)0) {
+    ct = findAdd(tc);	// Create stub to allow recursive definitions
+  }
+  else if (ct->getMetatype() != TYPE_CODE)
+    throw LowlevelError("Trying to redefine type: " + tc.name);
+  tc.restorePrototype(el, isConstructor, isDestructor, *this);
+  if (!ct->isIncomplete()) {	// Code data-type of this name was already present
+    if (0 != ct->compareDependency(tc))
+      throw LowlevelError("Redefinition of code data-type: " + tc.name);
+  }
+  else {	// If there was a placeholder stub
+    setPrototype(tc.proto, (TypeCode *)ct, tc.flags);
   }
   return ct;
 }
@@ -2804,13 +2866,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
     }
     break;
   case TYPE_CODE:
-    {
-      TypeCode tc("");
-      tc.restoreXml(el,*this);
-      if (forcecore)
-	tc.flags |= Datatype::coretype;
-      ct = findAdd(tc);
-    }
+    ct = restoreCode(el,false, false, forcecore);
     break;
   default:
     for(int4 i=0;i<el->getNumAttributes();++i) {
@@ -2844,7 +2900,7 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
     }
     {
       TypeBase tb(0,TYPE_UNKNOWN);
-      tb.restoreXml(el,*this);
+      tb.restoreXmlBasic(el);
       if (forcecore)
 	tb.flags |= Datatype::coretype;
       ct = findAdd(tb);

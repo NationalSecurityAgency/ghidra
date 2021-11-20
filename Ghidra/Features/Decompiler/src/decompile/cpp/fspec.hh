@@ -78,7 +78,6 @@ private:
   bool isLeftJustified(void) const { return (((flags&force_left_justify)!=0)||(!spaceid->isBigEndian())); }
 public:
   ParamEntry(int4 grp) { group=grp; }			///< Constructor for use with restoreXml
-  ParamEntry(type_metatype t,int4 grp,int4 grpsize,const Address &loc,int4 sz,int4 mnsz,int4 align,bool normalstack);
   int4 getGroup(void) const { return group; }		///< Get the group id \b this belongs to
   int4 getGroupSize(void) const { return groupsize; }	///< Get the number of groups occupied by \b this
   int4 getSize(void) const { return size; }		///< Get the size of the memory range in bytes.
