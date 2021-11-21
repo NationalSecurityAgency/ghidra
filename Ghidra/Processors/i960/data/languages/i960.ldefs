@@ -6,7 +6,7 @@
             endian="little"
             size="32"
             variant="default"
-            version="1.1"
+            version="1.2"
             slafile="i960.sla"
             processorspec="i960.pspec"
             id="i960:LE:32:default">
@@ -18,7 +18,7 @@
             instructionEndian="little"
             size="32"
             variant="lebe"
-            version="1.1"
+            version="1.2"
             slafile="i960.sla"
             processorspec="i960.pspec"
             id="i960:LEBE:32:lebe">

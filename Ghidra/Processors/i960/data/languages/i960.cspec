@@ -92,15 +92,10 @@
         <pentry minsize="1" maxsize="4">
           <register name="g0"/>
         </pentry>
-        <pentry minsize="1" maxsize="4">
-          <register name="g1"/>
+        <pentry minsize="5" maxsize="8">
+          <addr space="join" piece1="g1" piece2="g0" />
         </pentry>
-        <pentry minsize="1" maxsize="4">
-          <register name="g2"/>
-        </pentry>
-        <pentry minsize="1" maxsize="4">
-          <register name="g3"/>
-        </pentry>
+	<!-- TODO  g2 and g3 -->
       </output>
       <unaffected>
         <register name="fp"/>
