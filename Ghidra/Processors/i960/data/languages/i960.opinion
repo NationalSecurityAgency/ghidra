@@ -1,0 +1,16 @@
+<opinions>
+    <constraint loader="Executable and Linking Format (ELF)" compilerSpecID="default">
+        <constraint primary="19" processor="i960"  endian="little" />     
+    </constraint>
+        <constraint loader="Common Object File Format (COFF)" compilerSpecID="default">
+	<!-- CORE/CORE1 0x1000 -->
+	<!-- KB/SB      0x2000 -->
+	<!-- CA/CX      0x5000 -->
+	<!-- KA/SA      0x6000 -->
+	<!-- JX         0x7000 -->
+	<!-- HX         0x8000 -->
+	<!-- CORE2      0x9000 -->
+        <constraint primary="352" processor="i960"  endian="little" /> <!-- RO text -->
+	<constraint primary="353" processor="i960"  endian="little" /> <!-- RW text -->
+    </constraint>
+</opinions>
