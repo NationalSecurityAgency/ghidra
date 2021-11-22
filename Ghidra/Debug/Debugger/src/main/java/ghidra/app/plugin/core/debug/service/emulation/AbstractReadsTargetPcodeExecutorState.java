@@ -17,9 +17,6 @@ package ghidra.app.plugin.core.debug.service.emulation;
 
 import java.util.concurrent.*;
 
-import com.google.common.collect.Range;
-import com.google.common.primitives.UnsignedLong;
-
 import ghidra.app.services.TraceRecorder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.pcode.exec.AccessPcodeExecutionException;
@@ -56,17 +53,19 @@ public abstract class AbstractReadsTargetPcodeExecutorState
 		@Override
 		public byte[] read(long offset, int size) {
 			if (source != null) {
-				AddressSet uninitialized = new AddressSet();
-				for (Range<UnsignedLong> rng : cache.getUninitialized(offset, offset + size - 1)
-						.asRanges()) {
-					uninitialized.add(space.getAddress(lower(rng)),
-						space.getAddress(upper(rng)));
-				}
+				AddressSet uninitialized =
+					addrSet(cache.getUninitialized(offset, offset + size - 1));
 				if (uninitialized.isEmpty()) {
 					return super.read(offset, size);
 				}
 
 				fillUninitialized(uninitialized);
+
+				AddressSet unknown =
+					computeUnknown(addrSet(cache.getUninitialized(offset, offset + size - 1)));
+				if (!unknown.isEmpty()) {
+					warnUnknown(unknown);
+				}
 			}
 
 			// TODO: What to flush when bytes in the trace change?

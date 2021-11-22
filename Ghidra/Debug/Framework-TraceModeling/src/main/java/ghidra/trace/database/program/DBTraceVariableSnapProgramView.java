@@ -15,8 +15,6 @@
  */
 package ghidra.trace.database.program;
 
-import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.DomainObjectChangeRecord;
 import ghidra.program.model.lang.CompilerSpec;
 import ghidra.program.model.listing.CodeUnit;
 import ghidra.trace.database.DBTrace;

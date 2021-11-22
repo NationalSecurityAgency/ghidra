@@ -15,7 +15,6 @@
  */
 package ghidra.pcode.exec.trace;
 
-import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.common.primitives.UnsignedLong;
 
@@ -30,20 +29,6 @@ public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorState
 	protected class CheckedCachedSpace extends CachedSpace {
 		public CheckedCachedSpace(AddressSpace space, TraceMemorySpace source, long snap) {
 			super(space, source, snap);
-		}
-
-		protected AddressRange addrRng(Range<UnsignedLong> rng) {
-			Address start = space.getAddress(lower(rng));
-			Address end = space.getAddress(upper(rng));
-			return new AddressRangeImpl(start, end);
-		}
-
-		protected AddressSet addrSet(RangeSet<UnsignedLong> set) {
-			AddressSet result = new AddressSet();
-			for (Range<UnsignedLong> rng : set.asRanges()) {
-				result.add(addrRng(rng));
-			}
-			return result;
 		}
 
 		@Override

@@ -61,6 +61,7 @@ public abstract class AbstractDBTraceSymbol extends DBAnnotatedObject
 	private static final byte SOURCE_CLEAR = ~(SOURCE_MASK << SOURCE_SHIFT);
 
 	private static final byte PRIMARY_MASK = 0x10;
+	@SuppressWarnings("unused")
 	private static final int PRIMARY_CLEAR = ~PRIMARY_MASK;
 
 	static final String NAME_COLUMN_NAME = "Name";

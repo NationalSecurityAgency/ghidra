@@ -15,16 +15,10 @@
  */
 package ghidra.trace.database.program;
 
-import java.io.InputStream;
-import java.util.*;
-
 import ghidra.framework.store.LockException;
-import ghidra.program.database.mem.ByteMappingScheme;
-import ghidra.program.database.mem.FileBytes;
-import ghidra.program.model.address.*;
-import ghidra.program.model.mem.*;
-import ghidra.trace.database.memory.DBTraceMemorySpace;
-import ghidra.trace.model.memory.TraceMemorySpaceInputStream;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.mem.MemoryBlock;
 
 public class DBTraceProgramViewMemorySpaceBlock extends AbstractDBTraceProgramViewMemoryBlock {
 

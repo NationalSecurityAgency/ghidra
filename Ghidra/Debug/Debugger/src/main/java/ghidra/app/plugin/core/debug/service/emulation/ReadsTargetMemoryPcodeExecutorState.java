@@ -62,7 +62,6 @@ public class ReadsTargetMemoryPcodeExecutorState
 					return;
 				}
 			}
-			Msg.warn(this, "Emulator read from UNKNOWN state: " + unknown);
 		}
 
 		protected boolean fillUnknownWithRecorder(AddressSet unknown) {
@@ -92,7 +91,7 @@ public class ReadsTargetMemoryPcodeExecutorState
 					long shift = mappedRng.getShift();
 					for (AddressRange subsrng : initialized.intersectRange(srng.getMinAddress(),
 						srng.getMaxAddress())) {
-						Msg.warn(this,
+						Msg.debug(this,
 							"Filling in unknown trace memory in emulator using mapped image: " +
 								program + ": " + subsrng);
 						long lower = subsrng.getMinAddress().getOffset();
@@ -107,6 +106,7 @@ public class ReadsTargetMemoryPcodeExecutorState
 										"  Partial read of " + subsrng + ". Got " + read +
 											" bytes");
 								}
+								// write(lower - shift, data, 0 ,read);
 								cache.putData(lower - shift, data, 0, read);
 							}
 							catch (MemoryAccessException | AddressOutOfBoundsException e) {
