@@ -29,7 +29,7 @@ import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
 import help.screenshot.GhidraScreenShotGenerator;
 

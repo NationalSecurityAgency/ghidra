@@ -26,8 +26,8 @@ import org.junit.Test;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.TraceSchedule;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITest {

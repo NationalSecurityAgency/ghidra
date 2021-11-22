@@ -38,6 +38,7 @@ import ghidra.app.plugin.core.debug.DebuggerPluginPackage;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.services.DebuggerListingService;
+import ghidra.app.services.DebuggerTraceManagerService;
 import ghidra.async.AsyncDebouncer;
 import ghidra.async.AsyncTimer;
 import ghidra.base.widgets.table.DataTypeTableCellEditor;
@@ -60,6 +61,7 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.*;
 import ghidra.trace.model.Trace.TraceMemoryBytesChangeType;
 import ghidra.trace.model.Trace.TraceMemoryStateChangeType;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceAddressSpace;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -237,8 +239,10 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 	private Trace currentTrace; // Copy for transition
 
 	@AutoServiceConsumed
-	private DebuggerListingService listingService; // TODO: For goto and selection
+	private DebuggerListingService listingService; // For goto and selection
 	// TODO: Allow address marking
+	@AutoServiceConsumed
+	private DebuggerTraceManagerService traceManager; // For goto time (emu mods)
 	@SuppressWarnings("unused")
 	private final AutoService.Wiring autoServiceWiring;
 
@@ -638,5 +642,9 @@ public class DebuggerWatchesProvider extends ComponentProviderAdapter {
 
 	public boolean isEditsEnabled() {
 		return actionEnableEdits.isSelected();
+	}
+
+	public void goToTime(TraceSchedule time) {
+		traceManager.activateTime(time);
 	}
 }
