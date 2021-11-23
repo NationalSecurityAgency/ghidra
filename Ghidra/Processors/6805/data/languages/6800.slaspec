@@ -1,0 +1,5 @@
+# sleigh specification file for Motorola 6800
+
+@define M6800 ""
+
+@include "6800.sinc"
