@@ -522,6 +522,7 @@ public class AddEditDialog extends DialogComponentProvider {
 	 */
 	private JPanel create() {
 		labelNameChoices = new GhidraComboBox<>();
+		labelNameChoices.setName("label.name.choices");
 		GhidraComboBox<NamespaceWrapper> comboBox = new GhidraComboBox<>();
 		comboBox.setEnterKeyForwarding(true);
 		namespaceChoices = comboBox;

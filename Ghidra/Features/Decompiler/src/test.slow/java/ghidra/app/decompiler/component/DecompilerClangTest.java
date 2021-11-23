@@ -17,14 +17,14 @@ package ghidra.app.decompiler.component;
 
 import static org.junit.Assert.*;
 
-import java.awt.Color;
-import java.awt.Window;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.swing.JButton;
+import javax.swing.*;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -41,6 +41,7 @@ import ghidra.app.decompiler.DecompileOptions.NamespaceStrategy;
 import ghidra.app.plugin.core.decompile.AbstractDecompilerTest;
 import ghidra.app.plugin.core.decompile.DecompilerProvider;
 import ghidra.app.plugin.core.decompile.actions.*;
+import ghidra.app.util.AddEditDialog;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.util.OptionsService;
 import ghidra.program.model.listing.CodeUnit;
@@ -457,6 +458,79 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 	}
 
 	@Test
+	public void testSecondaryHighlighting_ClearAll_DoesNotAffectOtherFunctions() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		   
+		   
+		Decomp of '_call_structure_B':
+			
+			1|
+			2| void _call_structure_B(B *b)
+			3|
+			4| {
+			5|   	_printf("call_structure_B: %s\n",b->name);
+			6|   	_call_structure_C(&b->c);
+			7|   	return;
+			8| }
+		
+		
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line1 = 5;
+		int charPosition1 = 2;
+		setDecompilerLocation(line1, charPosition1);
+		ClangToken token1 = getToken();
+
+		Color color1 = highlight();
+		assertAllFieldsSecondaryHighlighted(token1, color1);
+
+		decompile("100000e10"); // '_call_structure_B'
+
+		// 5:2 "_printf"
+		int line2 = 5;
+		int charPosition2 = 2;
+		setDecompilerLocation(line2, charPosition2);
+		ClangToken token2 = getToken();
+
+		Color color2 = highlight();
+		assertAllFieldsSecondaryHighlighted(token2, color2);
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		setDecompilerLocation(line1, charPosition1);
+		clearAllHighlights();
+
+		// token 1 cleared; token 2 still highlighted
+		assertNoFieldsSecondaryHighlighted(token1.getText());
+
+		decompile("100000e10"); // '_call_structure_B'
+		setDecompilerLocation(line2, charPosition2);
+		token2 = getToken();
+		assertAllFieldsSecondaryHighlighted(token2, color2);
+	}
+
+	@Test
 	public void testSecondaryHighlighting_RenameHighlightedVariable() {
 
 		/*
@@ -492,6 +566,49 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		Color color = highlight();
 
 		rename("bob");
+
+		token = getToken();
+		text = token.getText();
+		assertEquals("bob", text);
+		assertAllFieldsSecondaryHighlighted(token, color);
+	}
+
+	@Test
+	public void testSecondaryHighlighting_RenameHighlightedFunction() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+
+		ClangToken token = getToken();
+		String text = token.getText();
+		assertEquals("_printf", text);
+
+		Color color = highlight();
+
+		renameFunction("bob");
 
 		token = getToken();
 		text = token.getText();
@@ -936,6 +1053,56 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		setDecompilerLocation(line, charPosition);
 		token = getToken();
 		assertAllFieldsSecondaryHighlighted(token, color);
+	}
+
+	@Test
+	public void testSecondaryHighlighting_DoesNotApplyToOtherFunctions() {
+
+		/*
+		
+		 Decomp of '_call_structure_A':
+		 
+			1|
+			2| void _call_structure_A(A *a)
+			3|
+			4| {
+			5|  	_printf("call_structure_A: %s\n",a->name);
+			6|  	_printf("call_structure_A: %s\n",(a->b).name);
+			7|  	_printf("call_structure_A: %s\n",(a->b).c.name);
+			8|  	_printf("call_structure_A: %s\n",(a->b).c.d.name);
+			9|  	_printf("call_structure_A: %s\n",(a->b).c.d.e.name);
+		   10|  	_call_structure_B(&a->b);
+		   11|  	return;
+		   12|	}
+		
+		Decomp of '_call_structure_B':
+			
+			1|
+			2| void _call_structure_B(B *b)
+			3|
+			4| {
+			5|   	_printf("call_structure_B: %s\n",b->name);
+			6|   	_call_structure_C(&b->c);
+			7|   	return;
+			8| }
+		
+		
+		
+		 */
+
+		decompile("100000d60"); // '_call_structure_A'
+
+		// 5:2 "_printf"
+		int line = 5;
+		int charPosition = 2;
+		setDecompilerLocation(line, charPosition);
+		ClangToken token = getToken();
+
+		Color color = highlight();
+		assertAllFieldsSecondaryHighlighted(token, color);
+
+		decompile("100000e10"); // '_call_structure_B'
+		assertNoFieldsSecondaryHighlighted(token.getText());
 	}
 
 	@Test
@@ -1788,6 +1955,22 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		waitForDecompiler();
 	}
 
+	private void renameFunction(String newName) {
+		DockingActionIf action = getAction(decompiler, "Rename Function");
+		performAction(action, provider.getActionContext(null), false);
+
+		AddEditDialog dialog = waitForDialogComponent(AddEditDialog.class);
+		runSwing(() -> {
+			JComboBox<?> comboBox =
+				(JComboBox<?>) findComponentByName(dialog, "label.name.choices");
+			Component comp = comboBox.getEditor().getEditorComponent();
+			((JTextField) comp).setText(newName);
+		});
+
+		pressButtonByText(dialog, "OK");
+		waitForDecompiler();
+	}
+
 	private void clearAllHighlights() {
 
 		DockingActionIf highlightAction =
@@ -1903,7 +2086,8 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 		Color combinedColor = getCombinedHighlightColor(token);
 		ColorMatcher cm = new ColorMatcher(color, combinedColor);
 		Color actual = token.getHighlight();
-		assertTrue("Token is not highlighted: '" + token + "'" + "\n\texpected: " + cm +
+		String tokenString = token.toString() + " at line " + token.getLineParent().getLineNumber();
+		assertTrue("Token is not highlighted: '" + tokenString + "'" + "\n\texpected: " + cm +
 			"; found: " + toString(actual), cm.matches(actual));
 	}
 
@@ -2123,7 +2307,6 @@ public class DecompilerClangTest extends AbstractDecompilerTest {
 
 		ColorMatcher(Color... colors) {
 			// note: we allow null
-
 			for (Color c : colors) {
 				myColors.add(c);
 			}
