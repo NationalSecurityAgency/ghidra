@@ -21,7 +21,7 @@ import ghidra.app.plugin.core.debug.service.emulation.DebuggerEmulationServicePl
 import ghidra.app.plugin.core.debug.service.emulation.DebuggerTracePcodeEmulator;
 import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.trace.model.Trace;
-import ghidra.trace.model.time.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 

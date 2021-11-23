@@ -25,7 +25,7 @@ import ghidra.framework.plugintool.ServiceInfo;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.TriConsumer;
 
 @ServiceInfo(defaultProvider = DebuggerTraceManagerServicePlugin.class)
