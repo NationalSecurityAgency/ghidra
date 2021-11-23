@@ -56,7 +56,7 @@ public interface DebuggerEmulationService {
 	 * 
 	 * <p>
 	 * This is the preferred means of performing emulation. Because the underlying emulator may
-	 * request <em>blocking</em> read of a target, it is important that
+	 * request a <em>blocking</em> read from a target, it is important that
 	 * {@link #emulate(Trace, TraceSchedule, TaskMonitor)} is <em>never</em> called by the Swing
 	 * thread.
 	 * 
@@ -72,7 +72,9 @@ public interface DebuggerEmulationService {
 	 * 
 	 * <p>
 	 * To guarantee the emulator is present, call {@link #backgroundEmulate(Trace, TraceSchedule)}
-	 * first. WARNING: This emulator belongs to this service. Stepping it, or otherwise manipulating
+	 * first.
+	 * <p>
+	 * <b>WARNING:</b> This emulator belongs to this service. Stepping it, or otherwise manipulating
 	 * it without the service's knowledge can lead to unintended consequences.
 	 * 
 	 * @param trace the trace containing the initial state

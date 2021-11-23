@@ -258,7 +258,7 @@ public class DefaultPcodeThread<T> implements PcodeThread<T> {
 	}
 
 	protected void beginInstructionOrInject() {
-		PcodeProgram inj = injects.get(counter);
+		PcodeProgram inj = getInject(counter);
 		if (inj != null) {
 			instruction = null;
 			frame = executor.begin(inj);

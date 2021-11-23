@@ -15,6 +15,8 @@
  */
 package ghidra.app.plugin.core.debug.gui.pcode;
 
+import java.util.Map;
+
 import ghidra.pcode.exec.PcodeProgram;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.pcode.PcodeOp;
@@ -23,11 +25,14 @@ public class OpPcodeRow implements PcodeRow {
 	protected final Language language;
 	protected final PcodeOp op;
 	protected final boolean isNext;
+	protected final Map<Integer, String> useropNames;
 
-	public OpPcodeRow(Language language, PcodeOp op, boolean isNext) {
+	public OpPcodeRow(Language language, PcodeOp op, boolean isNext,
+			Map<Integer, String> useropNames) {
 		this.language = language;
 		this.op = op;
 		this.isNext = isNext;
+		this.useropNames = useropNames;
 	}
 
 	@Override
@@ -37,7 +42,7 @@ public class OpPcodeRow implements PcodeRow {
 
 	@Override
 	public String getCode() {
-		return "<html>" + PcodeProgram.opToString(language, op, true) + "</html>";
+		return "<html>" + PcodeProgram.opToString(language, op, true, useropNames) + "</html>";
 	}
 
 	public boolean isNext() {
