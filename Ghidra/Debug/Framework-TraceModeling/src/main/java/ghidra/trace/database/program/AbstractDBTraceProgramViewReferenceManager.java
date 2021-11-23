@@ -161,6 +161,15 @@ public abstract class AbstractDBTraceProgramViewReferenceManager implements Refe
 	}
 
 	@Override
+	public void removeAllReferencesTo(Address toAddr) {
+		if (refs(false) == null) {
+			return;
+		}
+		refs.clearReferencesTo(Range.closed(program.snap, program.snap),
+			new AddressRangeImpl(toAddr, toAddr));
+	}
+
+	@Override
 	public Reference[] getReferencesTo(Variable var) {
 		return TODO();
 	}
