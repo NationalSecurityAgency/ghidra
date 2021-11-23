@@ -81,7 +81,7 @@ public class DBTraceProgramViewMemoryTest extends AbstractGhidraHeadlessIntegrat
 		assertEquals(1, blocks.length);
 
 		MemoryBlock blk = blocks[0];
-		assertSame(blk, vmem.getBlock(io));
+		assertSame(blk, vmem.getRegionBlock(io));
 		assertEquals(".io", blk.getName());
 		assertEquals(b.addr(os, 0x1000), blk.getStart());
 		assertEquals(b.addr(os, 0x1fff), blk.getEnd());

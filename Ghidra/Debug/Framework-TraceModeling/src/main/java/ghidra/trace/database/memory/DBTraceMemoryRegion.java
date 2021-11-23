@@ -154,7 +154,7 @@ public class DBTraceMemoryRegion
 		try (LockHold hold = LockHold.lock(space.lock.writeLock())) {
 			this.name = name;
 			update(NAME_COLUMN);
-			space.trace.updateViewsChangeBlockName(this);
+			space.trace.updateViewsChangeRegionBlockName(this);
 		}
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
@@ -175,7 +175,7 @@ public class DBTraceMemoryRegion
 			checkPathConflicts(newLifespan, path);
 			Range<Long> oldLifespan = getLifespan();
 			doSetLifespan(newLifespan);
-			space.trace.updateViewsChangeBlockLifespan(this, oldLifespan, newLifespan);
+			space.trace.updateViewsChangeRegionBlockLifespan(this, oldLifespan, newLifespan);
 			space.trace.setChanged(
 				new TraceChangeRecord<>(TraceMemoryRegionChangeType.LIFESPAN_CHANGED,
 					space, this, oldLifespan, newLifespan));
@@ -218,7 +218,7 @@ public class DBTraceMemoryRegion
 			oldRange = range;
 			checkOverlapConflicts(lifespan, newRange);
 			doSetRange(newRange);
-			space.trace.updateViewsChangeBlockRange(this, oldRange, newRange);
+			space.trace.updateViewsChangeRegionBlockRange(this, oldRange, newRange);
 		}
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
@@ -278,7 +278,7 @@ public class DBTraceMemoryRegion
 				this.flags.add(f);
 			}
 			update(FLAGS_COLUMN);
-			space.trace.updateViewsChangeBlockFlags(this);
+			space.trace.updateViewsChangeRegionBlockFlags(this);
 		}
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
@@ -293,7 +293,7 @@ public class DBTraceMemoryRegion
 				this.flags.add(f);
 			}
 			update(FLAGS_COLUMN);
-			space.trace.updateViewsChangeBlockFlags(this);
+			space.trace.updateViewsChangeRegionBlockFlags(this);
 		}
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));
@@ -308,7 +308,7 @@ public class DBTraceMemoryRegion
 				this.flags.remove(f);
 			}
 			update(FLAGS_COLUMN);
-			space.trace.updateViewsChangeBlockFlags(this);
+			space.trace.updateViewsChangeRegionBlockFlags(this);
 		}
 		space.trace.setChanged(
 			new TraceChangeRecord<>(TraceMemoryRegionChangeType.CHANGED, space, this));

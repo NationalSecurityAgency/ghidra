@@ -125,7 +125,7 @@ public class ByteViewerLayoutModel implements LayoutModel {
 		if (index.compareTo(numIndexes) >= 0) {
 			return null;
 		}
-		List<Field> fields = new ArrayList<Field>(8);
+		List<Field> fields = new ArrayList<Field>(factorys.length);
 		for (FieldFactory factory : factorys) {
 			Field field = factory.getField(index);
 			if (field != null) {

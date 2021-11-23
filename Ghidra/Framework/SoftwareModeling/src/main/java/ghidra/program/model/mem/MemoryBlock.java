@@ -17,6 +17,7 @@ package ghidra.program.model.mem;
 
 import java.io.InputStream;
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.util.List;
 
 import ghidra.framework.store.LockException;
@@ -30,8 +31,8 @@ import ghidra.util.NamingUtilities;
 public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
-	 * A special EXTERNAL block may be created by certain program loaders (e.g., Elf) to
-	 * act as a stand-in for unknown external symbol locations.
+	 * A special EXTERNAL block may be created by certain program loaders (e.g., Elf) to act as a
+	 * stand-in for unknown external symbol locations.
 	 */
 	public static final String EXTERNAL_BLOCK_NAME = "EXTERNAL";
 
@@ -42,20 +43,21 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public static int EXECUTE = 0x1;
 
 	/**
-	 * Returns block permissions as a bit mask.
-	 * Permission bits defined as READ, WRITE, EXECUTE and VOLATILE 
+	 * Returns block permissions as a bit mask. Permission bits defined as READ, WRITE, EXECUTE and
+	 * VOLATILE
 	 */
 	public int getPermissions();
 
 	/**
-	 * Get memory data in the form of an InputStream. 
-	 * Null is returned for thos memory blocks which have no data.
+	 * Get memory data in the form of an InputStream. Null is returned for thos memory blocks which
+	 * have no data.
 	 */
 	public InputStream getData();
 
 	/**
 	 * Return whether addr is contained in this block.
-	 * @param addr address 
+	 * 
+	 * @param addr address
 	 */
 	public boolean contains(Address addr);
 
@@ -81,13 +83,21 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public long getSize();
 
 	/**
+	 * Get the number of bytes in this block.
+	 * 
+	 * @return the number of bytes in this block as a BigInteger
+	 */
+	public BigInteger getSizeAsBigInteger();
+
+	/**
 	 * Get the name of this block
 	 */
 	public String getName();
 
 	/**
-	 * Set the name for this block (See {@link NamingUtilities#isValidName(String)} for
-	 * naming rules).  Specified name must not conflict with an address space name.
+	 * Set the name for this block (See {@link NamingUtilities#isValidName(String)} for naming
+	 * rules). Specified name must not conflict with an address space name.
+	 * 
 	 * @param name the new name for this block.
 	 * @throws IllegalArgumentException if invalid name specified
 	 * @throws LockException renaming an Overlay block without exclusive access
@@ -102,6 +112,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Set the comment associated with this block.
+	 * 
 	 * @param comment the comment to associate with this block.
 	 */
 	public void setComment(String comment);
@@ -113,6 +124,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Sets the read property associated with this block.
+	 * 
 	 * @param r the value to set the read property to.
 	 */
 	public void setRead(boolean r);
@@ -124,6 +136,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Sets the write property associated with this block.
+	 * 
 	 * @param w the value to set the write property to.
 	 */
 	public void setWrite(boolean w);
@@ -135,12 +148,14 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Sets the execute property associated with this block.
+	 * 
 	 * @param e the value to set the execute property to.
 	 */
 	public void setExecute(boolean e);
 
 	/**
 	 * Sets the read, write, execute permissions on this block
+	 * 
 	 * @param read the read permission
 	 * @param write the write permission
 	 * @param execute the execute permission
@@ -148,13 +163,14 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public void setPermissions(boolean read, boolean write, boolean execute);
 
 	/**
-	 * Returns the value of the volatile property associated with this block.
-	 * This attribute is generally associated with block of I/O regions of memory.
+	 * Returns the value of the volatile property associated with this block. This attribute is
+	 * generally associated with block of I/O regions of memory.
 	 */
 	public boolean isVolatile();
 
 	/**
 	 * Sets the volatile property associated with this block.
+	 * 
 	 * @param v the value to set the volatile property to.
 	 */
 	public void setVolatile(boolean v);
@@ -168,48 +184,50 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Sets the name of the source file that provided the data.
+	 * 
 	 * @param sourceName the name of the source file.
 	 */
 	public void setSourceName(String sourceName);
 
 	/**
 	 * Returns the byte at the given address in this block.
+	 * 
 	 * @param addr the address.
-	 * @throws MemoryAccessException if any of the requested bytes are
-	 * uninitialized.
+	 * @throws MemoryAccessException if any of the requested bytes are uninitialized.
 	 * @throws IllegalArgumentException if the Address is not in this block.
 	 */
 	public byte getByte(Address addr) throws MemoryAccessException;
 
 	/**
-	 * Tries to get b.length bytes from this block at the given address.  May 
-	 * return fewer bytes if the requested length is beyond the end of the block.
+	 * Tries to get b.length bytes from this block at the given address. May return fewer bytes if
+	 * the requested length is beyond the end of the block.
+	 * 
 	 * @param addr the address from which to get the bytes.
 	 * @param b the byte array to populate.
 	 * @return the number of bytes actually populated.
-	 * @throws MemoryAccessException if any of the requested bytes are
-	 * uninitialized.
+	 * @throws MemoryAccessException if any of the requested bytes are uninitialized.
 	 * @throws IllegalArgumentException if the Address is not in this block.
 	 */
 	public int getBytes(Address addr, byte[] b) throws MemoryAccessException;
 
 	/**
-	 * Tries to get len bytes from this block at the given address and put them 
-	 * into the given byte array at the specified offet.  May return
-	 * fewer bytes if the requested length is beyond the end of the block.
+	 * Tries to get len bytes from this block at the given address and put them into the given byte
+	 * array at the specified offet. May return fewer bytes if the requested length is beyond the
+	 * end of the block.
+	 * 
 	 * @param addr the address from which to get the bytes.
 	 * @param b the byte array to populate.
 	 * @param off the offset into the byte array.
 	 * @param len the number of bytes to get.
 	 * @return the number of bytes actually populated.
-	 * @throws MemoryAccessException if any of the requested bytes are
-	 * uninitialized.
+	 * @throws MemoryAccessException if any of the requested bytes are uninitialized.
 	 * @throws IllegalArgumentException if the Address is not in this block.
 	 */
 	public int getBytes(Address addr, byte[] b, int off, int len) throws MemoryAccessException;
 
 	/**
 	 * Puts the given byte at the given address in this block.
+	 * 
 	 * @param addr the address.
 	 * @throws MemoryAccessException if the block is uninitialized
 	 * @throws IllegalArgumentException if the Address is not in this block.
@@ -217,26 +235,26 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	public void putByte(Address addr, byte b) throws MemoryAccessException;
 
 	/**
-	 * Tries to put b.length bytes from the specified byte array to this block. 
-	 * All the bytes may not be put if the requested length is beyond the end of
-	 * the block.
+	 * Tries to put b.length bytes from the specified byte array to this block. All the bytes may
+	 * not be put if the requested length is beyond the end of the block.
+	 * 
 	 * @param addr the address of where to put the bytes.
 	 * @param b the byte array containing the bytes to write.
-	 * @return the number of bytes actually written.	
+	 * @return the number of bytes actually written.
 	 * @throws MemoryAccessException if the block is uninitialized
 	 * @throws IllegalArgumentException if the Address is not in this block.
 	 */
 	public int putBytes(Address addr, byte[] b) throws MemoryAccessException;
 
 	/**
-	 * Tries to put len bytes from the specified byte array to this block.  All 
-	 * the bytes may not be written if the requested length is beyond the end of
-	 * the block.
+	 * Tries to put len bytes from the specified byte array to this block. All the bytes may not be
+	 * written if the requested length is beyond the end of the block.
+	 * 
 	 * @param addr the address of where to put the bytes.
 	 * @param b the byte array containing the bytes to write.
 	 * @param off the offset into the byte array.
 	 * @param len the number of bytes to write.
-	 * @return the number of bytes actually written.	
+	 * @return the number of bytes actually written.
 	 * @throws MemoryAccessException if the block is uninitialized
 	 * @throws IllegalArgumentException if the Address is not in this block.
 	 */
@@ -259,6 +277,7 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 
 	/**
 	 * Returns true if this is an overlay block (i.e., contained within overlay space).
+	 * 
 	 * @return true if this is an overlay block
 	 */
 	public boolean isOverlay();
@@ -266,21 +285,24 @@ public interface MemoryBlock extends Serializable, Comparable<MemoryBlock> {
 	/**
 	 * Returns true if this memory block is a real loaded block (i.e. RAM) and not a special block
 	 * containing file header data such as debug sections.
+	 * 
 	 * @return true if this is a loaded block and not a "special" block such as a file header.
 	 */
 	public boolean isLoaded();
 
 	/**
-	 * Returns a list of {@link MemoryBlockSourceInfo} objects for this block.  A block may consist of 
-	 * multiple sequences of bytes from different sources.  Each such source of bytes is described
-	 * by its respective SourceInfo object.  Blocks may have multiple sources after two or more
+	 * Returns a list of {@link MemoryBlockSourceInfo} objects for this block. A block may consist
+	 * of multiple sequences of bytes from different sources. Each such source of bytes is described
+	 * by its respective SourceInfo object. Blocks may have multiple sources after two or more
 	 * memory blocks have been joined together and the underlying byte sources can't be joined.
+	 * 
 	 * @return a list of SourceInfo objects, one for each different source of bytes in this block.
 	 */
 	public List<MemoryBlockSourceInfo> getSourceInfos();
 
 	/**
 	 * Determine if the specified address is contained within the reserved EXTERNAL block.
+	 * 
 	 * @param address address of interest
 	 * @param program
 	 * @return true if address is contained within the reserved EXTERNAL block, else false.

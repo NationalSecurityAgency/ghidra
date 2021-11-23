@@ -16,6 +16,7 @@
 package ghidra.trace.database.program;
 
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -142,6 +143,11 @@ public class DBTraceProgramViewRegisterMemoryBlock implements MemoryBlock {
 	@Override
 	public long getSize() {
 		return range.getLength();
+	}
+
+	@Override
+	public BigInteger getSizeAsBigInteger() {
+		return range.getBigLength();
 	}
 
 	@Override

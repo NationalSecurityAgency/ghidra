@@ -34,6 +34,11 @@ public class DBTraceProgramViewRegisterMemory extends AbstractDBTraceProgramView
 	}
 
 	@Override
+	public void setForceFullView(boolean forceFullView) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	protected void recomputeAddressSet() {
 		// AddressSet is always full space
 	}

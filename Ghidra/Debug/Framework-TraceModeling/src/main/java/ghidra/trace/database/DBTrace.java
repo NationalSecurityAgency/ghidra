@@ -716,30 +716,38 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 		}
 	}
 
-	public void updateViewsAddBlock(DBTraceMemoryRegion region) {
-		allViews(v -> v.updateMemoryAddBlock(region));
+	public void updateViewsAddRegionBlock(DBTraceMemoryRegion region) {
+		allViews(v -> v.updateMemoryAddRegionBlock(region));
 	}
 
-	public void updateViewsChangeBlockName(DBTraceMemoryRegion region) {
-		allViews(v -> v.updateMemoryChangeBlockName(region));
+	public void updateViewsChangeRegionBlockName(DBTraceMemoryRegion region) {
+		allViews(v -> v.updateMemoryChangeRegionBlockName(region));
 	}
 
-	public void updateViewsChangeBlockFlags(DBTraceMemoryRegion region) {
-		allViews(v -> v.updateMemoryChangeBlockFlags(region));
+	public void updateViewsChangeRegionBlockFlags(DBTraceMemoryRegion region) {
+		allViews(v -> v.updateMemoryChangeRegionBlockFlags(region));
 	}
 
-	public void updateViewsChangeBlockRange(DBTraceMemoryRegion region,
+	public void updateViewsChangeRegionBlockRange(DBTraceMemoryRegion region,
 			AddressRange oldRange, AddressRange newRange) {
-		allViews(v -> v.updateMemoryChangeBlockRange(region, oldRange, newRange));
+		allViews(v -> v.updateMemoryChangeRegionBlockRange(region, oldRange, newRange));
 	}
 
-	public void updateViewsChangeBlockLifespan(DBTraceMemoryRegion region,
+	public void updateViewsChangeRegionBlockLifespan(DBTraceMemoryRegion region,
 			Range<Long> oldLifespan, Range<Long> newLifespan) {
-		allViews(v -> v.updateMemoryChangeBlockLifespan(region, oldLifespan, newLifespan));
+		allViews(v -> v.updateMemoryChangeRegionBlockLifespan(region, oldLifespan, newLifespan));
 	}
 
-	public void updateViewsDeleteBlock(DBTraceMemoryRegion region) {
-		allViews(v -> v.updateMemoryDeleteBlock(region));
+	public void updateViewsDeleteRegionBlock(DBTraceMemoryRegion region) {
+		allViews(v -> v.updateMemoryDeleteRegionBlock(region));
+	}
+
+	public void updateViewsAddSpaceBlock(AddressSpace space) {
+		allViews(v -> v.updateMemoryAddSpaceBlock(space));
+	}
+
+	public void updateViewsDeleteSpaceBlock(AddressSpace space) {
+		allViews(v -> v.updateMemoryDeleteSpaceBlock(space));
 	}
 
 	public void updateViewsRefreshBlocks() {
