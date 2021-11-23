@@ -18,19 +18,19 @@ package ghidra.app.plugin.core.debug.service.modules;
 import java.util.Collection;
 
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.app.services.RegionMapProposal.RegionMapEntry;
 import ghidra.framework.cmd.BackgroundCommand;
 import ghidra.framework.model.DomainObject;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public class MapModulesBackgroundCommand extends BackgroundCommand {
+public class MapRegionsBackgroundCommand extends BackgroundCommand {
 	private final DebuggerStaticMappingService service;
-	private final Collection<ModuleMapEntry> entries;
+	private final Collection<RegionMapEntry> entries;
 
-	public MapModulesBackgroundCommand(DebuggerStaticMappingService service,
-			Collection<ModuleMapEntry> entries) {
-		super("Map modules", true, true, true);
+	public MapRegionsBackgroundCommand(DebuggerStaticMappingService service,
+			Collection<RegionMapEntry> entries) {
+		super("Map regions", true, true, true);
 		this.service = service;
 		this.entries = entries;
 	}
@@ -38,7 +38,7 @@ public class MapModulesBackgroundCommand extends BackgroundCommand {
 	@Override
 	public boolean applyTo(DomainObject obj, TaskMonitor monitor) {
 		try {
-			service.addModuleMappings(entries, monitor, true);
+			service.addRegionMappings(entries, monitor, true);
 		}
 		catch (CancelledException e) {
 			return false;

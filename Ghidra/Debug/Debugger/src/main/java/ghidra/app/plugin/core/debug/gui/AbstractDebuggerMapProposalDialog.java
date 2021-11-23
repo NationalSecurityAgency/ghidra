@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.gui.modules;
+package ghidra.app.plugin.core.debug.gui;
 
 import java.awt.BorderLayout;
 import java.util.Collection;
@@ -57,6 +57,16 @@ public abstract class AbstractDebuggerMapProposalDialog<R> extends DialogCompone
 		addCancelButton();
 
 		createActions();
+	}
+
+	/* testing */
+	public GTable getTable() {
+		return table;
+	}
+
+	/* testing */
+	public EnumeratedColumnTableModel<R> getTableModel() {
+		return tableModel;
 	}
 
 	protected void removeEntry(R entry) {
