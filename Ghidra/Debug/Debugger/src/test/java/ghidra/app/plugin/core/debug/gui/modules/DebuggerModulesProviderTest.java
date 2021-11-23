@@ -30,15 +30,16 @@ import docking.widgets.filechooser.GhidraFileChooser;
 import generic.Unique;
 import generic.test.category.NightlyCategory;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
+import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog;
+import ghidra.app.plugin.core.debug.gui.DebuggerBlockChooserDialog.MemoryBlockRow;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.*;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingPlugin;
 import ghidra.app.plugin.core.debug.gui.listing.DebuggerListingProvider;
-import ghidra.app.plugin.core.debug.gui.modules.DebuggerBlockChooserDialog.MemoryBlockRow;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerModuleMapProposalDialog.ModuleMapTableColumns;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerSectionMapProposalDialog.SectionMapTableColumns;
 import ghidra.app.services.DebuggerListingService;
-import ghidra.app.services.DebuggerStaticMappingService.ModuleMapEntry;
-import ghidra.app.services.DebuggerStaticMappingService.SectionMapEntry;
+import ghidra.app.services.ModuleMapProposal.ModuleMapEntry;
+import ghidra.app.services.SectionMapProposal.SectionMapEntry;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.attributes.TargetPrimitiveDataType.DefaultTargetPrimitiveDataType;
 import ghidra.dbg.attributes.TargetPrimitiveDataType.PrimitiveKind;
@@ -46,7 +47,6 @@ import ghidra.dbg.model.TestTargetModule;
 import ghidra.dbg.model.TestTargetTypedefDataType;
 import ghidra.dbg.util.TargetDataTypeConverter;
 import ghidra.framework.main.DataTreeDialog;
-import ghidra.framework.store.LockException;
 import ghidra.plugin.importer.ImporterPlugin;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.address.AddressSet;
@@ -126,7 +126,7 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		}
 	}
 
-	protected MemoryBlock addBlock() throws LockException, DuplicateNameException,
+	protected MemoryBlock addBlock() throws Exception,
 			MemoryConflictException, AddressOverflowException, CancelledException {
 		try (UndoableTransaction tid = UndoableTransaction.start(program, "Add block", true)) {
 			return program.getMemory()
@@ -232,13 +232,13 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		DebuggerSectionMapProposalDialog propDialog =
 			waitForDialogComponent(DebuggerSectionMapProposalDialog.class);
-		clickTableCell(propDialog.table, 0, SectionMapTableColumns.CHOOSE.ordinal(), 1);
+		clickTableCell(propDialog.getTable(), 0, SectionMapTableColumns.CHOOSE.ordinal(), 1);
 
 		DebuggerBlockChooserDialog blockDialog =
 			waitForDialogComponent(DebuggerBlockChooserDialog.class);
 
-		assertEquals(1, blockDialog.tableModel.getRowCount());
-		MemoryBlockRow row = blockDialog.tableModel.getModelData().get(0);
+		assertEquals(1, blockDialog.getTableModel().getRowCount());
+		MemoryBlockRow row = blockDialog.getTableModel().getModelData().get(0);
 		assertEquals(program, row.getProgram());
 		assertEquals(block, row.getBlock());
 		// NOTE: Other getters should be tested in a separate MemoryBlockRowTest
@@ -399,19 +399,19 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		DebuggerModuleMapProposalDialog propDialog =
 			waitForDialogComponent(DebuggerModuleMapProposalDialog.class);
 
-		List<ModuleMapEntry> proposal = propDialog.tableModel.getModelData();
+		List<ModuleMapEntry> proposal = propDialog.getTableModel().getModelData();
 		ModuleMapEntry entry = Unique.assertOne(proposal);
 		assertEquals(modExe, entry.getModule());
-		assertEquals(program, entry.getProgram());
+		assertEquals(program, entry.getToProgram());
 
-		clickTableCell(propDialog.table, 0, ModuleMapTableColumns.CHOOSE.ordinal(), 1);
+		clickTableCell(propDialog.getTable(), 0, ModuleMapTableColumns.CHOOSE.ordinal(), 1);
 
 		DataTreeDialog programDialog = waitForDialogComponent(DataTreeDialog.class);
 		assertEquals(program.getDomainFile(), programDialog.getDomainFile());
 
 		pressButtonByText(programDialog, "OK", true);
 
-		assertEquals(program, entry.getProgram());
+		assertEquals(program, entry.getToProgram());
 		// TODO: Test the changed case
 
 		Collection<? extends TraceStaticMapping> mappings =
@@ -428,6 +428,9 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(0x1000, sm.getLength()); // Block is 0x1000 in length
 		assertEquals(tb.addr(0x55550000), sm.getMinTraceAddress());
 	}
+
+	// TODO: testActionMapModulesTo
+	// TODO: testActionMapModuleTo
 
 	@Test
 	public void testActionMapSections() throws Exception {
@@ -461,16 +464,16 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		DebuggerSectionMapProposalDialog propDialog =
 			waitForDialogComponent(DebuggerSectionMapProposalDialog.class);
 
-		List<SectionMapEntry> proposal = propDialog.tableModel.getModelData();
+		List<SectionMapEntry> proposal = propDialog.getTableModel().getModelData();
 		SectionMapEntry entry = Unique.assertOne(proposal);
 		assertEquals(secExeText, entry.getSection());
 		assertEquals(block, entry.getBlock());
 
-		clickTableCell(propDialog.table, 0, SectionMapTableColumns.CHOOSE.ordinal(), 1);
+		clickTableCell(propDialog.getTable(), 0, SectionMapTableColumns.CHOOSE.ordinal(), 1);
 
 		DebuggerBlockChooserDialog blockDialog =
 			waitForDialogComponent(DebuggerBlockChooserDialog.class);
-		MemoryBlockRow row = Unique.assertOne(blockDialog.tableModel.getModelData());
+		MemoryBlockRow row = Unique.assertOne(blockDialog.getTableModel().getModelData());
 		assertEquals(block, row.getBlock());
 
 		pressButtonByText(blockDialog, "OK", true);
@@ -491,6 +494,9 @@ public class DebuggerModulesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertEquals(0x100, sm.getLength()); // Section is 0x100, though block is 0x1000 long
 		assertEquals(tb.addr(0x55550000), sm.getMinTraceAddress());
 	}
+
+	// TODO: testActionMapSectionsTo
+	// TODO: testActionMapSectionTo
 
 	@Test
 	public void testActionSelectAddresses() throws Exception {

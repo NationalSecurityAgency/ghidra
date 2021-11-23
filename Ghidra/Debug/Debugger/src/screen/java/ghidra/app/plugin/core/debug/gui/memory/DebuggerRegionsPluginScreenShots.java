@@ -22,23 +22,38 @@ import org.junit.*;
 import com.google.common.collect.Range;
 
 import ghidra.app.plugin.core.debug.service.tracemgr.DebuggerTraceManagerServicePlugin;
+import ghidra.app.plugin.core.progmgr.ProgramManagerPlugin;
 import ghidra.app.services.DebuggerTraceManagerService;
+import ghidra.app.services.ProgramManager;
+import ghidra.framework.model.DomainFolder;
+import ghidra.program.database.ProgramBuilder;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Program;
 import ghidra.test.ToyProgramBuilder;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.util.database.UndoableTransaction;
+import ghidra.util.task.TaskMonitor;
 import help.screenshot.GhidraScreenShotGenerator;
 
 public class DebuggerRegionsPluginScreenShots extends GhidraScreenShotGenerator {
 
+	ProgramManager programManager;
 	DebuggerTraceManagerService traceManager;
 	DebuggerRegionsPlugin regionsPlugin;
+	DebuggerRegionsProvider regionsProvider;
 	ToyDBTraceBuilder tb;
+	Program progBash;
+	Program progLibC;
 
 	@Before
 	public void setUpMine() throws Throwable {
+		programManager = addPlugin(tool, ProgramManagerPlugin.class);
 		traceManager = addPlugin(tool, DebuggerTraceManagerServicePlugin.class);
 		regionsPlugin = addPlugin(tool, DebuggerRegionsPlugin.class);
+
+		regionsProvider = waitForComponentProvider(DebuggerRegionsProvider.class);
 
 		tb = new ToyDBTraceBuilder("echo", ToyProgramBuilder._X64);
 	}
@@ -46,34 +61,97 @@ public class DebuggerRegionsPluginScreenShots extends GhidraScreenShotGenerator 
 	@After
 	public void tearDownMine() {
 		tb.close();
+
+		if (progBash != null) {
+			progBash.release(this);
+		}
+		if (progLibC != null) {
+			progLibC.release(this);
+		}
+	}
+
+	private static Address addr(Program program, long offset) {
+		return program.getAddressFactory().getDefaultAddressSpace().getAddress(offset);
+	}
+
+	private void populateTrace() throws Exception {
+		try (UndoableTransaction tid = tb.startTransaction()) {
+
+			long snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
+
+			DBTraceMemoryManager mm = tb.trace.getMemoryManager();
+			mm.addRegion("/bin/bash (400000:40ffff)", Range.atLeast(snap),
+				tb.range(0x00400000, 0x0040ffff),
+				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
+			mm.addRegion("/bin/bash (600000:60ffff)", Range.atLeast(snap),
+				tb.range(0x00600000, 0x0060ffff),
+				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE));
+			mm.addRegion("/lib/libc (7fac0000:7facffff)", Range.atLeast(snap),
+				tb.range(0x7fac0000, 0x7facffff),
+				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
+			mm.addRegion("/lib/libc (7fcc0000:7fccffff)", Range.atLeast(snap),
+				tb.range(0x7fcc0000, 0x7fccffff),
+				Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE));
+		}
+	}
+
+	private void populateTraceAndPrograms() throws Exception {
+		DomainFolder root = tool.getProject().getProjectData().getRootFolder();
+
+		populateTrace();
+
+		progBash = createDefaultProgram("bash", ProgramBuilder._X64, this);
+		progLibC = createDefaultProgram("libc.so.6", ProgramBuilder._X64, this);
+
+		try (UndoableTransaction tid = UndoableTransaction.start(progBash, "Add memory", true)) {
+			progBash.setImageBase(addr(progBash, 0x00400000), true);
+			progBash.getMemory()
+					.createInitializedBlock(".text", addr(progBash, 0x00400000), 0x10000, (byte) 0,
+						TaskMonitor.DUMMY, false);
+			progBash.getMemory()
+					.createInitializedBlock(".data", addr(progBash, 0x00600000), 0x10000, (byte) 0,
+						TaskMonitor.DUMMY, false);
+		}
+
+		try (UndoableTransaction tid = UndoableTransaction.start(progLibC, "Add memory", true)) {
+			progLibC.setImageBase(addr(progLibC, 0x00400000), true);
+			progLibC.getMemory()
+					.createInitializedBlock(".text", addr(progLibC, 0x00400000), 0x10000, (byte) 0,
+						TaskMonitor.DUMMY, false);
+			progLibC.getMemory()
+					.createInitializedBlock(".data", addr(progLibC, 0x00600000), 0x10000, (byte) 0,
+						TaskMonitor.DUMMY, false);
+		}
+
+		root.createFile("trace", tb.trace, TaskMonitor.DUMMY);
+		root.createFile("bash", progBash, TaskMonitor.DUMMY);
+		root.createFile("libc.so.6", progLibC, TaskMonitor.DUMMY);
+
+		traceManager.openTrace(tb.trace);
+		traceManager.activateTrace(tb.trace);
+
+		programManager.openProgram(progBash);
+		programManager.openProgram(progLibC);
 	}
 
 	@Test
 	public void testCaptureDebuggerRegionsPlugin() throws Throwable {
-		try (UndoableTransaction tid = tb.startTransaction()) {
-			long snap = tb.trace.getTimeManager().createSnapshot("First").getKey();
+		populateTrace();
 
-			tb.trace.getMemoryManager()
-					.addRegion("[400000:40ffff]", Range.atLeast(snap),
-						tb.range(0x00400000, 0x0040ffff),
-						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
-			tb.trace.getMemoryManager()
-					.addRegion("[600000:60ffff]", Range.atLeast(snap),
-						tb.range(0x00600000, 0x0060ffff),
-						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE));
-			tb.trace.getMemoryManager()
-					.addRegion("[7fac0000:7facffff]", Range.atLeast(snap),
-						tb.range(0x7fac0000, 0x7facffff),
-						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE));
-			tb.trace.getMemoryManager()
-					.addRegion("[7fae0000:7faeffff]", Range.atLeast(snap),
-						tb.range(0x7fae0000, 0x7faeffff),
-						Set.of(TraceMemoryFlag.READ, TraceMemoryFlag.WRITE));
+		traceManager.openTrace(tb.trace);
+		traceManager.activateTrace(tb.trace);
 
-			traceManager.openTrace(tb.trace);
-			traceManager.activateTrace(tb.trace);
+		captureIsolatedProvider(DebuggerRegionsProvider.class, 900, 300);
+	}
 
-			captureIsolatedProvider(DebuggerRegionsProvider.class, 900, 300);
-		}
+	@Test
+	public void testCaptureDebuggerRegionMapProposalDialog() throws Throwable {
+		populateTraceAndPrograms();
+
+		regionsProvider
+				.setSelectedRegions(Set.copyOf(tb.trace.getMemoryManager().getAllRegions()));
+		performAction(regionsProvider.actionMapRegions, false);
+
+		captureDialog(DebuggerRegionMapProposalDialog.class);
 	}
 }

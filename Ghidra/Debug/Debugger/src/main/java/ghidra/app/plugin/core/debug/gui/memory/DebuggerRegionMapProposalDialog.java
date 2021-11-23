@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.gui.modules;
+package ghidra.app.plugin.core.debug.gui.memory;
 
 import java.util.List;
 import java.util.Map;
@@ -27,24 +27,23 @@ import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
 import ghidra.app.plugin.core.debug.gui.AbstractDebuggerMapProposalDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
-import ghidra.app.plugin.core.debug.gui.DebuggerResources.MapSectionsAction;
-import ghidra.app.services.SectionMapProposal.SectionMapEntry;
+import ghidra.app.plugin.core.debug.gui.DebuggerResources.MapRegionsAction;
+import ghidra.app.services.RegionMapProposal.RegionMapEntry;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.Swing;
 
-public class DebuggerSectionMapProposalDialog
-		extends AbstractDebuggerMapProposalDialog<SectionMapEntry> {
+public class DebuggerRegionMapProposalDialog
+		extends AbstractDebuggerMapProposalDialog<RegionMapEntry> {
 
 	static final int BUTTON_SIZE = 32;
 
-	protected enum SectionMapTableColumns
-		implements EnumeratedTableColumn<SectionMapTableColumns, SectionMapEntry> {
+	protected enum RegionMapTableColumns
+		implements EnumeratedTableColumn<RegionMapTableColumns, RegionMapEntry> {
 		REMOVE("Remove", String.class, e -> "Remove Proposed Entry", (e, v) -> nop()),
-		MODULE_NAME("Module", String.class, e -> e.getModule().getName()),
-		SECTION_NAME("Section", String.class, e -> e.getSection().getName()),
-		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getSection().getStart()),
+		REGION_NAME("Region", String.class, e -> e.getRegion().getName()),
+		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getRegion().getMinAddress()),
 		CHOOSE("Choose", String.class, e -> "Choose Block", (e, s) -> nop()),
 		PROGRAM_NAME("Program", String.class, e -> e.getToProgram().getName()),
 		BLOCK_NAME("Block", String.class, e -> e.getBlock().getName()),
@@ -53,23 +52,23 @@ public class DebuggerSectionMapProposalDialog
 
 		private final String header;
 		private final Class<?> cls;
-		private final Function<SectionMapEntry, ?> getter;
-		private final BiConsumer<SectionMapEntry, Object> setter;
+		private final Function<RegionMapEntry, ?> getter;
+		private final BiConsumer<RegionMapEntry, Object> setter;
 
 		private static void nop() {
 		}
 
 		@SuppressWarnings("unchecked")
-		<T> SectionMapTableColumns(String header, Class<T> cls, Function<SectionMapEntry, T> getter,
-				BiConsumer<SectionMapEntry, T> setter) {
+		<T> RegionMapTableColumns(String header, Class<T> cls, Function<RegionMapEntry, T> getter,
+				BiConsumer<RegionMapEntry, T> setter) {
 			this.header = header;
 			this.cls = cls;
 			this.getter = getter;
-			this.setter = (BiConsumer<SectionMapEntry, Object>) setter;
+			this.setter = (BiConsumer<RegionMapEntry, Object>) setter;
 		}
 
-		<T> SectionMapTableColumns(String header, Class<T> cls,
-				Function<SectionMapEntry, T> getter) {
+		<T> RegionMapTableColumns(String header, Class<T> cls,
+				Function<RegionMapEntry, T> getter) {
 			this(header, cls, getter, null);
 		}
 
@@ -84,44 +83,44 @@ public class DebuggerSectionMapProposalDialog
 		}
 
 		@Override
-		public Object getValueOf(SectionMapEntry row) {
+		public Object getValueOf(RegionMapEntry row) {
 			return getter.apply(row);
 		}
 
 		@Override
-		public boolean isEditable(SectionMapEntry row) {
+		public boolean isEditable(RegionMapEntry row) {
 			return setter != null;
 		}
 
 		@Override
-		public void setValueOf(SectionMapEntry row, Object value) {
+		public void setValueOf(RegionMapEntry row, Object value) {
 			setter.accept(row, value);
 		}
 	}
 
-	protected static class SectionMapPropsalTableModel extends
-			DefaultEnumeratedColumnTableModel<SectionMapTableColumns, SectionMapEntry> {
+	protected static class RegionMapPropsalTableModel extends
+			DefaultEnumeratedColumnTableModel<RegionMapTableColumns, RegionMapEntry> {
 
-		public SectionMapPropsalTableModel() {
-			super("Section Map", SectionMapTableColumns.class);
+		public RegionMapPropsalTableModel() {
+			super("Region Map", RegionMapTableColumns.class);
 		}
 
 		@Override
-		public List<SectionMapTableColumns> defaultSortOrder() {
-			return List.of(SectionMapTableColumns.MODULE_NAME, SectionMapTableColumns.SECTION_NAME);
+		public List<RegionMapTableColumns> defaultSortOrder() {
+			return List.of(RegionMapTableColumns.REGION_NAME);
 		}
 	}
 
-	private final DebuggerModulesProvider provider;
+	private final DebuggerRegionsProvider provider;
 
-	public DebuggerSectionMapProposalDialog(DebuggerModulesProvider provider) {
-		super(MapSectionsAction.NAME);
+	public DebuggerRegionMapProposalDialog(DebuggerRegionsProvider provider) {
+		super(MapRegionsAction.NAME);
 		this.provider = provider;
 	}
 
 	@Override
-	protected SectionMapPropsalTableModel createTableModel() {
-		return new SectionMapPropsalTableModel();
+	protected RegionMapPropsalTableModel createTableModel() {
+		return new RegionMapPropsalTableModel();
 	}
 
 	@Override
@@ -131,28 +130,28 @@ public class DebuggerSectionMapProposalDialog
 
 		TableColumnModel columnModel = table.getColumnModel();
 
-		TableColumn removeCol = columnModel.getColumn(SectionMapTableColumns.REMOVE.ordinal());
+		TableColumn removeCol = columnModel.getColumn(RegionMapTableColumns.REMOVE.ordinal());
 		CellEditorUtils.installButton(table, filterPanel, removeCol,
 			DebuggerResources.ICON_DELETE, BUTTON_SIZE, this::removeEntry);
 
 		TableColumn dynBaseCol =
-			columnModel.getColumn(SectionMapTableColumns.DYNAMIC_BASE.ordinal());
+			columnModel.getColumn(RegionMapTableColumns.DYNAMIC_BASE.ordinal());
 		dynBaseCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
 
-		TableColumn chooseCol = columnModel.getColumn(SectionMapTableColumns.CHOOSE.ordinal());
+		TableColumn chooseCol = columnModel.getColumn(RegionMapTableColumns.CHOOSE.ordinal());
 		CellEditorUtils.installButton(table, filterPanel, chooseCol, DebuggerResources.ICON_PROGRAM,
 			BUTTON_SIZE, this::chooseAndSetBlock);
 
-		TableColumn stBaseCol = columnModel.getColumn(SectionMapTableColumns.STATIC_BASE.ordinal());
+		TableColumn stBaseCol = columnModel.getColumn(RegionMapTableColumns.STATIC_BASE.ordinal());
 		stBaseCol.setCellRenderer(CustomToStringCellRenderer.MONO_OBJECT);
 
-		TableColumn sizeCol = columnModel.getColumn(SectionMapTableColumns.SIZE.ordinal());
+		TableColumn sizeCol = columnModel.getColumn(RegionMapTableColumns.SIZE.ordinal());
 		sizeCol.setCellRenderer(CustomToStringCellRenderer.MONO_ULONG_HEX);
 	}
 
-	private void chooseAndSetBlock(SectionMapEntry entry) {
+	private void chooseAndSetBlock(RegionMapEntry entry) {
 		Map.Entry<Program, MemoryBlock> choice =
-			provider.askBlock(entry.getSection(), entry.getToProgram(), entry.getBlock());
+			provider.askBlock(entry.getRegion(), entry.getToProgram(), entry.getBlock());
 		if (choice == null) {
 			return;
 		}
