@@ -90,6 +90,11 @@ public class ReferenceManagerTestDouble implements ReferenceManager {
 	}
 
 	@Override
+	public void removeAllReferencesTo(Address toAddr) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
 	public Reference[] getReferencesTo(Variable var) {
 		throw new UnsupportedOperationException();
 	}
