@@ -25,7 +25,6 @@ import javax.swing.JTextField;
 import org.junit.*;
 
 import ghidra.app.cmd.function.CreateFunctionCmd;
-import ghidra.app.events.ProgramSelectionPluginEvent;
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
 import ghidra.app.services.ProgramManager;
 import ghidra.framework.Application;
@@ -33,7 +32,6 @@ import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.*;
-import ghidra.program.util.ProgramSelection;
 import ghidra.test.*;
 
 /**
@@ -58,8 +56,9 @@ public class AutoRenameLabelsScriptTest extends AbstractGhidraHeadedIntegrationT
 
 		env.showTool();
 		script =
-			Application.getModuleFile("Base", "ghidra_scripts/AutoRenameLabelsScript.java").getFile(
-				true);
+			Application.getModuleFile("Base", "ghidra_scripts/AutoRenameLabelsScript.java")
+					.getFile(
+						true);
 
 		env.showTool();
 	}
@@ -88,12 +87,8 @@ public class AutoRenameLabelsScriptTest extends AbstractGhidraHeadedIntegrationT
 		return builder.getProgram();
 	}
 
-	/*
-	 * @see TestCase#tearDown()
-	 */
 	@After
 	public void tearDown() throws Exception {
-		env.release(program);
 		env.dispose();
 	}
 
@@ -102,29 +97,23 @@ public class AutoRenameLabelsScriptTest extends AbstractGhidraHeadedIntegrationT
 		SymbolTable symbolTable = program.getSymbolTable();
 		Symbol s1 = symbolTable.getPrimarySymbol(addr(0x01003a94));
 		assertNotNull(s1);
-		assertTrue(s1.getSource() == SourceType.DEFAULT);
+		assertEquals(s1.getSource(), SourceType.DEFAULT);
 
 		Symbol s2 = symbolTable.getPrimarySymbol(addr(0x01003a97));
 		assertNotNull(s2);
-		assertTrue(s2.getSource() == SourceType.DEFAULT);
+		assertEquals(s2.getSource(), SourceType.DEFAULT);
 
-		ProgramSelection sel = new ProgramSelection(addr(0x01003a94), addr(0x01003a9b));
-		tool.firePluginEvent(new ProgramSelectionPluginEvent("test", sel, program));
-		waitForPostedSwingRunnables();
+		makeSelection(tool, program, addr(0x01003a94), addr(0x01003a9b));
 
 		ScriptTaskListener scriptID = env.runScript(script);
 
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Auto Rename Labels", 2000);
-		final JTextField tf = findComponent(dialog, JTextField.class);
+		JDialog dialog = waitForJDialog("Auto Rename Labels");
+		JTextField tf = findComponent(dialog, JTextField.class);
 		runSwing(() -> tf.setText("My_Label"));
 		pressButtonByText(dialog, "OK");
 		waitForScriptCompletion(scriptID, 100000);
 
-		program.flushEvents();
-		waitForPostedSwingRunnables();
-
-		s1 = symbolTable.getPrimarySymbol(addr(0x01003a94));
-		s2 = symbolTable.getPrimarySymbol(addr(0x01003a97));
+		waitForProgram(program);
 
 		assertEquals("My_Label1", s1.getName());
 		assertEquals("My_Label2", s2.getName());
@@ -134,39 +123,34 @@ public class AutoRenameLabelsScriptTest extends AbstractGhidraHeadedIntegrationT
 	public void testNoRenameOnUserDefined() throws Exception {
 		SymbolTable symbolTable = program.getSymbolTable();
 		Symbol s1 = symbolTable.getPrimarySymbol(addr(0x010046cc));
-		assertTrue(s1.getSource() == SourceType.DEFAULT);
+		assertEquals(s1.getSource(), SourceType.DEFAULT);
 
 		// create a function at 10046d0 so we don't have a default label
 		CreateFunctionCmd cmd =
 			new CreateFunctionCmd("My_Function1", addr(0x010046d0), null, SourceType.ANALYSIS);
-		tool.execute(cmd, program);
-		program.flushEvents();
-		waitForPostedSwingRunnables();
+		applyCmd(program, cmd);
 
 		Symbol s2 = symbolTable.getPrimarySymbol(addr(0x010046d0));
 		assertNotNull(s2);
-		assertTrue(s2.getSource() != SourceType.DEFAULT);
+		assertNotEquals(s2.getSource(), SourceType.DEFAULT);
 		String s2Name = s2.getName();
 
-		ProgramSelection sel = new ProgramSelection(addr(0x010046cc), addr(0x010046d0));
-		tool.firePluginEvent(new ProgramSelectionPluginEvent("test", sel, program));
-		waitForPostedSwingRunnables();
+		makeSelection(tool, program, addr(0x010046cc), addr(0x010046d0));
 
 		ScriptTaskListener scriptID = env.runScript(script);
 
-		JDialog dialog = waitForJDialog(tool.getToolFrame(), "Auto Rename Labels", 2000);
-		final JTextField tf = findComponent(dialog, JTextField.class);
+		JDialog dialog = waitForJDialog("Auto Rename Labels");
+		JTextField tf = findComponent(dialog, JTextField.class);
 		runSwing(() -> tf.setText("My_Label"));
 		pressButtonByText(dialog, "OK");
 		waitForScriptCompletion(scriptID, 100000);
 
-		program.flushEvents();
-		waitForPostedSwingRunnables();
-		s1 = symbolTable.getPrimarySymbol(addr(0x010046cc));
+		waitForProgram(program);
+
 		assertEquals("My_Label1", s1.getName());
+
 		// only dynamic label should get renamed
-		s2 = symbolTable.getPrimarySymbol(addr(0x010046d0));
-		assertTrue(!s2.getName().equals("My_Label2"));
+		assertFalse(s2.getName().equals("My_Label2"));
 		assertEquals(s2Name, s2.getName());
 	}
 

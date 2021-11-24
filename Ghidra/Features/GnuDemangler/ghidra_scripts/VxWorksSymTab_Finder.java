@@ -23,13 +23,13 @@
 //
 // Any existing Ghidra symbol table entries that collide with VxWorks symbol
 // table entries are deleted.  Mangled C++ symbol names are demangled.
-// 
+//
 // The VxWorks symbol table is an array [0..n-1] of (struct SYMBOL) entries.
 // The table may be immediately followed or preceeded by an (int) vxSymTblLen
 // value.
 //
 // Prerequisites:
-//	
+//
 //		- Program memory block(s) is(are) aligned with actual load addresses
 //		  (run something like MemAlignARM_LE.java)
 //
@@ -40,6 +40,8 @@
 //		  symbol table entry structure, if necessary
 //
 // @category VxWorks
+
+import java.util.List;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.cmd.label.DemanglerCmd;
@@ -593,7 +595,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 	 * @param symTbl
 	 * @param vxSymbol
 	 * @param tableLen
-	 * @throws Exception 
+	 * @throws Exception
 	 */
 	private void markSymbolTableLen(Address symTbl, VxSymbol vxSymbol, int symTblLen)
 			throws Exception {
@@ -651,9 +653,11 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 
 		if (demangled != null) {
 			new DemanglerCmd(addr, mangled).applyTo(currentProgram, monitor);
-			currentProgram.getSymbolTable()
-					.removeSymbolSpecial(
-						getSymbol(mangled, currentProgram.getGlobalNamespace()));
+			List<Symbol> symbols =
+				getSymbols(mangled, currentProgram.getGlobalNamespace());
+			if (!symbols.isEmpty()) {
+				currentProgram.getSymbolTable().removeSymbolSpecial(symbols.get(0));
+			}
 		}
 
 		return;
@@ -735,7 +739,7 @@ public class VxWorksSymTab_Finder extends GhidraScript {
 			return;
 		}
 
-		// Process VxWorks symbol table entries 
+		// Process VxWorks symbol table entries
 		println("Processing symbol table entries.");
 		Address symEntry = symTbl;
 		for (int i = 0; (i < symTblLen) && !monitor.isCancelled(); i++, symEntry =

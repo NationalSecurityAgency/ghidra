@@ -55,7 +55,7 @@ public class BackwardsSliceToPCodeOpsAction extends AbstractDecompilerAction {
 			}
 			DecompilerPanel decompilerPanel = context.getDecompilerPanel();
 			decompilerPanel.clearPrimaryHighlights();
-			decompilerPanel.addPcodeOpHighlights(backwardSlice,
+			decompilerPanel.addHighlights(backwardSlice,
 				decompilerPanel.getCurrentVariableHighlightColor());
 		}
 	}

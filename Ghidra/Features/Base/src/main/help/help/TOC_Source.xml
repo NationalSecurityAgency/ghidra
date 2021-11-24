@@ -333,6 +333,8 @@
                 <tocdef id="Search Results Window" sortgroup="h" text="Query Results Window" target="help/topics/Search/Query_Results_Dialog.htm" />
             </tocdef>
             
+            <tocdef id="DWARF External Debug Files" sortgroup="q" text="DWARF External Debug Files" target="help/topics/DWARFExternalDebugFilesPlugin/DWARFExternalDebugFilesPlugin.html" >
+            </tocdef>
         </tocdef> <!-- End Program Annotation -->
         
         <tocdef id="Scripting" text="Scripting" target="help/topics/GhidraScriptMgrPlugin/GhidraScriptMgrPlugin.htm" >

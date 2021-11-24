@@ -32,30 +32,25 @@ public class AutoRenameLabelsScript extends GhidraScript {
 			return;
 		}
 
-		String base = askString("Auto Rename Labels", "Enter label base name:");
-		if (base == null) {
-			println("No base value entered.");
+		String baseName = askString("Auto Rename Labels", "Enter label name prefix:");
+		if (baseName == null) {
 			return;
 		}
 
 		int num = 1;
-
 		AddressSetView view = currentSelection;
-		if ((view == null) || (view.isEmpty()))
+		if ((view == null) || (view.isEmpty())) {
 			return;
+		}
 
-		// Obtain the symbol table and listing from program
 		SymbolTable symbolTable = currentProgram.getSymbolTable();
-
-		// Get the addresses in the set.
 		AddressIterator it = view.getAddresses(true);
-
 		CompoundCmd cmd = new CompoundCmd("Auto Rename Labels");
 		while (it.hasNext()) {
 			Address address = it.next();
 			Symbol primary = symbolTable.getPrimarySymbol(address);
 			if (primary != null && primary.getSource() == SourceType.DEFAULT) {
-				cmd.add(new RenameLabelCmd(address, null, base + num++, SourceType.USER_DEFINED));
+				cmd.add(new RenameLabelCmd(primary, baseName + num++, SourceType.USER_DEFINED));
 			}
 		}
 		if (cmd.size() > 0) {

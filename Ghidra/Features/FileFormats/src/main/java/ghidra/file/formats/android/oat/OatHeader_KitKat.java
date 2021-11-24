@@ -16,10 +16,12 @@
 package ghidra.file.formats.android.oat;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverterUtil;
+import ghidra.file.formats.android.oat.bundle.OatBundle;
+import ghidra.file.formats.android.oat.oatdexfile.OatDexFile;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -56,8 +58,13 @@ public class OatHeader_KitKat extends OatHeader {
 	}
 
 	@Override
-	public void parse(BinaryReader reader, Object additionalData) throws IOException {
+	public void parse(BinaryReader reader, OatBundle bundle) throws IOException {
 		//do nothing
+	}
+
+	@Override
+	public int getOatDexFilesOffset(BinaryReader reader) {
+		return -1;//not supported
 	}
 
 	public int getChecksum() {
@@ -117,20 +124,17 @@ public class OatHeader_KitKat extends OatHeader {
 
 	@Override
 	public int getKeyValueStoreSize() {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public List<OatDexFile> getOatDexFileList() {
-		// TODO Auto-generated method stub
-		return null;
+		return Collections.emptyList();
 	}
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String className = StructConverterUtil.parseName(OatHeader_KitKat.class);
-		Structure structure = new StructureDataType(className, 0);
+		Structure structure = new StructureDataType(OatHeader_KitKat.class.getSimpleName(), 0);
 		structure.add(STRING, 4, "magic_", null);
 		structure.add(STRING, 4, "version_", null);
 		structure.add(DWORD, "adler32_checksum_", null);

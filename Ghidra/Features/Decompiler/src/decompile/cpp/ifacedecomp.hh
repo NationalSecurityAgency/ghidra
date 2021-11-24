@@ -46,10 +46,6 @@ public:
   CallGraph *cgraph;	///< Call-graph information for the program
   FunctionTestCollection *testCollection;		///< Executable environment from a datatest
 
-  map<Funcdata*,PrototypePieces> prototypePieces;
-  void storePrototypePieces( Funcdata *fd_in, PrototypePieces pp_in ) { prototypePieces.insert(pair<Funcdata*,PrototypePieces>(fd_in,pp_in)); }
-  PrototypePieces findPrototypePieces( Funcdata *fd_in ) { return (*prototypePieces.find(fd_in)).second; }
-
 #ifdef CPUI_RULECOMPILE
   string experimental_file;	// File containing experimental rules
 #endif
@@ -550,6 +546,11 @@ public:
 };
 
 class IfcReadonly : public IfaceDecompCommand {
+public:
+  virtual void execute(istream &s);
+};
+
+class IfcPointerSetting : public IfaceDecompCommand {
 public:
   virtual void execute(istream &s);
 };

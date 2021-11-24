@@ -18,15 +18,17 @@ package ghidra.app.util.bin.format.dwarf4.next;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.junit.Test;
 
+import ghidra.app.util.NamespaceUtils;
 import ghidra.app.util.bin.format.dwarf4.*;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFSourceLanguage;
 import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionOpCodes;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.listing.Function;
-import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.data.*;
+import ghidra.program.model.listing.*;
+import ghidra.program.model.symbol.Namespace;
 import ghidra.util.exception.CancelledException;
 
 public class DWARFFunctionImporterTest extends DWARFTestBase {
@@ -112,5 +114,47 @@ public class DWARFFunctionImporterTest extends DWARFTestBase {
 		DataType returnType = fooFunc.getReturnType();
 		assertNotNull(returnType);
 		assertEquals("int", returnType.getName());
+	}
+
+	@Test
+	public void testNamespace_with_reserved_chars()
+			throws CancelledException, IOException, DWARFException {
+		// simulate what happens when a C++ operator/ or a templated classname
+		// that contains a namespace template argument (templateclass<ns1::ns2::argclass>)
+		// is encountered and a Ghidra namespace is created
+
+		DebugInfoEntry intDIE = addInt(cu);
+		DebugInfoEntry floatDIE = addFloat(cu);
+		DebugInfoEntry struct1DIE = newStruct("mystruct::operator/()", 100).create(cu);
+		DebugInfoEntry nestedStructPtrDIE = addFwdPtr(cu, 1);
+		DebugInfoEntry nestedStructDIE =
+			newStruct("nested_struct", 10).setParent(struct1DIE).create(cu);
+		newMember(nestedStructDIE, "blah1", intDIE, 0).create(cu);
+		DebugInfoEntry fooDIE =
+			newSubprogram("foo", intDIE, 0x410, 10).setParent(nestedStructDIE).create(cu);
+		newFormalParam(fooDIE, "this", nestedStructPtrDIE, DWARFExpressionOpCodes.DW_OP_fbreg, 0x6c)
+				.create(cu);
+
+		newMember(struct1DIE, "f1", intDIE, 0).create(cu);
+		newMember(struct1DIE, "f2", floatDIE, 10).create(cu);
+		newMember(struct1DIE, "f3", nestedStructDIE, 20).create(cu);
+
+		importFunctions();
+
+		Function fooFunc = program.getListing().getFunctionAt(addr(0x410));
+		List<Namespace> nsParts = NamespaceUtils.getNamespaceParts(fooFunc.getParentNamespace());
+
+		assertEquals("foo", fooFunc.getName());
+		assertEquals("nested_struct",
+			((Pointer) fooFunc.getParameter(0).getDataType()).getDataType().getName());
+		assertEquals("__thiscall", fooFunc.getCallingConventionName());
+		assertEquals("nested_struct", nsParts.get(nsParts.size() - 1).getName());
+		assertEquals("mystruct::operator/()", nsParts.get(nsParts.size() - 2).getName());
+
+		// Test that VariableUtilities can find the structure for the this* pointer
+		Structure nestedStructDT1 = (Structure) dataMgr
+				.getDataType(new CategoryPath(rootCP, "mystruct::operator/()"), "nested_struct");
+		Structure nestedStructDT2 = VariableUtilities.findExistingClassStruct(fooFunc);
+		assertTrue(nestedStructDT1 == nestedStructDT2);
 	}
 }

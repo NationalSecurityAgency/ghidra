@@ -18,6 +18,7 @@ package ghidra.app.plugin.core.debug.service.model;
 import java.math.BigInteger;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.*;
 import java.util.stream.Collectors;
 
@@ -87,9 +88,8 @@ public class TraceObjectManager {
 		//objectListener.addListenerAndConsiderSuccessors(target);
 	}
 
-	public void init() {
-		objectListener.init();
-		eventListener.init();
+	public CompletableFuture<Void> init() {
+		return objectListener.init().thenCombine(eventListener.init(), (v1, v2) -> null);
 	}
 
 	private void defaultHandlers() {

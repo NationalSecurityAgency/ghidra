@@ -121,12 +121,36 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	// show shortened class template names in class structure field names
 	private static final boolean USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS = true;
 
+	// replace defined existing class structures (ie pdb, fid, demangler, or other)with ones created by 
+	// this script and rename the existing ones with a _REPLACED suffix
+	// NOTE: currently does not replace DWARF
+	// NEW OPTION:
+	private static final boolean REPLACE_EXISTING_CLASS_STRUCTURES = true;
+
 	private static final String CLASS_DATA_STRUCT_NAME = "_data";
 
 	private static final String CONSTRUCTOR_BOOKMARK = "CONSTRUCTOR";
 	private static final String DESTRUCTOR_BOOKMARK = "DESTRUCTOR";
 
 	private static final String INDETERMINATE_BOOKMARK = "INDETERMINATE";
+
+	// If replacedClassStructuresOption is set to the following, no replaced structures will be removed
+	// from the data type manager
+	private static final int DO_NOT_REMOVE_REPLACED_CLASS_STRUCTURES = 0;
+
+	// If replacedClassStructuresOption is set to the following, only empty existing class structures 
+	// that were replaced by this script will be removed from the data type manager 
+	private static final int REMOVE_EMPTY_REPLACED_CLASS_STRUCTURES = 1;
+
+	// If replacedClassStructuresOption is set to the following, all existing class structures that 
+	// were replaced by this script, including non-emtpy ones, will be removed from the data type 
+	// manager 
+	private static final int REMOVE_ALL_REPLACED_CLASS_STRUCTURES = 2;
+
+	// NEW OPTION - 
+	// This option allows the user to decide whether and how to remove replaced existing class structures
+	// using one of the above three flags
+	int replacedClassStructuresOption = DO_NOT_REMOVE_REPLACED_CLASS_STRUCTURES;
 
 	boolean programHasRTTIApplied = false;
 	boolean hasDebugSymbols;
@@ -162,6 +186,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			recoverClassesFromRTTI = new RTTIWindowsClassRecoverer(currentProgram,
 				currentLocation, state.getTool(), this, BOOKMARK_FOUND_FUNCTIONS,
 				USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS, nameVfunctions, hasDebugSymbols,
+				REPLACE_EXISTING_CLASS_STRUCTURES,
 				monitor);
 		}
 		else if (isGcc()) {
@@ -182,6 +207,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 			recoverClassesFromRTTI = new RTTIGccClassRecoverer(currentProgram, currentLocation,
 				state.getTool(), this, BOOKMARK_FOUND_FUNCTIONS,
 				USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS, nameVfunctions, hasDebugSymbols,
+				REPLACE_EXISTING_CLASS_STRUCTURES,
 				monitor);
 		}
 		else {
@@ -273,6 +299,17 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 		if (GRAPH_CLASS_HIERARCHIES) {
 			AttributedGraph graph = createGraph(recoveredClasses);
 			showGraph(graph);
+		}
+
+		if (replacedClassStructuresOption == REMOVE_EMPTY_REPLACED_CLASS_STRUCTURES) {
+			println("Removing all empty replaced class structures from the data type manager");
+			recoverClassesFromRTTI.removeReplacedClassStructures(recoveredClasses, false);
+		}
+
+		if (replacedClassStructuresOption == REMOVE_ALL_REPLACED_CLASS_STRUCTURES) {
+			println(
+				"Removing all replaced class structures from the data type manager, including non-empty ones");
+			recoverClassesFromRTTI.removeReplacedClassStructures(recoveredClasses, true);
 		}
 
 

@@ -105,7 +105,8 @@ public:
     modified = 4,		///< This op has been modified by the current action
     warning = 8,		///< Warning has been generated for this op
     incidental_copy = 0x10,	///< Treat this as \e incidental for parameter recovery algorithms
-    is_cpool_transformed = 0x20 ///< Have we checked for cpool transforms
+    is_cpool_transformed = 0x20, ///< Have we checked for cpool transforms
+    stop_propagation = 0x40	///< Stop propagation into output from descendants
   };
 private:
   TypeOp *opcode;		///< Pointer to class providing behavioral details of the operation
@@ -202,6 +203,9 @@ public:
   /// \brief Return \b true if we have already examined this cpool
   bool isCpoolTransformed(void) const { return ((addlflags&PcodeOp::is_cpool_transformed)!=0); }
   bool isCollapsible(void) const; ///< Return \b true if this can be collapsed to a COPY of a constant
+  bool stopsPropagation(void) const { return ((addlflags&stop_propagation)!=0); }	///< Is propagation from below stopped
+  void setStopPropagation(void) { addlflags |= stop_propagation; }	///< Stop propagation from below
+  void clearStopPropagation(void) { addlflags &= ~stop_propagation; }	///< Allow propagation from below
   /// \brief Return \b true if this LOADs or STOREs from a dynamic \e spacebase pointer
   bool usesSpacebasePtr(void) const { return ((flags&PcodeOp::spacebase_ptr)!=0); }
   uintm getCseHash(void) const;	///< Return hash indicating possibility of common subexpression elimination

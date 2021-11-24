@@ -136,4 +136,16 @@
     <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
   </language>
 
+  <language processor="Dalvik"
+            endian="little"
+            size="32"
+            variant="DEX Android12"
+            version="1.0"
+            slafile="Dalvik_DEX_Android12.sla"
+            processorspec="Dalvik_Base.pspec"
+            id="Dalvik:LE:32:DEX_Android12">
+    <description>Dalvik DEX Android12</description>
+    <compiler name="default" spec="Dalvik_Base.cspec" id="default"/>
+  </language>
+ 
 </language_definitions>

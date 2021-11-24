@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.util.exception.DuplicateNameException;
 
@@ -53,8 +54,8 @@ public class ArtFieldGroup implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String name = StructConverterUtil.parseName(ArtFieldGroup.class);
-		Structure structure = new StructureDataType(name + "_" + fieldCount, 0);
+		Structure structure = new StructureDataType(
+			ArtFieldGroup.class.getSimpleName() + "_" + fieldCount, 0);
 		structure.setCategoryPath(new CategoryPath("/art"));
 		structure.add(DWORD, "fieldCount", null);
 		for (int i = 0; i < fieldCount; ++i) {

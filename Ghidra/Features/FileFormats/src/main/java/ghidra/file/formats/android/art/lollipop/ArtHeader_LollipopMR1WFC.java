@@ -18,7 +18,6 @@ package ghidra.file.formats.android.art.lollipop;
 import java.io.IOException;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverterUtil;
 import ghidra.file.formats.android.art.ArtHeader;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
@@ -127,11 +126,11 @@ public class ArtHeader_LollipopMR1WFC extends ArtHeader {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = (Structure) super.toDataType();
 
-		String className = StructConverterUtil.parseName(ArtHeader_LollipopMR1WFC.class);
 		try {
-			structure.setName(className);
+			structure.setName(ArtHeader_LollipopMR1WFC.class.getSimpleName());
 		}
 		catch (InvalidNameException e) {
+			//ignore
 		}
 
 		structure.add(DWORD, "image_begin_", null);

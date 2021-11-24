@@ -57,7 +57,7 @@ public class VdexHeaderAnalyzer extends FileFormatAnalyzer {
 
 	@Override
 	public boolean isPrototype() {
-		return true;
+		return false;
 	}
 
 	@Override
@@ -65,7 +65,7 @@ public class VdexHeaderAnalyzer extends FileFormatAnalyzer {
 			throws Exception {
 		Address address = VdexConstants.findVDEX(program);
 		if (address == null) {
-			log.appendMsg(getClass().getSimpleName() + " - no vdex header found, skipping");
+			log.appendMsg(getClass().getSimpleName() + " - no vdex header found in memory, skipping");
 			return true;
 		}
 		ByteProvider provider = new MemoryByteProvider(program.getMemory(), address);

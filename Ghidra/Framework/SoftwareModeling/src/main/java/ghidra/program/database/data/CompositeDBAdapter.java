@@ -68,8 +68,8 @@ abstract class CompositeDBAdapter {
 	}
 
 	/**
-	 * Gets an adapter for working with the composite data type database table. 
-	 * The composite table is used to store structures and unions. The adapter is based 
+	 * Gets an adapter for working with the composite data type database table.
+	 * The composite table is used to store structures and unions. The adapter is based
 	 * on the version of the database associated with the specified database handle and the openMode.
 	 * @param handle handle to the database to be accessed.
 	 * @param openMode the mode this adapter is to be opened for (CREATE, UPDATE, READ_ONLY, UPGRADE).
@@ -187,10 +187,10 @@ abstract class CompositeDBAdapter {
 	 * @param sourceArchiveID the ID for the source archive where this data type originated.
 	 * @param sourceDataTypeID the ID of the associated data type in the source archive.
 	 * @param lastChangeTime the time this data type was last changed.
-	 * @param packValue {@link CompositeInternal#NO_PACKING}, {@link CompositeInternal#DEFAULT_PACKING} 
+	 * @param packValue {@link CompositeInternal#NO_PACKING}, {@link CompositeInternal#DEFAULT_PACKING}
 	 * or the explicit pack value currently in use by this data type (positive value).
-	 * @param minAlignment {@link CompositeInternal#DEFAULT_ALIGNMENT}, {@link CompositeInternal#MACHINE_ALIGNMENT} 
-	 * or the minimum alignment value currently in use by this data type (positive value). 
+	 * @param minAlignment {@link CompositeInternal#DEFAULT_ALIGNMENT}, {@link CompositeInternal#MACHINE_ALIGNMENT}
+	 * or the minimum alignment value currently in use by this data type (positive value).
 	 * @return the database record for this data type.
 	 * @throws IOException if the database can't be accessed.
 	 */
@@ -216,7 +216,7 @@ abstract class CompositeDBAdapter {
 	/**
 	 * Updates the composite data type table with the provided record.
 	 * @param record the new record
-	 * @param setLastChangeTime true means change the last change time in the record to the 
+	 * @param setLastChangeTime true means change the last change time in the record to the
 	 * current time before putting the record in the database.
 	 * @throws IOException if the database can't be accessed.
 	 */
@@ -240,7 +240,7 @@ abstract class CompositeDBAdapter {
 	/**
 	 * Gets all the composite data types that are contained in the category that has the indicated ID.
 	 * @param categoryID the category whose composite data types are wanted.
-	 * @return an array of IDs as LongField values within Field array for the 
+	 * @return an array of IDs as LongField values within Field array for the
 	 * composite data types in the category.
 	 * @throws IOException if the database can't be accessed.
 	 */
@@ -256,7 +256,7 @@ abstract class CompositeDBAdapter {
 	abstract Field[] getRecordIdsForSourceArchive(long archiveID) throws IOException;
 
 	/**
-	 * Get composite record whoose sourceID and datatypeID match the specified Universal IDs.
+	 * Get composite record whose sourceID and datatypeID match the specified Universal IDs.
 	 * @param sourceID universal source archive ID
 	 * @param datatypeID universal datatype ID
 	 * @return composite record found or null

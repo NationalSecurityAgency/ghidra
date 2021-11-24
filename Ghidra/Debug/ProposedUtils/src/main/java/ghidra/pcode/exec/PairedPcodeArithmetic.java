@@ -66,9 +66,9 @@ public class PairedPcodeArithmetic<L, R> implements PcodeArithmetic<Pair<L, R>> 
 	}
 
 	@Override
-	public Pair<L, R> fromConst(BigInteger value, int size) {
-		return new ImmutablePair<>(leftArith.fromConst(value, size),
-			rightArith.fromConst(value, size));
+	public Pair<L, R> fromConst(BigInteger value, int size, boolean isContextreg) {
+		return new ImmutablePair<>(leftArith.fromConst(value, size, isContextreg),
+			rightArith.fromConst(value, size, isContextreg));
 	}
 
 	@Override
@@ -77,8 +77,8 @@ public class PairedPcodeArithmetic<L, R> implements PcodeArithmetic<Pair<L, R>> 
 	}
 
 	@Override
-	public BigInteger toConcrete(Pair<L, R> value) {
-		return leftArith.toConcrete(value.getLeft());
+	public BigInteger toConcrete(Pair<L, R> value, boolean isContextreg) {
+		return leftArith.toConcrete(value.getLeft(), isContextreg);
 	}
 
 	public PcodeArithmetic<L> getLeft() {

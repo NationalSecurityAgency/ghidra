@@ -20,10 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ghidra.app.util.bin.BinaryReader;
-import ghidra.app.util.bin.StructConverterUtil;
 import ghidra.file.formats.android.art.*;
 import ghidra.file.formats.android.art.android10.ImageMethod_10;
-import ghidra.file.formats.android.art.android10.ImageSections_10;
 import ghidra.file.formats.android.util.DecompressionManager;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Structure;
@@ -85,7 +83,7 @@ public class ArtHeader_11 extends ArtHeader {
 		image_roots_ = reader.readNextInt();
 		pointer_size_ = reader.readNextInt();
 
-		sections = new ImageSections_10(reader, this);
+		sections = ArtImageSectionsFactory.getArtImageSections(reader, this);
 		sections.parseSections(reader);
 
 		parseImageMethods(reader);
@@ -210,9 +208,8 @@ public class ArtHeader_11 extends ArtHeader {
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		Structure structure = (Structure) super.toDataType();
 
-		String className = StructConverterUtil.parseName(ArtHeader_11.class);
 		try {
-			structure.setName(className);
+			structure.setName(ArtHeader_11.class.getSimpleName());
 		}
 		catch (InvalidNameException e) {
 			//ignore

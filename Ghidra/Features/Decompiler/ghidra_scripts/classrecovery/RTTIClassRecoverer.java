@@ -40,12 +40,14 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 	TaskMonitor monitor;
 	boolean hasDebugSymbols;
 
+
 	RTTIClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVfunctions, boolean hasDebugSymbols,
+			boolean nameVfunctions, boolean hasDebugSymbols, boolean replaceClassStructures,
 			TaskMonitor monitor) {
 
 		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVfunctions,
+			replaceClassStructures,
 			monitor);
 
 		this.program = program;

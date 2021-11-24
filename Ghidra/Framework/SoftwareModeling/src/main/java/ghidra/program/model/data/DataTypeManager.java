@@ -69,14 +69,14 @@ public interface DataTypeManager {
 	 * Returns a unique name not currently used by any other dataType or category
 	 * with the same baseName
 	 * 
-	 * @param path the path of the name 
+	 * @param path the path of the name
 	 * @param baseName the base name to be made unique
 	 * @return a unique name starting with baseName
 	 */
 	public String getUniqueName(CategoryPath path, String baseName);
 
 	/**
-	 * Returns a dataType that is "in" (ie suitable implementation) this 
+	 * Returns a dataType that is "in" (ie suitable implementation) this
 	 * Manager, creating a new one if necessary.  Also the returned dataType
 	 * will be in a category in this dataTypeManager that is equivalent to the
 	 * category of the passed in dataType.
@@ -98,11 +98,11 @@ public interface DataTypeManager {
 	public DataType addDataType(DataType dataType, DataTypeConflictHandler handler);
 
 	/**
-	 * Sequentially adds a collection of datatypes to this data manager.  
+	 * Sequentially adds a collection of datatypes to this data manager.
 	 * This method provides the added benefit of equivalence caching
 	 * for improved performance.
 	 * <br>
-	 * WARNING: This is an experimental method whoose use may cause the GUI and
+	 * WARNING: This is an experimental method whose use may cause the GUI and
 	 * task monitor to become unresponsive due to extended hold times on the manager lock.
 	 * @param dataTypes collection of datatypes
 	 * @param handler conflict handler
@@ -165,7 +165,7 @@ public interface DataTypeManager {
 	 * @param updateCategoryPath if true, the replacementDt will have its categoryPath changed
 	 * to the exitingDt's path.
 	 * @return the resolved replacement dataType.
-	 * @throws DataTypeDependencyException if the replacement datatype depends on 
+	 * @throws DataTypeDependencyException if the replacement datatype depends on
 	 * the existing dataType;
 	 */
 	public DataType replaceDataType(DataType existingDt, DataType replacementDt,
@@ -179,7 +179,7 @@ public interface DataTypeManager {
 	 * name of a category in the same category as the datatype.  For example, if you call
 	 * getDataType("/a/b/c"), and "b/c" is the name of your datatype, it will find it unless
 	 * there is also a category "b" under category "a".  A better solution is to use
-	 * the {@link #getDataType(DataTypePath)} method because the DataTypePath keeps the 
+	 * the {@link #getDataType(DataTypePath)} method because the DataTypePath keeps the
 	 * category and datatype name separate.
 	 * 
 	 * @param dataTypePath path
@@ -204,10 +204,10 @@ public interface DataTypeManager {
 	public DataType getDataType(DataTypePath dataTypePath);
 
 	/**
-	* Returns the dataTypeId for the given dataType.  If the dataType is not 
+	* Returns the dataTypeId for the given dataType.  If the dataType is not
 	* currently in the dataTypeManger, it will be added
-	*  
-	 * @param dt the data type 
+	* 
+	 * @param dt the data type
 	 * @return the ID of the resolved type
 	*/
 	public long getResolvedID(DataType dt);
@@ -222,15 +222,15 @@ public interface DataTypeManager {
 	public long getID(DataType dt);
 
 	/**
-	 * Returns the dataType associated with the given dataTypeId or null if the dataTypeId is 
+	 * Returns the dataType associated with the given dataTypeId or null if the dataTypeId is
 	 * not valid
 	 * 
-	 * @param dataTypeID the ID 
+	 * @param dataTypeID the ID
 	 * @return the type
 	 */
 	public DataType getDataType(long dataTypeID);
 
-	/** 
+	/**
 	 * Returns the Category with the given id
 	 * 
 	 * @param categoryID id of the desired category
@@ -249,7 +249,7 @@ public interface DataTypeManager {
 	/**
 	 * Notification when data type is changed.
 	 * @param dataType data type that is changed
-	 * @param isAutoChange true if change was an automatic change in response to 
+	 * @param isAutoChange true if change was an automatic change in response to
 	 * another datatype's change (e.g., size, alignment).
 	 */
 	public void dataTypeChanged(DataType dataType, boolean isAutoChange);
@@ -291,7 +291,7 @@ public interface DataTypeManager {
 	/**
 	 * Return true if the given dataType exists in this data type manager
 	 * 
-	 * @param dataType the type 
+	 * @param dataType the type
 	 * @return true if the type is in this manager
 	 */
 	public boolean contains(DataType dataType);
@@ -367,12 +367,12 @@ public interface DataTypeManager {
 
 	/**
 	 * Returns a pointer of the given size to the given datatype.
-	 * Note: It is preferred to use default sized pointers when possible (i.e., size=-1, 
+	 * Note: It is preferred to use default sized pointers when possible (i.e., size=-1,
 	 * see {@link #getPointer(DataType)}) instead of explicitly specifying the size value.
 	 * 
 	 * @param datatype the pointed to data type
 	 * @param size the size of the pointer to be created or -1 for a default sized pointer
-	 * @return the pointer 
+	 * @return the pointer
 	 */
 	public Pointer getPointer(DataType datatype, int size);
 
@@ -476,7 +476,7 @@ public interface DataTypeManager {
 	public void associateDataTypeWithArchive(DataType datatype, SourceArchive archive);
 
 	/**
-	 * If the indicated data type is associated with a source archive, this will remove the 
+	 * If the indicated data type is associated with a source archive, this will remove the
 	 * association and the data type will become local to this data type manager.
 	 * @param datatype the data type to be disassociated from a source archive.
 	 */
@@ -501,8 +501,8 @@ public interface DataTypeManager {
 	public boolean updateSourceArchiveName(UniversalID sourceID, String name);
 
 	/**
-	 * Get the data organization associated with this data type manager.  Note that the 
-	 * DataOrganization settings may not be changed dynamically. 
+	 * Get the data organization associated with this data type manager.  Note that the
+	 * DataOrganization settings may not be changed dynamically.
 	 * @return data organization (will never be null)
 	 */
 	public DataOrganization getDataOrganization();
@@ -523,14 +523,14 @@ public interface DataTypeManager {
 
 	/**
 	 * Returns or creates a persisted version of the given source archive
-	 * @param sourceArchive the archive 
+	 * @param sourceArchive the archive
 	 * @return the archive
 	 */
 	public SourceArchive resolveSourceArchive(SourceArchive sourceArchive);
 
 	/**
-	 * Returns the data types within this data type manager that contain the specified data type. 
-	 * @param dataType the data type 
+	 * Returns the data types within this data type manager that contain the specified data type.
+	 * @param dataType the data type
 	 * @return a set of data types that contain the specified data type.
 	 */
 	public Set<DataType> getDataTypesContaining(DataType dataType);

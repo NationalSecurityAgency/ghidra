@@ -2825,31 +2825,37 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	Address getDefinedAddressAfter(Address address) {
-		DBRecord dataRec = null;
-		DBRecord instRec = null;
+		lock.acquire();
 		try {
-			dataRec = dataAdapter.getRecordAfter(address);
-			instRec = instAdapter.getRecordAfter(address);
+			DBRecord dataRec = null;
+			DBRecord instRec = null;
+			try {
+				dataRec = dataAdapter.getRecordAfter(address);
+				instRec = instAdapter.getRecordAfter(address);
+			}
+			catch (IOException e) {
+				program.dbError(e);
+				return null;
+			}
+			if (dataRec == null && instRec == null) {
+				return null;
+			}
+			if (dataRec == null) {
+				return addrMap.decodeAddress(instRec.getKey());
+			}
+			if (instRec == null) {
+				return addrMap.decodeAddress(dataRec.getKey());
+			}
+			Address dataAddr = addrMap.decodeAddress(dataRec.getKey());
+			Address instAddr = addrMap.decodeAddress(instRec.getKey());
+			if (dataAddr.compareTo(instAddr) < 0) {
+				return dataAddr;
+			}
+			return instAddr;
 		}
-		catch (IOException e) {
-			program.dbError(e);
-			return null;
+		finally {
+			lock.release();
 		}
-		if (dataRec == null && instRec == null) {
-			return null;
-		}
-		if (dataRec == null) {
-			return addrMap.decodeAddress(instRec.getKey());
-		}
-		if (instRec == null) {
-			return addrMap.decodeAddress(dataRec.getKey());
-		}
-		Address dataAddr = addrMap.decodeAddress(dataRec.getKey());
-		Address instAddr = addrMap.decodeAddress(instRec.getKey());
-		if (dataAddr.compareTo(instAddr) < 0) {
-			return dataAddr;
-		}
-		return instAddr;
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -3117,11 +3123,15 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 	}
 
 	int getLength(Address addr) {
+		lock.acquire();
 		try {
 			return lengthMgr.getInt(addr);
 		}
 		catch (NoValueException e) {
 			return -1;
+		}
+		finally {
+			lock.release();
 		}
 	}
 

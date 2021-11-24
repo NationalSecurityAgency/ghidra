@@ -27,7 +27,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Function;
 import ghidra.util.Msg;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.task.TaskMonitorAdapter;
+import ghidra.util.task.TaskMonitor;
 
 public class ImpliedMatchAssociationHook implements AssociationHook, VTControllerListener {
 	private VTSession session;
@@ -66,25 +66,27 @@ public class ImpliedMatchAssociationHook implements AssociationHook, VTControlle
 		if (source == null || destination == null) {
 			return;
 		}
+
 		AddressCorrelatorManager correlator = controller.getCorrelator();
-		if (autoCreateImpliedMatches) {
-			try {
-				Set<VTImpliedMatchInfo> impliedMatches =
-					ImpliedMatchUtils.findImpliedMatches(controller, source, destination, session,
-						correlator, TaskMonitorAdapter.DUMMY_MONITOR);
-				processAssociationAccepted(impliedMatches);
-			}
-			catch (Exception e) {
-				Msg.error(this, "Error auto-creating implied matches for association: " +
-					association);
-			}
+		if (!autoCreateImpliedMatches) {
+			return;
+		}
+
+		try {
+			TaskMonitor monitor = VTTaskMonitor.getTaskMonitor();
+			Set<VTImpliedMatchInfo> impliedMatches = ImpliedMatchUtils.findImpliedMatches(
+				controller, source, destination, session, correlator, monitor);
+			processAssociationAccepted(impliedMatches);
+		}
+		catch (CancelledException e) {
+			Msg.info(this, "User cancelled finding implied matches when accepting an assocation");
 		}
 	}
 
 	/**
 	 * When a match is accepted either create associated implied matches or if a match already
 	 * exists, increase the vote count
-	 * @param impliedMatches The implied matches set to either create or increase vote count 
+	 * @param impliedMatches The implied matches set to either create or increase vote count
 	 */
 	private void processAssociationAccepted(Set<VTImpliedMatchInfo> impliedMatches) {
 		for (VTImpliedMatchInfo impliedMatch : impliedMatches) {
@@ -112,15 +114,20 @@ public class ImpliedMatchAssociationHook implements AssociationHook, VTControlle
 		if (source == null || destination == null) {
 			return;
 		}
+
+		if (!autoCreateImpliedMatches) {
+			return;
+		}
+
 		AddressCorrelatorManager correlator = controller.getCorrelator();
 		try {
-			Set<VTImpliedMatchInfo> impliedMatches =
-				ImpliedMatchUtils.findImpliedMatches(controller, source, destination, session,
-					correlator, TaskMonitorAdapter.DUMMY_MONITOR);
+			TaskMonitor monitor = VTTaskMonitor.getTaskMonitor();
+			Set<VTImpliedMatchInfo> impliedMatches = ImpliedMatchUtils.findImpliedMatches(
+				controller, source, destination, session, correlator, monitor);
 			processAssociationCleared(impliedMatches);
 		}
 		catch (CancelledException e) {
-			// can't happen - using dummy monitor
+			Msg.info(this, "User cancelled finding implied matches when clearing an assocation");
 		}
 	}
 
@@ -182,7 +189,7 @@ public class ImpliedMatchAssociationHook implements AssociationHook, VTControlle
 
 	@Override
 	public void sessionUpdated(DomainObjectChangedEvent ev) {
-		// don't care		
+		// don't care
 	}
 
 }

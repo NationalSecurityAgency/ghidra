@@ -26,7 +26,7 @@ import ghidra.util.task.TaskMonitor;
  * <code>LongKeyRecordNode</code> is an abstract implementation of a BTree leaf node
  * which utilizes long key values and stores records.
  * <p>
- * This type of node has the following partial layout within a single DataBuffer 
+ * This type of node has the following partial layout within a single DataBuffer
  * (field size in bytes):
  * <pre>
  *   | NodeType(1) | KeyCount(4) | PrevLeafId(4) | NextLeafId(4) | ...
@@ -412,7 +412,7 @@ abstract class LongKeyRecordNode extends LongKeyNode implements RecordNode {
 
 	/**
 	 * Inserts the record at the given index if there is sufficient space in
-	 * the buffer. 
+	 * the buffer.
 	 * @param index insertion index
 	 * @param record record to be inserted
 	 * @return true if the record was successfully inserted.
@@ -421,7 +421,7 @@ abstract class LongKeyRecordNode extends LongKeyNode implements RecordNode {
 	abstract boolean insertRecord(int index, DBRecord record) throws IOException;
 
 	/**
-	 * Updates the record at the given index. 
+	 * Updates the record at the given index.
 	 * @param index record index
 	 * @param record new record
 	 * @return root node which may have changed.
@@ -448,7 +448,7 @@ abstract class LongKeyRecordNode extends LongKeyNode implements RecordNode {
 	abstract DBRecord getRecord(Schema schema, int index) throws IOException;
 
 	/**
-	 * Get the first record whoose key is less than the specified key.
+	 * Get the first record whose key is less than the specified key.
 	 * @param key record key
 	 * @param schema record data schema
 	 * @return Record requested or null if record not found.
@@ -470,7 +470,7 @@ abstract class LongKeyRecordNode extends LongKeyNode implements RecordNode {
 	}
 
 	/**
-	 * Get the first record whoose key is greater than the specified key.
+	 * Get the first record whose key is greater than the specified key.
 	 * @param key record key
 	 * @param schema record data schema
 	 * @return Record requested or null if record not found.
@@ -492,7 +492,7 @@ abstract class LongKeyRecordNode extends LongKeyNode implements RecordNode {
 	}
 
 	/**
-	 * Get the first record whoose key is less than or equal to the specified
+	 * Get the first record whose key is less than or equal to the specified
 	 * key.
 	 * @param key record key
 	 * @param schema record data schema
@@ -512,7 +512,7 @@ abstract class LongKeyRecordNode extends LongKeyNode implements RecordNode {
 	}
 
 	/**
-	 * Get the first record whoose key is greater than or equal to the specified
+	 * Get the first record whose key is greater than or equal to the specified
 	 * key.
 	 * @param key record key
 	 * @param schema record data schema

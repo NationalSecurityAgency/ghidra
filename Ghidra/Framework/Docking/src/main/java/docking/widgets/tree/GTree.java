@@ -943,13 +943,12 @@ public class GTree extends JPanel implements BusyListener {
 	}
 
 	/**
-	 * Requests that the node with the given name, in the given parent, be edited.  <b>This 
-	 * operation (as with many others on this tree) is asynchronous.</b>  This request will be
-	 * buffered as needed to wait for the given node to be added to the parent, up to a timeout
-	 * period.  
+	 * Requests that the node with the given name, in the given parent, be edited.  This 
+	 * operation is asynchronous.  This request will be buffered as needed to wait for 
+	 * the given node to be added to the parent, up to a timeout period.  
 	 * 
 	 * @param parent the parent node
-	 * @param childName the child node name
+	 * @param childName the name of the child to edit
 	 */
 	public void startEditing(GTreeNode parent, final String childName) {
 
@@ -970,6 +969,21 @@ public class GTree extends JPanel implements BusyListener {
 		ExpiringSwingTimer.runWhen(isReady, expireMs, () -> {
 			runTask(new GTreeStartEditingTask(GTree.this, tree, parent, childName));
 		});
+	}
+
+	/**
+	 * Requests that the node be edited.  This operation is asynchronous.  
+	 * 
+	 * @param child the node to edit
+	 */
+	public void startEditing(GTreeNode child) {
+
+		// we call this here, even though the JTree will do this for us, so that we will trigger
+		// a load call before this task is run, in case lazy nodes are involved in this tree,
+		// which must be loaded before we can edit
+		expandPath(child.getParent());
+
+		runTask(new GTreeStartEditingTask(GTree.this, tree, child));
 	}
 
 	@Override

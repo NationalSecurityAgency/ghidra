@@ -81,8 +81,7 @@ public class RenameLocalAction extends AbstractDecompilerAction {
 		HighSymbol highSymbol = findHighSymbolFromToken(tokenAtCursor, context.getHighFunction());
 
 		RenameVariableTask nameTask = new RenameVariableTask(tool, context.getProgram(),
-			context.getDecompilerPanel(),
-			tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
+			context.getComponentProvider(), tokenAtCursor, highSymbol, SourceType.USER_DEFINED);
 
 		nameTask.runTask(true);
 	}

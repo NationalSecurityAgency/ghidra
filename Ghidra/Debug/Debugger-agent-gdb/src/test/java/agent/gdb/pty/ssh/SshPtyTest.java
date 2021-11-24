@@ -82,7 +82,7 @@ public class SshPtyTest extends AbstractGhidraHeadedIntegrationTest {
 			out.write("exit\n".getBytes("UTF-8"));
 			out.flush();
 			new StreamPumper(pty.getParent().getInputStream(), System.out).start();
-			assertEquals(0, bash.waitExited().intValue());
+			assertEquals(0, bash.waitExited());
 		}
 	}
 }

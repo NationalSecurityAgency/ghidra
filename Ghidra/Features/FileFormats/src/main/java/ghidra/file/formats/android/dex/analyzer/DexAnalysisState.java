@@ -24,7 +24,6 @@ import ghidra.app.plugin.core.analysis.AnalysisStateInfo;
 import ghidra.file.formats.android.dex.DexHeaderFactory;
 import ghidra.file.formats.android.dex.format.*;
 import ghidra.file.formats.android.dex.util.DexUtil;
-import ghidra.framework.main.AppInfo;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.listing.Program;

@@ -54,7 +54,7 @@ public class ArtAnalyzer extends FileFormatAnalyzer {
 
 	@Override
 	public boolean isPrototype() {
-		return true;
+		return false;
 	}
 
 	@Override
@@ -75,7 +75,7 @@ public class ArtAnalyzer extends FileFormatAnalyzer {
 			DataType headerDataType = header.toDataType();
 
 			//only set "image base" when ART header not defined at "image begin"
-			//---this really only opens when ART is "added to" OAT program
+			//---this only happens when ART is "added to" OAT program
 			Address imageBase = toAddr(program, header.getImageBegin());
 
 			if (BinaryLoader.BINARY_NAME.equals(program.getExecutableFormat())) {

@@ -40,6 +40,8 @@ import ghidra.util.exception.DuplicateNameException;
  */
 public class CodeItem implements StructConverter {
 
+	public static final String CODE_ITEM = "code_item";
+
 	protected short registersSize;
 	protected short incomingSize;
 	protected short outgoingSize;
@@ -200,7 +202,7 @@ public class CodeItem implements StructConverter {
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		String suffix = hasPadding() ? "_p" : "";
-		String name = "code_item" + "_" + (instructionSize * 2) + suffix;
+		String name = CODE_ITEM + "_" + (instructionSize * 2) + suffix;
 		Structure structure = new StructureDataType(name, 0);
 		structure.add(WORD, "registers_size", null);
 		structure.add(WORD, "ins_size", null);
@@ -212,16 +214,6 @@ public class CodeItem implements StructConverter {
 		if (hasPadding()) {
 			structure.add(WORD, "padding", null);
 		}
-		// for ( int i = 0 ; i < tries.size( ) ; ++i ) {
-		// DataType dataType = tries.get( i ).toDataType( );
-		// structure.add( dataType, "tries_" + i, null );
-		// unique = dataType.getLength( );
-		// }
-		// if ( triesSize != 0 ) {
-		// DataType dataType = handlers.toDataType( );
-		// structure.add( dataType, "handlers", null );
-		// unique = dataType.getLength( );
-		// }
 		structure.setCategoryPath(new CategoryPath("/dex/code_item"));
 		return structure;
 	}

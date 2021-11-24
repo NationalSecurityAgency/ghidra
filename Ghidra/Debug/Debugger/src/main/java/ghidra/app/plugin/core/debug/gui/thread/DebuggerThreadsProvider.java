@@ -521,15 +521,20 @@ public class DebuggerThreadsProvider extends ComponentProviderAdapter {
 	}
 
 	private void rowActivated(ThreadRow row) {
+		if (row == null) {
+			return;
+		}
 		TraceThread thread = row.getThread();
 		Trace trace = thread.getTrace();
 		TraceRecorder recorder = modelService.getRecorder(trace);
-		if (recorder != null) {
-			TargetThread targetThread = recorder.getTargetThread(thread);
-			if (targetThread != null && targetThread.isValid()) {
-				DebugModelConventions.requestActivation(targetThread);
-			}
+		if (recorder == null) {
+			return;
 		}
+		TargetThread targetThread = recorder.getTargetThread(thread);
+		if (targetThread == null || !targetThread.isValid()) {
+			return;
+		}
+		DebugModelConventions.requestActivation(targetThread);
 	}
 
 	protected void buildMainPanel() {

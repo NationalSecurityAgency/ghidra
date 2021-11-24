@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +69,7 @@ public class DynamicLibraryModule implements StructConverter {
 		iinit_iterm                = reader.readNextInt();
 		ninit_nterm                = reader.readNextInt();
 		if (is32bit) {
-			objc_module_info_addr  = reader.readNextInt() & 0xffffffffL;
+			objc_module_info_addr  = reader.readNextUnsignedInt();
 		    objc_module_info_size  = reader.readNextInt();
 		}
 		else {

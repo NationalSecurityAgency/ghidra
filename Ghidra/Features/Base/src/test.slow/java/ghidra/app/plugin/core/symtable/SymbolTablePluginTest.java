@@ -28,6 +28,7 @@ import java.util.function.BiConsumer;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableModel;
+import javax.swing.text.JTextComponent;
 
 import org.jdom.Element;
 import org.junit.*;
@@ -346,10 +347,45 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		waitForNotBusy();
 
-		assertTrue(!symbolTable.isEditing());
+		assertFalse(symbolTable.isEditing());
 
 		Symbol s = getSymbol(row);
 		assertEquals("ghidra.Is.Cool", s.getName());
+	}
+
+	@Test
+	public void testEditName_AddNamespace() throws Exception {
+		openProgram("sample");
+
+		waitForNotBusy();
+
+		String symbolName = "ghidra";
+		int row = findRow(symbolName);
+
+		doubleClick(symbolTable, row, SymbolTableModel.LABEL_COL);
+		waitForSwing();
+		assertTrue(symbolTable.isEditing());
+
+		Component editor = symbolTable.getEditorComponent();
+		assertNotNull(editor);
+		JTextField textField = (JTextField) editor;
+		String currentText = getText(textField);
+		assertEquals(symbolName, currentText);
+
+		String newNamespaceName = "NS1";
+		JTextComponent textComponent = (JTextComponent) editor;
+		runSwing(() -> textComponent.selectAll());
+		myTypeText(editor, newNamespaceName + Namespace.DELIMITER + symbolName);
+		runSwing(() -> symbolTable.editingStopped(new ChangeEvent(symbolTable)));
+
+		waitForNotBusy();
+
+		assertFalse(symbolTable.isEditing());
+
+		Symbol s = getSymbol(row);
+		assertEquals(symbolName, s.getName());
+		Namespace namespace = s.getParentNamespace();
+		assertEquals(newNamespaceName, namespace.getName());
 	}
 
 	@Test
@@ -400,7 +436,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 		openProgram("sample");
 
 		int rowCount = symbolTable.getRowCount();
-		assertTrue(!deleteAction.isEnabled());
+		assertFalse(deleteAction.isEnabled());
 
 		int row = findRow("ghidra");
 		Rectangle rect = symbolTable.getCellRect(row, 0, true);
@@ -488,7 +524,7 @@ public class SymbolTablePluginTest extends AbstractGhidraHeadedIntegrationTest {
 	public void testMakeSelection() throws Exception {
 		openProgram("sample");
 
-		assertTrue(!makeSelectionAction.isEnabled());
+		assertFalse(makeSelectionAction.isEnabled());
 
 		int row1 = findRow("ghidra");
 		int row2 = findRow("KERNEL32.dll_GetProcAddress");

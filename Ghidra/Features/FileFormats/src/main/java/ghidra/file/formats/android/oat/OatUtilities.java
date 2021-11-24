@@ -34,14 +34,14 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.symbol.Symbol;
 import ghidra.program.model.symbol.SymbolTable;
 
-final class OatUtilities {
+public final class OatUtilities {
 
 	/**
 	 * Returns a BinaryReader based at the "oatdata" symbol.
 	 * The ".rodata" section contains the OAT information.
 	 * Returns null when the "oatdata" symbol does not exist.
 	 */
-	final static BinaryReader getBinaryReader(Program program) {
+	public static BinaryReader getBinaryReader(Program program) {
 		if (OatConstants.isOAT(program)) {
 			Symbol symbol = getOatDataSymbol(program);
 			if (symbol != null && symbol.getName().equals(OatConstants.SYMBOL_OAT_DATA)) {
@@ -53,11 +53,11 @@ final class OatUtilities {
 		return null;
 	}
 
-	final static boolean isELF(Program program) {
+	public static boolean isELF(Program program) {
 		return ElfLoader.ELF_NAME.equals(program.getExecutableFormat());
 	}
 
-	final static Symbol getOatDataSymbol(Program program) {
+	public static Symbol getOatDataSymbol(Program program) {
 		if (isELF(program)) {
 			MemoryBlock block = program.getMemory().getBlock(ElfSectionHeaderConstants.dot_rodata);
 			if (block != null) {
@@ -72,7 +72,7 @@ final class OatUtilities {
 		return null;
 	}
 
-	final static Symbol getOatExecSymbol(Program program) {
+	public static Symbol getOatExecSymbol(Program program) {
 		if (isELF(program)) {
 			MemoryBlock block = program.getMemory().getBlock(ElfSectionHeaderConstants.dot_text);
 			if (block != null) {
@@ -87,7 +87,7 @@ final class OatUtilities {
 		return null;
 	}
 
-	final static Symbol getOatLastWordSymbol(Program program) {
+	public static Symbol getOatLastWordSymbol(Program program) {
 		if (isELF(program)) {
 			MemoryBlock block = program.getMemory().getBlock(ElfSectionHeaderConstants.dot_text);
 			if (block != null) {
@@ -102,23 +102,14 @@ final class OatUtilities {
 		return null;
 	}
 
-//	final static Symbol getSymbol( Program program, String name ) {
-//		SymbolTable symbolTable = program.getSymbolTable( );
-//		List< Symbol > symbols = symbolTable.getSymbols( name, program.getGlobalNamespace( ) );
-//		if ( symbols.size( ) != 1 ) {
-//			return null;//TODO
-//		}
-//		return symbols.get( 0 );
-//	}
-
-	final static List<EncodedMethod> getAllMethods(ClassDataItem classDataItem) {
+	public static List<EncodedMethod> getAllMethods(ClassDataItem classDataItem) {
 		List<EncodedMethod> list = new ArrayList<EncodedMethod>();
 		list.addAll(classDataItem.getDirectMethods());
 		list.addAll(classDataItem.getVirtualMethods());
 		return list;
 	}
 
-	final static Address adjustForThumbAsNeeded(OatHeader oatHeader, Program program,
+	public static Address adjustForThumbAsNeeded(OatHeader oatHeader, Program program,
 			Address address, MessageLog log) {
 		long displacement = address.getOffset();
 		if (oatHeader.getInstructionSet() == OatInstructionSet.kThumb2) {

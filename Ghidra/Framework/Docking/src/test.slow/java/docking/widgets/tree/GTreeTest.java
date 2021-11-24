@@ -59,8 +59,10 @@ public class GTreeTest extends AbstractDockingTest {
 
 	@After
 	public void tearDown() throws Exception {
-		gTree.dispose();
-		frame.dispose();
+		runSwing(() -> {
+			gTree.dispose();
+			frame.dispose();
+		});
 	}
 
 	@Test

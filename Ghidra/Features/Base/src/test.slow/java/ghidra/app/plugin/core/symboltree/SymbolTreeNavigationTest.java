@@ -450,21 +450,16 @@ public class SymbolTreeNavigationTest extends AbstractProgramBasedTest {
 	}
 
 	private void rename(Symbol symbol, String newName) {
-
-		String oldName = symbol.getName();
-		RenameLabelCmd cmd =
-			new RenameLabelCmd(symbol.getAddress(), oldName, newName, SourceType.USER_DEFINED);
+		RenameLabelCmd cmd = new RenameLabelCmd(symbol, newName, SourceType.USER_DEFINED);
 		applyCmd(cmd);
 		util.waitForTree();
 	}
 
 	private Symbol createGlobalLabel(Address addr) {
-
 		return createGlobalLabel(addr, "GlobalLabel");
 	}
 
 	private Symbol createGlobalLabel(Address addr, String labelName) {
-
 		AddLabelCmd cmd = new AddLabelCmd(addr, labelName, SourceType.USER_DEFINED);
 		applyCmd(cmd);
 		Symbol symbol = cmd.getSymbol();

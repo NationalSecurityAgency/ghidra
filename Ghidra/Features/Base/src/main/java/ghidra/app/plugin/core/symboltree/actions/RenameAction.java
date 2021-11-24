@@ -1,6 +1,5 @@
 /* ###
  * IP: GHIDRA
- * REVIEWED: YES
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +15,13 @@
  */
 package ghidra.app.plugin.core.symboltree.actions;
 
-import ghidra.app.plugin.core.symboltree.SymbolTreeActionContext;
-import ghidra.app.plugin.core.symboltree.SymbolTreePlugin;
-import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
-
 import javax.swing.tree.TreePath;
 
 import docking.action.MenuData;
 import docking.widgets.tree.GTreeNode;
+import ghidra.app.plugin.core.symboltree.SymbolTreeActionContext;
+import ghidra.app.plugin.core.symboltree.SymbolTreePlugin;
+import ghidra.app.plugin.core.symboltree.nodes.SymbolNode;
 
 public class RenameAction extends SymbolTreeContextAction {
 
@@ -47,7 +45,7 @@ public class RenameAction extends SymbolTreeContextAction {
 	public void actionPerformed(SymbolTreeActionContext context) {
 		TreePath[] selectionPaths = context.getSelectedSymbolTreePaths();
 		GTreeNode node = (GTreeNode) selectionPaths[0].getLastPathComponent();
-		context.getSymbolTree().startEditing(node.getParent(), node.getName());
+		context.getSymbolTree().startEditing(node);
 	}
 
 }

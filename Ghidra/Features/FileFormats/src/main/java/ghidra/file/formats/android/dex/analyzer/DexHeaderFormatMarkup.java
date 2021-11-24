@@ -22,86 +22,39 @@ import java.util.List;
 import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.file.formats.android.cdex.CDexCodeItem;
-import ghidra.file.formats.android.dex.format.AccessFlags;
-import ghidra.file.formats.android.dex.format.AnnotationItem;
-import ghidra.file.formats.android.dex.format.AnnotationSetItem;
-import ghidra.file.formats.android.dex.format.AnnotationSetReferenceItem;
-import ghidra.file.formats.android.dex.format.AnnotationSetReferenceList;
-import ghidra.file.formats.android.dex.format.AnnotationsDirectoryItem;
-import ghidra.file.formats.android.dex.format.ClassDataItem;
-import ghidra.file.formats.android.dex.format.ClassDefItem;
-import ghidra.file.formats.android.dex.format.CodeItem;
-import ghidra.file.formats.android.dex.format.DebugInfoItem;
-import ghidra.file.formats.android.dex.format.DexHeader;
-import ghidra.file.formats.android.dex.format.EncodedArrayItem;
-import ghidra.file.formats.android.dex.format.EncodedCatchHandler;
-import ghidra.file.formats.android.dex.format.EncodedCatchHandlerList;
-import ghidra.file.formats.android.dex.format.EncodedField;
-import ghidra.file.formats.android.dex.format.EncodedMethod;
-import ghidra.file.formats.android.dex.format.FieldAnnotationsItem;
-import ghidra.file.formats.android.dex.format.FieldIDItem;
-import ghidra.file.formats.android.dex.format.MapItem;
-import ghidra.file.formats.android.dex.format.MapItemTypeCodes;
-import ghidra.file.formats.android.dex.format.MapList;
-import ghidra.file.formats.android.dex.format.MethodAnnotationsItem;
-import ghidra.file.formats.android.dex.format.MethodIDItem;
-import ghidra.file.formats.android.dex.format.ParameterAnnotationsItem;
-import ghidra.file.formats.android.dex.format.PrototypesIDItem;
-import ghidra.file.formats.android.dex.format.StringDataItem;
-import ghidra.file.formats.android.dex.format.StringIDItem;
-import ghidra.file.formats.android.dex.format.TryItem;
-import ghidra.file.formats.android.dex.format.TypeIDItem;
-import ghidra.file.formats.android.dex.format.TypeItem;
-import ghidra.file.formats.android.dex.format.TypeList;
+import ghidra.file.formats.android.dex.format.*;
 import ghidra.file.formats.android.dex.util.DexUtil;
 import ghidra.program.database.ProgramCompilerSpec;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.data.CategoryPath;
-import ghidra.program.model.data.DWordDataType;
-import ghidra.program.model.data.DataType;
-import ghidra.program.model.data.DataTypeConflictHandler;
-import ghidra.program.model.data.DataTypeManager;
-import ghidra.program.model.data.PointerDataType;
-import ghidra.program.model.data.TypedefDataType;
+import ghidra.program.model.data.*;
 import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
-import ghidra.program.model.listing.Data;
-import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.*;
 import ghidra.program.model.listing.Function.FunctionUpdateType;
-import ghidra.program.model.listing.Group;
-import ghidra.program.model.listing.LocalVariableImpl;
-import ghidra.program.model.listing.ParameterImpl;
-import ghidra.program.model.listing.Program;
-import ghidra.program.model.listing.ProgramFragment;
-import ghidra.program.model.listing.ProgramModule;
-import ghidra.program.model.listing.ReturnParameterImpl;
-import ghidra.program.model.listing.Variable;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.symbol.Namespace;
-import ghidra.program.model.symbol.RefType;
-import ghidra.program.model.symbol.SourceType;
-import ghidra.program.model.symbol.Symbol;
-import ghidra.program.model.symbol.SymbolTable;
-import ghidra.program.model.symbol.SymbolUtilities;
+import ghidra.program.model.symbol.*;
 import ghidra.util.NumericUtilities;
-import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.DuplicateNameException;
-import ghidra.util.exception.InvalidInputException;
-import ghidra.util.exception.NotEmptyException;
+import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
 public class DexHeaderFormatMarkup {
 
+	private DexHeaderFormatAnalyzer analyzer;
 	private Program program;
 	private Address baseAddress;
 	private FlatProgramAPI api;
+	private DexHeaderFragmentManager fragmentManager;
 
-	public DexHeaderFormatMarkup(Program program, Address baseAddress) {
+	public DexHeaderFormatMarkup(DexHeaderFormatAnalyzer analyzer, Program program,
+			Address baseAddress) {
+		this.analyzer = analyzer;
 		this.program = program;
 		this.baseAddress = baseAddress;
 		this.api = new FlatProgramAPI(program);
+		this.fragmentManager =
+			new DexHeaderFragmentManager(program, baseAddress, api, analyzer.isCreateFragments());
 	}
 
 	public boolean markup(TaskMonitor monitor, MessageLog log) throws Exception {
@@ -121,7 +74,7 @@ public class DexHeaderFormatMarkup {
 		DexHeader header = analysisState.getHeader();
 		processHeader(header);
 
-		createInitialFragments(header, monitor);
+		fragmentManager.createInitialFragments(header, monitor);
 
 		ProgramCompilerSpec.enableJavaLanguageDecompilation(program);
 		createNamespaces(header, monitor, log);
@@ -136,14 +89,17 @@ public class DexHeaderFormatMarkup {
 
 		createMethods(header, monitor, log);
 
+		fragmentManager.createFragments(monitor, log);
+
 		monitor.setMessage("DEX: cleaning up tree");
-		removeEmptyFragments();
+		analyzer.removeEmptyFragments(program);
 
 		return true;
 	}
 
 	private void createNamespaces(DexHeader header, TaskMonitor monitor, MessageLog log)
 			throws Exception {
+
 		monitor.setMessage("DEX: creating namespaces");
 		monitor.setMaximum(header.getClassDefsIdsSize());
 		monitor.setProgress(0);
@@ -167,6 +123,7 @@ public class DexHeaderFormatMarkup {
 
 	private void createMethods(DexHeader header, TaskMonitor monitor, MessageLog log)
 			throws Exception {
+
 		monitor.setMessage("DEX: creating methods");
 		monitor.setMaximum(header.getClassDefsIdsSize());
 		monitor.setProgress(0);
@@ -186,6 +143,7 @@ public class DexHeaderFormatMarkup {
 
 	private void createMethods(DexHeader header, ClassDefItem item, List<EncodedMethod> methods,
 			TaskMonitor monitor, MessageLog log) throws Exception {
+
 		String className = DexUtil.convertTypeIndexToString(header, item.getClassIndex());
 		Namespace classNameSpace = DexUtil.createNameSpaceFromMangledClassName(program, className);
 		if (classNameSpace == null) {
@@ -232,6 +190,7 @@ public class DexHeaderFormatMarkup {
 
 	private Symbol createMethodSymbol(Address methodAddress, String methodName,
 			Namespace classNameSpace, MessageLog log) {
+
 		program.getSymbolTable().addExternalEntryPoint(methodAddress);
 		try {
 			return program.getSymbolTable()
@@ -289,9 +248,8 @@ public class DexHeaderFormatMarkup {
 
 		int registerIndex = codeItem.getRegistersSize() - codeItem.getIncomingSize();
 
-		//TODO create local variables in between
 		for (int i = 0; i < registerIndex; ++i) {
-			DataType localDataType = null;//TODO
+			DataType localDataType = null;//default to UndefinedDataType of appropriate size
 			Register localRegister = language.getRegister("v" + i);
 			try {
 				LocalVariableImpl local =
@@ -303,7 +261,7 @@ public class DexHeaderFormatMarkup {
 			}
 		}
 
-		Variable returnVar = null;
+		Variable returnVar = null;//default to UndefinedDataType of appropriate size
 		List<Variable> paramList = new ArrayList<>();
 
 		int prototypeIndex = Short.toUnsignedInt(methodID.getProtoIndex());
@@ -373,11 +331,12 @@ public class DexHeaderFormatMarkup {
 		Address headerAddress = baseAddress.add(0x0);
 		DataType headerDataType = header.toDataType();
 		api.createData(headerAddress, headerDataType);
-		api.createFragment("header", headerAddress, headerDataType.getLength());
+		fragmentManager.createHeaderFragment(headerAddress, headerDataType);
 	}
 
 	private void processClassDefs(DexHeader header, TaskMonitor monitor, MessageLog log)
 			throws Exception {
+
 		monitor.setMessage("DEX: processing class definitions");
 		monitor.setMaximum(header.getClassDefsIdsSize());
 		monitor.setProgress(0);
@@ -392,7 +351,7 @@ public class DexHeaderFormatMarkup {
 
 			DataType dataType = item.toDataType();
 			api.createData(address, dataType);
-			api.createFragment("classes", address, dataType.getLength());
+			fragmentManager.classesAddressSet.add(address, address.add(dataType.getLength() - 1));
 			createClassDefSymbol(header, item, address);
 
 			processClassInterfaces(header, item, monitor);
@@ -409,6 +368,7 @@ public class DexHeaderFormatMarkup {
 
 	private void createProgramDataTypes(DexHeader header, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
+
 		monitor.setMessage("DEX: creating program datatypes");
 		monitor.setMaximum(header.getTypeIdsSize());
 		monitor.setProgress(0);
@@ -469,13 +429,15 @@ public class DexHeaderFormatMarkup {
 
 	private void processClassStaticValues(DexHeader header, ClassDefItem item, TaskMonitor monitor)
 			throws DuplicateNameException, IOException, Exception {
+
 		if (item.getStaticValuesOffset() > 0) {
 			EncodedArrayItem staticValues = item.getStaticValues();
 			Address staticAddress =
 				baseAddress.add(DexUtil.adjustOffset(item.getStaticValuesOffset(), header));
 			DataType staticDataType = staticValues.toDataType();
 			api.createData(staticAddress, staticDataType);
-			api.createFragment("class_static_values", staticAddress, staticDataType.getLength());
+			fragmentManager.classStaticValuesAddressSet.add(staticAddress,
+				staticAddress.add(staticDataType.getLength() - 1));
 
 			StringBuilder builder = new StringBuilder();
 			builder.append("Class: " +
@@ -489,6 +451,7 @@ public class DexHeaderFormatMarkup {
 
 	private void processClassDataItem(DexHeader header, ClassDefItem item, TaskMonitor monitor,
 			MessageLog log) throws DuplicateNameException, IOException, Exception {
+
 		if (item.getClassDataOffset() > 0) {
 			ClassDataItem classDataItem = item.getClassDataItem();
 			Address classDataAddress =
@@ -501,7 +464,8 @@ public class DexHeaderFormatMarkup {
 				log.appendMsg("Unable to create class data item at " + classDataAddress);
 				return;
 			}
-			api.createFragment("class_data", classDataAddress, classDataDataType.getLength());
+			fragmentManager.classDataAddressSet.add(classDataAddress,
+				classDataAddress.add(classDataDataType.getLength() - 1));
 
 			StringBuilder builder = new StringBuilder();
 			builder.append("Class: " +
@@ -523,6 +487,7 @@ public class DexHeaderFormatMarkup {
 
 	private void processEncodedFields(DexHeader header, List<EncodedField> instanceFields,
 			TaskMonitor monitor) throws Exception {
+
 		int index = 0;
 		for (int i = 0; i < instanceFields.size(); ++i) {
 			monitor.checkCanceled();
@@ -548,12 +513,14 @@ public class DexHeaderFormatMarkup {
 			DataType dataType = field.toDataType();
 			api.createData(address, dataType);
 			api.setPlateComment(address, builder.toString());
-			api.createFragment("encoded_fields", address, dataType.getLength());
+			fragmentManager.encodedFieldsAddressSet.add(address,
+				address.add(dataType.getLength() - 1));
 		}
 	}
 
 	private void processEncodedMethods(DexHeader header, ClassDefItem item,
 			List<EncodedMethod> methods, TaskMonitor monitor) throws Exception {
+
 		for (int i = 0; i < methods.size(); ++i) {
 			monitor.checkCanceled();
 
@@ -574,7 +541,8 @@ public class DexHeaderFormatMarkup {
 			DataType dataType = method.toDataType();
 			api.createData(address, dataType);
 			api.setPlateComment(address, builder.toString());
-			api.createFragment("encoded_methods", address, dataType.getLength());
+			fragmentManager.encodedMethodsAddressSet.add(address,
+				address.add(dataType.getLength() - 1));
 
 			processCodeItem(header, item, method, methodID);
 		}
@@ -621,7 +589,9 @@ public class DexHeaderFormatMarkup {
 
 					int codeItemDataTypeLength = codeItemDataType.getLength();
 
-					api.createFragment("code_item", codeAddress, codeItemDataTypeLength);
+					fragmentManager.codeItemAddressSet.add(codeAddress,
+						codeAddress.add(codeItemDataTypeLength - 1));
+
 					Address tempAddress = codeAddress.add(codeItemDataTypeLength);
 					tempAddress = processCodeItemTrys(tempAddress, codeItem);
 					processCodeItemHandlers(codeItem, tempAddress);
@@ -636,7 +606,8 @@ public class DexHeaderFormatMarkup {
 					DebugInfoItem debug = codeItem.getDebugInfo();
 					DataType debugDataType = debug.toDataType();
 					api.createData(debugAddress, debugDataType);
-					api.createFragment("debug_info", debugAddress, debugDataType.getLength());
+					fragmentManager.debugInfoAddressSet.add(debugAddress,
+						debugAddress.add(debugDataType.getLength() - 1));
 				}
 			}
 		}
@@ -644,6 +615,7 @@ public class DexHeaderFormatMarkup {
 
 	private void processCodeItemHandlers(CodeItem codeItem, Address tempAddress)
 			throws DuplicateNameException, IOException, Exception {
+
 		EncodedCatchHandlerList handlerList = codeItem.getHandlerList();
 		if (handlerList == null) {
 			return;
@@ -651,24 +623,28 @@ public class DexHeaderFormatMarkup {
 
 		DataType handlerDataType = handlerList.toDataType();
 		api.createData(tempAddress, handlerDataType);
-		api.createFragment("handlers", tempAddress, handlerDataType.getLength());
+		fragmentManager.handlersAddressSet.add(tempAddress,
+			tempAddress.add(handlerDataType.getLength() - 1));
 		tempAddress = tempAddress.add(handlerDataType.getLength());
 
 		for (EncodedCatchHandler handler : handlerList.getHandlers()) {
 			DataType dataType = handler.toDataType();
 			api.createData(tempAddress, dataType);
-			api.createFragment("handlers", tempAddress, dataType.getLength());
+			fragmentManager.handlersAddressSet.add(tempAddress,
+				tempAddress.add(dataType.getLength() - 1));
 			tempAddress = tempAddress.add(dataType.getLength());
 		}
 	}
 
 	private Address processCodeItemTrys(Address codeAddress, CodeItem codeItem)
 			throws DuplicateNameException, IOException, Exception {
+
 		Address tempAddress = codeAddress;
 		for (TryItem tryItem : codeItem.getTries()) {
 			DataType dataType = tryItem.toDataType();
 			api.createData(tempAddress, dataType);
-			api.createFragment("try", tempAddress, dataType.getLength());
+			fragmentManager.tryAddressSet.add(tempAddress,
+				tempAddress.add(dataType.getLength() - 1));
 			tempAddress = tempAddress.add(dataType.getLength());
 		}
 		return tempAddress;
@@ -677,13 +653,15 @@ public class DexHeaderFormatMarkup {
 	private void processClassAnnotations(DexHeader header, ClassDefItem item, TaskMonitor monitor,
 			MessageLog log)
 			throws DuplicateNameException, IOException, Exception, CancelledException {
+
 		if (item.getAnnotationsOffset() > 0) {
 			AnnotationsDirectoryItem annotationsDirectoryItem = item.getAnnotationsDirectoryItem();
 			Address annotationsAddress =
 				baseAddress.add(DexUtil.adjustOffset(item.getAnnotationsOffset(), header));
 			DataType annotationsDataType = annotationsDirectoryItem.toDataType();
 			api.createData(annotationsAddress, annotationsDataType);
-			api.createFragment("annotations", annotationsAddress, annotationsDataType.getLength());
+			fragmentManager.annotationsAddressSet.add(annotationsAddress,
+				annotationsAddress.add(annotationsDataType.getLength() - 1));
 
 			if (annotationsDirectoryItem.getClassAnnotationsOffset() > 0) {
 				Address classAddress = baseAddress.add(DexUtil.adjustOffset(
@@ -691,7 +669,8 @@ public class DexHeaderFormatMarkup {
 				AnnotationSetItem setItem = annotationsDirectoryItem.getClassAnnotations();
 				DataType setItemDataType = setItem.toDataType();
 				api.createData(classAddress, setItemDataType);
-				api.createFragment("class_annotations", classAddress, setItemDataType.getLength());
+				fragmentManager.classAnnotationsAddressSet.add(classAddress,
+					classAddress.add(setItemDataType.getLength() - 1));
 				processAnnotationSetItem(setItem, monitor, log);
 			}
 			for (FieldAnnotationsItem field : annotationsDirectoryItem.getFieldAnnotations()) {
@@ -701,7 +680,8 @@ public class DexHeaderFormatMarkup {
 				AnnotationSetItem setItem = field.getAnnotationSetItem();
 				DataType setItemDataType = setItem.toDataType();
 				api.createData(fieldAddress, setItemDataType);
-				api.createFragment("annotation_fields", fieldAddress, setItemDataType.getLength());
+				fragmentManager.annotationFieldsAddressSet.add(fieldAddress,
+					fieldAddress.add(setItemDataType.getLength() - 1));
 				processAnnotationSetItem(setItem, monitor, log);
 			}
 			for (MethodAnnotationsItem method : annotationsDirectoryItem.getMethodAnnotations()) {
@@ -711,8 +691,8 @@ public class DexHeaderFormatMarkup {
 				AnnotationSetItem setItem = method.getAnnotationSetItem();
 				DataType setItemDataType = setItem.toDataType();
 				api.createData(methodAddress, setItemDataType);
-				api.createFragment("annotation_methods", methodAddress,
-					setItemDataType.getLength());
+				fragmentManager.annotationMethodsAddressSet.add(methodAddress,
+					methodAddress.add(setItemDataType.getLength() - 1));
 				processAnnotationSetItem(setItem, monitor, log);
 			}
 			for (ParameterAnnotationsItem parameter : annotationsDirectoryItem
@@ -724,8 +704,8 @@ public class DexHeaderFormatMarkup {
 					parameter.getAnnotationSetReferenceList();
 				DataType listDataType = annotationSetReferenceList.toDataType();
 				api.createData(parameterAddress, listDataType);
-				api.createFragment("annotation_parameters", parameterAddress,
-					listDataType.getLength());
+				fragmentManager.annotationParametersAddressSet.add(parameterAddress,
+					parameterAddress.add(listDataType.getLength() - 1));
 
 				for (AnnotationSetReferenceItem refItem : annotationSetReferenceList.getItems()) {
 					AnnotationItem annotationItem = refItem.getItem();
@@ -735,8 +715,8 @@ public class DexHeaderFormatMarkup {
 							baseAddress.add(DexUtil.adjustOffset(annotationsItemOffset, header));
 						DataType annotationItemDataType = annotationItem.toDataType();
 						api.createData(annotationItemAddress, annotationItemDataType);
-						api.createFragment("annotation_item", annotationItemAddress,
-							annotationItemDataType.getLength());
+						fragmentManager.annotationItemAddressSet.add(annotationItemAddress,
+							annotationItemAddress.add(annotationItemDataType.getLength() - 1));
 					}
 				}
 			}
@@ -745,13 +725,15 @@ public class DexHeaderFormatMarkup {
 
 	private void processClassInterfaces(DexHeader header, ClassDefItem item, TaskMonitor monitor)
 			throws Exception {
+
 		if (item.getInterfacesOffset() > 0) {
 			TypeList interfaces = item.getInterfaces();
 			Address interfaceAddress =
 				baseAddress.add(DexUtil.adjustOffset(item.getInterfacesOffset(), header));
 			DataType interfaceDataType = interfaces.toDataType();
 			api.createData(interfaceAddress, interfaceDataType);
-			api.createFragment("interfaces", interfaceAddress, interfaceDataType.getLength());
+			fragmentManager.interfacesAddressSet.add(interfaceAddress,
+				interfaceAddress.add(interfaceDataType.getLength() - 1));
 
 			StringBuilder builder = new StringBuilder();
 			builder.append("Class: " +
@@ -775,7 +757,7 @@ public class DexHeaderFormatMarkup {
 //				AnnotationItem aItem = offsetItem.getItem();
 //				DataType aDataType = aItem.toDataType();
 //				api.createData( aAddress, aDataType);
-//				api.createFragment( "annotation_items", aAddress, aDataType.getLength());
+//				fragmentManager.annotationItemAddressSet.add(address, address.add( aDataType.getLength()-1));
 //			}
 		}
 		catch (Exception e) {
@@ -797,7 +779,7 @@ public class DexHeaderFormatMarkup {
 
 			DataType dataType = item.toDataType();
 			api.createData(address, dataType);
-			api.createFragment("methods", address, dataType.getLength());
+			fragmentManager.methodsAddressSet.add(address, address.add(dataType.getLength() - 1));
 
 			StringBuilder builder = new StringBuilder();
 			builder.append("Method Index: 0x" + Integer.toHexString(methodIndex) + "\n");
@@ -840,6 +822,7 @@ public class DexHeaderFormatMarkup {
 
 	private void processFields(DexHeader header, TaskMonitor monitor, MessageLog log)
 			throws Exception {
+
 		monitor.setMessage("DEX: processing fields");
 		monitor.setMaximum(header.getFieldIdsSize());
 		monitor.setProgress(0);
@@ -850,7 +833,7 @@ public class DexHeaderFormatMarkup {
 			monitor.incrementProgress(1);
 			DataType dataType = item.toDataType();
 			api.createData(address, dataType);
-			api.createFragment("fields", address, dataType.getLength());
+			fragmentManager.fieldsAddressSet.add(address, address.add(dataType.getLength() - 1));
 
 			StringBuilder builder = new StringBuilder();
 			builder.append("Field Index: 0x" + Integer.toHexString(index) + "\n");
@@ -869,6 +852,7 @@ public class DexHeaderFormatMarkup {
 
 	private void processPrototypes(DexHeader header, TaskMonitor monitor, MessageLog log)
 			throws Exception {
+
 		monitor.setMessage("DEX: processing prototypes");
 		monitor.setMaximum(header.getProtoIdsSize());
 		monitor.setProgress(0);
@@ -879,7 +863,8 @@ public class DexHeaderFormatMarkup {
 			monitor.incrementProgress(1);
 			DataType dataType = item.toDataType();
 			Data data = api.createData(address, dataType);
-			api.createFragment("prototypes", address, dataType.getLength());
+			fragmentManager.prototypesAddressSet.add(address,
+				address.add(dataType.getLength() - 1));
 
 			StringBuilder builder = new StringBuilder();
 			builder.append("Prototype Index: 0x" + Integer.toHexString(index) + "\n");
@@ -921,6 +906,7 @@ public class DexHeaderFormatMarkup {
 
 	private void processTypes(DexHeader header, TaskMonitor monitor, MessageLog log)
 			throws Exception {
+
 		monitor.setMessage("DEX: processing types");
 		monitor.setMaximum(header.getTypeIdsSize());
 		monitor.setProgress(0);
@@ -931,7 +917,7 @@ public class DexHeaderFormatMarkup {
 			monitor.incrementProgress(1);
 			DataType dataType = item.toDataType();
 			api.createData(address, dataType);
-			api.createFragment("types", address, dataType.getLength());
+			fragmentManager.typesAddressSet.add(address, address.add(dataType.getLength() - 1));
 
 			StringBuilder builder = new StringBuilder();
 			builder.append("Type Index: 0x" + Integer.toHexString(index) + "\n");
@@ -946,6 +932,7 @@ public class DexHeaderFormatMarkup {
 
 	private void processMap(DexHeader header, TaskMonitor monitor, MessageLog log)
 			throws Exception {
+
 		MapList mapList = header.getMapList();
 		if (mapList == null) {
 			return;
@@ -957,7 +944,8 @@ public class DexHeaderFormatMarkup {
 			baseAddress.add(DexUtil.adjustOffset(header.getMapOffset(), header));
 		DataType mapListDataType = mapList.toDataType();
 		api.createData(mapListAddress, mapListDataType);
-		api.createFragment("map", mapListAddress, mapListDataType.getLength());
+		fragmentManager.mapAddressSet.add(mapListAddress,
+			mapListAddress.add(mapListDataType.getLength() - 1));
 		StringBuilder builder = new StringBuilder();
 		for (MapItem item : header.getMapList().getItems()) {
 			monitor.checkCanceled();
@@ -966,17 +954,9 @@ public class DexHeaderFormatMarkup {
 		api.setPlateComment(mapListAddress, builder.toString());
 	}
 
-	private void createInitialFragments(DexHeader header, TaskMonitor monitor) throws Exception {
-		monitor.setMessage("DEX: creating fragments");
-
-		if (header.getDataSize() > 0) {
-			Address start = baseAddress.add(header.getDataOffset());
-			api.createFragment("data", start, header.getDataSize());
-		}
-	}
-
 	private void processStrings(DexHeader header, TaskMonitor monitor, MessageLog log)
 			throws Exception {
+
 		monitor.setMessage("DEX: processing strings");
 		monitor.setMaximum(header.getStringIdsSize());
 		monitor.setProgress(0);
@@ -1004,7 +984,8 @@ public class DexHeaderFormatMarkup {
 				api.createData(stringDataAddress, stringDataType);
 				api.setPlateComment(stringDataAddress,
 					Integer.toHexString(index) + "\n" + string.trim());
-				api.createFragment("string_data", stringDataAddress, stringDataType.getLength());
+				fragmentManager.stringDataAddressSet.add(stringDataAddress,
+					stringDataAddress.add(stringDataType.getLength() - 1));
 
 				createStringSymbol(stringDataAddress, string, "strings");
 			}
@@ -1019,7 +1000,8 @@ public class DexHeaderFormatMarkup {
 			DataType dataType = item.toDataType();
 			try {
 				Data data = api.createData(address, dataType);
-				api.createFragment("strings", address, dataType.getLength());
+				fragmentManager.stringsDataSet.add(address, address.add(dataType.getLength() - 1));
+
 				api.setPlateComment(address, "String Index: 0x" + Integer.toHexString(index) +
 					"\nString: " + string.trim() + "\nString Data Address: " + stringDataAddress);
 				createStringSymbol(address, string, "string_data");
@@ -1055,16 +1037,4 @@ public class DexHeaderFormatMarkup {
 		}
 	}
 
-	protected void removeEmptyFragments() throws NotEmptyException {
-		ProgramModule rootModule = program.getListing().getRootModule("Program Tree");
-		Group[] children = rootModule.getChildren();
-		for (Group child : children) {
-			if (child instanceof ProgramFragment) {
-				ProgramFragment fragment = (ProgramFragment) child;
-				if (fragment.isEmpty()) {
-					rootModule.removeChild(fragment.getName());
-				}
-			}
-		}
-	}
 }

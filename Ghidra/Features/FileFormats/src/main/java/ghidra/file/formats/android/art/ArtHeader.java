@@ -19,7 +19,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ghidra.app.util.bin.*;
+import ghidra.app.util.bin.BinaryReader;
+import ghidra.app.util.bin.StructConverter;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
 import ghidra.util.exception.DuplicateNameException;
@@ -137,8 +138,7 @@ public abstract class ArtHeader implements StructConverter {
 
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
-		String className = StructConverterUtil.parseName(ArtHeader.class);
-		Structure structure = new StructureDataType(className, 0);
+		Structure structure = new StructureDataType(ArtHeader.class.getSimpleName(), 0);
 		structure.add(STRING, 4, "magic_", null);
 		structure.add(STRING, 4, "version_", null);
 		structure.setCategoryPath(new CategoryPath("/art"));

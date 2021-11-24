@@ -100,7 +100,7 @@ public class ActionToGuiMapper {
 
 	void update() {
 		menuAndToolBarManager.update();
-		contextChangedAll();
+		contextChanged();
 	}
 
 	void dispose() {
@@ -117,12 +117,8 @@ public class ActionToGuiMapper {
 		return menuBarMenuHandler;
 	}
 
-	void contextChangedAll() {
-		menuAndToolBarManager.contextChangedAll();
-	}
-
-	void contextChanged(ComponentPlaceholder placeHolder) {
-		menuAndToolBarManager.contextChanged(placeHolder);
+	void contextChanged() {
+		menuAndToolBarManager.contextChanged();
 	}
 
 	PopupActionManager getPopupActionManager() {

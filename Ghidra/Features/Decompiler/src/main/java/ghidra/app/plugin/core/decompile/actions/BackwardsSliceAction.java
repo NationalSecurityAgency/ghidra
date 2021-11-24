@@ -60,7 +60,7 @@ public class BackwardsSliceAction extends AbstractDecompilerAction {
 		Set<Varnode> backwardSlice = DecompilerUtils.getBackwardSlice(varnode);
 		SliceHighlightColorProvider colorProvider =
 			new SliceHighlightColorProvider(decompilerPanel, backwardSlice, varnode, op);
-		decompilerPanel.addVarnodeHighlights(backwardSlice, colorProvider);
+		decompilerPanel.addHighlights(backwardSlice, colorProvider);
 	}
 
 }

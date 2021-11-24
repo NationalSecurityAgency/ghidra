@@ -34,7 +34,7 @@ You may not need all of these, depending on which portions you are building or d
       - https://adoptium.net/releases.html?variant=openjdk11&jvmVariant=hotspot
     - Amazon Corretto
       - https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html
-* Gradle 6 or 7
+* Gradle 6.4+ or 7.x
     - https://gradle.org/releases/
 * A C/C++ compiler - We use GCC on Linux, Xcode (Clang) on macOS, and Visual Studio (2017 or later) on Windows.
     - https://gcc.gnu.org/
@@ -55,8 +55,8 @@ You may not need all of these, depending on which portions you are building or d
     - https://github.com/pxb1988/dex2jar/releases
 * AXMLPrinter2
     - https://code.google.com/archive/p/android4me/downloads
-* Yet Another Java Service Wrapper. We use version 12.12 - Only to build Ghidra package.
-    - https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/
+* Yet Another Java Service Wrapper. We use version 13.01 - Only to build Ghidra package.
+    - https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-beta-13.01/
 * Eclipse PDE - Environment for developing the GhidraDev plugin.
     - https://www.eclipse.org/pde/
 * Eclipse CDT. We build against version 8.6.0 - Build dependency for the GhidraDev plugin.
@@ -122,7 +122,7 @@ directory populated with the following files:
  * flatRepo/dex-writer-2.0.jar
  * GhidraDev/cdt-8.6.0.zip
  * GhidraDev/PyDev 6.3.1.zip
- * GhidraServer/yajsw-stable-12.12.zip
+ * GhidraServer/yajsw-beta-13.01.zip
  * fidb/*.fidb
 
 If you see these, congrats! Skip to [building](#building-ghidra) or [developing](#developing-ghidra). If not, continue with manual download 
@@ -163,14 +163,14 @@ curl -OL https://storage.googleapis.com/google-code-archive-downloads/v2/code.go
 
 #### Get Dependencies for GhidraServer
 
-Building the GhidraServer requires "Yet another Java service wrapper" (yajsw) version 12.12.
-Download `yajsw-stable-12.12.zip` from their project on www.sourceforge.net, and place it in:
+Building the GhidraServer requires "Yet another Java service wrapper" (yajsw) version 13.01.
+Download `yajsw-beta-13.01.zip` from their project on www.sourceforge.net, and place it in:
 `~/git/ghidra/dependencies/GhidraServer/`:
 
 ```bash
 cd ~/Downloads   # Or wherever
-curl -OL https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-stable-12.12/yajsw-stable-12.12.zip
-cp ~/Downloads/yajsw-stable-12.12.zip ~/git/ghidra/dependencies/GhidraServer/
+curl -OL https://sourceforge.net/projects/yajsw/files/yajsw/yajsw-beta-13.01/yajsw-beta-13.01.zip
+cp ~/Downloads/yajsw-beta-13.01.zip ~/git/ghidra/dependencies/GhidraServer/
 ```
 
 #### Get Dependencies for GhidraDev

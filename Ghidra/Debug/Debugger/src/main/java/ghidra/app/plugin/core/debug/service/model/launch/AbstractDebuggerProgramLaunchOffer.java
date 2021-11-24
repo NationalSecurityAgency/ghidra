@@ -26,6 +26,7 @@ import org.jdom.JDOMException;
 import ghidra.app.plugin.core.debug.gui.objects.components.DebuggerMethodInvocationDialog;
 import ghidra.app.plugin.core.debug.service.model.DebuggerModelServicePlugin;
 import ghidra.app.services.DebuggerModelService;
+import ghidra.async.AsyncUtils;
 import ghidra.async.SwingExecutorService;
 import ghidra.dbg.*;
 import ghidra.dbg.target.TargetLauncher;
@@ -104,7 +105,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	 * Prompt the user for arguments, showing those last used or defaults
 	 * 
 	 * @param params the parameters of the model's launcher
-	 * @return the arguments given by the user
+	 * @return the arguments given by the user, or null if cancelled
 	 */
 	protected Map<String, ?> promptLauncherArgs(Map<String, ParameterDescription<?>> params) {
 		DebuggerMethodInvocationDialog dialog =
@@ -118,6 +119,10 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 			}
 		}
 		args = dialog.promptArguments(params);
+		if (args == null) {
+			// Cancelled
+			return null;
+		}
 		saveLauncherArgs(args, params);
 		return args;
 	}
@@ -187,7 +192,7 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 	 * be prompted to confirm.
 	 * 
 	 * @param params the parameters of the model's launcher
-	 * @return the chosen arguments
+	 * @return the chosen arguments, or null if the user cancels at the prompt
 	 */
 	protected Map<String, ?> getLauncherArgs(Map<String, ParameterDescription<?>> params,
 			boolean prompt) {
@@ -279,7 +284,12 @@ public abstract class AbstractDebuggerProgramLaunchOffer implements DebuggerProg
 			monitor.incrementProgress(1);
 			monitor.setMessage("Launching");
 			TargetLauncher launcher = (TargetLauncher) l;
-			return launcher.launch(getLauncherArgs(launcher.getParameters(), prompt));
+			Map<String, ?> args = getLauncherArgs(launcher.getParameters(), prompt);
+			if (args == null) {
+				// Cancelled
+				return AsyncUtils.NIL;
+			}
+			return launcher.launch(args);
 		}).thenRun(() -> {
 			monitor.incrementProgress(1);
 		});

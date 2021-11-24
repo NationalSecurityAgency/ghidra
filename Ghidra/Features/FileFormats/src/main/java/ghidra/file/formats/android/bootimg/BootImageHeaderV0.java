@@ -94,7 +94,7 @@ public class BootImageHeaderV0 extends BootImageHeader {
 
 	@Override
 	public int getRamdiskOffset() {
-		return page_size + getKernelPageCount() * page_size;//see header comment...
+		return page_size + getKernelPageCount() * page_size;
 	}
 
 	public int getRamdiskAddress() {

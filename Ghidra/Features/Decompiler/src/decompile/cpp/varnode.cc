@@ -723,7 +723,7 @@ int4 Varnode::isConstantExtended(uintb &val) const
 /// to determine if the Varnode is getting used as an \b int, \b float, or \b pointer, etc.
 /// Throw an exception if no Datatype can be found at all.
 /// \return the determined Datatype
-Datatype *Varnode::getLocalType(void) const
+Datatype *Varnode::getLocalType(bool &blockup) const
 
 {
   Datatype *ct;
@@ -733,8 +733,13 @@ Datatype *Varnode::getLocalType(void) const
     return type;		// Not a partial lock, return the locked type
 
   ct = (Datatype *)0;
-  if (def != (PcodeOp *)0)
+  if (def != (PcodeOp *)0) {
     ct = def->outputTypeLocal();
+    if (def->stopsPropagation()) {
+      blockup = true;
+      return ct;
+    }
+  }
 
   list<PcodeOp *>::const_iterator iter;
   PcodeOp *op;

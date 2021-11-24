@@ -71,10 +71,7 @@ class DataDB extends CodeUnitDB implements Data {
 		baseDataType = getBaseDataType(dataType);
 
 		defaultSettings = dataType.getDefaultSettings();
-		computeLength();
-		if (length < 0) {
-			Msg.error(this, " bad bad");
-		}
+		length = -1; // lazy compute
 	}
 
 	protected static DataType getBaseDataType(DataType dataType) {
@@ -121,12 +118,27 @@ class DataDB extends CodeUnitDB implements Data {
 		dataType = dt;
 		baseDataType = getBaseDataType(dataType);
 		defaultSettings = dataType.getDefaultSettings();
-		computeLength();
+		length = -1; // set to compute lazily later
+		bytes = null;
 		return false;
+	}
+
+	@Override
+	public int getLength() {
+		if (length == -1) {
+			computeLength();
+		}
+		return length;
 	}
 
 	private void computeLength() {
 		length = dataType.getLength();
+
+		// undefined will never change their size
+		if (dataType instanceof Undefined) {
+			return;
+		}
+
 		if (length < 1) {
 			length = codeMgr.getLength(address);
 		}
@@ -137,6 +149,11 @@ class DataDB extends CodeUnitDB implements Data {
 			else {
 				length = 1;
 			}
+		}
+
+		// no need to do all that follow on checking when length == 1
+		if (length == 1) {
+			return;
 		}
 
 		// FIXME Trying to get Data to display for External.
@@ -165,11 +182,24 @@ class DataDB extends CodeUnitDB implements Data {
 			}
 		}
 
+		// if this is not a component where the size could change and
+		// the length restricted by the following instruction/data item, assume
+		// the createData method stopped fixed code units that won't fit from being added
+		//
+		// TODO: If the data organization for a program changes, for example a long was 32-bits
+		//       and is changed to 64-bits, that could cause an issue.
+		//       If the data organization changing could be detected, this could be done.
+		//
+		// if (!(baseDataType instanceof Composite || baseDataType instanceof ArrayDataType)) {
+		//	return;
+		// }
+
+		// This is potentially expensive! So only do if necessary
+		// see if the datatype length is restricted by a following codeunit
 		Address nextAddr = codeMgr.getDefinedAddressAfter(address);
 		if ((nextAddr != null) && nextAddr.compareTo(endAddress) <= 0) {
 			length = (int) nextAddr.subtract(address);
 		}
-		bytes = null;
 	}
 
 	@Override
@@ -269,7 +299,7 @@ class DataDB extends CodeUnitDB implements Data {
 		lock.acquire();
 		try {
 			checkIsValid();
-			return dataType.getRepresentation(this, this, length);
+			return dataType.getRepresentation(this, this, getLength());
 		}
 		finally {
 			lock.release();
@@ -501,7 +531,7 @@ class DataDB extends CodeUnitDB implements Data {
 		lock.acquire();
 		try {
 			checkIsValid();
-			if (offset < 0 || offset > length) {
+			if (offset < 0 || offset > getLength()) {
 				return null;
 			}
 
@@ -538,7 +568,7 @@ class DataDB extends CodeUnitDB implements Data {
 		lock.acquire();
 		try {
 			checkIsValid();
-			if (offset < 0 || offset >= length) {
+			if (offset < 0 || offset >= getLength()) {
 				return null;
 			}
 			if (baseDataType instanceof Array) {
@@ -662,7 +692,7 @@ class DataDB extends CodeUnitDB implements Data {
 		lock.acquire();
 		try {
 			checkIsValid();
-			if (length < dataType.getLength()) {
+			if (getLength() < dataType.getLength()) {
 				return -1;
 			}
 			if (baseDataType instanceof Composite) {
@@ -715,7 +745,7 @@ class DataDB extends CodeUnitDB implements Data {
 		lock.acquire();
 		try {
 			checkIsValid();
-			if (offset < 0 || offset >= length) {
+			if (offset < 0 || offset >= getLength()) {
 				return null;
 			}
 			Data dc = getComponentContaining(offset);
@@ -744,7 +774,7 @@ class DataDB extends CodeUnitDB implements Data {
 		lock.acquire();
 		try {
 			checkIsValid();
-			return baseDataType.getValue(this, this, length);
+			return baseDataType.getValue(this, this, getLength());
 		}
 		finally {
 			lock.release();
@@ -773,7 +803,7 @@ class DataDB extends CodeUnitDB implements Data {
 		if (options == null) {
 			options = DataTypeDisplayOptions.DEFAULT;
 		}
-		return dataType.getDefaultLabelPrefix(this, this, length, options);
+		return dataType.getDefaultLabelPrefix(this, this, getLength(), options);
 	}
 
 	@Override
