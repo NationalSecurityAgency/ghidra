@@ -146,6 +146,9 @@ public class FunctionSymbol extends SymbolDB {
 			Symbol newSym =
 				symbolMgr.createCodeSymbol(entryPoint, symName, namespace, source, stringData);
 			newSym.setPrimary();
+			if (pinned) {
+				newSym.setPinned(true);
+			}
 			return true;
 		}
 		catch (InvalidInputException e) {
