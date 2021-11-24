@@ -893,7 +893,7 @@ macro PushEntireState()
     S = S - 1;
 }
 
-:TSX    is op=0x35
+:TXS    is op=0x35
 {
     S = X - 1;
 }
