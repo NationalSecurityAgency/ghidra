@@ -58,11 +58,29 @@ public class CachedMemory implements MemoryReader, MemoryWriter {
 	private final MemoryWriter writer;
 
 	protected static class PendingRead {
+		protected static Range<UnsignedLong> normalize(Range<UnsignedLong> range) {
+			if (range.lowerBoundType() == BoundType.CLOSED) {
+				if (range.upperBoundType() == BoundType.OPEN ||
+					range.upperEndpoint().longValue() == -1) {
+					return range;
+				}
+				return Range.closedOpen(range.lowerEndpoint(),
+					range.upperEndpoint().plus(UnsignedLong.ONE));
+			}
+			assert range.lowerEndpoint().longValue() != -1;
+			UnsignedLong lower = range.lowerEndpoint().plus(UnsignedLong.ONE);
+			if (range.upperBoundType() == BoundType.OPEN ||
+				range.upperEndpoint().longValue() == -1) {
+				return Range.closed(lower, range.upperEndpoint());
+			}
+			return Range.closedOpen(lower, range.upperEndpoint().plus(UnsignedLong.ONE));
+		}
+
 		final Range<UnsignedLong> range;
 		final CompletableFuture<Void> future;
 
 		protected PendingRead(Range<UnsignedLong> range, CompletableFuture<Void> future) {
-			this.range = range;
+			this.range = normalize(range);
 			this.future = future;
 		}
 	}
@@ -90,7 +108,7 @@ public class CachedMemory implements MemoryReader, MemoryWriter {
 	}
 
 	protected synchronized CompletableFuture<Void> waitForReads(long addr, int len) {
-		RangeSet<UnsignedLong> undefined = memory.getUninitialized(addr, addr + len);
+		RangeSet<UnsignedLong> undefined = memory.getUninitialized(addr, addr + len - 1);
 		// Do the reads in parallel
 		AsyncFence fence = new AsyncFence();
 		for (Range<UnsignedLong> rng : undefined.asRanges()) {
@@ -115,7 +133,8 @@ public class CachedMemory implements MemoryReader, MemoryWriter {
 			}
 		}
 		NavigableMap<UnsignedLong, PendingRead> applicablePending =
-			pendingByLoc.subMap(rng.lowerEndpoint(), true, rng.upperEndpoint(), false);
+			pendingByLoc.subMap(rng.lowerEndpoint(), true, rng.upperEndpoint(),
+				rng.upperBoundType() == BoundType.CLOSED);
 		for (Map.Entry<UnsignedLong, PendingRead> ent : applicablePending.entrySet()) {
 			PendingRead pending = ent.getValue();
 			if (pending.future.isCompletedExceptionally()) {
@@ -128,7 +147,10 @@ public class CachedMemory implements MemoryReader, MemoryWriter {
 		// Now we're left with a set of needed ranges. Make a request for each
 		for (Range<UnsignedLong> needed : needRequests.asRanges()) {
 			final UnsignedLong lower = needed.lowerEndpoint();
-			final UnsignedLong upper = needed.upperEndpoint();
+			// NB. upper is only used in size computation, so overflow to 0 is no big deal
+			final UnsignedLong upper = needed.upperBoundType() == BoundType.CLOSED
+					? needed.upperEndpoint().plus(UnsignedLong.ONE)
+					: needed.upperEndpoint();
 			/*Msg.debug(this,
 				"Need to read: [" + lower.toString(16) + ":" + upper.toString(16) + ")");*/
 			CompletableFuture<byte[]> futureRead =
