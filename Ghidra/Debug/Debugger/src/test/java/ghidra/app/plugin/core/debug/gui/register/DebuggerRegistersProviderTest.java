@@ -59,6 +59,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 	protected Register r0;
 	protected Register pc;
 	protected Register sp;
+	protected Register contextreg;
 
 	protected Register r0h;
 	protected Register r0l;
@@ -79,6 +80,7 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 		r0 = tb.language.getRegister("r0");
 		pc = tb.language.getProgramCounter();
 		sp = tb.language.getDefaultCompilerSpec().getStackPointer();
+		contextreg = tb.language.getContextBaseRegister();
 
 		pch = tb.language.getRegister("pch");
 		pcl = tb.language.getRegister("pcl");
@@ -379,6 +381,38 @@ public class DebuggerRegistersProviderTest extends AbstractGhidraHeadedDebuggerG
 
 		assertPCRowTypePopulated();
 		assertR0RowTypePopulated();
+	}
+
+	// TODO: Test that contextreg cannot be modified
+	// TODO: Make contextreg modifiable by Registers window
+
+	@Test
+	public void testDeadModifyValueEmulates() throws Exception {
+		traceManager.openTrace(tb.trace);
+
+		TraceThread thread = addThread();
+		traceManager.activateThread(thread);
+		waitForSwing();
+
+		assertTrue(registersProvider.actionEnableEdits.isEnabled());
+		performAction(registersProvider.actionEnableEdits);
+
+		addRegisterValues(thread);
+		waitForDomainObject(tb.trace);
+
+		TraceMemoryRegisterSpace regVals =
+			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
+
+		RegisterRow row = findRegisterRow(r0);
+
+		setRowText(row, "1234");
+		waitForSwing();
+		waitForPass(() -> {
+			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertEquals(BigInteger.valueOf(0x1234),
+				regVals.getValue(viewSnap, r0).getUnsignedValue());
+			assertEquals(BigInteger.valueOf(0x1234), row.getValue());
+		});
 	}
 
 	@Test
