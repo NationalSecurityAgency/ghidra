@@ -44,16 +44,16 @@ public class SemisparseByteArrayTest {
 		cache.putData(0, HW, 0, 1);
 		exp.clear();
 		exp.add(makeRange(0, 1));
-		assertEquals(exp, cache.getInitialized(0, HW.length + 8));
+		assertEquals(exp, cache.getInitialized(0, HW.length + 7));
 		exp.clear();
 		exp.add(makeRange(1, HW.length));
-		assertEquals(exp, cache.getUninitialized(0, HW.length));
+		assertEquals(exp, cache.getUninitialized(0, HW.length - 1));
 
 		cache.putData(2, HW, 2, 1);
 		exp.clear();
 		exp.add(makeRange(1, 2));
 		exp.add(makeRange(3, HW.length));
-		assertEquals(exp, cache.getUninitialized(0, HW.length));
+		assertEquals(exp, cache.getUninitialized(0, HW.length - 1));
 
 		cache.putData(11, HW, 11, 2);
 		byte[] read = new byte[HW.length + 5]; // 5 extra

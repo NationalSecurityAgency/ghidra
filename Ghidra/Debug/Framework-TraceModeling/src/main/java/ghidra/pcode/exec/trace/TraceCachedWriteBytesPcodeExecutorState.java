@@ -155,7 +155,7 @@ public class TraceCachedWriteBytesPcodeExecutorState
 				// TODO: Warn or bail when reading UNKNOWN bytes
 				// NOTE: Read without regard to gaps
 				// NOTE: Cannot write those gaps, though!!!
-				readUninitializedFromSource(cache.getUninitialized(offset, offset + size));
+				readUninitializedFromSource(cache.getUninitialized(offset, offset + size - 1));
 			}
 			return readCached(offset, size);
 		}

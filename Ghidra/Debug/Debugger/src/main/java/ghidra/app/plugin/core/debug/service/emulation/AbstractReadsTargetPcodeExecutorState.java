@@ -57,7 +57,7 @@ public abstract class AbstractReadsTargetPcodeExecutorState
 		public byte[] read(long offset, int size) {
 			if (source != null) {
 				AddressSet uninitialized = new AddressSet();
-				for (Range<UnsignedLong> rng : cache.getUninitialized(offset, offset + size)
+				for (Range<UnsignedLong> rng : cache.getUninitialized(offset, offset + size - 1)
 						.asRanges()) {
 					uninitialized.add(space.getAddress(lower(rng)),
 						space.getAddress(upper(rng)));
