@@ -72,6 +72,7 @@ import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
 import ghidra.trace.model.memory.TraceMemoryState;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.*;
 import ghidra.util.Msg;
 import ghidra.util.Swing;
@@ -755,8 +756,21 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		return true;
 	}
 
+	boolean canWriteRegister(Register register) {
+		if (!isEditsEnabled()) {
+			return false;
+		}
+		if (register.isProcessorContext()) {
+			return false; // TODO: Limitation from using Sleigh for patching
+		}
+		return true;
+	}
+
 	boolean canWriteTargetRegister(Register register) {
-		if (!computeEditsEnabled()) {
+		if (!isEditsEnabled()) {
+			return false;
+		}
+		if (!canWriteTarget()) {
 			return false;
 		}
 		return current.getRecorder().isRegisterOnTarget(current.getThread(), register);
@@ -775,23 +789,32 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	void writeRegisterValue(RegisterValue rv) {
-		rv = combineWithTraceBaseRegisterValue(rv);
-		CompletableFuture<Void> future = current.getRecorder()
-				.writeThreadRegisters(current.getThread(), current.getFrame(),
-					Map.of(rv.getRegister(), rv));
-		future.exceptionally(ex -> {
-			ex = AsyncUtils.unwrapThrowable(ex);
-			if (ex instanceof DebuggerModelAccessException) {
-				Msg.error(this, "Could not write target register", ex);
-				plugin.getTool()
-						.setStatusInfo("Could not write target register: " + ex.getMessage());
-			}
-			else {
-				Msg.showError(this, getComponent(), "Edit Register",
-					"Could not write target register", ex);
-			}
-			return null;
-		});
+		if (canWriteTargetRegister(rv.getRegister())) {
+			rv = combineWithTraceBaseRegisterValue(rv);
+			CompletableFuture<Void> future = current.getRecorder()
+					.writeThreadRegisters(current.getThread(), current.getFrame(),
+						Map.of(rv.getRegister(), rv));
+			future.exceptionally(ex -> {
+				ex = AsyncUtils.unwrapThrowable(ex);
+				if (ex instanceof DebuggerModelAccessException) {
+					Msg.error(this, "Could not write target register", ex);
+					plugin.getTool()
+							.setStatusInfo("Could not write target register: " + ex.getMessage());
+				}
+				else {
+					Msg.showError(this, getComponent(), "Edit Register",
+						"Could not write target register", ex);
+				}
+				return null;
+			});
+			return;
+		}
+		TraceSchedule time = current.getTime().patched(current.getThread(), generateSleigh(rv));
+		traceManager.activateTime(time);
+	}
+
+	protected String generateSleigh(RegisterValue rv) {
+		return String.format("%s=0x%s", rv.getRegister(), rv.getUnsignedValue().toString(16));
 	}
 
 	private RegisterValue combineWithTraceBaseRegisterValue(RegisterValue rv) {
@@ -886,11 +909,8 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		return !Objects.equals(curRegVal, prevRegVal);
 	}
 
-	private boolean computeEditsEnabled() {
-		if (!actionEnableEdits.isSelected()) {
-			return false;
-		}
-		return canWriteTarget();
+	private boolean isEditsEnabled() {
+		return actionEnableEdits.isSelected();
 	}
 
 	/**
