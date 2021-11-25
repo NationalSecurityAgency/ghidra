@@ -501,12 +501,14 @@ macro PushEntireState()
 
 :INX    is op=0x08
 {
-    increment(X);
+    X = X + 1;
+    $(Z) = (X == 0);
 }
 
 :DEX    is op=0x09
 {
-    decrement(X);
+    X = X - 1;
+    $(Z) = (X == 0);
 }
 
 :CLV    is op=0x0A
