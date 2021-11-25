@@ -197,7 +197,8 @@ REL:  addr    is simm8  [ addr = inst_next + simm8;  ]   { export *:2 addr; }
 # 1-byte operand, immediate/direct/indexed/extended addressing mode
 OP1: "#"imm8    is op45=0; imm8
 {
-    export imm8;
+    local tmp:1 = imm8;
+    export tmp;
 }
 OP1: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
 {
@@ -217,7 +218,8 @@ OP1: imm16    is op45=3; imm16
 # 2-byte operand, direct/indexed/extended addressing mode
 OP2: "#"imm16    is (op47=8 | op47=0xC); imm16
 {
-    export imm16;
+    local tmp:2 = imm16;
+    export tmp;
 }
 OP2: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
 {
