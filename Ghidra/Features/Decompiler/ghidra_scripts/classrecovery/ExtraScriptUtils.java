@@ -1045,8 +1045,10 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	 * @param parent parent CategoryPath
 	 * @param categoryName name of the new category in the parent path
 	 * @return CategoryPath for new categoryName 
+	 * @throws CancelledException if cancelled
 	 */
-	public CategoryPath createDataTypeCategoryPath(CategoryPath parent, String categoryName) {
+	public CategoryPath createDataTypeCategoryPath(CategoryPath parent, String categoryName)
+			throws CancelledException {
 
 		CategoryPath dataTypePath;
 
@@ -1070,12 +1072,8 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 			int index = 0;
 			String newCategoryName = new String();
 			while (index < categoryName.length()) {
-				try {
-					monitor.checkCanceled();
-				}
-				catch (CancelledException e) {
-					return null;
-				}
+
+				monitor.checkCanceled();
 
 				if (categoryName.substring(index).startsWith("::") && !insideBrackets) {
 					newCategoryName = newCategoryName.concat("/");

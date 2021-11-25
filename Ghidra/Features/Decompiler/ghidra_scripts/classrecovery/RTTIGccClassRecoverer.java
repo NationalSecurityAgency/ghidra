@@ -74,18 +74,16 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	public RTTIGccClassRecoverer(Program program, ProgramLocation location, PluginTool tool,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
 			boolean nameVfunctions, boolean isDwarfLoaded, boolean replaceExistingClassStructures,
-			TaskMonitor monitor) {
+			TaskMonitor monitor) throws Exception {
 
 		super(program, location, tool, api, createBookmarks, useShortTemplates, nameVfunctions,
-			replaceExistingClassStructures,
-			isDwarfLoaded,
-			monitor);
+			replaceExistingClassStructures, isDwarfLoaded, monitor);
 		this.isDwarfLoaded = isDwarfLoaded;
 		this.replaceClassStructs = replaceExistingClassStructures;
 	}
 
 	@Override
-	public boolean containsRTTI() throws CancelledException {
+	public boolean containsRTTI() throws CancelledException, InvalidInputException {
 
 		if (!hasSpecialVtable()) {
 			return false;
@@ -103,44 +101,33 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	@Override
-	public List<RecoveredClass> createRecoveredClasses() {
+	public List<RecoveredClass> createRecoveredClasses() throws CancelledException, Exception {
 
-		try {
-
-			processGccRTTI();
-			if (recoveredClasses == null) {
-				Msg.debug(this, "Could not recover gcc rtti classes");
-				return null;
-			}
-
-			createCalledFunctionMap(recoveredClasses);
-
-			createClassHierarchyListAndMapForGcc();
-
-			if (isDwarfLoaded) {
-				retrieveExistingClassStructures(recoveredClasses);
-				assignConstructorsAndDestructorsUsingExistingName(recoveredClasses);
-			}
-			else {
-				processConstructorAndDestructors();
-			}
-
-			createVftableOrderMap(recoveredClasses);
-
-			figureOutClassDataMembers(recoveredClasses);
-
-			createAndApplyClassStructures();
-
-			return recoveredClasses;
-		}
-		catch (CancelledException e) {
-			e.printStackTrace();
+		processGccRTTI();
+		if (recoveredClasses == null) {
+			Msg.debug(this, "Could not recover gcc rtti classes");
 			return null;
 		}
-		catch (Exception e) {
-			e.printStackTrace();
-			return null;
+
+		createCalledFunctionMap(recoveredClasses);
+
+		createClassHierarchyListAndMapForGcc();
+
+		if (isDwarfLoaded) {
+			retrieveExistingClassStructures(recoveredClasses);
+			assignConstructorsAndDestructorsUsingExistingName(recoveredClasses);
 		}
+		else {
+			processConstructorAndDestructors();
+		}
+
+		createVftableOrderMap(recoveredClasses);
+
+		figureOutClassDataMembers(recoveredClasses);
+
+		createAndApplyClassStructures();
+
+		return recoveredClasses;
 
 	}
 
@@ -171,8 +158,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		byte[] maskBytes = { (byte) 0xff, (byte) 0xff, (byte) 0xff, (byte) 0xff };
 
 		Address found = program.getMemory()
-				.findBytes(commentBlock.getStart(),
-					commentBlock.getEnd(), gccBytes, maskBytes, true, monitor);
+				.findBytes(commentBlock.getStart(), commentBlock.getEnd(), gccBytes, maskBytes,
+					true, monitor);
 		if (found == null) {
 			return false;
 		}
@@ -184,8 +171,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 * Method to check for at least one special RTTI vtable
 	 * @return true if the program has at least one special vtable, false if none
 	 * @throws CancelledException if cancelled
+	 * @throws InvalidInputException if bad characters creating labels
 	 */
-	private boolean hasSpecialVtable() throws CancelledException {
+	private boolean hasSpecialVtable() throws CancelledException, InvalidInputException {
 
 		boolean hasSpecialVtable = createSpecialVtables();
 		return hasSpecialVtable;
@@ -287,8 +275,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 	}
 
-	private void updateClassesWithParentsAndFlags(List<Symbol> typeinfoSymbols)
-			throws Exception {
+	private void updateClassesWithParentsAndFlags(List<Symbol> typeinfoSymbols) throws Exception {
 
 		// add properties and parents to each class 
 		Iterator<Symbol> typeinfoIterator = typeinfoSymbols.iterator();
@@ -464,6 +451,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		while (vtableIterator.hasNext()) {
 
+
 			monitor.checkCanceled();
 
 			Symbol vtableSymbol = vtableIterator.next();
@@ -534,14 +522,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				throw new Exception("typeinfo has global namespace " + typeinfoAddress);
 			}
 
-			try {
-				Symbol vtableSymbol = symbolTable.createLabel(vtableAddress, VTABLE_LABEL,
-					classNamespace, SourceType.ANALYSIS);
-				vtableSymbols.add(vtableSymbol);
-			}
-			catch (InvalidInputException e) {
-				continue;
-			}
+			Symbol vtableSymbol = symbolTable.createLabel(vtableAddress, VTABLE_LABEL,
+				classNamespace, SourceType.ANALYSIS);
+			vtableSymbols.add(vtableSymbol);
 
 			api.setPlateComment(vtableAddress, "vtable for " + classNamespace.getName(true));
 		}
@@ -631,16 +614,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		if (namespacesByPath.isEmpty()) {
 
-			try {
-				Namespace newNamespace =
-					NamespaceUtils.createNamespaceHierarchy(name, vtableNamespace,
-						program, SourceType.ANALYSIS);
-				return newNamespace;
-			}
-			catch (InvalidInputException e) {
-				e.printStackTrace();
-				return null;
-			}
+			Namespace newNamespace = NamespaceUtils.createNamespaceHierarchy(name, vtableNamespace,
+				program, SourceType.ANALYSIS);
+			return newNamespace;
+
 		}
 		if (namespacesByPath.size() == 1) {
 			return namespacesByPath.get(0);
@@ -684,8 +661,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			// check direct refs to see if they are in undefined area or not in function
 			byte[] bytes = ProgramMemoryUtil.getDirectAddressBytes(program, typeinfoAddress);
 
-			addByteSearchPattern(searcher, validTypeinfoRefs, typeinfoAddress, bytes,
-				monitor);
+			addByteSearchPattern(searcher, validTypeinfoRefs, typeinfoAddress, bytes, monitor);
 
 		}
 		searcher.search(program, searchSet, monitor);
@@ -780,10 +756,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 * @param vtableNamespace the namespace of the given vtable
 	 * @param isPrimary true if the vtable is the primary one for the class
 	 * @param listOfAllVtables list of all vtables
+	 * @throws CancelledException if cancelled
 	 */
 	private void processVtable(Address vtableAddress, Namespace vtableNamespace, boolean isPrimary,
-			List<Symbol> listOfAllVtables)
-			throws Exception {
+			List<Symbol> listOfAllVtables) throws CancelledException, Exception {
 
 		// skip the special tables			
 		if (vtableAddress.equals(class_type_info_vtable) ||
@@ -818,13 +794,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		Data typeinfoPtr = api.getDataAt(typeinfoAddress);
 		if (typeinfoPtr == null) {
 			DataType nullPointer = dataTypeManager.getPointer(null);
-			try {
-				api.createData(typeinfoAddress, nullPointer);
-			}
-			catch (Exception e) {
-				Msg.debug(this,
-					"Could not create typeinfo pointer at " + typeinfoAddress.toString());
-			}
+
+			api.createData(typeinfoAddress, nullPointer);
+
 		}
 
 		// if not already named a construction-vtable then check to see if it is one so it can
@@ -850,33 +822,19 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 							Namespace classNamespace = createConstructionNamespace(vtableSymbol,
 								vttSymbolBeforeConstructionVtable);
 
-							try {
-								vtableSymbol.setNameAndNamespace("construction-vtable",
-									classNamespace, SourceType.ANALYSIS);
-								vtableNamespace = vtableSymbol.getParentNamespace();
-								// label the subVTTaddress
-								symbolTable.createLabel(subVTTAddress, "subVTT_" + n,
-									vttSymbolBeforeConstructionVtable.getParentNamespace(),
-									SourceType.ANALYSIS);
+							vtableSymbol.setNameAndNamespace("construction-vtable", classNamespace,
+								SourceType.ANALYSIS);
+							vtableNamespace = vtableSymbol.getParentNamespace();
+							// label the subVTTaddress
+							symbolTable.createLabel(subVTTAddress, "subVTT_" + n,
+								vttSymbolBeforeConstructionVtable.getParentNamespace(),
+								SourceType.ANALYSIS);
 
-								api.setPlateComment(vtableAddress, "construction vtable " + n +
-									" for class " +
+							api.setPlateComment(vtableAddress,
+								"construction vtable " + n + " for class " +
 									vttSymbolBeforeConstructionVtable.getParentNamespace()
-											.getName(
-												true));
+											.getName(true));
 
-							}
-							catch (InvalidInputException e) {
-								Msg.debug(this, e.getMessage());
-								continue;
-							}
-							catch (CircularDependencyException e) {
-								Msg.debug(this, e.getMessage());
-								continue;
-							}
-							catch (DuplicateNameException e) {
-								continue;
-							}
 						}
 					}
 
@@ -919,25 +877,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			vftableLabel = "internal_" + vftableLabel;
 		}
 
-		try {
-			symbolTable.createLabel(possibleVftableAddress, vftableLabel, vtableNamespace,
-				SourceType.ANALYSIS);
+		symbolTable.createLabel(possibleVftableAddress, vftableLabel, vtableNamespace,
+			SourceType.ANALYSIS);
 
-			createVftableArray(possibleVftableAddress, numFunctionPointers);
-		}
-		catch (IllegalArgumentException e) {
-			Msg.debug(this, "Could not label vftable at " + possibleVftableAddress.toString());
-		}
-		catch (InvalidInputException e) {
-			Msg.debug(this, "Could not label vftable at " + possibleVftableAddress.toString());
-		}
-		catch (CancelledException e) {
-			return;
-		}
-		catch (AddressOutOfBoundsException e) {
-			Msg.debug(this, "Couldn't create vftable due to Address out of bounds issue");
-			return;
-		}
+		createVftableArray(possibleVftableAddress, numFunctionPointers);
 
 		// check for an internal vtable after the vftable and make a symbol there if there is one
 		// will process them later
@@ -1050,7 +993,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private boolean createInternalVtable(Address possibleInternalVtableAddress,
-			Namespace vtableNamespace) throws CancelledException {
+			Namespace vtableNamespace) throws CancelledException, InvalidInputException, Exception {
 		// check to see if it is a pointer and if so, it cannot be an internal vtable
 		// as they contain at least one long
 		Address pointer = getPointerToDefinedMemory(possibleInternalVtableAddress);
@@ -1071,27 +1014,12 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			(possibleInternalVtableSymbol.getSource() == SourceType.DEFAULT &&
 				(isValidVtableStart(possibleInternalVtableAddress) ||
 					isValidVftableStart(possibleInternalVtableAddress)))) {
-			try {
-				symbolTable.createLabel(possibleInternalVtableAddress,
-					"internal_vtable_" + possibleInternalVtableAddress.toString(), vtableNamespace,
-					SourceType.ANALYSIS);
-				processVtable(possibleInternalVtableAddress, vtableNamespace, false, null);
-				return true;
-			}
-			catch (IllegalArgumentException e) {
-				Msg.debug(this, "Could not label internal vtable at " +
-					possibleInternalVtableAddress.toString());
-				return true; // still created vtable, just couldn't name it
-			}
-			catch (InvalidInputException e) {
-				Msg.debug(this, "Could not label internal vtable at " +
-					possibleInternalVtableAddress.toString());
-				return true; // still created vtable, just couldn't name it
-			}
-			catch (Exception e) {
-				e.printStackTrace();
 
-			}
+			symbolTable.createLabel(possibleInternalVtableAddress,
+				"internal_vtable_" + possibleInternalVtableAddress.toString(), vtableNamespace,
+				SourceType.ANALYSIS);
+			processVtable(possibleInternalVtableAddress, vtableNamespace, false, null);
+			return true;
 
 		}
 		return false;
@@ -1102,8 +1030,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 * @param classNamespace the given namespace
 	 * @param address the address of the potential VTT table
 	 * @return true if a valid VTT has been discovered and label created
+	 * @throws Exception if data creation results in an exception
 	 */
-	private boolean createVTT(Namespace classNamespace, Address address) {
+	private boolean createVTT(Namespace classNamespace, Address address) throws Exception {
 
 		// get pointer at address
 		Address pointer = getPointerToDefinedMemory(address);
@@ -1120,22 +1049,15 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		// if it is then create the VTT symbol and create pointer there
-		try {
-			symbolTable.createLabel(address, "VTT", classNamespace, SourceType.ANALYSIS);
-		}
-		catch (IllegalArgumentException e) {
-			Msg.debug(this, "Could not label VTT at " + address.toString());
-		}
-		catch (InvalidInputException e) {
-			Msg.debug(this, "Could not label VTT at " + address.toString());
-		}
+
+		symbolTable.createLabel(address, "VTT", classNamespace, SourceType.ANALYSIS);
 
 		DataType nullPointer = dataTypeManager.getPointer(null);
 		try {
 			api.createData(pointer, nullPointer);
 		}
 		catch (Exception e) {
-			// already data there
+			// already data there so don't try and overwrite it
 		}
 
 		api.setPlateComment(address, "VTT for " + classNamespace.getName(true));
@@ -1144,7 +1066,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private Data createVftableArray(Address vftableAddress, int numFunctionPointers)
-			throws CancelledException, AddressOutOfBoundsException {
+			throws Exception {
 
 		api.clearListing(vftableAddress,
 			vftableAddress.add((numFunctionPointers * defaultPointerSize - 1)));
@@ -1152,14 +1074,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		DataType pointerDataType = dataTypeManager.getPointer(null);
 		ArrayDataType vftableArrayDataType =
 			new ArrayDataType(pointerDataType, numFunctionPointers, defaultPointerSize);
-		try {
-			Data vftableArrayData = api.createData(vftableAddress, vftableArrayDataType);
-			return vftableArrayData;
-		}
-		catch (Exception e) {
-			return null;
-		}
 
+		Data vftableArrayData = api.createData(vftableAddress, vftableArrayDataType);
+		return vftableArrayData;
 	}
 
 	/**
@@ -1349,35 +1266,25 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 * @param vtableAddress the given special vtable address
 	 * @return the address of the typeinfo in the vtable if replace was successful, null otherwise
 	 * @throws CancelledException if cancelled
+	 * @throws InvalidInputException if bad characters when creating label
 	 */
-	private Address createSpecialVtable(Address vtableAddress) throws CancelledException {
+	private Address createSpecialVtable(Address vtableAddress)
+			throws CancelledException, InvalidInputException {
 
 		Symbol vtableSymbol = symbolTable.getPrimarySymbol(vtableAddress);
 
 		api.clearListing(vtableAddress);
-		try {
-			int vtableLongs = createVtableLongs(vtableAddress);
 
-			if (vtableLongs > 0) {
+		int vtableLongs = createVtableLongs(vtableAddress);
 
-				Address typeinfoAddress = vtableAddress.add(vtableLongs * defaultPointerSize);
-				symbolTable.createLabel(typeinfoAddress, "typeinfo",
-					vtableSymbol.getParentNamespace(), SourceType.ANALYSIS);
-				return typeinfoAddress;
-			}
-			return null;
-		}
+		if (vtableLongs > 0) {
 
-		catch (AddressOutOfBoundsException e) {
-			return null;
+			Address typeinfoAddress = vtableAddress.add(vtableLongs * defaultPointerSize);
+			symbolTable.createLabel(typeinfoAddress, "typeinfo", vtableSymbol.getParentNamespace(),
+				SourceType.ANALYSIS);
+			return typeinfoAddress;
 		}
-		catch (IllegalArgumentException e) {
-			return null;
-		}
-		catch (InvalidInputException e) {
-			return null;
-		}
-
+		return null;
 	}
 
 	/**
@@ -1409,7 +1316,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 				api.createData(address, pointer);
 				Address referencedAddress = extraUtils.getSingleReferencedAddress(address);
 
-				// if it isn't valid, clear what we just created and increment to offset so
+				// if it isn't a valid pointer, clear what we just created and increment to offset so
 				// the next can be checked
 				if (referencedAddress == null || !programAddressSet.contains(referencedAddress)) {
 					api.clearListing(address);
@@ -1422,6 +1329,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 					return numLongs;
 				}
 			}
+			// if bump into existing data return the number found so far
 			catch (Exception e) {
 				return numLongs;
 			}
@@ -1534,20 +1442,13 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	}
 
 	private Data applyTypeinfoStructure(Structure typeInfoStructure, Address typeinfoAddress)
-			throws CancelledException, AddressOutOfBoundsException {
+			throws CancelledException, AddressOutOfBoundsException, Exception {
 
 		api.clearListing(typeinfoAddress, typeinfoAddress.add(typeInfoStructure.getLength() - 1));
 		Data newStructure;
-		try {
-			newStructure = api.createData(typeinfoAddress, typeInfoStructure);
-		}
-		catch (Exception e) {
-			newStructure = null;
-		}
-		if (newStructure == null) {
-			Msg.debug(this,
-				"Could not create " + typeInfoStructure.getName() + " at " + typeinfoAddress);
-		}
+
+		newStructure = api.createData(typeinfoAddress, typeInfoStructure);
+
 		return newStructure;
 	}
 
@@ -1560,14 +1461,14 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		try {
 			numBases = api.getInt(typeinfoAddress.add(offsetOfNumBases));
 		}
+		// if there isn't enough memory to get the int then return null
 		catch (MemoryAccessException | AddressOutOfBoundsException e) {
 			return null;
 		}
 
 		// get or create the vmiClassTypeInfoStruct
-		Structure vmiClassTypeinfoStructure =
-			(Structure) dataTypeManager.getDataType(classDataTypesCategoryPath,
-				VMI_CLASS_TYPE_INFO_STRUCTURE + numBases);
+		Structure vmiClassTypeinfoStructure = (Structure) dataTypeManager
+				.getDataType(classDataTypesCategoryPath, VMI_CLASS_TYPE_INFO_STRUCTURE + numBases);
 		if (vmiClassTypeinfoStructure == null) {
 			vmiClassTypeinfoStructure =
 				createVmiClassTypeInfoStructure(baseClassTypeInfoStructure, numBases);
@@ -1575,7 +1476,8 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return vmiClassTypeinfoStructure;
 	}
 
-	private Symbol createDemangledTypeinfoSymbol(Address typeinfoAddress) {
+	private Symbol createDemangledTypeinfoSymbol(Address typeinfoAddress)
+			throws DuplicateNameException, InvalidInputException {
 
 		String mangledTypeinfo = getTypeinfoName(typeinfoAddress);
 		if (mangledTypeinfo == null) {
@@ -1614,25 +1516,14 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		}
 
 		// create the new typeinfo symbol in the demangled namespace
-		try {
-			Symbol newSymbol = symbolTable.createLabel(typeinfoAddress, "typeinfo", classNamespace,
-				SourceType.ANALYSIS);
-			return newSymbol;
-		}
-		catch (InvalidInputException e) {
-			Msg.error(this,
-				typeinfoAddress.toString() + " invalid input exception " + e.getMessage());
-			return null;
-		}
-		catch (IllegalArgumentException e) {
-			Msg.debug(this,
-				typeinfoAddress.toString() + " illegal argument exception " + e.getMessage());
-			return null;
-		}
 
+		Symbol newSymbol = symbolTable.createLabel(typeinfoAddress, "typeinfo", classNamespace,
+			SourceType.ANALYSIS);
+		return newSymbol;
 	}
 
-	private Namespace createTypeinfoClassNamespace(String namespaceString) {
+	private Namespace createTypeinfoClassNamespace(String namespaceString)
+			throws DuplicateNameException, InvalidInputException {
 
 		int indexOfColons = namespaceString.indexOf("::");
 		Namespace namespace = globalNamespace;
@@ -1659,20 +1550,14 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return classNamespace;
 	}
 
-	private Namespace getOrCreateNamespace(String namespaceName, Namespace parentNamespace) {
+	private Namespace getOrCreateNamespace(String namespaceName, Namespace parentNamespace)
+			throws DuplicateNameException, InvalidInputException {
 
 		Namespace namespace = symbolTable.getNamespace(namespaceName, parentNamespace);
 		if (namespace == null) {
-			try {
-				namespace = symbolTable.createNameSpace(parentNamespace, namespaceName,
-					SourceType.ANALYSIS);
-			}
-			catch (DuplicateNameException e) {
-				// shouldn't happen since it only gets here if the symbol didn't exist in the first place
-			}
-			catch (InvalidInputException e) {
-				return null;
-			}
+
+			namespace =
+				symbolTable.createNameSpace(parentNamespace, namespaceName, SourceType.ANALYSIS);
 		}
 		return namespace;
 	}
@@ -1710,12 +1595,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		StringDataType sdt = new StringDataType();
 
 		String str;
-		try {
-			str = (String) sdt.getValue(buf, sdt.getDefaultSettings(), stringLen);
-		}
-		catch (AddressOutOfBoundsException e) {
-			return null;
-		}
+
+		str = (String) sdt.getValue(buf, sdt.getDefaultSettings(), stringLen);
+
 		return str;
 	}
 
@@ -1814,26 +1696,37 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		return false;
 	}
 
+	/**
+	 * Get the references to the special type infos that exist in the current program.
+	 * @return the references to the special type infos that exist in the current program
+	 * @throws CancelledException if cancelled
+	 */
 	private List<Address> getTypeinfoAddressesUsingSpecialTypeinfos() throws CancelledException {
 
 		List<Address> specialTypeinfoRefs = new ArrayList<Address>();
 
-		Reference[] refsToClassTypeinfo = api.getReferencesTo(class_type_info);
-		for (Reference ref : refsToClassTypeinfo) {
-			monitor.checkCanceled();
-			specialTypeinfoRefs.add(ref.getFromAddress());
+		if (class_type_info != null) {
+			Reference[] refsToClassTypeinfo = api.getReferencesTo(class_type_info);
+			for (Reference ref : refsToClassTypeinfo) {
+				monitor.checkCanceled();
+				specialTypeinfoRefs.add(ref.getFromAddress());
+			}
 		}
 
-		Reference[] refsToSiClassTypeinfo = api.getReferencesTo(si_class_type_info);
-		for (Reference ref : refsToSiClassTypeinfo) {
-			monitor.checkCanceled();
-			specialTypeinfoRefs.add(ref.getFromAddress());
+		if (si_class_type_info != null) {
+			Reference[] refsToSiClassTypeinfo = api.getReferencesTo(si_class_type_info);
+			for (Reference ref : refsToSiClassTypeinfo) {
+				monitor.checkCanceled();
+				specialTypeinfoRefs.add(ref.getFromAddress());
+			}
 		}
 
-		Reference[] refsToVmiClassTypeinfo = api.getReferencesTo(vmi_class_type_info);
-		for (Reference ref : refsToVmiClassTypeinfo) {
-			monitor.checkCanceled();
-			specialTypeinfoRefs.add(ref.getFromAddress());
+		if (vmi_class_type_info != null) {
+			Reference[] refsToVmiClassTypeinfo = api.getReferencesTo(vmi_class_type_info);
+			for (Reference ref : refsToVmiClassTypeinfo) {
+				monitor.checkCanceled();
+				specialTypeinfoRefs.add(ref.getFromAddress());
+			}
 		}
 
 		return specialTypeinfoRefs;
@@ -2153,8 +2046,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 			//virtual base offset for the virtual base referenced (negative).
 			long offset = (publicVirtualOffsetFlag & offsetMask) >> 8;
 
-			Msg.debug(this, "typeinfo " + typeinfoAddress + " base [" + i + "] isVirtual = " +
-				isVirtual + " isPublic = " + isPublic + " offset = " + offset);
+			if (DEBUG) {
+				Msg.debug(this, "typeinfo " + typeinfoAddress + " base [" + i + "] isVirtual = " +
+					isVirtual + " isPublic = " + isPublic + " offset = " + offset);
+			}
 
 			// add order to parent and parent offset
 			orderToParentMap.put(i, parentClass);
@@ -2232,8 +2127,9 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 * correct data types. Also creates a type info symbol at the correct offset in the table.
 	 * @return true if all found tables have a typeinfo symbol created successfully
 	 * @throws CancelledException if cancelled
+	 * @throws InvalidInputException if bad characters creating labels
 	 */
-	private boolean createSpecialVtables() throws CancelledException {
+	private boolean createSpecialVtables() throws CancelledException, InvalidInputException {
 
 		class_type_info_vtable = findSpecialVtable("__cxxabiv1", "__class_type_info");
 		class_type_info = null;
@@ -2517,8 +2413,7 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 * Use information from RTTI Base class Arrays to create class hierarchy lists and maps
 	 * @throws CancelledException if cancelled
 	 */
-	private void createClassHierarchyListAndMapForGcc()
-			throws CancelledException, Exception {
+	private void createClassHierarchyListAndMapForGcc() throws CancelledException, Exception {
 
 		Iterator<RecoveredClass> recoveredClassIterator = recoveredClasses.iterator();
 		while (recoveredClassIterator.hasNext()) {
@@ -2683,22 +2578,20 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 	 * address
 	 * @param start the starting address
 	 * @param end the ending address
+	 * @throws CancelledException if cancelled
+	 * @throws Exception if data has conflict when created
 	 */
-	private void createLongs(Address start, Address end) {
+	private void createLongs(Address start, Address end) throws CancelledException, Exception {
 
 		LongDataType longDT = new LongDataType();
 		int offset = 0;
 		Address address = start;
 		while (address != null && !address.equals(end)) {
-			try {
-				api.clearListing(address);
-				api.createData(address, longDT);
-				offset += defaultPointerSize;
-				address = getAddress(start, offset);
-			}
-			catch (Exception e) {
-				return;
-			}
+
+			api.clearListing(address, address.add(defaultPointerSize - 1));
+			api.createData(address, longDT);
+			offset += defaultPointerSize;
+			address = getAddress(start, offset);
 		}
 
 	}
@@ -2868,9 +2761,10 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// can't handle creating class data types for classes with virtual parents  yet
 		if (recoveredClass.inheritsVirtualAncestor()) {
 			if (DEBUG) {
-				Msg.debug(this, "Cannot create class data type for " +
-					recoveredClass.getClassNamespace().getName(true) +
-					" because it has virtual ancestors and we don't yet handle that use case.");
+				Msg.debug(this,
+					"Cannot create class data type for " +
+						recoveredClass.getClassNamespace().getName(true) +
+						" because it has virtual ancestors and we don't yet handle that use case.");
 			}
 			return;
 		}
@@ -2901,27 +2795,23 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 		// and class member data structure
 		Structure classStruct = createSimpleClassStructure(recoveredClass, vfPointerDataTypes);
 
-		// check for DWARF -- if none add c/d/etc to class
-		//TODO: if decide to replace dwarf data types then remove this check so the replaces
-		// in the following methods can replace the dwarf data types
-		if (!isDwarfLoaded) {
-
-			// Now that we have a class data type
-			// name constructor and destructor functions and put into the class namespace
-			addConstructorsToClassNamespace(recoveredClass, classStruct);
-			addDestructorsToClassNamespace(recoveredClass, classStruct);
+		// Now that we have a class data type
+		// name constructor and destructor functions and put into the class namespace
+		addConstructorsToClassNamespace(recoveredClass, classStruct);
+		addDestructorsToClassNamespace(recoveredClass, classStruct);
+		//TODO:
 //			addNonThisDestructorsToClassNamespace(recoveredClass);
 //			addVbaseDestructorsToClassNamespace(recoveredClass);
 //			addVbtableToClassNamespace(recoveredClass);
-//
+		//TODO:
 //			// add secondary label on functions with inlined constructors or destructors
 //			createInlinedConstructorComments(recoveredClass);
 //			createInlinedDestructorComments(recoveredClass);
 //			createIndeterminateInlineComments(recoveredClass);
 
-			// add label on constructor destructor functions that could not be determined which were which
-			createIndeterminateLabels(recoveredClass, classStruct);
-		}
+		// add label on constructor destructor functions that could not be determined which were which
+		createIndeterminateLabels(recoveredClass, classStruct);
+
 
 		// This is done after the class structure is created and added to the dtmanager
 		// because if done before the class structures are created 
