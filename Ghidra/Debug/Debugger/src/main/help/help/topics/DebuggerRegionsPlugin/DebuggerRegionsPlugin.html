@@ -100,5 +100,14 @@
     <P>This action is available when the dynamic listing's cursor is at a valid location. It
     selects the region containing that cursor. If the dynamic listing has a selection, it selects
     all regions intersecting that selection.</P>
+
+    <H3><A name="force_full_view"></A>Force Full View</H3>
+
+    <P>This action is available when a trace is active. It forces all physical address spaces into
+    the view. Ordinarily, only those addresses contained in a region at the active snap are
+    presented in the listing and memory windows. When this toggle is on, regions are ignored.
+    Instead, all physical addresses are presented. (Here "physical" includes all memory spaces
+    except <CODE>OTHER</CODE>.) This toggle applies only to the current trace for the duration it
+    is open.</P>
   </BODY>
 </HTML>

@@ -37,13 +37,6 @@ public class DBTraceVariableSnapProgramView extends DBTraceProgramView
 		super(trace, snap, compilerSpec);
 	}
 
-	/**
-	 * Fires object-restored event on this view and all associated register views.
-	 */
-	protected void fireObjectRestored() {
-		fireEventAllViews(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
-	}
-
 	@Override
 	public void setSnap(long newSnap) {
 		if (this.snap == newSnap) {

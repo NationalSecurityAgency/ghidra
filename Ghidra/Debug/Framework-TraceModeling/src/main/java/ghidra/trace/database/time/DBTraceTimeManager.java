@@ -27,6 +27,7 @@ import ghidra.trace.database.DBTraceManager;
 import ghidra.trace.database.thread.DBTraceThreadManager;
 import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.time.*;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.trace.util.TraceChangeRecord;
 import ghidra.util.LockHold;
 import ghidra.util.database.*;

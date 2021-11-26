@@ -35,7 +35,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemoryRegisterSpace;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
 import ghidra.util.task.TaskMonitor;
 

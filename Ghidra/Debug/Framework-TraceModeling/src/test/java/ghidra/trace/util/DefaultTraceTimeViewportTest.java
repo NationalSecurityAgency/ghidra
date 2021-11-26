@@ -26,7 +26,7 @@ import com.google.common.collect.*;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
 import ghidra.trace.database.ToyDBTraceBuilder;
 import ghidra.trace.database.time.DBTraceTimeManager;
-import ghidra.trace.model.time.TraceSchedule;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
 
 public class DefaultTraceTimeViewportTest extends AbstractGhidraHeadlessIntegrationTest {

@@ -16,42 +16,39 @@
 package ghidra.trace.database.program;
 
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.ByteMappingScheme;
 import ghidra.program.database.mem.FileBytes;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.*;
 import ghidra.program.model.mem.*;
-import ghidra.trace.database.memory.DBTraceMemoryRegion;
 import ghidra.trace.database.memory.DBTraceMemorySpace;
-import ghidra.trace.model.memory.TraceMemoryFlag;
 import ghidra.trace.model.memory.TraceMemorySpaceInputStream;
+import ghidra.util.MathUtilities;
 
-// TODO: Proper locking all over here
-public class DBTraceProgramViewMemoryBlock implements MemoryBlock {
+public abstract class AbstractDBTraceProgramViewMemoryBlock implements MemoryBlock {
 
-	private class DBTraceProgramViewMemoryBlockSourceInfo implements MemoryBlockSourceInfo {
+	private class MyMemoryBlockSourceInfo implements MemoryBlockSourceInfo {
 		@Override
 		public long getLength() {
-			return region.getLength();
+			return getMemoryBlock().getSize();
 		}
 
 		@Override
 		public Address getMinAddress() {
-			return region.getMinAddress();
+			return getMemoryBlock().getStart();
 		}
 
 		@Override
 		public Address getMaxAddress() {
-			return region.getMaxAddress();
+			return getMemoryBlock().getEnd();
 		}
 
 		@Override
 		public String getDescription() {
-			return "Trace region: " + region;
+			return getInfoDescription();
 		}
 
 		@Override
@@ -81,12 +78,12 @@ public class DBTraceProgramViewMemoryBlock implements MemoryBlock {
 
 		@Override
 		public MemoryBlock getMemoryBlock() {
-			return DBTraceProgramViewMemoryBlock.this;
+			return AbstractDBTraceProgramViewMemoryBlock.this;
 		}
 
 		@Override
 		public boolean contains(Address address) {
-			return region.getRange().contains(address);
+			return getMemoryBlock().contains(address);
 		}
 
 		@Override
@@ -95,15 +92,26 @@ public class DBTraceProgramViewMemoryBlock implements MemoryBlock {
 		}
 	}
 
-	private final DBTraceProgramView program;
-	private final DBTraceMemoryRegion region;
-
+	protected final DBTraceProgramView program;
 	private final List<MemoryBlockSourceInfo> info =
-		Collections.singletonList(new DBTraceProgramViewMemoryBlockSourceInfo());
+		Collections.singletonList(new MyMemoryBlockSourceInfo());
 
-	public DBTraceProgramViewMemoryBlock(DBTraceProgramView program, DBTraceMemoryRegion region) {
+	protected AbstractDBTraceProgramViewMemoryBlock(DBTraceProgramView program) {
 		this.program = program;
-		this.region = region;
+	}
+
+	protected abstract String getInfoDescription();
+
+	protected AddressSpace getAddressSpace() {
+		return getStart().getAddressSpace();
+	}
+
+	protected DBTraceMemorySpace getMemorySpace() {
+		return program.trace.getMemoryManager().getMemorySpace(getAddressSpace(), false);
+	}
+
+	protected AddressRange getAddressRange() {
+		return new AddressRangeImpl(getStart(), getEnd());
 	}
 
 	@Override
@@ -112,111 +120,39 @@ public class DBTraceProgramViewMemoryBlock implements MemoryBlock {
 	}
 
 	@Override
-	public void setPermissions(boolean read, boolean write, boolean execute) {
-		region.setRead(read);
-		region.setWrite(write);
-		region.setExecute(execute);
-	}
-
-	@Override
-	public int getPermissions() {
-		int bits = 0;
-		for (TraceMemoryFlag flag : region.getFlags()) {
-			bits |= flag.getBits();
-		}
-		return bits;
-	}
-
-	@Override
-	public InputStream getData() {
-		AddressRange range = region.getRange();
-		DBTraceMemorySpace space =
-			program.trace.getMemoryManager().getMemorySpace(range.getAddressSpace(), false);
-		if (space == null) {
-			return null;
-		}
-		return new TraceMemorySpaceInputStream(program, space, range);
-	}
-
-	@Override
 	public boolean contains(Address addr) {
-		return region.getRange().contains(addr);
-	}
-
-	@Override
-	public Address getStart() {
-		return region.getRange().getMinAddress();
-	}
-
-	@Override
-	public Address getEnd() {
-		return region.getRange().getMaxAddress();
+		return getAddressRange().contains(addr);
 	}
 
 	@Override
 	public long getSize() {
-		return region.getRange().getLength();
+		return getEnd().subtract(getStart()) + 1;
 	}
 
 	@Override
-	public String getName() {
-		return region.getName();
-	}
-
-	@Override
-	public void setName(String name) throws LockException {
-		region.setName(name);
+	public BigInteger getSizeAsBigInteger() {
+		return getEnd().getOffsetAsBigInteger()
+				.subtract(getStart().getOffsetAsBigInteger())
+				.add(BigInteger.ONE);
 	}
 
 	@Override
 	public String getComment() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void setComment(String comment) {
-		// TODO Auto-generated method stub
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean isRead() {
-		return region.isRead();
-	}
-
-	@Override
-	public void setRead(boolean r) {
-		region.setRead(r);
-	}
-
-	@Override
-	public boolean isWrite() {
-		return region.isWrite();
-	}
-
-	@Override
-	public void setWrite(boolean w) {
-		region.setWrite(w);
-	}
-
-	@Override
-	public boolean isExecute() {
-		return region.isExecute();
-	}
-
-	@Override
-	public void setExecute(boolean e) {
-		region.setExecute(e);
-	}
-
-	@Override
-	public boolean isVolatile() {
-		return region.isVolatile();
-	}
-
-	@Override
-	public void setVolatile(boolean v) {
-		region.setVolatile(v);
+	public InputStream getData() {
+		DBTraceMemorySpace ms = getMemorySpace();
+		if (ms == null) {
+			return null;
+		}
+		return new TraceMemorySpaceInputStream(program, ms, getAddressRange());
 	}
 
 	@Override
@@ -231,7 +167,7 @@ public class DBTraceProgramViewMemoryBlock implements MemoryBlock {
 
 	@Override
 	public byte getByte(Address addr) throws MemoryAccessException {
-		AddressRange range = region.getRange();
+		AddressRange range = getAddressRange();
 		if (!range.contains(addr)) {
 			throw new MemoryAccessException();
 		}
@@ -254,7 +190,7 @@ public class DBTraceProgramViewMemoryBlock implements MemoryBlock {
 
 	@Override
 	public int getBytes(Address addr, byte[] b, int off, int len) throws MemoryAccessException {
-		AddressRange range = region.getRange();
+		AddressRange range = getAddressRange();
 		if (!range.contains(addr)) {
 			throw new MemoryAccessException();
 		}
@@ -263,7 +199,7 @@ public class DBTraceProgramViewMemoryBlock implements MemoryBlock {
 		if (space == null) {
 			throw new MemoryAccessException("Space does not exist");
 		}
-		len = (int) Math.min(len, range.getMaxAddress().subtract(addr) + 1);
+		len = MathUtilities.unsignedMin(len, range.getMaxAddress().subtract(addr) + 1);
 		return space.getViewBytes(program.snap, addr, ByteBuffer.wrap(b, off, len));
 	}
 
@@ -281,7 +217,7 @@ public class DBTraceProgramViewMemoryBlock implements MemoryBlock {
 
 	@Override
 	public int putBytes(Address addr, byte[] b, int off, int len) throws MemoryAccessException {
-		AddressRange range = region.getRange();
+		AddressRange range = getAddressRange();
 		if (!range.contains(addr)) {
 			throw new MemoryAccessException();
 		}
@@ -308,7 +244,8 @@ public class DBTraceProgramViewMemoryBlock implements MemoryBlock {
 
 	@Override
 	public boolean isOverlay() {
-		return false;
+		// TODO: What effect does this have? Does it makes sense for trace "overlays"?
+		return getAddressSpace().isOverlaySpace();
 	}
 
 	@Override

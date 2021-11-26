@@ -253,6 +253,7 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 
 	SelectAddressesAction actionSelectAddresses;
 	DockingAction actionSelectRows;
+	ToggleDockingAction actionForceFullView;
 
 	public DebuggerRegionsProvider(DebuggerRegionsPlugin plugin) {
 		super(plugin.getTool(), DebuggerResources.TITLE_PROVIDER_REGIONS, plugin.getName(),
@@ -382,7 +383,10 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 				.enabledWhen(ctx -> currentTrace != null)
 				.onAction(this::activatedSelectCurrent)
 				.buildAndInstallLocal(this);
-
+		actionForceFullView = ForceFullViewAction.builder(plugin)
+				.enabledWhen(ctx -> currentTrace != null)
+				.onAction(this::activatedForceFullView)
+				.buildAndInstallLocal(this);
 		contextChanged();
 	}
 
@@ -501,6 +505,15 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		}
 	}
 
+	private void activatedForceFullView(ActionContext ignored) {
+		if (currentTrace == null) {
+			return;
+		}
+		currentTrace.getProgramView()
+				.getMemory()
+				.setForceFullView(actionForceFullView.isSelected());
+	}
+
 	public void setSelectedRegions(Set<TraceMemoryRegion> sel) {
 		DebuggerResources.setSelectedRows(sel, regionTableModel::getRow, regionTable,
 			regionTableModel, regionFilterPanel);
@@ -552,6 +565,16 @@ public class DebuggerRegionsProvider extends ComponentProviderAdapter {
 		addNewListeners();
 		loadRegions();
 		contextChanged();
+	}
+
+	@Override
+	public void contextChanged() {
+		super.contextChanged();
+		if (currentTrace != null) {
+			actionForceFullView.setSelected(currentTrace.getProgramView()
+					.getMemory()
+					.isForceFullView());
+		}
 	}
 
 	private void removeOldListeners() {

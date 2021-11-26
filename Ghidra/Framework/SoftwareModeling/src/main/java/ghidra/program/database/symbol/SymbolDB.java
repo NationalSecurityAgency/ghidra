@@ -855,15 +855,6 @@ public abstract class SymbolDB extends DatabaseObject implements Symbol {
 		}
 	}
 
-	protected void removeAllReferencesTo() {
-		ReferenceManager refMgr = symbolMgr.getReferenceManager();
-		ReferenceIterator it = refMgr.getReferencesTo(address);
-		while (it.hasNext()) {
-			Reference ref = it.next();
-			refMgr.delete(ref);
-		}
-	}
-
 	public long getDataTypeId() {
 		lock.acquire();
 		try {

@@ -943,6 +943,13 @@ public class DBTraceProgramView implements TraceProgramView {
 		}
 	}
 
+	/**
+	 * Fires object-restored event on this view and all associated register views.
+	 */
+	protected void fireObjectRestored() {
+		fireEventAllViews(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_RESTORED));
+	}
+
 	@Override
 	public String toString() {
 		return String.format("<%s on %s at snap=%d>", getClass().getSimpleName(), trace, snap);
@@ -1555,52 +1562,63 @@ public class DBTraceProgramView implements TraceProgramView {
 		trace.removeTransactionListener(listener);
 	}
 
-	public void updateMemoryAddBlock(DBTraceMemoryRegion region) {
+	public void updateMemoryAddRegionBlock(DBTraceMemoryRegion region) {
 		if (!isRegionVisible(region)) {
 			return;
 		}
-		memory.updateAddBlock(region);
+		memory.updateAddRegionBlock(region);
 	}
 
-	public void updateMemoryChangeBlockName(DBTraceMemoryRegion region) {
+	public void updateMemoryChangeRegionBlockName(DBTraceMemoryRegion region) {
 		if (!isRegionVisible(region)) {
 			return;
 		}
-		memory.updateChangeBlockName(region);
+		memory.updateChangeRegionBlockName(region);
 	}
 
-	public void updateMemoryChangeBlockFlags(DBTraceMemoryRegion region) {
+	public void updateMemoryChangeRegionBlockFlags(DBTraceMemoryRegion region) {
 		if (!isRegionVisible(region)) {
 			return;
 		}
-		memory.updateChangeBlockFlags(region);
+		memory.updateChangeRegionBlockFlags(region);
 	}
 
-	public void updateMemoryChangeBlockRange(DBTraceMemoryRegion region, AddressRange oldRange,
+	public void updateMemoryChangeRegionBlockRange(DBTraceMemoryRegion region,
+			AddressRange oldRange,
 			AddressRange newRange) {
 		if (!isRegionVisible(region)) {
 			return;
 		}
-		memory.updateChangeBlockRange(region, oldRange, newRange);
+		memory.updateChangeRegionBlockRange(region, oldRange, newRange);
 	}
 
-	public void updateMemoryChangeBlockLifespan(DBTraceMemoryRegion region,
+	public void updateMemoryChangeRegionBlockLifespan(DBTraceMemoryRegion region,
 			Range<Long> oldLifespan, Range<Long> newLifespan) {
 		boolean inOld = isRegionVisible(region, oldLifespan);
 		boolean inNew = isRegionVisible(region, newLifespan);
 		if (inOld && !inNew) {
-			memory.updateDeleteBlock(region);
+			memory.updateDeleteRegionBlock(region);
 		}
 		if (!inOld && inNew) {
-			memory.updateAddBlock(region);
+			memory.updateAddRegionBlock(region);
 		}
 	}
 
-	public void updateMemoryDeleteBlock(DBTraceMemoryRegion region) {
+	public void updateMemoryDeleteRegionBlock(DBTraceMemoryRegion region) {
 		if (!isRegionVisible(region)) {
 			return;
 		}
-		memory.updateAddBlock(region);
+		memory.updateAddRegionBlock(region);
+	}
+
+	public void updateMemoryAddSpaceBlock(AddressSpace space) {
+		// Spaces not not time-bound. No visibility check.
+		memory.updateAddSpaceBlock(space);
+	}
+
+	public void updateMemoryDeleteSpaceBlock(AddressSpace space) {
+		// Spaces not not time-bound. No visibility check.
+		memory.updateDeleteSpaceBlock(space);
 	}
 
 	public void updateMemoryRefreshBlocks() {

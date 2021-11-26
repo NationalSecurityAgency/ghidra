@@ -161,7 +161,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			DBTraceMemoryRegion region =
 				regionMapSpace.put(new ImmutableTraceAddressSnapRange(range, lifespan), null);
 			region.set(path, path, flags);
-			trace.updateViewsAddBlock(region);
+			trace.updateViewsAddRegionBlock(region);
 			trace.setChanged(
 				new TraceChangeRecord<>(TraceMemoryRegionChangeType.ADDED, this, region));
 			return region;
@@ -244,7 +244,7 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		try (LockHold hold = LockHold.lock(lock.writeLock())) {
 			regionMapSpace.deleteData(region);
 			regionCache.remove(region);
-			trace.updateViewsDeleteBlock(region);
+			trace.updateViewsDeleteRegionBlock(region);
 			trace.setChanged(
 				new TraceChangeRecord<>(TraceMemoryRegionChangeType.DELETED, this, region));
 		}

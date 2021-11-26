@@ -22,10 +22,10 @@
       </TBODY>
     </TABLE>
 
-    <P>P-code is the "microcode" of Ghidra's processor specifications, compiled from its SLEIGH
+    <P>P-code is the "microcode" of Ghidra's processor specifications, compiled from its Sleigh
     specification. Originally designed to facilitate static analysis, it is easily applied to
     emulation as well. Stepping each p-code operation is an effective means of debugging the
-    SLEIGH. The plugin provides two panes: 1) The p-code listing, and 2) Temporary ("Unique")
+    Sleigh. The plugin provides two panes: 1) The p-code listing, and 2) Temporary ("Unique")
     variables. The listing works similarly to the dynamic listing. It displays each p-code
     operation, highlighting the current "counter", which is the next operation to be executed.
     There is also a cursor, allowing selection of an operation. The variables view operates
@@ -62,12 +62,12 @@
     interact with the target, stepping at the p-code level implies you are no longer "at the
     present."</P>
 
-    <H3><A name="step_trace_pcode_backward"></A>Step Trace p-code Backward</H3>
+    <H3><A name="emu_trace_pcode_backward"></A>Emulate Trace p-code Backward</H3>
 
     <P>This action is available when the current coordinates have some positive number of p-code
     ticks. It steps the trace backward to the previous p-code tick.</P>
 
-    <H3><A name="step_trace_pcode_forward"></A>Step Trace p-code Forward</H3>
+    <H3><A name="emu_trace_pcode_forward"></A>Emulate Trace p-code Forward</H3>
 
     <P>This action is available when a thread is selected. It steps the current thread forward to
     the next p-code tick, using emulation. Note that emulation does not affect the target.
