@@ -212,10 +212,13 @@ public class SemisparseByteArray {
 	 */
 	public synchronized void putData(final long loc, final byte[] data, final int offset,
 			final int length) {
+		if (length == 0) {
+			return;
+		}
 		if (length < 0) {
 			throw new IllegalArgumentException("length: " + length);
 		}
-		if (Long.compareUnsigned(loc + length, loc) < 0) {
+		if (Long.compareUnsigned(loc + length - 1, loc) < 0) {
 			throw new IndexOutOfBoundsException("given offset and length would exceed ULONG_MAX");
 		}
 		UnsignedLong uLoc = UnsignedLong.fromLongBits(loc);
