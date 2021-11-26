@@ -215,7 +215,7 @@ public class SemisparseByteArray {
 		if (length < 0) {
 			throw new IllegalArgumentException("length: " + length);
 		}
-		if (loc + length < loc) {
+		if (Long.compareUnsigned(loc + length, loc) < 0) {
 			throw new IndexOutOfBoundsException("given offset and length would exceed ULONG_MAX");
 		}
 		UnsignedLong uLoc = UnsignedLong.fromLongBits(loc);
