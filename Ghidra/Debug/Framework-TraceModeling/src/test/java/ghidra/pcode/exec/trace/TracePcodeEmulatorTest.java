@@ -900,4 +900,27 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				TraceSleighUtils.evaluate("RCX", tb.trace, 1, thread, 0));
 		}
 	}
+
+	/**
+	 * Test that unimplemented instructions (as opposed to instructions with no semantics) result in
+	 * an interrupt.
+	 */
+	@Test(expected = PcodeExecutionException.class)
+	public void testUNIMPL() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "Toy:BE:64:default")) {
+			assertEquals(Register.NO_CONTEXT, tb.language.getContextBaseRegister());
+
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"pc = 0x00400000;",
+					"sp = 0x00110000;"),
+				List.of(
+					"unimpl"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+		}
+	}
 }
