@@ -18,14 +18,14 @@ package ghidra.app.plugin.core.decompile.actions;
 import docking.ActionContext;
 import docking.action.MenuData;
 import ghidra.app.actions.AbstractFindReferencesDataTypeAction;
-import ghidra.app.decompiler.ClangFieldToken;
-import ghidra.app.decompiler.ClangToken;
+import ghidra.app.decompiler.*;
 import ghidra.app.decompiler.component.*;
 import ghidra.app.plugin.core.decompile.DecompilerActionContext;
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
 import ghidra.app.util.HelpTopics;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.Enum;
 import ghidra.util.HelpLocation;
 
 public class FindReferencesToDataTypeAction extends AbstractFindReferencesDataTypeAction {
@@ -44,17 +44,30 @@ public class FindReferencesToDataTypeAction extends AbstractFindReferencesDataTy
 
 	@Override
 	public DataType getDataType(ActionContext context) {
-
 		return DecompilerUtils.getDataType((DecompilerActionContext) context);
 	}
 
 	@Override
-	protected String getDataTypeField() {
+	protected String getDataTypeField(DataType dataType) {
 
 		DecompilerPanel decompilerPanel = controller.getDecompilerPanel();
 		ClangToken tokenAtCursor = decompilerPanel.getTokenAtCursor();
 		if (tokenAtCursor instanceof ClangFieldToken) {
 			return tokenAtCursor.getText();
+		}
+
+		if (dataType instanceof Enum) {
+
+			// check for enum field
+			ClangVariableToken vt = (ClangVariableToken) tokenAtCursor;
+			String text = vt.getText();
+			Enum e = (Enum) dataType;
+			String[] names = e.getNames();
+			for (String name : names) {
+				if (name.equals(text)) {
+					return name;
+				}
+			}
 		}
 
 		return null;
@@ -93,8 +106,7 @@ public class FindReferencesToDataTypeAction extends AbstractFindReferencesDataTy
 
 		String typeName = type.getName();
 		String menuName = "Find Uses of " + typeName;
-
-		String fieldName = getDataTypeField();
+		String fieldName = getDataTypeField(type);
 		if (fieldName != null) {
 			menuName += '.' + fieldName;
 		}

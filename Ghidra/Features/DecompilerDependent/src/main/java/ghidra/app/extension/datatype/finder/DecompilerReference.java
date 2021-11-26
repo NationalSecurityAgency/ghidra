@@ -174,7 +174,7 @@ public abstract class DecompilerReference {
 		return "{\n" +
 			"\tvariable: " + StringUtilities.toStringWithIndent(variable) + ",\n" +
 			"\tdata type: " + getDataType() + ",\n"+
-			"\tline " + getContext() + ",\n" +
+			"\tline " + StringUtilities.toStringWithIndent(getContext().getPlainText()) + ",\n" +
 			"\tfunction: " + getFunction() + "\n" +
 		"}";
 		//@formatter:on

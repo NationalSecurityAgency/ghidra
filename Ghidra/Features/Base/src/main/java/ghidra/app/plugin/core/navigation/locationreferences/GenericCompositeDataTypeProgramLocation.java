@@ -18,12 +18,13 @@ package ghidra.app.plugin.core.navigation.locationreferences;
 import java.util.Objects;
 
 import ghidra.program.model.data.Composite;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 
 /**
- * A class to signal that the ProgramLocation is used for data types and is not really 
- * connected to the listing.  This is a subclass specifically for {@link Composite} types and a
- * particular field name of the given composite.
+ * A class to signal that the ProgramLocation is used for data types and is not really
+ * connected to the listing.  This is a subclass is designed for data types that have fields, such
+ * as {@link Composite} types and {@link Enum} types.
  * 
  * @see GenericCompositeDataTypeLocationDescriptor
  */
@@ -31,7 +32,7 @@ public class GenericCompositeDataTypeProgramLocation extends GenericDataTypeProg
 
 	private String fieldName;
 
-	GenericCompositeDataTypeProgramLocation(Program program, Composite dataType, String fieldName) {
+	GenericCompositeDataTypeProgramLocation(Program program, DataType dataType, String fieldName) {
 		super(program, dataType);
 		this.fieldName = Objects.requireNonNull(fieldName);
 	}
