@@ -1397,15 +1397,6 @@ public class SymbolMergeManagerNamespace1Test extends AbstractListingMergeManage
 			"The following namespaces were not removed", 4000);
 		waitForMergeCompletion();
 
-		SymbolTable symtab = resultProgram.getSymbolTable();
-		Namespace globalNS = resultProgram.getGlobalNamespace();
-		SymbolIterator iter = symtab.getSymbols(globalNS);
-		while (iter.hasNext()) {
-			Symbol s = iter.next();
-			if (s.getSymbolType().equals(SymbolType.NAMESPACE)) {
-				System.out.println("Namespace = " + s.getName(true));
-			}
-		}
 		Symbol firstNsSymbol =
 			getUniqueSymbol(resultProgram, "FirstNamespace", resultProgram.getGlobalNamespace());
 		assertNotNull(firstNsSymbol);

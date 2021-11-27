@@ -53,8 +53,8 @@ import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.trace.model.stack.TraceStackFrame;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.TraceSchedule;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
 import ghidra.util.datastruct.CollectionChangeListener;
 import ghidra.util.exception.*;
@@ -693,7 +693,11 @@ public class DebuggerTraceManagerServicePlugin extends Plugin
 				}
 				varView.setSnap(emuSnap);
 				fireLocationEvent(coordinates);
-			}));
+			})).exceptionally(ex -> {
+				Msg.showError(this, null, "Emulate", "Could not navigate to emulated coordinates",
+					ex);
+				return null;
+			});
 		}
 	}
 

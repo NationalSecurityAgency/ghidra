@@ -62,9 +62,9 @@
 
       <LI>Value - the raw bytes of the watched buffer. If the expression is a register, then this
       is its hexadecimal value. This field is user modifiable when the <B>Enable Edits</B> toggle
-      is on. Changes are sent to the target if the trace is live and "at the present." If the value
-      has changed since the last navigation event, this cell is rendered in <FONT color=
-      "red">red</FONT>.</LI>
+      is on. Changes are sent to the target if the trace is live and "at the present." Otherwise,
+      the change is materialized via emulation. If the value has changed since the last navigation
+      event, this cell is rendered in <FONT color="red">red</FONT>.</LI>
 
       <LI>Type - the user-modifiable type of the watch. Note the type is not marked up in the
       trace. Clicking the Apply Data Type action will apply it to the current trace, if
@@ -79,7 +79,7 @@
       not necessarily cause alarm. An expression devised for one context may not have meaning under
       another, even if it evaluates without error. E.g., <CODE>RIP</CODE> will disappear when
       switching to a 32-bit trace, or <CODE>*:8 (*:8 (RSP+8))</CODE> may cause an invalid
-      dereference if an x86 <CODE>PUSH</CODE> causes <CODE>*:8 (RSP+8)</CODE> to become 0.</LI>
+      dereference when the stack pointer moves.</LI>
     </UL>
 
     <H2>Actions</H2>
@@ -123,11 +123,15 @@
 
     <H3><A name="enable_edits"></A>Enable Edits</H3>
 
-    <P>This toggle is a write protector for recorded and/or live values. To modify a watch's value,
-    this toggle must be enabled. Editing a value when the trace is live and "at the present" will
-    cause the value to be modified on the target. Editing historical and/or emulated values is
-    permitted, but it has no effect on the target. Note that only the raw "Value" column can be
-    edited directly. The "Repr" column cannot be edited, yet.</P>
+    <P>This toggle is a write protector for target machine state. To modify a watch's value, this
+    toggle must be enabled. Editing a value when the trace is live and "at the present" will cause
+    the value to be modified on the target. Editing emulated values is permitted, but it has no
+    effect on the target. Editing historical values is not permitted. All edits to non-live trace
+    values are performed in emulation. Specifically, it appends a patch command to the current
+    emulation schedule. This keeps trace history in tact, and it allows patched emulated states to
+    be annotated and recalled later, since they are stored in the trace's scratch space. Note that
+    only the raw "Value" column can be edited directly. The "Repr" column cannot be edited,
+    yet.</P>
 
     <H2><A name="colors"></A>Tool Options: Colors</H2>
 

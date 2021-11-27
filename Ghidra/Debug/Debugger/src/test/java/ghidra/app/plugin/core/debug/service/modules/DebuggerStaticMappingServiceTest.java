@@ -33,7 +33,10 @@ import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
 import ghidra.trace.database.ToyDBTraceBuilder;
+import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.model.*;
+import ghidra.trace.model.memory.TraceMemoryFlag;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.*;
 import ghidra.util.Msg;
 import ghidra.util.database.UndoableTransaction;
@@ -579,4 +582,26 @@ public class DebuggerStaticMappingServiceTest extends AbstractGhidraHeadedDebugg
 	}
 
 	// TODO: open trace, add mapping to closed program, then open that program
+
+	// TODO: The various mapping proposals
+
+	@Test
+	public void testGroupRegionsByLikelyModule() throws Exception {
+		TraceMemoryRegion echoText, echoData, libText, libData;
+		DBTraceMemoryManager mm = tb.trace.getMemoryManager();
+		try (UndoableTransaction tid = tb.startTransaction()) {
+			echoText = mm.createRegion("Memory.Regions[/bin/echo (0x00400000)]",
+				0, tb.range(0x00400000, 0x0040ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			echoData = mm.createRegion("Memory.Regions[/bin/echo (0x00600000)]",
+				0, tb.range(0x00600000, 0x00600fff), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
+			libText = mm.createRegion("Memory.Regions[/lib/libc.so (0x7ff00000)]",
+				0, tb.range(0x7ff00000, 0x7ff0ffff), TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+			libData = mm.createRegion("Memory.Regions[/lib/libc.so (0x7ff20000)]",
+				0, tb.range(0x7ff20000, 0x7ff20fff), TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
+		}
+
+		Set<Set<TraceMemoryRegion>> actual =
+			DebuggerStaticMappingProposals.groupRegionsByLikelyModule(mm.getAllRegions());
+		assertEquals(Set.of(Set.of(echoText, echoData), Set.of(libText, libData)), actual);
+	}
 }

@@ -15,13 +15,22 @@
  */
 package ghidra.pcode.exec;
 
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.pcode.Varnode;
 
 public interface PcodeExecutorStatePiece<A, T> {
+
+	default void checkRange(AddressSpace space, long offset, int size) {
+		// TODO: Perhaps get/setVar should just take an AddressRange?
+		try {
+			new AddressRangeImpl(space.getAddress(offset), size);
+		}
+		catch (AddressOverflowException | AddressOutOfBoundsException e) {
+			throw new IllegalArgumentException("Given offset and length exceeds address space");
+		}
+	}
 
 	A longToOffset(AddressSpace space, long l);
 
@@ -39,6 +48,7 @@ public interface PcodeExecutorStatePiece<A, T> {
 
 	default void setVar(AddressSpace space, long offset, int size, boolean truncateAddressableUnit,
 			T val) {
+		checkRange(space, offset, size);
 		setVar(space, longToOffset(space, offset), size, truncateAddressableUnit, val);
 	}
 
@@ -56,6 +66,7 @@ public interface PcodeExecutorStatePiece<A, T> {
 	T getVar(AddressSpace space, A offset, int size, boolean truncateAddressableUnit);
 
 	default T getVar(AddressSpace space, long offset, int size, boolean truncateAddressableUnit) {
+		checkRange(space, offset, size);
 		return getVar(space, longToOffset(space, offset), size, truncateAddressableUnit);
 	}
 

@@ -24,25 +24,24 @@ import ghidra.app.services.*;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
-@PluginInfo( //
-	shortDescription = "Debugger module and section manager", //
-	description = "GUI to manage modules and sections", //
-	category = PluginCategoryNames.DEBUGGER, //
-	packageName = DebuggerPluginPackage.NAME, //
-	status = PluginStatus.RELEASED, //
+@PluginInfo(
+	shortDescription = "Debugger module and section manager",
+	description = "GUI to manage modules and sections",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
 	eventsConsumed = {
-		ProgramActivatedPluginEvent.class, //
-		ProgramLocationPluginEvent.class, //
-		ProgramClosedPluginEvent.class, //
-		TraceActivatedPluginEvent.class, //
-	}, //
-	servicesRequired = { //
-		DebuggerModelService.class, //
-		DebuggerStaticMappingService.class, //
-		DebuggerTraceManagerService.class, //
-		ProgramManager.class, //
-	} // 
-)
+		ProgramActivatedPluginEvent.class,
+		ProgramLocationPluginEvent.class,
+		ProgramClosedPluginEvent.class,
+		TraceActivatedPluginEvent.class,
+	},
+	servicesRequired = {
+		DebuggerModelService.class,
+		DebuggerStaticMappingService.class,
+		DebuggerTraceManagerService.class,
+		ProgramManager.class,
+	})
 public class DebuggerModulesPlugin extends AbstractDebuggerPlugin {
 	protected DebuggerModulesProvider provider;
 

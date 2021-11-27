@@ -24,19 +24,18 @@ import ghidra.framework.options.SaveState;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 
-@PluginInfo( //
-	shortDescription = "Lists recorded snapshots in a trace", //
-	description = "Provides the component which lists snapshots and allows navigation", //
-	category = PluginCategoryNames.DEBUGGER, //
-	packageName = DebuggerPluginPackage.NAME, //
-	status = PluginStatus.RELEASED, //
-	eventsConsumed = { //
-		TraceActivatedPluginEvent.class //
-	}, //
-	servicesRequired = { //
-		DebuggerTraceManagerService.class //
-	} //
-)
+@PluginInfo(
+	shortDescription = "Lists recorded snapshots in a trace",
+	description = "Provides the component which lists snapshots and allows navigation",
+	category = PluginCategoryNames.DEBUGGER,
+	packageName = DebuggerPluginPackage.NAME,
+	status = PluginStatus.RELEASED,
+	eventsConsumed = {
+		TraceActivatedPluginEvent.class
+	},
+	servicesRequired = {
+		DebuggerTraceManagerService.class
+	})
 public class DebuggerTimePlugin extends AbstractDebuggerPlugin {
 	protected DebuggerTimeProvider provider;
 

@@ -900,4 +900,87 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 				TraceSleighUtils.evaluate("RCX", tb.trace, 1, thread, 0));
 		}
 	}
+
+	/**
+	 * Test the read max boundary case
+	 * 
+	 * <p>
+	 * This happens very easily when RBP is uninitialized, as code commonly uses negative offsets
+	 * from RBP. The range will have upper endpoint {@code ULONG_MAX+1}, non-inclusive, which would
+	 * crash, instead requiring some special logic.
+	 */
+	@Test
+	public void testMOV_EAX_dword_RBPm4() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;",
+					"RSP = 0x00110000;",
+					"*:4 (0:8-4) = 0x12345678;"),
+				List.of(
+					"MOV EAX, dword ptr [RBP + -0x4]"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				emu.writeDown(tb.trace, 1, 1, false);
+			}
+
+			assertEquals(BigInteger.valueOf(0x12345678),
+				TraceSleighUtils.evaluate("EAX", tb.trace, 1, thread, 0));
+		}
+	}
+
+	/**
+	 * Test the read wrap-around case for x86_64
+	 * 
+	 * <p>
+	 * This tests a rare (I hope) case where a read would wrap around the address space: 2 bytes
+	 * including the max address, and 2 bytes at the min address. I imagine the behavior here varies
+	 * by architecture? TODO: For now, I think it's acceptable just to throw an exception, but in
+	 * reality, we should probably handle it and allow some mechanism for architectures to forbid
+	 * it, if that's in fact what they do.
+	 */
+	@Test(expected = PcodeExecutionException.class)
+	public void testMOV_EAX_dword_RBPm2_x64() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:64:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"RIP = 0x00400000;",
+					"RSP = 0x00110000;"),
+				List.of(
+					"MOV EAX, dword ptr [RBP + -0x2]"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+		}
+	}
+
+	/**
+	 * Test the read wrap-around case for x86 (32)
+	 * 
+	 * <p>
+	 * This test ensures the rule applies for spaces smaller than 64 bits
+	 */
+	@Test(expected = PcodeExecutionException.class)
+	public void testMOV_EAX_dword_EBPm2_x86() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "x86:LE:32:default")) {
+			TraceThread thread = initTrace(tb,
+				List.of(
+					"EIP = 0x00400000;",
+					"ESP = 0x00110000;"),
+				List.of(
+					"MOV EAX, dword ptr [EBP + -0x2]"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			emuThread.overrideContextWithDefault();
+			emuThread.stepInstruction();
+		}
+	}
 }

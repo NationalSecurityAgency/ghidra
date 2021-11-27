@@ -17,6 +17,7 @@ package ghidra.trace.model.time;
 
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.thread.TraceThread;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 
 /**
  * A "snapshot in time" in a trace

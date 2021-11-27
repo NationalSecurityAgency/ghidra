@@ -26,8 +26,8 @@ import org.junit.Test;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.trace.database.time.DBTraceTimeManager;
 import ghidra.trace.model.thread.TraceThread;
-import ghidra.trace.model.time.TraceSchedule;
 import ghidra.trace.model.time.TraceSnapshot;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.database.UndoableTransaction;
 
 public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITest {
@@ -50,7 +50,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 			first.setRealTime(c.getTimeInMillis());
 			TraceSnapshot second = timeManager.getSnapshot(10, true);
 			second.setDescription("Snap 10");
-			second.setSchedule(TraceSchedule.parse("0:5,t1-5"));
+			second.setSchedule(TraceSchedule.parse("0:5;t1-5"));
 		}
 	}
 
@@ -81,7 +81,7 @@ public class DebuggerTimeProviderTest extends AbstractGhidraHeadedDebuggerGUITes
 		SnapshotRow secondRow = snapsDisplayed.get(1);
 		assertEquals(10, secondRow.getSnap());
 		assertEquals("Snap 10", secondRow.getDescription());
-		assertEquals("0:5,t1-5", secondRow.getSchedule());
+		assertEquals("0:5;t1-5", secondRow.getSchedule());
 		// Timestamp is left unchecked, since default is current time
 	}
 

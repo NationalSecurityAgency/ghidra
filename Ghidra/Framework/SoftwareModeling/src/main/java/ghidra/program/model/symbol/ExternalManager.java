@@ -30,29 +30,31 @@ import ghidra.util.exception.InvalidInputException;
 public interface ExternalManager {
 
 	/**
-	 * Returns a list of all external names for which locations have been defined.
+	 * Returns an array of all external names for which locations have been defined.
+	 * @return array of external names
 	 */
 	public String[] getExternalLibraryNames();
-
+	
 	/**
 	 * Get the Library which corresponds to the specified name
-	 * @param name name of library
+	 * @param libraryName name of library
 	 * @return library or null if not found
 	 */
-	public Library getExternalLibrary(String name);
+	public Library getExternalLibrary(String libraryName);
 
 	/**
 	 * Removes external name if no associated ExternalLocation's exist
-	 * @param name external name
+	 * @param libraryName external library name
 	 * @return true if removed, false if unable to due to associated locations/references
 	 */
-	public boolean removeExternalLibrary(String name);
+	public boolean removeExternalLibrary(String libraryName);
 
 	/**
 	 * Returns the file pathname associated with an external name.
 	 * Null is returned if either the external name does not exist or
 	 * a pathname has not been set.
 	 * @param libraryName external name
+	 * @return project file pathname or null
 	 */
 	public String getExternalLibraryPath(String libraryName);
 
@@ -61,6 +63,7 @@ public interface ExternalManager {
 	 * @param libraryName the name of the library to associate with a file.
 	 * @param pathname the path to the program to be associated with the library name.
 	 * @param userDefined true if the external path is being specified by the user
+	 * @throws InvalidInputException 
 	 */
 	public void setExternalPath(String libraryName, String pathname, boolean userDefined)
 			throws InvalidInputException;
@@ -70,6 +73,8 @@ public interface ExternalManager {
 	 * @param oldName the old name of the external library name.
 	 * @param newName the new name of the external library name.
 	 * @param source the source of this external library
+	 * @throws DuplicateNameException if another namespace has the same name
+	 * @throws InvalidInputException 
 	 */
 	public void updateExternalLibraryName(String oldName, String newName, SourceType source)
 			throws DuplicateNameException, InvalidInputException;
@@ -85,7 +90,7 @@ public interface ExternalManager {
 	/**
 	 * Get an iterator over all external locations which have been associated to
 	 * the specified memory address
-	 * @param memoryAddress
+	 * @param memoryAddress memory address
 	 * @return external location iterator
 	 */
 	public ExternalLocationIterator getExternalLocations(Address memoryAddress);
@@ -94,7 +99,9 @@ public interface ExternalManager {
 	 * Get an external location.
 	 * @param libraryName the name of the library for which to get an external location
 	 * @param label the name of the external location.
-	 * @deprecated Use  {@link #getExternalLocations(String, String)} instead
+	 * @return first matching external location
+	 * @deprecated Use  {@link #getExternalLocations(String, String)} or 
+	 * {@link #getUniqueExternalLocation(String, String)} since duplicate names may exist
 	 */
 	@Deprecated
 	public ExternalLocation getExternalLocation(String libraryName, String label);
@@ -103,7 +110,9 @@ public interface ExternalManager {
 	 * Get an external location.
 	 * @param namespace the namespace containing the external label.
 	 * @param label the name of the external location.
-	 * @deprecated Use {@link #getExternalLocations(Namespace, String)}
+	 * @return first matching external location
+	 * @deprecated Use {@link #getExternalLocations(Namespace, String)} or 
+	 * {@link #getUniqueExternalLocation(Namespace, String)} since duplicate names may exist
 	 */
 	@Deprecated
 	public ExternalLocation getExternalLocation(Namespace namespace, String label);
@@ -156,25 +165,27 @@ public interface ExternalManager {
 
 	/**
 	 * Adds a new external library name
-	 * @param name the new library name to add.
+	 * @param libraryName the new external library name to add.
 	 * @param source the source of this external library
 	 * @return library
+	 * @throws InvalidInputException 
+	 * @throws DuplicateNameException if another non-Library namespace has the same name
 	 */
-	public Library addExternalLibraryName(String name, SourceType source)
-			throws DuplicateNameException, InvalidInputException;
+	public Library addExternalLibraryName(String libraryName, SourceType source)
+			throws InvalidInputException, DuplicateNameException;
 
 	/**
 	 * Get or create an external location associated with an library/file named extName
 	 * and the label within that file specified by extLabel
-	 * @param extName the external name
+	 * @param libraryName the external library name
 	 * @param extLabel the external label
 	 * @param extAddr the external address
 	 * @param sourceType the source type of this external library's symbol
 	 * @return external location
 	 * @throws InvalidInputException
-	 * @throws DuplicateNameException
+	 * @throws DuplicateNameException if another non-Library namespace has the same name
 	 */
-	public ExternalLocation addExtLocation(String extName, String extLabel, Address extAddr,
+	public ExternalLocation addExtLocation(String libraryName, String extLabel, Address extAddr,
 			SourceType sourceType) throws InvalidInputException, DuplicateNameException;
 
 	/**
@@ -185,10 +196,9 @@ public interface ExternalManager {
 	 * @param sourceType the source type of this external library's symbol
 	 * @return external location
 	 * @throws InvalidInputException
-	 * @throws DuplicateNameException
 	 */
 	public ExternalLocation addExtLocation(Namespace extNamespace, String extLabel, Address extAddr,
-			SourceType sourceType) throws InvalidInputException, DuplicateNameException;
+			SourceType sourceType) throws InvalidInputException;
 
 	/**
 	 * Get or create an external location in the indicated parent namespace with the specified name.
@@ -200,25 +210,24 @@ public interface ExternalManager {
 	 * location instead of creating a new one.
 	 * @return external location
 	 * @throws InvalidInputException
-	 * @throws DuplicateNameException
 	 */
 	public ExternalLocation addExtLocation(Namespace extNamespace, String extLabel, Address extAddr,
 			SourceType sourceType, boolean reuseExisting)
-			throws InvalidInputException, DuplicateNameException;
+			throws InvalidInputException;
 
 	/**
 	 * Get or create an external location associated with an library/file named extName
 	 * and the label within that file specified by extLabel
-	 * @param extName the external name
+	 * @param libraryName the external library name
 	 * @param extLabel the external label
 	 * @param extAddr the external address
 	 * @param sourceType the source type of this external library's symbol
 	 * @return external location
 	 * @throws InvalidInputException
-	 * @throws DuplicateNameException
+	 * @throws DuplicateNameException if another non-Library namespace has the same name
 	 */
-	public ExternalLocation addExtFunction(String extName, String extLabel, Address extAddr,
-			SourceType sourceType) throws DuplicateNameException, InvalidInputException;
+	public ExternalLocation addExtFunction(String libraryName, String extLabel, Address extAddr,
+			SourceType sourceType) throws InvalidInputException, DuplicateNameException;
 
 	/**
 	 * Get or create an external function location associated with an library/file named extName
@@ -229,10 +238,9 @@ public interface ExternalManager {
 	 * @param sourceType the source type of this external library's symbol
 	 * @return external location
 	 * @throws InvalidInputException
-	 * @throws DuplicateNameException if another non-Library namespace has the same name
 	 */
 	public ExternalLocation addExtFunction(Namespace extNamespace, String extLabel, Address extAddr,
-			SourceType sourceType) throws InvalidInputException, DuplicateNameException;
+			SourceType sourceType) throws InvalidInputException;
 
 	/**
 	 * Get or create an external function location associated with an library/file named extName
@@ -245,10 +253,9 @@ public interface ExternalManager {
 	 * address is not null and not used in an existing location.
 	 * @return external location
 	 * @throws InvalidInputException
-	 * @throws DuplicateNameException if another non-Library namespace has the same name
 	 */
 	public ExternalLocation addExtFunction(Namespace extNamespace, String extLabel, Address extAddr,
 			SourceType sourceType, boolean reuseExisting)
-			throws InvalidInputException, DuplicateNameException;
+			throws InvalidInputException;
 
 }

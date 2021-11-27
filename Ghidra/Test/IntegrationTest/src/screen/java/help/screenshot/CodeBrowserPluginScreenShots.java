@@ -144,15 +144,16 @@ public class CodeBrowserPluginScreenShots extends GhidraScreenShotGenerator {
 	@Test
 	public void testCaptureSelectionTable() {
 		setToolSize(1100, 700);
-		positionListingTop(0x0406bd7);
-		makeSelection(0x0406be1, 0x0406bf1);
+		positionListingTop(0x0406bd5);
+		makeSelection(0x0406be1, 0x0406bf6);
 
 		performAction("Create Table From Selection", "CodeBrowserSelectionPlugin", true);
 		Window window = waitForWindowByTitleContaining("Selection Table");
 		Point loc = plugin.getListingPanel().getLocationOnScreen();
 		Dimension size = window.getSize();
 		window.setBounds(loc.x + 300, loc.y + 150, size.width, 300);
-		captureProvider(CodeViewerProvider.class);
+		CodeViewerProvider provider = getProvider(CodeViewerProvider.class);
+		captureProviderWithScreenShot(provider);
 	}
 
 	@Test

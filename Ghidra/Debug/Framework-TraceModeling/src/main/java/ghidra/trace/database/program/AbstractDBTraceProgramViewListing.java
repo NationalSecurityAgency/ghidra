@@ -69,6 +69,7 @@ public abstract class AbstractDBTraceProgramViewListing implements TraceProgramV
 			DBTraceMemorySpace mem = trace.getMemoryManager().get(this, false);
 			if (mem == null) {
 				// TODO: 0-fill instead? Will need to check memory space bounds.
+				return 0;
 			}
 			return mem.getViewBytes(program.snap, address.add(addressOffset), buffer);
 		}

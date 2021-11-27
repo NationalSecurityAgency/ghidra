@@ -17,6 +17,7 @@ package ghidra.program.database.mem;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.util.*;
 
 import db.DBBuffer;
@@ -26,6 +27,7 @@ import ghidra.program.database.map.AddressMap;
 import ghidra.program.database.map.AddressMapDB;
 import ghidra.program.model.address.*;
 import ghidra.program.model.mem.*;
+import ghidra.util.NumericUtilities;
 import ghidra.util.exception.AssertException;
 
 public class MemoryBlockDB implements MemoryBlock {
@@ -52,6 +54,7 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	/**
 	 * Returns the id for this memory block
+	 * 
 	 * @return the id for this memory block
 	 */
 	long getID() {
@@ -81,6 +84,7 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	/**
 	 * Add a block which is mapped onto this block
+	 * 
 	 * @param mappedBlock mapped memory block
 	 */
 	void addMappedBlock(MemoryBlockDB mappedBlock) {
@@ -99,6 +103,7 @@ public class MemoryBlockDB implements MemoryBlock {
 
 	/**
 	 * Get collection of blocks which map onto this block.
+	 * 
 	 * @return collection of blocks which map onto this block or null if none identified
 	 */
 	Collection<MemoryBlockDB> getMappedBlocks() {
@@ -142,6 +147,11 @@ public class MemoryBlockDB implements MemoryBlock {
 	@Override
 	public long getSize() {
 		return length;
+	}
+
+	@Override
+	public BigInteger getSizeAsBigInteger() {
+		return NumericUtilities.unsignedLongToBigInteger(length);
 	}
 
 	@Override

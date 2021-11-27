@@ -48,7 +48,8 @@ public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorState
 
 		@Override
 		public byte[] read(long offset, int size) {
-			RangeSet<UnsignedLong> uninitialized = cache.getUninitialized(offset, offset + size);
+			RangeSet<UnsignedLong> uninitialized =
+				cache.getUninitialized(offset, offset + size - 1);
 
 			if (!uninitialized.isEmpty()) {
 				size = checkUninitialized(source, space.getAddress(offset), size,

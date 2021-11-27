@@ -292,39 +292,49 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	@Test
 	public void testDeadEditRegister() {
 		WatchRow row = prepareTestDeadEdit("r0");
-
-		row.setRawValueString("0x1234");
-		waitForSwing();
-
 		TraceMemoryRegisterSpace regVals =
 			tb.trace.getMemoryManager().getMemoryRegisterSpace(thread, false);
-		assertEquals(BigInteger.valueOf(0x1234), regVals.getValue(0, r0).getUnsignedValue());
 
-		row.setRawValueString("1234");
-		waitForSwing();
+		row.setRawValueString("0x1234");
+		waitForPass(() -> {
+			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertEquals(BigInteger.valueOf(0x1234),
+				regVals.getValue(viewSnap, r0).getUnsignedValue());
+			assertEquals("0x1234", row.getRawValueString());
+		});
 
-		assertEquals(BigInteger.valueOf(1234), regVals.getValue(0, r0).getUnsignedValue());
+		row.setRawValueString("1234"); // Decimal this time
+		waitForPass(() -> {
+			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertEquals(BigInteger.valueOf(1234),
+				regVals.getValue(viewSnap, r0).getUnsignedValue());
+			assertEquals("0x4d2", row.getRawValueString());
+		});
 	}
 
 	@Test
 	public void testDeadEditMemory() {
 		WatchRow row = prepareTestDeadEdit("*:8 r0");
-
-		row.setRawValueString("0x1234");
-		waitForSwing();
-
 		TraceMemoryOperations mem = tb.trace.getMemoryManager();
 		ByteBuffer buf = ByteBuffer.allocate(8);
-		mem.getBytes(0, tb.addr(0x00400000), buf);
-		buf.flip();
-		assertEquals(0x1234, buf.getLong());
+
+		row.setRawValueString("0x1234");
+		waitForPass(() -> {
+			long viewSnap = traceManager.getCurrent().getViewSnap();
+			buf.clear();
+			mem.getBytes(viewSnap, tb.addr(0x00400000), buf);
+			buf.flip();
+			assertEquals(0x1234, buf.getLong());
+		});
 
 		row.setRawValueString("{ 12 34 56 78 9a bc de f0 }");
-		waitForSwing();
-		buf.clear();
-		mem.getBytes(0, tb.addr(0x00400000), buf);
-		buf.flip();
-		assertEquals(0x123456789abcdef0L, buf.getLong());
+		waitForPass(() -> {
+			long viewSnap = traceManager.getCurrent().getViewSnap();
+			buf.clear();
+			mem.getBytes(viewSnap, tb.addr(0x00400000), buf);
+			buf.flip();
+			assertEquals(0x123456789abcdef0L, buf.getLong());
+		});
 	}
 
 	protected WatchRow prepareTestLiveEdit(String expression) throws Exception {
@@ -379,17 +389,18 @@ public class DebuggerWatchesProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	public void testLiveEditNonMappableRegister() throws Throwable {
 		WatchRow row = prepareTestLiveEdit("r1");
 		TraceThread thread = recorder.getTraceThread(mb.testThread1);
-
 		// Sanity check
 		assertFalse(recorder.isRegisterOnTarget(thread, r1));
 
 		row.setRawValueString("0x1234");
-		waitForSwing();
-
-		TraceMemoryRegisterSpace regs =
-			recorder.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, false);
-		assertEquals(BigInteger.valueOf(0x1234),
-			regs.getValue(recorder.getSnap(), r1).getUnsignedValue());
+		waitForPass(() -> {
+			TraceMemoryRegisterSpace regs =
+				recorder.getTrace().getMemoryManager().getMemoryRegisterSpace(thread, false);
+			assertNotNull(regs);
+			long viewSnap = traceManager.getCurrent().getViewSnap();
+			assertEquals(BigInteger.valueOf(0x1234),
+				regs.getValue(viewSnap, r1).getUnsignedValue());
+		});
 
 		assertFalse(bank.regVals.containsKey("r1"));
 	}

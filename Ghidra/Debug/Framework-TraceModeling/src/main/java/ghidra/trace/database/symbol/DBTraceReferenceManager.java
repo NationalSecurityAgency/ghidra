@@ -267,6 +267,11 @@ public class DBTraceReferenceManager extends
 	}
 
 	@Override
+	public void clearReferencesTo(Range<Long> span, AddressRange range) {
+		delegateDeleteV(range.getAddressSpace(), s -> s.clearReferencesTo(span, range));
+	}
+
+	@Override
 	public AddressSetView getReferenceSources(Range<Long> span) {
 		return new UnionAddressSetView(
 			Collections2.transform(memSpacesView, s -> s.getReferenceSources(span)));

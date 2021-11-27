@@ -19,12 +19,14 @@ import javax.swing.ImageIcon;
 
 import docking.action.builder.ActionBuilder;
 import docking.tool.ToolConstants;
+import ghidra.GhidraOptions;
 import ghidra.app.CorePluginPackage;
 import ghidra.app.plugin.PluginCategoryNames;
 import ghidra.app.plugin.core.table.TableComponentProvider;
 import ghidra.app.util.HelpTopics;
 import ghidra.app.util.PluginConstants;
 import ghidra.app.util.query.TableService;
+import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
 import ghidra.program.model.address.Address;
@@ -53,9 +55,21 @@ import resources.ResourceManager;
 //@formatter:on
 public class CodeBrowserSelectionPlugin extends Plugin {
 
+	private static final String SELECTION_LIMIT_OPTION_NAME = "Table From Selection Limit";
+	private static final int DEFAULT_TABLE_LIMIT = 20000;
+
 	public CodeBrowserSelectionPlugin(PluginTool tool) {
 		super(tool);
 		createActions();
+		registerOptions();
+	}
+
+	private void registerOptions() {
+		ToolOptions toolOptions = tool.getOptions(ToolConstants.TOOL_OPTIONS);
+		toolOptions.registerOption(SELECTION_LIMIT_OPTION_NAME, DEFAULT_TABLE_LIMIT,
+			new HelpLocation("CodeBrowserPlugin", "Selection_Table"),
+			"The maximum number of code units to include when creating a table from " +
+				"a selection in the Listing");
 	}
 
 	private void createActions() {
@@ -153,10 +167,22 @@ public class CodeBrowserSelectionPlugin extends Plugin {
 		public void load(Accumulator<Address> accumulator, TaskMonitor monitor)
 				throws CancelledException {
 
+			ToolOptions options = tool.getOptions(ToolConstants.TOOL_OPTIONS);
+			int resultsLimit =
+				options.getInt(GhidraOptions.OPTION_SEARCH_LIMIT, DEFAULT_TABLE_LIMIT);
+
 			long size = selection.getNumAddresses();
 			monitor.initialize(size);
 
 			while (iterator.hasNext()) {
+				if (accumulator.size() >= resultsLimit) {
+					Msg.showWarn(this, null, "Results Truncated",
+						"Results are limited to " + resultsLimit + " code units.\n" +
+							"This limit can be changed by the tool option \"Tool -> " +
+							SELECTION_LIMIT_OPTION_NAME +
+							"\".");
+					break;
+				}
 				monitor.checkCanceled();
 				CodeUnit cu = iterator.next();
 				accumulator.add(cu.getMinAddress());
