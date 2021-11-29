@@ -175,19 +175,24 @@ public class DebuggerLocationLabel extends JLabel {
 		if (address == null) {
 			return "(nowhere)";
 		}
-		TraceSection section = getNearestSectionContaining();
-		if (section != null) {
-			return section.getModule().getName() + ":" + section.getName();
+		try {
+			TraceSection section = getNearestSectionContaining();
+			if (section != null) {
+				return section.getModule().getName() + ":" + section.getName();
+			}
+			TraceModule module = getNearestModuleContaining();
+			if (module != null) {
+				return module.getName();
+			}
+			TraceMemoryRegion region = getRegionContaining();
+			if (region != null) {
+				return region.getName();
+			}
+			return "(unknown)";
 		}
-		TraceModule module = getNearestModuleContaining();
-		if (module != null) {
-			return module.getName();
+		catch (Throwable t) {
+			return "(error) " + t.getMessage();
 		}
-		TraceMemoryRegion region = getRegionContaining();
-		if (region != null) {
-			return region.getName();
-		}
-		return "(unknown)";
 	}
 
 	public void updateLabel() {
