@@ -20,7 +20,7 @@
 import java.io.*;
 
 import ghidra.app.script.GhidraScript;
-import ghidra.app.util.bin.format.pdb2.pdbreader.*;
+import ghidra.parser.pdbparser.*;
 import ghidra.util.Msg;
 
 public class PdbDeveloperDumpScript extends GhidraScript {

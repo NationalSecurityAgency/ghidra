@@ -24,15 +24,15 @@ import java.util.Set;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.*;
 
+import ghidra.app.PdbPlugin;
 import ghidra.app.util.bin.format.pdb.PdbInfo;
 import ghidra.app.util.bin.format.pdb.PdbInfoDotNet;
 import ghidra.app.util.datatype.microsoft.GUID;
 import ghidra.framework.options.Options;
 import ghidra.program.model.listing.Program;
-import pdb.PdbPlugin;
-import pdb.symbolserver.*;
-import pdb.symbolserver.ui.ConfigPdbDialog;
-import pdb.symbolserver.ui.LoadPdbDialog;
+import ghidra.symbolserver.*;
+import ghidra.symbolserver.ui.ConfigPdbDialog;
+import ghidra.symbolserver.ui.LoadPdbDialog;
 
 public class PdbScreenShots extends GhidraScreenShotGenerator {
 

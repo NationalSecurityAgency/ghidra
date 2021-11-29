@@ -24,11 +24,10 @@ import java.util.List;
 import java.io.File;
 import java.net.URI;
 
-import ghidra.app.plugin.core.analysis.PdbAnalyzer;
-import ghidra.app.plugin.core.analysis.PdbUniversalAnalyzer;
+import ghidra.app.PdbPlugin;
+import ghidra.app.PdbUniversalAnalyzer;
 import ghidra.app.script.GhidraScript;
-import pdb.PdbPlugin;
-import pdb.symbolserver.*;
+import ghidra.symbolserver.*;
 
 public class PdbSymbolServerExamplePrescript extends GhidraScript {
 
@@ -47,7 +46,6 @@ public class PdbSymbolServerExamplePrescript extends GhidraScript {
 		// You only need to enable the "allow remote" option on the specific
 		// analyzer you are using
 		PdbUniversalAnalyzer.setAllowRemoteOption(currentProgram, true);
-		PdbAnalyzer.setAllowRemoteOption(currentProgram, true);
 	}
 }
 
