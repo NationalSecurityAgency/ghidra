@@ -495,8 +495,12 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		tool.getProject().getProjectData().getRootFolder().createFile(obj.getName(), obj, monitor);
 	}
 
+	protected void createSnaplessTrace(String langID) throws IOException {
+		tb = new ToyDBTraceBuilder("dynamic-" + name.getMethodName(), langID);
+	}
+
 	protected void createSnaplessTrace() throws IOException {
-		tb = new ToyDBTraceBuilder("dynamic-" + name.getMethodName(), LANGID_TOYBE64);
+		createSnaplessTrace(LANGID_TOYBE64);
 	}
 
 	protected void addSnapshot(String desc) throws IOException {
@@ -505,14 +509,26 @@ public abstract class AbstractGhidraHeadedDebuggerGUITest
 		}
 	}
 
-	protected void createTrace() throws IOException {
-		createSnaplessTrace();
+	protected void createTrace(String langID) throws IOException {
+		createSnaplessTrace(langID);
 		addSnapshot("First snap");
 	}
 
-	protected void createAndOpenTrace() throws IOException {
-		createTrace();
+	protected void createTrace() throws IOException {
+		createTrace(LANGID_TOYBE64);
+	}
+
+	protected void useTrace(Trace trace) {
+		tb = new ToyDBTraceBuilder(trace);
+	}
+
+	protected void createAndOpenTrace(String langID) throws IOException {
+		createTrace(langID);
 		traceManager.openTrace(tb.trace);
+	}
+
+	protected void createAndOpenTrace() throws IOException {
+		createAndOpenTrace(LANGID_TOYBE64);
 	}
 
 	protected String getProgramName() {

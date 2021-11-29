@@ -23,8 +23,8 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 
 /**
- * A stub of the {@link ProgramManager} interface.  This can be used to supply a test program 
- * manager or to spy on system internals by overriding methods as needed.
+ * A stub of the {@link ProgramManager} interface. This can be used to supply a test program manager
+ * or to spy on system internals by overriding methods as needed.
  */
 public class TestDummyProgramManager implements ProgramManager {
 
@@ -88,6 +88,26 @@ public class TestDummyProgramManager implements ProgramManager {
 
 	@Override
 	public void openProgram(Program program, int state) {
+		// stub
+	}
+
+	@Override
+	public void saveProgram() {
+		// stub
+	}
+
+	@Override
+	public void saveProgram(Program program) {
+		// stub
+	}
+
+	@Override
+	public void saveProgramAs() {
+		// stub
+	}
+
+	@Override
+	public void saveProgramAs(Program program) {
 		// stub
 	}
 

@@ -49,8 +49,7 @@ import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.language.TraceGuestLanguage;
 import ghidra.util.Msg;
 import ghidra.util.database.DBOpenMode;
@@ -74,6 +73,12 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public ToyDBTraceBuilder(String name, String langID) throws IOException {
 		this.language = languageService.getLanguage(new LanguageID(langID));
 		this.trace = new DBTrace(name, language.getDefaultCompilerSpec(), this);
+	}
+
+	public ToyDBTraceBuilder(Trace trace) {
+		this.language = trace.getBaseLanguage();
+		this.trace = (DBTrace) trace;
+		trace.addConsumer(this);
 	}
 
 	public Address addr(AddressSpace space, long offset) {
