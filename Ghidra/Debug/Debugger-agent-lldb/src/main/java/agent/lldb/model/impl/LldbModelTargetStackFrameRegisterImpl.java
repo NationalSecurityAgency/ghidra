@@ -95,6 +95,11 @@ public class LldbModelTargetStackFrameRegisterImpl
 		if (value == null) {
 			return new byte[0];
 		}
+		if (value.startsWith("{")) {
+			String trim = value.substring(1, value.length() - 1);
+			String[] split = trim.split(" ");
+			value = split[0].substring(2) + split[1].substring(2);
+		}
 		BigInteger val = new BigInteger(value, 16);
 		byte[] bytes = ConversionUtils.bigIntegerToBytes((int) getRegister().GetByteSize(), val);
 		changeAttributes(List.of(), Map.of( //

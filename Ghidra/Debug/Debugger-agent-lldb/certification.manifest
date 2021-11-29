@@ -5,18 +5,7 @@
 .project||NONE||reviewed||END|
 Module.manifest||GHIDRA||||END|
 build.gradle||GHIDRA||||END|
-data/InstructionsForPatchingLLDB.txt||GHIDRA||||END|
-src/llvm/lldb/CMakeLists.txt||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm/lldb/bindings/CMakeLists.txt||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm/lldb/bindings/java/CMakeLists.txt||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm/lldb/bindings/java/java-typemaps.swig||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm/lldb/bindings/java/java.swig||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm/lldb/cmake/modules/FindJavaAndSwig.cmake||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm/lldb/cmake/modules/LLDBConfig.cmake||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm/lldb/include/lldb/Host/Config.h.cmake||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm/lldb/source/API/CMakeLists.txt||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm/lldb/source/API/liblldb-private.exports||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm/lldb/source/API/liblldb.exports||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm/lldb/source/Plugins/ScriptInterpreter/CMakeLists.txt||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm/lldb/source/Plugins/ScriptInterpreter/Java/CMakeLists.txt||Apache License 2.0 with LLVM Exceptions||||END|
-src/llvm/lldb/tools/debugserver/source/CMakeLists.txt||Apache License 2.0 with LLVM Exceptions||||END|
+data/InstructionsForBuildingLLDBInterface.txt||GHIDRA||||END|
+src/llvm-project/lldb/bindings/java/java-typemaps.swig||Apache License 2.0 with LLVM Exceptions||||END|
+src/llvm-project/lldb/bindings/java/java.swig||Apache License 2.0 with LLVM Exceptions||||END|
+src/llvm-project/lldb/build_script||GHIDRA||||END|
