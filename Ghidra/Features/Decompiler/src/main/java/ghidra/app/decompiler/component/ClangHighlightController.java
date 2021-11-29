@@ -27,6 +27,7 @@ import docking.widgets.fieldpanel.field.Field;
 import docking.widgets.fieldpanel.support.FieldLocation;
 import ghidra.app.decompiler.*;
 import ghidra.program.model.listing.Function;
+import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.util.ColorUtils;
 import util.CollectionUtils;
@@ -46,7 +47,7 @@ import util.CollectionUtils;
  * 		matching braces)
  *  </LI>
  *  <LI>Secondary Highlights - triggered by the user to show all occurrences of a particular
- *  	variable; they will stay until they are manually cleared by a user action.  The user can \
+ *  	variable; they will stay until they are manually cleared by a user action.  The user can
  *  	apply multiple secondary highlights at the same time, with different colors for each
  *  	highlight.
  *   	<B>These highlights apply to the function in use when the highlight is created.  Thus,
@@ -144,8 +145,8 @@ public abstract class ClangHighlightController {
 		return getSecondaryHighlight(token) != null;
 	}
 
-	public boolean hasSecondaryHighlights() {
-		return !secondaryHighlighters.isEmpty();
+	public boolean hasSecondaryHighlights(Function function) {
+		return !secondaryHighlightersbyFunction.get(function).isEmpty();
 	}
 
 	public Color getSecondaryHighlight(ClangToken token) {
@@ -174,7 +175,7 @@ public abstract class ClangHighlightController {
 	 * @param function the function
 	 * @return the highlighters
 	 */
-	public Set<ClangDecompilerHighlighter> getSecondaryHighlightersByFunction(Function function) {
+	public Set<ClangDecompilerHighlighter> getSecondaryHighlighters(Function function) {
 		return new HashSet<>(secondaryHighlightersbyFunction.get(function));
 	}
 
@@ -285,12 +286,14 @@ public abstract class ClangHighlightController {
 	 * @param f the function
 	 */
 	public void removeSecondaryHighlights(Function f) {
+
 		List<ClangDecompilerHighlighter> highlighters = secondaryHighlightersbyFunction.get(f);
 		for (ClangDecompilerHighlighter highlighter : highlighters) {
 			TokenHighlights highlights = highlighterHighlights.get(highlighter);
 			Consumer<ClangToken> clearHighlight = token -> updateHighlightColor(token);
 			doClearHighlights(highlights, clearHighlight);
 		}
+		highlighters.clear();
 		notifyListeners();
 	}
 
@@ -320,9 +323,18 @@ public abstract class ClangHighlightController {
 	}
 
 	public void removeHighlighter(DecompilerHighlighter highlighter) {
+
 		removeHighlighterHighlights(highlighter);
-		secondaryHighlighters.remove(highlighter);
 		highlighterHighlights.remove(highlighter);
+		secondaryHighlighters.remove(highlighter);
+
+		Collection<List<ClangDecompilerHighlighter>> lists =
+			secondaryHighlightersbyFunction.values();
+		for (List<ClangDecompilerHighlighter> highlighters : lists) {
+			if (highlighters.remove(highlighter)) {
+				break;
+			}
+		}
 	}
 
 	/**
@@ -330,6 +342,7 @@ public abstract class ClangHighlightController {
 	 * @param highlighter the highlighter
 	 */
 	public void removeHighlighterHighlights(DecompilerHighlighter highlighter) {
+
 		TokenHighlights highlighterTokens = highlighterHighlights.get(highlighter);
 		if (highlighterTokens == null) {
 			return;
@@ -348,21 +361,19 @@ public abstract class ClangHighlightController {
 	 */
 	public void addSecondaryHighlighter(Function function, ClangDecompilerHighlighter highlighter) {
 
-		// note: this highlighter has likely already been added the the this class, but has not
+		// Note: this highlighter has likely already been added the the this class, but has not
 		//       yet been bound to the given function.
 		secondaryHighlightersbyFunction.get(function).add(highlighter);
 		secondaryHighlighters.add(highlighter);
 		highlighterHighlights.putIfAbsent(highlighter, new TokenHighlights());
 	}
 
-	/**
-	 * Adds the given highlighter, but does not create any highlights
-	 * @param highlighter the highlighter
-	 */
+	// Note: this is used for all highlight types, secondary and highlighter service highlighters
 	public void addHighlighter(ClangDecompilerHighlighter highlighter) {
 		highlighterHighlights.putIfAbsent(highlighter, new TokenHighlights());
 	}
 
+	// Note: this is used for all highlight types, secondary and highlighter service highlights
 	public void addHighlighterHighlights(ClangDecompilerHighlighter highlighter,
 			Supplier<? extends Collection<ClangToken>> tokens,
 			ColorProvider colorProvider) {
@@ -488,9 +499,17 @@ public abstract class ClangHighlightController {
 
 	private Color blendHighlighterColors(ClangToken token) {
 
+		Function function = getFunction(token);
+		if (function == null) {
+			return null; // not sure if this can happen
+		}
+
+		Set<ClangDecompilerHighlighter> global = getGlobalHighlighters();
+		Set<ClangDecompilerHighlighter> secondary = getSecondaryHighlighters(function);
+		Iterable<ClangDecompilerHighlighter> it = CollectionUtils.asIterable(global, secondary);
 		Color lastColor = null;
-		Collection<TokenHighlights> allHighlights = highlighterHighlights.values();
-		for (TokenHighlights highlights : allHighlights) {
+		for (ClangDecompilerHighlighter highlighter : it) {
+			TokenHighlights highlights = highlighterHighlights.get(highlighter);
 			HighlightToken hlToken = highlights.get(token);
 			if (hlToken == null) {
 				continue;
@@ -508,9 +527,21 @@ public abstract class ClangHighlightController {
 		return lastColor;
 	}
 
+	private Function getFunction(ClangToken t) {
+		ClangFunction cFunction = t.getClangFunction();
+		if (cFunction == null) {
+			return null;
+		}
+
+		HighFunction highFunction = cFunction.getHighFunction();
+		if (highFunction == null) {
+			return null;
+		}
+		return highFunction.getFunction();
+	}
+
 	/**
-	 * If input token is a parenthesis, highlight all
-	 * tokens between it and its match
+	 * If input token is a parenthesis, highlight all tokens between it and its match
 	 * @param tok potential parenthesis token
 	 * @param highlightColor the highlight color
 	 * @return a list of all tokens that were highlighted.
