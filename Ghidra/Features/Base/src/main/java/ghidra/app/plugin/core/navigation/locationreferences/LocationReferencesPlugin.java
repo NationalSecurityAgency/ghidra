@@ -33,7 +33,6 @@ import ghidra.app.util.query.TableService;
 import ghidra.framework.options.ToolOptions;
 import ghidra.framework.plugintool.*;
 import ghidra.framework.plugintool.util.PluginStatus;
-import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.symbol.Reference;
@@ -102,10 +101,10 @@ public class LocationReferencesPlugin extends Plugin
 		tool.addAction(referencesToAddressAction);
 
 		//
-		// Unusual Code: This plugin does not use the delete action directly, but our transient 
-		//               tables do. We need a way to have keybindings shared for this action.  
+		// Unusual Code: This plugin does not use the delete action directly, but our transient
+		//               tables do. We need a way to have keybindings shared for this action.
 		//               Further, we need to register it now, not when the transient
-		//               providers are created, as they would only appear in the options at 
+		//               providers are created, as they would only appear in the options at
 		//               that point.
 		//
 		DeleteTableRowAction.registerDummy(tool, getName());
@@ -173,7 +172,7 @@ public class LocationReferencesPlugin extends Plugin
 
 		tool.showComponentProvider(provider, true);
 
-// REFS: is the following statement true???...it seems that the loading is off the swing thread, 
+// REFS: is the following statement true???...it seems that the loading is off the swing thread,
 // so it still may not be done at this point!
 
 		// we add the provider here instead of where it is created above to allow the provider to
@@ -311,7 +310,7 @@ public class LocationReferencesPlugin extends Plugin
 	}
 
 	@Override
-	public void findAndDisplayAppliedDataTypeAddresses(Composite dataType, String fieldName) {
+	public void findAndDisplayAppliedDataTypeAddresses(DataType dataType, String fieldName) {
 		ProgramManager programManagerService = tool.getService(ProgramManager.class);
 		GoToService goToService = tool.getService(GoToService.class);
 		Program program = programManagerService.getCurrentProgram();
