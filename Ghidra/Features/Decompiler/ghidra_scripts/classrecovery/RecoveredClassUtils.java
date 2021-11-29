@@ -148,7 +148,8 @@ public class RecoveredClassUtils {
 
 	public RecoveredClassUtils(Program program, ProgramLocation location, PluginTool tool,
 			FlatProgramAPI api, boolean createBookmarks, boolean useShortTemplates,
-			boolean nameVunctions, boolean replaceClassStructures, TaskMonitor monitor) {
+			boolean nameVunctions, boolean replaceClassStructures, TaskMonitor monitor)
+			throws Exception {
 
 		this.monitor = monitor;
 		this.program = program;
@@ -551,13 +552,13 @@ public class RecoveredClassUtils {
 	}
 
 	/**
-	 * Method to return reference to the class vftable in the given function
+	 * Method to return the first reference to the class vftable in the given function
 	 * @param recoveredClass the given class
 	 * @param function the given function
 	 * @return the reference to the class vftable in the given function or null if there isn't one
 	 * @throws CancelledException if cancelled
 	 */
-	public Address getClassVftableReference(RecoveredClass recoveredClass,
+	public Address getFirstClassVftableReference(RecoveredClass recoveredClass,
 			Function function) throws CancelledException {
 
 		List<Address> vftableReferenceList = functionToVftableRefsMap.get(function);
@@ -565,6 +566,8 @@ public class RecoveredClassUtils {
 		if (vftableReferenceList == null) {
 			return null;
 		}
+
+		Collections.sort(vftableReferenceList);
 
 		Iterator<Address> vftableRefs = vftableReferenceList.iterator();
 		while (vftableRefs.hasNext()) {
@@ -587,39 +590,6 @@ public class RecoveredClassUtils {
 		}
 		return null;
 
-	}
-
-	/**
-	 * Method to return the vftable reference in the given function that corresponds to the given class
-	 * @param function the given function
-	 * @param recoveredClass the given class
-	 * @return the vftableRef address in the given function that corresponds to the given class
-	 * @throws CancelledException if cancelled
-	 */
-	public Address getClassVftableRefInFunction(Function function, RecoveredClass recoveredClass)
-			throws CancelledException {
-
-		List<Address> listOfClassRefsInFunction =
-			getSortedListOfAncestorRefsInFunction(function, recoveredClass);
-
-		Iterator<Address> iterator = listOfClassRefsInFunction.iterator();
-		while (iterator.hasNext()) {
-			monitor.checkCanceled();
-			Address classRef = iterator.next();
-			Address vftableAddress = vftableRefToVftableMap.get(classRef);
-
-			// skip the ones that aren't vftable refs
-			if (vftableAddress == null) {
-				continue;
-			}
-
-			// return the first one that is a vftable ref to the given class
-			RecoveredClass vftableClass = vftableToClassMap.get(vftableAddress);
-			if (vftableClass.equals(recoveredClass)) {
-				return classRef;
-			}
-		}
-		return null;
 	}
 
 	/**
@@ -3389,7 +3359,7 @@ public class RecoveredClassUtils {
 				replaceClassStructure(destructorFunction, className, classStruct);
 			}
 
-			destructorFunction.setReturnType(DataType.VOID, SourceType.ANALYSIS);
+			destructorFunction.setReturnType(new VoidDataType(), SourceType.ANALYSIS);
 		}
 	}
 
@@ -3445,7 +3415,7 @@ public class RecoveredClassUtils {
 					classStruct);
 			}
 
-			vbaseDestructorFunction.setReturnType(DataType.VOID, SourceType.ANALYSIS);
+			vbaseDestructorFunction.setReturnType(new VoidDataType(), SourceType.ANALYSIS);
 		}
 
 	}
@@ -3635,7 +3605,9 @@ public class RecoveredClassUtils {
 			return true;
 		}
 
-		//TODO: decide whether to replace dwarf or not 
+		if (categoryPath.contains("DWARF")) {
+			return true;
+		}
 
 		// test to see if the data type is an empty structure with "PlaceHolder Class Structure" in 
 		// the description 
@@ -5146,23 +5118,10 @@ public class RecoveredClassUtils {
 		while (inlinedDestructorIterator.hasNext()) {
 			monitor.checkCanceled();
 			Function destructorFunction = inlinedDestructorIterator.next();
-			Address classVftableRef =
-				getClassVftableRefInFunction(destructorFunction, recoveredClass);
-
-			//TODO: use this one instead if testing pans out
-			Address otherWayRef = getClassVftableReference(recoveredClass, destructorFunction);
+			Address classVftableRef = getFirstClassVftableReference(recoveredClass, destructorFunction);
 
 			if (classVftableRef == null) {
 				continue;
-			}
-
-			//TODO: remove after testing
-			if (!classVftableRef.equals(otherWayRef)) {
-				if (DEBUG) {
-					Msg.debug(this, recoveredClass.getName() + " function " +
-						destructorFunction.getEntryPoint().toString() + " first ref: " +
-						classVftableRef.toString() + " other way ref: " + otherWayRef.toString());
-				}
 			}
 
 			String markupString = classNamespace.getName(true) + "::~" + className;
@@ -5189,23 +5148,10 @@ public class RecoveredClassUtils {
 			Function functionContainingInline = functionsContainingInlineIterator.next();
 
 			Address classVftableRef =
-				getClassVftableRefInFunction(functionContainingInline, recoveredClass);
-			//TODO: use this one if testing more progs gives same results
-			Address otherWayRef =
-				getClassVftableReference(recoveredClass, functionContainingInline);
+				getFirstClassVftableReference(recoveredClass, functionContainingInline);
 
 			if (classVftableRef == null) {
 				continue;
-			}
-			//TODO: remove after testing
-			if (!classVftableRef.equals(otherWayRef)) {
-				if (DEBUG) {
-					Msg.debug(this,
-						recoveredClass.getName() + " function " +
-							functionContainingInline.getEntryPoint().toString() + " first ref: " +
-							classVftableRef.toString() + " other way ref: " +
-							otherWayRef.toString());
-				}
 			}
 
 			String markupString = "inlined constructor or destructor (approx location) for " +
@@ -5419,21 +5365,10 @@ public class RecoveredClassUtils {
 		// Type 4 inlined - inlined class c/d called from other than first function
 		// either just vftable ref before operator delete or vftableref followed by parent call
 		// before operator delete
+		Address vftableReference = getFirstClassVftableReference(recoveredClass, virtualFunction);
 
-		Address vftableReference = getClassVftableReference(recoveredClass, virtualFunction);
-
-		//TODO remove after testing against prev method in more progs
-		Address otherWayRef = getClassVftableRefInFunction(virtualFunction, recoveredClass);
 		if (vftableReference == null) {
 			return;
-		}
-		if (!vftableReference.equals(otherWayRef)) {
-			if (DEBUG) {
-				Msg.debug(this, recoveredClass.getName() + " function " +
-					virtualFunction.getEntryPoint().toString() + " first ref: " +
-					vftableReference.toString() + " other way ref (with ances): " +
-					otherWayRef.toString());
-			}
 		}
 
 		List<Function> possibleParentDestructors = getPossibleParentDestructors(virtualFunction);
@@ -5723,43 +5658,6 @@ public class RecoveredClassUtils {
 		}
 		return NONE;
 
-	}
-
-	private boolean isDataAtOffsetEquivalentToStructure(Structure outerStructure,
-			Structure innerStructure, int offset) {
-
-		DataTypeComponent[] innerStructComponents = innerStructure.getDefinedComponents();
-		for (DataTypeComponent innerComponent : innerStructComponents) {
-			int innerOffset = innerComponent.getOffset();
-
-			DataTypeComponent outerComponent = outerStructure.getComponentAt(offset + innerOffset);
-			if (outerComponent == null) {
-				return false;
-			}
-
-			if (innerComponent.getFieldName().equals("vftablePtr")) {
-
-				// if one is vftablePtr and other isn't - return false
-				if (!outerComponent.getFieldName().equals("vftablePtr")) {
-					return false;
-				}
-
-				// if both are vftablePtrs they should both contain the innerStructure name (ie the class name) in 
-				// the vftablePtr data type name (either <some_class_name>_vftable_for_<innerStruct name> or <innerStruct name>_vftable *
-				if (outerComponent.getDataType().getDisplayName().contains(
-					innerStructure.getName()) &&
-					!innerComponent.getDataType().getDisplayName().contains(
-						innerStructure.getName())) {
-					return false;
-				}
-				continue;
-			}
-
-			if (!innerComponent.getDataType().equals(outerComponent.getDataType())) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 	/**
@@ -6552,7 +6450,7 @@ public class RecoveredClassUtils {
 						if (!atexitCalledFunctions.contains(calledFunction)) {
 							atexitCalledFunctions.add(calledFunction);
 						}
-						calledFunction.setReturnType(DataType.VOID, SourceType.ANALYSIS);
+						calledFunction.setReturnType(new VoidDataType(), SourceType.ANALYSIS);
 					}
 					else {
 						if (!atexitCalledFunctions.contains(calledFunction)) {
