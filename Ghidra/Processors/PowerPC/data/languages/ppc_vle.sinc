@@ -34,7 +34,7 @@ sd4WPlusRxAddr: SD4_VLE(RX_VLE)	is SD4_VLE & RX_VLE				{tmp:$(REGISTER_SIZE) = R
 OIMM: val						is UI5_VLE [ val = UI5_VLE+1; ] { export *[const]:$(REGISTER_SIZE) val; }
 
 @if REGISTER_SIZE == "4"
-SCALE: val						is BIT_10 & SCL_VLE & IMM8 [ val = (((0xFFFFFFFF << ((SCL_VLE*8) + 8)) | (0xFFFFFFFF >> (32 - (SCL_VLE*8)))) * BIT_10) | IMM8;   ] { export *[const]:4 val;}
+SCALE: val						is BIT_10 & SCL_VLE & IMM8 [ val = (((0xFFFFFFFF << ((SCL_VLE*8) + 8)) | (0xFFFFFFFF >> (32 - (SCL_VLE*8)))) * BIT_10) | (IMM8 << (SCL_VLE*8));   ] { export *[const]:4 val;}
 @else
 # Due to the way this big >> would work in java (arithmetic), we have to modify the orig way this was done.
 # (0xFFFFFFFFFFFFFFFF >> (64 - (SCL_VLE*8))  <--- Original
