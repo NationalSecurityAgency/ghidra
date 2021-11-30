@@ -441,7 +441,7 @@ public class DebuggerStackProvider extends ComponentProviderAdapter {
 		}
 		Address address = curTrace.getBaseLanguage()
 				.getDefaultSpace()
-				.getAddress(value.getUnsignedValue().longValue());
+				.getAddress(value.getUnsignedValue().longValue(), true);
 		stackTableModel.add(new StackFrameRow.Synthetic(this, address));
 	}
 

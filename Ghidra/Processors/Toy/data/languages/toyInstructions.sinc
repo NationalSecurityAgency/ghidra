@@ -109,8 +109,8 @@ Rel8:  addr is simm0007 [ addr = inst_start + simm0007; ] { export *:$(SIZE) add
 Rel82: addr is simm0411 [ addr = inst_start + simm0411; ] { export *:$(SIZE) addr; }
 Rel11: addr is simm0010 [ addr = inst_start + simm0010; ] { export *:$(SIZE) addr; }
 
-RS: [rs] is rs { export *[ram]:$(SIZE) rs; }
-RT: [rt] is rt { export *[ram]:$(SIZE) rt; }
+RS: [rs] is rs { export *[$(DATA_SPACE)]:$(SIZE) rs; }
+RT: [rt] is rt { export *[$(DATA_SPACE)]:$(SIZE) rt; }
 
 CC: "eq" is cc0002=0x0 { export Z; }
 CC: "ne" is cc0002=0x1 { tmp = !Z; export tmp; }

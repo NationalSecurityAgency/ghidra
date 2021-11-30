@@ -435,6 +435,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 
 	DebuggerRegisterActionContext myActionContext;
 	AddressSetView viewKnown;
+	AddressSetView catalog;
 
 	protected DebuggerRegistersProvider(final DebuggerRegistersPlugin plugin,
 			Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> selectionByCSpec,
@@ -551,7 +552,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			}
 			Address address;
 			try {
-				address = space.getAddress(lv);
+				address = space.getAddress(lv, true);
 			}
 			catch (AddressOutOfBoundsException e) {
 				continue;
@@ -689,6 +690,20 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 		removeOldTraceListener();
 		this.currentTrace = trace;
 		addNewTraceListener();
+
+		catalogRegisterAddresses();
+	}
+
+	private void catalogRegisterAddresses() {
+		this.catalog = null;
+		if (currentTrace == null) {
+			return;
+		}
+		AddressSet catalog = new AddressSet();
+		for (Register reg : currentTrace.getBaseLanguage().getRegisters()) {
+			catalog.add(TraceRegisterUtils.rangeForRegister(reg));
+		}
+		this.catalog = catalog;
 	}
 
 	private void removeOldRecorderListener() {
@@ -870,6 +885,10 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 	}
 
 	void recomputeViewKnown() {
+		if (catalog == null) {
+			viewKnown = null;
+			return;
+		}
 		TraceMemoryRegisterSpace regs = getRegisterMemorySpace(false);
 		TraceProgramView view = current.getView();
 		if (regs == null || view == null) {
@@ -877,7 +896,7 @@ public class DebuggerRegistersProvider extends ComponentProviderAdapter
 			return;
 		}
 		viewKnown = new AddressSet(view.getViewport()
-				.unionedAddresses(snap -> regs.getAddressesWithState(snap,
+				.unionedAddresses(snap -> regs.getAddressesWithState(snap, catalog,
 					state -> state == TraceMemoryState.KNOWN)));
 	}
 
