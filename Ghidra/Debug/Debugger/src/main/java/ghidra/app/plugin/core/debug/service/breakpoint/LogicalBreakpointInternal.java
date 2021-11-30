@@ -37,7 +37,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 import utilities.util.IDHashed;
 
-interface LogicalBreakpointInternal extends LogicalBreakpoint {
+public interface LogicalBreakpointInternal extends LogicalBreakpoint {
 	public static class ProgramBreakpoint {
 		public static Set<TraceBreakpointKind> kindsFromBookmark(Bookmark mark) {
 			String[] parts = mark.getCategory().split(";");

@@ -983,11 +983,11 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 	@Test
 	@Ignore("TODO") // Needs attention, but low priority
-	public void testActionCaptureSelectedMemory() throws Exception {
+	public void testActionReadSelectedMemory() throws Exception {
 		byte[] data = incBlock();
 		byte[] zero = new byte[data.length];
 		ByteBuffer buf = ByteBuffer.allocate(data.length);
-		assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
 		listingProvider.setAutoReadMemorySpec(readNone);
 
 		// To verify enabled requires live target
@@ -1002,12 +1002,12 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		traceManager.activateTrace(tb.trace);
 		waitForSwing();
 		// Still
-		assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		listingProvider.setSelection(sel);
 		waitForSwing();
 		// Still
-		assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		// Now, simulate the sequence that typically enables the action
 		createTestModel();
@@ -1024,12 +1024,12 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// NOTE: recordTargetContainerAndOpenTrace has already activated the trace
 		// Action is still disabled, because it requires a selection
-		assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		listingProvider.setSelection(sel);
 		waitForSwing();
 		// Now, it should be enabled
-		assertTrue(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertTrue(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		// First check nothing captured yet
 		buf.clear();
@@ -1038,7 +1038,7 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 		assertArrayEquals(zero, buf.array());
 
 		// Verify that the action performs the expected task
-		performAction(listingProvider.actionCaptureSelectedMemory);
+		performAction(listingProvider.actionReadSelectedMemory);
 		waitForBusyTool(tool);
 		waitForDomainObject(trace);
 
@@ -1053,28 +1053,28 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 
 		// Verify that setting the memory inaccessible disables the action
 		mb.testProcess1.memory.setAccessible(false);
-		waitForPass(() -> assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled()));
+		waitForPass(() -> assertFalse(listingProvider.actionReadSelectedMemory.isEnabled()));
 
 		// Verify that setting it accessible re-enables it (assuming we still have selection)
 		mb.testProcess1.memory.setAccessible(true);
-		waitForPass(() -> assertTrue(listingProvider.actionCaptureSelectedMemory.isEnabled()));
+		waitForPass(() -> assertTrue(listingProvider.actionReadSelectedMemory.isEnabled()));
 
 		// Verify that moving into the past disables the action
 		TraceSnapshot forced = recorder.forceSnapshot();
 		waitForSwing(); // UI Wants to sync with new snap. Wait....
 		traceManager.activateSnap(forced.getKey() - 1);
 		waitForSwing();
-		assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		// Verify that advancing to the present enables the action (assuming a selection)
 		traceManager.activateSnap(forced.getKey());
 		waitForSwing();
-		assertTrue(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertTrue(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		// Verify that stopping the recording disables the action
 		recorder.stopRecording();
 		waitForSwing();
-		assertFalse(listingProvider.actionCaptureSelectedMemory.isEnabled());
+		assertFalse(listingProvider.actionReadSelectedMemory.isEnabled());
 
 		// TODO: When resume recording is implemented, verify action is enabled with selection
 	}

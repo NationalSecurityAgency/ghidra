@@ -52,7 +52,6 @@ import ghidra.app.plugin.core.debug.gui.action.*;
 import ghidra.app.plugin.core.debug.gui.modules.DebuggerMissingModuleActionContext;
 import ghidra.app.plugin.core.debug.utils.ProgramLocationUtils;
 import ghidra.app.plugin.core.debug.utils.ProgramURLUtils;
-import ghidra.app.plugin.core.exporter.ExporterDialog;
 import ghidra.app.services.*;
 import ghidra.app.util.viewer.format.FormatManager;
 import ghidra.app.util.viewer.listingpanel.ListingPanel;
@@ -72,7 +71,6 @@ import ghidra.program.util.ProgramSelection;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.modules.*;
 import ghidra.trace.model.program.TraceProgramView;
-import ghidra.trace.model.program.TraceVariableSnapProgramView;
 import ghidra.util.HTMLUtilities;
 import ghidra.util.Swing;
 import ghidra.util.exception.CancelledException;
@@ -239,8 +237,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 	protected SyncToStaticListingAction actionSyncToStaticListing;
 	protected FollowsCurrentThreadAction actionFollowsCurrentThread;
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoReadMemory;
-	protected DockingAction actionCaptureSelectedMemory;
-	protected DockingAction actionExportView;
+	protected DockingAction actionReadSelectedMemory;
 	protected DockingAction actionOpenProgram;
 	protected MultiStateDockingAction<LocationTrackingSpec> actionTrackLocation;
 
@@ -608,12 +605,7 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 		actionGoTo = goToTrait.installAction();
 		actionTrackLocation = trackingTrait.installAction();
 		actionAutoReadMemory = readsMemTrait.installAutoReadAction();
-		actionCaptureSelectedMemory = readsMemTrait.installCaptureSelectedAction();
-
-		actionExportView = ExportTraceViewAction.builder(plugin)
-				.enabledWhen(ctx -> current.getView() != null)
-				.onAction(this::activatedExportView)
-				.buildAndInstallLocal(this);
+		actionReadSelectedMemory = readsMemTrait.installReadSelectedAction();
 
 		actionOpenProgram = OpenProgramAction.builder(plugin)
 				.withContext(DebuggerOpenProgramActionContext.class)
@@ -621,20 +613,6 @@ public class DebuggerListingProvider extends CodeViewerProvider {
 				.build();
 
 		contextChanged();
-	}
-
-	private void activatedExportView(ActionContext context) {
-		if (current.getView() == null) {
-			return;
-		}
-		// Avoid odd race conditions by fixing the snap
-		TraceProgramView fixed = current.getView() instanceof TraceVariableSnapProgramView
-				? current.getTrace().getFixedProgramView(current.getSnap())
-				: current.getView();
-
-		ExporterDialog dialog =
-			new ExporterDialog(tool, fixed.getDomainFile(), fixed, getSelection());
-		tool.showDialog(dialog);
 	}
 
 	private void activatedOpenProgram(DebuggerOpenProgramActionContext context) {

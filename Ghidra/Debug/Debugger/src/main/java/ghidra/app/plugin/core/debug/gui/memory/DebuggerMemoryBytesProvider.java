@@ -148,7 +148,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 	protected DockingAction actionGoTo;
 	protected FollowsCurrentThreadAction actionFollowsCurrentThread;
 	protected MultiStateDockingAction<AutoReadMemorySpec> actionAutoReadMemory;
-	protected DockingAction actionCaptureSelectedMemory;
+	protected DockingAction actionReadSelectedMemory;
 	protected MultiStateDockingAction<LocationTrackingSpec> actionTrackLocation;
 
 	protected ForMemoryBytesGoToTrait goToTrait;
@@ -257,7 +257,7 @@ public class DebuggerMemoryBytesProvider extends ProgramByteViewerComponentProvi
 		actionGoTo = goToTrait.installAction();
 		actionTrackLocation = trackingTrait.installAction();
 		actionAutoReadMemory = readsMemTrait.installAutoReadAction();
-		actionCaptureSelectedMemory = readsMemTrait.installCaptureSelectedAction();
+		actionReadSelectedMemory = readsMemTrait.installReadSelectedAction();
 	}
 
 	@Override
