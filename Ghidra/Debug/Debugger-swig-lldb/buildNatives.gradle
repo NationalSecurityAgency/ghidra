@@ -35,6 +35,7 @@ task generateSwig {
 	outputs.dir(outdir_cpp)
 	doLast {
 		if (System.env.LLVM_HOME) {
+			println "Debugger-swig-lldb: using LLVM_HOME=" + System.env.LLVM_HOME
 			new File(ext.outdir_java, "/SWIG").mkdirs()
 			def exe = "swig"
 			exec {
