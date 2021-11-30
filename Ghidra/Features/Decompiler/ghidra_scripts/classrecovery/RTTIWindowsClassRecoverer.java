@@ -176,7 +176,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		figureOutClassDataMembers(recoveredClasses);
 
 		if (USE_SHORT_TEMPLATE_NAMES_IN_STRUCTURE_FIELDS) {
-			extraUtils.createShortenedTemplateNamesForClasses(recoveredClasses);
+			extendedFlatAPI.createShortenedTemplateNamesForClasses(recoveredClasses);
 		}
 
 		createAndApplyClassStructures(recoveredClasses);
@@ -313,7 +313,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				continue;
 			}
 
-			Data data = extraUtils.getDataAt(symbol.getAddress());
+			Data data = extendedFlatAPI.getDataAt(symbol.getAddress());
 			if (data != null &&
 				data.getDataType().getName().contains(RTTI_BASE_COMPLETE_OBJECT_LOADER_DATA_NAME)) {
 				completeObjectLocatorSymbols.add(symbol);
@@ -352,7 +352,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		int sizeOfDt = completeObjLocatorDataType.getLength();
 
 		api.clearListing(address, address.add(sizeOfDt));
-		Data completeObjectLocator = extraUtils.createData(address, completeObjLocatorDataType);
+		Data completeObjectLocator =
+			extendedFlatAPI.createData(address, completeObjLocatorDataType);
 		if (completeObjectLocator == null) {
 			return null;
 		}
@@ -379,7 +380,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				continue;
 			}
 
-			Data data = extraUtils.getDataAt(symbol.getAddress());
+			Data data = extendedFlatAPI.getDataAt(symbol.getAddress());
 			if (data != null &&
 				data.getDataType().getName().contains(RTTI_BASE_CLASS_DESCRIPTOR_DATA_NAME)) {
 				baseClassDescriptorSymbols.add(symbol);
@@ -417,7 +418,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		api.clearListing(baseClassDescriptorAddress, baseClassDescriptorAddress.add(sizeOfDt));
 		Data baseClassDescArray =
-			extraUtils.createData(baseClassDescriptorAddress, baseClassDescriptor);
+			extendedFlatAPI.createData(baseClassDescriptorAddress, baseClassDescriptor);
 		if (baseClassDescArray == null) {
 			return null;
 		}
@@ -441,19 +442,19 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		for (int i = 0; i < numBaseClasses; i++) {
 
 			monitor.checkCanceled();
-			//TODO: extraUtils.getReferencedAddress(address, getIboIf64bit);
+			//TODO: extendedFlatAPI.getReferencedAddress(address, getIboIf64bit);
 			Address baseClassDescriptorAddress = getReferencedAddress(address.add(i * 4));
 
-			Data baseClassDescriptor = extraUtils.getDataAt(baseClassDescriptorAddress);
+			Data baseClassDescriptor = extendedFlatAPI.getDataAt(baseClassDescriptorAddress);
 			if (baseClassDescriptor == null || !baseClassDescriptor.getDataType()
 					.getName()
 					.equals(
 						RTTI_BASE_CLASS_DESCRIPTOR_DATA_NAME)) {
 
-				int num1 = extraUtils.getInt(baseClassDescriptorAddress.add(8));
-				int num2 = extraUtils.getInt(baseClassDescriptorAddress.add(12));
-				int num3 = extraUtils.getInt(baseClassDescriptorAddress.add(16));
-				int num4 = extraUtils.getInt(baseClassDescriptorAddress.add(20));
+				int num1 = extendedFlatAPI.getInt(baseClassDescriptorAddress.add(8));
+				int num2 = extendedFlatAPI.getInt(baseClassDescriptorAddress.add(12));
+				int num3 = extendedFlatAPI.getInt(baseClassDescriptorAddress.add(16));
+				int num4 = extendedFlatAPI.getInt(baseClassDescriptorAddress.add(20));
 
 				baseClassDescriptor = createBaseClassDescriptor(baseClassDescriptorAddress);
 				if (baseClassDescriptor != null) {
@@ -530,10 +531,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private Address createClassHierarchyDescriptor(Address address, Namespace classNamespace)
 			throws CancelledException, MemoryAccessException, InvalidInputException, Exception {
 
-		//TODO: extraUtils.getReferencedAddress(address, getIboIf64bit);
+		//TODO: extendedFlatAPI.getReferencedAddress(address, getIboIf64bit);
 		Address classHierarchyDescriptorAddress = getReferencedAddress(address);
 
-		Data classHierarchyStructure = extraUtils.getDataAt(classHierarchyDescriptorAddress);
+		Data classHierarchyStructure = extendedFlatAPI.getDataAt(classHierarchyDescriptorAddress);
 
 		if (classHierarchyStructure != null &&
 			classHierarchyStructure.getDataType()
@@ -578,7 +579,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			classHierarchyDescriptorAddress.add(sizeOfDt));
 
 		Data classHierarchyStructure =
-			extraUtils.createData(classHierarchyDescriptorAddress, classHDatatype);
+			extendedFlatAPI.createData(classHierarchyDescriptorAddress, classHDatatype);
 		if (classHierarchyStructure == null) {
 			return null;
 		}
@@ -611,13 +612,13 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				symbolTable.getPrimarySymbol(classHierarchyDescriptorAddress);
 			Namespace classNamespace = classHierarchyDescriptorSymbol.getParentNamespace();
 
-			int numBaseClasses = extraUtils.getInt(classHierarchyDescriptorAddress.add(8));
+			int numBaseClasses = extendedFlatAPI.getInt(classHierarchyDescriptorAddress.add(8));
 
-			//TODO: extraUtils.getReferencedAddress(address, getIboIf64bit);
+			//TODO: extendedFlatAPI.getReferencedAddress(address, getIboIf64bit);
 			Address baseClassArrayAddress =
 				getReferencedAddress(classHierarchyDescriptorAddress.add(12));
 
-			Data baseClassDescArray = extraUtils.getDataAt(baseClassArrayAddress);
+			Data baseClassDescArray = extendedFlatAPI.getDataAt(baseClassArrayAddress);
 
 			if (baseClassDescArray != null && baseClassDescArray.isArray()) {
 				baseClassArrayAddresses.add(baseClassArrayAddress);
@@ -681,7 +682,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		api.clearListing(baseClassArrayAddress,
 			baseClassArrayAddress.add(numBaseClasses * sizeOfDt));
 		Data baseClassDescArray =
-			extraUtils.createData(baseClassArrayAddress, baseClassDescArrayDT);
+			extendedFlatAPI.createData(baseClassArrayAddress, baseClassDescArrayDT);
 
 		if (baseClassDescArray == null) {
 			return null;
@@ -718,7 +719,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				continue;
 			}
 
-			Reference[] referencesTo = extraUtils.getReferencesTo(completeObjectLocatorAddress);
+			Reference[] referencesTo =
+				extendedFlatAPI.getReferencesTo(completeObjectLocatorAddress);
 			if (referencesTo.length == 0) {
 				Msg.debug(this, "No refs to " + completeObjectLocatorAddress.toString());
 				continue;
@@ -802,7 +804,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// this will work whether there is a created reference or not
 		int addressSize = address.getSize();
 		if (addressSize == 32) {
-			long offset = extraUtils.getInt(address);
+			long offset = extendedFlatAPI.getInt(address);
 
 			return address.getNewAddress(offset);
 		}
@@ -810,7 +812,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// this currently will workn only if there is a created reference
 		// TODO: get ibo bytes and figure out what the ibo ref address would be
 		if (addressSize == 64) {
-			Reference refs[] = extraUtils.getReferencesFrom(address);
+			Reference refs[] = extendedFlatAPI.getReferencesFrom(address);
 			if (refs.length == 0) {
 				return null;
 			}
@@ -853,7 +855,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			findVftableReferencesNotInFunction(vftableSymbols);
 
 		if (unusedVftableReferences.size() > 0) {
-			extraUtils.createUndefinedFunctions(unusedVftableReferences);
+			extendedFlatAPI.createUndefinedFunctions(unusedVftableReferences);
 		}
 
 		// create these automatically if found
@@ -915,7 +917,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				// Create Data Type Manager Category for given class
 				// TODO: make this global and check it for null
 				CategoryPath classPath =
-					extraUtils.createDataTypeCategoryPath(classDataTypesCategoryPath,
+					extendedFlatAPI.createDataTypeCategoryPath(classDataTypesCategoryPath,
 						classNameWithNamespace);
 
 				RecoveredClass nonVftableClass =
@@ -960,7 +962,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	 */
 	private List<Symbol> getListOfClassHierarchyDescriptors() throws CancelledException {
 
-		List<Symbol> classHierarchyDescriptorList = extraUtils.getListOfSymbolsInAddressSet(
+		List<Symbol> classHierarchyDescriptorList = extendedFlatAPI.getListOfSymbolsInAddressSet(
 			getInitializedMemory(), RTTI_CLASS_HIERARCHY_DESCRIPTOR_LABEL, false);
 
 		return classHierarchyDescriptorList;
@@ -989,13 +991,13 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				Address vftableAddress = vftableIterator.next();
 				Address ptrToColAddress = vftableAddress.subtract(defaultPointerSize);
 
-				Data pointerToCompleteObjLocator = extraUtils.getDataAt(vftableAddress);
+				Data pointerToCompleteObjLocator = extendedFlatAPI.getDataAt(vftableAddress);
 				if (pointerToCompleteObjLocator == null) {
 					pointerToCompleteObjLocator =
-						extraUtils.createData(ptrToColAddress, pointerDataType);
+						extendedFlatAPI.createData(ptrToColAddress, pointerDataType);
 				}
 
-				Address colAddress = extraUtils.getReferencedAddress(ptrToColAddress, false);
+				Address colAddress = extendedFlatAPI.getReferencedAddress(ptrToColAddress, false);
 
 				if (colAddress == null) {
 					Msg.debug(this, recoveredClass.getName() +
@@ -1005,7 +1007,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 				Address addressOfOffset = colAddress.add(4);
 
-				int offset = extraUtils.getInt(addressOfOffset);
+				int offset = extendedFlatAPI.getInt(addressOfOffset);
 
 				recoveredClass.addClassOffsetToVftableMapping(offset, vftableAddress);
 			}
@@ -1150,7 +1152,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 		List<RecoveredClass> classHierarchy = new ArrayList<RecoveredClass>();
 
-		List<Symbol> symbols = extraUtils.getListOfSymbolsByNameInNamespace(
+		List<Symbol> symbols = extendedFlatAPI.getListOfSymbolsByNameInNamespace(
 			RTTI_BASE_CLASS_ARRAY_LABEL,
 			recoveredClass.getClassNamespace(), false);
 
@@ -1167,7 +1169,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				Address pointerAddress = rttiBaseClassDescriptorArray.getComponent(i).getAddress();
 
 				Address baseClassDescriptorAddress =
-					extraUtils.getSingleReferencedAddress(pointerAddress);
+					extendedFlatAPI.getSingleReferencedAddress(pointerAddress);
 
 				if (baseClassDescriptorAddress == null) {
 					return classHierarchy;
@@ -1218,11 +1220,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	private int getClassInheritanceFlag(Namespace classNamespace)
 			throws CancelledException, MemoryAccessException, AddressOutOfBoundsException {
 
-		List<Symbol> symbols = extraUtils.getListOfSymbolsByNameInNamespace(
+		List<Symbol> symbols = extendedFlatAPI.getListOfSymbolsByNameInNamespace(
 			RTTI_CLASS_HIERARCHY_DESCRIPTOR_LABEL, classNamespace, false);
 
 		if (symbols.size() >= 1) {
-			return (extraUtils.getInt(symbols.get(0).getAddress().add(4)));
+			return (extendedFlatAPI.getInt(symbols.get(0).getAddress().add(4)));
 		}
 
 		return NONE;
@@ -1353,7 +1355,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			// iterate over base class array and for each parent class of the given recovered class 
 			// get the mdisp, pdisp, vdisp info
-			List<Symbol> baseClassArray = extraUtils.getListOfSymbolsByNameInNamespace(
+			List<Symbol> baseClassArray = extendedFlatAPI.getListOfSymbolsByNameInNamespace(
 				RTTI_BASE_CLASS_ARRAY_LABEL, recoveredClass.getClassNamespace(), false);
 
 			// this should never happen
@@ -1386,7 +1388,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				Address pointerAddress = baseClassArrayData.getComponent(i).getAddress();
 
 				Address baseClassDescriptorAddress =
-					extraUtils.getReferencedAddress(pointerAddress, true);
+					extendedFlatAPI.getReferencedAddress(pointerAddress, true);
 				if (baseClassArrayAddress == null) {
 					continue;
 				}
@@ -1591,7 +1593,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 						getTargetAddressFromPcodeOp(offsetPcodeOpPair.getPcodeOp());
 
 					Address vbtableAddress =
-						extraUtils.getSingleReferencedAddress(listingAddress);
+						extendedFlatAPI.getSingleReferencedAddress(listingAddress);
 
 					if (vbtableAddress == null) {
 						continue;
@@ -1950,7 +1952,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				if (possibleVftable == null) {
 
 					Function referencedFunction =
-						extraUtils.getReferencedFunction(classReferenceAddress, true);
+						extendedFlatAPI.getReferencedFunction(classReferenceAddress, true);
 					if (referencedFunction == null) {
 						continue;
 					}
@@ -2298,7 +2300,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			Address pointerAddress = baseClassArrayData.getComponent(i).getAddress();
 
 			Address baseClassDescriptorAddress =
-				extraUtils.getReferencedAddress(pointerAddress, true);
+				extendedFlatAPI.getReferencedAddress(pointerAddress, true);
 			if (baseClassDescriptorAddress == null) {
 				continue;
 			}
@@ -2361,7 +2363,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 						dataLength = baseClassStructure.getLength() - lengthOfVirtualParent;
 					}
 
-					if (structUtils.canAdd(classStructureDataType, baseClassOffset, dataLength,
+					if (EditStructureUtils.canAdd(classStructureDataType, baseClassOffset,
+						dataLength,
 						monitor)) {
 						classStructureDataType =
 							addIndividualComponentsToStructure(classStructureDataType,
@@ -2371,10 +2374,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				}
 
 				// else copy whole baseClass structure to the class Structure
-				if (structUtils.canAdd(classStructureDataType, baseClassOffset,
+				if (EditStructureUtils.canAdd(classStructureDataType, baseClassOffset,
 					baseClassStructure.getLength(), monitor)) {
 					classStructureDataType =
-						structUtils.addDataTypeToStructure(classStructureDataType, baseClassOffset,
+						EditStructureUtils.addDataTypeToStructure(classStructureDataType,
+							baseClassOffset,
 							baseClassStructure, baseClassStructure.getName(), monitor);
 
 				}
@@ -2390,11 +2394,12 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 				baseClassOffset = api.getInt(recoveredClass.getVbtableAddress().add(vdisp)) + pdisp;
 
-				if (structUtils.canAdd(classStructureDataType, baseClassOffset,
+				if (EditStructureUtils.canAdd(classStructureDataType, baseClassOffset,
 					baseClassStructure.getLength(), monitor)) {
 
 					classStructureDataType =
-						structUtils.addDataTypeToStructure(classStructureDataType, baseClassOffset,
+						EditStructureUtils.addDataTypeToStructure(classStructureDataType,
+							baseClassOffset,
 							baseClassStructure, baseClassStructure.getName(), monitor);
 
 				}
@@ -2422,9 +2427,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 
 			DataType classVftablePointer = vfPointerDataTypes.get(vftableAddress);
 
-			if (structUtils.canAdd(classStructureDataType, offset.intValue(),
+			if (EditStructureUtils.canAdd(classStructureDataType, offset.intValue(),
 				classVftablePointer.getLength(), monitor)) {
-				classStructureDataType = structUtils.addDataTypeToStructure(classStructureDataType,
+				classStructureDataType = EditStructureUtils.addDataTypeToStructure(
+					classStructureDataType,
 					offset.intValue(), classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
 
 			}
@@ -2440,7 +2446,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		int dataOffset = getDataOffset(recoveredClass, classStructureDataType);
 		int dataLen = UNKNOWN;
 		if (dataOffset != NONE) {
-			dataLen = structUtils.getNumberOfUndefinedsStartingAtOffset(classStructureDataType,
+			dataLen =
+				EditStructureUtils.getNumberOfUndefinedsStartingAtOffset(classStructureDataType,
 				dataOffset, monitor);
 		}
 
@@ -2450,7 +2457,8 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				classStructureDataType, dataLen, dataOffset);
 
 			if (recoveredClassDataStruct != null) {
-				classStructureDataType = structUtils.addDataTypeToStructure(classStructureDataType,
+				classStructureDataType =
+					EditStructureUtils.addDataTypeToStructure(classStructureDataType,
 					dataOffset, recoveredClassDataStruct,
 					classStructureDataType.getName() + "_data", monitor);
 			}
@@ -2517,11 +2525,12 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 				monitor.checkCanceled();
 
 				// if enough empty bytes - add class vftable pointer
-				if (structUtils.canAdd(classStructureDataType, vftableOffset,
+				if (EditStructureUtils.canAdd(classStructureDataType, vftableOffset,
 					classVftablePointer.getLength(), monitor)) {
 
 					classStructureDataType =
-						structUtils.addDataTypeToStructure(classStructureDataType, vftableOffset,
+						EditStructureUtils.addDataTypeToStructure(classStructureDataType,
+							vftableOffset,
 							classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
 
 					addedVftablePointer = true;
@@ -2638,7 +2647,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			return false;
 		}
 		int numUndefined1s =
-			structUtils.getNumberOfUndefinedsStartingAtOffset(structure, 0, monitor);
+			EditStructureUtils.getNumberOfUndefinedsStartingAtOffset(structure, 0, monitor);
 		if (structure.getLength() == numUndefined1s) {
 			return true;
 		}
@@ -2685,7 +2694,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			Address pointerAddress = baseClassArrayData.getComponent(i).getAddress();
 
 			Address baseClassDescriptorAddress =
-				extraUtils.getReferencedAddress(pointerAddress, true);
+				extendedFlatAPI.getReferencedAddress(pointerAddress, true);
 			if (baseClassDescriptorAddress == null) {
 				continue;
 			}
@@ -2735,7 +2744,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 	 */
 	private Data getBaseClassArray(RecoveredClass recoveredClass) throws CancelledException {
 
-		List<Symbol> baseClassArray = extraUtils.getListOfSymbolsByNameInNamespace(
+		List<Symbol> baseClassArray = extendedFlatAPI.getListOfSymbolsByNameInNamespace(
 			RTTI_BASE_CLASS_ARRAY_LABEL, recoveredClass.getClassNamespace(), false);
 
 		if (baseClassArray.size() != 1) {
@@ -2792,9 +2801,11 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 			DataType vbaseStructPointer = dataTypeManager.getPointer(vbtableStructure);
 
 			int dataLength = vbaseStructPointer.getLength();
-			if (structUtils.canAdd(classStructureDataType, vbtableOffset, dataLength, monitor)) {
+			if (EditStructureUtils.canAdd(classStructureDataType, vbtableOffset, dataLength,
+				monitor)) {
 
-				classStructureDataType = structUtils.addDataTypeToStructure(classStructureDataType,
+				classStructureDataType =
+					EditStructureUtils.addDataTypeToStructure(classStructureDataType,
 					vbtableOffset, vbaseStructPointer, "vbtablePtr", monitor);
 
 			}

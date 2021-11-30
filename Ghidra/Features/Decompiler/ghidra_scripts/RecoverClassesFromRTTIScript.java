@@ -179,8 +179,6 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 
 	RTTIClassRecoverer recoverClassesFromRTTI;
 
-	ExtraScriptUtils extraUtils;
-
 	boolean nameVfunctions = false;
 
 	@Override
