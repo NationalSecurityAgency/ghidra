@@ -34,19 +34,13 @@ import ghidra.program.model.symbol.*;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class ExtraScriptUtils extends FlatProgramAPI {
+public class ExtendedFlatProgramAPI extends FlatProgramAPI {
 
-	Program program;
-	TaskMonitor taskMonitor;
-	int defaultPointerSize;
+	final int defaultPointerSize;
 
-	ExtraScriptUtils(Program program, TaskMonitor taskMonitor) {
-		this.program = program;
-		this.taskMonitor = taskMonitor;
+	ExtendedFlatProgramAPI(Program program, TaskMonitor taskMonitor) {
 
-		currentProgram = program;
-		monitor = taskMonitor;
-
+		super(program, taskMonitor);
 		defaultPointerSize = program.getDefaultPointerSize();
 	}
 
@@ -66,7 +60,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 		int numComponents = data.getNumComponents();
 
 		for (int ii = 0; ii < numComponents; ++ii) {
-			taskMonitor.checkCanceled();
+			monitor.checkCanceled();
 
 			Data component = data.getComponent(ii);
 			if (!component.isPointer()) {
@@ -125,7 +119,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 		}
 
 		// check for or create function pointer if valid function pointed to
-		Data data = program.getListing().getDefinedDataAt(address);
+		Data data = currentProgram.getListing().getDefinedDataAt(address);
 		if (data != null) {
 			if (data.isPointer() && getPointedToFunction(address) != null) {
 				return true;
@@ -165,8 +159,8 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 			return false;
 		}
 
-		DataType nullPointer = program.getDataTypeManager().getPointer(null);
-		Listing listing = program.getListing();
+		DataType nullPointer = currentProgram.getDataTypeManager().getPointer(null);
+		Listing listing = currentProgram.getListing();
 		Data d = listing.getDefinedDataAt(address);
 		if (d == null) {
 			try {
@@ -316,7 +310,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	 */
 	public Function createFunctionBefore(Address address, Byte expectedFiller) {
 
-		PseudoDisassembler pseudoDisassembler = new PseudoDisassembler(program);
+		PseudoDisassembler pseudoDisassembler = new PseudoDisassembler(currentProgram);
 
 		Instruction instructionBefore = getInstructionBefore(address);
 
@@ -419,7 +413,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	public int getNumberOfSameFillerBytesStartingAtAddress(Address firstAddress)
 			throws CancelledException, MemoryAccessException {
 
-		AddressSetView validMemory = program.getMemory().getLoadedAndInitializedAddressSet();
+		AddressSetView validMemory = currentProgram.getMemory().getLoadedAndInitializedAddressSet();
 
 		if (firstAddress == null) {
 			return 0;
@@ -529,7 +523,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 		// Create a new address set to hold the entire selection.
 		AddressSet subroutineAddresses = new AddressSet();
 
-		IsolatedEntrySubModel model = new IsolatedEntrySubModel(program);
+		IsolatedEntrySubModel model = new IsolatedEntrySubModel(currentProgram);
 		CodeBlock[] codeBlocksContaining = model.getCodeBlocksContaining(address, monitor);
 
 		for (CodeBlock element : codeBlocksContaining) {
@@ -607,7 +601,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 		int addressSize = address.getSize();
 		if (addressSize == 64 && getIboIf64bit) {
 			ImageBaseOffset32DataType ibo32 =
-				new ImageBaseOffset32DataType(program.getDataTypeManager());
+				new ImageBaseOffset32DataType(currentProgram.getDataTypeManager());
 			int length = ibo32.getLength();
 			DumbMemBufferImpl compMemBuffer =
 				new DumbMemBufferImpl(currentProgram.getMemory(), address);
@@ -654,7 +648,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 
 		List<Symbol> symbolList = new ArrayList<Symbol>();
 
-		SymbolIterator symbols = program.getSymbolTable().getSymbols(namespace);
+		SymbolIterator symbols = currentProgram.getSymbolTable().getSymbols(namespace);
 
 		while (symbols.hasNext()) {
 			monitor.checkCanceled();
@@ -765,7 +759,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 		List<Address> referenceAddresses = new ArrayList<Address>();
 
 		ReferenceIterator referencesToFunctionBIterator =
-			program.getReferenceManager().getReferencesTo(bFunction.getEntryPoint());
+			currentProgram.getReferenceManager().getReferencesTo(bFunction.getEntryPoint());
 
 		while (referencesToFunctionBIterator.hasNext()) {
 
@@ -995,7 +989,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	 */
 	public void removeAllSymbolsAtAddress(Address address) throws CancelledException {
 
-		SymbolTable symbolTable = program.getSymbolTable();
+		SymbolTable symbolTable = currentProgram.getSymbolTable();
 
 		Symbol primarySymbol = symbolTable.getPrimarySymbol(address);
 
@@ -1031,7 +1025,7 @@ public class ExtraScriptUtils extends FlatProgramAPI {
 	 */
 	public boolean hasSymbolsInNamespace(Namespace namespace) {
 
-		SymbolIterator namespaceSymbols = program.getSymbolTable().getSymbols(namespace);
+		SymbolIterator namespaceSymbols = currentProgram.getSymbolTable().getSymbols(namespace);
 
 		if (namespaceSymbols.hasNext()) {
 			return true;
