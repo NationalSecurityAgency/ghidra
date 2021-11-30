@@ -25,9 +25,10 @@ import javax.swing.table.TableColumnModel;
 
 import docking.widgets.table.*;
 import docking.widgets.table.DefaultEnumeratedColumnTableModel.EnumeratedTableColumn;
+import ghidra.app.plugin.core.debug.gui.AbstractDebuggerMapProposalDialog;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources;
 import ghidra.app.plugin.core.debug.gui.DebuggerResources.MapSectionsAction;
-import ghidra.app.services.DebuggerStaticMappingService.SectionMapEntry;
+import ghidra.app.services.SectionMapProposal.SectionMapEntry;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
@@ -45,10 +46,10 @@ public class DebuggerSectionMapProposalDialog
 		SECTION_NAME("Section", String.class, e -> e.getSection().getName()),
 		DYNAMIC_BASE("Dynamic Base", Address.class, e -> e.getSection().getStart()),
 		CHOOSE("Choose", String.class, e -> "Choose Block", (e, s) -> nop()),
-		PROGRAM_NAME("Program", String.class, e -> e.getProgram().getName()),
+		PROGRAM_NAME("Program", String.class, e -> e.getToProgram().getName()),
 		BLOCK_NAME("Block", String.class, e -> e.getBlock().getName()),
 		STATIC_BASE("Static Base", Address.class, e -> e.getBlock().getStart()),
-		SIZE("Size", Long.class, e -> e.getLength());
+		SIZE("Size", Long.class, e -> e.getMappingLength());
 
 		private final String header;
 		private final Class<?> cls;
@@ -151,7 +152,7 @@ public class DebuggerSectionMapProposalDialog
 
 	private void chooseAndSetBlock(SectionMapEntry entry) {
 		Map.Entry<Program, MemoryBlock> choice =
-			provider.askBlock(entry.getSection(), entry.getProgram(), entry.getBlock());
+			provider.askBlock(entry.getSection(), entry.getToProgram(), entry.getBlock());
 		if (choice == null) {
 			return;
 		}

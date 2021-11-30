@@ -46,8 +46,14 @@ public class DebuggerMemoryByteViewerComponent extends ByteViewerComponent
 				List<ColoredFieldSelection> selections) {
 			Color selectionColor = paintContext.getSelectionColor();
 			Color highlightColor = paintContext.getHighlightColor();
-			selections.add(new ColoredFieldSelection(getSelection(), selectionColor));
-			selections.add(new ColoredFieldSelection(getHighlight(), highlightColor));
+			FieldSelection selection = getSelection();
+			if (!selection.isEmpty()) {
+				selections.add(new ColoredFieldSelection(selection, selectionColor));
+			}
+			FieldSelection highlight = getHighlight();
+			if (!highlight.isEmpty()) {
+				selections.add(new ColoredFieldSelection(highlight, highlightColor));
+			}
 		}
 	}
 

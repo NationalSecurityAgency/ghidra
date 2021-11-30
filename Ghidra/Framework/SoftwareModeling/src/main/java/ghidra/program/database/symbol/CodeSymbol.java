@@ -85,18 +85,22 @@ public class CodeSymbol extends SymbolDB {
 
 	@Override
 	public boolean delete() {
-		if (isExternal()) {
-			return delete(false);
-		}
-		return super.delete();
+		boolean keepReferences = !isExternal();
+		return delete(keepReferences);
 	}
 
+	/**
+	 * Delete code/label symbol
+	 * @param keepReferences if false all references to this symbols address will be removed,
+	 * otherwise associated references will simply be disassociated following symbol removal
+	 * (see {@link SymbolManager#doRemoveSymbol(SymbolDB)}.
+	 * @return true if symbol successfully removed
+	 */
 	public boolean delete(boolean keepReferences) {
 		lock.acquire();
 		try {
 			if (!keepReferences) {
-				// remove external references
-				removeAllReferencesTo();
+				symbolMgr.getReferenceManager().removeAllReferencesTo(getAddress());
 			}
 			return super.delete();
 		}

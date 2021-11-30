@@ -27,6 +27,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.*;
 import ghidra.program.model.pcode.PcodeOp;
 import ghidra.program.model.symbol.*;
+import ghidra.util.Msg;
 
 /**
  * PseudoDisassembler.java
@@ -387,6 +388,7 @@ public class PseudoDisassembler {
 	 * The process function can control what flows are followed and when to stop.
 	 * 
 	 * @param entryPoint start address
+	 * @param maxInstr maximum number of instructions to evaluate
 	 * @param processor processor to use
 	 * @return the address set of instructions that were followed
 	 */
@@ -402,6 +404,8 @@ public class PseudoDisassembler {
 	 * The process function can control what flows are followed and when to stop.
 	 * 
 	 * @param entryPoint start address
+	 * @param procContext initial processor context for disassembly
+	 * @param maxInstr maximum number of instructions to evaluate
 	 * @param processor processor to use
 	 * @return the address set of instructions that were followed
 	 */
@@ -579,6 +583,10 @@ public class PseudoDisassembler {
 
 	public boolean checkValidSubroutine(Address entryPoint, PseudoDisassemblerContext procContext,
 			boolean allowExistingInstructions, boolean mustTerminate) {
+
+		if (!entryPoint.isMemoryAddress()) {
+			return false;
+		}
 		AddressSet body = new AddressSet();
 		AddressSet instrStarts = new AddressSet();
 		AddressSetView execSet = memory.getExecuteSet();
@@ -987,6 +995,11 @@ public class PseudoDisassembler {
 	 * @return the correct address to disassemble at if it needs to be aligned
 	 */
 	public static Address setTargeContextForDisassembly(Program program, Address addr) {
+		if (!addr.isMemoryAddress()) {
+			Msg.error(PseudoDisassembler.class,
+				"Invalid attempt to adjust disassembler context at " + addr.toString(true));
+			return addr;
+		}
 		Register lowBitCodeMode = program.getRegister(LOW_BIT_CODE_MODE_REGISTER_NAME);
 		if (lowBitCodeMode == null) {
 			return addr;
@@ -1016,6 +1029,11 @@ public class PseudoDisassembler {
 
 	public Address setTargeContextForDisassembly(PseudoDisassemblerContext procContext,
 			Address addr) {
+		if (!addr.isMemoryAddress()) {
+			Msg.error(this,
+				"Invalid attempt to adjust disassembler context at " + addr.toString(true));
+			return addr;
+		}
 		Register lowBitCodeMode = program.getRegister(LOW_BIT_CODE_MODE_REGISTER_NAME);
 		if (lowBitCodeMode == null) {
 			return addr;

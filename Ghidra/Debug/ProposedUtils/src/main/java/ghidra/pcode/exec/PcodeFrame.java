@@ -69,7 +69,8 @@ public class PcodeFrame {
 				sb.append("   ");
 			}
 			PcodeOp op = code.get(i);
-			sb.append(op.getSeqnum() + ": " + PcodeProgram.opToString(language, op, false));
+			sb.append(
+				op.getSeqnum() + ": " + PcodeProgram.opToString(language, op, false, useropNames));
 		}
 		if (index == code.size()) {
 			sb.append("\n *> fall-through");
@@ -96,6 +97,10 @@ public class PcodeFrame {
 
 	public String getUseropName(int userop) {
 		return useropNames.get(userop);
+	}
+
+	public Map<Integer, String> getUseropNames() {
+		return useropNames;
 	}
 
 	public boolean isFallThrough() {

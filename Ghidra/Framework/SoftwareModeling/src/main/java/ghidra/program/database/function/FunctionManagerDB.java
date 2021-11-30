@@ -272,23 +272,23 @@ public class FunctionManagerDB implements FunctionManager {
 	/**
 	 * Transform an existing external symbol into an external function.
 	 * This method should only be invoked by an ExternalSymbol
-	 * @param extSpaceAddr the external space address to use when creating this external.
+	 * @param extSpaceAddr the external space address to use when creating this external.  Any 
+	 * other symbol using this address must first be deleted.  Results are unpredictable if this is 
+	 * not done.
 	 * @param name the external function name
 	 * @param nameSpace the external function namespace
 	 * @param extData the external data string to store additional info (see {@link ExternalLocationDB})
 	 * @param source the source of this external.
 	 * @return external function
 	 * @throws InvalidInputException if the name is invalid
-	 * @throws DuplicateNameException if the name is an invalid duplicate
 	 */
 	public Function createExternalFunction(Address extSpaceAddr, String name, Namespace nameSpace,
 			String extData, SourceType source)
-			throws DuplicateNameException, InvalidInputException {
+			throws InvalidInputException {
 		lock.acquire();
 		try {
-
-			Symbol symbol = symbolMgr.createSpecialSymbol(extSpaceAddr, name, nameSpace,
-				SymbolType.FUNCTION, null, null, extData, source);
+			Symbol symbol =
+				symbolMgr.createFunctionSymbol(extSpaceAddr, name, nameSpace, source, extData);
 
 			long returnDataTypeId = program.getDataTypeManager().getResolvedID(DataType.DEFAULT);
 

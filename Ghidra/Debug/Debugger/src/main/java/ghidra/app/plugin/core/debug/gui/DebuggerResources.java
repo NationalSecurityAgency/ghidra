@@ -151,6 +151,7 @@ public interface DebuggerResources {
 	ImageIcon ICON_MAP_IDENTICALLY = ResourceManager.loadImage("images/doubleArrow.png");
 	ImageIcon ICON_MAP_MODULES = ResourceManager.loadImage("images/modules.png");
 	ImageIcon ICON_MAP_SECTIONS = ICON_MAP_MODULES; // TODO
+	ImageIcon ICON_MAP_REGIONS = ICON_MAP_MODULES; // TODO
 	ImageIcon ICON_BLOCK = ICON_MAP_SECTIONS; // TODO
 	// TODO: Draw an icon
 	ImageIcon ICON_SELECT_ADDRESSES = ResourceManager.loadImage("images/text_align_justify.png");
@@ -1351,7 +1352,7 @@ public interface DebuggerResources {
 
 	interface MapSectionToAction {
 		String NAME_PREFIX = "Map Section to ";
-		String DESCRIPTION = "Map the selected module to the current program";
+		String DESCRIPTION = "Map the selected section to the current program";
 		Icon ICON = ICON_MAP_SECTIONS; // TODO: Probably no icon
 		String GROUP = GROUP_MAPPING;
 		String HELP_ANCHOR = "map_section_to";
@@ -1371,6 +1372,57 @@ public interface DebuggerResources {
 		Icon ICON = ICON_MAP_SECTIONS;
 		String GROUP = GROUP_MAPPING;
 		String HELP_ANCHOR = "map_sections_to";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
+					.popupMenuPath(NAME_PREFIX + "...")
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface MapRegionsAction {
+		String NAME = "Map Regions";
+		String DESCRIPTION = "Map selected regions to program memory blocks";
+		Icon ICON = ICON_MAP_REGIONS; // TODO: Probably no icon
+		String GROUP = GROUP_MAPPING;
+		String HELP_ANCHOR = "map_regions";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+					//.toolBarIcon(ICON)
+					//.toolBarGroup(GROUP)
+					//.popupMenuIcon(ICON)
+					.popupMenuPath(NAME)
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface MapRegionToAction {
+		String NAME_PREFIX = "Map Region to ";
+		String DESCRIPTION = "Map the selected region to the current program";
+		Icon ICON = ICON_MAP_SECTIONS; // TODO: Probably no icon
+		String GROUP = GROUP_MAPPING;
+		String HELP_ANCHOR = "map_region_to";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME_PREFIX, ownerName).description(DESCRIPTION)
+					.popupMenuPath(NAME_PREFIX + "...")
+					.popupMenuGroup(GROUP)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface MapRegionsToAction {
+		String NAME_PREFIX = "Map Regions to ";
+		String DESCRIPTION = "Map the selected (module) regions to the current program";
+		Icon ICON = ICON_MAP_SECTIONS;
+		String GROUP = GROUP_MAPPING;
+		String HELP_ANCHOR = "map_regions_to";
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
@@ -1468,24 +1520,24 @@ public interface DebuggerResources {
 		}
 	}
 
-	abstract class AbstractStepTickForwardAction extends DockingAction {
-		public static final String NAME = "Step Trace Tick Forward";
+	abstract class AbstractEmulateTickForwardAction extends DockingAction {
+		public static final String NAME = "Emulate Trace Tick Forward";
 		public static final Icon ICON = ICON_STEP_INTO;
-		public static final String HELP_ANCHOR = "step_trace_tick_forward";
+		public static final String HELP_ANCHOR = "emu_trace_tick_forward";
 
-		public AbstractStepTickForwardAction(Plugin owner) {
+		public AbstractEmulateTickForwardAction(Plugin owner) {
 			super(NAME, owner.getName());
-			setDescription("Navigate the recording forward one tick");
+			setDescription("Emulate the recording forward one tick");
 			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
 		}
 	}
 
-	interface StepPcodeForwardAction {
-		String NAME = "Step Trace p-code Forward";
+	interface EmulatePcodeForwardAction {
+		String NAME = "Emulate Trace p-code Forward";
 		String DESCRIPTION = "Navigate the recording forward one p-code tick";
 		Icon ICON = ICON_STEP_INTO;
 		String GROUP = GROUP_CONTROL;
-		String HELP_ANCHOR = "step_trace_pcode_forward";
+		String HELP_ANCHOR = "emu_trace_pcode_forward";
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
@@ -1497,14 +1549,14 @@ public interface DebuggerResources {
 		}
 	}
 
-	abstract class AbstractStepTickBackwardAction extends DockingAction {
-		public static final String NAME = "Step Trace Tick Backward";
+	abstract class AbstractEmulateTickBackwardAction extends DockingAction {
+		public static final String NAME = "Emulate Trace Tick Backward";
 		public static final Icon ICON = ICON_STEP_BACK;
-		public static final String HELP_ANCHOR = "step_trace_tick_backward";
+		public static final String HELP_ANCHOR = "emu_trace_tick_backward";
 
-		public AbstractStepTickBackwardAction(Plugin owner) {
+		public AbstractEmulateTickBackwardAction(Plugin owner) {
 			super(NAME, owner.getName());
-			setDescription("Navigate the recording backward one tick");
+			setDescription("Emulate the recording backward one tick");
 			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
 		}
 	}
@@ -1521,12 +1573,12 @@ public interface DebuggerResources {
 		}
 	}
 
-	interface StepPcodeBackwardAction {
-		String NAME = "Step Trace p-code Backward";
+	interface EmulatePcodeBackwardAction {
+		String NAME = "Emulate Trace p-code Backward";
 		String DESCRIPTION = "Navigate the recording backward one p-code tick";
 		Icon ICON = ICON_STEP_BACK;
 		String GROUP = GROUP_CONTROL;
-		String HELP_ANCHOR = "step_trace_pcode_backward";
+		String HELP_ANCHOR = "emu_trace_pcode_backward";
 
 		static ActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
@@ -1553,15 +1605,30 @@ public interface DebuggerResources {
 	interface SynchronizeFocusAction {
 		String NAME = "Synchronize Focus";
 		String DESCRIPTION = "Synchronize trace activation with debugger focus/select";
-		String GROUP = "zz";
 		Icon ICON = ICON_SYNC;
 		String HELP_ANCHOR = "sync_focus";
 
 		static ToggleActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();
 			return new ToggleActionBuilder(NAME, ownerName).description(DESCRIPTION)
-					.toolBarGroup(GROUP)
-					.toolBarIcon(ICON)
+					.menuPath(NAME)
+					.menuIcon(ICON)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface GoToTimeAction {
+		String NAME = "Go To Time";
+		String DESCRIPTION = "Go to a specific time, optionally using emulation";
+		Icon ICON = ICON_TIME;
+		String HELP_ANCHOR = "goto_time";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName).description(DESCRIPTION)
+					.menuPath(NAME)
+					.menuIcon(ICON)
+					.keyBinding("CTRL SHIFT T")
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}
@@ -1745,6 +1812,22 @@ public interface DebuggerResources {
 		String DESCRIPTION = "Hide negative snaps, typically used as emulation scratch space";
 		String GROUP = GROUP_GENERAL;
 		String HELP_ANCHOR = "hide_scratch";
+
+		static ToggleActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ToggleActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP_GENERAL)
+					.menuPath(NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface ForceFullViewAction {
+		String NAME = "Force Full View";
+		String DESCRIPTION = "Ignore regions and fiew full address spaces";
+		String GROUP = GROUP_GENERAL;
+		String HELP_ANCHOR = "force_full_view";
 
 		static ToggleActionBuilder builder(Plugin owner) {
 			String ownerName = owner.getName();

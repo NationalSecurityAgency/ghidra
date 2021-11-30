@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package ghidra.app.plugin.core.debug.gui.modules;
+package ghidra.app.plugin.core.debug.gui;
 
 import java.awt.BorderLayout;
 import java.util.*;
@@ -34,16 +34,17 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
+import ghidra.trace.model.memory.TraceMemoryRegion;
 import ghidra.trace.model.modules.TraceSection;
 import ghidra.util.table.GhidraTableFilterPanel;
 
 public class DebuggerBlockChooserDialog extends DialogComponentProvider {
-	static class MemoryBlockRow {
+	public static class MemoryBlockRow {
 		private final Program program;
 		private final MemoryBlock block;
 		private double score;
 
-		public MemoryBlockRow(Program program, MemoryBlock block) {
+		protected MemoryBlockRow(Program program, MemoryBlock block) {
 			this.program = program;
 			this.block = block;
 		}
@@ -85,6 +86,13 @@ public class DebuggerBlockChooserDialog extends DialogComponentProvider {
 				return score = 0;
 			}
 			return score = service.proposeSectionMap(section, program, block).computeScore();
+		}
+
+		public double score(TraceMemoryRegion region, DebuggerStaticMappingService service) {
+			if (region == null) {
+				return score = 0;
+			}
+			return score = service.proposeRegionMap(region, program, block).computeScore();
 		}
 
 		public ProgramLocation getProgramLocation() {
@@ -143,9 +151,19 @@ public class DebuggerBlockChooserDialog extends DialogComponentProvider {
 
 	private Entry<Program, MemoryBlock> chosen;
 
-	protected DebuggerBlockChooserDialog() {
+	public DebuggerBlockChooserDialog() {
 		super("Memory Blocks", true, true, true, false);
 		populateComponents();
+	}
+
+	/* testing */
+	public EnumeratedColumnTableModel<MemoryBlockRow> getTableModel() {
+		return tableModel;
+	}
+
+	/* testing */
+	public GhidraTableFilterPanel<MemoryBlockRow> getTableFilterPanel() {
+		return filterPanel;
 	}
 
 	protected void populateComponents() {
@@ -183,16 +201,28 @@ public class DebuggerBlockChooserDialog extends DialogComponentProvider {
 
 	public Map.Entry<Program, MemoryBlock> chooseBlock(PluginTool tool, TraceSection section,
 			Collection<Program> programs) {
+		DebuggerStaticMappingService service = tool.getService(DebuggerStaticMappingService.class);
+		return chooseBlock(tool, programs, rec -> rec.score(section, service));
+	}
+
+	public Map.Entry<Program, MemoryBlock> chooseBlock(PluginTool tool, TraceMemoryRegion region,
+			Collection<Program> programs) {
+		DebuggerStaticMappingService service = tool.getService(DebuggerStaticMappingService.class);
+		return chooseBlock(tool, programs, rec -> rec.score(region, service));
+	}
+
+	protected Map.Entry<Program, MemoryBlock> chooseBlock(PluginTool tool,
+			Collection<Program> programs, Function<MemoryBlockRow, Double> scorer) {
 		setBlocksFromPrograms(programs);
-		computeScores(section, tool.getService(DebuggerStaticMappingService.class));
+		computeScores(scorer);
 		selectHighestScoringBlock();
 		tool.showDialog(this);
 		return getChosen();
 	}
 
-	protected void computeScores(TraceSection section, DebuggerStaticMappingService service) {
+	protected void computeScores(Function<MemoryBlockRow, Double> scorer) {
 		for (MemoryBlockRow rec : tableModel.getModelData()) {
-			rec.score(section, service);
+			scorer.apply(rec);
 		}
 	}
 

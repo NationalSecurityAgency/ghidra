@@ -91,14 +91,7 @@ public class MemoryByteBlock implements ByteBlock {
 	 */
 	@Override
 	public BigInteger getLength() {
-
-		long size = block.getSize();
-		if (size < 0) {
-			return BigInteger.valueOf(size + 0x8000000000000000L)
-					.subtract(
-						BigInteger.valueOf(0x8000000000000000L));
-		}
-		return BigInteger.valueOf(size);
+		return block.getSizeAsBigInteger();
 	}
 
 	/**

@@ -462,6 +462,39 @@ public class DBTraceReferenceManagerTest extends AbstractGhidraHeadlessIntegrati
 	}
 
 	@Test
+	public void testClearReferencesTo() {
+		DBTraceReference keptRef;
+		try (UndoableTransaction tid = b.startTransaction()) {
+			b.addMemoryReference(0, b.addr(0x4000), b.addr(0x5000), 3);
+			b.addOffsetReference(0, b.addr(0x4001), b.addr(0x5000), 20);
+			b.addShiftedReference(0, b.addr(0x4002), b.addr(0x5000), 1);
+			keptRef = b.addMemoryReference(0, b.addr(0x8000), b.addr(0x5001));
+		}
+
+		assertEquals(3, manager.getReferencesTo(0, b.addr(0x5000)).size());
+		assertEquals(1, manager.getReferencesTo(0, b.addr(0x5001)).size());
+
+		try (UndoableTransaction tid = b.startTransaction()) {
+			manager.clearReferencesTo(Range.atLeast(10L), b.range(0x4000, 0x5000));
+		}
+
+		assertEquals(3, manager.getReferencesTo(0, b.addr(0x5000)).size());
+		assertEquals(0, manager.getReferencesTo(10, b.addr(0x5000)).size());
+		assertEquals(Range.closed(0L, 9L),
+			manager.getReferencesTo(0, b.addr(0x5000)).iterator().next().getLifespan());
+
+		try (UndoableTransaction tid = b.startTransaction()) {
+			manager.clearReferencesTo(Range.atLeast(0L), b.range(0x4000, 0x5000));
+		}
+
+		assertEquals(0, manager.getReferencesTo(0, b.addr(0x5000)).size());
+		assertEquals(0, manager.getReferencesTo(-1, b.addr(0x5000)).size());
+		assertEquals(1, manager.getReferencesTo(0, b.addr(0x5001)).size());
+		assertEquals(keptRef, manager.getReferencesTo(0, b.addr(0x5001)).iterator().next());
+		assertEquals(Range.atLeast(0L), keptRef.getLifespan());
+	}
+
+	@Test
 	public void testGetReferenceSourcesAndDestinations() {
 		try (UndoableTransaction tid = b.startTransaction()) {
 			b.addMemoryReference(0, b.addr(0x4000), b.addr(0x5000));

@@ -102,11 +102,12 @@ public class PcodeProgram {
 		}
 	}
 
-	public static String useropToString(Language language, Varnode vn, boolean markup) {
+	public static String useropToString(Language language, Varnode vn, boolean markup,
+			Map<Integer, String> useropNames) {
 		if (!vn.isConstant()) {
 			throw new IllegalArgumentException("userop index must be a constant varnode");
 		}
-		String display = "\"" + language.getUserDefinedOpName((int) vn.getOffset()) + "\"";
+		String display = "\"" + useropNames.get((int) vn.getOffset()) + "\"";
 		if (markup) {
 			return htmlSpan("userop", display);
 		}
@@ -124,7 +125,8 @@ public class PcodeProgram {
 		}
 	}
 
-	public static String opToString(Language language, PcodeOp op, boolean markup) {
+	public static String opToString(Language language, PcodeOp op, boolean markup,
+			Map<Integer, String> useropNames) {
 		StringBuilder sb = new StringBuilder();
 		Varnode output = op.getOutput();
 		if (output != null) {
@@ -146,7 +148,7 @@ public class PcodeProgram {
 		}
 		else if (isUserop) {
 			sb.append(' ');
-			sb.append(useropToString(language, op.getInput(0), markup));
+			sb.append(useropToString(language, op.getInput(0), markup, useropNames));
 			i = 1;
 		}
 		else {
@@ -208,7 +210,8 @@ public class PcodeProgram {
 	public String toString() {
 		StringBuilder sb = new StringBuilder("<" + getHead() + ":");
 		for (PcodeOp op : code) {
-			sb.append("\n  " + op.getSeqnum() + ": " + opToString(language, op, false));
+			sb.append(
+				"\n  " + op.getSeqnum() + ": " + opToString(language, op, false, useropNames));
 		}
 		sb.append("\n>");
 		return sb.toString();

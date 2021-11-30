@@ -29,6 +29,7 @@ import ghidra.trace.model.Trace.TraceSnapshotChangeType;
 import ghidra.trace.model.TraceDomainObjectListener;
 import ghidra.trace.model.program.TraceProgramView;
 import ghidra.trace.model.time.*;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.*;
 import ghidra.util.datastruct.ListenerSet;
 import ghidra.util.exception.ClosedException;

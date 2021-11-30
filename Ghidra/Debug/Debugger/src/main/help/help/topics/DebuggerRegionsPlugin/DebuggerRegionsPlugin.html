@@ -55,6 +55,41 @@
     <P>Other than modifications enabled by the table, the Regions window provides the following
     actions:</P>
 
+    <H3><A name="map_regions"></A>Map Regions</H3>
+
+    <P>This action is analogous to the Map Modules and Map Sections actions from the <A href=
+    "help/topics/DebuggerModulesPlugin/DebuggerModulesPlugin.html">Modules window</A>. It searches
+    the tool's open programs for blocks matching the selected regions and proposes new mappings.
+    Users who prefer this should also consider using the <A href=
+    "help/topics/DebuggerBots/DebuggerBots.html#map_regions">Map Regions</A> debugger bot. For the
+    best result, the selection regions should comprise a complete module. In particular, it should
+    include the region containing the module's image base, as the offset from this base is used in
+    scoring the best-matched blocks. Additionally, the region names must include the module's file
+    name, otherwise the matcher has no means to identify a corresponding program.</P>
+
+    <TABLE width="100%">
+      <TBODY>
+        <TR>
+          <TD align="center" width="100%"><IMG alt="" src=
+          "images/DebuggerRegionMapProposalDialog.png"></TD>
+        </TR>
+      </TBODY>
+    </TABLE>
+
+    <H3><A name="map_regions_to"></A>Map Regions to Current Program</H3>
+
+    <P>This action is available from the pop-up menu, when there is a selection of regions and
+    there is an open program. It behaves like Map Regions, except that it will attempt to map the
+    selected regions to blocks in the current program only. This is useful if the regions are not
+    named according to the module filename. The selected regions should still comprise a complete
+    module for best results.</P>
+
+    <H3><A name="map_region_to"></A>Map Region to Current Block</H3>
+
+    <P>This action is available from a single region's pop-up menu, when there is an open program.
+    It behaves like Map Regions, except that it will propose the selected region be mapped to the
+    block containing the cursor in the static listing.</P>
+
     <H3><A name="select_addresses"></A>Select Addresses</H3>
 
     <P>This action is available when at least one region is selected. It selects all addresses in
@@ -65,5 +100,14 @@
     <P>This action is available when the dynamic listing's cursor is at a valid location. It
     selects the region containing that cursor. If the dynamic listing has a selection, it selects
     all regions intersecting that selection.</P>
+
+    <H3><A name="force_full_view"></A>Force Full View</H3>
+
+    <P>This action is available when a trace is active. It forces all physical address spaces into
+    the view. Ordinarily, only those addresses contained in a region at the active snap are
+    presented in the listing and memory windows. When this toggle is on, regions are ignored.
+    Instead, all physical addresses are presented. (Here "physical" includes all memory spaces
+    except <CODE>OTHER</CODE>.) This toggle applies only to the current trace for the duration it
+    is open.</P>
   </BODY>
 </HTML>

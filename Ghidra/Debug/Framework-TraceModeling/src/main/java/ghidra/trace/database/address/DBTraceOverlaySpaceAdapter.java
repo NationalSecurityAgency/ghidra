@@ -255,6 +255,7 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			// Only if it succeeds do we store the record
 			DBTraceOverlaySpaceEntry ent = overlayStore.create();
 			ent.set(space.getName(), base.getName());
+			trace.updateViewsAddSpaceBlock(space);
 			return space;
 		}
 	}
@@ -268,7 +269,10 @@ public class DBTraceOverlaySpaceAdapter implements DBTraceManager {
 			}
 			overlayStore.delete(exists);
 			TraceAddressFactory factory = trace.getInternalAddressFactory();
+			AddressSpace space = factory.getAddressSpace(name);
+			assert space != null;
 			factory.removeOverlaySpace(name);
+			trace.updateViewsDeleteSpaceBlock(space);
 		}
 	}
 }

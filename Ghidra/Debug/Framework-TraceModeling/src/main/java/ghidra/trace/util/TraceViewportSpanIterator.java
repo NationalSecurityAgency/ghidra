@@ -19,6 +19,7 @@ import com.google.common.collect.*;
 
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.time.*;
+import ghidra.trace.model.time.schedule.TraceSchedule;
 import ghidra.util.AbstractPeekableIterator;
 
 public class TraceViewportSpanIterator extends AbstractPeekableIterator<Range<Long>> {

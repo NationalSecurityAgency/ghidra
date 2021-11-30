@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.function.Consumer;
 
 import com.google.common.cache.RemovalNotification;
 
@@ -42,6 +43,7 @@ public abstract class AbstractDBTraceProgramViewMemory
 	protected final DBTraceMemoryManager memoryManager;
 
 	protected AddressSetView addressSet;
+	protected boolean forceFullView = false;
 	protected long snap;
 
 	public AbstractDBTraceProgramViewMemory(DBTraceProgramView program) {
@@ -50,16 +52,57 @@ public abstract class AbstractDBTraceProgramViewMemory
 		setSnap(program.snap);
 	}
 
-	protected void blockRemoved(
-			RemovalNotification<DBTraceMemoryRegion, DBTraceProgramViewMemoryBlock> rn) {
+	protected void regionBlockRemoved(
+			RemovalNotification<DBTraceMemoryRegion, DBTraceProgramViewMemoryRegionBlock> rn) {
+		// Nothing
+	}
+
+	protected void spaceBlockRemoved(
+			RemovalNotification<AddressSpace, DBTraceProgramViewMemorySpaceBlock> rn) {
 		// Nothing
 	}
 
 	protected abstract void recomputeAddressSet();
 
+	protected void forPhysicalSpaces(Consumer<AddressSpace> consumer) {
+		for (AddressSpace space : program.getAddressFactory().getAddressSpaces()) {
+			// NB. Overlay's isMemory depends on its base space
+			// TODO: Allow other?
+			// For some reason "other" is omitted from factory.getAddressSet
+			if (space.isMemorySpace() && space.getType() != AddressSpace.TYPE_OTHER) {
+				consumer.accept(space);
+			}
+		}
+	}
+
+	protected void computeFullAdddressSet() {
+		AddressSet temp = new AddressSet();
+		forPhysicalSpaces(space -> temp.add(space.getMinAddress(), space.getMaxAddress()));
+		addressSet = temp;
+	}
+
+	@Override
+	public void setForceFullView(boolean forceFullView) {
+		this.forceFullView = forceFullView;
+		if (forceFullView) {
+			computeFullAdddressSet();
+		}
+		else {
+			recomputeAddressSet();
+		}
+		program.fireObjectRestored();
+	}
+
+	@Override
+	public boolean isForceFullView() {
+		return forceFullView;
+	}
+
 	void setSnap(long snap) {
 		this.snap = snap;
-		recomputeAddressSet();
+		if (!forceFullView) {
+			recomputeAddressSet();
+		}
 	}
 
 	@Override
@@ -463,17 +506,23 @@ public abstract class AbstractDBTraceProgramViewMemory
 	}
 
 	protected synchronized void addRange(AddressRange range) {
-		addressSet = addressSet.union(new AddressSet(range));
+		if (!forceFullView) {
+			addressSet = addressSet.union(new AddressSet(range));
+		}
 	}
 
 	protected synchronized void removeRange(AddressRange range) {
-		addressSet = addressSet.subtract(new AddressSet(range));
+		if (!forceFullView) {
+			addressSet = addressSet.subtract(new AddressSet(range));
+		}
 	}
 
 	protected synchronized void changeRange(AddressRange remove, AddressRange add) {
-		AddressSet temp = new AddressSet(addressSet);
-		temp.delete(remove);
-		temp.add(add);
-		addressSet = temp;
+		if (!forceFullView) {
+			AddressSet temp = new AddressSet(addressSet);
+			temp.delete(remove);
+			temp.add(add);
+			addressSet = temp;
+		}
 	}
 }

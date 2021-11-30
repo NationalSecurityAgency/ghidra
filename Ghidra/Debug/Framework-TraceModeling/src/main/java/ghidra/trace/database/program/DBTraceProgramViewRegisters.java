@@ -28,7 +28,6 @@ import ghidra.program.database.map.AddressMap;
 import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.Memory;
 import ghidra.program.model.pcode.Varnode;
 import ghidra.program.model.reloc.RelocationTable;
 import ghidra.program.model.symbol.*;
@@ -40,6 +39,7 @@ import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.data.TraceBasedDataTypeManager;
 import ghidra.trace.model.program.TraceProgramView;
+import ghidra.trace.model.program.TraceProgramViewMemory;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceTimeViewport;
 import ghidra.util.exception.CancelledException;
@@ -113,7 +113,7 @@ public class DBTraceProgramViewRegisters implements TraceProgramView {
 	}
 
 	@Override
-	public Memory getMemory() {
+	public TraceProgramViewMemory getMemory() {
 		return memory;
 	}
 
