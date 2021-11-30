@@ -154,7 +154,7 @@ public class RTTIClassRecoverer extends RecoveredClassUtils {
 			// if class is non-virtual have to search for an existing class datatype
 			if (!recoveredClass.hasVftable()) {
 				DataType[] possibleExistingClassStructures =
-					extraUtils.getDataTypes(recoveredClass.getName());
+					extendedFlatAPI.getDataTypes(recoveredClass.getName());
 				if (possibleExistingClassStructures.length == 0) {
 					continue;
 				}

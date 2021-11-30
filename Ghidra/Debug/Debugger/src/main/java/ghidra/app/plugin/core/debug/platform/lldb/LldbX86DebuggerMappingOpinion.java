@@ -18,15 +18,18 @@ package ghidra.app.plugin.core.debug.platform.lldb;
 import java.util.Set;
 
 import ghidra.app.plugin.core.debug.mapping.*;
-import ghidra.dbg.target.*;
-import ghidra.program.model.lang.*;
+import ghidra.dbg.target.TargetEnvironment;
+import ghidra.dbg.target.TargetProcess;
+import ghidra.program.model.lang.CompilerSpecID;
+import ghidra.program.model.lang.LanguageID;
 import ghidra.util.Msg;
 
 public class LldbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 	protected static final LanguageID LANG_ID_X86 = new LanguageID("x86:LE:32:default");
 	protected static final LanguageID LANG_ID_X86_64 = new LanguageID("x86:LE:64:default");
+	protected static final CompilerSpecID COMP_ID_DEFAULT = new CompilerSpecID("default");
 	protected static final CompilerSpecID COMP_ID_GCC = new CompilerSpecID("gcc");
-	protected static final CompilerSpecID COMP_ID_VS = new CompilerSpecID("Visual Studio");
+	protected static final CompilerSpecID COMP_ID_VS = new CompilerSpecID("windows");
 
 	protected static class LldbI386MacosOffer extends DefaultDebuggerMappingOffer {
 		public LldbI386MacosOffer(TargetProcess process) {
@@ -74,30 +77,49 @@ public class LldbX86DebuggerMappingOpinion implements DebuggerMappingOpinion {
 			return Set.of();
 		}
 		String arch = env.getArchitecture();
-		if (arch.startsWith("i386")) {
-			return Set.of();
-		}
+		boolean is32Bit = arch.contains("x86-32") || arch.contains("i386") ||
+			arch.contains("x86_32");
 		boolean is64Bit = arch.contains("x86-64") || arch.contains("x64-32") ||
-			arch.contains("x86_64") || arch.contains("x64_32");
+			arch.contains("x86_64") || arch.contains("x64_32") || arch.contains("i686");
 		String os = env.getOperatingSystem();
-		Msg.info(this, "Using os=" + os + " arch=" + arch);
 		if (os.contains("macos")) {
 			if (is64Bit) {
+				Msg.info(this, "Using os=" + os + " arch=" + arch);
 				return Set.of(new LldbI386X86_64MacosOffer(process));
 			}
-			return Set.of(new LldbI386MacosOffer(process));
+			else if (is32Bit) {
+				Msg.info(this, "Using os=" + os + " arch=" + arch);
+				return Set.of(new LldbI386MacosOffer(process));
+			}
+			else {
+				return Set.of();
+			}
 		}
 		else if (os.contains("Linux") || os.contains("linux")) {
 			if (is64Bit) {
+				Msg.info(this, "Using os=" + os + " arch=" + arch);
 				return Set.of(new LldbI386X86_64LinuxOffer(process));
 			}
-			return Set.of(new LldbI386LinuxOffer(process));
+			else if (is32Bit) {
+				Msg.info(this, "Using os=" + os + " arch=" + arch);
+				return Set.of(new LldbI386LinuxOffer(process));
+			}
+			else {
+				return Set.of();
+			}
 		}
-		else if (os.contains("Cygwin")) {
+		else if (os.contains("windows")) {
 			if (is64Bit) {
+				Msg.info(this, "Using os=" + os + " arch=" + arch);
 				return Set.of(new LldbI386X86_64WindowsOffer(process));
 			}
-			return Set.of(new LldbI386WindowsOffer(process));
+			else if (is32Bit) {
+				Msg.info(this, "Using os=" + os + " arch=" + arch);
+				return Set.of(new LldbI386WindowsOffer(process));
+			}
+			else {
+				return Set.of();
+			}
 		}
 		return Set.of();
 	}

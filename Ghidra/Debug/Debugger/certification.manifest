@@ -41,6 +41,8 @@ src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-enable-al
 src/main/help/help/topics/DebuggerBreakpointsPlugin/images/breakpoints-make-effective.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerConsolePlugin/DebuggerConsolePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerConsolePlugin/images/DebuggerConsolePlugin.png||GHIDRA||||END|
+src/main/help/help/topics/DebuggerCopyActionsPlugin/DebuggerCopyActionsPlugin.html||GHIDRA||||END|
+src/main/help/help/topics/DebuggerCopyActionsPlugin/images/DebuggerCopyIntoProgramDialog.png||GHIDRA||||END|
 src/main/help/help/topics/DebuggerEmulationServicePlugin/DebuggerEmulationServicePlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerInterpreterPlugin/DebuggerInterpreterPlugin.html||GHIDRA||||END|
 src/main/help/help/topics/DebuggerListingPlugin/DebuggerListingPlugin.html||GHIDRA||||END|

@@ -144,8 +144,8 @@ public interface DebuggerResources {
 	ImageIcon ICON_AUTOREAD = ResourceManager.loadImage("images/autoread.png");
 
 	// TODO: Draw a real icon.
-	ImageIcon ICON_CAPTURE_MEMORY = ICON_REGIONS;
-	//ResourceManager.loadImage("images/capture-memory.png");
+	ImageIcon ICON_READ_MEMORY = ICON_REGIONS;
+	//ResourceManager.loadImage("images/read-memory.png");
 
 	// TODO: Draw an icon
 	ImageIcon ICON_MAP_IDENTICALLY = ResourceManager.loadImage("images/doubleArrow.png");
@@ -778,14 +778,15 @@ public interface DebuggerResources {
 		}
 	}
 
-	abstract class AbstractCaptureSelectedMemoryAction extends DockingAction {
-		public static final String NAME = "Capture Selected Memory";
-		public static final Icon ICON = ICON_CAPTURE_MEMORY;
-		public static final String HELP_ANCHOR = "capture_memory";
+	abstract class AbstractReadSelectedMemoryAction extends DockingAction {
+		public static final String NAME = "Read Selected Memory";
+		public static final Icon ICON = ICON_READ_MEMORY;
+		public static final String HELP_ANCHOR = "read_memory";
 
-		public AbstractCaptureSelectedMemoryAction(Plugin owner) {
+		public AbstractReadSelectedMemoryAction(Plugin owner) {
 			super(NAME, owner.getName());
-			setDescription("Capture memory for the selected addresses into the trace database");
+			setDescription(
+				"(Re-)read and record memory for the selected addresses into the trace database");
 			setHelpLocation(new HelpLocation(owner.getName(), HELP_ANCHOR));
 		}
 	}
@@ -886,7 +887,7 @@ public interface DebuggerResources {
 
 	interface AutoReadMemoryAction {
 		String NAME = "Auto-Read Target Memory";
-		String DESCRIPTION = "Automatically capture visible memory from the live target";
+		String DESCRIPTION = "Automatically read and record visible memory from the live target";
 		String HELP_ANCHOR = "auto_memory";
 
 		String NAME_VIS_RO_ONCE = "Read Visible Memory, RO Once";
@@ -1082,7 +1083,43 @@ public interface DebuggerResources {
 			return new ActionBuilder(NAME, ownerName)
 					.description(DESCRIPTION)
 					.menuGroup(GROUP)
-					.menuPath(NAME)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface CopyIntoProgramAction {
+		String NAME_PAT = "Copy Into %s Program";
+		String DESC_PAT = "Copy the current selection into %s program";
+		String GROUP = GROUP_MAINTENANCE;
+	}
+
+	interface CopyIntoCurrentProgramAction extends CopyIntoProgramAction {
+		String NAME = String.format(NAME_PAT, "Current");
+		String DESCRIPTION = String.format(DESC_PAT, "the current");
+		String HELP_ANCHOR = "copy_into_current";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
+					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
+		}
+	}
+
+	interface CopyIntoNewProgramAction extends CopyIntoProgramAction {
+		String NAME = String.format(NAME_PAT, "New");
+		String DESCRIPTION = String.format(DESC_PAT, "a new");
+		String HELP_ANCHOR = "copy_into_new";
+
+		static ActionBuilder builder(Plugin owner) {
+			String ownerName = owner.getName();
+			return new ActionBuilder(NAME, ownerName)
+					.description(DESCRIPTION)
+					.menuGroup(GROUP)
+					.menuPath(DebuggerPluginPackage.NAME, NAME)
 					.helpLocation(new HelpLocation(ownerName, HELP_ANCHOR));
 		}
 	}

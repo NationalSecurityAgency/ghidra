@@ -102,8 +102,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	/**
 	 * Method called if the plugin supports this domain file.
 	 *
-	 * @param data
-	 *            the data to be used by the running tool
+	 * @param data the data to be used by the running tool
 	 * @return false if data is not a Program object.
 	 */
 	@Override
@@ -447,9 +446,9 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	}
 
 	/**
-	 * This method notifies listening plugins that a programs has been added to
-	 * the program manager. This is not used for actually opening a program from
-	 * the database and will act strangely if given a closed Program object.
+	 * This method notifies listening plugins that a programs has been added to the program manager.
+	 * This is not used for actually opening a program from the database and will act strangely if
+	 * given a closed Program object.
 	 *
 	 * @see ghidra.app.services.ProgramManager#openProgram(ghidra.program.model.listing.Program)
 	 */
@@ -585,7 +584,7 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	/**
 	 * Set the string chooser property editor on the property that is a filename.
 	 *
-	 * @param options            property list
+	 * @param options property list
 	 * @param filePropertyName name of the property that is a filename
 	 */
 	private void setPropertyEditor(Options options, String filePropertyName) {
@@ -597,8 +596,8 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	}
 
 	/**
-	 * Start a transaction if one has not been started; needed when program
-	 * properties are about to change from the options editor.
+	 * Start a transaction if one has not been started; needed when program properties are about to
+	 * change from the options editor.
 	 */
 	private void startTransaction(Program currentProgram) {
 		if (transactionID < 0) {
@@ -683,6 +682,26 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 			openProgram.release(this);
 		}
 		return openProgram;
+	}
+
+	@Override
+	public void saveProgram() {
+		saveProgram(getCurrentProgram());
+	}
+
+	@Override
+	public void saveProgram(Program program) {
+		Swing.runIfSwingOrRunLater(() -> programSaveMgr.saveProgram(program));
+	}
+
+	@Override
+	public void saveProgramAs() {
+		saveProgramAs(getCurrentProgram());
+	}
+
+	@Override
+	public void saveProgramAs(Program program) {
+		Swing.runIfSwingOrRunLater(() -> programSaveMgr.saveAs(program));
 	}
 
 	/**
@@ -1040,13 +1059,4 @@ public class ProgramManagerPlugin extends Plugin implements ProgramManager {
 	public boolean isManaged(Program program) {
 		return programMgr.contains(program);
 	}
-
-	public void saveProgram(Program program) {
-		programSaveMgr.saveProgram(program);
-	}
-
-	public void saveProgramAs(Program program) {
-		programSaveMgr.saveAs(program);
-	}
-
 }

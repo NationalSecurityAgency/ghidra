@@ -130,8 +130,7 @@ public class RecoveredClassUtils {
 	int defaultPointerSize;
 	SymbolTable symbolTable;
 
-	ExtraScriptUtils extraUtils;
-	EditStructureUtils structUtils;
+	ExtendedFlatProgramAPI extendedFlatAPI;
 
 	DecompilerScriptUtils decompilerUtils;
 	CategoryPath classDataTypesCategoryPath;
@@ -157,10 +156,10 @@ public class RecoveredClassUtils {
 		this.tool = tool;
 		this.api = api;
 
-		extraUtils = new ExtraScriptUtils(program, monitor);
+		extendedFlatAPI = new ExtendedFlatProgramAPI(program, monitor);
 
 		this.classDataTypesCategoryPath =
-			extraUtils.createDataTypeCategoryPath(CategoryPath.ROOT, DTM_CLASS_DATA_FOLDER_NAME);
+			extendedFlatAPI.createDataTypeCategoryPath(CategoryPath.ROOT, DTM_CLASS_DATA_FOLDER_NAME);
 
 		this.createBookmarks = createBookmarks;
 		this.useShortTemplates = useShortTemplates;
@@ -170,7 +169,6 @@ public class RecoveredClassUtils {
 		globalNamespace = (GlobalNamespace) program.getGlobalNamespace();
 
 		decompilerUtils = new DecompilerScriptUtils(program, tool, monitor);
-		structUtils = new EditStructureUtils();
 
 		dataTypeManager = program.getDataTypeManager();
 		symbolTable = program.getSymbolTable();
@@ -417,7 +415,7 @@ public class RecoveredClassUtils {
 			if (allConstructorsAndDestructors.contains(calledFunction)) {
 				// get list of refs to this function from the calling function
 				List<Address> referencesToFunctionBFromFunctionA =
-					extraUtils.getReferencesToFunctionBFromFunctionA(function,
+					extendedFlatAPI.getReferencesToFunctionBFromFunctionA(function,
 						referencedFunction);
 				// add them to list of ref address pairs
 				Iterator<Address> iterator = referencesToFunctionBFromFunctionA.iterator();
@@ -654,7 +652,7 @@ public class RecoveredClassUtils {
 			monitor.checkCanceled();
 
 			Address vftableRef = vftableRefIterator.next();
-			Address vftableAddress = extraUtils.getSingleReferencedAddress(vftableRef);
+			Address vftableAddress = extendedFlatAPI.getSingleReferencedAddress(vftableRef);
 
 			if (vftableAddress == null) {
 				continue;
@@ -1234,11 +1232,11 @@ public class RecoveredClassUtils {
 
 			DataType dataType = function.getParameter(i).getDataType();
 
-			if (!extraUtils.isPointerToEmptyStructure(dataType)) {
+			if (!extendedFlatAPI.isPointerToEmptyStructure(dataType)) {
 				continue;
 			}
 
-			PointerDataType ptrUndefined = extraUtils.createPointerToUndefinedDataType(dataType);
+			PointerDataType ptrUndefined = extendedFlatAPI.createPointerToUndefinedDataType(dataType);
 			if (ptrUndefined != null) {
 				function.getParameter(i).setDataType(ptrUndefined, SourceType.ANALYSIS);
 			}
@@ -1247,9 +1245,9 @@ public class RecoveredClassUtils {
 
 		// Next check the return type to see if it is the empty structure
 		DataType returnType = function.getReturnType();
-		if (extraUtils.isPointerToEmptyStructure(returnType)) {
+		if (extendedFlatAPI.isPointerToEmptyStructure(returnType)) {
 			PointerDataType ptrUndefined =
-				extraUtils.createPointerToUndefinedDataType(returnType);
+				extendedFlatAPI.createPointerToUndefinedDataType(returnType);
 			if (ptrUndefined != null) {
 				function.setReturnType(ptrUndefined, SourceType.ANALYSIS);
 			}
@@ -1664,7 +1662,7 @@ public class RecoveredClassUtils {
 			return possibleParentConstructors;
 		}
 
-		Address minVftableReference = extraUtils.getMinimumAddressOnList(vftableReferenceList);
+		Address minVftableReference = extendedFlatAPI.getMinimumAddressOnList(vftableReferenceList);
 		Iterator<ReferenceAddressPair> iterator = refAddrPairList.iterator();
 
 		while (iterator.hasNext()) {
@@ -1738,7 +1736,7 @@ public class RecoveredClassUtils {
 			return possibleParentDestructors;
 		}
 
-		Address maxVftableReference = extraUtils.getMaximumAddressOnList(vftableReferenceList);
+		Address maxVftableReference = extendedFlatAPI.getMaximumAddressOnList(vftableReferenceList);
 		Iterator<ReferenceAddressPair> iterator = refAddrPairList.iterator();
 
 		while (iterator.hasNext()) {
@@ -1746,7 +1744,7 @@ public class RecoveredClassUtils {
 			ReferenceAddressPair refAddrPair = iterator.next();
 			Address sourceAddr = refAddrPair.getSource();
 			if (sourceAddr.compareTo(maxVftableReference) > 0) {
-				Function calledFunction = extraUtils.getFunctionAt(refAddrPair.getDestination());
+				Function calledFunction = extendedFlatAPI.getFunctionAt(refAddrPair.getDestination());
 				if (calledFunction != null) {
 					possibleParentDestructors.add(calledFunction);
 				}
@@ -1930,7 +1928,7 @@ public class RecoveredClassUtils {
 		}
 
 		// If not already, make function a thiscall
-		extraUtils.makeFunctionThiscall(constructorFunction);
+		extendedFlatAPI.makeFunctionThiscall(constructorFunction);
 
 		recoveredClass.addConstructor(constructorFunction);
 		addToAllConstructors(constructorFunction);
@@ -1948,7 +1946,7 @@ public class RecoveredClassUtils {
 			throws InvalidInputException, DuplicateNameException {
 
 		//If not already, make function a thiscall
-		extraUtils.makeFunctionThiscall(inlinedConstructorFunction);
+		extendedFlatAPI.makeFunctionThiscall(inlinedConstructorFunction);
 
 		recoveredClass.addInlinedConstructor(inlinedConstructorFunction);
 		addToAllInlinedConstructors(inlinedConstructorFunction);
@@ -1965,7 +1963,7 @@ public class RecoveredClassUtils {
 			throws InvalidInputException, DuplicateNameException {
 
 		//If not already, make function a thiscall
-		extraUtils.makeFunctionThiscall(destructorFunction);
+		extendedFlatAPI.makeFunctionThiscall(destructorFunction);
 
 		recoveredClass.addDestructor(destructorFunction);
 		addToAllDestructors(destructorFunction);
@@ -1983,7 +1981,7 @@ public class RecoveredClassUtils {
 			throws InvalidInputException, DuplicateNameException {
 
 		//If not already, make function a thiscall
-		extraUtils.makeFunctionThiscall(inlinedDestructorFunction);
+		extendedFlatAPI.makeFunctionThiscall(inlinedDestructorFunction);
 
 		recoveredClass.addInlinedDestructor(inlinedDestructorFunction);
 		addToAllInlinedDestructors(inlinedDestructorFunction);
@@ -2068,7 +2066,7 @@ public class RecoveredClassUtils {
 			Address constructorReference = constructorIterator.next();
 			RecoveredClass recoveredClass = referenceToClassMap.get(constructorReference);
 
-			Function constructor = extraUtils.getReferencedFunction(constructorReference, true);
+			Function constructor = extendedFlatAPI.getReferencedFunction(constructorReference, true);
 
 			if (recoveredClass.getIndeterminateList().contains(constructor)) {
 				addConstructorToClass(recoveredClass, constructor);
@@ -2265,7 +2263,7 @@ public class RecoveredClassUtils {
 			ReferenceAddressPair referenceAddressPair = calledFunctionIterator.next();
 
 			Address calledFunctionAddress = referenceAddressPair.getDestination();
-			Function calledFunction = extraUtils.getFunctionAt(calledFunctionAddress);
+			Function calledFunction = extendedFlatAPI.getFunctionAt(calledFunctionAddress);
 
 			if (calledFunction.isThunk()) {
 				calledFunction = calledFunction.getThunkedFunction(true);
@@ -2299,7 +2297,7 @@ public class RecoveredClassUtils {
 			ReferenceAddressPair referenceAddressPair = calledFunctionIterator.next();
 
 			Address calledFunctionAddress = referenceAddressPair.getDestination();
-			Function calledFunction = extraUtils.getFunctionAt(calledFunctionAddress);
+			Function calledFunction = extendedFlatAPI.getFunctionAt(calledFunctionAddress);
 
 			if (calledFunction.isThunk()) {
 				calledFunction = calledFunction.getThunkedFunction(true);
@@ -2512,7 +2510,7 @@ public class RecoveredClassUtils {
 			Address destructorReference = destructorIterator.next();
 			RecoveredClass recoveredClass = referenceToClassMap.get(destructorReference);
 
-			Function destructor = extraUtils.getReferencedFunction(destructorReference, true);
+			Function destructor = extendedFlatAPI.getReferencedFunction(destructorReference, true);
 
 			if (recoveredClass.getIndeterminateList().contains(destructor)) {
 				addDestructorToClass(recoveredClass, destructor);
@@ -2638,7 +2636,7 @@ public class RecoveredClassUtils {
 		String className = namespace.getName();
 		String classNameWithNamespace = namespace.getName(true);
 
-		CategoryPath classPath = extraUtils.createDataTypeCategoryPath(classDataTypesCategoryPath,
+		CategoryPath classPath = extendedFlatAPI.createDataTypeCategoryPath(classDataTypesCategoryPath,
 			classNameWithNamespace);
 
 		RecoveredClass newClass =
@@ -2843,7 +2841,7 @@ public class RecoveredClassUtils {
 		while (referencesIterator.hasNext()) {
 			monitor.checkCanceled();
 			Address vftableReference = referencesIterator.next();
-			Function functionContaining = extraUtils.getFunctionContaining(vftableReference);
+			Function functionContaining = extendedFlatAPI.getFunctionContaining(vftableReference);
 			if (functionContaining != null) {
 				vftableRefToFunctionMapping.put(vftableReference, functionContaining);
 			}
@@ -2893,7 +2891,7 @@ public class RecoveredClassUtils {
 		Data vftableData = program.getListing().getDefinedDataAt(vftableAddress);
 
 		// now make sure the array or the structure is all pointers
-		if (!extraUtils.isArrayOrStructureOfAllPointers(vftableData)) {
+		if (!extendedFlatAPI.isArrayOrStructureOfAllPointers(vftableData)) {
 			// if it isn't an array of pointers then we don't know the size of the vftable
 			// If undefined or pointers not in array or struct then see if what they are
 			// pointing to are in the class already to determine size of array
@@ -2927,12 +2925,12 @@ public class RecoveredClassUtils {
 			monitor.checkCanceled();
 
 			Address functionPointerAddress = vftableData.getComponent(i).getAddress();
-			if (allowNullFunctionPtrs && extraUtils.isNullPointer(functionPointerAddress)) {
+			if (allowNullFunctionPtrs && extendedFlatAPI.isNullPointer(functionPointerAddress)) {
 				virtualFunctionList.add(null);
 				continue;
 			}
 
-			Function function = extraUtils.getPointedToFunction(functionPointerAddress);
+			Function function = extendedFlatAPI.getPointedToFunction(functionPointerAddress);
 
 			if (function != null) {
 				virtualFunctionList.add(function);
@@ -2979,7 +2977,7 @@ public class RecoveredClassUtils {
 
 		boolean stillInCurrentTable = true;
 		while (address != null && currentBlock.contains(address) && stillInCurrentTable &&
-			extraUtils.isFunctionPointer(address, allowNullFunctionPtrs)) {
+			extendedFlatAPI.isFunctionPointer(address, allowNullFunctionPtrs)) {
 			numFunctionPointers++;
 			address = address.add(defaultPointerSize);
 			Symbol symbol = program.getSymbolTable().getPrimarySymbol(address);
@@ -3068,7 +3066,7 @@ public class RecoveredClassUtils {
 						program.getListing().getInstructionContaining(vftableReference);
 					if (instructionContaining != null) {
 						boolean functionCreated =
-							extraUtils.createFunction(program, vftableReference);
+							extendedFlatAPI.createFunction(program, vftableReference);
 
 						if (!functionCreated) {
 							notInFunctionVftableRefs.add(vftableReference);
@@ -3124,7 +3122,7 @@ public class RecoveredClassUtils {
 					}
 					else {
 						boolean functionCreated =
-							extraUtils.createFunction(prog, addr);
+							extendedFlatAPI.createFunction(prog, addr);
 						if (!functionCreated) {
 							notInFunctionVftableRefs.add(addr);
 						}
@@ -3791,7 +3789,7 @@ public class RecoveredClassUtils {
 				if (!badFIDNamespaces.contains(symbol.getParentNamespace())) {
 					badFIDNamespaces.add(symbol.getParentNamespace());
 				}
-				extraUtils.addUniqueStringToPlateComment(functionAddress,
+				extendedFlatAPI.addUniqueStringToPlateComment(functionAddress,
 					"***** Removed Bad FID Symbol *****");
 
 				if (!badFIDFunctions.contains(function)) {
@@ -3799,7 +3797,7 @@ public class RecoveredClassUtils {
 				}
 
 				findAndRemoveBadStructuresFromFunction(function, namespace);
-				extraUtils.removeAllSymbolsAtAddress(functionAddress);
+				extendedFlatAPI.removeAllSymbolsAtAddress(functionAddress);
 
 			}
 			return;
@@ -3810,7 +3808,7 @@ public class RecoveredClassUtils {
 		if (bookmarkComment.contains("Multiple Matches")) {
 			// See if any contain the class name and if so add "resolved" and if not
 			if (doAnySymbolsHaveMatchingName(functionAddress, name)) {
-				extraUtils.addUniqueStringToPlateComment(functionAddress,
+				extendedFlatAPI.addUniqueStringToPlateComment(functionAddress,
 					"***** Resolved FID Conflict *****");
 
 				if (!resolvedFIDFunctions.contains(function)) {
@@ -3820,7 +3818,7 @@ public class RecoveredClassUtils {
 				findAndRemoveBadStructuresFromFunction(function, namespace);
 			}
 			else {
-				extraUtils.addUniqueStringToPlateComment(functionAddress,
+				extendedFlatAPI.addUniqueStringToPlateComment(functionAddress,
 					"***** Removed Bad FID Symbol(s) *****");
 
 				if (!badFIDFunctions.contains(function)) {
@@ -3830,7 +3828,7 @@ public class RecoveredClassUtils {
 				findAndRemoveBadStructuresFromFunction(function, namespace);
 
 			}
-			extraUtils.removeAllSymbolsAtAddress(functionAddress);
+			extendedFlatAPI.removeAllSymbolsAtAddress(functionAddress);
 			return;
 		}
 	}
@@ -3943,7 +3941,7 @@ public class RecoveredClassUtils {
 			monitor.checkCanceled();
 			DataType dataType = function.getParameter(i).getDataType();
 			if (!dataType.getName().equals(namespace.getName()) &&
-				extraUtils.isPointerToEmptyStructure(dataType)) {
+				extendedFlatAPI.isPointerToEmptyStructure(dataType)) {
 				Pointer ptr = (Pointer) dataType;
 				Structure structure = (Structure) ptr.getDataType();
 
@@ -3973,7 +3971,7 @@ public class RecoveredClassUtils {
 		for (int i = 0; i < parameterCount; i++) {
 			monitor.checkCanceled();
 			DataType paramDataType = function.getParameter(i).getDataType();
-			Structure baseDataType = extraUtils.getBaseStructureDataType(paramDataType);
+			Structure baseDataType = extendedFlatAPI.getBaseStructureDataType(paramDataType);
 			if (baseDataType != null && badStructureDataTypes.contains(baseDataType)) {
 
 				// To remove from this param we have to remove the function from its namespace
@@ -3983,7 +3981,7 @@ public class RecoveredClassUtils {
 				}
 				else {
 					PointerDataType ptrUndefined =
-						extraUtils.createPointerToUndefinedDataType(paramDataType);
+						extendedFlatAPI.createPointerToUndefinedDataType(paramDataType);
 					if (ptrUndefined != null) {
 						function.getParameter(i).setDataType(ptrUndefined, SourceType.ANALYSIS);
 					}
@@ -4008,7 +4006,7 @@ public class RecoveredClassUtils {
 
 		DataType returnType = function.getReturnType();
 		if (!returnType.getName().equals(namespace.getName()) &&
-			extraUtils.isPointerToEmptyStructure(returnType)) {
+			extendedFlatAPI.isPointerToEmptyStructure(returnType)) {
 			Pointer ptr = (Pointer) returnType;
 			Structure structure = (Structure) ptr.getDataType();
 
@@ -4030,10 +4028,10 @@ public class RecoveredClassUtils {
 			throws InvalidInputException {
 
 		DataType returnType = function.getReturnType();
-		Structure baseDataType = extraUtils.getBaseStructureDataType(returnType);
+		Structure baseDataType = extendedFlatAPI.getBaseStructureDataType(returnType);
 		if (baseDataType != null && badStructureDataTypes.contains(baseDataType)) {
 			PointerDataType ptrUndefined =
-				extraUtils.createPointerToUndefinedDataType(returnType);
+				extendedFlatAPI.createPointerToUndefinedDataType(returnType);
 			if (ptrUndefined != null) {
 				function.setReturnType(ptrUndefined, SourceType.ANALYSIS);
 			}
@@ -4052,13 +4050,13 @@ public class RecoveredClassUtils {
 	private boolean doAnySymbolsHaveMatchingName(Address address, String name)
 			throws CancelledException {
 
-		String simpleName = extraUtils.removeTemplate(name);
+		String simpleName = extendedFlatAPI.removeTemplate(name);
 
 		SymbolIterator it = symbolTable.getSymbolsAsIterator(address);
 		for (Symbol symbol : it) {
 			monitor.checkCanceled();
 
-			String simpleSymbolName = extraUtils.removeTemplate(symbol.getName());
+			String simpleSymbolName = extendedFlatAPI.removeTemplate(symbol.getName());
 			simpleSymbolName = removeSingleQuotes(simpleSymbolName);
 			simpleSymbolName = removeFIDConflict(simpleSymbolName);
 			simpleSymbolName = removeSingleQuotes(simpleSymbolName);
@@ -4150,7 +4148,7 @@ public class RecoveredClassUtils {
 			throws CancelledException {
 
 		List<ReferenceAddressPair> orderedReferenceAddressPairsFromCallingFunction =
-			extraUtils.getOrderedReferenceAddressPairsFromCallingFunction(constructor);
+			extendedFlatAPI.getOrderedReferenceAddressPairsFromCallingFunction(constructor);
 
 		// if there are no calls from the function then return false
 		if (orderedReferenceAddressPairsFromCallingFunction.size() == 0) {
@@ -4224,9 +4222,9 @@ public class RecoveredClassUtils {
 				monitor.checkCanceled();
 
 				Function vfunction = vfunctionIterator.next();
-				if (extraUtils.doesFunctionACallAnyListedFunction(vfunction,
+				if (extendedFlatAPI.doesFunctionACallAnyListedFunction(vfunction,
 					recoveredClass.getConstructorList()) &&
-					!extraUtils.doesFunctionACallAnyListedFunction(vfunction,
+					!extendedFlatAPI.doesFunctionACallAnyListedFunction(vfunction,
 						allOtherConstructors)) {
 					cloneToClassMap.put(vfunction, recoveredClass);
 				}
@@ -4269,13 +4267,13 @@ public class RecoveredClassUtils {
 		if (calledFunctions.size() != 2 && calledFunctions.size() != 3) {
 			return false;
 		}
-		if (!extraUtils.getCalledFunctionByCallOrder(caller, 1).equals(firstCalled)) {
+		if (!extendedFlatAPI.getCalledFunctionByCallOrder(caller, 1).equals(firstCalled)) {
 			return false;
 		}
 		RecoveredClass recoveredClass = cloneFunctionToClassMap.get(caller);
 		List<Function> constructorList = recoveredClass.getConstructorList();
 
-		Function secondFunction = extraUtils.getCalledFunctionByCallOrder(caller, 2);
+		Function secondFunction = extendedFlatAPI.getCalledFunctionByCallOrder(caller, 2);
 		if (secondFunction.isThunk()) {
 			secondFunction = secondFunction.getThunkedFunction(true);
 		}
@@ -4314,7 +4312,7 @@ public class RecoveredClassUtils {
 			// The second call is a class constructor and we know it is called
 			// from the cloneFunction or it wouldn't be a cloneFunction
 			Function firstCalledFunction =
-				extraUtils.getCalledFunctionByCallOrder(cloneFunction, 1);
+				extendedFlatAPI.getCalledFunctionByCallOrder(cloneFunction, 1);
 			if (firstCalledFunction == null) {
 				continue;
 			}
@@ -4406,7 +4404,7 @@ public class RecoveredClassUtils {
 			Namespace badNamespace = badNamespaceIterator.next();
 
 			// delete empty namespace and parent namespaces
-			if (!extraUtils.hasSymbolsInNamespace(badNamespace)) {
+			if (!extendedFlatAPI.hasSymbolsInNamespace(badNamespace)) {
 				removeEmptyNamespaces(badNamespace);
 			}
 		}
@@ -4427,7 +4425,7 @@ public class RecoveredClassUtils {
 		Namespace parentNamespace = namespace.getParentNamespace();
 
 		namespace.getSymbol().delete();
-		while (parentNamespace != null && !extraUtils.hasSymbolsInNamespace(parentNamespace)) {
+		while (parentNamespace != null && !extendedFlatAPI.hasSymbolsInNamespace(parentNamespace)) {
 			monitor.checkCanceled();
 
 			namespace = parentNamespace;
@@ -4472,7 +4470,7 @@ public class RecoveredClassUtils {
 			throws CancelledException {
 
 		DataType dataType = dataTypeManager.getDataType(folderPath, structureName);
-		if (extraUtils.isEmptyStructure(dataType)) {
+		if (extendedFlatAPI.isEmptyStructure(dataType)) {
 
 			dataTypeManager.remove(dataType, monitor);
 			Category classCategory = dataTypeManager.getCategory(folderPath);
@@ -5281,7 +5279,7 @@ public class RecoveredClassUtils {
 					}
 					// get first called function and verify it is on cd list
 					Function firstCalledFunction =
-						extraUtils.getCalledFunctionByCallOrder(deletingDestructor, 1);
+						extendedFlatAPI.getCalledFunctionByCallOrder(deletingDestructor, 1);
 					if (firstCalledFunction == null ||
 						!recoveredClass.getConstructorOrDestructorFunctions()
 								.contains(
@@ -5291,7 +5289,7 @@ public class RecoveredClassUtils {
 
 					// get second one and if operator_delete has not been assigned yet, assign it
 					Function secondCalledFunction =
-						extraUtils.getCalledFunctionByCallOrder(deletingDestructor, 2);
+						extendedFlatAPI.getCalledFunctionByCallOrder(deletingDestructor, 2);
 					if (secondCalledFunction == null) {
 						return null;
 					}
@@ -5338,7 +5336,7 @@ public class RecoveredClassUtils {
 			throws CancelledException, InvalidInputException, DuplicateNameException {
 
 		// don't continue checking if it doesn't call operator_delete
-		if (!extraUtils.doesFunctionACallFunctionB(virtualFunction, operatorDeleteFunction)) {
+		if (!extendedFlatAPI.doesFunctionACallFunctionB(virtualFunction, operatorDeleteFunction)) {
 			return;
 		}
 
@@ -5354,7 +5352,7 @@ public class RecoveredClassUtils {
 			Function function = functionIterator.next();
 
 			//Type 4 - class c/d called from other than first vfunction
-			if (extraUtils.doesFunctionACallFunctionB(virtualFunction, function)) {
+			if (extendedFlatAPI.doesFunctionACallFunctionB(virtualFunction, function)) {
 				recoveredClass.addDeletingDestructor(virtualFunction);
 				addDestructorToClass(recoveredClass, function);
 				recoveredClass.removeIndeterminateConstructorOrDestructor(function);
@@ -5389,7 +5387,7 @@ public class RecoveredClassUtils {
 				continue;
 			}
 
-			Function referencedFunction = extraUtils.getReferencedFunction(codeUnitAddress, true);
+			Function referencedFunction = extendedFlatAPI.getReferencedFunction(codeUnitAddress, true);
 			if (referencedFunction == null) {
 				continue;
 			}
@@ -5515,7 +5513,7 @@ public class RecoveredClassUtils {
 
 			String fieldname = dataTypeComponent.getFieldName();
 
-			structureDataType = structUtils.addDataTypeToStructure(structureDataType,
+			structureDataType = EditStructureUtils.addDataTypeToStructure(structureDataType,
 				startOffset + dataComponentOffset, dataTypeComponent.getDataType(), fieldname,
 				monitor);
 		}
@@ -5544,7 +5542,7 @@ public class RecoveredClassUtils {
 
 			String fieldname = dataTypeComponent.getFieldName();
 
-			structureDataType = structUtils.addDataTypeToStructure(structureDataType,
+			structureDataType = EditStructureUtils.addDataTypeToStructure(structureDataType,
 				startOffset + dataComponentOffset, dataTypeComponent.getDataType(), fieldname,
 				monitor);
 		}
@@ -5811,9 +5809,9 @@ public class RecoveredClassUtils {
 				// get first called function and verify is not a c/d function in current class or 
 				// any class get second called function and verify it is operator delete
 				Function firstCalledFunction =
-					extraUtils.getCalledFunctionByCallOrder(vFunction, 1);
+					extendedFlatAPI.getCalledFunctionByCallOrder(vFunction, 1);
 				Function secondCalledFunction =
-					extraUtils.getCalledFunctionByCallOrder(vFunction, 2);
+					extendedFlatAPI.getCalledFunctionByCallOrder(vFunction, 2);
 				if (firstCalledFunction != null && secondCalledFunction != null &&
 					!recoveredClass.getConstructorOrDestructorFunctions()
 							.contains(
@@ -6095,7 +6093,7 @@ public class RecoveredClassUtils {
 				Map<Address, RecoveredClass> referenceToClassMap =
 					getReferenceToClassMap(recoveredClass, inlineFunction);
 				List<Address> referencesToFunctions =
-					extraUtils.getReferencesToFunctions(referenceToClassMap);
+					extendedFlatAPI.getReferencesToFunctions(referenceToClassMap);
 
 				// if some of the references are to functions figure out if they are 
 				// constructors destructors or add them to list of indetermined
@@ -6110,7 +6108,7 @@ public class RecoveredClassUtils {
 						monitor.checkCanceled();
 						Address functionReference = functionReferenceIterator.next();
 						Function function =
-							extraUtils.getReferencedFunction(functionReference, true);
+							extendedFlatAPI.getReferencedFunction(functionReference, true);
 						if (function == null) {
 							continue;
 						}
@@ -6240,7 +6238,7 @@ public class RecoveredClassUtils {
 		}
 
 		int dataLength =
-			structUtils.getNumberOfUndefinedsBeforeOffset(structure, endOfData, monitor);
+			EditStructureUtils.getNumberOfUndefinedsBeforeOffset(structure, endOfData, monitor);
 		if (dataLength < 0) {
 			return NONE;
 		}
@@ -6276,7 +6274,7 @@ public class RecoveredClassUtils {
 				boolean callsKnownConstructor = callsKnownConstructor(indeterminateFunction);
 				boolean callsKnownDestrutor = callsKnownDestructor(indeterminateFunction);
 				boolean callsAtexit =
-					extraUtils.doesFunctionACallFunctionB(indeterminateFunction, atexit);
+					extendedFlatAPI.doesFunctionACallFunctionB(indeterminateFunction, atexit);
 
 				if (callsKnownConstructor && !callsKnownDestrutor) {
 					addConstructorToClass(recoveredClass, indeterminateFunction);
@@ -6384,7 +6382,7 @@ public class RecoveredClassUtils {
 	public void findFunctionsUsingAtexit() throws CancelledException, InvalidInputException {
 
 		Function atexitFunction = null;
-		List<Function> atexitFunctions = extraUtils.getGlobalFunctions("_atexit");
+		List<Function> atexitFunctions = extendedFlatAPI.getGlobalFunctions("_atexit");
 		if (atexitFunctions.size() != 1) {
 			return;
 		}
@@ -6399,13 +6397,13 @@ public class RecoveredClassUtils {
 			Reference ref = referenceIterator.next();
 			Address fromAddress = ref.getFromAddress();
 
-			Function function = extraUtils.getFunctionContaining(fromAddress);
+			Function function = extendedFlatAPI.getFunctionContaining(fromAddress);
 			if (function == null) {
 				AddressSet subroutineAddresses =
-					extraUtils.getSubroutineAddresses(program, fromAddress);
+					extendedFlatAPI.getSubroutineAddresses(program, fromAddress);
 				Address minAddress = subroutineAddresses.getMinAddress();
 
-				function = extraUtils.createFunction(minAddress, null);
+				function = extendedFlatAPI.createFunction(minAddress, null);
 				if (function == null) {
 					continue;
 				}
@@ -6440,9 +6438,9 @@ public class RecoveredClassUtils {
 						continue;
 					}
 
-					Function calledFunction = extraUtils.getFunctionAt(calledAddress);
+					Function calledFunction = extendedFlatAPI.getFunctionAt(calledAddress);
 					if (calledFunction == null) {
-						calledFunction = extraUtils.createFunction(calledAddress, null);
+						calledFunction = extendedFlatAPI.createFunction(calledAddress, null);
 						if (calledFunction == null) {
 							continue;
 						}
@@ -6493,7 +6491,7 @@ public class RecoveredClassUtils {
 				Address vftableAddress = vftableIterator.next();
 
 				// this gets the first function pointer in the vftable
-				Function firstVirtualFunction = extraUtils.getPointedToFunction(vftableAddress);
+				Function firstVirtualFunction = extendedFlatAPI.getPointedToFunction(vftableAddress);
 				processDeletingDestructor(recoveredClass, firstVirtualFunction);
 			}
 		}
@@ -6539,7 +6537,7 @@ public class RecoveredClassUtils {
 				monitor.checkCanceled();
 				Address vftableAddress = vftableAddressIterator.next();
 
-				Function firstVirtualFunction = extraUtils.getPointedToFunction(vftableAddress);
+				Function firstVirtualFunction = extendedFlatAPI.getPointedToFunction(vftableAddress);
 				List<Function> virtualFunctions =
 					recoveredClass.getVirtualFunctions(vftableAddress);
 
@@ -6646,7 +6644,7 @@ public class RecoveredClassUtils {
 
 			Function function = functionIterator.next();
 
-			if (extraUtils.doesFunctionACallFunctionB(firstVirtualFunction, function)) {
+			if (extendedFlatAPI.doesFunctionACallFunctionB(firstVirtualFunction, function)) {
 				recoveredClass.addDeletingDestructor(firstVirtualFunction);
 				addDestructorToClass(recoveredClass, function);
 				recoveredClass.removeIndeterminateConstructorOrDestructor(function);
@@ -7011,7 +7009,7 @@ public class RecoveredClassUtils {
 
 			// if the computed class struct has field name (ie from pdb) use it otherwise create one 
 			if (definedComponent.getFieldName() == null) {
-				fieldName = "offset_" + extraUtils.toHexString(offset, false, true);
+				fieldName = "offset_" + extendedFlatAPI.toHexString(offset, false, true);
 			}
 			else {
 				fieldName = definedComponent.getFieldName();
@@ -7047,7 +7045,7 @@ public class RecoveredClassUtils {
 		for (DataTypeComponent component : definedComponents) {
 			monitor.checkCanceled();
 
-			classStructureDataType = structUtils.addDataTypeToStructure(
+			classStructureDataType = EditStructureUtils.addDataTypeToStructure(
 				classStructureDataType, component.getOffset(), component.getDataType(),
 				component.getFieldName(), monitor);
 		}
@@ -7200,7 +7198,7 @@ public class RecoveredClassUtils {
 			}
 
 			String classNameWithNamespace = classNamespace.getName(true);
-			CategoryPath classPath = extraUtils.createDataTypeCategoryPath(
+			CategoryPath classPath = extendedFlatAPI.createDataTypeCategoryPath(
 				classDataTypesCategoryPath, classNameWithNamespace);
 
 			// check that the given vftable data type is in the right ClassDataTypes/<class_folder>

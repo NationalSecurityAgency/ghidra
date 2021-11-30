@@ -15,10 +15,11 @@
  */
 package ghidra.app.plugin.core.debug.service.emulation;
 
+import java.util.Collection;
 import java.util.Map.Entry;
 
 import ghidra.app.services.DebuggerStaticMappingService;
-import ghidra.app.services.DebuggerStaticMappingService.ShiftAndAddressSetView;
+import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.app.services.TraceRecorder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
@@ -78,40 +79,44 @@ public class ReadsTargetMemoryPcodeExecutorState
 			DebuggerStaticMappingService mappingService =
 				tool.getService(DebuggerStaticMappingService.class);
 			byte[] data = new byte[4096];
-			for (Entry<Program, ShiftAndAddressSetView> ent : mappingService
+			for (Entry<Program, Collection<MappedAddressRange>> ent : mappingService
 					.getOpenMappedViews(trace, unknown, snap)
 					.entrySet()) {
 				Program program = ent.getKey();
-				ShiftAndAddressSetView shifted = ent.getValue();
-				long shift = shifted.getShift();
 				Memory memory = program.getMemory();
 				AddressSetView initialized = memory.getLoadedAndInitializedAddressSet();
-				AddressSetView toRead = shifted.getAddressSetView().intersect(initialized);
-				Msg.warn(this,
-					"Filling in unknown trace memory in emulator using mapped image: " +
-						program + ": " + toRead);
 
-				for (AddressRange rng : toRead) {
-					long lower = rng.getMinAddress().getOffset();
-					long fullLen = rng.getLength();
-					while (fullLen > 0) {
-						int len = MathUtilities.unsignedMin(data.length, fullLen);
-						try {
-							int read =
-								memory.getBytes(space.getAddress(lower), data, 0, len);
-							if (read < len) {
-								Msg.warn(this,
-									"  Partial read of " + rng + ". Got " + read + " bytes");
+				Collection<MappedAddressRange> mappedSet = ent.getValue();
+				for (MappedAddressRange mappedRng : mappedSet) {
+					AddressRange srng = mappedRng.getSourceAddressRange();
+					long shift = mappedRng.getShift();
+					for (AddressRange subsrng : initialized.intersectRange(srng.getMinAddress(),
+						srng.getMaxAddress())) {
+						Msg.warn(this,
+							"Filling in unknown trace memory in emulator using mapped image: " +
+								program + ": " + subsrng);
+						long lower = subsrng.getMinAddress().getOffset();
+						long fullLen = subsrng.getLength();
+						while (fullLen > 0) {
+							int len = MathUtilities.unsignedMin(data.length, fullLen);
+							try {
+								int read =
+									memory.getBytes(space.getAddress(lower), data, 0, len);
+								if (read < len) {
+									Msg.warn(this,
+										"  Partial read of " + subsrng + ". Got " + read +
+											" bytes");
+								}
+								cache.putData(lower - shift, data, 0, read);
 							}
-							cache.putData(lower - shift, data, 0, read);
+							catch (MemoryAccessException | AddressOutOfBoundsException e) {
+								throw new AssertionError(e);
+							}
+							lower += len;
+							fullLen -= len;
 						}
-						catch (MemoryAccessException | AddressOutOfBoundsException e) {
-							throw new AssertionError(e);
-						}
-						lower += len;
-						fullLen -= len;
+						result = true;
 					}
-					result = true;
 				}
 			}
 			return result;
