@@ -1196,6 +1196,50 @@ public class DebuggerListingProviderTest extends AbstractGhidraHeadedDebuggerGUI
 	}
 
 	@Test
+	public void testActivateTraceChangeLanguage() throws Exception {
+		assertEquals(trackPc, listingProvider.actionTrackLocation.getCurrentUserData());
+
+		createSnaplessTrace("x86:LE:64:default");
+
+		try (ToyDBTraceBuilder tb2 =
+			new ToyDBTraceBuilder("dynamic2-" + name.getMethodName(), "dsPIC33F:LE:24:default")) {
+
+			TraceThread thread1;
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				tb.trace.getTimeManager().createSnapshot("First");
+				tb.trace.getMemoryManager()
+						.createRegion(".text", 0, tb.range(0x00400000, 0x0040ffff),
+							TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+				thread1 = tb.getOrAddThread("Thread1", 0);
+				tb.exec(0, 0, thread1, java.util.List.of(
+					"RIP = 0x00400000;"));
+			}
+
+			TraceThread thread2;
+			try (UndoableTransaction tid = tb2.startTransaction()) {
+				tb2.trace.getTimeManager().createSnapshot("First");
+				tb2.trace.getMemoryManager()
+						.createRegion(".text", 0, tb2.range(0x200, 0x3ff),
+							TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
+				thread2 = tb2.getOrAddThread("Thread2", 0);
+				tb2.exec(0, 0, thread2, java.util.List.of(
+					"PC = 0x100;"));
+			}
+
+			traceManager.openTrace(tb.trace);
+			traceManager.openTrace(tb2.trace);
+
+			traceManager.activateThread(thread1);
+			waitForSwing();
+
+			traceManager.activateThread(thread2);
+			waitForSwing();
+
+			assertFalse(listingProvider.locationLabel.getText().startsWith("(error)"));
+		}
+	}
+
+	@Test
 	public void testActivateThreadTracks() throws Exception {
 		assertEquals(trackPc, listingProvider.actionTrackLocation.getCurrentUserData());
 
