@@ -293,20 +293,7 @@ public class LocationReferencesPlugin extends Plugin
 
 	@Override
 	public void findAndDisplayAppliedDataTypeAddresses(DataType dataType) {
-		ProgramManager programManagerService = tool.getService(ProgramManager.class);
-		GoToService goToService = tool.getService(GoToService.class);
-		Program program = programManagerService.getCurrentProgram();
-		if (program == null) {
-			Msg.showInfo(this, null, "Find References To...",
-				"You must have a program open in order to use the 'Find References To...' action");
-			return; // cannot find references to a data type if there is no open program
-		}
-
-		ProgramLocation genericLocation = new GenericDataTypeProgramLocation(program, dataType);
-		LocationDescriptor locationDescriptor = getLocationDescriptor(genericLocation);
-		Navigatable navigatable = goToService.getDefaultNavigatable();
-		LocationReferencesProvider provider = findProvider(locationDescriptor, navigatable);
-		showProvider(program, provider, locationDescriptor, navigatable);
+		findAndDisplayAppliedDataTypeAddresses(dataType, null);
 	}
 
 	@Override
@@ -320,8 +307,15 @@ public class LocationReferencesPlugin extends Plugin
 			return; // cannot find references to a data type if there is no open program
 		}
 
-		ProgramLocation genericLocation =
-			new GenericCompositeDataTypeProgramLocation(program, dataType, fieldName);
+		ProgramLocation genericLocation;
+		if (fieldName != null) {
+			genericLocation =
+				new GenericCompositeDataTypeProgramLocation(program, dataType, fieldName);
+		}
+		else {
+			genericLocation = new GenericDataTypeProgramLocation(program, dataType);
+		}
+
 		LocationDescriptor locationDescriptor = getLocationDescriptor(genericLocation);
 		Navigatable navigatable = goToService.getDefaultNavigatable();
 		LocationReferencesProvider provider = findProvider(locationDescriptor, navigatable);
