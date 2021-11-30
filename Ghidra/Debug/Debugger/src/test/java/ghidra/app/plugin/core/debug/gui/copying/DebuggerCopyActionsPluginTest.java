@@ -38,8 +38,7 @@ import ghidra.app.services.DebuggerStaticMappingService;
 import ghidra.app.services.TraceRecorder;
 import ghidra.dbg.DebuggerModelListener;
 import ghidra.dbg.target.TargetObject;
-import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.address.*;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.util.ProgramLocation;
@@ -68,6 +67,21 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		listingProvider = waitForComponentProvider(DebuggerListingProvider.class);
 	}
 
+	protected void selectAndFocus(Address min, Address max) {
+		selectAndFocus(new ProgramSelection(min, max));
+	}
+
+	protected void selectAndFocus(AddressSetView set) {
+		selectAndFocus(new ProgramSelection(set));
+	}
+
+	protected void selectAndFocus(ProgramSelection sel) {
+		runSwing(() -> {
+			listingProvider.requestFocus();
+			listingProvider.setSelection(sel);
+		});
+	}
+
 	@Test
 	public void testActionCopyIntoCurrentProgramWithoutRelocationCreateBlocks() throws Exception {
 		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
@@ -86,9 +100,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.activateTrace(tb.trace);
 		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
 
-		listingProvider.requestFocus();
-		listingProvider
-				.setSelection(new ProgramSelection(tb.addr(0x00400000), tb.addr(0x0040ffff)));
+		selectAndFocus(tb.addr(0x00400000), tb.addr(0x0040ffff));
 
 		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled()));
 		performAction(copyActionsPlugin.actionCopyIntoCurrentProgram, false);
@@ -151,11 +163,10 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.activateTrace(tb.trace);
 		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
 
-		listingProvider.requestFocus();
-		listingProvider.setSelection(new ProgramSelection(tb.set(
+		selectAndFocus(tb.set(
 			tb.range(0x00400000, 0x0040ffff),
 			tb.range(0x7fff00400000L, 0x7fff0040ffffL),
-			tb.range(0xfffff000L, 0x100000fffL))));
+			tb.range(0xfffff000L, 0x100000fffL)));
 
 		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled()));
 		performAction(copyActionsPlugin.actionCopyIntoCurrentProgram, false);
@@ -237,9 +248,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 				.getOpenMappedViews(tb.trace, tb.set(tb.range(0x55550000, 0x5555ffff)), 0)
 				.get(program));
 
-		listingProvider.requestFocus();
-		listingProvider
-				.setSelection(new ProgramSelection(tb.addr(0x55550000), tb.addr(0x5555ffff)));
+		selectAndFocus(tb.addr(0x55550000), tb.addr(0x5555ffff));
 
 		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled()));
 		performAction(copyActionsPlugin.actionCopyIntoCurrentProgram, false);
@@ -302,9 +311,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 				.getOpenMappedViews(tb.trace, tb.set(tb.range(0x55550000, 0x5555ffff)), 0)
 				.get(program));
 
-		listingProvider.requestFocus();
-		listingProvider
-				.setSelection(new ProgramSelection(tb.addr(0x55550000), tb.addr(0x5555ffff)));
+		selectAndFocus(tb.addr(0x55550000), tb.addr(0x5555ffff));
 
 		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled()));
 		performAction(copyActionsPlugin.actionCopyIntoCurrentProgram, false);
@@ -345,9 +352,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.activateTrace(tb.trace);
 		assertFalse(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled());
 
-		listingProvider.requestFocus();
-		listingProvider
-				.setSelection(new ProgramSelection(tb.addr(0x55550000), tb.addr(0x5555ffff)));
+		selectAndFocus(tb.addr(0x55550000), tb.addr(0x5555ffff));
 
 		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled()));
 		performAction(copyActionsPlugin.actionCopyIntoNewProgram, false);
@@ -393,9 +398,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.activateTrace(tb.trace);
 		assertFalse(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled());
 
-		listingProvider.requestFocus();
-		listingProvider
-				.setSelection(new ProgramSelection(tb.addr(0x55550000), tb.addr(0x5556ffff)));
+		selectAndFocus(tb.addr(0x55550000), tb.addr(0x5556ffff));
 
 		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled()));
 		performAction(copyActionsPlugin.actionCopyIntoNewProgram, false);
@@ -464,9 +467,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		traceManager.activateTrace(tb.trace);
 		assertFalse(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled());
 
-		listingProvider.requestFocus();
-		listingProvider
-				.setSelection(new ProgramSelection(tb.addr(0x55550000), tb.addr(0x5555ffff)));
+		selectAndFocus(tb.addr(0x55550000), tb.addr(0x5555ffff));
 
 		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled()));
 		performAction(copyActionsPlugin.actionCopyIntoNewProgram, false);
