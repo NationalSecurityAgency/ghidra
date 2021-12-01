@@ -26,6 +26,8 @@ import org.junit.Test;
 
 import com.google.common.collect.Range;
 
+import docking.ActionContext;
+import docking.action.DockingActionIf;
 import generic.Unique;
 import ghidra.app.plugin.core.debug.gui.AbstractGhidraHeadedDebuggerGUITest;
 import ghidra.app.plugin.core.debug.gui.action.AutoReadMemorySpec;
@@ -67,29 +69,39 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 		listingProvider = waitForComponentProvider(DebuggerListingProvider.class);
 	}
 
-	protected void selectAndFocus(Address min, Address max) {
-		selectAndFocus(new ProgramSelection(min, max));
+	protected void select(Address min, Address max) {
+		select(new ProgramSelection(min, max));
 	}
 
-	protected void selectAndFocus(AddressSetView set) {
-		selectAndFocus(new ProgramSelection(set));
+	protected void select(AddressSetView set) {
+		select(new ProgramSelection(set));
 	}
 
-	protected void selectAndFocus(ProgramSelection sel) {
+	protected void select(ProgramSelection sel) {
 		runSwing(() -> {
-			listingProvider.requestFocus();
 			listingProvider.setSelection(sel);
 		});
 	}
 
+	protected void assertDisabled(DockingActionIf action) {
+		ActionContext context = listingProvider.getActionContext(null);
+		assertFalse(action.isEnabledForContext(context));
+	}
+
+	protected void performEnabledAction(DockingActionIf action) {
+		ActionContext context = listingProvider.getActionContext(null);
+		waitForCondition(() -> action.isEnabledForContext(context));
+		performAction(action, context, false);
+	}
+
 	@Test
 	public void testActionCopyIntoCurrentProgramWithoutRelocationCreateBlocks() throws Exception {
-		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		createProgram();
 		AddressSpace stSpace = program.getAddressFactory().getDefaultAddressSpace();
 		programManager.openProgram(program);
-		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		createAndOpenTrace();
 		try (UndoableTransaction tid = tb.startTransaction()) {
@@ -98,12 +110,11 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		traceManager.activateTrace(tb.trace);
-		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
-		selectAndFocus(tb.addr(0x00400000), tb.addr(0x0040ffff));
+		select(tb.addr(0x00400000), tb.addr(0x0040ffff));
 
-		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled()));
-		performAction(copyActionsPlugin.actionCopyIntoCurrentProgram, false);
+		performEnabledAction(copyActionsPlugin.actionCopyIntoCurrentProgram);
 		DebuggerCopyIntoProgramDialog dialog =
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
 		dialog.setRelocate(false);
@@ -126,11 +137,11 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 	@Test
 	public void testActionCopyIntoCurrentProgramWithoutRelocationCrossLanguage() throws Exception {
-		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		createProgram(getSLEIGH_X86_LANGUAGE());
 		createAndOpenTrace(ToyProgramBuilder._X64);
-		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		AddressSpace stSpace = program.getAddressFactory().getDefaultAddressSpace();
 
@@ -161,15 +172,14 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		programManager.openProgram(program);
 		traceManager.activateTrace(tb.trace);
-		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
-		selectAndFocus(tb.set(
+		select(tb.set(
 			tb.range(0x00400000, 0x0040ffff),
 			tb.range(0x7fff00400000L, 0x7fff0040ffffL),
 			tb.range(0xfffff000L, 0x100000fffL)));
 
-		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled()));
-		performAction(copyActionsPlugin.actionCopyIntoCurrentProgram, false);
+		performEnabledAction(copyActionsPlugin.actionCopyIntoCurrentProgram);
 		DebuggerCopyIntoProgramDialog dialog =
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
 		dialog.setRelocate(false);
@@ -211,7 +221,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 	@Test
 	public void testActionCopyIntoCurrentProgramWithRelocationExistingBlocks() throws Exception {
-		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		createAndOpenTrace();
 		createProgramFromTrace();
@@ -224,10 +234,10 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		traceManager.activateTrace(tb.trace);
-		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		programManager.openProgram(program);
-		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		AddressSpace stSpace = program.getAddressFactory().getDefaultAddressSpace();
 		MemoryBlock block;
@@ -248,10 +258,9 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 				.getOpenMappedViews(tb.trace, tb.set(tb.range(0x55550000, 0x5555ffff)), 0)
 				.get(program));
 
-		selectAndFocus(tb.addr(0x55550000), tb.addr(0x5555ffff));
+		select(tb.addr(0x55550000), tb.addr(0x5555ffff));
 
-		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled()));
-		performAction(copyActionsPlugin.actionCopyIntoCurrentProgram, false);
+		performEnabledAction(copyActionsPlugin.actionCopyIntoCurrentProgram);
 		DebuggerCopyIntoProgramDialog dialog =
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
 		dialog.setRelocate(true);
@@ -274,7 +283,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 	@Test
 	public void testActionCopyIntoCurrentProgramWithRelocationOverlayBlocks() throws Exception {
-		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		createAndOpenTrace();
 		createProgramFromTrace();
@@ -287,10 +296,10 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		traceManager.activateTrace(tb.trace);
-		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		programManager.openProgram(program);
-		assertFalse(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoCurrentProgram);
 
 		AddressSpace stSpace = program.getAddressFactory().getDefaultAddressSpace();
 		MemoryBlock block;
@@ -311,10 +320,9 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 				.getOpenMappedViews(tb.trace, tb.set(tb.range(0x55550000, 0x5555ffff)), 0)
 				.get(program));
 
-		selectAndFocus(tb.addr(0x55550000), tb.addr(0x5555ffff));
+		select(tb.addr(0x55550000), tb.addr(0x5555ffff));
 
-		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoCurrentProgram.isEnabled()));
-		performAction(copyActionsPlugin.actionCopyIntoCurrentProgram, false);
+		performEnabledAction(copyActionsPlugin.actionCopyIntoCurrentProgram);
 		DebuggerCopyIntoProgramDialog dialog =
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
 		dialog.setRelocate(true);
@@ -340,7 +348,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 	@Test
 	public void testActionCopyIntoNewProgram() throws Exception {
-		assertFalse(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoNewProgram);
 
 		createAndOpenTrace();
 
@@ -350,12 +358,11 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 						TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
 		}
 		traceManager.activateTrace(tb.trace);
-		assertFalse(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoNewProgram);
 
-		selectAndFocus(tb.addr(0x55550000), tb.addr(0x5555ffff));
+		select(tb.addr(0x55550000), tb.addr(0x5555ffff));
 
-		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled()));
-		performAction(copyActionsPlugin.actionCopyIntoNewProgram, false);
+		performEnabledAction(copyActionsPlugin.actionCopyIntoNewProgram);
 		DebuggerCopyIntoProgramDialog dialog =
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
 		dialog.setDestination(DebuggerCopyIntoProgramDialog.TEMP_PROGRAM);
@@ -383,7 +390,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 	@Test
 	public void testActionCopyIntoNewProgramAdjacentRegions() throws Exception {
-		assertFalse(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoNewProgram);
 
 		createAndOpenTrace();
 
@@ -396,12 +403,11 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 						TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 		}
 		traceManager.activateTrace(tb.trace);
-		assertFalse(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoNewProgram);
 
-		selectAndFocus(tb.addr(0x55550000), tb.addr(0x5556ffff));
+		select(tb.addr(0x55550000), tb.addr(0x5556ffff));
 
-		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled()));
-		performAction(copyActionsPlugin.actionCopyIntoNewProgram, false);
+		performEnabledAction(copyActionsPlugin.actionCopyIntoNewProgram);
 		DebuggerCopyIntoProgramDialog dialog =
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
 		assertFalse(dialog.cbCapture.isEnabled());
@@ -436,7 +442,7 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 	@Test
 	public void testActionCopyIntoNewProgramCaptureLive() throws Exception {
-		assertFalse(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoNewProgram);
 
 		createTestModel();
 
@@ -465,12 +471,11 @@ public class DebuggerCopyActionsPluginTest extends AbstractGhidraHeadedDebuggerG
 
 		traceManager.openTrace(tb.trace);
 		traceManager.activateTrace(tb.trace);
-		assertFalse(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled());
+		assertDisabled(copyActionsPlugin.actionCopyIntoNewProgram);
 
-		selectAndFocus(tb.addr(0x55550000), tb.addr(0x5555ffff));
+		select(tb.addr(0x55550000), tb.addr(0x5555ffff));
 
-		waitForPass(() -> assertTrue(copyActionsPlugin.actionCopyIntoNewProgram.isEnabled()));
-		performAction(copyActionsPlugin.actionCopyIntoNewProgram, false);
+		performEnabledAction(copyActionsPlugin.actionCopyIntoNewProgram);
 		DebuggerCopyIntoProgramDialog dialog =
 			waitForDialogComponent(DebuggerCopyIntoProgramDialog.class);
 		assertTrue(dialog.cbCapture.isEnabled());
