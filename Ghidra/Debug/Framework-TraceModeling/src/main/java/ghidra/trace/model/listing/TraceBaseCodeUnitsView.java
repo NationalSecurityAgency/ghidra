@@ -29,6 +29,7 @@ import ghidra.util.UnionAddressSetView;
  * @param <T> the type of units in the view
  */
 public interface TraceBaseCodeUnitsView<T extends TraceCodeUnit> {
+
 	/**
 	 * Get the total number of <em>defined</em> units in this view
 	 * 

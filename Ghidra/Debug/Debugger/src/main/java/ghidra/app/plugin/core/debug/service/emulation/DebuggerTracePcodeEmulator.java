@@ -64,7 +64,9 @@ public class DebuggerTracePcodeEmulator extends TracePcodeEmulator {
 		if (contextreg != Register.NO_CONTEXT && !isRegisterKnown(name, contextreg)) {
 			RegisterValue context = trace.getRegisterContextManager()
 					.getValueWithDefault(language, contextreg, snap, thread.getCounter());
-			thread.overrideContext(context);
+			if (context != null) { // TODO: Why does this happen?
+				thread.overrideContext(context);
+			}
 		}
 		return thread;
 	}

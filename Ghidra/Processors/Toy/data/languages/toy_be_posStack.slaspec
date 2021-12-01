@@ -3,6 +3,7 @@
 
 @define INSTR_PHASE ""   # not used by basic toy language
 @define POS_STACK "true" # enables switch in instructions for push/pop to work in positive direction
+@define DATA_SPACE "ram"
 
 @include "toy.sinc"
 @include "toyInstructions.sinc"
