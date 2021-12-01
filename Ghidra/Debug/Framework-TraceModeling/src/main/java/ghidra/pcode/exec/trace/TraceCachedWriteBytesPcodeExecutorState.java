@@ -100,11 +100,14 @@ public class TraceCachedWriteBytesPcodeExecutorState
 	protected static class CachedSpace {
 		protected final SemisparseByteArray cache = new SemisparseByteArray();
 		protected final RangeSet<UnsignedLong> written = TreeRangeSet.create();
+		protected final Language language; // For logging diagnostic
 		protected final AddressSpace space;
 		protected final TraceMemorySpace source;
 		protected final long snap;
 
-		public CachedSpace(AddressSpace space, TraceMemorySpace source, long snap) {
+		public CachedSpace(Language language, AddressSpace space, TraceMemorySpace source,
+				long snap) {
+			this.language = language;
 			this.space = space;
 			this.source = source;
 			this.snap = snap;
@@ -166,8 +169,6 @@ public class TraceCachedWriteBytesPcodeExecutorState
 		}
 
 		protected Set<Register> getRegs(AddressSet set) {
-			// TODO: Should pass in language instead?
-			Language language = source.getTrace().getBaseLanguage();
 			Set<Register> regs = new TreeSet<>();
 			for (AddressRange rng : set) {
 				Register r = language.getRegister(rng.getMinAddress(), (int) rng.getLength());
@@ -297,7 +298,7 @@ public class TraceCachedWriteBytesPcodeExecutorState
 	}
 
 	protected CachedSpace newSpace(AddressSpace space, TraceMemorySpace source, long snap) {
-		return new CachedSpace(space, source, snap);
+		return new CachedSpace(language, space, source, snap);
 	}
 
 	@Override
