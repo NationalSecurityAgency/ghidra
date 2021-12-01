@@ -235,10 +235,10 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 	public String toString() {
 		//@formatter:off
 		return "{\n" +
-				"\tvertex: " + vertex + ",\n" +
-				"\tclickedComponent: " + mousedDestinationComponent + ",\n" +
-				"\tevent: " + originalMouseEvent + ",\n" +
-				"\ttranslatedEvent: " + translatedMouseEvent + "\n" +
+				"\tvertex: " + vertex + ",\n"+
+				"\tclickedComponent: " + mousedDestinationComponent+ ",\n"+
+				"\tevent: " + originalMouseEvent + ",\n"+
+				"\ttranslatedEvent: " + translatedMouseEvent + "\n"+
 				"}";
 		//@formatter:on
 	}
