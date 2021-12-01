@@ -19,6 +19,7 @@ import com.google.common.collect.RangeSet;
 import com.google.common.primitives.UnsignedLong;
 
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.thread.TraceThread;
@@ -27,8 +28,9 @@ public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorState
 		extends TraceCachedWriteBytesPcodeExecutorState {
 
 	protected class CheckedCachedSpace extends CachedSpace {
-		public CheckedCachedSpace(AddressSpace space, TraceMemorySpace source, long snap) {
-			super(space, source, snap);
+		public CheckedCachedSpace(Language language, AddressSpace space, TraceMemorySpace source,
+				long snap) {
+			super(language, space, source, snap);
 		}
 
 		@Override
@@ -54,7 +56,7 @@ public abstract class AbstractCheckedTraceCachedWriteBytesPcodeExecutorState
 
 	@Override
 	protected CachedSpace newSpace(AddressSpace space, TraceMemorySpace source, long snap) {
-		return new CheckedCachedSpace(space, source, snap);
+		return new CheckedCachedSpace(language, space, source, snap);
 	}
 
 	protected abstract int checkUninitialized(TraceMemorySpace source, Address start, int size,
