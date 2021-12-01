@@ -30,6 +30,7 @@ import ghidra.program.model.mem.MemBuffer;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.symbol.*;
 import ghidra.trace.database.DBTraceUtils;
+import ghidra.trace.database.context.DBTraceRegisterContextManager;
 import ghidra.trace.database.context.DBTraceRegisterContextSpace;
 import ghidra.trace.database.language.DBTraceGuestLanguage;
 import ghidra.trace.database.map.DBTraceAddressSnapRangePropertyMapTree;
@@ -621,13 +622,12 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	@Override
 	public BigInteger getValue(Register register, boolean signed) {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			DBTraceRegisterContextSpace ctxSpace =
-				space.trace.getRegisterContextManager().get(space, false);
-			if (ctxSpace == null) {
+			DBTraceRegisterContextManager manager = space.trace.getRegisterContextManager();
+			RegisterValue rv =
+				manager.getValueWithDefault(getLanguage(), register, getStartSnap(), getAddress());
+			if (rv == null) {
 				return null;
 			}
-			RegisterValue rv =
-				ctxSpace.getValue(getLanguage(), register, getStartSnap(), getAddress());
 			return signed ? rv.getSignedValue() : rv.getUnsignedValue();
 		}
 	}
@@ -635,12 +635,9 @@ public class DBTraceInstruction extends AbstractDBTraceCodeUnit<DBTraceInstructi
 	@Override
 	public RegisterValue getRegisterValue(Register register) {
 		try (LockHold hold = LockHold.lock(space.lock.readLock())) {
-			DBTraceRegisterContextSpace ctxSpace =
-				space.trace.getRegisterContextManager().get(space, false);
-			if (ctxSpace == null) {
-				return null;
-			}
-			return ctxSpace.getValue(getLanguage(), register, getStartSnap(), getAddress());
+			DBTraceRegisterContextManager manager = space.trace.getRegisterContextManager();
+			return manager.getValueWithDefault(getLanguage(), register, getStartSnap(),
+				getAddress());
 		}
 	}
 

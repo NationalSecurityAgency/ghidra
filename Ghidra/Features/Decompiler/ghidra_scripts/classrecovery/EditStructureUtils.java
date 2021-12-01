@@ -22,9 +22,9 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-public class EditStructureUtils {
+class EditStructureUtils {
 
-	EditStructureUtils() {
+	private EditStructureUtils() {
 
 	}
 
@@ -42,7 +42,7 @@ public class EditStructureUtils {
 	 * internal struct, false otherwise
 	 * @throws CancelledException if cancelled
 	 */
-	public boolean hasReplaceableComponentsAtOffset(Structure containingStruct, int offset,
+	static boolean hasReplaceableComponentsAtOffset(Structure containingStruct, int offset,
 			Structure newInternalStruct, TaskMonitor monitor) throws CancelledException {
 
 		DataTypeComponent[] newStructComponents = newInternalStruct.getComponents();
@@ -95,7 +95,7 @@ public class EditStructureUtils {
 	 * @return true if there are at least length undefined size 1 components at the given offset in the given structure
 	 * @throws CancelledException if cancelled
 	 */
-	public boolean hasEnoughUndefined1sAtOffset(Structure structure, int offset, int length,
+	static boolean hasEnoughUndefined1sAtOffset(Structure structure, int offset, int length,
 			TaskMonitor monitor) throws CancelledException {
 
 		if (structure.getLength() < offset + length) {
@@ -128,7 +128,7 @@ public class EditStructureUtils {
 	 * @return true if successfully cleared from offset to offset+length, false otherwise
 	 * @throws CancelledException if cancelled
 	 */
-	public boolean clearLengthAtOffset(Structure structure, int offset, int length,
+	static boolean clearLengthAtOffset(Structure structure, int offset, int length,
 			TaskMonitor monitor) throws CancelledException {
 
 		if (structure.getLength() < offset + length) {
@@ -143,17 +143,10 @@ public class EditStructureUtils {
 
 			monitor.checkCanceled();
 
-			DataTypeComponent component = structure.getComponentAt(offset);
-			DataType dataType = component.getDataType();
+			DataTypeComponent component = structure.getComponentContaining(offset);
 
-			// return false if it would clear too much
-			if (offset + dataType.getLength() > endOfClear) {
-				return false;
-			}
-
-			offsetsToClear.add(offset);
-			offset += dataType.getLength();
-			continue;
+			offsetsToClear.add(component.getOffset());
+			offset = component.getOffset() + component.getLength();
 
 		}
 
@@ -178,11 +171,12 @@ public class EditStructureUtils {
 	 * @param dataType the given data type
 	 * @return true if given data type is undefined size 1, false otherwise
 	 */
-	public boolean isUndefined1(DataType dataType) {
+	static boolean isUndefined1(DataType dataType) {
 
-		if (isUndefined(dataType) && dataType.getLength() == 1) {
+		if (Undefined.isUndefined(dataType) && dataType.getLength() == 1) {
 			return true;
 		}
+
 		return false;
 	}
 
@@ -191,7 +185,7 @@ public class EditStructureUtils {
 	 * @param dataType the given data type
 	 * @return true if given data type is undefined of any size, false otherwise
 	 */
-	public boolean isUndefined(DataType dataType) {
+	static boolean isUndefined(DataType dataType) {
 		if (dataType.getName().contains("undefined")) {
 			return true;
 		}
@@ -199,41 +193,46 @@ public class EditStructureUtils {
 	}
 
 	/**
-	 * Method to determine if there are at least the given length of undefined (any size) components at the given offset in the given structure
+	 * Method to determine if there are at least the given length of undefined (any size) components 
+	 * at the given offset in the given structure. This is only valid for non-packed structures.
 	 * @param structure the given structure
 	 * @param offset the given offset
 	 * @param length the total length of undefined components to check for starting at given offset
 	 * @param monitor task monitor
 	 * @return true if there are at least total length of undefined components at the given offset in the given structure
 	 * @throws CancelledException if cancelled
+	 * @throws IllegalArgumentException if a packed structure is passed in
 	 */
-	public boolean hasEnoughUndefinedsOfAnyLengthAtOffset(Structure structure, int offset,
+	static boolean hasEnoughUndefinedsOfAnyLengthAtOffset(Structure structure, int offset,
 			int length, TaskMonitor monitor) throws CancelledException {
 
-		if (structure.getLength() < offset + length) {
-			return false;
+		if (structure.isPackingEnabled()) {
+			throw new IllegalArgumentException(
+				"Packed structures are not supported by this method");
 		}
 
 		int endOfRange = offset + length;
+
+		if (offset < 0 || length <= 0 || structure.getLength() < endOfRange) {
+			return false;
+		}
 
 		while (offset < endOfRange) {
 
 			monitor.checkCanceled();
 
-			DataTypeComponent component = structure.getComponentAt(offset);
+			DataTypeComponent component = structure.getComponentContaining(offset);
+
 			DataType dataType = component.getDataType();
-			if (isUndefined(dataType)) {
 
-				offset += dataType.getLength();
-				if (offset > endOfRange) {
-					return false;
-				}
-
-				continue;
-
+			if (!Undefined.isUndefined(dataType)) {
+				return false;
 			}
-			return false;
+
+			offset = component.getOffset() + component.getLength();
+
 		}
+
 		return true;
 	}
 
@@ -251,7 +250,7 @@ public class EditStructureUtils {
 	 * @throws IllegalArgumentException if issue inserting data type into structure
 	 * @throws CancelledException if cancelled
 	 */
-	public Structure addDataTypeToStructure(Structure structure, int offset,
+	static Structure addDataTypeToStructure(Structure structure, int offset,
 			DataType dataType, String fieldName, TaskMonitor monitor)
 			throws CancelledException, IllegalArgumentException {
 
@@ -292,7 +291,7 @@ public class EditStructureUtils {
 	 * @return true if the given structure has room at the given offset to have a component of the given length added to it
 	 * @throws CancelledException if cancelled
 	 */
-	public boolean canAdd(Structure structureDataType, int offset, int lengthToAdd,
+	static boolean canAdd(Structure structureDataType, int offset, int lengthToAdd,
 			TaskMonitor monitor)
 			throws CancelledException {
 
@@ -332,7 +331,7 @@ public class EditStructureUtils {
 	 * @return the number of undefined size 1 components in the given structure before the given offset
 	 * @throws CancelledException if cancelled
 	 */
-	public int getNumberOfUndefinedsBeforeOffset(Structure structure, int offset,
+	static int getNumberOfUndefinedsBeforeOffset(Structure structure, int offset,
 			TaskMonitor monitor) throws CancelledException {
 
 		if (structure.getNumComponents() == 0) {
@@ -364,7 +363,7 @@ public class EditStructureUtils {
 	 * @return the number of undefined size 1 components starting at the given offset in the given structure
 	 * @throws CancelledException if cancelled
 	 */
-	public int getNumberOfUndefinedsStartingAtOffset(Structure structure, int offset,
+	static int getNumberOfUndefinedsStartingAtOffset(Structure structure, int offset,
 			TaskMonitor monitor) throws CancelledException {
 
 		int numUndefineds = 0;

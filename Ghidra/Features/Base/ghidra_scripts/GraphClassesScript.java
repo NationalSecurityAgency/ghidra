@@ -24,10 +24,17 @@ import ghidra.app.services.GraphDisplayBroker;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.data.*;
 import ghidra.service.graph.*;
+import ghidra.util.WebColors;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class GraphClassesScript extends GhidraScript {
+
+	private static final String NO_INHERITANCE = "No Inheritance";
+	private static final String SINGLE_INHERITANCE = "Single Inheritance";
+	private static final String MULTIPLE_INHERITANCE = "Multiple Inheritance";
+	private static final String VIRTUAL_INHERITANCE = "Virtual Inheritance";
+	private static final String NON_VIRTUAL_INHERITANCE = "Non-virtual Inheritance";
 
 	List<Structure> classStructures = new ArrayList<Structure>();
 
@@ -107,7 +114,15 @@ public class GraphClassesScript extends GhidraScript {
 	 */
 	private AttributedGraph createGraph() throws Exception {
 
-		AttributedGraph g = new AttributedGraph("Test Graph", new EmptyGraphType());
+		GraphType graphType =
+			new GraphTypeBuilder("Class Hierarchy Graph").vertexType(NO_INHERITANCE)
+					.vertexType(SINGLE_INHERITANCE)
+					.vertexType(MULTIPLE_INHERITANCE)
+					.edgeType(NON_VIRTUAL_INHERITANCE)
+					.edgeType(VIRTUAL_INHERITANCE)
+					.build();
+
+		AttributedGraph g = new AttributedGraph("Recovered Classes Graph", graphType);
 
 		for (Structure classStructure : classStructures) {
 
@@ -176,24 +191,27 @@ public class GraphClassesScript extends GhidraScript {
 
 				AttributedEdge edge = g.addEdge(parentVertex, classVertex);
 				if (isVirtualParent) {
-					edge.setAttribute("Color", "Orange");
+					edge.setEdgeType(VIRTUAL_INHERITANCE);
 				}
-				// else leave it default lime green
+				else {
+					// else leave it default lime green
+					edge.setEdgeType(NON_VIRTUAL_INHERITANCE);
+				}
 
 				description = removeClassSubstring(description, parentName);
 			}
 
 			// no parent = blue vertex
 			if (numParents == 0) {
-				classVertex.setAttribute("Color", "Blue");
+				classVertex.setVertexType(NO_INHERITANCE);
 			}
 			// single parent = green vertex
 			else if (numParents == 1) {
-				classVertex.setAttribute("Color", "Green");
+				classVertex.setVertexType(SINGLE_INHERITANCE);
 			}
 			// multiple parents = red vertex
 			else {
-				classVertex.setAttribute("Color", "Red");
+				classVertex.setVertexType(MULTIPLE_INHERITANCE);
 			}
 		}
 
@@ -295,7 +313,20 @@ public class GraphClassesScript extends GhidraScript {
 		GraphDisplayBroker broker = tool.getService(GraphDisplayBroker.class);
 		GraphDisplayProvider service = broker.getGraphDisplayProvider("Default Graph Display");
 		display = service.getGraphDisplay(false, TaskMonitor.DUMMY);
-		display.setGraph(graph, "test graph", false, TaskMonitor.DUMMY);
+
+		GraphDisplayOptions graphOptions = new GraphDisplayOptionsBuilder(graph.getGraphType())
+				.vertex(NO_INHERITANCE, VertexShape.RECTANGLE, WebColors.BLUE)
+				.vertex(SINGLE_INHERITANCE, VertexShape.RECTANGLE, WebColors.GREEN)
+				.vertex(MULTIPLE_INHERITANCE, VertexShape.RECTANGLE, WebColors.RED)
+				.edge(NON_VIRTUAL_INHERITANCE, WebColors.LIME_GREEN)
+				.edge(VIRTUAL_INHERITANCE, WebColors.ORANGE)
+				.defaultVertexColor(WebColors.PURPLE)
+				.defaultEdgeColor(WebColors.PURPLE)
+				.defaultLayoutAlgorithm("Compact Hierarchical")
+				.build();
+
+		display.setGraph(graph, graphOptions,
+			"Recovered Classes Graph", false, TaskMonitor.DUMMY);
 	}
 
 

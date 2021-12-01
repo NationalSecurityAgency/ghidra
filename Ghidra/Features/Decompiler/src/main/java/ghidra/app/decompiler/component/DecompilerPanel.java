@@ -149,8 +149,8 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		return highlightController.getSecondaryHighlightColors();
 	}
 
-	public boolean hasSecondaryHighlights() {
-		return highlightController.hasSecondaryHighlights();
+	public boolean hasSecondaryHighlights(Function function) {
+		return highlightController.hasSecondaryHighlights(function);
 	}
 
 	public boolean hasSecondaryHighlight(ClangToken token) {
@@ -166,14 +166,14 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	private Set<ClangDecompilerHighlighter> getSecondaryHighlihgtersByFunction(Function function) {
-		return highlightController.getSecondaryHighlightersByFunction(function);
+		return highlightController.getSecondaryHighlighters(function);
 	}
 
 	/**
 	 * Removes all secondary highlights for the current function
+	 * @param function the function containing the secondary highlights
 	 */
-	public void removeSecondaryHighlights() {
-		Function function = controller.getFunction();
+	public void removeSecondaryHighlights(Function function) {
 		highlightController.removeSecondaryHighlights(function);
 	}
 
@@ -283,9 +283,14 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 	}
 
 	/**
-	 * This is function is used to alert the panel that a token was renamed.
-	 * If the token that is being renamed had a secondary highlight, we must re-apply the highlight
-	 * to the new token.
+	 * This function is used to alert the panel that a token was renamed. If the token being renamed
+	 * had a secondary highlight, we must re-apply the highlight to the new token.
+	 * 
+	 * <p>This is not needed for highlighter service highlights, since they get called again to
+	 * re-apply highlights.  It is up to that highlighter to determine if highlighting still applies
+	 * to the new token name.  Alternatively, for secondary highlights, we know the user chose the
+	 * highlight based upon name.  Thus, when the name changes, we need to take action to update
+	 * the secondary highlight.
 	 * 
 	 * @param token the token being renamed
 	 * @param newName the new name of the token
@@ -307,9 +312,9 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 
 	private void cloneGlobalHighlighters(DecompilerPanel sourcePanel) {
 
-		Set<ClangDecompilerHighlighter> allHighlighters =
+		Set<ClangDecompilerHighlighter> globalHighlighters =
 			sourcePanel.highlightController.getGlobalHighlighters();
-		for (ClangDecompilerHighlighter otherHighlighter : allHighlighters) {
+		for (ClangDecompilerHighlighter otherHighlighter : globalHighlighters) {
 
 			ClangDecompilerHighlighter newHighlighter = otherHighlighter.clone(this);
 			highlightersById.put(newHighlighter.getId(), newHighlighter);
@@ -411,18 +416,19 @@ public class DecompilerPanel extends JPanel implements FieldMouseListener, Field
 		currentSearchLocation = null;
 
 		reapplySecondaryHighlights();
-		reapplyHighlighterHighlights();
+		reapplyGlobalHighlights();
 	}
 
-	private void reapplyHighlighterHighlights() {
+	private void reapplyGlobalHighlights() {
 
 		Function function = decompileData.getFunction();
 		if (function == null) {
 			return;
 		}
 
-		Collection<ClangDecompilerHighlighter> values = highlightersById.values();
-		for (ClangDecompilerHighlighter highlighter : values) {
+		Set<ClangDecompilerHighlighter> globalHighlighters =
+			highlightController.getGlobalHighlighters();
+		for (ClangDecompilerHighlighter highlighter : globalHighlighters) {
 			highlighter.clearHighlights();
 			highlighter.applyHighlights();
 		}

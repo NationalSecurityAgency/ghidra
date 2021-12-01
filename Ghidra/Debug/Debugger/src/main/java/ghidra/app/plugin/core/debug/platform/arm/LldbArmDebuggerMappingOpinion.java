@@ -29,7 +29,7 @@ import ghidra.util.Msg;
  */
 public class LldbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 	protected static final LanguageID LANG_ID_AARCH64 = new LanguageID("AARCH64:LE:64:v8A");
-	protected static final CompilerSpecID COMP_ID_GCC = new CompilerSpecID("gcc");
+	protected static final CompilerSpecID COMP_ID_DEFAULT = new CompilerSpecID("default");
 
 	protected static class LldbI386X86_64RegisterMapper extends DefaultDebuggerRegisterMapper {
 		public LldbI386X86_64RegisterMapper(CompilerSpec cSpec,
@@ -49,7 +49,7 @@ public class LldbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 
 	protected static class LldbAarch64MacosOffer extends DefaultDebuggerMappingOffer {
 		public LldbAarch64MacosOffer(TargetProcess process) {
-			super(process, 50, "AARCH64/LLDB on macos", LANG_ID_AARCH64, COMP_ID_GCC,
+			super(process, 50, "AARCH64/LLDB on macos", LANG_ID_AARCH64,COMP_ID_DEFAULT,
 				Set.of("cpsr"));
 		}
 	}
@@ -61,7 +61,7 @@ public class LldbArmDebuggerMappingOpinion implements DebuggerMappingOpinion {
 			return Set.of();
 		}
 		String arch = env.getArchitecture();
-		boolean is64Bit = arch.contains("AARCH64");
+		boolean is64Bit = arch.contains("AARCH64") || arch.contains("arm64");
 		String os = env.getOperatingSystem();
 		if (os.contains("macos")) {
 			if (is64Bit) {
