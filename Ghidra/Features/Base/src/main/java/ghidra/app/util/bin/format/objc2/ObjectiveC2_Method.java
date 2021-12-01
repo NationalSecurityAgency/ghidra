@@ -38,7 +38,8 @@ public class ObjectiveC2_Method extends ObjectiveC_Method {
 		if (isSmallList) {
 			int nameOffset = (int)ObjectiveC1_Utilities.readNextIndex(reader, true);
 			int namePtr = reader.readInt(_index + nameOffset);
-			name = reader.readAsciiString(namePtr);
+			long imagebase = state.program.getImageBase().getOffset(); // When we support dyld_shared_cache, this base will likely have to change
+			name = reader.readAsciiString(imagebase + namePtr);
 
 			int typesOffset = (int)ObjectiveC1_Utilities.readNextIndex(reader, true);
 			types = reader.readAsciiString(_index + 4 + typesOffset);
