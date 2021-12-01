@@ -7789,13 +7789,13 @@ define pcodeop pwrsavOp;
 
 :swap.w Wn_t is OP_23_20=0xF & OP_19_16=0xD & OP_15=1 & OP_13_4=0x0 & TOK_B=0 & Wn_t {
 
-  Wn_t = ((Wn_t & 0xFF) << 8) & ((Wn_t & 0xFF00) >> 8);
+  Wn_t = ((Wn_t & 0xFF) << 8) | ((Wn_t & 0xFF00) >> 8);
 }
 
 
 :swap.b Wnbyte_t is OP_23_20=0xF & OP_19_16=0xD & OP_15=1 & OP_13_4=0x0 & TOK_B=1 & Wnbyte_t {
 
-  Wnbyte_t = ((Wnbyte_t & 0xF) << 4) & ((Wnbyte_t & 0xF0) >> 4); 
+  Wnbyte_t = ((Wnbyte_t & 0xF) << 4) | ((Wnbyte_t & 0xF0) >> 4); 
 }
 
 
