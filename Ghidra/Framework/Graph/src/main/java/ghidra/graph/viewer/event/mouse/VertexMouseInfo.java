@@ -43,20 +43,19 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 	private final MouseEvent originalMouseEvent;
 	private final GraphViewer<V, E> viewer;
 
-	// TODO make these private if the subclass goes away
-	protected final V vertex;
+	private final V vertex;
 	private MouseEvent translatedMouseEvent;
-	protected Component mousedDestinationComponent;
+	private Component mousedDestinationComponent;
 
 	public VertexMouseInfo(MouseEvent originalMouseEvent, V vertex, Point2D vertexBasedClickPoint,
-			GraphViewer<V, E> viewer) {
+						   GraphViewer<V, E> viewer) {
 		this.originalMouseEvent = Objects.requireNonNull(originalMouseEvent);
 		this.vertex = Objects.requireNonNull(vertex);
 		this.viewer = Objects.requireNonNull(viewer);
 
 		JComponent component = vertex.getComponent();
 		Component deepestComponent = SwingUtilities.getDeepestComponentAt(component,
-			(int) vertexBasedClickPoint.getX(), (int) vertexBasedClickPoint.getY());
+				(int) vertexBasedClickPoint.getX(), (int) vertexBasedClickPoint.getY());
 		setClickedComponent(deepestComponent, vertexBasedClickPoint);
 	}
 
@@ -91,10 +90,7 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 
 	public boolean isButtonClick() {
 		Component clickedComponent = getClickedComponent();
-		if (clickedComponent instanceof JButton) {
-			return true;
-		}
-		return false;
+		return clickedComponent instanceof JButton;
 	}
 
 	public boolean isVertexSelected() {
@@ -103,8 +99,8 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 	}
 
 	/**
-	 * Selects, or 'pick's the given vertex.  
-	 * 
+	 * Selects, or 'pick's the given vertex.
+	 *
 	 * @param addToSelection true signals to add the given vertex to the set of selected vertices;
 	 *                       false signals to clear the existing selected vertices before selecting
 	 *                       the given vertex
@@ -145,27 +141,28 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 	 * You can use this method to override which Java component will get the forwarded event.  By
 	 * default, the mouse info will forward the event to the component that is under the point in
 	 * the event.
+	 *
 	 * @param clickedComponent the component that was clicked
 	 * @param vertexBasedPoint the point, relative to the vertex's coordinates
 	 */
 	public void setClickedComponent(Component clickedComponent, Point2D vertexBasedPoint) {
-		this.mousedDestinationComponent = clickedComponent;
+		mousedDestinationComponent = clickedComponent;
 
 		Point componentPoint =
-			new Point((int) vertexBasedPoint.getX(), (int) vertexBasedPoint.getY());
+				new Point((int) vertexBasedPoint.getX(), (int) vertexBasedPoint.getY());
 
 		// default values...
 		Component newEventSource = vertex.getComponent();
 		Point pointInClickedComponentCoordinates = componentPoint;
-		if (clickedComponent != null) {
+		if (null != clickedComponent) {
 			// the component can be null when it hasn't been shown yet, like in fast rendering
 			newEventSource = clickedComponent;
 			pointInClickedComponentCoordinates =
-				SwingUtilities.convertPoint(getVertexComponent(), componentPoint, clickedComponent);
+					SwingUtilities.convertPoint(getVertexComponent(), componentPoint, clickedComponent);
 		}
 
 		translatedMouseEvent = createMouseEventFromSource(newEventSource, originalMouseEvent,
-			pointInClickedComponentCoordinates);
+				pointInClickedComponentCoordinates);
 	}
 
 	public Object getEventSource() {
@@ -181,7 +178,7 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 	}
 
 	public void forwardEvent() {
-		if (mousedDestinationComponent == null) {
+		if (null == mousedDestinationComponent) {
 			return;
 		}
 
@@ -193,7 +190,7 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 	}
 
 	public void simulateMouseEnteredEvent() {
-		if (mousedDestinationComponent == null) {
+		if (null == mousedDestinationComponent) {
 			return;
 		}
 
@@ -203,7 +200,7 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 	}
 
 	public void simulateMouseExitedEvent() {
-		if (mousedDestinationComponent == null) {
+		if (null == mousedDestinationComponent) {
 			return;
 		}
 
@@ -214,20 +211,20 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 
 	private MouseEvent createMouseEnteredEvent() {
 		return new MouseEvent(mousedDestinationComponent, MouseEvent.MOUSE_ENTERED,
-			System.currentTimeMillis(), 0, 0, 0, 0, false);
+				System.currentTimeMillis(), 0, 0, 0, 0, false);
 	}
 
 	private MouseEvent createMouseExitedEvent() {
 		return new MouseEvent(mousedDestinationComponent, MouseEvent.MOUSE_EXITED,
-			System.currentTimeMillis(), 0, 0, 0, 0, false);
+				System.currentTimeMillis(), 0, 0, 0, 0, false);
 	}
 
 	private MouseEvent createMouseEventFromSource(Component source, MouseEvent progenitor,
-			Point2D clickPoint) {
+												  Point2D clickPoint) {
 		return new MouseEvent(source, progenitor.getID(), progenitor.getWhen(),
-			progenitor.getModifiers() | progenitor.getModifiersEx(), (int) clickPoint.getX(),
-			(int) clickPoint.getY(), progenitor.getClickCount(), progenitor.isPopupTrigger(),
-			progenitor.getButton());
+				progenitor.getModifiers() | progenitor.getModifiersEx(), (int) clickPoint.getX(),
+				(int) clickPoint.getY(), progenitor.getClickCount(), progenitor.isPopupTrigger(),
+				progenitor.getButton());
 	}
 
 	public boolean isPopupClick() {
@@ -238,11 +235,11 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 	public String toString() {
 		//@formatter:off
 		return "{\n" +
-			"\tvertex: " + vertex + ",\n"+
-			"\tclickedComponent: " + mousedDestinationComponent+ ",\n"+
-			"\tevent: " + originalMouseEvent + ",\n"+
-			"\ttranslatedEvent: " + translatedMouseEvent + "\n"+
-		"}";
+				"\tvertex: " + vertex + ",\n" +
+				"\tclickedComponent: " + mousedDestinationComponent + ",\n" +
+				"\tevent: " + originalMouseEvent + ",\n" +
+				"\ttranslatedEvent: " + translatedMouseEvent + "\n" +
+				"}";
 		//@formatter:on
 	}
 }
