@@ -1245,8 +1245,9 @@ void TypeStruct::restoreFields(const Element *el,TypeFactory &typegrp)
 void TypePointerRel::restoreXml(const Element *el,TypeFactory &typegrp)
 
 {
-  flags = is_ptrrel;
+  flags |= is_ptrrel;
   restoreXmlBasic(el);
+  metatype = TYPE_PTR;		// Don't use TYPE_PTRREL internally
   for(int4 i=0;i<el->getNumAttributes();++i)
     if (el->getAttributeName(i) == "wordsize") {
       istringstream s(el->getAttributeValue(i));
@@ -1256,6 +1257,8 @@ void TypePointerRel::restoreXml(const Element *el,TypeFactory &typegrp)
   const List &list(el->getChildren());
   List::const_iterator iter;
   iter = list.begin();
+  ptrto = typegrp.restoreXmlType( *iter );
+  ++iter;
   parent = typegrp.restoreXmlType( *iter );
   ++iter;
   istringstream s1((*iter)->getContent());
@@ -1263,10 +1266,23 @@ void TypePointerRel::restoreXml(const Element *el,TypeFactory &typegrp)
   s1 >> offset;
   if (offset == 0)
     throw new LowlevelError("For metatype=\"ptrstruct\", <off> tag must not be zero");
-  ptrto = getPtrTo(parent, offset, typegrp);
   submeta = (ptrto->getMetatype()==TYPE_UNKNOWN) ? SUB_PTRREL_UNK: SUB_PTRREL;
   if (name.size() == 0)		// If the data-type is not named
     cacheStrippedType(typegrp);	// it is considered ephemeral
+}
+
+/// For a variable that is a relative pointer, constant offsets off of the variable can be
+/// displayed either as coming from the variable itself or from the parent object.
+/// \param byteOff is the given offset off of the variable
+/// \return \b true if the variable should be displayed as coming from the parent
+bool TypePointerRel::evaluateThruParent(uintb addrOff) const
+
+{
+  uintb byteOff = AddrSpace::addressToByte(addrOff, wordsize);
+  if (ptrto->getMetatype() == TYPE_STRUCT && byteOff < ptrto->getSize())
+    return false;
+  byteOff = (byteOff + offset) & calc_mask(size);
+  return (byteOff < parent->getSize());
 }
 
 void TypePointerRel::printRaw(ostream &s) const
@@ -1301,15 +1317,18 @@ void TypePointerRel::saveXml(ostream &s) const
   if (wordsize != 1)
     a_v_i(s,"wordsize",wordsize);
   s << ">\n";
+  ptrto->saveXml(s);
+  s << '\n';
   parent->saveXmlRef(s);
-  s << "<off>" << dec << offset << "</off>\n";
+  s << "\n<off>" << dec << offset << "</off>\n";
   s << "</type>";
 }
 
 TypePointer *TypePointerRel::downChain(uintb &off,TypePointer *&par,uintb &parOff,bool allowArrayWrap,
 					  TypeFactory &typegrp)
 {
-  if (off < ptrto->getSize() && stripped != (TypePointer *)0) {
+  type_metatype ptrtoMeta = ptrto->getMetatype();
+  if (off < ptrto->getSize() && (ptrtoMeta == TYPE_STRUCT || ptrtoMeta == TYPE_ARRAY)) {
     return TypePointer::downChain(off,par,parOff,allowArrayWrap,typegrp);
   }
   uintb relOff = (off + offset) & calc_mask(size);		// Convert off to be relative to the parent container
@@ -1318,6 +1337,8 @@ TypePointer *TypePointerRel::downChain(uintb &off,TypePointer *&par,uintb &parOf
 
   TypePointer *origPointer = typegrp.getTypePointer(size, parent, wordsize);
   off = relOff;
+  if (relOff == 0 && offset != 0)	// Recovering the start of the parent is still downchaining, even though the parent may be the container
+    return origPointer;	// So we return the pointer to the parent and don't drill down to field at offset 0
   return origPointer->downChain(off,par,parOff,allowArrayWrap,typegrp);
 }
 
@@ -1339,7 +1360,7 @@ bool TypePointerRel::isPtrsubMatching(uintb off) const
 /// \param off is the offset relative to the start of the container
 /// \param typegrp is the factory owning the data-types
 /// \return the "pointed to" data-type
-Datatype *TypePointerRel::getPtrTo(Datatype *base,int4 off,TypeFactory &typegrp)
+Datatype *TypePointerRel::getPtrToFromParent(Datatype *base,int4 off,TypeFactory &typegrp)
 
 {
   if (off > 0) {
@@ -2839,6 +2860,15 @@ Datatype *TypeFactory::restoreXmlTypeNoRef(const Element *el,bool forcecore)
     {
       TypePointer tp;
       tp.restoreXml(el,*this);
+      if (forcecore)
+	tp.flags |= Datatype::coretype;
+      ct = findAdd(tp);
+    }
+    break;
+  case TYPE_PTRREL:
+    {
+      TypePointerRel tp;
+      tp.restoreXml(el, *this);
       if (forcecore)
 	tp.flags |= Datatype::coretype;
       ct = findAdd(tp);
