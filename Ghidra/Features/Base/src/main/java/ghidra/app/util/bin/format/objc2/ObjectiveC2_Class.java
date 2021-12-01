@@ -39,7 +39,7 @@ public class ObjectiveC2_Class implements StructConverter {
 	private ObjectiveC2_Class superclass;
 	private ObjectiveC2_Cache cache;
 	private ObjectiveC2_Implementation vtable;
-	private ObjectiveC2_ClassRW data;
+	private ObjectiveC2_ClassRW data; // class_rw_t * plus custom rr/alloc flags
 
 	public ObjectiveC2_Class(ObjectiveC2_State state, BinaryReader reader) {
 		this._state = state;
@@ -115,6 +115,10 @@ public class ObjectiveC2_Class implements StructConverter {
 			//Trying to read uninitialized memory
 			return;
 		}
+
+		// Fix pointer by applying Swift FAST_DATA_MASK (see objc-runtime-new.h for details)
+		index &= _state.is64bit ? ~0x7L : ~0x3L;
+
 		if (index != 0 && reader.isValidIndex(index)) {
 			long originalIndex = reader.getPointerIndex();
 			reader.setPointerIndex(index);

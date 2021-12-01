@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
 
+import ghidra.program.model.address.AddressRange;
 import ghidra.program.model.lang.Register;
 import ghidra.program.model.lang.RegisterValue;
 import ghidra.trace.model.TraceAddressSnapRange;
@@ -26,17 +27,54 @@ import ghidra.trace.model.listing.TraceCodeRegisterSpace;
 import ghidra.trace.model.thread.TraceThread;
 import ghidra.trace.util.TraceRegisterUtils;
 
+/**
+ * A "memory" space for storing the raw bytes and values of registers for a thread.
+ */
 public interface TraceMemoryRegisterSpace extends TraceMemorySpace {
+
+	/**
+	 * Get the thread for this register space
+	 * 
+	 * @return the thread
+	 */
 	TraceThread getThread();
 
+	/**
+	 * Get the registers
+	 * 
+	 * <p>
+	 * This is essentially a convenience to {@code getTrace().getBaseLanguage().getRegisters()}
+	 * 
+	 * @return the list of registers
+	 */
 	default List<Register> getRegisters() {
 		return getThread().getRegisters();
 	}
 
+	/**
+	 * Set the state of a given register at a given time
+	 * 
+	 * <p>
+	 * Setting state to {@link TraceMemoryState#KNOWN} via this method is not recommended. Setting
+	 * bytes will automatically update the state accordingly.
+	 * 
+	 * @param snap the time
+	 * @param register the register
+	 * @param state the state
+	 */
 	default void setState(long snap, Register register, TraceMemoryState state) {
 		setState(snap, TraceRegisterUtils.rangeForRegister(register), state);
 	}
 
+	/**
+	 * Assert that a register's range has a single state at the given snap and get that state
+	 * 
+	 * @param snap the time
+	 * @param register the register to examine
+	 * @return the state
+	 * @throws IllegalStateException if the register is mapped to more than one state. See
+	 *             {@link #getStates(long, Register)}
+	 */
 	default TraceMemoryState getState(long snap, Register register) {
 		Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> states =
 			getStates(snap, register);
@@ -49,13 +87,31 @@ public interface TraceMemoryRegisterSpace extends TraceMemorySpace {
 		return states.iterator().next().getValue();
 	}
 
+	/**
+	 * Break the register's range into smaller ranges each mapped to its state at the given snap
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
+	 * 
+	 * @param snap the time
+	 * @param register the register to examine
+	 * @return the map of ranges to states
+	 */
 	default Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> getStates(long snap,
 			Register register) {
-		return getStates(snap, TraceRegisterUtils.rangeForRegister(register));
+		AddressRange range = TraceRegisterUtils.rangeForRegister(register);
+		if (register.getAddressSpace() != getAddressSpace()) {
+			return getTrace().getMemoryManager().getStates(snap, range);
+		}
+		return getStates(snap, range);
 	}
 
 	/**
 	 * Set the value of a register at the given snap
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space. In those
+	 * cases, the assignment affects all threads.
 	 * 
 	 * <p>
 	 * <b>IMPORTANT:</b> The trace database cannot track the state ({@link TraceMemoryState#KNOWN},
@@ -79,11 +135,19 @@ public interface TraceMemoryRegisterSpace extends TraceMemorySpace {
 			value = old.combineValues(value);
 		}
 		ByteBuffer buf = TraceRegisterUtils.bufferForValue(reg, value);
+		// TODO: A better way to deal with memory-mapped registers?
+		if (reg.getAddressSpace() != getAddressSpace()) {
+			return getTrace().getMemoryManager().putBytes(snap, reg.getAddress(), buf);
+		}
 		return putBytes(snap, reg.getAddress(), buf);
 	}
 
 	/**
 	 * Write bytes at the given snap and register address
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space. In those
+	 * cases, the assignment affects all threads.
 	 * 
 	 * <p>
 	 * Note that bit-masked registers are not properly heeded. If the caller wishes to preserve
@@ -100,32 +164,94 @@ public interface TraceMemoryRegisterSpace extends TraceMemorySpace {
 		int byteLength = register.getNumBytes();
 		int limit = buf.limit();
 		buf.limit(Math.min(limit, buf.position() + byteLength));
-		int result = putBytes(snap, register.getAddress(), buf);
+		// TODO: A better way to deal with memory-mapped registers?
+		int result;
+		if (register.getAddressSpace() != getAddressSpace()) {
+			result = getTrace().getMemoryManager().putBytes(snap, register.getAddress(), buf);
+		}
+		else {
+			result = putBytes(snap, register.getAddress(), buf);
+		}
 		buf.limit(limit);
 		return result;
 	}
 
+	/**
+	 * Get the most-recent value of a given register at the given time
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
+	 * 
+	 * @param snap the time
+	 * @param register the register
+	 * @return the value
+	 */
 	default RegisterValue getValue(long snap, Register register) {
-		return TraceRegisterUtils.getRegisterValue(register,
-			(a, buf) -> getBytes(snap, a, buf));
+		return TraceRegisterUtils.getRegisterValue(register, (a, buf) -> {
+			// TODO: A better way to deal with memory-mapped registers?
+			if (a.getAddressSpace() != getAddressSpace()) {
+				getTrace().getMemoryManager().getBytes(snap, a, buf);
+			}
+			else {
+				getBytes(snap, a, buf);
+			}
+		});
 	}
 
+	/**
+	 * Get the most-recent value of a given register at the given time, following schedule forks
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
+	 * 
+	 * @param snap the time
+	 * @param register the register
+	 * @return the value
+	 */
 	default RegisterValue getViewValue(long snap, Register register) {
-		return TraceRegisterUtils.getRegisterValue(register,
-			(a, buf) -> getViewBytes(snap, a, buf));
+		return TraceRegisterUtils.getRegisterValue(register, (a, buf) -> {
+			// TODO: A better way to deal with memory-mapped registers?
+			if (a.getAddressSpace() != getAddressSpace()) {
+				getTrace().getMemoryManager().getViewBytes(snap, a, buf);
+			}
+			else {
+				getViewBytes(snap, a, buf);
+			}
+		});
 	}
 
+	/**
+	 * Get the most-recent bytes of a given register at the given time
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
+	 * 
+	 * @param snap the time
+	 * @param register the register
+	 * @param buf the destination buffer
+	 * @return the number of bytes read
+	 */
 	default int getBytes(long snap, Register register, ByteBuffer buf) {
 		int byteLength = register.getNumBytes();
 		int limit = buf.limit();
 		buf.limit(Math.min(limit, buf.position() + byteLength));
-		int result = getBytes(snap, register.getAddress(), buf);
+		// TODO: A better way to deal with memory-mapped registers?
+		int result;
+		if (register.getAddressSpace() != getAddressSpace()) {
+			result = getTrace().getMemoryManager().getBytes(snap, register.getAddress(), buf);
+		}
+		else {
+			result = getBytes(snap, register.getAddress(), buf);
+		}
 		buf.limit(limit);
 		return result;
 	}
 
 	/**
 	 * Remove a value from the given time and register
+	 * 
+	 * <p>
+	 * If the register is memory mapped, this will delegate to the appropriate space.
 	 * 
 	 * <p>
 	 * <b>IMPORANT:</b> The trace database cannot track the state ({@link TraceMemoryState#KNOWN},
@@ -139,9 +265,20 @@ public interface TraceMemoryRegisterSpace extends TraceMemorySpace {
 	 */
 	default void removeValue(long snap, Register register) {
 		int byteLength = register.getNumBytes();
-		removeBytes(snap, register.getAddress(), byteLength);
+		if (register.getAddressSpace() != getAddressSpace()) {
+			getTrace().getMemoryManager().removeBytes(snap, register.getAddress(), byteLength);
+		}
+		else {
+			removeBytes(snap, register.getAddress(), byteLength);
+		}
 	}
 
+	/**
+	 * Get the most recent values for all registers at the given time
+	 * 
+	 * @param snap the time
+	 * @return all register values
+	 */
 	default Collection<RegisterValue> getAllValues(long snap) {
 		Set<RegisterValue> result = new LinkedHashSet<>();
 		for (Register reg : getRegisters()) {

@@ -279,7 +279,7 @@ public class PcodeExecutor<T> {
 		branchToOffset(offset, frame);
 
 		long concrete = arithmetic.toConcrete(offset).longValue();
-		Address target = op.getSeqnum().getTarget().getNewAddress(concrete);
+		Address target = op.getSeqnum().getTarget().getNewAddress(concrete, true);
 		branchToAddress(target);
 	}
 

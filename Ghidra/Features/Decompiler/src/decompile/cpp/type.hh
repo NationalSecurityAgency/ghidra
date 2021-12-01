@@ -401,6 +401,7 @@ public:
     parent = par; offset = off; stripped = (TypePointer *)0; flags |= is_ptrrel;
     submeta = pt->getMetatype()==TYPE_UNKNOWN ? SUB_PTRREL_UNK : SUB_PTRREL; }
   Datatype *getParent(void) const { return parent; }	///< Get the parent data-type to which \b this pointer is offset
+  bool evaluateThruParent(uintb addrOff) const;	///< Do we display given address offset as coming from the parent data-type
 
   /// \brief Get offset of \b this pointer relative to start of the containing data-type
   ///
@@ -413,7 +414,7 @@ public:
   virtual TypePointer *downChain(uintb &off,TypePointer *&par,uintb &parOff,bool allowArrayWrap,TypeFactory &typegrp);
   virtual bool isPtrsubMatching(uintb off) const;
   virtual Datatype *getStripped(void) const { return stripped; }	///< Get the plain form of the pointer
-  static Datatype *getPtrTo(Datatype *base,int4 off,TypeFactory &typegrp);
+  static Datatype *getPtrToFromParent(Datatype *base,int4 off,TypeFactory &typegrp);
 };
 
 class FuncProto;		// Forward declaration
