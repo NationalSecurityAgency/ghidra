@@ -23,6 +23,7 @@ import ghidra.app.services.DebuggerStaticMappingService.MappedAddressRange;
 import ghidra.app.services.TraceRecorder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -38,9 +39,9 @@ public class ReadsTargetMemoryPcodeExecutorState
 
 	protected class ReadsTargetMemoryCachedSpace extends AbstractReadsTargetCachedSpace {
 
-		public ReadsTargetMemoryCachedSpace(AddressSpace space, TraceMemorySpace source,
-				long snap) {
-			super(space, source, snap);
+		public ReadsTargetMemoryCachedSpace(Language language, AddressSpace space,
+				TraceMemorySpace source, long snap) {
+			super(language, space, source, snap);
 		}
 
 		@Override
@@ -131,6 +132,6 @@ public class ReadsTargetMemoryPcodeExecutorState
 	@Override
 	protected AbstractReadsTargetCachedSpace createCachedSpace(AddressSpace s,
 			TraceMemorySpace tms) {
-		return new ReadsTargetMemoryCachedSpace(s, tms, snap);
+		return new ReadsTargetMemoryCachedSpace(language, s, tms, snap);
 	}
 }

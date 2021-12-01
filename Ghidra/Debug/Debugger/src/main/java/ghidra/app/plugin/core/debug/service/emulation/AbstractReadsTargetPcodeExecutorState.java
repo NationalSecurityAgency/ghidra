@@ -24,6 +24,7 @@ import ghidra.pcode.exec.trace.TraceCachedWriteBytesPcodeExecutorState;
 import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.lang.Language;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
 import ghidra.trace.model.memory.TraceMemoryState;
@@ -34,9 +35,9 @@ public abstract class AbstractReadsTargetPcodeExecutorState
 		extends TraceCachedWriteBytesPcodeExecutorState {
 
 	abstract class AbstractReadsTargetCachedSpace extends CachedSpace {
-		public AbstractReadsTargetCachedSpace(AddressSpace space,
+		public AbstractReadsTargetCachedSpace(Language language, AddressSpace space,
 				TraceMemorySpace source, long snap) {
-			super(space, source, snap);
+			super(language, space, source, snap);
 		}
 
 		protected abstract void fillUninitialized(AddressSet uninitialized);
