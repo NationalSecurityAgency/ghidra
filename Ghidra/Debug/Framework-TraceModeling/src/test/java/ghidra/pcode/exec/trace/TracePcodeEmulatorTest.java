@@ -33,6 +33,7 @@ import ghidra.app.plugin.assembler.sleigh.sem.AssemblyPatternBlock;
 import ghidra.app.plugin.processors.sleigh.SleighLanguage;
 import ghidra.pcode.emu.PcodeThread;
 import ghidra.pcode.exec.*;
+import ghidra.program.model.address.*;
 import ghidra.program.model.lang.*;
 import ghidra.program.model.listing.Instruction;
 import ghidra.test.AbstractGhidraHeadlessIntegrationTest;
@@ -45,6 +46,12 @@ import ghidra.util.NumericUtilities;
 import ghidra.util.database.UndoableTransaction;
 
 public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTest {
+
+	public TraceThread initTrace(ToyDBTraceBuilder tb, List<String> stateInit,
+			List<String> assembly) throws Throwable {
+		return initTrace(tb, tb.range(0x00400000, 0x0040ffff), tb.range(0x00100000, 0x0010ffff),
+			stateInit, assembly);
+	}
 
 	/**
 	 * Build a trace with a program ready for emulation
@@ -64,21 +71,19 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 	 * @return a new trace thread, whose register state is initialized as specified
 	 * @throws Throwable if anything goes wrong
 	 */
-	public TraceThread initTrace(ToyDBTraceBuilder tb, List<String> stateInit,
-			List<String> assembly) throws Throwable {
+	public TraceThread initTrace(ToyDBTraceBuilder tb, AddressRange text, AddressRange stack,
+			List<String> stateInit, List<String> assembly) throws Throwable {
 		TraceMemoryManager mm = tb.trace.getMemoryManager();
 		TraceThread thread;
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			thread = tb.getOrAddThread("Thread1", 0);
-			mm.addRegion("Regions[bin:.text]",
-				Range.atLeast(0L), tb.range(0x00400000, 0x0040ffff),
+			mm.addRegion("Regions[bin:.text]", Range.atLeast(0L), text,
 				TraceMemoryFlag.READ, TraceMemoryFlag.EXECUTE);
-			mm.addRegion("Regions[stack1]",
-				Range.atLeast(0L), tb.range(0x00100000, 0x0010ffff),
+			mm.addRegion("Regions[stack1]", Range.atLeast(0L), stack,
 				TraceMemoryFlag.READ, TraceMemoryFlag.WRITE);
 			Assembler asm = Assemblers.getAssembler(tb.trace.getFixedProgramView(0));
 			Iterator<Instruction> block = assembly.isEmpty() ? Collections.emptyIterator()
-					: asm.assemble(tb.addr(0x00400000), assembly.toArray(String[]::new));
+					: asm.assemble(text.getMinAddress(), assembly.toArray(String[]::new));
 			Instruction last = null;
 			while (block.hasNext()) {
 				last = block.next();
@@ -1006,4 +1011,39 @@ public class TracePcodeEmulatorTest extends AbstractGhidraHeadlessIntegrationTes
 			emuThread.stepInstruction();
 		}
 	}
+
+	@Test
+	public void testMov_w_mW1_W0() throws Throwable {
+		try (ToyDBTraceBuilder tb = new ToyDBTraceBuilder("Test", "dsPIC33F:LE:24:default")) {
+			Address textStart = tb.language.getDefaultSpace().getAddress(0x000100, true);
+			// TODO: Where is the stack typically on this arch?
+			Address stackStart = tb.language.getDefaultDataSpace().getAddress(0, true);
+			TraceThread thread = initTrace(tb,
+				new AddressRangeImpl(textStart, 0x200),
+				new AddressRangeImpl(stackStart, 1),
+				List.of(
+					"PC = 0x000100;",
+					"W1 = 0x0800;",
+					"*[ram]:2 0x000800:3 = 0x1234;"),
+				List.of(
+					"mov.w [W1], W0"));
+
+			TracePcodeEmulator emu = new TracePcodeEmulator(tb.trace, 0);
+			PcodeThread<byte[]> emuThread = emu.newThread(thread.getPath());
+			//emuThread.overrideContextWithDefault(); // default context is null?
+			emuThread.stepInstruction();
+
+			try (UndoableTransaction tid = tb.startTransaction()) {
+				emu.writeDown(tb.trace, 1, 1, false);
+			}
+
+			assertEquals(BigInteger.valueOf(0x000102),
+				TraceSleighUtils.evaluate("PC", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x1234),
+				TraceSleighUtils.evaluate("W0", tb.trace, 1, thread, 0));
+			assertEquals(BigInteger.valueOf(0x0800),
+				TraceSleighUtils.evaluate("W1", tb.trace, 1, thread, 0));
+		}
+	}
+
 }

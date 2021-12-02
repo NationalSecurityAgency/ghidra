@@ -66,20 +66,16 @@
 :adde D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=138 & Rc=0
 {	
 	zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
-	xer_ca = carry(B, zextCarry);
-	tmp:$(REGISTER_SIZE)=B + zextCarry; 
-	xer_ca = xer_ca || carry(A, tmp);
-	D=A+tmp; 
+	addExtendedCarry(A,B);
+	D=A + B + zextCarry; 
 }
 
 #adde. r1,r2,r3  0x7c 22 19 15
 :adde. D,A,B	is OP=31 & D & A & B & OE=0 & XOP_1_9=138 & Rc=1	
 { 	
 	zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
-	xer_ca = carry(B, zextCarry);
-	tmp:$(REGISTER_SIZE)=B + zextCarry; 
-	xer_ca = xer_ca || carry(A, tmp);
-	D=A+tmp; 
+	addExtendedCarry(A,B);
+	D=A + B + zextCarry;
 	cr0flags(D);
 }
 
@@ -87,26 +83,21 @@
 :addeo D,A,B	is OP=31 & D & A & B & OE=1 & XOP_1_9=138 & Rc=0
 { 
 	zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
-	xer_ca = carry(B, zextCarry);
-	addOverflow(B, zextCarry);
-	tmp:$(REGISTER_SIZE)=B + zextCarry; 
-	addOverflowAgain(A,tmp); 
-	xer_ca = xer_ca || carry(A, tmp);
-	D=A+tmp; 
+ 	addExtendedOverflow(A,B);
+	addExtendedCarry(A,B);
+	D=A + B + zextCarry;
 }
 
 #addeo. r1,r2,r3  0x7c 22 1d 15
 :addeo. D,A,B	is OP=31 & D & A & B & OE=1 & XOP_1_9=138 & Rc=1
 { 	
 	zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
-	xer_ca = carry(B, zextCarry);
-	addOverflow(B, zextCarry);
-	tmp:$(REGISTER_SIZE)=B + zextCarry; 
-	addOverflowAgain(A,tmp); 
-	xer_ca = xer_ca || carry(A, tmp);
-	D=A+tmp; 
+ 	addExtendedOverflow(A,B);
+	addExtendedCarry(A,B);
+	D=A + B + zextCarry;
 	cr0flags(D);
 }
+
 #addi r0,0x7fff		0x38 00 7f ff
 #addi r0,1 0x38 01 00 01
 :addi D,A,SIMM 		is $(NOTVLE) & OP=14 & D & A & SIMM_SIGN=0 & SIMM
@@ -189,36 +180,40 @@
 #addme r0,r0 0x7c 00 01 D4
 :addme D,A			is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=234 & Rc=0
 {
-	tmp:$(REGISTER_SIZE) = zext(xer_ca) - 1;
-	xer_ca = carry(A, tmp);
-	D = A + tmp;
+	local zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
+	local BVal:$(REGISTER_SIZE) = ~(0);
+	addExtendedCarry(A,BVal);
+	D=A + BVal + zextCarry; 
 }
 
 #addme. r0,r0 0x7c 00 01 D5
 :addme. D,A			is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=234 & Rc=1
 {
-	tmp:$(REGISTER_SIZE) = zext(xer_ca) - 1;
-	xer_ca = carry(A, tmp);
-	D = A + tmp;
+	local zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
+	local BVal:$(REGISTER_SIZE) = ~(0);
+	addExtendedCarry(A,BVal);
+	D=A + BVal + zextCarry; 
 	cr0flags(D);
 }
 
 #addmeo r0,r0 0x7C 00 05 D4
 :addmeo D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=234 & Rc=0
 {
-	tmp:$(REGISTER_SIZE) = zext(xer_ca) - 1;
-	xer_ca = carry(A, tmp);
-	addOverflow(A, tmp);
-	D = A + tmp;
+	local zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
+	local BVal:$(REGISTER_SIZE) = ~(0);
+	addExtendedOverflow(A,BVal);
+	addExtendedCarry(A,BVal);
+	D=A + BVal + zextCarry; 
 }
 
 #addmeo. r0,r0 0x7C 00 05 D5
 :addmeo. D,A 	is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=234 & Rc=1
 {
-	tmp:$(REGISTER_SIZE) = zext(xer_ca) - 1;
-	xer_ca = carry(A, tmp);
-	addOverflow(A, tmp);
-	D = A + tmp;
+	local zextCarry:$(REGISTER_SIZE) = zext(xer_ca);
+	local BVal:$(REGISTER_SIZE) = ~(0);
+	addExtendedOverflow(A,BVal);
+	addExtendedCarry(A,BVal);
+	D=A + BVal + zextCarry;
 	cr0flags(D);
 }
 
@@ -892,7 +887,7 @@
 #crorc	4*cr1+lt,4*cr2+gt,4*cr3+eq			0x4c 89 73 42
 :crorc	CC_D_OP,CC_OP,CC_B_OP	is $(NOTVLE) & OP=19 & CC_D_OP & CC_OP & CC_B_OP & CR_D & CR_D_CC & XOP_1_10=417 & BIT_0=0
 {
-	setCrBit(CR_D,CR_D_CC,(CC_B_OP | (!CC_OP)));
+	setCrBit(CR_D,CR_D_CC,((!CC_B_OP) | CC_OP));
 }
 
 #crxor lt,lt,lt								0x4c 00 01 82
@@ -2768,7 +2763,7 @@ define pcodeop lswxOp;
 # mulhwu r0,r0,r0	0x10 00 03 10
 :mullhwu D,A,B		is OP=4 & D & A & B & XOP_1_10=392 & Rc=0
 {
-        D = mullhwu(D, A, B);
+		D = mullhwu(D, A, B);
 }
 @endif
 
@@ -3179,32 +3174,33 @@ define pcodeop lswxOp;
 	MSR = (MSR & ~mask) | (S & mask);
 }
 @endif
+CRM_val: crmval is CRM [crmval = CRM+0;] {export *[const]:1 crmval;}
 #mtocrf 10,r0		0x7c 21 01 20
-:mtocrf CRM,S	is OP=31 & S & BIT_20=1 & CRM & CRM0 & CRM1 & CRM2 & CRM3 & CRM4 & CRM5 & CRM6 & CRM7 & BIT_11=0 & XOP_1_10=144 & BIT_0=0 
+:mtocrf CRM_val,S	is OP=31 & S & BIT_20=1 & CRM_val & CRM0 & CRM1 & CRM2 & CRM3 & CRM4 & CRM5 & CRM6 & CRM7 & BIT_11=0 & XOP_1_10=144 & BIT_0=0 
 {
 	tmp:$(REGISTER_SIZE) = (S >> 28) & 0xf;
-	cr0 = (cr0 * (CRM0:1 == 0)) | (tmp:1 * (CRM0:1 == 1));
+	cr0 = (cr0 * (CRM_val != 128)) | (tmp:1 * (CRM_val == 128));
 
 	tmp = (S >> 24) & 0xf;
-	cr1 = (cr1 * (CRM1:1 == 0)) | (tmp:1 * (CRM1:1 == 1));
+	cr1 = (cr1 * (CRM_val != 64)) | (tmp:1 * (CRM_val == 64));
 
 	tmp = (S >> 20) & 0xf;
-	cr2 = (cr2 * (CRM2:1 == 0)) | (tmp:1 * (CRM2:1 == 1));
+	cr2 = (cr2 * (CRM_val != 32)) | (tmp:1 * (CRM_val == 32));
 
 	tmp = (S >> 16) & 0xf;
-	cr3 = (cr3 * (CRM3:1 == 0)) | (tmp:1 * (CRM3:1 == 1));
+	cr3 = (cr3 * (CRM_val != 16)) | (tmp:1 * (CRM_val == 16));
 
 	tmp = (S >> 12) & 0xf;
-	cr4 = (cr4 * (CRM4:1 == 0)) | (tmp:1 * (CRM4:1 == 1));
+	cr4 = (cr4 * (CRM_val != 8)) | (tmp:1 * (CRM_val == 8));
 
 	tmp = (S >> 8) & 0xf;
-	cr5 = (cr5 * (CRM5:1 == 0)) | (tmp:1 * (CRM5:1 == 1));
+	cr5 = (cr5 * (CRM_val != 4)) | (tmp:1 * (CRM_val == 4));
 
 	tmp = (S >> 4) & 0xf;
-	cr6 = (cr6 * (CRM6:1 == 0)) | (tmp:1 * (CRM6:1 == 1));
+	cr6 = (cr6 * (CRM_val != 2)) | (tmp:1 * (CRM_val == 2));
 
 	tmp = S & 0xf;
-	cr7 = (cr7 * (CRM7:1 == 0)) | (tmp:1 * (CRM7:1 == 1));
+	cr7 = (cr7 * (CRM_val != 1)) | (tmp:1 * (CRM_val == 1));
 }
 
 ### is this pcode correct on 64-bit bridge?
@@ -3280,7 +3276,7 @@ define pcodeop lswxOp;
 @ifdef BIT_64
 	tmp:8 = sext(A:4) * sext(B:4);
 	tmp2:4 = tmp(4);
-	D = sext(tmp2);
+	D = zext(tmp2);
 @else
 	tmp:8 = sext(A) * sext(B);
 	D = tmp(4);
@@ -3293,7 +3289,7 @@ define pcodeop lswxOp;
 @ifdef BIT_64
 	tmp:8 = sext(A:4) * sext(B:4);
 	tmp2:4 = tmp(4);
-	D = sext(tmp2);
+	D = zext(tmp2);
 @else
 	tmp:8 = sext(A) * sext(B);
 	D = tmp(4);
@@ -3357,7 +3353,7 @@ define pcodeop lswxOp;
 	tmp:16 = sext(A) * sext(B);
 	D = tmp:8;
 	mulOverflow128(tmp);
-	cr0flags(D);	
+	cr0flags(D);
 }
 
 @endif
@@ -3370,7 +3366,7 @@ define pcodeop lswxOp;
 
 #mullw r0,r0,r0		0x7C 00 01 D6
 :mullw D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=235 & Rc=0	
-{ 
+{
 @ifdef BIT_64
 	D = sext(A:4) * sext(B:4);
 @else
@@ -3399,7 +3395,7 @@ define pcodeop lswxOp;
 	tmp:8 = sext(A) * sext(B);
 	mulOverflow64(tmp);
 	D = tmp:4;
-@endif
+@endif	
 }
 
 #mullwo. r0,r0,r0		0x7C 00 05 D7
@@ -3412,7 +3408,7 @@ define pcodeop lswxOp;
 	tmp:8 = sext(A) * sext(B);
 	mulOverflow64(tmp);
 	D = tmp:4;
-@endif	
+@endif
 	cr0flags(D); 
 }
 
@@ -3533,38 +3529,37 @@ define pcodeop lswxOp;
 	cr0flags(A);
 }
 #rldcr r0,r0,r0,0	0x78 00 00 12
-:rldcr A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=9 & Rc=0
+:rldcr A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=9 & Rc=0 & rotmask_Z
 { 
 	shift:$(REGISTER_SIZE) = B & 0x3f; 
 	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff >> MB); 
+	A = tmp & rotmask_Z; 
 }
 #rldcr. r0,r0,r0,0	0x78 00 00 13
-:rldcr. A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=9 & Rc=1
+:rldcr. A,S,B,MB	is $(NOTVLE) & OP=30 & S & A & B & MB & XOP_1_4=9 & Rc=1 & rotmask_Z
 { 
 	shift:$(REGISTER_SIZE) = B & 0x3f; 
 	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	A = tmp & (0xffffffffffffffff << (64-MB)); 
+	A = tmp & rotmask_Z;  
 	cr0flags(A);
 }
 
 #rldic r0,r0,r0,0	0x78 00 00 08
-:rldic A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=2 & Rc=0
+:rldic A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=2 & Rc=0 & rotmask_SH
 { 
 	shift:4 = SH;
 	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	mask:$(REGISTER_SIZE) = (0xffffffffffffffff >> MB) & (0xffffffffffffffff << shift);
-	A = tmp & mask; 
+	A = tmp & rotmask_SH;
 }
 #rldic. r0,r0,r0,0	0x78 00 00 09
-:rldic. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=2 & Rc=1
+:rldic. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=2 & Rc=1 & rotmask_SH
 { 
 	shift:4 = SH; 
 	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	mask:$(REGISTER_SIZE) = (0xffffffffffffffff >> MB) & (0xffffffffffffffff << shift);
-	A = tmp & mask; 
+	A = tmp & rotmask_SH; 
 	cr0flags(A);
 }
+
 #rldicl r0,r0,r0,0	0x78 00 00 00
 :rldicl A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=0 & Rc=0
 { 
@@ -3596,20 +3591,18 @@ define pcodeop lswxOp;
 	cr0flags(A);
 }
 #rldimi r0,r0,r0,0	0x78 00 00 0c
-:rldimi A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=3 & Rc=0
+:rldimi A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=3 & Rc=0 & rotmask_SH
 { 
 	shift:4 = SH;
 	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	mask:$(REGISTER_SIZE) = (0xffffffffffffffff >> MB) & (0xffffffffffffffff << shift);
-	A = (tmp & mask) | (A & ~mask);
+	A = (tmp & rotmask_SH) | (A & ~rotmask_SH);
 }
 #rldimi. r0,r0,r0,0	0x78 00 00 0d
-:rldimi. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=3 & Rc=1
+:rldimi. A,S,SH,MB	is $(NOTVLE) & OP=30 & S & A & B & SH & MB & XOP_2_4=3 & Rc=1 & rotmask_SH
 { 
 	shift:4 = SH; 
 	tmp:$(REGISTER_SIZE)=(S<<shift)|(S>>(64-shift)); 
-	mask:$(REGISTER_SIZE) = (0xffffffffffffffff >> MB) & (0xffffffffffffffff << shift);
-	A = (tmp & mask) | (A & ~mask);
+	A = (tmp & rotmask_SH) | (A & ~rotmask_SH);
 	cr0flags(A);
 }
 @endif
@@ -3621,9 +3614,9 @@ define pcodeop lswxOp;
 { 
 	shift:1 = SHL;
 @ifdef BIT_64
-	tmp:4 = S:4;
-	tmp2:4 = (tmp<<shift)|(tmp>>(32-shift)); 
-	A = zext(tmp2 & rotmask) | (A & ~zext(rotmask));
+	tmp:$(REGISTER_SIZE) = (S << 32) | (S & 0xffffffff);
+	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
+	A = (tmp2 & rotmask) | (A & ~(rotmask));
 @else
 	tmp = (S<<shift)|(S>>(32-shift)); 
 	A = (tmp & rotmask) | (A & ~rotmask);
@@ -3635,9 +3628,9 @@ define pcodeop lswxOp;
 { 
 	shift:1 = SHL;
 @ifdef BIT_64
-	tmp:4 = S:4;
-	tmp2:4 = (tmp<<shift)|(tmp>>(32-shift)); 
-	A = zext(tmp2 & rotmask) | (A & ~zext(rotmask));
+	tmp:$(REGISTER_SIZE) = (S << 32) | (S & 0xffffffff);
+	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
+	A = (tmp2 & rotmask) | (A & ~(rotmask));
 @else
 	tmp = (S<<shift)|(S>>(32-shift)); 
 	A = (tmp & rotmask) | (A & ~rotmask);
@@ -3650,9 +3643,9 @@ define pcodeop lswxOp;
 { 
 	shift:1 = SHL;
 @ifdef BIT_64
-	tmp:4 = S:4;
-	tmp2:4 = (tmp<<shift)|(tmp>>(32-shift)); 
-	A = zext(tmp2 & rotmask);
+	tmp:$(REGISTER_SIZE) = (S << 32) | (S & 0xffffffff);
+	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
+	A = tmp2 & rotmask;
 @else
 	tmp = (S<<shift)|(S>>(32-shift)); 
 	A = (tmp & rotmask);
@@ -3664,9 +3657,9 @@ define pcodeop lswxOp;
 { 
 	shift:1 = SHL;
 @ifdef BIT_64
-	tmp:4 = S:4;
-	tmp2:4 = (tmp<<shift)|(tmp>>(32-shift)); 
-	A = zext(tmp2 & rotmask);
+	tmp:$(REGISTER_SIZE) = (S << 32) | (S & 0xffffffff);
+	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
+	A = tmp2 & rotmask;
 @else
 	tmp = (S<<shift)|(S>>(32-shift)); 
 	A = (tmp & rotmask);
@@ -3679,9 +3672,9 @@ define pcodeop lswxOp;
 { 	
 	shift:$(REGISTER_SIZE) = B & 0x1f;
 @ifdef BIT_64
-	tmp:4 = S:4;
-	tmp2:4 = (tmp<<shift)|(tmp>>(32-shift)); 
-	A = zext(tmp2 & rotmask);
+	tmp:$(REGISTER_SIZE) = (S << 32) | (S & 0xffffffff);
+	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
+	A = tmp2 & rotmask;
 @else
 	tmp = (S<<shift)|(S>>(32-shift)); 
 	A = (tmp & rotmask);
@@ -3693,9 +3686,9 @@ define pcodeop lswxOp;
 { 
 	shift:$(REGISTER_SIZE) = B & 0x1f;
 @ifdef BIT_64
-	tmp:4 = S:4;
-	tmp2:4 = (tmp<<shift)|(tmp>>(32-shift)); 
-	A = zext(tmp2 & rotmask);
+	tmp:$(REGISTER_SIZE) = (S << 32) | (S & 0xffffffff);
+	tmp2:$(REGISTER_SIZE) = (tmp<<shift)|(tmp>>(64-shift));
+	A = tmp2 & rotmask;
 @else
 	tmp = (S<<shift)|(S>>(32-shift)); 
 	A = (tmp & rotmask);
@@ -3758,10 +3751,12 @@ define pcodeop lswxOp;
 :slw A,S,B		is OP=31 & S & A & B & XOP_1_10=24 & Rc=0
 {
 @ifdef BIT_64
-	tmp:4 = S:4 << B;
-	A = (A & 0xffffffff00000000) | zext(tmp);
+	shift:4 = B:4 & 0x3f;
+	tmp:4 = S:4 << shift;
+	A = zext(tmp);
 @else
-	A = S << B;
+	shift = B & 0x3f;
+	A = S << shift;
 @endif
 }
 
@@ -3770,10 +3765,12 @@ define pcodeop lswxOp;
 :slw. A,S,B		is OP=31 & S & A & B & XOP_1_10=24 & Rc=1
 {
 @ifdef BIT_64
-	tmp:4 = S:4 << B;
-	A = (A & 0xffffffff00000000) | zext(tmp);
+	shift:4 = B:4 & 0x3f;
+	tmp:4 = S:4 << shift;
+	A = zext(tmp);
 @else
-	A = S << B;	
+	shift = B & 0x3f;
+	A = S << shift;
 @endif
 	cr0flags(A);
 }
@@ -3816,12 +3813,13 @@ define pcodeop lswxOp;
 #sraw r0,r0,r0	0x7C 00 06 30
 :sraw A,S,B			is OP=31 & A & S & B & XOP_1_10=792 & Rc=0
 {
-	shift:$(REGISTER_SIZE) = B & 0x3f;
 @ifdef BIT_64
+	shift:4 = B:4 & 0x3f;
 	shiftCarry(S:4,shift);
 	tmp2:4 = S:4 s>> shift;
-	A = (A & 0xffffffff00000000) | zext(tmp2);
+	A = sext(tmp2);
 @else
+	shift = B & 0x3f;
 	shiftCarry(S,shift);
 	A = S s>> shift;
 @endif
@@ -3829,12 +3827,13 @@ define pcodeop lswxOp;
 #sraw. r0,r0,r0	0x7C 00 06 31
 :sraw. A,S,B		is OP=31 & A & S & B & XOP_1_10=792 & Rc=1
 {
-	shift:$(REGISTER_SIZE) = B & 0x3f;
 @ifdef BIT_64
+	shift:4 = B:4 & 0x3f;
 	shiftCarry(S:4,shift);
 	tmp2:4 = S:4 s>> shift;
-	A = (A & 0xffffffff00000000) | zext(tmp2);
+	A = sext(tmp2);
 @else
+	shift = B & 0x3f;
 	shiftCarry(S,shift);
 	A = S s>> shift;
 @endif
@@ -3848,7 +3847,7 @@ define pcodeop lswxOp;
 	shift:4 = SHL;
 	shiftCarry(S:4,shift);
 	tmp2:4 = S:4 s>> shift;
-	A = (A & 0xffffffff00000000) | zext(tmp2);
+	A = sext(tmp2);
 @else
 	shiftCarry(S,SHL);
 	A = S s>> SHL;
@@ -3861,7 +3860,7 @@ define pcodeop lswxOp;
 	shift:4 = SHL;
 	shiftCarry(S:4,shift);
 	tmp2:4 = S:4 s>> shift;
-	A = (A & 0xffffffff00000000) | zext(tmp2);
+	A = sext(tmp2);
 @else
 	shiftCarry(S,SHL);
 	A = S s>> SHL;
@@ -3888,10 +3887,12 @@ define pcodeop lswxOp;
 :srw A,S,B		is OP=31 & S & A & B & XOP_1_10=536 & Rc=0
 {
 @ifdef BIT_64
-	tmp:4 = S:4 >> B;
-	A = (A & 0xffffffff00000000) | zext(tmp);
+	shift:4 = B:4 & 0x3f;
+	tmp:4 = S:4 >> shift;
+	A = zext(tmp);
 @else
-	A = S >> B;
+	shift = B & 0x3f;
+	A = S >> shift;
 @endif
 }
 
@@ -3900,10 +3901,12 @@ define pcodeop lswxOp;
 :srw. A,S,B		is OP=31 & S & A & B & XOP_1_10=536 & Rc=1
 {
 @ifdef BIT_64
-	tmp:4 = S:4 >> B;
-	A = (A & 0xffffffff00000000) | zext(tmp);
+	shift:4 = B:4 & 0x3f;
+	tmp:4 = S:4 >> shift;
+	A = zext(tmp);
 @else
-	A = S >> B;	
+	shift = B & 0x3f;
+	A = S >> shift;
 @endif
 	cr0flags(A);
 }
@@ -4253,26 +4256,26 @@ define pcodeop stswxOp;
 #subfe r0,r0,r0  0x7c 00 01 10
 :subfe D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=136 & Rc=0
 {	
-	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A; 
-	xer_ca= (tmp<=B); 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	subExtendedCarry(B,A);
 	D = B - tmp; 
 }
 
 #subfe. r0,r0,r0  0x7c 00 01 11
 :subfe. D,A,B		is OP=31 & D & A & B & OE=0 & XOP_1_9=136 & Rc=1	
 { 	
-	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A; 
-	xer_ca= (tmp<=B); 
-	D = B - tmp; 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	subExtendedCarry(B,A);
+	D = B - tmp;
 	cr0flags(D);
 }
 
 #subfeo r0,r0,r0  0x7c 00 05 10
 :subfeo D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=136 & Rc=0
 { 
-	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A; 
-	xer_ca= (tmp<=B); 
-	subOverflow( B, tmp );
+	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A;
+	subExtendedOverflow(B,A); 
+	subExtendedCarry(B,A);
 	D = B - tmp;
 }
 
@@ -4280,8 +4283,8 @@ define pcodeop stswxOp;
 :subfeo. D,A,B		is OP=31 & D & A & B & OE=1 & XOP_1_9=136 & Rc=1
 { 	
 	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A; 
-	xer_ca= (tmp<=B); 
-	subOverflow( B, tmp );
+	subExtendedOverflow(B,A);
+	subExtendedCarry(B,A);
 	D = B - tmp;
 	cr0flags(D);
 }
@@ -4296,36 +4299,39 @@ define pcodeop stswxOp;
 #subfme r0,r0	0x7c 00 01 d0
 :subfme D,A			is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=232 & Rc=0
 {
-	tmp:$(REGISTER_SIZE)=zext(!xer_ca)+A;
-	xer_ca=!(-1 s< tmp);
-	D=-1-tmp; 
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	Bval:$(REGISTER_SIZE) = ~(0);
+	subExtendedCarry(Bval,A);
+	D = Bval - tmp;
 }
 
 #subfme. r0,r0	0x7c 00 01 d1
 :subfme. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=232 & Rc=1
 {
-	tmp:$(REGISTER_SIZE)=zext(!xer_ca)+A;
-	xer_ca=!(-1 s< tmp);
-	D=-1-tmp;
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	Bval:$(REGISTER_SIZE) = ~(0);
+	subExtendedCarry(Bval,A);
+	D = Bval - tmp;
 	cr0flags(D);
 }
 
-#subfmeo r0,r0	0x7c 00 05 d0
 :subfmeo D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=232 & Rc=0
 {
-	tmp:$(REGISTER_SIZE)=zext(!xer_ca)+A;
-	subOverflow(0xffffffff,tmp);
-	xer_ca=!(-1 s< tmp);
-	D=-1-tmp;
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	Bval:$(REGISTER_SIZE) = ~(0);
+	subExtendedOverflow(Bval,A);
+	subExtendedCarry(Bval,A);
+	D = Bval - tmp;
 }
 
 #subfmeo. r0,r0	0x7c 00 05 d1
 :subfmeo. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=232 & Rc=1
 {
-	tmp:$(REGISTER_SIZE)=zext(!xer_ca)+A;
-	subOverflow(0xffffffff,tmp);
-	xer_ca=!(-1 s< tmp);
-	D=-1-tmp;
+	tmp:$(REGISTER_SIZE) = A + zext(!xer_ca); 
+	Bval:$(REGISTER_SIZE) = ~(0);
+	subExtendedOverflow(Bval,A);
+	subExtendedCarry(Bval,A);
+	D = Bval - tmp;
 	cr0flags(D);
 }
 
@@ -4333,7 +4339,8 @@ define pcodeop stswxOp;
 :subfze D,A			is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=200 & Rc=0
 {
 	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A;
-	xer_ca=!(0 s< tmp);
+	Bval:$(REGISTER_SIZE) = 0;
+	subExtendedCarry(Bval,A);
 	D=-tmp;
 }
 
@@ -4341,7 +4348,8 @@ define pcodeop stswxOp;
 :subfze. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=0 & XOP_1_9=200 & Rc=1
 {
 	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A;
-	xer_ca= !(0 s< tmp);
+	Bval:$(REGISTER_SIZE) = 0;
+	subExtendedCarry(Bval,A);
 	D=-tmp;
 	cr0flags(D);
 }
@@ -4350,8 +4358,9 @@ define pcodeop stswxOp;
 :subfzeo D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=200 & Rc=0
 {
 	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A;
-	subOverflow(0,tmp);
-	xer_ca= !(0 s< tmp);
+	Bval:$(REGISTER_SIZE) = 0;
+	subExtendedOverflow(Bval,A);
+	subExtendedCarry(Bval,A);
 	D=-tmp;
 }
 
@@ -4359,8 +4368,9 @@ define pcodeop stswxOp;
 :subfzeo. D,A		is OP=31 & D & A & BITS_11_15=0 & OE=1 & XOP_1_9=200 & Rc=1
 {
 	tmp:$(REGISTER_SIZE) = zext(!xer_ca)+A;
-	subOverflow(0,tmp);
-	xer_ca= !(0 s< tmp);
+	Bval:$(REGISTER_SIZE) = 0;
+	subExtendedOverflow(Bval,A);
+	subExtendedCarry(Bval,A);
 	D=-tmp;
 	cr0flags(D);
 }

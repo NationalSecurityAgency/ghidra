@@ -1,5 +1,6 @@
 @define ENDIAN "big"
 @define ALIGN "2"
 @define SIZE "4"
+@define DATA_SPACE "ram"
 
 @include "toy_builder.sinc"

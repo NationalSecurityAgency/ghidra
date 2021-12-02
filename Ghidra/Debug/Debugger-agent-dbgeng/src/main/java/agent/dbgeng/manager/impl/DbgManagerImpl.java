@@ -606,7 +606,7 @@ public class DbgManagerImpl implements DbgManager {
 		handlerMap.putVoid(DbgBreakpointDeletedEvent.class, this::processBreakpointDeleted);
 
 		statusMap.put(DbgBreakpointEvent.class, DebugStatus.BREAK);
-		statusMap.put(DbgExceptionEvent.class, DebugStatus.BREAK);
+		statusMap.put(DbgExceptionEvent.class, DebugStatus.NO_CHANGE);
 		statusMap.put(DbgProcessCreatedEvent.class, DebugStatus.BREAK);
 		statusMap.put(DbgStateChangedEvent.class, DebugStatus.NO_CHANGE);
 		statusMap.put(DbgStoppedEvent.class, DebugStatus.BREAK);

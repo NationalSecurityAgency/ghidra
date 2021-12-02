@@ -410,8 +410,10 @@ public class OptionsPanel extends JPanel {
 			}
 
 			String[] descriptions = editor.getOptionDescriptions();
-			for (String string : descriptions) {
-				results.add(string);
+			if (descriptions != null) {
+				for (String string : descriptions) {
+					results.add(string);
+				}
 			}
 		}
 	}

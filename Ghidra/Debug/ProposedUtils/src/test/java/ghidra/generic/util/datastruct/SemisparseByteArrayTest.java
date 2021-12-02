@@ -88,6 +88,16 @@ public class SemisparseByteArrayTest {
 	}
 
 	@Test
+	public void testBoundaryAtUnsignedMax() {
+		SemisparseByteArray cache = new SemisparseByteArray();
+
+		cache.putData(-HW.length, HW);
+		byte[] data = new byte[HW.length];
+		cache.getData(-HW.length, data);
+		assertEquals(HELLO_WORLD, new String(data));
+	}
+
+	@Test
 	public void testLarge() {
 		Random rand = new Random();
 		byte[] chunk = new byte[SemisparseByteArray.BLOCK_SIZE * 10];

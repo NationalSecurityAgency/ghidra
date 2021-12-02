@@ -21,6 +21,7 @@ import java.util.Set;
 import ghidra.app.services.TraceRecorder;
 import ghidra.framework.plugintool.PluginTool;
 import ghidra.program.model.address.*;
+import ghidra.program.model.lang.Language;
 import ghidra.program.model.lang.Register;
 import ghidra.trace.model.Trace;
 import ghidra.trace.model.memory.TraceMemorySpace;
@@ -32,9 +33,9 @@ public class ReadsTargetRegistersPcodeExecutorState
 
 	protected class ReadsTargetRegistersCachedSpace extends AbstractReadsTargetCachedSpace {
 
-		public ReadsTargetRegistersCachedSpace(AddressSpace space, TraceMemorySpace source,
-				long snap) {
-			super(space, source, snap);
+		public ReadsTargetRegistersCachedSpace(Language language, AddressSpace space,
+				TraceMemorySpace source, long snap) {
+			super(language, space, source, snap);
 		}
 
 		@Override
@@ -71,6 +72,6 @@ public class ReadsTargetRegistersPcodeExecutorState
 	@Override
 	protected AbstractReadsTargetCachedSpace createCachedSpace(AddressSpace s,
 			TraceMemorySpace tms) {
-		return new ReadsTargetRegistersCachedSpace(s, tms, snap);
+		return new ReadsTargetRegistersCachedSpace(language, s, tms, snap);
 	}
 }

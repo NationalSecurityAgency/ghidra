@@ -356,10 +356,10 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
     & vrD_16_0 & vrD_16_1 & vrD_16_2 & vrD_16_3 & vrD_16_4 & vrD_16_5 & vrD_16_6 & vrD_16_7 
 {   
     vrD_16_0 = vrA_16_0 + vrB_16_0;
-    vrD_16_1 = vrA_16_1 + vrB_16_0;
+    vrD_16_1 = vrA_16_1 + vrB_16_1;
     vrD_16_2 = vrA_16_2 + vrB_16_2;
     vrD_16_3 = vrA_16_3 + vrB_16_3;
-    vrD_16_4 = vrA_16_3 + vrB_16_4;
+    vrD_16_4 = vrA_16_4 + vrB_16_4;
     vrD_16_5 = vrA_16_5 + vrB_16_5;
     vrD_16_6 = vrA_16_6 + vrB_16_6;
     vrD_16_7 = vrA_16_7 + vrB_16_7;
@@ -1079,16 +1079,16 @@ vaddubm_part2: is  vrA_8_8 & vrA_8_9 & vrA_8_10 & vrA_8_11 & vrA_8_12 & vrA_8_13
 :vsubuhm vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1088 
     & vrA_16_0 & vrA_16_1 & vrA_16_2 & vrA_16_3 & vrA_16_4 & vrA_16_5 & vrA_16_6 & vrA_16_7 
     & vrB_16_0 & vrB_16_1 & vrB_16_2 & vrB_16_3 & vrB_16_4 & vrB_16_5 & vrB_16_6 & vrB_16_7 
-    & vrC_16_0 & vrC_16_1 & vrC_16_2 & vrC_16_3 & vrC_16_4 & vrC_16_5 & vrC_16_6 & vrC_16_7 
+    & vrD_16_0 & vrD_16_1 & vrD_16_2 & vrD_16_3 & vrD_16_4 & vrD_16_5 & vrD_16_6 & vrD_16_7 
 {	
-    vrC_16_0 = vrA_16_0 - vrB_16_0;
-    vrC_16_1 = vrA_16_1 - vrB_16_1;
-    vrC_16_2 = vrA_16_2 - vrB_16_2;
-    vrC_16_3 = vrA_16_3 - vrB_16_3;
-    vrC_16_4 = vrA_16_4 - vrB_16_4;
-    vrC_16_5 = vrA_16_5 - vrB_16_5;
-    vrC_16_6 = vrA_16_6 - vrB_16_6;
-    vrC_16_7 = vrA_16_7 - vrB_16_7;
+    vrD_16_0 = vrA_16_0 - vrB_16_0;
+    vrD_16_1 = vrA_16_1 - vrB_16_1;
+    vrD_16_2 = vrA_16_2 - vrB_16_2;
+    vrD_16_3 = vrA_16_3 - vrB_16_3;
+    vrD_16_4 = vrA_16_4 - vrB_16_4;
+    vrD_16_5 = vrA_16_5 - vrB_16_5;
+    vrD_16_6 = vrA_16_6 - vrB_16_6;
+    vrD_16_7 = vrA_16_7 - vrB_16_7;
 }
 
 :vsubuhs vrD,vrA,vrB		is OP=4 & vrD & vrA & vrB & XOP_0_10=1600
@@ -1705,7 +1705,7 @@ define pcodeop altv300_71;
 
 :vextractd vrD,vrB,UIMB		is OP=4 & vrD & BITS_20_20=0 & UIMB & vrB & XOP_0_10=717 {
 	# if UIMB > 8 the result is undefined
-	vrD = (vrB >> (16 * (8 - UIMB))) & 0xffffffffffffffff;
+	vrD = (vrB >> (8 * (8 - UIMB))) & 0xffffffffffffffff;
 }
 
 :vextractub vrD,vrB,UIMB	is OP=4 & vrD & BITS_20_20=0 & UIMB & vrB & XOP_0_10=525 {

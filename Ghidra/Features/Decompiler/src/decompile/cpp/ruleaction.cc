@@ -5977,6 +5977,13 @@ void AddTreeState::calcSubtype(void)
     }
     extra = AddrSpace::byteToAddress(extra, ct->getWordSize()); // Convert back to address units
     offset = (nonmultsum - extra) & ptrmask;
+    if (pRelType != (TypePointerRel *)0 && offset == pRelType->getPointerOffset()) {
+      // offset falls within basic ptrto
+      if (!pRelType->evaluateThruParent(0)) {	// If we are not representing offset 0 through parent
+	valid = false;				// Use basic (alternate) form
+	return;
+      }
+    }
     isSubtype = true;
   }
   else if (baseType->getMetatype() == TYPE_ARRAY) {
@@ -6331,7 +6338,7 @@ int4 RuleStructOffset0::applyOp(PcodeOp *op,Funcdata &data)
   if (ct->getMetatype() != TYPE_PTR) return 0;
   Datatype *baseType = ((TypePointer *)ct)->getPtrTo();
   uintb offset = 0;
-  if (ct->isFormalPointerRel()) {
+  if (ct->isFormalPointerRel() && ((TypePointerRel *)ct)->evaluateThruParent(0)) {
     TypePointerRel *ptRel = (TypePointerRel *)ct;
     baseType = ptRel->getParent();
     if (baseType->getMetatype() != TYPE_STRUCT)

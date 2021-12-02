@@ -120,7 +120,7 @@ public class DBTraceProgramViewRootModule implements ProgramModule {
 		try (LockHold hold = LockHold.lock(program.trace.getReadWriteLock().readLock())) {
 			program.memory.forVisibleRegions(region -> names.add(region.getName()));
 		}
-		return names.indexOf(names);
+		return names.indexOf(name);
 	}
 
 	@Override

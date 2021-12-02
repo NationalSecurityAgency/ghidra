@@ -452,9 +452,8 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 			while (!remains.isEmpty()) {
 				AddressRange range = remains.getFirstRange();
 				remains.delete(range);
-				for (Entry<TraceAddressSnapRange, TraceMemoryState> entry : stateMapSpace.reduce(
-					TraceAddressSnapRangeQuery.intersecting(range.getMinAddress(),
-						range.getMaxAddress(), snap, snap)).entries()) {
+				for (Entry<TraceAddressSnapRange, TraceMemoryState> entry : doGetStates(snap,
+					range)) {
 					AddressRange foundRange = entry.getKey().getRange();
 					remains.delete(foundRange);
 					if (predicate.test(entry.getValue())) {
@@ -466,11 +465,21 @@ public class DBTraceMemorySpace implements Unfinished, TraceMemorySpace, DBTrace
 		}
 	}
 
+	protected Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> doGetStates(long snap,
+			AddressRange range) {
+		// TODO: A better way to handle memory-mapped registers?
+		if (getAddressSpace().isRegisterSpace() && !range.getAddressSpace().isRegisterSpace()) {
+			return trace.getMemoryManager().getStates(snap, range);
+		}
+		return stateMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range.getMinAddress(),
+			range.getMaxAddress(), snap, snap)).entries();
+	}
+
 	@Override
 	public Collection<Entry<TraceAddressSnapRange, TraceMemoryState>> getStates(long snap,
 			AddressRange range) {
-		return stateMapSpace.reduce(TraceAddressSnapRangeQuery.intersecting(range.getMinAddress(),
-			range.getMaxAddress(), snap, snap)).entries();
+		assertInSpace(range);
+		return doGetStates(snap, range);
 	}
 
 	@Override
