@@ -43,7 +43,7 @@ else {
 /***************************************************************************************
  * Make sure Gradle wasn't launched with a 32-bit Java...it can cause confusing errors
  ***************************************************************************************/
-if ("32".equals(System.getProperty("sun.arch.data.model"))) {
+if ("32" == System.getProperty("sun.arch.data.model")) {
 	throw new GradleException("\n\n\t32-bit Java detected!  Please use 64-bit Java.\n\n");
 }
 
@@ -218,24 +218,22 @@ List<String> getExternalRuntimeDependencies(Project project) {
 
 List<String> getExternalRuntimeDependencies(Project project, Configuration configuration) {
 	List<String> list = new ArrayList<>();
-	configuration.dependencies.each { dep ->
-
+	for (dep in configuration.dependencies) {
 		// if the dependency is an external jar
-		if (dep instanceof ExternalDependency) { 	
+		if (dep instanceof ExternalDependency) {
 			String name = dep.getName()
 			Set<String> classifiers = dep.artifacts.classifier
-			String group = dep.getGroup()
-			String version = dep.getVersion()	
+			String version = dep.getVersion()
 			String searchString = name
 
 			if (version != null) {
-				searchString = name+"-"+version;
+				searchString = name + "-" + version;
 			}
 
 			if (!classifiers.empty) {
 				String cls = classifiers.first()
 				if (cls != null) {
-					searchString+= "-$cls"
+					searchString += "-$cls"
 				}
 			}
 			// search for the dependency in the runtime class path
@@ -244,13 +242,13 @@ List<String> getExternalRuntimeDependencies(Project project, Configuration confi
 			}
 
 			if (depPath == null) {
-				println("****************DID NOT FIND DEPENDENCY: name = "+name+" version = "+version)
+				println("****************DID NOT FIND DEPENDENCY: name = " + name + " version = " + version)
 			}
 			// if we found the path, then add it to the list
 			if (depPath) {
 				list.add(depPath)
 			}
-		}	
+		}
 	}
 	return list;
 }
