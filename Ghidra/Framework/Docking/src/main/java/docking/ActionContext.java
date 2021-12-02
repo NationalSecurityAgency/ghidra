@@ -16,7 +16,7 @@
 package docking;
 
 import java.awt.Component;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 import docking.action.DockingActionIf;
 
@@ -78,6 +78,7 @@ public class ActionContext {
 	private MouseEvent mouseEvent;
 	private Object contextObject;
 	private Object sourceObject;
+	private int eventModifiers;
 	private ActionContext globalContext;
 
 	// Note: the setting of this object is delayed.  This allows clients to build-up the state
@@ -184,6 +185,28 @@ public class ActionContext {
 	}
 
 	/**
+	 * Sets the modifiers for this event.
+	 * 
+	 * @param modifiers bit-masked int, see {@link ActionEvent#getModifiers()} or
+	 * {@link MouseEvent#getModifiersEx()}
+	 */
+	public void setEventModifiers(int modifiers) {
+		this.eventModifiers = modifiers;
+	}
+
+	/**
+	 * Returns the modifiers for this event.
+	 * <p>
+	 * Only present for some mouse assisted events, e.g. clicking on a toolbar button or choosing
+	 * a menu item in a popup menu. 
+	 * 
+	 * @return bit-masked int, see {@link InputEvent#SHIFT_MASK}, etc
+	 */
+	public int getEventModifiers() {
+		return eventModifiers;
+	}
+
+	/**
 	 * Sets the sourceObject for this ActionContext.  This method is used internally by the 
 	 * DockingWindowManager. ComponentProvider and action developers should only use this 
 	 * method for testing.
@@ -206,6 +229,7 @@ public class ActionContext {
 	 */
 	public ActionContext setMouseEvent(MouseEvent e) {
 		this.mouseEvent = e;
+		this.eventModifiers = e.getModifiersEx();
 		return this;
 	}
 
