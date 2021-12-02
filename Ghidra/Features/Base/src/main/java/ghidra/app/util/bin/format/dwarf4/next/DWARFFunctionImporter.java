@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import ghidra.app.cmd.comments.AppendCommentCmd;
 import ghidra.app.cmd.label.SetLabelPrimaryCmd;
 import ghidra.app.util.bin.format.dwarf4.*;
+import ghidra.app.util.bin.format.dwarf4.attribs.DWARFNumericAttribute;
 import ghidra.app.util.bin.format.dwarf4.encoding.*;
 import ghidra.app.util.bin.format.dwarf4.expression.*;
 import ghidra.program.database.data.DataTypeUtilities;
@@ -176,7 +177,11 @@ public class DWARFFunctionImporter {
 			return true;
 		}
 
-		if (diea.getLowPC(-1) == 0) {
+		// fetch the low_pc attribute directly instead of calling diea.getLowPc() to avoid
+		// any fixups applied by lower level code
+		DWARFNumericAttribute attr =
+			diea.getAttribute(DWARFAttribute.DW_AT_low_pc, DWARFNumericAttribute.class);
+		if (attr != null && attr.getUnsignedValue() == 0) {
 			return true;
 		}
 
