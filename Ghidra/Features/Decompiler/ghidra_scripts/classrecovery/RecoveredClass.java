@@ -191,7 +191,7 @@ public class RecoveredClass {
 			return;
 		}
 
-		if (!classOffsetToVftableMap.keySet().contains(offset)) {
+		if (!classOffsetToVftableMap.containsKey(offset)) {
 
 			// error if try to add same address to different offset
 			if (classOffsetToVftableMap.values().contains(vftableAddress)) {
@@ -219,7 +219,7 @@ public class RecoveredClass {
 
 	public void addParentToBaseTypeMapping(RecoveredClass recoveredClass, Boolean isVirtualBase) {
 
-		if (!parentToBaseTypeMap.keySet().contains(recoveredClass)) {
+		if (!parentToBaseTypeMap.containsKey(recoveredClass)) {
 			parentToBaseTypeMap.put(recoveredClass, isVirtualBase);
 		}
 	}
@@ -658,7 +658,7 @@ public class RecoveredClass {
 	public void addClassHierarchyMapping(RecoveredClass recoveredClass,
 			List<RecoveredClass> recoveredClasses) {
 
-		if (!classHierarchyMap.keySet().contains(recoveredClass)) {
+		if (!classHierarchyMap.containsKey(recoveredClass)) {
 			classHierarchyMap.put(recoveredClass, recoveredClasses);
 		}
 	}

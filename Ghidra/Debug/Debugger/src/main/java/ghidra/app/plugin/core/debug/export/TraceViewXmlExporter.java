@@ -40,14 +40,14 @@ public class TraceViewXmlExporter extends XmlExporter {
 	public List<Option> getOptions(DomainObjectService domainObjectService) {
 		List<Option> options = super.getOptions(domainObjectService);
 		return options.stream()
-				.filter(o -> !hideOpts.keySet().contains(o.getName()))
+				.filter(o -> !hideOpts.containsKey(o.getName()))
 				.collect(Collectors.toList());
 	}
 
 	@Override
 	public void setOptions(List<Option> options) throws OptionException {
 		List<Option> opts = new ArrayList<>(options);
-		options.stream().filter(o -> !hideOpts.keySet().contains(o.getName())).forEach(opts::add);
+		options.stream().filter(o -> !hideOpts.containsKey(o.getName())).forEach(opts::add);
 		for (Map.Entry<String, Object> ent : hideOpts.entrySet()) {
 			opts.add(new Option(ent.getKey(), ent.getValue()));
 		}

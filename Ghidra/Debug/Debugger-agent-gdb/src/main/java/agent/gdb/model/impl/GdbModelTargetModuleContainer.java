@@ -107,7 +107,7 @@ public class GdbModelTargetModuleContainer
 	protected CompletableFuture<Void> doRefresh() {
 		return inferior.listModules().thenCompose(byName -> {
 			for (String modName : inferior.getKnownModules().keySet()) {
-				if (!byName.keySet().contains(modName)) {
+				if (!byName.containsKey(modName)) {
 					impl.deleteModelObject(byName.get(modName));
 				}
 			}

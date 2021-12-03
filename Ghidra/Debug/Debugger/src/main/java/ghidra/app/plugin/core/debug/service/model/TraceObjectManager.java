@@ -232,7 +232,7 @@ public class TraceObjectManager {
 
 		Set<Class<? extends TargetObject>> interfaces = obj.getSchema().getInterfaces();
 		for (Class<? extends TargetObject> ifc : interfaces) {
-			if (handlerMapInit.keySet().contains(ifc)) {
+			if (handlerMapInit.containsKey(ifc)) {
 				return true;
 			}
 		}

@@ -171,7 +171,7 @@ public class FunctionTagListingMerger extends AbstractListingMerger {
 
 	@Override
 	public boolean hasConflict(Address addr) {
-		return conflictMap.keySet().contains(addr);
+		return conflictMap.containsKey(addr);
 	}
 
 	@Override

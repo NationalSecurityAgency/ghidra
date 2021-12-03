@@ -4322,7 +4322,7 @@ public class RecoveredClassHelper {
 				continue;
 			}
 
-			if (!functionOccuranceMap.keySet().contains(firstCalledFunction)) {
+			if (!functionOccuranceMap.containsKey(firstCalledFunction)) {
 				functionOccuranceMap.put(firstCalledFunction, 1);
 			}
 			else {
