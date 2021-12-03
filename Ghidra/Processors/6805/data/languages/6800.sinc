@@ -17,9 +17,9 @@ define register offset=0 size=1 [ A B ];
 # 8-bit condition code register
 define register offset=8 size=1 [ CC ];
 # 16-bit registers:
-    PC: Program counter
-    S:  Stack pointer
-    X: index register
+#    PC: Program counter
+#    S:  Stack pointer
+#    X: index register
 define register offset=16 size=2 [ PC X S ];
 
 # define status bits: (See also 8051/z80).
@@ -42,7 +42,7 @@ define token data8 (8)
 ;
 
 define token data (16)
-    imm16   = (0,15)
+    imm16     = (0,15)
 ;
 
 ################################################################
@@ -57,19 +57,19 @@ OP1: "#"imm8    is op45=0; imm8
     local tmp:1 = imm8;
     export tmp;
 }
-OP1: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
+OP1: imm8    is (op47=0 | op47=9 | op47=0xD); imm8
 {
     local tmp:1 = imm8;
-    export *:1 tmp;
-}
-OP1: imm8,X  is op45=2; imm8
-{
-    local tmp:2 = X + zext(imm8);
     export *:1 tmp;
 }
 OP1: imm16    is op45=3; imm16
 {
     export *:1 imm16;
+}
+OP1: imm8,X  is op45=2 & X; imm8
+{
+    local tmp:2 = imm8 + X;
+    export *:1 tmp;
 }
 
 # 2-byte operand, direct/indexed/extended addressing mode
@@ -78,19 +78,19 @@ OP2: "#"imm16    is (op47=8 | op47=0xC); imm16
     local tmp:2 = imm16;
     export tmp;
 }
-OP2: "<"imm8    is (op47=0 | op47=9 | op47=0xD); imm8
+OP2: imm8    is (op47=0 | op47=9 | op47=0xD); imm8
 {
     local tmp:1 = imm8;
-    export *:2 tmp;
-}
-OP2: imm8,X      is (op47=6); imm8
-{
-    local tmp:2 = X + zext(imm8);
     export *:2 tmp;
 }
 OP2: imm16      is (op47=7 | op47=0xB | op47=0xF); imm16
 {
     export *:2 imm16;
+}
+OP2: imm8,X      is (op47=6) & X; imm8
+{
+    local tmp:2 = X + imm8;
+    export *:2 tmp;
 }
 
 ################################################################
@@ -295,14 +295,14 @@ macro storeRegister(reg, op)
     $(V) = 0;
 }
 
-# Push 1 byte operand op1
+# Push 1 byte operand op
 macro Push1(reg, op)
 {
     *:1 reg = op;
     reg = reg - 1;
 }
 
-# Push 2 byte operand op2
+# Push 2 byte operand op
 macro Push2(reg, op)
 {
     reg = reg - 1;
@@ -310,14 +310,14 @@ macro Push2(reg, op)
     reg = reg - 1;
 }
 
-# Pull 1 byte operand op1
+# Pull 1 byte operand op
 macro Pull1(reg, op)
 {
     op = *:1 reg;
     reg = reg + 1;
 }
 
-# Pull 2 byte operand op2
+# Pull 2 byte operand op
 macro Pull2(reg, op)
 {
     reg = reg + 1;
@@ -935,7 +935,7 @@ macro PushEntireState()
     call REL;
 }
 
-:JSR OP2    is (op=0x9D | op=0xAD | op=0xBD) ... & OP2
+:JSR OP2    is (op=0xAD | op=0xBD) ... & OP2
 {
     local addr:2 = inst_next;
     Push2(S, addr);
