@@ -492,7 +492,7 @@ macro PushEntireState()
     logicalShiftLeft(B);
 }
 
-:ALSL OP1    is (op=0x68 | op=0x78) ... & OP1
+:ASL OP1    is (op=0x68 | op=0x78) ... & OP1
 {
     logicalShiftLeft(OP1);
 }
@@ -861,22 +861,22 @@ macro PushEntireState()
     bitTest(B, OP1);
 }
 
-:LDA OP1    is (op=0x86 | op=0x96 | op=0xA6 | op=0xB6) ... & OP1
+:LDAA OP1    is (op=0x86 | op=0x96 | op=0xA6 | op=0xB6) ... & OP1
 {
     loadRegister(A, OP1);
 }
 
-:LDB OP1    is (op=0xC6 | op=0xD6 | op=0xE6 | op=0xF6) ... & OP1
+:LDAB OP1    is (op=0xC6 | op=0xD6 | op=0xE6 | op=0xF6) ... & OP1
 {
     loadRegister(B, OP1);
 }
 
-:STA OP1    is (op=0x97 | op=0xA7 | op=0xB7) ... & OP1
+:STAA OP1    is (op=0x97 | op=0xA7 | op=0xB7) ... & OP1
 {
     storeRegister(A, OP1);
 }
 
-:STB OP1    is (op=0xD7 | op=0xE7 | op=0xF7) ... & OP1
+:STAB OP1    is (op=0xD7 | op=0xE7 | op=0xF7) ... & OP1
 {
     storeRegister(B, OP1);
 }
@@ -901,12 +901,12 @@ macro PushEntireState()
     additionWithCarry(B, OP1);
 }
 
-:ORA OP1    is (op=0x8A | op=0x9A | op=0xAA | op=0xBA) ... & OP1
+:ORAA OP1    is (op=0x8A | op=0x9A | op=0xAA | op=0xBA) ... & OP1
 {
     logicalOr(A, OP1);
 }
 
-:ORB OP1    is (op=0xCA | op=0xDA | op=0xEA | op=0xFA) ... & OP1
+:ORAB OP1    is (op=0xCA | op=0xDA | op=0xEA | op=0xFA) ... & OP1
 {
     logicalOr(B, OP1);
 }
@@ -923,7 +923,7 @@ macro PushEntireState()
     addition(B, OP1);
 }
 
-:CMPX OP2    is (op=0x8C | op=0x9C | op=0xAC | op=0xBC) ... & OP2
+:CPX OP2    is (op=0x8C | op=0x9C | op=0xAC | op=0xBC) ... & OP2
 {
     compare(X, OP2);
 }
