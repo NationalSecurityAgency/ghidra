@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.*;
 
 import ghidra.app.util.MemoryBlockUtils;
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.bin.format.macho.MachException;
 import ghidra.app.util.bin.format.macho.MachHeader;
@@ -28,6 +27,7 @@ import ghidra.app.util.bin.format.macho.commands.NList;
 import ghidra.app.util.bin.format.macho.dyld.*;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.importer.MessageLogContinuesFactory;
+import ghidra.app.util.opinion.DyldCacheUtils.SplitDyldCache;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
@@ -44,31 +44,36 @@ import ghidra.util.task.TaskMonitor;
  */
 public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 
-	protected DyldCacheHeader dyldCacheHeader;
 	private boolean shouldProcessSymbols;
 	private boolean shouldCreateDylibSections;
 	private boolean shouldAddRelocationEntries;
+	private boolean shouldCombineSplitFiles;
 
 	/**
 	 * Creates a new {@link DyldCacheProgramBuilder} based on the given information.
 	 * 
 	 * @param program The {@link Program} to build up
 	 * @param provider The {@link ByteProvider} that contains the DYLD Cache bytes
-	 * @param fileBytes Where the Mach-O's bytes came from
+	 * @param fileBytes Where the DYLD Cache's bytes came from
 	 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
 	 * @param shouldCreateDylibSections True if memory blocks should be created for DYLIB sections; 
 	 *   otherwise, false
-	 * @param shouldAddRelocationEntries True to create a relocation entry for each fixed up pointer in pointer chain
+	 * @param shouldAddRelocationEntries True to create a relocation entry for each fixed up pointer
+	 *   in pointer chain
+	 * @param shouldCombineSplitFiles True if split DYLD Cache files should be automatically 
+	 *   imported and combined into 1 program; otherwise, false
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
 	 */
 	protected DyldCacheProgramBuilder(Program program, ByteProvider provider, FileBytes fileBytes,
 			boolean shouldProcessSymbols, boolean shouldCreateDylibSections,
-			boolean shouldAddRelocationEntries, MessageLog log, TaskMonitor monitor) {
+			boolean shouldAddRelocationEntries, boolean shouldCombineSplitFiles, MessageLog log,
+			TaskMonitor monitor) {
 		super(program, provider, fileBytes, log, monitor);
 		this.shouldProcessSymbols = shouldProcessSymbols;
 		this.shouldCreateDylibSections = shouldCreateDylibSections;
 		this.shouldAddRelocationEntries = shouldAddRelocationEntries;
+		this.shouldCombineSplitFiles = shouldCombineSplitFiles;
 	}
 
 	/**
@@ -80,44 +85,62 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * @param shouldProcessSymbols True if symbols should be processed; otherwise, false
 	 * @param shouldCreateDylibSections True if memory blocks should be created for DYLIB sections; 
 	 *   otherwise, false
-	 * @param addRelocationEntries True to create a relocation entry for each fixed up pointer in pointer chain
+	 * @param addRelocationEntries True to create a relocation entry for each fixed up pointer in 
+	 *   pointer chain; otherwise, false
+	 * @param shouldCombineSplitFiles True if split DYLD Cache files should be automatically 
+	 *   imported and combined into 1 program; otherwise, false
 	 * @param log The log
 	 * @param monitor A cancelable task monitor
 	 * @throws Exception if a problem occurs
 	 */
 	public static void buildProgram(Program program, ByteProvider provider, FileBytes fileBytes,
 			boolean shouldProcessSymbols, boolean shouldCreateDylibSections,
-			boolean addRelocationEntries, MessageLog log, TaskMonitor monitor) throws Exception {
-		DyldCacheProgramBuilder dyldCacheProgramBuilder =
-			new DyldCacheProgramBuilder(program, provider, fileBytes, shouldProcessSymbols,
-				shouldCreateDylibSections, addRelocationEntries, log, monitor);
+			boolean addRelocationEntries, boolean shouldCombineSplitFiles, MessageLog log,
+			TaskMonitor monitor) throws Exception {
+		DyldCacheProgramBuilder dyldCacheProgramBuilder = new DyldCacheProgramBuilder(program,
+			provider, fileBytes, shouldProcessSymbols, shouldCreateDylibSections,
+			addRelocationEntries, shouldCombineSplitFiles, log, monitor);
 		dyldCacheProgramBuilder.build();
 	}
 
 	@Override
 	protected void build() throws Exception {
 
-		monitor.setMessage("Parsing DYLD Cache header ...");
-		monitor.initialize(1);
-		dyldCacheHeader = new DyldCacheHeader(new BinaryReader(provider, true));
-		dyldCacheHeader.parseFromFile(shouldProcessSymbols, log, monitor);
-		monitor.incrementProgress(1);
+		try (SplitDyldCache splitDyldCache = new SplitDyldCache(provider, shouldProcessSymbols,
+			shouldCombineSplitFiles, log, monitor)) {
 
-		setDyldCacheImageBase();
-		processDyldCacheMemoryBlocks();
-		fixPageChains();
-		markupHeaders();
-		markupBranchIslands();
-		createSymbols();
-		processDylibs();
+			// Set image base
+			setDyldCacheImageBase(splitDyldCache.getDyldCacheHeader(0));
+
+			// Setup memory
+			for (int i = 0; i < splitDyldCache.size(); i++) {
+				DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
+				ByteProvider bp = splitDyldCache.getProvider(i);
+
+				processDyldCacheMemoryBlocks(header, bp);
+			}
+
+			// Perform additional DYLD processing
+			for (int i = 0; i < splitDyldCache.size(); i++) {
+				DyldCacheHeader header = splitDyldCache.getDyldCacheHeader(i);
+				ByteProvider bp = splitDyldCache.getProvider(i);
+
+				fixPageChains(header);
+				markupHeaders(header);
+				markupBranchIslands(header, bp);
+				createSymbols(header);
+				processDylibs(header, bp);
+			}
+		}
 	}
 
 	/**
 	 * Sets the program's image base.
 	 * 
+	 * @param dyldCacheHeader The "base" DYLD Cache header
 	 * @throws Exception if there was problem setting the program's image base
 	 */
-	private void setDyldCacheImageBase() throws Exception {
+	private void setDyldCacheImageBase(DyldCacheHeader dyldCacheHeader) throws Exception {
 		monitor.setMessage("Setting image base...");
 		monitor.initialize(1);
 		program.setImageBase(space.getAddress(dyldCacheHeader.getBaseAddress()), true);
@@ -127,20 +150,24 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	/**
 	 * Processes the DYLD Cache's memory mappings and creates memory blocks for them.
 	 * 
+	 * @param dyldCacheHeader The {@link DyldCacheHeader}
+	 * @param bp The corresponding {@link ByteProvider}
 	 * @throws Exception if there was a problem creating the memory blocks
 	 */
-	private void processDyldCacheMemoryBlocks() throws Exception {
+	private void processDyldCacheMemoryBlocks(DyldCacheHeader dyldCacheHeader, ByteProvider bp)
+			throws Exception {
 		List<DyldCacheMappingInfo> mappingInfos = dyldCacheHeader.getMappingInfos();
-
 		monitor.setMessage("Processing DYLD mapped memory blocks...");
 		monitor.initialize(mappingInfos.size());
+		FileBytes fb = MemoryBlockUtils.createFileBytes(program, bp, monitor);
 		long endOfMappedOffset = 0;
 		for (DyldCacheMappingInfo mappingInfo : mappingInfos) {
 			long offset = mappingInfo.getFileOffset();
 			long size = mappingInfo.getSize();
 			MemoryBlockUtils.createInitializedBlock(program, false, "DYLD",
-				space.getAddress(mappingInfo.getAddress()), fileBytes, offset, size, "", "",
+				space.getAddress(mappingInfo.getAddress()), fb, offset, size, "", "",
 				mappingInfo.isRead(), mappingInfo.isWrite(), mappingInfo.isExecute(), log);
+
 			if (offset + size > endOfMappedOffset) {
 				endOfMappedOffset = offset + size;
 			}
@@ -148,21 +175,22 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			monitor.incrementProgress(1);
 		}
 
-		if (endOfMappedOffset < provider.length()) {
+		if (endOfMappedOffset < bp.length()) {
 			monitor.setMessage("Processing DYLD unmapped memory block...");
 			MemoryBlockUtils.createInitializedBlock(program, true, "FILE",
-				AddressSpace.OTHER_SPACE.getAddress(endOfMappedOffset), fileBytes,
-				endOfMappedOffset, provider.length() - endOfMappedOffset,
-				"Useful bytes that don't get mapped into memory", "", false, false, false, log);
+				AddressSpace.OTHER_SPACE.getAddress(endOfMappedOffset), fb, endOfMappedOffset,
+				bp.length() - endOfMappedOffset, "Useful bytes that don't get mapped into memory",
+				"", false, false, false, log);
 		}
 	}
 
 	/**
 	 * Marks up the DYLD Cache headers.
 	 * 
+	 * @param dyldCacheHeader The {@link DyldCacheHeader}
 	 * @throws Exception if there was a problem marking up the headers
 	 */
-	private void markupHeaders() throws Exception {
+	private void markupHeaders(DyldCacheHeader dyldCacheHeader) throws Exception {
 		monitor.setMessage("Marking up DYLD headers...");
 		monitor.initialize(1);
 		dyldCacheHeader.parseFromMemory(program, space, log, monitor);
@@ -173,15 +201,18 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	/**
 	 * Marks up the DYLD Cache branch islands.
 	 * 
+	 * @param dyldCacheHeader The {@link DyldCacheHeader}
+	 * @param bp The corresponding {@link ByteProvider}
 	 * @throws Exception if there was a problem marking up the branch islands.
 	 */
-	private void markupBranchIslands() throws Exception {
+	private void markupBranchIslands(DyldCacheHeader dyldCacheHeader, ByteProvider bp)
+			throws Exception {
 		monitor.setMessage("Marking up DYLD branch islands...");
 		monitor.initialize(dyldCacheHeader.getBranchPoolAddresses().size());
 		for (Long addr : dyldCacheHeader.getBranchPoolAddresses()) {
 			try {
 				MachHeader header =
-					MachHeader.createMachHeader(MessageLogContinuesFactory.create(log), provider,
+					MachHeader.createMachHeader(MessageLogContinuesFactory.create(log), bp,
 						addr - dyldCacheHeader.getBaseAddress());
 				header.parse();
 				super.markupHeaders(header, space.getAddress(addr));
@@ -197,9 +228,10 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	/**
 	 * Creates the DYLD Cache symbols.
 	 * 
+	 * @param dyldCacheHeader The {@link DyldCacheHeader}
 	 * @throws Exception if there was a problem creating the symbols
 	 */
-	private void createSymbols() throws Exception {
+	private void createSymbols(DyldCacheHeader dyldCacheHeader) throws Exception {
 		DyldCacheLocalSymbolsInfo localSymbolsInfo = dyldCacheHeader.getLocalSymbolsInfo();
 		if (localSymbolsInfo != null) {
 			monitor.setMessage("Processing DYLD symbols...");
@@ -225,10 +257,12 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	/**
 	 * Fixes any chained pointers within each of the data pages.
 	 * 
+	 * @param dyldCacheHeader The {@link DyldCacheHeader}
 	 * @throws MemoryAccessException if there was a problem reading/writing memory.
 	 * @throws CancelledException if user cancels
 	 */
-	private void fixPageChains() throws MemoryAccessException, CancelledException {
+	private void fixPageChains(DyldCacheHeader dyldCacheHeader)
+			throws MemoryAccessException, CancelledException {
 		// locate slide Info
 		List<DyldCacheSlideInfoCommon> slideInfos = dyldCacheHeader.getSlideInfos();
 		for (DyldCacheSlideInfoCommon info : slideInfos) {
@@ -243,19 +277,22 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 	 * Processes the DYLD Cache's DYLIB files.  This will mark up the DYLIB files, added them to the
 	 * program tree, and make memory blocks for them.
 	 * 
+	 * @param dyldCacheHeader The {@link DyldCacheHeader}
+	 * @param bp The corresponding {@link ByteProvider}
 	 * @throws Exception if there was a problem processing the DYLIB files
 	 */
-	private void processDylibs() throws Exception {
+	private void processDylibs(DyldCacheHeader dyldCacheHeader, ByteProvider bp) throws Exception {
 		// Create an "info" object for each DyldCache DYLIB, which will make processing them 
 		// easier
 		monitor.setMessage("Parsing DYLIB's...");
-		monitor.initialize(dyldCacheHeader.getImageInfos().size());
 		TreeSet<DyldCacheMachoInfo> infoSet =
 			new TreeSet<>((a, b) -> a.headerAddr.compareTo(b.headerAddr));
-		for (DyldCacheImageInfo dyldCacheImageInfo : dyldCacheHeader.getImageInfos()) {
-			infoSet.add(new DyldCacheMachoInfo(provider,
-				dyldCacheImageInfo.getAddress() - dyldCacheHeader.getBaseAddress(),
-				space.getAddress(dyldCacheImageInfo.getAddress()), dyldCacheImageInfo.getPath()));
+		List<DyldCacheImage> mappedImages = dyldCacheHeader.getMappedImages();
+		monitor.initialize(mappedImages.size());
+		for (DyldCacheImage mappedImage : mappedImages) {
+			infoSet.add(new DyldCacheMachoInfo(bp,
+				mappedImage.getAddress() - dyldCacheHeader.getBaseAddress(),
+				space.getAddress(mappedImage.getAddress()), mappedImage.getPath()));
 			monitor.checkCanceled();
 			monitor.incrementProgress(1);
 		}
@@ -278,7 +315,7 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 			do {
 				DyldCacheMachoInfo next = iter.hasNext() ? iter.next() : null;
 				try {
-					curr.addToProgramTree(next);
+					curr.addToProgramTree(dyldCacheHeader, next);
 				}
 				catch (DuplicateNameException exc) {
 					log.appendException(exc);
@@ -357,11 +394,13 @@ public class DyldCacheProgramBuilder extends MachoProgramBuilder {
 		/**
 		 * Adds an entry to the program tree for this Mach-O
 		 * 
+		 * @param dyldCacheHeader The DYLD Cache header
 		 * @param next The Mach-O that comes directly after this one.  Could be null if this
 		 *   is the last one.
 		 * @throws Exception If there was a problem adding this Mach-O to the program tree
 		 */
-		public void addToProgramTree(DyldCacheMachoInfo next) throws Exception {
+		public void addToProgramTree(DyldCacheHeader dyldCacheHeader, DyldCacheMachoInfo next)
+				throws Exception {
 			ProgramFragment fragment = listing.getDefaultRootModule().createFragment(path);
 			if (next != null) {
 				fragment.move(headerAddr, next.headerAddr.subtract(1));
