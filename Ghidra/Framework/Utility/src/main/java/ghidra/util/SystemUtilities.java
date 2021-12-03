@@ -459,9 +459,8 @@ public class SystemUtilities {
 		//       Users can set the system property cpu.core.override to specify an exact
 		//       value to use for non-GUI usage.
 		//
-		if (numProcessors > 10) {
-			// TODO: This bound is fairly arbitrary, probably could be made even lower
-			numProcessors = 10;
+		if (numProcessors > 8) {
+			numProcessors = 8;
 		}
 
 		// Note:  this serves only to limit the number of cores possible, not to increase
