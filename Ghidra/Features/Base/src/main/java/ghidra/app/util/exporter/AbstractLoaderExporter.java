@@ -83,7 +83,7 @@ public abstract class AbstractLoaderExporter extends Exporter {
 			return false;
 		}
 		if (fileBytes.size() > 1) {
-			log.appendMsg("Exporting from more than 1 file source is not supported");
+			log.appendMsg("Exporting a program with more than 1 file source is not supported");
 			return false;
 		}
 
