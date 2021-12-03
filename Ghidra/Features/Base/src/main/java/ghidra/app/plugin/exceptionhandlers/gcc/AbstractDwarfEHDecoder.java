@@ -17,6 +17,7 @@ package ghidra.app.plugin.exceptionhandlers.gcc;
 
 import ghidra.app.plugin.exceptionhandlers.gcc.datatype.SignedLeb128DataType;
 import ghidra.app.plugin.exceptionhandlers.gcc.datatype.UnsignedLeb128DataType;
+import ghidra.app.util.opinion.ElfLoader;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.Program;
@@ -333,7 +334,10 @@ abstract class AbstractDwarfEHDecoder implements DwarfEHDecoder {
 
 		switch (appMode) {
 			case DW_EH_PE_absptr:
-				// just pass this through
+				// if the program has been rebased, need to add in the image base difference.
+				Long oib = ElfLoader.getElfOriginalImageBase(prog);
+				long programBaseAddressFixup = prog.getImageBase().getOffset() - oib.longValue();
+				val = val + programBaseAddressFixup;
 				break;
 
 			case DW_EH_PE_aligned:
