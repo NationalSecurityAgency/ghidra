@@ -2278,7 +2278,10 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// if cannot recover the base class array return the existing or computed one instead
 		// so user will at least have some information like correct size and some members
 		if (baseClassArrayData == null) {
-			classStructureDataType = createDefaultStructure(classStructure, classStructureDataType);
+			classStructureDataType.replaceWith(classStructure);
+
+			classStructureDataType = (Structure) dataTypeManager.addDataType(classStructureDataType,
+				DataTypeConflictHandler.DEFAULT_HANDLER);
 			return classStructureDataType;
 		}
 
@@ -2485,183 +2488,14 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		return classStructureDataType;
 	}
 
-
-
-
-	private Structure addClassVftables(Structure classStructureDataType,
-			RecoveredClass recoveredClass, Map<Address, DataType> vfPointerDataTypes)
-			throws CancelledException, IllegalArgumentException {
-
-		if (vfPointerDataTypes == null) {
-			return classStructureDataType;
-		}
-
-		if (!isClassOffsetToVftableMapComplete(recoveredClass)) {
-			Msg.debug(this,
-				"class vftable offset map for " + recoveredClass.getName() + " is not complete");
-		}
-
-		// iterate over the set of offsets to vftables for the class and if nothing
-		// is already at the offset, add the vftables
-		Map<Integer, Address> classOffsetToVftableMap = recoveredClass.getClassOffsetToVftableMap();
-		Set<Integer> classVftableOffsets = classOffsetToVftableMap.keySet();
-
-		if (classVftableOffsets.isEmpty()) {
-			return classStructureDataType;
-		}
-
-		for (Integer offset : classVftableOffsets) {
-			monitor.checkCanceled();
-
-			Address vftableAddress = classOffsetToVftableMap.get(offset);
-
-			int vftableOffset = offset.intValue();
-
-			DataType classVftablePointer = vfPointerDataTypes.get(vftableAddress);
-
-			boolean addedVftablePointer = false;
-			while (!addedVftablePointer) {
-
-				monitor.checkCanceled();
-
-				// if enough empty bytes - add class vftable pointer
-				if (EditStructureUtils.canAdd(classStructureDataType, vftableOffset,
-					classVftablePointer.getLength(), monitor)) {
-
-					classStructureDataType =
-						EditStructureUtils.addDataTypeToStructure(classStructureDataType,
-							vftableOffset,
-							classVftablePointer, CLASS_VTABLE_PTR_FIELD_EXT, monitor);
-
-					addedVftablePointer = true;
-					continue;
-				}
-
-				// if already has a base class vftable pointer replace with main class vftablePtr
-				// get the item at that location
-
-				//NOTE: this returns the component containing that offset so need to get the
-				// offset of the start of the component 
-				//TODO: maybe updated to getComponentContaining
-				DataTypeComponent currentComponent =
-					classStructureDataType.getComponentAt(vftableOffset);
-
-				int componentOffset = currentComponent.getOffset();
-
-				if (currentComponent.getFieldName().endsWith(CLASS_VTABLE_PTR_FIELD_EXT)) {
-					classStructureDataType.replaceAtOffset(vftableOffset, classVftablePointer,
-						classVftablePointer.getLength(), CLASS_VTABLE_PTR_FIELD_EXT, "");
-					addedVftablePointer = true;
-					continue;
-				}
-
-				// ToDO: check size first
-				if (!(currentComponent.getDataType() instanceof Structure)) {
-//					Msg.debug(this,
-//							"Overwriting non-empty, non-vftable, non-struct at offset " +
-//								offset.intValue() + " of " + classStructureDataType.getName());
-					classStructureDataType.replaceAtOffset(vftableOffset, classVftablePointer,
-						classVftablePointer.getLength(), CLASS_VTABLE_PTR_FIELD_EXT, "");
-					addedVftablePointer = true;
-					continue;
-				}
-
-				// if there is a structure at the offset, split it into pieces then 
-				// loop again to try to place vftable over either empty bytes or base vftableptr
-				if (currentComponent.getDataType() instanceof Structure) {
-
-					DataType currentDT = currentComponent.getDataType();
-					Structure internalStruct = (Structure) currentDT;
-					int sizeBefore = internalStruct.getLength();
-					internalStruct = splitStructure(internalStruct);
-					int sizeAfter = internalStruct.getLength();
-					if (sizeBefore != sizeAfter) {
-						Msg.debug(this,
-							"Splitting internal Struct " + internalStruct.getName() + " in " +
-								classStructureDataType.getName() + " at offset " +
-								offset.intValue());
-					}
-					DataTypeComponent[] components = internalStruct.getComponents();
-					for (DataTypeComponent component : components) {
-
-						int innerOffset = component.getOffset();
-
-						int replaceOffset = component.getOffset() + componentOffset;
-						if (classStructureDataType.getLength() <= replaceOffset) {
-							Msg.debug(this,
-								classStructureDataType.getName() + " trying to place component " +
-									component.getFieldName() + " at offset " +
-									component.getOffset());
-						}
-
-						// add indiv components of internal structure to the outer structure
-						classStructureDataType.replaceAtOffset(componentOffset + innerOffset,
-							component.getDataType(), component.getLength(),
-							component.getFieldName(), "");
-					}
-				}
-
-			}
-		}
-		return classStructureDataType;
-	}
-
-	private Structure splitStructure(Structure structure)
-			throws CancelledException, IllegalArgumentException {
-
-		structure.setPackingEnabled(false);
-
-
-
-		if (structure.isNotYetDefined() || isEmptyDefaultSizeStructure(structure)) {
-			DataType undefinedDataType = new Undefined4DataType();
-
-
-			if (defaultPointerSize == 8) {
-				undefinedDataType = new Undefined8DataType();
-			}
-			structure.replaceAtOffset(0, undefinedDataType, undefinedDataType.getLength(),
-				structure.getName() + "_expanded", "");
-		}
-		else {
-			DataTypeComponent[] interalStructComponents = structure.getComponents();
-
-			// add indiv components of internal structure to the outer structure
-			for (DataTypeComponent component : interalStructComponents) {
-				structure.replaceAtOffset(component.getOffset(), component.getDataType(),
-					component.getLength(), component.getFieldName(), "");
-			}
-		}
-
-		if (structure.getNumComponents() == structure.getNumDefinedComponents()) {
-			structure.setPackingEnabled(true);
-		}
-
-		return structure;
-	}
-
-
-	private boolean isEmptyDefaultSizeStructure(Structure structure) throws CancelledException {
-
-		if (structure.getLength() != defaultPointerSize) {
-			return false;
-		}
-		int numUndefined1s =
-			EditStructureUtils.getNumberOfUndefinedsStartingAtOffset(structure, 0, monitor);
-		if (structure.getLength() == numUndefined1s) {
-			return true;
-		}
-		return false;
-	}
-
 	/**
 	 * Method to return the offset of the given class's single virtual parent
 	 * @param recoveredClass the given class
 	 * @return the offset of the single virtual parent or null if there is not a single virtual parent
 	 * or if there is no mapping in the offset map for that parent
 	 * @throws CancelledException if cancelled
-	 * @throws AddressOutOfBoundsException 
-	 * @throws MemoryAccessException 
+	 * @throws AddressOutOfBoundsException if trying to access an address that does not exist in program
+	 * @throws MemoryAccessException  if trying to access memory that can't be accessed
 	 */
 	public Integer getSingleVirtualParentOffset(RecoveredClass recoveredClass)
 			throws CancelledException, MemoryAccessException, AddressOutOfBoundsException {
@@ -2780,41 +2614,6 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		RecoveredClass baseClass = getClass(namespace);
 
 		return baseClass;
-	}
-
-	/**
-	 * Method to add a pointer to the class vbtable to the given class's class structure
-	 * @param recoveredClass the given class
-	 * @param classStructureDataType the given class's class structure data type
-	 * @return the updated class structure
-	 * @throws CancelledException if cancelled
-	 */
-	private Structure addVbtableToClassStructure(RecoveredClass recoveredClass,
-			Structure classStructureDataType, boolean overwrite) throws CancelledException {
-
-		Structure vbtableStructure = recoveredClass.getVbtableStructure();
-
-		if (vbtableStructure != null) {
-
-			int vbtableOffset = recoveredClass.getVbtableOffset();
-
-			DataType vbaseStructPointer = dataTypeManager.getPointer(vbtableStructure);
-
-			int dataLength = vbaseStructPointer.getLength();
-			if (EditStructureUtils.canAdd(classStructureDataType, vbtableOffset, dataLength,
-				monitor)) {
-
-				classStructureDataType =
-					EditStructureUtils.addDataTypeToStructure(classStructureDataType,
-					vbtableOffset, vbaseStructPointer, "vbtablePtr", monitor);
-
-			}
-			else if (overwrite) {
-				classStructureDataType.replaceAtOffset(vbtableOffset, vbaseStructPointer,
-					vbaseStructPointer.getLength(), "vbtablePtr", "");
-			}
-		}
-		return classStructureDataType;
 	}
 
 	/**
