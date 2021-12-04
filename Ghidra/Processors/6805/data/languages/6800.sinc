@@ -87,7 +87,7 @@ OP2: imm16      is (op47=7 | op47=0xB | op47=0xF); imm16
 {
     export *:2 imm16;
 }
-OP2: imm8,X      is (op47=6) & X; imm8
+OP2: imm8,X      is (op47=6 | op47=0xA | op47=0xE) & X; imm8
 {
     local tmp:2 = X + imm8;
     export *:2 tmp;
