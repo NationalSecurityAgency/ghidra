@@ -211,7 +211,7 @@ macro addition(reg, op)
 
 macro additionWithCarry(reg, op)
 {
-    local carryIn = zext($(C));
+    local carryIn = $(C);
     local mask = 0x0F; # Low nibble mask
     local tmpResult = reg + op;
 
@@ -234,7 +234,7 @@ macro subtraction(reg, op)
 
 macro subtractionWithCarry(reg, op)
 {
-    local carryIn = zext($(C));
+    local carryIn = $(C);
     local tmpResult = reg - op;
 
     $(C) = (reg < op) || (tmpResult < carryIn);
@@ -346,6 +346,8 @@ macro PushEntireState()
 
 :NOP    is op=0x01
 {
+	# Intentional NOP.
+	goto inst_next;
 }
 
 :TAP    is op=0x06
@@ -789,7 +791,7 @@ macro PushEntireState()
 
 :WAI    is op=0x3E
 {
-    # DO NOT SUBMIT
+    PushEntireState();
 }
 
 :SWI    is op=0x3F
