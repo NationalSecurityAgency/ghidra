@@ -35,7 +35,7 @@ public class MemoryBox {
 	protected long stopAddr = -1;
 	protected long startTime;
 	protected long stopTime = -1;
-	protected Color color = Color.BLUE;
+	protected Color color;
 
 	protected int pixAstart;
 	protected int pixAend;
@@ -102,8 +102,8 @@ public class MemoryBox {
 	}
 
 	public void setColor(Color base, int type, int src) {
-		setColor(new Color(base.getRed(), (base.getGreen() + type * 8) % 255,
-			(base.getBlue() + src * 16) % 255));
+		setColor(new Color(base.getRed(), (base.getGreen() + (type << 3)) % 255,
+			(base.getBlue() + (src << 4)) % 255));
 	}
 
 	public int getAddressPixelStart() {
