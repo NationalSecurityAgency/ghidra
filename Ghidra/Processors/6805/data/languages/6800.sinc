@@ -57,7 +57,7 @@ OP1: "#"imm8    is op45=0; imm8
     local tmp:1 = imm8;
     export tmp;
 }
-OP1: imm8    is (op47=0 | op47=9 | op47=0xD); imm8
+OP1: imm8    is op45=1; imm8
 {
     local tmp:1 = imm8;
     export *:1 tmp;
