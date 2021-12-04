@@ -426,12 +426,35 @@ public class DyldCacheHeader implements StructConverter {
 	}
 
 	/**
-	 * Gets the {@link List} of {@link DyldCacheImageInfo}s. Requires header to have been parsed.
+	 * Generates a {@link List} of {@link DyldCacheImage}s that are mapped in by this 
+	 * {@link DyldCacheHeader}.  Requires header to have been parsed.
+	 * <p>
+	 * NOTE: A "split" DYLD Cache header may declare an image, but that image may get loaded at an
+	 * address defined by the memory map of a different split header.  This method will only return 
+	 * the images that are mapped by "this" header's memory map.
 	 * 
-	 * @return The {@link List} of {@link DyldCacheImageInfo}s
+	 * 
+	 * @return A {@link List} of {@link DyldCacheImage}s mapped by this {@link DyldCacheHeader}
 	 */
-	public List<DyldCacheImageInfo> getImageInfos() {
-		return imageInfoList;
+	public List<DyldCacheImage> getMappedImages() {
+		List<DyldCacheImage> images = new ArrayList<>();
+		if (imageInfoList.size() > 0) {
+			// The old, simple way
+			images.addAll(imageInfoList);
+		}
+		else {
+			// The new, split file way.  A split file will have an entry for every image, but
+			// not every image will be mapped.
+			for (DyldCacheImageTextInfo imageTextInfo : imageTextInfoList) {
+				for (DyldCacheMappingInfo mappingInfo : mappingInfoList) {
+					if (mappingInfo.contains(imageTextInfo.getAddress())) {
+						images.add(imageTextInfo);
+						break;
+					}
+				}
+			}
+		}
+		return images;
 	}
 
 	/**
@@ -691,8 +714,8 @@ public class DyldCacheHeader implements StructConverter {
 		monitor.setMessage("Marking up DYLD header...");
 		monitor.initialize(1);
 		try {
-			DataUtilities.createData(program, program.getImageBase(), toDataType(), -1, false,
-				DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
+			DataUtilities.createData(program, space.getAddress(getBaseAddress()), toDataType(), -1,
+				false, DataUtilities.ClearDataMode.CHECK_FOR_SPACE);
 			monitor.incrementProgress(1);
 		}
 		catch (CodeUnitInsertionException | DuplicateNameException | IOException e) {

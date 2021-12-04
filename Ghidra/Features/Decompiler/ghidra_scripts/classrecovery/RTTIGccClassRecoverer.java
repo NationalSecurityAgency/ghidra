@@ -2938,6 +2938,15 @@ public class RTTIGccClassRecoverer extends RTTIClassRecoverer {
 
 		}
 
+		//NEW:
+		classStructureDataType =
+			addClassVftables(classStructureDataType, recoveredClass, vfPointerDataTypes);
+
+		//NEW: unused at this point until something figures out how to create them and where to
+		// put them
+		classStructureDataType =
+			addVbtableToClassStructure(recoveredClass, classStructureDataType, true);
+
 		if (classStructureDataType.getNumComponents() == classStructureDataType
 				.getNumDefinedComponents()) {
 			classStructureDataType.setPackingEnabled(true);
