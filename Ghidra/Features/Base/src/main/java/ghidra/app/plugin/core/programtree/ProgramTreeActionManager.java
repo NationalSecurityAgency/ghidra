@@ -259,7 +259,7 @@ class ProgramTreeActionManager implements ClipboardOwner {
 
 		goToViewAction = new ProgramTreeAction("Go To start of folder/fragment in View", owner,
 			new String[] { "Go To in View" },
-			KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_MASK)) {
+			KeyStroke.getKeyStroke(KeyEvent.VK_G, InputEvent.CTRL_DOWN_MASK)) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				addToView();
@@ -274,7 +274,7 @@ class ProgramTreeActionManager implements ClipboardOwner {
 
 		removeViewAction = new ProgramTreeAction("Remove folder/fragment from View", owner,
 			new String[] { "Remove From View" },
-			KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK)) {
+			KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK)) {
 			@Override
 			public void actionPerformed(ActionContext context) {
 				removeFromView();
@@ -289,7 +289,7 @@ class ProgramTreeActionManager implements ClipboardOwner {
 
 		replaceViewAction =
 			new ProgramTreeAction("Replace View", owner, new String[] { "Replace View" },
-				KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK)) {
+				KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_DOWN_MASK)) {
 				@Override
 				public void actionPerformed(ActionContext context) {
 					replaceView();

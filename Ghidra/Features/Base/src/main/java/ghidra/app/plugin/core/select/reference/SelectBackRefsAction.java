@@ -43,7 +43,7 @@ public class SelectBackRefsAction extends NavigatableContextAction {
 		String group = "references";
 		setMenuBarData( new MenuData( new String[] {"Select", "Back Refs"}, null, group ) );
 		
-		setKeyBindingData( new KeyBindingData(KeyEvent.VK_SEMICOLON, InputEvent.CTRL_MASK ) );
+		setKeyBindingData( new KeyBindingData(KeyEvent.VK_SEMICOLON, InputEvent.CTRL_DOWN_MASK ) );
 		setHelpLocation(new HelpLocation(HelpTopics.SELECTION, "Backward"));
 		addToWindowWhen(NavigatableActionContext.class);
 	}

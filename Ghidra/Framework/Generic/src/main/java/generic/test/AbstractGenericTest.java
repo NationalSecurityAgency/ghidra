@@ -1021,13 +1021,12 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 
 	}
 
-	@SuppressWarnings("deprecation")
 	private static int convertToExtendedModifiers(int modifiers, int button) {
 
 		// TODO: Eliminate duplication of similar modifier modification logic
 		// which exists in KeyBindingData
 
-		// remove system-dependent control key mask and transform deprecated modifiers
+		// remove system-dependent control key mask
 
 		int controlMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 
@@ -1036,29 +1035,9 @@ public abstract class AbstractGenericTest extends AbstractGTest {
 			modifiers = modifiers | controlMask;
 		}
 
-		if ((modifiers & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
-			modifiers = modifiers ^ InputEvent.CTRL_MASK;
-			modifiers = modifiers | controlMask;
-		}
-
 		if ((modifiers & ActionEvent.CTRL_MASK) == ActionEvent.CTRL_MASK) {
 			modifiers = modifiers ^ ActionEvent.CTRL_MASK;
 			modifiers = modifiers | controlMask;
-		}
-
-		if ((modifiers & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
-			modifiers = modifiers ^ InputEvent.SHIFT_MASK;
-			modifiers = modifiers | InputEvent.SHIFT_DOWN_MASK;
-		}
-
-		if ((modifiers & InputEvent.ALT_MASK) == InputEvent.ALT_MASK) {
-			modifiers = modifiers ^ InputEvent.ALT_MASK;
-			modifiers = modifiers | InputEvent.ALT_DOWN_MASK;
-		}
-
-		if ((modifiers & InputEvent.META_MASK) == InputEvent.META_MASK) {
-			modifiers = modifiers ^ InputEvent.META_MASK;
-			modifiers = modifiers | InputEvent.META_DOWN_MASK;
 		}
 
 		switch (button) {

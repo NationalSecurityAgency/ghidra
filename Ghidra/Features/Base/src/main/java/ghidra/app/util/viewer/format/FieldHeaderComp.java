@@ -96,14 +96,14 @@ public class FieldHeaderComp extends JPanel {
 			@Override
 			public void mousePressed(MouseEvent e) {
 				FieldHeaderComp.this.headerPanel.requestFocus();
-				if ((e.getModifiers() & InputEvent.BUTTON1_MASK) > 0) {
+				if ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) != 0) {
 					pressed(e.getX(), e.getY());
 				}
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent e) {
-				if ((e.getModifiers() & InputEvent.BUTTON1_MASK) > 0) {
+				if ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) != 0) {
 					released(e.getX(), e.getY());
 				}
 			}
@@ -117,7 +117,7 @@ public class FieldHeaderComp extends JPanel {
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				if ((e.getModifiers() & InputEvent.BUTTON1_MASK) > 0) {
+				if ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) != 0) {
 					dragged(e.getX(), e.getY());
 				}
 			}

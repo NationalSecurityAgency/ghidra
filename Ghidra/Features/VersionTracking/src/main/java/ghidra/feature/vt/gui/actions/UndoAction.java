@@ -44,7 +44,7 @@ public class UndoAction extends DockingAction {
 		setMenuBarData(menuData);
 		setToolBarData(new ToolBarData(icon, group));
 		setDescription("Undo");
-		setKeyBindingData(new KeyBindingData('Z', InputEvent.CTRL_MASK));
+		setKeyBindingData(new KeyBindingData('Z', InputEvent.CTRL_DOWN_MASK));
 	}
 
 	@Override

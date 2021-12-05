@@ -1460,8 +1460,7 @@ public class FieldPanel extends JPanel
 			// Shift is handled special, so mask it off in the event before getting the action.
 			// If the shift is being held, the selection is extended while moving the cursor.
 			int keyCode = e.getKeyCode();
-			int modifiers =
-				e.getModifiers() & ~(InputEvent.SHIFT_DOWN_MASK | InputEvent.SHIFT_MASK);
+			int modifiers = e.getModifiersEx() & ~(InputEvent.SHIFT_DOWN_MASK);
 			KeyEvent maskedEvent = new KeyEvent(e.getComponent(), e.getID(), e.getWhen(), modifiers,
 				keyCode, e.getKeyChar(), e.getKeyLocation());
 

@@ -296,7 +296,7 @@ class DiffActionManager {
 		};
 		icon = ResourceManager.loadImage("images/down.png");
 		nextDiffAction.setKeyBindingData(
-			new KeyBindingData('N', InputEvent.CTRL_MASK | InputEvent.ALT_MASK));
+			new KeyBindingData('N', InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
 		nextDiffAction.setPopupMenuData(
 			new MenuData(new String[] { "Next Difference" }, icon, DIFF_NAVIGATE_GROUP));
 		nextDiffAction.setToolBarData(new ToolBarData(icon, DIFF_NAVIGATE_GROUP));
@@ -310,7 +310,7 @@ class DiffActionManager {
 		};
 		icon = ResourceManager.loadImage("images/up.png");
 		previousDiffAction.setKeyBindingData(
-			new KeyBindingData('P', InputEvent.CTRL_MASK | InputEvent.ALT_MASK));
+			new KeyBindingData('P', InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
 		previousDiffAction.setPopupMenuData(
 			new MenuData(new String[] { "Previous Difference" }, icon, DIFF_NAVIGATE_GROUP));
 		previousDiffAction.setToolBarData(new ToolBarData(icon, DIFF_NAVIGATE_GROUP));
@@ -437,7 +437,7 @@ class DiffActionManager {
 		icon = ResourceManager.loadImage(TOGGLE_VIEW_ICON_NAME);
 		openCloseProgram2Action.setEnabled(false);
 		openCloseProgram2Action.setKeyBindingData(
-			new KeyBindingData('C', InputEvent.CTRL_MASK | InputEvent.ALT_MASK));
+			new KeyBindingData('C', InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK));
 		openCloseProgram2Action.setToolBarData(new ToolBarData(icon, "zzz"));
 		openCloseProgram2Action.setHelpLocation(
 			new HelpLocation(HelpTopics.DIFF, OPEN_CLOSE_PROGRAM2_ACTION));

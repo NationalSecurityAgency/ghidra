@@ -57,9 +57,8 @@ public class DragGestureAdapter implements DragGestureListener {
         // check input event: if any button other than MB1 is pressed,
         // don't attempt to process the drag and drop event.
         InputEvent ie = e.getTriggerEvent();
-        int modifiers = ie.getModifiers();
-        if ((modifiers & InputEvent.BUTTON2_MASK) != 0 ||
-            (modifiers & InputEvent.BUTTON3_MASK) != 0) {
+        int modifiers = ie.getModifiersEx();
+        if ((modifiers & (InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK)) != 0) {
             return;
         }
         int dragAction = dragComponent.getDragAction();

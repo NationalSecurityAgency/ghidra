@@ -33,7 +33,7 @@ class SetOperandLabelAction extends ListingContextAction {
 	private LabelMgrPlugin plugin;
 	private static final String[] POPUP_PATH = { "Set Associated Label..." };
 	private static final KeyStroke KEYBINDING =
-		KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_MASK | InputEvent.ALT_MASK);
+		KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK);
 
 	/**
 	 * Creates a new instance of the action.

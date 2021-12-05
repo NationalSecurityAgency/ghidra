@@ -67,7 +67,7 @@ public class HelloWorldComponentProvider extends ComponentProviderAdapter {
 		ImageIcon prevImage = ResourceManager.loadImage(PREV_IMAGE);
 		action.setMenuBarData(new MenuData(new String[] { "Misc", "Hello World" }, prevImage));
 		action.setKeyBindingData(new KeyBindingData(KeyStroke.getKeyStroke(KeyEvent.VK_W,
-			InputEvent.CTRL_MASK)));
+			InputEvent.CTRL_DOWN_MASK)));
 
 		// puts the action on the local toolbar.
 		action.setToolBarData(new ToolBarData(prevImage));

@@ -18,7 +18,6 @@ package ghidra.graph.viewer.event.mouse;
 import java.awt.event.MouseEvent;
 
 import edu.uci.ics.jung.visualization.VisualizationViewer;
-import edu.uci.ics.jung.visualization.control.PickingGraphMousePlugin;
 import ghidra.graph.VisualGraph;
 import ghidra.graph.viewer.*;
 
@@ -26,12 +25,6 @@ import ghidra.graph.viewer.*;
  * An interface to provide a common set of methods for classes that could not otherwise 
  * extend an abstract class.  This interface signals that the implementer is a {@link VisualGraph}
  * mouse plugin.
- * 
- * <P>Note: The implementors of this interface still use the deprecated 
- * {@link MouseEvent#getModifiers()} method, since many of those classes extends from 
- * 3rd-party classes that still use them, such as {@link PickingGraphMousePlugin}.   We will need
- * to update the library (if/when possible), or rewrite our code so that it does not use the 
- * old 3rd-party algorithms. 
  *
  * @param <V> the vertex
  * @param <E> the edge

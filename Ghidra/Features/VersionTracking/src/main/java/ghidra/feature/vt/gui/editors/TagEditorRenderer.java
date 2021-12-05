@@ -119,7 +119,7 @@ public class TagEditorRenderer extends GListCellRenderer<TagState> {
 
 				MouseEvent newEvent =
 					new MouseEvent(clickedComponent, event.getID(), event.getWhen(),
-						event.getModifiers(), x, y, event.getXOnScreen(), event.getYOnScreen(),
+						event.getModifiersEx(), x, y, event.getXOnScreen(), event.getYOnScreen(),
 						event.getClickCount(), event.isPopupTrigger(), event.getButton());
 
 				clickedComponent.dispatchEvent(newEvent);

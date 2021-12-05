@@ -250,8 +250,7 @@ public class DockableHeader extends GenericHeader
 		// if any button other than MB1 is pressed, don't attempt to process the drag and drop event
 		InputEvent ie = event.getTriggerEvent();
 		int modifiers = ie.getModifiersEx();
-		if ((modifiers & InputEvent.BUTTON2_DOWN_MASK) != 0 ||
-			(modifiers & InputEvent.BUTTON3_DOWN_MASK) != 0) {
+		if ((modifiers & (InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK)) != 0) {
 			return;
 		}
 		DockableComponent.DROP_CODE = DropCode.WINDOW;

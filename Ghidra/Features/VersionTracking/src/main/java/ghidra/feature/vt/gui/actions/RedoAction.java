@@ -44,7 +44,7 @@ public class RedoAction extends DockingAction {
 		menuData.setMenuSubGroup("2Redo"); // make this appear below the undo menu item
 		setMenuBarData(menuData);
 		setToolBarData(new ToolBarData(icon, group));
-		setKeyBindingData(new KeyBindingData('Z', InputEvent.CTRL_MASK | InputEvent.SHIFT_MASK));
+		setKeyBindingData(new KeyBindingData('Z', InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
 		setDescription("Redo");
 	}
 

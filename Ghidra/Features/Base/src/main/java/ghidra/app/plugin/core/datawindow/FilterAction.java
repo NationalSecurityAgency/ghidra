@@ -197,7 +197,7 @@ class FilterAction extends ToggleDockingAction {
 		private KeyListener listener = new KeyAdapter() {
 			@Override
 			public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiers() == 0) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER && e.getModifiersEx() == 0) {
 					e.consume();
 					okCallback();
 				}

@@ -79,7 +79,7 @@ public class ListRendererMouseEventForwarder extends MouseAdapter {
 		p.translate(-cellBounds.x, -cellBounds.y);
 
 		MouseEvent newEvent =
-			new MouseEvent(rendererComponent, event.getID(), event.getWhen(), event.getModifiers(),
+			new MouseEvent(rendererComponent, event.getID(), event.getWhen(), event.getModifiersEx(),
 				p.x, p.y, event.getXOnScreen(), event.getYOnScreen(), event.getClickCount(),
 				event.isPopupTrigger(), event.getButton());
 

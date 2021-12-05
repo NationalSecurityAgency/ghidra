@@ -42,7 +42,7 @@ public class NavigationPanel extends JPanel {
 			@Override
 			public void mousePressed(MouseEvent e) {
 
-				if ((e.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
+				if ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) != 0) {
 					manager.navigateTo(e.getX(), e.getY());
 				}
 			}

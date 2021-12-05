@@ -28,7 +28,7 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.HelpLocation;
 import ghidra.util.Msg;
 
-import java.awt.Event;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import javax.swing.*;
@@ -96,7 +96,7 @@ public class KitchenSinkPlugin extends ProgramPlugin {
         ImageIcon prevImage = ResourceManager.loadImage(PREV_IMAGE);
         action.setMenuBarData( new MenuData( new String[] {"Misc", "Hello World"}, prevImage, helloGroup ) );
         action.setPopupMenuData( new MenuData( new String[] {"Hello World"}, prevImage, helloGroup ) );
-        action.setKeyBindingData( new KeyBindingData( KeyStroke.getKeyStroke('H', Event.CTRL_MASK ) ) );
+        action.setKeyBindingData( new KeyBindingData( KeyStroke.getKeyStroke('H', InputEvent.CTRL_DOWN_MASK ) ) );
         action.setToolBarData( new ToolBarData( prevImage, helloGroup ) );
         action.setDescription("Hello World");
         action.setHelpLocation(new HelpLocation("SampleHelpTopic", "KS_Hello_World"));
@@ -113,7 +113,7 @@ public class KitchenSinkPlugin extends ProgramPlugin {
         action.setEnabled(false);
         ImageIcon nextImage = ResourceManager.loadImage(NEXT_IMAGE);
         action.setMenuBarData( new MenuData( new String[]{"Misc", "Hello Program"}, nextImage, helloGroup ) );
-        action.setKeyBindingData( new KeyBindingData( KeyStroke.getKeyStroke(KeyEvent.VK_P, Event.CTRL_MASK ) ) );
+        action.setKeyBindingData( new KeyBindingData( KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.CTRL_DOWN_MASK ) ) );
         action.setToolBarData( new ToolBarData( nextImage, helloGroup ) );
         action.setDescription("Hello Program");
         action.setHelpLocation(new HelpLocation("SampleHelpTopic", "KS_Hello_Program"));

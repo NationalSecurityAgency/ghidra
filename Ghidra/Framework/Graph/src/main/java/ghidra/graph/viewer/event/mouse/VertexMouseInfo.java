@@ -225,7 +225,7 @@ public class VertexMouseInfo<V extends VisualVertex, E extends VisualEdge<V>> {
 	private MouseEvent createMouseEventFromSource(Component source, MouseEvent progenitor,
 			Point2D clickPoint) {
 		return new MouseEvent(source, progenitor.getID(), progenitor.getWhen(),
-			progenitor.getModifiers() | progenitor.getModifiersEx(), (int) clickPoint.getX(),
+			progenitor.getModifiersEx(), (int) clickPoint.getX(),
 			(int) clickPoint.getY(), progenitor.getClickCount(), progenitor.isPopupTrigger(),
 			progenitor.getButton());
 	}

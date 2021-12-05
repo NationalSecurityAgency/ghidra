@@ -609,45 +609,21 @@ public class KeyBindingUtils {
 	 * @param keyStroke the keystroke to validate
 	 * @return the potentially changed keystroke
 	 */
-	// TODO ignore the deprecation, as this method is responsible for fixing deprecated usage.
-	//      When all actions no longer user the deprecated modifiers, the deprecated elements
-	//      of this method can be removed
-	@SuppressWarnings("deprecation")
 	public static KeyStroke validateKeyStroke(KeyStroke keyStroke) {
 		if (keyStroke == null) {
 			return null;
 		}
 
-		// remove system-dependent control key mask and transform deprecated modifiers
+		// remove system-dependent control key mask
 		int modifiers = keyStroke.getModifiers();
 		if ((modifiers & InputEvent.CTRL_DOWN_MASK) == InputEvent.CTRL_DOWN_MASK) {
 			modifiers = modifiers ^ InputEvent.CTRL_DOWN_MASK;
 			modifiers = modifiers | DockingUtils.CONTROL_KEY_MODIFIER_MASK;
 		}
 
-		if ((modifiers & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
-			modifiers = modifiers ^ InputEvent.CTRL_MASK;
-			modifiers = modifiers | DockingUtils.CONTROL_KEY_MODIFIER_MASK;
-		}
-
 		if ((modifiers & ActionEvent.CTRL_MASK) == ActionEvent.CTRL_MASK) {
 			modifiers = modifiers ^ ActionEvent.CTRL_MASK;
 			modifiers = modifiers | DockingUtils.CONTROL_KEY_MODIFIER_MASK;
-		}
-
-		if ((modifiers & InputEvent.SHIFT_MASK) == InputEvent.SHIFT_MASK) {
-			modifiers = modifiers ^ InputEvent.SHIFT_MASK;
-			modifiers = modifiers | InputEvent.SHIFT_DOWN_MASK;
-		}
-
-		if ((modifiers & InputEvent.ALT_MASK) == InputEvent.ALT_MASK) {
-			modifiers = modifiers ^ InputEvent.ALT_MASK;
-			modifiers = modifiers | InputEvent.ALT_DOWN_MASK;
-		}
-
-		if ((modifiers & InputEvent.META_MASK) == InputEvent.META_MASK) {
-			modifiers = modifiers ^ InputEvent.META_MASK;
-			modifiers = modifiers | InputEvent.META_DOWN_MASK;
 		}
 
 		int eventType = keyStroke.getKeyEventType();
@@ -715,19 +691,19 @@ public class KeyBindingUtils {
 
 		int modifiers = keyStroke.getModifiers();
 		StringBuilder buffy = new StringBuilder();
-		if (isShift(modifiers)) {
+		if ((modifiers & InputEvent.SHIFT_DOWN_MASK) != 0) {
 			buffy.insert(0, SHIFT + MODIFIER_SEPARATOR);
 			keyString = removeIgnoreCase(keyString, SHIFT);
 		}
-		if (isAlt(modifiers)) {
+		if ((modifiers & InputEvent.ALT_DOWN_MASK) != 0) {
 			buffy.insert(0, ALT + MODIFIER_SEPARATOR);
 			keyString = removeIgnoreCase(keyString, ALT);
 		}
-		if (isControl(modifiers)) {
+		if ((modifiers & InputEvent.CTRL_DOWN_MASK) != 0) {
 			buffy.insert(0, CTRL + MODIFIER_SEPARATOR);
 			keyString = removeIgnoreCase(keyString, CONTROL);
 		}
-		if (isMeta(modifiers)) {
+		if ((modifiers & InputEvent.META_DOWN_MASK) != 0) {
 			buffy.insert(0, META + MODIFIER_SEPARATOR);
 			keyString = removeIgnoreCase(keyString, META);
 		}
@@ -742,34 +718,6 @@ public class KeyBindingUtils {
 
 	private static int indexOf(String source, String search, int offset) {
 		return StringUtils.indexOfIgnoreCase(source, search, offset);
-	}
-
-	// ignore the deprecated; remove when we are confident that all tool actions no longer use the
-	// deprecated InputEvent mask types
-	@SuppressWarnings("deprecation")
-	private static boolean isShift(int mask) {
-		return (mask & InputEvent.SHIFT_DOWN_MASK) != 0 || (mask & InputEvent.SHIFT_MASK) != 0;
-	}
-
-	// ignore the deprecated; remove when we are confident that all tool actions no longer use the
-	// deprecated InputEvent mask types
-	@SuppressWarnings("deprecation")
-	private static boolean isAlt(int mask) {
-		return (mask & InputEvent.ALT_DOWN_MASK) != 0 || (mask & InputEvent.ALT_MASK) != 0;
-	}
-
-	// ignore the deprecated; remove when we are confident that all tool actions no longer use the
-	// deprecated InputEvent mask types
-	@SuppressWarnings("deprecation")
-	private static boolean isControl(int mask) {
-		return (mask & InputEvent.CTRL_DOWN_MASK) != 0 || (mask & InputEvent.CTRL_MASK) != 0;
-	}
-
-	// ignore the deprecated; remove when we are confident that all tool actions no longer use the
-	// deprecated InputEvent mask types
-	@SuppressWarnings("deprecation")
-	private static boolean isMeta(int mask) {
-		return (mask & InputEvent.META_DOWN_MASK) != 0 || (mask & InputEvent.META_MASK) != 0;
 	}
 
 	/**
