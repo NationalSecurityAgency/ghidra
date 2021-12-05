@@ -90,7 +90,7 @@ public class SchemaBuilder {
 	 * @return this builder
 	 */
 	public SchemaBuilder addElementSchema(String index, SchemaName schema, Object origin) {
-		if (index.equals("")) {
+		if (index.isEmpty()) {
 			return setDefaultElementSchema(schema);
 		}
 		if (elementSchemas.containsKey(index)) {
@@ -104,7 +104,7 @@ public class SchemaBuilder {
 	}
 
 	public SchemaBuilder removeElementSchema(String index) {
-		if (index.equals("")) {
+		if (index.isEmpty()) {
 			return setDefaultElementSchema(EnumerableTargetObjectSchema.OBJECT.getName());
 		}
 		elementSchemas.remove(index);
@@ -145,7 +145,7 @@ public class SchemaBuilder {
 	 * @return this builder
 	 */
 	public SchemaBuilder addAttributeSchema(AttributeSchema schema, Object origin) {
-		if (schema.getName().equals("")) {
+		if (schema.getName().isEmpty()) {
 			return setDefaultAttributeSchema(schema);
 		}
 		if (attributeSchemas.containsKey(schema.getName())) {
@@ -159,7 +159,7 @@ public class SchemaBuilder {
 	}
 
 	public SchemaBuilder removeAttributeSchema(String name) {
-		if (name.equals("")) {
+		if (name.isEmpty()) {
 			return setDefaultAttributeSchema(AttributeSchema.DEFAULT_ANY);
 		}
 		attributeSchemas.remove(name);
@@ -176,7 +176,7 @@ public class SchemaBuilder {
 	}
 
 	public SchemaBuilder replaceAttributeSchema(AttributeSchema schema, Object origin) {
-		if (schema.getName().equals("")) {
+		if (schema.getName().isEmpty()) {
 			return setDefaultAttributeSchema(schema);
 		}
 		attributeSchemas.put(schema.getName(), schema);

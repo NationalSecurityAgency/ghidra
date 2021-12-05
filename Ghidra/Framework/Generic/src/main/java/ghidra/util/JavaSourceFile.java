@@ -328,7 +328,7 @@ public class JavaSourceFile {
 	private JavaSourceLine findNextNonBlankLine(int lineNumber) {
 		do {
 			JavaSourceLine line = getLine(lineNumber++);
-			if (!line.getText().trim().equals("")) {
+			if (!line.getText().trim().isEmpty()) {
 				return line;
 			}
 		}

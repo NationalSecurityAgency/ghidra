@@ -94,7 +94,7 @@ public class SpacerFieldFactory extends FieldFactory {
 			OptionDialog.showInputSingleLineDialog(null, "Input Spacer Text", "Text", text);
 		if (newText != null) {
 			newText = newText.trim();
-			if (newText.equals("")) {
+			if (newText.isEmpty()) {
 				text = null;
 			}
 			else {

@@ -52,7 +52,7 @@ public class XmlSchemaContext extends DefaultSchemaContext {
 
 	public static Element attributeSchemaToXml(AttributeSchema as) {
 		Element attrElem = new Element("attribute");
-		if (!as.getName().equals("")) {
+		if (!as.getName().isEmpty()) {
 			XmlUtilities.setStringAttr(attrElem, "name", as.getName());
 		}
 		XmlUtilities.setStringAttr(attrElem, "schema", as.getSchema().toString());

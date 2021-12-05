@@ -34,7 +34,7 @@ public class DefaultTargetObjectSchema
 
 		public DefaultAttributeSchema(String name, SchemaName schema, boolean isRequired,
 				boolean isFixed, boolean isHidden) {
-			if (name.equals("") && isRequired) {
+			if (name.isEmpty() && isRequired) {
 				throw new IllegalArgumentException(
 					"The default attribute schema cannot be required");
 			}

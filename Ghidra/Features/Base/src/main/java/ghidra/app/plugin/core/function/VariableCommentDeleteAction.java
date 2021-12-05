@@ -54,7 +54,7 @@ class VariableCommentDeleteAction extends ListingContextAction {
 		if (var == null) {
 			return;
 		}
-		if (var.getComment().equals("")) {
+		if (var.getComment().isEmpty()) {
 			return;
 		}
 		if (currentLocation instanceof VariableCommentFieldLocation) {

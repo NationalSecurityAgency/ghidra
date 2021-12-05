@@ -891,7 +891,7 @@ public class ModelObjectImpl implements ModelObjectInternal {
 	public void setIndexer(ModelObject indexer) {
 		this.indexer = indexer;
 		String str = "0x" + indexer.getValueString();
-		if (!str.equals("")) {
+		if (!str.isEmpty()) {
 			key = str;
 		}
 	}

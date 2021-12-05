@@ -1501,7 +1501,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 
 	public void performStepLast(ActionContext context) {
 		performAction(context, false, TargetSteppable.class, s -> {
-			if (extendedStep.equals("")) {
+			if (extendedStep.isEmpty()) {
 				return s.step(TargetStepKind.EXTENDED);
 			}
 			else {

@@ -102,7 +102,7 @@ public abstract class AssemblyTestCase extends AbstractGenericTest {
 			else {
 				AssemblyParseErrorResult err = (AssemblyParseErrorResult) result;
 				dbg.println(err);
-				if (err.getBuffer().equals("")) {
+				if (err.getBuffer().isEmpty()) {
 					suggestions.addAll(err.getSuggestions());
 				}
 			}

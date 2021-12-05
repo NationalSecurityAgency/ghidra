@@ -1511,7 +1511,7 @@ public class DbgManagerImpl implements DbgManager {
 	@Override
 	public CompletableFuture<Void> console(String command) {
 		if (continuation != null) {
-			//String prompt = command.equals("") ? DbgModelTargetInterpreter.DBG_PROMPT : ">>>";
+			//String prompt = command.isEmpty() ? DbgModelTargetInterpreter.DBG_PROMPT : ">>>";
 			//getEventListeners().fire.promptChanged(prompt);
 			continuation.complete(command);
 			setContinuation(null);

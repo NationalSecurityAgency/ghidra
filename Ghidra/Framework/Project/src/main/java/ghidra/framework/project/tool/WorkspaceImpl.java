@@ -157,7 +157,7 @@ class WorkspaceImpl implements Workspace {
 		isActive = (activeStr != null && activeStr.equalsIgnoreCase("true"));
 
 		String defaultTool = System.getProperty("ghidra.defaulttool");
-		if (defaultTool != null && !defaultTool.equals("")) {
+		if (defaultTool != null && !defaultTool.isEmpty()) {
 			PluginTool tool = toolManager.getTool(defaultTool);
 			runningTools.add(tool);
 			toolManager.fireToolAddedEvent(this, tool);

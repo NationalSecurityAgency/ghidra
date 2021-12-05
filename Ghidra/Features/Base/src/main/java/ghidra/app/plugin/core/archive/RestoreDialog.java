@@ -91,7 +91,7 @@ public class RestoreDialog extends DialogComponentProvider {
 				String archivePath = chooseArchiveFile("Choose archive file",
 					"Selects the project archive file to restore.");
 
-				if ((archivePath != null) && (!archivePath.equals(""))) {
+				if ((archivePath != null) && (!archivePath.isEmpty())) {
 					// Make sure the archive has the correct suffix.
 					if (!archivePath.endsWith(ArchivePlugin.ARCHIVE_EXTENSION)) {
 						archivePath += ArchivePlugin.ARCHIVE_EXTENSION;
@@ -102,11 +102,11 @@ public class RestoreDialog extends DialogComponentProvider {
 					projectNameField.setText(projectName);
 
 					String dir = restoreField.getText().trim();
-					if (dir.equals("")) {
+					if (dir.isEmpty()) {
 						dir = archivePath.substring(0, archivePath.lastIndexOf(File.separator));
 						restoreField.setText(dir);
 					}
-					if ((projectName == null) || (projectName.equals(""))) {
+					if ((projectName == null) || (projectName.isEmpty())) {
 						Msg.showError(this, getComponent(), ArchivePlugin.RESTORE_ERROR_TITLE,
 							"Archive File is not a valid project archive.");
 					}
@@ -245,7 +245,7 @@ public class RestoreDialog extends DialogComponentProvider {
 		this.archivePathName = pathName;
 		this.restoreURL = projectLocator;
 		String projectName = projectNameField.getText();
-		if (projectName == null || projectName.equals("")) {
+		if (projectName == null || projectName.isEmpty()) {
 			projectName = ArchivePlugin.getProjectName(pathName);
 		}
 		archiveField.setText(pathName);
@@ -296,17 +296,17 @@ public class RestoreDialog extends DialogComponentProvider {
 	 */
 	private boolean checkInput() {
 		String archiveName = getArchivePathName();
-		if ((archiveName == null) || archiveName.equals("")) {
+		if ((archiveName == null) || archiveName.isEmpty()) {
 			setStatusText("Specify a valid archive file.");
 			return false;
 		}
 		String restoreDir = restoreField.getText().trim();
-		if (restoreDir == null || restoreDir.equals("") || !(new File(restoreDir)).isDirectory()) {
+		if (restoreDir == null || restoreDir.isEmpty() || !(new File(restoreDir)).isDirectory()) {
 			setStatusText("Specify a valid project directory.");
 			return false;
 		}
 		String restoreProjectName = projectNameField.getText().trim();
-		if (restoreProjectName == null || restoreProjectName.equals("") ||
+		if (restoreProjectName == null || restoreProjectName.isEmpty() ||
 			!NamingUtilities.isValidName(restoreProjectName)) {
 			setStatusText("Specify a valid project name.");
 			return false;

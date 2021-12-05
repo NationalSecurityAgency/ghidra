@@ -330,7 +330,7 @@ public class SleighAssemblerBuilder implements AssemblerBuilder {
 						}
 						else {
 							String tstr = str.trim();
-							if (tstr.equals("")) {
+							if (tstr.isEmpty()) {
 								rhs.addWS();
 							}
 							else {

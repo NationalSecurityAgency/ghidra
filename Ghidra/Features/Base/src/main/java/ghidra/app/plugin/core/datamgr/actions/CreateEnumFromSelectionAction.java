@@ -93,7 +93,7 @@ public class CreateEnumFromSelectionAction extends DockingAction {
 		String newName = "";
 		PluginTool tool = plugin.getTool();
 
-		while (newName.equals("")) {
+		while (newName.isEmpty()) {
 			InputDialog inputDialog =
 				new InputDialog("Name new ENUM", "Please enter a name for the new ENUM: ");
 			tool = plugin.getTool();

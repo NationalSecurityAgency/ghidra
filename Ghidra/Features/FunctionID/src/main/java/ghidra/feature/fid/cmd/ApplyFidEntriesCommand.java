@@ -258,10 +258,10 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 		else {
 			addFunctionLabelMultipleMatches(function, monitor);
 		}
-		if (plateCommentContents != null && !plateCommentContents.equals("")) {
+		if (plateCommentContents != null && !plateCommentContents.isEmpty()) {
 			function.setComment(plateCommentContents);
 		}
-		if (bookmarkContents != null && !bookmarkContents.equals("")) {
+		if (bookmarkContents != null && !bookmarkContents.isEmpty()) {
 			function.getProgram()
 					.getBookmarkManager()
 					.setBookmark(function.getEntryPoint(),

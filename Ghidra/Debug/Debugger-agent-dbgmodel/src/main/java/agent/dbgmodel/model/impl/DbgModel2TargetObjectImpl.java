@@ -225,7 +225,7 @@ public class DbgModel2TargetObjectImpl extends DefaultTargetObject<TargetObject,
 		if (tk != null) {
 			attrs.put(TYPE_ATTRIBUTE_NAME, tk.toString());
 		}
-		if (value != null && !value.equals("")) {
+		if (value != null && !value.isEmpty()) {
 			attrs.put(VALUE_ATTRIBUTE_NAME, value);
 			if (!kind.equals(ModelObjectKind.OBJECT_PROPERTY_ACCESSOR)) {
 				synchronized (attributes) {

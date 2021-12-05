@@ -96,7 +96,7 @@ public class CallFixupAnalyzer extends AbstractAnalyzer {
 			boolean noReturn = function.hasNoReturn();
 
 			boolean mustFix =
-				noReturn || (callFixupApplied != null && !callFixupApplied.equals(""));
+				noReturn || (callFixupApplied != null && !callFixupApplied.isEmpty());
 
 			if (mustFix) {
 				PcodeInjectLibrary snippetLibrary =

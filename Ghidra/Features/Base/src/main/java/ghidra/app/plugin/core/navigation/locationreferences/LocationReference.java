@@ -192,7 +192,7 @@ public class LocationReference implements Comparable<LocationReference> {
 		//@formatter:off
 		return "{\n" +
 			"\taddress: " + locationOfUseAddress + ",\n" +
-			((refType.equals("")) ? "" : "\trefType: " + refType + ",\n") +
+			((refType.isEmpty()) ? "" : "\trefType: " + refType + ",\n") +
 			"\tisOffcut: " + isOffcutReference + ",\n" +
 			((context == EMPTY_CONTEXT) ? "" : "\tcontext: " + context + ",") +
 		"}";

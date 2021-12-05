@@ -1269,7 +1269,7 @@ public abstract class CompEditorModel extends CompositeEditorModel {
 
 	@Override
 	public void setComponentComment(int rowIndex, String comment) throws InvalidInputException {
-		if (comment.equals("")) {
+		if (comment.isEmpty()) {
 			comment = null;
 		}
 		getComponent(rowIndex).setComment(comment);

@@ -35,7 +35,7 @@ public class ContextRegisterPanelBuilder {
 	 * @param contextRegisterInfo string representation of context register extent
 	 */
 	public ContextRegisterPanelBuilder(String contextRegisterInfo) {
-		if ((contextRegisterInfo == null) || (contextRegisterInfo.equals(""))) {
+		if ((contextRegisterInfo == null) || (contextRegisterInfo.isEmpty())) {
 			message = DEFAULT;
 		}
 		else {

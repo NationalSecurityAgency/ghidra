@@ -1597,7 +1597,7 @@ public class LldbManagerImpl implements LldbManager {
 	@Override
 	public CompletableFuture<Void> console(String command) {
 		if (continuation != null) {
-			String prompt = command.equals("") ? LldbModelTargetInterpreter.LLDB_PROMPT : ">>>";
+			String prompt = command.isEmpty() ? LldbModelTargetInterpreter.LLDB_PROMPT : ">>>";
 			getEventListeners().fire.promptChanged(prompt);
 			continuation.complete(command);
 			setContinuation(null);

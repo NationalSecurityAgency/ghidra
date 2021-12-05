@@ -328,7 +328,7 @@ public class NGramUtils {
 			scanner1.close();
 		}
 
-		if (modelType.equals("")) {
+		if (modelType.isEmpty()) {
 			throw new IOException("Model file: " + modelName + " does not contain the model type.");
 		}
 

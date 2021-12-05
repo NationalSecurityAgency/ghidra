@@ -154,7 +154,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 			}
 			return namesByClass.computeIfAbsent(cls, c -> {
 				String name = info.name();
-				if (name.equals("")) {
+				if (name.isEmpty()) {
 					return new SchemaName(cls.getSimpleName());
 				}
 				return new SchemaName(name);
@@ -256,7 +256,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 
 		boolean sawDefaultElementType = false;
 		for (TargetElementType et : info.elements()) {
-			if (et.index().equals("")) {
+			if (et.index().isEmpty()) {
 				sawDefaultElementType = true;
 			}
 			builder.addElementSchema(et.index(), nameFromClass(et.type()), et);
@@ -305,7 +305,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 	protected String attributeNameFromBean(String beanName, boolean isBool) {
 		beanName = isBool ? StringUtils.removeStartIgnoreCase(beanName, "is")
 				: StringUtils.removeStartIgnoreCase(beanName, "get");
-		if (beanName.equals("")) {
+		if (beanName.isEmpty()) {
 			throw new IllegalArgumentException("Attribute getter must have a name");
 		}
 		return beanName.replaceAll("([A-Z]+)([A-Z][a-z])", "$1_$2")
@@ -327,7 +327,7 @@ public class AnnotatedSchemaContext extends DefaultSchemaContext {
 		}
 		String name = at.name();
 		Class<?> ret = method.getReturnType();
-		if (name.equals("")) {
+		if (name.isEmpty()) {
 			name = attributeNameFromBean(method.getName(),
 				EnumerableTargetObjectSchema.BOOL.getTypes().contains(ret));
 		}

@@ -411,7 +411,7 @@ public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 		addAtPoint(complexStructure, 1, 0);
 		assertEquals(num, model.getNumComponents());
 		assertEquals(len, model.getLength());
-		assertTrue(!model.getStatus().equals(""));
+		assertTrue(!model.getStatus().isEmpty());
 	}
 
 	@Test

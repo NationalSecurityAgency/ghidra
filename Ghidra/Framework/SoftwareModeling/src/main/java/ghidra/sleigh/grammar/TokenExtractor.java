@@ -56,7 +56,7 @@ public class TokenExtractor {
         	System.out.println("writing tokens to: " + outputFile.getCanonicalPath());
             out = new PrintWriter(outputFile);
             out.println("lexer grammar " + name + ";");
-            if (packedge != null && !packedge.trim().equals("")) {
+            if (packedge != null && !packedge.trim().isEmpty()) {
                 out.println("@lexer::header{");
                 out.println("package " + packedge + ";");
                 out.println("}");

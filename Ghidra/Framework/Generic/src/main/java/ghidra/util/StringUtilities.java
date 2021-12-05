@@ -829,8 +829,8 @@ public class StringUtilities {
 		if (string1 == null && string2 == null) {
 			return null; // Both strings are null;
 		}
-		boolean hasString1 = (string1 != null && !string1.equals(""));
-		boolean hasString2 = (string2 != null && !string2.equals(""));
+		boolean hasString1 = (string1 != null && !string1.isEmpty());
+		boolean hasString2 = (string2 != null && !string2.isEmpty());
 
 		if (hasString1) {
 			if (hasString2) {

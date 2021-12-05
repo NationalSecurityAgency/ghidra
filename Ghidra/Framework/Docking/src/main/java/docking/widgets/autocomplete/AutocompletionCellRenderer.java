@@ -53,7 +53,7 @@ public class AutocompletionCellRenderer<T> implements ListCellRenderer<T> {
 		JLabel label = (JLabel) defaultRenderer.getListCellRendererComponent(list, value, index,
 			isSelected, cellHasFocus);
 		label.setText(owner.getCompletionDisplay(value));
-		if (label.getText().equals("")) {
+		if (label.getText().isEmpty()) {
 			label.setText(" ");
 		}
 		Font font = owner.getCompletionFont(value, isSelected, cellHasFocus);

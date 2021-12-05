@@ -185,7 +185,7 @@ public class DummyTargetObject implements TargetObject {
 				String display = getName() + " : " + value;
 				addAttribute(TargetObject.DISPLAY_ATTRIBUTE_NAME, display);
 			}
-			if (kind != null && !kind.equals("")) {
+			if (kind != null && !kind.isEmpty()) {
 				addAttribute(TargetObject.KIND_ATTRIBUTE_NAME, kind);
 			}
 			else {
