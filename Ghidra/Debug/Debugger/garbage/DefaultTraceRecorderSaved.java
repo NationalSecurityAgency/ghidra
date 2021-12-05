@@ -1752,7 +1752,7 @@ public class DefaultTraceRecorderSaved implements TraceRecorder {
 			target.getModel(), null, null);
 		AsyncFence fence = new AsyncFence();
 		CompletableFuture<? extends TargetBreakpointContainer<?>> futureBreaks =
-			DebugModelConventions.findSuitable(TargetBreakpointContainer.tclass, target);
+			DebugModelConventions.suitable(TargetBreakpointContainer.tclass, target);
 		fence.include(futureBreaks.thenAccept(breaks -> {
 			if (breaks != null && !PathUtils.isAncestor(target.getPath(), breaks.getPath())) {
 				offerProcessBreakpointContainer(breaks); // instead of objectAdded
@@ -1764,7 +1764,7 @@ public class DefaultTraceRecorderSaved implements TraceRecorder {
 		}));
 
 		CompletableFuture<? extends TargetEventScope<?>> futureEvents =
-			DebugModelConventions.findSuitable(TargetEventScope.tclass, target);
+			DebugModelConventions.suitable(TargetEventScope.tclass, target);
 		fence.include(futureEvents.thenAccept(events -> {
 			if (events != null && !PathUtils.isAncestor(target.getPath(), events.getPath())) {
 				// Don't descend. Scope may be the entire session.
@@ -1776,7 +1776,7 @@ public class DefaultTraceRecorderSaved implements TraceRecorder {
 		}));
 
 		CompletableFuture<? extends TargetFocusScope<?>> futureFocus =
-			DebugModelConventions.findSuitable(TargetFocusScope.tclass, target);
+			DebugModelConventions.suitable(TargetFocusScope.tclass, target);
 		fence.include(futureFocus.thenAccept(focus -> {
 			if (focus != null && !PathUtils.isAncestor(target.getPath(), focus.getPath())) {
 				// Don't descend. Scope may be the entire session.

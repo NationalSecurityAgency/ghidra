@@ -695,7 +695,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			if (targetObject instanceof TargetInterpreter) {
 				TargetInterpreter interpreter = (TargetInterpreter) targetObject;
 				getPlugin().showConsole(interpreter);
-				DebugModelConventions.findSuitable(TargetFocusScope.class, targetObject)
+				DebugModelConventions.suitable(TargetFocusScope.class, targetObject)
 						.thenAccept(f -> {
 							setFocus(f, targetObject);
 						});
@@ -850,7 +850,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		TargetObject result = null;
 		try {
 			result =
-				DebugModelConventions.findSuitable(clazz, object).get(100, TimeUnit.MILLISECONDS);
+				DebugModelConventions.suitable(clazz, object).get(100, TimeUnit.MILLISECONDS);
 		}
 		catch (Exception e) {
 			// IGNORE
@@ -1357,7 +1357,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			obj = root.getTargetObject();
 		}
 		if (!isLocalOnly()) {
-			DebugModelConventions.findSuitable(cls, obj).thenCompose(t -> {
+			DebugModelConventions.suitable(cls, obj).thenCompose(t -> {
 				return func.apply(t);
 			}).exceptionally(DebuggerResources.showError(getComponent(), errorMsg));
 		}
@@ -1425,7 +1425,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 			return;
 		}
 		// NB. This doesn't really mean anything in local-only actions mode
-		DebugModelConventions.findSuitable(TargetAttacher.class, obj).thenCompose(attacher -> {
+		DebugModelConventions.suitable(TargetAttacher.class, obj).thenCompose(attacher -> {
 			return attacher.attach((TargetAttachable) obj);
 		}).exceptionally(DebuggerResources.showError(getComponent(), "Couldn't re-attach"));
 	}
@@ -1571,7 +1571,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		}
 		TargetObject result = null;
 		try {
-			result = DebugModelConventions.findSuitable(TargetExecutionStateful.class, object)
+			result = DebugModelConventions.suitable(TargetExecutionStateful.class, object)
 					.get(100, TimeUnit.MILLISECONDS);
 		}
 		catch (Exception e) {

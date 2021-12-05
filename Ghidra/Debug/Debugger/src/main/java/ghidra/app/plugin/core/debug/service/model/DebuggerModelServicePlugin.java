@@ -128,7 +128,7 @@ public class DebuggerModelServicePlugin extends Plugin
 					forRemoval.invalidated(root, root, "Who knows?");
 				}
 				CompletableFuture<? extends TargetFocusScope> findSuitable =
-					DebugModelConventions.findSuitable(TargetFocusScope.class, r);
+					DebugModelConventions.suitable(TargetFocusScope.class, r);
 				return findSuitable;
 			}).thenAccept(fs -> {
 				synchronized (this) {

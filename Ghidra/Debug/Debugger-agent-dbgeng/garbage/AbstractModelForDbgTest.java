@@ -167,7 +167,7 @@ public abstract class AbstractModelForDbgTest
 				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(DbgModelTargetLauncher.class, root.get())
+				DebugModelConventions.suitable(DbgModelTargetLauncher.class, root.get())
 						.handle(seq::next);
 			}, launcher).then(seq -> {
 				Msg.debug(this, "Launching...");
@@ -214,7 +214,7 @@ public abstract class AbstractModelForDbgTest
 				model.fetchModelObject(List.of("Sessions", "[0]")).handle(seq::next);
 			}, session).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(DbgModelTargetLauncher.class,
+				DebugModelConventions.suitable(DbgModelTargetLauncher.class,
 					session.get()).handle(seq::next);
 			}, TypeSpec.cls(TargetObject.class)).then((obj, seq) -> {
 				assertTrue(obj.getInterfaceNames().contains("Launcher"));
@@ -293,7 +293,7 @@ public abstract class AbstractModelForDbgTest
 				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(TargetAttacher.class, root.get())
+				DebugModelConventions.suitable(TargetAttacher.class, root.get())
 						.handle(
 							seq::next);
 			}, proc).then(seq -> {
@@ -343,7 +343,7 @@ public abstract class AbstractModelForDbgTest
 
 				AsyncFence fence = new AsyncFence();
 				Msg.debug(this, "Finding TargetAttacher...");
-				fence.include(DebugModelConventions.findSuitable(TargetAttacher.class, root.get())
+				fence.include(DebugModelConventions.suitable(TargetAttacher.class, root.get())
 						.thenAccept(a -> {
 							Msg.debug(this, "  Got TargetAttacher: " + a);
 							attacher.set(a);
@@ -401,7 +401,7 @@ public abstract class AbstractModelForDbgTest
 				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(TargetAttacher.class, root.get())
+				DebugModelConventions.suitable(TargetAttacher.class, root.get())
 						.handle(
 							seq::next);
 			}, obj).then(seq -> {
@@ -451,7 +451,7 @@ public abstract class AbstractModelForDbgTest
 				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(TargetAttacher.class, root.get())
+				DebugModelConventions.suitable(TargetAttacher.class, root.get())
 						.handle(
 							seq::next);
 			}, obj).then(seq -> {
@@ -509,7 +509,7 @@ public abstract class AbstractModelForDbgTest
 				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(DbgModelTargetLauncher.class, root.get())
+				DebugModelConventions.suitable(DbgModelTargetLauncher.class, root.get())
 						.handle(seq::next);
 			}, obj).then(seq -> {
 				Msg.debug(this, "Launching...");
@@ -555,7 +555,7 @@ public abstract class AbstractModelForDbgTest
 				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(TargetAttacher.class, root.get())
+				DebugModelConventions.suitable(TargetAttacher.class, root.get())
 						.handle(
 							seq::next);
 			}, proc).then(seq -> {
@@ -589,7 +589,7 @@ public abstract class AbstractModelForDbgTest
 				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(TargetAttacher.class, root.get())
+				DebugModelConventions.suitable(TargetAttacher.class, root.get())
 						.handle(
 							seq::next);
 			}, proc).then(seq -> {
@@ -719,7 +719,7 @@ public abstract class AbstractModelForDbgTest
 				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding breakpoint container...");
-				DebugModelConventions.findSuitable(TargetBreakpointSpecContainer.class, root.get())
+				DebugModelConventions.suitable(TargetBreakpointSpecContainer.class, root.get())
 						.handle(seq::next);
 			}, breaks).then(seq -> {
 				Msg.debug(this, "Got: " + breaks);
@@ -758,7 +758,7 @@ public abstract class AbstractModelForDbgTest
 				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(DbgModelTargetLauncher.class, root.get())
+				DebugModelConventions.suitable(DbgModelTargetLauncher.class, root.get())
 						.handle(
 							seq::next);
 			}, launcher).then(seq -> {
@@ -768,7 +768,7 @@ public abstract class AbstractModelForDbgTest
 						.handle(seq::nextIgnore);
 			}).then(seq -> {
 				Msg.debug(this, "Finding breakpoint container...");
-				DebugModelConventions.findSuitable(TargetBreakpointSpecContainer.class, root.get())
+				DebugModelConventions.suitable(TargetBreakpointSpecContainer.class, root.get())
 						.handle(seq::next);
 			}, breaks).then(seq -> {
 				Msg.debug(this, "Placing breakpoint...");
@@ -820,7 +820,7 @@ public abstract class AbstractModelForDbgTest
 				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(TargetLauncher.class, root.get())
+				DebugModelConventions.suitable(TargetLauncher.class, root.get())
 						.handle(
 							seq::next);
 			}, launcher).then(seq -> {
@@ -833,7 +833,7 @@ public abstract class AbstractModelForDbgTest
 				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding breakpoint container...");
-				DebugModelConventions.findSuitable(TargetBreakpointSpecContainer.class, root.get())
+				DebugModelConventions.suitable(TargetBreakpointSpecContainer.class, root.get())
 						.handle(seq::next);
 			}, breaks).then(seq -> {
 				Msg.debug(this, "Placing breakpoint...");
@@ -896,7 +896,7 @@ public abstract class AbstractModelForDbgTest
 				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(DbgModelTargetLauncher.class, root.get())
+				DebugModelConventions.suitable(DbgModelTargetLauncher.class, root.get())
 						.handle(
 							seq::next);
 			}, launcher).then(seq -> {
@@ -996,7 +996,7 @@ public abstract class AbstractModelForDbgTest
 				access.get().waitValue(true).handle(seq::next);
 			}).then(seq -> {
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(DbgModelTargetLauncher.class, root.get())
+				DebugModelConventions.suitable(DbgModelTargetLauncher.class, root.get())
 						.handle(
 							seq::next);
 			}, obj1).then(seq -> {
@@ -1009,7 +1009,7 @@ public abstract class AbstractModelForDbgTest
 			}, processes).then(seq -> {
 				processes.get().addListener(procListener);
 				Msg.debug(this, "Finding TargetLauncher...");
-				DebugModelConventions.findSuitable(DbgModelTargetLauncher.class, root.get())
+				DebugModelConventions.suitable(DbgModelTargetLauncher.class, root.get())
 						.handle(
 							seq::next);
 			}, obj2).then(seq -> {

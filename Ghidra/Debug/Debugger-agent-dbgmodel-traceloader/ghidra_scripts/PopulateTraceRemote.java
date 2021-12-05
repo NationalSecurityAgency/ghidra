@@ -162,11 +162,11 @@ public class PopulateTraceRemote extends GhidraScript {
 		Set<DebuggerObjectModel> models = targets.getModels();
 		DebuggerObjectModel model = (DebuggerObjectModel) models.toArray()[0];
 		TargetInterpreter interpreter =
-			DebugModelConventions.findSuitable(TargetInterpreter.class, model.getModelRoot()).get();
+			DebugModelConventions.suitable(TargetInterpreter.class, model.getModelRoot()).get();
 		interpreter.execute(".opendump " + f.getAbsolutePath()).get();
 		interpreter.execute("g");
 		TargetAttacher attacher =
-			DebugModelConventions.findSuitable(TargetAttacher.class, model.getModelRoot()).get();
+			DebugModelConventions.suitable(TargetAttacher.class, model.getModelRoot()).get();
 		// TODO: Is "Available" the correct path?
 		attacher.attach(model.getModelObject("Available", "[0]").as(TargetAttachable.class)).get();
 	}

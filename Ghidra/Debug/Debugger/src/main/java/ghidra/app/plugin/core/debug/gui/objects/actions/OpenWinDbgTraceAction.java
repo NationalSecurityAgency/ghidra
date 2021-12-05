@@ -75,7 +75,7 @@ public class OpenWinDbgTraceAction extends ImportExportAsAction {
 				AtomicReference<TargetLauncher> launcher = new AtomicReference<>();
 				AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
 					TargetObject obj = provider.getObjectFromContext(context);
-					DebugModelConventions.findSuitable(TargetLauncher.class, obj).handle(seq::next);
+					DebugModelConventions.suitable(TargetLauncher.class, obj).handle(seq::next);
 				}, launcher).then(seq -> {
 					launcher.get()
 							.launch(Map.of(TargetCmdLineLauncher.CMDLINE_ARGS_NAME, args))

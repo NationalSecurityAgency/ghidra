@@ -190,7 +190,7 @@ public class TraceObjectListener implements DebuggerModelListener {
 		result.add(target);
 		AsyncFence fence = new AsyncFence();
 		CompletableFuture<? extends TargetEventScope> futureEvents =
-			DebugModelConventions.findSuitable(TargetEventScope.class, target);
+			DebugModelConventions.suitable(TargetEventScope.class, target);
 		fence.include(futureEvents.thenAccept(events -> {
 			if (events != null) {
 				result.add(events);
@@ -200,7 +200,7 @@ public class TraceObjectListener implements DebuggerModelListener {
 			return null;
 		}));
 		CompletableFuture<? extends TargetFocusScope> futureFocus =
-			DebugModelConventions.findSuitable(TargetFocusScope.class, target);
+			DebugModelConventions.suitable(TargetFocusScope.class, target);
 		fence.include(futureFocus.thenAccept(focus -> {
 			if (focus != null) {
 				// Don't descend. Scope may be the entire session.

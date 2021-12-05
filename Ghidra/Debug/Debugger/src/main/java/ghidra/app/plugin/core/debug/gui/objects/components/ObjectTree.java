@@ -260,7 +260,7 @@ public class ObjectTree implements ObjectPane {
 			return;
 		}
 		AsyncUtils.sequence(TypeSpec.VOID).then(seq -> {
-			DebugModelConventions.findSuitable(TargetAccessConditioned.class, targetObject)
+			DebugModelConventions.suitable(TargetAccessConditioned.class, targetObject)
 					.handle(seq::next);
 		}, access).then(seq -> {
 			boolean accessible = true;

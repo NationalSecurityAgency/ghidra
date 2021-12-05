@@ -73,7 +73,7 @@ public enum DebugModelConventions {
 	 * 
 	 * <pre>
 	 * CompletableFuture<? extends TargetEnvironment<?>> futureEnv =
-	 * 	DebugModelConventions.findSuitable(TargetEnvironment.tclass, aProcess);
+	 * 	DebugModelConventions.suitable(TargetEnvironment.tclass, aProcess);
 	 * </pre>
 	 * 
 	 * @param <T> the desired interface type.
@@ -823,7 +823,7 @@ public enum DebugModelConventions {
 	 */
 	public static CompletableFuture<Void> requestActivation(TargetObject obj) {
 		CompletableFuture<? extends TargetActiveScope> futureActivator =
-			DebugModelConventions.findSuitable(TargetActiveScope.class, obj);
+			DebugModelConventions.suitable(TargetActiveScope.class, obj);
 		return futureActivator.thenCompose(activator -> {
 			if (activator == null) {
 				return AsyncUtils.NIL;
@@ -843,7 +843,7 @@ public enum DebugModelConventions {
 	 */
 	public static CompletableFuture<Void> requestFocus(TargetObject obj) {
 		CompletableFuture<? extends TargetFocusScope> futureScope =
-			DebugModelConventions.findSuitable(TargetFocusScope.class, obj);
+			DebugModelConventions.suitable(TargetFocusScope.class, obj);
 		return futureScope.thenCompose(scope -> {
 			if (scope == null) {
 				return AsyncUtils.NIL;
