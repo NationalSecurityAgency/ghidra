@@ -1934,7 +1934,7 @@ class StructureDB extends CompositeDB implements StructureInternal {
 	}
 
 	private int getLastDefinedComponentOrdinal() {
-		if (components.size() == 0) {
+		if (components.isEmpty()) {
 			return 0;
 		}
 		DataTypeComponentDB dataTypeComponentDB = components.get(components.size() - 1);

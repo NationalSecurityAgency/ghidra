@@ -405,7 +405,7 @@ class MarkupXmlMgr {
 							}
 						}
 
-						if (instrScalars.size() == 0) {
+						if (instrScalars.isEmpty()) {
 							log.appendMsg("BAD EQUATE REFERENCE: operand " + "[" + opIndex +
 								"] at address " + "[" + addr + "] is not a scalar.");
 							return;

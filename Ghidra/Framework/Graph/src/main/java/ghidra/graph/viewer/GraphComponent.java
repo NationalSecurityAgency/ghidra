@@ -1084,7 +1084,7 @@ public class GraphComponent<V extends VisualVertex, E extends VisualEdge<V>, G e
 		@Override
 		public void verticesPicked(Set<V> vertices, EventSource source) {
 
-			if (vertices.size() == 0) {
+			if (vertices.isEmpty()) {
 				innerClassGraph.clearSelectedVertices();
 			}
 			else if (vertices.size() == 1) {

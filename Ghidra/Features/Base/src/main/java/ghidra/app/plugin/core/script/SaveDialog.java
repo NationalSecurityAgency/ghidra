@@ -218,7 +218,7 @@ public class SaveDialog extends DialogComponentProvider implements ListSelection
 	}
 
 	protected ResourceFile getDirectory() {
-		if (paths.size() == 0 && scriptFile != null) {
+		if (paths.isEmpty() && scriptFile != null) {
 			return scriptFile.getParentFile();
 		}
 		int index = listPanel.getSelectedIndex();

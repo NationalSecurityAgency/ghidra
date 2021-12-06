@@ -220,7 +220,7 @@ public class FindRunsOfPointersScript extends GhidraScript {
 //						
 //		ArrayList<Address> foundAddrs = new ArrayList<Address>();
 //		long counter = 0;
-//		while((foundAddrs.size() == 0) || (counter == (dist-1))){
+//		while((foundAddrs.isEmpty()) || (counter == (dist-1))){
 //			List<Address> newList = findReferences(topAddress.subtract(dist-counter));
 //			for(int i=0;i<newList.size();i++){
 //				Address a = (Address)newList.get(i);

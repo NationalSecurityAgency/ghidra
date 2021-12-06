@@ -104,7 +104,7 @@ public class HelpModuleCollection implements TOCItemProvider {
 
 		loadHelpSets();
 
-		if (inputHelp == null && externalHelpSets.size() == 0) {
+		if (inputHelp == null && externalHelpSets.isEmpty()) {
 			throw new IllegalArgumentException(
 				"Required TOC file does not exist.  " + "You must create a TOC_Source.xml file, " +
 					"even if it is an empty template, or provide a pre-built TOC.  " +

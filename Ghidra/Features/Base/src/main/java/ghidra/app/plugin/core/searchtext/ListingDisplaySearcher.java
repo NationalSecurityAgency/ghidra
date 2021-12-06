@@ -179,7 +179,7 @@ class ListingDisplaySearcher implements Searcher {
 	 * Get the next location.
 	 */
 	ProgramLocation next() {
-		if (locationList.size() == 0) {
+		if (locationList.isEmpty()) {
 			findNext();
 		}
 
@@ -205,7 +205,7 @@ class ListingDisplaySearcher implements Searcher {
 	}
 
 	boolean hasNext() {
-		if (locationList.size() == 0) {
+		if (locationList.isEmpty()) {
 			findNext();
 		}
 		return options.isForward() ? locationIterator.hasNext() : locationIterator.hasPrevious();
@@ -259,7 +259,7 @@ class ListingDisplaySearcher implements Searcher {
 		currentCodeUnit = null;
 		Listing listing = program.getListing();
 		while (!monitor.isCancelled() && currentLayout == null && addressIterator.hasNext() &&
-			locationList.size() == 0) {
+			locationList.isEmpty()) {
 
 			currentAddress = addressIterator.next();
 			monitor.setMessage("Checking address " + currentAddress);
@@ -290,14 +290,14 @@ class ListingDisplaySearcher implements Searcher {
 			}
 
 			if (options.isForward()) {
-				while (!monitor.isCancelled() && locationList.size() == 0 &&
+				while (!monitor.isCancelled() && locationList.isEmpty() &&
 					currentLayout != null && currentFieldIndex < currentLayout.getNumFields()) {
 					findNextMatch();
 				}
 			}
 			else {
 				currentFieldIndex = currentLayout.getNumFields() - 1;
-				while (!monitor.isCancelled() && locationList.size() == 0 &&
+				while (!monitor.isCancelled() && locationList.isEmpty() &&
 					currentLayout != null && currentFieldIndex >= 0) {
 					findNextMatch();
 				}

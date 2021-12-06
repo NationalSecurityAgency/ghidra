@@ -50,7 +50,7 @@ public class PrettyPrinter {
     private void padEmptyLines() {
         for (ClangLine line : lines) {
 			ArrayList<ClangToken> tokenList = line.getAllTokens();
-			if (tokenList.size() == 0) {
+			if (tokenList.isEmpty()) {
 				ClangToken spacer = ClangToken.buildSpacer(null, line.getIndent(), INDENT_STRING);
 				spacer.setLineParent( line );
                 tokenList.add(0, spacer);

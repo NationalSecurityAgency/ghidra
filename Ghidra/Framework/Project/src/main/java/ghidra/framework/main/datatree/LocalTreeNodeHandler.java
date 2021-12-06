@@ -70,7 +70,7 @@ public final class LocalTreeNodeHandler
 		this.treeState = tree.getTreeState();
 
 		List<GTreeNode> list = (List<GTreeNode>) transferData;
-		if (list.size() == 0) {
+		if (list.isEmpty()) {
 			return;
 		}
 

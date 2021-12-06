@@ -709,7 +709,7 @@ public class ProgramTreePlugin extends ProgramPlugin
 					GroupPath gp = newViewList.get(i);
 					tree.addGroupViewPath(gp);
 				}
-				if (newViewList.size() > 0 && tree.getViewList().size() == 0) {
+				if (newViewList.size() > 0 && tree.getViewList().isEmpty()) {
 					tree.addGroupViewPath(new GroupPath(rootNode.getName()));
 				}
 			}

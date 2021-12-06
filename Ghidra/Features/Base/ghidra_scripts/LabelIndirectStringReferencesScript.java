@@ -61,7 +61,7 @@ public class LabelIndirectStringReferencesScript extends GhidraScript {
 		}
 
 		// Check strings are found
-		if (strAddrSet.size() == 0) {
+		if (strAddrSet.isEmpty()) {
 			popup("No strings found.  Try running 'Search -> For Strings...' first.");
 			return;
 		}

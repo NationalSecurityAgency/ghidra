@@ -178,7 +178,7 @@ class ProgramSaveManager {
 			}
 		}
 
-		if (saveProgramsList.size() == 0) {
+		if (saveProgramsList.isEmpty()) {
 			return true;
 		}
 		// calling can close here ensures that we use the same dialog for single files

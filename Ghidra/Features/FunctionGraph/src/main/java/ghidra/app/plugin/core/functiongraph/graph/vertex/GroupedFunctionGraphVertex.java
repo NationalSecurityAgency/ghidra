@@ -58,7 +58,7 @@ public class GroupedFunctionGraphVertex extends AbstractFunctionGraphVertex {
 	private String initialGroupVertexUserText;
 
 	private static AddressSetView gatherAddresses(Program program, Set<FGVertex> vertices) {
-		if (vertices.size() == 0) {
+		if (vertices.isEmpty()) {
 			throw new IllegalArgumentException(
 				"Cannot create a group vertex with no grouped vertices");
 		}

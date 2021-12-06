@@ -239,7 +239,7 @@ public class VerticalChoicesPanel extends ConflictPanel {
 			return new JComponent[0];
 		}
 		ArrayList<JComponent> list = rowComps.get(row);
-		if (list == null || list.size() == 0) {
+		if (list == null || list.isEmpty()) {
 			return new JComponent[0];
 		}
 		JComponent[] comps = list.toArray(new JComponent[list.size()]);

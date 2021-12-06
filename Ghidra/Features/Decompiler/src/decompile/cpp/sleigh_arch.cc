@@ -168,7 +168,7 @@ PcodeInjectLibrary *SleighArchitecture::buildPcodeInjectLibrary(void)
 void SleighArchitecture::resolveArchitecture(void)
 
 { // Find best architecture
-  if (archid.size() == 0) {
+  if (archid.isEmpty()) {
     if ((target.size()==0)||(target=="default"))
       archid = loader->getArchType();
     else
@@ -450,7 +450,7 @@ void SleighArchitecture::scanForSleighDirectories(const string &rootpath)
   }
   // If we haven't matched this directory structure, just use the rootpath as the directory containing
   // the ldef
-  if (languagesubdirs.size() == 0)
+  if (languagesubdirs.isEmpty())
     languagesubdirs.push_back( rootpath );
 
   for(uint4 i=0;i<languagesubdirs.size();++i)

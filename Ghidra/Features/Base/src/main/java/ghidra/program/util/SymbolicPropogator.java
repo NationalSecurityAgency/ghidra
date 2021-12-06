@@ -2313,7 +2313,7 @@ public class SymbolicPropogator {
 				opIndex = instruction.getNumOperands() - 1;
 				// if it is invisible, don't put anything here.  Just put it on the mnemonic
 				List<Object> list = instruction.getDefaultOperandRepresentationList(opIndex);
-				if (list == null || list.size() == 0) {
+				if (list == null || list.isEmpty()) {
 					opIndex = -1;
 				}
 				// if is external, and any refs, just throw the ref on the mnemonic

@@ -377,7 +377,7 @@ public class TagFilterTest extends VTBaseTestCase {
 	private VTMatch createMatch(VTSessionDB sessionDb) {
 		VTMatchInfo matchInfo = createRandomMatch(addr(), addr(), sessionDb);
 		List<VTMatchSet> matchSets = sessionDb.getMatchSets();
-		if (matchSets.size() == 0) {
+		if (matchSets.isEmpty()) {
 			sessionDb.createMatchSet(createProgramCorrelator(null, sessionDb.getSourceProgram(),
 				sessionDb.getDestinationProgram()));
 			matchSets = sessionDb.getMatchSets();

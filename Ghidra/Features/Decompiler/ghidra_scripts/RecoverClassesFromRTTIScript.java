@@ -834,7 +834,7 @@ public class RecoverClassesFromRTTIScript extends GhidraScript {
 	private void bookmarkFunctionsOnList(List<Function> functions, String comment)
 			throws CancelledException {
 
-		if (functions.size() == 0) {
+		if (functions.isEmpty()) {
 			return;
 		}
 

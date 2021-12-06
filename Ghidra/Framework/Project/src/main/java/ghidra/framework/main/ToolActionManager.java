@@ -358,7 +358,7 @@ class ToolActionManager implements ToolChestChangeListener {
 
 		// create default disable menu items if the number of tools
 		// in toolchest is now zero
-		if (runToolActionMap.size() == 0) {
+		if (runToolActionMap.isEmpty()) {
 			createPlaceHolderActions();
 		}
 	}

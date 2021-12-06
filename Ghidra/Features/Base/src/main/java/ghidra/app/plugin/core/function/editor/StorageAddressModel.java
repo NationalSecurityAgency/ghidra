@@ -356,7 +356,7 @@ class StorageAddressModel {
 		if (!isValid) {
 			return null;
 		}
-		if (varnodes.size() == 0) {
+		if (varnodes.isEmpty()) {
 			if (requiredSize == 0) {
 				return VariableStorage.VOID_STORAGE;
 			}

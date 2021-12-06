@@ -125,7 +125,7 @@ public class ServiceManager {
 		List<Object> list = servicesByInterface.get(interfaceClass);
 		if (list != null) {
 			list.remove(service);
-			if (list.size() == 0) {
+			if (list.isEmpty()) {
 				servicesByInterface.remove(interfaceClass);
 			}
 		}

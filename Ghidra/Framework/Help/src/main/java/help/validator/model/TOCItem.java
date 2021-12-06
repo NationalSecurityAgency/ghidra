@@ -265,7 +265,7 @@ public abstract class TOCItem {
 
 	public void writeContents(LinkDatabase linkDatabase, PrintWriter writer, int indentLevel) {
 		// if I have no children, then just write out a simple tag
-		if (children.size() == 0) {
+		if (children.isEmpty()) {
 			writer.println(generateTOCItemTag(linkDatabase, true, indentLevel));
 		}
 

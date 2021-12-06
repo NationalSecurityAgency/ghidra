@@ -674,7 +674,7 @@ public class SearchTextPlugin extends ProgramPlugin implements OptionsChangeList
 				}
 			}
 
-			if (list.size() == 0) {
+			if (list.isEmpty()) {
 				return NO_HIGHLIGHTS;
 			}
 			Highlight[] h = new Highlight[list.size()];

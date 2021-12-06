@@ -1372,7 +1372,7 @@ public class ElfHeader implements StructConverter, Writeable {
 				list.add(sectionHeader);
 			}
 		}
-		if (list.size() == 0) {
+		if (list.isEmpty()) {
 			return null;
 		}
 		if (list.size() > 1) {

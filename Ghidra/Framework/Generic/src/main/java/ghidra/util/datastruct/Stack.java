@@ -67,7 +67,7 @@ public class Stack<E> implements Iterable<E> {
 	 * Tests if this stack is empty.
 	 */
 	public boolean isEmpty() {
-		return (list.size() == 0);
+		return (list.isEmpty());
 	}
 
 	/**

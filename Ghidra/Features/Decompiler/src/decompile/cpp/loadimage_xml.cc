@@ -40,7 +40,7 @@ void LoadImageXml::saveXml(ostream &s) const
   map<Address,vector<uint1> >::const_iterator iter1;
   for(iter1=chunk.begin();iter1!=chunk.end();++iter1) {
     const vector<uint1> &vec((*iter1).second);
-    if (vec.size() == 0) continue;
+    if (vec.isEmpty()) continue;
     s << " <bytechunk";
     (*iter1).first.getSpace()->saveXmlAttributes(s,(*iter1).first.getOffset());
     if (readonlyset.find((*iter1).first) != readonlyset.end())

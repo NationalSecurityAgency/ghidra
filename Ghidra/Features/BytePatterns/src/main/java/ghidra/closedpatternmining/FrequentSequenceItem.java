@@ -103,7 +103,7 @@ public class FrequentSequenceItem implements Comparable<FrequentSequenceItem> {
 	public static String getPrettyString(Collection<FrequentSequenceItem> items) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("\n");
-		if (items.size() == 0) {
+		if (items.isEmpty()) {
 			sb.append("empty!");
 		}
 		else {

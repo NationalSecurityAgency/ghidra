@@ -881,7 +881,7 @@ public class DWARFDataTypeImporterTest extends DWARFTestBase {
 			BitFieldDataType bfdt = (BitFieldDataType) dtc.getDataType();
 			expectedBitfieldSizes.remove(bfdt.getBitSize());
 		}
-		assertTrue(expectedBitfieldSizes.size() == 0);
+		assertTrue(expectedBitfieldSizes.isEmpty());
 	}
 
 	List<DataTypeComponent> getBitFieldComponents(Structure struct) {

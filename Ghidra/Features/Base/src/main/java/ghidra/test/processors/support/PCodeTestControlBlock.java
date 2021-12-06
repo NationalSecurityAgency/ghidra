@@ -281,7 +281,7 @@ public class PCodeTestControlBlock extends PCodeTestAbstractControlBlock {
 			}
 		}
 
-		if (testGroups.size() == 0) {
+		if (testGroups.isEmpty()) {
 			throw new InvalidControlBlockException(
 				"P-Code test binary does not define any test groups");
 		}

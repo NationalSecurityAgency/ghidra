@@ -97,7 +97,7 @@ public class CliStreamStrings extends CliAbstractStream {
 	 */
 	public String getString(int index) {
 
-		if (stringIndexes.size() == 0 || stringSizes.size() == 0) {
+		if (stringIndexes.isEmpty() || stringSizes.isEmpty()) {
 			return null;
 		}
 

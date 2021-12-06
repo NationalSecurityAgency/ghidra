@@ -161,7 +161,7 @@ public class PatternBlock {
 	public PatternBlock(ArrayList<?> list) {
 		PatternBlock res;
 
-		if (list.size() == 0) {
+		if (list.isEmpty()) {
 			offset = 0;
 			nonzerosize = 0;
 			maskvec = null;

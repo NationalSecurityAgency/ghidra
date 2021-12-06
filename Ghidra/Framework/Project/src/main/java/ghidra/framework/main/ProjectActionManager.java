@@ -310,7 +310,7 @@ class ProjectActionManager {
 		}
 
 		// disable the menu if no recent project views
-		if (reopenViewsList.size() == 0) {
+		if (reopenViewsList.isEmpty()) {
 			DockingAction action = new DockingAction("View Recent", plugin.getName(), false) {
 				@Override
 				public void actionPerformed(ActionContext context) {

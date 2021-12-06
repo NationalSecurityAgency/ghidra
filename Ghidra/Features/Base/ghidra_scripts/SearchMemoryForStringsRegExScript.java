@@ -70,7 +70,7 @@ public class SearchMemoryForStringsRegExScript extends GhidraScript {
 			}
 		}
 
-		if (matchingAddressList.size() == 0) {
+		if (matchingAddressList.isEmpty()) {
 			println("No match found");
 			return;
 		}

@@ -559,7 +559,7 @@ public class ProgramDnDTree extends DragNDropTree {
 				list.add(p);
 			}
 		}
-		if (list.size() == 0 || (viewList.containsAll(list) && viewList.size() == list.size())) {
+		if (list.isEmpty() || (viewList.containsAll(list) && viewList.size() == list.size())) {
 			return;
 		}
 		TreePath[] paths = new TreePath[list.size()];
@@ -1586,7 +1586,7 @@ public class ProgramDnDTree extends DragNDropTree {
 
 		// this must be TreeTransferable.localTreeNodeFlavor
 		List<ProgramNode> list = (List<ProgramNode>) data;
-		if (list.size() == 0) {
+		if (list.isEmpty()) {
 			throw new RuntimeException("Nothing to drop!");
 		}
 

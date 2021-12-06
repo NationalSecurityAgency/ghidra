@@ -193,7 +193,7 @@ public class KeyEntryDialog extends DialogComponentProvider {
 		}
 
 		List<DockingActionIf> list = getManagedActionsForKeyStroke(ks);
-		if (list.size() == 0) {
+		if (list.isEmpty()) {
 			return;
 		}
 

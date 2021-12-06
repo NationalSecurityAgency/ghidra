@@ -279,7 +279,7 @@ void FunctionTestCollection::runTests(list<string> &lateStream)
     return;
   }
   string result = bulkout.str();
-  if (result.size() == 0) {
+  if (result.isEmpty()) {
     ostringstream fs;
     fs << "No output for " << fileName;
     lateStream.push_back(fs.str());

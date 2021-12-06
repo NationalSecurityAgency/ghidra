@@ -70,7 +70,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 
 	@Override
 	public String toString() {
-		if (symbols.size() == 0) {
+		if (symbols.isEmpty()) {
 			return "e";
 		}
 		Iterator<? extends AssemblySymbol> symIt = symbols.iterator();
@@ -198,7 +198,7 @@ public class AssemblySentential<NT extends AssemblyNonTerminal> extends
 
 	// If the right-most symbol is whitespace, return it
 	private WhiteSpace lastWhiteSpace() {
-		if (symbols.size() == 0) {
+		if (symbols.isEmpty()) {
 			return null;
 		}
 		AssemblySymbol last = symbols.get(symbols.size() - 1);

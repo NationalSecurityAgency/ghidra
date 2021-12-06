@@ -114,7 +114,7 @@ public class ApplyFidEntriesCommand extends BackgroundCommand {
 		String bookmarkContents = null;
 		String plateCommentContents = null;
 
-		if (result.matches.size() == 0) {
+		if (result.matches.isEmpty()) {
 			// nothing to do - eliminate functions above might have removed all possibilities
 			return;
 		}

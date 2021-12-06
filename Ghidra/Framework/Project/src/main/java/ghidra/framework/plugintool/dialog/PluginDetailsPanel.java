@@ -159,7 +159,7 @@ class PluginDetailsPanel extends AbstractDetailsPanel {
 		buffer.append("</TD>");
 
 		Set<DockingActionIf> actions = model.getActionsForPlugin(pluginDescription);
-		if (actions.size() == 0) {
+		if (actions.isEmpty()) {
 			buffer.append("<TD VALIGN=\"TOP\">");
 			insertHTMLLine(buffer, "No actions for plugin", noValueAttrSet);
 			buffer.append("</TD>");

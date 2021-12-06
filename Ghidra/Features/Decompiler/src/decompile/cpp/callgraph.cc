@@ -104,7 +104,7 @@ bool CallGraph::findNoEntry(vector<CallGraphNode *> &seeds)
   for(iter=graph.begin();iter!=graph.end();++iter) {
     CallGraphNode &node( (*iter).second );
     if (node.isMark()) continue;
-    if ((node.inedge.size() == 0)||((node.flags&CallGraphNode::onlycyclein)!=0)) {
+    if ((node.inedge.isEmpty())||((node.flags&CallGraphNode::onlycyclein)!=0)) {
       seeds.push_back(&node);
       node.flags |= CallGraphNode::mark | CallGraphNode::entrynode;
       newseeds = true;

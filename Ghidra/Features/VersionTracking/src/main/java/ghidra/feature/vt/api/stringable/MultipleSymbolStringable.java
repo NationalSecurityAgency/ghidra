@@ -84,7 +84,7 @@ public class MultipleSymbolStringable extends Stringable {
 
 	@Override
 	protected String doConvertToString(Program program) {
-		if (symbolInfos == null || symbolInfos.size() == 0) {
+		if (symbolInfos == null || symbolInfos.isEmpty()) {
 			return "";
 		}
 

@@ -236,7 +236,7 @@ class DirectoryList extends GList<File> implements GhidraFileChooserDirectoryMod
 			selectedFiles.add(model.getFile(i));
 		}
 
-		if (selectedFiles.size() == 0 || selectedFiles.size() > 1) {
+		if (selectedFiles.isEmpty() || selectedFiles.size() > 1) {
 			return; // not sure if this can happen, maybe with the Ctrl key pressed
 		}
 

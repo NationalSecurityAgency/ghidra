@@ -44,7 +44,7 @@ public class WeakValueHashMapTest extends AbstractGenericTest {
 			System.gc();
 			Thread.sleep(10);
 			cache.get(0);
-			if (cache.size() == 0) {
+			if (cache.isEmpty()) {
 				break;
 			}
 		}

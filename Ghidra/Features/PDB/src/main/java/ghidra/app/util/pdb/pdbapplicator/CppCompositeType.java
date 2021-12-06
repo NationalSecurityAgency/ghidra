@@ -611,7 +611,7 @@ public class CppCompositeType {
 	}
 
 	boolean isZeroSize() {
-		return memberData.size() == 0;
+		return memberData.isEmpty();
 	}
 
 	//----------------------------------------------------------------------------------------------

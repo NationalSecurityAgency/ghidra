@@ -84,7 +84,7 @@ public class OpenDeclarations {
 				}
 			}
 
-			if (indexNames.size() == 0) {
+			if (indexNames.isEmpty()) {
 				EclipseMessageUtils.info("Found no definitions, looking for declarations...");
 				for (IIndexBinding binding : bindings) {
 					IIndexName[] names = index.findNames(binding, IIndex.FIND_DECLARATIONS);

@@ -650,7 +650,7 @@ public class GhidraTableColumnModelTest extends AbstractGhidraHeadedIntegrationT
 	private LocationReferencesProvider findProvider() {
 		List<?> providerList =
 			(List<?>) TestUtils.getInstanceField("providerList", locationReferencesPlugin);
-		if (providerList.size() == 0) {
+		if (providerList.isEmpty()) {
 			return null;
 		}
 		return (LocationReferencesProvider) providerList.get(0);

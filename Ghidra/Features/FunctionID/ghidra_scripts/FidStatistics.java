@@ -406,7 +406,7 @@ public class FidStatistics extends GhidraScript {
 			throws CancelledException, IOException {
 		StatRecord record = statRecord;
 		record.totalFunction += 1;
-		if (result.matches == null || result.matches.size() == 0) {
+		if (result.matches == null || result.matches.isEmpty()) {
 			record.noMatch += 1;
 		}
 		else {

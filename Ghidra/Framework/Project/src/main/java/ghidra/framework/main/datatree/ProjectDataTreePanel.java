@@ -364,7 +364,7 @@ public class ProjectDataTreePanel extends JPanel {
 
 	public String[] getExpandedPathsByNodeName() {
 		List<TreePath> expandedPaths = tree.getExpandedPaths(root);
-		if (expandedPaths == null || expandedPaths.size() == 0) {
+		if (expandedPaths == null || expandedPaths.isEmpty()) {
 			return null;
 		}
 

@@ -397,7 +397,7 @@ public class AutoVersionTrackingTask extends Task {
 
 			MatchInfo matchInfo = controller.getMatchInfo(match);
 			Collection<VTMarkupItem> markupItems = matchInfo.getAppliableMarkupItems(monitor);
-			if (markupItems == null || markupItems.size() == 0) {
+			if (markupItems == null || markupItems.isEmpty()) {
 				continue;
 			}
 

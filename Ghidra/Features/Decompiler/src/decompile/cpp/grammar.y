@@ -1381,7 +1381,7 @@ void parse_C(Architecture *glb,istream &s)
   }
   else if (decl->hasProperty(CParse::f_typedef)) {
     Datatype *ct = decl->buildType(glb);
-    if (decl->getIdentifier().size() == 0)
+    if (decl->getIdentifier().isEmpty())
       throw ParseError("Missing identifier for typedef");
     glb->types->setName(ct,decl->getIdentifier());
   }

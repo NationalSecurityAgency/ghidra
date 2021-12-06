@@ -132,7 +132,7 @@ public class ByteViewerLayoutModel implements LayoutModel {
 				fields.add(field);
 			}
 		}
-		if (fields.size() == 0) {
+		if (fields.isEmpty()) {
 			if (factorys.length > 0) {
 				FontMetrics fm = factorys[0].getMetrics();
 				int height = fm.getMaxAscent() + fm.getMaxDescent();

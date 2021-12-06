@@ -408,7 +408,7 @@ public class DropDownTextField<T> extends JTextField implements GComponent {
 		});
 
 		// adjust the display based upon the list contents
-		if (data.size() == 0) {
+		if (data.isEmpty()) {
 			updateDisplayLocation(false);
 			return;
 		}

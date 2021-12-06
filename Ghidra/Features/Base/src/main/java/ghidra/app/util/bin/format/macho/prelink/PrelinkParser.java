@@ -106,7 +106,7 @@ public class PrelinkParser {
 		String value = element.getValue();
 		if (value.equals(PrelinkConstants.kPrelinkPersonalitiesKey)) {
 			Element arrayElement = (Element) iterator.next();
-			if (arrayElement.getChildren().size() == 0) {
+			if (arrayElement.getChildren().isEmpty()) {
 				//should be empty...
 			}
 		}

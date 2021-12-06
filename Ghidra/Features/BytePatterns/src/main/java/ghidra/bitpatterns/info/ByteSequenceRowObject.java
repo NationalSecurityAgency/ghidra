@@ -372,7 +372,7 @@ public class ByteSequenceRowObject {
 	 * @return merged sequences
 	 */
 	public static DittedBitSequence merge(List<ByteSequenceRowObject> rowObjects) {
-		if (rowObjects == null || rowObjects.size() == 0) {
+		if (rowObjects == null || rowObjects.isEmpty()) {
 			return null;
 		}
 

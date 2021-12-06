@@ -86,7 +86,7 @@ public class VariableXRefFieldFactory extends XRefFieldFactory {
 		List<Reference> offcuts = new ArrayList<>();
 		XReferenceUtils.getVariableRefs(var, xrefs, offcuts, maxXRefs);
 
-		if (xrefs.size() + offcuts.size() == 0) {
+		if (xrefs.isEmpty() && offcuts.isEmpty()) {
 			return null;
 		}
 

@@ -681,7 +681,7 @@ class FileActionManager {
 				Msg.showError(this, null, null, null, e);
 			}
 		}
-		if (list.size() == 0) {
+		if (list.isEmpty()) {
 			return true;
 		}
 

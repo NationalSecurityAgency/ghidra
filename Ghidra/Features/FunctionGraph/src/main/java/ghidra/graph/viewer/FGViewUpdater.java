@@ -178,7 +178,7 @@ public class FGViewUpdater extends VisualGraphViewUpdater<FGVertex, FGEdge> {
 			}
 		}
 
-		if (groupVertices.size() == 0) {
+		if (groupVertices.isEmpty()) {
 			return; // nothing left to ungroup
 		}
 
@@ -448,7 +448,7 @@ public class FGViewUpdater extends VisualGraphViewUpdater<FGVertex, FGEdge> {
 			boolean relayoutOverride, boolean animate, boolean isRegroup) {
 
 		boolean doAnimate = animate & isAnimationEnabled(); // never animate when the user has disabled it
-		if (groupVertex.getVertices().size() == 0) {
+		if (groupVertex.getVertices().isEmpty()) {
 			return false;
 		}
 

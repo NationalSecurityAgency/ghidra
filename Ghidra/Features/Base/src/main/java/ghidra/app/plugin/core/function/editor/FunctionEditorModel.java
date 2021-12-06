@@ -413,7 +413,7 @@ public class FunctionEditorModel {
 			}
 			buf.append(FunctionSignature.VAR_ARGS_DISPLAY_STRING);
 		}
-		else if (parameters.size() == 0) {
+		else if (parameters.isEmpty()) {
 			buf.append(FunctionSignature.VOID_PARAM_DISPLAY_STRING);
 		}
 		buf.append(')');
@@ -1012,7 +1012,7 @@ public class FunctionEditorModel {
 					}
 				}
 				if (changed && function.getSignatureSource() == SourceType.DEFAULT &&
-					parameters.size() == 0 &&
+					parameters.isEmpty() &&
 					!Function.UNKNOWN_CALLING_CONVENTION_STRING.equals(callingConventionName)) {
 					function.setSignatureSource(SourceType.USER_DEFINED);
 				}

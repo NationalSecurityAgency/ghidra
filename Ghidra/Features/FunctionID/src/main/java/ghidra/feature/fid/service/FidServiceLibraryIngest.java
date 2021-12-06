@@ -571,7 +571,7 @@ class FidServiceLibraryIngest {
 			}
 			hashes.add(relation.getSpecificHash());
 		}
-		if (hashes.size() == 0 && (!list.isEmpty())) {
+		if (hashes.isEmpty() && (!list.isEmpty())) {
 			Msg.warn(FidServiceLibraryIngest.class,
 				"direct relation " + symbol.name + "lost with hash filter");
 		}

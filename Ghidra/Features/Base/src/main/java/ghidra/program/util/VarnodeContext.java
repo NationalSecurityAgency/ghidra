@@ -194,7 +194,7 @@ public class VarnodeContext implements ProcessorContext {
 			spaceContext.mergeToFutureFlowState(fromAddr, toAddr);
 		conflicts.addAll(spaceConflicts);
 
-		if (conflicts.size() == 0) {
+		if (conflicts.isEmpty()) {
 			return false;
 		}
 

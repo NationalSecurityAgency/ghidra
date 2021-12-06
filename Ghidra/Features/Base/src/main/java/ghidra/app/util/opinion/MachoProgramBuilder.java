@@ -622,7 +622,7 @@ public class MachoProgramBuilder {
 				}
 			}
 		}
-		if (undefinedSymbols.size() == 0) {
+		if (undefinedSymbols.isEmpty()) {
 			return;
 		}
 		Address start = getAddress();
@@ -680,7 +680,7 @@ public class MachoProgramBuilder {
 				}
 			}
 		}
-		if (absoluteSymbols.size() == 0) {
+		if (absoluteSymbols.isEmpty()) {
 			return;
 		}
 		Address start = getAddress();
@@ -735,7 +735,7 @@ public class MachoProgramBuilder {
 
 		//then we are use the old school binding technique.
 		//this only still appears in powerpc
-		if (commands.size() == 0) {
+		if (commands.isEmpty()) {
 			ClassicBindProcessor classicBindProcess =
 				new ClassicBindProcessor(machoHeader, program);
 			try {

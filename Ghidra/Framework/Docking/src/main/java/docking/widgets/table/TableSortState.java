@@ -144,7 +144,7 @@ public class TableSortState implements Iterable<ColumnSortState> {
 
 	public static TableSortState restoreFromXML(Element element) {
 		List<?> tableSortStateElementList = element.getChildren(XML_TABLE_SORT_STATE);
-		if (tableSortStateElementList == null || tableSortStateElementList.size() == 0) {
+		if (tableSortStateElementList == null || tableSortStateElementList.isEmpty()) {
 			return null; // the given element contains no sort state data
 		}
 

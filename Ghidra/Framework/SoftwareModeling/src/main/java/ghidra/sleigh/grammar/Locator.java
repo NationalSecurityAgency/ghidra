@@ -31,7 +31,7 @@ public class Locator {
 		Integer key;
 		Location location;
 		Location correctLocation;
-		if (headMap.size() == 0) {
+		if (headMap.isEmpty()) {
 			return null;
 		}
 		key = headMap.lastKey();

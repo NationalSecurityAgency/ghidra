@@ -486,7 +486,7 @@ public class CParser {
 	}
 
 	private int popPack(Token iD) {
-		if (packStack.size() == 0) {
+		if (packStack.isEmpty()) {
 			return packSize;
 		}
 		String name = "";

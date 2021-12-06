@@ -740,7 +740,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		//
 		Graph<FGVertex, FGEdge> graph = functionGraph;
 		Collection<FGEdge> inEdgesForDestination = graph.getInEdges(destinationVertex);
-		if (inEdgesForDestination.size() == 0) {
+		if (inEdgesForDestination.isEmpty()) {
 			// must be in a dirty state with vertices and edges that don't match reality
 			return;
 		}
@@ -847,7 +847,7 @@ public class FGProvider extends VisualGraphComponentProvider<FGVertex, FGEdge, F
 		//
 		Graph<FGVertex, FGEdge> graph = functionGraph;
 		Collection<FGEdge> inEdgesForDestination = graph.getInEdges(destinationVertex);
-		if (inEdgesForDestination.size() == 0) {
+		if (inEdgesForDestination.isEmpty()) {
 			// must be in a dirty state with vertices and edges that don't match reality
 			return;
 		}

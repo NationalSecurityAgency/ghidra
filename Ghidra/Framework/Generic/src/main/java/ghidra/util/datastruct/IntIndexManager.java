@@ -44,7 +44,7 @@ public class IntIndexManager implements Serializable {
      * indexes.
      */
     public int allocate() {
-        if (freeList.size() == 0) {
+        if (freeList.isEmpty()) {
             if (nextIndex < 0) {
                 throw new IndexOutOfBoundsException();
             }

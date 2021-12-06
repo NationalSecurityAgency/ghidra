@@ -115,7 +115,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		List<PluginTool> list = namesMap.get(toolName);
 		SystemUtilities.assertTrue(list != null, "Attempted to remove tool that's not there");
 		list.remove(tool);
-		if (list.size() == 0) {
+		if (list.isEmpty()) {
 			namesMap.remove(toolName);
 			toolStatusMap.remove(toolName);
 		}
@@ -258,7 +258,7 @@ public class ToolManagerImpl implements ToolManager, PropertyChangeListener {
 		// set the oldest workspace to now be the active workspace;
 		// if this is the last workspace, then create a new "empty"
 		// workspace which is the project default
-		if (workspaces.size() == 0) {
+		if (workspaces.isEmpty()) {
 			try {
 				createWorkspace(DEFAULT_WORKSPACE_NAME);
 			}

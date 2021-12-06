@@ -109,7 +109,7 @@ public class ApplyMatchTask extends VtTask {
 			long progress = monitor.getProgress();
 			MatchInfo matchInfo = controller.getMatchInfo(match);
 			Collection<VTMarkupItem> markupItems = matchInfo.getAppliableMarkupItems(monitor);
-			if (markupItems == null || markupItems.size() == 0) {
+			if (markupItems == null || markupItems.isEmpty()) {
 				monitor.incrementProgress(1);
 				continue;
 			}

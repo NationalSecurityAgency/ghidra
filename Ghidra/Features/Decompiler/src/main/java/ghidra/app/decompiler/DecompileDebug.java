@@ -468,7 +468,7 @@ public class DecompileDebug {
 	}
 
 	private void dumpCPool(OutputStream debugStream) throws IOException {
-		if (cpool.size() == 0) {
+		if (cpool.isEmpty()) {
 			return;
 		}
 		debugStream.write("<constantpool>\n".getBytes());
@@ -491,7 +491,7 @@ public class DecompileDebug {
 	}
 
 	private void dumpFlowOverride(OutputStream debugStream) throws IOException {
-		if (flowoverride.size() == 0) {
+		if (flowoverride.isEmpty()) {
 			return;
 		}
 		debugStream.write("<flowoverridelist>\n".getBytes());
@@ -503,7 +503,7 @@ public class DecompileDebug {
 	}
 
 	private void dumpInject(OutputStream debugStream) throws IOException {
-		if (inject.size() == 0) {
+		if (inject.isEmpty()) {
 			return;
 		}
 		debugStream.write("<injectdebug>\n".getBytes());

@@ -141,7 +141,7 @@ public class FunctionGraphFactory {
 			TaskMonitor monitor) throws CancelledException {
 
 		FunctionGraph graph = createGraph(function, controller, monitor);
-		if (graph.getVertices().size() == 0) {
+		if (graph.getVertices().isEmpty()) {
 			return new EmptyFunctionGraphData("No data in function: " + function.getName());
 		}
 

@@ -434,7 +434,7 @@ public class ClipboardPanel extends JPanel {
 			}
 		}
 		//only prepatterns
-		if ((postPatterns.size() == 0)) {
+		if ((postPatterns.isEmpty())) {
 			for (PatternInfoRowObject row : rows) {
 				patternList.add(new Pattern(row.getDittedBitSequence(), 0, new PostRule[0],
 					new MatchAction[0]));
@@ -444,7 +444,7 @@ public class ClipboardPanel extends JPanel {
 		}
 		onlyPrePatterns = false;
 		//only postpatterns
-		if (prePatterns.size() == 0) {
+		if (prePatterns.isEmpty()) {
 			for (PatternInfoRowObject row : rows) {
 				patternList.add(new Pattern(row.getDittedBitSequence(), 0, getAlignRule(null, row),
 					new MatchAction[0]));

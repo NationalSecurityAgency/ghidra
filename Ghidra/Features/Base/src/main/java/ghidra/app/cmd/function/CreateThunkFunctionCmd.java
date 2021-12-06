@@ -694,7 +694,7 @@ public class CreateThunkFunctionCmd extends BackgroundCommand {
 			}
 
 			// if not checking for sideEffect registers set, or there are no side-effects
-			if (!checkForSideEffects || setRegisters.size() == 0) {
+			if (!checkForSideEffects || setRegisters.isEmpty()) {
 				flowingAddr = getFlowingAddress(program, instr);
 			}
 		}

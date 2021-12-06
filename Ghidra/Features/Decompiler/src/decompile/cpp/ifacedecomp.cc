@@ -1487,7 +1487,7 @@ void IfcPrintExtrapop::execute(istream &s)
   string name;
 
   s >> ws >> name;
-  if (name.size() == 0) {
+  if (name.isEmpty()) {
     if (dcp->fd != (Funcdata *)0) {
       int4 num = dcp->fd->numCalls();
       for(int4 i=0;i<num;++i) {
@@ -1830,7 +1830,7 @@ void IfcFlowOverride::execute(istream &s)
   s >> ws;
   Address addr( parse_machaddr(s,discard,*dcp->conf->types));
   s >> token;
-  if (token.size() == 0)
+  if (token.isEmpty())
     throw IfaceParseError("Missing override type");
   type = Override::stringToType(token);
   if (type == Override::NONE)
@@ -2682,7 +2682,7 @@ void IfcCallGraphDump::execute(istream &s)
 
   string name;
   s >> ws >> name;
-  if (name.size() == 0)
+  if (name.isEmpty())
     throw IfaceParseError("Need file name to write callgraph to");
 
   ofstream os;
@@ -2712,7 +2712,7 @@ void IfcCallGraphLoad::execute(istream &s)
   string name;
 
   s >> ws >> name;
-  if (name.size() == 0)
+  if (name.isEmpty())
     throw IfaceExecutionError("Need name of file to read callgraph from");
 
   ifstream is(name.c_str());
@@ -3031,7 +3031,7 @@ void IfcParseRule::execute(istream &s)
   bool debug = false;
 
   s >> filename;
-  if (filename.size() == 0)
+  if (filename.isEmpty())
     throw IfaceParseError("Missing rule input file");
 
   s >> ws;
@@ -3069,7 +3069,7 @@ void IfcExperimentalRules::execute(istream &s)
   if (dcp->conf != (Architecture *)0)
     throw IfaceExecutionError("Experimental rules must be registered before loading architecture");
   s >> filename;
-  if (filename.size() == 0)
+  if (filename.isEmpty())
     throw IfaceParseError("Missing name of file containing experimental rules");
   dcp->experimental_file = filename;
   *status->optr << "Successfully registered experimental file " << filename << endl;

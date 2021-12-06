@@ -363,7 +363,7 @@ public class HighFunction extends PcodeSyntaxTree {
 					oldinst.add(curvn);
 				}
 			}
-			if (oldinst.size() == 0) {
+			if (oldinst.isEmpty()) {
 				return high; // Everybody is in the same group
 			}
 			if (!(high instanceof HighLocal)) {

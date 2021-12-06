@@ -59,7 +59,7 @@ public class LabelIndirectReferencesScript extends GhidraScript {
 		}
 
 		// Check that data with user symbols are found
-		if (dataAddrSet.size() == 0) {
+		if (dataAddrSet.isEmpty()) {
 			popup("No data with user symbols were found.");
 			return;
 		}

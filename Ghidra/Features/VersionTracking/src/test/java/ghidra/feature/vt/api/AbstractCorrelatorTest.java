@@ -110,7 +110,7 @@ public abstract class AbstractCorrelatorTest extends AbstractGhidraHeadedIntegra
 						Address sourceEntryPoint = function.getEntryPoint();
 						Collection<VTAssociation> associations =
 							manager.getRelatedAssociationsBySourceAddress(sourceEntryPoint);
-						if (associations.size() == 0) {
+						if (associations.isEmpty()) {
 							error(factory, "no source matches for function " + function.getName() +
 								" at " + sourceEntryPoint);
 						}

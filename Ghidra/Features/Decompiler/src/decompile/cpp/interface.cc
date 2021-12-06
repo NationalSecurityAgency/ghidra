@@ -352,7 +352,7 @@ bool IfaceStatus::runCommand(void)
     *optr << "ERROR: Invalid command" << endl;
     return false;
   }
-  else if ( fullcommand.size() == 0 ) // Nothing useful typed
+  else if ( fullcommand.isEmpty() ) // Nothing useful typed
     return false;
   else if (match>1) {
     if ( (*first)->numWords() != fullcommand.size()) { // Check for complete but not unique

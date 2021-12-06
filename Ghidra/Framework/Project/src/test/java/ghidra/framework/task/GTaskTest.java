@@ -360,7 +360,7 @@ public class GTaskTest extends AbstractGenericTest {
 		LatchedTask task1 = new LatchedTask("Task 1");
 		gTaskManager.scheduleTask(task1, 10, "GROUP1");
 		gTaskManager.scheduleTask(new SimpleTask("Task 2"), 20, "GROUP1");
-		assertTrue(domainObject.transactionsList.size() == 0);
+		assertTrue(domainObject.transactionsList.isEmpty());
 		task1.latch.countDown();
 		waitForTaskManager();
 		assertTrue(domainObject.transactionsList.size() == 1);

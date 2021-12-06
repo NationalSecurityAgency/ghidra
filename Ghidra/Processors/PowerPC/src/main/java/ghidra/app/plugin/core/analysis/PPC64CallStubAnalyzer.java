@@ -229,7 +229,7 @@ public class PPC64CallStubAnalyzer extends AbstractAnalyzer {
 
 		matches.clear();
 		sequenceSearchState.apply(searchBytes, matches);
-		if (matches.size() == 0) {
+		if (matches.isEmpty()) {
 			return null;
 		}
 

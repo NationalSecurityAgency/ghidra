@@ -288,7 +288,7 @@ class SymbolTableModel extends AddressBasedTableModel<Symbol> {
 		CompoundCmd cmd = new CompoundCmd("Delete symbol(s)");
 		for (Symbol symbol : rowObjects) {
 			if (symbol.isDynamic()) {
-				continue;//can't delete dynamic symbols...
+				continue;// can't delete dynamic symbols...
 			}
 
 			deleteList.add(symbol);

@@ -66,7 +66,7 @@ public class RemoveMatchAction extends DockingAction {
 		}
 		VTMatchContext matchContext = (VTMatchContext) context;
 		List<VTMatch> matches = matchContext.getSelectedMatches();
-		if (matches.size() == 0) {
+		if (matches.isEmpty()) {
 			return false;
 		}
 		if (!isRemovableMatch(matches.get(0))) {

@@ -58,7 +58,7 @@ public class LabelDirectFunctionReferencesScript extends GhidraScript {
 		while (funcIter.hasNext() && !monitor.isCancelled()) {
 			funcSet.add(funcIter.next());
 		}
-		if (funcSet.size() == 0) {
+		if (funcSet.isEmpty()) {
 			popup("No functions found.  Try analyzing code first.");
 			return;
 		}

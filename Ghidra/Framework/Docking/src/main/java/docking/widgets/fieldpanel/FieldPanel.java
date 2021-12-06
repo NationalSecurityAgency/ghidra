@@ -824,7 +824,7 @@ public class FieldPanel extends JPanel
 		cursorHandler.scrollToCursor();
 		int newOffset = getCursorOffset();
 		int scrollAmount = newOffset - offset;
-		if (layouts.size() == 0) {
+		if (layouts.isEmpty()) {
 			return;
 		}
 		scrollView(scrollAmount);

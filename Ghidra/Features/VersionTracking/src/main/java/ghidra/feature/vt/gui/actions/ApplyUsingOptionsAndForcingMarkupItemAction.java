@@ -83,7 +83,7 @@ public class ApplyUsingOptionsAndForcingMarkupItemAction extends DockingAction {
 	public boolean isEnabledForContext(ActionContext context) {
 		List<VTMarkupItem> markupItems = controller.getMarkupItems(context);
 
-		if (markupItems.size() == 0) {
+		if (markupItems.isEmpty()) {
 			return false;
 		}
 
@@ -106,7 +106,7 @@ public class ApplyUsingOptionsAndForcingMarkupItemAction extends DockingAction {
 	public boolean isAddToPopup(ActionContext context) {
 		List<VTMarkupItem> markupItems = controller.getMarkupItems(context);
 
-		if (markupItems.size() == 0) {
+		if (markupItems.isEmpty()) {
 			return false;
 		}
 

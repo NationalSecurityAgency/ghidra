@@ -818,7 +818,7 @@ public class FunctionStartAnalyzer extends AbstractAnalyzer implements PatternFa
 		if (patternlist == null) {
 			return null;
 		}
-		if (patternlist.size() == 0) {
+		if (patternlist.isEmpty()) {
 			return null;
 		}
 

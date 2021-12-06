@@ -145,7 +145,7 @@ public class InjectPayloadJavaParameters implements InjectPayload {
 		paramCategories.addAll(DescriptorDecoder.getParameterCategories(descriptor));
 		int numOps = paramCategories.size();
 
-		if (paramCategories.size() == 0) {
+		if (paramCategories.isEmpty()) {
 			//no this pointer, no parameters: nothing to do
 			return new PcodeOp[0];
 		}

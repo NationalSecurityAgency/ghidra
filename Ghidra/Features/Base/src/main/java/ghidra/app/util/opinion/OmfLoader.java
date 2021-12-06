@@ -464,7 +464,7 @@ public class OmfLoader extends AbstractLibrarySupportLoader {
 			MessageLog log) {
 
 		ArrayList<OmfExternalSymbol> symbolrecs = header.getExternalSymbols();
-		if (symbolrecs.size() == 0) {
+		if (symbolrecs.isEmpty()) {
 			return;
 		}
 

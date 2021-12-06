@@ -152,7 +152,7 @@ public class CodeUnitPrintable implements Printable {
 
 		if (layouts != null) {
 			//If no layouts, ignore blank page
-			if (layouts.size() == 0) {
+			if (layouts.isEmpty()) {
 				return NO_SUCH_PAGE;
 			}
 			for (int i = 0; i < layouts.size(); i++) {

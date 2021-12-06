@@ -73,7 +73,7 @@ void InjectPayloadSleigh::restoreXml(const Element *el)
       parsestring = subel->getContent();
     }
   }
-  if (parsestring.size() == 0 && (!dynamic))
+  if (parsestring.isEmpty() && (!dynamic))
     throw LowlevelError("Missing <body> subtag in <pcode>: "+getSource());
 }
 

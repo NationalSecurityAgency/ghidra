@@ -321,7 +321,7 @@ public class WindowUtilities {
 
 	public static Dialog findModalestDialog() {
 		List<Dialog> openModalDialogs = getOpenModalDialogs();
-		if (openModalDialogs.size() == 0) {
+		if (openModalDialogs.isEmpty()) {
 			return null;
 		}
 

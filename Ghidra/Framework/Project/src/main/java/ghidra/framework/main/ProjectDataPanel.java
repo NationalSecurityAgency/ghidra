@@ -286,7 +286,7 @@ class ProjectDataPanel extends JSplitPane {
 		((ProjectDataTreePanel) view).dispose();
 
 		// if we have no more views, hide the read-only tabbed pane
-		if (readOnlyViews.size() == 0) {
+		if (readOnlyViews.isEmpty()) {
 			setViewsVisible(false);
 		}
 		tool.getProject().removeProjectView(url);

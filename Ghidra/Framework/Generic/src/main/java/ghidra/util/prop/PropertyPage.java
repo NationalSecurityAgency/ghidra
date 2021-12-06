@@ -416,7 +416,7 @@ class PropertyPage implements Serializable {
         }
 
 		boolean result = keySet.remove(offset);
-        if (keySet.size() == 0) {
+        if (keySet.isEmpty()) {
             keySet = new RedBlackKeySet((short)(pageSize-1));
         }
         int row = getRow(offset,false);

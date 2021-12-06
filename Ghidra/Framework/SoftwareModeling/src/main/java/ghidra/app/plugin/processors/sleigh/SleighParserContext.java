@@ -113,7 +113,7 @@ public class SleighParserContext implements ParserContext {
 	}
 
 	public void applyCommits(ProcessorContext ctx) throws MemoryAccessException {
-		if (contextcommit.size() == 0)
+		if (contextcommit.isEmpty())
 			return;
 		ContextCache contextCache = prototype.getContextCache();
 		ParserWalker walker = new ParserWalker(this);

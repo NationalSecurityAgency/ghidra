@@ -216,7 +216,7 @@ public class ProjectedDatabase {
 	 */
 	public Set<FrequentSequenceItem> getBackwardExtensionItems() {
 		Set<FrequentSequenceItem> backwardExtensionItems = new HashSet<FrequentSequenceItem>();
-		if (projectedInfo.size() == 0) {
+		if (projectedInfo.isEmpty()) {
 			return backwardExtensionItems;
 		}
 

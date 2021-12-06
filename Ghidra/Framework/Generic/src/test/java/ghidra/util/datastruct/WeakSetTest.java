@@ -119,7 +119,7 @@ public class WeakSetTest extends AbstractGenericTest {
 		weakSet.clear();
 
 		assertTrue("The weak set does not have 0 elements after calling " + "clear().",
-			(weakSet.size() == 0));
+			(weakSet.isEmpty()));
 
 		assertTrue("WeakSet.isEmpty() did not return true when the set is " + "empty.",
 			weakSet.isEmpty());

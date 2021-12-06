@@ -91,7 +91,7 @@ public class PcodeFieldLocation extends ProgramLocation {
 	}
 
 	private String getPcodeSample() {
-		if (pcodeStrings.size() == 0) {
+		if (pcodeStrings.isEmpty()) {
 			return "<no pcode>";
 		}
 		return pcodeStrings.get(0);

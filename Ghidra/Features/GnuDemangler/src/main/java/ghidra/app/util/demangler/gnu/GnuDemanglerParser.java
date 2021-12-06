@@ -1394,7 +1394,7 @@ public class GnuDemanglerParser {
 	 * @return the newly created type
 	 */
 	private DemangledType convertToNamespaces(List<String> names) {
-		if (names.size() == 0) {
+		if (names.isEmpty()) {
 			return null;
 		}
 		int index = names.size() - 1;

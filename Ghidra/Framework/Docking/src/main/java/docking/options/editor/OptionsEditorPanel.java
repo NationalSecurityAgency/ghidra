@@ -56,7 +56,7 @@ public class OptionsEditorPanel extends JPanel {
 	 */
 	public OptionsEditorPanel(String title, Options options, List<String> optionNames,
 			EditorStateFactory editorStateFactory) {
-		if (optionNames.size() == 0) {
+		if (optionNames.isEmpty()) {
 			throw new AssertException("No editable options given for this panel.");
 		}
 		this.options = options;

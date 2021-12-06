@@ -540,7 +540,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 
 		try {
 			instance.setUp();
-			if (instance.testGroupMap == null || instance.testGroupMap.size() == 0) {
+			if (instance.testGroupMap == null || instance.testGroupMap.isEmpty()) {
 				return getTestFailure(emulatorTestClass, "No test binaries found", null);
 			}
 			ArrayList<PCodeTestGroup> testGroups = new ArrayList<>(instance.testGroupMap.values());
@@ -1854,7 +1854,7 @@ public abstract class ProcessorEmulatorTestAdapter extends TestCase implements E
 			resourcesTestDataDir);
 		testFiles = findBinaryTestFiles(resourcesTestDataDir);
 
-		if (testFiles.size() == 0) {
+		if (testFiles.isEmpty()) {
 			throw new AssertException("No test binaries found");
 		}
 

@@ -349,7 +349,7 @@ public class DefaultProjectManager implements ProjectManager {
 
 	private File getMostRecentValidProjectDirectory() {
 		List<File> ghidraUserDirsByTime = GenericRunInfo.getPreviousApplicationSettingsDirsByTime();
-		if (ghidraUserDirsByTime.size() == 0) {
+		if (ghidraUserDirsByTime.isEmpty()) {
 			return null;
 		}
 

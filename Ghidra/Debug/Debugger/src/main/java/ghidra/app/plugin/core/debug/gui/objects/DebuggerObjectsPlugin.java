@@ -227,7 +227,7 @@ public class DebuggerObjectsPlugin extends AbstractDebuggerPlugin
 		for (DebuggerObjectsProvider p : toRemove) {
 			providers.remove(p);
 		}
-		if (providers.size() == 0) {
+		if (providers.isEmpty()) {
 			Swing.runIfSwingOrRunLater(() -> {
 				init();
 			});

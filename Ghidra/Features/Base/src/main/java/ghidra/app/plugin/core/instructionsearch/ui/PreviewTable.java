@@ -199,7 +199,7 @@ public class PreviewTable extends AbstractInstructionTable {
 
 						// See if we only have a mnemonic and NO operands.  If so, then just add
 						// the mnemonic to the preview panel and increment our counter.
-						if (metadata.getOperands() == null || metadata.getOperands().size() == 0) {
+						if (metadata.getOperands() == null || metadata.getOperands().isEmpty()) {
 							MaskContainer maskContainer = metadata.getMaskContainer();
 							if (maskContainer != null && maskContainer.getValue() != null) {
 								instrSize = maskContainer.getValue().length;

@@ -114,7 +114,7 @@ public class GHelpBuilder {
 		Collection<DuplicateAnchorCollection> duplicateAnchors = linkDatabase.getDuplicateAnchors();
 
 		// report the results
-		if (invalidLinks.size() == 0 && duplicateAnchors.size() == 0) {
+		if (invalidLinks.isEmpty() && duplicateAnchors.isEmpty()) {
 			// everything is valid!
 			return new Results("Finished validating help files--all valid!", false);
 		}
@@ -311,7 +311,7 @@ public class GHelpBuilder {
 
 		HelpBuildUtils.debug = debugEnabled;
 
-		if (helpInputDirectories.size() == 0) {
+		if (helpInputDirectories.isEmpty()) {
 			errorMessage("Must specify at least one input directory");
 			printUsage();
 			System.exit(1);

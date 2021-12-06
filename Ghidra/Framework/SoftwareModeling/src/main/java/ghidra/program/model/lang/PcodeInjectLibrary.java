@@ -292,7 +292,7 @@ public class PcodeInjectLibrary {
 	 * @return true if the user-defined op exists
 	 */
 	public boolean hasUserDefinedOp(String name) {
-		if (callOtherFixupMap.size() == 0) {
+		if (callOtherFixupMap.isEmpty()) {
 			int max = language.getNumberOfUserDefinedOpNames();
 			for (int i = 0; i < max; ++i) {
 				String opname = language.getUserDefinedOpName(i);

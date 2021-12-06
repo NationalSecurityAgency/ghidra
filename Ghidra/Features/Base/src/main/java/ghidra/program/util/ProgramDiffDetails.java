@@ -1449,7 +1449,7 @@ public class ProgramDiffDetails {
 	 * @return
 	 */
 	private String getTagInfo(Collection<FunctionTag> tags) {
-		if (tags == null || tags.size() == 0) {
+		if (tags == null || tags.isEmpty()) {
 			return "";
 		}
 

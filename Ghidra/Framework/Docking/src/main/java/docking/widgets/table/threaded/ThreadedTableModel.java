@@ -432,7 +432,7 @@ public abstract class ThreadedTableModel<ROW_OBJECT, DATA_SOURCE>
 		// copy the filter so that it is not changed by another thread whilst this filter is
 		// taking place
 
-		if (data.size() == 0) {
+		if (data.isEmpty()) {
 			return data;
 		}
 

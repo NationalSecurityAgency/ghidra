@@ -1686,7 +1686,7 @@ public class StructureDataType extends CompositeDataTypeImpl implements Structur
 	}
 
 	private int getLastDefinedComponentOrdinal() {
-		if (components.size() == 0) {
+		if (components.isEmpty()) {
 			return 0;
 		}
 		DataTypeComponent dataTypeComponent = components.get(components.size() - 1);

@@ -360,7 +360,7 @@ public class AnalyzeHeadless implements GhidraLaunchable {
 			}
 		}
 		else {
-			if (filesToImport == null || filesToImport.size() == 0) {
+			if (filesToImport == null || filesToImport.isEmpty()) {
 				if (options.preScripts.isEmpty() && options.postScripts.isEmpty()) {
 					System.err.println("Nothing to do ... must specify -import, -process, or " +
 						"prescript and/or postscript.");

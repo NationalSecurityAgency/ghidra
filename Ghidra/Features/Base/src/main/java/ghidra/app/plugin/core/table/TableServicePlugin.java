@@ -195,7 +195,7 @@ public class TableServicePlugin extends ProgramPlugin
 			Program p = iter.next();
 			List<TableComponentProvider<?>> list = programMap.get(p);
 			if (list.remove(provider)) {
-				if (list.size() == 0) {
+				if (list.isEmpty()) {
 					programMap.remove(p);
 					return;
 				}
@@ -209,7 +209,7 @@ public class TableServicePlugin extends ProgramPlugin
 			Program p = iter.next();
 			List<TableChooserDialog> list = programToDialogMap.get(p);
 			if (list.remove(dialog)) {
-				if (list.size() == 0) {
+				if (list.isEmpty()) {
 					programToDialogMap.remove(p);
 					return;
 				}

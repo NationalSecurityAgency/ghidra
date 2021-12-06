@@ -50,7 +50,7 @@ public class UnusedHelpImageFileFinder {
 		debug("Found " + allImagesOnDisk.size() + " image files in help directories");
 
 		Collection<Path> unusedFiles = getUnusedFiles(referencedIMGs, allImagesOnDisk);
-		if (unusedFiles.size() == 0) {
+		if (unusedFiles.isEmpty()) {
 			System.out.println("No unused image files found!");
 			System.exit(0);
 		}
@@ -239,7 +239,7 @@ public class UnusedHelpImageFileFinder {
 			}
 		}
 
-		if (moduleHelpPaths.size() == 0) {
+		if (moduleHelpPaths.isEmpty()) {
 			errorMessage(
 				"Missing molule help path(s) arguments - actual arguments:\n\t'" + argList + "'");
 			printUsage();

@@ -473,7 +473,7 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 		List<GnuDisassembledInstruction> disassembly =
 			runDisassembler(gdisConfig, address, bytes, disOptions);
 
-		if (disassembly == null || disassembly.size() == 0 || disassembly.get(0) == null) {
+		if (disassembly == null || disassembly.isEmpty() || disassembly.get(0) == null) {
 			return "(bad)";
 		}
 		return disassembly.get(0).toString();

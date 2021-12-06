@@ -811,7 +811,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 		for (String link : path) {
 			ppath.add(link);
 		}
-		if (path.size() == 0) {
+		if (path.isEmpty()) {
 			return null;
 		}
 		ppath.remove(path.size() - 1);

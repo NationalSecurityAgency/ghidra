@@ -1194,7 +1194,7 @@ public class StringsAnalyzerTest extends AbstractGhidraHeadedIntegrationTest {
 		// Create and load the "bad" model -- needs to be in the same directory as current model
 		List<ResourceFile> modelFiles = Application.findFilesByExtensionInApplication(".sng");
 
-		if (modelFiles.size() == 0) {
+		if (modelFiles.isEmpty()) {
 			Assert.fail("Could not find directory containing the .sng string n-grams model!");
 		}
 

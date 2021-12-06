@@ -275,7 +275,7 @@ public class HeadlessAnalyzer {
 		}
 
 		if (!options.runScriptsNoImport) { // Running in -import mode
-			if ((filesToImport == null || filesToImport.size() == 0) &&
+			if ((filesToImport == null || filesToImport.isEmpty()) &&
 				options.preScripts.isEmpty() && options.postScripts.isEmpty()) {
 				Msg.warn(this, "REPORT: Nothing to do ... must specify files for import.");
 				return;
@@ -389,7 +389,7 @@ public class HeadlessAnalyzer {
 		}
 		else {
 			// If we are importing, need some files to import or at least a script to run!
-			if ((filesToImport == null || filesToImport.size() == 0) &&
+			if ((filesToImport == null || filesToImport.isEmpty()) &&
 				options.preScripts.isEmpty() && options.postScripts.isEmpty()) {
 				Msg.warn(this, "REPORT: Nothing to do ... must specify file(s) for import.");
 				return;

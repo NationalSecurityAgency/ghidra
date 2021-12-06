@@ -397,7 +397,7 @@ public class FixedBitSizeValueField extends JPanel {
 	}
 
 	public void valueChanged() {
-		if (listeners.size() == 0) {
+		if (listeners.isEmpty()) {
 			return;
 		}
 		ChangeEvent ev = new ChangeEvent(this);

@@ -182,7 +182,7 @@ int main(int argc,char **argv)
     }
 
     string ghidraroot = FileManage::discoverGhidraRoot(argv[0]);
-    if (ghidraroot.size() == 0) {
+    if (ghidraroot.isEmpty()) {
       const char *sleighhomepath = getenv("SLEIGHHOME");
       if (sleighhomepath == (const char*) 0) {
 	if (extrapaths.empty()) {

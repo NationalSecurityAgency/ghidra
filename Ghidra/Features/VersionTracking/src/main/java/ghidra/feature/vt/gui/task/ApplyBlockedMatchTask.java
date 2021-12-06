@@ -101,7 +101,7 @@ public class ApplyBlockedMatchTask extends VtTask {
 
 		MatchInfo matchInfo = controller.getMatchInfo(match);
 		Collection<VTMarkupItem> markupItems = matchInfo.getAppliableMarkupItems(monitor);
-		if (markupItems == null || markupItems.size() == 0) {
+		if (markupItems == null || markupItems.isEmpty()) {
 			monitor.setProgress(2);
 			return; // No markup items to apply.
 		}

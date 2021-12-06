@@ -287,7 +287,7 @@ class VTFunctionAssociationTableModel extends AddressBasedTableModel<VTFunctionR
 			TableSortingContext<VTFunctionRowObject> lastSortingContext, TaskMonitor monitor)
 			throws CancelledException {
 
-		if (data.size() == 0) {
+		if (data.isEmpty()) {
 			return data;
 		}
 

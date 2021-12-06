@@ -784,7 +784,7 @@ class AnalysisPanel extends JPanel implements PropertyChangeListener {
 
 	private File getMostRecentApplicationSettingsDirWithSavedOptions() {
 		List<File> ghidraUserDirsByTime = GenericRunInfo.getPreviousApplicationSettingsDirsByTime();
-		if (ghidraUserDirsByTime.size() == 0) {
+		if (ghidraUserDirsByTime.isEmpty()) {
 			return null;
 		}
 

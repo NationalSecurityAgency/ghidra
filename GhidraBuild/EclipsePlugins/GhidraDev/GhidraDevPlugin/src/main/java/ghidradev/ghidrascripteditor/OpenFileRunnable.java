@@ -71,7 +71,7 @@ public class OpenFileRunnable implements Runnable {
 	}
 
 	private IFile[] maybePromptUserForFilesToOpen(List<IFile> projectFiles) {
-		if (projectFiles.size() == 0) {
+		if (projectFiles.isEmpty()) {
 			return null;
 		}
 

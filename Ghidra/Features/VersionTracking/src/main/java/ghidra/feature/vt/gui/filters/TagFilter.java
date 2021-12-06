@@ -109,7 +109,7 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 	private void updateTags(Map<String, VTMatchTag> allTags) {
 		fireStatusChanged(getFilterStatus());
 
-		if (excludedTags.size() == 0) {
+		if (excludedTags.isEmpty()) {
 			excludedTagsLabel.setText(ALL_TAGS_INCLUDED);
 			return;
 		}
@@ -159,7 +159,7 @@ public class TagFilter extends AncillaryFilter<VTMatch> {
 	@Override
 	public FilterShortcutState getFilterShortcutState() {
 
-		if (excludedTags.size() == 0) {
+		if (excludedTags.isEmpty()) {
 			return FilterShortcutState.ALWAYS_PASSES;
 		}
 

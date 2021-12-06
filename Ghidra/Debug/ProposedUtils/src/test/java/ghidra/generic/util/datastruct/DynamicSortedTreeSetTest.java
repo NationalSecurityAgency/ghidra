@@ -172,7 +172,7 @@ public class DynamicSortedTreeSetTest {
 			checkConsistent(queue, comp);
 		}
 		assertTrue(queue.isEmpty());
-		assertTrue(queue.size() == 0);
+		assertTrue(queue.isEmpty());
 	}
 
 	@Test

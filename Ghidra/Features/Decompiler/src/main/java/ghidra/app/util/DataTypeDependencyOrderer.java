@@ -298,7 +298,7 @@ public class DataTypeDependencyOrderer {
 			throw new AssertException("Cannot create dependency graph on data types.");
 		}
 		for (Entry entry : doneSet) {
-			if (!whoIDependOn.containsKey(entry) || (whoIDependOn.get(entry).size() == 0)) {
+			if (!whoIDependOn.containsKey(entry) || (whoIDependOn.get(entry).isEmpty())) {
 				noDependentsQueue.add(entry);
 				whoIDependOn.remove(entry);
 			}
@@ -379,7 +379,7 @@ public class DataTypeDependencyOrderer {
 				//get reverse information to delete forward information.
 				Set<Entry> supportSet = whoIDependOn.get(myDependent);
 				supportSet.remove(entry);
-				if (supportSet.size() == 0) {
+				if (supportSet.isEmpty()) {
 					noDependentsQueue.add(myDependent);
 					whoIDependOn.remove(myDependent);
 				}

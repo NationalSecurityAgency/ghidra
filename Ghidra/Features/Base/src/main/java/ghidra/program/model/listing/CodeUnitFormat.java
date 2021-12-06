@@ -420,7 +420,7 @@ public class CodeUnitFormat {
 			return false;
 		}
 
-		if (representationList.size() == 0) {
+		if (representationList.isEmpty()) {
 			return false;
 		}
 

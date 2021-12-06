@@ -147,7 +147,7 @@ public class GhidraScriptProperties {
 	 */
 	public String getValue(String keyString) {
 
-		if (propertiesMap.size() == 0) {
+		if (propertiesMap.isEmpty()) {
 			return "";
 		}
 
@@ -162,7 +162,7 @@ public class GhidraScriptProperties {
 	 * @return true if there are no properties
 	 */
 	public boolean isEmpty() {
-		return (propertiesMap.size() == 0);
+		return (propertiesMap.isEmpty());
 	}
 
 	/**

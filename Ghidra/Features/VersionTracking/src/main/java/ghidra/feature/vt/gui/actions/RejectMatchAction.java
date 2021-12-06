@@ -65,7 +65,7 @@ public class RejectMatchAction extends DockingAction {
 		}
 		VTMatchContext matchContext = (VTMatchContext) context;
 		List<VTMatch> matches = matchContext.getSelectedMatches();
-		if (matches.size() == 0) {
+		if (matches.isEmpty()) {
 			return false;
 		}
 

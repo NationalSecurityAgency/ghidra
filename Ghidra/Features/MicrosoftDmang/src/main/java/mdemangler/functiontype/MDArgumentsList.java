@@ -60,7 +60,7 @@ public class MDArgumentsList extends MDParsableItem {
 					// If "void" is first argument of a function, terminate the arguments list
 					//  without an '@' list terminator.  A "void" can be found in other
 					//  argument locations, freely, and they will not terminate the list.
-					if (args.size() == 0) {
+					if (args.isEmpty()) {
 						argsDone = true;
 					}
 					args.add(dt);

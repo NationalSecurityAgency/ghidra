@@ -159,7 +159,7 @@ public class JavaHelpPlugin extends Plugin implements FrontEndable {
 				monitor.initialize(1);
 			}
 
-			if (helpInfos.size() == 0) {
+			if (helpInfos.isEmpty()) {
 				Msg.showInfo(this, tool.getToolFrame(), "Help Validation Complete",
 					"No items missing help were found");
 				return;

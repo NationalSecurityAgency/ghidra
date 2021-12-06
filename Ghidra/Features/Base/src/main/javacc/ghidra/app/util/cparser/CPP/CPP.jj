@@ -1098,7 +1098,7 @@ public class PreProcessor {
 		try {
 			Input();
 			fileStack.pop();
-			if (fileStack.size() == 0) {
+			if (fileStack.isEmpty()) {
 				if (verboseLevel == 1) {
 					Msg.info(this,
 							"PreProcessor Version 0.0:  Java program parsed successfully.");
