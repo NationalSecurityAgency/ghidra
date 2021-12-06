@@ -42,7 +42,7 @@ public class RepositoryFolder {
 	static final Logger log = LogManager.getLogger(RepositoryFolder.class);
 
 	private Repository repository;
-	private LocalFileSystem fileSystem;
+	private final LocalFileSystem fileSystem;
 	private RepositoryFolder parent;
 	private String name;
 	private Map<String, RepositoryFolder> folderMap = new HashMap<>();

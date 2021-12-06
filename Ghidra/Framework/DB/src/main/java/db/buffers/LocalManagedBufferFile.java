@@ -151,7 +151,7 @@ public class LocalManagedBufferFile extends LocalBufferFile implements ManagedBu
 	/**
 	 * <code>preSaveLock</code> is used to arbitrate access to the preSaveBackoff flag.
 	 */
-	private Object preSaveLock = new Object();
+	private final Object preSaveLock = new Object();
 
 	/**
 	 * <code>preSaveThread</code> corresponds to the PreSaveTask which creates the 

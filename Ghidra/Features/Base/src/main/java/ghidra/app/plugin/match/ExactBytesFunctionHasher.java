@@ -29,7 +29,7 @@ import ghidra.util.task.TaskMonitor;
 public class ExactBytesFunctionHasher extends AbstractFunctionHasher {
 	public static final ExactBytesFunctionHasher INSTANCE = new ExactBytesFunctionHasher();
 
-	private MessageDigest digest;
+	private final MessageDigest digest;
 
 	private ExactBytesFunctionHasher() {
 		this.digest = new FNV1a64MessageDigest();

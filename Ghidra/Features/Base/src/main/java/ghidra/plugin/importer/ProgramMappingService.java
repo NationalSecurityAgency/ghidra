@@ -60,7 +60,7 @@ public class ProgramMappingService {
 	 * <p>
 	 * Limited in size to {@value #FSRL_TO_PATH_MAP_SIZE}.
 	 */
-	private static Map<FSRL, String> fsrlToProjectPathMap =
+	private static final Map<FSRL, String> fsrlToProjectPathMap =
 		new FixedSizeHashMap<>(FSRL_TO_PATH_MAP_SIZE);
 
 	private ProgramMappingService() {

@@ -25,7 +25,7 @@ public class KeyToRecordIterator implements RecordIterator {
 
 	private DBFieldIterator keyIter;
 	private Table table;
-	private DBHandle db;
+	private final DBHandle db;
 
 	/**
 	 * Construct a record iterator from a secondary index key iterator.

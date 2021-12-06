@@ -37,7 +37,7 @@ import java.util.List;
  */
 public class SynchronizedAddressSetCollection implements AddressSetCollection {
 	private List<AddressSetView> addressSetList = new ArrayList<>();
-	private Object sync;
+	private final Object sync;
 
 	public SynchronizedAddressSetCollection(Object sync, AddressSetView... addressSetViews) {
 		this.sync = sync;

@@ -70,11 +70,11 @@ public class LockFile {
 
 	private long deltaTime = Long.MAX_VALUE;
 
-	private Object waitLock = new Object(); // synchronization lock
+	private final Object waitLock = new Object(); // synchronization lock
 	private GTimerMonitor waitTimerMonitor;
 	private WaitForLockRunnable waitTask;
 
-	private Object holdLock = new Object(); // synchronization lock
+	private final Object holdLock = new Object(); // synchronization lock
 	private GTimerMonitor holdTimerMonitor;
 
 	private int lockCount = 0;

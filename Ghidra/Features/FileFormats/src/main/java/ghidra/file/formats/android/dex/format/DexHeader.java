@@ -67,8 +67,8 @@ public class DexHeader implements StructConverter {
 	private List<MethodIDItem> methods = new ArrayList<>();
 	private List<ClassDefItem> classDefs = new ArrayList<>();
 
-	private AddressCache methodXref = new AddressCache(); // Index to method address cache
-	private DataTypeCache typeXref = new DataTypeCache(); // Index to datatype cache
+	private final AddressCache methodXref = new AddressCache(); // Index to method address cache
+	private final DataTypeCache typeXref = new DataTypeCache(); // Index to datatype cache
 
 	private boolean parsed = false;
 

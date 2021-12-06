@@ -67,7 +67,7 @@ public class BlockStreamServer extends Thread {
 		return server;
 	}
 
-	private Map<Long, BlockStreamRegistration> blockStreamMap = new HashMap<>();
+	private final Map<Long, BlockStreamRegistration> blockStreamMap = new HashMap<>();
 
 	private long nextStreamID = System.currentTimeMillis();
 

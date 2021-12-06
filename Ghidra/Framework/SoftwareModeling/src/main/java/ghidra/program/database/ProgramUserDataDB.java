@@ -662,28 +662,24 @@ class ProgramUserDataDB extends DomainObjectAdapterDB implements ProgramUserData
 	}
 
 	@Override
-	public void save(String comment, TaskMonitor monitor) throws IOException, CancelledException {
-
-		synchronized (this) {
-			if (dbh.canUpdate()) {
-				if (changed) {
-					dbh.save(comment, null, monitor);
-					setChanged(false);
-				}
-			}
-			else {
-				FileSystem userfs = program.getAssociatedUserFilesystem();
-				if (userfs != null) {
-					ContentHandler contentHandler = getContentHandler(program);
-					if (contentHandler != null) {
-						contentHandler.saveUserDataFile(program, dbh, userfs, monitor);
-					}
-					setChanged(false);
-				}
+	public synchronized void save(String comment, TaskMonitor monitor) throws IOException, CancelledException {
+		// fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_SAVED));
+		if (dbh.canUpdate()) {
+			if (changed) {
+				dbh.save(comment, null, monitor);
+				setChanged(false);
 			}
 		}
-
-		// fireEvent(new DomainObjectChangeRecord(DomainObject.DO_OBJECT_SAVED));
+		else {
+			FileSystem userfs = program.getAssociatedUserFilesystem();
+			if (userfs != null) {
+				ContentHandler contentHandler = getContentHandler(program);
+				if (contentHandler != null) {
+					contentHandler.saveUserDataFile(program, dbh, userfs, monitor);
+				}
+				setChanged(false);
+			}
+		}
 	}
 
 }

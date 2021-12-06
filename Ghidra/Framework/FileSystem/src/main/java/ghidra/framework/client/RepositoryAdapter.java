@@ -37,7 +37,7 @@ import ghidra.util.exception.UserAccessException;
 public class RepositoryAdapter implements RemoteAdapterListener {
 
 	private String name;
-	private RepositoryServerAdapter serverAdapter;
+	private final RepositoryServerAdapter serverAdapter;
 
 	private WeakSet<RemoteAdapterListener> listenerList =
 		WeakDataStructureFactory.createCopyOnWriteWeakSet();

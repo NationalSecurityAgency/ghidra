@@ -143,7 +143,7 @@ public class DebuggerRegistersPlugin extends AbstractDebuggerPlugin {
 	public static void readSetsByCSpec(
 			Map<LanguageCompilerSpecPair, LinkedHashSet<Register>> setsByCSpec, String encoded) {
 		LanguageService langServ = DefaultLanguageService.getLanguageService();
-		if (encoded.length() == 0) {
+		if (encoded.isEmpty()) {
 			return;
 		}
 		String[] cSpecRegPairParts = encoded.split(";");

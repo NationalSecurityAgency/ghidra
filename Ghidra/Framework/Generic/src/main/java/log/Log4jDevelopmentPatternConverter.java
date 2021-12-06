@@ -66,9 +66,9 @@ public class Log4jDevelopmentPatternConverter extends LogEventPatternConverter {
 
 	private static final String EMPTY_STRING = "";
 
-	private StringWriter stringWriter = new StringWriter();
+	private final StringWriter stringWriter = new StringWriter();
 	private PrintWriter printWriter = new PrintWriter(stringWriter);
-	private StringBuilder buffer = new StringBuilder(100);
+	private final StringBuilder buffer = new StringBuilder(100);
 
 	/**
 	 * Required constructor.

@@ -66,7 +66,7 @@ public class BufferMgr {
 	private LocalBufferFile cacheFile;
 
 	private RecoveryMgr recoveryMgr;
-	private Object snapshotLock = new Object(); // Used to prevent BufferNode modifications during snapshot
+	private final Object snapshotLock = new Object(); // Used to prevent BufferNode modifications during snapshot
 	private boolean modifiedSinceSnapshot = false;
 	private boolean hasNonUndoableChanges = false;
 
@@ -145,7 +145,7 @@ public class BufferMgr {
 
 	private PreCacheStatus preCacheStatus = PreCacheStatus.INIT;
 	private Thread preCacheThread; // only used once for original sourceFile (TODO: use currently not supported)
-	private Object preCacheLock = new Object();
+	private final Object preCacheLock = new Object();
 
 	/**
 	 * Construct a new buffer manager with no underlying source file using the

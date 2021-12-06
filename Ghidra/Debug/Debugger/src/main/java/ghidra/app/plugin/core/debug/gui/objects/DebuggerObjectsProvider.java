@@ -197,7 +197,7 @@ public class DebuggerObjectsProvider extends ComponentProviderAdapter
 	private JPanel mainPanel;
 	private ObjectPane pane;
 	protected ObjectContainer root;
-	private Map<String, ObjectContainer> targetMap;
+	private final Map<String, ObjectContainer> targetMap;
 	private Set<TargetObject> refSet;
 
 	public Program currentProgram; // For quick launch

@@ -241,10 +241,8 @@ public class TaskMonitorComponent extends JPanel implements TaskMonitor {
 	}
 
 	@Override
-	public void clearCanceled() {
-		synchronized (this) {
-			isCancelled = false;
-		}
+	public synchronized void clearCanceled() {
+		isCancelled = false;
 	}
 
 	@Override

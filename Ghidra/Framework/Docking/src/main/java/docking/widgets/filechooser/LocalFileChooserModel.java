@@ -38,7 +38,7 @@ public class LocalFileChooserModel implements GhidraFileChooserModel {
 		ResourceManager.loadImage("images/unknown.gif");
 
 	private FileSystemView fsView = FileSystemView.getFileSystemView();
-	private Map<File, String> rootDescripMap = new HashMap<>();
+	private final Map<File, String> rootDescripMap = new HashMap<>();
 	private Map<File, Icon> rootIconMap = new HashMap<>();
 	private File[] roots = new File[0];
 	private GhidraFileChooserListener listener;

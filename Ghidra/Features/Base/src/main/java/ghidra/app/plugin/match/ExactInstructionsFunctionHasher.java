@@ -32,7 +32,7 @@ public class ExactInstructionsFunctionHasher extends AbstractFunctionHasher {
 	public static final ExactInstructionsFunctionHasher INSTANCE =
 		new ExactInstructionsFunctionHasher();
 
-	protected MessageDigest digest;
+	protected final MessageDigest digest;
 
 	protected ExactInstructionsFunctionHasher() {
 		this.digest = new FNV1a64MessageDigest();

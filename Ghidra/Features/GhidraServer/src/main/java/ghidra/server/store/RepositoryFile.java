@@ -36,7 +36,7 @@ import ghidra.util.exception.UserAccessException;
 public class RepositoryFile {
 
 	private Repository repository;
-	private LocalFileSystem fileSystem;
+	private final LocalFileSystem fileSystem;
 	private RepositoryFolder parent;
 	private String name;
 	private LocalDatabaseItem databaseItem;

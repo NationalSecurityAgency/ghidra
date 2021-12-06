@@ -40,11 +40,11 @@ import utilities.util.FileUtilities;
 public class RepositoryManager {
 	static final Logger log = LogManager.getLogger(RepositoryManager.class);
 
-	private static Map<Thread, String> clientNameMap = new WeakHashMap<>();
+	private static final Map<Thread, String> clientNameMap = new WeakHashMap<>();
 
 	private File rootDirFile;
 	private HashMap<String, Repository> repositoryMap; // maps name to Repository
-	private ArrayList<RepositoryServerHandleImpl> handleList = new ArrayList<>();
+	private final ArrayList<RepositoryServerHandleImpl> handleList = new ArrayList<>();
 	private UserManager userMgr;
 	private boolean anonymousAccessAllowed;
 

@@ -60,23 +60,19 @@ public class RecorderSimpleMemory implements AbstractRecorderMemory {
 	}
 
 	@Override
-	public CompletableFuture<byte[]> readMemory(Address address, int length) {
-		synchronized (this) {
-			if (memory != null) {
-				return memory.readMemory(address, length);
-			}
-			return CompletableFuture.completedFuture(new byte[0]);
+	public synchronized CompletableFuture<byte[]> readMemory(Address address, int length) {
+		if (memory != null) {
+			return memory.readMemory(address, length);
 		}
+		return CompletableFuture.completedFuture(new byte[0]);
 	}
 
 	@Override
-	public CompletableFuture<Void> writeMemory(Address address, byte[] data) {
-		synchronized (this) {
-			if (memory != null) {
-				return memory.writeMemory(address, data);
-			}
-			throw new IllegalArgumentException("read starts outside any address space");
+	public synchronized CompletableFuture<Void> writeMemory(Address address, byte[] data) {
+		if (memory != null) {
+			return memory.writeMemory(address, data);
 		}
+		throw new IllegalArgumentException("read starts outside any address space");
 	}
 
 	/**
@@ -87,18 +83,16 @@ public class RecorderSimpleMemory implements AbstractRecorderMemory {
 	 * @return the computed set
 	 */
 	@Override
-	public AddressSet getAccessibleMemory(Predicate<TargetMemory> pred,
-			DebuggerMemoryMapper memMapper) {
-		synchronized (this) {
-			// TODO: Might accomplish by using listeners and tracking the accessible set
-			AddressSet accessible = new AddressSet();
-			if (memMapper != null) {
-				for (Entry<Address, TargetMemoryRegion> ent : byMin.entrySet()) {
-					accessible.add(memMapper.targetToTrace(ent.getValue().getRange()));
-				}
+	public synchronized AddressSet getAccessibleMemory(Predicate<TargetMemory> pred,
+													   DebuggerMemoryMapper memMapper) {
+		// TODO: Might accomplish by using listeners and tracking the accessible set
+		AddressSet accessible = new AddressSet();
+		if (memMapper != null) {
+			for (Entry<Address, TargetMemoryRegion> ent : byMin.entrySet()) {
+				accessible.add(memMapper.targetToTrace(ent.getValue().getRange()));
 			}
-			return accessible;
 		}
+		return accessible;
 	}
 
 	@Override
@@ -110,13 +104,11 @@ public class RecorderSimpleMemory implements AbstractRecorderMemory {
 		return align(address, length).intersect(floor.getValue().getRange());
 	}
 
-	protected Entry<Address, TargetMemoryRegion> findChainedFloor(Address address) {
-		synchronized (this) {
-			return byMin.floorEntry(address);
-		}
+	protected synchronized Entry<Address, TargetMemoryRegion> findChainedFloor(Address address) {
+		return byMin.floorEntry(address);
 	}
 
-	protected AddressRange align(Address address, int length) {
+	protected static AddressRange align(Address address, int length) {
 		AddressSpace space = address.getAddressSpace();
 		long offset = address.getOffset();
 		Address start = space.getAddress(offset & BLOCK_MASK);

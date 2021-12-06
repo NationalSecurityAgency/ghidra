@@ -130,8 +130,8 @@ public class DBTrace extends DBCachedDomainObjectAdapter implements Trace, Trace
 	protected boolean recordChanges = false;
 
 	protected DBTraceVariableSnapProgramView programView;
-	protected Map<DBTraceVariableSnapProgramView, Void> programViews = new WeakHashMap<>();
-	protected Map<Long, DBTraceProgramView> fixedProgramViews = new WeakValueHashMap<>();
+	protected final Map<DBTraceVariableSnapProgramView, Void> programViews = new WeakHashMap<>();
+	protected final Map<Long, DBTraceProgramView> fixedProgramViews = new WeakValueHashMap<>();
 
 	public DBTrace(String name, CompilerSpec baseCompilerSpec, Object consumer)
 			throws IOException, LanguageNotFoundException {

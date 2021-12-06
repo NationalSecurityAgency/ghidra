@@ -41,7 +41,7 @@ public class EventManager {
 		LazyMap.lazyMap(new HashMap<>(), name -> new Counter());
 	private LinkedHashMap<Class<? extends PluginEvent>, PluginEvent> lastEventsByType =
 		new LinkedHashMap<>();
-	private LinkedList<PluginEvent> eventQ = new LinkedList<>();
+	private final LinkedList<PluginEvent> eventQ = new LinkedList<>();
 	private Set<PluginEventListener> allEventListeners = new HashSet<>();
 
 	private PluginTool tool;

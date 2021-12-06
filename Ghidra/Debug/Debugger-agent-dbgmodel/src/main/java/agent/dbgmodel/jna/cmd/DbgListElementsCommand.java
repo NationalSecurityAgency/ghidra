@@ -30,7 +30,7 @@ public class DbgListElementsCommand extends AbstractDbgCommand<List<TargetObject
 
 	private List<TargetObject> updatedElements;
 
-	private WrappedDbgModel access;
+	private final WrappedDbgModel access;
 	private List<String> path;
 	private DbgModel2TargetObjectImpl targetObject;
 

@@ -37,7 +37,7 @@ public class GhidraFile implements DomainFile {
 
 	protected ProjectFileManager fileManager;
 
-	private LocalFileSystem fileSystem;
+	private final LocalFileSystem fileSystem;
 	private DomainFolderChangeListener listener;
 
 	private GhidraFolder parent;

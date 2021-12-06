@@ -58,7 +58,7 @@ public class GhidraFileData {
 		ResourceManager.loadImage("images/checkNotLatest.gif");
 
 	private ProjectFileManager fileManager;
-	private LocalFileSystem fileSystem;
+	private final LocalFileSystem fileSystem;
 	private FileSystem versionedFileSystem;
 	private DomainFolderChangeListener listener;
 

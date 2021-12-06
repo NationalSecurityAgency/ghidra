@@ -56,7 +56,7 @@ public class ConsoleTextPane extends JTextPane implements OptionsChangeListener 
 	// don't update more than once per second if lots of messages are being written
 	private SwingUpdateManager updateManager = new SwingUpdateManager(100, 1000, () -> doUpdate());
 
-	private LinkedList<MessageWrapper> messageList = new LinkedList<>();
+	private final LinkedList<MessageWrapper> messageList = new LinkedList<>();
 
 	private boolean scrollLock;
 	private int maximumCharacterLimit = DEFAULT_MAXIMUM_CHARS;

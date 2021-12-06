@@ -35,7 +35,7 @@ public class DefaultStackRecorder implements ManagedStackRecorder {
 		return Integer.decode(frame.getIndex());
 	}
 
-	private NavigableMap<Integer, TargetStackFrame> stack =
+	private final NavigableMap<Integer, TargetStackFrame> stack =
 		Collections.synchronizedNavigableMap(new TreeMap<>());
 
 	private final TraceThread thread;

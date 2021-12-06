@@ -43,7 +43,7 @@ public class ClientUtil {
 
 	private static ClientAuthenticator clientAuthenticator;
 
-	private static Hashtable<ServerInfo, RepositoryServerAdapter> serverHandles = new Hashtable<>();
+	private static final Hashtable<ServerInfo, RepositoryServerAdapter> serverHandles = new Hashtable<>();
 
 	private ClientUtil() {
 	}

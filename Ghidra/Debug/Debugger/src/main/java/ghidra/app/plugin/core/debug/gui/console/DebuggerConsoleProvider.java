@@ -290,7 +290,7 @@ public class DebuggerConsoleProvider extends ComponentProviderAdapter
 	protected GhidraTable logTable;
 	private GhidraTableFilterPanel<LogRow> logFilterPanel;
 
-	private Deque<LogRow> buffer = new ArrayDeque<>();
+	private final Deque<LogRow> buffer = new ArrayDeque<>();
 
 	private final JPanel mainPanel = new JPanel(new BorderLayout());
 

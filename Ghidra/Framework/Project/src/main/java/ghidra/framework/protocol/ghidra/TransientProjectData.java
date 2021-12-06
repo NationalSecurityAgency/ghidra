@@ -35,7 +35,7 @@ public class TransientProjectData extends ProjectFileManager {
 	private boolean timerInitiatedDisposal = false;
 	private boolean disposed = false;
 
-	private GhidraSwinglessTimer cleanupTimer;
+	private final GhidraSwinglessTimer cleanupTimer;
 
 	TransientProjectData(TransientProjectManager dataMgr, ProjectLocator tmpProjectLocation,
 			RepositoryInfo repositoryInfo, RepositoryAdapter repository) throws IOException {

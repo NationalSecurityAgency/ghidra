@@ -64,8 +64,8 @@ public class Repository implements FileSystemListener, RepositoryLogger {
 	private File userAccessFile;
 	private LinkedHashMap<String, User> userMap = new LinkedHashMap<>();
 	private boolean anonymousAccessAllowed;
-	private ArrayList<RepositoryHandleImpl> handleList = new ArrayList<>();
-	private ArrayList<RepositoryChangeEvent> eventQueue = new ArrayList<>();
+	private final ArrayList<RepositoryHandleImpl> handleList = new ArrayList<>();
+	private final ArrayList<RepositoryChangeEvent> eventQueue = new ArrayList<>();
 	private boolean dispatchSuspended = false;
 
 	/**

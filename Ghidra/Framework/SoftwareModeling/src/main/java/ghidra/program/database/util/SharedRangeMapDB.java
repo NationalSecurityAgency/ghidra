@@ -32,7 +32,7 @@ import ghidra.util.exception.NotYetImplementedException;
 @Deprecated
 public class SharedRangeMapDB {
 
-	private DBHandle dbHandle;
+	private final DBHandle dbHandle;
 	private ErrorHandler errHandler;
 	Table rangeTable; // exposed for testing
 	Table mapTable;   // exposed for testing
