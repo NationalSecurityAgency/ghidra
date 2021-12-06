@@ -32,7 +32,8 @@ define register offset=16 size=2 [ PC X S ];
 
 define token opbyte (8)
     op        = (0,7)
-    op45      = (4,5)
+    addrMode  = (4,5)
+    acc_4     = (4,4)
 ;
 
 define token data8 (8)
@@ -44,6 +45,8 @@ define token data (16)
     imm16     = (0,15)
 ;
 
+attach variables acc_4 [ A B ];
+
 ################################################################
 # Constructors
 ################################################################
@@ -51,43 +54,43 @@ define token data (16)
 REL:  addr    is simm8  [ addr = inst_next + simm8;  ]   { export *:2 addr; }
 
 # 1-byte operand, immediate/direct/indexed/extended addressing mode
-OP1: "#"imm8    is op45=0; imm8
+OP1: "#"imm8    is addrMode=0; imm8
 {
     local tmp:1 = imm8;
     export tmp;
 }
-OP1: imm8    is op45=1; imm8
+OP1: imm8    is addrMode=1; imm8
 {
     local tmp:1 = imm8;
     export *:1 tmp;
 }
-OP1: imm8,X  is op45=2 & X; imm8
+OP1: imm8,X  is addrMode=2 & X; imm8
 {
     local tmp:2 = imm8 + X;
     export *:1 tmp;
 }
-OP1: imm16    is op45=3; imm16
+OP1: imm16    is addrMode=3; imm16
 {
     export *:1 imm16;
 }
 
 # 2-byte operand, direct/indexed/extended addressing mode
-OP2: imm8    is op45=0; imm8
-{
-    local tmp:1 = imm8;
-    export *:2 tmp;
-}
-OP2: "#"imm16    is op45=1; imm16
+OP2: "#"imm16    is addrMode=0; imm16
 {
     local tmp:2 = imm16;
     export tmp;
 }
-OP2: imm8,X      is op45=2 & X; imm8
+OP2: imm8    is addrMode=1; imm8
+{
+    local tmp:1 = imm8;
+    export *:2 tmp;
+}
+OP2: imm8,X      is addrMode=2 & X; imm8
 {
     local tmp:2 = X + imm8;
     export *:2 tmp;
 }
-OP2: imm16      is op45=3; imm16
+OP2: imm16      is addrMode=3; imm16
 {
     export *:2 imm16;
 }
@@ -408,14 +411,9 @@ macro PushEntireState()
 # Opcode 0x70 - 0x7F, extended addressing
 ################################################################
 
-:NEGA    is op=0x40
+:NEG^acc_4    is (op=0x40 | op=0x50) & acc_4
 {
-    negate(A);
-}
-
-:NEGB 	is op=0x50
-{
-    negate(B);
+    negate(acc_4);
 }
 
 :NEG OP1    is (op=0x60 | op=0x70) ... & OP1
@@ -423,14 +421,9 @@ macro PushEntireState()
     negate(OP1);
 }
 
-:COMA 	is op=0x43
+:COM^acc_4 	is (op=0x43 | op=0x53) & acc_4
 {
-    complement(A);
-}
-
-:COMB 	is op=0x53
-{
-    complement(B);
+    complement(acc_4);
 }
 
 :COM OP1    is (op=0x63 | op=0x73) ... & OP1
@@ -438,14 +431,9 @@ macro PushEntireState()
     complement(OP1);
 }
 
-:LSRA 	is op=0x44
+:LSR^acc_4 	is (op=0x44 | op=0x54) & acc_4
 {
-    logicalShiftRight(A);
-}
-
-:LSRB 	is op=0x54
-{
-    logicalShiftRight(B);
+    logicalShiftRight(acc_4);
 }
 
 :LSR OP1    is (op=0x64 | op=0x74) ... & OP1
@@ -453,14 +441,9 @@ macro PushEntireState()
     logicalShiftRight(OP1);
 }
 
-:RORA 	is op=0x46
+:ROR^acc_4 	is (op=0x46 | op=0x56) & acc_4
 {
-    rotateRightWithCarry(A);
-}
-
-:RORB 	is op=0x56
-{
-    rotateRightWithCarry(B);
+    rotateRightWithCarry(acc_4);
 }
 
 :ROR OP1    is (op=0x66 | op=0x76) ... & OP1
@@ -468,14 +451,9 @@ macro PushEntireState()
     rotateRightWithCarry(OP1);
 }
 
-:ASRA 	is op=0x47
+:ASR^acc_4 	is (op=0x47 | op=0x57) & acc_4
 {
-    arithmeticShiftRight(A);
-}
-
-:ASRB 	is op=0x57
-{
-    arithmeticShiftRight(B);
+    arithmeticShiftRight(acc_4);
 }
 
 :ASR OP1    is (op=0x67 | op=0x77) ... & OP1
@@ -483,14 +461,9 @@ macro PushEntireState()
     arithmeticShiftRight(OP1);
 }
 
-:ASLA 	is op=0x48
+:ASL^acc_4 	is (op=0x48 | op=0x58) & acc_4
 {
-    logicalShiftLeft(A);
-}
-
-:ASLB 	is op=0x58
-{
-    logicalShiftLeft(B);
+    logicalShiftLeft(acc_4);
 }
 
 :ASL OP1    is (op=0x68 | op=0x78) ... & OP1
@@ -498,14 +471,9 @@ macro PushEntireState()
     logicalShiftLeft(OP1);
 }
 
-:ROLA    is op=0x49
+:ROL^acc_4    is (op=0x49 | op=0x59) & acc_4
 {
-    rotateLeftWithCarry(A);
-}
-
-:ROLB    is op=0x59
-{
-    rotateLeftWithCarry(B);
+    rotateLeftWithCarry(acc_4);
 }
 
 :ROL OP1    is (op=0x69 | op=0x79) ... & OP1
@@ -513,14 +481,9 @@ macro PushEntireState()
     rotateLeftWithCarry(OP1);
 }
 
-:DECA    is op=0x4A
+:DEC^acc_4    is (op=0x4A | op=0x5A) & acc_4
 {
-    decrement(A);
-}
-
-:DECB    is op=0x5A
-{
-    decrement(B);
+    decrement(acc_4);
 }
 
 :DEC OP1    is (op=0x6A | op=0x7A) ... & OP1
@@ -528,14 +491,9 @@ macro PushEntireState()
     decrement(OP1);
 }
 
-:INCA    is op=0x4C
+:INC^acc_4    is (op=0x4C | op=0x5C) & acc_4
 {
-    increment(A);
-}
-
-:INCB    is op=0x5C
-{
-    increment(B);
+    increment(acc_4);
 }
 
 :INC OP1    is (op=0x6C | op=0x7C) ... & OP1
@@ -543,14 +501,9 @@ macro PushEntireState()
     increment(OP1);
 }
 
-:TSTA    is op=0x4D
+:TST^acc_4    is (op=0x4D | op=0x5D) & acc_4
 {
-    test(A);
-}
-
-:TSTB    is op=0x5D
-{
-    test(B);
+    test(acc_4);
 }
 
 :TST OP1    is (op=0x6D | op=0x7D) ... & OP1
@@ -563,14 +516,9 @@ macro PushEntireState()
     goto OP2;
 }
 
-:CLRA    is op=0x4F
+:CLR^acc_4    is (op=0x4F | op=0x5F) & acc_4
 {
-    clear(A);
-}
-
-:CLRB    is op=0x5F
-{
-    clear(B);
+    clear(acc_4);
 }
 
 :CLR OP1    is (op=0x6F | op=0x7F) ... & OP1
