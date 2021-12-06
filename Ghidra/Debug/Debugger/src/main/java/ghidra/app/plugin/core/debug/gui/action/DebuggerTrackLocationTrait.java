@@ -227,7 +227,7 @@ public class DebuggerTrackLocationTrait {
 	protected void doSetSpec(LocationTrackingSpec spec) {
 		if (this.spec != spec) {
 			this.spec = spec;
-			specChanged();
+			specChanged(spec);
 		}
 		doTrack();
 	}
@@ -299,7 +299,7 @@ public class DebuggerTrackLocationTrait {
 		// Listener method
 	}
 
-	protected void specChanged() {
+	protected void specChanged(LocationTrackingSpec spec) {
 		// Listener method
 	}
 }
