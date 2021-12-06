@@ -49,7 +49,6 @@ public class SleighAssembler implements Assembler {
 	protected Program program;
 	protected Listing listing;
 	protected Memory memory;
-	protected Disassembler dis;
 	protected AssemblyParser parser;
 	protected AssemblyDefaultContext defaultContext;
 	protected AssemblyContextGraph ctxGraph;
@@ -71,8 +70,6 @@ public class SleighAssembler implements Assembler {
 
 		this.listing = program.getListing();
 		this.memory = program.getMemory();
-		this.dis = Disassembler.getDisassembler(program, TaskMonitor.DUMMY,
-			DisassemblerMessageListener.IGNORE);
 	}
 
 	/**
@@ -114,6 +111,10 @@ public class SleighAssembler implements Assembler {
 		listing.clearCodeUnits(at, end, false);
 		memory.setBytes(at, insbytes);
 		AddressSet set = new AddressSet(at, end);
+
+		// Creating this at construction causes it to assess memory flags too early.
+		Disassembler dis = Disassembler.getDisassembler(program, TaskMonitor.DUMMY,
+			DisassemblerMessageListener.IGNORE);
 		dis.disassemble(at, set);
 		return listing.getInstructions(set, true);
 	}

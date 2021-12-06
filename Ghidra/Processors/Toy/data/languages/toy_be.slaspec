@@ -2,6 +2,7 @@
 @define SIZE "4"
 
 @define INSTR_PHASE "" # not used by basic toy language
+@define DATA_SPACE "ram"
 
 @include "toy.sinc"
 @include "toyInstructions.sinc"

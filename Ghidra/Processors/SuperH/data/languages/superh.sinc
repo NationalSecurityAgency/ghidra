@@ -1979,14 +1979,13 @@ define pcodeop Sleep_Standby;
 
 :trapa  imm_00_07  is opcode_08_15=0b11000011 & imm_00_07
 {
-    r15 = r15 -4;
+    r15 = r15 - 4;
     *r15 = sr;
 
-    r15 = r15- 4;
+    r15 = r15 - 4;
     *r15 = pc + 2;
 
-    pc = *(vbr + (imm_00_07 * 4));
-    goto [pc];
+    call [vbr + (imm_00_07 * 4)];
 }
 
 @if defined(FPU)

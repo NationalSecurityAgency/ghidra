@@ -163,7 +163,7 @@ public class DisplayableEol {
 			return getPreviewForNoReferences();
 		}
 
-		Set<String> set = new HashSet<>();
+		Set<String> set = new LinkedHashSet<>();
 		for (Reference reference : refs) {
 
 			if (reachedMaximumResults(set.size())) {
@@ -513,8 +513,8 @@ public class DisplayableEol {
 	 */
 	private RefRepeatComment[] getRepeatableComments(Listing listing, Reference[] memRefs,
 			boolean showAll) {
-		Set<RefRepeatComment> set = new HashSet<>();
 
+		Set<RefRepeatComment> set = new LinkedHashSet<>();
 		for (int i = 0; i < memRefs.length && totalCommentsFound < maxDisplayLines; ++i) {
 			if (!showAll && !memRefs[i].isPrimary()) {
 				continue;

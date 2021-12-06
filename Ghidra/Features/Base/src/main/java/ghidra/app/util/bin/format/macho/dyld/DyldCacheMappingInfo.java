@@ -106,6 +106,17 @@ public class DyldCacheMappingInfo implements StructConverter {
 		return (initProt & SegmentConstants.PROTECTION_X) != 0;
 	}
 
+	/**
+	 * Returns true if the mapping contains the given address
+	 * 
+	 * @param addr The address to check
+	 * @return True if the mapping contains the given address; otherwise, false
+	 */
+	public boolean contains(long addr) {
+		return Long.compareUnsigned(addr, address) >= 0 &&
+			Long.compareUnsigned(addr, address + size) < 0;
+	}
+
 	@Override
 	public DataType toDataType() throws DuplicateNameException, IOException {
 		StructureDataType struct = new StructureDataType("dyld_cache_mapping_info", 0);

@@ -340,6 +340,15 @@ public class DataTypesProvider extends ComponentProviderAdapter {
 			clickedNode = archiveGTree.getNodeForLocation(point.x, point.y);
 			isToolbarAction = false;
 		}
+		else {
+			// Called via a keybinding; use the selected node in the tree to represent the clicked
+			// node.  This allows users to use a keybinding to show the context menu and have all
+			// actions installed.
+			TreePath path = archiveGTree.getSelectionPath();
+			if (path != null) {
+				clickedNode = (GTreeNode) path.getLastPathComponent();
+			}
+		}
 
 		return new DataTypesActionContext(this, plugin.getProgram(), archiveGTree, clickedNode,
 			isToolbarAction);

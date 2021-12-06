@@ -26,12 +26,14 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
 
 import com.google.common.collect.Range;
 
 import db.DBHandle;
+import ghidra.app.plugin.processors.sleigh.SleighLanguage;
+import ghidra.pcode.exec.*;
+import ghidra.pcode.exec.trace.TraceSleighUtils;
 import ghidra.program.disassemble.Disassembler;
 import ghidra.program.model.address.*;
 import ghidra.program.model.data.DataType;
@@ -49,9 +51,9 @@ import ghidra.trace.database.memory.DBTraceMemoryManager;
 import ghidra.trace.database.symbol.DBTraceReference;
 import ghidra.trace.database.thread.DBTraceThread;
 import ghidra.trace.database.thread.DBTraceThreadManager;
-import ghidra.trace.model.ImmutableTraceAddressSnapRange;
-import ghidra.trace.model.TraceAddressSnapRange;
+import ghidra.trace.model.*;
 import ghidra.trace.model.language.TraceGuestLanguage;
+import ghidra.trace.model.thread.TraceThread;
 import ghidra.util.Msg;
 import ghidra.util.database.DBOpenMode;
 import ghidra.util.database.UndoableTransaction;
@@ -74,6 +76,19 @@ public class ToyDBTraceBuilder implements AutoCloseable {
 	public ToyDBTraceBuilder(String name, String langID) throws IOException {
 		this.language = languageService.getLanguage(new LanguageID(langID));
 		this.trace = new DBTrace(name, language.getDefaultCompilerSpec(), this);
+	}
+
+	public ToyDBTraceBuilder(Trace trace) {
+		this.language = trace.getBaseLanguage();
+		this.trace = (DBTrace) trace;
+		trace.addConsumer(this);
+	}
+
+	public void exec(long snap, int frame, TraceThread thread, List<String> sleigh) {
+		PcodeProgram program = SleighProgramCompiler.compileProgram((SleighLanguage) language,
+			"builder", sleigh, SleighUseropLibrary.nil());
+		TraceSleighUtils.buildByteExecutor(trace, snap, thread, frame)
+				.execute(program, SleighUseropLibrary.nil());
 	}
 
 	public Address addr(AddressSpace space, long offset) {

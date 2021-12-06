@@ -33,7 +33,6 @@ import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesPr
 import ghidra.app.plugin.core.navigation.locationreferences.LocationReferencesService;
 import ghidra.app.services.DataTypeReference;
 import ghidra.app.services.DataTypeReferenceFinder;
-import ghidra.program.model.data.Composite;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.Program;
 import ghidra.program.util.ProgramLocation;
@@ -167,7 +166,7 @@ public abstract class AbstractDecompilerFindReferencesActionTest extends Abstrac
 		}
 
 		@Mock
-		public void findReferences(Program p, Composite composite, String fieldName,
+		public void findReferences(Program p, DataType dt, String fieldName,
 				Consumer<DataTypeReference> callback, TaskMonitor monitor) {
 
 			compositeFieldReferencesCallCount.incrementAndGet();
