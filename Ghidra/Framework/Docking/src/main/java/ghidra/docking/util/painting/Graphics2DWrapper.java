@@ -547,7 +547,7 @@ public class Graphics2DWrapper extends Graphics2D {
 
 	@Override
 	public void finalize() {
-		delegate.finalize();
+		delegate.dispose();
 	}
 
 	@Override

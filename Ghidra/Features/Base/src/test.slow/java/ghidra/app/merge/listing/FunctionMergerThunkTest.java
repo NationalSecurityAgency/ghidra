@@ -21,6 +21,7 @@ import java.util.List;
 
 import javax.swing.JDialog;
 
+import docking.test.AbstractDockingTest;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -182,7 +183,7 @@ public class FunctionMergerThunkTest extends AbstractExternalMergerTest {
 		});
 
 		executeMerge(ASK_USER);
-		JDialog dialog = waitForJDialog(null, "Function Merge Errors", 1000);
+		JDialog dialog = AbstractDockingTest.waitForJDialog(null, "Function Merge Errors", 1000);
 		assertNotNull(dialog);
 		pressButtonByText(dialog, "OK");
 		waitForMergeCompletion();

@@ -85,7 +85,7 @@ public class ExternalCodeBrowserNavigationTest extends AbstractCodeBrowserNaviga
 	private void addThunkToExternalFunction(String libraryName, String label,
 			Address thunkAddress) {
 		ExternalLocation externalLocation =
-			program.getExternalManager().getExternalLocation(libraryName, label);
+                program.getExternalManager().getUniqueExternalLocation(libraryName, label);
 		Function extFunction = externalLocation.getFunction();
 
 		CreateThunkFunctionCmd cmd = new CreateThunkFunctionCmd(thunkAddress,

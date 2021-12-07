@@ -336,7 +336,7 @@ public class ArchiveDialog extends DialogComponentProvider {
 			File file = selectedFile;
 			String chosenPathname = file.getAbsolutePath();
 			String name = file.getName();
-			if (!NamingUtilities.isValidName(name)) {
+			if (!NamingUtilities.isValidProjectName(name)) {
 				Msg.showError(getClass(), null, "Invalid Archive Name",
 					name + " is not a valid archive name");
 				continue;

@@ -24,6 +24,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 
+import docking.test.AbstractDockingTest;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
@@ -197,7 +198,7 @@ public abstract class AbstractCreateArchiveTest extends AbstractGhidraHeadedInte
 		waitForPostedSwingRunnables();
 
 		// this handles the save changes dialog and potential analysis dialogs
-		closeAllWindowsAndFrames();
+		AbstractDockingTest.closeAllWindows();
 		env.release(program);
 		env.dispose();
 	}

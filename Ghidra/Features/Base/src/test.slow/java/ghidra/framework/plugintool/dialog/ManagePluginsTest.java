@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.*;
 import javax.swing.table.TableModel;
 
+import docking.test.AbstractDockingTest;
 import org.junit.*;
 
 import docking.action.DockingActionIf;
@@ -92,7 +93,7 @@ public class ManagePluginsTest extends AbstractGhidraHeadedIntegrationTest {
 		ToolChest tc = tool.getProject().getLocalToolChest();
 		tc.remove("MyTestTool");
 		runSwing(() -> provider.close());
-		closeAllWindowsAndFrames();
+		AbstractDockingTest.closeAllWindows();
 		env.dispose();
 	}
 

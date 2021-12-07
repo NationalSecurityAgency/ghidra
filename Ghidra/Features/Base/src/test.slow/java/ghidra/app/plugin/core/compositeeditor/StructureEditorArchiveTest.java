@@ -22,6 +22,7 @@ import java.io.File;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 
+import docking.test.AbstractDockingTest;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -82,7 +83,7 @@ public class StructureEditorArchiveTest extends AbstractStructureEditorTest {
 		waitForSwing();
 
 		// Answer "No" to "Save Structure Editor Changes?".
-		JDialog dialog = waitForJDialog(null, "Save Structure Editor Changes?", 2000);
+		JDialog dialog = AbstractDockingTest.waitForJDialog(null, "Save Structure Editor Changes?", 2000);
 		assertNotNull(dialog);
 		pressButtonByText(dialog.getContentPane(), "No");
 		waitForSwing();

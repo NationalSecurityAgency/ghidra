@@ -23,6 +23,7 @@ import java.util.Iterator;
 import javax.swing.JDialog;
 import javax.swing.JTextField;
 
+import docking.test.AbstractDockingTest;
 import org.junit.*;
 
 import generic.jar.ResourceFile;
@@ -229,7 +230,7 @@ public class FindAndReplaceCommentScriptTest extends AbstractGhidraHeadedIntegra
 	}
 
 	private void respondToDialog(String response, String titleValue) {
-		JDialog askStringDialog = waitForJDialog(null, titleValue, 3000);
+		JDialog askStringDialog = AbstractDockingTest.waitForJDialog(null, titleValue, 3000);
 		JTextField textField = findComponent(askStringDialog, JTextField.class);
 		setText(textField, response);
 		pressButtonByText(askStringDialog, "OK");

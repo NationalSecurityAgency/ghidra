@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import javax.swing.JDialog;
 import javax.swing.JTextField;
 
+import docking.test.AbstractDockingTest;
 import org.junit.Test;
 
 import ghidra.program.model.data.*;
@@ -168,7 +169,7 @@ public class StructureEditorLockedDnDTest extends AbstractStructureEditorTest {
 		insertAtPoint(dt4, 0, 0);
 
 		JDialog dialog =
-			waitForJDialog(env.getTool().getToolFrame(), "Enter Number", DEFAULT_WINDOW_TIMEOUT);
+                AbstractDockingTest.waitForJDialog(env.getTool().getToolFrame(), "Enter Number", DEFAULT_WINDOW_TIMEOUT);
 		assertNotNull(dialog);
 		JTextField textField = findComponent(dialog, JTextField.class);
 		triggerText(textField, "3");

@@ -54,7 +54,7 @@ public class IntegerInputVerifier extends InputVerifier {
     /** Overridden to beep when the user tries to click out of the edited field when invalid */
     @Override
     public boolean shouldYieldFocus( JComponent input ) {
-        boolean shouldYieldFocus = super.shouldYieldFocus( input );
+        boolean shouldYieldFocus = super.shouldYieldFocus(input);
         if ( !shouldYieldFocus ) {
             warn();
         }

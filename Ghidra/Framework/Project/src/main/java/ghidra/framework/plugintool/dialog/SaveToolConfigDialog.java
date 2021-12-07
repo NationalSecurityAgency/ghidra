@@ -218,7 +218,7 @@ public class SaveToolConfigDialog extends DialogComponentProvider implements Lis
 			nameField.requestFocus();
 			return;
 		}
-		if (!NamingUtilities.isValidName(newName)) {
+		if (!NamingUtilities.isValidProjectName(newName)) {
 			setStatusText("Invalid character in name: " + NamingUtilities.findInvalidChar(newName));
 			nameField.requestFocus();
 			return;

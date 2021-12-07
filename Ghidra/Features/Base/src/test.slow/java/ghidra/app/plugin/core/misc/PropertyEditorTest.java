@@ -23,6 +23,7 @@ import java.awt.Container;
 
 import javax.swing.*;
 
+import docking.test.AbstractDockingTest;
 import org.junit.After;
 import org.junit.Test;
 
@@ -53,7 +54,7 @@ public class PropertyEditorTest extends AbstractGhidraHeadedIntegrationTest {
 			runSwing(() -> DockingDialog.createDialog(null, dialogComponent, null));
 		SwingUtilities.invokeLater(() -> editorDialog.setVisible(true));
 
-		waitForJDialog(null, "Test Properties", 500);
+		AbstractDockingTest.waitForJDialog(null, "Test Properties", 500);
 		assertNotNull("Dialog failed to launch", editorDialog);
 		waitForPostedSwingRunnables();
 		waitForOptionsTree(dialogComponent);

@@ -19,7 +19,7 @@ import com.sun.jna.*;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 
 public interface JavaProviderNative extends Library {
-	JavaProviderNative INSTANCE = Native.loadLibrary("javaprovider", JavaProviderNative.class);
+	JavaProviderNative INSTANCE = Native.load("javaprovider", JavaProviderNative.class);
 
 	HRESULT createClient(Pointer client);
 }

@@ -306,8 +306,8 @@ public class RestoreDialog extends DialogComponentProvider {
 			return false;
 		}
 		String restoreProjectName = projectNameField.getText().trim();
-		if (restoreProjectName == null || restoreProjectName.equals("") ||
-			!NamingUtilities.isValidName(restoreProjectName)) {
+		if (restoreProjectName == null || restoreProjectName.isEmpty() ||
+			!NamingUtilities.isValidProjectName(restoreProjectName)) {
 			setStatusText("Specify a valid project name.");
 			return false;
 		}
@@ -419,7 +419,7 @@ public class RestoreDialog extends DialogComponentProvider {
 
 			File file = selectedFile;
 			String chosenName = file.getName();
-			if (!NamingUtilities.isValidName(chosenName)) {
+			if (!NamingUtilities.isValidProjectName(chosenName)) {
 				Msg.showError(getClass(), null, "Invalid Archive Name",
 					chosenName + " is not a valid archive name");
 				continue;
