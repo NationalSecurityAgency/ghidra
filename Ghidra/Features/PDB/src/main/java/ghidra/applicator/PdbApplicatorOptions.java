@@ -77,7 +77,7 @@ public class PdbApplicatorOptions {
 	private static final String OPTION_DESCRIPTION_APPLY_FUNCTION_VARIABLES =
 		"If checked, attempts to apply function parameters and local variables for program functions.";
 	// TODO: set the following to true if we come up with a reasonably good solution
-	private static final boolean DEFAULT_APPLY_FUNCTION_VARIABLES = false;
+	private static final boolean DEFAULT_APPLY_FUNCTION_VARIABLES = true;
 	private boolean applyFunctionVariables;
 
 	// Sets the composite layout.

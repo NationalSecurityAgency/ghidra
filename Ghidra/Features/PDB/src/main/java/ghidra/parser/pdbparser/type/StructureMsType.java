@@ -45,23 +45,20 @@ public class StructureMsType extends AbstractStructureMsType {
 		fieldDescriptorListRecordNumber = RecordNumber.parse(pdb, reader, RecordCategory.TYPE, 32);
 		derivedFromListRecordNumber = RecordNumber.parse(pdb, reader, RecordCategory.TYPE, 32);
 		vShapeTableRecordNumber = RecordNumber.parse(pdb, reader, RecordCategory.TYPE, 32);
-		//TODO: has more... guessing below... commented out some other conditions, but we
-		// might want to investigate if any data hits them.
 		Numeric numeric = new Numeric(reader);
 		if (!numeric.isIntegral()) {
-			throw new PdbException("Expecting integral numeric");
+			throw new PdbException("StructureMSType non-integral size.");
 		}
 		size = numeric.getIntegral();
 		if (reader.hasMoreNonPad()) {
 			name = reader.parseString(pdb, StringParseType.StringNt);
-			if (reader.hasMoreNonPad()) {
+			if (reader.hasMoreNonPad() && this.property.hasUniqueName() == true) {
 				mangledName = reader.parseString(pdb, StringParseType.StringNt);
 			}
-//			else if (reader.hasMore()) {
-//			}
 		}
-//		else {
-//		}
+		else if(reader.hasMoreNonPad()) {
+			throw new PdbException("StructureMSType has invalid data.");
+		}
 		reader.skipPadding();
 	}
 

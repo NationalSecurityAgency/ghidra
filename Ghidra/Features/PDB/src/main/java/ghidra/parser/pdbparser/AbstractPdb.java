@@ -683,17 +683,23 @@ public abstract class AbstractPdb implements AutoCloseable {
 		// Check the parameters for IDs
 		for (int param : parameters) {
 			monitor.checkCanceled();
-			if (param == MINIMAL_DEBUG_INFO_PARAM) {
+			if (param == 0) {
+				continue;
+			}
+			else if (param == MINIMAL_DEBUG_INFO_PARAM) {
 				minimalDebugInfo = true;
 			}
 			else if (param == NO_TYPE_MERGE_PARAM) {
 				noTypeMerge = true;
 			}
-			// Putting all of these >= ID after the specific == tests above
-			//  so that no >= tests in the ID section trigger off of any
-			//  of the above flags
-			else if (param >= PdbParser.VC110_ID) {
+			else if (param == PdbParser.VC110_ID) {
 				hasIdStream = true;
+			}
+			else if (param == PdbParser.VC140_ID) {
+				hasIdStream = true;
+			}
+			else {
+				PdbLog.message("Unknown parameter:"+param +" in tail of PDB info stream");
 			}
 		}
 	}

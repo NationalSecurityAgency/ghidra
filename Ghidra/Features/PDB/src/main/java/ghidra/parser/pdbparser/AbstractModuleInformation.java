@@ -169,15 +169,10 @@ public abstract class AbstractModuleInformation {
 		sizeLocalSymbolsDebugInformation = reader.parseInt();
 		sizeLineNumberDebugInformation = reader.parseInt();
 		sizeC13StyleLineNumberInformation = reader.parseInt();
-		numFilesContributing = reader.parseUnsignedShortVal(); //unsigned 16-bit
+		numFilesContributing = reader.parseUnsignedShortVal();
 		reader.align4();
-		reader.parseBytes(4); //placeholder for offsetsArray // unsigned 32-bit (unused?)
+		reader.parseBytes(4); // (unused)
 		parseAdditionals(reader);
-
-//		for (int i = 0; i < numFilesContributing; i++) {
-//			int offsetBufFilename = reader.parseInt();
-//			offsetsArray.add(offsetBufFilename);
-//		}
 		reader.align4();
 	}
 

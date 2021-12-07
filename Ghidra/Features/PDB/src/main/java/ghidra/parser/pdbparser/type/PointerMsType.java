@@ -118,11 +118,11 @@ public class PointerMsType extends AbstractPointerMsType {
 		size = (int) (attributes & 0x003f);
 		attributes >>= 6;
 
-		isMocom = ((attributes & 0x0001) == 0x0001);
+		isMocom = ((attributes & 0x0001) == 0x0001); // pointer is a WinRT smart pointer
 		attributes >>= 1;
-		isLRef = ((attributes & 0x0001) == 0x0001);
+		isLRef = ((attributes & 0x0001) == 0x0001); // pointer is a 'this' pointer of a member function with ref qualifier (e.g. void X::foo() &)
 		attributes >>= 1;
-		isRRef = ((attributes & 0x0001) == 0x0001);
+		isRRef = ((attributes & 0x0001) == 0x0001); // pointer is a 'this' pointer of a member function with ref qualifier (e.g. void X::foo() &&)
 		attributes >>= 1;
 		unk = ((attributes & 0x0001) == 0x0001);
 	}
