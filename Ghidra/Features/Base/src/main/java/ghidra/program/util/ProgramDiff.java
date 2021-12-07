@@ -484,7 +484,7 @@ public class ProgramDiff {
 		for (int element : pt) {
 			// Are we interested in this difference type?
 			if (pdf.getFilter(element)) {
-				Integer key = new Integer(element);
+				Integer key = Integer.valueOf(element);
 				// Do we still need to determine differences of this type?
 				if (!diffAddrSets.containsKey(key)) {
 					if (!cancelled) {
@@ -543,7 +543,7 @@ public class ProgramDiff {
 			// Adjust any required address sets.
 			int[] pt = ProgramDiffFilter.getPrimaryTypes();
 			for (int element : pt) {
-				Integer key = new Integer(element);
+				Integer key = Integer.valueOf(element);
 				AddressSet thisSet = diffAddrSets.get(key);
 				if (thisSet == null) {
 					continue; // This is not part of current address sets.
@@ -832,7 +832,7 @@ public class ProgramDiff {
 		AddressSet diffs = new AddressSet();
 		int[] pt = ProgramDiffFilter.getPrimaryTypes();
 		for (int element : pt) {
-			AddressSet as = diffAddrSets.get(new Integer(element));
+			AddressSet as = diffAddrSets.get(Integer.valueOf(element));
 			diffs.add(as);
 		}
 		AddressRangeIterator iter = diffs.getAddressRanges();
@@ -854,7 +854,7 @@ public class ProgramDiff {
 		int[] pt = ProgramDiffFilter.getPrimaryTypes();
 		for (int element : pt) {
 			Msg.info(this, "\n" + ProgramDiffFilter.typeToName(element) + " differences:");
-			AddressSet as = diffAddrSets.get(new Integer(element));
+			AddressSet as = diffAddrSets.get(Integer.valueOf(element));
 			if (as != null) {
 				AddressRangeIterator iter = as.getAddressRanges();
 				while (iter.hasNext()) {
@@ -967,7 +967,7 @@ public class ProgramDiff {
 				break;
 		}
 		if (as != null) {
-			diffAddrSets.put(new Integer(diffType), as);
+			diffAddrSets.put(Integer.valueOf(diffType), as);
 		}
 	}
 
@@ -3026,7 +3026,7 @@ public class ProgramDiff {
 				// int property.
 				try {
 					int intProp = cu.getIntProperty(localPropertyName);
-					return new Integer(intProp);
+					return Integer.valueOf(intProp);
 				}
 				catch (NoValueException e) {
 					// Do nothing. Instead fall-through to next property type.
@@ -3056,7 +3056,7 @@ public class ProgramDiff {
 				// void property.
 				try {
 					boolean voidProp = cu.getVoidProperty(localPropertyName);
-					return new Boolean(voidProp);
+					return Boolean.valueOf(voidProp);
 				}
 				catch (TypeMismatchException e) {
 					// Do nothing. Instead fall-through to next property type.

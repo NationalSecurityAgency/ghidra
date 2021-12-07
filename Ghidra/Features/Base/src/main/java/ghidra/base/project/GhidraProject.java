@@ -364,7 +364,7 @@ public class GhidraProject {
 			throw new IOException("Cancelled");
 		}
 		if (id >= 0) {
-			openPrograms.put(program, new Integer(program.startTransaction("")));
+			openPrograms.put(program, Integer.valueOf(program.startTransaction("")));
 		}
 	}
 
@@ -436,7 +436,7 @@ public class GhidraProject {
 		}
 		finally {
 			if (success || id >= 0) {
-				openPrograms.put(program, new Integer(program.startTransaction("")));
+				openPrograms.put(program, Integer.valueOf(program.startTransaction("")));
 			}
 		}
 
@@ -490,7 +490,7 @@ public class GhidraProject {
 		}
 		finally {
 			if (success || id >= 0) {
-				openPrograms.put(program, new Integer(program.startTransaction("")));
+				openPrograms.put(program, Integer.valueOf(program.startTransaction("")));
 			}
 		}
 	}
@@ -508,7 +508,7 @@ public class GhidraProject {
 			throw new IllegalStateException("Cannot checkpoint a read-only program");
 		}
 		program.endTransaction(id.intValue(), true);
-		openPrograms.put(program, new Integer(program.startTransaction("")));
+		openPrograms.put(program, Integer.valueOf(program.startTransaction("")));
 	}
 
 	/**
@@ -523,7 +523,7 @@ public class GhidraProject {
 			throw new IllegalStateException("Cannot rollback a read-only program");
 		}
 		program.endTransaction(id.intValue(), false);
-		openPrograms.put(program, new Integer(program.startTransaction("")));
+		openPrograms.put(program, Integer.valueOf(program.startTransaction("")));
 	}
 
 	/**
@@ -592,7 +592,7 @@ public class GhidraProject {
 			AutoAnalysisManager mgr = AutoAnalysisManager.getAnalysisManager(program);
 			mgr.initializeOptions();
 		}
-		openPrograms.put(program, new Integer(id));
+		openPrograms.put(program, Integer.valueOf(id));
 	}
 
 	public Program importProgram(File file, Language language, CompilerSpec compilerSpec)

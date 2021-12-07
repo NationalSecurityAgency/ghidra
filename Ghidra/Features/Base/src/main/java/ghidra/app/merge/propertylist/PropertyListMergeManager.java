@@ -362,19 +362,16 @@ public class PropertyListMergeManager implements MergeResolver {
 		OptionType type = options.getType(propertyName);
 		switch (type) {
 			case BOOLEAN_TYPE:
-				return options.getBoolean(propertyName, false) ? Boolean.TRUE : Boolean.FALSE;
+				return Boolean.valueOf(options.getBoolean(propertyName, false));
 
 			case DOUBLE_TYPE:
-				return new Double(options.getDouble(propertyName, 0d));
+				return Double.valueOf(options.getDouble(propertyName, 0d));
 
 			case INT_TYPE:
-				return new Integer(options.getInt(propertyName, 0));
+				return Integer.valueOf(options.getInt(propertyName, 0));
 
 			case LONG_TYPE:
-				return new Long(options.getLong(propertyName, 0L));
-
-			case NO_TYPE:
-				return null;
+				return Long.valueOf(options.getLong(propertyName, 0L));
 
 			case STRING_TYPE:
 				return options.getString(propertyName, (String) null);
@@ -382,6 +379,7 @@ public class PropertyListMergeManager implements MergeResolver {
 			case DATE_TYPE:
 				return options.getDate(propertyName, (Date) null);
 
+			case NO_TYPE:
 			default:
 				return null;
 		}

@@ -366,7 +366,7 @@ public class Motorola68KAnalyzer extends ConstantPropagationAnalyzer {
 
 			tableSizeMax = 64;
 			for (long assume = 0; assume < tableSizeMax; assume++) {
-				switchEvaluator.setAssume(new Long(assume));
+				switchEvaluator.setAssume(Long.valueOf(assume));
 				switchEvaluator.setGuard(false);
 				switchEvaluator.setTargetSwitchAddr(loc);
 

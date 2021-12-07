@@ -129,7 +129,7 @@ class CheckoutsTableModel extends AbstractSortedTableModel<ItemCheckoutStatus> {
 			case DATE_COL:
 				return new Date(t.getCheckoutTime());
 			case VERSION_COL:
-				return new Integer(t.getCheckoutVersion());
+				return Integer.valueOf(t.getCheckoutVersion());
 			case USER_COL:
 				return t.getUser();
 			case HOST_COL:

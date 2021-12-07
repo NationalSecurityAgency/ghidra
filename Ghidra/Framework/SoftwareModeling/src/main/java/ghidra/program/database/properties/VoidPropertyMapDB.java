@@ -65,7 +65,7 @@ public class VoidPropertyMapDB extends PropertyMapDB implements VoidPropertyMap 
 		lock.acquire();
 		try {
 			long key = addrMap.getKey(addr, true);
-			Boolean oldValue = new Boolean(hasProperty(addr));
+			Boolean oldValue = Boolean.valueOf(hasProperty(addr));
 
 			if (propertyTable == null) {
 				createTable(null);
@@ -73,7 +73,7 @@ public class VoidPropertyMapDB extends PropertyMapDB implements VoidPropertyMap 
 			DBRecord rec = schema.createRecord(key);
 			propertyTable.putRecord(rec);
 			cache.put(key, VOID_OBJECT);
-			changeMgr.setPropertyChanged(name, addr, oldValue, new Boolean(true));
+			changeMgr.setPropertyChanged(name, addr, oldValue, Boolean.valueOf(true));
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);

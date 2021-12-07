@@ -73,7 +73,7 @@ public class DefineTable {
 
 		while (findTable != null && pos < buf.length()) {
 			char ch = buf.charAt(pos++);
-			Character chObj = new Character(ch);
+			Character chObj = Character.valueOf(ch);
 
 			findTable = (Hashtable) findTable.get(chObj);
 
@@ -105,7 +105,7 @@ public class DefineTable {
 		int len = string.length();
 		while (pos < len) {
 			char ch = string.charAt(pos++);
-			chObj = new Character(ch);
+			chObj = Character.valueOf(ch);
 
 			Hashtable node = (Hashtable) findTable.get(chObj);
 
@@ -166,7 +166,7 @@ public class DefineTable {
 		int len = string.length();
 		while (pos < len) {
 			char ch = string.charAt(pos++);
-			chObj = new Character(ch);
+			chObj = Character.valueOf(ch);
 
 			findTable = (Hashtable) findTable.get(chObj);
 
@@ -506,7 +506,7 @@ public class DefineTable {
 					continue;
 				}
 
-				Integer begin = new Integer(curpos);
+				Integer begin = Integer.valueOf(curpos);
 				int insertLoc = 0;
 				for (; insertLoc < beginPos.size(); insertLoc++) {
 					Integer loc = beginPos.get(insertLoc);
@@ -517,7 +517,7 @@ public class DefineTable {
 
 				beginPos.add(insertLoc, begin);
 				endPos.add(insertLoc,
-						new Integer(curpos + curArgName.length()));
+                        Integer.valueOf(curpos + curArgName.length()));
 				subValue.add(insertLoc, argValue);
 			} while (curpos >= 0);
 		}

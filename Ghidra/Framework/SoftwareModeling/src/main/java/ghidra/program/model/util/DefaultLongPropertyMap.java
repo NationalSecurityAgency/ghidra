@@ -64,7 +64,7 @@ public class DefaultLongPropertyMap extends DefaultPropertyMap implements LongPr
 	 */
 	public Object getObject(Address addr) {
 		try {
-			return new Long(getLong(addr));
+			return Long.valueOf(getLong(addr));
 		}
 		catch (NoValueException e) {
 			return null;

@@ -52,9 +52,9 @@ public class FcgVertex extends AbstractVisualVertex implements VertexShapeProvid
 		ResourceManager.getScaledIcon(Icons.COLLAPSE_ALL_ICON, 10, 10);
 
 	// higher numbered layers go on top	
-	private static final Integer VERTEX_SHAPE_LAYER = new Integer(100);
-	private static final Integer TOGGLE_BUTTON_LAYER = new Integer(200);
-	private static final Integer LABEL_LAYER = new Integer(300);
+	private static final Integer VERTEX_SHAPE_LAYER = Integer.valueOf(100);
+	private static final Integer TOGGLE_BUTTON_LAYER = Integer.valueOf(200);
+	private static final Integer LABEL_LAYER = Integer.valueOf(300);
 
 	private static final int GAP = 2;
 	private static final int VERTEX_SHAPE_SIZE = 50;

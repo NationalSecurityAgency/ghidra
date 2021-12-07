@@ -87,7 +87,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(b);
 		assertEquals(3, b.length);
 
-		defaultSettings.setValue("long", new Long(10));
+		defaultSettings.setValue("long", Long.valueOf(10));
 		Object obj = defaultSettings.getValue("long");
 		assertNotNull(obj);
 		assertEquals(10, ((Long) obj).longValue());
@@ -113,7 +113,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 		assertNotNull(b);
 		assertEquals(3, b.length);
 
-		defaultSettings.setValue("long", new Long(10));
+		defaultSettings.setValue("long", Long.valueOf(10));
 		Object obj = defaultSettings.getValue("long");
 		assertNotNull(obj);
 		assertEquals(10, ((Long) obj).longValue());
@@ -453,7 +453,7 @@ public class SettingsTest extends AbstractGhidraHeadedIntegrationTest {
 
 		redo(program);
 		defSettings = td.getDefaultSettings();
-		assertEquals(new Long(FormatSettingsDefinition.BINARY), defSettings.getValue("format"));
+		assertEquals(Long.valueOf(FormatSettingsDefinition.BINARY), defSettings.getValue("format"));
 	}
 
 	@Test

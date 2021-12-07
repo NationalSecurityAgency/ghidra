@@ -118,7 +118,7 @@ public class NormalizedAddressSet implements AddressSetView {
 		if (set == null) {
 			set = new SortedRangeList();
 			baseLists.put(baseKey, set);
-			bases.add(new Long(baseKey));
+			bases.add(Long.valueOf(baseKey));
 			Collections.sort(bases, baseComparator);
 		}
 		set.addRange((int) minKey + Integer.MIN_VALUE, (int) maxKey + Integer.MIN_VALUE);
@@ -150,7 +150,7 @@ public class NormalizedAddressSet implements AddressSetView {
 		set.removeRange((int) minKey + Integer.MIN_VALUE, (int) maxKey + Integer.MIN_VALUE);
 		if (set.isEmpty()) {
 			baseLists.remove(baseKey);
-			bases.remove(new Long(baseKey));
+			bases.remove(Long.valueOf(baseKey));
 		}
 	}
 

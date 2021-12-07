@@ -27,12 +27,12 @@ public class ShortColumnAdapter extends AbstractColumnAdapter {
 
 	@Override
 	Object getKeyValue(DBRecord rec) {
-		return new Short(((ShortField) rec.getKeyField()).getShortValue());
+		return Short.valueOf(((ShortField) rec.getKeyField()).getShortValue());
 	}
 
 	@Override
 	Object getValue(DBRecord rec, int col) {
-		return new Short(rec.getShortValue(col));
+		return Short.valueOf(rec.getShortValue(col));
 	}
 
 }

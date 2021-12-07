@@ -68,7 +68,7 @@ public class MatchSet extends HashSet<Match>
 		a[1] = thisName;
 		a[2] = m.getOtherBeginning();
 		a[3] = otherName;
-		a[4] = new Integer( m.length() );
+		a[4] = Integer.valueOf( m.length() );
 		return a;
 	}
 		

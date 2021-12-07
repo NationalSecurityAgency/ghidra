@@ -229,7 +229,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 		class SwitchEvaluator implements ContextEvaluator {
 
 			int tableSizeMax = 64;
-			Long assumeValue = new Long(0);
+			Long assumeValue = Long.valueOf(0);
 			Address targetSwitchAddr = null;
 			int addrByteSize = 1;
 			boolean hitTheGuard = false;
@@ -238,7 +238,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 
 			public void init(Address loc, int maxSize) {
 				addrByteSize = 1;
-				assumeValue = new Long(0);
+				assumeValue = Long.valueOf(0);
 				tableSizeMax = maxSize;
 				targetSwitchAddr = loc;
 				hitTheGuard = false;
@@ -248,7 +248,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 			}
 
 			public void initForCase(Long assume) {
-				assumeValue = new Long(assume);
+				assumeValue = Long.valueOf(assume);
 				hitTheGuard = false;
 			}
 
@@ -412,7 +412,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 							return null;
 						}
 						if (!regName.startsWith("r")) {
-							return new Long(0);
+							return Long.valueOf(0);
 						}
 					}
 					if (hitTheGuard) {
@@ -500,7 +500,7 @@ public class ArmAnalyzer extends ConstantPropagationAnalyzer {
 
 			Address zeroAddr = targetInstr.getMinAddress().getNewAddress(0);
 			for (long assume = 0; assume < switchEvaluator.getTableSizeMax(); assume++) {
-				switchEvaluator.initForCase(new Long(assume));
+				switchEvaluator.initForCase(Long.valueOf(assume));
 
 				targetEval.flowConstants(branchSet.getMinAddress(), branchSet, switchEvaluator,
 					false, monitor);

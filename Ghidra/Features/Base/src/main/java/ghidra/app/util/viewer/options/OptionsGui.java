@@ -733,7 +733,7 @@ public class OptionsGui extends JPanel {
 	}
 
 	private FontMetrics getMetrics(int style) {
-		Integer i = new Integer(style);
+		Integer i = Integer.valueOf(style);
 		FontMetrics fm = metricsMap.get(i);
 		if (fm == null) {
 			if (style == -1) {

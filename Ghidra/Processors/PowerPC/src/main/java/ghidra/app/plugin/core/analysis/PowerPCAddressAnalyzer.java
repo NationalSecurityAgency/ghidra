@@ -288,11 +288,11 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 						Register reg = program.getRegister(node.getAddress());
 						if (reg != null) {
 							if (reg.getName().equals("xer_so")) {
-								return new Long(0);
+								return Long.valueOf(0);
 							}
 							if (propagateR2value && reg.getName().equals("r2") &&
 								startingR2Value != null && startingR2Value.hasValue()) {
-								return new Long(startingR2Value.getUnsignedValue().longValue());
+								return Long.valueOf(startingR2Value.getUnsignedValue().longValue());
 							}
 						}
 					}
@@ -389,7 +389,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 			long tableIndexOffset;
 			Address targetSwitchAddr = null;
 			boolean hitTheGuard = false;
-			Long assumeValue = new Long(0);
+			Long assumeValue = Long.valueOf(0);
 			int tableSizeMax = STARTING_MAX_TABLE_SIZE;
 
 			public void setGuard(boolean hitGuard) {
@@ -492,7 +492,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 					if (reg != null) {
 						// never assume for flags, or control registers
 						if (reg.getName().equals("xer_so") || reg.getName().startsWith("cr")) {
-							return new Long(0);
+							return Long.valueOf(0);
 						}
 					}
 					if (hitTheGuard) {
@@ -567,7 +567,7 @@ public class PowerPCAddressAnalyzer extends ConstantPropagationAnalyzer {
 			}
 
 			for (long assume = 0; assume < switchEvaluator.getMaxTableSize(); assume++) {
-				switchEvaluator.setAssume(new Long(assume));
+				switchEvaluator.setAssume(Long.valueOf(assume));
 				switchEvaluator.setGuard(false);
 				switchEvaluator.setTargetSwitchAddr(loc);
 

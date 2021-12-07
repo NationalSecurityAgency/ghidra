@@ -58,17 +58,17 @@ class SourceArchivePanel extends JPanel {
 		
 		headingAttrSet = new SimpleAttributeSet();
 		headingAttrSet.addAttribute(StyleConstants.FontFamily, "Monospaced");
-		headingAttrSet.addAttribute(StyleConstants.FontSize, new Integer(12));
+		headingAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
 		headingAttrSet.addAttribute(StyleConstants.Foreground, Color.BLUE);
 		
 		valueAttrSet = new SimpleAttributeSet();
 		valueAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		valueAttrSet.addAttribute(StyleConstants.FontSize, new Integer(11));
+		valueAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(11));
 		valueAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
 
 		deletedAttrSet = new SimpleAttributeSet();
 		deletedAttrSet.addAttribute(StyleConstants.FontFamily, "Tahoma");
-		deletedAttrSet.addAttribute(StyleConstants.FontSize, new Integer(12));
+		deletedAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
 		deletedAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);
 		deletedAttrSet.addAttribute(StyleConstants.Foreground, Color.RED);
 		

@@ -151,11 +151,11 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		Integer offObject;
 		int roundsize = (storage.size() + 15) & 0xfffffff0;
 		if (offset < 0) {
-			offObject = new Integer(joinAllocate);
+			offObject = Integer.valueOf(joinAllocate);
 			joinAllocate += roundsize;
 		}
 		else {
-			offObject = new Integer((int)offset);
+			offObject = Integer.valueOf((int) offset);
 			offset += roundsize;
 			if (offset > joinAllocate) {
 				joinAllocate = (int)offset;
@@ -172,7 +172,7 @@ public class PcodeSyntaxTree implements PcodeFactory {
 		if (joinmap == null) {
 			return null;
 		}
-		return joinmap.get(new Integer((int)offset));
+		return joinmap.get(Integer.valueOf((int) offset));
 	}
 
 	@Override

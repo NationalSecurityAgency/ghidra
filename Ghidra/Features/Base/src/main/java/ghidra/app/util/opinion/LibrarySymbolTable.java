@@ -435,7 +435,7 @@ class LibrarySymbolTable {
 
 				exportList.add(sym);
 				symMap.put(name, sym);
-				ordMap.put(new Integer(ordinal), sym);
+				ordMap.put(Integer.valueOf(ordinal), sym);
 			}
 		}
 		catch (JDOMException e) {
@@ -463,7 +463,7 @@ class LibrarySymbolTable {
 		//            LibraryExportedSymbol sym = new LibraryExportedSymbol(tableName, ord, funcName, purge, comment);
 		//            exportList.add(sym);
 		//            symMap.put(funcName, sym);
-		//            ordMap.put(new Integer(ord), sym);
+		//            ordMap.put(Integer.valueOf(ord), sym);
 		//        }
 		//    }
 		//}

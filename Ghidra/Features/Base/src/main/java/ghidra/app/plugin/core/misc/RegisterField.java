@@ -174,7 +174,7 @@ public class RegisterField extends JTextField {
 		
 		if (text.equals("0x") || text.equals("0X")) {
 		 	if ((currentValue == null) || (currentValue.longValue() != 0)) {
-				currentValue = new Long(0);
+				currentValue = Long.valueOf(0);
 				notifyListeners();
 			}
 			return true;
@@ -268,7 +268,7 @@ public class RegisterField extends JTextField {
 		JFrame f = new JFrame("Test");
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(new JTextField("123"), BorderLayout.SOUTH);
-		RegisterField rf = new RegisterField(1, new Long(1));
+		RegisterField rf = new RegisterField(1, Long.valueOf(1));
 		panel.add(rf, BorderLayout.CENTER);
 		f.getContentPane().add(panel);
 		f.pack();

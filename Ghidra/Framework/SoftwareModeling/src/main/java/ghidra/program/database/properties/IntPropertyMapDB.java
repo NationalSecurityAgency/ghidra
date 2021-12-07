@@ -72,7 +72,7 @@ public class IntPropertyMapDB extends PropertyMapDB implements IntPropertyMap {
 				if (oldValue == null) {
 					DBRecord rec = propertyTable.getRecord(key);
 					if (rec != null) {
-						oldValue = new Integer(rec.getIntValue(PROPERTY_VALUE_COL));
+						oldValue = Integer.valueOf(rec.getIntValue(PROPERTY_VALUE_COL));
 					}
 				}
 			}
@@ -80,9 +80,9 @@ public class IntPropertyMapDB extends PropertyMapDB implements IntPropertyMap {
 
 			rec.setIntValue(PROPERTY_VALUE_COL, value);
 			propertyTable.putRecord(rec);
-			cache.put(key, new Integer(value));
+			cache.put(key, Integer.valueOf(value));
 
-			changeMgr.setPropertyChanged(name, addr, oldValue, new Integer(value));
+			changeMgr.setPropertyChanged(name, addr, oldValue, Integer.valueOf(value));
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
@@ -133,7 +133,7 @@ public class IntPropertyMapDB extends PropertyMapDB implements IntPropertyMap {
 	@Override
 	public Object getObject(Address addr) {
 		try {
-			return new Integer(getInt(addr));
+			return Integer.valueOf(getInt(addr));
 		}
 		catch (NoValueException e) {
 			return null;

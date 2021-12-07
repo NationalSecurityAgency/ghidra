@@ -258,7 +258,7 @@ public class PropagateX86ConstantReferences extends GhidraScript {
 				tableSizeMax = 64;
 				tableIndexOffset = 0;
 				for (long assume = 0; assume < tableSizeMax; assume++) {
-					assumeValue = new Long(assume);
+					assumeValue = Long.valueOf(assume);
 					hitTheGuard = false;
 
 					symEval.flowConstants(branchSet.getMinAddress(), branchSet, eval, false,

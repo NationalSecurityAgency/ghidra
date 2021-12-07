@@ -128,7 +128,7 @@ public class ProgramDiffDetails {
 	 */
 	private void initAttributes() {
 		textAttrSet = new SimpleAttributeSet();
-		textAttrSet.addAttribute(StyleConstants.FontSize, new Integer(12));
+		textAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
 	}
 
 	/**

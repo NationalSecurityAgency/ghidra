@@ -70,15 +70,15 @@ public class LongPropertyMapDB extends PropertyMapDB implements LongPropertyMap 
 				if (oldValue == null) {
 					DBRecord rec = propertyTable.getRecord(key);
 					if (rec != null) {
-						oldValue = new Long(rec.getLongValue(PROPERTY_VALUE_COL));
+						oldValue = Long.valueOf(rec.getLongValue(PROPERTY_VALUE_COL));
 					}
 				}
 			}
 			DBRecord rec = schema.createRecord(key);
 			rec.setLongValue(PROPERTY_VALUE_COL, value);
 			propertyTable.putRecord(rec);
-			cache.put(key, new Long(value));
-			changeMgr.setPropertyChanged(name, addr, oldValue, new Long(value));
+			cache.put(key, Long.valueOf(value));
+			changeMgr.setPropertyChanged(name, addr, oldValue, Long.valueOf(value));
 		}
 		catch (IOException e) {
 			errHandler.dbError(e);
@@ -130,7 +130,7 @@ public class LongPropertyMapDB extends PropertyMapDB implements LongPropertyMap 
 	@Override
 	public Object getObject(Address addr) {
 		try {
-			return new Long(getLong(addr));
+			return Long.valueOf(getLong(addr));
 		}
 		catch (NoValueException e) {
 			return null;

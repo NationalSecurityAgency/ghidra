@@ -185,7 +185,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		Long lid = new Long(id);
+		Long lid = Long.valueOf(id);
 		if (!addedDataTypeIds.contains(lid) && !tmpAddedDataTypeIds.contains(lid)) {
 			tmpChangedDataTypeIds.add(lid);
 		}
@@ -196,7 +196,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		tmpAddedDataTypeIds.add(new Long(id));
+		tmpAddedDataTypeIds.add(Long.valueOf(id));
 	}
 
 	@Override
@@ -214,7 +214,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		Long lid = new Long(id);
+		Long lid = Long.valueOf(id);
 		if (!addedCategoryIds.contains(lid) && !tmpAddedCategoryIds.contains(lid)) {
 			tmpChangedCategoryIds.add(lid);
 		}
@@ -225,7 +225,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		tmpAddedCategoryIds.add(new Long(id));
+		tmpAddedCategoryIds.add(Long.valueOf(id));
 	}
 
 	@Override
@@ -243,7 +243,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		Long lid = new Long(id);
+		Long lid = Long.valueOf(id);
 		if (!addedProgramTreeIds.contains(lid) && !tmpAddedProgramTreeIds.contains(lid)) {
 			tmpChangedProgramTreeIds.add(lid);
 		}
@@ -254,7 +254,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		tmpAddedProgramTreeIds.add(new Long(id));
+		tmpAddedProgramTreeIds.add(Long.valueOf(id));
 	}
 
 	@Override
@@ -272,7 +272,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		Long lid = new Long(id);
+		Long lid = Long.valueOf(id);
 		if (!addedSymbolIds.contains(lid) && !tmpAddedSymbolIds.contains(lid)) {
 			tmpChangedSymbolIds.add(lid);
 		}
@@ -283,7 +283,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		tmpAddedSymbolIds.add(new Long(id));
+		tmpAddedSymbolIds.add(Long.valueOf(id));
 	}
 
 	@Override
@@ -301,7 +301,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		Long lid = new Long(id);
+		Long lid = Long.valueOf(id);
 		if (!changedTagIds.contains(lid) && !tmpChangedTagIds.contains(lid)) {
 			tmpChangedTagIds.add(lid);
 		}
@@ -312,7 +312,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		tmpAddedTagIds.add(new Long(id));
+		tmpAddedTagIds.add(Long.valueOf(id));
 	}
 
 	@Override
@@ -330,7 +330,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		tmpAddedSourceArchiveIds.add(new Long(id));
+		tmpAddedSourceArchiveIds.add(Long.valueOf(id));
 	}
 
 	@Override
@@ -338,7 +338,7 @@ class ProgramDBChangeSet implements ProgramChangeSet, DomainObjectDBChangeSet {
 		if (!inTransaction) {
 			throw new IllegalStateException("Not in a transaction");
 		}
-		Long lid = new Long(id);
+		Long lid = Long.valueOf(id);
 		if (!addedSourceArchiveIds.contains(lid) && !tmpAddedSourceArchiveIds.contains(lid)) {
 			tmpChangedSourceArchiveIds.add(lid);
 		}

@@ -39,7 +39,7 @@ public class CharacterIterator {
 	private int index;
 
 	/**
-	 * Constructs a new character iterator using str.
+	 * Constructs a new Character iterator using str.
 	 * @param str the string to iterate
 	 */
 	public CharacterIterator(String str) {

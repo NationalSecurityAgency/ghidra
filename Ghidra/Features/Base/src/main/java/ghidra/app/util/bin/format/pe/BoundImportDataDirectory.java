@@ -239,7 +239,7 @@ public class BoundImportDataDirectory extends DataDirectory {
 			else {
 				String moduleName = descriptor.getModuleName();
 				if (moduleName != null && moduleName.length() > 0) {
-					nameHash.put(moduleName, new Short((short)pos));
+					nameHash.put(moduleName, Short.valueOf((short) pos));
 					descriptor.setOffsetModuleName((short)pos);
 					pos += (descriptor.getModuleName().length() + 1);
 				}
@@ -257,7 +257,7 @@ public class BoundImportDataDirectory extends DataDirectory {
 				else {
 					String moduleName = forwarder.getModuleName();
 					if (moduleName != null && moduleName.length() > 0) {
-						nameHash.put(moduleName, new Short((short)pos));
+						nameHash.put(moduleName, Short.valueOf((short) pos));
 						forwarder.setOffsetModuleName((short)pos);
 						pos += (forwarder.getModuleName().length() + 1);
 					}

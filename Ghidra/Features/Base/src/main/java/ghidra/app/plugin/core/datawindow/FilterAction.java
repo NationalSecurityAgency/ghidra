@@ -99,7 +99,7 @@ class FilterAction extends ToggleDockingAction {
 	}
 
 	synchronized void addType(String type) {
-		Boolean bool = new Boolean(!filterEnabled);
+		Boolean bool = Boolean.valueOf(!filterEnabled);
 		typeEnabledMap.put(type, bool);
 
 		if (dialog != null) {

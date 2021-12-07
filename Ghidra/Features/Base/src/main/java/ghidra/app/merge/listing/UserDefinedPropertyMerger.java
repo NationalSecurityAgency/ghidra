@@ -202,7 +202,7 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 		}
 		else if (map instanceof LongPropertyMap) {
 			try {
-				return new Long(((LongPropertyMap) map).getLong(address));
+				return Long.valueOf(((LongPropertyMap) map).getLong(address));
 			}
 			catch (NoValueException e) {
 				return null;
@@ -210,7 +210,7 @@ class UserDefinedPropertyMerger extends AbstractListingMerger {
 		}
 		else if (map instanceof IntPropertyMap) {
 			try {
-				return new Integer(((IntPropertyMap) map).getInt(address));
+				return Integer.valueOf(((IntPropertyMap) map).getInt(address));
 			}
 			catch (NoValueException e) {
 				return null;

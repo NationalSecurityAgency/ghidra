@@ -184,8 +184,8 @@ public class AddressFormatModel implements ProgramDataFormatModel {
 	 * @param block block to change
 	 * @param index byte index into the block
 	 * @param pos The position within the unit where c will be the
-	 * new character.
-	 * @param c new character to put at pos param
+	 * Character.valueOf.
+	 * @param c Character.valueOf to put at pos param
 	 * @return true if the replacement is legal, false if the
 	 * replacement value would not make sense for this format, e.g.
 	 * attempt to put a 'z' in a hex unit.

@@ -69,7 +69,7 @@ public class IntIndexManager implements Serializable {
             nextIndex--;
         }
         else {
-            freeList.add(new Integer(index));
+            freeList.add(Integer.valueOf(index));
         }
 
         // all nodes are free, so reset...

@@ -74,7 +74,7 @@ public class DirData {
 					numStr += dir.charAt(i);
 				}
 			}
-			size = new Integer(numStr);
+			size = Integer.parseValue(numStr);
 		}
 
 		name = nizer.nextToken();

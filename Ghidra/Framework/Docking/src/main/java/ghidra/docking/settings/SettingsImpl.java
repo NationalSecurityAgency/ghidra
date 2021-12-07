@@ -128,7 +128,7 @@ public class SettingsImpl implements Settings, Serializable {
 	 */
 	@Override
 	public void setLong(String name, long value) {
-		map.put(name, new Long(value));
+		map.put(name, Long.valueOf(value));
 		changed();
 	}
 

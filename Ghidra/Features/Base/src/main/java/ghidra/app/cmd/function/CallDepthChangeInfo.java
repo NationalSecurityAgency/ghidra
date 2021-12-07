@@ -529,7 +529,7 @@ public class CallDepthChangeInfo {
 
 		Stack<Object> st = new Stack<Object>();
 		st.push(func.getEntryPoint());
-		st.push(new Integer(0));
+		st.push(Integer.valueOf(0));
 		st.push(Boolean.TRUE);
 		ProcessorContextImpl procContext = new ProcessorContextImpl(program.getLanguage());
 
@@ -582,7 +582,7 @@ public class CallDepthChangeInfo {
 				Address[] flows = instr.getFlows();
 				for (Address flow2 : flows) {
 					st.push(flow2);
-					st.push(new Integer(stackPointerDepth));
+					st.push(Integer.valueOf(stackPointerDepth));
 					st.push(stackOK);
 				}
 			}
@@ -600,7 +600,7 @@ public class CallDepthChangeInfo {
 			Address fallThru = instr.getFallThrough();
 			if (fallThru != null) {
 				st.push(fallThru);
-				st.push(new Integer(stackPointerDepth));
+				st.push(Integer.valueOf(stackPointerDepth));
 				st.push(stackOK);
 			}
 			if (flow.isTerminal()) {
@@ -974,7 +974,7 @@ public class CallDepthChangeInfo {
 			Address fallThru = instr.getFallThrough();
 			if (fallThru != null) {
 				st.push(fallThru);
-				st.push(new Integer(stackPointerDepth));
+				st.push(Integer.valueOf(stackPointerDepth));
 				st.push(stackOK);
 			}
 			if (flow.isTerminal()) {

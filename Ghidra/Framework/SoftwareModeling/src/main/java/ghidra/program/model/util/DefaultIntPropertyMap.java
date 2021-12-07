@@ -61,7 +61,7 @@ public class DefaultIntPropertyMap extends DefaultPropertyMap implements IntProp
 	 */
 	public Object getObject(Address addr) {
 		try {
-			return new Integer(getInt(addr));
+			return Integer.valueOf(getInt(addr));
 		}
 		catch (NoValueException e) {
 			return null;

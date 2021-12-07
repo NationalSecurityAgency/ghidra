@@ -84,7 +84,7 @@ public class ConflictCountPanel extends JPanel {
 		set.addAttribute(StyleConstants.Foreground, Color.RED);
 
 		textAttrSet = new SimpleAttributeSet();
-		textAttrSet.addAttribute(StyleConstants.FontSize, new Integer(12));
+		textAttrSet.addAttribute(StyleConstants.FontSize, Integer.valueOf(12));
 
 		countAttrSet = new SimpleAttributeSet();
 		countAttrSet.addAttribute(StyleConstants.Bold, Boolean.TRUE);

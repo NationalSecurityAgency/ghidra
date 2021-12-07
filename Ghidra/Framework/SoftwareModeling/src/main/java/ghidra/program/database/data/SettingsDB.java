@@ -43,7 +43,7 @@ class SettingsDB {
 		Long lvalue = null;
 		if (getStringValue() == null && getByteValue() == null) {
 			long l = record.getLongValue(SettingsDBAdapter.SETTINGS_LONG_VALUE_COL);
-			lvalue = new Long(l);
+			lvalue = Long.valueOf(l);
 		}
 		return lvalue;
 	}

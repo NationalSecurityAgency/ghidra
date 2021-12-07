@@ -18,7 +18,7 @@ class NewTests{
     private String stringValue;
 
     public Object integerTest1(){
-        return new Integer(1234); 
+        return Integer.valueOf(1234); 
     }
 
     public NewTests(Integer a, String b){
@@ -31,11 +31,11 @@ class NewTests{
     }
 
     public NewTests callsConstructor2(int x, String b){
-        return new NewTests(new Integer(2*x), b+b);
+        return new NewTests(Integer.valueOf(2*x), b+b);
     } 
 
     public String callsConstructor3(int x, String b){
-        return getString(new NewTests(new Integer(2*x), b+b));
+        return getString(new NewTests(Integer.valueOf(2*x), b+b));
     } 
 
     public String getString(NewTests test){

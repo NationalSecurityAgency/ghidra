@@ -742,7 +742,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 	}
 
 	private Variable getVariableContaining(int offset, List<Variable> sortedVariables) {
-		Object key = new Integer(offset);
+		Object key = Integer.valueOf(offset);
 		int index = Collections.binarySearch(sortedVariables, key, StackVariableComparator.get());
 		if (index >= 0) {
 			return sortedVariables.get(index);
@@ -773,7 +773,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 	 * @param sortedVariables
 	 */
 	private void addVariableToSortedList(Variable var, List<Variable> sortedVariables) {
-		int index = Collections.binarySearch(sortedVariables, new Integer(var.getStackOffset()),
+		int index = Collections.binarySearch(sortedVariables, Integer.valueOf(var.getStackOffset()),
 			StackVariableComparator.get());
 		if (index >= 0) {
 			throw new AssertException("Unexpected variable conflict");
