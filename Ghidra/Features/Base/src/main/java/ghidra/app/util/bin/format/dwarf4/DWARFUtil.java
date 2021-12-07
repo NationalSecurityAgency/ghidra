@@ -28,6 +28,7 @@ import ghidra.app.util.bin.format.dwarf4.attribs.DWARFAttributeValue;
 import ghidra.app.util.bin.format.dwarf4.attribs.DWARFNumericAttribute;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFAttribute;
 import ghidra.app.util.bin.format.dwarf4.encoding.DWARFTag;
+import ghidra.app.util.bin.format.dwarf4.expression.DWARFExpressionException;
 import ghidra.app.util.bin.format.dwarf4.next.DWARFProgram;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeComponent;
@@ -323,6 +324,47 @@ public class DWARFUtil {
 		}
 
 		return "anon_" + getContainerTypeName(diea) + "_for_" + sb.toString();
+	}
+
+	/**
+	 * Creates a fingerprint of the layout of an (anonymous) structure using its
+	 * size, number of members, and the hashcode of the member field names.
+	 * 
+	 * @param diea struct/union/class
+	 * @return formatted string, example "80_5_73dc6de9" (80 bytes, 5 fields, hex hash of field names) 
+	 */
+	public static String getStructLayoutFingerprint(DIEAggregate diea) {
+		long structSize = diea.getUnsignedLong(DWARFAttribute.DW_AT_byte_size, 0);
+		int memberCount = 0;
+		List<String> memberNames = new ArrayList<>();
+		for (DebugInfoEntry childEntry : diea.getHeadFragment().getChildren()) {
+			if (!(childEntry.getTag() == DWARFTag.DW_TAG_member ||
+				childEntry.getTag() == DWARFTag.DW_TAG_inheritance)) {
+				continue;
+			}
+			DIEAggregate childDIEA = diea.getProgram().getAggregate(childEntry);
+			if (childDIEA.hasAttribute(DWARFAttribute.DW_AT_external)) {
+				continue;
+			}
+			memberCount++;
+
+			String memberName = childDIEA.getName();
+			int memberOffset = 0;
+			try {
+				memberOffset =
+					childDIEA.parseDataMemberOffset(DWARFAttribute.DW_AT_data_member_location, 0);
+			}
+			catch (DWARFExpressionException | IOException e) {
+				// ignore, leave as default value 0
+			}
+			if (memberName == null) {
+				memberName = "UNNAMED_MEMBER_" + memberCount;
+			}
+			memberName = String.format("%04x_%s", memberOffset, memberName);
+			memberNames.add(memberName);
+		}
+		Collections.sort(memberNames);	// "hexoffset_name"
+		return String.format("%d_%d_%08x", structSize, memberCount, memberNames.hashCode());
 	}
 
 	/**
