@@ -1637,7 +1637,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 	private VTMarkupItem getFunctionSignatureMarkup(VTMatch match) {
 		MatchInfo matchInfo = controller.getMatchInfo(match);
 		Collection<VTMarkupItem> appliableMarkupItems =
-			matchInfo.getAppliableMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			matchInfo.getAppliableMarkupItems(TaskMonitor.DUMMY);
 		for (VTMarkupItem vtMarkupItem : appliableMarkupItems) {
 			if (vtMarkupItem.getMarkupType() instanceof FunctionSignatureMarkupType) {
 				return vtMarkupItem;
@@ -1744,7 +1744,7 @@ public class VTMatchApplyFunctionSignatureTest extends AbstractGhidraHeadedInteg
 				}
 			}
 			assertNotNull(compilerSpecID);
-			program.setLanguage(language, compilerSpecID, true, TaskMonitorAdapter.DUMMY_MONITOR);
+			program.setLanguage(language, compilerSpecID, true, TaskMonitor.DUMMY);
 		}
 		finally {
 			program.endTransaction(transaction, true);

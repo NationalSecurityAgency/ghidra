@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import ghidra.app.cmd.function.AddRegisterParameterCommand;
@@ -75,7 +76,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		transactionID = program.startTransaction("Test");
 		program.getMemory()
 				.createInitializedBlock("test", addr(100), 500, (byte) 0,
-					TaskMonitorAdapter.DUMMY_MONITOR, false);
+                        TaskMonitor.DUMMY, false);
 		functionManager = program.getFunctionManager();
 	}
 
@@ -1261,7 +1262,7 @@ public class FunctionDBTest extends AbstractGhidraHeadedIntegrationTest
 		// delete the typedef data type
 		localTransactionID = program.startTransaction("test");
 		try {
-			program.getDataTypeManager().remove(td, TaskMonitorAdapter.DUMMY_MONITOR);
+			program.getDataTypeManager().remove(td, TaskMonitor.DUMMY);
 		}
 		finally {
 			program.endTransaction(localTransactionID, true);

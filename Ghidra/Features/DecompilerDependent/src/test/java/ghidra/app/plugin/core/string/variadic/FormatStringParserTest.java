@@ -82,14 +82,14 @@ public class FormatStringParserTest extends AbstractGenericTest {
 		runFormatTest("%d%hi", expectedTypes2, false);
 
 		DataType[] expectedTypes3 =
-			{ program.getDataTypeManager().getPointer(new PointerDataType(DataType.VOID)),
+			{ program.getDataTypeManager().getPointer(new PointerDataType(VoidDataType.dataType)),
 				program.getDataTypeManager().getPointer(new CharDataType()) };
 		runFormatTest("%p%*d%s", expectedTypes3, false);
 
 		DataType[] expectedTypes4 =
 			{ program.getDataTypeManager().getPointer(new LongDoubleDataType()),
 				program.getDataTypeManager().getPointer(new CharDataType()),
-				program.getDataTypeManager().getPointer(new PointerDataType(DataType.VOID)) };
+				program.getDataTypeManager().getPointer(new PointerDataType(VoidDataType.dataType)) };
 
 		runFormatTest("!:%12La%*d+=%2s%3p%*20d", expectedTypes4, false);
 
@@ -108,7 +108,7 @@ public class FormatStringParserTest extends AbstractGenericTest {
 		runFormatTest("#thisisatest%+-4.12s%#.1lin\nd2", expectedTypes2, true);
 
 		DataType[] expectedTypes3 =
-			{ new PointerDataType(DataType.VOID), new LongDoubleDataType(),
+			{ new PointerDataType(VoidDataType.dataType), new LongDoubleDataType(),
 				new UnsignedCharDataType() };
 		runFormatTest("%01.3pp%%%#1.2Lg%%%%%hhXxn2", expectedTypes3, true);
 

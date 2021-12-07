@@ -19,6 +19,7 @@ import static ghidra.util.task.TaskMonitorAdapter.DUMMY_MONITOR;
 
 import java.util.*;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -102,7 +103,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		node(3, 4);
 
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, false);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(TaskMonitor.DUMMY);
 
 		Assert.assertEquals(4, graph.size());
 
@@ -119,7 +120,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		node(2,3);
 		
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program,functions,false);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(TaskMonitor.DUMMY);
 		
 		Assert.assertEquals(3, graph.size());
 		
@@ -135,7 +136,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		node(3, 1);
 
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, false);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(TaskMonitor.DUMMY);
 
 		Assert.assertEquals(3, graph.size());
 
@@ -152,7 +153,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		node(2, 2);
 
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, false);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(TaskMonitor.DUMMY);
 
 		Assert.assertEquals(3, graph.size());
 
@@ -168,7 +169,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		node(3, 1);
 
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, false);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(TaskMonitor.DUMMY);
 
 		Assert.assertEquals(3, graph.size());
 
@@ -197,7 +198,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		thunkNode(17, 18, false);
 
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, false);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(TaskMonitor.DUMMY);
 
 		Assert.assertEquals(18, graph.size());
 
@@ -241,7 +242,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 		thunkNode(17, 18, false);
 
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, true);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(TaskMonitor.DUMMY);
 
 		Assert.assertEquals(8, graph.size());
 
@@ -265,7 +266,7 @@ public class AcyclicCallGraphBuilderTest extends AbstractGenericTest {
 
 		thunkNode(5, 3, true);	// Thunk node hits recursion from different point
 		AcyclicCallGraphBuilder builder = new AcyclicCallGraphBuilder(program, functions, true);
-		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(DUMMY_MONITOR);
+		AbstractDependencyGraph<Address> graph = builder.getDependencyGraph(TaskMonitor.DUMMY);
 
 		Assert.assertEquals(4, graph.size());
 		assertDependents(graph, 2, 1);

@@ -152,7 +152,7 @@ public class FunctionPrototype {
 		if ((returnstorage == null) || (!returnstorage.isValid())) {	// Unassigned or otherwise invalid storage
 			outputlock = false;
 			returnstorage = VariableStorage.VOID_STORAGE;		// Treat as unlocked void
-			returntype = DataType.VOID;
+			returntype = VoidDataType.dataType;
 		}
 		voidinputlock =
 			(f.getSignatureSource() != SourceType.DEFAULT) && f.getParameterCount() == 0;

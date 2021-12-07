@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.swing.*;
 import javax.swing.tree.TreeModel;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import docking.widgets.tree.GTree;
@@ -60,10 +61,10 @@ public class DataTreeDialogTest extends AbstractGhidraHeadedIntegrationTest {
 
 		ProgramBuilder builder = new ProgramBuilder("notepad", ProgramBuilder._TOY_BE);
 		Program p = builder.getProgram();
-		rootFolder.createFile("notepad", p, TaskMonitorAdapter.DUMMY_MONITOR);
-		rootFolder.createFile("XNotepad", p, TaskMonitorAdapter.DUMMY_MONITOR);
+		rootFolder.createFile("notepad", p, TaskMonitor.DUMMY);
+		rootFolder.createFile("XNotepad", p, TaskMonitor.DUMMY);
 		for (String name : names) {
-			rootFolder.createFile(name, p, TaskMonitorAdapter.DUMMY_MONITOR);
+			rootFolder.createFile(name, p, TaskMonitor.DUMMY);
 		}
 		builder.dispose();
 

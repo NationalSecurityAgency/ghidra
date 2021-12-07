@@ -82,7 +82,7 @@ class CreateArrayAction extends ListingContextAction {
 		Function fun = plugin.getFunction(context);
 		if (loc instanceof FunctionSignatureFieldLocation) {
 			DataType dt = fun.getReturnType();
-			if (dt == DataType.VOID) {
+			if (dt == VoidDataType.dataType) {
 				dt = DataType.DEFAULT;
 			}
 			if (dt.getLength() < 1) {

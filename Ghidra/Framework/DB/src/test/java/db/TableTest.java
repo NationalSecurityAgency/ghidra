@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -334,7 +335,7 @@ public class TableTest extends AbstractGenericTest {
 
 		verifyRangeDoesNotExist(startKey, endKey);
 		verifyRecordsBeforeAndAfterExist(startKey, endKey);
-		assertTrue(table.isConsistent(TaskMonitorAdapter.DUMMY_MONITOR));
+		assertTrue(table.isConsistent(TaskMonitor.DUMMY));
 	}
 
 	private void verifyRangeDoesNotExist(int startKey, int endKey) throws IOException {

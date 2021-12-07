@@ -39,6 +39,7 @@ import ghidra.framework.store.db.PackedDatabase;
 import ghidra.util.Msg;
 import ghidra.util.filechooser.ExtensionFileFilter;
 import ghidra.util.layout.PairLayout;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 import utility.application.ApplicationLayout;
 
@@ -134,8 +135,8 @@ public class DbViewer extends JFrame {
 		catch (IOException e) {
 			try {
 				PackedDatabase pdb = PackedDatabase.getPackedDatabase(selectedFile,
-					TaskMonitorAdapter.DUMMY_MONITOR);
-				dbh = pdb.open(TaskMonitorAdapter.DUMMY_MONITOR);
+                        TaskMonitor.DUMMY);
+				dbh = pdb.open(TaskMonitor.DUMMY);
 				tables = dbh.getTables();
 				Arrays.sort(tables, new TableNameComparator());
 			}

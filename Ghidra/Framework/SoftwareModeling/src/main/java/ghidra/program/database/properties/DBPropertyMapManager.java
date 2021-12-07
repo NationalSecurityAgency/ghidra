@@ -126,7 +126,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 		lock.acquire();
 		try {
 			propertyMapCache.clear();
-			loadPropertyMaps(-1, TaskMonitorAdapter.DUMMY_MONITOR);
+			loadPropertyMaps(-1, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 		}
@@ -236,7 +236,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			IntPropertyMap pm = null;
 			try {
 				pm = new IntPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr, addrMap,
-					propertyName, TaskMonitorAdapter.DUMMY_MONITOR);
+					propertyName, TaskMonitor.DUMMY);
 				propertiesDBAdapter.putRecord(propertyName, INT_PROPERTY_TYPE, null);
 				propertyMapCache.put(propertyName, pm);
 			}
@@ -273,7 +273,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			LongPropertyMap pm = null;
 			try {
 				pm = new LongPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr,
-					addrMap, propertyName, TaskMonitorAdapter.DUMMY_MONITOR);
+					addrMap, propertyName, TaskMonitor.DUMMY);
 				propertiesDBAdapter.putRecord(propertyName, LONG_PROPERTY_TYPE, null);
 				propertyMapCache.put(propertyName, pm);
 			}
@@ -311,7 +311,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			StringPropertyMap pm = null;
 			try {
 				pm = new StringPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr,
-					addrMap, propertyName, TaskMonitorAdapter.DUMMY_MONITOR);
+					addrMap, propertyName, TaskMonitor.DUMMY);
 				propertiesDBAdapter.putRecord(propertyName, STRING_PROPERTY_TYPE, null);
 				propertyMapCache.put(propertyName, pm);
 			}
@@ -350,7 +350,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			ObjectPropertyMap pm = null;
 			try {
 				pm = new ObjectPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr,
-					addrMap, propertyName, objectClass, TaskMonitorAdapter.DUMMY_MONITOR, false);
+					addrMap, propertyName, objectClass, TaskMonitor.DUMMY, false);
 				propertiesDBAdapter.putRecord(propertyName, OBJECT_PROPERTY_TYPE,
 					objectClass.getName());
 				propertyMapCache.put(propertyName, pm);
@@ -389,7 +389,7 @@ public class DBPropertyMapManager implements PropertyMapManager, ManagerDB {
 			VoidPropertyMap pm = null;
 			try {
 				pm = new VoidPropertyMapDB(dbHandle, DBConstants.CREATE, program, changeMgr,
-					addrMap, propertyName, TaskMonitorAdapter.DUMMY_MONITOR);
+					addrMap, propertyName, TaskMonitor.DUMMY);
 				propertiesDBAdapter.putRecord(propertyName, VOID_PROPERTY_TYPE, null);
 				propertyMapCache.put(propertyName, pm);
 			}

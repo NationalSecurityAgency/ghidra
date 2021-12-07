@@ -109,17 +109,17 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 			int id = startTransaction("create data type archive");
 
 			createDatabase();
-			if (createManagers(CREATE, TaskMonitorAdapter.DUMMY_MONITOR) != null) {
+			if (createManagers(CREATE, TaskMonitor.DUMMY) != null) {
 				throw new AssertException("Unexpected version exception on create");
 			}
 			changeSet = new DataTypeArchiveDBChangeSet(NUM_UNDOS);
-			initManagers(CREATE, TaskMonitorAdapter.DUMMY_MONITOR);
+			initManagers(CREATE, TaskMonitor.DUMMY);
 			propertiesCreate();
 			endTransaction(id, true);
 			clearUndo(false);
 
 			if (folder != null) {
-				folder.createFile(name, this, TaskMonitorAdapter.DUMMY_MONITOR);
+				folder.createFile(name, this, TaskMonitor.DUMMY);
 			}
 
 			success = true;
@@ -155,7 +155,7 @@ public class DataTypeArchiveDB extends DomainObjectAdapterDB
 
 		super(dbh, "Untitled", 500, 1000, consumer);
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 		boolean success = false;
 		try {

@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import db.*;
@@ -87,7 +88,7 @@ public class VoidPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 
 	private void createPropertyMap(String name) throws Exception {
 		propertyMap = new VoidPropertyMapDB(db, DBConstants.CREATE, this, null, addrMap, name,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 		propertyMap.setCacheSize(2);
 	}
 

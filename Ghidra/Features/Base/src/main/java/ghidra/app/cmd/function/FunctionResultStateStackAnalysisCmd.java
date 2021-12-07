@@ -336,7 +336,7 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 				ContextState returnState = results.getContextStates(seq).next();
 				Varnode varnode =
 					returnState.get(results.getStackPointerVarnode(),
-						TaskMonitorAdapter.DUMMY_MONITOR);
+                            TaskMonitor.DUMMY);
 				Varnode zero =
 					new Varnode(addrFactory.getConstantSpace().getAddress(0),
 						stackReg.getMinimumByteSize());
@@ -364,7 +364,7 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 		}
 		VarnodeOperation vop = (VarnodeOperation) vn;
 		return ResultsState.simplify(vop.getPCodeOp(), vop.getInputValues(), addrFactory,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 	}
 
 	/**

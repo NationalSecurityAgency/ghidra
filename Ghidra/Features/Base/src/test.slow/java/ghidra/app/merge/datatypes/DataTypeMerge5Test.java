@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -53,10 +54,10 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -152,10 +153,10 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -273,10 +274,10 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -403,10 +404,10 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 
 					// edit FavoriteColors
 					Enum enumm =
@@ -546,15 +547,15 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 
 					// delete FavoriteColors
 					Enum enumm =
 						(Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
-					dtm.remove(enumm, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(enumm, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -687,15 +688,15 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 
 					// delete FavoriteColors
 					Enum enumm =
 						(Enum) dtm.getDataType(new CategoryPath("/MISC"), "FavoriteColors");
-					dtm.remove(enumm, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(enumm, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {
@@ -816,10 +817,10 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 
 					// edit FavoriteColors
 					Enum enumm =
@@ -961,10 +962,10 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 
 					// edit FavoriteColors
 					Enum enumm =
@@ -1116,10 +1117,10 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 
 					// edit FavoriteColors
 					Enum enumm =
@@ -1427,10 +1428,10 @@ public class DataTypeMerge5Test extends AbstractDataTypeMergeTest {
 
 				try {
 					Structure s = (Structure) dtm.getDataType(CategoryPath.ROOT, "DLL_Table");
-					dtm.remove(s, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(s, TaskMonitor.DUMMY);
 					DataType dt =
 						dtm.getDataType(new CategoryPath("/Category1/Category2"), "CoolUnion");
-					dtm.remove(dt, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(dt, TaskMonitor.DUMMY);
 
 					// edit FavoriteColors
 					Enum enumm =

@@ -34,6 +34,7 @@ import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.util.DefaultLanguageService;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 import utility.application.ApplicationLayout;
 
@@ -81,11 +82,11 @@ public class ProgramExaminer {
 		messageLog = new MessageLog();
 		try {
 			program = AutoImporter.importByUsingBestGuess(provider, null, this, messageLog,
-				TaskMonitorAdapter.DUMMY_MONITOR);
+                    TaskMonitor.DUMMY);
 
 			if (program == null) {
 				program = AutoImporter.importAsBinary(provider, null, defaultLanguage, null, this,
-					messageLog, TaskMonitorAdapter.DUMMY_MONITOR);
+					messageLog, TaskMonitor.DUMMY);
 			}
 			if (program == null) {
 				throw new GhidraException(
@@ -172,7 +173,7 @@ public class ProgramExaminer {
 		int txID = program.startTransaction("find images");
 		try {
 			EmbeddedMediaAnalyzer imageAnalyzer = new EmbeddedMediaAnalyzer();
-			imageAnalyzer.added(program, program.getMemory(), TaskMonitorAdapter.DUMMY_MONITOR,
+			imageAnalyzer.added(program, program.getMemory(), TaskMonitor.DUMMY,
 				messageLog);
 		}
 		catch (CancelledException e) {

@@ -18,6 +18,7 @@ package ghidra.feature.vt.api.markuptype;
 import java.util.ArrayList;
 import java.util.List;
 
+import ghidra.util.task.TaskMonitor;
 import org.apache.commons.lang3.StringUtils;
 
 import ghidra.feature.vt.api.impl.MarkupItemImpl;
@@ -206,7 +207,7 @@ public abstract class CommentMarkupType extends VTMarkupType {
 		Stringable appliedMarkupOriginalValue = null;
 		try {
 			appliedMarkupOriginalValue = getOriginalDestinationValueForAppliedMarkupOfThisType(
-				association, destinationAddress, TaskMonitorAdapter.DUMMY_MONITOR);
+				association, destinationAddress, TaskMonitor.DUMMY);
 		}
 		catch (CancelledException e) {
 			// For now this shouldn't get a cancel.

@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import db.LongField;
@@ -280,7 +281,7 @@ public class AddressRangeMapDBTest extends AbstractGhidraHeadedIntegrationTest
 
 			try {
 				map.moveAddressRange(addr(0x0100000000L), addr(0x0100001000L), 0x1000,
-					TaskMonitorAdapter.DUMMY_MONITOR);
+                        TaskMonitor.DUMMY);
 			}
 			catch (CancelledException e) {
 				Assert.fail();

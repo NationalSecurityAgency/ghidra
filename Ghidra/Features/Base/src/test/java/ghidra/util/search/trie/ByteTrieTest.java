@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.util.*;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import ghidra.util.exception.CancelledException;
@@ -201,7 +202,7 @@ public class ByteTrieTest {
 		add(trie, "caa", true);
 
 		List<SearchResult<Integer, String>> result =
-			trie.search("abccab".getBytes(), TaskMonitorAdapter.DUMMY_MONITOR);
+			trie.search("abccab".getBytes(), TaskMonitor.DUMMY);
 
 		assertEquals("wrong size result list", 7, result.size());
 		expect(result, 0, "a");
@@ -221,7 +222,7 @@ public class ByteTrieTest {
 		add(trie, "hers", true);
 
 		List<SearchResult<Integer, String>> result =
-			trie.search("they shelled this hershey".getBytes(), TaskMonitorAdapter.DUMMY_MONITOR);
+			trie.search("they shelled this hershey".getBytes(), TaskMonitor.DUMMY);
 
 		assertEquals("wrong size result list", 8, result.size());
 		expect(result, 1, "he");
@@ -245,7 +246,7 @@ public class ByteTrieTest {
 		add(trie, "tables", true);
 
 		List<SearchResult<Integer, String>> result =
-			trie.search("unstoppable tables".getBytes(), TaskMonitorAdapter.DUMMY_MONITOR);
+			trie.search("unstoppable tables".getBytes(), TaskMonitor.DUMMY);
 
 		assertEquals("wrong size result list", 8, result.size());
 		expect(result, 0, "unstoppable");
@@ -288,7 +289,7 @@ public class ByteTrieTest {
 	 */
 	private static Iterator<String> iterator(ByteTrieIfc<String> trie) throws CancelledException {
 		final ArrayList<String> list = new ArrayList<String>();
-		trie.inorder(TaskMonitorAdapter.DUMMY_MONITOR, new Op<String>() {
+		trie.inorder(TaskMonitor.DUMMY, new Op<String>() {
 			@Override
 			public void op(ByteTrieNodeIfc<String> node) {
 				if (node.isTerminal()) {
@@ -307,7 +308,7 @@ public class ByteTrieTest {
 	 */
 	private static Iterator<String> iterator2(ByteTrieIfc<String> trie) throws CancelledException {
 		final ArrayList<String> list = new ArrayList<String>();
-		trie.inorder(TaskMonitorAdapter.DUMMY_MONITOR, new Op<String>() {
+		trie.inorder(TaskMonitor.DUMMY, new Op<String>() {
 			@Override
 			public void op(ByteTrieNodeIfc<String> node) {
 				if (node.isTerminal()) {

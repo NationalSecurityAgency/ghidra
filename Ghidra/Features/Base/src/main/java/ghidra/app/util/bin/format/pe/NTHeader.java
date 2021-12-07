@@ -26,6 +26,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.*;
 import ghidra.util.exception.DuplicateNameException;
 import ghidra.util.exception.NotYetImplementedException;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
 /**
@@ -276,7 +277,7 @@ public class NTHeader implements StructConverter, OffsetValidator {
 		}
 
 		if (advancedProcess) {
-			optionalHeader.processDataDirectories(TaskMonitorAdapter.DUMMY_MONITOR);
+			optionalHeader.processDataDirectories(TaskMonitor.DUMMY);
 		}
 	}
 

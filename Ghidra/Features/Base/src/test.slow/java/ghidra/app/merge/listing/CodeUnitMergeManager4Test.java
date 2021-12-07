@@ -17,6 +17,7 @@ package ghidra.app.merge.listing;
 
 import static org.junit.Assert.*;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.Test;
 
 import ghidra.program.database.ProgramDB;
@@ -1170,7 +1171,7 @@ public class CodeUnitMergeManager4Test extends AbstractListingMergeManagerTest {
 					Category cat = dtm.getCategory(catPath);
 					assertNotNull(cat);
 					// Delete category "cat1".
-					root.removeCategory("cat1", TaskMonitorAdapter.DUMMY_MONITOR);
+					root.removeCategory("cat1", TaskMonitor.DUMMY);
 					cat = dtm.getCategory(catPath);
 					assertNull(cat);
 					//Add "cat1" category back

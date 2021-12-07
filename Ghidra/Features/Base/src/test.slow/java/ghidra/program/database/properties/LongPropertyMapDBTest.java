@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.util.Random;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import db.*;
@@ -89,7 +90,7 @@ public class LongPropertyMapDBTest extends AbstractGhidraHeadedIntegrationTest i
 
 	private void createPropertyMap(String name) throws Exception {
 		propertyMap = new LongPropertyMapDB(db, DBConstants.CREATE, this, null, addrMap, name,
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 		propertyMap.setCacheSize(2);
 	}
 

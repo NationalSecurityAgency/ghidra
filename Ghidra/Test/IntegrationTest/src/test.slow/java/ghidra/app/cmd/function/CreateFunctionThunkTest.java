@@ -17,6 +17,7 @@ package ghidra.app.cmd.function;
 
 import static org.junit.Assert.*;
 
+import ghidra.program.model.data.VoidDataType;
 import org.junit.*;
 
 import ghidra.app.plugin.core.analysis.AnalysisBackgroundCommand;
@@ -115,7 +116,7 @@ public class CreateFunctionThunkTest extends AbstractGhidraHeadedIntegrationTest
 
 		builder.setBytes("0x466050", "3c 0f 00 47  8d f9 72 24  03 20 00 08  25 f8 72 24");
 		builder.setBytes("0x477224", "00 47 99 c0");
-		builder.createEmptyFunction("chdir", "0x4799c0", 1, DataType.VOID);
+		builder.createEmptyFunction("chdir", "0x4799c0", 1, VoidDataType.dataType);
 		builder.disassemble("0x466050", 27, true);
 
 		builder.createFunction("0x466050");

@@ -749,7 +749,7 @@ public class ProgramMerge implements PropertyVisitor {
 		// Use heavyweight disassembler for delay slotted instruction
 		AddressSet restrictedSet = new AddressSet(addr);
 		Disassembler disassembler =
-			Disassembler.getDisassembler(program, TaskMonitorAdapter.DUMMY_MONITOR, null);
+			Disassembler.getDisassembler(program, TaskMonitor.DUMMY, null);
 		disassembler.disassemble(addr, restrictedSet, false);
 		return program.getListing().getInstructionAt(addr);
 	}
@@ -3730,7 +3730,7 @@ public class ProgramMerge implements PropertyVisitor {
 			BookmarkManager bm2 = originProgram.getBookmarkManager();
 			try {
 				bm1.removeBookmarks(new AddressSet(resultAddress, resultAddress),
-					TaskMonitorAdapter.DUMMY_MONITOR);
+                        TaskMonitor.DUMMY);
 			}
 			catch (CancelledException e) {
 				// DummyAdapter doesn't let cancel occur.

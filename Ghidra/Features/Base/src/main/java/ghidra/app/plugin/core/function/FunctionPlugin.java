@@ -513,7 +513,7 @@ public class FunctionPlugin extends Plugin implements DataService {
 			return false;
 		}
 
-		if (dataType != DataType.DEFAULT && dataType != DataType.VOID) {
+		if (dataType != DataType.DEFAULT && dataType != VoidDataType.dataType) {
 			dtmService.setRecentlyUsed(dataType);
 		}
 
@@ -687,7 +687,7 @@ public class FunctionPlugin extends Plugin implements DataService {
 		// Add Favorite data actions
 		List<DataType> favorites = dtmService.getFavorites();
 		for (DataType dataType : favorites) {
-			if (dataType.isEquivalent(POINTER_DATA_TYPE) || dataType.isEquivalent(DataType.VOID)) {
+			if (dataType.isEquivalent(POINTER_DATA_TYPE) || dataType.isEquivalent(VoidDataType.dataType)) {
 				continue;
 			}
 			action = new DataAction(dataType, this);

@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.util.Iterator;
 import java.util.List;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import ghidra.app.cmd.function.AddStackVarCmd;
@@ -54,7 +55,7 @@ public class FunctionManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		transactionID = program.startTransaction("Test");
 		program.getMemory()
 				.createInitializedBlock("temp", addr(0), 10000, (byte) 0,
-					TaskMonitorAdapter.DUMMY_MONITOR, false);
+                        TaskMonitor.DUMMY, false);
 	}
 
 	@After

@@ -17,6 +17,7 @@ package ghidra.framework.project;
 
 import static org.junit.Assert.*;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import ghidra.framework.model.*;
@@ -367,7 +368,7 @@ public class CreateDomainObjectTest extends AbstractGhidraHeadedIntegrationTest 
 
 		DomainFolder f = df.createFolder(to);
 		DomainFolder f2 = df.getFolder(from);
-		f2.copyTo(f, TaskMonitorAdapter.DUMMY_MONITOR);
+		f2.copyTo(f, TaskMonitor.DUMMY);
 	}
 
 	private static void moveTree(Project proj, String from, String to) throws Exception {

@@ -22,6 +22,7 @@ import ghidra.feature.vt.gui.util.MatchInfo;
 import ghidra.framework.model.DomainObjectChangedEvent;
 import ghidra.framework.options.Options;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
 import java.util.Collection;
@@ -87,7 +88,7 @@ public class MatchStatusUpdaterAssociationHook implements AssociationHook, VTCon
 		Collection<VTMarkupItem> markupItems;
 		try {
 			markupItems =
-				matches.get(0).getAssociation().getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+				matches.get(0).getAssociation().getMarkupItems(TaskMonitor.DUMMY);
 			VTAssociationMarkupStatus markupItemsStatus = getAppliedMarkupStatus(markupItems);
 			association.setMarkupStatus(markupItemsStatus);
 		}

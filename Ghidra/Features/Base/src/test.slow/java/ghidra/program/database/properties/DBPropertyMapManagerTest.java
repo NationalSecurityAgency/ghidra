@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import db.*;
@@ -161,7 +162,7 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 
 		dbh = new DBHandle(dbFile);
 		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 		PropertyMap pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
@@ -178,7 +179,7 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 
 		dbh = new DBHandle(dbFile);
 		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 		PropertyMap pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
@@ -195,7 +196,7 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 
 		dbh = new DBHandle(dbFile);
 		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 		PropertyMap pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
@@ -212,7 +213,7 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 
 		dbh = new DBHandle(dbFile);
 		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 		PropertyMap pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
@@ -229,7 +230,7 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 
 		dbh = new DBHandle(dbFile);
 		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 		PropertyMap pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
@@ -246,7 +247,7 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 
 		dbh = new DBHandle(dbFile);
 		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 		PropertyMap pmap = mgr.getPropertyMap("TEST");
 		assertEquals(1, pmap.getSize());
 	}
@@ -264,7 +265,7 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 		dbh = new DBHandle(dbFile);
 		dbh.startTransaction();
 		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 		mgr.removePropertyMap("TEST");
 
 		assertNull(mgr.getIntPropertyMap("TEST"));
@@ -282,7 +283,7 @@ public class DBPropertyMapManagerTest extends AbstractGhidraHeadedIntegrationTes
 
 		dbh = new DBHandle(dbFile);
 		mgr = new DBPropertyMapManager(dbh, this, addrMap, DBConstants.UPDATE, new Lock("TEST"),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 
 		int cnt = 0;
 		Iterator<String> iter = mgr.propertyManagers();

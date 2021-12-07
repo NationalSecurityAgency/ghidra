@@ -56,7 +56,7 @@ public abstract class BackgroundCommand implements Command {
 	 */
 	@Override
 	public final boolean applyTo(DomainObject obj) {
-		return applyTo(obj, TaskMonitorAdapter.DUMMY_MONITOR);
+		return applyTo(obj, TaskMonitor.DUMMY);
 	}
 
 	/**

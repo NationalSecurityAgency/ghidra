@@ -624,7 +624,7 @@ public abstract class PropertyMapDB implements PropertyMap {
 			if (propertyTable != null) {
 				try {
 					DatabaseTableUtils.updateAddressKey(propertyTable, addrMap, start, end,
-						newStart, TaskMonitorAdapter.DUMMY_MONITOR);
+						newStart, TaskMonitor.DUMMY);
 				}
 				catch (CancelledException e) {
 				}

@@ -320,6 +320,6 @@ public class MipsPreAnalyzerTest extends AbstractGhidraHeadlessIntegrationTest {
 	}
 
 	private TaskMonitor getTaskMonitor() {
-		return TaskMonitorAdapter.DUMMY_MONITOR;
+		return TaskMonitor.DUMMY;
 	}
 }

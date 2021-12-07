@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.util.ConcurrentModificationException;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import ghidra.framework.model.*;
@@ -211,14 +212,14 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 		transactionID = -1;
 
 		DomainFile df =
-			rootFolder.createFile("mynotepad", program, TaskMonitorAdapter.DUMMY_MONITOR);
+			rootFolder.createFile("mynotepad", program, TaskMonitor.DUMMY);
 		env.release(program);
 
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0), getAddr(0x40));
 
 		Program p =
-			(Program) df.getDomainObject(this, true, false, TaskMonitorAdapter.DUMMY_MONITOR);
+			(Program) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		int txID = p.startTransaction("test");
 		int value = 0x11223344;
 		int otherValue = 0x44332211;
@@ -231,13 +232,13 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 			p.endTransaction(txID, true);
 		}
 
-		df.save(TaskMonitorAdapter.DUMMY_MONITOR);
+		df.save(TaskMonitor.DUMMY);
 		p.release(this);
 
 		df = rootFolder.getFile("mynotepad");
 		assertNotNull(df);
 
-		p = (Program) df.getDomainObject(this, true, false, TaskMonitorAdapter.DUMMY_MONITOR);
+		p = (Program) df.getDomainObject(this, true, false, TaskMonitor.DUMMY);
 		IntRangeMap map = p.getIntRangeMap("MyMap");
 		assertNotNull(map);
 		assertEquals(set, map.getAddressSet());
@@ -302,7 +303,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
     public void testMoveRange() throws Exception {
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.createInitializedBlock(".test", getAddr(0), 0x23, (byte) 0xa,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+                TaskMonitor.DUMMY, false);
 
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0), getAddr(0x10));
@@ -315,7 +316,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 		assertEquals(set, map.getAddressSet());
 
 		// move .test block to 0x1000
-		memory.moveBlock(block, getAddr(0x1000), TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.moveBlock(block, getAddr(0x1000), TaskMonitor.DUMMY);
 
 		// [0,10], [20, 22] should be moved
 		// [23,30] should not be moved
@@ -338,7 +339,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
     public void testDeleteBlockRange() throws Exception {
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.createInitializedBlock(".test", getAddr(5), 0x20, (byte) 0xa,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+                TaskMonitor.DUMMY, false);
 
 		AddressSet set = new AddressSet();
 		set.addRange(getAddr(0), getAddr(0x10));
@@ -348,7 +349,7 @@ public class IntRangeMapTest extends AbstractGhidraHeadlessIntegrationTest {
 		int value = 0x11223344;
 		map.setValue(set, value);
 		// remove the block
-		memory.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.removeBlock(block, TaskMonitor.DUMMY);
 
 		// [0,4], [25,30] should still exist
 		// [5,24] should have been removed

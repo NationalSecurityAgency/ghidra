@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.io.*;
 import java.util.Arrays;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
@@ -205,7 +206,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 
 			// Simulate private checkout
 			pbf = new LocalManagedBufferFile(vbf.getBufferSize(), privateTestFileMgr, PRIVATE);
-			LocalBufferFile.copyFile(vbf, pbf, null, TaskMonitorAdapter.DUMMY_MONITOR);
+			LocalBufferFile.copyFile(vbf, pbf, null, TaskMonitor.DUMMY);
 
 			assertEquals(indexCnt, pbf.getIndexCount());
 			assertTrue(Arrays.equals(freeList, pbf.getFreeIndexes()));
@@ -392,7 +393,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 			pbf = new LocalManagedBufferFile(privateTestFileMgr, false, -1, PRIVATE);
 
 			// Create version-2 using quick update
-			pbf.createNewVersion(vbf, null, TaskMonitorAdapter.DUMMY_MONITOR);
+			pbf.createNewVersion(vbf, null, TaskMonitor.DUMMY);
 
 			vbf.close();
 			vbf = null;
@@ -625,7 +626,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 			privateTestFileMgr = new PrivateTestFileMgr(2);
 			vbf = new LocalManagedBufferFile(versionedTestFileMgr, 1, -1);
 			pbf = new LocalManagedBufferFile(vbf.getBufferSize(), privateTestFileMgr, PRIVATE);
-			LocalBufferFile.copyFile(vbf, pbf, null, TaskMonitorAdapter.DUMMY_MONITOR);
+			LocalBufferFile.copyFile(vbf, pbf, null, TaskMonitor.DUMMY);
 
 			vbf.close();
 			vbf = null;
@@ -690,7 +691,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 			pbf = new LocalManagedBufferFile(privateTestFileMgr, true, -1, -1);
 
 			// Perform quick update of private file to replicate version-2 file - should wipe-out all private changes
-			pbf.updateFrom(vbf, 1, TaskMonitorAdapter.DUMMY_MONITOR);
+			pbf.updateFrom(vbf, 1, TaskMonitor.DUMMY);
 
 			pbf.close();
 			pbf = null;
@@ -763,7 +764,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 			privateTestFileMgr = new PrivateTestFileMgr(2);
 			vbf = new LocalManagedBufferFile(versionedTestFileMgr, 1, -1);
 			pbf = new LocalManagedBufferFile(vbf.getBufferSize(), privateTestFileMgr, PRIVATE);
-			LocalBufferFile.copyFile(vbf, pbf, null, TaskMonitorAdapter.DUMMY_MONITOR);
+			LocalBufferFile.copyFile(vbf, pbf, null, TaskMonitor.DUMMY);
 
 			vbf.close();
 			vbf = null;
@@ -833,7 +834,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 			pbf = new LocalManagedBufferFile(privateTestFileMgr, true, -1, -1);
 
 			// Perform quick update of private file to replicate version-2 file - should wipe-out all private changes
-			pbf.updateFrom(vbf, 1, TaskMonitorAdapter.DUMMY_MONITOR);
+			pbf.updateFrom(vbf, 1, TaskMonitor.DUMMY);
 
 			pbf.close();
 			pbf = null;
@@ -906,7 +907,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 			privateTestFileMgr = new PrivateTestFileMgr(2);
 			vbf = new LocalManagedBufferFile(versionedTestFileMgr, 1, -1);
 			pbf = new LocalManagedBufferFile(vbf.getBufferSize(), privateTestFileMgr, PRIVATE);
-			LocalBufferFile.copyFile(vbf, pbf, null, TaskMonitorAdapter.DUMMY_MONITOR);
+			LocalBufferFile.copyFile(vbf, pbf, null, TaskMonitor.DUMMY);
 
 			vbf.close();
 			vbf = null;
@@ -966,7 +967,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 			pbf = new LocalManagedBufferFile(privateTestFileMgr, true, -1, -1);
 
 			// Perform quick update of private file to replicate version-2 file - should wipe-out all private changes
-			pbf.updateFrom(vbf, 1, TaskMonitorAdapter.DUMMY_MONITOR);
+			pbf.updateFrom(vbf, 1, TaskMonitor.DUMMY);
 
 			pbf.close();
 			pbf = null;
@@ -1039,7 +1040,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 			privateTestFileMgr = new PrivateTestFileMgr(2);
 			vbf = new LocalManagedBufferFile(versionedTestFileMgr, 1, -1);
 			pbf = new LocalManagedBufferFile(vbf.getBufferSize(), privateTestFileMgr, PRIVATE);
-			LocalBufferFile.copyFile(vbf, pbf, null, TaskMonitorAdapter.DUMMY_MONITOR);
+			LocalBufferFile.copyFile(vbf, pbf, null, TaskMonitor.DUMMY);
 
 			vbf.close();
 			vbf = null;
@@ -1101,7 +1102,7 @@ public class VersionedLocalBufferFileTest extends AbstractGenericTest {
 			pbf = new LocalManagedBufferFile(privateTestFileMgr, true, -1, -1);
 
 			// Perform quick update of private file to replicate version-3 file - should wipe-out all private changes
-			pbf.updateFrom(vbf, 1, TaskMonitorAdapter.DUMMY_MONITOR);
+			pbf.updateFrom(vbf, 1, TaskMonitor.DUMMY);
 
 			pbf.close();
 			pbf = null;

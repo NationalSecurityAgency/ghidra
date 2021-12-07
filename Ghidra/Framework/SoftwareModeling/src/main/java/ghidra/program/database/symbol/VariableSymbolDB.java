@@ -24,6 +24,7 @@ import ghidra.program.model.address.Address;
 import ghidra.program.model.address.OldGenericNamespaceAddress;
 import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.Undefined;
+import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.*;
 import ghidra.program.util.ProgramLocation;
@@ -258,7 +259,7 @@ public class VariableSymbolDB extends SymbolDB {
 				dt = DataType.DEFAULT;
 			}
 			else if (storage.isVoidStorage()) {
-				dt = DataType.VOID;
+				dt = VoidDataType.dataType;
 			}
 			else {
 				dt = Undefined.getUndefinedDataType(storage.size());

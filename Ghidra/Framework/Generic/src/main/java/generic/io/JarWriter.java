@@ -179,7 +179,7 @@ public class JarWriter {
 		try {
 			JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(args[1]));
 			JarWriter writer = new JarWriter(jarOut);
-			writer.outputRecursively(new File(args[0]), "", TaskMonitorAdapter.DUMMY_MONITOR);
+			writer.outputRecursively(new File(args[0]), "", TaskMonitor.DUMMY);
 			jarOut.close();
 		}
 		catch (FileNotFoundException e) {

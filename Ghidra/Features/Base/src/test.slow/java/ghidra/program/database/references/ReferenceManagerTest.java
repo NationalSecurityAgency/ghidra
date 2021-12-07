@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.util.Iterator;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import ghidra.program.database.ProgramBuilder;
@@ -61,7 +62,7 @@ public class ReferenceManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		listing = program.getListing();
 		transactionID = program.startTransaction("Test");
 		program.getMemory().createInitializedBlock("code", addr(0), 10000, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+                TaskMonitor.DUMMY, false);
 	}
 
     @After

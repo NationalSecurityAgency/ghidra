@@ -20,6 +20,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.awt.Dimension;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import docking.widgets.table.GTable;
@@ -108,7 +109,7 @@ public class DataWindowPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		int id = program.startTransaction(testName.getMethodName());
 		try {
-			program.getListing().clearAll(false, TaskMonitorAdapter.DUMMY_MONITOR);
+			program.getListing().clearAll(false, TaskMonitor.DUMMY);
 		}
 		finally {
 			program.endTransaction(id, true);

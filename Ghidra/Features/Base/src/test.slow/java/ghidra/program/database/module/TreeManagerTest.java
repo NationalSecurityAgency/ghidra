@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.util.Iterator;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import ghidra.program.database.ProgramBuilder;
@@ -232,7 +233,7 @@ public class TreeManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(5, r1FragCount);
 		Address startAddr = b2.getStart();
 		Address endAddr = b2.getEnd();
-		treeManager.deleteAddressRange(startAddr, endAddr, TaskMonitorAdapter.DUMMY_MONITOR);
+		treeManager.deleteAddressRange(startAddr, endAddr, TaskMonitor.DUMMY);
 		r1FragCount = root.getChildren().length;
 		r2FragCount = r2.getChildren().length;
 		assertEquals(r1FragCount, r2FragCount);
@@ -257,7 +258,7 @@ public class TreeManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// move b2 to 0x2000
 		treeManager.moveAddressRange(b2.getStart(), getAddr(0x2000), b2.getSize(),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 
 		Listing listing = program.getListing();
 		root = listing.getRootModule("Test-One");
@@ -296,7 +297,7 @@ public class TreeManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// move b1 to 0x5050
 		treeManager.moveAddressRange(b1.getStart(), getAddr(0x5050), b1.getSize(),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 
 		fragB1 = treeManager.getFragment("Test-One", getAddr(0x5050));
 		assertNotNull(fragB1);
@@ -319,7 +320,7 @@ public class TreeManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// move b2 to 0x5600
 		treeManager.moveAddressRange(b2.getStart(), getAddr(0x5600), b2.getSize(),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 
 		fragB2 = treeManager.getFragment("Test-One", getAddr(0x5600));
 		assertNotNull(fragB2);
@@ -345,7 +346,7 @@ public class TreeManagerTest extends AbstractGhidraHeadedIntegrationTest {
 
 		// move b1 to 0
 		treeManager.moveAddressRange(b1.getStart(), getAddr(0), b1.getSize(),
-			TaskMonitorAdapter.DUMMY_MONITOR);
+                TaskMonitor.DUMMY);
 
 		f2 = program.getListing().getFragment("Test-One", "f2");
 		assertNotNull(f2);
@@ -371,7 +372,7 @@ public class TreeManagerTest extends AbstractGhidraHeadedIntegrationTest {
 		Memory memory = program.getMemory();
 		Address start = getAddr(offset);
 		return memory.createInitializedBlock(name, start, length, (byte) 0,
-			TaskMonitorAdapter.DUMMY_MONITOR, false);
+                TaskMonitor.DUMMY, false);
 	}
 
 	private Address getAddr(long offset) {

@@ -20,6 +20,7 @@ import ghidra.program.model.data.DataType;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.symbol.*;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
 /**
@@ -113,7 +114,7 @@ public class MergeProgram {
 
 				try {
 					memory.createInitializedBlock(name, startAddress, size, (byte) 0,
-						TaskMonitorAdapter.DUMMY_MONITOR, false);
+                            TaskMonitor.DUMMY, false);
 				}
 				catch (Exception e) {
 					throw new RuntimeException("Exception building memory", e);

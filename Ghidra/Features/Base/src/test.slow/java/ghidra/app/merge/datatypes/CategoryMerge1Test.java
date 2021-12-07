@@ -17,6 +17,7 @@ package ghidra.app.merge.datatypes;
 
 import static org.junit.Assert.*;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -102,7 +103,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					Structure s =
 						new StructureDataType(miscCat.getCategoryPath(), "My structure", 0);
 					s.add(new ByteDataType());
@@ -174,7 +175,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					destCat.moveCategory(c, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(c, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -531,7 +532,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category miscCat = dtm.getCategory(new CategoryPath("/MISC"));
 				Category destCat = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -556,7 +557,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -595,7 +596,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category miscCat = dtm.getCategory(new CategoryPath("/MISC"));
 				Category destCat = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -620,7 +621,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -659,7 +660,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category miscCat = dtm.getCategory(new CategoryPath("/MISC"));
 				Category destCat = dtm.getCategory(new CategoryPath("/Category1/Category2"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -684,7 +685,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -732,7 +733,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				Category destCat =
 					dtm.getCategory(new CategoryPath("/Category1/Category2/Category3"));
 				try {
-					destCat.moveCategory(miscCat, TaskMonitorAdapter.DUMMY_MONITOR);
+					destCat.moveCategory(miscCat, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -777,7 +778,7 @@ public class CategoryMerge1Test extends AbstractDataTypeMergeTest {
 				try {
 					dtm.createCategory(path);
 					dtm.getRootCategory().removeCategory("MyCategory",
-						TaskMonitorAdapter.DUMMY_MONITOR);
+                            TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (Exception e) {

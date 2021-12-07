@@ -1715,12 +1715,12 @@ public class DataTypeManagerHandler {
 			try {
 				contentType = newDomainFile.getContentType();
 				try {
-					openArchive(newDomainFile, false, false, TaskMonitorAdapter.DUMMY_MONITOR);
+					openArchive(newDomainFile, false, false, TaskMonitor.DUMMY);
 				}
 				catch (VersionException e) {
 					// should never happen following check-in (i.e., DomainObjectReplaced)
 					if (VersionExceptionHandler.isUpgradeOK(null, newDomainFile, "Re-open", e)) {
-						openArchive(newDomainFile, true, false, TaskMonitorAdapter.DUMMY_MONITOR);
+						openArchive(newDomainFile, true, false, TaskMonitor.DUMMY);
 					}
 				}
 			}

@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.*;
 import javax.swing.table.TableModel;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.After;
 import org.junit.Before;
 
@@ -382,7 +383,7 @@ public abstract class AbstractVTCorrelatorTest extends AbstractGhidraHeadedInteg
 	 */
 	protected void runTask(Task task) throws Exception {
 
-		task.run(TaskMonitorAdapter.DUMMY_MONITOR);
+		task.run(TaskMonitor.DUMMY);
 		destProg.flushEvents();
 		waitForSwing();
 		waitForTasks();

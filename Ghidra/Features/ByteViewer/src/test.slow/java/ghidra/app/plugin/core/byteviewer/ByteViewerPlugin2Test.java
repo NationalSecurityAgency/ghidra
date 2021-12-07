@@ -26,6 +26,7 @@ import java.util.Map;
 
 import javax.swing.*;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import docking.ActionContext;
@@ -854,7 +855,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		MemoryBlock block = memory.getBlock(addr);
 		Address newStart = getAddr(0x500);
 		transactionID = program.startTransaction("Test");
-		memory.moveBlock(block, newStart, TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.moveBlock(block, newStart, TaskMonitor.DUMMY);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 
@@ -966,7 +967,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		assertEquals(getFieldLocation(addr), loc);
 
 		int transactionID = program.startTransaction("Test");
-		memory.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.removeBlock(block, TaskMonitor.DUMMY);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 
@@ -997,7 +998,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 
 		MemoryBlock block = memory.getBlock(getAddr(0x01001000));
 		int transactionID = program.startTransaction("Test");
-		memory.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.removeBlock(block, TaskMonitor.DUMMY);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 
@@ -1061,7 +1062,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		MemoryBlock block = null;
 		try {
 			block = memory.createInitializedBlock(".test", getAddr(0), 500, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+                    TaskMonitor.DUMMY, false);
 		}
 		finally {
 			program.endTransaction(transactionID, true);
@@ -1087,7 +1088,7 @@ public class ByteViewerPlugin2Test extends AbstractGhidraHeadedIntegrationTest {
 		// now remove the block
 		transactionID = program.startTransaction("test");
 		try {
-			memory.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
+			memory.removeBlock(block, TaskMonitor.DUMMY);
 		}
 		finally {
 			program.endTransaction(transactionID, true);

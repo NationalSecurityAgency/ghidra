@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import java.util.Arrays;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import generic.test.AbstractGenericTest;
@@ -119,7 +120,7 @@ public class ProgramOverlaysTest extends AbstractGenericTest {
 		assertNotNull(block);
 
 		int id = p.startTransaction("");
-		memory.removeBlock(block, TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.removeBlock(block, TaskMonitor.DUMMY);
 		p.endTransaction(id, true);
 
 		assertEquals(2, p.getAddressFactory().getNumAddressSpaces()); // ram, OTHER

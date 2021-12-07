@@ -837,13 +837,13 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		int transactionID = program.startTransaction("Test");
 		try {
 			memory.createInitializedBlock("test1", addr(0x1006000), 0x1000, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+                    TaskMonitor.DUMMY, false);
 			memory.createInitializedBlock("test2", addr(0x1008000), 0x1000, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+                    TaskMonitor.DUMMY, false);
 			memory.createInitializedBlock("test3", addr(0x100b000), 0x1000, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+                    TaskMonitor.DUMMY, false);
 			memory.createInitializedBlock("test4", addr(0xf0000000), 0x2000, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+                    TaskMonitor.DUMMY, false);
 
 			SymbolTable st = program.getSymbolTable();
 			Namespace ns = st.createNameSpace(null, "Deadpool", SourceType.USER_DEFINED);
@@ -871,9 +871,9 @@ public class CommentsPluginTest extends AbstractGhidraHeadedIntegrationTest {
 		int transactionID = program.startTransaction("Test");
 		try {
 			memory.createInitializedBlock("EEPROM", extmemSpace.getAddress(0), 0x100, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+                    TaskMonitor.DUMMY, false);
 			memory.createInitializedBlock("CODE", codeSpace.getAddress(0), 0x100, (byte) 0,
-				TaskMonitorAdapter.DUMMY_MONITOR, false);
+                    TaskMonitor.DUMMY, false);
 		}
 		finally {
 			program.endTransaction(transactionID, true);

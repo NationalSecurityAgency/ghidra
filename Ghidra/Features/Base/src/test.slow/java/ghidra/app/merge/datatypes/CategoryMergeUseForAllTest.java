@@ -18,6 +18,7 @@ package ghidra.app.merge.datatypes;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -59,10 +60,10 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 //						new CategoryPath("/Category1/Category2/Category4"));
 				try {
 					miscCat.setName("My Misc");
-					cat1.moveCategory(cat3, TaskMonitorAdapter.DUMMY_MONITOR);
+					cat1.moveCategory(cat3, TaskMonitor.DUMMY);
 					DataTypeManager dtm = program.getDataTypeManager();
 					dtm.createCategory(new CategoryPath("/newCat"));
-					cat2.removeCategory("Category4", TaskMonitorAdapter.DUMMY_MONITOR);
+					cat2.removeCategory("Category4", TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -91,7 +92,7 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 					new CategoryPath("/Category1/Category2/Category4"));
 				try {
 					miscCat.setName("Some Other Misc");
-					cat4.moveCategory(cat3, TaskMonitorAdapter.DUMMY_MONITOR);
+					cat4.moveCategory(cat3, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -142,7 +143,7 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 					new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					miscCat.setName("My Misc");
-					cat1.moveCategory(cat3, TaskMonitorAdapter.DUMMY_MONITOR);
+					cat1.moveCategory(cat3, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -171,7 +172,7 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 					new CategoryPath("/Category1/Category2/Category4"));
 				try {
 					miscCat.setName("Some Other Misc");
-					cat4.moveCategory(cat3, TaskMonitorAdapter.DUMMY_MONITOR);
+					cat4.moveCategory(cat3, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -219,7 +220,7 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 					new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					miscCat.setName("My Misc");
-					cat1.moveCategory(cat3, TaskMonitorAdapter.DUMMY_MONITOR);
+					cat1.moveCategory(cat3, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -248,7 +249,7 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 					new CategoryPath("/Category1/Category2/Category4"));
 				try {
 					miscCat.setName("Some Other Misc");
-					cat4.moveCategory(cat3, TaskMonitorAdapter.DUMMY_MONITOR);
+					cat4.moveCategory(cat3, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -296,7 +297,7 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 					new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					miscCat.setName("My Misc");
-					cat1.moveCategory(cat3, TaskMonitorAdapter.DUMMY_MONITOR);
+					cat1.moveCategory(cat3, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -325,7 +326,7 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 					new CategoryPath("/Category1/Category2/Category4"));
 				try {
 					miscCat.setName("Some Other Misc");
-					cat4.moveCategory(cat3, TaskMonitorAdapter.DUMMY_MONITOR);
+					cat4.moveCategory(cat3, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -388,7 +389,7 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 					new CategoryPath("/Category1/Category2/Category3"));
 				try {
 					miscCat.setName("My Misc");
-					cat1.moveCategory(cat3, TaskMonitorAdapter.DUMMY_MONITOR);
+					cat1.moveCategory(cat3, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {
@@ -417,7 +418,7 @@ public class CategoryMergeUseForAllTest extends AbstractDataTypeMergeTest {
 					new CategoryPath("/Category1/Category2/Category4"));
 				try {
 					miscCat.setName("Some Other Misc");
-					cat4.moveCategory(cat3, TaskMonitorAdapter.DUMMY_MONITOR);
+					cat4.moveCategory(cat3, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				catch (DuplicateNameException e) {

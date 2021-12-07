@@ -174,7 +174,7 @@ public class VariableUtilities {
 		if (autoParameterType == AutoParameterType.THIS) {
 			DataType classStruct = findOrCreateClassStruct(function);
 			if (classStruct == null) {
-				classStruct = DataType.VOID;
+				classStruct = VoidDataType.dataType;
 			}
 			return getPointer(function.getProgram(), classStruct, storage.size());
 		}

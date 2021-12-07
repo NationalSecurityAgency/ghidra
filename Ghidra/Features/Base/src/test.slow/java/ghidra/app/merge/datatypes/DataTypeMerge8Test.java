@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
 
 import javax.swing.JLabel;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.Test;
 
 import generic.test.TestUtils;
@@ -109,7 +110,7 @@ public class DataTypeMerge8Test extends AbstractDataTypeMergeTest {
 				transactionID = program.startTransaction("remove XYZ");
 				try {
 					// Remove the XYZ data type.
-					dtm.remove(xyz, TaskMonitorAdapter.DUMMY_MONITOR);
+					dtm.remove(xyz, TaskMonitor.DUMMY);
 					commit = true;
 				}
 				finally {

@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Collection;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import ghidra.feature.vt.api.db.MarkupItemStorageDB;
@@ -242,7 +243,7 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 
 		VTAssociationDB association = (VTAssociationDB) match.getAssociation();
 		Collection<VTMarkupItem> markupItems =
-			association.getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			association.getMarkupItems(TaskMonitor.DUMMY);
 		assertEquals(1, markupItems.size());
 		VTMarkupItem foundItem = markupItems.iterator().next();
 		Object storage = getInstanceField("markupItemStorage", foundItem);
@@ -263,7 +264,7 @@ public class UnappliedMarkupItemStorageDBTest extends VTBaseTestCase {
 		VTMarkupItem markupItem = createRandomMarkupItemStub(match);
 		VTAssociationDB association = (VTAssociationDB) match.getAssociation();
 		Collection<VTMarkupItem> markupItems =
-			association.getMarkupItems(TaskMonitorAdapter.DUMMY_MONITOR);
+			association.getMarkupItems(TaskMonitor.DUMMY);
 		assertEquals(1, markupItems.size());
 		VTMarkupItem foundItem = markupItems.iterator().next();
 		Object storage = getInstanceField("markupItemStorage", foundItem);

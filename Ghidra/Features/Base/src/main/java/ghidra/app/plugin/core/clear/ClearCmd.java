@@ -104,7 +104,7 @@ public class ClearCmd extends BackgroundCommand {
 			throws CancelledException {
 
 		if (monitor == null) {
-			monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+			monitor = TaskMonitor.DUMMY;
 		}
 
 		Program program = (Program) obj;

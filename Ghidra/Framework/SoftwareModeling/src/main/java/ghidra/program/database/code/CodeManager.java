@@ -339,7 +339,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 								// overwrite conflicting instruction in delay slot - ignore conflict and resume,
 								// no need to remove context since this will happen when instruction is added
 								clearCodeUnits(inst.getMinAddress(), inst.getMinAddress(), false,
-									TaskMonitorAdapter.DUMMY_MONITOR);
+                                        TaskMonitor.DUMMY);
 							}
 							else {
 								// Likely caused by odd flow into delay slot - assume OK - skip prototype and resume
@@ -410,7 +410,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 				// no need to remove context since this will happen when instruction is added
 				for (AddressRange range : instructionSet.getAddressSet()) {
 					clearCodeUnits(range.getMinAddress(), range.getMaxAddress(), false,
-						TaskMonitorAdapter.DUMMY_MONITOR);
+                            TaskMonitor.DUMMY);
 				}
 			}
 			else {
@@ -1640,7 +1640,7 @@ public class CodeManager implements ErrorHandler, ManagerDB {
 		lock.acquire();
 		try {
 			if (monitor == null) {
-				monitor = TaskMonitorAdapter.DUMMY_MONITOR;
+				monitor = TaskMonitor.DUMMY;
 			}
 			Memory mem = program.getMemory();
 			AddressSet searchSet;

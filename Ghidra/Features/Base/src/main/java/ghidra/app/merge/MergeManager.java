@@ -225,7 +225,7 @@ public abstract class MergeManager implements DomainObjectMergeManager {
 	 * Convenience method for Junit tests.
 	 */
 	public boolean merge() throws CancelledException {
-		return merge(TaskMonitorAdapter.DUMMY_MONITOR);
+		return merge(TaskMonitor.DUMMY);
 	}
 
 	/**

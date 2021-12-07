@@ -166,7 +166,7 @@ public class OverridePrototypeAction extends AbstractDecompilerAction {
 			buf.append(dt.getDisplayName());
 		}
 		else {
-			buf.append(DataType.VOID.getDisplayName());
+			buf.append(VoidDataType.dataType.getDisplayName());
 		}
 
 		buf.append(' ').append(name).append('(');

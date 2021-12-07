@@ -17,6 +17,7 @@ package ghidra.app.script;
 
 import static org.junit.Assert.*;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import ghidra.app.plugin.core.codebrowser.CodeBrowserPlugin;
@@ -417,7 +418,7 @@ public class GhidraScriptRealProgramTest extends AbstractGhidraHeadedIntegration
 				// test stub
 			}
 		};
-		script.set(state, TaskMonitorAdapter.DUMMY_MONITOR, null);
+		script.set(state, TaskMonitor.DUMMY, null);
 		return script;
 	}
 

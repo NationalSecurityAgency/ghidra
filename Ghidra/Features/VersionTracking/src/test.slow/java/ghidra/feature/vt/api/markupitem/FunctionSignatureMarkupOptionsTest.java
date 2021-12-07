@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.Test;
 
 import ghidra.feature.vt.api.main.*;
@@ -795,7 +796,7 @@ private void setLanguage(Program program, String languageID, String compilerSpec
 				}
 			}
 			assertNotNull(compilerSpecID);
-			program.setLanguage(language, compilerSpecID, true, TaskMonitorAdapter.DUMMY_MONITOR);
+			program.setLanguage(language, compilerSpecID, true, TaskMonitor.DUMMY);
 		}
 		finally {
 			program.endTransaction(transaction, true);

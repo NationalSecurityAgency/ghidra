@@ -20,6 +20,7 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.math.BigInteger;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import ghidra.program.database.ProgramDB;
@@ -81,7 +82,7 @@ public class ProgramContextTest extends AbstractGhidraHeadedIntegrationTest {
 			Address start = getAddress(0);
 			try {
 				mem.createInitializedBlock("first", start, 100, (byte) 0,
-					TaskMonitorAdapter.DUMMY_MONITOR, false);
+                        TaskMonitor.DUMMY, false);
 			}
 			catch (Exception e) {
 				Assert.fail("TestProgramContext: couldn't add block to memory");

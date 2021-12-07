@@ -253,7 +253,7 @@ public class VTMarkupItemResetTest extends VTBaseTestCase {
 		Object markupItemManager = getInstanceField("markupManager", association);
 		return (Collection<VTMarkupItem>) invokeInstanceMethod("getStoredMarkupItems",
 			markupItemManager, new Class[] { TaskMonitor.class },
-			new Object[] { TaskMonitorAdapter.DUMMY_MONITOR });
+			new Object[] {TaskMonitor.DUMMY});
 	}
 
 	private VTMarkupItemApplyActionType createRandomApplyAction(VTMarkupItem item) {

@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Random;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,19 +37,19 @@ public class FNV1a32MessageDigestTest {
 	public void testBasicValues() throws Exception {
 		byte[] input = bytearray(0xcc, 0x24, 0x31, 0xc4);
 		byte[] target = bytearray(0, 0, 0, 0);
-		digest.update(input, TaskMonitorAdapter.DUMMY_MONITOR);
+		digest.update(input, TaskMonitor.DUMMY);
 		byte[] actual = digest.digest();
 		assertArrayEquals(target, actual);
 
 		input = bytearray(0xe0, 0x4d, 0x9f, 0xcb);
 		target = bytearray(0, 0, 0, 0);
-		digest.update(input, TaskMonitorAdapter.DUMMY_MONITOR);
+		digest.update(input, TaskMonitor.DUMMY);
 		actual = digest.digest();
 		assertArrayEquals(target, actual);
 
 		input = bytearray('+', '!', '=', 'y', 'G');
 		target = bytearray(0, 0, 0, 0);
-		digest.update(input, TaskMonitorAdapter.DUMMY_MONITOR);
+		digest.update(input, TaskMonitor.DUMMY);
 		actual = digest.digest();
 		assertArrayEquals(target, actual);
 	}
@@ -67,9 +68,9 @@ public class FNV1a32MessageDigestTest {
 		for (int ii = 0; ii < 10; ++ii) {
 			byte[] input = new byte[20];
 			random.nextBytes(input);
-			digest.update(input, TaskMonitorAdapter.DUMMY_MONITOR);
+			digest.update(input, TaskMonitor.DUMMY);
 			byte[] bytes = digest.digest();
-			digest.update(input, TaskMonitorAdapter.DUMMY_MONITOR);
+			digest.update(input, TaskMonitor.DUMMY);
 			long asLong = digest.digestLong();
 
 			long acc = 0;
@@ -84,7 +85,7 @@ public class FNV1a32MessageDigestTest {
 	@Test
 	public void testLongerRequests() throws Exception {
 		byte[] input = bytearray('F', 'o', 'o', 'b', 'a', 'r');
-		digest.update(input, TaskMonitorAdapter.DUMMY_MONITOR);
+		digest.update(input, TaskMonitor.DUMMY);
 		byte[] reference = digest.digest();
 
 		for (int beforeLength = 0; beforeLength < digest.getDigestLength(); ++beforeLength) {
@@ -97,7 +98,7 @@ public class FNV1a32MessageDigestTest {
 					for (int ii = 0; ii < output.length; ++ii) {
 						output[ii] = MARKER;
 					}
-					digest.update(input, TaskMonitorAdapter.DUMMY_MONITOR);
+					digest.update(input, TaskMonitor.DUMMY);
 					digest.digest(output, beforeLength, requestLength);
 					for (int ii = 0; ii < beforeLength; ++ii) {
 						assertEquals(

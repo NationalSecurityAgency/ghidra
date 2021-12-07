@@ -25,6 +25,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.TableModel;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import docking.ActionContext;
@@ -305,7 +306,7 @@ public class MemoryMapPluginTest extends AbstractGhidraHeadedIntegrationTest {
 
 		MemoryBlock block = memory.getBlock(memory.getMinAddress());
 		int transactionID = program.startTransaction("test");
-		memory.moveBlock(block, getAddr(0x100), TaskMonitorAdapter.DUMMY_MONITOR);
+		memory.moveBlock(block, getAddr(0x100), TaskMonitor.DUMMY);
 		program.endTransaction(transactionID, true);
 		program.flushEvents();
 

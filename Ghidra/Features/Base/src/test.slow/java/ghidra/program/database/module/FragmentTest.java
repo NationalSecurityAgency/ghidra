@@ -17,6 +17,7 @@ package ghidra.program.database.module;
 
 import static org.junit.Assert.*;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import ghidra.framework.store.LockException;
@@ -460,7 +461,7 @@ public class FragmentTest extends AbstractGhidraHeadedIntegrationTest {
 		try {
 			MemoryBlock block =
 				memory.createInitializedBlock(name, start, length, (byte) 0,
-					TaskMonitorAdapter.DUMMY_MONITOR, false);
+                        TaskMonitor.DUMMY, false);
 			return block;
 
 		}

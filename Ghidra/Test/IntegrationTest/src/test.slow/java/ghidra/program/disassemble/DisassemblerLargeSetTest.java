@@ -17,6 +17,7 @@ package ghidra.program.disassemble;
 
 import static org.junit.Assert.*;
 
+import ghidra.util.task.TaskMonitor;
 import org.junit.*;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
@@ -61,7 +62,7 @@ public class DisassemblerLargeSetTest extends AbstractGhidraHeadlessIntegrationT
 			block.putBytes(addr(i * CASESIZE), disBlock);
 		}
 
-		disassembler = new Disassembler(program, TaskMonitorAdapter.DUMMY_MONITOR, null);
+		disassembler = new Disassembler(program, TaskMonitor.DUMMY, null);
 
 		startTime = System.currentTimeMillis();
 	}

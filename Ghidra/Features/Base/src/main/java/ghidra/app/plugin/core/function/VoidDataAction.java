@@ -17,6 +17,7 @@
 package ghidra.app.plugin.core.function;
 
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.VoidDataType;
 
 import java.awt.event.KeyEvent;
 
@@ -25,7 +26,7 @@ import javax.swing.KeyStroke;
 public class VoidDataAction extends DataAction {
 
 	public VoidDataAction(FunctionPlugin plugin) {
-		super(DataType.VOID, plugin);
+		super(VoidDataType.dataType, plugin);
 
 		setPopupMenu(FunctionPlugin.SET_RETURN_TYPE_MENU_PATH, true);
 	}

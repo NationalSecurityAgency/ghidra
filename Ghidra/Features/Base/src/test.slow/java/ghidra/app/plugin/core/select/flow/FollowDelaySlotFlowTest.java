@@ -21,6 +21,7 @@ import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.block.FollowFlow;
 import ghidra.program.model.symbol.FlowType;
 import ghidra.test.ToyProgramBuilder;
+import ghidra.util.task.TaskMonitor;
 import ghidra.util.task.TaskMonitorAdapter;
 
 import org.junit.*;
@@ -89,7 +90,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet addressSet = new AddressSet(addr);
 		FlowType[] flowsNotToFollow = new FlowType[] {};
 		FollowFlow followFlow = new FollowFlow(program, addressSet, flowsNotToFollow); // FollowAllFlows
-		AddressSet flowAddresses = followFlow.getFlowAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(10), address(15));
@@ -130,7 +131,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet addressSet = new AddressSet(addr);
 		FlowType[] flowsNotToFollow = new FlowType[] {};
 		FollowFlow followFlow = new FollowFlow(program, addressSet, flowsNotToFollow); // FollowAllFlows
-		AddressSet flowAddresses = followFlow.getFlowAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(14), address(17));
@@ -171,7 +172,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet addressSet = new AddressSet(addr);
 		FlowType[] flowsNotToFollow = new FlowType[] {};
 		FollowFlow followFlow = new FollowFlow(program, addressSet, flowsNotToFollow); // FollowAllFlows
-		AddressSet flowAddresses = followFlow.getFlowAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(10), address(15));
@@ -213,7 +214,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet addressSet = new AddressSet(addr);
 		FlowType[] flowsNotToFollow = new FlowType[] {};
 		FollowFlow followFlow = new FollowFlow(program, addressSet, flowsNotToFollow); // FollowAllFlows
-		AddressSet flowAddresses = followFlow.getFlowAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(4), address(5));
@@ -255,7 +256,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet addressSet = new AddressSet(addr);
 		FlowType[] flowsNotToFollow = new FlowType[] {};
 		FollowFlow followFlow = new FollowFlow(program, addressSet, flowsNotToFollow); // FollowAllFlows
-		AddressSet flowAddresses = followFlow.getFlowAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(10), address(15));
@@ -292,7 +293,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet addressSet = new AddressSet(addr);
 		FlowType[] flowsNotToFollow = new FlowType[] {};
 		FollowFlow followFlow = new FollowFlow(program, addressSet, flowsNotToFollow); // FollowAllFlows
-		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(10), address(13));
@@ -329,7 +330,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet addressSet = new AddressSet(addr);
 		FlowType[] flowsNotToFollow = new FlowType[] {};
 		FollowFlow followFlow = new FollowFlow(program, addressSet, flowsNotToFollow); // FollowAllFlows
-		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(10), address(15));
@@ -369,7 +370,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet addressSet = new AddressSet(addr);
 		FlowType[] flowsNotToFollow = new FlowType[] {};
 		FollowFlow followFlow = new FollowFlow(program, addressSet, flowsNotToFollow); // FollowAllFlows
-		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(10), address(15));
@@ -410,7 +411,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet addressSet = new AddressSet(addr);
 		FlowType[] flowsNotToFollow = new FlowType[] {};
 		FollowFlow followFlow = new FollowFlow(program, addressSet, flowsNotToFollow); // FollowAllFlows
-		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(10), address(15));
@@ -451,7 +452,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet addressSet = new AddressSet(addr);
 		FlowType[] flowsNotToFollow = new FlowType[] {};
 		FollowFlow followFlow = new FollowFlow(program, addressSet, flowsNotToFollow); // FollowAllFlows
-		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(10), address(17));
@@ -493,7 +494,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet addressSet = new AddressSet(addr);
 		FlowType[] flowsNotToFollow = new FlowType[] {};
 		FollowFlow followFlow = new FollowFlow(program, addressSet, flowsNotToFollow); // FollowAllFlows
-		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(10), address(15));
@@ -535,7 +536,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		AddressSet addressSet = new AddressSet(addr);
 		FlowType[] flowsNotToFollow = new FlowType[] {};
 		FollowFlow followFlow = new FollowFlow(program, addressSet, flowsNotToFollow); // FollowAllFlows
-		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(4), address(5));
@@ -576,7 +577,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		Address addr = address(16);
 		AddressSet addressSet = new AddressSet(addr);
 		FollowFlow followFlow = new FollowFlow(program, addressSet, followOnlyPointers());
-		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(16), address(17));
@@ -620,7 +621,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		Address addr = address(16);
 		AddressSet addressSet = new AddressSet(addr);
 		FollowFlow followFlow = new FollowFlow(program, addressSet, followAllFlows());
-		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(4), address(5));
@@ -665,7 +666,7 @@ public class FollowDelaySlotFlowTest extends AbstractFollowFlowTest {
 		Address addr = address(16);
 		AddressSet addressSet = new AddressSet(addr);
 		FollowFlow followFlow = new FollowFlow(program, addressSet, followAllFlows());
-		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitorAdapter.DUMMY_MONITOR);
+		AddressSet flowAddresses = followFlow.getFlowToAddressSet(TaskMonitor.DUMMY);
 
 		AddressSet expectedAddresses = new AddressSet();
 		expectedAddresses.add(address(4), address(5));
