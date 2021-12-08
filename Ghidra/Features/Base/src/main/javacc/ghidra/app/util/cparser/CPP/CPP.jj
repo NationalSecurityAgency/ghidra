@@ -789,11 +789,28 @@ public class PreProcessor {
 		iFile = new File(parent + File.separator + filename);
 		if (iFile.exists())
 			return iFile;
+
 		// try just in this directory
 		File sameiFile = new File(parent + File.separator
 				+ (new File(filename)).getName());
 		if (sameiFile.exists())
 			return sameiFile;
+			
+		// try all files in this directory doing to-lower on both input file and output file
+		// if match return it
+		File folder = new File(parent);
+		if (folder.isDirectory()) {
+			File[] listOfFiles = folder.listFiles();
+	
+			if (listOfFiles != null) {
+				for (File file : listOfFiles) {
+					if (file.isFile() && filename.compareToIgnoreCase(file.getName()) == 0) {
+						return file;
+					}
+				}
+			}
+		}
+		
 		if (possibleXsym) {
 			String child = "";
 			// look up parent chain, looking for a file that has an Xsym in it
