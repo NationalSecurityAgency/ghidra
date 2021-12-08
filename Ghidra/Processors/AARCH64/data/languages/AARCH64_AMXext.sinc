@@ -1,0 +1,171 @@
+#
+# Apple AARCH64 extended matrix instructions
+# Contents based on evolving information published on Web
+#
+#
+
+define pcodeop __amx_ldx;
+define pcodeop __amx_ldy;
+define pcodeop __amx_stx;
+define pcodeop __amx_sty;
+define pcodeop __amx_ldz;
+define pcodeop __amx_stz;
+define pcodeop __amx_ldzi;
+define pcodeop __amx_stzi;
+define pcodeop __amx_extrx;
+define pcodeop __amx_extry;
+define pcodeop __amx_fma64;
+define pcodeop __amx_fms64;
+define pcodeop __amx_fma32;
+define pcodeop __amx_fms32;
+define pcodeop __amx_mac16;
+define pcodeop __amx_fma16;
+define pcodeop __amx_fms16;
+define pcodeop __amx_enable;
+define pcodeop __amx_disable;
+define pcodeop __amx_vecint;
+define pcodeop __amx_vecfp;
+define pcodeop __amx_matint;
+define pcodeop __amx_matfp;
+define pcodeop __amx_genlut;
+
+
+with : ImmS_ImmR_TestSet=1 {
+
+AMXAddr:  is Rd_GPR64 {
+  addr:8 = Rd_GPR64 & 0x00FFFFFFFFFFFFFF;
+  export addr;
+}
+
+AMXRegOff: is Rd_GPR64 {
+  registerOff:8 = (Rd_GPR64 >> 56) & 0x1F;
+  export registerOff;
+}
+
+AMXSize: is Rd_GPR64 {
+  local size = ((Rd_GPR64 >> 62) & 1);
+  size = zext(size == 0) * 0x40 | zext(size ==1 ) * 0x80;
+  export size;
+}
+
+:__amx_ldx Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=0 & AMXAddr & AMXRegOff & AMXSize & Rd_GPR64
+{
+   __amx_ldx(Rd_GPR64);
+}
+
+:__amx_ldy Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=1 & AMXAddr & AMXRegOff & AMXSize & Rd_GPR64
+{
+   __amx_ldy(Rd_GPR64);
+}
+
+:__amx_stx Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=2 & AMXAddr & AMXRegOff & AMXSize & Rd_GPR64
+{
+   __amx_stx(Rd_GPR64);
+}
+
+:__amx_sty Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=3 & AMXAddr & AMXRegOff & AMXSize & Rd_GPR64
+{
+   __amx_sty(Rd_GPR64);
+}
+
+:__amx_ldz Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=4 & AMXAddr & AMXRegOff & AMXSize & Rd_GPR64
+{
+   __amx_ldz(Rd_GPR64);
+}
+
+:__amx_stz Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=5 & AMXAddr & AMXRegOff & AMXSize & Rd_GPR64
+{
+   __amx_stz(Rd_GPR64);
+}
+
+:__amx_ldzi Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=6 & AMXAddr & AMXRegOff & AMXSize & Rd_GPR64
+{
+   __amx_ldzi(Rd_GPR64);
+}
+
+:__amx_stzi Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=7 & AMXAddr & AMXRegOff & AMXSize & Rd_GPR64
+{
+   __amx_stzi(Rd_GPR64);
+}
+
+:__amx_extrx Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=8 & Rd_GPR64
+{
+   __amx_extrx(Rd_GPR64);
+}
+
+:__amx_extry Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=9 & Rd_GPR64
+{
+   __amx_extry(Rd_GPR64);
+}
+
+:__amx_fma64 Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=10 & Rd_GPR64
+{
+   __amx_fma64(Rd_GPR64);
+}
+
+:__amx_fms64 Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=11 & Rd_GPR64
+{
+   __amx_fms64(Rd_GPR64);
+}
+
+:__amx_fma32 Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=12 & Rd_GPR64
+{
+   __amx_fma32(Rd_GPR64);
+}
+
+:__amx_fms32 Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=13 & Rd_GPR64
+{
+   __amx_fms32(Rd_GPR64);
+}
+
+:__amx_mac16 Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=14 & Rd_GPR64
+{
+   __amx_mac16(Rd_GPR64);
+}
+
+:__amx_fma16 Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=15 & Rd_GPR64
+{
+   __amx_fma16(Rd_GPR64);
+}
+
+:__amx_fms16 Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=16 & Rd_GPR64
+{
+   __amx_fms16(Rd_GPR64);
+}
+
+:__amxdisable is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=17 & b_0004=1
+{
+   __amx_disable();
+}
+
+:__amxenable is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=17 & b_0004=0
+{
+   __amx_enable();
+}
+
+:__amx_vecint Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=18 & Rd_GPR64
+{
+   __amx_vecint(Rd_GPR64);
+}
+
+:__amx_vecfp Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=19 & Rd_GPR64
+{
+   __amx_vecfp(Rd_GPR64);
+}
+
+:__amx_matint Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=20 & Rd_GPR64
+{
+   __amx_matint(Rd_GPR64);
+}
+
+:__amx_matfp Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=21 & Rd_GPR64
+{
+   __amx_matfp(Rd_GPR64);
+}
+
+:__amx_genlut Rd_GPR64 is b_2431=0x00 & b_1623=0x20 & b_1215=1 & b_1011=0 & b_0509=22 & Rd_GPR64
+{
+   __amx_genlut(Rd_GPR64);
+}
+
+}

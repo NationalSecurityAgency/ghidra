@@ -31,7 +31,7 @@ import ghidra.util.Msg;
 import ghidra.util.exception.*;
 import ghidra.util.task.TaskMonitor;
 
-public class RTTIClassRecoverer extends RecoveredClassUtils {
+public class RTTIClassRecoverer extends RecoveredClassHelper {
 
 	boolean programHasRTTIApplied = false;
 
