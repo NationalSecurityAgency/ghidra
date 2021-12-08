@@ -544,7 +544,7 @@ public class GNUExternalDisassembler implements ExternalDisassembler {
 		String endianString = gdisConfig.isBigEndian ? "0x00" : "0x01"; // 0x0 is big, 0x1 is little endian
 
 		// NOTE: valid target must be specified but has no effect on results
-		String cmds[] = { gdisConfig.gdisExecFile.getAbsolutePath(), "pef", gdisConfig.architecture,
+		String[] cmds = { gdisConfig.gdisExecFile.getAbsolutePath(), "pef", gdisConfig.architecture,
 			gdisConfig.machineId, endianString, "0x0",
 			gdisDataDirectory.getAbsolutePath() + File.separator,
 			GNUExternalDisassembler.READ_FROM_STDIN_PARAMETER };

@@ -56,7 +56,7 @@ public class SearchForImageBaseOffsetsScript extends GhidraScript {
 
 		long currentAddressIbo = currentAddressOffset - imageBaseOffset;
 
-		byte searchBytes[] =
+		byte[] searchBytes =
 			createSearchArray(currentAddressIbo, POINTER_BYTE_LEN_64BIT, isBigEndian);
 		println("searching for possible ibo64 references to " + currentAddress.toString() + " ...");
 		AddressSet ibo64refs = searchForByteArray(searchBytes);
@@ -99,7 +99,7 @@ public class SearchForImageBaseOffsetsScript extends GhidraScript {
 			throws CancelledException {
 
 
-		byte byteArray[] = new byte[numBytes];
+		byte[] byteArray = new byte[numBytes];
 
 		for (int i = 0; i < numBytes; i++) {
 			monitor.checkCanceled();
@@ -118,7 +118,7 @@ public class SearchForImageBaseOffsetsScript extends GhidraScript {
 	 */
 	private byte[] createBigEndianByteArray(long value, int numBytes) throws CancelledException {
 
-		byte byteArray[] = new byte[numBytes];
+		byte[] byteArray = new byte[numBytes];
 
 		for (int i = 0; i < numBytes; i++) {
 			monitor.checkCanceled();

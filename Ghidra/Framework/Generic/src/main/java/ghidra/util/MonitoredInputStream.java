@@ -100,7 +100,7 @@ public class MonitoredInputStream extends InputStream {
 	 * @see        java.io.FilterInputStream#read(byte[], int, int)
 	 */
 	@Override
-	public int read(byte b[]) throws IOException {
+	public int read(byte[] b) throws IOException {
 		return read(b, 0, b.length);
 	}
 
@@ -121,7 +121,7 @@ public class MonitoredInputStream extends InputStream {
 	 * @exception  IOException  if an I/O error occurs.
 	 */
 	@Override
-	public int read(byte b[], int off, int len) throws IOException {
+	public int read(byte[] b, int off, int len) throws IOException {
 		if (monitor.isCancelled()) {
 			throw new IOCancelledException();
 		}

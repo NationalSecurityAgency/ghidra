@@ -230,9 +230,9 @@ public class AddressObjectMapTest extends AbstractGenericTest {
 	}
 
 	private boolean testContains(AddressObjectMap testMap, AddressSet set, Address addr) {
-		Object objs[] = testMap.getObjects(addr);
-		for (int i = 0; i < objs.length; i++) {
-			if (objs[i].equals(set)) {
+		Object[] objs = testMap.getObjects(addr);
+		for (Object obj : objs) {
+			if (obj.equals(set)) {
 				return true;
 			}
 		}

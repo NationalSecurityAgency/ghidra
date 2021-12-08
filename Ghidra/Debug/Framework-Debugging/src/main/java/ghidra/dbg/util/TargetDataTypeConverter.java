@@ -298,7 +298,7 @@ public class TargetDataTypeConverter {
 		 * space-separated token in its index. It can be the sole token, but the index must be
 		 * unique within the namespace.
 		 */
-		String parts[] = type.getIndex().split("\\s+");
+		String[] parts = type.getIndex().split("\\s+");
 		String name = parts[parts.length - 1];
 		switch (type.getTypeKind()) {
 			case ENUM:

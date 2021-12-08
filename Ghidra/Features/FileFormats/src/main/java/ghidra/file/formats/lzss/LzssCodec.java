@@ -82,9 +82,9 @@ public class LzssCodec {
 		}
 
 		/* These constitute binary search trees */
-		int lchild[] = new int[N + 1];
-		int rchild[] = new int[N + 257];
-		int parent[] = new int[N + 1];
+		int[] lchild = new int[N + 1];
+		int[] rchild = new int[N + 257];
+		int[] parent = new int[N + 1];
 
 		/* Ring buffer of size N, with extra F-1 bytes to aid string comparison */
 		ByteBuffer textBuf = ByteBuffer.allocate(N + F - 1);

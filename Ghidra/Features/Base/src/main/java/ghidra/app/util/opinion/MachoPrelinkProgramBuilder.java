@@ -368,7 +368,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		long imageBaseOffset = program.getImageBase().getOffset();
 		Address chainStart = memory.getProgram().getLanguage().getDefaultSpace().getAddress(page);
 
-		byte origBytes[] = new byte[8];
+		byte[] origBytes = new byte[8];
 
 		long next = -1;
 		boolean start = true;
@@ -520,7 +520,7 @@ public class MachoPrelinkProgramBuilder extends MachoProgramBuilder {
 		}
 
 		// Add entry to relocation table for the pointer fixup
-		byte origBytes[] = new byte[8];
+		byte[] origBytes = new byte[8];
 		memory.getBytes(pointerAddr, origBytes);
 		program.getRelocationTable()
 				.add(pointerAddr, (int) fixedPointerType, new long[] { fixedPointerValue },

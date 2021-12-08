@@ -76,7 +76,7 @@ public class ProgramTreeSelectionPlugin extends ProgramPlugin {
 
 		JTree tree = node.getTree();
 		int count = tree.getSelectionCount();
-		TreePath paths[] = node.getTree().getSelectionPaths();
+		TreePath[] paths = node.getTree().getSelectionPaths();
 		for (int i = 0; i < count; i++) {
 			TreePath path = paths[i];
 			ProgramNode pNode = (ProgramNode) path.getLastPathComponent();

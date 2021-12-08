@@ -73,7 +73,7 @@ public class DebuggerCopyPlanTests extends AbstractGhidraHeadedDebuggerGUITest {
 		assertTrue(AllCopiers.BYTES.isAvailable(view, program));
 
 		Random r = new Random();
-		byte src[] = new byte[0x10000];
+		byte[] src = new byte[0x10000];
 		r.nextBytes(src);
 		try (UndoableTransaction tid = tb.startTransaction()) {
 			DBTraceMemoryManager memory = tb.trace.getMemoryManager();
@@ -92,7 +92,7 @@ public class DebuggerCopyPlanTests extends AbstractGhidraHeadedDebuggerGUITest {
 				TaskMonitor.DUMMY);
 		}
 
-		byte dst[] = new byte[0x10000];
+		byte[] dst = new byte[0x10000];
 		program.getMemory().getBytes(paddr, dst);
 
 		assertArrayEquals(src, dst);

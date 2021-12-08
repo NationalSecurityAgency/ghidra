@@ -58,7 +58,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 
 	// The fields for each component.
 	/** The column headers for the component edit area. */
-	protected String headers[] =
+	protected String[] headers =
 		{ "Offset", "Length", "Mnemonic", "DataType", "FieldName", "Comment" };
 	private static final int OFFSET = 0;
 	private static final int LENGTH = 1;
@@ -1049,7 +1049,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * @return true if a sub-component is in the indicated category.
 	 */
 	boolean hasSubDtInCategory(Composite parentDt, String catPath) {
-		DataTypeComponent components[] = parentDt.getDefinedComponents();
+		DataTypeComponent[] components = parentDt.getDefinedComponents();
 		// FUTURE Add a structure to keep track of which composites were searched so they aren't searched multiple times.
 		for (DataTypeComponent component : components) {
 			DataType subDt = component.getDataType();
@@ -1074,7 +1074,7 @@ class CompositeViewerModel extends AbstractTableModel implements DataTypeManager
 	 * @return true if the composite data type has the data type as a sub-component.
 	 */
 	protected boolean hasSubDt(Composite parentDt, DataTypePath dtPath) {
-		DataTypeComponent components[] = parentDt.getDefinedComponents();
+		DataTypeComponent[] components = parentDt.getDefinedComponents();
 		for (DataTypeComponent component : components) {
 			DataType subDt = component.getDataType();
 

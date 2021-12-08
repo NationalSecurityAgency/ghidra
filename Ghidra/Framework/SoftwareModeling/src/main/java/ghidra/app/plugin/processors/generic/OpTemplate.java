@@ -54,7 +54,7 @@ public class OpTemplate implements Serializable {
 		Varnode out = null;
 		if (output != null)
 			out = output.resolve(handles, position, off);
-		Varnode in[] = new Varnode[numInputs];
+		Varnode[] in = new Varnode[numInputs];
 		for (int i = 0; i < numInputs; i++)
 			in[i] = input[i].resolve(handles, position, off);
 		

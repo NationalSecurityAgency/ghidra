@@ -61,7 +61,7 @@ class CodeBlockCache extends AddressObjectMap {
         Object[] blocks = getObjects(addr);
         for (int i=0; i < blocks.length; i++) {
             CodeBlock block = (CodeBlock) blocks[i];
-            Address starts[] = block.getStartAddresses();
+            Address[] starts = block.getStartAddresses();
             for (int j=0; j < starts.length; j++) {
                 if (starts[j].equals(addr)) {
                     return block;

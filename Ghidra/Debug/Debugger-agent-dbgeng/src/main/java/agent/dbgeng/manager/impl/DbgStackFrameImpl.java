@@ -38,7 +38,7 @@ public class DbgStackFrameImpl implements DbgStackFrame {
 	private long stackOffset;
 	private boolean virtual;
 
-	private long params[] = new long[4];
+	private long[] params = new long[4];
 
 	public DbgStackFrameImpl(DbgThreadImpl thread, int level, BigInteger addr, String func) {
 		this.manager = thread.manager;

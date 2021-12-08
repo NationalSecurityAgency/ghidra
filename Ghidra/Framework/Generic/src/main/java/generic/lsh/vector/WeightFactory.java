@@ -22,8 +22,8 @@ import ghidra.xml.XmlElement;
 import ghidra.xml.XmlPullParser;
 
 public class WeightFactory {
-	private double idfweight[] = new double[512];		// Weights associated with (normalized) idf counts
-	private double tfweight[] = new double[64];			// Weights associated with tf (term frequency) counts
+	private double[] idfweight = new double[512];		// Weights associated with (normalized) idf counts
+	private double[] tfweight = new double[64];			// Weights associated with tf (term frequency) counts
 	private double weightnorm;		// Scale to which idf weights are normalized = -log2( probability of 1000th most common hash)
 	private double probflip0;		// Hash flipping probability in causal model, param0
 	private double probflip1;		// Hash flipping probability in causal model, param1

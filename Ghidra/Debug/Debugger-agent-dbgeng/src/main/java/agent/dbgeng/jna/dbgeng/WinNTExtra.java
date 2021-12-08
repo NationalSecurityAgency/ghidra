@@ -183,7 +183,7 @@ public class WinNTExtra {
 		public EXCEPTION_RECORD.ByReference ExceptionRecord;
 		public Pointer ExceptionAddress;
 		public DWORD NumberParameters;
-		public ULONG_PTR ExceptionInformation[] = new ULONG_PTR[15];
+		public ULONG_PTR[] ExceptionInformation = new ULONG_PTR[15];
 
 		@Override
 		protected List<String> getFieldOrder() {
@@ -206,7 +206,7 @@ public class WinNTExtra {
 		public DWORD ExceptionAddress;
 		public DWORD NumberParameters;
 		public DWORD __unusedAlignment;
-		public DWORD ExceptionInformation[] = new DWORD[15];
+		public DWORD[] ExceptionInformation = new DWORD[15];
 
 		@Override
 		protected List<String> getFieldOrder() {
@@ -229,7 +229,7 @@ public class WinNTExtra {
 		public DWORDLONG ExceptionAddress;
 		public DWORD NumberParameters;
 		public DWORD __unusedAlignment;
-		public DWORDLONG ExceptionInformation[] = new DWORDLONG[15];
+		public DWORDLONG[] ExceptionInformation = new DWORDLONG[15];
 
 		@Override
 		protected List<String> getFieldOrder() {

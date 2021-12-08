@@ -794,7 +794,7 @@ public class CallDepthChangeInfo {
 		int offsetReg = 0;
 		Register offReg = null;
 		Scalar s = null;
-		Object obj[] = cu.getOpObjects(opIndex);
+		Object[] obj = cu.getOpObjects(opIndex);
 		for (int i = 0; obj != null && i < obj.length; i++) {
 			if (obj[i] instanceof Scalar) {
 				Scalar newsc = (Scalar) obj[i];
@@ -1014,7 +1014,7 @@ public class CallDepthChangeInfo {
 		FlowType fType = instr.getFlowType();
 		Address[] flows;
 		if (fType.isComputed()) {
-			Reference refs[] = instr.getReferencesFrom();
+			Reference[] refs = instr.getReferencesFrom();
 			flows = new Address[refs.length];
 			for (int ri = 0; ri < refs.length; ri++) {
 				Data data = program.getListing().getDataAt(refs[ri].getToAddress());

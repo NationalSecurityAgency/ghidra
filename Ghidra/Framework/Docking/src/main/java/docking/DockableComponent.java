@@ -322,7 +322,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		if (comp instanceof Container) {
 			Container c = (Container) comp;
 			c.addContainerListener(this);
-			Component comps[] = c.getComponents();
+			Component[] comps = c.getComponents();
 			for (Component comp2 : comps) {
 				initializeComponents(comp2);
 			}
@@ -345,7 +345,7 @@ public class DockableComponent extends JPanel implements ContainerListener {
 		if (comp instanceof Container) {
 			Container c = (Container) comp;
 			c.removeContainerListener(this);
-			Component comps[] = c.getComponents();
+			Component[] comps = c.getComponents();
 			for (Component comp2 : comps) {
 				deinitializeComponents(comp2);
 			}

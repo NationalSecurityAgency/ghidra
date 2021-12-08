@@ -108,7 +108,7 @@ public class SimpleBlockModel implements CodeBlockModel {
 	public CodeBlock getCodeBlockAt(Address addr, TaskMonitor monitor) throws CancelledException {
 
 		// First check out the Block cache
-		Object blocks[] = foundBlockMap.getObjects(addr);
+		Object[] blocks = foundBlockMap.getObjects(addr);
 		if (blocks.length > 0) {
 			CodeBlock block = (CodeBlock) blocks[0];
 			Address[] entryPts = block.getStartAddresses();
@@ -313,7 +313,7 @@ public class SimpleBlockModel implements CodeBlockModel {
 			return null;
 		}
 		// First check out the Block cache
-		Object blocks[] = foundBlockMap.getObjects(addr);
+		Object[] blocks = foundBlockMap.getObjects(addr);
 		if (blocks.length > 0) {
 			return (CodeBlock) blocks[0];
 		}
@@ -417,7 +417,7 @@ public class SimpleBlockModel implements CodeBlockModel {
 	 */
 	protected boolean isBlockStart(Address addr) {
 		// First check out the Block cache
-		Object blocks[] = foundBlockMap.getObjects(addr);
+		Object[] blocks = foundBlockMap.getObjects(addr);
 		if (blocks.length > 0) {
 			CodeBlock block = (CodeBlock) blocks[0];
 			if (block.getFirstStartAddress().equals(addr)) {

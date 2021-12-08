@@ -118,9 +118,9 @@ public class JumpTable {
 	private Address opAddress;
 
 	// Address corresponds to label entries.  If DEFAULT_VALUE, then entry is the default guard case, not a jump target.
-	private Address addressTable[];
-	private Integer labelTable[];
-	private LoadTable loadTable[];
+	private Address[] addressTable;
+	private Integer[] labelTable;
+	private LoadTable[] loadTable;
 	private BasicOverride override;
 
 	public JumpTable(AddressSpace preferredSpace) {

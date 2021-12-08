@@ -36,8 +36,8 @@ public class DyldChainedStartsInSegment implements StructConverter {
 	private long segment_offset;    // offset in memory to start of segment
 	private int max_valid_pointer;  // for 32-bit OS, any value beyond this is not a pointer
 	private short page_count;       // how many pages are in array
-	private short page_starts[];    // each entry is offset in each page of first element in chain
-	private short chain_starts[];   // TODO: used for some 32-bit formats with multiple starts per page 
+	private short[] page_starts;    // each entry is offset in each page of first element in chain
+	private short[] chain_starts;   // TODO: used for some 32-bit formats with multiple starts per page
 
 	static DyldChainedStartsInSegment createDyldChainedFixupHeader(
 			FactoryBundledWithBinaryReader reader) throws IOException {

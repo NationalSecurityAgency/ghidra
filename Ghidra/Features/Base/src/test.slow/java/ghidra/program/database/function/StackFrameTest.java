@@ -103,7 +103,7 @@ public class StackFrameTest extends AbstractGhidraHeadedIntegrationTest {
 		boolean growsNeg = frame.growsNegative();
 		DataType dt = new ByteDataType();
 
-		String names[] = new String[16];
+		String[] names = new String[16];
 
 		for (int i = 0; i < 16; i++) {
 			int offset = i - 8;

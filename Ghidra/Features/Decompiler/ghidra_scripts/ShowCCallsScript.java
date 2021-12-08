@@ -68,7 +68,7 @@ public class ShowCCallsScript extends GhidraScript {
 	        // call decompiler for all refs to current function
 	        Symbol sym = this.getSymbolAt(func.getEntryPoint());
 	
-	        Reference refs[] = sym.getReferences(null);
+	        Reference[] refs = sym.getReferences(null);
 	
 	        for (int i = 0; i < refs.length; i++) {
 	            if (monitor.isCancelled()) {

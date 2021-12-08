@@ -32,9 +32,9 @@ import ghidra.util.exception.DuplicateNameException;
 public class DyldChainedStartsInImage implements StructConverter {
 
 	private int seg_count;         // count of segment chain starts
-	private int seg_info_offset[];
+	private int[] seg_info_offset;
 
-	private DyldChainedStartsInSegment chainedStarts[];
+	private DyldChainedStartsInSegment[] chainedStarts;
 
 	static DyldChainedStartsInImage createDyldChainedStartsInImage(
 			FactoryBundledWithBinaryReader reader) throws IOException {

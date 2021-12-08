@@ -24,7 +24,7 @@ import ghidra.program.model.data.*;
 import ghidra.util.exception.InvalidInputException;
 
 public class CliCodedIndexUtils {	
-	public static DataType toDataType(CliStreamMetadata stream, int bitsUsed, CliTypeTable tables[]) {
+	public static DataType toDataType(CliStreamMetadata stream, int bitsUsed, CliTypeTable[] tables) {
 		int maxForWord = (1 << (WordDataType.dataType.getLength()*8 - bitsUsed)) - 1;
 		for (CliTypeTable table : tables) {
 			if (table != null && stream.getNumberRowsForTable(table) > maxForWord)
@@ -33,7 +33,7 @@ public class CliCodedIndexUtils {
 		return WordDataType.dataType;
 	}
 	
-	public static CliTypeTable getTableName(int codedIndex, int bitsUsed, CliTypeTable tables[]) throws InvalidInputException {
+	public static CliTypeTable getTableName(int codedIndex, int bitsUsed, CliTypeTable[] tables) throws InvalidInputException {
 		int mask = (2 << (bitsUsed - 1)) - 1; // 2 << (bitsUsed-1) == 2^(bitsUsed)
 		int tableBits = codedIndex & mask;
 		if (tableBits >= tables.length)
@@ -45,7 +45,7 @@ public class CliCodedIndexUtils {
 		return codedIndex >> bitsUsed;
 	}
 	
-	public static int readCodedIndex(BinaryReader reader, CliStreamMetadata stream, int bitsUsed, CliTypeTable tables[]) throws IOException {
+	public static int readCodedIndex(BinaryReader reader, CliStreamMetadata stream, int bitsUsed, CliTypeTable[] tables) throws IOException {
 		if (toDataType(stream, bitsUsed, tables).getLength() == WordDataType.dataType.getLength()) {
 			return reader.readNextShort();
 		}

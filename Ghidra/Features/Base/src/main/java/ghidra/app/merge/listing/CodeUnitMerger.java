@@ -285,7 +285,7 @@ class CodeUnitMerger extends AbstractListingMerger {
 		Listing latestListing = latestPgm.getListing();
 		Listing myListing = myPgm.getListing();
 		Listing originalListing = originalPgm.getListing();
-		Listing listings[] = new Listing[] { latestListing, myListing, originalListing };
+		Listing[] listings = new Listing[] { latestListing, myListing, originalListing };
 		// Create address ranges based on alignment between versions.
 		AddressRangeIterator iter = conflictSet.getAddressRanges();
 		while (iter.hasNext()) {

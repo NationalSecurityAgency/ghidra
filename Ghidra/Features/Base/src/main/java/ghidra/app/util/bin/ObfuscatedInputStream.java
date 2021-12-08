@@ -88,7 +88,7 @@ public class ObfuscatedInputStream extends InputStream {
 		try (InputStream is = new ObfuscatedInputStream(new FileInputStream(obfuscatedInputFile));
 				OutputStream os = new FileOutputStream(plainTextOutputFile)) {
 
-			byte buffer[] = new byte[4096];
+			byte[] buffer = new byte[4096];
 			int bytesRead;
 			while ((bytesRead = is.read(buffer)) > 0) {
 				os.write(buffer, 0, bytesRead);

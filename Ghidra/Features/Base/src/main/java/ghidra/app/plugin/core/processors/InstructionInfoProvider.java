@@ -322,7 +322,7 @@ class InstructionInfoProvider extends ComponentProviderAdapter implements Domain
 		}
 	}
 
-	private String getString(String strs[]) {
+	private String getString(String[] strs) {
 		if (strs == null) {
 			return "-none-";
 		}

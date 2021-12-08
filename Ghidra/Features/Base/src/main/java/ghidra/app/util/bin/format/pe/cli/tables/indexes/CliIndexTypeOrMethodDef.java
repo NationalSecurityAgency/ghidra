@@ -25,7 +25,7 @@ import ghidra.util.exception.InvalidInputException;
 
 public class CliIndexTypeOrMethodDef {
 	private static final int bitsUsed = 1;
-	private static final CliTypeTable tables[] = { CliTypeTable.TypeDef, CliTypeTable.MethodDef };
+	private static final CliTypeTable[] tables = { CliTypeTable.TypeDef, CliTypeTable.MethodDef };
 	
 	public static DataType toDataType(CliStreamMetadata stream) {
 		return CliCodedIndexUtils.toDataType(stream, bitsUsed, tables);

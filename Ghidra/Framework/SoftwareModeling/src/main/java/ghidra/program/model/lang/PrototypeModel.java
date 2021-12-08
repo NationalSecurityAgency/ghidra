@@ -246,7 +246,7 @@ public class PrototypeModel {
 			// customized storage has been used
 		}
 
-		DataType arr[] = new DataType[argIndex + 2];
+		DataType[] arr = new DataType[argIndex + 2];
 		arr[0] = VoidDataType.dataType;				// Assume the return type is void
 		for (int i = 0; i < argIndex; ++i) {
 			if (params != null && i < params.length) {
@@ -258,7 +258,7 @@ public class PrototypeModel {
 		}
 		arr[argIndex + 1] = dataType;
 
-		VariableStorage res[] = getStorageLocations(program, arr, false);
+		VariableStorage[] res = getStorageLocations(program, arr, false);
 		return res[res.length - 1];
 	}
 

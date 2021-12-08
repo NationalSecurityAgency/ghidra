@@ -690,7 +690,7 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 
 	private AddressSet getExecuteSet(Memory memory) {
 		AddressSet set = new AddressSet();
-		MemoryBlock blocks[] = memory.getBlocks();
+		MemoryBlock[] blocks = memory.getBlocks();
 		for (MemoryBlock block : blocks) {
 			if (block.isExecute()) {
 				set.addRange(block.getStart(), block.getEnd());
@@ -729,7 +729,7 @@ public class OperandReferenceAnalyzer extends AbstractAnalyzer {
 			return null;
 		}
 
-		Object opObjects[] = instr.getOpObjects(opIndex);
+		Object[] opObjects = instr.getOpObjects(opIndex);
 		// figure out the multiple away
 		long entryLen = 0;
 		for (Object opObject : opObjects) {

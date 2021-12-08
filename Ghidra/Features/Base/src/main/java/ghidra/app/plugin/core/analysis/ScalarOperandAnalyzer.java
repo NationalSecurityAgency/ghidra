@@ -108,7 +108,7 @@ public class ScalarOperandAnalyzer extends AbstractAnalyzer {
 		// Check for scalar operands that are a valid address
 		//
 		for (int i = 0; i < instr.getNumOperands(); i++) {
-			Object objs[] = instr.getOpObjects(i);
+			Object[] objs = instr.getOpObjects(i);
 			for (int j = 0; j < objs.length; j++) {
 				if (!(objs[j] instanceof Scalar)) {
 					continue;
@@ -227,7 +227,7 @@ public class ScalarOperandAnalyzer extends AbstractAnalyzer {
 
 		//check that the target does not fall inside a defined function
 		if (checkOffcutFuncRef(program, addr)) {
-			Object objs[] = instr.getOpObjects(opIndex);
+			Object[] objs = instr.getOpObjects(opIndex);
 			checkForJumpTable(program, instr, opIndex, objs, addr);
 			return false;
 		}
@@ -246,8 +246,8 @@ public class ScalarOperandAnalyzer extends AbstractAnalyzer {
 		return true;
 	}
 
-	void checkForJumpTable(Program program, Instruction refInstr, int opIndex, Object opObjects[],
-			Address addr) {
+	void checkForJumpTable(Program program, Instruction refInstr, int opIndex, Object[] opObjects,
+                           Address addr) {
 		Instruction instr = program.getListing().getInstructionContaining(addr);
 
 		if (instr == null) {

@@ -193,7 +193,7 @@ public enum OpCode {
 		return false;
 	}
 
-	static final String opcode_name[] = { "BLANK", "COPY", "LOAD", "STORE", "BRANCH", "CBRANCH",
+	static final String[] opcode_name = { "BLANK", "COPY", "LOAD", "STORE", "BRANCH", "CBRANCH",
 		"BRANCHIND", "CALL", "CALLIND", "CALLOTHER", "RETURN", "INT_EQUAL", "INT_NOTEQUAL",
 		"INT_SLESS", "INT_SLESSEQUAL", "INT_LESS", "INT_LESSEQUAL", "INT_ZEXT", "INT_SEXT",
 		"INT_ADD", "INT_SUB", "INT_CARRY", "INT_SCARRY", "INT_SBORROW", "INT_2COMP", "INT_NEGATE",
@@ -209,7 +209,7 @@ public enum OpCode {
 		return opcode_name[op.ordinal()];
 	}
 
-	static final int opcode_indices[] = { 0, 39, 37, 40, 38, 4, 6, 60, 7, 8, 9, 64, 5, 57, 1, 68, 66,
+	static final int[] opcode_indices = { 0, 39, 37, 40, 38, 4, 6, 60, 7, 8, 9, 64, 5, 57, 1, 68, 66,
 			61, 71, 55, 52, 47, 48, 41, 43, 44, 49, 46, 51, 42, 53, 50, 58, 70, 54, 24, 19, 27, 21,
 			33, 11, 29, 15, 16, 32, 25, 12, 28, 35, 30, 23, 22, 34, 18, 13, 14, 36, 31, 20, 26, 17,
 			65, 2, 69, 62, 72, 10, 59, 67, 3, 63, 56, 45 };

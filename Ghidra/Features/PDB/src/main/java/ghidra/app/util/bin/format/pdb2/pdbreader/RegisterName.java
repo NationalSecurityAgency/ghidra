@@ -22,7 +22,7 @@ import java.util.*;
  */
 public class RegisterName extends AbstractParsableItem {
 
-	private static final String regX86[] = { "None", "al", "cl", "dl", "bl", "ah", "ch", "dh", "bh",
+	private static final String[] regX86 = { "None", "al", "cl", "dl", "bl", "ah", "ch", "dh", "bh",
 		"ax", "cx", "dx", "bx", "sp", "bp", "si", "di", "eax", "ecx", "edx", "ebx", "esp", "ebp",
 		"esi", "edi", "es", "cs", "ss", "ds", "fs", "gs", "ip", "flags", "eip", "eflags", "???",
 		"???", "???", "???", "???", "temp", "temph", "quote", "pcdr3", "pcdr4", "pcdr5", "pcdr6",
@@ -35,7 +35,7 @@ public class RegisterName extends AbstractParsableItem {
 		"???", "???", "???", "st(0)", "st(1)", "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)",
 		"ctrl", "stat", "tag", "fpip", "fpcs", "fpdo", "fpds", "fpeip", "fped0" };
 
-	private static final String regAmd64[] = { "None", "al", "cl", "dl", "bl", "ah", "ch", "dh",
+	private static final String[] regAmd64 = { "None", "al", "cl", "dl", "bl", "ah", "ch", "dh",
 		"bh", "ax", "cx", "dx", "bx", "sp", "bp", "si", "di", "eax", "ecx", "edx", "ebx", "esp",
 		"ebp", "esi", "edi", "es", "cs", "ss", "ds", "fs", "gs", "flags", "rip", "eflags", "???",
 		"???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???",
@@ -71,7 +71,7 @@ public class RegisterName extends AbstractParsableItem {
 		"r11w", "r12w", "r13w", "r14w", "r15w", "r8d", "r9d", "r10d", "r11d", "r12d", "r13d",
 		"r14d", "r15d" };
 
-	private static final String regMips[] = { "None", "???", "???", "???", "???", "???", "???",
+	private static final String[] regMips = { "None", "???", "???", "???", "???", "???", "???",
 		"???", "???", "???", "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3", "t0", "t1", "t2",
 		"t3", "t4", "t5", "t6", "t7", "s0", "s1", "t2", "s3", "s4", "s5", "s6", "s7", "t8", "t9",
 		"k0", "k1", "gp", "sp", "s8", "ra", "lo", "hi", "???", "???", "???", "???", "???", "???",
@@ -82,14 +82,14 @@ public class RegisterName extends AbstractParsableItem {
 
 	// Indices 41-48 are actually:
 	//   R68_MMUSR030, R68_MMUSR, R68_URP, R68_DTT0, R68_DTT1, R68_ITT0, R68_ITT1
-	private static final String reg68k[] = { "CCR", "SR", "SUP", "MSP", "SFC", "DFC", "CACR", "VBR",
+	private static final String[] reg68k = { "CCR", "SR", "SUP", "MSP", "SFC", "DFC", "CACR", "VBR",
 		"CARR", "ISP", "PC", "???", "FPCR", "FPSR", "FPIAR", "???", "FPO", "FP1", "FP2", "FP3",
 		"FP4", "FP5", "FP6", "FP7", "???", "???", "???", "???", "???", "???", "???", "???", "???",
 		"???", "???", "PSR", "PCSR", "VAL", "CRP", "SRP", "DRP", "TC", "AC", "SCC", "CAL", "TT0",
 		"TT1", "???", "BAD0", "BAD1", "BAD2", "BAD3", "BAD4", "BAD5", "BAD6", "BAD7", "BAC0",
 		"BAC1", "BAC2", "BAC3", "BAC4", "BAC5", "BAC6", "BAC7", };
 
-	private static final String regAlpha[] = { "None", "???", "???", "???", "???", "???", "???",
+	private static final String[] regAlpha = { "None", "???", "???", "???", "???", "???", "???",
 		"???", "???", "???", "$f0", "$f1", "$f2", "$f3", "$f4", "$f5", "$f6", "$f7", "$f8", "$f9",
 		"$f10", "$f11", "$f12", "$f13", "$f14", "$f15", "$f16", "$f17", "$f18", "$f19", "$f20",
 		"$f21", "$f22", "$f23", "$f24", "$f25", "$f26", "$f27", "$f28", "$f29", "$f30", "$f31",
@@ -97,7 +97,7 @@ public class RegisterName extends AbstractParsableItem {
 		"fp", "a0", "a1", "a2", "a3", "a4", "a5", "t8", "t9", "t10", "t11", "ra", "t12", "at", "gp",
 		"sp", "zero", "Fpcr", "Fir", "Psr", "FltFsr" };
 
-	private static final String regPpc[] =
+	private static final String[] regPpc =
 		{ "None", "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12",
 			"r13", "r14", "r15", "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23", "r24",
 			"r25", "r26", "r27", "r28", "r29", "r30", "r31", "cr", "cr0", "cr1", "cr2", "cr3",
@@ -105,7 +105,7 @@ public class RegisterName extends AbstractParsableItem {
 			"f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17", "f18", "f19", "f20", "f21",
 			"f22", "f23", "f24", "f25", "f26", "f27", "f28", "f29", "f30", "f31", "Fpscr", "Msr" };
 
-	private static final String regSh[] = { "None", "???", "???", "???", "???", "???", "???", "???",
+	private static final String[] regSh = { "None", "???", "???", "???", "???", "???", "???", "???",
 		"???", "???", "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11",
 		"r12", "r13", "fp", "sp", "???", "???", "???", "???", "???", "???", "???", "???", "???",
 		"???", "???", "???", "gbr", "pr", "mach", "macl", "???", "???", "???", "???", "???", "???",

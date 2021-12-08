@@ -82,7 +82,7 @@ public class MonitoredOutputStream extends OutputStream {
 	 * @see        java.io.FilterOutputStream#write(byte[], int, int)
 	 */
 	@Override
-	public void write(byte b[]) throws IOException {
+	public void write(byte[] b) throws IOException {
 		write(b, 0, b.length);
 	}
 
@@ -107,7 +107,7 @@ public class MonitoredOutputStream extends OutputStream {
 	 * @see        java.io.FilterOutputStream#write(int)
 	 */
 	@Override
-	public void write(byte b[], int off, int len) throws IOException {
+	public void write(byte[] b, int off, int len) throws IOException {
 		out.write(b, off, len);
 		smallCount += len;
 

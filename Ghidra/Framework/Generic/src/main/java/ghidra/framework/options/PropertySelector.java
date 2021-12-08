@@ -38,7 +38,7 @@ public class PropertySelector extends JComboBox<String> implements ItemListener 
 	 */
 	public PropertySelector(PropertyEditor pe) {
 		propertyEditor = pe;
-		String tags[] = propertyEditor.getTags();
+		String[] tags = propertyEditor.getTags();
 		for (String tag : tags) {
 			addItem(tag);
 		}

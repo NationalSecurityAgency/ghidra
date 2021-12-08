@@ -111,7 +111,7 @@ public class MultiComparableArrayIterator<T extends Comparable<T>> {
 
 		// Find next variable.
 		T compNext = null;
-		boolean next[] = new boolean[comps.length];
+		boolean[] next = new boolean[comps.length];
 //		for (int i = (forward ? 0 : comps.length-1); 
 //				(forward ? (i < comps.length) : (i >= 0)); 
 //				i=(forward ? i+1 : i-1)) {

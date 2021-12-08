@@ -75,7 +75,7 @@ class MemoryMapModel extends AbstractSortedTableModel<MemoryBlock> {
 	private ArrayList<MemoryBlock> memList;
 	private MemoryMapProvider provider;
 
-	private final static String COLUMN_NAMES[] =
+	private final static String[] COLUMN_NAMES =
 		{ NAME_COL, START_COL, END_COL, LENGTH_COL, READ_COL, WRITE_COL, EXECUTE_COL, VOLATILE_COL,
 			OVERLAY_COL, BLOCK_TYPE_COL, INIT_COL, BYTE_SOURCE_COL, SOURCE_COL, COMMENT_COL };
 

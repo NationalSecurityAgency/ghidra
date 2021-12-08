@@ -535,7 +535,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 			return;
 		}
 		ArrayList<MemoryBlock> delBlocks = new ArrayList<>();
-		int delRows[] = memTable.getSelectedRows();
+		int[] delRows = memTable.getSelectedRows();
 		for (int element : delRows) {
 			MemoryBlock block = mapModel.getBlockAt(element);
 			delBlocks.add(block);
@@ -640,7 +640,7 @@ class MemoryMapProvider extends ComponentProviderAdapter {
 	 */
 	private void mergeBlocks() {
 		ArrayList<MemoryBlock> blocks = new ArrayList<>();
-		int rows[] = memTable.getSelectedRows();
+		int[] rows = memTable.getSelectedRows();
 		for (int element : rows) {
 			MemoryBlock block = mapModel.getBlockAt(element);
 			blocks.add(block);

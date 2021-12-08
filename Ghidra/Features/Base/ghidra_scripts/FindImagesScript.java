@@ -118,7 +118,7 @@ public class FindImagesScript extends GhidraScript {
 
 	List<Address> scanForGIF87aImages() {
 
-		byte gifBytes[] = new byte[6];
+		byte[] gifBytes = new byte[6];
 		gifBytes[0] = (byte) 0x47;
 		gifBytes[1] = (byte) 0x49;
 		gifBytes[2] = (byte) 0x46;
@@ -132,7 +132,7 @@ public class FindImagesScript extends GhidraScript {
 
 	List<Address> scanForGIF89aImages() {
 
-		byte gifBytes[] = new byte[6];
+		byte[] gifBytes = new byte[6];
 		gifBytes[0] = (byte) 0x47;
 		gifBytes[1] = (byte) 0x49;
 		gifBytes[2] = (byte) 0x46;
@@ -146,7 +146,7 @@ public class FindImagesScript extends GhidraScript {
 
 	List<Address> scanForPNGs() {
 
-		byte pngBytes[] = new byte[8];
+		byte[] pngBytes = new byte[8];
 		pngBytes[0] = (byte) 0x89;
 		pngBytes[1] = (byte) 0x50;
 		pngBytes[2] = (byte) 0x4e;
@@ -165,7 +165,7 @@ public class FindImagesScript extends GhidraScript {
 		Memory memory = currentProgram.getMemory();
 		MemoryBlock[] blocks = memory.getBlocks();
 
-		byte maskBytes[] = null;
+		byte[] maskBytes = null;
 
 		List<Address> foundImages = new ArrayList<Address>();
 

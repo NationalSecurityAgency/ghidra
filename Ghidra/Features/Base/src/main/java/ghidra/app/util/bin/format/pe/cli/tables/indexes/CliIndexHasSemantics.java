@@ -25,7 +25,7 @@ import ghidra.util.exception.InvalidInputException;
 
 public class CliIndexHasSemantics {
 	private static final int bitsUsed = 1;
-	private static final CliTypeTable tables[] = { CliTypeTable.Event, CliTypeTable.Property };
+	private static final CliTypeTable[] tables = { CliTypeTable.Event, CliTypeTable.Property };
 	
 	public static DataType toDataType(CliStreamMetadata stream) {
 		return CliCodedIndexUtils.toDataType(stream, bitsUsed, tables);

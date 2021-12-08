@@ -295,7 +295,7 @@ public class AddressTableAnalyzer extends AbstractAnalyzer {
 		// trim from the first offcut entry on
 		Address start = tableEntry.getTopAddress();
 		int tableLen = tableEntry.getNumberAddressEntries();
-		Address addrs[] = tableEntry.getTableElements();
+		Address[] addrs = tableEntry.getTableElements();
 		for (int i = 0; i < tableLen; i++) {
 			Address tableEntryAddr = start.add(i * 4);
 			Address targetAddr = addrs[i];

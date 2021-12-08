@@ -141,7 +141,7 @@ public class FunctionResultStateStackAnalysisCmd extends BackgroundCommand {
 				while (iter.hasNext()) {
 					monitor.checkCanceled();
 					Address fromAddr = iter.next();
-					Reference refs[] =
+					Reference[] refs =
 						program.getReferenceManager().getFlowReferencesFrom(fromAddr);
 					for (Reference ref : refs) {
 						if (ref.getReferenceType().isCall()) {

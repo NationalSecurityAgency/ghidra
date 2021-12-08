@@ -135,7 +135,7 @@ public class CliTableMethodDef extends CliAbstractTable {
 				paramsStr = "";
 			}
 			else {
-				String params[] = new String[this.nextRowParamIndex - this.paramIndex];
+				String[] params = new String[this.nextRowParamIndex - this.paramIndex];
 				for (int i = 0; i < params.length; i++) {
 					params[i] = getRowRepresentationSafe(CliTypeTable.Param, paramIndex + i);
 				}
@@ -169,7 +169,7 @@ public class CliTableMethodDef extends CliAbstractTable {
 				paramsStr = "";
 			}
 			else {
-				String params[] = new String[this.nextRowParamIndex - this.paramIndex];
+				String[] params = new String[this.nextRowParamIndex - this.paramIndex];
 				for (int i = 0; i < params.length; i++) {
 					params[i] = getRowShortRepSafe(CliTypeTable.Param, paramIndex + i);
 				}
@@ -301,7 +301,7 @@ public class CliTableMethodDef extends CliAbstractTable {
 
 			int maxSequence = 0;
 			int stackOffset = 0;
-			CliParam paramTypes[] = methodSig.getParamTypes();
+			CliParam[] paramTypes = methodSig.getParamTypes();
 			int paramCount = paramTypes.length;
 			CliTableParam paramTable = (CliTableParam) metadataStream.getTable(CliTypeTable.Param);
 

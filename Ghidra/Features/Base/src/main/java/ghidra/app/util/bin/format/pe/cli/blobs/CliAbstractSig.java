@@ -434,7 +434,7 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		private long dataOffset;
 
 		private CliRetType retType;
-		private CliParam params[];
+		private CliParam[] params;
 		private int sizeOfCount;
 		private byte flags;
 		private int genericParamCount;
@@ -1182,12 +1182,12 @@ public abstract class CliAbstractSig extends CliBlob implements CliRepresentable
 		private int rankBytes;
 		private int numSizes;
 		private int numSizesBytes;
-		private int size[];
-		private int sizeBytes[];
+		private int[] size;
+		private int[] sizeBytes;
 		private int numLoBounds;
 		private int numLoBoundsBytes;
-		private int loBound[];
-		private int loBoundBytes[];
+		private int[] loBound;
+		private int[] loBoundBytes;
 
 		public CliArrayShape(BinaryReader reader) throws IOException {
 			long origIndex = reader.getPointerIndex();

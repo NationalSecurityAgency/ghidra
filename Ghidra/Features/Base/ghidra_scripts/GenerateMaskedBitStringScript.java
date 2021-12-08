@@ -57,7 +57,7 @@ public class GenerateMaskedBitStringScript extends GhidraScript {
 		println("\nTotal count: " + count);
 	}
 
-	private String createMaskedBitString(byte values[], byte masks[]) {
+	private String createMaskedBitString(byte[] values, byte[] masks) {
 
 		String bitString = new String();
 

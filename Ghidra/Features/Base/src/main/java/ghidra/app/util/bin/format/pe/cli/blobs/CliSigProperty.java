@@ -27,7 +27,7 @@ public class CliSigProperty extends CliAbstractSig {
 	private int sizeOfCount;
 	private byte flags;
 	private CliRetType returnType;
-	private CliParam params[];
+	private CliParam[] params;
 
 	private final int CLISIGPROPERTY_PROLOG = 0x08;
 	private final int CLISIGPROPERTY_FLAGS_HASTHIS = 0x20;

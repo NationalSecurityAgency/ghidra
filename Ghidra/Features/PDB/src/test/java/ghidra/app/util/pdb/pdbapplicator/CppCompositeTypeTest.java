@@ -224,7 +224,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 
 			@Override
 			public int getInt(Address addr) throws MemoryAccessException {
-				byte bytes[] = new byte[4];
+				byte[] bytes = new byte[4];
 				int num = getBytes(addr, bytes, 0, 4);
 				assertEquals(num, 4);
 				return LittleEndianDataConverter.INSTANCE.getInt(bytes);
@@ -232,7 +232,7 @@ public class CppCompositeTypeTest extends AbstractGenericTest {
 
 			@Override
 			public long getLong(Address addr) throws MemoryAccessException {
-				byte bytes[] = new byte[8];
+				byte[] bytes = new byte[8];
 				int num = getBytes(addr, bytes, 0, 8);
 				assertEquals(num, 8);
 				return LittleEndianDataConverter.INSTANCE.getLong(bytes);

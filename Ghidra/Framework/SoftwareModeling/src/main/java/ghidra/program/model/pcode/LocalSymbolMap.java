@@ -154,7 +154,7 @@ public class LocalSymbolMap {
 	public void grabFromFunction(boolean includeDefaultNames) {
 		ArrayList<String> mergeNames = null;
 		Function dbFunction = func.getFunction();
-		Variable locals[] = dbFunction.getLocalVariables();
+		Variable[] locals = dbFunction.getLocalVariables();
 		for (Variable local : locals) {
 			if (!local.isValid()) {
 				// exclude locals which don't have valid storage
@@ -519,7 +519,7 @@ public class LocalSymbolMap {
 						if (instr == null) {
 							continue;
 						}
-						long hash[] = DynamicHash.calcConstantHash(instr, eqValue);
+						long[] hash = DynamicHash.calcConstantHash(instr, eqValue);
 						if (hash.length == 0) {
 							continue;
 						}

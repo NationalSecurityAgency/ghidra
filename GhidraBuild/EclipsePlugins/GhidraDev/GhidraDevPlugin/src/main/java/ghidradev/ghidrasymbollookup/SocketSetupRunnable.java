@@ -95,7 +95,7 @@ public class SocketSetupRunnable implements Runnable {
 
 	private String init() {
 		String projectName = GhidraSymbolLookupPreferences.getSymbolLookupProjectName();
-		final String errorMessageContainer[] = { "" };
+		final String[] errorMessageContainer = { "" };
 		Display.getDefault().syncExec(() -> {
 			while (!isInitialized) {
 				if (projectName == null) {

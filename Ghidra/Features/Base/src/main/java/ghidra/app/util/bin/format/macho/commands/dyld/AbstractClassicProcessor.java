@@ -74,7 +74,7 @@ public abstract class AbstractClassicProcessor {
 
 		int fileType = header.getFileType();
 
-		byte originalBytes[] = new byte[0];
+		byte[] originalBytes = new byte[0];
 
 		switch (fileType) {
 

@@ -221,7 +221,7 @@ public class DBTraceFunctionSymbolView
 	// TODO: Move this into a FunctionUtilities class?
 	public static Variable getReferencedVariable(Function function, Address instrAddr,
 			Address storageAddr, int size, boolean isRead, Language language) {
-		Variable variables[] = function.getAllVariables();
+		Variable[] variables = function.getAllVariables();
 
 		Parameter paramCandidate = null;
 		List<Variable> localCandidates = null;

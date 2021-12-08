@@ -25,7 +25,7 @@ import ghidra.util.exception.InvalidInputException;
 
 public class CliIndexHasConstant {
 	private static final int bitsUsed = 2;
-	private static final CliTypeTable tables[] = { CliTypeTable.Field, CliTypeTable.Param, CliTypeTable.Property };
+	private static final CliTypeTable[] tables = { CliTypeTable.Field, CliTypeTable.Param, CliTypeTable.Property };
 	
 	public static DataType toDataType(CliStreamMetadata stream) {
 		return CliCodedIndexUtils.toDataType(stream, bitsUsed, tables);

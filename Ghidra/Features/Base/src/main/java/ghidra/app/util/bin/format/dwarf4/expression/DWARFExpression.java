@@ -30,7 +30,7 @@ import ghidra.util.NumericUtilities;
  * Use a {@link DWARFExpressionEvaluator} to execute a {@link DWARFExpression}.
  */
 public class DWARFExpression {
-	static long EMPTY_OPERANDS_VALUE[] = {};
+	static long[] EMPTY_OPERANDS_VALUE = {};
 
 	private final List<DWARFExpressionOperation> operations;
 

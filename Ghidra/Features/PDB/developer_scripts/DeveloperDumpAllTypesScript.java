@@ -80,7 +80,7 @@ public class DeveloperDumpAllTypesScript extends GhidraScript {
 		PluginTool tool = state.getTool();
 		DataTypeManagerService service = tool.getService(DataTypeManagerService.class);
 		DataTypeManager[] dataTypeManagers = service.getDataTypeManagers();
-		String names[] = new String[dataTypeManagers.length];
+		String[] names = new String[dataTypeManagers.length];
 		String initialDtmChoice = names[0];
 		try {
 			initialDtmChoice = currentProgram.getDataTypeManager().getName();

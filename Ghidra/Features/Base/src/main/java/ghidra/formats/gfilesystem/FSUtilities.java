@@ -360,7 +360,7 @@ public class FSUtilities {
 	 */
 	public static long streamCopy(InputStream is, OutputStream os, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		byte buffer[] = new byte[FileUtilities.IO_BUFFER_SIZE];
+		byte[] buffer = new byte[FileUtilities.IO_BUFFER_SIZE];
 		int bytesRead;
 		long totalBytesCopied = 0;
 		while ((bytesRead = is.read(buffer)) > 0) {

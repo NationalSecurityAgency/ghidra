@@ -812,7 +812,7 @@ public class RTTIWindowsClassRecoverer extends RTTIClassRecoverer {
 		// this currently will workn only if there is a created reference
 		// TODO: get ibo bytes and figure out what the ibo ref address would be
 		if (addressSize == 64) {
-			Reference refs[] = extendedFlatAPI.getReferencesFrom(address);
+			Reference[] refs = extendedFlatAPI.getReferencesFrom(address);
 			if (refs.length == 0) {
 				return null;
 			}

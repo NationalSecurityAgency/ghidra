@@ -1193,7 +1193,7 @@ public class DirectedGraph {
 	protected void copyEdgeAttributeValues(Edge newe, Edge e, DirectedGraph other) {
 
 		AttributeManager<Edge> aman = other.edgeAttributes();
-		String vamNames[] = aman.getAttributeNames();
+		String[] vamNames = aman.getAttributeNames();
 		for (int i = 0; i < vamNames.length; i++) {
 			ObjectAttribute<Edge> att = (ObjectAttribute<Edge>) aman.getAttribute(vamNames[i]);
 			if (!this.edgeAttributes().hasAttributeNamed(vamNames[i])) {
@@ -1238,7 +1238,7 @@ public class DirectedGraph {
 	protected void copyVertexAttributeValues(Vertex vert, DirectedGraph other) {
 
 		AttributeManager<Vertex> aman = other.vertexAttributes();
-		String vamNames[] = aman.getAttributeNames();
+		String[] vamNames = aman.getAttributeNames();
 		for (int i = 0; i < vamNames.length; i++) {
 			ObjectAttribute<Vertex> att = (ObjectAttribute<Vertex>) aman.getAttribute(vamNames[i]);
 			if (!this.vertexAttributes().hasAttributeNamed(vamNames[i])) {

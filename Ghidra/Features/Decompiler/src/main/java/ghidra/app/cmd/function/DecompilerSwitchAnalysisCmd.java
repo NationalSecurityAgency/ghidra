@@ -220,7 +220,7 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 			new AddLabelCmd(table.getSwitchAddress(), "switchD", SourceType.ANALYSIS);
 
 		// check if the table is already labeled
-		Symbol syms[] = program.getSymbolTable().getSymbols(table.getSwitchAddress());
+		Symbol[] syms = program.getSymbolTable().getSymbols(table.getSwitchAddress());
 		for (Symbol sym : syms) {
 			if (sym.getName(false).startsWith(tableNameLabel.getLabelName())) {
 				return;
@@ -269,7 +269,7 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 			}
 		}
 
-		JumpTable.LoadTable loadtable[] = table.getLoadTables();
+		JumpTable.LoadTable[] loadtable = table.getLoadTables();
 		for (LoadTable element : loadtable) {
 			labelLoadTable(element, switchCases, caseSymbols, space, monitor);
 		}
@@ -377,7 +377,7 @@ public class DecompilerSwitchAnalysisCmd extends BackgroundCommand {
 
 		String dataName = "switchdataD_" + loadtable.getAddress();
 		// check if the table is already labeled
-		Symbol syms[] = program.getSymbolTable().getSymbols(tableAddr);
+		Symbol[] syms = program.getSymbolTable().getSymbols(tableAddr);
 		for (Symbol sym : syms) {
 			if (sym.getName(false).startsWith(dataName)) {
 				return;

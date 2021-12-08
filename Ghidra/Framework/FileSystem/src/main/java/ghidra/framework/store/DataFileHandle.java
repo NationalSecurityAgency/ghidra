@@ -40,7 +40,7 @@ public interface DataFileHandle {
      *               all the bytes.
      * @exception  IOException   if an I/O error occurs.       
      */
-    public void read(byte b[]) throws IOException;
+    public void read(byte[] b) throws IOException;
 
     /**
      * Reads exactly <code>len</code> bytes from this file into the byte 
@@ -56,7 +56,7 @@ public interface DataFileHandle {
      *               all the bytes.
      * @exception  IOException   if an I/O error occurs.
      */
-    public void read(byte b[], int off, int len) throws IOException;
+    public void read(byte[] b, int off, int len) throws IOException;
 
     /**
      * Attempts to skip over <code>n</code> bytes of input discarding the 
@@ -92,7 +92,7 @@ public interface DataFileHandle {
      * @param      b   the data.
      * @exception  IOException  if an I/O error occurs.
      */
-    public void write(byte b[]) throws IOException;
+    public void write(byte[] b) throws IOException;
 
     /**
      * Writes <code>len</code> bytes from the specified byte array 
@@ -103,7 +103,7 @@ public interface DataFileHandle {
      * @param      len   the number of bytes to write.
      * @exception  IOException  if an I/O error occurs.
      */
-    public void write(byte b[], int off, int len) throws IOException;
+    public void write(byte[] b, int off, int len) throws IOException;
 
     /**
      * Sets the file-pointer offset, measured from the beginning of this 

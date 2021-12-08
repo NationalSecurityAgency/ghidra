@@ -837,7 +837,7 @@ public class PdbResearch {
 		int indexNumber = pdb.getTypeProgramInterface().getTypeIndexMin();
 		int indexLimit = pdb.getTypeProgramInterface().getTypeIndexMaxExclusive();
 		int num = indexLimit - indexNumber;
-		boolean covered[] = new boolean[indexLimit];
+		boolean[] covered = new boolean[indexLimit];
 
 		monitor.initialize(num);
 		monitor.setMessage("Study: NAMES_START " + (indexLimit - indexNumber));

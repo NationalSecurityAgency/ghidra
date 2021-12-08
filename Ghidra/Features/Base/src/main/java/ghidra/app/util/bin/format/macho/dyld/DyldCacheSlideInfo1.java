@@ -44,8 +44,8 @@ public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 	private int entries_count;
 	private int entries_size;
 
-	private short toc[];
-	private byte bits[][];
+	private short[] toc;
+	private byte[][] bits;
 
 	public int getTocOffset() {
 		return toc_offset;
@@ -138,7 +138,7 @@ public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 
 		List<Address> unchainedLocList = new ArrayList<>(1024);
 
-		byte origBytes[] = new byte[8];
+		byte[] origBytes = new byte[8];
 
 		monitor.setMessage("Fixing V1 chained data page pointers...");
 
@@ -156,7 +156,7 @@ public class DyldCacheSlideInfo1 extends DyldCacheSlideInfoCommon {
 				continue;
 			}
 
-			byte entry[] = bits[entryIndex];
+			byte[] entry = bits[entryIndex];
 
 			long page = dataPageStart + (4096L * tocIndex);
 			for (int pageEntriesIndex = 0; pageEntriesIndex < 128; ++pageEntriesIndex) {

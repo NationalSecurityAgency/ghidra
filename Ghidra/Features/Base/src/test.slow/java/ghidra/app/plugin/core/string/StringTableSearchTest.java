@@ -1254,7 +1254,7 @@ public class StringTableSearchTest extends AbstractGhidraHeadedIntegrationTest {
 		// make sure new label is made primary and second label is still there as secondary one
 		sym = program.getSymbolTable().getPrimarySymbol(addr(0x40503c));
 		assertEquals("s_String2", sym.getName());
-		Symbol symArray[] = program.getSymbolTable().getSymbols(addr(0x40503c));
+		Symbol[] symArray = program.getSymbolTable().getSymbols(addr(0x40503c));
 		assertEquals(2, symArray.length);
 		assertEquals("s_String2", symArray[0].getName());
 		assertEquals("testLabel", symArray[1].getName());

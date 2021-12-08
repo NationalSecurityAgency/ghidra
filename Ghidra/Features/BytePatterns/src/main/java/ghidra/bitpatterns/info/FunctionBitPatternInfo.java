@@ -133,7 +133,7 @@ public class FunctionBitPatternInfo {
 		}
 		numPreBytes = Math.max(numPreBytes, params.getNumPreBytes());
 
-		byte preByteArray[] = getBytesAgainstFlow(numPreBytes, mem, adjustedAddress);
+		byte[] preByteArray = getBytesAgainstFlow(numPreBytes, mem, adjustedAddress);
 		if (preByteArray != null) {
 			this.preBytes = getBytesAsString(preByteArray);
 		}

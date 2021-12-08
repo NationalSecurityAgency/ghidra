@@ -235,7 +235,7 @@ class DmgServerProcessManager implements Closeable {
 		String classPath = buildClasspath();
 
 		// library path setup
-		String envp[] = buildEnvironmentVariables();
+		String[] envp = buildEnvironmentVariables();
 
 		String java =
 			System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";

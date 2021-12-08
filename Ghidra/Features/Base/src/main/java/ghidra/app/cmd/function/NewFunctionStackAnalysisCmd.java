@@ -560,7 +560,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 		int opIndex = 0;
 //		int opLocation = -1;
 		for (; opIndex < cu.getNumOperands(); opIndex++) {
-			Object obj[] = cu.getOpObjects(opIndex);
+			Object[] obj = cu.getOpObjects(opIndex);
 //	        if (obj.length <= 1) {
 //	        	continue;
 //	        }
@@ -707,7 +707,7 @@ public class NewFunctionStackAnalysisCmd extends BackgroundCommand {
 			}
 		}
 		else {
-			Object results[] = instr.getResultObjects();
+			Object[] results = instr.getResultObjects();
 			if (results.length == 1 && results[0] instanceof Register) {
 				return ((Register) results[0]).getMinimumByteSize();
 			}

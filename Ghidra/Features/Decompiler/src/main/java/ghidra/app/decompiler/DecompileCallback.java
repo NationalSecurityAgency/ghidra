@@ -574,7 +574,7 @@ public class DecompileCallback {
 			curspace = curspace.getParentNamespace();
 			curId = curspace.getID();
 		}
-		long path[] = new long[pathSize];
+		long[] path = new long[pathSize];
 		curspace = namespace;
 		path[0] = startId;
 		for (int i = 1; i < pathSize; ++i) {
@@ -1086,7 +1086,7 @@ public class DecompileCallback {
 			containedFunc.getBody());
 		while (iter.hasNext()) {
 			Address changeAddr = iter.next();
-			Reference refs[] =
+			Reference[] refs =
 				func.getProgram().getReferenceManager().getFlowReferencesFrom(changeAddr);
 			for (Reference element : refs) {
 				if (element.getToAddress().equals(addr)) {

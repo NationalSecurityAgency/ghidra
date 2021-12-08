@@ -43,7 +43,7 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 	private int page_size;
 	private int page_starts_count;
 	private long auth_value_add;
-	private short page_starts[];
+	private short[] page_starts;
 
 	public int getPageSize() {
 		return page_size;
@@ -172,7 +172,7 @@ public class DyldCacheSlideInfo3 extends DyldCacheSlideInfoCommon {
 
 		List<Address> unchainedLocList = new ArrayList<>(1024);
 
-		byte origBytes[] = new byte[8];
+		byte[] origBytes = new byte[8];
 
 		long delta = -1;
 		while (delta != 0) {

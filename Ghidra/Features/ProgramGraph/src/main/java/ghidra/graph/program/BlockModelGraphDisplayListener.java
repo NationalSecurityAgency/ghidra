@@ -129,7 +129,7 @@ public class BlockModelGraphDisplayListener extends AddressBasedGraphDisplayList
 			return;
 		}
 
-		CodeBlock blocks[] = null;
+		CodeBlock[] blocks = null;
 		if (blockModel != null) {
 			CodeBlock block = blockModel.getCodeBlockAt(blockAddr, TaskMonitor.DUMMY);
 			if (block != null) {

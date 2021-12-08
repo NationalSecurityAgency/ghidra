@@ -29,7 +29,7 @@ public class OpTplWalker {
 	private ConstructState point;		// The current node being visited
 	private OpTpl[] oparray;			// current array of ops being traversed
 	private int depth;					// Depth of current node within the tree
-	private int breadcrumb[];			// Path of operands from the root
+	private int[] breadcrumb;			// Path of operands from the root
 	private int maxsize;				// Maximum number of directives for this point
 	private int sectionnum;
 

@@ -174,7 +174,7 @@ public class CreateEnumFromSelectionTest extends AbstractGhidraHeadedIntegration
 		assertNotNull(newEnumNode);
 
 		Enum newEnum = (Enum) newEnumNode.getDataType();
-		long values[] = newEnum.getValues();
+		long[] values = newEnum.getValues();
 
 		assertEquals(values.length, 6);
 

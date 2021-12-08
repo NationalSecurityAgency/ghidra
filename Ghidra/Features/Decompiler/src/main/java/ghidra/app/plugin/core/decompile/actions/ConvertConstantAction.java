@@ -111,7 +111,7 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 	 * @param values is an array of the given values
 	 * @return the Scalar and
 	 */
-	private ScalarMatch findScalarInInstruction(Instruction instr, long values[]) {
+	private ScalarMatch findScalarInInstruction(Instruction instr, long[] values) {
 		int numOperands = instr.getNumOperands();
 		ScalarMatch scalarMatch = null;
 		for (int i = 0; i < numOperands; i++) {
@@ -154,7 +154,7 @@ public abstract class ConvertConstantAction extends AbstractDecompilerAction {
 		if (constVn.getSize() < 8) {
 			mask = mask >>> (8 - constVn.getSize()) * 8;
 		}
-		long values[] = new long[4];
+		long[] values = new long[4];
 		values[0] = value;
 		values[1] = (value - 1) & mask;
 		values[2] = (value + 1) & mask;

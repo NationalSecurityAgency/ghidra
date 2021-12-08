@@ -119,7 +119,7 @@ public class GenericHeader extends JPanel {
 	private void installMouseListener(Component comp) {
 		if (comp instanceof Container) {
 			Container c = (Container) comp;
-			Component comps[] = c.getComponents();
+			Component[] comps = c.getComponents();
 			for (Component element : comps) {
 				installMouseListener(element);
 			}

@@ -261,19 +261,19 @@ public class DataTypeDependencyOrderer {
 			}
 			else if (dataType instanceof Structure) {
 				Structure struct = (Structure) dataType;
-				DataTypeComponent dtcomps[] = struct.getDefinedComponents();
+				DataTypeComponent[] dtcomps = struct.getDefinedComponents();
 				for (DataTypeComponent dtcomp : dtcomps) {
 					addDependent(entry, dtcomp.getDataType());
 				}
 			}
 			else if (dataType instanceof Composite) {
-				DataTypeComponent dtcomps[] = ((Composite) dataType).getComponents();
+				DataTypeComponent[] dtcomps = ((Composite) dataType).getComponents();
 				for (DataTypeComponent dtcomp : dtcomps) {
 					addDependent(entry, dtcomp.getDataType());
 				}
 			}
 			else if (dataType instanceof FunctionDefinition) {
-				ParameterDefinition paramDefs[] = ((FunctionDefinition) dataType).getArguments();
+				ParameterDefinition[] paramDefs = ((FunctionDefinition) dataType).getArguments();
 				addDependent(entry, ((FunctionDefinition) dataType).getReturnType());
 				for (ParameterDefinition paramDef : paramDefs) {
 					addDependent(entry, paramDef.getDataType());

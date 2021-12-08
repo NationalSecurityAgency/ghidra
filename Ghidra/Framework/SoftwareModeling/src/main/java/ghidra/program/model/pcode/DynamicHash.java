@@ -40,7 +40,7 @@ public class DynamicHash {
 
 	// Table for how to hash opcodes, lumps certain operators (i.e. AND SUB PTRADD PTRSUB) into one hash
 	// zero indicates the operator should be skipped
-	public final static int transtable[] = { 0, PcodeOp.COPY, PcodeOp.LOAD, PcodeOp.STORE,
+	public final static int[] transtable = { 0, PcodeOp.COPY, PcodeOp.LOAD, PcodeOp.STORE,
 		PcodeOp.BRANCH, PcodeOp.CBRANCH, PcodeOp.BRANCHIND,
 
 		PcodeOp.CALL,

@@ -48,7 +48,7 @@ public interface GdbGadpServer extends AutoCloseable {
 		private List<String> gdbArgs = new ArrayList<>();
 		private InetSocketAddress bindTo;
 
-		public void run(String args[])
+		public void run(String[] args)
 				throws IOException, InterruptedException, ExecutionException {
 			parseArguments(args);
 

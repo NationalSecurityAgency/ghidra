@@ -51,7 +51,7 @@ public class JavaCompiler {
 		if (javaLoc.endsWith("jre")) {
 			javaLoc = javaLoc.substring(0, javaLoc.indexOf("jre")-1);
 		}
-		String argV[] = new String[6];
+		String[] argV = new String[6];
 		argV[0] = javaLoc + File.separator + "bin" + File.separator +"javac";
 		argV[1] = "-classpath";
 		argV[2] = classpath;

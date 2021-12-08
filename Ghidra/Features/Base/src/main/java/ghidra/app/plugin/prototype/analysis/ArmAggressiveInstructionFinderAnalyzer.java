@@ -260,7 +260,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 		pseudoContext.setValue(tmodeReg, entry, curValue);
 		AddressSet body =
 			pseudo.followSubFlows(entry, pseudoContext, 1000, new PseudoFlowProcessor() {
-				Object lastResults[] = null;
+				Object[] lastResults = null;
 				Instruction lastInstr = null;
 				int duplicateCount = 0;
 
@@ -299,7 +299,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 					if (ftype.isComputed() && ftype.isJump()) {
 						return true;
 					}
-					Address flows[] = instr.getFlows();
+					Address[] flows = instr.getFlows();
 					if (flows != null && flows.length > 0) {
 
 						if (!curProgram.getMemory().contains(flows[0])) {
@@ -357,7 +357,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 				private boolean validTerminator(PseudoInstruction instr) {
 					// for load multiple, one better be the stack to be a return
 					if (instr.getMnemonicString().startsWith("ldm")) {
-						Object inObjs[] = instr.getInputObjects();
+						Object[] inObjs = instr.getInputObjects();
 						if (inObjs != null) {
 							for (int i = 0; i < inObjs.length; i++) {
 								if (inObjs[i] instanceof Register &&
@@ -486,7 +486,7 @@ public class ArmAggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 		// check if there is a block marked unexec
 
 		AddressSet execSet = new AddressSet();
-		MemoryBlock blocks[] = program.getMemory().getBlocks();
+		MemoryBlock[] blocks = program.getMemory().getBlocks();
 		for (int i = 0; i < blocks.length; i++) {
 			if (blocks[i].isExecute()) {
 				execSet.addRange(blocks[i].getStart(), blocks[i].getEnd());

@@ -25,7 +25,7 @@ import java.util.Arrays;
  *
  */
 public class LimitedByteBuffer {
-	byte value[];
+	byte[] value;
 	int count;			// Current number of characters
 	int absmax;			// Absolute maximum number of characters
 	

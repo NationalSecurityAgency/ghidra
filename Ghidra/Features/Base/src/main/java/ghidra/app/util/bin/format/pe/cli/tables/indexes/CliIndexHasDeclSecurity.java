@@ -25,7 +25,7 @@ import ghidra.util.exception.InvalidInputException;
 
 public class CliIndexHasDeclSecurity {
 	private static final int bitsUsed = 2;
-	private static final CliTypeTable tables[] = { CliTypeTable.TypeDef, CliTypeTable.MethodDef, CliTypeTable.Assembly };
+	private static final CliTypeTable[] tables = { CliTypeTable.TypeDef, CliTypeTable.MethodDef, CliTypeTable.Assembly };
 	
 	public static DataType toDataType(CliStreamMetadata stream) {
 		return CliCodedIndexUtils.toDataType(stream, bitsUsed, tables);

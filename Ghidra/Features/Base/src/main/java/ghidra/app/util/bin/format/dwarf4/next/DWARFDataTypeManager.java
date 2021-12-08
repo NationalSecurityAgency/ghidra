@@ -65,11 +65,11 @@ public class DWARFDataTypeManager {
 	private DataType baseDataTypeBool;
 	private DataType baseDataTypeChar;
 	private DataType baseDataTypeUchar;
-	private DataType baseDataTypeFloats[];
-	private DataType baseDataTypeSignedInts[];
-	private DataType baseDataTypeUnsignedInts[];
-	private DataType baseDataTypeUntyped[];
-	private DataType baseDataTypeChars[];
+	private DataType[] baseDataTypeFloats;
+	private DataType[] baseDataTypeSignedInts;
+	private DataType[] baseDataTypeUnsignedInts;
+	private DataType[] baseDataTypeUntyped;
+	private DataType[] baseDataTypeChars;
 	private DataType baseDataTypeUndefined1;
 
 	/**

@@ -141,7 +141,7 @@ public class TRICOREEmulateInstructionStateModifier extends EmulateInstructionSt
 	
 	// Helper functions
 	private int copyRegisterToArray(Register reg, int len, MemoryState memoryState, byte[] outBytes, int i) {
-		byte vBytes[] = new byte[len];
+		byte[] vBytes = new byte[len];
 		int nread = memoryState.getChunk(vBytes, reg.getAddressSpace(), reg.getOffset(), len, false);
 		System.arraycopy(vBytes, 0, outBytes, i, len);
 		return nread;

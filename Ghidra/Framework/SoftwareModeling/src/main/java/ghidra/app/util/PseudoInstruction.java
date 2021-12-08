@@ -159,7 +159,7 @@ public class PseudoInstruction extends PseudoCodeUnit implements Instruction, In
 		}
 		Reference ref = new MemReferenceImpl(address, toAddr, getOperandRefType(opIndex),
 			SourceType.DEFAULT, opIndex, false);
-		Reference refArray[] = new Reference[1];
+		Reference[] refArray = new Reference[1];
 		refArray[0] = ref;
 		return refArray;
 	}

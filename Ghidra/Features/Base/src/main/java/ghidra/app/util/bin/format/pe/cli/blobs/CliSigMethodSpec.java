@@ -26,7 +26,7 @@ import ghidra.util.exception.InvalidInputException;
 public class CliSigMethodSpec extends CliAbstractSig {
 	private int genArgCount;
 	private int genArgCountBytes;
-	private CliSigType types[];
+	private CliSigType[] types;
 
 	private static final byte CLISIGMETHODSPEC_PROLOG = 0x0A;
 

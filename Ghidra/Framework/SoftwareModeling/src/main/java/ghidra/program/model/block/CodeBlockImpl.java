@@ -35,7 +35,7 @@ import ghidra.util.task.TaskMonitorAdapter;
 public class CodeBlockImpl implements CodeBlock {
 
 	private CodeBlockModel model; // model that produced this block
-	private Address starts[]; // entry points into block.  Addresses are stored
+	private Address[] starts; // entry points into block.  Addresses are stored
 	// in natural sorted order.
 	private AddressSetView set; // set of addresses that make up this block
 
@@ -47,7 +47,7 @@ public class CodeBlockImpl implements CodeBlock {
 	 * be used to identify this block within the model that produced it.
 	 * @param body the address set which makes-up the body of this block.
 	 */
-	public CodeBlockImpl(CodeBlockModel model, Address starts[], AddressSetView body) {
+	public CodeBlockImpl(CodeBlockModel model, Address[] starts, AddressSetView body) {
 		if (starts != null) {
 			this.starts = starts.clone();
 			Arrays.sort(this.starts); // store start Addresses in natural sorted order

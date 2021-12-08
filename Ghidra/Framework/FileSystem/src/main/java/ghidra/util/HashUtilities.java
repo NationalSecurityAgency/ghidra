@@ -200,7 +200,7 @@ public class HashUtilities {
 	 * @return hex character representation of data
 	 */
 	public static char[] hexDump(byte[] data) {
-		char buf[] = new char[data.length * 2];
+		char[] buf = new char[data.length * 2];
 		for (int i = 0; i < data.length; i++) {
 			String b = Integer.toHexString(data[i] & 0xFF);
 			if (b.length() < 2) {

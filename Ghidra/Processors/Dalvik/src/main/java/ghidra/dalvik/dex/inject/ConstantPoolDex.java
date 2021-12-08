@@ -146,7 +146,7 @@ public class ConstantPoolDex extends ConstantPool {
 				paramDef.add(pDef);
 			}
 		}
-		ParameterDefinition finalDefs[] = new ParameterDefinition[paramDef.size()];
+		ParameterDefinition[] finalDefs = new ParameterDefinition[paramDef.size()];
 		paramDef.toArray(finalDefs);
 		funcDef.setArguments(finalDefs);
 	}

@@ -251,7 +251,7 @@ public class FillOutStructureCmd extends BackgroundCommand {
 				return null;
 			}
 		}
-		DataType typeList[] = new DataType[slot + 1];
+		DataType[] typeList = new DataType[slot + 1];
 		typeList[0] = DataType.DEFAULT;		// Default function return data-type
 		for (int i = 1; i < slot + 1; ++i) {
 			typeList[i] = inputs[i].getHigh().getDataType();

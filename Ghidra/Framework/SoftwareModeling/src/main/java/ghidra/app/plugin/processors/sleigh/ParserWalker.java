@@ -40,7 +40,7 @@ public class ParserWalker {
 	private SleighParserContext cross_context;		// If in the midst of cross-build, the context from the original instruction
 	private ConstructState point;		// The current node being visited
 	private int depth;					// Depth of current node within the tree
-	private int breadcrumb[];			// Path of operands from the root
+	private int[] breadcrumb;			// Path of operands from the root
 
 	public ParserWalker(SleighParserContext c) {
 		context = c;

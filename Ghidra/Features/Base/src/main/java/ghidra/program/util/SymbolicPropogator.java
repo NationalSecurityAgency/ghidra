@@ -532,7 +532,7 @@ public class SymbolicPropogator {
 				// if the instruction changed it's type to a call, need to handle the call side effects
 				FlowType instrFlow = instr.getFlowType();
 				if (!originalFlowType.equals(instrFlow) && instrFlow.isCall()) {
-					Address targets[] = getInstructionFlows(instr);
+					Address[] targets = getInstructionFlows(instr);
 					for (Address target : targets) {
 						handleFunctionSideEffects(instr, target, monitor);
 					}
@@ -548,7 +548,7 @@ public class SymbolicPropogator {
 				// follow flow, except for call flow
 				boolean doFallThruLast = false;
 				if (!simpleFlow) {
-					Address flows[] = getInstructionFlows(instr);
+					Address[] flows = getInstructionFlows(instr);
 					if (flows != null && flows.length > 0) {
 						// if already hit another flow, don't continue past any type of branching instruction
 						if (hitOtherFlow) {
@@ -702,7 +702,7 @@ public class SymbolicPropogator {
 	}
 
 	private PcodeOp[] getInstructionPcode(Instruction instruction) {
-		PcodeOp ops[] = pcodeCache.get(instruction.getMinAddress());
+		PcodeOp[] ops = pcodeCache.get(instruction.getMinAddress());
 		if (ops == null) {
 			ops = instruction.getPcode(true);
 			pcodeCache.put(instruction.getMinAddress(), ops);
@@ -1487,7 +1487,7 @@ public class SymbolicPropogator {
 			}
 
 			// clear out settings for any return variables
-			Varnode returnVarnodes[] = context.getReturnVarnode(targetFunc);
+			Varnode[] returnVarnodes = context.getReturnVarnode(targetFunc);
 			if (returnVarnodes != null) {
 				for (Varnode varnode : returnVarnodes) {
 					context.putValue(varnode, context.createBadVarnode(), false);

@@ -335,7 +335,7 @@ public class AggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 								if (ftype.isTerminal()) {
 									return true;
 								}
-								Address flows[] = instr.getFlows();
+								Address[] flows = instr.getFlows();
 								if (flows != null && flows.length > 0) {
 
 									if (!curProgram.getMemory().contains(flows[0])) {
@@ -414,7 +414,7 @@ public class AggressiveInstructionFinderAnalyzer extends AbstractAnalyzer {
 		// check if there is a block marked unexec
 
 		AddressSet execSet = new AddressSet();
-		MemoryBlock blocks[] = program.getMemory().getBlocks();
+		MemoryBlock[] blocks = program.getMemory().getBlocks();
 		for (MemoryBlock block : blocks) {
 			if (block.isExecute()) {
 				execSet.addRange(block.getStart(), block.getEnd());

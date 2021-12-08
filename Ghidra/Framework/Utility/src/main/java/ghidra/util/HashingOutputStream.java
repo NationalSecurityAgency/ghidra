@@ -46,12 +46,12 @@ public class HashingOutputStream extends OutputStream {
 		out.write(b);
 	}
 
-	public void write(byte b[]) throws IOException {
+	public void write(byte[] b) throws IOException {
 		messageDigest.update(b);
 		out.write(b, 0, b.length);
 	}
 
-	public void write(byte b[], int off, int len) throws IOException {
+	public void write(byte[] b, int off, int len) throws IOException {
 		messageDigest.update(b, off, len);
 		out.write(b, off, len);
 	}

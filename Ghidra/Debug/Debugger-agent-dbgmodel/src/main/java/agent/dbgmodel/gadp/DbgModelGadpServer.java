@@ -108,7 +108,7 @@ public interface DbgModelGadpServer extends DbgEngGadpServer {
 		}
 
 		@Override
-		public void run(String args[])
+		public void run(String[] args)
 				throws IOException, InterruptedException, ExecutionException {
 			parseArguments(args);
 

@@ -31,11 +31,11 @@ public class NullOutputStream extends OutputStream {
 		// nada
 	}
 
-	public void write(byte b[]) throws IOException {
+	public void write(byte[] b) throws IOException {
 		// nada
 	}
 
-	public void write(byte b[], int off, int len) throws IOException {
+	public void write(byte[] b, int off, int len) throws IOException {
 		// nada
 	}
 

@@ -827,7 +827,7 @@ public class ServerTestUtil {
 		System.arraycopy(users, 0, userArray, 1, users.length);
 		createUsers(dirPath, userArray);
 
-		String keys[] = SSHKeyUtil.generateSSHKeys();
+		String[] keys = SSHKeyUtil.generateSSHKeys();
 		addSSHKeys(dirPath, keys[0], "test.key", keys[1], "test.pub");
 
 		LocalFileSystem repoFilesystem = createRepository(dirPath, "Test", ADMIN_USER + "=ADMIN",

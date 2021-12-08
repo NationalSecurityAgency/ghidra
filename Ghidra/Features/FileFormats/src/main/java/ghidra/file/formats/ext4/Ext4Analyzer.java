@@ -97,7 +97,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 		long groupDescOffset = groupStart + blockSize;
 		Address groupDescAddress = toAddr(program, groupDescOffset);
 		reader.setPointerIndex(groupDescOffset);
-		Ext4GroupDescriptor groupDescriptors[] = new Ext4GroupDescriptor[numGroups];
+		Ext4GroupDescriptor[] groupDescriptors = new Ext4GroupDescriptor[numGroups];
 		monitor.setMessage("Creating group descriptors...");
 		monitor.setMaximum(numGroups);
 		for( int i = 0; i < numGroups; i++ ) {
@@ -122,7 +122,7 @@ public class Ext4Analyzer extends FileFormatAnalyzer {
 			Ext4GroupDescriptor[] groupDescriptors, boolean is64Bit, TaskMonitor monitor) throws DuplicateNameException, Exception {
 		
 		int inodeCount = superBlock.getS_inodes_count();
-		Ext4Inode inodes[] = new Ext4Inode[inodeCount];
+		Ext4Inode[] inodes = new Ext4Inode[inodeCount];
 
 		for( int i = 0; i < groupDescriptors.length; i++ ) {
 			monitor.checkCanceled();

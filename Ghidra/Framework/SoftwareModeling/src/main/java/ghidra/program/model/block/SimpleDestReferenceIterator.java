@@ -246,7 +246,7 @@ public class SimpleDestReferenceIterator implements CodeBlockReferenceIterator {
     	if (primitive != null) {
 
 			// Follow pointer - could have multiple references 			
-			Reference refs[] = primitive.getReferencesFrom();
+			Reference[] refs = primitive.getReferencesFrom();
 			for (int i = 0; i < refs.length; i++) {
 				
 				monitor.checkCanceled();

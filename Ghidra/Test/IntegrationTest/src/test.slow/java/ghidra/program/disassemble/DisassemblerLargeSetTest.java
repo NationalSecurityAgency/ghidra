@@ -36,7 +36,7 @@ public class DisassemblerLargeSetTest extends AbstractGhidraHeadlessIntegrationT
 
 	private static final long NUMCASES = MEMORY_SIZE / CASESIZE;
 
-	private static byte disBlock[] = { (byte) 0xf5, 0x0c, 0x03, 0x04, (byte) 0xf4, 0x00,
+	private static byte[] disBlock = { (byte) 0xf5, 0x0c, 0x03, 0x04, (byte) 0xf4, 0x00,
 		(byte) 0xdf, 0x34, (byte) 0xf4, 0x00, (byte) 0xf4, 0x00 };
 
 	private ToyProgramBuilder programBuilder;// Instructions are 2-byte aligned 

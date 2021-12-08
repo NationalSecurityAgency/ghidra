@@ -352,7 +352,7 @@ public class ProgramMemoryUtil {
 				}
 				else {
 					// handle any addrSize the hard way
-					byte dest[] = new byte[addrSize / 8];
+					byte[] dest = new byte[addrSize / 8];
 					int num = memory.getBytes(a, dest);
 					if (num != dest.length) {
 						continue; // insufficient bytes
@@ -661,7 +661,7 @@ public class ProgramMemoryUtil {
 	private static void findBytePattern(Memory memory, AddressRange memoryRange, byte[] bytePattern,
 			int alignment, Set<Address> foundList, TaskMonitor monitor) throws CancelledException {
 
-		byte maskBytes[] = null;
+		byte[] maskBytes = null;
 
 		MemoryBlock[] blocks = memory.getBlocks();
 		for (MemoryBlock block : blocks) {
@@ -698,7 +698,7 @@ public class ProgramMemoryUtil {
 	private static void findBytePattern(Memory memory, List<MemoryBlock> blocks, byte[] bytePattern,
 			int alignment, Set<Address> foundList, TaskMonitor monitor) throws CancelledException {
 
-		byte maskBytes[] = null;
+		byte[] maskBytes = null;
 
 		if (blocks == null) {
 			blocks = Arrays.asList(memory.getBlocks());

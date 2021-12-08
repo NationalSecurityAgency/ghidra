@@ -115,7 +115,7 @@ public class FileOpenDropHandler implements DropTargetHandler, Droppable, Contai
 		if (comp instanceof Container) {
 			Container c = (Container) comp;
 			c.addContainerListener(this);
-			Component comps[] = c.getComponents();
+			Component[] comps = c.getComponents();
 			for (Component element : comps) {
 				initializeComponents(element);
 			}
@@ -134,7 +134,7 @@ public class FileOpenDropHandler implements DropTargetHandler, Droppable, Contai
 		if (comp instanceof Container) {
 			Container c = (Container) comp;
 			c.removeContainerListener(this);
-			Component comps[] = c.getComponents();
+			Component[] comps = c.getComponents();
 			for (Component element : comps) {
 				deinitializeComponents(element);
 			}

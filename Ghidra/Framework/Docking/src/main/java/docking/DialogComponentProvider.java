@@ -325,7 +325,7 @@ public class DialogComponentProvider
 		if (component instanceof Container) {
 			Container c = (Container) component;
 			c.addContainerListener(popupHandler);
-			Component comps[] = c.getComponents();
+			Component[] comps = c.getComponents();
 			for (Component comp : comps) {
 				installMouseListener(comp);
 			}
@@ -343,7 +343,7 @@ public class DialogComponentProvider
 		if (comp instanceof Container) {
 			Container c = (Container) comp;
 			c.removeContainerListener(popupHandler);
-			Component comps[] = c.getComponents();
+			Component[] comps = c.getComponents();
 			for (Component comp2 : comps) {
 				uninstallMouseListener(comp2);
 			}

@@ -68,7 +68,7 @@ public class AddressObjectMap {
      */
     public Object[] getObjects(Address addr) {
 
-        Object objarray[] = getObj(addrMap.getKey(addr));
+        Object[] objarray = getObj(addrMap.getKey(addr));
         return objarray;
     }
 
@@ -397,7 +397,7 @@ class Mark implements Serializable {
     static final int END = 2;
     static final int SINGLE = 3;
 
-    private final static Object emptyArray[] = new Object[0];
+    private final static Object[] emptyArray = new Object[0];
 
     Object obj;
     int type;

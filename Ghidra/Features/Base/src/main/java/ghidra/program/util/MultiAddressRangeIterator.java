@@ -24,8 +24,8 @@ import ghidra.program.model.address.*;
  * as determined from all the iterators.
  */
 public class MultiAddressRangeIterator {
-	AddressRangeIterator	iters[];
-	AddressRange			addrRanges[];
+	AddressRangeIterator[] iters;
+	AddressRange[] addrRanges;
 	boolean			forward;
 	Address min = null;
 	Address max = null;

@@ -338,7 +338,7 @@ public class OptionsGui extends JPanel {
 		JPanel panel1 = new JPanel(new FlowLayout());
 
 		GraphicsEnvironment gEnv = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		String envfonts[] = gEnv.getAvailableFontFamilyNames();
+		String[] envfonts = gEnv.getAvailableFontFamilyNames();
 		fontNameField = new GComboBox<>(envfonts);
 		fontNameField.setBackground(Color.white);
 		fontNameField.setRenderer(new FontRenderer());

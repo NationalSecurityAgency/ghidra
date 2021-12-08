@@ -26,9 +26,9 @@ import ghidra.program.model.address.AddressIterator;
  */
 public class MultiAddressIterator {
 	/** the code unit iterators */
-	AddressIterator	iters[];
+	AddressIterator[] iters;
 	/** the current code units */
-	Address			addrs[];
+	Address[] addrs;
 	boolean			forward;
 
 	/**
@@ -85,7 +85,7 @@ public class MultiAddressIterator {
 
 		// Find next address.
 		Address addrNext = null;
-		boolean next[] = new boolean[iters.length];
+		boolean[] next = new boolean[iters.length];
 		for (int i = 0; i < iters.length; i++) {
 			if (addrs[i] == null) {
 				continue;
@@ -137,7 +137,7 @@ public class MultiAddressIterator {
 
 		// Find next address.
 		Address addrNext = null;
-		boolean next[] = new boolean[iters.length];
+		boolean[] next = new boolean[iters.length];
 		for (int i = 0; i < iters.length; i++) {
 			if (addrs[i] == null) {
 				continue;
@@ -162,7 +162,7 @@ public class MultiAddressIterator {
 		}
 
 		// Load array with all addresses that have same address as next. Others are null.
-		Address nextAddr[] = new Address[iters.length];
+		Address[] nextAddr = new Address[iters.length];
 		for (int i = 0; i < iters.length; i++) {
 			if (next[i]) {
 				nextAddr[i] = addrs[i];

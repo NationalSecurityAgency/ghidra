@@ -131,7 +131,7 @@ public class NewExt4Analyzer extends FileFormatAnalyzer {
 			long groupDescOffset = groupStart + blockSize;
 			Address groupDescAddress = toAddr( program, groupDescOffset );
 			reader.setPointerIndex( groupDescOffset );
-			Ext4GroupDescriptor groupDescriptors[] = new Ext4GroupDescriptor [ numGroups ];
+			Ext4GroupDescriptor[] groupDescriptors = new Ext4GroupDescriptor [ numGroups ];
 			monitor.setMessage( "Creating group descriptors..." );
 			monitor.setMaximum( numGroups );
 			for ( int i = 0; i < numGroups; i++ ) {

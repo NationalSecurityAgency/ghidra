@@ -25,7 +25,7 @@ import ghidra.util.exception.InvalidInputException;
 public class CliSigStandAloneMethod extends CliAbstractSig {
 
 	private CliRetType retType;
-	private CliParam params[];
+	private CliParam[] params;
 	private byte flags;
 	private int sizeOfCount;
 	private int sentinelIndex; // SENTINEL is before the parameter index in this field

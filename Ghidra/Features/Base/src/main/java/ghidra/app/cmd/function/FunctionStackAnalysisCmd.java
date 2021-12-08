@@ -341,7 +341,7 @@ public class FunctionStackAnalysisCmd extends BackgroundCommand {
 			}
 		}
 		else {
-			Object results[] = instr.getResultObjects();
+			Object[] results = instr.getResultObjects();
 			if (results.length == 1 && results[0] instanceof Register) {
 				return ((Register) results[0]).getMinimumByteSize();
 			}

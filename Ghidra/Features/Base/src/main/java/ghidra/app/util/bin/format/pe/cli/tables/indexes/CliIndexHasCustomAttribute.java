@@ -25,7 +25,7 @@ import ghidra.util.exception.InvalidInputException;
 
 public class CliIndexHasCustomAttribute {
 	private static final int bitsUsed = 5;
-	private static final CliTypeTable tables[] = { CliTypeTable.MethodDef, CliTypeTable.Field, CliTypeTable.TypeRef, CliTypeTable.TypeDef, CliTypeTable.Param, 
+	private static final CliTypeTable[] tables = { CliTypeTable.MethodDef, CliTypeTable.Field, CliTypeTable.TypeRef, CliTypeTable.TypeDef, CliTypeTable.Param,
 		CliTypeTable.InterfaceImpl, CliTypeTable.MemberRef, CliTypeTable.Module, null, CliTypeTable.Property, CliTypeTable.Event, CliTypeTable.StandAloneSig,
 		CliTypeTable.ModuleRef, CliTypeTable.TypeSpec, CliTypeTable.Assembly, CliTypeTable.AssemblyRef, CliTypeTable.File, CliTypeTable.ExportedType, 
 		CliTypeTable.ManifestResource }; // TODO: null should be TableName.Permission, but this is not well-described in the standard

@@ -22,7 +22,7 @@ public class BoundedBufferedReader extends Reader {
 
 	private Reader in;
 
-	private char cb[];
+	private char[] cb;
 	private int nChars, nextChar;
 
 	private static final int INVALIDATED = -2;
@@ -101,7 +101,7 @@ public class BoundedBufferedReader extends Reader {
 					dst = delta;
 				} else {
 					/* Reallocate buffer to accommodate read-ahead limit */
-					char ncb[] = new char[readAheadLimit];
+					char[] ncb = new char[readAheadLimit];
 					System.arraycopy(cb, markedChar, ncb, 0, delta);
 					cb = ncb;
 					markedChar = 0;
@@ -239,7 +239,7 @@ public class BoundedBufferedReader extends Reader {
 	 * @exception IOException
 	 *                If an I/O error occurs
 	 */
-	public int read(char cbuf[], int off, int len) throws IOException {
+	public int read(char[] cbuf, int off, int len) throws IOException {
 		synchronized (lock) {
 			ensureOpen();
 			if ((off < 0) || (off > cbuf.length) || (len < 0)

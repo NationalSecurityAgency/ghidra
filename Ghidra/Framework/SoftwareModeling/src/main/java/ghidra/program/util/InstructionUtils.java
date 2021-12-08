@@ -207,7 +207,7 @@ public class InstructionUtils {
 		return buf.toString();
 	}
 
-	private static String getString(String strs[], boolean multiline) {
+	private static String getString(String[] strs, boolean multiline) {
 		if (multiline) {
 			List<String> list = Arrays.asList(strs);
 			return getString(list, true);

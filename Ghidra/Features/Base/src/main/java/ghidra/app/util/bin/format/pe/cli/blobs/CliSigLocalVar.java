@@ -25,7 +25,7 @@ import ghidra.util.exception.InvalidInputException;
 
 public class CliSigLocalVar extends CliAbstractSig {
 	private int sizeOfCount;
-	private CliParam types[];
+	private CliParam[] types;
 
 	private static final int CLISIGLOCALVAR_PROLOG = 0x07;
 

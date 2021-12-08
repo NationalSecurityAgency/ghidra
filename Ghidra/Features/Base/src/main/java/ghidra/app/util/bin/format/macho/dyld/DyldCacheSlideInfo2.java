@@ -48,8 +48,8 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 	private int page_extras_count;
 	private long delta_mask;
 	private long value_add;
-	private short page_starts_entries[];
-	private short page_extras_entries[];
+	private short[] page_starts_entries;
+	private short[] page_extras_entries;
 
 	public long getPageSize() {
 		return Integer.toUnsignedLong(page_size);
@@ -212,7 +212,7 @@ public class DyldCacheSlideInfo2 extends DyldCacheSlideInfoCommon {
 		Memory memory = program.getMemory();
 		List<Address> unchainedLocList = new ArrayList<>(1024);
 
-		byte origBytes[] = new byte[8];
+		byte[] origBytes = new byte[8];
 
 		long valueMask = 0xffffffffffffffffL >>> (64 - deltaShift);
 

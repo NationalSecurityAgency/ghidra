@@ -25,7 +25,7 @@ import ghidra.util.exception.InvalidInputException;
 
 public class CliIndexResolutionScope {
 	private static final int bitsUsed = 2;
-	private static final CliTypeTable tables[] = { CliTypeTable.Module, CliTypeTable.ModuleRef, CliTypeTable.AssemblyRef, CliTypeTable.TypeRef };
+	private static final CliTypeTable[] tables = { CliTypeTable.Module, CliTypeTable.ModuleRef, CliTypeTable.AssemblyRef, CliTypeTable.TypeRef };
 	
 	public static DataType toDataType(CliStreamMetadata stream) {
 		return CliCodedIndexUtils.toDataType(stream, bitsUsed, tables);

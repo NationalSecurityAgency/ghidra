@@ -479,7 +479,7 @@ public class AddressTable {
 		if (flagNewCode && newCodeFound) {
 			// make sure we didn't get any references on the mnemonic
 			//  since more code must be found
-			Reference refs[] = start_inst.getMnemonicReferences();
+			Reference[] refs = start_inst.getMnemonicReferences();
 			for (Reference ref : refs) {
 				start_inst.removeMnemonicReference(ref.getToAddress());
 			}
@@ -536,7 +536,7 @@ public class AddressTable {
 	public void labelTable(Program program, Instruction start_inst,
 			ArrayList<AddLabelCmd> switchLabelList, AddLabelCmd tableNameLabel) {
 		// check if the table is already labeled
-		Symbol syms[] = program.getSymbolTable().getSymbols(getTopAddress());
+		Symbol[] syms = program.getSymbolTable().getSymbols(getTopAddress());
 		for (Symbol sym : syms) {
 			if (sym.getName(false).startsWith(tableNameLabel.getLabelName())) {
 				return;
@@ -587,7 +587,7 @@ public class AddressTable {
 		Symbol s = program.getSymbolTable().getGlobalSymbol(tableNameLabel.getLabelName(),
 			tableNameLabel.getLabelAddr());
 		for (int op = 0; op < start_inst.getNumOperands(); op++) {
-			Reference fromRefs[] = start_inst.getOperandReferences(op);
+			Reference[] fromRefs = start_inst.getOperandReferences(op);
 			for (Reference fromRef : fromRefs) {
 				if (fromRef.getToAddress().equals(tableNameLabel.getLabelAddr())) {
 					program.getReferenceManager().setAssociation(s, fromRef);
@@ -770,7 +770,7 @@ public class AddressTable {
 
 	private AddressSet getExecuteSet(Memory memory) {
 		AddressSet set = new AddressSet();
-		MemoryBlock blocks[] = memory.getBlocks();
+		MemoryBlock[] blocks = memory.getBlocks();
 		for (MemoryBlock block : blocks) {
 			if (block.isExecute()) {
 				set.addRange(block.getStart(), block.getEnd());

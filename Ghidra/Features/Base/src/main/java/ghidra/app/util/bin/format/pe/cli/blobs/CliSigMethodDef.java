@@ -25,7 +25,7 @@ import ghidra.util.exception.InvalidInputException;
 public class CliSigMethodDef extends CliAbstractSig {
 
 	private CliRetType retType;
-	private CliParam params[];
+	private CliParam[] params;
 	private int sizeOfCount;
 	private int genericParamCount;
 	private byte flags;

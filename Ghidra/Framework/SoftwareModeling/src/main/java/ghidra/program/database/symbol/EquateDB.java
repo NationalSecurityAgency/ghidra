@@ -80,7 +80,7 @@ public class EquateDB extends DatabaseObject implements Equate {
 			}
 			else {
 				long value = record.getLongValue(EquateDBAdapter.VALUE_COL);
-				long hashArray[] = DynamicHash.calcConstantHash(instr, value);
+				long[] hashArray = DynamicHash.calcConstantHash(instr, value);
 				if (hashArray.length != 1) {
 					dynamicHash = 0;
 				}
@@ -116,7 +116,7 @@ public class EquateDB extends DatabaseObject implements Equate {
 			return -1;
 		}
 		long value = record.getLongValue(EquateDBAdapter.VALUE_COL);
-		long checkHash[] = DynamicHash.calcConstantHash(instr, value);
+		long[] checkHash = DynamicHash.calcConstantHash(instr, value);
 		for (long element : checkHash) {
 			if (element == dynamicHash) {
 				return findScalarOpIndex(instr);

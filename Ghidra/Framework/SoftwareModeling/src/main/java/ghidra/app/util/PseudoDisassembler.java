@@ -188,7 +188,7 @@ public class PseudoDisassembler {
 	 * @throws UnknownInstructionException
 	 * @throws UnknownContextException
 	 */
-	public PseudoInstruction disassemble(Address addr, byte bytes[])
+	public PseudoInstruction disassemble(Address addr, byte[] bytes)
 			throws InsufficientBytesException, UnknownInstructionException,
 			UnknownContextException {
 
@@ -210,8 +210,8 @@ public class PseudoDisassembler {
 	 * @throws UnknownInstructionException
 	 * @throws UnknownContextException
 	 */
-	public PseudoInstruction disassemble(Address addr, byte bytes[],
-			PseudoDisassemblerContext disassemblerContext) throws InsufficientBytesException,
+	public PseudoInstruction disassemble(Address addr, byte[] bytes,
+                                         PseudoDisassemblerContext disassemblerContext) throws InsufficientBytesException,
 			UnknownInstructionException, UnknownContextException {
 
 		MemBuffer memBuffer = new ByteMemBufferImpl(addr, bytes, language.isBigEndian());
@@ -491,7 +491,7 @@ public class PseudoDisassembler {
 					else if (instr.getFlowType().isJump()) {
 						// if this is a jump, and jumps forward only some number of bytes
 						//    make that the new target.
-						Address flows[] = instr.getFlows();
+						Address[] flows = instr.getFlows();
 						if (flows != null) {
 							for (Address address : flows) {
 								if (!body.contains(address)) {
@@ -510,7 +510,7 @@ public class PseudoDisassembler {
 				// if this is a jump, add it's targets to list of valid
 				//   forward reference continuation points.
 				if (instr.getFlowType().isJump()) {
-					Address flows[] = instr.getFlows();
+					Address[] flows = instr.getFlows();
 					if (flows != null) {
 						for (Address address : flows) {
 							targetList.add(address);
@@ -704,7 +704,7 @@ public class PseudoDisassembler {
 						// if this is a jump, and jumps forward only some number
 						// of bytes
 						// make that the new target.
-						Address flows[] = instr.getFlows();
+						Address[] flows = instr.getFlows();
 						if (flows != null) {
 							for (Address address : flows) {
 								if (!body.contains(address)) {
@@ -724,7 +724,7 @@ public class PseudoDisassembler {
 				// if this is a jump, add it's targets to list of valid
 				// forward reference continuation points.
 				if (flowType.isJump()) {
-					Address flows[] = instr.getFlows();
+					Address[] flows = instr.getFlows();
 					if (flows != null && flows.length > 0) {
 						for (Address address : flows) {
 							// if jump target is the same as the fallthru
@@ -753,7 +753,7 @@ public class PseudoDisassembler {
 					}
 				}
 				if (flowType.isCall() || (flowType.isJump() && flowType.isComputed())) {
-					Address flows[] = instr.getFlows();
+					Address[] flows = instr.getFlows();
 					if (flows == null || flows.length == 0) {
 						Reference[] refsFrom = instr.getReferencesFrom();
 						if (refsFrom != null && refsFrom.length > 0) {

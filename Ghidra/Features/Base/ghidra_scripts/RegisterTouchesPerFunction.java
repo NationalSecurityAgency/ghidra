@@ -81,7 +81,7 @@ public class RegisterTouchesPerFunction extends GhidraScript
         {
             inst = iIter.next();
 
-            Object o[] = inst.getResultObjects();
+            Object[] o = inst.getResultObjects();
             for (int i = 0; i < o.length; i++)
             {
                 if (o[i] instanceof Register)

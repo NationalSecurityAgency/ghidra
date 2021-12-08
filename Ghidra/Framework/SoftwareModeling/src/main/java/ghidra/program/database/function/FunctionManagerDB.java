@@ -777,7 +777,7 @@ public class FunctionManagerDB implements FunctionManager {
 	 */
 	private VariableStorage checkDynamicStorageConversion(DataType returnDataType,
 			Parameter[] currentParams, int paramOffset, PrototypeModel callingConvention) {
-		DataType types[] = new DataType[currentParams.length - paramOffset + 1];
+		DataType[] types = new DataType[currentParams.length - paramOffset + 1];
 		types[0] = returnDataType;
 		int index = 1;
 		for (int i = paramOffset; i < currentParams.length; ++i) {

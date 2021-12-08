@@ -119,7 +119,7 @@ class LibrarySymbolTable {
 			}
 
 			// assumes that Ordinal_# name comes right before the actual name
-			Symbol symbolsAt[] = symTab.getSymbols(symAddr);
+			Symbol[] symbolsAt = symTab.getSymbols(symAddr);
 			for (int i = 0; i < symbolsAt.length; i++) {
 				if (symbolsAt[i].getName().equals(sym.getName())) {
 					if (i + 1 < symbolsAt.length) {

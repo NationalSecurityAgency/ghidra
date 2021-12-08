@@ -478,7 +478,7 @@ public strictfp class BigFloat implements Comparable<BigFloat> {
 		int lshift = fracbits + 2 + other.unscaled.bitLength() - this.unscaled.bitLength();
 		this.upscale(lshift);
 
-		BigInteger qr[] = this.unscaled.divideAndRemainder(other.unscaled);
+		BigInteger[] qr = this.unscaled.divideAndRemainder(other.unscaled);
 		BigInteger q = qr[0];
 		BigInteger r = qr[1];
 

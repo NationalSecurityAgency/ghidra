@@ -38,7 +38,7 @@ class MemviewMapModel extends AbstractSortedTableModel<MemoryBox> {
 	private Map<String, MemoryBox> memMap = new HashMap<>();
 	private MemviewProvider provider;
 
-	private final static String COLUMN_NAMES[] =
+	private final static String[] COLUMN_NAMES =
 		{ NAME_COL, ASTART_COL, ASTOP_COL, TSTART_COL, TSTOP_COL };
 
 	public MemviewMapModel(MemviewProvider provider) {

@@ -134,7 +134,7 @@ public class EquateTest extends AbstractDecompilerTest {
 		boolean foundHash = false;
 		if (ref.getDynamicHashValue() == 0) {
 			Instruction instr = program.getListing().getInstructionAt(ref.getAddress());
-			long values[] = DynamicHash.calcConstantHash(instr, equate.getValue());
+			long[] values = DynamicHash.calcConstantHash(instr, equate.getValue());
 			for (long value : values) {
 				if (value == dynEntry.getHash()) {
 					foundHash = true;

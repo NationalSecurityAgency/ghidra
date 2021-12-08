@@ -159,7 +159,7 @@ public class FontPropertyEditor extends PropertyEditorSupport {
 
 			GraphicsEnvironment gEnv = GraphicsEnvironment.getLocalGraphicsEnvironment();
 
-			String envfonts[] = gEnv.getAvailableFontFamilyNames();
+			String[] envfonts = gEnv.getAvailableFontFamilyNames();
 			List<FontWrapper> list = new ArrayList<>(envfonts.length);
 			for (String envfont : envfonts) {
 				list.add(new FontWrapper(envfont));

@@ -33,7 +33,7 @@ public class ColorUtils {
 	public static final float HUE_PINK = 11.0f / 12;
 
 	public static Color deriveBackground(Color src, float hue, float sfact, float bfact) {
-		float vals[] = new float[3];
+		float[] vals = new float[3];
 		Color.RGBtoHSB(src.getRed(), src.getGreen(), src.getBlue(), vals);
 		// Assign the requested hue without modification
 		vals[0] = hue;
@@ -174,8 +174,8 @@ public class ColorUtils {
 		if (c2 == null) {
 			return c1;
 		}
-		float rgb1[] = new float[3];
-		float rgb2[] = new float[3];
+		float[] rgb1 = new float[3];
+		float[] rgb2 = new float[3];
 		c1.getColorComponents(rgb1);
 		c2.getColorComponents(rgb2);
 

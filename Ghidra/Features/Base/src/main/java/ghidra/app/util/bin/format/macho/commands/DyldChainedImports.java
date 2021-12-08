@@ -34,7 +34,7 @@ public class DyldChainedImports implements StructConverter {
 	private int imports_count;
 	private int imports_format;
 	private long imports_offset;
-	private DyldChainedImport chainedImports[];
+	private DyldChainedImport[] chainedImports;
 
 	static DyldChainedImports createDyldChainedImports(FactoryBundledWithBinaryReader reader,
 			DyldChainedFixupHeader cfh) throws IOException {

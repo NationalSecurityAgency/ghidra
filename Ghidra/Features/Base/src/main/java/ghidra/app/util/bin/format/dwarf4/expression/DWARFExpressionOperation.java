@@ -27,7 +27,7 @@ class DWARFExpressionOperation {
 	protected final int offset;
 	protected final int opcode;
 	protected final DWARFExpressionOperandType[] operandTypes;
-	protected final long operands[];
+	protected final long[] operands;
 	protected final byte[] blob;
 
 	/**

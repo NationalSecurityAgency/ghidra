@@ -214,7 +214,7 @@ public class MnemonicSearchPlugin extends Plugin {
 	/*
 	 * Returns a single string based on the masked bits
 	 */
-	private String createMaskedBitString(byte values[], byte masks[]) {
+	private String createMaskedBitString(byte[] values, byte[] masks) {
 
 		String bitString = new String();
 

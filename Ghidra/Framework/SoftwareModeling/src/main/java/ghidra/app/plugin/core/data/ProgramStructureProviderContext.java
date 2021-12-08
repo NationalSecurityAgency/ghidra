@@ -33,7 +33,7 @@ public class ProgramStructureProviderContext implements DataTypeProviderContext 
 	public ProgramStructureProviderContext(Program program, ProgramLocation loc) {
 		this.program = program;
 
-		int dataPath[] = loc.getComponentPath();
+		int[] dataPath = loc.getComponentPath();
 		Data data = program.getListing().getDefinedDataContaining(loc.getAddress());
 		data = data.getComponent(dataPath);
 		this.addr = data.getMinAddress();

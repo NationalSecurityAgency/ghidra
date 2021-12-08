@@ -52,8 +52,8 @@ public class DyldCacheSlideInfo4 extends DyldCacheSlideInfoCommon {
 	private long delta_mask;         // which (contiguous) set of bits contains the delta to the next rebase location (0xC0000000)
 	private long value_add;          // base address of cache
 
-	private short page_starts[];
-	private short page_extras[];
+	private short[] page_starts;
+	private short[] page_extras;
 
 	public int getPageSize() {
 		return page_size;
@@ -225,7 +225,7 @@ public class DyldCacheSlideInfo4 extends DyldCacheSlideInfoCommon {
 
 		List<Address> unchainedLocList = new ArrayList<Address>(1024);
 
-		byte origBytes[] = new byte[4];
+		byte[] origBytes = new byte[4];
 
 		int valueMask = 0xffffffff >>> (32 - deltaShift);
 

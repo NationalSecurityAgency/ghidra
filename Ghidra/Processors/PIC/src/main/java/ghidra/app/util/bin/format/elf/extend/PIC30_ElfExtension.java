@@ -262,7 +262,7 @@ public class PIC30_ElfExtension extends ElfExtension {
 		}
 
 		@Override
-		public int read(byte b[], int off, int len) throws IOException {
+		public int read(byte[] b, int off, int len) throws IOException {
 			if (b == null) {
 				throw new NullPointerException();
 			}

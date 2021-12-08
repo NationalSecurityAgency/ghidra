@@ -575,7 +575,7 @@ abstract class PseudoCodeUnit implements CodeUnit {
 	 *             if this object is no longer valid.
 	 */
 	@Override
-	public void setCommentAsArray(int commentType, String comment[]) {
+	public void setCommentAsArray(int commentType, String[] comment) {
 		setComment(commentType, comment[0]);
 		//throw new UnsupportedOperationException();
 	}

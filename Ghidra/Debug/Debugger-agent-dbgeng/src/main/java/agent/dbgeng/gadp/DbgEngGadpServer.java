@@ -77,7 +77,7 @@ public interface DbgEngGadpServer extends AutoCloseable {
 		public DbgEngRunner() {
 		}
 
-		public void run(String args[])
+		public void run(String[] args)
 				throws IOException, InterruptedException, ExecutionException {
 			parseArguments(args);
 

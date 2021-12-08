@@ -218,7 +218,7 @@ public class CliMetadataTokenAnalyzer extends AbstractAnalyzer {
 
 	private CliAbstractTableRow getRowForMetadataToken(CliStreamMetadata metaStream,
 			Instruction inst) {
-		Object ops[] = inst.getOpObjects(0);
+		Object[] ops = inst.getOpObjects(0);
 		Scalar tableOp = (Scalar) ops[0];
 		Scalar indexOp = (Scalar) ops[1];
 		int table = (int) tableOp.getUnsignedValue();

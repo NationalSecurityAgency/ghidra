@@ -33,7 +33,7 @@ import ghidra.xml.XmlPullParser;
  * A raw varnode is said to be free, it is not attached to any variable.
  */
 public class Varnode {
-	private static final long masks[] = { 0L, 0xffL, 0xffffL, 0xffffffL, 0xffffffffL, 0xffffffffffL,
+	private static final long[] masks = { 0L, 0xffL, 0xffffL, 0xffffffL, 0xffffffffL, 0xffffffffffL,
 		0xffffffffffffL, 0xffffffffffffffL, 0xffffffffffffffffL };
 
 	private Address address;

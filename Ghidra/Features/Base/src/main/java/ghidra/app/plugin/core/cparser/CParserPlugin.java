@@ -288,7 +288,7 @@ public class CParserPlugin extends ProgramPlugin {
 			ghidra.app.util.cparser.CPP.ParseException {
 		String[] args = parseOptions(options);
 
-		DataTypeManager openDTmanagers[] = null;
+		DataTypeManager[] openDTmanagers = null;
 		DataTypeManagerService dtService = tool.getService(DataTypeManagerService.class);
 		if (dtService != null) {
 			openDTmanagers = dtService.getDataTypeManagers();

@@ -28,9 +28,9 @@ import ghidra.program.model.listing.*;
  */
 public class MultiCodeUnitIterator {
 	/** the code unit iterators */
-	CodeUnitIterator	iter[];
+	CodeUnitIterator[] iter;
 	/** the current code units */
-	CodeUnit			cu[];
+	CodeUnit[] cu;
 	boolean				forward;
 
 	/**
@@ -97,7 +97,7 @@ public class MultiCodeUnitIterator {
 
 		// Find next code unit.
 		CodeUnit cuNext = null;
-		boolean next[] = new boolean[iter.length];
+		boolean[] next = new boolean[iter.length];
 		for (int i = 0; i < iter.length; i++) {
 			if (cu[i] == null) {
 				continue;
@@ -122,7 +122,7 @@ public class MultiCodeUnitIterator {
 		}
 
 		// Load array with all code units that have same address as next. Others are null.
-		CodeUnit nextCU[] = new CodeUnit[iter.length];
+		CodeUnit[] nextCU = new CodeUnit[iter.length];
 		for (int i = 0; i < iter.length; i++) {
 			if (next[i]) {
 				nextCU[i] = cu[i];

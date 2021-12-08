@@ -232,7 +232,7 @@ public class CompareAnalysisScript extends GhidraScript {
 			Symbol currentSym = currentSymIter.next();
 			Address switchAddress = currentSym.getAddress();
 			numSwitchesInCurrentProg++;
-			Symbol otherSyms[] = otherSymbolTable.getSymbols(switchAddress);
+			Symbol[] otherSyms = otherSymbolTable.getSymbols(switchAddress);
 			if (!isSwitch(otherSyms, "switchdataD_")) {
 				numMissingSwitches++;
 				println(numMissingSwitches + ": Missing switch table in " + otherProgramName +
@@ -249,7 +249,7 @@ public class CompareAnalysisScript extends GhidraScript {
 			Symbol otherSym = otherSymIter.next();
 			Address otherSwitchAddress = otherSym.getAddress();
 			numSwitchesInOtherProg++;
-			Symbol currentSyms[] = currentSymbolTable.getSymbols(otherSwitchAddress);
+			Symbol[] currentSyms = currentSymbolTable.getSymbols(otherSwitchAddress);
 			if (!isSwitch(currentSyms, "switchdataD_")) {
 				numMissingSwitches2++;
 				println(numMissingSwitches2 + ": Missing switch table in " + currentProgramName +

@@ -66,7 +66,7 @@ public interface LldbGadpServer extends AutoCloseable {
 		public LldbRunner() {
 		}
 
-		public void run(String args[])
+		public void run(String[] args)
 				throws IOException, InterruptedException, ExecutionException {
 			parseArguments(args);
 

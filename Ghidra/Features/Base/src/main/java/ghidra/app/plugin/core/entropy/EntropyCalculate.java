@@ -21,7 +21,7 @@ import ghidra.program.model.mem.MemoryBlock;
 
 public class EntropyCalculate {
 	private MemoryBlock block;
-	private int entropy[];				// Quantized entropy statistic for each chunk
+	private int[] entropy;				// Quantized entropy statistic for each chunk
 	private int chunksize;
 	private int[] histo;				// histogram of a chunk (reused for each chunk)
 	private byte[] chunk;				// chunk of bytes
