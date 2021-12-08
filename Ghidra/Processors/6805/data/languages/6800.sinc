@@ -56,6 +56,8 @@ REL:  addr    is simm8  [ addr = inst_next + simm8;  ]   { export *:2 addr; }
 # 1-byte operand, immediate/direct/indexed/extended addressing mode
 OP1: "#"imm8    is addrMode=0; imm8
 {
+	# For some reason this needs explicit sizing, or the p-code
+	# ends up picking up a zero value for all #imm8 operands. 
 	local tmp:1 = imm8;
     export tmp;
 }
@@ -313,8 +315,8 @@ macro Push2(reg, op)
 # Pull 1 byte operand op
 macro Pull1(reg, op)
 {
-    op = *:1 reg;
     reg = reg + 1;
+    op = *:1 reg;
 }
 
 # Pull 2 byte operand op
