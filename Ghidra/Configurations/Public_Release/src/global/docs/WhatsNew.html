@@ -42,7 +42,7 @@
     vulnerabilities in networks and systems.
     </P>
     
-    <H1>What's new in Ghidra 10.1 BETA</H1>
+    <H1>What's new in Ghidra 10.1</H1>
     
     <H2>The not-so-fine print: Please Read!</H2>
     
@@ -52,6 +52,12 @@
 	<P>This release includes many new features and capabilities, performance improvements, quite a few bug fixes, and many pull-request
 	contributions.  Thanks to all those who have contributed their time, thoughts, and code. The Ghidra user community
 	thanks you too!</P>
+	
+	<P>NOTE: Please note that any programs imported with a Ghidra beta versions or code built directly from source outside of a release tag may not be compatible
+	and may have flaws that have been corrected.  Any programs analyzed with a beta should be considered experimental and re-imported and analyzed with
+	a release version.  As an example, Ghidra 10.1 beta had an import flaw affecting symbol de-mangling that was not correctable.
+	Programs imported with previous release versions should upgrade correctly through various automatic upgrade mechanisms.  Any program
+	you will continue to reverse engineer should be imported fresh with a release version or a build you trust with the latest code fixes.</P>
 
 	<P>NOTE: Ghidra Server: The Ghidra 10.1 server is compatible with Ghidra 9.2 and later Ghidra clients.  Ghidra 10.1 
 	clients are compatible with all 9.x servers.</P>
@@ -89,6 +95,11 @@
 	and build LLDB with language bindings for Java. Once done, the new connectors for LLDB can be used in the normal fashion. While intended for macOS,
 	these connectors also work on Linux, and may work on Windows, too. This offers an alternative for those who prefer lldb to gdb.</P>
 	
+	<H2>Decompiler</H2>
+	<P>Many improvements have been made to the decompiler output to improve readability. These include the production of <i>else-if</i> syntax in control flow,
+	and the reduction of casting when typedefs are involved.  In addition, pointer calculation during sub-expression elimination has been improved, and
+	a new API for iterating and accessing the decompiler output syntax tokens has been added.</P>
+	
 	<H2>Data Types</H2>
 	
 	<P>Support for zero-length data types and components has been improved, although such types will continue to
@@ -100,14 +111,23 @@
 	The static method <i>DataTypeComponent.usesZeroLengthComponent(DataType)</i> may be used to determine if a zero-length component
 	will be used for a specific data type.  Due to the overlapping behavior of zero-length components, a data type which returns <i>true</i>
 	 for <i>isNotYetDefined()</i> will not produce a zero-length component.</P>
+	 
+	 <P>Improved parsing of C header files to correctly extract data type definitions, including corrected sizeof() handling, expression
+	 simplification to a constant for many types such as array size and enumeration value, and handling of type declarations within function
+	 and structure declarations.  We have re-parsed most of the included data type archives to take advantage of the changes, and plan to
+	 update the archives to more recent versions of the header files in the near future.</P>
 	
 	<H2>Mach-O Binary Import</H2>
 	<P>Mach-O binary import has been greatly improved, including handling of relocation pointer chains, support for newer Objective-C
-	class structures with RelativePointers, many additional load commands such as encrypted blocks, and more recent dyld and kernel caches.</P>
+	class structures with RelativePointers, additional load commands, and support for more recent versions of dyld and kernel caches
+	including split-file dyld_shared_cache variants.</P>
 	
 	<H2>Android</H2>
-	<P>Added support for Android formats (ART, OAT, ODEX, DEX, CDEX, VDEX) and Dalvik VM Sleigh modules for each major Android release up to version 12.x.
-	Support for the latest android release is in progress for a future release.</P>
+	<P>Import and analysis of the entire existing set (almost) of Android binaries up to version 12.x is now supported.  The type of binaries supported
+	include: Android Run-Time (ART), Ahead-of-Time (OAT)/ELF, Dalvik Executables (DEX), Compact DEX (CDEX), Verified DEX (VEX), Boot Image,
+	and Boot Loader formats.  Also included are Sleigh modules for DEX files covering each major release of Android; the optimized instructions
+	vary across versions.  Now when importing DEX files, you can select the Dalvik language appropriate to the Android release, which will result
+	in better analysis.</P>
 
 	<H2>Performance Improvements</H2>
 	<P>There have been many performance improvements to import, analysis, program data base access, many API calls, and the user interface.</P>
@@ -120,10 +140,6 @@
 	<H2>DWARF</H2>
 	<P>Support for loading DWARF debug information from a separate file during import has been added.  In addition data type information contained in the
 	separate debug file can be loaded without application to a program, enabling the use of debug information from a related version of the binary.</P>
-
-	<P>
-	... WORK IN PROGRESS ... See release notes for more details.
-	</P>
 	
     <H2>Bug Fixes and Enhancements</H2>
     <P> Numerous other bug fixes and improvements are fully listed in the <a href="ChangeHistory.html">ChangeHistory</a> file.</P>
