@@ -404,9 +404,11 @@ contextdef
 spacedef
 	scope {
 		SpaceQuality quality;
+		boolean wordSizeSet;
 	}
 	@init {
 		$spacedef::quality = null;
+		$spacedef::wordSizeSet = false;
 	}
 	:	^(OP_SPACE n=unbound_identifier["space"] {
 			String name = "<parse error>";
@@ -447,14 +449,23 @@ typemod
 	;
 
 sizemod
-	:	^(OP_SIZE i=integer) {
-			$spacedef::quality.size = $i.value.intValue();
+	:	^(t=OP_SIZE i=integer) {
+			if ($spacedef::quality.size != 0) {
+				reportError(find(t), "space '" + $spacedef::quality.name + "' already has a size set");
+			} else {
+				$spacedef::quality.size = $i.value.intValue();
+			}
 		}
 	;
 
 wordsizemod
-	:	^(OP_WORDSIZE i=integer) {
-			$spacedef::quality.wordsize = $i.value.intValue();
+	:	^(t=OP_WORDSIZE i=integer) {
+			if ($spacedef::wordSizeSet) {
+				reportError(find(t), "space '" + $spacedef::quality.name + "' already has a word size set");
+			} else {
+				$spacedef::quality.wordsize = $i.value.intValue();
+				$spacedef::wordSizeSet = true;
+			}
 		}
 	;
 
