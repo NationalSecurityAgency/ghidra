@@ -39,6 +39,22 @@ smooth process when submitting a patch:
   goal. For example, do not make unnecessary indentation changes; but don't go
   out of your way to make the patch so minimal that it isn't easy to read,
   either. Consider the reviewer's perspective.
+- Unless previously authorized by the Ghidra team, repackaging, renaming, and 
+  other refactoring should not be part of any pull request. These types of 
+  changes are difficult to review, pollute the git history making it harder 
+  to do git forensics on regressions, and will likely conflict with other 
+  changes that the Ghidra team is making internally.
+- Avoid "find and replace" changes in your pull request.  While it may be 
+  tempting to globally replace calls to deprecated methods or change the style
+  of the code to fit your personal preference, these types of seemingly trivial
+  changes have likely not already been performed by the Ghidra team for good 
+  reason.
+- Focus your patches on bug fixes that were discovered through real-world
+  usage and testing, and on improvements that clearly satisfy a need in 
+  Ghidra's functionality.  Before you begin implementing, consider first
+  opening a dialogue with the Ghidra team to ensure that your efforts will 
+  align with the goals of the project.  This will significantly improve the odds
+  that your patch gets accepted.
 - Before submission, please squash your commits to using a message that starts
   with the issue number and a description of the changes.
 - Isolate multiple patches from each other. If you wish to make several
